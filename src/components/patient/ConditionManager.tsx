@@ -16,6 +16,7 @@ import {
   useResolveCondition,
 } from '../../hooks/useFhirData';
 import type { Condition, CreateCondition } from '../../types/fhir';
+import { useToast } from '../../hooks/useToast';
 
 // Category options based on FHIR ValueSet
 const CONDITION_CATEGORIES = [
@@ -56,6 +57,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   encounterId,
   onConditionUpdate,
 }) => {
+  const { showToast, ToastContainer } = useToast();
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'chronic' | 'problem-list'>('all');
@@ -115,7 +117,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
     e.preventDefault();
 
     if (!formData.code || !formData.code_display) {
-      alert('Please enter a condition code and description');
+      showToast('warning', 'Please enter a condition code and description');
       return;
     }
 
@@ -131,9 +133,10 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
         // Create new condition
         await createMutation.mutateAsync(formData as CreateCondition);
         resetForm();
+        showToast('success', 'Condition added successfully.');
       }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } catch (err: unknown) {
+      showToast('error', err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -159,8 +162,9 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
 
     try {
       await resolveMutation.mutateAsync(conditionId);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
+      showToast('success', 'Condition marked as resolved.');
+    } catch (err: unknown) {
+      showToast('error', err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -220,14 +224,16 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Conditions & Diagnoses</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage patient health conditions, diagnoses, and health concerns
-          </p>
+    <>
+      <ToastContainer />
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Conditions & Diagnoses</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Manage patient health conditions, diagnoses, and health concerns
+            </p>
         </div>
         {!readOnly && (
           <button
@@ -446,10 +452,10 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
           />
         </div>
         <div className="flex gap-2">
-          {['all', 'active', 'chronic', 'problem-list'].map((f) => (
+          {(['all', 'active', 'chronic', 'problem-list'] as const).map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f as any)}
+              onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === f
                   ? 'bg-blue-600 text-white'
@@ -566,8 +572,9 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
             </div>
           ))
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

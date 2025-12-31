@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { useToast } from '../../hooks/useToast';
+import { auditLogger } from '../../services/auditLogger';
 
 interface EnrollmentRecord {
   firstName: string;
@@ -35,6 +37,7 @@ interface BulkEnrollmentJob {
 const BulkEnrollmentPanel: React.FC = () => {
   const navigate = useNavigate();
   const { adminRole } = useAdminAuth();
+  const { showToast, ToastContainer } = useToast();
   const [enrollmentJob, setEnrollmentJob] = useState<BulkEnrollmentJob | null>(null);
   const [, setCsvData] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -63,7 +66,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
     if (!file) return;
 
     if (file.type !== 'text/csv' && !file.name.toLowerCase().endsWith('.csv')) {
-      alert('Please upload a CSV file only.');
+      showToast('warning', 'Please upload a CSV file only.');
       return;
     }
 
@@ -174,7 +177,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
 
   const startBulkEnrollment = async () => {
     if (previewRecords.length === 0) {
-      alert('No valid records to enroll');
+      showToast('warning', 'No valid records to enroll');
       return;
     }
 
@@ -353,7 +356,10 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
         const { error } = await supabase.auth.admin.deleteUser(record.userId);
 
         if (error) {
-
+          auditLogger.error('BULK_ENROLLMENT_ROLLBACK_ERROR', error.message, {
+            userId: record.userId,
+            recordRow: record.row,
+          });
           rollbackErrors++;
         } else {
           rolledBackCount++;
@@ -365,8 +371,11 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
             )
           } : null);
         }
-      } catch (error) {
-
+      } catch (err: unknown) {
+        auditLogger.error('BULK_ENROLLMENT_ROLLBACK_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', {
+          userId: record.userId,
+          recordRow: record.row,
+        });
         rollbackErrors++;
       }
     }
@@ -380,11 +389,11 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
       canRollback: false
     } : null);
 
-    alert(
-      `Rollback completed!\n\n` +
-      `✓ Rolled back: ${rolledBackCount} users\n` +
-      `${rollbackErrors > 0 ? `✗ Errors: ${rollbackErrors}` : ''}`
-    );
+    if (rollbackErrors > 0) {
+      showToast('warning', `Rollback completed with errors. Rolled back: ${rolledBackCount} users, Errors: ${rollbackErrors}`);
+    } else {
+      showToast('success', `Rollback completed. Rolled back: ${rolledBackCount} users`);
+    }
   };
 
   const resetEnrollment = () => {
@@ -445,6 +454,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <ToastContainer />
       {/* Back Button */}
       <button
         onClick={() => navigate('/admin')}

@@ -9,6 +9,7 @@
 
 import React, { useState } from 'react';
 import { X, Shield, Users, Building, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useToast } from '../../../hooks/useToast';
 
 interface GrantAccessModalProps {
   userId: string;
@@ -41,6 +42,7 @@ const DATA_CATEGORIES = [
 const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, onSuccess }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
+  const { showToast, ToastContainer } = useToast();
   const [formData, setFormData] = useState<GrantFormData>({
     accessType: 'provider',
     recipientName: '',
@@ -97,9 +99,10 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
         throw error;
       }
 
+      showToast('success', 'Access granted successfully.');
       onSuccess();
     } catch (err: unknown) {
-      alert('Failed to grant access. Please try again.');
+      showToast('error', 'Failed to grant access. Please try again.');
     }
     setLoading(false);
   };
@@ -125,6 +128,7 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
+      <ToastContainer />
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
         {/* Backdrop */}
         <div

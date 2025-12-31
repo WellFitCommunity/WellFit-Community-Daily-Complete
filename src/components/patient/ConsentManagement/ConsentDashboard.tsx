@@ -13,6 +13,7 @@
 import React, { useState } from 'react';
 import { Shield, Users, Smartphone, History, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useToast } from '../../../hooks/useToast';
 import AuthorizedAppsList from './AuthorizedAppsList';
 import ConsentAuditLog from './ConsentAuditLog';
 import GrantAccessModal from './GrantAccessModal';
@@ -24,6 +25,34 @@ interface ConsentStats {
   authorizedApps: number;
   recentAccess: number;
   pendingRequests: number;
+}
+
+/** Patient consent record from database */
+interface PatientConsent {
+  id: string;
+  patient_id: string;
+  consent_category: string;
+  purpose: string;
+  external_system_name?: string;
+  scopes_granted?: string[];
+  data_categories?: string[];
+  status: string;
+  granted_at: string;
+  expires_at?: string;
+  revoked_at?: string;
+}
+
+/** Care team member with practitioner data */
+interface CareTeamMember {
+  id: string;
+  patient_id: string;
+  member_name?: string;
+  role?: string;
+  practitioner?: {
+    id: string;
+    name?: string;
+    specialty?: string;
+  } | null;
 }
 
 const ConsentDashboard: React.FC = () => {
@@ -203,7 +232,7 @@ interface OverviewTabProps {
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({ userId, onStatsUpdate }) => {
-  const [consents, setConsents] = React.useState<any[]>([]);
+  const [consents, setConsents] = React.useState<PatientConsent[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -272,12 +301,13 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userId, onStatsUpdate }) => {
 
 // Consent Card Component
 interface ConsentCardProps {
-  consent: any;
+  consent: PatientConsent;
   onRevoke: () => void;
 }
 
 const ConsentCard: React.FC<ConsentCardProps> = ({ consent, onRevoke }) => {
   const [revoking, setRevoking] = useState(false);
+  const { showToast, ToastContainer } = useToast();
 
   const handleRevoke = async () => {
     if (!confirm('Are you sure you want to revoke this access? This action cannot be undone.')) {
@@ -297,10 +327,13 @@ const ConsentCard: React.FC<ConsentCardProps> = ({ consent, onRevoke }) => {
         .eq('id', consent.id);
 
       if (!error) {
+        showToast('success', 'Access revoked successfully.');
         onRevoke();
+      } else {
+        showToast('error', 'Failed to revoke access. Please try again.');
       }
     } catch (err: unknown) {
-      alert('Failed to revoke access. Please try again.');
+      showToast('error', 'Failed to revoke access. Please try again.');
     }
     setRevoking(false);
   };
@@ -327,52 +360,55 @@ const ConsentCard: React.FC<ConsentCardProps> = ({ consent, onRevoke }) => {
   };
 
   return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div className="flex items-start">
-          <div className="mr-4 mt-1">
-            {getCategoryIcon(consent.consent_category)}
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900">
-              {consent.external_system_name || consent.purpose}
-            </h4>
-            <p className="text-sm text-gray-600 mt-1">{consent.purpose}</p>
+    <>
+      <ToastContainer />
+      <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start">
+            <div className="mr-4 mt-1">
+              {getCategoryIcon(consent.consent_category)}
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-900">
+                {consent.external_system_name || consent.purpose}
+              </h4>
+              <p className="text-sm text-gray-600 mt-1">{consent.purpose}</p>
 
-            {consent.scopes_granted && consent.scopes_granted.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {consent.scopes_granted.slice(0, 3).map((scope: string, idx: number) => (
-                  <span
-                    key={idx}
-                    className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
-                  >
-                    {scope.replace('patient/', '').replace('.read', '')}
-                  </span>
-                ))}
-                {consent.scopes_granted.length > 3 && (
-                  <span className="text-xs text-gray-500">
-                    +{consent.scopes_granted.length - 3} more
-                  </span>
-                )}
-              </div>
-            )}
+              {consent.scopes_granted && consent.scopes_granted.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {consent.scopes_granted.slice(0, 3).map((scope: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                    >
+                      {scope.replace('patient/', '').replace('.read', '')}
+                    </span>
+                  ))}
+                  {consent.scopes_granted.length > 3 && (
+                    <span className="text-xs text-gray-500">
+                      +{consent.scopes_granted.length - 3} more
+                    </span>
+                  )}
+                </div>
+              )}
 
-            <p className="text-xs text-gray-500 mt-2">
-              Granted: {formatDate(consent.granted_at)}
-              {consent.expires_at && ` · Expires: ${formatDate(consent.expires_at)}`}
-            </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Granted: {formatDate(consent.granted_at)}
+                {consent.expires_at && ` · Expires: ${formatDate(consent.expires_at)}`}
+              </p>
+            </div>
           </div>
+
+          <button
+            onClick={handleRevoke}
+            disabled={revoking}
+            className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+          >
+            {revoking ? 'Revoking...' : 'Revoke'}
+          </button>
         </div>
-
-        <button
-          onClick={handleRevoke}
-          disabled={revoking}
-          className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
-        >
-          {revoking ? 'Revoking...' : 'Revoke'}
-        </button>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -382,7 +418,7 @@ interface ProvidersTabProps {
 }
 
 const ProvidersTab: React.FC<ProvidersTabProps> = ({ userId }) => {
-  const [providers, setProviders] = React.useState<any[]>([]);
+  const [providers, setProviders] = React.useState<CareTeamMember[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {

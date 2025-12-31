@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Smartphone, ExternalLink, Shield, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { useToast } from '../../../hooks/useToast';
 
 interface AuthorizedAppsListProps {
   userId: string;
@@ -28,10 +29,28 @@ interface AuthorizedApp {
   status: string;
 }
 
+/** Raw database response from smart_authorizations with joined app data */
+interface SmartAuthorizationRow {
+  id: string;
+  scopes_granted: string[] | null;
+  authorized_at: string;
+  last_access_at: string | null;
+  access_count: number | null;
+  status: string;
+  app: {
+    id: string;
+    client_name: string;
+    client_description: string | null;
+    logo_uri: string | null;
+    client_uri: string | null;
+  } | null;
+}
+
 const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCountUpdate }) => {
   const [apps, setApps] = useState<AuthorizedApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const { showToast, ToastContainer } = useToast();
 
   useEffect(() => {
     loadAuthorizedApps();
@@ -65,15 +84,16 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
         .order('authorized_at', { ascending: false });
 
       if (!error && data) {
-        const mappedApps = data.map((auth: any) => ({
+        const rows = data as unknown as SmartAuthorizationRow[];
+        const mappedApps = rows.map((auth) => ({
           id: auth.id,
           app_id: auth.app?.id || '',
           app_name: auth.app?.client_name || 'Unknown App',
-          app_description: auth.app?.client_description,
-          logo_uri: auth.app?.logo_uri,
+          app_description: auth.app?.client_description ?? undefined,
+          logo_uri: auth.app?.logo_uri ?? undefined,
           scopes_granted: auth.scopes_granted || [],
           authorized_at: auth.authorized_at,
-          last_access_at: auth.last_access_at,
+          last_access_at: auth.last_access_at ?? undefined,
           access_count: auth.access_count || 0,
           status: auth.status,
         }));
@@ -113,11 +133,12 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
           .eq('authorization_id', authId);
 
         loadAuthorizedApps();
+        showToast('success', 'App access revoked successfully.');
       } else {
-        alert('Failed to revoke access. Please try again.');
+        showToast('error', 'Failed to revoke access. Please try again.');
       }
     } catch (err: unknown) {
-      alert('Failed to revoke access. Please try again.');
+      showToast('error', 'Failed to revoke access. Please try again.');
     }
     setRevoking(null);
   };
@@ -195,116 +216,119 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Connected Apps</h3>
-        <span className="text-sm text-gray-500">
-          {apps.length} app{apps.length !== 1 ? 's' : ''} connected
-        </span>
-      </div>
-
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-        <div className="flex items-start">
-          <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
-          <p className="text-sm text-yellow-700">
-            These apps can access your health data based on the permissions you granted.
-            Revoke access anytime if you no longer use an app.
-          </p>
+    <>
+      <ToastContainer />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Connected Apps</h3>
+          <span className="text-sm text-gray-500">
+            {apps.length} app{apps.length !== 1 ? 's' : ''} connected
+          </span>
         </div>
-      </div>
 
-      {apps.map((app) => (
-        <div
-          key={app.id}
-          className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start">
-              {/* App Icon */}
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
-                {app.logo_uri ? (
-                  <img
-                    src={app.logo_uri}
-                    alt={app.app_name}
-                    className="w-10 h-10 rounded"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <Smartphone className="w-6 h-6 text-gray-400" />
-                )}
-              </div>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+          <div className="flex items-start">
+            <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
+            <p className="text-sm text-yellow-700">
+              These apps can access your health data based on the permissions you granted.
+              Revoke access anytime if you no longer use an app.
+            </p>
+          </div>
+        </div>
 
-              {/* App Info */}
-              <div className="flex-1">
-                <div className="flex items-center">
-                  <h4 className="font-medium text-gray-900">{app.app_name}</h4>
-                  <a
-                    href="#"
-                    className="ml-2 text-gray-400 hover:text-gray-600"
-                    title="View app details"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
+        {apps.map((app) => (
+          <div
+            key={app.id}
+            className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-start">
+                {/* App Icon */}
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
+                  {app.logo_uri ? (
+                    <img
+                      src={app.logo_uri}
+                      alt={app.app_name}
+                      className="w-10 h-10 rounded"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <Smartphone className="w-6 h-6 text-gray-400" />
+                  )}
                 </div>
 
-                {app.app_description && (
-                  <p className="text-sm text-gray-600 mt-1">{app.app_description}</p>
-                )}
+                {/* App Info */}
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <h4 className="font-medium text-gray-900">{app.app_name}</h4>
+                    <a
+                      href="#"
+                      className="ml-2 text-gray-400 hover:text-gray-600"
+                      title="View app details"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
 
-                {/* Permissions */}
-                <div className="mt-2">
-                  <p className="text-xs text-gray-500 mb-1">Permissions:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {app.scopes_granted.slice(0, 4).map((scope, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded"
-                      >
-                        {getScopeDisplayName(scope)}
+                  {app.app_description && (
+                    <p className="text-sm text-gray-600 mt-1">{app.app_description}</p>
+                  )}
+
+                  {/* Permissions */}
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 mb-1">Permissions:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {app.scopes_granted.slice(0, 4).map((scope, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded"
+                        >
+                          {getScopeDisplayName(scope)}
+                        </span>
+                      ))}
+                      {app.scopes_granted.length > 4 && (
+                        <span className="text-xs text-gray-500">
+                          +{app.scopes_granted.length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Access Stats */}
+                  <div className="mt-3 flex items-center text-xs text-gray-500 space-x-4">
+                    <span className="flex items-center">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Connected {formatDate(app.authorized_at)}
+                    </span>
+                    {app.last_access_at && (
+                      <span className="flex items-center">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Last used {formatRelativeTime(app.last_access_at)}
                       </span>
-                    ))}
-                    {app.scopes_granted.length > 4 && (
-                      <span className="text-xs text-gray-500">
-                        +{app.scopes_granted.length - 4} more
-                      </span>
+                    )}
+                    {app.access_count > 0 && (
+                      <span>{app.access_count} data request{app.access_count !== 1 ? 's' : ''}</span>
                     )}
                   </div>
                 </div>
-
-                {/* Access Stats */}
-                <div className="mt-3 flex items-center text-xs text-gray-500 space-x-4">
-                  <span className="flex items-center">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Connected {formatDate(app.authorized_at)}
-                  </span>
-                  {app.last_access_at && (
-                    <span className="flex items-center">
-                      <Clock className="w-3 h-3 mr-1" />
-                      Last used {formatRelativeTime(app.last_access_at)}
-                    </span>
-                  )}
-                  {app.access_count > 0 && (
-                    <span>{app.access_count} data request{app.access_count !== 1 ? 's' : ''}</span>
-                  )}
-                </div>
               </div>
-            </div>
 
-            {/* Revoke Button */}
-            <button
-              onClick={() => handleRevoke(app.id, app.app_name)}
-              disabled={revoking === app.id}
-              className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              {revoking === app.id ? 'Revoking...' : 'Revoke'}
-            </button>
+              {/* Revoke Button */}
+              <button
+                onClick={() => handleRevoke(app.id, app.app_name)}
+                disabled={revoking === app.id}
+                className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                {revoking === app.id ? 'Revoking...' : 'Revoke'}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 };
 

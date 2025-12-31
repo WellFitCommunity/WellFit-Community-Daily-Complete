@@ -12,9 +12,12 @@ import { useSupabaseClient } from '../../contexts/AuthContext';
 import { createSOC2MonitoringService, IncidentResponseItem } from '../../services/soc2MonitoringService';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
+import { useToast } from '../../hooks/useToast';
+import { auditLogger } from '../../services/auditLogger';
 
 export const SOC2IncidentResponseDashboard: React.FC = () => {
   const supabase = useSupabaseClient();
+  const { showToast, ToastContainer } = useToast();
   const [incidents, setIncidents] = useState<IncidentResponseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,8 +35,10 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
       const data = await service.getIncidentResponseQueue();
       setIncidents(data);
       setLastRefresh(new Date());
-    } catch (err) {
-
+    } catch (err: unknown) {
+      auditLogger.error('SOC2_INCIDENT_QUEUE_LOAD_ERROR', err instanceof Error ? err.message : 'Unknown error', {
+        component: 'SOC2IncidentResponseDashboard',
+      });
       setError('Failed to load incident response queue');
     } finally {
       setLoading(false);
@@ -52,7 +57,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
 
   const handleResolveIncident = async () => {
     if (!selectedIncident || !resolution.trim()) {
-      alert('Please provide a resolution description');
+      showToast('warning', 'Please provide a resolution description');
       return;
     }
 
@@ -62,16 +67,15 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
       const success = await service.markEventInvestigated(selectedIncident.id, resolution);
 
       if (success) {
-        alert('Incident marked as resolved');
+        showToast('success', 'Incident marked as resolved');
         setSelectedIncident(null);
         setResolution('');
         await loadIncidents();
       } else {
-        alert('Failed to resolve incident');
+        showToast('error', 'Failed to resolve incident');
       }
-    } catch (err) {
-
-      alert('Error resolving incident');
+    } catch (err: unknown) {
+      showToast('error', err instanceof Error ? err.message : 'Error resolving incident');
     } finally {
       setSubmittingResolution(false);
     }
@@ -141,6 +145,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <ToastContainer />
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -226,7 +231,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
               <label className="text-sm font-medium text-gray-700 mr-2">Severity:</label>
               <select
                 value={filterSeverity}
-                onChange={(e) => setFilterSeverity(e.target.value as any)}
+                onChange={(e) => setFilterSeverity(e.target.value as typeof filterSeverity)}
                 className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
               >
                 <option value="ALL">All</option>
@@ -240,7 +245,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
               <label className="text-sm font-medium text-gray-700 mr-2">Status:</label>
               <select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
+                onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
                 className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
               >
                 <option value="ALL">All</option>

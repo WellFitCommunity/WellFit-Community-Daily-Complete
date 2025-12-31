@@ -14,6 +14,7 @@ import {
   useCancelMedicationRequest,
 } from '../../hooks/useFhirData';
 import type { MedicationRequest, CreateMedicationRequest } from '../../types/fhir';
+import { useToast } from '../../hooks/useToast';
 
 // Intent options
 const INTENT_OPTIONS = [
@@ -55,6 +56,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
   readOnly = false,
   onMedicationUpdate,
 }) => {
+  const { showToast, ToastContainer } = useToast();
   const [allergyWarning, setAllergyWarning] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
     setAllergyWarning(null);
 
     if (!formData.medication_code || !formData.medication_display) {
-      alert('Please enter medication code and name');
+      showToast('warning', 'Please enter medication code and name');
       return;
     }
 
@@ -136,7 +138,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
         }
       }
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
+      showToast('error', err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -169,8 +171,9 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
     try {
       await cancelMutation.mutateAsync({ id: medicationId, reason });
+      showToast('success', 'Prescription cancelled successfully.');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
+      showToast('error', err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -223,9 +226,11 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <>
+      <ToastContainer />
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Medication Requests</h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -365,7 +370,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select
                   value={formData.status || ''}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as MedicationRequest['status'] })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {STATUS_OPTIONS.map((status) => (
@@ -381,7 +386,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                 <label className="block text-sm font-medium text-gray-700 mb-1">Intent</label>
                 <select
                   value={formData.intent || ''}
-                  onChange={(e) => setFormData({ ...formData, intent: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, intent: e.target.value as MedicationRequest['intent'] })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {INTENT_OPTIONS.map((intent) => (
@@ -397,7 +402,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                 <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                 <select
                   value={formData.priority || ''}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as MedicationRequest['priority'] })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {PRIORITY_OPTIONS.map((priority) => (
@@ -457,7 +462,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                   />
                   <select
                     value={formData.dosage_timing_period_unit || ''}
-                    onChange={(e) => setFormData({ ...formData, dosage_timing_period_unit: e.target.value as any })}
+                    onChange={(e) => setFormData({ ...formData, dosage_timing_period_unit: e.target.value as MedicationRequest['dosage_timing_period_unit'] })}
                     className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Unit</option>
@@ -671,8 +676,9 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
             </div>
           ))
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
