@@ -7,6 +7,15 @@ import { auditLogger } from '../services/auditLogger';
 // Storage key pattern for Supabase auth tokens
 const SUPABASE_AUTH_KEY_PATTERN = /^sb-.*$/;
 
+// REST endpoint that is currently spamming failures
+const REALTIME_SUBSCRIPTION_REGISTRY_PATH = '/rest/v1/realtime_subscription_registry';
+
+// Throttle repeated log entries so we get signal instead of a log storm
+const FAILURE_LOG_COOLDOWN_MS = 2000;
+
+// Track last time we logged a given failure key (method + url)
+const lastFailureLogAtByKey = new Map<string, number>();
+
 /**
  * Clears all Supabase auth tokens from storage and redirects to login.
  * Called when we detect an unrecoverable auth failure.
@@ -211,6 +220,72 @@ export function createAuthAwareFetch(): typeof fetch {
           note: '401 body unparseable - not treated as global auth failure',
         });
       }
+    }
+
+    // ============================================================
+    // REALTIME SUBSCRIPTION REGISTRY PATCH FAILURES: LOG + THROTTLE
+    // ============================================================
+    // This endpoint is currently spamming PATCH failures. We capture the status
+    // and PostgREST error details (when available) WITHOUT logging out.
+    if (
+      isRestEndpoint &&
+      method === 'PATCH' &&
+      url.includes(REALTIME_SUBSCRIPTION_REGISTRY_PATH) &&
+      !response.ok
+    ) {
+      const failureKey = `${method}:${url}`;
+      const lastAt = lastFailureLogAtByKey.get(failureKey) || 0;
+
+      if (now - lastAt >= FAILURE_LOG_COOLDOWN_MS) {
+        lastFailureLogAtByKey.set(failureKey, now);
+
+        const clonedResponse = response.clone();
+        let parsed: Record<string, unknown> | null = null;
+
+        try {
+          parsed = await clonedResponse.json();
+        } catch {
+          // non-json response; ignore
+        }
+
+        const msg = (parsed?.message || parsed?.error || null) as string | null;
+        const details = (parsed?.details || null) as string | null;
+        const hint = (parsed?.hint || null) as string | null;
+        const code = (parsed?.code || parsed?.error_code || null) as string | null;
+
+        // Attempt to safely describe payload without storing sensitive PHI values
+        let payloadKeys: string[] | null = null;
+        try {
+          if (init?.body && typeof init.body === 'string') {
+            const maybeJson = JSON.parse(init.body) as
+              | Record<string, unknown>
+              | Record<string, unknown>[];
+            if (maybeJson && typeof maybeJson === 'object') {
+              payloadKeys = Array.isArray(maybeJson)
+                ? Object.keys(maybeJson[0] || {})
+                : Object.keys(maybeJson);
+            }
+          }
+        } catch {
+          // ignore parse errors
+        }
+
+        auditLogger.security('REALTIME_REGISTRY_PATCH_FAILED', 'low', {
+          source: 'authAwareFetch',
+          url,
+          method,
+          status,
+          ok: response.ok,
+          message: msg,
+          details,
+          hint,
+          code,
+          payloadKeys,
+          note: 'PATCH to realtime_subscription_registry failed (likely RLS/policy/schema). Capture response details here.',
+        });
+      }
+
+      return response;
     }
 
     // ==========================================
