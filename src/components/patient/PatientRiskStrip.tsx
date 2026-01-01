@@ -117,7 +117,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
       // Fetch readmission risk
       const { data: readmissionData } = await supabase
         .from('readmission_risk_predictions')
-        .select('readmission_risk_score, risk_category, predicted_readmission_window_days, primary_risk_factors')
+        .select('readmission_risk_score, risk_category, predicted_readmission_window_days, primary_risk_factors, plain_language_explanation')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(1)
