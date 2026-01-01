@@ -146,7 +146,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
           level: (readmissionData.risk_category as 'low' | 'moderate' | 'high' | 'critical') || scoreToLevel(Math.round((readmissionData.readmission_risk_score ?? 0) * 100)),
           daysUntilPredicted: readmissionData.predicted_readmission_window_days ?? undefined,
           topFactor: primaryFactors[0]?.factor,
-          plainLanguageExplanation: undefined, // Column not available in current schema
+          plainLanguageExplanation: readmissionData.plain_language_explanation ?? undefined,
         } : null,
         deterioration: deteriorationData ? {
           score: deteriorationData.auto_composite_score ?? 0,

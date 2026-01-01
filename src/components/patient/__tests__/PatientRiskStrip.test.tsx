@@ -31,10 +31,10 @@ vi.mock('../../../services/auditLogger', () => ({
 // ============================================================================
 
 const mockReadmissionData = {
-  readmission_risk_30_day: 0.65,
+  readmission_risk_score: 0.65,
   risk_category: 'high',
-  predicted_readmission_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-  top_risk_factors: [{ factor: 'Prior admission', weight: 0.25 }],
+  predicted_readmission_window_days: 7,
+  primary_risk_factors: [{ factor: 'Prior admission', weight: 0.25 }],
   plain_language_explanation: 'Your risk of going back to the hospital is HIGH. This is because you were in the hospital 2 times recently. Good news: You have a doctor visit coming up soon. Please call your doctor to set up a visit in the next 7 days.',
 };
 

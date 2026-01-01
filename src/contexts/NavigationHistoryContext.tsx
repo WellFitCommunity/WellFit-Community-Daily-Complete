@@ -291,4 +291,13 @@ export const useNavigationHistory = (): NavigationHistoryContextType => {
   return context;
 };
 
+/**
+ * Safe version that returns null if context is not available
+ * Use this when the hook may be called outside the provider
+ */
+export const useNavigationHistorySafe = (): NavigationHistoryContextType | null => {
+  const context = useContext(NavigationHistoryContext);
+  return context ?? null;
+};
+
 export default NavigationHistoryContext;

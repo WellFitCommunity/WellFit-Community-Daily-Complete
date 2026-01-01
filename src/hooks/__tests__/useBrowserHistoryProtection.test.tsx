@@ -31,7 +31,7 @@ vi.mock('../../contexts/AuthContext', () => ({
 }));
 
 vi.mock('../../contexts/NavigationHistoryContext', () => ({
-  useNavigationHistory: vi.fn(),
+  useNavigationHistorySafe: vi.fn(),
 }));
 
 vi.mock('../../services/auditLogger', () => ({
@@ -45,12 +45,12 @@ vi.mock('../../services/auditLogger', () => ({
 
 import { useBrowserHistoryProtection } from '../useBrowserHistoryProtection';
 import { useSession, useAuth } from '../../contexts/AuthContext';
-import { useNavigationHistory } from '../../contexts/NavigationHistoryContext';
+import { useNavigationHistorySafe } from '../../contexts/NavigationHistoryContext';
 import { useLocation as useLocationMock } from 'react-router-dom';
 
 const mockedUseSession = vi.mocked(useSession);
 const mockedUseAuth = vi.mocked(useAuth);
-const mockedUseNavigationHistory = vi.mocked(useNavigationHistory);
+const mockedUseNavigationHistorySafe = vi.mocked(useNavigationHistorySafe);
 const mockedUseLocation = vi.mocked(useLocationMock);
 
 // ============================================================================
@@ -113,7 +113,7 @@ describe('useBrowserHistoryProtection', () => {
     // Default mocks
     mockedUseSession.mockReturnValue(mockSession as ReturnType<typeof useSession>);
     mockedUseAuth.mockReturnValue(mockAuthContext as ReturnType<typeof useAuth>);
-    mockedUseNavigationHistory.mockReturnValue(mockNavHistory);
+    mockedUseNavigationHistorySafe.mockReturnValue(mockNavHistory);
     mockedUseLocation.mockReturnValue({
       pathname: '/admin/settings',
       search: '',
@@ -298,7 +298,7 @@ describe('useBrowserHistoryProtection', () => {
 
   describe('Navigation History Integration', () => {
     it('should use NavigationHistoryContext when available', () => {
-      mockedUseNavigationHistory.mockReturnValue({
+      mockedUseNavigationHistorySafe.mockReturnValue({
         ...mockNavHistory,
         canGoBack: true,
         getPreviousRoute: vi.fn().mockReturnValue('/admin/users'),
@@ -309,13 +309,12 @@ describe('useBrowserHistoryProtection', () => {
       });
 
       // Hook should integrate with nav history
-      expect(mockedUseNavigationHistory).toHaveBeenCalled();
+      expect(mockedUseNavigationHistorySafe).toHaveBeenCalled();
     });
 
-    it('should fall back gracefully when NavigationHistoryContext throws', () => {
-      mockedUseNavigationHistory.mockImplementation(() => {
-        throw new Error('Context not available');
-      });
+    it('should fall back gracefully when NavigationHistoryContext returns null', () => {
+      // useNavigationHistorySafe returns null when context is not available
+      mockedUseNavigationHistorySafe.mockReturnValue(null);
 
       // Should not throw
       expect(() => {
@@ -328,7 +327,7 @@ describe('useBrowserHistoryProtection', () => {
 
   describe('Fallback Routes', () => {
     it('should fallback to /admin when in admin routes and no history', () => {
-      mockedUseNavigationHistory.mockReturnValue({
+      mockedUseNavigationHistorySafe.mockReturnValue({
         ...mockNavHistory,
         canGoBack: false,
         getPreviousRoute: vi.fn().mockReturnValue(null),

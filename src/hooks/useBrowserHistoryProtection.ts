@@ -28,7 +28,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession, useAuth } from '../contexts/AuthContext';
-import { useNavigationHistory } from '../contexts/NavigationHistoryContext';
+import { useNavigationHistorySafe } from '../contexts/NavigationHistoryContext';
 import { auditLogger } from '../services/auditLogger';
 
 // Routes that authenticated users should never navigate back to via browser history
@@ -141,13 +141,8 @@ export function useBrowserHistoryProtection(): void {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get navigation history context (if available)
-  let navHistory: ReturnType<typeof useNavigationHistory> | null = null;
-  try {
-    navHistory = useNavigationHistory();
-  } catch {
-    // NavigationHistoryContext not available - fall back to basic protection
-  }
+  // Get navigation history context (if available) - uses safe version that doesn't throw
+  const navHistory = useNavigationHistorySafe();
 
   // Track if we're currently handling a popstate to prevent loops
   const isHandlingPopstate = useRef(false);
