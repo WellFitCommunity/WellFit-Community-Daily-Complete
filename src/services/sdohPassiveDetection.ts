@@ -19,7 +19,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { SDOHIndicatorService } from './sdohIndicatorService';
-import type { SDOHCategory, SDOHRiskLevel, SDOHFactor } from '../types/sdohIndicators';
+import type { SDOHCategory, SDOHRiskLevel } from '../types/sdohIndicators';
 
 /**
  * Text source types for passive detection
@@ -494,16 +494,16 @@ export const SDOHPassiveDetectionService = {
         }
       }
 
-      // Scan check-in comments
+      // Scan check-in data (comments/notes columns don't exist - use label and emotional_state)
       const { data: checkIns } = await supabase
         .from('check_ins')
-        .select('id, comments, notes')
+        .select('id, label, emotional_state')
         .eq('user_id', patientId)
         .gte('created_at', cutoffDate);
 
       if (checkIns) {
         for (const checkIn of checkIns) {
-          const text = [checkIn.comments, checkIn.notes].filter(Boolean).join(' ');
+          const text = [checkIn.label, checkIn.emotional_state].filter(Boolean).join(' ');
           if (text) {
             const detections = await this.analyzeText(
               text,

@@ -275,7 +275,7 @@ export async function calculateMentalHealthRisk(
         .order('created_at', { ascending: false }),
       supabase
         .from('check_ins')
-        .select('emotional_state, notes, created_at')
+        .select('emotional_state, label, created_at')
         .eq('user_id', userId)
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
@@ -290,7 +290,7 @@ export async function calculateMentalHealthRisk(
       })),
       ...(checkInsResult.data || []).map(r => ({
         mood: r.emotional_state, // Map emotional_state to mood
-        symptoms: r.notes, // Use notes as additional symptom context
+        symptoms: r.label, // Use label as additional context (notes column doesn't exist)
         created_at: r.created_at
       }))
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());

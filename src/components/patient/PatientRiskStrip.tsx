@@ -91,7 +91,7 @@ function levelToDisplay(level: string): string {
 
 export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
   patientId,
-  tenantId,
+  tenantId: _tenantId, // Reserved for future tenant-scoped queries
   variant = 'compact',
   showLabels = true,
   onRiskClick,
@@ -117,7 +117,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
       // Fetch readmission risk
       const { data: readmissionData } = await supabase
         .from('readmission_risk_predictions')
-        .select('readmission_risk_30_day, risk_category, predicted_readmission_date, top_risk_factors, plain_language_explanation')
+        .select('readmission_risk_score, risk_category, predicted_readmission_window_days, primary_risk_factors')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -133,19 +133,24 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
         .maybeSingle();
 
       // Build risk data object
+      // Type the primary_risk_factors as array of objects with factor property
+      interface RiskFactor {
+        factor?: string;
+        [key: string]: unknown;
+      }
+      const primaryFactors = (readmissionData?.primary_risk_factors ?? []) as RiskFactor[];
+
       const risks: PatientRiskData = {
         readmission: readmissionData ? {
-          score: Math.round((readmissionData.readmission_risk_30_day ?? 0) * 100),
-          level: (readmissionData.risk_category as any) || scoreToLevel(Math.round((readmissionData.readmission_risk_30_day ?? 0) * 100)),
-          daysUntilPredicted: readmissionData.predicted_readmission_date
-            ? Math.ceil((new Date(readmissionData.predicted_readmission_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-            : undefined,
-          topFactor: readmissionData.top_risk_factors?.[0]?.factor,
-          plainLanguageExplanation: readmissionData.plain_language_explanation,
+          score: Math.round((readmissionData.readmission_risk_score ?? 0) * 100),
+          level: (readmissionData.risk_category as 'low' | 'moderate' | 'high' | 'critical') || scoreToLevel(Math.round((readmissionData.readmission_risk_score ?? 0) * 100)),
+          daysUntilPredicted: readmissionData.predicted_readmission_window_days ?? undefined,
+          topFactor: primaryFactors[0]?.factor,
+          plainLanguageExplanation: undefined, // Column not available in current schema
         } : null,
         deterioration: deteriorationData ? {
           score: deteriorationData.auto_composite_score ?? 0,
-          level: (deteriorationData.final_risk_level?.toLowerCase() as any) || scoreToLevel(deteriorationData.auto_composite_score ?? 0),
+          level: (deteriorationData.final_risk_level?.toLowerCase() as 'low' | 'moderate' | 'high' | 'critical') || scoreToLevel(deteriorationData.auto_composite_score ?? 0),
           hoursToReassess: deteriorationData.final_risk_level === 'CRITICAL' ? 1 :
                           deteriorationData.final_risk_level === 'HIGH' ? 2 : 4,
         } : null,

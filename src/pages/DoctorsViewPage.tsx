@@ -18,7 +18,7 @@ import Calendar from 'lucide-react/dist/esm/icons/calendar';
 interface CheckInData {
   id: string;
   user_id: string;
-  notes: string | null;
+  label: string | null; // Was 'notes' - column doesn't exist in check_ins table
   created_at: string;
   reviewed_at?: string | null;
   reviewed_by_name?: string | null;
@@ -223,10 +223,10 @@ const DoctorsView: React.FC = () => {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       const results = await Promise.allSettled([
-        // Latest check-in with vitals
+        // Latest check-in with vitals (notes column doesn't exist - use label instead)
         supabase
           .from('check_ins')
-          .select('id, user_id, notes, emotional_state, bp_systolic, bp_diastolic, heart_rate, glucose_mg_dl, pulse_oximeter, created_at, reviewed_at, reviewed_by_name')
+          .select('id, user_id, label, emotional_state, bp_systolic, bp_diastolic, heart_rate, glucose_mg_dl, pulse_oximeter, created_at, reviewed_at, reviewed_by_name')
           .eq('user_id', uid)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -645,7 +645,7 @@ const DoctorsView: React.FC = () => {
                     <TimelineItem
                       date={latestCheckIn.created_at}
                       title="Daily Check-in"
-                      content={latestCheckIn.notes || 'No notes provided'}
+                      content={latestCheckIn.label || latestCheckIn.emotional_state || 'No notes provided'}
                       reviewed={!!latestCheckIn.reviewed_at}
                       type="checkin"
                     />

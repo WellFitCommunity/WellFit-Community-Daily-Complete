@@ -52,7 +52,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
           );
         }
 
-        // Get appointments
+        // Get appointments (no FK join - provider_id doesn't have FK to profiles)
         const { data, error } = await supabase
           .from('telehealth_appointments')
           .select(`
@@ -63,11 +63,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
             status,
             reason_for_visit,
             daily_room_url,
-            provider:profiles!provider_id(
-              first_name,
-              last_name,
-              specialty
-            )
+            provider_id
           `)
           .eq('patient_id', user.id)
           .in('status', ['scheduled', 'confirmed', 'in-progress'])
@@ -76,7 +72,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
 
         if (error) throw error;
 
-        // Format appointments - type the database row shape
+        // Type the database row shape
         interface AppointmentRow {
           id: string;
           appointment_time: string;
@@ -85,12 +81,29 @@ const TelehealthAppointmentsPage: React.FC = () => {
           status: string;
           reason_for_visit: string | null;
           daily_room_url: string | null;
-          provider?: {
-            first_name?: string;
-            last_name?: string;
-            specialty?: string;
-          } | null;
+          provider_id: string | null;
         }
+
+        // Fetch provider names separately (no FK relationship exists)
+        const providerIds = [...new Set((data as AppointmentRow[] || [])
+          .map(apt => apt.provider_id)
+          .filter((id): id is string => id !== null))];
+
+        const providerMap = new Map<string, string>();
+        if (providerIds.length > 0) {
+          const { data: providers } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', providerIds);
+
+          if (providers) {
+            for (const p of providers) {
+              const name = `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Your Doctor';
+              providerMap.set(p.user_id, name);
+            }
+          }
+        }
+
         const formattedAppointments = (data as AppointmentRow[] || []).map((apt) => ({
           id: apt.id,
           appointment_time: apt.appointment_time,
@@ -98,10 +111,8 @@ const TelehealthAppointmentsPage: React.FC = () => {
           encounter_type: apt.encounter_type,
           status: apt.status,
           reason_for_visit: apt.reason_for_visit,
-          provider_name:
-            `${apt.provider?.first_name || ''} ${apt.provider?.last_name || ''}`.trim() ||
-            'Your Doctor',
-          provider_specialty: apt.provider?.specialty || null,
+          provider_name: apt.provider_id ? providerMap.get(apt.provider_id) || 'Your Doctor' : 'Your Doctor',
+          provider_specialty: null, // profiles table doesn't have specialty column
           daily_room_url: apt.daily_room_url,
         }));
 
