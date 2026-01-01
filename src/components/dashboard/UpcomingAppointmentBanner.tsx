@@ -48,13 +48,12 @@ const UpcomingAppointmentBanner: React.FC = () => {
         if (data.provider_id) {
           const { data: provider } = await supabase
             .from('profiles')
-            .select('full_name, first_name, last_name')
+            .select('first_name, last_name')
             .eq('user_id', data.provider_id)
             .maybeSingle();
 
           if (provider) {
             providerName =
-              provider.full_name ||
               `${provider.first_name || ''} ${provider.last_name || ''}`.trim() ||
               'Your Doctor';
           }

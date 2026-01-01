@@ -60,6 +60,7 @@ export function BillingReviewDashboard() {
     setLoading(true);
     try {
       // Load claims pending review
+      // Note: encounters.patient_id FK → auth.users, not profiles, so we fetch patient info separately
       const { data, error } = await supabase
         .from('claims')
         .select(`
@@ -76,11 +77,10 @@ export function BillingReviewDashboard() {
           encounters (
             encounter_type,
             chief_complaint,
-            patient:patient_id (
-              full_name
-            ),
+            patient_id,
             provider:provider_id (
-              full_name
+              first_name,
+              last_name
             )
           )
         `)
@@ -89,27 +89,97 @@ export function BillingReviewDashboard() {
 
       if (error) throw error;
 
+      // Collect unique patient IDs to fetch names
+      interface ClaimRow {
+        id: string;
+        claim_number: string;
+        service_date: string;
+        total_charge: number;
+        expected_reimbursement: number;
+        review_status: string;
+        ai_confidence_score: number | null;
+        ai_flags: (string | AIFlag)[] | null;
+        created_at: string;
+        encounter_id: string;
+        encounters?: {
+          patient_id?: string;
+          provider?: { first_name?: string; last_name?: string } | null;
+          encounter_type?: string;
+          chief_complaint?: string;
+        } | null;
+      }
+      const patientIds = [...new Set(
+        (data as ClaimRow[] || [])
+          .map(c => c.encounters?.patient_id)
+          .filter((id): id is string => !!id)
+      )];
+
+      // Fetch patient names from profiles
+      const patientMap = new Map<string, string>();
+      if (patientIds.length > 0) {
+        const { data: patients } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', patientIds);
+
+        if (patients) {
+          for (const p of patients) {
+            const name = `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+            patientMap.set(p.user_id, name);
+          }
+        }
+      }
+
       // Load line items for each claim
-      const claimsWithDetails = await Promise.all(
-        (data || []).map(async (claim: any) => {
+      const claimsWithDetails: Claim[] = await Promise.all(
+        (data as ClaimRow[] || []).map(async (claim): Promise<Claim> => {
           const { data: lineItems } = await supabase
             .from('claim_lines')
             .select('cpt_code, description, units, charge_amount, icd10_codes')
             .eq('claim_id', claim.id);
 
+          // Parse AI flags from database format to AIFlag interface
+          const parsedFlags: AIFlag[] = Array.isArray(claim.ai_flags)
+            ? claim.ai_flags.map((flag) => {
+                if (typeof flag === 'object' && flag !== null) {
+                  return flag as AIFlag;
+                }
+                // Handle string flags (legacy format)
+                return {
+                  code: String(flag),
+                  name: String(flag),
+                  severity: 'low' as const,
+                  details: {},
+                  flagged_at: claim.created_at
+                };
+              })
+            : [];
+
           return {
-            ...claim,
-            patient_name: claim.encounters?.patient?.full_name || 'Unknown',
-            provider_name: claim.encounters?.provider?.full_name || 'Unknown',
+            id: claim.id,
+            claim_number: claim.claim_number,
+            service_date: claim.service_date,
+            total_charge: claim.total_charge,
+            expected_reimbursement: claim.expected_reimbursement,
+            review_status: claim.review_status,
+            ai_confidence_score: claim.ai_confidence_score ?? 0,
+            ai_flags: parsedFlags,
+            created_at: claim.created_at,
+            patient_name: claim.encounters?.patient_id
+              ? patientMap.get(claim.encounters.patient_id) || 'Unknown'
+              : 'Unknown',
+            provider_name: claim.encounters?.provider
+              ? `${claim.encounters.provider.first_name || ''} ${claim.encounters.provider.last_name || ''}`.trim() || 'Unknown'
+              : 'Unknown',
             encounter_type: claim.encounters?.encounter_type || 'Unknown',
             chief_complaint: claim.encounters?.chief_complaint || '',
-            line_items: lineItems?.map((item: any) => ({
+            line_items: (lineItems || []).map((item: { cpt_code: string; description: string; units: number; charge_amount: number; icd10_codes?: string[] }) => ({
               cpt_code: item.cpt_code,
               description: item.description,
               units: item.units,
               charge: item.charge_amount,
               icd10_codes: item.icd10_codes || []
-            })) || []
+            }))
           };
         })
       );
