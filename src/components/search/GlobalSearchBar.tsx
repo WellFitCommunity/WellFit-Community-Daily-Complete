@@ -32,12 +32,15 @@ import {
   LogOut,
   Command,
   Loader2,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { parseVoiceEntity, EntityType, ParsedEntity, SearchResult, ENTITY_ROUTES } from '../../contexts/VoiceActionContext';
 import { voiceSearch, searchPatients, searchBeds, searchProviders } from '../../services/voiceSearchService';
 import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
 import { auditLogger } from '../../services/auditLogger';
+import { useVoiceCommand } from '../../hooks/useVoiceCommand';
 
 // ============================================================================
 // ICONS & COLORS
@@ -128,6 +131,26 @@ export const GlobalSearchBar: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = (supabaseClient as any)?.supabase || supabaseClient;
   const { selectPatient } = usePatientContext();
+
+  // Voice command integration
+  const [voiceState, voiceActions] = useVoiceCommand({
+    autoExecute: false, // We'll handle the transcript ourselves for search
+  });
+
+  // Update search query when voice transcript changes
+  useEffect(() => {
+    if (voiceState.transcript && !voiceState.isListening) {
+      setQuery(voiceState.transcript.trim());
+      voiceActions.clearTranscript();
+    }
+  }, [voiceState.transcript, voiceState.isListening, voiceActions]);
+
+  // Also update with interim results for real-time feedback
+  useEffect(() => {
+    if (voiceState.isListening && voiceState.interimTranscript) {
+      setQuery(voiceState.interimTranscript.trim());
+    }
+  }, [voiceState.interimTranscript, voiceState.isListening]);
 
   // Rotate example placeholder
   useEffect(() => {
@@ -346,18 +369,38 @@ export const GlobalSearchBar: React.FC = () => {
   return (
     <>
       {/* Search Trigger Button (always visible in header) */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-400 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors"
-        title="Search (Ctrl+/)"
-      >
-        <Search className="w-4 h-4" />
-        <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-slate-700 rounded-sm">
-          <Command className="w-3 h-3" />
-          <span>/</span>
-        </kbd>
-      </button>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-400 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-l-lg transition-colors"
+          title="Search (Ctrl+/)"
+        >
+          <Search className="w-4 h-4" />
+          <span className="hidden sm:inline">Search...</span>
+          <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-slate-700 rounded-sm">
+            <Command className="w-3 h-3" />
+            <span>/</span>
+          </kbd>
+        </button>
+        {/* Voice Search Quick Button */}
+        {voiceState.isSupported && (
+          <button
+            onClick={() => {
+              setIsOpen(true);
+              // Small delay to ensure modal is open before starting voice
+              setTimeout(() => voiceActions.startListening(), 100);
+            }}
+            className={`px-2 py-1.5 text-sm border rounded-r-lg transition-colors ${
+              voiceState.isListening
+                ? 'bg-red-500 text-white border-red-500 animate-pulse'
+                : 'text-slate-400 bg-slate-800 hover:bg-slate-700 hover:text-teal-400 border-slate-600 border-l-0'
+            }`}
+            title="Voice search"
+          >
+            <Mic className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       {/* Search Modal */}
       {isOpen && (
@@ -378,7 +421,7 @@ export const GlobalSearchBar: React.FC = () => {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={`Try: "${SEARCH_EXAMPLES[exampleIndex]}"`}
+                placeholder={voiceState.isListening ? 'Listening...' : `Try: "${SEARCH_EXAMPLES[exampleIndex]}"`}
                 className="flex-1 bg-transparent text-white placeholder-slate-500 outline-hidden text-lg"
                 autoComplete="off"
                 spellCheck={false}
@@ -388,11 +431,41 @@ export const GlobalSearchBar: React.FC = () => {
                 <button
                   onClick={() => setQuery('')}
                   className="p-1 text-slate-400 hover:text-white"
+                  title="Clear search"
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
+              {/* Voice Search Button */}
+              {voiceState.isSupported && (
+                <button
+                  onClick={() => voiceActions.toggleListening()}
+                  className={`p-2 rounded-lg transition-all ${
+                    voiceState.isListening
+                      ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50'
+                      : 'text-slate-400 hover:text-teal-400 hover:bg-slate-700'
+                  }`}
+                  title={voiceState.isListening ? 'Stop listening' : 'Voice search'}
+                >
+                  {voiceState.isListening ? (
+                    <MicOff className="w-5 h-5" />
+                  ) : (
+                    <Mic className="w-5 h-5" />
+                  )}
+                </button>
+              )}
             </div>
+
+            {/* Voice Listening Indicator */}
+            {voiceState.isListening && (
+              <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/30 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-red-400 text-sm">Listening... speak your search</span>
+                {voiceState.error && (
+                  <span className="text-red-300 text-xs ml-auto">{voiceState.error}</span>
+                )}
+              </div>
+            )}
 
             {/* Parsed Entity Indicator */}
             {parsedEntity && (
