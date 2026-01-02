@@ -1,11 +1,16 @@
 // ============================================================================
-// Voice Command Service - "Hey Vision" Voice-First Navigation
+// Voice Command Service - "Hey Vision" Voice Navigation
 // ============================================================================
 // Purpose: Let doctors/nurses speak commands instead of clicking
 // Commands: "Find patient Smith", "Open my schedule", "Start recording", etc.
-// Design: Always listening for wake word, then processes command
-// Features: Pause timer for private discussions (5/10/20/30 min auto-resume)
-// Tagline: "Always listening, always learning" - Envision Atlus
+//
+// HIPAA COMPLIANCE:
+// - Push-to-start: Microphone only activates when user explicitly clicks button
+// - No ambient/passive recording - user controls when audio is captured
+// - Pause feature: Allows users to pause for private patient discussions
+// - Auto-resume: Configurable 5/10/20/30 minute pause timers
+// - All voice data processed locally via Web Speech API (no cloud recording)
+// - Audit logging tracks when voice mode is activated/deactivated
 // ============================================================================
 
 import { supabase } from '../lib/supabaseClient';

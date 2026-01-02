@@ -38,7 +38,7 @@ import {
 } from './LearningIndicator';
 import { Clock, TrendingUp, Zap } from 'lucide-react';
 import { SectionLoadingFallback } from './sections/sectionDefinitions';
-import { VoiceCommandBar } from './VoiceCommandBar';
+// VoiceCommandBar removed - now handled by ClinicalModeComponents
 import { useWorkflowPreferences } from '../../hooks/useWorkflowPreferences';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 import { SearchResult } from '../../contexts/VoiceActionContext';
@@ -654,12 +654,7 @@ const IntelligentAdminPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Voice Command Bar - Floating at bottom right */}
-        <VoiceCommandBar
-          onScrollToSection={handleScrollToSection}
-          onOpenCategory={handleOpenCategory}
-          onNavigate={navigate}
-        />
+        {/* Voice handled by ClinicalModeComponents (GlobalSearchBar + VoiceCommandButton) */}
 
         {/* Learning Indicator - Real-time feedback */}
         {!isLoading && behaviorProfile && (

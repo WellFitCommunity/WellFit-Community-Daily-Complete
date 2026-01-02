@@ -1,9 +1,10 @@
 // ============================================================================
-// Voice Command Button - Floating "Hey Vision" Assistant
+// Voice Command Button - "Hey Vision" Voice Navigation Assistant
 // ============================================================================
-// Purpose: Always-available voice interface for hands-free operation
-// Design: Floating button, visual feedback, executes voice commands
-// Tagline: "Always listening, always learning" - Envision Atlus
+// Purpose: Hands-free voice navigation for clinical workflows
+// Design: Push-to-start (HIPAA compliant) - user explicitly activates
+// HIPAA: No ambient/passive listening. Mic only active after user clicks.
+//        Pause feature for private discussions (patient consultations).
 // ============================================================================
 
 import React, { useState, useEffect, useCallback } from 'react';

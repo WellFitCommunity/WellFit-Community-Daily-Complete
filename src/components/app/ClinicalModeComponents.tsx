@@ -13,7 +13,7 @@
 import React from 'react';
 
 // Global UI Components for Clinical Mode
-import { VoiceCommandBar } from '../admin/VoiceCommandBar';
+// Note: VoiceCommandBar removed - GlobalSearchBar now has integrated voice search
 import { VoiceCommandButton } from '../voice/VoiceCommandButton';
 import { VoiceSearchOverlay } from '../voice/VoiceSearchOverlay';
 import { GlobalSearchBar } from '../search/GlobalSearchBar';
@@ -37,25 +37,23 @@ export function ClinicalModeComponents(): React.ReactElement | null {
 
   return (
     <>
-      {/* Global Voice Command Bar - compact mic icon that expands when clicked */}
-      <VoiceCommandBar />
-
-      {/* "Hey Vision" Wake Word Assistant - always listening, hands-free navigation */}
-      {/* "Always listening, always learning" - Envision Atlus */}
+      {/* Voice Navigation Assistant - "Hey Vision" hands-free commands */}
+      {/* Push-to-start (HIPAA compliant) - user clicks to activate, can pause for privacy */}
       <VoiceCommandButton />
 
-      {/* Global Search Bar - keyboard-accessible search (Ctrl+/) (ATLUS: Intuitive) */}
+      {/* Global Search Bar with Voice - keyboard (Ctrl+/) or mic button */}
+      {/* Unified search + voice interface in header */}
       <div className="fixed top-4 right-4 z-50">
         <GlobalSearchBar />
       </div>
 
-      {/* Voice Search Overlay - Shows search results from smart voice commands (ATLUS: Intuitive) */}
+      {/* Voice Search Overlay - Shows search results from smart voice commands */}
       <VoiceSearchOverlay />
 
-      {/* Session Resume Prompt - Shows when user returns and has previous session (ATLUS: Unity) */}
+      {/* Session Resume Prompt - Shows when user returns and has previous session */}
       <EASessionResume />
 
-      {/* Notification Dock - Consolidates all floating notifications (ATLUS: Leading) */}
+      {/* Notification Dock - Consolidates all floating notifications */}
       <EANotificationDock />
     </>
   );
