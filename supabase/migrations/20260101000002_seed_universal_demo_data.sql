@@ -263,22 +263,19 @@ ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- ENCOUNTERS
--- NOTE: Skipped due to invalidate_patient_summary_cache() trigger bug that
--- references NEW.user_id which doesn't exist on encounters table.
--- TODO: Fix the trigger in a separate migration, then re-enable this.
 -- ============================================================================
--- INSERT INTO encounters (id, patient_id, provider_id, encounter_type, date_of_service, status, chief_complaint, tenant_id, created_by)
--- VALUES
---   -- Eleanor's encounters
---   (gen_random_uuid(), 'a1111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE - INTERVAL '7 days', 'completed', 'Heart failure follow-up, medication adjustment', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111'),
---   (gen_random_uuid(), 'a1111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE - INTERVAL '30 days', 'completed', 'Routine cardiac check', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111'),
---   -- Robert's encounters
---   (gen_random_uuid(), 'a2222222-2222-2222-2222-222222222222', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE - INTERVAL '14 days', 'completed', 'Diabetes management review, A1C elevated', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111'),
---   -- Maria's encounters
---   (gen_random_uuid(), 'a3333333-3333-3333-3333-333333333333', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE - INTERVAL '3 days', 'completed', 'Post-surgical follow-up, wound healing well', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111'),
---   -- Upcoming appointments
---   (gen_random_uuid(), 'a1111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE + INTERVAL '3 days', 'draft', 'Scheduled follow-up', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111')
--- ON CONFLICT DO NOTHING;
+INSERT INTO encounters (id, patient_id, provider_id, encounter_type, date_of_service, status, chief_complaint, tenant_id, created_by)
+VALUES
+  -- Eleanor's encounters
+  (gen_random_uuid(), 'a1111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE - INTERVAL '7 days', 'completed', 'Heart failure follow-up, medication adjustment', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111'),
+  (gen_random_uuid(), 'a1111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE - INTERVAL '30 days', 'completed', 'Routine cardiac check', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111'),
+  -- Robert's encounters
+  (gen_random_uuid(), 'a2222222-2222-2222-2222-222222222222', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE - INTERVAL '14 days', 'completed', 'Diabetes management review, A1C elevated', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111'),
+  -- Maria's encounters
+  (gen_random_uuid(), 'a3333333-3333-3333-3333-333333333333', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE - INTERVAL '3 days', 'completed', 'Post-surgical follow-up, wound healing well', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111'),
+  -- Upcoming appointments
+  (gen_random_uuid(), 'a1111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'follow_up', CURRENT_DATE + INTERVAL '3 days', 'draft', 'Scheduled follow-up', '2b902657-6a20-4435-a78a-576f397517ca', 'b1111111-1111-1111-1111-111111111111')
+ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- FHIR OBSERVATIONS (Vitals)
