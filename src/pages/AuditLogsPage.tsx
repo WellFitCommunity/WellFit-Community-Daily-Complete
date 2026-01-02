@@ -22,7 +22,33 @@ interface AuditLog {
   resource_id?: string;
   ip_address?: string;
   user_agent?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
+}
+
+interface PhiLogRecord {
+  id: string;
+  access_timestamp: string;
+  user_id: string;
+  action: string;
+  patient_id?: string;
+  ip_address?: string;
+}
+
+interface AuthLogRecord {
+  id: string;
+  created_at: string;
+  user_id: string;
+  email?: string;
+  attempt_type: string;
+  ip_address?: string;
+  user_agent?: string;
+}
+
+interface StaffLogRecord {
+  id: string;
+  created_at: string;
+  user_id: string;
+  action: string;
 }
 
 const AuditLogsPage: React.FC = () => {
@@ -83,7 +109,7 @@ const AuditLogsPage: React.FC = () => {
       // Combine and format all logs
       const combinedLogs: AuditLog[] = [];
 
-      (phiLogs || []).forEach((log: any) => {
+      ((phiLogs || []) as PhiLogRecord[]).forEach((log) => {
         combinedLogs.push({
           id: log.id,
           timestamp: log.access_timestamp,
@@ -93,11 +119,11 @@ const AuditLogsPage: React.FC = () => {
           resource_type: 'PHI',
           resource_id: log.patient_id,
           ip_address: log.ip_address,
-          metadata: log
+          metadata: log as unknown as Record<string, unknown>
         });
       });
 
-      (authLogs || []).forEach((log: any) => {
+      ((authLogs || []) as AuthLogRecord[]).forEach((log) => {
         combinedLogs.push({
           id: log.id,
           timestamp: log.created_at,
@@ -107,18 +133,18 @@ const AuditLogsPage: React.FC = () => {
           resource_type: 'Authentication',
           ip_address: log.ip_address,
           user_agent: log.user_agent,
-          metadata: log
+          metadata: log as unknown as Record<string, unknown>
         });
       });
 
-      (staffLogs || []).forEach((log: any) => {
+      ((staffLogs || []) as StaffLogRecord[]).forEach((log) => {
         combinedLogs.push({
           id: log.id,
           timestamp: log.created_at,
           user_id: log.user_id,
           action: `Staff: ${log.action}`,
           resource_type: 'Staff Action',
-          metadata: log
+          metadata: log as unknown as Record<string, unknown>
         });
       });
 

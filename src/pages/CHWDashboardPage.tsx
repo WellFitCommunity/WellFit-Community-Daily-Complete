@@ -37,7 +37,7 @@ interface CHWStats {
 
 const CHWDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const user = useUser();
+  const _user = useUser();
   const [stats, setStats] = useState<CHWStats>({
     totalVisitsToday: 0,
     vitalsRecorded: 0,

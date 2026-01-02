@@ -80,8 +80,9 @@ if (q.type === 'recovery' && q.code) {
         // C) No tokens provided; check if we already have a session
         const { data: { session } } = await supabase.auth.getSession();
         setSessionReady(!!session);
-      } catch (e: any) {
-        setError(e?.message || 'Could not establish session from reset link.');
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Could not establish session from reset link.';
+        setError(message);
         setSessionReady(false);
       }
     })();
@@ -124,8 +125,9 @@ if (q.type === 'recovery' && q.code) {
       // 3) Notify & route forward
       setSuccess('Password updated successfully.');
       setTimeout(() => navigate('/demographics', { replace: true }), 900);
-    } catch (e: any) {
-      setError(e?.message || 'Could not change password. Try again.');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Could not change password. Try again.';
+      setError(message);
     } finally {
       setBusy(false);
     }

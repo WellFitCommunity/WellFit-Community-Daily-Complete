@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDemoMode } from '../contexts/DemoModeContext';
-import { EACard, EACardHeader, EACardContent } from '../components/envision-atlus/EACard';
+import { EACard, EACardContent } from '../components/envision-atlus/EACard';
 import { EAButton } from '../components/envision-atlus/EAButton';
 import { EABadge } from '../components/envision-atlus/EABadge';
 
@@ -294,7 +294,10 @@ const DemoPage: React.FC = () => {
               <EAButton
                 variant="accent"
                 size="sm"
-                onClick={() => handleNavigateToFeature(demoFeatures.find(f => f.id === 'memory-lane')!)}
+                onClick={() => {
+                  const feature = demoFeatures.find(f => f.id === 'memory-lane');
+                  if (feature) handleNavigateToFeature(feature);
+                }}
                 className="w-full"
               >
                 Launch Trivia Demo
@@ -310,7 +313,10 @@ const DemoPage: React.FC = () => {
               <EAButton
                 variant="accent"
                 size="sm"
-                onClick={() => handleNavigateToFeature(demoFeatures.find(f => f.id === 'readmissions')!)}
+                onClick={() => {
+                  const feature = demoFeatures.find(f => f.id === 'readmissions');
+                  if (feature) handleNavigateToFeature(feature);
+                }}
                 className="w-full"
               >
                 Launch Risk Demo
