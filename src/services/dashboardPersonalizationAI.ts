@@ -163,18 +163,34 @@ Be concise and actionable. This powers real-time UI reorganization.`;
    */
   private static parseAIResponse(aiResponse: string): PersonalizationInsight[] {
     try {
-      const parsed = JSON.parse(aiResponse);
+      // Extract JSON from response - Claude often wraps it in markdown code blocks
+      let jsonStr = aiResponse;
+
+      // Try to extract JSON from markdown code block
+      const jsonBlockMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonBlockMatch) {
+        jsonStr = jsonBlockMatch[1].trim();
+      } else {
+        // Try to find JSON object in the response
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          jsonStr = jsonMatch[0];
+        }
+      }
+
+      const parsed = JSON.parse(jsonStr);
       const insights: PersonalizationInsight[] = [];
 
       // Extract predictions
       interface AIPrediction {
         section: string;
+        reason?: string;
         confidence?: number;
       }
       (parsed.predictions as AIPrediction[] | undefined)?.forEach((pred) => {
         insights.push({
           type: 'pattern',
-          message: `You usually start with: ${pred.section}`,
+          message: pred.reason || `You usually start with: ${pred.section}`,
           action: pred.section,
           confidence: pred.confidence || 75
         });
@@ -199,8 +215,8 @@ Be concise and actionable. This powers real-time UI reorganization.`;
       }
 
       return insights;
-    } catch (error) {
-
+    } catch {
+      // If JSON parsing fails completely, return empty - will use fallback pattern-based insights
       return [];
     }
   }
