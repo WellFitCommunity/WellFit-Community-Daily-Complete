@@ -15,10 +15,7 @@ import { ClinicalModeComponents } from '../ClinicalModeComponents';
 // ============================================================================
 
 // Mock all clinical components
-vi.mock('../../admin/VoiceCommandBar', () => ({
-  VoiceCommandBar: () => <div data-testid="voice-command-bar">VoiceCommandBar</div>,
-}));
-
+// Note: VoiceCommandBar was removed - GlobalSearchBar now has integrated voice search
 vi.mock('../../voice/VoiceCommandButton', () => ({
   VoiceCommandButton: () => <div data-testid="voice-command-button">VoiceCommandButton</div>,
 }));
@@ -80,7 +77,7 @@ describe('ClinicalModeComponents', () => {
 
       render(<ClinicalModeComponents />);
 
-      expect(screen.getByTestId('voice-command-bar')).toBeInTheDocument();
+      // Note: VoiceCommandBar was removed - GlobalSearchBar now has integrated voice search
       expect(screen.getByTestId('voice-command-button')).toBeInTheDocument();
       expect(screen.getByTestId('voice-search-overlay')).toBeInTheDocument();
       expect(screen.getByTestId('global-search-bar')).toBeInTheDocument();
@@ -113,7 +110,7 @@ describe('ClinicalModeComponents', () => {
       const { container } = render(<ClinicalModeComponents />);
 
       expect(container.firstChild).toBeNull();
-      expect(screen.queryByTestId('voice-command-bar')).not.toBeInTheDocument();
+      // Note: VoiceCommandBar was removed - GlobalSearchBar now has integrated voice search
       expect(screen.queryByTestId('voice-command-button')).not.toBeInTheDocument();
       expect(screen.queryByTestId('global-search-bar')).not.toBeInTheDocument();
     });
@@ -161,7 +158,8 @@ describe('ClinicalModeComponents', () => {
       }));
 
       rerender(<ClinicalModeComponents />);
-      expect(screen.getByTestId('voice-command-bar')).toBeInTheDocument();
+      // Note: VoiceCommandBar was removed - GlobalSearchBar now has integrated voice search
+      expect(screen.getByTestId('voice-command-button')).toBeInTheDocument();
     });
 
     it('should remain hidden after loading completes for non-clinical user', () => {

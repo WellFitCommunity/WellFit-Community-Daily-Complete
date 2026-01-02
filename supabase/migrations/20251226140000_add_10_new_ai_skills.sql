@@ -11,7 +11,7 @@
 --   #53: Security Anomaly Detector
 --   #54: PHI Exposure Risk Scorer
 --   #55: HIPAA Violation Predictor
---   #58: Care Team Chat Summarizer
+--   #61: Care Team Chat Summarizer (renumbered from 58 to avoid conflict with welfare_check_dispatcher)
 -- ============================================================================
 
 -- ============================================================================
@@ -83,8 +83,8 @@ VALUES
    ARRAY['professional', 'enterprise'],
    'AlertTriangle', 'text-red-700', 'src/services/ai/hipaaViolationPredictorService.ts'),
 
-  -- #58: Care Team Chat Summarizer
-  ('care_team_chat_summarizer', 58, 'Care Team Chat Summarizer',
+  -- #61: Care Team Chat Summarizer (renumbered from 58 to avoid conflict with welfare_check_dispatcher)
+  ('care_team_chat_summarizer', 61, 'Care Team Chat Summarizer',
    'Summarizes care team communications, extracts action items, and highlights critical patient updates for shift handoffs.',
    'clinical_docs', 'claude-haiku-4-5-20250929', 200.00,
    ARRAY['standard', 'professional', 'enterprise'],
