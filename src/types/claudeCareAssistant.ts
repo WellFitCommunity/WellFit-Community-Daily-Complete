@@ -328,7 +328,7 @@ export const ROLE_MODULE_CONFIGS: Record<string, ClaudeCareModuleConfig> = {
       'referral_letter',
       'medical_necessity_letter',
     ],
-    preferredModel: ClaudeModel.SONNET_4_5, // Revenue-critical accuracy
+    preferredModel: ClaudeModel.SONNET_3_5, // Revenue-critical accuracy
     culturalContextRequired: true,
   },
   nurse: {
@@ -346,7 +346,7 @@ export const ROLE_MODULE_CONFIGS: Record<string, ClaudeCareModuleConfig> = {
       'patient_education_material',
       'wound_care_documentation',
     ],
-    preferredModel: ClaudeModel.HAIKU_4_5, // Fast, cost-effective
+    preferredModel: ClaudeModel.HAIKU_3_5, // Fast, cost-effective
     culturalContextRequired: true,
   },
   nurse_practitioner: {
@@ -362,7 +362,7 @@ export const ROLE_MODULE_CONFIGS: Record<string, ClaudeCareModuleConfig> = {
       'referral_letter',
       'patient_education_material',
     ],
-    preferredModel: ClaudeModel.SONNET_4_5,
+    preferredModel: ClaudeModel.SONNET_3_5,
     culturalContextRequired: true,
   },
   physician_assistant: {
@@ -378,7 +378,7 @@ export const ROLE_MODULE_CONFIGS: Record<string, ClaudeCareModuleConfig> = {
       'referral_letter',
       'patient_education_material',
     ],
-    preferredModel: ClaudeModel.SONNET_4_5,
+    preferredModel: ClaudeModel.SONNET_3_5,
     culturalContextRequired: true,
   },
   case_manager: {
@@ -396,7 +396,7 @@ export const ROLE_MODULE_CONFIGS: Record<string, ClaudeCareModuleConfig> = {
       'length_of_stay_justification',
       'skilled_nursing_recommendation',
     ],
-    preferredModel: ClaudeModel.SONNET_4_5, // Accuracy for insurance/discharge
+    preferredModel: ClaudeModel.SONNET_3_5, // Accuracy for insurance/discharge
     culturalContextRequired: true,
   },
   social_worker: {
@@ -414,7 +414,7 @@ export const ROLE_MODULE_CONFIGS: Record<string, ClaudeCareModuleConfig> = {
       'benefits_application',
       'housing_assistance_referral',
     ],
-    preferredModel: ClaudeModel.SONNET_4_5, // Nuanced understanding needed
+    preferredModel: ClaudeModel.SONNET_3_5, // Nuanced understanding needed
     culturalContextRequired: true,
   },
   admin: {
@@ -426,7 +426,7 @@ export const ROLE_MODULE_CONFIGS: Record<string, ClaudeCareModuleConfig> = {
       crossRoleContext: false,
     },
     availableTaskTypes: ['meeting_notes'],
-    preferredModel: ClaudeModel.HAIKU_4_5,
+    preferredModel: ClaudeModel.HAIKU_3_5,
     culturalContextRequired: false,
   },
 };

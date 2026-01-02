@@ -9,14 +9,13 @@ export interface ModelSelectionStrategy {
 // Cost per 1K tokens for each model (input, output)
 const MODEL_COSTS = {
   [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 }, // Legacy
-  [ClaudeModel.HAIKU_4_5]: { input: 0.0001, output: 0.0005 }, // LATEST: Ultra-fast UI/personalization
-  [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // Legacy (SONNET_4 is alias)
-  [ClaudeModel.SONNET_4_5]: { input: 0.003, output: 0.015 }, // LATEST: Revenue-critical billing
-  [ClaudeModel.OPUS_4_1]: { input: 0.015, output: 0.075 } // Premium (reserved)
+  [ClaudeModel.HAIKU_3_5]: { input: 0.0001, output: 0.0005 }, // CURRENT: Ultra-fast UI/personalization
+  [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // CURRENT: Revenue-critical billing
+  [ClaudeModel.OPUS_3]: { input: 0.015, output: 0.075 }, // Legacy Opus
+  [ClaudeModel.OPUS_4_5]: { input: 0.015, output: 0.075 } // LATEST: Opus 4.5 premium
 } as const;
 
 // Model capabilities and characteristics
- 
 const _MODEL_CHARACTERISTICS = {
   [ClaudeModel.HAIKU_3]: {
     speed: 'fastest',
@@ -24,25 +23,19 @@ const _MODEL_CHARACTERISTICS = {
     capability: 'basic',
     bestFor: ['simple_questions', 'basic_health_guidance']
   },
-  [ClaudeModel.HAIKU_4_5]: {
+  [ClaudeModel.HAIKU_3_5]: {
     speed: 'ultra_fast',
     cost: 'ultra_low',
     capability: 'intelligent',
-    bestFor: ['ui_personalization', 'pattern_recognition', 'dashboard_intelligence', 'quick_responses']
+    bestFor: ['ui_personalization', 'pattern_recognition', 'dashboard_intelligence', 'quick_responses', 'nurse_scribe', 'admin_panel']
   },
   [ClaudeModel.SONNET_3_5]: {
     speed: 'fast',
     cost: 'moderate',
     capability: 'advanced',
-    bestFor: ['health_analysis', 'complex_questions', 'care_recommendations', 'senior_interactions', 'clinical_analysis', 'fhir_processing', 'risk_assessment', 'medical_research']
+    bestFor: ['health_analysis', 'complex_questions', 'care_recommendations', 'senior_interactions', 'clinical_analysis', 'fhir_processing', 'risk_assessment', 'medical_research', 'complex_coding', 'autonomous_agents', 'medical_coding']
   },
-  [ClaudeModel.SONNET_4_5]: {
-    speed: 'fast',
-    cost: 'moderate',
-    capability: 'expert_plus',
-    bestFor: ['nurse_scribe', 'admin_panel', 'complex_coding', 'autonomous_agents', 'medical_coding']
-  },
-  [ClaudeModel.OPUS_4_1]: {
+  [ClaudeModel.OPUS_3]: {
     speed: 'medium',
     cost: 'premium',
     capability: 'maximum',
@@ -84,16 +77,16 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
       case RequestType.ANALYTICS:
       case RequestType.FHIR_ANALYSIS:
       case RequestType.RISK_ASSESSMENT:
-        return ClaudeModel.SONNET_4_5; // Latest model for best admin/nurse analytics
+        return ClaudeModel.SONNET_3_5; // Latest model for best admin/nurse analytics
 
       case RequestType.CLINICAL_NOTES:
-        return complexity === 'complex' ? ClaudeModel.SONNET_4_5 : ClaudeModel.SONNET_3_5;
+        return complexity === 'complex' ? ClaudeModel.SONNET_3_5 : ClaudeModel.SONNET_3_5;
 
       case RequestType.HEALTH_INSIGHTS:
         return ClaudeModel.SONNET_3_5; // Good balance for general insights
 
       default:
-        return ClaudeModel.SONNET_4_5; // Default to latest for admin panel
+        return ClaudeModel.SONNET_3_5; // Default to latest for admin panel
     }
   }
 
@@ -193,7 +186,7 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
     // Only show advanced models for admin and healthcare providers
     if (userRole === UserRole.ADMIN || userRole === UserRole.HEALTHCARE_PROVIDER) {
       baseRecommendations.push({
-        model: ClaudeModel.SONNET_4_5,
+        model: ClaudeModel.SONNET_3_5,
         recommendedFor: ['Nurse scribe', 'Admin panel', 'Medical coding', 'Complex analytics', 'Autonomous agents'],
         costTier: 'medium',
         speed: 'fast'

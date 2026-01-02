@@ -90,10 +90,10 @@ class CostTracker {
 
   private readonly modelCosts = {
     [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 }, // Legacy
-    [ClaudeModel.HAIKU_4_5]: { input: 0.0001, output: 0.0005 }, // LATEST: Ultra-fast, ultra-cheap
-    [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // Legacy (SONNET_4 is alias)
-    [ClaudeModel.SONNET_4_5]: { input: 0.003, output: 0.015 }, // LATEST: Revenue-critical accuracy
-    [ClaudeModel.OPUS_4_1]: { input: 0.015, output: 0.075 } // Premium model pricing (reserved)
+    [ClaudeModel.HAIKU_3_5]: { input: 0.0001, output: 0.0005 }, // CURRENT: Ultra-fast, ultra-cheap
+    [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // CURRENT: Revenue-critical accuracy
+    [ClaudeModel.OPUS_3]: { input: 0.015, output: 0.075 }, // Legacy Opus
+    [ClaudeModel.OPUS_4_5]: { input: 0.015, output: 0.075 } // LATEST: Opus 4.5 premium pricing
   };
 
   calculateCost(model: ClaudeModel, inputTokens: number, outputTokens: number): number {
@@ -254,7 +254,7 @@ class ClaudeService {
   private circuitBreaker: CircuitBreaker;
   private isInitialized = false;
   private lastHealthCheck?: Date;
-  private defaultModel: ClaudeModel = ClaudeModel.SONNET_4_5; // Using latest model
+  private defaultModel: ClaudeModel = ClaudeModel.SONNET_3_5; // Using latest model
 
   private constructor() {
     this.rateLimiter = new RateLimiter();

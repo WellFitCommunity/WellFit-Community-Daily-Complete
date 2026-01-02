@@ -433,7 +433,11 @@ const IntelligentAdminPanel: React.FC = () => {
   }, []);
 
   async function loadPersonalizedDashboard() {
-    if (!user?.id) return;
+    if (!user?.id) {
+      // No user yet - set loading false to prevent infinite loading state
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
 

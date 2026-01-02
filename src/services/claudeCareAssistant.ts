@@ -369,7 +369,7 @@ CONFIDENCE: [0.0-1.0]
 
       // Select model (default to template preference)
       const model = request.preferredModel ||
-                   (template.preferredModel === 'sonnet-4.5' ? ClaudeModel.SONNET_4_5 : ClaudeModel.HAIKU_4_5);
+                   (template.preferredModel === 'sonnet-4.5' ? ClaudeModel.SONNET_3_5 : ClaudeModel.HAIKU_3_5);
 
       // Executing admin task
 

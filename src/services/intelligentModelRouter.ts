@@ -2,9 +2,9 @@
  * Intelligent Model Router
  *
  * Routes Claude API requests to the optimal model based on use case:
- * - Haiku 4.5: Fast, cheap - UI personalization, pattern recognition, dashboard intelligence
- * - Sonnet 4.5: Accurate, premium - Billing, revenue, medical coding (money-critical)
- * - Opus 4.1: Reserved for complex reasoning (future use)
+ * - Haiku 3.5: Fast, cheap - UI personalization, pattern recognition, dashboard intelligence
+ * - Sonnet 3.5: Accurate, premium - Billing, revenue, medical coding (money-critical)
+ * - Opus 3: Reserved for complex reasoning (future use)
  */
 
 import { ClaudeModel, RequestType } from '../types/claude';
@@ -21,40 +21,40 @@ export class IntelligentModelRouter {
    * Route request to optimal Claude model based on request type
    */
   static routeRequest(requestType: RequestType): ModelRoutingDecision {
-    // UI/UX and personalization → Haiku 4.5 (fast + cheap)
+    // UI/UX and personalization → Haiku 3.5 (fast + cheap)
     if (this.isPersonalizationRequest(requestType)) {
       return {
-        model: ClaudeModel.HAIKU_4_5,
-        reason: 'Fast pattern recognition and UI intelligence - Haiku 4.5 optimized for speed',
+        model: ClaudeModel.HAIKU_3_5,
+        reason: 'Fast pattern recognition and UI intelligence - Haiku 3.5 optimized for speed',
         estimatedCostPerRequest: 0.0001, // ~$0.0001 per request
         expectedResponseTime: 'subsecond'
       };
     }
 
-    // Revenue-critical operations → Sonnet 4.5 (accuracy matters)
+    // Revenue-critical operations → Sonnet 3.5 (accuracy matters)
     if (this.isRevenueCriticalRequest(requestType)) {
       return {
-        model: ClaudeModel.SONNET_4_5,
-        reason: 'Accuracy-critical billing/revenue - Sonnet 4.5 for maximum precision',
+        model: ClaudeModel.SONNET_3_5,
+        reason: 'Accuracy-critical billing/revenue - Sonnet 3.5 for maximum precision',
         estimatedCostPerRequest: 0.005, // ~$0.005 per request
         expectedResponseTime: 'fast'
       };
     }
 
-    // Clinical/FHIR analysis → Sonnet 4.5 (medical accuracy important)
+    // Clinical/FHIR analysis → Sonnet 3.5 (medical accuracy important)
     if (this.isClinicalRequest(requestType)) {
       return {
-        model: ClaudeModel.SONNET_4_5,
-        reason: 'Clinical decision support requires high accuracy - Sonnet 4.5',
+        model: ClaudeModel.SONNET_3_5,
+        reason: 'Clinical decision support requires high accuracy - Sonnet 3.5',
         estimatedCostPerRequest: 0.005,
         expectedResponseTime: 'fast'
       };
     }
 
-    // Default: Haiku 4.5 for general use
+    // Default: Haiku 3.5 for general use
     return {
-      model: ClaudeModel.HAIKU_4_5,
-      reason: 'General purpose request - Haiku 4.5 for speed and cost efficiency',
+      model: ClaudeModel.HAIKU_3_5,
+      reason: 'General purpose request - Haiku 3.5 for speed and cost efficiency',
       estimatedCostPerRequest: 0.0001,
       expectedResponseTime: 'subsecond'
     };
