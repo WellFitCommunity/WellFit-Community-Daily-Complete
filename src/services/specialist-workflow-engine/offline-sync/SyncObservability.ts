@@ -13,10 +13,11 @@
  * - Anonymized telemetry (no PHI)
  */
 
-import { auditLogger } from '../../auditLogger';
+import { auditLogger as _auditLogger } from '../../auditLogger';
 import type { ServiceResult } from '../../_base/ServiceResult';
 import { success, failure } from '../../_base/ServiceResult';
-import type { SyncMetrics, SyncState, RetentionPolicy } from './types';
+import type { SyncMetrics, SyncState } from './types';
+import type { RetentionPolicy as _RetentionPolicy } from './types';
 
 /**
  * Network quality levels

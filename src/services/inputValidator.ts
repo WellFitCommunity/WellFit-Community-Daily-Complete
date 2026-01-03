@@ -15,7 +15,7 @@ export class InputValidationError extends Error {
   constructor(
     message: string,
     public field: string,
-    public value: any,
+    public value: unknown,
     public validationRule: string
   ) {
     super(message);
@@ -311,7 +311,7 @@ export class InputValidator {
     fieldName: string = 'date',
     maxFutureDays: number = 365
   ): Date {
-    const now = new Date();
+    const _now = new Date();
     const maxFuture = new Date();
     maxFuture.setDate(maxFuture.getDate() + maxFutureDays);
 

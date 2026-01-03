@@ -904,8 +904,9 @@ export class GitHubIntegration {
 
       // Check if all required checks are complete
       if (options.requiredChecks && options.requiredChecks.length > 0) {
+        const requiredChecksArr = options.requiredChecks;
         const requiredResults = checkStatus.checks.filter((c) =>
-          options.requiredChecks!.includes(c.name)
+          requiredChecksArr.includes(c.name)
         );
 
         const allRequiredComplete = requiredResults.every(

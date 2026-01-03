@@ -367,10 +367,11 @@ export const GuardianFlowEngine = {
         for (const c of candidates) {
           const hoursInED = (Date.now() - new Date(c.assigned_at).getTime()) / (1000 * 60 * 60);
 
+          const bedsData = c.beds as unknown as Record<string, unknown> | undefined;
           expediteDischarges.push({
             patientId: c.patient_id,
             currentLocation: 'ED',
-            bedLabel: (c.beds as any)?.bed_label,
+            bedLabel: bedsData?.bed_label as string | undefined,
             hoursInED: Math.round(hoursInED * 10) / 10,
             disposition: c.discharge_disposition || 'pending',
             reason: hoursInED > 4 ? 'Extended ED stay - ready for discharge' : 'Discharge pending',
@@ -597,7 +598,10 @@ export const GuardianFlowEngine = {
       // Calculate MAPE
       const percentageErrors = predictions
         .filter(p => p.actual_census && p.actual_census > 0)
-        .map(p => Math.abs((p.actual_census! - p.predicted_census) / p.actual_census!) * 100);
+        .map(p => {
+          const actual = p.actual_census ?? 0;
+          return Math.abs((actual - p.predicted_census) / actual) * 100;
+        });
       const mape = percentageErrors.length > 0
         ? percentageErrors.reduce((a, b) => a + b, 0) / percentageErrors.length
         : 0;

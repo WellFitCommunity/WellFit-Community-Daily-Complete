@@ -445,7 +445,7 @@ export class HL7ToFHIRTranslator {
   private translateADTResources(
     message: ADTMessage,
     resources: FHIRResource[],
-    warnings: string[]
+    _warnings: string[]
   ): void {
     // Create Patient resource
     if (message.patientIdentification) {
@@ -495,7 +495,7 @@ export class HL7ToFHIRTranslator {
   private translateORUResources(
     message: ORUMessage,
     resources: FHIRResource[],
-    warnings: string[]
+    _warnings: string[]
   ): void {
     // Create Patient resource
     if (message.patientIdentification) {
@@ -531,7 +531,7 @@ export class HL7ToFHIRTranslator {
   private translateORMResources(
     message: ORMMessage,
     resources: FHIRResource[],
-    warnings: string[]
+    _warnings: string[]
   ): void {
     // Create Patient resource if available
     if (message.patientIdentification) {
@@ -783,13 +783,13 @@ export class HL7ToFHIRTranslator {
     }
 
     // Effective time
-    if (obr.observationDateTime) {
-      report.effectiveDateTime = this.translateDateTime(obr.observationDateTime);
-    } else if (obr.observationDateTime && obr.observationEndDateTime) {
+    if (obr.observationDateTime && obr.observationEndDateTime) {
       report.effectivePeriod = {
         start: this.translateDateTime(obr.observationDateTime),
         end: this.translateDateTime(obr.observationEndDateTime),
       };
+    } else if (obr.observationDateTime) {
+      report.effectiveDateTime = this.translateDateTime(obr.observationDateTime);
     }
 
     // Issued time
@@ -1387,7 +1387,7 @@ export class HL7ToFHIRTranslator {
     return `${year}-${month}-${day}T${hour}:${minute}:${second}Z`;
   }
 
-  private translateEncounterStatus(eventType?: string, pv1?: PV1Segment): FHIREncounter['status'] {
+  private translateEncounterStatus(eventType?: string, _pv1?: PV1Segment): FHIREncounter['status'] {
     // Map ADT event to encounter status
     switch (eventType) {
       case 'A01': // Admit

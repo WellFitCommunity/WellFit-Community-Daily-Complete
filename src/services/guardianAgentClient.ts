@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabaseClient';
 
 const GUARDIAN_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guardian-agent-api`;
 
-interface GuardianResponse<T = any> {
+interface GuardianResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

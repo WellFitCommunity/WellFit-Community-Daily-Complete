@@ -340,7 +340,10 @@ export class TokenAuthenticator {
       if (!this.sessionTokens.has(params.sessionId)) {
         this.sessionTokens.set(params.sessionId, new Set());
       }
-      this.sessionTokens.get(params.sessionId)!.add(jti);
+      const sessionSet = this.sessionTokens.get(params.sessionId);
+      if (sessionSet) {
+        sessionSet.add(jti);
+      }
     }
 
     // Audit log

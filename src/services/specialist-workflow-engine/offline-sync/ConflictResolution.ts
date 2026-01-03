@@ -19,10 +19,10 @@ import type {
   VectorClock,
   ConflictStrategy,
   ConflictDetectionResult,
-  OfflineFieldVisit,
-  OfflineAssessment,
-  OfflinePhoto,
-  OfflineAlert,
+  // OfflineFieldVisit - type available for conflict resolution
+  // OfflineAssessment - type available for conflict resolution
+  // OfflinePhoto - type available for conflict resolution
+  // OfflineAlert - type available for conflict resolution
 } from './types';
 
 /**

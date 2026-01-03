@@ -560,12 +560,12 @@ export class AgentBrain {
     };
   }
 
-  private contextMatches(signature: ErrorSignature, context: ErrorContext): boolean {
+  private contextMatches(_signature: ErrorSignature, _context: ErrorContext): boolean {
     // Implement context matching logic
     return true; // Simplified
   }
 
-  private calculateSeverity(signature: ErrorSignature, context: ErrorContext): SeverityLevel {
+  private calculateSeverity(signature: ErrorSignature, _context: ErrorContext): SeverityLevel {
     let severity = signature.severity;
 
     // Escalate if security or PHI is involved

@@ -26,7 +26,7 @@ export interface FunctionDefinition {
   sideEffects: 'none' | 'read' | 'write';
 }
 
-export interface FunctionInvocationResult<T = any> {
+export interface FunctionInvocationResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -37,7 +37,7 @@ export interface BatchInvocationResult {
   results: Array<{
     function_name: string;
     success: boolean;
-    data?: any;
+    data?: unknown;
     error?: string;
     executionTimeMs: number;
   }>;
@@ -97,9 +97,9 @@ class EdgeFunctionsMCPClient {
   /**
    * Invoke a single edge function
    */
-  async invokeFunction<T = any>(
+  async invokeFunction<T = unknown>(
     functionName: AllowedFunctionName,
-    payload?: Record<string, any>,
+    payload?: Record<string, unknown>,
     timeout?: number
   ): Promise<FunctionInvocationResult<T>> {
     try {
@@ -217,7 +217,7 @@ class EdgeFunctionsMCPClient {
   async batchInvoke(
     invocations: Array<{
       function_name: AllowedFunctionName;
-      payload?: Record<string, any>;
+      payload?: Record<string, unknown>;
     }>,
     stopOnError = true
   ): Promise<BatchInvocationResult> {
@@ -241,7 +241,7 @@ class EdgeFunctionsMCPClient {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const _error = await response.json();
         return {
           results: [],
           completed: 0,
@@ -353,7 +353,7 @@ export async function generateQualityReport(tenantId: string, period: 'quarter' 
  */
 export async function exportPatientFHIR(patientId: string, resources?: string[]) {
   return client.invokeFunction<{
-    bundle: any;
+    bundle: Record<string, unknown>;
     resource_count: number;
   }>('enhanced-fhir-export', {
     patient_id: patientId,

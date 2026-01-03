@@ -88,7 +88,7 @@ export class HealingEngine {
   /**
    * Generates rollback steps for emergency recovery
    */
-  async generateRollbackSteps(issue: DetectedIssue, strategy: HealingStrategy): Promise<HealingStep[]> {
+  async generateRollbackSteps(issue: DetectedIssue, _strategy: HealingStrategy): Promise<HealingStep[]> {
     return [
       {
         id: `rollback-${Date.now()}`,
@@ -182,7 +182,7 @@ export class HealingEngine {
     }
   }
 
-  private async performAction(step: HealingStep, issue: DetectedIssue): Promise<any> {
+  private async performAction(step: HealingStep, _issue: DetectedIssue): Promise<{ success: boolean; message: string; value?: number }> {
     // This is where actual healing actions are performed
     // In a real implementation, this would integrate with your application
     switch (step.action) {
@@ -209,7 +209,7 @@ export class HealingEngine {
     }
   }
 
-  private validateStep(step: HealingStep, result: any): boolean {
+  private validateStep(step: HealingStep, result: { success: boolean; message: string; value?: number }): boolean {
     const { validation } = step;
 
     switch (validation.type) {
@@ -217,7 +217,7 @@ export class HealingEngine {
         return result.success === true;
 
       case 'metric':
-        return result.value <= (validation.threshold || 100);
+        return (result.value ?? 0) <= (validation.threshold || 100);
 
       case 'state_check':
         return result.success === true; // Simplified
@@ -375,7 +375,7 @@ export class HealingEngine {
     ];
   }
 
-  private generateResourceCleanupSteps(issue: DetectedIssue): HealingStep[] {
+  private generateResourceCleanupSteps(_issue: DetectedIssue): HealingStep[] {
     return [
       {
         id: `cleanup-1-${Date.now()}`,
@@ -397,7 +397,7 @@ export class HealingEngine {
     ];
   }
 
-  private generateConfigResetSteps(issue: DetectedIssue): HealingStep[] {
+  private generateConfigResetSteps(_issue: DetectedIssue): HealingStep[] {
     return [
       {
         id: `config-1-${Date.now()}`,

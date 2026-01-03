@@ -27,9 +27,9 @@ import type {
   OfflinePhoto,
   OfflineAlert,
   SyncResult,
-  SyncBundle,
-  VectorClock,
-  SyncState,
+  // SyncBundle - type available for bundle operations
+  // VectorClock - type available for causality tracking
+  // SyncState - type available for sync state management
   RetentionPolicy,
   FHIRBundle,
 } from './types';
@@ -340,7 +340,7 @@ export class EnterpriseOfflineDataSync {
 
       let totalSynced = 0;
       let totalFailed = 0;
-      let conflictsDetected = 0;
+      const conflictsDetected = 0;
 
       // Step 3: Sync each visit as a bundle (transactional)
       for (const visit of pendingVisits) {

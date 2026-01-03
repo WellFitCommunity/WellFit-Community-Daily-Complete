@@ -214,7 +214,7 @@ export class MedicationReconciliationService {
         const name2 = this.normalizeMedName(med2.name);
 
         // Check in known duplicates
-        for (const [generic, brands] of Object.entries(knownDuplicates)) {
+        for (const [_generic, brands] of Object.entries(knownDuplicates)) {
           if (brands.some(b => name1.includes(b)) &&
               brands.some(b => name2.includes(b))) {
             const groupKey = [name1, name2].sort().join('|');

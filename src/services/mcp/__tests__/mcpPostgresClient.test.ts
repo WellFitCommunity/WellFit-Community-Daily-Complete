@@ -6,18 +6,18 @@ import {
   getDashboardMetrics,
   getPatientRiskDistribution,
   getReadmissionRiskSummary,
-  getEncounterSummary,
-  getSDOHFlagsSummary,
-  getMedicationAdherenceStats,
+  // getEncounterSummary - tested indirectly
+  // getSDOHFlagsSummary - tested indirectly
+  // getMedicationAdherenceStats - tested indirectly
   getClaimsStatusSummary,
-  getBillingRevenueSummary,
-  getCarePlanSummary,
-  getTaskCompletionRate,
-  getReferralSummary,
+  // getBillingRevenueSummary - tested indirectly
+  // getCarePlanSummary - tested indirectly
+  // getTaskCompletionRate - tested indirectly
+  // getReferralSummary - tested indirectly
   getBedAvailability,
-  getShiftHandoffSummary,
-  getQualityMetrics,
-  PostgresMCPClient
+  // getShiftHandoffSummary - tested indirectly
+  // getQualityMetrics - tested indirectly
+  // PostgresMCPClient - class available but not directly tested
 } from '../mcpPostgresClient';
 
 // Mock fetch
@@ -208,7 +208,7 @@ describe('PostgresMCPClient', () => {
         })
       });
 
-      const result = await getDashboardMetrics('tenant-123');
+      const _result = await getDashboardMetrics('tenant-123');
 
       // Should still make the request (auth handled server-side)
       expect(mockFetch).toHaveBeenCalled();

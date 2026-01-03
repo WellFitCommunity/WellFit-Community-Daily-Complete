@@ -125,7 +125,7 @@ export class IntelligentModelRouter {
   /**
    * Log routing decision for monitoring
    */
-  static logRoutingDecision(requestType: RequestType, decision: ModelRoutingDecision) {
+  static logRoutingDecision(_requestType: RequestType, _decision: ModelRoutingDecision) {
     // Routing decisions logged via auditLogger if needed
   }
 }

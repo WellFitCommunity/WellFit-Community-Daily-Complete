@@ -17,7 +17,7 @@ export interface MCPCallOptions {
   timeout?: number;
 }
 
-export interface MCPResponse<T = unknown> {
+export interface MCPResponse<_T = unknown> {
   content: Array<{ type: string; text: string }>;
   metadata?: {
     inputTokens?: number;
@@ -40,7 +40,7 @@ export class MCPClient {
     this.initialized = true;
   }
 
-  async callTool<T = unknown>(options: MCPCallOptions): Promise<MCPResponse<T>> {
+  async callTool<T = unknown>(_options: MCPCallOptions): Promise<MCPResponse<T>> {
     return {
       content: [{ type: 'text', text: 'mock response' }],
       metadata: {

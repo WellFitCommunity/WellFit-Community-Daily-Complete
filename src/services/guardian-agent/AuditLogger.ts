@@ -33,7 +33,7 @@ export interface AuditLogEntry {
   environment: 'production' | 'staging' | 'development';
   ipAddress?: string;
   userAgent?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface ReviewTicket {
@@ -48,7 +48,7 @@ export interface ReviewTicket {
   reviewNotes?: string;
   action: HealingAction;
   issue: DetectedIssue;
-  sandboxTestResults?: any;
+  sandboxTestResults?: HealingResult | null;
 }
 
 /**
@@ -365,7 +365,7 @@ export class AuditLogger {
   }
 
   private getEnvironment(): 'production' | 'staging' | 'development' {
-    return (import.meta.env.MODE as any) || 'development';
+    return (import.meta.env.MODE as 'production' | 'staging' | 'development') || 'development';
   }
 
   private captureVersionInfo(): string {

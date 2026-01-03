@@ -23,7 +23,7 @@ export interface SecurityEvent {
   actor_ip_address?: string;
   actor_user_agent?: string;
   description: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   auto_blocked?: boolean;
   requires_investigation?: boolean;
   timestamp?: string;
@@ -42,7 +42,7 @@ export interface SecurityAlert {
   user_agent?: string;
   detection_method?: 'rule_based' | 'threshold' | 'anomaly' | 'manual';
   confidence_score?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   notification_sent?: boolean;
   notification_channels?: string[];
 }

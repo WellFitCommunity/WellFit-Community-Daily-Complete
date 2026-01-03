@@ -27,7 +27,7 @@ interface SecurityAlert {
   description?: string;
   affected_user_id?: string;
   created_at: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface SecurityEvent {
@@ -36,7 +36,7 @@ interface SecurityEvent {
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   description: string;
   timestamp: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   requires_investigation?: boolean;
 }
 
@@ -170,7 +170,7 @@ export class RealtimeSecurityMonitor {
   /**
    * Handle alert update
    */
-  private handleAlertUpdate(alert: SecurityAlert): void {
+  private handleAlertUpdate(_alert: SecurityAlert): void {
   }
 
   /**

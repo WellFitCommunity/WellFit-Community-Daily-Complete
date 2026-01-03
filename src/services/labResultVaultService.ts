@@ -5,6 +5,21 @@ import { supabase } from '../lib/supabaseClient';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type { LabResult } from '../types/handoff';
 
+interface ParsedLabData {
+  test_name: string;
+  value: string;
+  unit: string;
+  reference_range?: string;
+  abnormal?: boolean;
+  confidence: number;
+}
+
+interface CriticalAlert {
+  high?: number;
+  low?: number;
+  message: string;
+}
+
 export interface ParsedLabResult extends LabResult {
   confidence_score?: number; // 0-1, AI confidence in extraction
   source_file?: string;
@@ -46,7 +61,7 @@ export class LabResultVaultService {
       if (error) throw error;
 
       // Claude returns structured lab data
-      const parsedLabs: ParsedLabResult[] = data.labs.map((lab: any) => ({
+      const parsedLabs: ParsedLabResult[] = (data.labs as ParsedLabData[]).map((lab) => ({
         test_name: lab.test_name,
         value: lab.value,
         unit: lab.unit,
@@ -69,7 +84,7 @@ export class LabResultVaultService {
    * Fallback regex-based parsing for common lab formats
    * Works for basic CBC, CMP, BMP reports
    */
-  private static async fallbackRegexParsing(file: File): Promise<ParsedLabResult[]> {
+  private static async fallbackRegexParsing(_file: File): Promise<ParsedLabResult[]> {
     // This would use pdf.js or similar to extract text, then regex patterns
     // For MVP, return empty array - Claude AI is primary method
 
@@ -244,7 +259,7 @@ export class LabResultVaultService {
     const latestValue = parseFloat(history[history.length - 1].value);
 
     // Critical thresholds
-    const criticalAlerts: Record<string, any> = {
+    const criticalAlerts: Record<string, CriticalAlert> = {
       creatinine: {
         high: 2.0,
         message: 'Acute kidney injury risk - Consider nephrology consult'

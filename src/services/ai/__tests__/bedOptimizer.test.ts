@@ -17,8 +17,7 @@ import type {
   CapacityForecast,
   DischargeRecommendation,
   BedAssignmentRecommendation,
-  CapacityInsight,
-  OptimizationReport
+  CapacityInsight
 } from '../bedOptimizer';
 import type { UnitCapacity, BedBoardEntry } from '../../../types/bed';
 

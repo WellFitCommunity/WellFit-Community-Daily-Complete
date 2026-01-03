@@ -8,10 +8,10 @@ import {
   getPatientMedications,
   getPatientConditions,
   getPatientVitals,
-  getPatientLabResults,
-  getPatientAllergies,
-  getPatientImmunizations,
-  getPatientCarePlans,
+  // getPatientLabResults - tested indirectly
+  // getPatientAllergies - tested indirectly
+  // getPatientImmunizations - tested indirectly
+  // getPatientCarePlans - tested indirectly
   getPatientCareTeam,
   getPatientSDOHRisks,
   validateFHIRResource,
@@ -21,7 +21,7 @@ import {
   listEHRConnections,
   syncPatientWithEHR,
   LOINC_CODES,
-  FHIRMCPClient
+  // FHIRMCPClient - class available but not directly tested
 } from '../mcpFHIRClient';
 
 // Mock fetch
@@ -338,7 +338,7 @@ describe('FHIRMCPClient', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.id).toBe('c-new');
+      expect((result.data as { id?: string } | undefined)?.id).toBe('c-new');
     });
   });
 
@@ -365,7 +365,7 @@ describe('FHIRMCPClient', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.medication_name).toBe('Lisinopril');
+      expect((result.data as { medication_name?: string } | undefined)?.medication_name).toBe('Lisinopril');
     });
   });
 
@@ -394,7 +394,7 @@ describe('FHIRMCPClient', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.value_quantity.value).toBe(72);
+      expect((result.data as { value_quantity?: { value: number } } | undefined)?.value_quantity?.value).toBe(72);
     });
   });
 

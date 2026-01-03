@@ -46,7 +46,7 @@ export interface AssessmentField {
   conditionalDisplay?: {
     dependsOn: string;
     condition: string;
-    value: any;
+    value: unknown;
   };
 }
 
@@ -145,8 +145,8 @@ export interface SpecialistProvider {
   workflow_template_id: string;
   license_number?: string;
   npi?: string;
-  service_area?: any; // PostGIS geography
-  credentials: Record<string, any>;
+  service_area?: Record<string, unknown>; // PostGIS geography
+  credentials: Record<string, unknown>;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -159,13 +159,13 @@ export interface FieldVisit {
   visit_type: string;
   workflow_template_id: string;
   scheduled_at?: Date;
-  check_in_location?: any; // PostGIS point
+  check_in_location?: { type: string; coordinates: [number, number] }; // PostGIS point
   check_in_time?: Date;
-  check_out_location?: any;
+  check_out_location?: { type: string; coordinates: [number, number] };
   check_out_time?: Date;
   current_step: number;
   completed_steps: number[];
-  data: Record<string, any>; // Flexible JSON data
+  data: Record<string, unknown>; // Flexible JSON data
   photos: string[];
   voice_notes: string[];
   offline_captured: boolean;
@@ -181,7 +181,7 @@ export interface SpecialistAssessment {
   visit_id: string;
   assessment_type: string;
   template_id: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   photos: string[];
   calculated_scores?: Record<string, number>;
   requires_review: boolean;
@@ -195,7 +195,7 @@ export interface SpecialistAlert {
   visit_id: string;
   alert_rule_id: string;
   severity: SeverityLevel;
-  triggered_by: Record<string, any>;
+  triggered_by: Record<string, unknown>;
   triggered_at: Date;
   notify_role: string;
   notify_user_id?: string;
@@ -214,7 +214,7 @@ export interface OfflineSyncJob {
   id: string;
   entity_type: 'visit' | 'assessment' | 'photo' | 'alert';
   entity_id: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   sync_status: 'pending' | 'syncing' | 'synced' | 'failed';
   sync_attempts: number;
   last_attempt_at?: Date;
@@ -226,10 +226,10 @@ export interface OfflineSyncJob {
 export interface WorkflowContext {
   visit: FieldVisit;
   specialist: SpecialistProvider;
-  patient: any; // From existing patient table
+  patient: Record<string, unknown>; // From existing patient table
   workflow: SpecialistWorkflow;
   currentStep: WorkflowStep;
-  collectedData: Record<string, any>;
+  collectedData: Record<string, unknown>;
   triggeredAlerts: SpecialistAlert[];
 }
 
@@ -237,6 +237,6 @@ export interface WorkflowContext {
 export interface ConditionEvaluation {
   condition: string;
   result: boolean;
-  value?: any;
+  value?: unknown;
   error?: string;
 }

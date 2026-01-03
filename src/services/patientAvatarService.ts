@@ -7,7 +7,8 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
-import { ServiceResult, success, failure, fromSupabaseError } from './_base/ServiceResult';
+import { ServiceResult, success, failure } from './_base/ServiceResult';
+import type { fromSupabaseError as _fromSupabaseError } from './_base/ServiceResult';
 import {
   PatientAvatar,
   UpdatePatientAvatarRequest,
@@ -16,9 +17,8 @@ import {
   UpdateMarkerRequest,
   PatientMarkersResponse,
   PatientMarkerHistory,
-  SkinTone,
-  GenderPresentation,
 } from '../types/patientAvatar';
+import type { SkinTone as _SkinTone, GenderPresentation as _GenderPresentation } from '../types/patientAvatar';
 
 // ============================================================================
 // PATIENT AVATAR PREFERENCES

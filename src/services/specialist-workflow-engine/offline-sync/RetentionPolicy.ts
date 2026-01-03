@@ -345,9 +345,9 @@ export class RetentionPolicyService {
    * Clean up a specific store based on retention rules
    */
   private async cleanupStore(
-    storeName: string,
-    syncedCutoff: number,
-    failedCutoff: number
+    _storeName: string,
+    _syncedCutoff: number,
+    _failedCutoff: number
   ): Promise<{ removed: number; bytesFreed: number; preserved: number }> {
     // This would interface with the actual IndexedDB store
     // For now, return mock result - actual implementation would query IndexedDB
@@ -370,7 +370,7 @@ export class RetentionPolicyService {
    * Clean up audit logs based on retention
    */
   private async cleanupAuditLogs(
-    cutoff: number
+    _cutoff: number
   ): Promise<{ removed: number; bytesFreed: number }> {
     // This would interface with the audit log IndexedDB store
     // Only delete logs that have been synced to server

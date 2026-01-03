@@ -451,7 +451,7 @@ export class CHWService {
       visit_id: visitId,
       assessment_type: 'SDOH_PRAPARE',
       template_id: 'prapare',
-      data: sdohData,
+      data: sdohData as unknown as Record<string, unknown>,
       calculated_scores: {
         risk_score: riskScore,
         barrier_count: this.countSDOHBarriers(sdohData)

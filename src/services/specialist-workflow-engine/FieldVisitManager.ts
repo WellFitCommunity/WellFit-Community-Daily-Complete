@@ -4,7 +4,8 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
-import { FieldVisit, SpecialistProvider } from './types';
+import { FieldVisit } from './types';
+import type { SpecialistProvider as _SpecialistProvider } from './types';
 import { offlineSync } from './OfflineDataSync';
 
 export class FieldVisitManager {
@@ -21,7 +22,7 @@ export class FieldVisitManager {
 
       navigator.geolocation.getCurrentPosition(
         (position) => resolve(position.coords),
-        (error) => {
+        (_error) => {
 
           resolve(null);
         },
@@ -44,7 +45,7 @@ export class FieldVisitManager {
 
     return navigator.geolocation.watchPosition(
       (position) => callback(position.coords),
-      (error) => {
+      (_error) => {
         // Geolocation watch error - logged via audit system
       },
       {
@@ -288,7 +289,7 @@ export class FieldVisitManager {
   async updateVisitData(
     visitId: string,
     stepNumber: number,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<void> {
     const visit = await this.getVisit(visitId);
     if (!visit) throw new Error('Visit not found');

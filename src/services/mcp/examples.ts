@@ -6,7 +6,7 @@
 import {
   analyzeText,
   generateSuggestion,
-  summarizeContent,
+  // summarizeContent - available but not used in examples
   generateCodingSuggestions,
   summarizeClinicalNotes
 } from './index';

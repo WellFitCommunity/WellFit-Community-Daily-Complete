@@ -361,7 +361,7 @@ export class OfflineDataSync {
     for (const item of unsynced) {
       try {
         // Remove IndexedDB-specific fields
-        const { synced, timestamp, offline_captured, ...cleanData } = item;
+        const { synced: _synced, timestamp: _timestamp, offline_captured: _offline_captured, ...cleanData } = item;
 
         // Upsert to Supabase
         const { error } = await supabase

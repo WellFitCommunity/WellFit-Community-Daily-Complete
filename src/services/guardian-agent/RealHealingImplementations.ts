@@ -149,7 +149,7 @@ export class RealHealingImplementations {
       // Fix error messages with PHI
       const errorWithPHIRegex = /throw new Error\([^)]*\b(patient|diagnosis|medication|ssn)\b[^)]*\)/gi;
 
-      fixedCode = fixedCode.replace(errorWithPHIRegex, (match) => {
+      fixedCode = fixedCode.replace(errorWithPHIRegex, (_match) => {
         hasChanges = true;
         return `// SECURITY FIX: Use generic error message\nthrow new Error('Operation failed')`;
       });
@@ -158,7 +158,7 @@ export class RealHealingImplementations {
       if (hasChanges && !code.includes('maskPHI')) {
         const maskingHelper = `
 // PHI Masking Helper
-const maskPHI = (data: any) => {
+const maskPHI = (data: unknown) => {
   if (typeof data === 'string') {
     return data.replace(/\\b\\d{3}-\\d{2}-\\d{4}\\b/g, 'XXX-XX-XXXX'); // SSN
   }

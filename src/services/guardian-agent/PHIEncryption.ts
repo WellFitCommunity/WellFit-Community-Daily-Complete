@@ -82,7 +82,7 @@ export const PHI_FIELDS = [
 /**
  * Encrypted field wrapper
  */
-export interface EncryptedField<T = any> {
+export interface EncryptedField<_T = unknown> {
   /** Encrypted data (base64) */
   ciphertext: string;
 
@@ -359,11 +359,11 @@ export class PHIEncryption {
    * Encrypt an entire object (only PHI fields)
    */
   async encryptObject(
-    obj: Record<string, any>,
+    obj: Record<string, unknown>,
     tenantId: string,
     userId?: string
-  ): Promise<Record<string, any>> {
-    const encrypted: Record<string, any> = { ...obj };
+  ): Promise<Record<string, unknown>> {
+    const encrypted: Record<string, unknown> = { ...obj };
 
     for (const [key, value] of Object.entries(obj)) {
       if (this.isPHIField(key)) {
@@ -378,10 +378,10 @@ export class PHIEncryption {
    * Decrypt an entire object (only encrypted fields)
    */
   async decryptObject(
-    obj: Record<string, any>,
+    obj: Record<string, unknown>,
     userId?: string
-  ): Promise<Record<string, any>> {
-    const decrypted: Record<string, any> = { ...obj };
+  ): Promise<Record<string, unknown>> {
+    const decrypted: Record<string, unknown> = { ...obj };
 
     for (const [key, value] of Object.entries(obj)) {
       if (this.isEncryptedField(value)) {
@@ -403,7 +403,7 @@ export class PHIEncryption {
   /**
    * Check if a value is an encrypted field
    */
-  isEncryptedField(value: any): value is EncryptedField {
+  isEncryptedField(value: unknown): value is EncryptedField {
     return (
       typeof value === 'object' &&
       value !== null &&

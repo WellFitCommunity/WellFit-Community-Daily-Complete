@@ -20,13 +20,12 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import {
   IntelligentMigrationService,
   PatternDetector,
-  DataDNAGenerator,
+  DataDNAGenerator, // eslint-disable-line @typescript-eslint/no-unused-vars -- Reserved for DNA fingerprinting features
   SourceDNA,
   MappingSuggestion,
-  ColumnDNA,
-  DataPattern,
   MigrationResult
 } from './intelligentMigrationEngine';
+import type { ColumnDNA as _ColumnDNA, DataPattern as _DataPattern } from './intelligentMigrationEngine';
 import { auditLogger } from './auditLogger';
 
 // =============================================================================
@@ -1185,8 +1184,9 @@ export class ConditionalMappingService {
 
   /** Load conditional mappings for a column */
   async loadMappings(sourceColumn: string): Promise<ConditionalMapping[]> {
-    if (this.mappingsCache.has(sourceColumn)) {
-      return this.mappingsCache.get(sourceColumn)!;
+    const cached = this.mappingsCache.get(sourceColumn);
+    if (cached) {
+      return cached;
     }
 
     const { data } = await this.supabase

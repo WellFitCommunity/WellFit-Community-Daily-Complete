@@ -21,7 +21,7 @@ export interface AIResponse {
 }
 
 export class MCPCostOptimizer {
-  async call(options: AICallOptions): Promise<AIResponse> {
+  async call(_options: AICallOptions): Promise<AIResponse> {
     return {
       response: 'mock AI response',
       cost: 0.001,
@@ -33,11 +33,11 @@ export class MCPCostOptimizer {
     };
   }
 
-  async clearCache(userId?: string): Promise<void> {
+  async clearCache(_userId?: string): Promise<void> {
     // Mock implementation
   }
 
-  async getCacheStats(userId?: string): Promise<{
+  async getCacheStats(_userId?: string): Promise<{
     totalCalls: number;
     cachedCalls: number;
     totalCost: number;

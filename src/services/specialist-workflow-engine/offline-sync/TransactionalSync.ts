@@ -24,7 +24,7 @@ import type {
   OfflineAssessment,
   OfflinePhoto,
   OfflineAlert,
-  SyncState,
+  // SyncState - type available for state tracking
 } from './types';
 import type { OfflineAuditTrail } from './OfflineAuditTrail';
 

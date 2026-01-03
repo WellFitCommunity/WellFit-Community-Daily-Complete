@@ -62,7 +62,7 @@ export interface SDOHCode {
 
 export type SDOHCategory = 'housing' | 'food' | 'transportation' | 'employment' | 'education' | 'social' | 'all';
 
-export interface MedicalCodeResult<T = any> {
+export interface MedicalCodeResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -104,7 +104,7 @@ class MedicalCodesMCPClient {
     return '';
   }
 
-  private async callTool<T>(toolName: string, args: Record<string, any>): Promise<MedicalCodeResult<T>> {
+  private async callTool<T>(toolName: string, args: Record<string, unknown>): Promise<MedicalCodeResult<T>> {
     try {
       const response = await fetch(this.edgeFunctionUrl, {
         method: 'POST',

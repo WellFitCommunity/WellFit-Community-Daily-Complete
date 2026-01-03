@@ -35,7 +35,7 @@ import type {
   // Insurance types
   InsurancePayerConnection,
   EligibilityRequest,
-  EligibilityResponse,
+  // EligibilityResponse - type available for insurance responses
   PatientInsurance,
   CheckEligibilityRequest,
   // Stats

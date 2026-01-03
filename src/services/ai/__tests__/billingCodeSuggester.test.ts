@@ -9,7 +9,7 @@
  * - Accuracy tracking integration
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BillingCodeSuggester, type EncounterContext, type BillingSuggestionResult } from '../billingCodeSuggester';
 
 // ============================================================================

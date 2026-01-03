@@ -40,7 +40,7 @@ import {
   HCStaffReportingInsert,
   HCProviderGroup,
   HCProviderGroupInsert,
-  HCStaffGroupAffiliation,
+  // HCStaffGroupAffiliation - type available for group affiliations
   HCStaffEHRMapping,
   HCStaffEHRMappingInsert,
   HCMigrationBatch,

@@ -12,6 +12,14 @@ export interface MealInteraction {
   rating?: number;
 }
 
+export interface MealInteractionRecord extends MealInteraction {
+  id: string;
+  created_at?: string;
+  photo_url?: string;
+  photo_uploaded?: boolean;
+  photo_uploaded_at?: string;
+}
+
 export interface MealPhotoUpload {
   interaction_id: string;
   photo_file: File;
@@ -24,7 +32,7 @@ export interface MealPhotoUpload {
 export async function submitMealInteraction(
   supabase: SupabaseClient,
   interaction: MealInteraction
-): Promise<{ data: any; error: any }> {
+): Promise<{ data: MealInteractionRecord | null; error: unknown }> {
   try {
     const { data, error } = await supabase
       .from('meal_interactions')
@@ -57,7 +65,7 @@ export async function submitMealInteraction(
 export async function uploadMealPhoto(
   supabase: SupabaseClient,
   upload: MealPhotoUpload
-): Promise<{ data: any; error: any }> {
+): Promise<{ data: MealInteractionRecord | null; error: unknown }> {
   try {
     // 1. Upload photo to storage
     const fileExt = upload.photo_file.name.split('.').pop();
@@ -112,7 +120,7 @@ export async function getUserMealInteraction(
   supabase: SupabaseClient,
   userId: string,
   mealId: string
-): Promise<{ data: any; error: any }> {
+): Promise<{ data: MealInteractionRecord | null; error: unknown }> {
   try {
     const { data, error } = await supabase
       .from('meal_interactions')
@@ -140,7 +148,7 @@ export async function getUserMealInteraction(
 export async function getUserPlannedMeals(
   supabase: SupabaseClient,
   userId: string
-): Promise<{ data: any[]; error: any }> {
+): Promise<{ data: MealInteractionRecord[]; error: unknown }> {
   try {
     const { data, error } = await supabase
       .from('meal_interactions')
@@ -165,7 +173,7 @@ export async function getUserPlannedMeals(
  */
 export async function getAllMealPhotos(
   supabase: SupabaseClient
-): Promise<{ data: any[]; error: any }> {
+): Promise<{ data: MealInteractionRecord[]; error: unknown }> {
   try {
     const { data, error } = await supabase
       .from('meal_interactions')

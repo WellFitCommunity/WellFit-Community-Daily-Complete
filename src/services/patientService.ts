@@ -302,8 +302,8 @@ class PatientService {
    * Fallback for risk patients when join isn't available
    */
   private async getPatientsByRiskFallback(
-    riskLevel: string,
-    limit: number
+    _riskLevel: string,
+    _limit: number
   ): Promise<ServiceResult<PatientWithRisk[]>> {
     // Return empty array - risk registry not available
     await auditLogger.info('RISK_REGISTRY_NOT_AVAILABLE', {

@@ -11,7 +11,7 @@ import { SB_URL } from '../../settings/settings';
 // Types
 // =====================================================
 
-export interface PostgresQueryResult<T = any> {
+export interface PostgresQueryResult<T = unknown> {
   success: boolean;
   data?: T[];
   error?: string;
@@ -82,10 +82,10 @@ class PostgresMCPClient {
   /**
    * Execute a whitelisted query
    */
-  async executeQuery<T = any>(
+  async executeQuery<T = unknown>(
     queryName: WhitelistedQueryName,
     tenantId: string,
-    parameters?: Record<string, any>
+    parameters?: Record<string, unknown>
   ): Promise<PostgresQueryResult<T>> {
     try {
       const response = await fetch(this.edgeFunctionUrl, {

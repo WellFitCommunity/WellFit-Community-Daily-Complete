@@ -2,7 +2,7 @@
  * Monitoring System - Continuous health monitoring and anomaly detection
  */
 
-import { DetectedIssue, ErrorContext/*, AgentState*/ } from './types';
+import { DetectedIssue, ErrorContext, ErrorSignature, SeverityLevel/*, AgentState*/ } from './types';
 import { AgentBrain } from './AgentBrain';
 import { SecurityScanner } from './SecurityScanner';
 
@@ -315,7 +315,7 @@ export class MonitoringSystem {
   private setupResourceMonitoring(): void {
     // Monitor resource loading errors
     window.addEventListener('error', (event) => {
-      if (event.target && (event.target as any).src) {
+      if (event.target && (event.target as HTMLElement & { src?: string }).src) {
         // Resource loading error
         this.handleResourceError(event);
       }
@@ -402,7 +402,7 @@ export class MonitoringSystem {
   /**
    * Handles failed API calls
    */
-  private async handleFailedAPI(url: string, status: number, args: any[]): Promise<void> {
+  private async handleFailedAPI(url: string, status: number, _args: unknown[]): Promise<void> {
     await this.agentBrain.analyze(
       new Error(`API request failed with status ${status}`),
       {
@@ -416,7 +416,7 @@ export class MonitoringSystem {
   /**
    * Handles API errors
    */
-  private async handleAPIError(url: string, error: any): Promise<void> {
+  private async handleAPIError(url: string, error: unknown): Promise<void> {
     await this.agentBrain.analyze(
       error instanceof Error ? error : new Error(String(error)),
       {
@@ -431,12 +431,12 @@ export class MonitoringSystem {
    * Handles resource loading errors
    */
   private async handleResourceError(event: Event): Promise<void> {
-    const target = event.target as any;
+    const target = event.target as HTMLElement & { src?: string; tagName?: string };
 
     await this.agentBrain.analyze(
-      new Error(`Failed to load resource: ${target.src}`),
+      new Error(`Failed to load resource: ${target.src ?? 'unknown'}`),
       {
-        environmentState: { resourceType: target.tagName },
+        environmentState: { resourceType: target.tagName ?? 'unknown' },
         recentActions: []
       }
     );
@@ -450,7 +450,7 @@ export class MonitoringSystem {
     this.baselines.set('requestRate', 10);
   }
 
-  private updateBaselines(metrics: HealthMetrics): void {
+  private updateBaselines(_metrics: HealthMetrics): void {
     if (this.metricsHistory.length < 50) return;
 
     const recent = this.metricsHistory.slice(-50);
@@ -463,9 +463,11 @@ export class MonitoringSystem {
   }
 
   private getMemoryUsage(): number {
-    if ('memory' in performance && (performance as any).memory) {
-      const mem = (performance as any).memory;
-      return (mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100;
+    const perfWithMemory = performance as Performance & {
+      memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number };
+    };
+    if (perfWithMemory.memory) {
+      return (perfWithMemory.memory.usedJSHeapSize / perfWithMemory.memory.jsHeapSizeLimit) * 100;
     }
     return 0;
   }
@@ -507,12 +509,12 @@ export class MonitoringSystem {
     return values.reduce((sum, v) => sum + v, 0) / values.length;
   }
 
-  private mapAnomalyToSignature(anomaly: Anomaly): any {
+  private mapAnomalyToSignature(anomaly: Anomaly): ErrorSignature {
     return {
       id: anomaly.type,
       category: anomaly.type === 'memory' ? 'memory_leak' : 'performance_degradation',
       pattern: anomaly.description,
-      severity: anomaly.severity,
+      severity: anomaly.severity as SeverityLevel,
       description: anomaly.description,
       commonCauses: [],
       healingStrategies: ['resource_cleanup', 'circuit_breaker'],

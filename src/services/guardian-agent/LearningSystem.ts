@@ -71,7 +71,7 @@ export class LearningSystem {
   /**
    * Learns a new error pattern that hasn't been seen before
    */
-  async learnNewPattern(errorInfo: any, context: ErrorContext): Promise<void> {
+  async learnNewPattern(errorInfo: Record<string, unknown>, context: ErrorContext): Promise<void> {
     const features = this.featureExtractor.extractFromError(errorInfo, context);
     const patternKey = this.generatePatternKey(features);
 
@@ -265,14 +265,14 @@ class FeatureExtractor {
   /**
    * Extracts features from raw error information
    */
-  extractFromError(errorInfo: any, context: ErrorContext): string[] {
+  extractFromError(errorInfo: Record<string, unknown>, context: ErrorContext): string[] {
     const features: string[] = [];
 
     // Error type
-    features.push(`error:${errorInfo.name}`);
+    features.push(`error:${String(errorInfo.name ?? 'unknown')}`);
 
     // Message keywords
-    const keywords = this.extractKeywords(errorInfo.message);
+    const keywords = this.extractKeywords(String(errorInfo.message ?? ''));
     keywords.forEach(kw => features.push(`keyword:${kw}`));
 
     // Context

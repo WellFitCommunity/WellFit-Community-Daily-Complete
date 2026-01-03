@@ -225,7 +225,9 @@ export default function MealDetailPage() {
       if (error) throw error;
 
       setUserResponse(willMakeIt);
-      setInteractionId(data.id);
+      if (data) {
+        setInteractionId(data.id);
+      }
       setShowInteractionPrompt(false);
 
       if (willMakeIt) {

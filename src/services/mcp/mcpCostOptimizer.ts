@@ -4,7 +4,8 @@
 // Reduces costs by 60-80% through MCP prompt caching
 // =====================================================
 
-import { MCPClient, MCPCallOptions } from './mcpClient';
+import { MCPClient } from './mcpClient';
+import type { MCPCallOptions as _MCPCallOptions } from './mcpClient';
 import { supabase } from '../../lib/supabaseClient';
 import { SB_URL } from '../../settings/settings';
 
@@ -395,7 +396,7 @@ Always prioritize patient safety and HIPAA compliance.`;
     return this.costTracker.getCacheHitRate();
   }
 
-  async generateCostReport(userId: string): Promise<{
+  async generateCostReport(_userId: string): Promise<{
     daily_cost: number;
     monthly_cost: number;
     cache_savings: number;

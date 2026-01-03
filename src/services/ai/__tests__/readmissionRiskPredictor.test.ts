@@ -917,7 +917,7 @@ describe('DischargeValidator - Input Validation', () => {
 
 describe('Skill Enablement', () => {
   it('should check if readmission predictor is enabled for tenant', async () => {
-    const predictor = new ReadmissionRiskPredictor();
+    const _predictor = new ReadmissionRiskPredictor();
 
     // Mock config with skill disabled
     const disabledConfig = {

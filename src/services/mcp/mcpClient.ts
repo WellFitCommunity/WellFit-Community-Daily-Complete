@@ -20,7 +20,7 @@ export interface MCPCallOptions {
   timeout?: number;
 }
 
-export interface MCPResponse<T = unknown> {
+export interface MCPResponse<_T = unknown> {
   content: Array<{ type: string; text: string }>;
   metadata?: {
     inputTokens?: number;

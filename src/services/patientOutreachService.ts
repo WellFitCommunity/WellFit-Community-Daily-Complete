@@ -345,7 +345,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
       }
 
       // Call Twilio edge function
-      const { data, error } = await supabase.functions.invoke('send-sms', {
+      const { data: _data, error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: phoneNumber,
           message: message,

@@ -28,7 +28,7 @@ export interface HealthCheckResult {
   service: string;
   error?: string;
   timestamp: Date;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export interface SystemHealthReport {
@@ -230,7 +230,7 @@ class HealthCheckService {
 
     try {
       // Simple query to check connectivity
-      const { error, data } = await supabase
+      const { error, data: _data } = await supabase
         .from('profiles')
         .select('id')
         .limit(1)

@@ -15,12 +15,12 @@
 import { getPHIEncryption, type EncryptedField, PHI_FIELDS } from '../../guardian-agent/PHIEncryption';
 import { auditLogger } from '../../auditLogger';
 import type {
-  EnterpriseOfflineRecord,
+  // EnterpriseOfflineRecord - base type for records
   OfflineFieldVisit,
   OfflineAssessment,
   OfflinePhoto,
-  OfflineAlert,
-  OfflineAuditEntry,
+  // OfflineAlert - type available for encryption
+  // OfflineAuditEntry - type available for encryption
 } from './types';
 
 /**

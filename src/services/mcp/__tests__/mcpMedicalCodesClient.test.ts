@@ -14,7 +14,7 @@ import {
   getSDOHZCodes,
   EM_CODES,
   COMMON_MODIFIERS,
-  MedicalCodesMCPClient
+  // MedicalCodesMCPClient - class available but not directly tested
 } from '../mcpMedicalCodesClient';
 
 // Mock fetch

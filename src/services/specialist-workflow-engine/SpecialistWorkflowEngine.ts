@@ -11,8 +11,8 @@ import {
   SpecialistAlert,
   ConditionEvaluation,
   AlertRule,
-  SeverityLevel
 } from './types';
+import type { SeverityLevel as _SeverityLevel } from './types';
 import { supabase } from '../../lib/supabaseClient';
 import { logPhiAccess } from '../phiAccessLogger';
 
@@ -124,7 +124,7 @@ export class SpecialistWorkflowEngine {
   async captureStepData(
     visitId: string,
     stepNumber: number,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<void> {
     // Get current visit
     const { data: visit, error: fetchError } = await supabase
@@ -179,7 +179,7 @@ export class SpecialistWorkflowEngine {
    */
   private async evaluateAlertRules(
     visitId: string,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<void> {
     for (const rule of this.workflow.alertRules) {
       const evaluation = this.evaluateCondition(rule.condition, data);
@@ -195,7 +195,7 @@ export class SpecialistWorkflowEngine {
    */
   private evaluateCondition(
     condition: string,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): ConditionEvaluation {
     try {
       // Parse condition like "vitals.systolic > 180" or "BP_SYSTOLIC > 180"
@@ -218,16 +218,16 @@ export class SpecialistWorkflowEngine {
 
       switch (operator) {
         case '>':
-          result = parseFloat(value) > thresholdNum;
+          result = parseFloat(String(value)) > thresholdNum;
           break;
         case '<':
-          result = parseFloat(value) < thresholdNum;
+          result = parseFloat(String(value)) < thresholdNum;
           break;
         case '>=':
-          result = parseFloat(value) >= thresholdNum;
+          result = parseFloat(String(value)) >= thresholdNum;
           break;
         case '<=':
-          result = parseFloat(value) <= thresholdNum;
+          result = parseFloat(String(value)) <= thresholdNum;
           break;
         case '==':
           // Handle boolean, number, and string comparisons
@@ -269,13 +269,13 @@ export class SpecialistWorkflowEngine {
   /**
    * Extracts a value from nested data object
    */
-  private extractValue(path: string, data: Record<string, any>): any {
+  private extractValue(path: string, data: Record<string, unknown>): unknown {
     const keys = path.split('.');
-    let value: any = data;
+    let value: unknown = data;
 
     for (const key of keys) {
-      if (value && typeof value === 'object') {
-        value = value[key];
+      if (value && typeof value === 'object' && value !== null) {
+        value = (value as Record<string, unknown>)[key];
       } else {
         return undefined;
       }
@@ -378,7 +378,7 @@ export class SpecialistWorkflowEngine {
   /**
    * Validates if a step can be completed
    */
-  canCompleteStep(stepNumber: number, data: Record<string, any>): {
+  canCompleteStep(stepNumber: number, data: Record<string, unknown>): {
     canComplete: boolean;
     missingFields: string[];
   } {

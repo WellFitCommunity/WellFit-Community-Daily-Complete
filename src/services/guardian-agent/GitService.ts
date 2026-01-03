@@ -140,7 +140,13 @@ export class GitService {
   /**
    * Get PR status
    */
-  static async getPRStatus(prNumber: number): Promise<any> {
+  static async getPRStatus(prNumber: number): Promise<{
+    success: boolean;
+    state?: 'open' | 'closed' | 'merged';
+    checks?: Array<{ name: string; status: string }>;
+    reviews?: Array<{ user: string; state: string }>;
+    error?: string;
+  }> {
     try {
       const { data, error } = await supabase.functions.invoke('guardian-pr-service', {
         body: {

@@ -22,8 +22,8 @@ import {
   RejectionFormData,
   ApprovalResult,
   CreateTicketParams,
-  TicketStatus,
 } from '../types/guardianApproval';
+import type { TicketStatus as _TicketStatus } from '../types/guardianApproval';
 
 // ============================================================================
 // Service Class

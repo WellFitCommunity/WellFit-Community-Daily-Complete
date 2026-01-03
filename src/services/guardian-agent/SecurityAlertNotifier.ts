@@ -358,8 +358,8 @@ export class SecurityAlertNotifier {
    */
   getEnabledChannels(): string[] {
     return Array.from(this.channels.entries())
-      .filter(([_, channel]) => channel.enabled)
-      .map(([name, _]) => name);
+      .filter(([_name, channel]) => channel.enabled)
+      .map(([name]) => name);
   }
 
   /**

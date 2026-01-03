@@ -38,7 +38,7 @@ export interface FHIRBundle {
   total: number;
   entry: Array<{
     fullUrl: string;
-    resource: any;
+    resource: Record<string, unknown>;
   }>;
 }
 
@@ -158,7 +158,7 @@ export interface SDOHAssessmentResult {
     id: string;
     code: string;
     display: string;
-    value: any;
+    value: unknown;
     date: string;
   }>;
   active_flags: Array<{
@@ -205,7 +205,7 @@ export interface ValidationResult {
   errors: string[];
 }
 
-export interface FHIRResult<T = any> {
+export interface FHIRResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -247,7 +247,7 @@ class FHIRMCPClient {
     return '';
   }
 
-  private async callTool<T>(toolName: string, args: Record<string, any>): Promise<FHIRResult<T>> {
+  private async callTool<T>(toolName: string, args: Record<string, unknown>): Promise<FHIRResult<T>> {
     try {
       const response = await fetch(this.edgeFunctionUrl, {
         method: 'POST',
@@ -318,7 +318,7 @@ class FHIRMCPClient {
   /**
    * Get a specific FHIR resource by ID
    */
-  async getResource<T = any>(
+  async getResource<T = unknown>(
     resourceType: FHIRResourceType,
     resourceId: string
   ): Promise<FHIRResult<T>> {
@@ -358,9 +358,9 @@ class FHIRMCPClient {
   /**
    * Create a new FHIR resource
    */
-  async createResource<T = any>(
+  async createResource<T = unknown>(
     resourceType: FHIRResourceType,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     patientId?: string
   ): Promise<FHIRResult<T>> {
     return this.callTool('create_resource', {
@@ -373,10 +373,10 @@ class FHIRMCPClient {
   /**
    * Update an existing FHIR resource
    */
-  async updateResource<T = any>(
+  async updateResource<T = unknown>(
     resourceType: FHIRResourceType,
     resourceId: string,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<FHIRResult<T>> {
     return this.callTool('update_resource', {
       resource_type: resourceType,
@@ -390,7 +390,7 @@ class FHIRMCPClient {
    */
   async validateResource(
     resourceType: FHIRResourceType,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<FHIRResult<ValidationResult>> {
     return this.callTool('validate_resource', {
       resource_type: resourceType,
@@ -655,7 +655,7 @@ export async function getPatientSDOHRisks(patientId: string) {
 /**
  * Validate a FHIR resource before saving
  */
-export async function validateFHIRResource(resourceType: FHIRResourceType, data: Record<string, any>) {
+export async function validateFHIRResource(resourceType: FHIRResourceType, data: Record<string, unknown>) {
   return client.validateResource(resourceType, data);
 }
 
