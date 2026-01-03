@@ -152,34 +152,33 @@ serve(async (req: Request) => {
     const newUserId = ures.user.id;
 
     // 4) Insert profile with PK == auth.users.id  (CRITICAL)
-    // FIXED 2025-10-03: Changed 'id' to 'user_id' to match schema in
-    // migration 20250916000000_new_init_roles_and_security.sql:5-16
-    // Added all fields from EnrollSeniorPage to avoid data loss
-    // FIXED 2025-10-26: Added role_id: 4 (senior) - was defaulting to 1 (admin) causing security issue
-    // FIXED 2025-11-28: Added created_by to track which staff member enrolled this patient
+    // FIXED 2025-10-03: Changed 'id' to 'user_id' to match schema
+    // FIXED 2025-10-26: Added role_id: 4 (senior) - was defaulting to 1 (admin)
+    // FIXED 2026-01-03: Fixed column names to match actual schema:
+    //   - admin_enrollment_notes → enrollment_notes
+    //   - created_by → enrolled_by
+    //   - Removed authenticated/verified (don't exist in schema)
     const { error: perr } = await supabase.from("profiles").insert({
-      user_id: newUserId,  // ✅ FIXED: Was 'id', now 'user_id' (matches schema)
-      role_id: 4,  // ✅ FIXED 2025-10-26: Explicitly set role_id to 4 (senior) - was missing, defaulting to 1 (admin)
+      user_id: newUserId,
+      role_id: 4,  // Senior role
       phone,
       first_name,
       last_name,
       email: email ?? null,
-      dob: date_of_birth ?? null,  // Date of birth (optional)
-      emergency_contact_name: emergency_contact_name ?? null,  // Next of Kin name
-      emergency_contact_phone: emergency_contact_phone ?? null,  // Next of Kin phone
-      caregiver_email: caregiver_email ?? null,  // Caregiver email (optional)
-      admin_enrollment_notes: notes ?? null,  // Admin notes (not visible to patient)
+      dob: date_of_birth ?? null,
+      emergency_contact_name: emergency_contact_name ?? null,
+      emergency_contact_phone: emergency_contact_phone ?? null,
+      caregiver_email: caregiver_email ?? null,
+      enrollment_notes: notes ?? null,  // ✅ FIXED: Was admin_enrollment_notes
+      enrollment_type: "app",  // ✅ ADDED: Community enrollment (not hospital)
       role: "senior",
       role_code: 4,
-      authenticated: true,
-      verified: true,
-      phone_verified: true,  // Set to true since phone_confirm: true in auth
-      demographics_complete: false,  // Will be set to true after DemographicsPage
-      onboarded: false,  // Will be set to true after full onboarding
-      is_test_user: is_test_user ?? false,  // Mark as test user for easy deletion
-      test_tag: test_tag ?? null,  // Tag for bulk operations
-      created_by: adminId,  // ✅ FIXED 2025-11-28: Track which staff member enrolled this patient
-      created_at: new Date().toISOString(),
+      phone_verified: true,
+      demographics_complete: false,
+      onboarded: false,
+      is_test_user: is_test_user ?? false,
+      test_tag: test_tag ?? null,
+      enrolled_by: adminId,  // ✅ FIXED: Was created_by
     });
     if (perr) {
       // Cleanup orphan to keep DB consistent
