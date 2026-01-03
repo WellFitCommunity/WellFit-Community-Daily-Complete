@@ -11,7 +11,6 @@ import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   PTFunctionalAssessment,
   CreatePTAssessmentRequest,
-  UpdatePTAssessmentRequest,
 } from '../types/physicalTherapy';
 
 /**

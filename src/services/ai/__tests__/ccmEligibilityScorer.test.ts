@@ -17,7 +17,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   CCMEligibilityScorer,
   type CCMAssessmentContext,
-  type CCMEligibilityResult,
+  type CCMEligibilityResult as _CCMEligibilityResult,
   type ChronicCondition,
 } from '../ccmEligibilityScorer';
 

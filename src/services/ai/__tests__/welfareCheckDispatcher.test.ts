@@ -323,7 +323,7 @@ describe('WelfareCheckDispatcher', () => {
         { score: 90, category: 'critical' },
       ];
 
-      scoreMappings.forEach(({ score, category }) => {
+      scoreMappings.forEach(({ score, category: _category }) => {
         let mappedCategory: PriorityCategory;
         if (score >= 80) mappedCategory = 'critical';
         else if (score >= 60) mappedCategory = 'high';

@@ -378,7 +378,7 @@ describe('SDOHPassiveDetector', () => {
 
     it.each(SDOH_PATTERN_TESTS)(
       'should detect $category from text patterns',
-      ({ category, text, expectedZCode }) => {
+      ({ category: _category, text, expectedZCode }) => {
         const content = createValidSourceContent({ sourceText: text });
 
         expect(content.sourceText).toContain(expectedZCode.length > 0 ? text.split(' ')[0] : '');

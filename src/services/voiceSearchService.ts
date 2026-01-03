@@ -33,7 +33,7 @@ interface PatientRecord {
   acuity_level?: number;
 }
 
-interface BedRecord {
+interface _BedRecord {
   id: string;
   bed_id: string;
   room_number: string;

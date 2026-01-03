@@ -22,7 +22,6 @@ import type {
   RecordTreatmentSessionRequest,
   AssignHEPRequest,
   RecordOutcomeMeasureRequest,
-  AttendanceStatus,
 } from '../types/physicalTherapy';
 
 /**

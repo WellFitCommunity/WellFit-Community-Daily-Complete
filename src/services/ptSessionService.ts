@@ -11,7 +11,6 @@ import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   PTTreatmentSession,
   RecordTreatmentSessionRequest,
-  SessionIntervention,
 } from '../types/physicalTherapy';
 
 /**

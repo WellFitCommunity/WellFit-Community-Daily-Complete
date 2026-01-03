@@ -1,7 +1,7 @@
 // Joint Commission Medication Reconciliation Form Generator
 // NPSG.03.06.01 - Maintain and communicate accurate patient medication information
 
-import type { HandoffPacket, Medication } from '../types/handoff';
+import type { HandoffPacket } from '../types/handoff';
 import type { MedRecReport } from './medicationReconciliationService';
 
 export interface JointCommissionMedRecForm {

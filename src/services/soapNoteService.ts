@@ -111,7 +111,7 @@ export async function generateSOAPNote(
 export async function saveSOAPNote(
   soapNoteData: SOAPNoteData
 ): Promise<{ success: boolean; note_ids: string[] }> {
-  const { encounter_id, author_id, patient_id, ...components } = soapNoteData;
+  const { encounter_id, author_id, patient_id: _patient_id, ...components } = soapNoteData;
 
   // Validate required fields
   if (!encounter_id || !author_id) {

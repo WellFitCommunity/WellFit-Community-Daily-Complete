@@ -1030,7 +1030,7 @@ describe('PlainLanguageExplainer', () => {
 
   describe('Risk Factor Translation', () => {
     it('should translate prior admission to plain language', () => {
-      const factor = 'Prior readmission within 30 days';
+      const _factor = 'Prior readmission within 30 days';
       const priorAdmissions = 2;
       const expectedTranslation = `you were in the hospital ${priorAdmissions} times recently`;
 

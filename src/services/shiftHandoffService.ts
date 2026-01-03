@@ -7,7 +7,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
-import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
+import { applyLimit } from '../utils/pagination';
 import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   ShiftHandoffRiskScore,

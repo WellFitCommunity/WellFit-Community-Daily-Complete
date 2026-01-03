@@ -25,7 +25,6 @@ import type {
   SDOHReferral,
   SDOHResource,
   SDOHScreening,
-  calculateOverallSDOHRisk,
   calculateComplexityTier
 } from '../types/sdohIndicators';
 

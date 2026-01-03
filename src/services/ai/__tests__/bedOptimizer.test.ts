@@ -60,7 +60,7 @@ function createMockUnitCapacity(overrides?: Partial<UnitCapacity>): UnitCapacity
   };
 }
 
-function createMockBedBoardEntry(overrides?: Partial<BedBoardEntry>): BedBoardEntry {
+function _createMockBedBoardEntry(overrides?: Partial<BedBoardEntry>): BedBoardEntry {
   return {
     bed_id: 'bed-123',
     bed_label: 'MSN-101A',

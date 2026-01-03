@@ -11,7 +11,6 @@ import {
   SmartScribeOutputWithEntities,
   SmartScribeAvatarEntity,
   CreateMarkerRequest,
-  MarkerCategory,
   Laterality,
 } from '../types/patientAvatar';
 import {
