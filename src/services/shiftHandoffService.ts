@@ -20,6 +20,33 @@ import type {
   ShiftType,
 } from '../types/shiftHandoff';
 
+/** Patient vitals data structure from FHIR observations */
+interface VitalsData {
+  systolic_bp?: number;
+  diastolic_bp?: number;
+  heart_rate?: number;
+  temperature?: number;
+  oxygen_sat?: number;
+  respiratory_rate?: number;
+}
+
+/** Dashboard metrics query result row */
+interface DashboardMetricsRow {
+  final_risk_level: string;
+  nurse_reviewed: boolean;
+  auto_composite_score: number;
+  nurse_risk_level: string | null;
+}
+
+/** Emergency bypass RPC result */
+interface EmergencyBypassResult {
+  bypass_id: string;
+  bypass_number: number;
+  weekly_total: number;
+  should_notify_manager: boolean;
+  nurse_name: string;
+}
+
 // ============================================================================
 // PART 1: SHIFT HANDOFF SUMMARY
 // ============================================================================
@@ -232,9 +259,9 @@ export async function getHandoffDashboardMetrics(
     .eq('shift_date', new Date().toISOString().split('T')[0])
     .eq('shift_type', shiftType);
 
-  let data;
+  let data: DashboardMetricsRow[];
   try {
-    data = await applyLimit<any>(query, 100);
+    data = await applyLimit<DashboardMetricsRow>(query, 100);
   } catch (err: unknown) {
     await auditLogger.error(
       'DASHBOARD_METRICS_FAILED',
@@ -335,7 +362,7 @@ export async function logEmergencyBypass(
     throw new Error(`Failed to log bypass: ${error.message}`);
   }
 
-  return data as any;
+  return data as EmergencyBypassResult;
 }
 
 // ============================================================================
@@ -449,7 +476,7 @@ export async function getMyTimeSavings(): Promise<{
 // HELPERS
 // ============================================================================
 
-async function getLatestVitals(patientId: string): Promise<any | null> {
+async function getLatestVitals(patientId: string): Promise<VitalsData | null> {
   const { data, error } = await supabase
     .from('fhir_observations')
     .select('*')
@@ -466,7 +493,7 @@ async function getLatestVitals(patientId: string): Promise<any | null> {
     return null;
   }
 
-  const vitals: any = {};
+  const vitals: VitalsData = {};
   data?.forEach(o => {
     if (o.code === '8462-4') vitals.systolic_bp = o.value_quantity_value;
     if (o.code === '8480-6') vitals.diastolic_bp = o.value_quantity_value;
@@ -521,19 +548,19 @@ function calculateMedicalAcuityScore(diagnosis: string | null): number {
   return diagnosis.toLowerCase().includes('sepsis') ? 85 : 50;
 }
 
-function calculateStabilityScore(vitals: any): number {
+function calculateStabilityScore(vitals: VitalsData | null): number {
   if (!vitals) return 50;
   let score = 0;
-  if (vitals.systolic_bp < 90 || vitals.systolic_bp > 180) score += 30;
-  if (vitals.heart_rate < 50 || vitals.heart_rate > 120) score += 25;
-  if (vitals.oxygen_sat < 92) score += 30;
+  if (vitals.systolic_bp && (vitals.systolic_bp < 90 || vitals.systolic_bp > 180)) score += 30;
+  if (vitals.heart_rate && (vitals.heart_rate < 50 || vitals.heart_rate > 120)) score += 25;
+  if (vitals.oxygen_sat && vitals.oxygen_sat < 92) score += 30;
   return Math.min(score, 100);
 }
 
-async function calculateEarlyWarningScoreFromVitals(vitals: any): Promise<number> {
+async function calculateEarlyWarningScoreFromVitals(vitals: VitalsData): Promise<number> {
   const input: EarlyWarningScoreInput = {
-    systolic_bp: vitals.systolic_bp,
-    heart_rate: vitals.heart_rate,
+    systolic_bp: vitals.systolic_bp ?? 0,
+    heart_rate: vitals.heart_rate ?? 0,
     respiratory_rate: vitals.respiratory_rate || 16,
     temperature: vitals.temperature || 37,
     oxygen_sat: vitals.oxygen_sat || 98,
@@ -551,7 +578,7 @@ function calculateEventRiskScore(events: ShiftHandoffEvent[]): number {
   return Math.min(100, critical * 40 + major * 20);
 }
 
-function buildClinicalSnapshot(v: any, e: ShiftHandoffEvent[], d: string | null) {
+function buildClinicalSnapshot(v: VitalsData | null, e: ShiftHandoffEvent[], d: string | null) {
   return {
     bp: v?.systolic_bp ? `${v.systolic_bp}/${v.diastolic_bp}` : 'N/A',
     o2_sat: v?.oxygen_sat || null,
@@ -561,12 +588,12 @@ function buildClinicalSnapshot(v: any, e: ShiftHandoffEvent[], d: string | null)
 }
 
 function identifyRiskFactors(
-  vitals: any,
+  vitals: VitalsData | null,
   events: ShiftHandoffEvent[],
   diagnosis: string | null
 ): string[] {
   const f: string[] = [];
-  if (vitals?.oxygen_sat < 92) f.push('hypoxia');
+  if (vitals?.oxygen_sat && vitals.oxygen_sat < 92) f.push('hypoxia');
   if (events.some(e => e.event_type === 'fall')) f.push('fall_risk');
   if (diagnosis?.toLowerCase().includes('sepsis')) f.push('sepsis_risk');
   return f;

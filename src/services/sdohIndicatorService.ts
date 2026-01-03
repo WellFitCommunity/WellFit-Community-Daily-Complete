@@ -28,6 +28,66 @@ import type {
   calculateComplexityTier
 } from '../types/sdohIndicators';
 
+/** SDOH observation record from database */
+interface SDOHObservationRecord {
+  id: string;
+  patient_id: string;
+  category: string;
+  risk_level?: SDOHRiskLevel;
+  effective_datetime?: string;
+  performer_id?: string;
+  next_assessment_date?: string;
+  z_codes?: string[];
+  loinc_code?: string;
+  snomed_code?: string;
+  value_text?: string;
+  interpretation?: string;
+  notes?: string;
+  health_impact?: 'none' | 'minimal' | 'moderate' | 'significant' | 'severe';
+  priority_level?: number;
+  status?: string;
+  intervention_provided?: boolean;
+  referral_made?: boolean;
+}
+
+/** Database update structure for SDOH observations */
+interface SDOHDbUpdates {
+  risk_level?: string;
+  notes?: string;
+  health_impact?: string;
+  priority_level?: number;
+  next_assessment_date?: string;
+  z_codes?: string[];
+  loinc_code?: string;
+  snomed_code?: string;
+  updated_at: string;
+  status?: string;
+  intervention_provided?: boolean;
+  referral_made?: boolean;
+}
+
+/** SDOH referral row from database */
+interface SDOHReferralRow {
+  id: string;
+  service: string;
+  organization: string;
+  contact_info?: string;
+  date_referred: string;
+  status: 'pending' | 'completed' | 'declined' | 'no-show';
+  follow_up_date?: string;
+  notes?: string;
+}
+
+/** SDOH resource row from database */
+interface SDOHResourceRow {
+  id: string;
+  type: 'information' | 'material' | 'financial' | 'service';
+  name: string;
+  description?: string;
+  date_provided: string;
+  provided_by?: string;
+}
+
 /**
  * SDOH Indicator Service
  */
@@ -43,7 +103,7 @@ export const SDOHIndicatorService = {
       const observations = await SDOHService.getAll(patientId);
 
       // Transform database records to SDOHFactor format
-      const factors: SDOHFactor[] = observations.map((obs: any) => ({
+      const factors: SDOHFactor[] = observations.map((obs: SDOHObservationRecord) => ({
         category: obs.category as SDOHCategory,
         riskLevel: obs.risk_level as SDOHRiskLevel || 'unknown',
         interventionStatus: this.mapInterventionStatus(obs),
@@ -115,7 +175,7 @@ export const SDOHIndicatorService = {
       }
 
       // Map SDOHFactor updates to database format
-      const dbUpdates: any = {
+      const dbUpdates: SDOHDbUpdates = {
         risk_level: updates.riskLevel,
         notes: updates.notes,
         health_impact: updates.impactOnHealth,
@@ -315,7 +375,7 @@ export const SDOHIndicatorService = {
 
       if (error) throw error;
 
-      return (data || []).map((ref: any) => ({
+      return (data || []).map((ref: SDOHReferralRow) => ({
         id: ref.id,
         service: ref.service,
         organization: ref.organization,
@@ -347,7 +407,7 @@ export const SDOHIndicatorService = {
 
       if (error) throw error;
 
-      return (data || []).map((res: any) => ({
+      return (data || []).map((res: SDOHResourceRow) => ({
         id: res.id,
         type: res.type,
         name: res.name,
@@ -407,7 +467,7 @@ export const SDOHIndicatorService = {
   /**
    * Map database fields to intervention status
    */
-  mapInterventionStatus(obs: any): SDOHInterventionStatus {
+  mapInterventionStatus(obs: SDOHObservationRecord): SDOHInterventionStatus {
     if (!obs.status || obs.status === 'preliminary') return 'not-assessed';
     if (obs.status === 'cancelled') return 'declined';
 
@@ -422,8 +482,8 @@ export const SDOHIndicatorService = {
   /**
    * Map intervention status to database fields
    */
-  mapInterventionStatusToDb(status: SDOHInterventionStatus): any {
-    const mapping = {
+  mapInterventionStatusToDb(status: SDOHInterventionStatus): Pick<SDOHDbUpdates, 'status' | 'intervention_provided' | 'referral_made'> {
+    const mapping: Record<SDOHInterventionStatus, Pick<SDOHDbUpdates, 'status' | 'intervention_provided' | 'referral_made'>> = {
       'not-assessed': { status: 'preliminary', intervention_provided: false, referral_made: false },
       'identified': { status: 'final', intervention_provided: false, referral_made: false },
       'referral-made': { status: 'final', intervention_provided: false, referral_made: true },
@@ -438,8 +498,10 @@ export const SDOHIndicatorService = {
   /**
    * Calculate priority level from risk level
    */
-  calculatePriorityFromRisk(riskLevel: string): number {
-    const priorityMap: Record<string, number> = {
+  calculatePriorityFromRisk(riskLevel: SDOHRiskLevel | undefined): number {
+    if (!riskLevel) return 1;
+
+    const priorityMap: Record<SDOHRiskLevel, number> = {
       'critical': 5,
       'high': 4,
       'moderate': 3,

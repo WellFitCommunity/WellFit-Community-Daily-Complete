@@ -14,6 +14,27 @@
 
 import { supabase } from '../lib/supabaseClient';
 
+/** FHIR condition record from database */
+interface FHIRConditionRecord {
+  code?: {
+    coding?: Array<{ code?: string; display?: string }>;
+  };
+  clinical_status: string;
+}
+
+/** FHIR medication request record from database */
+interface FHIRMedicationRequestRecord {
+  medication_codeable_concept?: {
+    coding?: Array<{ display?: string }>;
+  };
+  dosage_instruction?: Array<{
+    dose_and_rate?: Array<{
+      dose_quantity?: { value?: string };
+    }>;
+    timing?: { code?: { text?: string } };
+  }>;
+}
+
 export interface SOAPNoteComponents {
   subjective: string;
   objective: string;
@@ -347,7 +368,7 @@ export async function fetchClinicalDataForEncounter(
     .order('recorded_date', { ascending: false })
     .limit(10);
 
-  const diagnoses = diagnosesData?.map((d: any) => ({
+  const diagnoses = diagnosesData?.map((d: FHIRConditionRecord) => ({
     code: d.code?.coding?.[0]?.code || '',
     display: d.code?.coding?.[0]?.display || '',
     clinical_status: d.clinical_status
@@ -362,7 +383,7 @@ export async function fetchClinicalDataForEncounter(
     .order('authored_on', { ascending: false })
     .limit(10);
 
-  const medications = medsData?.map((m: any) => ({
+  const medications = medsData?.map((m: FHIRMedicationRequestRecord) => ({
     medication_name: m.medication_codeable_concept?.coding?.[0]?.display || '',
     dosage: m.dosage_instruction?.[0]?.dose_and_rate?.[0]?.dose_quantity?.value || '',
     frequency: m.dosage_instruction?.[0]?.timing?.code?.text || ''
