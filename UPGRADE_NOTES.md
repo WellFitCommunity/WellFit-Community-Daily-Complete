@@ -36,33 +36,19 @@
 | Package | Version | Status |
 |---------|---------|--------|
 | `@anthropic-ai/sdk` | 0.71.2 | ✅ Latest |
-| `@supabase/supabase-js` | 2.88.0 | 🔄 2.89.0 available |
+| `@supabase/supabase-js` | 2.89.0 | ✅ Latest |
 | `react` | 19.2.0 | ✅ Latest |
 | `react-dom` | 19.2.0 | ✅ Latest |
 | `react-router-dom` | 7.11.0 | ✅ Latest |
+| `react-hook-form` | 7.69.0 | ✅ Latest |
 | `typescript` | 5.6.3 | ✅ Latest |
 | `tailwindcss` | 4.1.18 | ✅ Latest |
 | `vite` | 6.0.7 | ✅ Latest |
-
----
-
-## Safe Updates Available (Non-Breaking)
-
-These can be applied with minimal risk:
-
-```bash
-npm update @supabase/supabase-js supabase lucide-react react-hook-form twilio nodemailer libphonenumber-js
-```
-
-| Package | Current | Available |
-|---------|---------|-----------|
-| `@supabase/supabase-js` | 2.88.0 | 2.89.0 |
-| `supabase` (CLI) | 2.67.2 | 2.70.5 |
-| `lucide-react` | 0.544.0 | 0.562.0 |
-| `react-hook-form` | 7.68.0 | 7.69.0 |
-| `twilio` | 5.10.7 | 5.11.1 |
-| `nodemailer` | 7.0.11 | 7.0.12 |
-| `libphonenumber-js` | 1.12.31 | 1.12.33 |
+| `supabase` (CLI) | 2.70.5 | ✅ Latest |
+| `twilio` | 5.11.1 | ✅ Latest |
+| `nodemailer` | 7.0.12 | ✅ Latest |
+| `libphonenumber-js` | 1.12.33 | ✅ Latest |
+| `lucide-react` | 0.544.0 | 🔄 0.562.0 available |
 
 ---
 
