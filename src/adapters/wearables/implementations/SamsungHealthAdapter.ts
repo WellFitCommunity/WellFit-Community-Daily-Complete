@@ -27,6 +27,35 @@ interface SamsungHealthConfig extends WearableAdapterConfig {
   // Samsung-specific config
 }
 
+/** API response types for Samsung Health endpoints */
+interface SamsungActivityRecord {
+  date: string;
+  step_count: number;
+  distance?: number;
+  calories?: number;
+  active_time?: number;
+  step_goal?: number;
+}
+
+interface SamsungSleepSession {
+  start_time: number;
+  end_time: number;
+  stages?: {
+    deep: number;
+    light: number;
+    rem: number;
+    awake: number;
+  };
+}
+
+interface SamsungDevice {
+  device_id: string;
+  device_name: string;
+  model: string;
+  last_sync_time: string;
+  battery_level?: number;
+}
+
 export class SamsungHealthAdapter implements WearableAdapter {
   metadata: WearableAdapterMetadata = {
     id: 'samsung-health',
@@ -85,12 +114,12 @@ export class SamsungHealthAdapter implements WearableAdapter {
     this.status = 'disconnected';
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
       const response = await this.makeRequest('/users/profile', 'GET');
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { user_id?: string; connected_devices?: unknown[] };
         return {
           success: true,
           message: 'Connection successful',
@@ -106,10 +135,11 @@ export class SamsungHealthAdapter implements WearableAdapter {
         success: false,
         message: `Connection test failed: ${response.status} ${response.statusText}`,
       };
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection test failed';
       return {
         success: false,
-        message: error.message || 'Connection test failed',
+        message,
       };
     }
   }
@@ -230,7 +260,7 @@ export class SamsungHealthAdapter implements WearableAdapter {
 
           for (const sample of samples) {
             vitals.push({
-              type: type as any,
+              type: type as 'heart_rate' | 'blood_pressure' | 'spo2' | 'temperature' | 'respiratory_rate',
               value: sample.value,
               unit: sample.unit,
               timestamp: new Date(sample.timestamp),
@@ -269,7 +299,7 @@ export class SamsungHealthAdapter implements WearableAdapter {
     const data = await response.json();
     const activities = data.data || [];
 
-    return activities.map((activity: any) => ({
+    return activities.map((activity: SamsungActivityRecord) => ({
       date: new Date(activity.date),
       steps: activity.step_count,
       distanceMeters: activity.distance,
@@ -312,7 +342,7 @@ export class SamsungHealthAdapter implements WearableAdapter {
     const data = await response.json();
     const sleepSessions = data.data || [];
 
-    return sleepSessions.map((session: any) => ({
+    return sleepSessions.map((session: SamsungSleepSession) => ({
       date: new Date(session.start_time),
       duration: Math.floor((session.end_time - session.start_time) / 60000),
       stages: session.stages ? {
@@ -340,7 +370,7 @@ export class SamsungHealthAdapter implements WearableAdapter {
     const data = await response.json();
     const devices = data.devices || [];
 
-    return devices.map((device: any) => ({
+    return devices.map((device: SamsungDevice) => ({
       deviceId: device.device_id,
       name: device.device_name,
       model: device.model,
@@ -368,7 +398,7 @@ export class SamsungHealthAdapter implements WearableAdapter {
     return mapping[type] || type;
   }
 
-  private async makeRequest(path: string, method: string, body?: any): Promise<Response> {
+  private async makeRequest(path: string, method: string, body?: Record<string, unknown>): Promise<Response> {
     if (this.tokenExpiry && new Date() >= this.tokenExpiry && this.refreshToken) {
       await this.refreshAccessToken(this.refreshToken);
     }

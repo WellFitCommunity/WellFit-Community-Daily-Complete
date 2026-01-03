@@ -41,7 +41,7 @@ export interface WearableAdapterConfig {
   apiKey?: string;
 
   // SDK fields (for Apple HealthKit, Android Health Connect)
-  sdkConfig?: Record<string, any>;
+  sdkConfig?: Record<string, unknown>;
 
   // Sync configuration
   syncInterval?: number; // milliseconds
@@ -52,7 +52,7 @@ export interface WearableAdapterConfig {
   encryptionEnabled?: boolean;
 
   // Custom options per vendor
-  options?: Record<string, any>;
+  options?: Record<string, unknown>;
 }
 
 export interface WearableVitalData {
@@ -92,7 +92,7 @@ export interface WearableFallEvent {
   };
   userResponded: boolean;
   emergencyContacted: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface WearableECGData {
@@ -101,7 +101,7 @@ export interface WearableECGData {
   heartRate: number;
   waveformData?: number[]; // Raw ECG waveform samples
   duration: number; // seconds
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface WearableGaitData {
@@ -126,7 +126,7 @@ export interface WearableAdapter {
   // Connection Management
   connect(config: WearableAdapterConfig): Promise<void>;
   disconnect(): Promise<void>;
-  test(): Promise<{ success: boolean; message: string; details?: any }>;
+  test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }>;
   getConnectionStatus(): 'connected' | 'disconnected' | 'error';
 
   // OAuth Flow (for devices requiring it)
@@ -283,9 +283,10 @@ export class UniversalWearableRegistry {
 
       // Successfully connected to adapter
       return { success: true, connection: adapter };
-    } catch (error: any) {
+    } catch (err: unknown) {
       // Failed to connect to adapter
-      return { success: false, error: error.message };
+      const message = err instanceof Error ? err.message : 'Connection failed';
+      return { success: false, error: message };
     }
   }
 
@@ -357,10 +358,11 @@ export class UniversalWearableRegistry {
         error: testResult.success ? undefined : testResult.message,
         capabilities
       };
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection test failed';
       return {
         success: false,
-        error: error.message || 'Connection test failed'
+        error: message
       };
     }
   }
@@ -396,8 +398,8 @@ export async function testWearableAdapter(
   }
 
   
-  Object.entries(adapter.metadata.capabilities).forEach(([key, value]) => {
-    
+  Object.entries(adapter.metadata.capabilities).forEach(([_key, _value]) => {
+    // Capability iteration - no logging needed
   });
 
   await wearableRegistry.disconnect('test-connection');

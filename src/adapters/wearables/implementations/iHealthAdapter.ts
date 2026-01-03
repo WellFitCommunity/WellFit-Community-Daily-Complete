@@ -87,12 +87,12 @@ export class iHealthAdapter implements WearableAdapter {
     this.status = 'disconnected';
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: unknown }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
       const response = await this.makeRequest('/user/OpenApiUserInfo.json', 'GET');
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { userid?: string; nickname?: string };
         return {
           success: true,
           message: 'Connection successful',
@@ -107,11 +107,11 @@ export class iHealthAdapter implements WearableAdapter {
         success: false,
         message: `Connection test failed: ${response.status} ${response.statusText}`,
       };
-    } catch (error: unknown) {
-      const err = error as Error;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection test failed';
       return {
         success: false,
-        message: err.message || 'Connection test failed',
+        message,
       };
     }
   }

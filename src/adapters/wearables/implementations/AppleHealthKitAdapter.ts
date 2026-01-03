@@ -34,6 +34,67 @@ interface AppleHealthKitConfig extends WearableAdapterConfig {
   environment?: 'production' | 'sandbox';
 }
 
+/** API response types for Apple HealthKit endpoints */
+interface AppleVitalSample {
+  value: number;
+  unit: string;
+  timestamp: string;
+  metadata?: {
+    context?: string;
+    confidence?: number;
+  };
+  source?: {
+    name?: string;
+  };
+}
+
+interface AppleActivityRecord {
+  date: string;
+  steps: number;
+  distance: number;
+  calories: number;
+  activeMinutes: number;
+  sleepMinutes?: number;
+  goals?: Record<string, unknown>;
+}
+
+interface AppleSleepSession {
+  date: string;
+  duration: number;
+  stages?: {
+    deep: number;
+    light: number;
+    rem: number;
+    awake: number;
+  };
+}
+
+interface AppleFallEvent {
+  timestamp: string;
+  severity?: 'minor' | 'moderate' | 'severe' | 'unknown';
+  location?: { latitude: number; longitude: number };
+  userResponded: boolean;
+  emergencyContacted: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+interface AppleECGReading {
+  timestamp: string;
+  classification: 'sinus_rhythm' | 'afib' | 'high_heart_rate' | 'low_heart_rate' | 'inconclusive';
+  heartRate: number;
+  waveform?: number[];
+  duration: number;
+  metadata?: Record<string, unknown>;
+}
+
+interface AppleDevice {
+  id: string;
+  name: string;
+  model: string;
+  lastSync: string;
+  batteryLevel?: number;
+}
+
 export class AppleHealthKitAdapter implements WearableAdapter {
   metadata: WearableAdapterMetadata = {
     id: 'apple-healthkit',
@@ -108,13 +169,13 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     this.status = 'disconnected';
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
       // Test by fetching user profile
       const response = await this.makeRequest('/user/profile', 'GET');
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { id?: string; devices?: unknown[] };
         return {
           success: true,
           message: 'Connection successful',
@@ -130,10 +191,11 @@ export class AppleHealthKitAdapter implements WearableAdapter {
         success: false,
         message: `Connection test failed: ${response.status} ${response.statusText}`,
       };
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection test failed';
       return {
         success: false,
-        message: error.message || 'Connection test failed',
+        message,
       };
     }
   }
@@ -276,10 +338,10 @@ export class AppleHealthKitAdapter implements WearableAdapter {
       throw new Error(`Failed to fetch ${type}: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { samples: AppleVitalSample[] };
 
-    return data.samples.map((sample: any) => ({
-      type: type as any,
+    return data.samples.map((sample: AppleVitalSample) => ({
+      type: type as 'heart_rate' | 'blood_pressure' | 'spo2' | 'temperature' | 'respiratory_rate',
       value: sample.value,
       unit: sample.unit,
       timestamp: new Date(sample.timestamp),
@@ -308,9 +370,9 @@ export class AppleHealthKitAdapter implements WearableAdapter {
       throw new Error(`Failed to fetch activity: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { activities: AppleActivityRecord[] };
 
-    return data.activities.map((activity: any) => ({
+    return data.activities.map((activity: AppleActivityRecord) => ({
       date: new Date(activity.date),
       steps: activity.steps,
       distanceMeters: activity.distance,
@@ -349,9 +411,9 @@ export class AppleHealthKitAdapter implements WearableAdapter {
       throw new Error(`Failed to fetch sleep: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { sleepSessions: AppleSleepSession[] };
 
-    return data.sleepSessions.map((session: any) => ({
+    return data.sleepSessions.map((session: AppleSleepSession) => ({
       date: new Date(session.date),
       duration: session.duration,
       stages: session.stages ? {
@@ -380,9 +442,9 @@ export class AppleHealthKitAdapter implements WearableAdapter {
       throw new Error(`Failed to fetch fall detection: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { falls: AppleFallEvent[] };
 
-    return data.falls.map((fall: any) => ({
+    return data.falls.map((fall: AppleFallEvent) => ({
       timestamp: new Date(fall.timestamp),
       severity: fall.severity || 'unknown',
       location: fall.location,
@@ -414,9 +476,9 @@ export class AppleHealthKitAdapter implements WearableAdapter {
       throw new Error(`Failed to fetch ECG: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { ecgReadings: AppleECGReading[] };
 
-    return data.ecgReadings.map((reading: any) => ({
+    return data.ecgReadings.map((reading: AppleECGReading) => ({
       timestamp: new Date(reading.timestamp),
       classification: reading.classification,
       heartRate: reading.heartRate,
@@ -439,9 +501,9 @@ export class AppleHealthKitAdapter implements WearableAdapter {
       throw new Error(`Failed to fetch devices: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { devices: AppleDevice[] };
 
-    return data.devices.map((device: any) => ({
+    return data.devices.map((device: AppleDevice) => ({
       deviceId: device.id,
       name: device.name,
       model: device.model,
@@ -471,7 +533,7 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     return mapping[type] || type;
   }
 
-  private async makeRequest(path: string, method: string, body?: any): Promise<Response> {
+  private async makeRequest(path: string, method: string, body?: Record<string, unknown>): Promise<Response> {
     // Check if token needs refresh
     if (this.tokenExpiry && new Date() >= this.tokenExpiry && this.refreshToken) {
       await this.refreshAccessToken(this.refreshToken);

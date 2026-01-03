@@ -29,6 +29,23 @@ interface GarminConfig extends WearableAdapterConfig {
   oauthTokenSecret?: string;
 }
 
+/** API response types for Garmin endpoints */
+interface GarminDailySummary {
+  calendarDate: string;
+  totalSteps?: number;
+  totalDistanceInMeters?: number;
+  activeKilocalories?: number;
+  moderateIntensityDurationInSeconds?: number;
+  dailyStepGoal?: number;
+  restingHeartRateInBeatsPerMinute?: number;
+  averageRespirationRateInBreathsPerMinute?: number;
+  sleepingSeconds?: number;
+  deepSleepSeconds?: number;
+  lightSleepSeconds?: number;
+  remSleepSeconds?: number;
+  awakeSleepSeconds?: number;
+}
+
 export class GarminAdapter implements WearableAdapter {
   metadata: WearableAdapterMetadata = {
     id: 'garmin',
@@ -76,7 +93,7 @@ export class GarminAdapter implements WearableAdapter {
     this.status = 'disconnected';
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     // Test with a simple ping - no actual network call needed for OAuth-based services
     return {
       success: true,
@@ -88,17 +105,17 @@ export class GarminAdapter implements WearableAdapter {
     return this.status;
   }
 
-  getAuthorizationUrl(scopes: string[]): string {
+  getAuthorizationUrl(_scopes: string[]): string {
     // Garmin uses OAuth 1.0a, not OAuth 2.0
     // Implementation would require request token flow
     throw new Error('Garmin OAuth 1.0a implementation required');
   }
 
-  async handleOAuthCallback(code: string): Promise<{ accessToken: string; refreshToken?: string }> {
+  async handleOAuthCallback(_code: string): Promise<{ accessToken: string; refreshToken?: string }> {
     throw new Error('Garmin uses OAuth 1.0a - use OAuth 1.0a callback handler');
   }
 
-  async refreshAccessToken(refreshToken: string): Promise<string> {
+  async refreshAccessToken(_refreshToken: string): Promise<string> {
     throw new Error('Garmin OAuth 1.0a does not use refresh tokens');
   }
 
@@ -152,7 +169,7 @@ export class GarminAdapter implements WearableAdapter {
   }): Promise<WearableActivityData[]> {
     const summaries = await this.fetchDailySummaries(params.userId, params.startDate, params.endDate);
 
-    return summaries.map((summary: any) => ({
+    return summaries.map((summary: GarminDailySummary) => ({
       date: new Date(summary.calendarDate),
       steps: summary.totalSteps,
       distanceMeters: summary.totalDistanceInMeters,
@@ -183,26 +200,26 @@ export class GarminAdapter implements WearableAdapter {
     const summaries = await this.fetchDailySummaries(params.userId, params.startDate, params.endDate);
 
     return summaries
-      .filter((s: any) => s.sleepingSeconds)
-      .map((summary: any) => ({
+      .filter((s: GarminDailySummary) => s.sleepingSeconds)
+      .map((summary: GarminDailySummary) => ({
         date: new Date(summary.calendarDate),
-        duration: Math.floor(summary.sleepingSeconds / 60),
+        duration: Math.floor((summary.sleepingSeconds ?? 0) / 60),
         stages: summary.deepSleepSeconds ? {
-          deep: Math.floor(summary.deepSleepSeconds / 60),
-          light: Math.floor(summary.lightSleepSeconds / 60),
-          rem: Math.floor(summary.remSleepSeconds / 60),
-          awake: Math.floor(summary.awakeSleepSeconds / 60),
+          deep: Math.floor((summary.deepSleepSeconds ?? 0) / 60),
+          light: Math.floor((summary.lightSleepSeconds ?? 0) / 60),
+          rem: Math.floor((summary.remSleepSeconds ?? 0) / 60),
+          awake: Math.floor((summary.awakeSleepSeconds ?? 0) / 60),
         } : undefined,
       }));
   }
 
-  private async fetchDailySummaries(userId: string, startDate: Date, endDate: Date): Promise<any[]> {
+  private async fetchDailySummaries(_userId: string, startDate: Date, endDate: Date): Promise<GarminDailySummary[]> {
     const uploadStartTime = Math.floor(startDate.getTime() / 1000);
     const uploadEndTime = Math.floor(endDate.getTime() / 1000);
 
     const url = `${this.GARMIN_API_BASE}/dailies?uploadStartTimeInSeconds=${uploadStartTime}&uploadEndTimeInSeconds=${uploadEndTime}`;
 
-    const response = await this.makeOAuthRequest(url, 'GET', userId);
+    const response = await this.makeOAuthRequest(url, 'GET', _userId);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch daily summaries: ${response.statusText}`);

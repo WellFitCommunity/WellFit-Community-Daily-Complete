@@ -28,6 +28,44 @@ interface WithingsConfig extends WearableAdapterConfig {
   // Withings-specific config
 }
 
+/** API response types for Withings endpoints */
+interface WithingsMeasure {
+  type: number;
+  value: number;
+  unit: number;
+}
+
+interface WithingsMeasureGroup {
+  date: number;
+  measures: WithingsMeasure[];
+}
+
+interface WithingsActivityRecord {
+  date: string;
+  steps?: number;
+  distance?: number;
+  calories?: number;
+  intense?: number;
+}
+
+interface WithingsSleepSummary {
+  startdate: number;
+  enddate: number;
+  data?: {
+    deepsleepduration?: number;
+    lightsleepduration?: number;
+    remsleepduration?: number;
+    wakeupduration?: number;
+  };
+}
+
+interface WithingsDevice {
+  deviceid: string;
+  model: string;
+  last_session_date: number;
+  battery?: number;
+}
+
 export class WithingsAdapter implements WearableAdapter {
   metadata: WearableAdapterMetadata = {
     id: 'withings',
@@ -88,7 +126,7 @@ export class WithingsAdapter implements WearableAdapter {
     this.status = 'disconnected';
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
       // Test by fetching user devices
       const response = await this.makeRequest('/v2/user', 'POST', {
@@ -96,7 +134,7 @@ export class WithingsAdapter implements WearableAdapter {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { status: number; body?: { devices?: unknown[] } };
 
         if (data.status === 0) {
           return {
@@ -113,10 +151,11 @@ export class WithingsAdapter implements WearableAdapter {
         success: false,
         message: `Connection test failed: ${response.statusText}`,
       };
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection test failed';
       return {
         success: false,
-        message: error.message || 'Connection test failed',
+        message,
       };
     }
   }
@@ -292,8 +331,8 @@ export class WithingsAdapter implements WearableAdapter {
     return vitals;
   }
 
-  private async fetchMeasures(startdate?: number, enddate?: number): Promise<any[]> {
-    const body: any = {
+  private async fetchMeasures(startdate?: number, enddate?: number): Promise<WithingsMeasureGroup[]> {
+    const body: Record<string, string | number> = {
       action: 'getmeas',
       meastypes: '9,10,11,54,71', // BP, HR, SpO2, Temp
     };
@@ -340,7 +379,7 @@ export class WithingsAdapter implements WearableAdapter {
 
     const activities = data.body?.activities || [];
 
-    return activities.map((activity: any) => ({
+    return activities.map((activity: WithingsActivityRecord) => ({
       date: new Date(activity.date),
       steps: activity.steps,
       distanceMeters: activity.distance,
@@ -383,7 +422,7 @@ export class WithingsAdapter implements WearableAdapter {
 
     const sleepSummaries = data.body?.series || [];
 
-    return sleepSummaries.map((sleep: any) => ({
+    return sleepSummaries.map((sleep: WithingsSleepSummary) => ({
       date: new Date(sleep.startdate * 1000),
       duration: Math.floor((sleep.enddate - sleep.startdate) / 60),
       stages: sleep.data ? {
@@ -395,7 +434,7 @@ export class WithingsAdapter implements WearableAdapter {
     }));
   }
 
-  async listConnectedDevices(userId: string): Promise<{
+  async listConnectedDevices(_userId: string): Promise<{
     deviceId: string;
     name: string;
     model: string;
@@ -418,7 +457,7 @@ export class WithingsAdapter implements WearableAdapter {
 
     const devices = data.body?.devices || [];
 
-    return devices.map((device: any) => ({
+    return devices.map((device: WithingsDevice) => ({
       deviceId: device.deviceid,
       name: device.model,
       model: device.model,
@@ -436,7 +475,7 @@ export class WithingsAdapter implements WearableAdapter {
   }
 
   // Helper Methods
-  private async makeRequest(path: string, method: string, body?: any): Promise<Response> {
+  private async makeRequest(path: string, method: string, body?: Record<string, string | number>): Promise<Response> {
     // Check if token needs refresh
     if (this.tokenExpiry && new Date() >= this.tokenExpiry && this.refreshToken) {
       await this.refreshAccessToken(this.refreshToken);
@@ -455,7 +494,12 @@ export class WithingsAdapter implements WearableAdapter {
     };
 
     if (body) {
-      options.body = new URLSearchParams(body);
+      // Convert to string values for URLSearchParams
+      const stringBody: Record<string, string> = {};
+      for (const [key, value] of Object.entries(body)) {
+        stringBody[key] = String(value);
+      }
+      options.body = new URLSearchParams(stringBody);
     }
 
     return await fetch(url, options);

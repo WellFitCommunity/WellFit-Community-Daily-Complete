@@ -29,6 +29,35 @@ interface AmazfitConfig extends WearableAdapterConfig {
   region?: 'global' | 'china'; // Different API endpoints
 }
 
+/** API response types for Amazfit/Zepp endpoints */
+interface AmazfitActivityRecord {
+  date: string;
+  steps: number;
+  distance: number;
+  calories: number;
+  active_time?: number;
+  step_goal?: number;
+}
+
+interface AmazfitSleepSession {
+  start_time: string;
+  duration: number;
+  stages?: {
+    deep: number;
+    light: number;
+    rem: number;
+    awake: number;
+  };
+}
+
+interface AmazfitDevice {
+  device_id: string;
+  device_name: string;
+  model_name: string;
+  last_sync_time: string;
+  battery_level?: number;
+}
+
 export class AmazfitAdapter implements WearableAdapter {
   metadata: WearableAdapterMetadata = {
     id: 'amazfit',
@@ -87,12 +116,12 @@ export class AmazfitAdapter implements WearableAdapter {
     this.status = 'disconnected';
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
       const response = await this.makeRequest('/user/profile', 'GET');
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { user_id?: string; devices?: unknown[] };
         return {
           success: true,
           message: 'Connection successful',
@@ -108,10 +137,11 @@ export class AmazfitAdapter implements WearableAdapter {
         success: false,
         message: `Connection test failed: ${response.status} ${response.statusText}`,
       };
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection test failed';
       return {
         success: false,
-        message: error.message || 'Connection test failed',
+        message,
       };
     }
   }
@@ -297,7 +327,7 @@ export class AmazfitAdapter implements WearableAdapter {
     const data = await response.json();
     const activities = data.data || [];
 
-    return activities.map((activity: any) => ({
+    return activities.map((activity: AmazfitActivityRecord) => ({
       date: new Date(activity.date),
       steps: activity.steps,
       distanceMeters: activity.distance,
@@ -337,7 +367,7 @@ export class AmazfitAdapter implements WearableAdapter {
     const data = await response.json();
     const sleepSessions = data.data || [];
 
-    return sleepSessions.map((session: any) => ({
+    return sleepSessions.map((session: AmazfitSleepSession) => ({
       date: new Date(session.start_time),
       duration: session.duration,
       stages: session.stages ? {
@@ -349,7 +379,7 @@ export class AmazfitAdapter implements WearableAdapter {
     }));
   }
 
-  async listConnectedDevices(userId: string): Promise<{
+  async listConnectedDevices(_userId: string): Promise<{
     deviceId: string;
     name: string;
     model: string;
@@ -365,7 +395,7 @@ export class AmazfitAdapter implements WearableAdapter {
     const data = await response.json();
     const devices = data.devices || [];
 
-    return devices.map((device: any) => ({
+    return devices.map((device: AmazfitDevice) => ({
       deviceId: device.device_id,
       name: device.device_name,
       model: device.model_name,
@@ -382,7 +412,7 @@ export class AmazfitAdapter implements WearableAdapter {
     return this.metadata.capabilities[feature as keyof typeof this.metadata.capabilities] || false;
   }
 
-  private async makeRequest(path: string, method: string, body?: any): Promise<Response> {
+  private async makeRequest(path: string, method: string, body?: Record<string, unknown>): Promise<Response> {
     if (this.tokenExpiry && new Date() >= this.tokenExpiry && this.refreshToken) {
       await this.refreshAccessToken(this.refreshToken);
     }

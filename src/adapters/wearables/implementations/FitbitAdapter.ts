@@ -31,6 +31,19 @@ interface FitbitConfig extends WearableAdapterConfig {
   subscriptionsEnabled?: boolean; // Webhook subscriptions
 }
 
+/** API response types for Fitbit endpoints */
+interface FitbitDistanceRecord {
+  activity: string;
+  distance: number;
+}
+
+interface FitbitDevice {
+  id: string;
+  deviceVersion: string;
+  lastSyncTime: string;
+  batteryLevel: 'High' | 'Medium' | 'Low' | string;
+}
+
 export class FitbitAdapter implements WearableAdapter {
   metadata: WearableAdapterMetadata = {
     id: 'fitbit',
@@ -117,13 +130,13 @@ export class FitbitAdapter implements WearableAdapter {
     this.status = 'disconnected';
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
       // Test by fetching user profile
       const response = await this.makeRequest('/1/user/-/profile.json', 'GET');
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { user: { encodedId: string; displayName?: string; memberSince?: string; devices?: unknown[] } };
         this.userId = data.user.encodedId;
 
         return {
@@ -142,10 +155,11 @@ export class FitbitAdapter implements WearableAdapter {
         success: false,
         message: `Connection test failed: ${response.status} ${response.statusText}`,
       };
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection test failed';
       return {
         success: false,
-        message: error.message || 'Connection test failed',
+        message,
       };
     }
   }
@@ -402,7 +416,7 @@ export class FitbitAdapter implements WearableAdapter {
         activities.push({
           date: new Date(currentDate),
           steps: summary.steps,
-          distanceMeters: summary.distances?.find((d: any) => d.activity === 'total')?.distance * 1000 || 0,
+          distanceMeters: ((summary.distances as FitbitDistanceRecord[] | undefined)?.find((d: FitbitDistanceRecord) => d.activity === 'total')?.distance ?? 0) * 1000,
           caloriesBurned: summary.caloriesOut,
           activeMinutes: summary.fairlyActiveMinutes + summary.veryActiveMinutes,
           metadata: {
@@ -434,7 +448,7 @@ export class FitbitAdapter implements WearableAdapter {
       awake: number;
     };
   }[]> {
-    const sleepData: any[] = [];
+    const sleepData: { date: Date; duration: number; stages?: { deep: number; light: number; rem: number; awake: number } }[] = [];
 
     const dateString = this.formatDate(params.endDate);
     const response = await this.makeRequest(`/1.2/user/-/sleep/date/${dateString}.json`, 'GET');
@@ -463,7 +477,7 @@ export class FitbitAdapter implements WearableAdapter {
     return sleepData;
   }
 
-  async listConnectedDevices(userId: string): Promise<{
+  async listConnectedDevices(_userId: string): Promise<{
     deviceId: string;
     name: string;
     model: string;
@@ -476,9 +490,9 @@ export class FitbitAdapter implements WearableAdapter {
       throw new Error(`Failed to fetch devices: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as FitbitDevice[];
 
-    return data.map((device: any) => ({
+    return data.map((device: FitbitDevice) => ({
       deviceId: device.id,
       name: device.deviceVersion,
       model: device.deviceVersion,
@@ -496,7 +510,7 @@ export class FitbitAdapter implements WearableAdapter {
   }
 
   // Helper Methods
-  private async makeRequest(path: string, method: string, body?: any): Promise<Response> {
+  private async makeRequest(path: string, method: string, body?: Record<string, unknown>): Promise<Response> {
     // Rate limiting check
     this.checkRateLimit();
 
