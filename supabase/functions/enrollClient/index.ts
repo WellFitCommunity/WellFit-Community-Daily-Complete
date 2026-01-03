@@ -42,7 +42,7 @@ const EnrollSchema = z.object({
   test_tag:                   z.string().optional(), // Tag for bulk operations (e.g., "demo-2025")
 });
 
-// ─── Helper: get caller + roles ─────────────────────────────────────────────
+// ─── Helper: get caller + roles + tenant ────────────────────────────────────
 async function getCaller(req: Request) {
   // Check for X-Admin-Token (admin/nurse PIN-based auth)
   const adminToken = req.headers.get("X-Admin-Token");
@@ -55,39 +55,50 @@ async function getCaller(req: Request) {
       .single();
 
     if (sessionError || !session) {
-      return { id: null as string | null, roles: [] as string[] };
+      return { id: null as string | null, roles: [] as string[], tenantId: null as string | null };
     }
 
     // Check if session is expired
     if (new Date(session.expires_at) < new Date()) {
-      return { id: null as string | null, roles: [] as string[] };
+      return { id: null as string | null, roles: [] as string[], tenantId: null as string | null };
     }
 
-    // Return admin/nurse with their role
-    return { id: session.user_id, roles: [session.role] };
+    // Get admin's tenant_id from their profile
+    const { data: adminProfile } = await supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("user_id", session.user_id)
+      .single();
+
+    // Return admin/nurse with their role and tenant
+    return {
+      id: session.user_id,
+      roles: [session.role],
+      tenantId: adminProfile?.tenant_id ?? null
+    };
   }
 
   // Fallback to Bearer token (regular JWT auth)
   const hdr = req.headers.get("Authorization") || "";
   const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : "";
-  if (!token) return { id: null as string | null, roles: [] as string[] };
+  if (!token) return { id: null as string | null, roles: [] as string[], tenantId: null as string | null };
 
   const { data, error } = await supabase.auth.getUser(token);
   const id = data?.user?.id ?? null;
-  if (error || !id) return { id: null, roles: [] };
+  if (error || !id) return { id: null, roles: [], tenantId: null };
 
-  // Check role from profiles table instead of user_roles (simpler and more reliable)
+  // Check role and tenant from profiles table
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, role_code")
+    .select("role, role_code, tenant_id")
     .eq("user_id", id)
     .single();
 
-  if (!profile) return { id, roles: [] };
+  if (!profile) return { id, roles: [], tenantId: null };
 
   // Return role as array for compatibility
   const roles = profile.role ? [profile.role] : [];
-  return { id, roles };
+  return { id, roles, tenantId: profile.tenant_id ?? null };
 }
 
 // ─── Function ────────────────────────────────────────────────────────────────
@@ -104,13 +115,17 @@ serve(async (req: Request) => {
 
   try {
     // 1) AuthZ: must be admin or super_admin
-    const { id: adminId, roles } = await getCaller(req);
+    const { id: adminId, roles, tenantId } = await getCaller(req);
     if (!adminId)
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const isAllowed = roles.includes("admin") || roles.includes("super_admin") || roles.includes("nurse");
     if (!isAllowed)
       return new Response(JSON.stringify({ error: "Insufficient privileges - admin, super_admin, or nurse role required" }), { status: 403, headers: corsHeaders });
+
+    // Require tenant_id for enrollment (patient goes into same tenant as admin)
+    if (!tenantId)
+      return new Response(JSON.stringify({ error: "Admin has no tenant_id - cannot enroll patients" }), { status: 400, headers: corsHeaders });
 
     // 2) Validate input
     const body = await req.json();
@@ -151,15 +166,12 @@ serve(async (req: Request) => {
     }
     const newUserId = ures.user.id;
 
-    // 4) Insert profile with PK == auth.users.id  (CRITICAL)
-    // FIXED 2025-10-03: Changed 'id' to 'user_id' to match schema
-    // FIXED 2025-10-26: Added role_id: 4 (senior) - was defaulting to 1 (admin)
-    // FIXED 2026-01-03: Fixed column names to match actual schema:
-    //   - admin_enrollment_notes → enrollment_notes
-    //   - created_by → enrolled_by
-    //   - Removed authenticated/verified (don't exist in schema)
-    const { error: perr } = await supabase.from("profiles").insert({
-      user_id: newUserId,
+    // 4) Update profile created by handle_new_user trigger
+    // NOTE: The handle_new_user trigger on auth.users auto-creates a basic profile.
+    // We UPDATE it with the full enrollment data instead of INSERT.
+    // FIXED 2026-01-03: Changed from INSERT to UPDATE to avoid duplicate key errors
+    const { error: perr } = await supabase.from("profiles").update({
+      tenant_id: tenantId,  // Patient inherits admin's tenant
       role_id: 4,  // Senior role
       phone,
       first_name,
@@ -169,8 +181,8 @@ serve(async (req: Request) => {
       emergency_contact_name: emergency_contact_name ?? null,
       emergency_contact_phone: emergency_contact_phone ?? null,
       caregiver_email: caregiver_email ?? null,
-      enrollment_notes: notes ?? null,  // ✅ FIXED: Was admin_enrollment_notes
-      enrollment_type: "app",  // ✅ ADDED: Community enrollment (not hospital)
+      enrollment_notes: notes ?? null,
+      enrollment_type: "app",  // Community enrollment (not hospital)
       role: "senior",
       role_code: 4,
       phone_verified: true,
@@ -178,8 +190,8 @@ serve(async (req: Request) => {
       onboarded: false,
       is_test_user: is_test_user ?? false,
       test_tag: test_tag ?? null,
-      enrolled_by: adminId,  // ✅ FIXED: Was created_by
-    });
+      enrolled_by: adminId,
+    }).eq("user_id", newUserId);
     if (perr) {
       // Cleanup orphan to keep DB consistent
       await supabase.auth.admin.deleteUser(newUserId).catch(() => {});
