@@ -4,7 +4,7 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { AlertSeverity } from '../useRealtimeAlerts';
+import type { AlertSeverity as _AlertSeverity } from '../useRealtimeAlerts';
 
 // Mock the dependencies BEFORE importing the hook
 const mockUseRealtimeSubscription = vi.fn();

@@ -24,7 +24,7 @@ interface UseFHIRIntegrationReturn {
   // Connection operations
   loadConnections: () => Promise<void>;
   createConnection: (data: Omit<FHIRConnection, 'id' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
-  testConnection: (connectionId: string) => Promise<{ success: boolean; message: string; metadata?: any }>;
+  testConnection: (connectionId: string) => Promise<{ success: boolean; message: string; metadata?: Record<string, unknown> }>;
   deleteConnection: (connectionId: string) => Promise<boolean>;
   updateConnectionStatus: (connectionId: string, status: FHIRConnection['status']) => Promise<boolean>;
 
@@ -32,13 +32,13 @@ interface UseFHIRIntegrationReturn {
   syncFromFHIR: (connectionId: string, userIds?: string[]) => Promise<SyncResult | null>;
   syncToFHIR: (connectionId: string, userIds: string[]) => Promise<SyncResult | null>;
   syncBidirectional: (connectionId: string, userIds?: string[]) => Promise<{ pullResult: SyncResult; pushResult: SyncResult } | null>;
-  getSyncHistory: (connectionId: string, limit?: number) => Promise<any[]>;
-  getSyncStats: (connectionId: string, days?: number) => Promise<any>;
+  getSyncHistory: (connectionId: string, limit?: number) => Promise<SyncHistoryEntry[]>;
+  getSyncStats: (connectionId: string, days?: number) => Promise<SyncStats | null>;
 
   // Patient mapping
   createPatientMapping: (communityUserId: string, fhirPatientId: string, connectionId: string) => Promise<boolean>;
-  getPatientMapping: (communityUserId: string, connectionId: string) => Promise<any>;
-  getAllPatientMappings: (connectionId: string) => Promise<any[]>;
+  getPatientMapping: (communityUserId: string, connectionId: string) => Promise<PatientMapping | null>;
+  getAllPatientMappings: (connectionId: string) => Promise<PatientMapping[]>;
   deletePatientMapping: (communityUserId: string, connectionId: string) => Promise<boolean>;
 
   // Auto-sync
@@ -46,7 +46,7 @@ interface UseFHIRIntegrationReturn {
   stopAutoSync: (connectionId: string) => Promise<boolean>;
 
   // Analytics
-  getComplianceMetrics: () => Promise<any>;
+  getComplianceMetrics: () => Promise<ComplianceMetrics | null>;
 }
 
 interface SyncProgress {
@@ -56,6 +56,43 @@ interface SyncProgress {
   message: string;
   recordsProcessed?: number;
   recordsTotal?: number;
+}
+
+interface SyncHistoryEntry {
+  id: string;
+  connectionId: string;
+  direction: 'pull' | 'push' | 'bidirectional';
+  status: 'completed' | 'failed' | 'partial';
+  recordsSynced: number;
+  recordsFailed: number;
+  startedAt: string;
+  completedAt: string;
+  errors?: string[];
+}
+
+interface SyncStats {
+  totalSyncs: number;
+  successfulSyncs: number;
+  failedSyncs: number;
+  recordsSynced: number;
+  lastSyncAt: string | null;
+  averageDuration: number;
+}
+
+interface PatientMapping {
+  communityUserId: string;
+  fhirPatientId: string;
+  connectionId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ComplianceMetrics {
+  overallScore: number;
+  dataIntegrity: number;
+  syncReliability: number;
+  errorRate: number;
+  lastAssessedAt: string;
 }
 
 // ============================================================================

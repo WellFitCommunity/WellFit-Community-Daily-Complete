@@ -43,8 +43,9 @@ export const useRealtimeCoding = (encounterId?: string) => {
         if (fetchError) throw fetchError;
 
         setRecommendations(data || []);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch coding recommendations');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch coding recommendations';
+        setError(message);
 
       } finally {
         setLoading(false);

@@ -114,7 +114,7 @@ const ALERT_SOUNDS = {
 // Simple beep fallback using Web Audio API
 const playBeep = (frequency: number, duration: number, volume: number = 0.5) => {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 

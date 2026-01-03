@@ -597,7 +597,7 @@ export function useCreateAllergy() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (allergy: any) => {
+    mutationFn: async (allergy: Record<string, unknown>) => {
       const data = await AllergyIntoleranceService.create(allergy);
       return data;
     },

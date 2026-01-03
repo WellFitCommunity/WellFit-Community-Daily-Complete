@@ -51,7 +51,7 @@ interface UsePassiveSDOHDetectionOptions {
  */
 export function usePassiveSDOHDetection(options: UsePassiveSDOHDetectionOptions = {}) {
   const {
-    autoDetect = true,
+    autoDetect: _autoDetect = true,
     onDetectionsFound,
     onError
   } = options;

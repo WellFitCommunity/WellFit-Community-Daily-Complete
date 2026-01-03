@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-interface UseFormDraftRecoveryOptions<T> {
+interface UseFormDraftRecoveryOptions<_T = unknown> {
   key: string;
   debounceMs?: number;
   enabled?: boolean;

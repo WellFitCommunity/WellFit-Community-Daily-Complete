@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BillingService } from '../services/billingService';
 import { queryKeys, cacheTime } from '../lib/queryClient';
 import type {
+  BatchStatus,
   ClaimLine,
   ClaimStatus,
   CodingSuggestion,
@@ -417,7 +418,7 @@ export function useUpdateBatchStatus() {
 
   return useMutation({
     mutationFn: ({ batchId, status }: { batchId: string; status: string }) =>
-      BillingService.updateBatchStatus(batchId, status as any),
+      BillingService.updateBatchStatus(batchId, status as BatchStatus),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [...queryKeys.billing.all, 'batch', variables.batchId] });
     },

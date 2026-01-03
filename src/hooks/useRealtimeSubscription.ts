@@ -45,7 +45,7 @@ import { errorReporter } from '../services/errorReporter';
 // TYPES
 // ============================================================================
 
-export interface RealtimeSubscriptionOptions<T = any> {
+export interface RealtimeSubscriptionOptions<T = unknown> {
   /** Table to subscribe to */
   table: string;
 

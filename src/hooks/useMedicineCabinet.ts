@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import medicationAPI, { Medication, MedicationReminder, ApiResponse } from '../api/medications';
+import medicationAPI, { Medication, MedicationReminder } from '../api/medications';
 import { LabelExtractionResult, MedicationInfo } from '../services/medicationLabelReader';
 import { PsychMedAlert } from '../services/psychMedClassifier';
 

@@ -213,7 +213,7 @@ export function usePresence(options: UsePresenceOptions): UsePresenceReturn {
     });
 
     // Handle user join
-    channel.on('presence', { event: 'join' }, ({ key: joinKey, newPresences }) => {
+    channel.on('presence', { event: 'join' }, ({ key: _joinKey, newPresences }) => {
       if (!mountedRef.current) return;
 
       auditLogger.debug('PRESENCE_USER_JOINED', {

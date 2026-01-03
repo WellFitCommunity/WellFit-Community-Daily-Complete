@@ -1,4 +1,4 @@
-import { type Mock } from 'vitest';
+import type { Mock as _Mock } from 'vitest';
 /**
  * useVoiceCommand Hook Test Suite
  *
