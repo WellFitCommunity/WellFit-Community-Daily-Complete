@@ -1,9 +1,16 @@
 // src/index.tsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 import './index.css';
-import App from './App';
+
+// Data Router
+import { createAppRouter } from './routes/createAppRouter';
+
+// React Query
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from './lib/queryClient';
 
 // Toasts
 import { ToastContainer, toast } from 'react-toastify';
@@ -113,21 +120,20 @@ if (!rootElement) {
 }
 const root = createRoot(rootElement);
 
+// Create the data router instance
+// This must be done outside of the render to avoid recreating on every render
+const router = createAppRouter();
+
 root.render(
   <React.StrictMode>
     <LanguageProvider>
       <AuthProvider>
         <AdminAuthProvider>
-          <HashRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <ErrorBoundary>
-              <DemoModeBridge>
-                <App />
-                {/* Global toast container (if you already mount one inside App, remove this to avoid duplicates) */}
+          <DemoModeBridge>
+            <QueryClientProvider client={queryClient}>
+              <ErrorBoundary>
+                <RouterProvider router={router} />
+                {/* Global toast container */}
                 <ToastContainer
                   containerId="root-toaster"
                   position="bottom-center"
@@ -138,9 +144,13 @@ root.render(
                   limit={2}
                   autoClose={4000}
                 />
-              </DemoModeBridge>
-            </ErrorBoundary>
-          </HashRouter>
+              </ErrorBoundary>
+              {/* React Query DevTools - Only visible in development */}
+              {import.meta.env.MODE === 'development' && (
+                <ReactQueryDevtools initialIsOpen={false} />
+              )}
+            </QueryClientProvider>
+          </DemoModeBridge>
         </AdminAuthProvider>
       </AuthProvider>
     </LanguageProvider>

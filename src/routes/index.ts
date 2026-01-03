@@ -3,6 +3,8 @@
 
 export { AppProviders } from './AppProviders';
 export { RouteRenderer } from './RouteRenderer';
+export { RootLayout } from './RootLayout';
+export { createAppRouter, ROUTER_FUTURE_CONFIG } from './createAppRouter';
 export * from './routeConfig';
 export * from './lazyComponents';
 
