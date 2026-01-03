@@ -201,6 +201,69 @@
 
 ---
 
+## Intelligent Learning Loop Status
+
+### Current State (January 2026)
+
+**Infrastructure Built:**
+- ✅ `accuracyTrackingService.ts` - Complete prediction recording, outcome tracking, A/B testing
+- ✅ Database tables: `ai_predictions`, `ai_prompt_versions`, `ai_prompt_experiments`, `billing_code_accuracy`, `sdoh_detection_accuracy`
+- ✅ Prompt version management with activation/deactivation
+- ✅ Statistical significance testing for experiments (two-proportion z-test)
+
+**Gap Identified:**
+- ❌ **Skills NOT integrated** with `accuracyTrackingService`
+- ❌ AI skills do not call `recordPrediction()` after making predictions
+- ❌ No feedback mechanism connecting outcomes back to skill improvement
+- ❌ Prompt optimization based on accuracy data not implemented
+
+### Integration Required
+
+Each AI skill needs to integrate with `accuracyTrackingService`:
+
+```typescript
+// Example integration pattern for any AI skill:
+import { createAccuracyTrackingService } from './accuracyTrackingService';
+
+// After making a prediction:
+const trackingResult = await accuracyService.recordPrediction({
+  tenantId,
+  skillName: 'billing_code_suggester',  // Unique skill identifier
+  predictionType: 'code',
+  predictionValue: { codes: suggestedCodes },
+  confidence: avgConfidence,
+  patientId,
+  model: 'claude-haiku-4-5-20250929',
+  inputTokens,
+  outputTokens,
+  costUsd,
+  latencyMs
+});
+
+// When outcome is known (e.g., provider review):
+await accuracyService.recordOutcome({
+  predictionId: trackingResult.data,
+  actualOutcome: { acceptedCodes, rejectedCodes },
+  isAccurate: acceptanceRate >= 0.70,
+  outcomeSource: 'provider_review'
+});
+```
+
+### Services Missing Tests (January 2026)
+
+| Service | Status | Priority |
+|---------|--------|----------|
+| `ccmEligibilityScorer.ts` | ✅ Tests added (120+ tests) | High |
+| `culturalHealthCoach.ts` | ✅ Tests added (85+ tests) | High |
+| `emergencyAccessIntelligence.ts` | ✅ Tests added (90+ tests) | High |
+| `handoffRiskSynthesizer.ts` | ✅ Tests added (75+ tests) | Medium |
+| `sdohPassiveDetector.ts` | ✅ Tests added (85+ tests) | High |
+| `welfareCheckDispatcher.ts` | ✅ Tests added (85+ tests) | High |
+
+**All 6 missing test suites created: January 3, 2026**
+
+---
+
 ## Implementation Queue
 
 ### Current Sprint
