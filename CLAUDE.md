@@ -532,6 +532,248 @@ async function getData(id: string): Promise<ServiceResult<Data>> {
 
 ---
 
+## AI Services Standards
+
+This codebase contains **40+ AI-powered services** using Claude. All AI services must follow these patterns.
+
+### Skill Registration
+All AI services must be registered in the `ai_skills` database table:
+
+| Field | Purpose |
+|-------|---------|
+| `skill_key` | Unique identifier (e.g., `care_team_chat_summarizer`) |
+| `skill_number` | Sequential number for tracking/billing |
+| `description` | What the skill does |
+| `model` | Which Claude model to use |
+| `is_active` | Whether skill is enabled |
+
+### AI Service Pattern
+```typescript
+import { auditLogger } from '../auditLogger';
+import { ServiceResult, success, failure } from './_base';
+
+export async function analyzePatientRisk(
+  input: PatientRiskInput
+): Promise<ServiceResult<RiskAnalysis>> {
+  // 1. Log AI operation start
+  await auditLogger.ai('AI_RISK_ANALYSIS_START', {
+    patientId: input.patientId,
+    skillKey: 'risk_analyzer'
+  });
+
+  try {
+    // 2. Call AI service
+    const result = await callClaudeAPI(input);
+
+    // 3. Log success
+    await auditLogger.ai('AI_RISK_ANALYSIS_COMPLETE', {
+      patientId: input.patientId,
+      riskLevel: result.riskLevel
+    });
+
+    return success(result);
+  } catch (err: unknown) {
+    // 4. Log failure with auditLogger (never console.log)
+    await auditLogger.error('AI_RISK_ANALYSIS_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { patientId: input.patientId }
+    );
+    return failure('AI_ERROR', 'Risk analysis failed');
+  }
+}
+```
+
+### AI Cost Tracking
+- All AI calls are tracked for billing purposes
+- Use `/cost-check` skill to analyze AI spending
+- Monitor token usage in production
+
+---
+
+## Error Handling Pattern - REQUIRED
+
+**All error handling MUST follow this pattern:**
+
+```typescript
+try {
+  // operation
+} catch (err: unknown) {
+  await auditLogger.error('OPERATION_FAILED',
+    err instanceof Error ? err : new Error(String(err)),
+    { context: 'relevant data here' }
+  );
+  return failure('OPERATION_FAILED', 'User-friendly message');
+}
+```
+
+### Rules
+| Do This | Not This |
+|---------|----------|
+| `catch (err: unknown)` | `catch (err: any)` |
+| `err instanceof Error ? err : new Error(String(err))` | `err as Error` |
+| `auditLogger.error(...)` | `console.error(...)` |
+| Return `failure()` result | Throw exceptions |
+
+### Never
+- `catch (err: any)` - always use `unknown`
+- `catch (err)` without type annotation
+- Swallow errors silently
+- Use `console.log/error/warn` for error logging
+
+---
+
+## Accessibility (a11y) Standards - REQUIRED
+
+**Target users include seniors with vision/motor impairments. Accessibility is not optional.**
+
+### WCAG Compliance Requirements
+
+| Requirement | Standard | Reason |
+|-------------|----------|--------|
+| Font size | Minimum 16px, prefer 18px+ | Senior vision |
+| Touch targets | Minimum 44x44px | Motor impairments |
+| Color contrast | WCAG AA (4.5:1 minimum) | Low vision |
+| Focus indicators | Visible on all interactive elements | Keyboard navigation |
+| Alt text | All images must have descriptive alt text | Screen readers |
+
+### Senior-Friendly UI Rules
+- **Large, clear buttons** - Easy to tap/click
+- **High contrast text** - Dark text on light backgrounds
+- **Simple navigation** - Minimal nesting, clear labels
+- **Readable fonts** - Sans-serif, adequate line height
+- **Voice command support** - Where possible
+- **Error messages** - Clear, non-technical language
+
+### Testing Accessibility
+```bash
+# Run accessibility audit
+npx lighthouse --only-categories=accessibility <url>
+```
+
+### Common Patterns
+```tsx
+// ✅ GOOD - Large touch target, clear label
+<button className="min-h-[44px] min-w-[44px] text-lg font-medium">
+  Check In
+</button>
+
+// ❌ BAD - Too small, unclear
+<button className="text-xs p-1">
+  <Icon />
+</button>
+```
+
+---
+
+## Component File Structure
+
+### Standard Component Layout
+```
+src/components/feature-name/
+├── FeatureName.tsx           # Main component
+├── FeatureName.types.ts      # TypeScript interfaces (if complex)
+├── __tests__/
+│   └── FeatureName.test.tsx  # Tests (REQUIRED)
+└── index.ts                  # Barrel export (optional)
+```
+
+### Naming Conventions
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Components | PascalCase | `PatientDashboard.tsx` |
+| Hooks | camelCase with `use` prefix | `usePatientData.ts` |
+| Services | camelCase with `Service` suffix | `patientService.ts` |
+| Types | PascalCase | `PatientTypes.ts` |
+| Tests | Same name + `.test` | `PatientDashboard.test.tsx` |
+| Constants | SCREAMING_SNAKE_CASE | `const MAX_RETRIES = 3` |
+
+### Component Template
+```tsx
+/**
+ * ComponentName - Brief description
+ *
+ * Purpose: What this component does
+ * Used by: Where it's used
+ */
+
+import React from 'react';
+import { ComponentNameProps } from './ComponentName.types';
+
+export const ComponentName: React.FC<ComponentNameProps> = ({
+  prop1,
+  prop2
+}) => {
+  return (
+    <div>
+      {/* Implementation */}
+    </div>
+  );
+};
+
+export default ComponentName;
+```
+
+---
+
+## Performance Guidelines
+
+### Code Splitting
+- Use `React.lazy()` for all route-level components
+- Dynamic imports for heavy libraries
+
+```typescript
+// ✅ GOOD - Lazy loaded route
+const PatientDashboard = React.lazy(() => import('./pages/PatientDashboard'));
+
+// ❌ BAD - Direct import for routes
+import PatientDashboard from './pages/PatientDashboard';
+```
+
+### Image Optimization
+- Use WebP format when possible
+- Always include `loading="lazy"` for below-fold images
+- Specify width/height to prevent layout shift
+
+### Database Performance
+- Always use indexes on frequently queried columns
+- Limit query results: `.limit(100)`
+- Use pagination for large datasets
+- Avoid `SELECT *` - specify needed columns
+
+### List Virtualization
+- Virtualize lists with > 100 items
+- Use `react-window` or similar for long lists
+
+### Bundle Monitoring
+```bash
+# Check bundle size after changes
+npm run build
+# Review dist/ folder sizes
+```
+
+---
+
+## Available Skills
+
+Custom skills available via `/skill-name` commands:
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `/security-scan` | HIPAA compliance check | Before commits, demos, audits |
+| `/demo-ready` | Methodist Hospital demo validation | Before customer demos |
+| `/cost-check` | AI cost analysis | Monthly review, budget planning |
+
+### Running Skills
+```bash
+# In Claude Code CLI
+/security-scan
+/demo-ready
+/cost-check
+```
+
+---
+
 ## Security Requirements
 
 - All authentication must use secure tokens
