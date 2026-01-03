@@ -908,6 +908,6 @@ describe('Cost Calculation', () => {
     const savings = fullCost - totalCost;
 
     expect(savings).toBeGreaterThan(0);
-    expect(savings).toBeCloseTo(2.40, 2); // 65 cached saves $0.04 each = $2.60 - overhead
+    expect(savings).toBeCloseTo(2.60, 2); // 65 cached requests save $0.04 each = $2.60
   });
 });

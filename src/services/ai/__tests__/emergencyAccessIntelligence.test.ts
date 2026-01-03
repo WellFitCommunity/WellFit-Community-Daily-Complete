@@ -126,11 +126,15 @@ const mockEmergencyContacts: EmergencyContact[] = [
   },
 ];
 
+// Use dynamic dates to prevent test expiration
+const mockGeneratedAt = new Date();
+const mockValidUntil = new Date(mockGeneratedAt.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+
 const mockBriefing: EmergencyBriefing = {
   briefingId: validBriefingId,
   seniorId: validSeniorId,
-  generatedAt: '2024-12-01T00:00:00Z',
-  validUntil: '2024-12-08T00:00:00Z',
+  generatedAt: mockGeneratedAt.toISOString(),
+  validUntil: mockValidUntil.toISOString(),
   executiveSummary: '78-year-old female with CHF, diabetes, on walker. High fall risk. DNR: NO. Entry via lockbox at front door.',
   medicalIntelligence: mockMedicalIntelligence,
   accessInformation: mockAccessInformation,
