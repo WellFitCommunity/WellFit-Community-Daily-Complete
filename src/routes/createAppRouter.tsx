@@ -29,18 +29,8 @@ import {
 
 import type { StaffRole } from '../types/roles';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ROUTER FUTURE FLAGS (v7 compatibility)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export const ROUTER_FUTURE_CONFIG = {
-  v7_startTransition: true,
-  v7_relativeSplatPath: true,
-  v7_fetcherPersist: true,
-  v7_normalizeFormMethod: true,
-  v7_partialHydration: true,
-  v7_skipActionErrorRevalidation: true,
-};
+// Note: In React Router v7, the v6 future flags are now the defaults
+// No additional configuration needed
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE WRAPPERS
@@ -240,19 +230,14 @@ const buildRoutes = (): RouteObject[] => {
 export function createAppRouter() {
   const childRoutes = buildRoutes();
 
-  return createHashRouter(
-    [
-      {
-        // Root layout wraps all routes
-        element: <RootLayout />,
-        errorElement: <NotFoundPage />,
-        children: childRoutes,
-      },
-    ],
+  return createHashRouter([
     {
-      future: ROUTER_FUTURE_CONFIG,
-    }
-  );
+      // Root layout wraps all routes
+      element: <RootLayout />,
+      errorElement: <NotFoundPage />,
+      children: childRoutes,
+    },
+  ]);
 }
 
 export default createAppRouter;
