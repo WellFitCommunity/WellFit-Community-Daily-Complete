@@ -279,6 +279,20 @@ export async function testTimingAttackResistance(
 }
 
 // ============================================
+// React Router v7 Future Flags for Tests
+// ============================================
+
+/**
+ * React Router v7 Future Flags
+ * These flags enable v7 behavior in v6.30+ to prepare for migration.
+ * Apply these to all router instances (MemoryRouter, BrowserRouter, HashRouter).
+ */
+export const ROUTER_FUTURE_FLAGS = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+};
+
+// ============================================
 // Global Test Configuration
 // ============================================
 

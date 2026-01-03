@@ -118,7 +118,12 @@ root.render(
     <LanguageProvider>
       <AuthProvider>
         <AdminAuthProvider>
-          <HashRouter>
+          <HashRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
             <ErrorBoundary>
               <DemoModeBridge>
                 <App />

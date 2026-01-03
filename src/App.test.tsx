@@ -8,7 +8,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { TestMemoryRouter } from './test-utils';
 
 // ============================================================================
 // MOCKS - Must be defined before importing App
@@ -159,9 +159,9 @@ const mockedGetCurrentBranding = vi.mocked(getCurrentBranding);
 
 const renderApp = () => {
   return render(
-    <MemoryRouter>
+    <TestMemoryRouter>
       <App />
-    </MemoryRouter>
+    </TestMemoryRouter>
   );
 };
 
