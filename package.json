@@ -67,7 +67,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@types/react-toastify": "^4.0.2",
-    "@vercel/node": "^2.3.0",
+    "@vercel/node": "^5.5.16",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/ui": "^4.0.16",
     "eslint": "^9.39.2",
