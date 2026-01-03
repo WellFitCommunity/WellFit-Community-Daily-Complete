@@ -466,7 +466,7 @@ export interface RecordDBSSessionRequest {
   patient_id: string;
   session_date?: string;
   programmer_name?: string;
-  settings_changed?: Record<string, any>;
+  settings_changed?: Record<string, string | number | boolean | null>;
   battery_status?: string;
   patient_response?: string;
   notes?: string;

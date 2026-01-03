@@ -1,5 +1,5 @@
 // SMART on FHIR Client Library for WellFit
-import { supabase } from './supabaseClient';
+// Note: supabase import reserved for future FHIR data persistence
 
 interface SMARTConfig {
   clientId: string;
@@ -138,7 +138,7 @@ export class SMARTClient {
   }
 
   // Fetch patient data using SMART context
-  async fetchPatientData(accessToken: string, patientId: string): Promise<any> {
+  async fetchPatientData(accessToken: string, patientId: string): Promise<Record<string, unknown>> {
     if (!this.endpoints) {
       await this.discoverEndpoints();
     }

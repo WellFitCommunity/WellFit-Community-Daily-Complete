@@ -39,7 +39,7 @@ const AdminProfileEditor: React.FC = () => {
   const [editingNoteText, setEditingNoteText] = useState('');
 
   // Loading & feedback
-  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+  const [_isLoadingProfiles, setIsLoadingProfiles] = useState(false);
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [isLoadingAddNote, setIsLoadingAddNote] = useState(false);
   const [isLoadingEditNote, setIsLoadingEditNote] = useState(false);

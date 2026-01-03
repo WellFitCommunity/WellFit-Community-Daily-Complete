@@ -141,8 +141,8 @@ export interface PTFunctionalAssessment {
   prior_level_of_function?: string;
   comorbidities?: string[];
   medications_affecting_rehab?: string[];
-  surgical_history?: Record<string, any>;
-  imaging_results?: Record<string, any>;
+  surgical_history?: Record<string, string | number | boolean | null>;
+  imaging_results?: Record<string, string | number | boolean | null>;
   precautions?: string[];
   contraindications?: string[];
 
@@ -157,7 +157,7 @@ export interface PTFunctionalAssessment {
 
   // Patient Goals
   patient_stated_goals?: string[];
-  participation_goals?: Record<string, any>;
+  participation_goals?: Record<string, string | number | boolean | null>;
 
   // Systems Review
   cardiovascular_respiratory_findings?: string;
@@ -169,9 +169,9 @@ export interface PTFunctionalAssessment {
   pain_assessment?: PainAssessment;
   range_of_motion_data?: ROMData[];
   muscle_strength_data?: StrengthData[];
-  sensory_assessment?: Record<string, any>;
-  reflex_testing?: Record<string, any>;
-  special_tests?: Record<string, any>;
+  sensory_assessment?: Record<string, string | number | boolean | null>;
+  reflex_testing?: Record<string, string | number | boolean | null>;
+  special_tests?: Record<string, string | number | boolean | null>;
   posture_analysis?: string;
   gait_analysis?: GaitAnalysis;
   balance_assessment?: BalanceAssessment;
@@ -198,7 +198,7 @@ export interface PTFunctionalAssessment {
   expected_visit_frequency?: string;
 
   // Barriers
-  barriers_to_recovery?: Record<string, any>;
+  barriers_to_recovery?: Record<string, string | number | boolean | null>;
 
   // Clinical Reasoning
   clinical_reasoning?: string;
@@ -305,7 +305,7 @@ export interface PTTreatmentPlan {
   hep_compliance_tracking: boolean;
 
   // Modifications
-  modification_history?: Record<string, any>;
+  modification_history?: Record<string, string | number | boolean | null>;
 
   // Discharge Planning
   discharge_criteria?: DischargeCriteria[];
@@ -313,7 +313,7 @@ export interface PTTreatmentPlan {
 
   // Collaboration
   interdisciplinary_referrals?: string[];
-  physician_communication_log?: Record<string, any>;
+  physician_communication_log?: Record<string, string | number | boolean | null>;
 
   // Metadata
   created_at: string;
@@ -367,8 +367,8 @@ export interface PTTreatmentSession {
   barriers_today?: string[];
 
   // Objective (SOAP)
-  vitals_if_needed?: Record<string, any>;
-  reassessments_today?: Record<string, any>;
+  vitals_if_needed?: Record<string, string | number | boolean | null>;
+  reassessments_today?: Record<string, string | number | boolean | null>;
 
   // Interventions Provided
   interventions_delivered: SessionIntervention[];
@@ -380,7 +380,7 @@ export interface PTTreatmentSession {
 
   // Plan (SOAP)
   plan_for_next_visit: string;
-  plan_modifications?: Record<string, any>;
+  plan_modifications?: Record<string, string | number | boolean | null>;
   goals_updated: boolean;
 
   // Billing
@@ -699,7 +699,7 @@ export interface PTTeamCommunication {
   responded_at?: string;
 
   // Action Items
-  action_items?: Record<string, any>;
+  action_items?: Record<string, string | number | boolean | null>;
 
   // Metadata
   created_at: string;
@@ -735,7 +735,7 @@ export interface PTTelehealthSession {
   technical_issues?: string;
 
   // Clinical Adaptations
-  limitations_due_to_virtual?: Record<string, any>;
+  limitations_due_to_virtual?: Record<string, string | number | boolean | null>;
   adaptations_made?: string[];
 
   // Patient Environment
@@ -861,8 +861,8 @@ export interface CreatePTAssessmentRequest {
   prior_level_of_function?: string;
   comorbidities?: string[];
   medications_affecting_rehab?: string[];
-  surgical_history?: Record<string, any>;
-  imaging_results?: Record<string, any>;
+  surgical_history?: Record<string, string | number | boolean | null>;
+  imaging_results?: Record<string, string | number | boolean | null>;
   precautions?: string[];
   contraindications?: string[];
   living_situation?: LivingSituation;
@@ -873,7 +873,7 @@ export interface CreatePTAssessmentRequest {
   work_demands?: WorkDemands;
   hobbies_recreational_activities?: string[];
   patient_stated_goals?: string[];
-  participation_goals?: Record<string, any>;
+  participation_goals?: Record<string, string | number | boolean | null>;
   cardiovascular_respiratory_findings?: string;
   integumentary_findings?: string;
   musculoskeletal_findings?: string;
@@ -881,9 +881,9 @@ export interface CreatePTAssessmentRequest {
   pain_assessment?: PainAssessment;
   range_of_motion_data?: ROMData[];
   muscle_strength_data?: StrengthData[];
-  sensory_assessment?: Record<string, any>;
-  reflex_testing?: Record<string, any>;
-  special_tests?: Record<string, any>;
+  sensory_assessment?: Record<string, string | number | boolean | null>;
+  reflex_testing?: Record<string, string | number | boolean | null>;
+  special_tests?: Record<string, string | number | boolean | null>;
   posture_analysis?: string;
   gait_analysis?: GaitAnalysis;
   balance_assessment?: BalanceAssessment;
@@ -900,7 +900,7 @@ export interface CreatePTAssessmentRequest {
   prognosis_narrative?: string;
   expected_duration_weeks?: number;
   expected_visit_frequency?: string;
-  barriers_to_recovery?: Record<string, any>;
+  barriers_to_recovery?: Record<string, string | number | boolean | null>;
   clinical_reasoning?: string;
   evidence_based_rationale?: string;
   video_assessment_url?: string;
@@ -945,11 +945,11 @@ export interface RecordTreatmentSessionRequest {
   pain_level_today?: number;
   hep_compliance?: HEPCompliance;
   barriers_today?: string[];
-  vitals_if_needed?: Record<string, any>;
-  reassessments_today?: Record<string, any>;
+  vitals_if_needed?: Record<string, string | number | boolean | null>;
+  reassessments_today?: Record<string, string | number | boolean | null>;
   functional_changes?: string;
   clinical_decision_making?: string;
-  plan_modifications?: Record<string, any>;
+  plan_modifications?: Record<string, string | number | boolean | null>;
   goals_updated?: boolean;
   exercise_videos_shared?: string[];
   educational_materials_provided?: string[];

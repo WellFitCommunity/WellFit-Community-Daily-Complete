@@ -1,14 +1,14 @@
 // Centralized Supabase mock with handler pattern
 // Allows tests to configure behavior per-test using setSupabaseHandler
 
-type SupabaseResponse<T = any> = {
+type SupabaseResponse<T = unknown> = {
   data: T | null;
-  error: any | null;
+  error: Error | null;
 };
 
 type QueryCall = {
   method: string;
-  args: any[];
+  args: unknown[];
 };
 
 type QueryHandler = (table: string, method: string, calls: QueryCall[]) => Promise<SupabaseResponse>;
@@ -20,11 +20,16 @@ export function setSupabaseHandler(fn: QueryHandler) {
   handler = fn;
 }
 
-// Build a mock query builder that supports chaining
-function createQueryBuilder(table: string, method: string, prevCalls: QueryCall[] = []) {
-  const builder: any = {};
+// Query builder type for chaining
+type QueryBuilder = Record<string, (...args: unknown[]) => QueryBuilder> & {
+  then: (onFulfilled: (value: SupabaseResponse) => unknown, onRejected?: (reason: unknown) => unknown) => Promise<unknown>;
+};
 
-  const chain = (nextMethod: string) => (...args: any[]) =>
+// Build a mock query builder that supports chaining
+function createQueryBuilder(table: string, method: string, prevCalls: QueryCall[] = []): QueryBuilder {
+  const builder = {} as QueryBuilder;
+
+  const chain = (nextMethod: string) => (...args: unknown[]) =>
     createQueryBuilder(table, nextMethod, [...prevCalls, { method: nextMethod, args }]);
 
   // Chainable methods
@@ -56,7 +61,7 @@ function createQueryBuilder(table: string, method: string, prevCalls: QueryCall[
   builder.maybeSingle = chain('maybeSingle');
 
   // Finalizer: when awaited, call handler
-  builder.then = (onFulfilled: any, onRejected: any) => {
+  builder.then = (onFulfilled: (value: SupabaseResponse) => unknown, onRejected?: (reason: unknown) => unknown) => {
     const finalMethod = method || 'select';
     const allCalls = prevCalls;
 

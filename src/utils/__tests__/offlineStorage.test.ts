@@ -215,7 +215,7 @@ describe('offlineStorage', () => {
         { id: '3', synced: false, permanentlyFailed: false, attempts: 2, lastAttemptTime: Date.now() - 100 }, // In backoff
       ];
 
-      const MAX_SYNC_ATTEMPTS = 5;
+      const _MAX_SYNC_ATTEMPTS = 5;
       const BASE_BACKOFF_MS = 1000;
 
       const isReadyToRetry = (report: { attempts: number; lastAttemptTime?: number }): boolean => {

@@ -403,7 +403,7 @@ export interface ReadmissionRiskPrediction {
 export interface FeatureContribution {
   featureName: string;
   featureCategory: 'clinical' | 'medication' | 'post_discharge' | 'social' | 'functional';
-  featureValue: any;
+  featureValue: string | number | boolean | null;
   contributionWeight: number; // 0.00 to 1.00
   explanation: string;
   evidenceBase: string; // Citation or clinical guideline

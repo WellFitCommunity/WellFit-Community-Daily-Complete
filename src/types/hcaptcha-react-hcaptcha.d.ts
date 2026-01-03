@@ -1,5 +1,15 @@
 declare module '@hcaptcha/react-hcaptcha' {
   import * as React from 'react';
+
+  export interface HCaptchaRef {
+    execute: (opts?: { async?: boolean }) => Promise<string> | void;
+    reset?: () => void;
+    resetCaptcha?: () => void;
+    getRespKey?: () => string | null;
+    getResponse?: () => string | null;
+    setData?: (data: Record<string, string>) => void;
+  }
+
   export interface HCaptchaProps {
     sitekey: string;
     size?: 'normal' | 'compact' | 'invisible';
@@ -15,8 +25,9 @@ declare module '@hcaptcha/react-hcaptcha' {
     onClose?: () => void;
     onChalExpired?: () => void;
   }
+
   const HCaptcha: React.ForwardRefExoticComponent<
-    HCaptchaProps & React.RefAttributes<any>
+    HCaptchaProps & React.RefAttributes<HCaptchaRef>
   >;
   export default HCaptcha;
 }

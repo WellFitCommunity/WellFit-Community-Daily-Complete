@@ -39,18 +39,18 @@ const AIHelpPage: React.FC = () => {
   const [contextualSuggestions, setContextualSuggestions] = useState<string[]>([]);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const recognition = useRef<any>(null);
+  const recognition = useRef<SpeechRecognition | null>(null);
 
   // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      recognition.current = new SpeechRecognition();
+      const SpeechRecognitionClass = (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition || window.SpeechRecognition;
+      recognition.current = new SpeechRecognitionClass();
       recognition.current.continuous = false;
       recognition.current.interimResults = false;
       recognition.current.lang = 'en-US';
 
-      recognition.current.onresult = (event: any) => {
+      recognition.current.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript;
         setSearchTerm(transcript);
         setIsListening(false);

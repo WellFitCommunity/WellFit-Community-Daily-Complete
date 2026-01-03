@@ -82,7 +82,7 @@ export interface ClinicalSnapshot {
   last_assessment?: string; // "2 hours ago"
   diagnosis?: string; // "Post-stroke, day 3"
   room_number?: string;
-  [key: string]: any; // Allow additional fields
+  [key: string]: string | number | boolean | string[] | undefined; // Allow additional fields
 }
 
 // ============================================================================

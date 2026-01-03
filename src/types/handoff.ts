@@ -152,7 +152,7 @@ export interface HandoffSection {
   id: string;
   handoff_packet_id: string;
   section_type: HandoffSectionType;
-  section_data: Record<string, any>;
+  section_data: Record<string, string | number | boolean | null>;
   created_at: string;
   updated_at: string;
 }
@@ -194,7 +194,7 @@ export interface HandoffLog {
   user_role?: string;
   ip_address?: string;
   user_agent?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean | null>;
   timestamp: string;
 }
 

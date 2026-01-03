@@ -123,7 +123,7 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
   /**
    * Patient/Caregiver model selection - uses Sonnet 3.5 for excellent senior experience
    */
-  private selectPatientModel(requestType: RequestType, complexity: 'simple' | 'moderate' | 'complex'): ClaudeModel {
+  private selectPatientModel(requestType: RequestType, _complexity: 'simple' | 'moderate' | 'complex'): ClaudeModel {
     switch (requestType) {
       case RequestType.HEALTH_QUESTION:
       case RequestType.MEDICATION_GUIDANCE:

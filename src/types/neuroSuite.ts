@@ -354,23 +354,23 @@ export interface NeuroCarePlan {
   actual_end_date?: string;
 
   // Stroke-Specific
-  stroke_prevention_medications?: Record<string, any>;
+  stroke_prevention_medications?: Record<string, string | number | boolean | null>;
   blood_pressure_target?: string;
   cholesterol_target?: string;
   diabetes_management_plan?: string;
   smoking_cessation_plan?: string;
 
   // Dementia-Specific
-  cognitive_stimulation_activities?: Record<string, any>;
-  behavioral_management_strategies?: Record<string, any>;
+  cognitive_stimulation_activities?: Record<string, string | number | boolean | null>;
+  behavioral_management_strategies?: Record<string, string | number | boolean | null>;
   medication_management_plan?: string;
-  safety_interventions?: Record<string, any>;
+  safety_interventions?: Record<string, string | number | boolean | null>;
   advance_directive_status?: string;
   legal_planning_status?: string;
 
   // Goals
-  patient_goals?: Record<string, any>;
-  family_goals?: Record<string, any>;
+  patient_goals?: Record<string, string | number | boolean | null>;
+  family_goals?: Record<string, string | number | boolean | null>;
 
   // Care Team
   neurologist_id?: string;
@@ -379,13 +379,13 @@ export interface NeuroCarePlan {
   social_worker_id?: string;
 
   // Monitoring
-  follow_up_schedule?: Record<string, any>;
-  imaging_schedule?: Record<string, any>;
-  lab_monitoring_schedule?: Record<string, any>;
+  follow_up_schedule?: Record<string, string | number | boolean | null>;
+  imaging_schedule?: Record<string, string | number | boolean | null>;
+  lab_monitoring_schedule?: Record<string, string | number | boolean | null>;
 
   // Education
-  patient_education_completed?: Record<string, any>;
-  caregiver_education_completed?: Record<string, any>;
+  patient_education_completed?: Record<string, string | number | boolean | null>;
+  caregiver_education_completed?: Record<string, string | number | boolean | null>;
 
   // Metadata
   created_by: string;

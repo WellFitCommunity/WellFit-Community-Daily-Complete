@@ -8,6 +8,22 @@
  */
 
 // ============================================================================
+// JSON VALUE TYPE (for serializable data)
+// ============================================================================
+
+/**
+ * Represents any JSON-serializable value for metadata, config, and audit fields.
+ * Used instead of `any` for fields that store arbitrary but serializable data.
+ */
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+// ============================================================================
 // SUPER ADMIN USERS
 // ============================================================================
 
@@ -63,7 +79,7 @@ export interface SystemFeatureFlag {
   enabledForNewTenants: boolean;
   requiresLicense: boolean;
   category?: FeatureCategory;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, JsonValue>;
   createdAt: string;
   updatedAt?: string;
   updatedBy?: string;
@@ -98,8 +114,8 @@ export interface SystemHealthCheck {
   responseTimeMs?: number;
   errorMessage?: string;
   message?: string;
-  metrics?: Record<string, any>;
-  metadata?: Record<string, any>;
+  metrics?: Record<string, JsonValue>;
+  metadata?: Record<string, JsonValue>;
   checkedAt: string;
 }
 
@@ -126,6 +142,12 @@ export type AuditActionType =
 export type AuditTargetType = 'tenant' | 'feature' | 'user' | 'system';
 export type AuditSeverity = 'info' | 'warning' | 'critical';
 
+/**
+ * Audit value type - accepts any JSON-serializable structure for audit logging.
+ * This is intentionally permissive to accommodate complex nested config objects.
+ */
+export type AuditLogValue = Record<string, unknown>;
+
 export interface SuperAdminAuditLog {
   id: string;
   superAdminId: string;
@@ -135,9 +157,9 @@ export interface SuperAdminAuditLog {
   targetType?: AuditTargetType;
   targetId?: string;
   targetName?: string;
-  oldValue?: Record<string, any>;
-  newValue?: Record<string, any>;
-  details?: Record<string, any>;
+  oldValue?: AuditLogValue;
+  newValue?: AuditLogValue;
+  details?: AuditLogValue;
   reason?: string;
   ipAddress?: string;
   userAgent?: string;
@@ -163,7 +185,7 @@ export interface SystemMetric {
   id: string;
   metricType: MetricType;
   metricValue: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, JsonValue>;
   recordedAt: string;
 }
 
@@ -203,7 +225,7 @@ export interface TenantWithStatus {
   lastActivityAt?: string;
   licenseTier?: string;
   licenseEndDate?: string;
-  modules?: Record<string, any>;
+  modules?: Record<string, JsonValue>;
   createdAt: string;
   totalSavings?: number; // Total cost savings for this tenant
 }

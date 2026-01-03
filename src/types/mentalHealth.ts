@@ -725,7 +725,7 @@ export interface MentalHealthQualityMetrics {
 // API RESPONSE TYPES
 // ============================================================================
 
-export interface MentalHealthApiResponse<T = any> {
+export interface MentalHealthApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

@@ -96,7 +96,7 @@ claudeService
   .then(() => {
 
   })
-  .catch((error) => {
+  .catch((_error) => {
     // Claude AI service initialization failed (limited AI features)
   });
 

@@ -90,7 +90,7 @@ export default function AdminLoginPage() {
   const [userTenantCode, setUserTenantCode] = useState<string | null>(null);
 
   const userLabel = useMemo(() => {
-    return user?.email || (user as any)?.phone || user?.user_metadata?.email || 'Unknown user';
+    return user?.email || (user as { phone?: string } | undefined)?.phone || user?.user_metadata?.email || 'Unknown user';
   }, [user]);
 
   // Fetch admin status and role from DB
@@ -142,8 +142,8 @@ export default function AdminLoginPage() {
     if (!user) return false;
     if (dbIsAdmin === true) return true;
     if (dbIsAdmin === false) return false;
-    const appMetaRole = (user as any)?.app_metadata?.role;
-    const appMetaIsAdmin = (user as any)?.app_metadata?.is_admin;
+    const appMetaRole = (user as { app_metadata?: { role?: string } } | undefined)?.app_metadata?.role;
+    const appMetaIsAdmin = (user as { app_metadata?: { is_admin?: boolean } } | undefined)?.app_metadata?.is_admin;
     return Boolean(
       isAdmin ||
       appMetaIsAdmin === true ||
@@ -254,8 +254,8 @@ export default function AdminLoginPage() {
       const defaultDashboard = getDashboardForRole(role);
       const intendedPath = state.from?.pathname || defaultDashboard;
       navigate(intendedPath, { replace: true });
-    } catch (err: any) {
-      setLocalErr(err?.message || 'Verification failed.');
+    } catch (err: unknown) {
+      setLocalErr((err as Error)?.message || 'Verification failed.');
     }
   }
 
@@ -301,8 +301,8 @@ export default function AdminLoginPage() {
       setOldPin('');
       setPin('');
       setPin2('');
-    } catch (e: any) {
-      setLocalErr(e?.message || 'Could not change PIN.');
+    } catch (err: unknown) {
+      setLocalErr((err as Error)?.message || 'Could not change PIN.');
     } finally {
       setBusy(false);
     }
@@ -363,8 +363,8 @@ export default function AdminLoginPage() {
       setSuccessMsg('Verified! Set your new PIN.');
       setSmsCode('');
       setMode('reset');
-    } catch (e: any) {
-      setLocalErr(e?.message || 'Verification failed.');
+    } catch (err: unknown) {
+      setLocalErr((err as Error)?.message || 'Verification failed.');
     } finally {
       setBusy(false);
     }
@@ -408,8 +408,8 @@ export default function AdminLoginPage() {
       setPin2('');
       setSuccessMsg('PIN reset successfully!');
       setMode('unlock');
-    } catch (e: any) {
-      setLocalErr(e?.message || 'Could not reset PIN.');
+    } catch (err: unknown) {
+      setLocalErr((err as Error)?.message || 'Could not reset PIN.');
     } finally {
       setBusy(false);
     }
