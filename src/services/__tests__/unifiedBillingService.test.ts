@@ -37,20 +37,19 @@ vi.mock('../billingService', () => ({
     createPayer: vi.fn(),
     deleteProvider: vi.fn(),
     createClaim: vi.fn(),
-    createClaimLines: vi.fn(),
   },
 }));
 
 vi.mock('../sdohBillingService', () => ({
   SDOHBillingService: {
-    analyzePatient: vi.fn(),
-    getRecommendedCodes: vi.fn(),
+    assessSDOHComplexity: vi.fn(),
+    getRecommendedZCodes: vi.fn(),
   },
 }));
 
 vi.mock('../billingDecisionTreeService', () => ({
   BillingDecisionTreeService: {
-    executeDecisionTree: vi.fn(),
+    processEncounter: vi.fn(),
   },
 }));
 
@@ -176,61 +175,63 @@ describe('Unified Billing Service Tests', () => {
       (BillingService.createClaim as Mock).mockResolvedValue(mockClaim);
 
       const result = await BillingService.createClaim({
-        patient_id: TEST_DATA.patient.id,
-        provider_id: TEST_DATA.provider.id,
-        payer_id: TEST_DATA.payer.id,
         encounter_id: TEST_DATA.encounter.id,
-        date_of_service: TEST_DATA.encounter.serviceDate,
-        place_of_service: TEST_DATA.encounter.placeOfService,
+        payer_id: TEST_DATA.payer.id,
+        billing_provider_id: TEST_DATA.provider.id,
+        claim_type: 'professional',
+        status: 'generated',
+        total_charge: 150.0,
       });
 
       expect(BillingService.createClaim).toHaveBeenCalledTimes(1);
       expect(result.id).toBe('claim-new');
     });
 
-    test('should call createClaimLines with CPT codes', async () => {
-      const mockLines = [
-        { id: 'line-1', cpt_code: '99214', charge_amount: 150 },
-        { id: 'line-2', cpt_code: '99215', charge_amount: 200 },
-      ];
-      (BillingService.createClaimLines as Mock).mockResolvedValue(mockLines);
+    test('should create claims with required fields', async () => {
+      const mockClaim = { id: 'claim-456', total_charge: 350, status: 'generated' };
+      (BillingService.createClaim as Mock).mockResolvedValue(mockClaim);
 
-      const result = await BillingService.createClaimLines('claim-123', [
-        { cpt_code: '99214', diagnosis_pointers: ['1'], charge_amount: 150 },
-        { cpt_code: '99215', diagnosis_pointers: ['1', '2'], charge_amount: 200 },
-      ]);
+      const result = await BillingService.createClaim({
+        encounter_id: 'enc-789',
+        claim_type: 'professional',
+        status: 'generated',
+      });
 
-      expect(BillingService.createClaimLines).toHaveBeenCalledWith('claim-123', expect.any(Array));
-      expect(result).toHaveLength(2);
+      expect(BillingService.createClaim).toHaveBeenCalledWith(expect.objectContaining({
+        encounter_id: 'enc-789',
+        claim_type: 'professional',
+      }));
+      expect(result.status).toBe('generated');
     });
   });
 
   describe('SDOHBillingService Integration', () => {
-    test('should analyze patient for SDOH factors', async () => {
+    test('should assess patient SDOH complexity', async () => {
       const mockAssessment = {
+        patientId: TEST_DATA.patient.id,
         overallComplexityScore: 0.75,
         ccmEligible: true,
-        sdohFactors: ['housing_instability', 'food_insecurity'],
-        recommendedCodes: ['Z59.0', 'Z59.4'],
+        housingInstability: true,
+        foodInsecurity: true,
       };
-      (SDOHBillingService.analyzePatient as Mock).mockResolvedValue(mockAssessment);
+      (SDOHBillingService.assessSDOHComplexity as Mock).mockResolvedValue(mockAssessment);
 
-      const result = await SDOHBillingService.analyzePatient(TEST_DATA.patient.id);
+      const result = await SDOHBillingService.assessSDOHComplexity(TEST_DATA.patient.id);
 
-      expect(SDOHBillingService.analyzePatient).toHaveBeenCalledWith(TEST_DATA.patient.id);
+      expect(SDOHBillingService.assessSDOHComplexity).toHaveBeenCalledWith(TEST_DATA.patient.id);
       expect(result.overallComplexityScore).toBe(0.75);
       expect(result.ccmEligible).toBe(true);
-      expect(result.sdohFactors).toContain('housing_instability');
+      expect(result.housingInstability).toBe(true);
     });
 
-    test('should get recommended SDOH codes', async () => {
+    test('should get recommended SDOH Z-codes', async () => {
       const mockCodes = [
         { code: 'Z59.0', description: 'Homelessness' },
         { code: 'Z59.4', description: 'Food insecurity' },
       ];
-      (SDOHBillingService.getRecommendedCodes as Mock).mockResolvedValue(mockCodes);
+      (SDOHBillingService.getRecommendedZCodes as Mock).mockResolvedValue(mockCodes);
 
-      const result = await SDOHBillingService.getRecommendedCodes(TEST_DATA.patient.id);
+      const result = await SDOHBillingService.getRecommendedZCodes(TEST_DATA.patient.id);
 
       expect(result).toHaveLength(2);
       expect(result[0].code).toBe('Z59.0');
@@ -238,27 +239,27 @@ describe('Unified Billing Service Tests', () => {
   });
 
   describe('BillingDecisionTreeService Integration', () => {
-    test('should execute decision tree and return result', async () => {
+    test('should process encounter and return result', async () => {
       const mockResult = {
         decisions: [
           { nodeId: 'NODE_A', answer: 'yes', result: 'proceed' },
           { nodeId: 'NODE_B', answer: 'office_visit', result: 'proceed' },
           { nodeId: 'NODE_C', answer: '99214', result: 'complete' },
         ],
-        finalCode: '99214',
+        recommendedCPT: '99214',
         confidence: 0.95,
       };
-      (BillingDecisionTreeService.executeDecisionTree as Mock).mockResolvedValue(mockResult);
+      (BillingDecisionTreeService.processEncounter as Mock).mockResolvedValue(mockResult);
 
-      const result = await BillingDecisionTreeService.executeDecisionTree({
+      const result = await BillingDecisionTreeService.processEncounter({
+        encounterId: TEST_DATA.encounter.id,
         encounterType: 'office_visit',
         diagnoses: [{ icd10Code: 'I10' }],
-        timeSpent: 30,
         placeOfService: '11',
       });
 
-      expect(BillingDecisionTreeService.executeDecisionTree).toHaveBeenCalledTimes(1);
-      expect(result.finalCode).toBe('99214');
+      expect(BillingDecisionTreeService.processEncounter).toHaveBeenCalledTimes(1);
+      expect(result.recommendedCPT).toBe('99214');
       expect(result.confidence).toBe(0.95);
       expect(result.decisions).toHaveLength(3);
     });
@@ -269,16 +270,16 @@ describe('Unified Billing Service Tests', () => {
           { nodeId: 'NODE_A', answer: 'yes', result: 'proceed' },
           { nodeId: 'NODE_B', answer: 'telehealth', result: 'proceed' },
         ],
-        finalCode: '99214',
+        recommendedCPT: '99214',
         modifiers: ['95'],
         confidence: 0.90,
       };
-      (BillingDecisionTreeService.executeDecisionTree as Mock).mockResolvedValue(mockResult);
+      (BillingDecisionTreeService.processEncounter as Mock).mockResolvedValue(mockResult);
 
-      const result = await BillingDecisionTreeService.executeDecisionTree({
+      const result = await BillingDecisionTreeService.processEncounter({
+        encounterId: 'telehealth-enc',
         encounterType: 'telehealth',
         diagnoses: [{ icd10Code: 'I10' }],
-        timeSpent: 25,
         placeOfService: '02',
       });
 
@@ -319,20 +320,21 @@ describe('Unified Billing Service Tests', () => {
 
       await expect(
         BillingService.createClaim({
-          patient_id: 'test',
-          provider_id: 'test',
-          payer_id: 'test',
+          encounter_id: 'test',
+          claim_type: 'professional',
+          status: 'generated',
         })
       ).rejects.toThrow('Database connection failed');
     });
 
-    test('should handle decision tree execution errors', async () => {
-      (BillingDecisionTreeService.executeDecisionTree as Mock).mockRejectedValue(
+    test('should handle decision tree processing errors', async () => {
+      (BillingDecisionTreeService.processEncounter as Mock).mockRejectedValue(
         new Error('Invalid encounter type')
       );
 
       await expect(
-        BillingDecisionTreeService.executeDecisionTree({
+        BillingDecisionTreeService.processEncounter({
+          encounterId: 'test',
           encounterType: 'invalid' as unknown as 'office_visit',
           diagnoses: [],
           placeOfService: '11',
