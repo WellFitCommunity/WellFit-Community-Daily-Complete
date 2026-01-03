@@ -43,7 +43,7 @@ vi.mock('../billingService', () => ({
 vi.mock('../sdohBillingService', () => ({
   SDOHBillingService: {
     assessSDOHComplexity: vi.fn(),
-    getRecommendedZCodes: vi.fn(),
+    analyzeEncounter: vi.fn(),
   },
 }));
 
@@ -224,17 +224,22 @@ describe('Unified Billing Service Tests', () => {
       expect(result.housingInstability).toBe(true);
     });
 
-    test('should get recommended SDOH Z-codes', async () => {
-      const mockCodes = [
-        { code: 'Z59.0', description: 'Homelessness' },
-        { code: 'Z59.4', description: 'Food insecurity' },
-      ];
-      (SDOHBillingService.getRecommendedZCodes as Mock).mockResolvedValue(mockCodes);
+    test('should analyze encounter for SDOH coding', async () => {
+      const mockSuggestion = {
+        encounterId: TEST_DATA.encounter.id,
+        suggestedCodes: [
+          { code: 'Z59.0', description: 'Homelessness', type: 'sdoh' },
+          { code: 'Z59.4', description: 'Food insecurity', type: 'sdoh' },
+        ],
+        confidence: 0.85,
+      };
+      (SDOHBillingService.analyzeEncounter as Mock).mockResolvedValue(mockSuggestion);
 
-      const result = await SDOHBillingService.getRecommendedZCodes(TEST_DATA.patient.id);
+      const result = await SDOHBillingService.analyzeEncounter(TEST_DATA.encounter.id);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].code).toBe('Z59.0');
+      expect(SDOHBillingService.analyzeEncounter).toHaveBeenCalledWith(TEST_DATA.encounter.id);
+      expect(result.suggestedCodes).toHaveLength(2);
+      expect(result.confidence).toBe(0.85);
     });
   });
 
