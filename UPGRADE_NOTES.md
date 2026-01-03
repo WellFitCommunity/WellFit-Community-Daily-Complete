@@ -48,7 +48,7 @@
 | `twilio` | 5.11.1 | ✅ Latest |
 | `nodemailer` | 7.0.12 | ✅ Latest |
 | `libphonenumber-js` | 1.12.33 | ✅ Latest |
-| `lucide-react` | 0.544.0 | 🔄 0.562.0 available |
+| `lucide-react` | 0.562.0 | ✅ Latest |
 
 ---
 
