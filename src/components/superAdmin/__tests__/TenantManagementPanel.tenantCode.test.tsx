@@ -16,6 +16,14 @@ vi.mock('../../../contexts/AuthContext', () => ({
   useUser: () => ({ id: 'test-user-id' }),
 }));
 
+// Mock SuperAdminService
+vi.mock('../../../services/superAdminService', () => ({
+  SuperAdminService: {
+    getAllTenants: vi.fn().mockResolvedValue([]),
+    getCurrentSuperAdmin: vi.fn().mockResolvedValue({ id: 'admin-1', name: 'Test Admin' }),
+  },
+}));
+
 // Mock auditLogger
 vi.mock('../../../services/auditLogger', () => ({
   auditLogger: {
@@ -30,8 +38,11 @@ describe('TenantManagementPanel - Tenant Code', () => {
     vi.clearAllMocks();
   });
 
-  it('renders without crashing', () => {
+  it('shows loading skeleton initially', () => {
     render(<TenantManagementPanel />);
-    expect(document.body).toBeInTheDocument();
+
+    // Should show loading skeleton with animate-pulse class
+    const skeleton = document.querySelector('.animate-pulse');
+    expect(skeleton).toBeInTheDocument();
   });
 });

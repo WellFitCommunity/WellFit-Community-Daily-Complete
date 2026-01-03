@@ -42,15 +42,6 @@ describe('GrantAccessModal', () => {
     vi.clearAllMocks();
   });
 
-  it('renders without crashing', () => {
-    render(
-      <MemoryRouter>
-        <GrantAccessModal {...defaultProps} />
-      </MemoryRouter>
-    );
-    expect(document.body).toBeInTheDocument();
-  });
-
   it('displays the modal title', () => {
     render(
       <MemoryRouter>

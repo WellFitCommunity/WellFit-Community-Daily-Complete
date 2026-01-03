@@ -62,15 +62,6 @@ describe('ConsentDashboard', () => {
     vi.clearAllMocks();
   });
 
-  it('renders without crashing', () => {
-    render(
-      <MemoryRouter>
-        <ConsentDashboard />
-      </MemoryRouter>
-    );
-    expect(document.body).toBeInTheDocument();
-  });
-
   it('displays the main title', () => {
     render(
       <MemoryRouter>

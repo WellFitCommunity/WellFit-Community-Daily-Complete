@@ -9,6 +9,8 @@ vi.mock('../../contexts/AuthContext', () => ({
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
       insert: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
@@ -31,12 +33,38 @@ describe('CheckInPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders without crashing', () => {
+  it('renders check-in center heading', () => {
     render(
       <MemoryRouter>
         <CheckInPage />
       </MemoryRouter>
     );
-    expect(document.body).toBeInTheDocument();
+
+    // Should show the Daily Check-In Center title
+    expect(screen.getByText(/daily check-in center/i)).toBeInTheDocument();
+  });
+
+  it('renders back to dashboard button', () => {
+    render(
+      <MemoryRouter>
+        <CheckInPage />
+      </MemoryRouter>
+    );
+
+    // CheckInPage passes showBackButton={true} to CheckInTracker
+    expect(screen.getByText(/back to dashboard/i)).toBeInTheDocument();
+  });
+
+  it('displays mood options for check-in', () => {
+    render(
+      <MemoryRouter>
+        <CheckInPage />
+      </MemoryRouter>
+    );
+
+    // Should have mood selection options
+    expect(screen.getByText('Great')).toBeInTheDocument();
+    expect(screen.getByText('Good')).toBeInTheDocument();
+    expect(screen.getByText('Okay')).toBeInTheDocument();
   });
 });

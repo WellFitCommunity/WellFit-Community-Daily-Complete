@@ -78,15 +78,6 @@ describe('ConsentAuditLog', () => {
   });
 
   describe('Rendering', () => {
-    it('renders without crashing', () => {
-      render(
-        <MemoryRouter>
-          <ConsentAuditLog {...defaultProps} />
-        </MemoryRouter>
-      );
-      expect(document.body).toBeInTheDocument();
-    });
-
     it('shows loading state initially', () => {
       render(
         <MemoryRouter>

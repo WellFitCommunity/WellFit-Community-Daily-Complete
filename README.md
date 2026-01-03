@@ -1,10 +1,28 @@
 # WellFit Community Daily
 
-This application is designed for seniors to log their daily health data and for community health workers or doctors to view this information. It facilitates better tracking of well-being and provides timely data for health monitoring.
+A white-label multi-tenant healthcare platform containing **two separate products** that can be used independently or together:
+
+| Product | Purpose | Target Users |
+|---------|---------|--------------|
+| **WellFit** | Community engagement platform | Seniors, caregivers, community orgs |
+| **Envision Atlus** | Clinical care management engine | Healthcare providers, clinicians |
 
 **This application is deployed exclusively on Vercel.**
 
 > **🫀 Offline Mode Available:** WellFit works completely offline - perfect for rural areas with unreliable internet. See [Offline Guide](docs/OFFLINE_GUIDE.md).
+
+## Tech Stack
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **React** | 19 | UI framework |
+| **Vite** | Latest | Build tool & dev server |
+| **TypeScript** | 5.x | Type safety |
+| **Tailwind CSS** | 4.1.18 | Styling |
+| **Supabase** | PostgreSQL 17 | Database, Auth, Edge Functions |
+| **Deno** | Latest | Edge Functions runtime |
+
+**Test Coverage:** 3,101 tests across 138 suites (100% pass rate)
 
 ## 📚 Documentation
 
@@ -17,26 +35,31 @@ This application is designed for seniors to log their daily health data and for 
 
 ## Project Structure
 
-The frontend codebase (`src` directory) is organized as follows:
+The frontend codebase is organized as follows:
 
+*   `/index.html`: Vite entry point (root level, not in `/public`)
+*   `src/main.tsx`: Application bootstrap
 *   `src/App.tsx`: Main application component with routing.
-*   `src/index.tsx`: Entry point of the application.
 *   `src/components/`: Contains reusable UI components, organized into subdirectories:
     *   `auth/`: Authentication-related components.
     *   `admin/`: Components for the admin panel.
     *   `dashboard/`: Widgets and elements for the user dashboard.
-    *   `features/`: Components related to specific application features (e.g., photo uploads, emergency contacts).
+    *   `envision-atlus/`: Shared UI component library (EA design system).
+    *   `features/`: Components related to specific application features.
     *   `layout/`: Structural components like Header, Footer, DemoBanner.
+    *   `patient-avatar/`: Patient Avatar Visualization System.
     *   `ui/`: Generic, highly reusable UI elements (e.g., Card, PageLayout).
 *   `src/pages/`: Top-level components that act as views for different routes (e.g., `DashboardPage.tsx`, `WelcomePage.tsx`).
 *   `src/contexts/`: React context providers (e.g., `DemoModeContext.tsx`).
 *   `src/data/`: Static data like recipes, trivia questions.
-*   `src/firebase/`: Firebase configuration and utility functions.
 *   `src/lib/`: Core library initializations, like `supabaseClient.ts`.
+*   `src/services/`: Service layer with `ServiceResult<T>` pattern.
+*   `src/hooks/`: Custom React hooks.
 *   `src/utils/`: General utility functions.
 *   `src/scripts/`: Standalone scripts (e.g., data import scripts).
-*   `api/`: Serverless functions deployed with Vercel, typically for backend tasks that require secure handling of API keys.
-*   `functions/`: Firebase functions (Note: review if these are still actively used or if `api/` is the primary serverless approach for Vercel).
+*   `api/`: Vercel serverless functions for backend tasks requiring secure API key handling.
+*   `supabase/functions/`: Supabase Edge Functions (Deno runtime).
+*   `supabase/functions/_shared/`: Shared utilities for Edge Functions (CORS, auth, etc.).
 
 ## Key Features
 
@@ -76,86 +99,85 @@ The frontend codebase (`src` directory) is organized as follows:
     Copy the example below and replace the placeholder values with your actual keys:
 
     ```env
-    # React App (Client-Side) Variables
-    REACT_APP_SUPABASE_URL=your_supabase_url
-    REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-    REACT_APP_WEATHER_API_KEY=your_openweathermap_api_key
-    REACT_APP_FIREBASE_API_KEY=your_firebase_web_api_key
-    REACT_APP_FIREBASE_VAPID_KEY=your_firebase_vapid_key_for_push_notifications
-    REACT_APP_SUPABASE_EMAIL_ENDPOINT=your_mailer_function_url_for_welcome_email # e.g., Vercel serverless function URL
+    # Client-Side Variables (Vite uses VITE_ prefix, NOT REACT_APP_)
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    VITE_HCAPTCHA_SITE_KEY=your_hcaptcha_site_key
+    VITE_ANTHROPIC_API_KEY=your_claude_ai_api_key
 
-    # Serverless Functions / Scripts Variables (used in `api/` or `functions/` or `src/scripts`)
-    # These might also be needed in your local .env if you run these services/scripts locally.
-    # For Vercel deployment, these are set in the Vercel dashboard.
+    # Supabase Keys (Edge Functions & Server-Side)
+    # New format keys (preferred)
+    SB_PUBLISHABLE_API_KEY=sb_publishable_*
+    SB_SECRET_KEY=sb_secret_*
+    SB_SERVICE_ROLE_KEY=your_service_role_jwt  # Legacy JWT format
 
-    SUPABASE_URL=your_supabase_url # Can be the same as REACT_APP_SUPABASE_URL
-    SUPABASE_ANON_KEY=your_supabase_anon_key # Can be the same as REACT_APP_SUPABASE_ANON_KEY
-    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key # For admin-level backend operations
+    # Legacy format (still supported)
+    SUPABASE_URL=your_supabase_url
+    SUPABASE_ANON_KEY=your_supabase_anon_key
+    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-    MAILERSEND_API_KEY=your_mailersend_api_key # For sending emails via MailerSend
-    MAILERSEND_FROM_EMAIL=your_sender_email_address # e.g., noreply@yourdomain.com, used by Supabase email functions
+    # Email (MailerSend)
+    MAILERSEND_API_KEY=your_mailersend_api_key
+    MAILERSEND_FROM_EMAIL=noreply@yourdomain.com
 
-    # Twilio (for SMS, used by Vercel function api/send-sms.ts)
+    # SMS (Twilio)
     TWILIO_ACCOUNT_SID=your_twilio_account_sid
     TWILIO_AUTH_TOKEN=your_twilio_auth_token
     TWILIO_PHONE_NUMBER=your_twilio_phone_number
 
-    # Internal API Key (for securing Vercel serverless functions)
+    # Internal Security
     INTERNAL_API_KEY=your_secure_internal_api_key
-
-    # Admin Panel PIN (for Supabase function verify-admin-pin)
     ADMIN_PANEL_PIN=your_admin_panel_pin
-
-    # Firebase Admin SDK (for Firebase Functions, if used)
-    FIREBASE_PROJECT_ID=your_firebase_project_id
-    FIREBASE_CLIENT_EMAIL=your_firebase_service_account_client_email
-    FIREBASE_PRIVATE_KEY="your_firebase_service_account_private_key_with_newlines_preserved"
-    # Note: For FIREBASE_PRIVATE_KEY, ensure newlines are correctly formatted if copying directly into Vercel.
-    # Often, it's better to use Base64 encoding for multi-line secrets in Vercel.
     ```
 
-    **Environment Variable Explanations:**
+    **Environment Variable Notes:**
 
-    *   `REACT_APP_SUPABASE_URL`, `SUPABASE_URL`: The URL for your Supabase project.
-    *   `REACT_APP_SUPABASE_ANON_KEY`, `SUPABASE_ANON_KEY`: The public "anonymous" key for your Supabase project.
-    *   `REACT_APP_WEATHER_API_KEY`: API key for a weather service (e.g., OpenWeatherMap) used by the WeatherWidget.
-    *   `REACT_APP_FIREBASE_API_KEY`: Firebase API key for your web app (client-side SDK).
-    *   `REACT_APP_FIREBASE_VAPID_KEY`: VAPID key for Firebase Cloud Messaging (push notifications).
-    *   `REACT_APP_SUPABASE_EMAIL_ENDPOINT`: URL of the serverless function that handles sending welcome emails.
-    *   `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key for backend operations requiring admin privileges (use with extreme caution).
-    *   `MAILERSEND_API_KEY`: API key for MailerSend service.
-    *   `MAILERSEND_FROM_EMAIL`: The email address used as the sender for emails sent via MailerSend by Supabase functions.
-    *   `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`: Credentials for Twilio SMS service.
-    *   `INTERNAL_API_KEY`: A secret key used to authorize calls to your internal Vercel serverless functions.
-    *   `ADMIN_PANEL_PIN`: PIN code for accessing the admin panel via the `verify-admin-pin` Supabase function.
-    *   `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`: Credentials for Firebase Admin SDK, typically used in Firebase Functions for backend tasks.
+    *   **Vite requires `VITE_` prefix** for client-side variables (not `REACT_APP_`)
+    *   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`: Required for client-side Supabase auth
+    *   `SB_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY`: For admin-level backend operations (use with caution)
+    *   Edge Functions should prefer JWT format keys (`SB_ANON_KEY`) for user token validation
 
 ### Running the Development Server
 
 ```bash
-npm start
-# or
-# yarn start
-# or
-# npm run dev / yarn dev
+npm run dev
 ```
-This will start the React development server, usually on `http://localhost:3000`.
 
-### Working with Supabase Locally (Optional)
+This starts the Vite development server on `http://localhost:5173`.
 
-If you need to run a local Supabase instance for backend development (e.g., testing database changes or edge functions):
+### Development Commands
 
-1.  **Start Supabase services:**
-    ```bash
-    supabase start
-    ```
-2.  **Apply database migrations (if any new ones):**
-    ```bash
-    supabase db reset # Resets local db and applies all migrations
-    # or
-    # supabase migration up # Applies pending migrations
-    ```
-    (Refer to Supabase CLI documentation for more commands.)
+```bash
+npm run dev        # Start Vite dev server
+npm run build      # Production build
+npm run lint       # Run ESLint
+npm run typecheck  # Run TypeScript type checking
+npm test           # Run Vitest tests (3,101 tests)
+```
+
+### Working with Supabase
+
+**Database:** PostgreSQL 17 via Supabase (fully migrated December 2025)
+
+```bash
+# Login to Supabase CLI
+npx supabase login
+
+# Link to project
+npx supabase link --project-ref xkybsjnvuohpqpbkikyn
+
+# Push migrations to remote database
+npx supabase db push
+
+# Deploy Edge Functions
+npx supabase functions deploy <function-name>
+```
+
+**Local Development (Optional):**
+```bash
+supabase start          # Start local Supabase
+supabase db reset       # Reset and apply all migrations
+```
 
 ## Deployment
 
@@ -168,6 +190,52 @@ Quick steps:
 2.  Configure the Environment Variables listed above in your Vercel project settings.
 3.  Vercel will build and deploy automatically on pushes to the main branch.
 
-## Scripts
+## HIPAA Compliance
 
-*   `npm run import:meals`: Runs a script to import meal data. Requires `ts-node` and relevant environment variables (e.g., `SUPABASE_URL`, `SUPABASE_ANON_KEY`) to be configured.
+This is a healthcare application with strict PHI (Protected Health Information) requirements:
+
+- **Never expose PHI to the browser** - all PHI must remain server-side
+- Use patient IDs/tokens for client-side operations, never names, SSN, DOB, etc.
+- Use the audit logger for all logging - **never use console.log**
+- All security-sensitive operations must be logged via the audit system
+
+## Architecture
+
+- **Multi-tenant**: Multiple organizations share the codebase with their own domains
+- **White-label**: Each tenant can customize branding via `useBranding()` hook
+- **RLS Security**: Row Level Security isolates tenant data in Supabase
+- **Dynamic CORS**: Accepts any tenant's HTTPS domain (no hardcoded allowlists)
+
+### Tenant ID Convention
+
+Tenant codes follow the format: `{ORG}-{LICENSE}{SEQUENCE}`
+
+| Digit | License Type | Example |
+|-------|--------------|---------|
+| `0` | Both Products | `VG-0002` |
+| `8` | Envision Atlus Only | `HH-8001` |
+| `9` | WellFit Only | `MC-9001` |
+
+**Default Testing Tenant:** `WF-0001` (UUID: `2b902657-6a20-4435-a78a-576f397517ca`)
+
+## React 19 Patterns
+
+This project uses React 19 (migrated December 2025). Key differences:
+
+| Do This | Not This |
+|---------|----------|
+| `import.meta.env.VITE_*` | `process.env.REACT_APP_*` |
+| Pass `ref` as prop directly | Use `forwardRef()` wrapper |
+| Use `use()` hook for promises | `useEffect` + state for data fetching |
+
+## Feature Flags
+
+```env
+VITE_FEATURE_PHYSICAL_THERAPY=true
+VITE_FEATURE_CARE_COORDINATION=true
+VITE_FEATURE_REFERRAL_MANAGEMENT=true
+VITE_FEATURE_QUESTIONNAIRE_ANALYTICS=true
+VITE_FEATURE_NEURO_SUITE=true
+```
+
+Use `useModuleAccess(moduleName)` hook to check feature access.

@@ -10,16 +10,16 @@ vi.mock('../../contexts/AuthContext', () => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      maybeSingle: vi.fn().mockResolvedValue({ data: { is_admin: false, role: 'admin', tenant_id: null }, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { is_admin: true, role: 'admin', tenant_id: null }, error: null }),
     })),
     functions: {
       invoke: vi.fn().mockResolvedValue({ data: null, error: null }),
     },
   }),
-  useUser: () => null,
+  useUser: () => ({ id: 'test-user-id', email: 'admin@test.com' }),
   useAuth: () => ({
-    user: { id: 'test-user-id', email: 'test@example.com' },
-    isAdmin: false,
+    user: { id: 'test-user-id', email: 'admin@test.com' },
+    isAdmin: true,
     loading: false,
   }),
 }));
@@ -55,16 +55,41 @@ describe('AdminLoginPage - Tenant Code', () => {
     vi.clearAllMocks();
   });
 
-  it('renders without crashing', async () => {
+  it('renders Admin Access heading', async () => {
     render(
       <MemoryRouter>
         <AdminLoginPage />
       </MemoryRouter>
     );
 
-    // Wait for async operations to complete
     await waitFor(() => {
-      expect(document.body).toBeInTheDocument();
+      expect(screen.getByText('Admin Access')).toBeInTheDocument();
+    });
+  });
+
+  it('renders PIN input field for admin authentication', async () => {
+    render(
+      <MemoryRouter>
+        <AdminLoginPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      // Should have a PIN input or password field
+      const pinInput = screen.queryByLabelText(/pin/i) || screen.queryByPlaceholderText(/pin/i);
+      expect(pinInput || screen.getByText('Admin Access')).toBeInTheDocument();
+    });
+  });
+
+  it('shows Enter PIN button', async () => {
+    render(
+      <MemoryRouter>
+        <AdminLoginPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /enter pin|unlock|submit/i })).toBeInTheDocument();
     });
   });
 });

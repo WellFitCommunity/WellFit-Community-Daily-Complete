@@ -86,15 +86,6 @@ describe('AuthorizedAppsList', () => {
   });
 
   describe('Rendering', () => {
-    it('renders without crashing', () => {
-      render(
-        <MemoryRouter>
-          <AuthorizedAppsList {...defaultProps} />
-        </MemoryRouter>
-      );
-      expect(document.body).toBeInTheDocument();
-    });
-
     it('shows loading state initially', () => {
       render(
         <MemoryRouter>
