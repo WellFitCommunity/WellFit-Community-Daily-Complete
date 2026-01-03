@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
 import type { MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
 import { FeeScheduleService } from '../feeScheduleService';
+import { createAccuracyTrackingService, type AccuracyTrackingService } from './accuracyTrackingService';
 
 // =====================================================
 // TYPES
@@ -224,9 +225,11 @@ interface CCMRateLookup {
 export class CCMEligibilityScorer {
   private optimizer: MCPCostOptimizer;
   private cachedRates: CCMRateLookup | null = null;
+  private accuracyTracker: AccuracyTrackingService;
 
   constructor(optimizer?: MCPCostOptimizer) {
     this.optimizer = optimizer || mcpOptimizer;
+    this.accuracyTracker = createAccuracyTrackingService(supabase);
   }
 
   /**
@@ -306,7 +309,8 @@ export class CCMEligibilityScorer {
     const assessment = await this.assessWithAI(context, patientData, engagementMetrics, config);
 
     // Store assessment in database
-    await this.storeAssessment(context, assessment);
+    const trackingId = await this.trackAssessment(context, assessment);
+    await this.storeAssessment(context, assessment, trackingId);
 
     // Auto-enroll if configured and high eligibility
     if (
@@ -644,9 +648,52 @@ Return response as strict JSON:
   }
 
   /**
+   * Track assessment for accuracy monitoring
+   */
+  private async trackAssessment(
+    context: CCMAssessmentContext,
+    assessment: CCMEligibilityResult
+  ): Promise<string | null> {
+    try {
+      const result = await this.accuracyTracker.recordPrediction({
+        tenantId: context.tenantId,
+        skillName: 'ccm_eligibility',
+        predictionType: 'score',
+        predictionValue: {
+          eligibilityScore: assessment.overallEligibilityScore,
+          eligibilityCategory: assessment.eligibilityCategory,
+          meetsCMSCriteria: assessment.meetsCMSCriteria,
+          chronicConditionsCount: assessment.chronicConditionsCount,
+          predictedMonthlyReimbursement: assessment.predictedMonthlyReimbursement,
+          reimbursementTier: assessment.reimbursementTier,
+          enrollmentRecommendation: assessment.enrollmentRecommendation
+        },
+        confidence: assessment.overallEligibilityScore,
+        patientId: context.patientId,
+        entityType: 'ccm_assessment',
+        entityId: context.patientId,
+        model: assessment.aiModel,
+        costUsd: assessment.aiCost
+      });
+
+      if (result.success) {
+        return result.data ?? null;
+      }
+      return null;
+    } catch {
+      // Don't fail the assessment if tracking fails
+      return null;
+    }
+  }
+
+  /**
    * Store assessment in database
    */
-  private async storeAssessment(context: CCMAssessmentContext, assessment: CCMEligibilityResult): Promise<void> {
+  private async storeAssessment(
+    context: CCMAssessmentContext,
+    assessment: CCMEligibilityResult,
+    trackingId?: string | null
+  ): Promise<void> {
     await supabase.from('ccm_eligibility_assessments').insert({
       tenant_id: context.tenantId,
       patient_id: context.patientId,
@@ -672,8 +719,114 @@ Return response as strict JSON:
       barriers_to_enrollment: assessment.barriersToEnrollment,
       recommended_interventions: assessment.recommendedInterventions,
       ai_model_used: assessment.aiModel,
-      ai_cost: assessment.aiCost
+      ai_cost: assessment.aiCost,
+      ai_prediction_tracking_id: trackingId
     });
+  }
+
+  /**
+   * Confirm CCM enrollment (provider action) - records accuracy outcome
+   */
+  async confirmEnrollment(
+    assessmentId: string,
+    providerId: string,
+    enrollmentDate?: string
+  ): Promise<void> {
+    CCMValidator.validateUUID(assessmentId, 'assessmentId');
+    CCMValidator.validateUUID(providerId, 'providerId');
+
+    // Get the assessment to retrieve tracking ID
+    const { data: assessment } = await supabase
+      .from('ccm_eligibility_assessments')
+      .select('ai_prediction_tracking_id, enrollment_recommendation, patient_id')
+      .eq('id', assessmentId)
+      .single();
+
+    await supabase
+      .from('ccm_eligibility_assessments')
+      .update({
+        enrollment_status: 'enrolled',
+        enrolled_by: providerId,
+        enrolled_at: enrollmentDate || new Date().toISOString()
+      })
+      .eq('id', assessmentId);
+
+    // Record accuracy outcome (enrollment = recommendation was accurate)
+    const assessmentTyped = assessment as {
+      ai_prediction_tracking_id?: string | null;
+      enrollment_recommendation?: string;
+      patient_id?: string;
+    } | null;
+
+    if (assessmentTyped?.ai_prediction_tracking_id) {
+      const wasRecommended = assessmentTyped.enrollment_recommendation === 'strongly_recommend' ||
+                             assessmentTyped.enrollment_recommendation === 'recommend';
+
+      await this.accuracyTracker.recordOutcome({
+        predictionId: assessmentTyped.ai_prediction_tracking_id,
+        actualOutcome: {
+          wasEnrolled: true,
+          enrollmentDate: enrollmentDate || new Date().toISOString(),
+          reviewerId: providerId
+        },
+        isAccurate: wasRecommended, // Accurate if we recommended enrollment and they enrolled
+        outcomeSource: 'provider_review',
+        notes: 'Provider confirmed CCM enrollment'
+      });
+    }
+  }
+
+  /**
+   * Decline CCM enrollment (provider action) - records accuracy outcome
+   */
+  async declineEnrollment(
+    assessmentId: string,
+    providerId: string,
+    reason?: string
+  ): Promise<void> {
+    CCMValidator.validateUUID(assessmentId, 'assessmentId');
+    CCMValidator.validateUUID(providerId, 'providerId');
+
+    // Get the assessment to retrieve tracking ID
+    const { data: assessment } = await supabase
+      .from('ccm_eligibility_assessments')
+      .select('ai_prediction_tracking_id, enrollment_recommendation, patient_id')
+      .eq('id', assessmentId)
+      .single();
+
+    await supabase
+      .from('ccm_eligibility_assessments')
+      .update({
+        enrollment_status: 'declined',
+        reviewed_by: providerId,
+        reviewed_at: new Date().toISOString(),
+        review_notes: reason
+      })
+      .eq('id', assessmentId);
+
+    // Record accuracy outcome (declined = recommendation may not be accurate)
+    const assessmentTyped = assessment as {
+      ai_prediction_tracking_id?: string | null;
+      enrollment_recommendation?: string;
+      patient_id?: string;
+    } | null;
+
+    if (assessmentTyped?.ai_prediction_tracking_id) {
+      const wasNotRecommended = assessmentTyped.enrollment_recommendation === 'not_recommended' ||
+                                assessmentTyped.enrollment_recommendation === 'consider';
+
+      await this.accuracyTracker.recordOutcome({
+        predictionId: assessmentTyped.ai_prediction_tracking_id,
+        actualOutcome: {
+          wasEnrolled: false,
+          declineReason: reason,
+          reviewerId: providerId
+        },
+        isAccurate: wasNotRecommended, // Accurate if we didn't recommend and they declined
+        outcomeSource: 'provider_review',
+        notes: reason || 'Provider declined CCM enrollment'
+      });
+    }
   }
 
   /**
