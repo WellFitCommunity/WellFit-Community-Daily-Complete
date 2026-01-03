@@ -35,9 +35,8 @@ describe('Role Permission Tests', () => {
           canViewAdmin: true,
           canSupervise: true,
           canManageDepartment: true,
-          baseRole: 'super_admin',
-          accessibleRoles: ['nurse', 'physician', 'admin', 'super_admin'],
-          permissionLevel: 5
+          department: null,
+          roles: ['nurse', 'physician', 'admin', 'super_admin']
         };
 
         (supabase.rpc as Mock).mockResolvedValue({
