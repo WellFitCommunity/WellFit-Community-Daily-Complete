@@ -7,19 +7,20 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
+import { describe, test, expect, beforeEach, vi, type Mock } from 'vitest';
 import { SuperAdminService } from '../../services/superAdminService';
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(),
-    rpc: jest.fn(),
+    from: vi.fn(),
+    rpc: vi.fn(),
     auth: {
-      getUser: jest.fn()
+      getUser: vi.fn()
     },
     functions: {
-      invoke: jest.fn()
+      invoke: vi.fn()
     }
   }
 }));
@@ -32,13 +33,13 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
     };
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       // Mock getCurrentSuperAdmin
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as Mock).mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: {
             id: 'super-admin-master',
             user_id: masterAdminUser.id,
@@ -49,7 +50,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
           },
           error: null
         }),
-        maybeSingle: jest.fn().mockResolvedValue({
+        maybeSingle: vi.fn().mockResolvedValue({
           data: {
             is_admin: true,
             role: 'super_admin',
@@ -59,13 +60,13 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         })
       });
 
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as Mock).mockResolvedValue({
         data: { user: masterAdminUser }
       });
     });
 
     test('should authenticate with PIN only (no tenant code required)', async () => {
-      const mockVerifyPin = jest.fn().mockResolvedValue({
+      const mockVerifyPin = vi.fn().mockResolvedValue({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 7200000).toISOString(),
@@ -74,7 +75,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         error: null
       });
 
-      (supabase.functions.invoke as jest.Mock).mockImplementation(mockVerifyPin);
+      (supabase.functions.invoke as Mock).mockImplementation(mockVerifyPin);
 
       // Simulate PIN authentication
       const result = await supabase.functions.invoke('verify-admin-pin', {
@@ -114,19 +115,19 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
     };
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as Mock).mockResolvedValue({
         data: { user: tenantUser }
       });
 
       // Mock profiles query - returns tenant_id
-      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      (supabase.from as Mock).mockImplementation((table: string) => {
         if (table === 'profiles') {
           return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            maybeSingle: jest.fn().mockResolvedValue({
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
               data: {
                 is_admin: true,
                 role: 'admin',
@@ -134,7 +135,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
               },
               error: null
             }),
-            single: jest.fn().mockResolvedValue({
+            single: vi.fn().mockResolvedValue({
               data: {
                 id: 'super-admin-tenant',
                 user_id: tenantUser.id,
@@ -148,18 +149,18 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         }
         if (table === 'tenants') {
           return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
               data: { tenant_code: tenantData.tenant_code },
               error: null
             })
           };
         }
         return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({ data: null, error: null })
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
         };
       });
     });
@@ -185,7 +186,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
     });
 
     test('should authenticate with TenantCode-PIN format', async () => {
-      const mockVerifyPin = jest.fn().mockResolvedValue({
+      const mockVerifyPin = vi.fn().mockResolvedValue({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 7200000).toISOString(),
@@ -194,7 +195,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         error: null
       });
 
-      (supabase.functions.invoke as jest.Mock).mockImplementation(mockVerifyPin);
+      (supabase.functions.invoke as Mock).mockImplementation(mockVerifyPin);
 
       // Simulate PIN authentication with tenant code
       const result = await supabase.functions.invoke('verify-admin-pin', {
@@ -238,7 +239,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
       userId: 'user-123',
       email: 'admin@envisionvirtualedge.com',
       role: 'super_admin' as const,
-      permissions: ['tenants.manage'] as any[],
+      permissions: ['tenants.manage'] as string[],
       isActive: true
     };
 
@@ -249,17 +250,17 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
     };
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as Mock).mockResolvedValue({
         data: { user: { id: mockSuperAdmin.userId } }
       });
 
       // Mock getCurrentSuperAdmin
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as Mock).mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: {
             id: mockSuperAdmin.id,
             user_id: mockSuperAdmin.userId,
@@ -270,23 +271,40 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
           },
           error: null
         }),
-        update: jest.fn().mockReturnThis()
+        update: vi.fn().mockReturnThis()
       });
     });
 
     test('should assign tenant code through Super Admin UI', async () => {
-      const mockUpdate = jest.fn().mockResolvedValue({ error: null });
+      const mockEq = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
 
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
-          data: mockSuperAdmin,
-          error: null
-        })
-      }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
-        eq: mockUpdate
+      (supabase.from as Mock).mockImplementation((table: string) => {
+        if (table === 'super_admin_users') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: {
+                id: mockSuperAdmin.id,
+                user_id: mockSuperAdmin.userId,
+                email: mockSuperAdmin.email,
+                role: mockSuperAdmin.role,
+                permissions: mockSuperAdmin.permissions,
+                is_active: mockSuperAdmin.isActive
+              },
+              error: null
+            })
+          };
+        }
+        if (table === 'tenants') {
+          return { update: mockUpdate };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
       });
 
       await SuperAdminService.updateTenantCode({
@@ -295,20 +313,21 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         superAdminId: mockSuperAdmin.id
       });
 
-      expect(mockUpdate).toHaveBeenCalledWith(testTenant.id);
+      expect(mockUpdate).toHaveBeenCalledWith({ tenant_code: 'TH-9999' });
+      expect(mockEq).toHaveBeenCalledWith('id', testTenant.id);
     });
 
     test('should reject duplicate tenant codes', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as Mock).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
       }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({
           error: { code: '23505', message: 'duplicate key value' }
         })
       });
@@ -316,7 +335,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
       await expect(
         SuperAdminService.updateTenantCode({
           tenantId: testTenant.id,
-          tenantCode: 'DUPLICATE-1234',
+          tenantCode: 'DH-1234', // Valid format PREFIX-NUMBER
           superAdminId: mockSuperAdmin.id
         })
       ).rejects.toThrow('This tenant code is already in use');
@@ -324,8 +343,12 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
   });
 
   describe('PIN Authentication Security', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
     test('should handle failed authentication gracefully', async () => {
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as Mock).mockResolvedValue({
         data: {
           success: false,
           error: 'Invalid PIN'
@@ -342,7 +365,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
     });
 
     test('should not expose tenant information on failed auth', async () => {
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as Mock).mockResolvedValue({
         data: {
           success: false,
           error: 'Authentication failed'
@@ -362,7 +385,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
     test('should enforce session expiration (2 hours)', async () => {
       const expiresAt = new Date(Date.now() + 7200000); // 2 hours from now
 
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as Mock).mockResolvedValue({
         data: {
           success: true,
           expires_at: expiresAt.toISOString(),
@@ -385,8 +408,12 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
   });
 
   describe('Helper Function Integration', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
     test('should lookup tenant by code using get_tenant_by_code', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as Mock).mockResolvedValue({
         data: {
           tenant_id: 'tenant-123',
           tenant_name: 'Methodist Hospital',
@@ -404,7 +431,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
     });
 
     test('should be case-insensitive when looking up tenant code', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as Mock).mockResolvedValue({
         data: {
           tenant_id: 'tenant-123',
           tenant_name: 'Methodist Hospital',
@@ -423,42 +450,49 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
 
   describe('Full Authentication Journey', () => {
     test('Methodist Hospital admin complete flow', async () => {
+      vi.clearAllMocks();
+
       const methodistAdmin = {
         id: 'user-methodist-admin',
         email: 'admin@methodist.com'
       };
 
       // Step 1: User logs in with email/password (mocked as already authenticated)
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as Mock).mockResolvedValue({
         data: { user: methodistAdmin }
       });
 
-      // Step 2: Fetch user profile
-      (supabase.from as jest.Mock).mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            maybeSingle: jest.fn().mockResolvedValue({
-              data: {
-                is_admin: true,
-                role: 'admin',
-                tenant_id: 'tenant-methodist'
-              },
-              error: null
-            })
-          };
-        }
-        if (table === 'tenants') {
-          return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({
-              data: { tenant_code: 'MH-6702' },
-              error: null
-            })
-          };
-        }
+      // Step 2: Mock profile and tenant queries with chainable methods
+      const profileMock = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            is_admin: true,
+            role: 'admin',
+            tenant_id: 'tenant-methodist'
+          },
+          error: null
+        })
+      };
+
+      const tenantMock = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { tenant_code: 'MH-6702' },
+          error: null
+        })
+      };
+
+      (supabase.from as Mock).mockImplementation((table: string) => {
+        if (table === 'profiles') return profileMock;
+        if (table === 'tenants') return tenantMock;
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
       });
 
       const { data: profile } = await supabase.from('profiles')
@@ -486,7 +520,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
       expect(inputNumber).toBe('6702');
 
       // Step 5: Verify PIN with backend
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as Mock).mockResolvedValue({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 7200000).toISOString(),
