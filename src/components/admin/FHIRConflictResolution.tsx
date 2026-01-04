@@ -21,6 +21,36 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
+// FHIR data structures are inherently dynamic JSON
+type FHIRResourceData = Record<string, unknown>;
+type CommunityData = Record<string, unknown>;
+
+// FHIR telecom contact point
+interface FHIRTelecom {
+  system?: string;
+  value?: string;
+  use?: string;
+}
+
+// Database row from query
+interface ConflictRow {
+  id: string;
+  connection_id: string;
+  patient_id: string;
+  resource_type: string;
+  resource_id: string;
+  conflict_type: string;
+  fhir_data: FHIRResourceData;
+  community_data: CommunityData;
+  detected_at: string;
+  resolution_action?: string;
+  resolved_at?: string;
+  resolved_by?: string;
+  resolution_notes?: string;
+  fhir_connections?: { name: string };
+  profiles?: { first_name: string; last_name: string };
+}
+
 interface FHIRConflict {
   id: string;
   connection_id: string;
@@ -30,8 +60,8 @@ interface FHIRConflict {
   resource_type: string;
   resource_id: string;
   conflict_type: 'data_mismatch' | 'version_conflict' | 'missing_resource' | 'other';
-  fhir_data: any;
-  community_data: any;
+  fhir_data: FHIRResourceData;
+  community_data: CommunityData;
   detected_at: string;
   resolution_action?: 'use_fhir' | 'use_community' | 'merge' | 'manual';
   resolved_at?: string;
@@ -71,13 +101,13 @@ export const FHIRConflictResolution: React.FC = () => {
 
       if (error) throw error;
 
-      const mappedConflicts = (data || []).map((conflict: any) => ({
+      const mappedConflicts = (data || []).map((conflict: ConflictRow) => ({
         ...conflict,
         connection_name: conflict.fhir_connections?.name,
         patient_name: conflict.profiles
           ? `${conflict.profiles.first_name} ${conflict.profiles.last_name}`
           : 'Unknown Patient',
-      }));
+      })) as FHIRConflict[];
 
       setConflicts(mappedConflicts);
     } catch (error) {
@@ -259,47 +289,67 @@ export const FHIRConflictResolution: React.FC = () => {
    */
   const mapFHIRToCommunitySchema = (
     resourceType: string,
-    fhirData: any
-  ): Record<string, any> | null => {
+    fhirData: FHIRResourceData
+  ): CommunityData | null => {
+    // Type assertion helpers for FHIR nested structures
+    const getName = () => {
+      const name = fhirData.name as Array<{ given?: string[]; family?: string }> | undefined;
+      return name?.[0];
+    };
+    const getAddress = () => {
+      const address = fhirData.address as Array<{ line?: string[]; city?: string; state?: string; postalCode?: string }> | undefined;
+      return address?.[0];
+    };
+    const getTelecom = () => fhirData.telecom as FHIRTelecom[] | undefined;
+
     switch (resourceType) {
       case 'Patient':
         return {
-          first_name: fhirData.name?.[0]?.given?.[0],
-          last_name: fhirData.name?.[0]?.family,
+          first_name: getName()?.given?.[0],
+          last_name: getName()?.family,
           date_of_birth: fhirData.birthDate,
           gender: fhirData.gender,
-          phone: fhirData.telecom?.find((t: any) => t.system === 'phone')?.value,
-          email: fhirData.telecom?.find((t: any) => t.system === 'email')?.value,
-          address_line1: fhirData.address?.[0]?.line?.[0],
-          city: fhirData.address?.[0]?.city,
-          state: fhirData.address?.[0]?.state,
-          zip: fhirData.address?.[0]?.postalCode,
+          phone: getTelecom()?.find((t: FHIRTelecom) => t.system === 'phone')?.value,
+          email: getTelecom()?.find((t: FHIRTelecom) => t.system === 'email')?.value,
+          address_line1: getAddress()?.line?.[0],
+          city: getAddress()?.city,
+          state: getAddress()?.state,
+          zip: getAddress()?.postalCode,
         };
-      case 'Observation':
+      case 'Observation': {
+        const code = fhirData.code as { coding?: Array<{ code?: string; display?: string }> } | undefined;
+        const valueQuantity = fhirData.valueQuantity as { value?: number; unit?: string } | undefined;
         return {
-          code: fhirData.code?.coding?.[0]?.code,
-          display_name: fhirData.code?.coding?.[0]?.display,
-          value: fhirData.valueQuantity?.value,
-          unit: fhirData.valueQuantity?.unit,
+          code: code?.coding?.[0]?.code,
+          display_name: code?.coding?.[0]?.display,
+          value: valueQuantity?.value,
+          unit: valueQuantity?.unit,
           effective_date: fhirData.effectiveDateTime,
           status: fhirData.status,
         };
-      case 'Condition':
+      }
+      case 'Condition': {
+        const conditionCode = fhirData.code as { coding?: Array<{ code?: string; display?: string }> } | undefined;
+        const clinicalStatus = fhirData.clinicalStatus as { coding?: Array<{ code?: string }> } | undefined;
         return {
-          code: fhirData.code?.coding?.[0]?.code,
-          display_name: fhirData.code?.coding?.[0]?.display,
-          clinical_status: fhirData.clinicalStatus?.coding?.[0]?.code,
+          code: conditionCode?.coding?.[0]?.code,
+          display_name: conditionCode?.coding?.[0]?.display,
+          clinical_status: clinicalStatus?.coding?.[0]?.code,
           onset_date: fhirData.onsetDateTime,
           recorded_date: fhirData.recordedDate,
         };
-      case 'MedicationRequest':
+      }
+      case 'MedicationRequest': {
+        const medConcept = fhirData.medicationCodeableConcept as { coding?: Array<{ code?: string; display?: string }> } | undefined;
+        const dosageInstruction = fhirData.dosageInstruction as Array<{ text?: string }> | undefined;
         return {
-          medication_code: fhirData.medicationCodeableConcept?.coding?.[0]?.code,
-          medication_name: fhirData.medicationCodeableConcept?.coding?.[0]?.display,
-          dosage_instruction: fhirData.dosageInstruction?.[0]?.text,
+          medication_code: medConcept?.coding?.[0]?.code,
+          medication_name: medConcept?.coding?.[0]?.display,
+          dosage_instruction: dosageInstruction?.[0]?.text,
           status: fhirData.status,
           authored_on: fhirData.authoredOn,
         };
+      }
       default:
         // For unsupported types, return the raw data for manual review
         return null;
@@ -311,9 +361,9 @@ export const FHIRConflictResolution: React.FC = () => {
    */
   const smartMerge = (
     resourceType: string,
-    communityData: any,
-    fhirData: any
-  ): Record<string, any> => {
+    communityData: CommunityData,
+    fhirData: FHIRResourceData
+  ): CommunityData => {
     const merged = { ...communityData };
 
     // Clinical fields that FHIR should take precedence on

@@ -16,6 +16,28 @@ import { useUser } from '../../contexts/AuthContext';
 import { useMedicineCabinet } from '../../hooks/useMedicineCabinet';
 import { Medication } from '../../api/medications';
 import { toast } from 'react-toastify';
+import { MedicationInfo, LabelExtractionResult } from '../../services/medicationLabelReader';
+
+// Tab type for navigation
+type TabId = 'all' | 'scan' | 'identify' | 'verify' | 'adherence' | 'reminders';
+
+// Adherence tracking data
+interface AdherenceDataItem {
+  medication_id: string;
+  medication_name: string;
+  adherence_rate: number;
+  total_taken: number;
+  total_scheduled: number;
+}
+
+// Upcoming dose reminder
+interface UpcomingDose {
+  medication_id: string;
+  medication_name: string;
+  dosage: string;
+  instructions: string;
+  next_reminder_at: string;
+}
 import {
   Camera,
   Pill,
@@ -50,10 +72,11 @@ export function MedicineCabinet() {
     psychAlerts,
     scanMedicationLabel,
     confirmScannedMedication,
-    addMedication,
-    updateMedication,
+    // These are available for future use but currently unused
+    addMedication: _addMedication,
+    updateMedication: _updateMedication,
     deleteMedication,
-    discontinueMedication,
+    discontinueMedication: _discontinueMedication,
     recordDose,
     getAdherence,
     getNeedingRefill,
@@ -62,13 +85,18 @@ export function MedicineCabinet() {
     acknowledgePsychAlert
   } = useMedicineCabinet(userId);
 
-  const [activeTab, setActiveTab] = useState<'all' | 'scan' | 'identify' | 'verify' | 'adherence' | 'reminders'>('all');
+  // Suppress unused variable warnings for future-use methods
+  void _addMedication;
+  void _updateMedication;
+  void _discontinueMedication;
+
+  const [activeTab, setActiveTab] = useState<TabId>('all');
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [showScanner, setShowScanner] = useState(false);
-  const [adherenceData, setAdherenceData] = useState<any[]>([]);
+  const [adherenceData, setAdherenceData] = useState<AdherenceDataItem[]>([]);
   const [needingRefill, setNeedingRefill] = useState<Medication[]>([]);
-  const [upcomingDoses, setUpcomingDoses] = useState<any[]>([]);
-  const [scannedData, setScannedData] = useState<any>(null);
+  const [upcomingDoses, setUpcomingDoses] = useState<UpcomingDose[]>([]);
+  const [scannedData, setScannedData] = useState<LabelExtractionResult | null>(null);
 
   // Load analytics data
   const loadAnalytics = useCallback(async () => {
@@ -192,16 +220,16 @@ export function MedicineCabinet() {
       <div className="max-w-7xl mx-auto mb-6">
         <div className="flex gap-2 bg-white rounded-xl shadow-md p-2 overflow-x-auto">
           {[
-            { id: 'all', label: 'All Medications', icon: Pill },
-            { id: 'scan', label: 'Scan Label', icon: Camera },
-            { id: 'identify', label: 'Identify Pill', icon: Search },
-            { id: 'verify', label: 'Verify Pill', icon: Shield },
-            { id: 'adherence', label: 'Adherence', icon: BarChart3 },
-            { id: 'reminders', label: 'Reminders', icon: Bell }
+            { id: 'all' as TabId, label: 'All Medications', icon: Pill },
+            { id: 'scan' as TabId, label: 'Scan Label', icon: Camera },
+            { id: 'identify' as TabId, label: 'Identify Pill', icon: Search },
+            { id: 'verify' as TabId, label: 'Verify Pill', icon: Shield },
+            { id: 'adherence' as TabId, label: 'Adherence', icon: BarChart3 },
+            { id: 'reminders' as TabId, label: 'Reminders', icon: Bell }
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-linear-to-r from-blue-600 to-purple-600 text-white shadow-md'
@@ -339,8 +367,8 @@ export function MedicineCabinet() {
             uploadProgress={uploadProgress}
             scannedData={scannedData}
             onScan={handleImageScan}
-            onConfirm={async (data: any) => {
-              const success = await confirmScannedMedication(data);
+            onConfirm={async (medicationInfo: MedicationInfo) => {
+              const success = await confirmScannedMedication(medicationInfo);
               if (success) {
                 toast.success('Medication added to cabinet!');
                 setScannedData(null);
@@ -559,8 +587,16 @@ function MedicationCard({
   );
 }
 
+// Scanner Modal Props
+interface ScannerModalProps {
+  onClose: () => void;
+  onScan: (file: File) => void;
+  processing: boolean;
+  uploadProgress: number;
+}
+
 // Scanner Modal
-function ScannerModal({ onClose, onScan, processing, uploadProgress }: any) {
+function ScannerModal({ onClose, onScan, processing, uploadProgress }: ScannerModalProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -624,8 +660,17 @@ function ScannerModal({ onClose, onScan, processing, uploadProgress }: any) {
   );
 }
 
+// Scanner View Props
+interface ScannerViewProps {
+  processing: boolean;
+  uploadProgress: number;
+  scannedData: LabelExtractionResult | null;
+  onScan: (file: File) => void;
+  onConfirm: (medicationInfo: MedicationInfo) => void;
+}
+
 // Scanner View
-function ScannerView({ processing, uploadProgress, scannedData, onScan, onConfirm }: any) {
+function ScannerView({ processing, uploadProgress, scannedData, onScan, onConfirm }: ScannerViewProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -718,8 +763,9 @@ function ScannerView({ processing, uploadProgress, scannedData, onScan, onConfir
           </div>
 
           <button
-            onClick={() => onConfirm(scannedData.medication)}
-            className="w-full bg-linear-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            onClick={() => scannedData.medication && onConfirm(scannedData.medication)}
+            disabled={!scannedData.medication}
+            className="w-full bg-linear-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <CheckCircle className="w-5 h-5" />
             Confirm & Add to Cabinet
@@ -730,8 +776,17 @@ function ScannerView({ processing, uploadProgress, scannedData, onScan, onConfir
   );
 }
 
+// Adherence View Props
+interface AdherenceViewProps {
+  adherenceData: AdherenceDataItem[];
+  medications: Medication[];
+}
+
 // Adherence View
-function AdherenceView({ adherenceData, medications }: any) {
+function AdherenceView({ adherenceData, medications: _medications }: AdherenceViewProps) {
+  // medications prop available for future enhancements
+  void _medications;
+
   return (
     <div className="bg-white rounded-xl shadow-md p-8">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -740,7 +795,7 @@ function AdherenceView({ adherenceData, medications }: any) {
       </h2>
 
       <div className="space-y-4">
-        {adherenceData.map((item: any) => {
+        {adherenceData.map((item: AdherenceDataItem) => {
           const rate = item.adherence_rate || 0;
           const color = rate >= 80 ? 'green' : rate >= 60 ? 'yellow' : 'red';
 
@@ -775,8 +830,14 @@ function AdherenceView({ adherenceData, medications }: any) {
   );
 }
 
+// Reminders View Props
+interface RemindersViewProps {
+  upcomingDoses: UpcomingDose[];
+  onTakeDose: (medicationId: string) => void;
+}
+
 // Reminders View
-function RemindersView({ upcomingDoses, onTakeDose }: any) {
+function RemindersView({ upcomingDoses, onTakeDose }: RemindersViewProps) {
   return (
     <div className="bg-white rounded-xl shadow-md p-8">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -785,7 +846,7 @@ function RemindersView({ upcomingDoses, onTakeDose }: any) {
       </h2>
 
       <div className="space-y-3">
-        {upcomingDoses.map((dose: any, idx: number) => (
+        {upcomingDoses.map((dose: UpcomingDose, idx: number) => (
           <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-3">
               <div className="bg-purple-100 rounded-full p-2">

@@ -17,11 +17,135 @@ interface DashboardProps {
   supabaseKey: string;
 }
 
+// Population Dashboard Types
+interface PopulationOverview {
+  totalPatients: number;
+  activePatients: number;
+  highRiskPatients: number;
+  averageHealthScore: number;
+  trendingConcerns?: string[];
+}
+
+interface RiskMatrixQuadrants {
+  highRiskLowAdherence: number;
+  highRiskHighAdherence: number;
+  lowRiskLowAdherence: number;
+  lowRiskHighAdherence: number;
+}
+
+interface RiskMatrixData {
+  quadrants: RiskMatrixQuadrants;
+}
+
+interface PredictiveAlert {
+  message: string;
+  probabilityScore: number;
+  timeframe: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  recommendedActions?: string[];
+}
+
+interface InterventionQueueItem {
+  patientId: string;
+  priority: number;
+}
+
+interface ResourceAllocationItem {
+  recommendation: string;
+  priority: number;
+  justification: string;
+  estimatedCost: string;
+  expectedRoi: string;
+}
+
+interface PopulationDashboard {
+  overview: PopulationOverview;
+  riskMatrix: RiskMatrixData;
+  predictiveAlerts: PredictiveAlert[];
+  interventionQueue: InterventionQueueItem[];
+  resourceAllocation: ResourceAllocationItem[];
+}
+
+// Quality Metrics Types
+interface FhirComplianceData {
+  score: number;
+  issues?: unknown[];
+}
+
+interface DataQualityData {
+  completeness: number;
+  accuracy: number;
+  consistency: number;
+  issues?: DataQualityIssue[];
+}
+
+interface DataQualityIssue {
+  type: string;
+  description: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  count: number;
+}
+
+interface ClinicalQualityData {
+  adherenceToGuidelines: number;
+  outcomeMetrics?: {
+    readmissionRate: number;
+  };
+}
+
+interface QualityMetricsData {
+  fhirCompliance: FhirComplianceData;
+  dataQuality: DataQualityData;
+  clinicalQuality: ClinicalQualityData;
+}
+
+// Patient Types
+interface RiskAssessmentData {
+  riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  priority: number;
+}
+
+interface AIPatientData {
+  patientId: string;
+  patientName: string;
+  overallHealthScore: number;
+  adherenceScore: number;
+  emergencyAlerts?: unknown[];
+  riskAssessment?: RiskAssessmentData;
+}
+
+interface EnhancedPatientData {
+  aiInsights: AIPatientData;
+}
+
+// Automated Reports Types
+interface WeeklyReportSummary {
+  totalPatients: number;
+  activePatients: number;
+  highRiskPatients: number;
+  newEmergencyAlerts: number;
+}
+
+interface WeeklyReport {
+  summary?: WeeklyReportSummary;
+  keyInsights?: string[];
+}
+
+interface EmergencyReport {
+  alertCount: number;
+  escalationRequired: boolean;
+}
+
+interface AutomatedReports {
+  weeklyReport?: WeeklyReport;
+  emergencyReport?: EmergencyReport;
+}
+
 interface DashboardState {
-  populationDashboard: any;
-  qualityMetrics: any;
-  enhancedPatients: any[];
-  automatedReports: any;
+  populationDashboard: PopulationDashboard | null;
+  qualityMetrics: QualityMetricsData | null;
+  enhancedPatients: EnhancedPatientData[];
+  automatedReports: AutomatedReports | null;
   loading: boolean;
   error: string | null;
   lastUpdated: Date | null;
@@ -31,6 +155,12 @@ interface AlertConfig {
   enableRealTime: boolean;
   criticalThreshold: number;
   notificationMethods: string[];
+}
+
+interface QuickActionContext {
+  patientId?: string;
+  ehrSystem?: string;
+  source?: string;
 }
 
 // Quick Action Card Component
@@ -69,11 +199,11 @@ const QuickActionCard: React.FC<{
 };
 
 // Risk Matrix Visualization
-const RiskMatrix: React.FC<{ riskMatrix: any }> = ({ riskMatrix }) => {
+const RiskMatrix: React.FC<{ riskMatrix: RiskMatrixData | undefined }> = ({ riskMatrix }) => {
   if (!riskMatrix) return <div>Loading risk matrix...</div>;
 
   const { quadrants } = riskMatrix;
-  const total = Object.values(quadrants).reduce((sum: number, count: any) => sum + count, 0);
+  const total = Object.values(quadrants).reduce((sum: number, count: number) => sum + count, 0);
 
   return (
     <div className="grid grid-cols-2 gap-4 p-4">
@@ -113,7 +243,7 @@ const RiskMatrix: React.FC<{ riskMatrix: any }> = ({ riskMatrix }) => {
 };
 
 // Population Health Metrics Component
-const PopulationMetrics: React.FC<{ overview: any }> = ({ overview }) => {
+const PopulationMetrics: React.FC<{ overview: PopulationOverview | undefined }> = ({ overview }) => {
   if (!overview) return <div>Loading population metrics...</div>;
 
   const engagementRate = overview.totalPatients > 0 ?
@@ -166,7 +296,7 @@ const PopulationMetrics: React.FC<{ overview: any }> = ({ overview }) => {
 };
 
 // Predictive Alerts Component
-const PredictiveAlerts: React.FC<{ alerts: any[] }> = ({ alerts }) => {
+const PredictiveAlerts: React.FC<{ alerts: PredictiveAlert[] | undefined }> = ({ alerts }) => {
   if (!alerts || alerts.length === 0) {
     return (
       <Card>
@@ -222,7 +352,7 @@ const PredictiveAlerts: React.FC<{ alerts: any[] }> = ({ alerts }) => {
 
 // Patient List with AI Insights
 const AIPatientList: React.FC<{
-  patients: any[];
+  patients: AIPatientData[];
   onPatientSelect: (patientId: string) => void;
 }> = ({ patients, onPatientSelect }) => {
   if (!patients || patients.length === 0) {
@@ -277,7 +407,7 @@ const AIPatientList: React.FC<{
 };
 
 // Quality Metrics Component
-const QualityMetrics: React.FC<{ qualityMetrics: any }> = ({ qualityMetrics }) => {
+const QualityMetrics: React.FC<{ qualityMetrics: QualityMetricsData | null }> = ({ qualityMetrics }) => {
   if (!qualityMetrics) return <div>Loading quality metrics...</div>;
 
   return (
@@ -381,15 +511,14 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
 
       // Get enhanced data for high-priority patients
       const highPriorityPatients = dashboard.interventionQueue
-        .filter((item: any) => item.priority >= 4)
+        .filter((item: InterventionQueueItem) => item.priority >= 4)
         .slice(0, 10);
 
       const enhancedPatients = await Promise.all(
-        highPriorityPatients.map(async (item: any) => {
+        highPriorityPatients.map(async (item: InterventionQueueItem) => {
           try {
             return await fhirService.exportEnhancedPatientData(item.patientId);
-          } catch (error) {
-
+          } catch {
             return null;
           }
         })
@@ -436,16 +565,16 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
   };
 
   // Handle quick actions with optional context
-  const handleQuickAction = async (action: string, context?: any) => {
+  const handleQuickAction = async (action: string, context?: QuickActionContext) => {
     try {
-      // Log action with context for audit trail
-      const actionContext = {
-        action,
-        timestamp: new Date().toISOString(),
-        connectionConfig: connectionConfig.isConfigured,
-        patientId: context?.patientId,
-        source: context?.source || 'dashboard'
-      };
+      // Action context would be used for audit logging in production
+      // const actionContext = {
+      //   action,
+      //   timestamp: new Date().toISOString(),
+      //   connectionConfig: connectionConfig.isConfigured,
+      //   patientId: context?.patientId,
+      //   source: context?.source || 'dashboard'
+      // };
 
       switch (action) {
         case 'validate-data':
@@ -488,17 +617,19 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
   const getQuickActions = () => {
     const actions = [];
 
-    if (state.populationDashboard?.overview?.highRiskPatients > 10) {
+    const highRiskCount = state.populationDashboard?.overview?.highRiskPatients ?? 0;
+    if (highRiskCount > 10) {
       actions.push({
         title: 'High Risk Alert',
-        description: `${state.populationDashboard.overview.highRiskPatients} patients need immediate attention`,
+        description: `${highRiskCount} patients need immediate attention`,
         action: 'Review High-Risk Patients',
         urgency: 'HIGH' as const,
         onClick: () => handleQuickAction('review-high-risk')
       });
     }
 
-    if (state.qualityMetrics?.fhirCompliance?.score < 90) {
+    const fhirScore = state.qualityMetrics?.fhirCompliance?.score ?? 100;
+    if (fhirScore < 90) {
       actions.push({
         title: 'FHIR Compliance',
         description: 'Data quality issues detected',
@@ -508,7 +639,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
       });
     }
 
-    if (state.populationDashboard?.predictiveAlerts?.some((alert: any) => alert.severity === 'CRITICAL')) {
+    if (state.populationDashboard?.predictiveAlerts?.some((alert: PredictiveAlert) => alert.severity === 'CRITICAL')) {
       actions.push({
         title: 'Critical Predictions',
         description: 'AI has detected critical population trends',
@@ -794,7 +925,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {state.populationDashboard?.resourceAllocation?.map((rec: any, index: number) => (
+                {state.populationDashboard?.resourceAllocation?.map((rec: ResourceAllocationItem, index: number) => (
                   <div key={index} className="border rounded-sm p-4">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-medium">{rec.recommendation}</h4>
@@ -822,7 +953,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {state.qualityMetrics.dataQuality.issues.map((issue: any, index: number) => (
+                  {state.qualityMetrics.dataQuality.issues.map((issue: DataQualityIssue, index: number) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded-sm">
                       <div>
                         <div className="font-medium">{issue.type}</div>
