@@ -25,6 +25,9 @@
 15. [Testing Strategy](#15-testing-strategy)
 16. [Feature Modules](#16-feature-modules)
 17. [Technology Stack](#17-technology-stack)
+18. [Guardian Agent & Guardian Eyes](#18-guardian-agent--guardian-eyes)
+19. [BLE & Remote Patient Monitoring](#19-ble--remote-patient-monitoring)
+20. [Dual PHI Encryption Systems](#20-dual-phi-encryption-systems)
 
 ---
 
@@ -833,6 +836,413 @@ npm run test:coverage   # Coverage report
 | Daily.co | Video telehealth |
 | Twilio | SMS/voice |
 | Firebase | Push notifications |
+
+---
+
+## 18. Guardian Agent & Guardian Eyes
+
+### 18.1 Overview
+
+The Guardian Agent is a **production-grade autonomous self-healing system** designed for HIPAA/SOC 2 healthcare environments. It provides continuous monitoring, automatic issue detection, and intelligent remediation.
+
+**Location:** `src/services/guardian-agent/`
+
+### 18.2 Core Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **Agent Brain** | `AgentBrain.ts` | Core AI decision engine with pattern recognition |
+| **Monitoring System** | `MonitoringSystem.ts` | Real-time health monitoring (5-second intervals) |
+| **Healing Engine** | `HealingEngine.ts` | Executes 13 distinct healing strategies |
+| **Security Scanner** | `SecurityScanner.ts` | Proactive vulnerability detection |
+| **Learning System** | `LearningSystem.ts` | Adaptive ML for pattern optimization |
+| **Error Signature Library** | `ErrorSignatureLibrary.ts` | 30+ healthcare-specific error signatures |
+
+### 18.3 Monitoring Capabilities
+
+```
+┌─────────────────────────────────────────────────┐
+│           GUARDIAN EYES MONITORING              │
+├─────────────────────────────────────────────────┤
+│  Performance Observer  │ Slow ops, navigation   │
+│  Error Monitoring      │ Global errors, promises│
+│  API Monitoring        │ Fetch proxy intercept  │
+│  Health Checks         │ Memory, error rates    │
+│  Resource Monitoring   │ Memory leaks, exhaust  │
+│  Security Events       │ Real-time via Supabase │
+└─────────────────────────────────────────────────┘
+```
+
+**Anomaly Types Detected:**
+- Performance degradation
+- Error rate spikes
+- Security vulnerabilities
+- Memory leaks
+- Service availability issues
+
+### 18.4 Self-Healing Strategies
+
+| Strategy | Autonomous | Description |
+|----------|------------|-------------|
+| `retry_with_backoff` | ✅ | Exponential backoff for transient failures |
+| `circuit_breaker` | ✅ | Prevents cascade failures |
+| `fallback_to_cache` | ✅ | Uses cached data when service unavailable |
+| `graceful_degradation` | ✅ | Disables non-critical features |
+| `state_rollback` | ✅ | Reverts to last known good state |
+| `resource_cleanup` | ✅ | Cleans memory leaks |
+| `session_recovery` | ✅ | Refreshes authentication tokens |
+| `dependency_isolation` | ✅ | Bulkhead pattern isolation |
+| `data_reconciliation` | ✅ | Ensures data consistency |
+| `auto_patch` | ⚠️ | Code fixes (requires approval) |
+| `configuration_reset` | ⚠️ | Config changes (requires approval) |
+| `security_lockdown` | ⚠️ | Blocks suspicious activity |
+| `emergency_shutdown` | ⚠️ | Graceful critical shutdown |
+
+### 18.5 6-Layer Security Architecture
+
+```
+Layer 1: Token-Based Authentication (TokenAuth.ts)
+         └─ JWT scoped tokens, 2-5 min TTL, JTI replay protection
+
+Layer 2: Schema Validation (SchemaValidator.ts)
+         └─ Zod-based validation, FHIR compliance, prevents AI hallucination
+
+Layer 3: Tool Registry (ToolRegistry.ts)
+         └─ Capability-based security, checksum validation, version pinning
+
+Layer 4: Execution Sandbox (ExecutionSandbox.ts)
+         └─ Network isolation, file system isolation, concurrency limits
+
+Layer 5: PHI Encryption (PHIEncryption.ts)
+         └─ AES-256-GCM field-level encryption, per-tenant keys
+
+Layer 6: Propose Workflow (ProposeWorkflow.ts)
+         └─ All code changes via GitHub PR, zero direct modifications
+```
+
+### 18.6 Guardian Eyes Real-Time Monitoring
+
+**File:** `src/services/guardian-agent/RealtimeSecurityMonitor.ts`
+
+- Listens to Supabase Realtime: `security_alerts`, `security_events`
+- Live notification system with callbacks
+- SOC 2 compliance dashboard
+- Multi-channel alerts: email, Slack, SMS, PagerDuty
+
+### 18.7 Approval Workflow
+
+**File:** `src/services/guardianApprovalService.ts`
+
+```
+Issue Detection → Sandbox Testing → Review Ticket → Admin Approval → Conditional Merge
+```
+
+**Dashboard:** `/admin/guardian`
+
+### 18.8 Performance Metrics
+
+| Metric | Target |
+|--------|--------|
+| Detection Time | < 100ms |
+| Healing Time | < 5 seconds |
+| Success Rate | > 90% |
+| False Positives | < 5% |
+| Memory Overhead | < 10MB |
+| CPU Overhead | < 1% |
+
+---
+
+## 19. BLE & Remote Patient Monitoring
+
+### 19.1 Overview
+
+Complete Web Bluetooth API integration for medical vital sign devices, supporting the **Mercy Methodist pilot** and enterprise RPM deployments.
+
+### 19.2 Vital Capture Modes
+
+| Mode | Description | Privacy |
+|------|-------------|---------|
+| **Manual Entry** | Senior-friendly form input | N/A |
+| **Live Camera Scan** | Tesseract.js OCR on video | No storage |
+| **Photo Capture** | 24-hour temporary storage | Auto-delete |
+| **Web Bluetooth BLE** | Direct device connection | In-browser |
+
+### 19.3 BLE Service Implementation
+
+**File:** `src/components/vitals/useBluetooth.ts`
+
+**Bluetooth SIG Standard UUIDs:**
+
+| Service | UUID | Purpose |
+|---------|------|---------|
+| Blood Pressure | 0x1810 | BP monitors |
+| Glucose | 0x1808 | Glucometers |
+| Heart Rate | 0x180D | HR monitors |
+| Weight Scale | 0x181D | Smart scales |
+| Health Thermometer | 0x1809 | Thermometers |
+| Battery Service | 0x180F | Battery level |
+
+**Features:**
+- IEEE 11073 SFLOAT parsing
+- kPa to mmHg conversion
+- mol/L to mg/dL conversion
+- 30-second measurement timeout
+- Notification/indication handling
+
+### 19.4 Wearable Device Adapters
+
+**Location:** `src/adapters/wearables/implementations/`
+
+| Adapter | Devices | Certifications |
+|---------|---------|----------------|
+| **iHealth** | BP5, BP7, Core scales, Gluco+ | FDA 510(k), CE |
+| **Fitbit** | Charge, Versa, Sense, Inspire | - |
+| **Garmin** | Forerunner, Fenix, Venu | - |
+| **Withings** | BPM Connect, Body+, Thermo | FDA, CE |
+| **Apple HealthKit** | Apple Watch Series 4+ | - |
+| **Samsung Health** | Galaxy Watch | - |
+| **Amazfit** | GTR, GTS, Band series | - |
+
+### 19.5 Critical Vital Thresholds
+
+| Vital | Normal Range | Low Alert | High Alert |
+|-------|--------------|-----------|------------|
+| Systolic BP | 90-140 mmHg | < 90 | > 180 |
+| Diastolic BP | 60-90 mmHg | < 60 | > 120 |
+| Heart Rate | 60-100 bpm | < 50 | > 120 |
+| SpO2 | 95-100% | < 88% | - |
+| Temperature | 97-99°F | < 95°F | > 103°F |
+| Glucose | 70-140 mg/dL | < 54 | > 400 |
+
+### 19.6 Wearable Service Capabilities
+
+**File:** `src/services/wearableService.ts`
+
+```typescript
+// Device Management
+connectDevice(userId, deviceType, authToken)
+disconnectDevice(userId, deviceType)
+getConnectedDevices(userId)
+
+// Vital Signs
+storeVitalSign(userId, vitalData)
+detectAbnormalVital(vital) → triggers sendVitalAlert()
+getVitalsTrend(userId, vitalType, days)
+
+// Fall Detection
+processFallDetection(userId, fallData)
+sendFallAlert(userId, fallEvent)
+updateFallResponse(fallId, response)
+
+// Gait Analysis (11 parameters)
+storeGaitAnalysis(userId, gaitData)
+  → step_count, cadence, stride_length
+  → gait_speed, postural_sway
+  → tremor_detected, tremor_frequency
+  → freezing_episodes, double_support_time
+```
+
+### 19.7 Database Schema
+
+**Migration:** `20251209200000_web_vital_capture_system.sql`
+
+```sql
+-- Vital capture source tracking
+ALTER TABLE check_ins ADD COLUMN source TEXT;
+-- Values: manual, camera_scan, camera_photo, ble_web,
+--         caregiver_app, vendor_api, import
+
+-- Temporary image storage (24-hour TTL)
+CREATE TABLE temp_image_jobs (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES auth.users,
+  status TEXT, -- pending_ocr, processing, processed, failed
+  extracted_data JSONB,
+  expires_at TIMESTAMPTZ
+);
+```
+
+### 19.8 Edge Function: Photo OCR
+
+**File:** `supabase/functions/process-vital-image/index.ts`
+
+- Server-side OCR for uploaded vital images
+- Validates against physiological ranges
+- Updates job status workflow
+- Auto-cleanup of expired images
+
+---
+
+## 20. Dual PHI Encryption Systems
+
+### 20.1 Overview
+
+Two complementary encryption systems for HIPAA compliance:
+
+| System | Purpose | Algorithm | Key Storage |
+|--------|---------|-----------|-------------|
+| **WellFit Community** | Handoff/patient data | AES-256 | Supabase Secrets |
+| **Envision Atlus** | Clinical/FHIR data | AES-256 | Supabase Vault |
+
+### 20.2 Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT APPLICATIONS                       │
+├─────────────────────────────────────────────────────────────┤
+│  phiEncryptionClient.ts    │    secureStorage.ts            │
+│  (Server-side calls)       │    (Browser sessionStorage)    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    EDGE FUNCTIONS                            │
+├─────────────────────────────────────────────────────────────┤
+│  phi-encrypt/index.ts      │    phiDeidentifier.ts          │
+│  (Encrypt/decrypt API)     │    (HIPAA Safe Harbor)         │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    DATABASE LAYER                            │
+├──────────────────────────┬──────────────────────────────────┤
+│   WELLFIT COMMUNITY      │      ENVISION ATLUS (CLINICAL)   │
+├──────────────────────────┼──────────────────────────────────┤
+│  encrypt_phi_text()      │   encrypt_phi_text(..., TRUE)    │
+│  decrypt_phi_text()      │   decrypt_phi_text(..., TRUE)    │
+│                          │                                   │
+│  Key: Supabase Secrets   │   Key: Supabase Vault            │
+│  app.settings.PHI_KEY    │   vault.decrypted_secrets        │
+└──────────────────────────┴──────────────────────────────────┘
+```
+
+### 20.3 Database Functions
+
+**encrypt_phi_text()**
+```sql
+CREATE FUNCTION encrypt_phi_text(
+  data TEXT,
+  use_clinical_key BOOLEAN DEFAULT FALSE
+) RETURNS TEXT
+```
+
+**decrypt_phi_text()**
+```sql
+CREATE FUNCTION decrypt_phi_text(
+  encrypted_data TEXT,
+  use_clinical_key BOOLEAN DEFAULT FALSE
+) RETURNS TEXT
+-- Raises [PHI_ENCRYPTION_FAILED] on error (fail-safe design)
+```
+
+### 20.4 Encrypted Fields
+
+**WellFit Community:**
+- Patient names (handoff packets)
+- Dates of birth (handoff packets)
+- Medication photos (CHW service)
+- Check-in emotional state/vitals
+- Risk assessment notes
+
+**Envision Atlus (Clinical):**
+
+| Table | Encrypted Field |
+|-------|-----------------|
+| `billing_providers` | `ein_encrypted` |
+| `facilities` | `tax_id_encrypted` |
+| `hc_organization` | `tax_id_encrypted` |
+| `hc_provider_group` | `tax_id_encrypted` |
+| `profiles` | `dob_encrypted` |
+| `senior_demographics` | `date_of_birth_encrypted` |
+| `patient_referrals` | `patient_dob_encrypted` |
+| `hc_staff` | `date_of_birth_encrypted` |
+| `fhir_practitioners` | `birth_date_encrypted` |
+
+### 20.5 Auto-Encryption Triggers
+
+```sql
+-- Automatic encryption on INSERT/UPDATE
+CREATE TRIGGER encrypt_tax_id_on_change
+  BEFORE INSERT OR UPDATE ON billing_providers
+  FOR EACH ROW EXECUTE FUNCTION encrypt_tax_id_on_change();
+
+CREATE TRIGGER encrypt_dob_on_change
+  BEFORE INSERT OR UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION encrypt_dob_on_change();
+```
+
+### 20.6 Decrypted Views
+
+Controlled access to decrypted PHI with RLS:
+
+| View | Decrypted Field |
+|------|-----------------|
+| `billing_providers_decrypted` | `ein_decrypted` |
+| `facilities_decrypted` | `tax_id_decrypted` |
+| `profiles_decrypted` | `dob_decrypted` |
+| `senior_demographics_decrypted` | `date_of_birth_decrypted` |
+| `patient_referrals_decrypted` | `patient_dob_decrypted` |
+
+### 20.7 Client-Side Utilities
+
+**phiEncryptionClient.ts:**
+```typescript
+encryptPHI(plaintext, patientId) → Promise<string>
+decryptPHI(encryptedData, patientId) → Promise<string>
+validateEncryption() → Promise<boolean>
+```
+
+**secureStorage.ts (Browser):**
+```typescript
+// AES-GCM with PBKDF2 (100,000 iterations)
+secureStorage.setItem(key, value)
+secureStorage.getItem(key)
+```
+
+### 20.8 PHI De-Identification
+
+**File:** `supabase/functions/_shared/phiDeidentifier.ts`
+
+**HIPAA Safe Harbor § 164.514 Compliance:**
+
+| Pattern | Detection |
+|---------|-----------|
+| Names | Full names, labeled names, possessives |
+| Geographic | Addresses, ZIP codes, city/state |
+| Dates | DOB, full dates, exact ages |
+| Identifiers | MRN, SSN, account numbers |
+| Contact | Phone, email, fax |
+| Digital | URLs, IP addresses |
+
+**Redaction Levels:**
+- `standard` - Common PHI patterns
+- `strict` - Medical terms included
+- `paranoid` - Maximum coverage
+
+### 20.9 Key Management
+
+```
+Development:
+  VITE_PHI_ENCRYPTION_KEY (browser - dev only)
+
+Production - WellFit:
+  Supabase Secrets → PHI_ENCRYPTION_KEY
+  Session config → app.settings.PHI_ENCRYPTION_KEY
+
+Production - Envision Atlus:
+  Supabase Vault → vault.decrypted_secrets
+  Key name → app.encryption_key
+```
+
+### 20.10 HIPAA Compliance
+
+| Requirement | Implementation |
+|-------------|----------------|
+| § 164.312(a)(2)(iv) | AES-256 encryption at rest |
+| Encryption in Transit | HTTPS/TLS required |
+| Access Control | Auth required for encrypt/decrypt |
+| Audit Trail | All operations logged |
+| Fail-Safe | Exceptions on failure (not NULL) |
 
 ---
 
