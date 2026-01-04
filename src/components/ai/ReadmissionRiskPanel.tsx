@@ -94,9 +94,9 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
 
       setPrediction(transformedPrediction);
       auditLogger.clinical('READMISSION_PREDICTION_VIEWED', true, { predictionId });
-    } catch (err: any) {
-      auditLogger.error('READMISSION_PREDICTION_LOAD_FAILED', err, { predictionId });
-      setError(err.message || 'Failed to load prediction');
+    } catch (err: unknown) {
+      auditLogger.error('READMISSION_PREDICTION_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), { predictionId });
+      setError(err instanceof Error ? err.message : 'Failed to load prediction');
     } finally {
       setLoading(false);
     }

@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuth, useSupabaseClient } from '../../contexts/AuthContext';
 import { auditLogger } from '../../services/auditLogger';
-import { ccmEligibilityScorer, type CCMEligibilityResult } from '../../services/ai/ccmEligibilityScorer';
+import { ccmEligibilityScorer } from '../../services/ai/ccmEligibilityScorer';
 
 // Envision Atlus Design System
 import {
@@ -42,7 +42,6 @@ import {
   EAMetricCard,
   EAAlert,
   EAPageLayout,
-  EARiskIndicator,
 } from '../envision-atlus';
 
 // =====================================================
@@ -152,8 +151,17 @@ export const AIRevenueDashboard: React.FC<AIRevenueDashboardProps> = ({
         auditLogger.error('AI_REVENUE_RISK_LOAD_ERROR', riskError);
       }
 
+      interface CCMAssessmentRow {
+        patient_id: string;
+        overall_eligibility_score: number | null;
+        chronic_conditions_count: number | null;
+        predicted_monthly_reimbursement: number | null;
+        enrollment_recommendation: string | null;
+        assessment_date: string | null;
+      }
+
       // Process CCM assessments
-      const assessments: CCMPatientSummary[] = (ccmData || []).map((row: any) => ({
+      const assessments: CCMPatientSummary[] = ((ccmData || []) as CCMAssessmentRow[]).map((row) => ({
         patientId: row.patient_id,
         eligibilityScore: row.overall_eligibility_score || 0,
         chronicConditions: row.chronic_conditions_count || 0,

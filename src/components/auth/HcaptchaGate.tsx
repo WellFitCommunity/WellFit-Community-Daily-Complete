@@ -21,8 +21,8 @@ export default function HcaptchaGate({ onVerified }: Props) {
       const token = await execute();
       await verifyHcaptchaToken(token, siteKey);
       await onVerified(); // only now perform your sensitive action
-    } catch (err: any) {
-      setError(err?.message || 'Verification failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Verification failed');
     } finally {
       setSubmitting(false);
     }

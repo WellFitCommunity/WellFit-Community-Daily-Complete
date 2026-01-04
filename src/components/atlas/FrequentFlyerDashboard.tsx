@@ -32,16 +32,82 @@ export const FrequentFlyerDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [highRiskPatients, setHighRiskPatients] = useState<HighRiskPatient[]>([]);
   const [utilizerMetrics, setUtilizerMetrics] = useState<HighUtilizerMetrics[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
+  interface Alert {
+    id?: string;
+    title: string;
+    description?: string;
+    severity: 'critical' | 'high' | 'medium' | 'low';
+    alert_type?: string;
+    created_at?: string;
+  }
+
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);
   const [selectedPatient, setSelectedPatient] = useState<HighRiskPatient | null>(null);
 
   useEffect(() => {
-    loadDashboard();
+    const fetchDashboard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Load high utilizer metrics
+        const utilizers = await ReadmissionTrackingService.identifyHighUtilizers(selectedPeriod);
+        setUtilizerMetrics(utilizers);
+
+        // Load active alerts
+        const activeAlerts = await CareCoordinationService.getActiveAlerts();
+        setAlerts(activeAlerts);
+
+        // Get high risk patients with profile data
+        const highRisk = await ReadmissionTrackingService.getActiveHighRiskPatients();
+
+        interface HighRiskPatientData {
+          patient_id: string;
+          profiles?: { first_name?: string; last_name?: string } | null;
+          risk_score?: number;
+          admission_date: string;
+          care_plan_created?: boolean;
+        }
+
+        // Format for display
+        const formattedPatients: HighRiskPatient[] = (highRisk as HighRiskPatientData[]).map((patient) => ({
+          patient_id: patient.patient_id,
+          patient_name: patient.profiles ? `${patient.profiles.first_name || ''} ${patient.profiles.last_name || ''}`.trim() : 'Unknown',
+          risk_score: patient.risk_score || 0,
+          total_visits: utilizers.find(u => u.patient_id === patient.patient_id)?.total_visits || 1,
+          er_visits: utilizers.find(u => u.patient_id === patient.patient_id)?.er_visits || 0,
+          readmissions: utilizers.find(u => u.patient_id === patient.patient_id)?.readmissions || 0,
+          last_visit_date: patient.admission_date,
+          has_active_care_plan: patient.care_plan_created || false,
+          cms_penalty_risk: utilizers.find(u => u.patient_id === patient.patient_id)?.cms_penalty_risk || false
+        }));
+
+        setHighRiskPatients(formattedPatients);
+
+        // Calculate dashboard metrics
+        const dashboardMetrics: DashboardMetrics = {
+          total_high_utilizers: utilizers.length,
+          total_readmissions_30day: utilizers.reduce((sum, u) => sum + u.readmissions, 0),
+          active_care_plans: formattedPatients.filter(p => p.has_active_care_plan).length,
+          alerts_pending: activeAlerts.length,
+          cms_penalty_risk_patients: utilizers.filter(u => u.cms_penalty_risk).length,
+          prevented_readmissions: 0 // Calculate from completed care plans
+        };
+
+        setMetrics(dashboardMetrics);
+
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
     // Refresh every 5 minutes
-    const interval = setInterval(loadDashboard, 5 * 60 * 1000);
+    const interval = setInterval(fetchDashboard, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [selectedPeriod]);
 
@@ -60,8 +126,16 @@ export const FrequentFlyerDashboard: React.FC = () => {
       // Get high risk patients with profile data
       const highRisk = await ReadmissionTrackingService.getActiveHighRiskPatients();
 
+      interface HighRiskPatientData {
+        patient_id: string;
+        profiles?: { first_name?: string; last_name?: string } | null;
+        risk_score?: number;
+        admission_date: string;
+        care_plan_created?: boolean;
+      }
+
       // Format for display
-      const formattedPatients: HighRiskPatient[] = highRisk.map((patient: any) => ({
+      const formattedPatients: HighRiskPatient[] = (highRisk as HighRiskPatientData[]).map((patient) => ({
         patient_id: patient.patient_id,
         patient_name: patient.profiles ? `${patient.profiles.first_name || ''} ${patient.profiles.last_name || ''}`.trim() : 'Unknown',
         risk_score: patient.risk_score || 0,
@@ -227,7 +301,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
                     <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                       <span className="flex items-center">
                         <Calendar size={12} className="mr-1" />
-                        {new Date(alert.created_at).toLocaleDateString()}
+                        {alert.created_at ? new Date(alert.created_at).toLocaleDateString() : 'N/A'}
                       </span>
                       <span className="px-2 py-1 bg-white rounded-sm text-xs font-medium">
                         {alert.alert_type?.replace(/_/g, ' ').toUpperCase()}
@@ -458,31 +532,50 @@ interface PatientDetailModalProps {
   onClose: () => void;
 }
 
+interface CheckIn {
+  id?: string;
+  visit_type?: string;
+  type?: string;
+  visit_date?: string;
+  created_at?: string;
+  status?: string;
+  facility_name?: string;
+}
+
+interface CarePlan {
+  id?: string;
+  title: string;
+  plan_type: string;
+  status: string;
+  start_date: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+}
+
 const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClose }) => {
-  const [checkIns, setCheckIns] = useState<any[]>([]);
-  const [carePlans, setCarePlans] = useState<any[]>([]);
+  const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
+  const [carePlans, setCarePlans] = useState<CarePlan[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(true);
 
   useEffect(() => {
-    loadPatientDetails();
+    const fetchPatientDetails = async () => {
+      setLoadingDetails(true);
+      try {
+        // Load patient's care plans
+        const plans = await CareCoordinationService.getPatientCarePlans(patient.patient_id, false);
+        setCarePlans(plans);
+
+        // Load patient's recent check-ins/visits
+        const visits = await ReadmissionTrackingService.getPatientVisitHistory(patient.patient_id, 90);
+        setCheckIns(visits || []);
+      } catch (_error) {
+        // Error handled silently - UI will show empty state
+      } finally {
+        setLoadingDetails(false);
+      }
+    };
+
+    fetchPatientDetails();
   }, [patient.patient_id]);
-
-  const loadPatientDetails = async () => {
-    setLoadingDetails(true);
-    try {
-      // Load patient's care plans
-      const plans = await CareCoordinationService.getPatientCarePlans(patient.patient_id, false);
-      setCarePlans(plans);
-
-      // Load patient's recent check-ins/visits
-      const visits = await ReadmissionTrackingService.getPatientVisitHistory(patient.patient_id, 90);
-      setCheckIns(visits || []);
-    } catch (_error) {
-      // Error handled silently - UI will show empty state
-    } finally {
-      setLoadingDetails(false);
-    }
-  };
 
   const getRiskLabel = (score: number): string => {
     if (score >= 80) return 'CRITICAL';
@@ -542,7 +635,7 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
                           {checkIn.visit_type || checkIn.type || 'Visit'}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {new Date(checkIn.visit_date || checkIn.created_at).toLocaleDateString()}
+                          {checkIn.visit_date || checkIn.created_at ? new Date(checkIn.visit_date || checkIn.created_at || '').toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
                     </div>

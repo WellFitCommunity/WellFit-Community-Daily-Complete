@@ -17,15 +17,36 @@ interface CCMPatient {
 }
 
 export const CCMTimeline: React.FC = () => {
+  interface RevenueBreakdown {
+    code: string;
+    count: number;
+    revenue: number;
+  }
+
   const [patients, setPatients] = useState<CCMPatient[]>([]);
-  const [revenue, setRevenue] = useState({ total: 0, breakdown: [] as any[] });
+  const [revenue, setRevenue] = useState({ total: 0, breakdown: [] as RevenueBreakdown[] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
   useEffect(() => {
-    loadCCMData();
-     
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const eligiblePatients = await CCMAutopilotService.getEligiblePatients(selectedMonth);
+        setPatients(eligiblePatients);
+
+        const revenueData = CCMAutopilotService.calculateCCMRevenue(eligiblePatients);
+        setRevenue(revenueData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load CCM data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [selectedMonth]);
 
   const loadCCMData = async () => {

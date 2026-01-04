@@ -5,7 +5,7 @@ interface ConfidenceScoreBadgeProps {
   score: number; // 0-100
   suggestionType?: 'billing_code' | 'clinical' | 'drug_interaction' | 'risk_assessment';
   explanation?: string;
-  supportingEvidence?: Record<string, any>;
+  supportingEvidence?: Record<string, unknown>;
   onValidate?: (accepted: boolean, modifiedValue?: string) => void;
   variant?: 'badge' | 'detailed';
 }

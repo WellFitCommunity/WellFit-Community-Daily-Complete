@@ -29,8 +29,19 @@ export const ClaimsSubmissionPanel: React.FC = () => {
     placeOfService: '11', // Office
   });
 
-  const [providers, setProviders] = useState<any[]>([]);
-  const [payers, setPayers] = useState<any[]>([]);
+  interface Provider {
+    id: string;
+    npi: string;
+    organization_name?: string | null;
+  }
+
+  interface Payer {
+    id: string;
+    name: string;
+  }
+
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [payers, setPayers] = useState<Payer[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -119,11 +130,11 @@ export const ClaimsSubmissionPanel: React.FC = () => {
         payerId: formData.payerId,
         serviceDate: encounterData.encounter.date_of_service,
         encounterType: formData.encounterType,
-        diagnoses: encounterData.diagnoses?.map((d: any) => ({
+        diagnoses: encounterData.diagnoses?.map((d: { description?: string; term?: string; code?: string; icd10Code?: string }) => ({
           term: d.description || d.term,
           icd10Code: d.code || d.icd10Code,
         })) || [],
-        procedures: encounterData.procedures?.map((p: any) => ({
+        procedures: encounterData.procedures?.map((p: { description?: string; code?: string; cptCode?: string }) => ({
           description: p.description,
           cptCode: p.code || p.cptCode,
         })) || [],
@@ -194,10 +205,10 @@ export const ClaimsSubmissionPanel: React.FC = () => {
         encounterType: 'office_visit',
         placeOfService: '11',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setResult({
         success: false,
-        message: error.message || 'Failed to create claim',
+        message: error instanceof Error ? error.message : 'Failed to create claim',
       });
     } finally {
       setSubmitting(false);
@@ -276,7 +287,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
             </label>
             <select
               value={formData.encounterType}
-              onChange={(e) => setFormData({ ...formData, encounterType: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, encounterType: e.target.value as 'office_visit' | 'telehealth' | 'emergency' | 'procedure' | 'surgery' })}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >

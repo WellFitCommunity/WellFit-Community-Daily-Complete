@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
-import { CheckCircle2, XCircle, Edit, AlertTriangle, Sparkles, DollarSign, RefreshCw, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, Edit, AlertTriangle, Sparkles, DollarSign, FileText } from 'lucide-react';
 import { billingCodeSuggester } from '../../services/ai/billingCodeSuggester';
 import type { BillingSuggestionResult } from '../../services/ai/billingCodeSuggester';
 import { AIFeedbackButton } from './AIFeedbackButton';
@@ -20,7 +20,7 @@ interface BillingCodeSuggestionPanelProps {
   encounterId: string;
   suggestionId?: string;
   onAccept?: (suggestionId: string) => void;
-  onModify?: (suggestionId: string, modifiedCodes: any) => void;
+  onModify?: (suggestionId: string, modifiedCodes: BillingSuggestionResult['suggestedCodes'] | undefined) => void;
   onReject?: (suggestionId: string) => void;
 }
 
@@ -90,9 +90,9 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
 
       setSuggestion(transformedSuggestion);
       auditLogger.clinical('BILLING_SUGGESTION_VIEWED', true, { encounterId, suggestionId });
-    } catch (err: any) {
-      auditLogger.error('BILLING_SUGGESTION_LOAD_FAILED', err, { encounterId, suggestionId });
-      setError(err.message || 'Failed to load billing suggestions');
+    } catch (err: unknown) {
+      auditLogger.error('BILLING_SUGGESTION_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), { encounterId, suggestionId });
+      setError(err instanceof Error ? err.message : 'Failed to load billing suggestions');
     } finally {
       setLoading(false);
     }
@@ -111,8 +111,8 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
       await billingCodeSuggester.acceptSuggestion(suggestionId, userId);
       onAccept?.(suggestionId);
       setProcessing(false);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to accept suggestion');
       setProcessing(false);
     }
   };
@@ -126,8 +126,8 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
       await billingCodeSuggester.rejectSuggestion(suggestionId, userId);
       onReject?.(suggestionId);
       setProcessing(false);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to reject suggestion');
       setProcessing(false);
     }
   };

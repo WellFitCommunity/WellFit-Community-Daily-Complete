@@ -60,10 +60,17 @@ export const CodingSuggestionPanel: React.FC<CodingSuggestionPanelProps> = ({
     // Poll every 10 seconds for new suggestions
     const interval = setInterval(fetchSuggestions, 10000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- parseCodingSuggestion is stable and encounterId is the only trigger
   }, [encounterId]);
 
+  interface CodingPayload {
+    cpt?: Array<{ code: string; rationale?: string }>;
+    hcpcs?: Array<{ code: string; rationale?: string }>;
+    icd10?: Array<{ code: string; rationale?: string }>;
+  }
+
   const parseCodingSuggestion = async (
-    payload: any,
+    payload: CodingPayload,
     confidence: number | null
   ): Promise<CodeSuggestion[]> => {
     const results: CodeSuggestion[] = [];

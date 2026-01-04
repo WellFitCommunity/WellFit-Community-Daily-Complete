@@ -21,45 +21,56 @@ export const PersonalizedGreeting: React.FC = () => {
   const [greetingData, setGreetingData] = useState<GreetingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showQuote, setShowQuote] = useState(false);
-  const [roleStats, setRoleStats] = useState<Record<string, any>>({});
+  const [roleStats, setRoleStats] = useState<Record<string, number | undefined>>({});
   const [localGreetingContext, setLocalGreetingContext] = useState<GreetingContext | null>(null);
 
   useEffect(() => {
-    fetchGreeting();
-    fetchLocalGreeting();
-  }, [user]);
+    const fetchData = async () => {
+      if (!user) return;
 
-  const fetchLocalGreeting = async () => {
-    if (!user) return;
+      // Fetch greeting from edge function
+      try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const hour = new Date().getHours();
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
 
-    try {
-      // Fetch user profile and generate personalized greeting
-      const greetingContext = await generateGreeting(supabase, user.id);
-
-      if (greetingContext) {
-        setLocalGreetingContext(greetingContext);
-
-        // Fetch role-specific stats - use maybeSingle to avoid 406 errors
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, tenant_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (profile) {
-          const stats = await getRoleSpecificStats(
-            supabase,
-            user.id,
-            profile.role,
-            profile.tenant_id
-          );
-          setRoleStats(stats);
+        if (accessToken) {
+          const { data, error } = await supabase.functions.invoke('get-personalized-greeting', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: { timezone, hour },
+          });
+          if (!error) setGreetingData(data);
         }
+      } catch {
+        // Error handled silently - greeting will fall back to local greeting
       }
-    } catch (error) {
-      // Fail gracefully
-    }
-  };
+
+      // Fetch local greeting
+      try {
+        const greetingContext = await generateGreeting(supabase, user.id);
+        if (greetingContext) {
+          setLocalGreetingContext(greetingContext);
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, tenant_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (profile) {
+            const stats = await getRoleSpecificStats(supabase, user.id, profile.role, profile.tenant_id);
+            setRoleStats(stats);
+          }
+        }
+      } catch {
+        // Fail gracefully
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   useEffect(() => {
     // Animate quote appearance after greeting
@@ -68,40 +79,6 @@ export const PersonalizedGreeting: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [greetingData]);
-
-  const fetchGreeting = async () => {
-    if (!user) return;
-
-    try {
-      // Get client's timezone and current hour to ensure server uses correct local time
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const hour = new Date().getHours();
-
-      // Get the session token - skip edge function if not available
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      if (!accessToken) {
-        // No valid session - skip edge function call, use local greeting only
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('get-personalized-greeting', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: { timezone, hour },
-      });
-
-      if (error) throw error;
-      setGreetingData(data);
-    } catch (error) {
-      // Error handled silently - greeting will fall back to local greeting
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (

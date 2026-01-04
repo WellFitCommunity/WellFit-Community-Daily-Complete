@@ -55,8 +55,8 @@ export function CoderAssist({ encounterId, patientId, onSaved }: Props) {
       // but we’ll be defensive and stringify for “rawPreview” pane toggle
       setSuggestion(data as CodingSuggestion);
       setRawPreview(JSON.stringify(data, null, 2));
-    } catch (e: any) {
-      setError(e?.message || 'Failed to get coding suggestions');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to get coding suggestions');
     } finally {
       setLoading(false);
     }
@@ -82,8 +82,8 @@ export function CoderAssist({ encounterId, patientId, onSaved }: Props) {
       if (error) throw new Error(error.message || 'Insert failed');
 
       if (onSaved) onSaved(data.id as string);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to save recommendation');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to save recommendation');
     } finally {
       setSaving(false);
     }

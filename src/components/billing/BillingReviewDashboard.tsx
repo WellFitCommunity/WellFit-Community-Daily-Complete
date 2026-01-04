@@ -23,7 +23,7 @@ interface AIFlag {
   code: string;
   name: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   flagged_at: string;
 }
 
@@ -53,7 +53,153 @@ export function BillingReviewDashboard() {
   const [filter, setFilter] = useState<'all' | 'flagged' | 'high_value'>('all');
 
   useEffect(() => {
-    loadClaims();
+    const fetchClaims = async () => {
+      setLoading(true);
+      try {
+        // Load claims pending review
+        // Note: encounters.patient_id FK → auth.users, not profiles, so we fetch patient info separately
+        const { data, error } = await supabase
+          .from('claims')
+          .select(`
+            id,
+            claim_number,
+            service_date,
+            total_charge,
+            expected_reimbursement,
+            review_status,
+            ai_confidence_score,
+            ai_flags,
+            created_at,
+            encounter_id,
+            encounters (
+              encounter_type,
+              chief_complaint,
+              patient_id,
+              provider:provider_id (
+                first_name,
+                last_name
+              )
+            )
+          `)
+          .in('review_status', ['pending_review', 'flagged'])
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Collect unique patient IDs to fetch names
+        interface ClaimRow {
+          id: string;
+          claim_number: string;
+          service_date: string;
+          total_charge: number;
+          expected_reimbursement: number;
+          review_status: string;
+          ai_confidence_score: number | null;
+          ai_flags: (string | AIFlag)[] | null;
+          created_at: string;
+          encounter_id: string;
+          encounters?: {
+            patient_id?: string;
+            provider?: { first_name?: string; last_name?: string } | null;
+            encounter_type?: string;
+            chief_complaint?: string;
+          } | null;
+        }
+        const patientIds = [...new Set(
+          (data as ClaimRow[] || [])
+            .map(c => c.encounters?.patient_id)
+            .filter((id): id is string => !!id)
+        )];
+
+        // Fetch patient names from profiles
+        const patientMap = new Map<string, string>();
+        if (patientIds.length > 0) {
+          const { data: patients } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', patientIds);
+
+          if (patients) {
+            for (const p of patients) {
+              const name = `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+              patientMap.set(p.user_id, name);
+            }
+          }
+        }
+
+        // Load line items for each claim
+        const claimsWithDetails: Claim[] = await Promise.all(
+          (data as ClaimRow[] || []).map(async (claim): Promise<Claim> => {
+            const { data: lineItems } = await supabase
+              .from('claim_lines')
+              .select('cpt_code, description, units, charge_amount, icd10_codes')
+              .eq('claim_id', claim.id);
+
+            // Parse AI flags from database format to AIFlag interface
+            const parsedFlags: AIFlag[] = Array.isArray(claim.ai_flags)
+              ? claim.ai_flags.map((flag) => {
+                  if (typeof flag === 'object' && flag !== null) {
+                    return flag as AIFlag;
+                  }
+                  // Handle string flags (legacy format)
+                  return {
+                    code: String(flag),
+                    name: String(flag),
+                    severity: 'low' as const,
+                    details: {},
+                    flagged_at: claim.created_at
+                  };
+                })
+              : [];
+
+            return {
+              id: claim.id,
+              claim_number: claim.claim_number,
+              service_date: claim.service_date,
+              total_charge: claim.total_charge,
+              expected_reimbursement: claim.expected_reimbursement,
+              review_status: claim.review_status,
+              ai_confidence_score: claim.ai_confidence_score ?? 0,
+              ai_flags: parsedFlags,
+              created_at: claim.created_at,
+              patient_name: claim.encounters?.patient_id
+                ? patientMap.get(claim.encounters.patient_id) || 'Unknown'
+                : 'Unknown',
+              provider_name: claim.encounters?.provider
+                ? `${claim.encounters.provider.first_name || ''} ${claim.encounters.provider.last_name || ''}`.trim() || 'Unknown'
+                : 'Unknown',
+              encounter_type: claim.encounters?.encounter_type || 'Unknown',
+              chief_complaint: claim.encounters?.chief_complaint || '',
+              line_items: (lineItems || []).map((item: { cpt_code: string; description: string; units: number; charge_amount: number; icd10_codes?: string[] }) => ({
+                cpt_code: item.cpt_code,
+                description: item.description,
+                units: item.units,
+                charge: item.charge_amount,
+                icd10_codes: item.icd10_codes || []
+              }))
+            };
+          })
+        );
+
+        // Apply filters
+        let filteredClaims = claimsWithDetails;
+        if (filter === 'flagged') {
+          filteredClaims = claimsWithDetails.filter(c =>
+            c.ai_flags && c.ai_flags.length > 0
+          );
+        } else if (filter === 'high_value') {
+          filteredClaims = claimsWithDetails.filter(c => c.total_charge > 500);
+        }
+
+        setClaims(filteredClaims);
+      } catch {
+        // Error handled silently
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClaims();
   }, [filter]);
 
   const loadClaims = async () => {

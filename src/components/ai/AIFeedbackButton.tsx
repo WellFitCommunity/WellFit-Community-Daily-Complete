@@ -176,8 +176,8 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
       if (onFeedbackSubmitted) {
         onFeedbackSubmitted(feedbackType, notes);
       }
-    } catch (err: any) {
-      auditLogger.error('ai_feedback_submit_failed', err instanceof Error ? err : new Error(err?.message || 'Unknown error'));
+    } catch (err: unknown) {
+      auditLogger.error('ai_feedback_submit_failed', err instanceof Error ? err : new Error(String(err)));
 
       setState(prev => ({
         ...prev,

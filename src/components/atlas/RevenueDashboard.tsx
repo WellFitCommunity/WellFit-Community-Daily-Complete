@@ -36,8 +36,25 @@ export const RevenueDashboard: React.FC = () => {
   });
 
   useEffect(() => {
-    loadDashboard();
-     
+    const fetchDashboard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [metricsData, opportunitiesData] = await Promise.all([
+          AtlusRevenueService.getRevenueMetrics(dateRange.from, dateRange.to),
+          AtlusRevenueService.findCodingOpportunities(dateRange.from, dateRange.to),
+        ]);
+
+        setMetrics(metricsData);
+        setOpportunities(opportunitiesData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load revenue data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
   }, [dateRange]);
 
   const loadDashboard = async () => {

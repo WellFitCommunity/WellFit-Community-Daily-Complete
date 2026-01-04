@@ -310,15 +310,22 @@ const UsersList: React.FC = () => {
       // Build stats map
       let statsMap: Record<string, { total_check_ins: number; emergency_check_ins: number; last_check_in: string | null }> = {};
 
+      interface CheckInStat {
+        user_id: string;
+        total_check_ins: number | null;
+        emergency_check_ins: number | null;
+        last_check_in: string | null;
+      }
+
       if (!statsError && checkInStats) {
-        statsMap = (checkInStats as any[]).reduce((acc, stat: any) => {
+        statsMap = (checkInStats as CheckInStat[]).reduce((acc, stat) => {
           acc[stat.user_id] = {
             total_check_ins: stat.total_check_ins ?? 0,
             emergency_check_ins: stat.emergency_check_ins ?? 0,
             last_check_in: stat.last_check_in ?? null,
           };
           return acc;
-        }, {} as Record<string, any>);
+        }, {} as Record<string, { total_check_ins: number; emergency_check_ins: number; last_check_in: string | null }>);
       } else {
         // Fallback: manual aggregation with batching to avoid URL/row limits
         const chunk = (arr: string[], size = 200) =>
@@ -351,8 +358,18 @@ const UsersList: React.FC = () => {
         }, {} as Record<string, { total_check_ins: number; emergency_check_ins: number; last_check_in: string | null }>);
       }
 
+      interface ProfileData {
+        user_id: string;
+        first_name: string;
+        last_name: string;
+        phone: string | null;
+        dob?: string;
+        address?: string | null;
+        created_at?: string;
+      }
+
       // Combine profile data with stats
-      const enrichedProfiles: Profile[] = (profilesData as any[]).map((profile: any) => ({
+      const enrichedProfiles: Profile[] = (profilesData as ProfileData[]).map((profile) => ({
         ...profile,
         phone: profile.phone ?? null,
         address: profile.address ?? null,
@@ -576,7 +593,7 @@ const UsersList: React.FC = () => {
             <select
               id="filter"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
+              onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'inactive' | 'emergency')}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Users</option>
@@ -790,7 +807,7 @@ const UsersList: React.FC = () => {
                                   {new Date(user.last_check_in).toLocaleDateString()}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {Math.floor(daysSinceLastCheckIn!)} days ago
+                                  {Math.floor(daysSinceLastCheckIn)} days ago
                                 </div>
                               </div>
                             ) : (

@@ -77,10 +77,15 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
         )
       );
 
+      interface FeatureRow {
+        feature_clicked: string;
+        click_count: number;
+      }
+
       setMetrics({
         total_interactions: totalInteractions || 0,
         adaptation_score: adaptationScore,
-        most_used_features: featureData?.map((f: any) => f.feature_clicked) || [],
+        most_used_features: featureData?.map((f: FeatureRow) => f.feature_clicked) || [],
         workflow_patterns_detected: patternsCount || 0,
         last_personalization_update: lastEvent?.created_at || new Date().toISOString(),
       });

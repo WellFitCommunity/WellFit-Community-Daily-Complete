@@ -26,7 +26,46 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
   useEffect(() => {
-    fetchUnacknowledgedMilestones();
+    const fetchMilestones = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('ai_learning_milestones')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('acknowledged', false)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setMilestones(data);
+          showMilestone(data[0]);
+        }
+      } catch {
+        // Error handled silently - milestones will not display on failure
+      }
+    };
+
+    const showMilestone = (milestone: Milestone) => {
+      setCurrentMilestone(milestone);
+
+      // Show confetti for modal celebrations
+      if (milestone.celebration_type === 'modal' || milestone.celebration_type === 'confetti') {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 5000);
+      }
+
+      // Auto-dismiss toast after 5 seconds
+      if (milestone.celebration_type === 'toast') {
+        setTimeout(() => {
+          acknowledgeMilestone(milestone.id);
+        }, 5000);
+      }
+    };
+
+    fetchMilestones();
 
     // Subscribe to new milestones
     const subscription = supabase
@@ -39,10 +78,10 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
           table: 'ai_learning_milestones',
           filter: `user_id=eq.${user?.id}`,
         },
-        (payload: any) => {
+        (payload) => {
           const newMilestone = payload.new as Milestone;
           setMilestones((prev) => [...prev, newMilestone]);
-          displayMilestone(newMilestone);
+          showMilestone(newMilestone);
         }
       )
       .subscribe();
@@ -57,31 +96,10 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
       subscription.unsubscribe();
       window.removeEventListener('resize', handleResize);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- acknowledgeMilestone is stable via useCallback pattern
   }, [user]);
 
-  const fetchUnacknowledgedMilestones = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('ai_learning_milestones')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('acknowledged', false)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setMilestones(data);
-        displayMilestone(data[0]);
-      }
-    } catch (error) {
-      // Error handled silently - milestones will not display on failure
-    }
-  };
-
-  const displayMilestone = (milestone: Milestone) => {
+  const showNextMilestone = (milestone: Milestone) => {
     setCurrentMilestone(milestone);
 
     // Show confetti for modal celebrations
@@ -115,9 +133,9 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
       // Show next milestone if available
       const nextMilestone = milestones.find((m) => m.id !== milestoneId);
       if (nextMilestone) {
-        setTimeout(() => displayMilestone(nextMilestone), 500);
+        setTimeout(() => showNextMilestone(nextMilestone), 500);
       }
-    } catch (error) {
+    } catch {
       // Error handled silently - milestone will remain visible
     }
   };

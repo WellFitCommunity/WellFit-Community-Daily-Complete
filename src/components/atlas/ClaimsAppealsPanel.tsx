@@ -5,6 +5,19 @@ import React, { useState, useEffect } from 'react';
 import { AtlusRevenueService } from '../../services/atlasRevenueService';
 import { BillingService } from '../../services/billingService';
 
+interface ClaimLine {
+  id: string;
+  procedure_code: string;
+  description?: string;
+  charge_amount: number;
+}
+
+interface ClaimStatusEntry {
+  status: string;
+  changed_at: string;
+  reason?: string;
+}
+
 interface RejectedClaim {
   id: string;
   encounter_id: string;
@@ -13,8 +26,8 @@ interface RejectedClaim {
   status: string;
   response_payload?: string;
   created_at: string;
-  claim_lines?: any[];
-  claim_status_history?: any[];
+  claim_lines?: ClaimLine[];
+  claim_status_history?: ClaimStatusEntry[];
 }
 
 export const ClaimsAppealsPanel: React.FC = () => {
@@ -106,8 +119,8 @@ Generated: ${new Date().toISOString()}
       await BillingService.updateClaimStatus(claimId, 'submitted', 'Resubmitted after appeal');
       alert('Claim marked as resubmitted. Monitor in Revenue Dashboard.');
       loadRejectedClaims();
-    } catch (error: any) {
-      alert('Failed to resubmit claim: ' + error.message);
+    } catch (error: unknown) {
+      alert('Failed to resubmit claim: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
 

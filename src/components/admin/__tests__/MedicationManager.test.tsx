@@ -43,10 +43,6 @@ const mockMedications = [
 
 // Mock Supabase client
 const mockFrom = vi.fn();
-const mockSelect = vi.fn().mockReturnThis();
-const mockEq = vi.fn().mockReturnThis();
-const mockOrder = vi.fn().mockReturnThis();
-const mockLimit = vi.fn();
 
 // Default mock user with admin role
 let mockUser = {
