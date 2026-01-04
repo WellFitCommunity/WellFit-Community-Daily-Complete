@@ -48,6 +48,29 @@ export interface HighUtilizerMetrics {
   estimated_cost?: number;
 }
 
+export interface HighRiskPatientResult extends ReadmissionEvent {
+  profiles?: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string | null;
+  } | null;
+}
+
+export interface VisitHistoryItem {
+  id?: string;
+  visit_date: string;
+  visit_type: string;
+  facility_name: string;
+  status: 'completed' | 'in_progress';
+  is_readmission?: boolean;
+  readmission_category?: string;
+  diagnosis?: string;
+  risk_score?: number;
+  follow_up_scheduled?: boolean;
+  follow_up_completed?: boolean;
+  created_at: string;
+}
+
 export class ReadmissionTrackingService {
   /**
    * Log a new readmission event and automatically detect patterns
@@ -101,7 +124,7 @@ export class ReadmissionTrackingService {
    */
   private static analyzeReadmission(
     currentEvent: ReadmissionEvent,
-    previousAdmissions: any[]
+    previousAdmissions: ReadmissionEvent[]
   ): Partial<ReadmissionEvent> {
     if (!previousAdmissions || previousAdmissions.length === 0) {
       return {
@@ -113,7 +136,7 @@ export class ReadmissionTrackingService {
     }
 
     const lastDischarge = previousAdmissions.find(a => a.discharge_date);
-    if (!lastDischarge) {
+    if (!lastDischarge || !lastDischarge.discharge_date) {
       return {
         is_readmission: false,
         readmission_category: 'none',
@@ -169,21 +192,22 @@ export class ReadmissionTrackingService {
   /**
    * Trigger automated workflows for high-risk patients
    */
-  private static async triggerHighRiskWorkflow(readmission: any): Promise<void> {
+  private static async triggerHighRiskWorkflow(readmission: ReadmissionEvent): Promise<void> {
+    const riskScore = readmission.risk_score ?? 0;
     try {
       // 1. Create care team alert
       await supabase.from('care_team_alerts').insert({
         patient_id: readmission.patient_id,
         alert_type: readmission.is_readmission ? 'readmission_risk_high' : 'er_visit_detected',
-        severity: readmission.risk_score >= 90 ? 'critical' : 'high',
-        priority: readmission.risk_score >= 90 ? 'emergency' : 'urgent',
+        severity: riskScore >= 90 ? 'critical' : 'high',
+        priority: riskScore >= 90 ? 'emergency' : 'urgent',
         title: `High-Risk ${readmission.is_readmission ? 'Readmission' : 'ER Visit'} Detected`,
-        description: `Patient admitted to ${readmission.facility_name} on ${readmission.admission_date}. Risk score: ${readmission.risk_score}. ${readmission.is_readmission ? `Readmission within ${readmission.readmission_category} window.` : ''}`,
+        description: `Patient admitted to ${readmission.facility_name} on ${readmission.admission_date}. Risk score: ${riskScore}. ${readmission.is_readmission ? `Readmission within ${readmission.readmission_category} window.` : ''}`,
         alert_data: {
           readmission_id: readmission.id,
           facility: readmission.facility_name,
           admission_date: readmission.admission_date,
-          risk_score: readmission.risk_score,
+          risk_score: riskScore,
           high_utilizer: readmission.high_utilizer_flag
         },
         status: 'active'
@@ -209,7 +233,8 @@ export class ReadmissionTrackingService {
   /**
    * Generate automated care plan using AI
    */
-  private static async generateAutomatedCarePlan(readmission: any): Promise<void> {
+  private static async generateAutomatedCarePlan(readmission: ReadmissionEvent): Promise<void> {
+    const riskScore = readmission.risk_score ?? 0;
     try {
       // Get patient profile for context
       await supabase
@@ -231,7 +256,7 @@ export class ReadmissionTrackingService {
 PATIENT SITUATION:
 - Recent admission to: ${readmission.facility_name}
 - Admission type: ${readmission.facility_type}
-- Risk score: ${readmission.risk_score}/100
+- Risk score: ${riskScore}/100
 - Is readmission: ${readmission.is_readmission}
 ${readmission.primary_diagnosis_description ? `- Primary diagnosis: ${readmission.primary_diagnosis_description}` : ''}
 ${readmission.high_utilizer_flag ? '- FLAGGED AS HIGH UTILIZER (multiple recent visits)' : ''}
@@ -274,7 +299,7 @@ Format as JSON with this structure:
         patient_id: readmission.patient_id,
         plan_type: readmission.is_readmission ? 'readmission_prevention' : 'high_utilizer',
         status: 'active',
-        priority: readmission.risk_score >= 90 ? 'critical' : 'high',
+        priority: riskScore >= 90 ? 'critical' : 'high',
         title: `Automated ${readmission.is_readmission ? 'Readmission Prevention' : 'High Utilizer'} Care Plan`,
         goals: planData.goals || [],
         interventions: planData.interventions || [],
@@ -317,9 +342,9 @@ Format as JSON with this structure:
         .gte('admission_date', startDate)
         .lte('admission_date', endDate);
 
-      const admissions = await applyLimit<any>(query, PAGINATION_LIMITS.ENCOUNTERS * 10);
+      const admissions = await applyLimit<ReadmissionEvent>(query, PAGINATION_LIMITS.ENCOUNTERS * 10);
 
-      const patientMap = new Map<string, any[]>();
+      const patientMap = new Map<string, ReadmissionEvent[]>();
       admissions.forEach(admission => {
         const existing = patientMap.get(admission.patient_id) || [];
         existing.push(admission);
@@ -392,7 +417,7 @@ Format as JSON with this structure:
   /**
    * Get all active high-risk patients
    */
-  static async getActiveHighRiskPatients(): Promise<any[]> {
+  static async getActiveHighRiskPatients(): Promise<HighRiskPatientResult[]> {
     const query = supabase
       .from('patient_readmissions')
       .select('*, profiles(*)')
@@ -400,7 +425,7 @@ Format as JSON with this structure:
       .gte('admission_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
       .order('risk_score', { ascending: false });
 
-    return await applyLimit<any>(query, PAGINATION_LIMITS.ALERTS);
+    return await applyLimit<HighRiskPatientResult>(query, PAGINATION_LIMITS.ALERTS);
   }
 
   // Helper methods
@@ -411,7 +436,7 @@ Format as JSON with this structure:
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  private static calculateUtilizationRiskScore(visits: any[]): number {
+  private static calculateUtilizationRiskScore(visits: ReadmissionEvent[]): number {
     let score = 0;
 
     score += Math.min(visits.length * 15, 40);
@@ -435,7 +460,7 @@ Format as JSON with this structure:
     return 'low';
   }
 
-  private static getDefaultCarePlan(readmission: any) {
+  private static getDefaultCarePlan(_readmission: ReadmissionEvent) {
     return {
       goals: [
         {
@@ -519,7 +544,7 @@ Format as JSON with this structure:
    * Get patient's visit history for a given period
    * Returns all recorded visits, ER visits, and hospital admissions
    */
-  static async getPatientVisitHistory(patientId: string, days: number = 90): Promise<any[]> {
+  static async getPatientVisitHistory(patientId: string, days: number = 90): Promise<VisitHistoryItem[]> {
     try {
       const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 

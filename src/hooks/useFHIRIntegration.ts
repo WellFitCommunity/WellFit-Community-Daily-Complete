@@ -49,7 +49,7 @@ interface UseFHIRIntegrationReturn {
   getComplianceMetrics: () => Promise<ComplianceMetrics | null>;
 }
 
-interface SyncProgress {
+export interface SyncProgress {
   connectionId: string;
   stage: 'preparing' | 'syncing' | 'processing' | 'completed' | 'failed';
   progress: number; // 0-100
@@ -58,7 +58,7 @@ interface SyncProgress {
   recordsTotal?: number;
 }
 
-interface SyncHistoryEntry {
+export interface SyncHistoryEntry {
   id: string;
   connectionId: string;
   direction: 'pull' | 'push' | 'bidirectional';
@@ -70,7 +70,7 @@ interface SyncHistoryEntry {
   errors?: string[];
 }
 
-interface SyncStats {
+export interface SyncStats {
   totalSyncs: number;
   successfulSyncs: number;
   failedSyncs: number;
@@ -79,7 +79,7 @@ interface SyncStats {
   averageDuration: number;
 }
 
-interface PatientMapping {
+export interface PatientMapping {
   communityUserId: string;
   fhirPatientId: string;
   connectionId: string;
@@ -87,7 +87,7 @@ interface PatientMapping {
   updatedAt: string;
 }
 
-interface ComplianceMetrics {
+export interface ComplianceMetrics {
   overallScore: number;
   dataIntegrity: number;
   syncReliability: number;

@@ -22,6 +22,9 @@ export interface CheckInResponse {
   timestamp: string;
 }
 
+// Response value can be string, number, or boolean depending on question type
+export type CheckInResponseValue = string | number | boolean;
+
 export interface DailyCheckIn {
   id?: string;
   patient_id: string;
@@ -30,7 +33,7 @@ export interface DailyCheckIn {
   check_in_method: 'sms' | 'app' | 'phone_call' | 'automated';
   status: 'pending' | 'completed' | 'missed' | 'escalated';
   questions_asked: CheckInQuestion[];
-  responses?: Record<string, any>;
+  responses?: Record<string, CheckInResponseValue>;
   alert_triggered?: boolean;
   alert_type?: string;
   alert_severity?: 'low' | 'medium' | 'high' | 'critical';
@@ -40,13 +43,40 @@ export interface DailyCheckIn {
   ai_analysis_summary?: string;
 }
 
+export interface OutreachCriteria {
+  plan_type?: string;
+  risk_level?: string;
+  [key: string]: string | undefined;
+}
+
 export interface OutreachCampaign {
   name: string;
   target_patient_ids?: string[];
-  target_criteria?: Record<string, any>;
+  target_criteria?: OutreachCriteria;
   message_template: string;
   send_method: 'sms' | 'app_notification' | 'both';
   scheduled_time?: string;
+}
+
+// AI-generated question structure from edge function
+interface AIGeneratedQuestion {
+  question: string;
+  type: 'yes_no' | 'scale' | 'text' | 'multiple_choice';
+  scale?: { min: number; max: number; label_min?: string; label_max?: string };
+  choices?: string[];
+  required?: boolean;
+}
+
+// Error tracking for campaign results
+interface CampaignError {
+  patientId: string;
+  error: string;
+}
+
+// Care plan with minimal fields for check-in
+interface CheckInCarePlan {
+  id?: string;
+  plan_type?: string;
 }
 
 export class PatientOutreachService {
@@ -130,7 +160,7 @@ export class PatientOutreachService {
    */
   static async recordCheckInResponse(
     checkInId: string,
-    responses: Record<string, any>
+    responses: Record<string, CheckInResponseValue>
   ): Promise<DailyCheckIn> {
     try {
       // Get existing check-in
@@ -196,7 +226,7 @@ export class PatientOutreachService {
    */
   private static async analyzeCheckInResponses(
     checkIn: DailyCheckIn,
-    responses: Record<string, any>
+    responses: Record<string, CheckInResponseValue>
   ): Promise<{
     alert_triggered: boolean;
     alert_type?: string;
@@ -367,12 +397,12 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
   static async sendOutreachCampaign(campaign: OutreachCampaign): Promise<{
     sent: number;
     failed: number;
-    errors: any[];
+    errors: CampaignError[];
   }> {
-    const results = {
+    const results: { sent: number; failed: number; errors: CampaignError[] } = {
       sent: 0,
       failed: 0,
-      errors: [] as any[]
+      errors: []
     };
 
     try {
@@ -453,7 +483,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
 
       if (data?.questions && Array.isArray(data.questions)) {
         // Map AI-generated questions to our interface
-        return data.questions.map((q: any) => ({
+        return (data.questions as AIGeneratedQuestion[]).map((q: AIGeneratedQuestion) => ({
           question: q.question,
           type: q.type,
           scale: q.scale,
@@ -473,7 +503,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
   /**
    * Generate default check-in questions (fallback)
    */
-  private static generateDefaultQuestions(carePlan?: any): CheckInQuestion[] {
+  private static generateDefaultQuestions(carePlan?: CheckInCarePlan): CheckInQuestion[] {
     const defaultQuestions: CheckInQuestion[] = [
       {
         question: 'How are you feeling today overall?',

@@ -11,12 +11,23 @@ import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
 import type {
   SuperAdminUser,
+  SuperAdminRole,
+  SuperAdminPermission,
   SystemFeatureFlag,
+  FeatureCategory,
   SystemHealthCheck,
+  HealthCheckType,
+  HealthStatus,
   SuperAdminAuditLog,
+  AuditTargetType,
+  AuditSeverity,
+  AuditLogValue,
   SystemMetric,
+  MetricType,
   SystemOverview,
   TenantWithStatus,
+  LicensedProduct,
+  JsonValue,
   EmergencyDisableFeaturePayload,
   SuspendTenantPayload,
   ActivateTenantPayload,
@@ -24,6 +35,119 @@ import type {
   UpdateFeatureFlagPayload,
   CreateSuperAdminPayload
 } from '../types/superAdmin';
+
+// Database row interfaces for type-safe transforms
+// These are at the database boundary where casts are appropriate per CLAUDE.md
+interface SuperAdminUserRow {
+  id: string;
+  user_id: string;
+  email: string;
+  full_name: string;
+  role: SuperAdminRole;
+  permissions: SuperAdminPermission[];
+  is_active: boolean;
+  last_login_at?: string;
+  created_at: string;
+  created_by?: string;
+  updated_at?: string;
+  updated_by?: string;
+}
+
+interface FeatureFlagRow {
+  id: string;
+  feature_key: string;
+  feature_name: string;
+  description?: string;
+  is_enabled: boolean;
+  force_disabled: boolean;
+  enabled_for_new_tenants: boolean;
+  requires_license?: boolean;
+  category?: FeatureCategory;
+  metadata?: Record<string, JsonValue>;
+  created_at: string;
+  updated_at?: string;
+  updated_by?: string;
+}
+
+interface HealthCheckRow {
+  id: string;
+  check_type: HealthCheckType;
+  check_name: string;
+  component_name?: string;
+  status: HealthStatus;
+  response_time_ms?: number;
+  error_message?: string;
+  message?: string;
+  metrics?: Record<string, JsonValue>;
+  metadata?: Record<string, JsonValue>;
+  checked_at: string;
+}
+
+interface AuditLogRow {
+  id: string;
+  super_admin_id: string;
+  super_admin_email: string;
+  action: string;
+  target_type?: AuditTargetType;
+  target_id?: string;
+  target_name?: string;
+  old_value?: AuditLogValue;
+  new_value?: AuditLogValue;
+  reason?: string;
+  ip_address?: string;
+  user_agent?: string;
+  severity: AuditSeverity;
+  created_at: string;
+}
+
+interface MetricRow {
+  id: string;
+  metric_type: MetricType;
+  metric_value: string | number;
+  metadata?: Record<string, JsonValue>;
+  recorded_at: string;
+}
+
+interface TenantRow {
+  tenant_id?: string;
+  id?: string;
+  tenant_name?: string;
+  name?: string;
+  subdomain?: string;
+  tenant_code?: string;
+  licensed_products?: LicensedProduct[];
+  is_active?: boolean;
+  is_suspended?: boolean;
+  suspension_reason?: string;
+  user_count?: string | number;
+  patient_count?: string | number;
+  max_users?: number;
+  max_patients?: number;
+  last_activity?: string;
+  license_tier?: string;
+  license_end_date?: string;
+  created_at?: string;
+}
+
+interface SystemOverviewResult {
+  total_tenants?: number;
+  active_tenants?: number;
+  suspended_tenants?: number;
+  total_users?: number;
+  total_patients?: number;
+  features_force_disabled?: number;
+  critical_health_issues?: number;
+  critical_audit_events_24h?: number;
+}
+
+interface FeatureFlagUpdateFields {
+  updated_at: string;
+  updated_by: string;
+  is_enabled?: boolean;
+  force_disabled?: boolean;
+  enabled_for_new_tenants?: boolean;
+  [key: string]: string | boolean | undefined; // Index signature for AuditLogValue compatibility
+}
 
 export const SuperAdminService = {
   // ============================================================================
@@ -130,10 +254,10 @@ export const SuperAdminService = {
       }
 
       // RPC returns JSON - handle both string and object responses
-      let result: any = data;
+      let result: SystemOverviewResult | null = data as SystemOverviewResult | null;
       if (typeof data === 'string') {
         try {
-          result = JSON.parse(data);
+          result = JSON.parse(data) as SystemOverviewResult;
         } catch {
           auditLogger.error('SUPER_ADMIN_JSON_PARSE_ERROR', new Error('Failed to parse JSON'), { rpc: 'get_system_overview' });
           throw new Error('Invalid JSON response from get_system_overview');
@@ -189,19 +313,19 @@ export const SuperAdminService = {
       }
 
       // RPC returns JSON - handle both string and array responses
-      let tenantsArray: any[] = [];
+      let tenantsArray: TenantRow[] = [];
       if (typeof data === 'string') {
         try {
-          tenantsArray = JSON.parse(data);
+          tenantsArray = JSON.parse(data) as TenantRow[];
         } catch {
           auditLogger.error('SUPER_ADMIN_JSON_PARSE_ERROR', new Error('Failed to parse JSON'), { rpc: 'get_all_tenants_with_status' });
           return [];
         }
       } else if (Array.isArray(data)) {
-        tenantsArray = data;
+        tenantsArray = data as TenantRow[];
       } else if (data && typeof data === 'object') {
         // Might be a single object or wrapped response
-        tenantsArray = Array.isArray(data) ? data : [data];
+        tenantsArray = Array.isArray(data) ? data as TenantRow[] : [data as TenantRow];
       }
 
       // Validate we have an array
@@ -210,26 +334,28 @@ export const SuperAdminService = {
         return [];
       }
 
-      return tenantsArray.map((row: any) => ({
-        tenantId: row.tenant_id || row.id,
-        tenantName: row.tenant_name || row.name,
-        subdomain: row.subdomain,
-        tenantCode: row.tenant_code,
-        licensedProducts: row.licensed_products || ['wellfit', 'atlus'],
-        isActive: row.is_active ?? true,
-        isSuspended: row.is_suspended ?? false,
-        status: row.is_suspended ? 'suspended' : 'active',
-        suspensionReason: row.suspension_reason,
-        userCount: parseInt(row.user_count) || 0,
-        patientCount: parseInt(row.patient_count) || 0,
-        maxUsers: row.max_users,
-        maxPatients: row.max_patients,
-        lastActivity: row.last_activity,
-        lastActivityAt: row.last_activity,
-        licenseTier: row.license_tier,
-        licenseEndDate: row.license_end_date,
-        createdAt: row.created_at
-      }));
+      return tenantsArray
+        .filter((row: TenantRow) => row.tenant_id || row.id) // Filter out rows without valid IDs
+        .map((row: TenantRow): TenantWithStatus => ({
+          tenantId: row.tenant_id || row.id || '',
+          tenantName: row.tenant_name || row.name || 'Unknown Tenant',
+          subdomain: row.subdomain || '',
+          tenantCode: row.tenant_code,
+          licensedProducts: row.licensed_products || ['wellfit', 'atlus'] as LicensedProduct[],
+          isActive: row.is_active ?? true,
+          isSuspended: row.is_suspended ?? false,
+          status: row.is_suspended ? 'suspended' : 'active',
+          suspensionReason: row.suspension_reason,
+          userCount: typeof row.user_count === 'string' ? parseInt(row.user_count, 10) || 0 : (row.user_count || 0),
+          patientCount: typeof row.patient_count === 'string' ? parseInt(row.patient_count, 10) || 0 : (row.patient_count || 0),
+          maxUsers: row.max_users,
+          maxPatients: row.max_patients,
+          lastActivity: row.last_activity,
+          lastActivityAt: row.last_activity,
+          licenseTier: row.license_tier,
+          licenseEndDate: row.license_end_date,
+          createdAt: row.created_at || new Date().toISOString()
+        }));
     } catch (err: unknown) {
       auditLogger.error('SUPER_ADMIN_TENANTS_FAILED', err instanceof Error ? err : new Error('Unknown error'), { category: 'ADMINISTRATIVE' });
       throw new Error(`Failed to load tenants: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -372,7 +498,7 @@ export const SuperAdminService = {
       const currentAdmin = await this.getCurrentSuperAdmin();
       if (!currentAdmin) throw new Error('Unauthorized');
 
-      const updates: any = {
+      const updates: FeatureFlagUpdateFields = {
         updated_at: new Date().toISOString(),
         updated_by: payload.superAdminId
       };
@@ -575,7 +701,7 @@ export const SuperAdminService = {
   // HELPER METHODS
   // ============================================================================
 
-  transformSuperAdminUser(data: any): SuperAdminUser {
+  transformSuperAdminUser(data: SuperAdminUserRow): SuperAdminUser {
     return {
       id: data.id,
       userId: data.user_id,
@@ -592,7 +718,7 @@ export const SuperAdminService = {
     };
   },
 
-  transformFeatureFlag(data: any): SystemFeatureFlag {
+  transformFeatureFlag(data: FeatureFlagRow): SystemFeatureFlag {
     return {
       id: data.id,
       featureKey: data.feature_key,
@@ -601,7 +727,7 @@ export const SuperAdminService = {
       isEnabled: data.is_enabled,
       forceDisabled: data.force_disabled,
       enabledForNewTenants: data.enabled_for_new_tenants,
-      requiresLicense: data.requires_license,
+      requiresLicense: data.requires_license ?? false,
       category: data.category,
       metadata: data.metadata,
       createdAt: data.created_at,
@@ -610,7 +736,7 @@ export const SuperAdminService = {
     };
   },
 
-  transformHealthCheck(data: any): SystemHealthCheck {
+  transformHealthCheck(data: HealthCheckRow): SystemHealthCheck {
     return {
       id: data.id,
       checkType: data.check_type,
@@ -626,7 +752,7 @@ export const SuperAdminService = {
     };
   },
 
-  transformAuditLog(data: any): SuperAdminAuditLog {
+  transformAuditLog(data: AuditLogRow): SuperAdminAuditLog {
     return {
       id: data.id,
       superAdminId: data.super_admin_id,
@@ -645,11 +771,11 @@ export const SuperAdminService = {
     };
   },
 
-  transformMetric(data: any): SystemMetric {
+  transformMetric(data: MetricRow): SystemMetric {
     return {
       id: data.id,
       metricType: data.metric_type,
-      metricValue: parseFloat(data.metric_value) || 0,
+      metricValue: typeof data.metric_value === 'string' ? parseFloat(data.metric_value) || 0 : data.metric_value || 0,
       metadata: data.metadata,
       recordedAt: data.recorded_at
     };
