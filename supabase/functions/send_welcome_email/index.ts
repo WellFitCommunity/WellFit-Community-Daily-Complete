@@ -1,7 +1,8 @@
 // supabase/functions/send_welcome_email/index.ts
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { cors } from "../_shared/cors.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 // Validate incoming payload
 const welcomeEmailSchema = z.object({
@@ -14,22 +15,18 @@ const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY");
 const MAILERSEND_FROM_EMAIL = Deno.env.get("MAILERSEND_FROM_EMAIL");
 const MAILERSEND_FROM_NAME = Deno.env.get("MAILERSEND_FROM_NAME") || "WellFit Community";
 const WELCOME_TEMPLATE_ID = "v69oxl5w0zzl785k";
-
-console.log("✅ send_welcome_email initialized with template:", WELCOME_TEMPLATE_ID);
+const logger = createLogger("send_welcome_email");
 
 serve(async (req) => {
-  const { headers, allowed } = cors(req.headers.get('origin'), {
-    methods: ['POST','OPTIONS'],
-  });
+  const { headers: corsHeaders } = corsFromRequest(req);
 
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  if (!allowed) return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers });
+  if (req.method === 'OPTIONS') return handleOptions(req);
   if (req.method !== 'POST')
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   try {
     if (!MAILERSEND_API_KEY || !MAILERSEND_FROM_EMAIL) {
-      return new Response(JSON.stringify({ error: "Email server configuration error." }), { status: 500, headers });
+      return new Response(JSON.stringify({ error: "Email server configuration error." }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Parse JSON body safely
@@ -37,7 +34,7 @@ serve(async (req) => {
     try {
       rawBody = await req.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers });
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Validate payload
@@ -49,7 +46,7 @@ serve(async (req) => {
       }));
       return new Response(JSON.stringify({ error: "Validation failed", details: errors }), {
         status: 400,
-        headers,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -80,7 +77,7 @@ serve(async (req) => {
       ]
     };
 
-    console.log(`📨 Sending welcome email template ${WELCOME_TEMPLATE_ID}`);
+    logger.info("Sending welcome email", { templateId: WELCOME_TEMPLATE_ID });
 
     const resp = await fetch('https://api.mailersend.com/v1/email', {
       method: 'POST',
@@ -94,29 +91,29 @@ serve(async (req) => {
     if (!resp.ok) {
       const errText = await resp.text();
       // PHI: Email addresses not logged per HIPAA - error logged without details
-      console.error(`❌ MailerSend error: Status ${resp.status}`);
+      logger.error("MailerSend error", { status: resp.status, templateId: WELCOME_TEMPLATE_ID });
       return new Response(JSON.stringify({
         error: 'Failed to send welcome email via MailerSend.',
         details: errText.substring(0, 500)
-      }), { status: resp.status, headers });
+      }), { status: resp.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    console.log('✅ Welcome email template sent successfully');
+    logger.info("Welcome email sent successfully", { templateId: WELCOME_TEMPLATE_ID });
     return new Response(
       JSON.stringify({
         success: true,
         message: "Welcome email sent with template.",
         template_id: WELCOME_TEMPLATE_ID
       }),
-      { status: 200, headers }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err: unknown) {
-    const msg = (err as any)?.message ?? String(err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
     // PHI: Error message sanitized - may contain email addresses
-    console.error("❌ send_welcome_email internal error");
-    return new Response(JSON.stringify({ error: "Internal server error", details: msg }), {
+    logger.error("Internal error in send_welcome_email", { error: errorMessage.slice(0, 500) });
+    return new Response(JSON.stringify({ error: "Internal server error", details: errorMessage }), {
       status: 500,
-      headers,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });

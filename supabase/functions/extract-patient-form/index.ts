@@ -1,6 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { createLogger } from '../_shared/auditLogger.ts';
+
+const logger = createLogger('extract-patient-form');
 
 interface ExtractedPatientData {
   // Demographics
@@ -90,7 +93,7 @@ serve(async (req) => {
     // Get Anthropic API key from environment
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicApiKey) {
-      console.error('ANTHROPIC_API_KEY not configured');
+      logger.error('ANTHROPIC_API_KEY not configured', {});
       return new Response(
         JSON.stringify({ success: false, error: 'API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -187,7 +190,7 @@ DO NOT include any text before or after the JSON. Return ONLY the JSON object.`,
 
     if (!anthropicResponse.ok) {
       const errorText = await anthropicResponse.text();
-      console.error('Anthropic API error:', errorText);
+      logger.error('Anthropic API error', { status: anthropicResponse.status, error: errorText.slice(0, 500) });
       return new Response(
         JSON.stringify({
           success: false,
@@ -213,7 +216,7 @@ DO NOT include any text before or after the JSON. Return ONLY the JSON object.`,
         extractedData = JSON.parse(responseText);
       }
     } catch (parseError) {
-      console.error('Failed to parse Claude response:', responseText);
+      logger.error('Failed to parse Claude response', { responseLength: responseText.length });
       return new Response(
         JSON.stringify({
           success: false,
@@ -225,7 +228,7 @@ DO NOT include any text before or after the JSON. Return ONLY the JSON object.`,
     }
 
     // Log successful extraction (PHI-free)
-    console.log('Successfully extracted patient data - confidence:', extractedData.confidence);
+    logger.info('Successfully extracted patient data', { confidence: extractedData.confidence });
 
     // Return extracted data
     return new Response(
@@ -246,12 +249,13 @@ DO NOT include any text before or after the JSON. Return ONLY the JSON object.`,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
-  } catch (error) {
-    console.error('Error in extract-patient-form function:', error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Error in extract-patient-form function', { error: errorMessage.slice(0, 500) });
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
       }),
       {
         status: 500,

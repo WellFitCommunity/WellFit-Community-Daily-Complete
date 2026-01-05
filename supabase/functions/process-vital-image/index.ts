@@ -6,6 +6,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("process-vital-image");
 
 // Tesseract worker for OCR - using CDN for Deno compatibility
 // Note: In production, consider self-hosting the worker for reliability
@@ -44,7 +47,7 @@ function parseVitalText(text: string, vitalType: string): VitalReading | null {
     .replace(/\s+/g, ' ')
     .trim();
 
-  console.log(`[OCR] Parsing text for ${vitalType}: "${normalized}"`);
+  logger.debug("Parsing OCR text", { vitalType, normalizedLength: normalized.length });
 
   switch (vitalType) {
     case 'blood_pressure':
@@ -271,7 +274,7 @@ async function performOCR(imageData: ArrayBuffer): Promise<string> {
   // 2. Or call Google Cloud Vision API
   // 3. Or call AWS Textract
 
-  console.log(`[OCR] Image size: ${imageData.byteLength} bytes`);
+  logger.debug("OCR image received", { imageSizeBytes: imageData.byteLength });
 
   // Placeholder: Return instruction to use client-side OCR
   throw new Error('OCR_CLIENT_SIDE_REQUIRED');
@@ -399,9 +402,10 @@ serve(async (req: Request) => {
     let ocrText: string;
     try {
       ocrText = await performOCR(imageBuffer);
-    } catch (ocrErr: any) {
+    } catch (ocrErr: unknown) {
       // If server-side OCR not available, indicate client should do OCR
-      if (ocrErr.message === 'OCR_CLIENT_SIDE_REQUIRED') {
+      const ocrErrMessage = ocrErr instanceof Error ? ocrErr.message : String(ocrErr);
+      if (ocrErrMessage === 'OCR_CLIENT_SIDE_REQUIRED') {
         await userClient
           .from("temp_image_jobs")
           .update({ status: "pending_ocr", error: "Client-side OCR required" })
@@ -461,10 +465,11 @@ serve(async (req: Request) => {
       { status: 200, headers: corsHeaders }
     );
 
-  } catch (error: any) {
-    console.error("[process-vital-image] Error:", error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Processing error", { error: errorMessage.slice(0, 500) });
     return new Response(
-      JSON.stringify({ error: error?.message || "Server error" }),
+      JSON.stringify({ error: errorMessage || "Server error" }),
       { status: 500, headers: corsFromRequest(req).headers }
     );
   }

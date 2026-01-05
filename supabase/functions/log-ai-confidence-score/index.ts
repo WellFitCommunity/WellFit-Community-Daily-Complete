@@ -7,6 +7,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
+import { createLogger } from '../_shared/auditLogger.ts'
+
+const logger = createLogger('log-ai-confidence-score')
 
 interface ConfidenceScoreLog {
   patient_id?: string
@@ -136,10 +139,11 @@ serve(async (req) => {
         headers: { ...headers, 'Content-Type': 'application/json' },
       }
     )
-  } catch (error) {
-    console.error('Error logging AI confidence score:', error)
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Error logging AI confidence score", { error: errorMessage.slice(0, 500) });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { ...headers, 'Content-Type': 'application/json' },

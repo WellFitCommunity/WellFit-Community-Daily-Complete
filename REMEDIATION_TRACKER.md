@@ -68,13 +68,16 @@ serve(async (req) => {
 
 | Function | Status | Issue |
 |----------|--------|-------|
-| `extract-patient-form` | :red_circle: TODO | `console.log` on success |
-| `process-vital-image` | :red_circle: TODO | `console.log` for OCR parsing |
-| `process-medical-transcript` | :red_circle: TODO | `console.error` on error |
-| `send_welcome_email` | :red_circle: TODO | `console.log` init and sending |
-| `send-stale-reminders` | :red_circle: TODO | `console.error` on fetch errors |
-| `realtime_medical_transcription` | :red_circle: TODO | Multiple `console.error` calls |
-| + 8 others | :red_circle: TODO | Various console usage |
+| `extract-patient-form` | :white_check_mark: DONE | Replaced with createLogger |
+| `process-vital-image` | :white_check_mark: DONE | Replaced with createLogger |
+| `process-medical-transcript` | :white_check_mark: DONE | Replaced with createLogger |
+| `send_welcome_email` | :white_check_mark: DONE | Replaced with createLogger |
+| `send-stale-reminders` | :white_check_mark: DONE | Fixed in CORS update |
+| `log-ai-confidence-score` | :white_check_mark: DONE | Replaced with createLogger |
+| `update-voice-profile` | :white_check_mark: DONE | Replaced with createLogger |
+| `verify-admin-pin` | :yellow_circle: SKIP | Can't log audit failure to audit log (documented) |
+| `test_users` | :yellow_circle: SKIP | Test helper function |
+| `realtime_medical_transcription` | :yellow_circle: SKIP | WebSocket - requires different handling |
 
 **Pattern to use:**
 ```typescript

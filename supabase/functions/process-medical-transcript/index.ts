@@ -2,6 +2,10 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createAdminClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const logger = createLogger("process-medical-transcript");
 
 interface MedicalCode {
   code: string;
@@ -164,8 +168,9 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
       } else {
         throw new Error('No valid JSON found in AI response')
       }
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError)
+    } catch (parseError: unknown) {
+      const parseErrMsg = parseError instanceof Error ? parseError.message : String(parseError);
+      logger.error("Failed to parse AI response", { error: parseErrMsg.slice(0, 500) });
       // Fallback response
       aiResult = {
         summary: 'Medical transcript processed. Please review for accuracy.',
@@ -198,7 +203,7 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
       })
 
     if (auditError) {
-      console.error('Audit log error:', auditError)
+      logger.error("Audit log error", { error: auditError.message?.slice(0, 500) });
     }
 
     // Return processed results
@@ -224,8 +229,9 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
       }
     )
 
-  } catch (error) {
-    console.error('Medical transcript processing error:', error)
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Medical transcript processing error", { error: errorMessage.slice(0, 500) });
 
     // Log error for monitoring
     try {
@@ -237,18 +243,19 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
         .from('scribe_audit_log')
         .insert({
           session_type: 'error',
-          error_message: error.message,
+          error_message: errorMessage.slice(0, 500),
           success: false,
           processing_time_ms: Date.now()
         })
-    } catch (logError) {
-      console.error('Failed to log error:', logError)
+    } catch (logErr: unknown) {
+      const logErrMsg = logErr instanceof Error ? logErr.message : String(logErr);
+      logger.error("Failed to log error to audit table", { error: logErrMsg.slice(0, 500) });
     }
 
     return new Response(
       JSON.stringify({
         error: 'Failed to process medical transcript',
-        details: error.message
+        details: errorMessage
       }),
       {
         status: 500,
