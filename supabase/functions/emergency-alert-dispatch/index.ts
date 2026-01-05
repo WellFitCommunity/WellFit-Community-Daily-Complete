@@ -1,7 +1,8 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/auditLogger.ts'
+import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
 
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@wellfitcommunity.org";
 const SEND_EMAIL_FUNCTION_NAME = "send_email";
@@ -30,6 +31,21 @@ interface EmailResult {
   success: boolean;
   recipient: string;
   error?: string;
+}
+
+interface EmailPayload {
+  subject: string;
+  html: string;
+  text: string;
+  to?: string;
+}
+
+interface AuditLogger {
+  info: (message: string, data?: Record<string, unknown>) => void;
+  error: (message: string, data?: Record<string, unknown>) => void;
+  debug: (message: string, data?: Record<string, unknown>) => void;
+  security: (message: string, data?: Record<string, unknown>) => void;
+  phi: (message: string, data?: Record<string, unknown>) => void;
 }
 
 // Helper function to format email content
@@ -69,10 +85,10 @@ User ID: ${userId}`;
 
 // Helper function to send email with retry logic
 async function sendEmailWithRetry(
-  supabaseClient: any,
-  emailPayload: any,
+  supabaseClient: SupabaseClient,
+  emailPayload: EmailPayload,
   recipient: string,
-  logger: any,
+  logger: AuditLogger,
   maxRetries: number = 2
 ): Promise<EmailResult> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -97,14 +113,15 @@ async function sendEmailWithRetry(
       // Wait before retry (exponential backoff)
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
 
-    } catch (e) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error('Exception during email send attempt', {
         attempt,
         recipient,
-        error: e.message
+        error: errorMessage
       });
       if (attempt === maxRetries) {
-        return { success: false, recipient, error: e.message };
+        return { success: false, recipient, error: errorMessage };
       }
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
@@ -115,11 +132,17 @@ async function sendEmailWithRetry(
 
 serve(async (req) => {
   const logger = createLogger('emergency-alert-dispatch', req);
+  const { headers: corsHeaders } = corsFromRequest(req);
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return handleOptions(req);
+  }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
-      headers: { "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
   }
 
@@ -136,7 +159,7 @@ serve(async (req) => {
       logger.error('No record found in payload');
       return new Response(JSON.stringify({ error: 'Bad Request: No record found in payload' }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
 
@@ -147,7 +170,7 @@ serve(async (req) => {
       });
       return new Response(JSON.stringify({ message: 'Not an emergency check-in, skipped.' }), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
 
@@ -163,7 +186,7 @@ serve(async (req) => {
       logger.error('Missing required fields', { user_id, alert_type });
       return new Response(JSON.stringify({ error: 'Bad Request: Missing user_id or label' }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
     
@@ -199,7 +222,7 @@ serve(async (req) => {
         error: `Failed to fetch profile: ${profileError?.message}`
       }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
 
@@ -309,7 +332,7 @@ serve(async (req) => {
         details: insertAlertError.message
       }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
 
@@ -334,23 +357,24 @@ serve(async (req) => {
 
     return new Response(JSON.stringify(response), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
 
-  } catch (error) {
+  } catch (err: unknown) {
     const processingTime = Date.now() - startTime;
+    const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error('Unhandled error in emergency-alert-dispatch', {
       processingTimeMs: processingTime,
-      error: error.message
+      error: errorMessage
     });
 
     return new Response(JSON.stringify({
       error: 'Internal Server Error',
-      details: error.message,
+      details: errorMessage,
       processing_time_ms: processingTime
     }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
   }
 });

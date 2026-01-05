@@ -4,6 +4,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // Zod schema for save-fcm-token payload
 const saveTokenSchema = z.object({
@@ -38,11 +39,16 @@ async function getAuthenticatedUser(req: Request, supabaseClient: SupabaseClient
 
 serve(async (req) => {
   const logger = createLogger('save-fcm-token', req);
+  const { headers: corsHeaders } = corsFromRequest(req);
+
+  if (req.method === 'OPTIONS') {
+    return handleOptions(req);
+  }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -54,7 +60,7 @@ serve(async (req) => {
       const errors = validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }));
       return new Response(
         JSON.stringify({ error: "Validation failed", details: errors }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -94,7 +100,7 @@ serve(async (req) => {
       });
       return new Response(JSON.stringify({ error: 'Failed to save FCM token', details: error.message }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -104,23 +110,23 @@ serve(async (req) => {
     });
     return new Response(JSON.stringify({ success: true, message: 'FCM token saved.', data }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (e) {
-    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     logger.error('Fatal error in save-fcm-token', {
       error: errorMessage,
-      stack: e instanceof Error ? e.stack : undefined
+      stack: err instanceof Error ? err.stack : undefined
     });
     if (errorMessage.includes('User not authenticated') || errorMessage.includes('Missing Authorization header')) {
         return new Response(JSON.stringify({ error: 'Unauthorized: ' + errorMessage }), {
-            status: 401, headers: { 'Content-Type': 'application/json' }
+            status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }
     return new Response(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });

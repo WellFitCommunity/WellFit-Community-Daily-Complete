@@ -29,32 +29,9 @@
 
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 const logger = createLogger("hash-pin");
-
-// CORS Configuration - Explicit allowlist for security
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100",
-  // Add tenant subdomains
-  "https://houston.thewellfitcommunity.org",
-  "https://miami.thewellfitcommunity.org",
-  "https://phoenix.thewellfitcommunity.org",
-  "https://seattle.thewellfitcommunity.org",
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  return new Headers({
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigin || "null",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-  });
-}
 
 /**
  * Hash a PIN using PBKDF2 with cryptographically random salt
@@ -162,19 +139,18 @@ async function verifyPin(pin: string, storedHash: string): Promise<boolean> {
 
 // Main handler
 serve(async (req: Request) => {
-  const origin = req.headers.get("Origin");
-  const headers = getCorsHeaders(origin);
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers });
+    return handleOptions(req);
   }
 
   // Only allow POST
   if (req.method !== "POST") {
     return new Response(
       JSON.stringify({ error: "Method not allowed" }),
-      { status: 405, headers }
+      { status: 405, headers: corsHeaders }
     );
   }
 
@@ -187,7 +163,7 @@ serve(async (req: Request) => {
     if (!pin || typeof pin !== "string") {
       return new Response(
         JSON.stringify({ error: "PIN is required and must be a string" }),
-        { status: 400, headers }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -197,21 +173,21 @@ serve(async (req: Request) => {
       if (!storedHash) {
         return new Response(
           JSON.stringify({ error: "storedHash is required for verification" }),
-          { status: 400, headers }
+          { status: 400, headers: corsHeaders }
         );
       }
 
       const isValid = await verifyPin(pin, storedHash);
       return new Response(
         JSON.stringify({ valid: isValid }),
-        { status: 200, headers }
+        { status: 200, headers: corsHeaders }
       );
     } else {
       // Default action: hash PIN
       const hashed = await hashPinWithPBKDF2(pin);
       return new Response(
         JSON.stringify({ hashed }),
-        { status: 200, headers }
+        { status: 200, headers: corsHeaders }
       );
     }
   } catch (err: unknown) {
@@ -221,7 +197,7 @@ serve(async (req: Request) => {
     const errorMessage = err instanceof Error ? err.message : "Internal server error";
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers }
+      { status: 500, headers: corsHeaders }
     );
   }
 });

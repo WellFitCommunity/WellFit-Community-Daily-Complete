@@ -7,6 +7,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import {
   createLogger,
   getChicagoTime,
@@ -201,8 +202,9 @@ async function sendDay3Push(user: UserMissedData): Promise<AlertResult> {
 
     result.success = true;
     await logAlert(user.user_id, user.consecutive_missed_days, "push", true);
-  } catch (err: any) {
-    result.error = String(err?.message || err).slice(0, 500);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    result.error = errorMessage.slice(0, 500);
     logger.error("Day 3 push failed", { userId: user.user_id, error: result.error });
     await logAlert(user.user_id, user.consecutive_missed_days, "push", false, result.error);
   }
@@ -258,8 +260,9 @@ async function sendDay5SMS(user: UserMissedData): Promise<AlertResult> {
     logger.info("Day 5 SMS sent", { userId: user.user_id, phone: user.phone });
     result.success = true;
     await logAlert(user.user_id, user.consecutive_missed_days, "sms", true);
-  } catch (err: any) {
-    result.error = String(err?.message || err).slice(0, 500);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    result.error = errorMessage.slice(0, 500);
     logger.error("Day 5 SMS failed", { userId: user.user_id, error: result.error });
     await logAlert(user.user_id, user.consecutive_missed_days, "sms", false, result.error);
   }
@@ -330,8 +333,9 @@ async function sendDay7Email(user: UserMissedData): Promise<AlertResult> {
 
     result.success = true;
     await logAlert(user.user_id, user.consecutive_missed_days, "email", true);
-  } catch (err: any) {
-    result.error = String(err?.message || err).slice(0, 500);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    result.error = errorMessage.slice(0, 500);
     logger.error("Day 7 email failed", { userId: user.user_id, error: result.error });
     await logAlert(user.user_id, user.consecutive_missed_days, "email", false, result.error);
   }
@@ -369,7 +373,11 @@ async function processAlerts(users: UserMissedData[]): Promise<AlertResult[]> {
 }
 
 // --- Main Handler ---
-serve(async () => {
+serve(async (req) => {
+  const { headers: corsHeaders } = corsFromRequest(req);
+
+  if (req.method === "OPTIONS") return handleOptions(req);
+
   try {
     logger.info("Function invoked", { chicagoTime: getChicagoTime().toISOString() });
 
@@ -381,7 +389,7 @@ serve(async () => {
           message: "Outside scheduled time window",
           chicagoTime: getChicagoTime().toISOString(),
         }),
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -413,7 +421,7 @@ serve(async () => {
           message: "No users need alerts",
           timestamp: new Date().toISOString(),
         }),
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -443,18 +451,19 @@ serve(async () => {
         summary,
         timestamp: new Date().toISOString(),
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
-    logger.error("Function error", { message: String(err?.message || err).slice(0, 500) });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Function error", { message: errorMessage.slice(0, 500) });
     return new Response(
       JSON.stringify({
         success: false,
-        error: String(err?.message || err),
+        error: errorMessage,
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }

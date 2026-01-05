@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9?target=deno";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 const logger = createLogger("admin_register");
 
@@ -13,31 +14,6 @@ const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 const SB_URL = SUPABASE_URL || Deno.env.get("SB_URL") || "";
 const SERVICE_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
 const ADMIN_REGISTER_SECRET = Deno.env.get("ADMIN_REGISTER_SECRET") || "";
-
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100"
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-register-secret",
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-  };
-  if (allowedOrigin) {
-    headers["Access-Control-Allow-Origin"] = allowedOrigin;
-  }
-  return headers;
-}
 
 const Payload = z.object({
   email: z.string().email().optional(),
@@ -68,8 +44,8 @@ const ELEVATED = new Set([1,2,3,12,14]);
 const PUBLIC = new Set([4,5,6,11,13]);
 const ALL = new Set([...ELEVATED, ...PUBLIC]);
 
-function jsonResponse(body: unknown, status: number, origin: string | null = null) {
-  return new Response(JSON.stringify(body), { status, headers: getCorsHeaders(origin) });
+function jsonResponse(body: unknown, status: number, headers: Record<string, string>) {
+  return new Response(JSON.stringify(body), { status, headers });
 }
 /**
  * Normalize phone number to E.164 format using libphonenumber-js
@@ -89,12 +65,12 @@ function normalizePhone(phone?: string): string | undefined {
 }
 
 serve(async (req: Request) => {
-  const origin = req.headers.get("origin");
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: getCorsHeaders(origin) });
-  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, origin);
+  const { headers: corsHeaders } = corsFromRequest(req);
+  if (req.method === "OPTIONS") return handleOptions(req);
+  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, corsHeaders);
 
   try {
-    if (!SB_URL || !SERVICE_KEY) return jsonResponse({ error: "Server misconfigured" }, 500, origin);
+    if (!SB_URL || !SERVICE_KEY) return jsonResponse({ error: "Server misconfigured" }, 500, corsHeaders);
 
     // Gate: require either a valid admin session OR the secret header
     const supabase = createClient(SB_URL, SERVICE_KEY);
@@ -115,22 +91,22 @@ serve(async (req: Request) => {
     const hasSecret = ADMIN_REGISTER_SECRET && secretHeader === ADMIN_REGISTER_SECRET;
 
     if (!isAdminSession && !hasSecret) {
-      return jsonResponse({ error: "Forbidden: admin credentials required" }, 403, origin);
+      return jsonResponse({ error: "Forbidden: admin credentials required" }, 403, corsHeaders);
     }
 
     // Parse body
     let body: unknown;
-    try { body = await req.json(); } catch { return jsonResponse({ error: "Invalid JSON" }, 400, origin); }
+    try { body = await req.json(); } catch { return jsonResponse({ error: "Invalid JSON" }, 400, corsHeaders); }
     const parsed = Payload.safeParse(body);
-    if (!parsed.success) return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400, origin);
+    if (!parsed.success) return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400, corsHeaders);
 
     const input: Input = parsed.data;
-    if (!ALL.has(input.role_code)) return jsonResponse({ error: "Invalid role_code" }, 400, origin);
+    if (!ALL.has(input.role_code)) return jsonResponse({ error: "Invalid role_code" }, 400, corsHeaders);
 
     const phone = normalizePhone(input.phone);
     const email = (input.email && input.email.trim() !== "") ? input.email : undefined;
 
-    if (!email && !phone) return jsonResponse({ error: "Provide email or phone" }, 400, origin);
+    if (!email && !phone) return jsonResponse({ error: "Provide email or phone" }, 400, corsHeaders);
 
     // Auto-gen password if missing
     const password = input.password ?? crypto.randomUUID() + "aA1!";
@@ -170,8 +146,8 @@ serve(async (req: Request) => {
       },
     });
 
-    if (authError) return jsonResponse({ error: "Failed to create user", details: authError.message }, 400, origin);
-    if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500, origin);
+    if (authError) return jsonResponse({ error: "Failed to create user", details: authError.message }, 400, corsHeaders);
+    if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500, corsHeaders);
 
     // Upsert profiles
     const profile = {
@@ -197,11 +173,11 @@ serve(async (req: Request) => {
       delivery: input.delivery,
       temporary_password: password, // Return password so admin can give it to patient
       info: input.delivery === "none" ? "No credentials sent." : "Send credentials via your chosen channel.",
-    }, 201);
+    }, 201, corsHeaders);
 
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error("unhandled error", { error: errorMessage, stack: err instanceof Error ? err.stack : undefined });
-    return jsonResponse({ error: "Internal server error", details: errorMessage }, 500, origin);
+    return jsonResponse({ error: "Internal server error", details: errorMessage }, 500, corsHeaders);
   }
 });

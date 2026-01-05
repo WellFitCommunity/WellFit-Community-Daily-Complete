@@ -4,6 +4,10 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("send-telehealth-appointment-notification");
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") || "";
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
@@ -122,10 +126,14 @@ function formatAppointmentTime(isoString: string): { date: string; time: string 
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const { headers: corsHeaders } = corsFromRequest(req);
+
+  if (req.method === "OPTIONS") return handleOptions(req);
+
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -135,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!appointment_id) {
       return new Response(JSON.stringify({ error: "appointment_id is required" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -175,7 +183,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (aptError || !appointment) {
       return new Response(
         JSON.stringify({ error: "Appointment not found", details: aptError }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -200,7 +208,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (patientPhone && patientPhone.trim()) {
       smsResult = await sendSMS(patientPhone, smsMessage);
       if (!smsResult.ok) {
-        console.error("SMS failed:", smsResult.error);
+        logger.error("SMS failed", { error: smsResult.error, phone: patientPhone });
       }
     }
 
@@ -243,13 +251,14 @@ const handler = async (req: Request): Promise<Response> => {
         push_sent: pushResults.filter((r) => r.ok).length,
         push_failed: pushResults.filter((r) => !r.ok).length,
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
-    console.error("Notification error:", error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Notification error", { error: errorMessage });
     return new Response(
-      JSON.stringify({ error: "Internal server error", details: String(error) }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Internal server error", details: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 };

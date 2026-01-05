@@ -3,6 +3,7 @@ import { SUPABASE_URL as IMPORTED_SUPABASE_URL, SB_SECRET_KEY as IMPORTED_SB_SEC
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 const SUPABASE_URL = IMPORTED_SUPABASE_URL ?? "";
 const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? IMPORTED_SB_SECRET_KEY ?? "";
@@ -12,29 +13,6 @@ if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
-
-// CORS Configuration
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100",
-  "https://houston.thewellfitcommunity.org",
-  "https://miami.thewellfitcommunity.org",
-  "https://phoenix.thewellfitcommunity.org",
-  "https://seattle.thewellfitcommunity.org",
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  return new Headers({
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigin || "null",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-  });
-}
 
 // Generate random challenge
 function generateChallenge(): string {
@@ -56,12 +34,11 @@ function stringToBase64url(str: string): string {
 
 serve(async (req: Request) => {
   const logger = createLogger('passkey-register-start', req);
-  const origin = req.headers.get("Origin");
-  const headers = getCorsHeaders(origin);
+  const { headers: corsHeaders } = corsFromRequest(req);
 
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method === "OPTIONS") return handleOptions(req);
   if (req.method !== "POST")
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
 
   try {
     // Get user from auth header
@@ -69,12 +46,12 @@ serve(async (req: Request) => {
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
 
     if (!token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
     const body = await req.json();
@@ -96,10 +73,11 @@ serve(async (req: Request) => {
 
     if (challengeError) {
       logger.error('Failed to store challenge', { error: challengeError.message, code: challengeError.code });
-      return new Response(JSON.stringify({ error: 'Failed to create challenge' }), { status: 500, headers });
+      return new Response(JSON.stringify({ error: 'Failed to create challenge' }), { status: 500, headers: corsHeaders });
     }
 
     // Get relying party ID from request origin
+    const origin = req.headers.get("Origin");
     const rpId = new URL(origin || SUPABASE_URL).hostname;
 
     // Build registration options
@@ -128,14 +106,14 @@ serve(async (req: Request) => {
       attestation: "none" as const
     };
 
-    return new Response(JSON.stringify(options), { status: 200, headers });
+    return new Response(JSON.stringify(options), { status: 200, headers: corsHeaders });
 
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error('Unhandled error in passkey-register-start', { error: errorMessage });
     return new Response(
       JSON.stringify({ error: errorMessage || "Internal server error" }),
-      { status: 500, headers }
+      { status: 500, headers: corsHeaders }
     );
   }
 });

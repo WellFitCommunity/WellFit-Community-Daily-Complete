@@ -2,6 +2,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.4";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import {
   createLogger,
   getChicagoTime,
@@ -123,7 +124,11 @@ Please reach out and ensure they’re okay.
   if (error) throw new Error(`send_email function failed: ${error.message}`);
 }
 
-serve(async () => {
+serve(async (req) => {
+  const { headers: corsHeaders } = corsFromRequest(req);
+
+  if (req.method === "OPTIONS") return handleOptions(req);
+
   try {
     logger.info("Function invoked", { chicagoTime: getChicagoTime().toISOString() });
 
@@ -135,7 +140,7 @@ serve(async () => {
           message: "Outside scheduled time window",
           chicagoTime: getChicagoTime().toISOString(),
         }),
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -143,7 +148,7 @@ serve(async () => {
     if (stale.length === 0) {
       logger.info("No stale users found");
       return new Response(JSON.stringify({ success: true, message: "No users to notify." }), {
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -184,11 +189,12 @@ serve(async () => {
         await logNotified(row.user_id, weekStart);
         sent++;
         logger.info("Email sent", { userId: row.user_id, email: prof.emergency_email });
-      } catch (err: any) {
+      } catch (err: unknown) {
         errors++;
+        const errorMessage = err instanceof Error ? err.message : String(err);
         logger.error("Email send failed", {
           userId: row.user_id,
-          message: String(err?.message || err).slice(0, 500),
+          message: errorMessage.slice(0, 500),
         });
       }
     }
@@ -200,13 +206,14 @@ serve(async () => {
         results: { sent, skipped, errors },
         timestamp: new Date().toISOString(),
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
-    logger.error("Execution failed", { message: String(err?.message || err).slice(0, 500) });
-    return new Response(JSON.stringify({ success: false, error: String(err?.message || err) }), {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Execution failed", { message: errorMessage.slice(0, 500) });
+    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

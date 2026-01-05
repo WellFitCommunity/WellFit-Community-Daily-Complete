@@ -3,6 +3,7 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import * as XLSX from "https://esm.sh/xlsx@0.18.5";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import {
   createLogger,
   getChicagoTime,
@@ -207,9 +208,9 @@ Download: ${signedUrl}
       }
 
       this.logger.info("Email notification sent successfully", { recipients: this.adminEmails.length });
-    } catch (error: any) {
-      const msg = String(error?.message || error).slice(0, 500);
-      this.logger.error("Failed to send email notification", { message: msg });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error("Failed to send email notification", { message: msg.slice(0, 500) });
     }
   }
 
@@ -256,9 +257,12 @@ Download: ${signedUrl}
   }
 }
 
-serve(async () => {
+serve(async (req) => {
+  const { headers: corsHeaders } = corsFromRequest(req);
   const service = new BackupService();
   const logger = createLogger("nightly-excel-backup");
+
+  if (req.method === "OPTIONS") return handleOptions(req);
 
   try {
     logger.info("Function invoked", { chicagoTime: getChicagoTime().toISOString() });
@@ -271,7 +275,7 @@ serve(async () => {
           message: "Outside scheduled time window",
           chicagoTime: getChicagoTime().toISOString(),
         }),
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -285,17 +289,18 @@ serve(async () => {
         results,
         timestamp: new Date().toISOString(),
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
-    logger.error("Function execution failed", { message: String(err?.message || err).slice(0, 500) });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Function execution failed", { message: errorMessage.slice(0, 500) });
     return new Response(
       JSON.stringify({
         success: false,
-        error: String(err?.message || err),
+        error: errorMessage,
         timestamp: new Date().toISOString(),
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

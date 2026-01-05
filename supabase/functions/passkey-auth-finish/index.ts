@@ -4,6 +4,7 @@ import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { verifyAuthenticationResponse } from "https://deno.land/x/simplewebauthn@v10.0.1/deno/server.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 const SUPABASE_URL = IMPORTED_SUPABASE_URL ?? "";
 const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? IMPORTED_SB_SECRET_KEY ?? "";
@@ -14,38 +15,13 @@ if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
 
-// CORS Configuration
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100",
-  "https://houston.thewellfitcommunity.org",
-  "https://miami.thewellfitcommunity.org",
-  "https://phoenix.thewellfitcommunity.org",
-  "https://seattle.thewellfitcommunity.org",
-  "https://legendary-space-goggles-g46697v595g4c757-3100.app.github.dev"
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  return new Headers({
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigin || "null",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-  });
-}
-
 serve(async (req: Request) => {
   const logger = createLogger('passkey-auth-finish', req);
-  const origin = req.headers.get("Origin");
-  const headers = getCorsHeaders(origin);
+  const { headers: corsHeaders } = corsFromRequest(req);
 
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method === "OPTIONS") return handleOptions(req);
   if (req.method !== "POST")
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
 
   try {
     const body = await req.json();
@@ -95,7 +71,7 @@ resource_type: 'auth_event',
 
       return new Response(
         JSON.stringify({ error: 'Invalid or expired challenge' }),
-        { status: 400, headers }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -144,7 +120,7 @@ resource_type: 'auth_event',
 
       return new Response(
         JSON.stringify({ error: 'Credential not found' }),
-        { status: 404, headers }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -213,7 +189,7 @@ resource_type: 'auth_event',
 
       return new Response(
         JSON.stringify({ error: 'Signature verification failed' }),
-        { status: 401, headers }
+        { status: 401, headers: corsHeaders }
       );
     }
 
@@ -240,7 +216,7 @@ resource_type: 'auth_event',
 
       return new Response(
         JSON.stringify({ error: 'Authentication failed - invalid signature' }),
-        { status: 401, headers }
+        { status: 401, headers: corsHeaders }
       );
     }
 
@@ -260,7 +236,7 @@ resource_type: 'auth_event',
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'User not found' }),
-        { status: 404, headers }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -282,7 +258,7 @@ resource_type: 'auth_event',
       logger.error('Session generation failed', { error: sessionError?.message, code: sessionError?.code });
       return new Response(
         JSON.stringify({ error: 'Failed to create session' }),
-        { status: 500, headers }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -336,7 +312,7 @@ resource_type: 'auth_event',
         user: user,
         profile: profile
       }),
-      { status: 200, headers }
+      { status: 200, headers: corsHeaders }
     );
 
   } catch (err: unknown) {
@@ -346,14 +322,14 @@ resource_type: 'auth_event',
     // Log failed authentication
     await supabase.from('passkey_audit_log').insert({
       operation: 'failed_auth',
-resource_type: 'auth_event',
+      resource_type: 'auth_event',
       success: false,
       error_message: errorMessage || 'Unknown error'
     }).catch(() => {});
 
     return new Response(
       JSON.stringify({ error: errorMessage || "Internal server error" }),
-      { status: 500, headers }
+      { status: 500, headers: corsHeaders }
     );
   }
 });
