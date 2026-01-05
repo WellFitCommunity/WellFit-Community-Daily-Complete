@@ -5,7 +5,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { SB_URL, SB_SECRET_KEY, HCAPTCHA_SECRET } from "../_shared/env.ts";
-import { cors } from "../_shared/cors.ts";
+import { corsFromRequest } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
 const MAX_REQUESTS = 5;
@@ -57,7 +57,7 @@ function passwordMissingRules(pw: string): string[] {
 export default async function handler(req: Request): Promise<Response> {
   const logger = createLogger('verify-hcaptcha', req);
 
-  const { headers, allowed } = cors(req.headers.get("origin"), {
+  const { headers, allowed } = corsFromRequest(req, {
     methods: ["POST", "OPTIONS"],
     allowHeaders: ["authorization", "x-client-info", "apikey", "content-type", "x-hcaptcha-token"]
   });

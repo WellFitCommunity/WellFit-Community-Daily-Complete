@@ -96,11 +96,13 @@ await auditLogger.error('PROCESS_FAILED', err instanceof Error ? err : new Error
 **Risk**: Silent failures in discharge planning
 **Effort**: 15 minutes
 
-**Location**: `src/services/dischargePlanningService.ts:51-53`
+**Location**: `src/services/dischargePlanningService.ts`
 
-| Item | Status |
-|------|--------|
-| Add error handling to catch block | :red_circle: TODO |
+| Item | Status | Notes |
+|------|--------|-------|
+| Line 51-53: Risk score calculation error | :white_check_mark: DONE | Added console.warn for fallback |
+| Line 289-292: AI recommendations error | :white_check_mark: DONE | Added console.warn (non-critical) |
+| Line 449-451: Follow-up alert creation error | :white_check_mark: DONE | Added console.warn (secondary) |
 
 ---
 
@@ -110,17 +112,13 @@ await auditLogger.error('PROCESS_FAILED', err instanceof Error ? err : new Error
 
 | Function | Status | Current Pattern |
 |----------|--------|-----------------|
-| `login` | :red_circle: TODO | Uses `cors()` directly |
-| `verify-hcaptcha` | :red_circle: TODO | Uses `cors()` directly |
+| `login` | :white_check_mark: DONE | Uses `corsFromRequest(req)` |
+| `verify-hcaptcha` | :white_check_mark: DONE | Uses `corsFromRequest(req)` |
 
-**Change from:**
+**Pattern used:**
 ```typescript
-const { headers, allowed } = cors(req.headers.get("origin"));
-```
-
-**Change to:**
-```typescript
-const { headers: corsHeaders } = corsFromRequest(req);
+import { corsFromRequest } from "../_shared/cors.ts";
+const { headers, allowed } = corsFromRequest(req, { methods: [...], allowHeaders: [...] });
 ```
 
 ---

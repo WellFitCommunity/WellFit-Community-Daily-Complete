@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabaseClient';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { getErrorMessage } from '../lib/getErrorMessage';
 import { claudeService } from './claudeService';
+import { auditLogger } from './auditLogger';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 import { ReadmissionTrackingService } from './readmissionTrackingService';
 import type {
@@ -49,7 +50,11 @@ export class DischargePlanningService {
       );
 
       if (riskError) {
-
+        // Log error but don't fail - use fallback risk score
+        auditLogger.warn('Risk score calculation failed - using fallback', {
+          patientId: request.patient_id,
+          error: riskError.message
+        });
       }
 
       const calculatedRiskScore = riskScore || 50; // Fallback to moderate risk
@@ -287,8 +292,11 @@ Format as JSON:
         .eq('id', planId);
 
     } catch (err: unknown) {
-
-      // Don't throw - recommendations are nice-to-have
+      // Log error but don't throw - recommendations are nice-to-have
+      auditLogger.warn('AI recommendations generation failed', {
+        planId,
+        error: getErrorMessage(err)
+      });
     }
   }
 
@@ -447,7 +455,11 @@ Format as JSON:
         status: 'active'
       });
     } catch (err: unknown) {
-
+      // Log error but don't throw - alert creation is secondary to follow-up completion
+      auditLogger.warn('Follow-up alert creation failed', {
+        patientId: followUp.patient_id,
+        error: getErrorMessage(err)
+      });
     }
   }
 

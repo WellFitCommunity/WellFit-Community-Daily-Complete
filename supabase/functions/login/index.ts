@@ -4,7 +4,7 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z, type ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { cors } from "../_shared/cors.ts";
+import { corsFromRequest } from "../_shared/cors.ts";
 import { createLogger } from '../_shared/auditLogger.ts';
 
 const MAX_REQUESTS = 5;
@@ -26,7 +26,7 @@ function toE164(phone: string): string {
 serve(async (req: Request) => {
   const logger = createLogger('login', req);
 
-  const { headers, allowed } = cors(req.headers.get("origin"), {
+  const { headers, allowed } = corsFromRequest(req, {
     methods: ["POST", "OPTIONS"],
     allowHeaders: ["authorization", "x-client-info", "apikey", "content-type"],
   });
