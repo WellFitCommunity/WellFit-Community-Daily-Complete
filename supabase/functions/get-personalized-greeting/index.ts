@@ -249,12 +249,13 @@ serve(async (req) => {
         headers: { ...headers, 'Content-Type': 'application/json' },
       }
     )
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error('Greeting generation failed', {
-      error: error instanceof Error ? error.message : String(error)
+      error: errorMessage
     })
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { ...headers, 'Content-Type': 'application/json' },

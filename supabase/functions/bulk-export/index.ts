@@ -298,14 +298,15 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     const processingTime = Date.now() - startTime;
     logger.error('Error in bulk-export function', {
-      error: error.message,
+      error: errorMessage,
       processingTimeMs: processingTime
     });
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -511,19 +512,20 @@ async function processExportInBackground(
       processingTimeMs: processingTime
     });
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     const processingTime = Date.now() - processingStartTime;
     logger.error('Error processing export', {
       jobId,
       exportType,
-      error: error.message,
+      error: errorMessage,
       processingTimeMs: processingTime
     });
 
     // Mark as failed
     await supabaseAdmin.from('export_jobs').update({
       status: 'failed',
-      error_message: error.message || 'Unknown error occurred',
+      error_message: errorMessage || 'Unknown error occurred',
     }).eq('id', jobId);
   }
 }

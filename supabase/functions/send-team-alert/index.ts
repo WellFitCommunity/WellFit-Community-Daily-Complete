@@ -109,10 +109,11 @@ Please check on this user as soon as possible.
           }
         })
         logger.info('Team alert email sent successfully', { recipient });
-      } catch (emailError) {
+      } catch (emailError: unknown) {
+        const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
         logger.error('Failed to send team alert email', {
           recipient,
-          error: emailError.message
+          error: errorMessage
         })
       }
     }
@@ -152,9 +153,10 @@ Please check on this user as soon as possible.
           }
         })
         logger.info('High priority SMS sent successfully');
-      } catch (smsError) {
+      } catch (smsError: unknown) {
+        const errorMessage = smsError instanceof Error ? smsError.message : String(smsError);
         logger.error('SMS send error', {
-          error: smsError.message
+          error: errorMessage
         })
       }
     }
@@ -172,10 +174,11 @@ Please check on this user as soon as possible.
       }
     )
 
-  } catch (error) {
-    logger.error('Send team alert error', { error: error.message })
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Send team alert error', { error: errorMessage })
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -331,8 +331,9 @@ serve(async (req: Request) => {
       }
     )
 
-  } catch (error) {
-    logger.error('Mobile sync error', { error: error instanceof Error ? error.message : String(error) })
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Mobile sync error', { error: errorMessage })
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       {
@@ -383,8 +384,9 @@ async function triggerVitalsAnalysis(supabaseClient: any, patientId: string, vit
       await supabaseClient.from('emergency_alerts').insert(alerts);
       logger.phi('Vitals anomaly detected', { patientId, alertCount: alerts.length });
     }
-  } catch (error) {
-    logger.error('Vitals analysis error', { error: error instanceof Error ? error.message : String(error), patientId })
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Vitals analysis error', { error: errorMessage, patientId })
   }
 }
 
@@ -406,8 +408,9 @@ async function checkGeofenceAlerts(supabaseClient: any, patientId: string, event
         })
       logger.security('Geofence breach detected', { patientId, breachCount: breachEvents.length });
     }
-  } catch (error) {
-    logger.error('Geofence alert error', { error: error instanceof Error ? error.message : String(error), patientId })
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Geofence alert error', { error: errorMessage, patientId })
   }
 }
 
@@ -429,7 +432,8 @@ async function triggerEmergencyResponse(supabaseClient: any, patientId: string, 
         })
       logger.security('Critical emergency incident detected', { patientId, incidentCount: criticalIncidents.length });
     }
-  } catch (error) {
-    logger.error('Emergency response error', { error: error instanceof Error ? error.message : String(error), patientId })
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Emergency response error', { error: errorMessage, patientId })
   }
 }

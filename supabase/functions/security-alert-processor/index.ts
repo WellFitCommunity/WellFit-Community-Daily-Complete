@@ -146,11 +146,12 @@ serve(async (req) => {
           }
 
           notifications.push(result);
-        } catch (error) {
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
           notifications.push({
             channel,
             success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: errorMessage,
           });
         }
       }
@@ -190,9 +191,10 @@ serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error("Fatal error in security-alert-processor", {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
     });
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
@@ -303,11 +305,12 @@ async function sendEmailNotification(alert: SecurityAlert): Promise<Notification
     }
 
     return { channel: "email", success: true };
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       channel: "email",
       success: false,
-      error: error instanceof Error ? error.message : "Email failed",
+      error: errorMessage,
     };
   }
 }
@@ -348,11 +351,12 @@ async function sendSMSNotification(alert: SecurityAlert): Promise<NotificationRe
     }
 
     return { channel: "sms", success: true };
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       channel: "sms",
       success: false,
-      error: error instanceof Error ? error.message : "SMS failed",
+      error: errorMessage,
     };
   }
 }
@@ -405,11 +409,12 @@ async function sendSlackNotification(alert: SecurityAlert): Promise<Notification
     }
 
     return { channel: "slack", success: true };
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       channel: "slack",
       success: false,
-      error: error instanceof Error ? error.message : "Slack failed",
+      error: errorMessage,
     };
   }
 }
@@ -464,11 +469,12 @@ async function sendPagerDutyNotification(alert: SecurityAlert): Promise<Notifica
     }
 
     return { channel: "pagerduty", success: true };
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       channel: "pagerduty",
       success: false,
-      error: error instanceof Error ? error.message : "PagerDuty failed",
+      error: errorMessage,
     };
   }
 }
@@ -487,9 +493,10 @@ async function checkEscalations(
     if (error) {
       logger.error("Escalation check failed", { error: error.message });
     }
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error("Escalation check exception", {
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: errorMessage,
     });
   }
 }

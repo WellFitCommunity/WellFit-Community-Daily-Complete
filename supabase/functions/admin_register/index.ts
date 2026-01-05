@@ -55,7 +55,7 @@ function normalizePhone(phone?: string): string | undefined {
   try {
     const phoneNumber = parsePhoneNumber(phone, 'US');
     return phoneNumber.number; // Returns E.164 format: +15551234567
-  } catch (error) {
+  } catch (err: unknown) {
     // Fallback to old logic if parsing fails
     const digits = phone.replace(/\D/g, "");
     if (digits.length === 10) return `+1${digits}`;

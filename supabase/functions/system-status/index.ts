@@ -92,7 +92,8 @@ serve(async (req) => {
       { status: httpStatus, headers }
     );
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     // If health check itself fails, system is down
     const errorStatus: SystemStatus = {
       status: 'down',
@@ -100,7 +101,7 @@ serve(async (req) => {
       checks: [{
         name: 'system',
         status: 'down',
-        message: `Health check failed: ${error.message}`
+        message: `Health check failed: ${errorMessage}`
       }],
       uptime_seconds: Math.floor((Date.now() - startTime) / 1000)
     };
@@ -161,12 +162,13 @@ async function checkDatabase(): Promise<HealthCheck> {
       responseTime
     };
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       name: 'database',
       status: 'down',
       responseTime: Date.now() - start,
-      message: `Exception: ${error.message}`
+      message: `Exception: ${errorMessage}`
     };
   }
 }
@@ -218,12 +220,13 @@ async function checkAPI(): Promise<HealthCheck> {
       responseTime
     };
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       name: 'api',
       status: 'down',
       responseTime: Date.now() - start,
-      message: `Exception: ${error.message}`
+      message: `Exception: ${errorMessage}`
     };
   }
 }
@@ -271,12 +274,13 @@ async function checkGuardian(): Promise<HealthCheck> {
       message: data && data.length > 0 ? 'Active' : 'No recent alerts (system healthy)'
     };
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       name: 'guardian',
       status: 'degraded',
       responseTime: Date.now() - start,
-      message: `Exception: ${error.message}`
+      message: `Exception: ${errorMessage}`
     };
   }
 }

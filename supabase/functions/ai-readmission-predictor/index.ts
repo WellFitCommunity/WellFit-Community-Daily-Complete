@@ -174,9 +174,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -240,7 +241,7 @@ async function gatherPatientData(patientId: string, tenantId: string): Promise<a
     data.hasActiveCarePlan = !!carePlan;
 
     return data;
-  } catch (error) {
+  } catch (err: unknown) {
     return data;
   }
 }

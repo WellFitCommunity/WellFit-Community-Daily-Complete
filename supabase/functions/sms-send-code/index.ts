@@ -35,7 +35,7 @@ function validatePhone(phone: string): { valid: boolean; error?: string } {
     }
 
     return { valid: true };
-  } catch (error) {
+  } catch (_err: unknown) {
     return { valid: false, error: "Invalid phone number format" };
   }
 }

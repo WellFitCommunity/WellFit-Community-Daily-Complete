@@ -113,11 +113,12 @@ serve(async (req) => {
       default:
         throw new Error(`Unknown action: ${action}`)
     }
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: errorMessage
       }),
       {
         status: 400,
@@ -265,11 +266,12 @@ async function createPullRequest(
       prNumber: prData.number,
       prUrl: prData.html_url,
     }
-  } catch (error) {
-    await logPRError(supabase, prRequest, error.message)
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    await logPRError(supabase, prRequest, errorMessage)
     return {
       success: false,
-      error: error.message,
+      error: errorMessage,
     }
   }
 }
@@ -419,8 +421,9 @@ async function mergePR(
     await logPRMerge(supabase, prNumber)
 
     return { success: true }
-  } catch (error) {
-    return { success: false, error: error.message }
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return { success: false, error: errorMessage }
   }
 }
 

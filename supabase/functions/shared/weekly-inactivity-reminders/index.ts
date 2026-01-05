@@ -112,8 +112,9 @@ class InactivityReminderService {
         return false;
       }
       return true;
-    } catch (err: any) {
-      this.logger.error("FCM request failed", { message: String(err?.message || err).slice(0, 500) });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error("FCM request failed", { message: errorMessage.slice(0, 500) });
       return false;
     }
   }
@@ -187,11 +188,12 @@ class InactivityReminderService {
           errors++;
           this.logger.error("All FCM sends failed for user", { userId: user.userId, fail });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         errors++;
+        const errorMessage = err instanceof Error ? err.message : String(err);
         this.logger.error("Error processing user reminder", {
           userId: user.userId,
-          message: String(err?.message || err).slice(0, 500),
+          message: errorMessage.slice(0, 500),
         });
       }
     }
@@ -233,12 +235,13 @@ serve(async () => {
       }),
       { headers: { "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
-    logger.error("Function execution failed", { message: String(err?.message || err).slice(0, 500) });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Function execution failed", { message: errorMessage.slice(0, 500) });
     return new Response(
       JSON.stringify({
         success: false,
-        error: String(err?.message || err),
+        error: errorMessage,
         timestamp: new Date().toISOString(),
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }

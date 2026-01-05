@@ -145,12 +145,13 @@ serve(async (req) => {
             status: data.status
           });
         }
-      } catch (error) {
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
         logger.error("SMS send exception", {
           phone: phoneNumber,
-          error: error instanceof Error ? error.message : String(error)
+          error: errorMessage
         });
-        errors.push({ phone: phoneNumber, error: error.message });
+        errors.push({ phone: phoneNumber, error: errorMessage });
       }
     }
 
@@ -180,13 +181,14 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error("Fatal error in send-sms", {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      error: errorMessage,
+      stack: err instanceof Error ? err.stack : undefined
     });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -108,9 +108,10 @@ serve(async (req) => {
       // Single mode: Process one encounter
       return await processSingleEncounter(encounterId, patientId, effectiveTenantId, corsHeaders);
     }
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -251,7 +252,7 @@ async function processBatchEncounters(tenantId: string, corsHeaders: Record<stri
         corsHeaders
       );
       results.processed++;
-    } catch (error) {
+    } catch (err: unknown) {
       results.errors++;
     }
   }

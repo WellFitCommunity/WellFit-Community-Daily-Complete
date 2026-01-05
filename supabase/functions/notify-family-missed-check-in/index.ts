@@ -131,13 +131,14 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error('Family missed check-in notification error', {
-      error: error.message
+      error: errorMessage
     });
     const { headers } = corsFromRequest(req);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers }
     );
   }

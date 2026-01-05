@@ -80,13 +80,14 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (err: unknown) {
     // Get CORS headers again for error response
     const { headers: errorCorsHeaders } = corsFromRequest(req);
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
+        error: errorMessage || 'Internal server error'
       }),
       { status: 500, headers: { ...errorCorsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -128,10 +129,11 @@ async function handleSecurityScan(
         summary: 'System scan completed successfully'
       }
     };
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Security scan failed'
+      error: errorMessage || 'Security scan failed'
     };
   }
 }
@@ -179,10 +181,11 @@ async function handleAuditLog(
         timestamp: new Date().toISOString()
       }
     };
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Audit logging failed'
+      error: errorMessage || 'Audit logging failed'
     };
   }
 }
@@ -243,10 +246,11 @@ async function handleMonitorHealth(
         }
       }
     };
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Health monitoring failed'
+      error: errorMessage || 'Health monitoring failed'
     };
   }
 }

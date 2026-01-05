@@ -115,14 +115,15 @@ serve(async (req) => {
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (err: unknown) {
     // Log error - audit logging happens in try block only when we have valid context
-    logger.error('Claude API request failed', { error: error instanceof Error ? error.message : String(error) });
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Claude API request failed', { error: errorMessage });
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Internal server error",
-        details: String(error),
+        error: errorMessage || "Internal server error",
+        details: errorMessage,
       }),
       {
         status: 500,

@@ -58,8 +58,8 @@ async function sendSMS(to: string, body: string): Promise<{ ok: boolean; sid?: s
 
     const result = JSON.parse(text);
     return { ok: true, sid: result.sid };
-  } catch (error) {
-    return { ok: false, error: String(error) };
+  } catch (err: unknown) {
+    return { ok: false, error: String(err) };
   }
 }
 
@@ -100,8 +100,8 @@ async function sendPushNotification(
     }
 
     return { ok: true };
-  } catch (error) {
-    return { ok: false, error: String(error) };
+  } catch (err: unknown) {
+    return { ok: false, error: String(err) };
   }
 }
 

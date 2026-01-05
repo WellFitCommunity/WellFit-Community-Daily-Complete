@@ -151,10 +151,11 @@ serve(async (req) => {
       { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (error) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     const processingTime = Date.now() - startTime;
     logger.error('FHIR export error', {
-      error: error.message,
+      error: errorMessage,
       processingTimeMs: processingTime
     });
     return new Response(

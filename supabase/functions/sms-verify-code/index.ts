@@ -77,10 +77,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
         phoneChanged: phone !== normalizedPhone,
         codeLength: code.length
       });
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error("Phone parsing failed", {
         phone: phone,
-        error: error instanceof Error ? error.message : String(error)
+        error: errorMessage
       });
       return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
     }
