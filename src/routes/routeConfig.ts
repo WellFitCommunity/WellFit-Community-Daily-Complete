@@ -34,9 +34,15 @@ export const publicRoutes: RouteConfig[] = [
   { path: '/change-password', component: 'ChangePasswordPage', auth: 'none', category: 'public' },
   { path: '/reset-password', component: 'ResetPasswordPage', auth: 'none', category: 'public' },
   { path: '/admin-login', component: 'AdminLoginPage', auth: 'none', category: 'public' },
+  // WellFit Community Entry Points (seniors, caregivers, community orgs)
+  { path: '/wellfit', component: 'LoginPage', auth: 'none', category: 'public' },
+  { path: '/wellfit/login', component: 'LoginPage', auth: 'none', category: 'public' },
+  { path: '/wellfit/register', component: 'RegisterPage', auth: 'none', category: 'public' },
+  // Envision Atlus Entry Points (clinical staff, healthcare providers)
   { path: '/envision', component: 'EnvisionLoginPage', auth: 'none', category: 'public' },
   { path: '/envision/login', component: 'EnvisionLoginPage', auth: 'none', category: 'public' },
   { path: '/envision-2fa-setup', component: 'EnvisionTotpSetupPage', auth: 'none', category: 'public' },
+  // Generic login (redirects based on tenant)
   { path: '/login', component: 'LoginPage', auth: 'none', category: 'public' },
   { path: '/metrics', component: 'MetricsPage', auth: 'none', category: 'public' },
   { path: '/home', component: 'Home', auth: 'none', category: 'public' },

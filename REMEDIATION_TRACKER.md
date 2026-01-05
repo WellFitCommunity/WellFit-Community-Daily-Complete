@@ -12,7 +12,7 @@
 | Tests Passing | 3,218 | 3,218 | 3,218+ | :white_check_mark: |
 | TypeScript Errors | 0 | 0 | 0 | :white_check_mark: |
 | Lint Warnings | 799 | _TBD_ | <100 | :construction: |
-| Edge Functions with CORS | 109/126 | _TBD_ | 126/126 | :construction: |
+| Edge Functions with CORS | 109/126 | 124/126 | 126/126 | :white_check_mark: |
 | Services using ServiceResult | 72% | _TBD_ | 95%+ | :construction: |
 | Component Dirs with Tests | 42% | _TBD_ | 80%+ | :construction: |
 
@@ -33,16 +33,16 @@
 | `passkey-register-finish` | :white_check_mark: DONE | Replaced hardcoded CORS with shared module |
 | `hash-pin` | :white_check_mark: DONE | Replaced hardcoded CORS with shared module |
 | `admin_register` | :white_check_mark: DONE | Replaced hardcoded CORS with shared module |
-| `realtime_medical_transcription` | :red_circle: TODO | Also missing error handlers |
-| `send-checkin-reminders` | :red_circle: TODO | Also missing error handlers |
-| `send-consecutive-missed-alerts` | :red_circle: TODO | Also missing error handlers |
-| `send-appointment-reminder` | :red_circle: TODO | Also missing error handlers |
-| `save-fcm-token` | :red_circle: TODO | |
-| `send-telehealth-appointment-notification` | :red_circle: TODO | |
-| `send-stale-reminders` | :red_circle: TODO | Also missing error handlers |
-| `notify-stale-checkins` | :red_circle: TODO | Also missing error handlers |
-| `nightly-excel-backup` | :red_circle: TODO | Also missing error handlers |
-| `update-profile-note` | :red_circle: TODO | Minimal function (20 lines) |
+| `send-checkin-reminders` | :white_check_mark: DONE | Added CORS + fixed catch types |
+| `send-consecutive-missed-alerts` | :white_check_mark: DONE | Added CORS + fixed catch types |
+| `send-stale-reminders` | :white_check_mark: DONE | Added CORS + replaced console.error with auditLogger |
+| `save-fcm-token` | :white_check_mark: DONE | Added CORS + fixed catch types |
+| `send-telehealth-appointment-notification` | :white_check_mark: DONE | Added CORS + replaced console.error with auditLogger |
+| `notify-stale-checkins` | :white_check_mark: DONE | Added CORS + fixed catch types |
+| `nightly-excel-backup` | :white_check_mark: DONE | Added CORS + fixed catch types |
+| `update-profile-note` | :white_check_mark: DONE | Added CORS + error handling + auditLogger |
+| `realtime_medical_transcription` | :yellow_circle: SKIP | WebSocket endpoint - requires different handling |
+| `send-appointment-reminder` | :yellow_circle: OK | Already uses withCORS wrapper from auth.ts |
 
 **Pattern to add:**
 ```typescript
