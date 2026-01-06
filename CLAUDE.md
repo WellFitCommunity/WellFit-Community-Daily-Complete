@@ -166,7 +166,7 @@ const result = processData(input as unknown as ExpectedType); // NO
 
 **Rule: Casts must never move closer to business logic.** If you need a cast inside a function, the problem is upstream - fix the caller or the interface.
 
-**Current lint warning count: 799** (down from 1,605) - mostly `any` types that must be eliminated.
+**Current lint warning count: 617** (down from 1,605) - mostly `any` types that must be eliminated.
 
 ### Lint Warning Policy - ZERO NEW WARNINGS
 
