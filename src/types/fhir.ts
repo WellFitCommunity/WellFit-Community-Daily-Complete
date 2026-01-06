@@ -505,7 +505,7 @@ export interface Observation extends FHIRResource {
   value_range_high?: number;
   value_ratio_numerator?: number;
   value_ratio_denominator?: number;
-  value_sampled_data?: any;
+  value_sampled_data?: Record<string, unknown>;
   value_time?: string;
   value_datetime?: string;
   value_period_start?: string;
@@ -581,7 +581,7 @@ export interface CreateObservation extends Partial<Observation> {
 // API RESPONSE TYPES
 // ============================================================================
 
-export interface FHIRApiResponse<T = any> {
+export interface FHIRApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -886,7 +886,7 @@ export interface FHIRCareTeam extends FHIRResource {
   encounter_display?: string;
   managing_organization_reference?: string;
   managing_organization_display?: string;
-  telecom?: any;
+  telecom?: Array<{ system?: string; value?: string; use?: string; rank?: number }>;
   reason_code?: string[];
   reason_display?: string[];
   note?: string;
@@ -911,7 +911,7 @@ export interface FHIRCareTeamMember {
   period_start?: string;
   period_end?: string;
   is_primary_contact?: boolean;
-  telecom?: any;
+  telecom?: Array<{ system?: string; value?: string; use?: string; rank?: number }>;
   sequence?: number;
   created_at?: string;
   updated_at?: string;
@@ -1028,8 +1028,19 @@ export interface FHIRPractitionerRole extends FHIRResource {
   telecom?: FHIRContactPoint[];
 
   // Availability
-  available_time?: any; // FHIR AvailableTime structure
-  not_available?: any; // FHIR NotAvailable structure
+  available_time?: Array<{
+    daysOfWeek?: ('mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun')[];
+    allDay?: boolean;
+    availableStartTime?: string;
+    availableEndTime?: string;
+  }>;
+  not_available?: Array<{
+    description: string;
+    during?: {
+      start?: string;
+      end?: string;
+    };
+  }>;
 
   // Endpoints
   endpoint_references?: string[];

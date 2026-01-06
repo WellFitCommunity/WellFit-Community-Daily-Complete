@@ -192,7 +192,7 @@ export interface AdminTaskRequest {
   templateId: string;
   role: string;
   taskType: string;
-  inputData: Record<string, any>;
+  inputData: Record<string, unknown>;
   preferredModel?: ClaudeModel;
   userId?: string;
 }
@@ -217,8 +217,8 @@ export interface AdminTaskHistory {
   role: string;
   taskType: string;
   templateId?: string;
-  inputData: Record<string, any>;
-  outputData: Record<string, any>;
+  inputData: Record<string, unknown>;
+  outputData: Record<string, unknown>;
   tokensUsed?: number;
   executionTimeMs?: number;
   aiCorrectionsCount?: number;
@@ -244,7 +244,7 @@ export interface VoiceInputSession {
   transcription?: string;
   transcriptionConfidence?: number;
   correctionsApplied?: number;
-  finalOutput?: Record<string, any>;
+  finalOutput?: Record<string, unknown>;
   suggestedTemplateId?: string;
   voiceProfileUsed?: boolean;
   processingTimeMs?: number;
@@ -282,7 +282,7 @@ export interface CareContextEntry {
   contextType: CareContextType;
   contributedByRole: string;
   contributedByUser: string;
-  contextData: Record<string, any>;
+  contextData: Record<string, unknown>;
   contextSummary?: string;
   validUntil?: string;
   isActive?: boolean;
