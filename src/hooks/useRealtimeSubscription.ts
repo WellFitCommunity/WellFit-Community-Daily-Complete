@@ -36,7 +36,7 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from '../services/auditLogger';
 import { errorReporter } from '../services/errorReporter';
@@ -65,7 +65,7 @@ export interface RealtimeSubscriptionOptions<T = unknown> {
   initialFetch?: () => Promise<T[]>;
 
   /** Callback when data changes */
-  onChange?: (payload: any) => void;
+  onChange?: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
 
   /** Enable heartbeat (default: true) */
   enableHeartbeat?: boolean;
@@ -74,7 +74,7 @@ export interface RealtimeSubscriptionOptions<T = unknown> {
   heartbeatInterval?: number;
 }
 
-export interface RealtimeSubscriptionResult<T = any> {
+export interface RealtimeSubscriptionResult<T = unknown> {
   /** Current data */
   data: T[] | null;
 
@@ -98,7 +98,7 @@ export interface RealtimeSubscriptionResult<T = any> {
 // HOOK
 // ============================================================================
 
-export function useRealtimeSubscription<T = any>(
+export function useRealtimeSubscription<T = unknown>(
   options: RealtimeSubscriptionOptions<T>
 ): RealtimeSubscriptionResult<T> {
   const {
@@ -384,12 +384,15 @@ export function useRealtimeSubscription<T = any>(
         // Build subscription using refs to avoid dependency issues
         const currentEvent = eventRef.current;
         const currentFilter = filterRef.current;
+        // SDK boundary - Supabase types don't perfectly match runtime API
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const subscription = channel.on('postgres_changes', {
-          event: currentEvent === '*' ? '*' : (currentEvent as any),
+          event: currentEvent === '*' ? '*' : (currentEvent as 'INSERT' | 'UPDATE' | 'DELETE'),
           schema: schema,
           table: table,
           filter: currentFilter,
-        } as any, (payload) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any, (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
           if (isCleanedUp || !mountedRef.current) return;
 
           auditLogger.debug('REALTIME_EVENT_RECEIVED', {
