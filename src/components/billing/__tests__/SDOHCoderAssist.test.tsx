@@ -36,7 +36,7 @@ vi.mock('../CCMTimeTracker', () => ({
   CCMTimeTracker: ({ onSave, onCancel }: { onSave: () => void; onCancel: () => void }) => (
     <div data-testid="ccm-time-tracker">
       <button onClick={onCancel}>Cancel CCM</button>
-      <button onClick={() => onSave([])}>Save CCM</button>
+      <button onClick={() => onSave()}>Save CCM</button>
     </div>
   ),
 }));
@@ -53,8 +53,8 @@ describe('SDOHCoderAssist', () => {
   const mockEnhancedSuggestion = {
     medicalCodes: {
       icd10: [
-        { code: 'I10', rationale: 'Essential hypertension', principal: true },
-        { code: 'Z59.4', rationale: 'Food insecurity', category: 'sdoh' },
+        { code: 'I10', rationale: 'Essential hypertension', principal: true, category: 'medical' as const },
+        { code: 'Z59.4', rationale: 'Food insecurity', principal: false, category: 'sdoh' as const },
       ],
     },
     procedureCodes: {
@@ -62,25 +62,30 @@ describe('SDOHCoderAssist', () => {
       hcpcs: [],
     },
     sdohAssessment: {
+      patientId: 'patient-456',
+      assessmentDate: '2024-01-15',
       housingInstability: null,
-      foodInsecurity: { zCode: 'Z59.4', description: 'Food insecurity', severity: 'moderate', impact: 'medium' },
+      foodInsecurity: { zCode: 'Z59.4', description: 'Food insecurity', severity: 'moderate' as const, impact: 'medium' as const, documented: true, source: 'assessment' },
       transportationBarriers: null,
       socialIsolation: null,
       financialInsecurity: null,
+      educationBarriers: null,
+      employmentConcerns: null,
       overallComplexityScore: 65,
       ccmEligible: true,
-      ccmTier: 'standard',
+      ccmTier: 'standard' as const,
     },
     ccmRecommendation: {
       eligible: true,
-      tier: 'standard',
+      tier: 'standard' as const,
       expectedReimbursement: 62.43,
       justification: 'Patient has chronic conditions requiring ongoing care coordination',
       requiredDocumentation: ['Care plan', 'Time documentation', 'Patient consent'],
     },
     auditReadiness: {
       score: 85,
-      issues: [],
+      missingElements: [],
+      recommendations: [],
     },
     confidence: 88,
     notes: 'SDOH factors identified - additional Z-codes recommended',
@@ -90,7 +95,7 @@ describe('SDOHCoderAssist', () => {
     isValid: true,
     errors: [],
     warnings: [
-      { code: 'FOOD_INSECURITY', message: 'Patient has food insecurity', recommendation: 'Consider referral' },
+      { code: 'FOOD_INSECURITY', field: 'icd10.Z59.4', message: 'Patient has food insecurity', recommendation: 'Consider referral' },
     ],
     auditFlags: [],
   };

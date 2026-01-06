@@ -65,22 +65,25 @@ describe('BillingDecisionTreeService', () => {
   });
 
   // Helper to create base input for tests
-  const createBaseInput = (overrides: Partial<DecisionTreeInput> = {}): DecisionTreeInput => ({
-    encounterId: 'encounter-123',
-    patientId: 'patient-456',
-    providerId: 'provider-789',
-    payerId: 'payer-001',
-    serviceDate: '2024-01-15',
-    encounterType: 'office_visit',
-    placeOfService: '11',
-    chiefComplaint: 'Annual checkup',
-    presentingDiagnoses: [
-      { term: 'Hypertension', icd10Code: 'I10' },
-    ],
-    proceduresPerformed: [],
-    timeSpent: 25,
-    ...overrides,
-  });
+  const createBaseInput = (overrides: Partial<DecisionTreeInput> = {}): DecisionTreeInput => {
+    const base: DecisionTreeInput = {
+      encounterId: 'encounter-123',
+      patientId: 'patient-456',
+      providerId: 'provider-789',
+      payerId: 'payer-001',
+      policyStatus: 'active',
+      serviceDate: '2024-01-15',
+      encounterType: 'office_visit',
+      placeOfService: '11',
+      chiefComplaint: 'Annual checkup',
+      presentingDiagnoses: [
+        { term: 'Hypertension', icd10Code: 'I10' },
+      ],
+      proceduresPerformed: [],
+      timeSpent: 25,
+    };
+    return { ...base, ...overrides };
+  };
 
   // Helper to setup Supabase mock chain
   const setupSupabaseMock = (tableMocks: Record<string, { data: unknown; error?: { message: string } | null }>) => {
@@ -860,11 +863,30 @@ describe('BillingDecisionTreeService', () => {
     it('should add SDOH codes when patient has social determinants', async () => {
       const { SDOHBillingService } = await import('../sdohBillingService');
       vi.mocked(SDOHBillingService.assessSDOHComplexity).mockResolvedValueOnce({
-        housingInstability: { zCode: 'Z59.0', description: 'Homelessness' },
-        foodInsecurity: { zCode: 'Z59.41', description: 'Food insecurity' },
+        patientId: 'patient-123',
+        assessmentDate: '2024-01-15',
+        housingInstability: {
+          zCode: 'Z59.0',
+          description: 'Homelessness',
+          severity: 'severe',
+          impact: 'high',
+          documented: true,
+          source: 'assessment',
+        },
+        foodInsecurity: {
+          zCode: 'Z59.41',
+          description: 'Food insecurity',
+          severity: 'moderate',
+          impact: 'medium',
+          documented: true,
+          source: 'assessment',
+        },
         transportationBarriers: null,
         socialIsolation: null,
         financialInsecurity: null,
+        educationBarriers: null,
+        employmentConcerns: null,
+        overallComplexityScore: 75,
         ccmEligible: true,
         ccmTier: 'complex',
       });

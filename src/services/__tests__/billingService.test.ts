@@ -148,11 +148,11 @@ describe('BillingService', () => {
         const result = await BillingService.createProvider({
           npi: '1234567890',
           organization_name: 'Test Medical Group',
-          tax_id: '12-3456789',
+          ein: '12-3456789',
           address_line1: '123 Main St',
           city: 'Houston',
           state: 'TX',
-          zip_code: '77001',
+          zip: '77001',
           taxonomy_code: '207Q00000X',
         });
 
@@ -166,11 +166,11 @@ describe('BillingService', () => {
           BillingService.createProvider({
             npi: '1234567890',
             organization_name: 'Test',
-            tax_id: '12-3456789',
+            ein: '12-3456789',
             address_line1: '123 Main',
             city: 'Houston',
             state: 'TX',
-            zip_code: '77001',
+            zip: '77001',
             taxonomy_code: '207Q00000X',
           })
         ).rejects.toThrow('Failed to create provider: Duplicate NPI');
@@ -268,11 +268,9 @@ describe('BillingService', () => {
         const result = await BillingService.createPayer({
           name: 'Blue Cross Blue Shield',
           payer_id: 'BCBS001',
-          type: 'commercial',
-          address_line1: '456 Insurance Blvd',
-          city: 'Dallas',
-          state: 'TX',
-          zip_code: '75001',
+          receiver_id: 'RCV001',
+          clearinghouse_id: 'CLH001',
+          notes: 'Commercial insurance payer',
         });
 
         expect(result).toEqual(mockPayer);
@@ -285,11 +283,8 @@ describe('BillingService', () => {
           BillingService.createPayer({
             name: 'Test Payer',
             payer_id: 'DUP001',
-            type: 'commercial',
-            address_line1: '123 St',
-            city: 'City',
-            state: 'TX',
-            zip_code: '75001',
+            receiver_id: 'RCV002',
+            notes: 'Test notes',
           })
         ).rejects.toThrow('Failed to create payer: Duplicate payer ID');
       });
@@ -348,12 +343,11 @@ describe('BillingService', () => {
 
         const result = await BillingService.createClaim({
           encounter_id: 'encounter-456',
-          patient_id: 'patient-789',
           billing_provider_id: 'provider-123',
           payer_id: 'payer-123',
-          status: 'draft',
-          total_amount: 150.0,
-          service_date: '2024-01-15',
+          claim_type: 'professional',
+          status: 'generated',
+          total_charge: 150.0,
         });
 
         expect(result).toEqual(mockClaim);
@@ -365,12 +359,11 @@ describe('BillingService', () => {
         await expect(
           BillingService.createClaim({
             encounter_id: 'invalid',
-            patient_id: 'patient-789',
             billing_provider_id: 'provider-123',
             payer_id: 'payer-123',
-            status: 'draft',
-            total_amount: 150.0,
-            service_date: '2024-01-15',
+            claim_type: 'professional',
+            status: 'generated',
+            total_charge: 150.0,
           })
         ).rejects.toThrow('Failed to create claim: Invalid encounter ID');
       });
@@ -420,7 +413,7 @@ describe('BillingService', () => {
 
         const result = await BillingService.logClaimStatusChange(
           'claim-123',
-          'draft',
+          'generated',
           'submitted',
           'Submitted for processing'
         );
@@ -454,7 +447,7 @@ describe('BillingService', () => {
         setupQueryChain({ data: null, error: { message: 'Insert failed' } });
 
         await expect(
-          BillingService.logClaimStatusChange('claim-123', 'draft', 'submitted')
+          BillingService.logClaimStatusChange('claim-123', 'generated', 'submitted')
         ).rejects.toThrow('Failed to log status change: Insert failed');
       });
     });
@@ -468,13 +461,12 @@ describe('BillingService', () => {
       id: 'line-123',
       claim_id: 'claim-123',
       position: 1,
-      cpt_code: '99213',
-      description: 'Office visit - established patient',
+      code_system: 'CPT' as const,
+      procedure_code: '99213',
       units: 1,
-      unit_price: 150.0,
-      total_price: 150.0,
+      charge_amount: 150.0,
       modifiers: ['25'],
-      icd10_codes: ['J06.9'],
+      diagnosis_pointers: [1],
       created_at: '2024-01-15T10:00:00Z',
       updated_at: '2024-01-15T10:00:00Z',
     };
@@ -486,13 +478,12 @@ describe('BillingService', () => {
         const result = await BillingService.addClaimLine({
           claim_id: 'claim-123',
           position: 1,
-          cpt_code: '99213',
-          description: 'Office visit - established patient',
+          code_system: 'CPT',
+          procedure_code: '99213',
           units: 1,
-          unit_price: 150.0,
-          total_price: 150.0,
+          charge_amount: 150.0,
           modifiers: ['25'],
-          icd10_codes: ['J06.9'],
+          diagnosis_pointers: [1],
         });
 
         expect(result).toEqual(mockClaimLine);
@@ -505,11 +496,12 @@ describe('BillingService', () => {
           BillingService.addClaimLine({
             claim_id: 'claim-123',
             position: 1,
-            cpt_code: 'INVALID',
-            description: 'Test',
+            code_system: 'CPT',
+            procedure_code: 'INVALID',
             units: 1,
-            unit_price: 100.0,
-            total_price: 100.0,
+            charge_amount: 100.0,
+            modifiers: [],
+            diagnosis_pointers: [1],
           })
         ).rejects.toThrow('Failed to add claim line: Invalid CPT code');
       });
@@ -627,10 +619,8 @@ describe('BillingService', () => {
       encounter_id: 'encounter-456',
       patient_id: 'patient-789',
       payload: {
-        cpt_codes: ['99213'],
-        icd10_codes: ['J06.9'],
-        modifiers: [],
-        reasoning: 'Standard office visit for URI',
+        cpt: [{ code: '99213', rationale: 'Standard office visit for URI' }],
+        icd10: [{ code: 'J06.9', rationale: 'Upper respiratory infection' }],
       },
       confidence: 0.92,
       created_at: '2024-01-15T10:00:00Z',
@@ -644,10 +634,8 @@ describe('BillingService', () => {
           'encounter-456',
           'patient-789',
           {
-            cpt_codes: ['99213'],
-            icd10_codes: ['J06.9'],
-            modifiers: [],
-            reasoning: 'Standard office visit for URI',
+            cpt: [{ code: '99213', rationale: 'Standard office visit for URI' }],
+            icd10: [{ code: 'J06.9', rationale: 'Upper respiratory infection' }],
           },
           0.92
         );
@@ -662,7 +650,7 @@ describe('BillingService', () => {
         const result = await BillingService.saveCodingRecommendation(
           'encounter-456',
           null,
-          { cpt_codes: ['99213'], icd10_codes: ['J06.9'] },
+          { cpt: [{ code: '99213' }], icd10: [{ code: 'J06.9' }] },
           0.85
         );
 
@@ -673,7 +661,7 @@ describe('BillingService', () => {
         setupQueryChain({ data: null, error: { message: 'Invalid encounter' } });
 
         await expect(
-          BillingService.saveCodingRecommendation('invalid', null, { cpt_codes: [] })
+          BillingService.saveCodingRecommendation('invalid', null, { cpt: [] })
         ).rejects.toThrow('Failed to save coding recommendation: Invalid encounter');
       });
     });
@@ -740,10 +728,11 @@ describe('BillingService', () => {
   describe('Coding Suggestions', () => {
     describe('getCodingSuggestions', () => {
       const mockSuggestion = {
-        cpt_codes: ['99214'],
-        icd10_codes: ['M54.5', 'G89.29'],
-        modifiers: ['25'],
-        reasoning: 'Extended visit with chronic pain management',
+        cpt: [{ code: '99214', modifiers: ['25'], rationale: 'Extended visit with chronic pain management' }],
+        icd10: [
+          { code: 'M54.5', rationale: 'Low back pain' },
+          { code: 'G89.29', rationale: 'Chronic pain' },
+        ],
         confidence: 0.88,
       };
 
@@ -861,7 +850,7 @@ describe('BillingService', () => {
     describe('getClaimMetrics', () => {
       it('should return aggregated claim metrics', async () => {
         const rpcResult = [
-          { status: 'draft', count: 10, total_amount: 1500.0 },
+          { status: 'generated', count: 10, total_amount: 1500.0 },
           { status: 'submitted', count: 25, total_amount: 5000.0 },
           { status: 'accepted', count: 50, total_amount: 12500.0 },
           { status: 'rejected', count: 5, total_amount: 750.0 },
@@ -873,7 +862,7 @@ describe('BillingService', () => {
 
         expect(result.total).toBe(90);
         expect(result.totalAmount).toBe(19750.0);
-        expect(result.byStatus.draft).toBe(10);
+        expect(result.byStatus.generated).toBe(10);
         expect(result.byStatus.submitted).toBe(25);
         expect(result.byStatus.accepted).toBe(50);
         expect(result.byStatus.rejected).toBe(5);
