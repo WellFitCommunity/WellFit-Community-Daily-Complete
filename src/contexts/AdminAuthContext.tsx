@@ -37,9 +37,9 @@ interface AdminAuthContextType {
   canManageDepartment: boolean;
 
   // Use this to call admin-only Edge Functions (adds admin token header)
-  invokeAdminFunction: <T = any>(
+  invokeAdminFunction: <T = unknown>(
     fnName: string,
-    body?: any
+    body?: Record<string, unknown>
   ) => Promise<{ data: T | null; error: Error | null }>;
 }
 
@@ -241,12 +241,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         adminTokenRef.current = null; adminTokenRefGlobal.current = null;
         return false;
       }
-    } catch (e: any) {
-      auditLogger.error('ADMIN_PIN_VERIFICATION_EXCEPTION', e, {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      auditLogger.error('ADMIN_PIN_VERIFICATION_EXCEPTION', e instanceof Error ? e : new Error(errorMessage), {
         role,
-        errorMessage: e?.message
+        errorMessage
       }).catch(() => {});
-      setError(e?.message || 'An unexpected error occurred.');
+      setError(errorMessage || 'An unexpected error occurred.');
       setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
       persistSession(false, null, null); clearExpiryTimer();
       adminTokenRef.current = null; adminTokenRefGlobal.current = null;
@@ -315,11 +316,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }).catch(() => {});
 
       return true;
-    } catch (e: any) {
-      auditLogger.error('SUPER_ADMIN_AUTO_AUTH_ERROR', e, {
-        errorMessage: e?.message
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      auditLogger.error('SUPER_ADMIN_AUTO_AUTH_ERROR', e instanceof Error ? e : new Error(errorMessage), {
+        errorMessage
       }).catch(() => {});
-      setError(e?.message || 'Auto-authentication failed.');
+      setError(errorMessage || 'Auto-authentication failed.');
       return false;
     } finally {
       setIsLoading(false);
@@ -357,7 +359,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // All admin-only functions should be called through this helper.
   // It adds the short-lived admin token in a header the server validates.
   const invokeAdminFunction = useCallback(
-    async <T = any>(fnName: string, body?: any): Promise<{ data: T | null; error: Error | null }> => {
+    async <T = unknown>(fnName: string, body?: Record<string, unknown>): Promise<{ data: T | null; error: Error | null }> => {
       if (!isAdminAuthenticated || !adminTokenRef.current) {
         return { data: null, error: new Error('Admin session required. Re-enter PIN.') };
       }
@@ -368,7 +370,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
         if (error) return { data: null, error };
         return { data: (data as T) ?? null, error: null };
-      } catch (e: any) {
+      } catch (e: unknown) {
         return { data: null, error: e instanceof Error ? e : new Error(String(e)) };
       }
     },

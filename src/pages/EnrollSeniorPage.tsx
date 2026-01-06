@@ -112,7 +112,7 @@ const EnrollSeniorPage: React.FC = () => {
 
       // If test patient, use test_users function
       if (isTestPatient) {
-        const { data, error } = await invokeAdminFunction('test-users/create', {
+        const { data, error } = await invokeAdminFunction<{ user_id: string }>('test-users/create', {
           phone,
           password: tempPassword,
           full_name: `${firstName} ${lastName}`,
@@ -134,7 +134,7 @@ const EnrollSeniorPage: React.FC = () => {
         }
       } else {
         // Regular enrollment using admin context (includes X-Admin-Token header automatically)
-        const { data, error } = await invokeAdminFunction('enrollClient', enrollmentBody);
+        const { data, error } = await invokeAdminFunction<{ user_id: string }>('enrollClient', enrollmentBody);
 
         // Check if user_id returned (success) even if error present
         if (data?.user_id) {

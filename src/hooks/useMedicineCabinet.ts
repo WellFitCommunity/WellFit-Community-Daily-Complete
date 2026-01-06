@@ -10,6 +10,20 @@ import medicationAPI, { Medication, MedicationReminder } from '../api/medication
 import { LabelExtractionResult, MedicationInfo } from '../services/medicationLabelReader';
 import { PsychMedAlert } from '../services/psychMedClassifier';
 
+// Type definitions for adherence and dose tracking
+interface DoseRecord {
+  taken_at?: string;
+  status?: 'taken' | 'missed' | 'skipped';
+  notes?: string;
+}
+
+// Extended PsychMedAlert with optional properties used by components
+interface ExtendedPsychMedAlert extends PsychMedAlert {
+  id?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  acknowledged?: boolean;
+}
+
 interface UseMedicineCabinetReturn {
   // State
   medications: Medication[];
@@ -18,7 +32,7 @@ interface UseMedicineCabinetReturn {
   processing: boolean;
   uploadProgress: number;
   psychMedAlert: PsychMedAlert | null;
-  psychAlerts: any[];
+  psychAlerts: ExtendedPsychMedAlert[];
 
   // CRUD operations
   loadMedications: () => Promise<void>;
@@ -37,11 +51,11 @@ interface UseMedicineCabinetReturn {
   updateReminder: (id: string, updates: Partial<MedicationReminder>) => Promise<boolean>;
   deleteReminder: (id: string) => Promise<boolean>;
 
-  // Adherence
-  recordDose: (medicationId: string, data: any) => Promise<boolean>;
-  getAdherence: (medicationId?: string, days?: number) => Promise<any>;
+  // Adherence - use generic types to avoid conflicts with component-local types
+  recordDose: (medicationId: string, data: DoseRecord) => Promise<boolean>;
+  getAdherence: (medicationId?: string, days?: number) => Promise<unknown[] | null>;
   getNeedingRefill: (daysThreshold?: number) => Promise<Medication[]>;
-  getUpcomingDoses: (hoursAhead?: number) => Promise<any[]>;
+  getUpcomingDoses: (hoursAhead?: number) => Promise<unknown[]>;
 
   // Psychiatric medication alerts
   checkPsychMeds: () => Promise<void>;
@@ -55,7 +69,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
   const [processing, setProcessing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [psychMedAlert, setPsychMedAlert] = useState<PsychMedAlert | null>(null);
-  const [psychAlerts, setPsychAlerts] = useState<any[]>([]);
+  const [psychAlerts, setPsychAlerts] = useState<ExtendedPsychMedAlert[]>([]);
 
   // Load medications
   const loadMedications = useCallback(async () => {
@@ -246,7 +260,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
   }, []);
 
   // Adherence tracking
-  const recordDose = useCallback(async (medicationId: string, data: any): Promise<boolean> => {
+  const recordDose = useCallback(async (medicationId: string, data: DoseRecord): Promise<boolean> => {
     const response = await medicationAPI.recordDoseTaken({
       medication_id: medicationId,
       user_id: userId,
@@ -255,9 +269,9 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
     return response.success;
   }, [userId]);
 
-  const getAdherence = useCallback(async (medicationId?: string, days: number = 30): Promise<any> => {
+  const getAdherence = useCallback(async (medicationId?: string, days: number = 30): Promise<unknown[] | null> => {
     const response = await medicationAPI.getMedicationAdherence(userId, medicationId, days);
-    return response.data;
+    return response.data as unknown[] | null;
   }, [userId]);
 
   const getNeedingRefill = useCallback(async (daysThreshold: number = 7): Promise<Medication[]> => {
@@ -265,9 +279,9 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
     return response.data || [];
   }, [userId]);
 
-  const getUpcomingDoses = useCallback(async (hoursAhead: number = 24): Promise<any[]> => {
+  const getUpcomingDoses = useCallback(async (hoursAhead: number = 24): Promise<unknown[]> => {
     const response = await medicationAPI.getUpcomingReminders(userId, hoursAhead);
-    return response.data || [];
+    return (response.data || []) as unknown[];
   }, [userId]);
 
   // Check for multiple psych meds

@@ -106,9 +106,9 @@ export function MedicineCabinet() {
         getNeedingRefill(7),
         getUpcomingDoses(24)
       ]);
-      setAdherenceData(adherence || []);
+      setAdherenceData((adherence || []) as AdherenceDataItem[]);
       setNeedingRefill(refills);
-      setUpcomingDoses(upcoming);
+      setUpcomingDoses(upcoming as UpcomingDose[]);
     }
   }, [userId, getAdherence, getNeedingRefill, getUpcomingDoses]);
 
@@ -304,7 +304,9 @@ export function MedicineCabinet() {
                   {!psychAlerts[0].acknowledged && (
                     <button
                       onClick={async () => {
-                        const success = await acknowledgePsychAlert(psychAlerts[0].id);
+                        const alertId = psychAlerts[0].id;
+                        if (!alertId) return;
+                        const success = await acknowledgePsychAlert(alertId);
                         if (success) {
                           toast.success('Alert acknowledged');
                         }

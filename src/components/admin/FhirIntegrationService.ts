@@ -180,7 +180,178 @@ interface FHIRBundle {
   timestamp: string;
   entry: Array<{
     fullUrl: string;
-    resource: FHIRPatient | FHIRObservation | FHIRMedicationStatement;
+    resource: FHIRPatient | FHIRObservation | FHIRMedicationStatement | FHIRImmunization | FHIRCarePlan;
+  }>;
+}
+
+// Database row types for FHIR resource mapping
+interface ImmunizationDbRow {
+  id: string;
+  patient_id: string;
+  status: string;
+  vaccine_code: string;
+  vaccine_display?: string;
+  vaccine_name?: string;
+  occurrence_datetime: string;
+  created_at: string;
+  primary_source?: boolean;
+  lot_number?: string;
+  expiration_date?: string;
+  site_display?: string;
+  route_display?: string;
+  dose_quantity_value?: number;
+  dose_quantity_unit?: string;
+  performer_actor_display?: string;
+  note?: string;
+  protocol_dose_number_positive_int?: number;
+  protocol_series_doses_positive_int?: number;
+  reaction_date?: string;
+  reaction_reported?: boolean;
+}
+
+interface CarePlanActivity {
+  kind?: string;
+  status?: string;
+  detail?: string;
+  description?: string;
+  scheduled_start?: string;
+  scheduled_end?: string;
+}
+
+interface CarePlanDbRow {
+  id: string;
+  patient_id: string;
+  status: string;
+  intent: string;
+  category?: string[];
+  title?: string;
+  description?: string;
+  period_start?: string;
+  period_end?: string;
+  created?: string;
+  created_at?: string;
+  author_display?: string;
+  care_team_reference?: string;
+  care_team_display?: string;
+  addresses_condition_references?: string[];
+  addresses_condition_displays?: string[];
+  goal_displays?: string[];
+  activities?: CarePlanActivity[];
+  note?: string;
+}
+
+// FHIR Immunization resource type
+interface FHIRImmunization {
+  resourceType: 'Immunization';
+  id: string;
+  status: string;
+  vaccineCode: {
+    coding: Array<{
+      system: string;
+      code: string;
+      display: string;
+    }>;
+  };
+  patient: {
+    reference: string;
+  };
+  occurrenceDateTime: string;
+  recorded: string;
+  primarySource: boolean;
+  lotNumber?: string;
+  expirationDate?: string;
+  site?: {
+    coding: Array<{
+      system: string;
+      code: string;
+      display: string;
+    }>;
+  };
+  route?: {
+    coding: Array<{
+      system: string;
+      code: string;
+      display: string;
+    }>;
+  };
+  doseQuantity?: {
+    value: number;
+    unit: string;
+    system: string;
+    code: string;
+  };
+  performer?: Array<{
+    actor: {
+      display: string;
+    };
+  }>;
+  note?: Array<{
+    text: string;
+  }>;
+  protocolApplied?: Array<{
+    doseNumberPositiveInt: number;
+    seriesDosesPositiveInt?: number;
+  }>;
+  reaction?: Array<{
+    date: string;
+    reported?: boolean;
+  }>;
+}
+
+// FHIR CarePlan resource type
+interface FHIRCarePlan {
+  resourceType: 'CarePlan';
+  id: string;
+  status: string;
+  intent: string;
+  category?: Array<{
+    coding: Array<{
+      system: string;
+      code: string;
+      display: string;
+    }>;
+  }>;
+  title?: string;
+  description?: string;
+  subject: {
+    reference: string;
+  };
+  period?: {
+    start?: string;
+    end?: string;
+  };
+  created?: string;
+  author?: {
+    display: string;
+  };
+  careTeam?: Array<{
+    reference: string;
+    display?: string;
+  }>;
+  addresses?: Array<{
+    reference: string;
+    display?: string;
+  }>;
+  goal?: Array<{
+    display: string;
+  }>;
+  activity?: Array<{
+    detail: {
+      kind: string;
+      status?: string;
+      description?: string;
+      scheduledTiming?: {
+        repeat: {
+          boundsPeriod: {
+            start?: string;
+            end?: string;
+          };
+        };
+      };
+    };
+  }>;
+  note?: Array<{
+    text: string;
   }>;
 }
 
@@ -699,7 +870,19 @@ export class FHIRIntegrationService {
   }
 
   // ==== POPULATION HEALTH ANALYTICS ====
-  async getPopulationHealthMetrics(days = 30): Promise<any> {
+  async getPopulationHealthMetrics(days = 30): Promise<{
+    totalPatients: number;
+    activePatients: number;
+    engagementRate: number;
+    averageVitals: {
+      systolic: number | null;
+      diastolic: number | null;
+      heartRate: number | null;
+      glucose: number | null;
+    };
+    period: string;
+    generatedAt: string;
+  }> {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
@@ -760,7 +943,15 @@ export class FHIRIntegrationService {
 
 
   // ==== UTILITY FUNCTIONS ====
-  private parseAddress(address: string): any[] {
+  private parseAddress(address: string): Array<{
+    use: string;
+    type: string;
+    line: string[];
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  }> {
     // Simple address parsing - you might want to enhance this
     const parts = address.split(',').map(p => p.trim());
     return [
@@ -997,7 +1188,7 @@ export class FHIRIntegrationService {
     return routeMap[route?.toLowerCase()] || 'IM';
   }
 
-  private mapImmunizationToFHIR(imm: any): any {
+  private mapImmunizationToFHIR(imm: ImmunizationDbRow): FHIRImmunization {
     return {
       resourceType: 'Immunization',
       id: imm.id,
@@ -1006,7 +1197,7 @@ export class FHIRIntegrationService {
         coding: [{
           system: 'http://hl7.org/fhir/sid/cvx',
           code: imm.vaccine_code,
-          display: imm.vaccine_display || imm.vaccine_name
+          display: imm.vaccine_display || imm.vaccine_name || 'Unknown vaccine'
         }]
       },
       patient: {
@@ -1057,7 +1248,7 @@ export class FHIRIntegrationService {
   }
 
   // ==== CAREPLAN RESOURCE MAPPING ====
-  private mapCarePlanToFHIR(plan: any): any {
+  private mapCarePlanToFHIR(plan: CarePlanDbRow): FHIRCarePlan {
     return {
       resourceType: 'CarePlan',
       id: plan.id,
@@ -1094,7 +1285,7 @@ export class FHIRIntegrationService {
       goal: plan.goal_displays ? plan.goal_displays.map((g: string) => ({
         display: g
       })) : undefined,
-      activity: plan.activities ? (Array.isArray(plan.activities) ? plan.activities : []).map((a: any) => ({
+      activity: plan.activities ? (Array.isArray(plan.activities) ? plan.activities : []).map((a: CarePlanActivity) => ({
         detail: {
           kind: a.kind || 'Task',
           status: a.status,
@@ -1222,7 +1413,7 @@ export class FHIRIntegrationService {
   }
 
   // SOC 2: Audit logging helper
-  private async logAuditEvent(eventType: string, metadata: any): Promise<void> {
+  private async logAuditEvent(eventType: string, metadata: Record<string, unknown>): Promise<void> {
     try {
       await this.supabase.from('audit_logs').insert({
         event_type: eventType,
@@ -1238,7 +1429,7 @@ export class FHIRIntegrationService {
   }
 
   // SOC 2: Security event logging helper
-  private async logSecurityEvent(eventType: string, metadata: any): Promise<void> {
+  private async logSecurityEvent(eventType: string, metadata: Record<string, unknown>): Promise<void> {
     try {
       await this.supabase.from('security_events').insert({
         event_type: eventType,

@@ -88,7 +88,7 @@ const NurseEnrollPatientSection: React.FC = () => {
 
     try {
       // Use invokeAdminFunction to properly authenticate with X-Admin-Token header
-      const { data, error } = await invokeAdminFunction('enrollClient', {
+      const { data, error } = await invokeAdminFunction<{ user_id: string; success: boolean }>('enrollClient', {
         phone,
         password: password, // ← Use the password from the generator
         first_name: firstName,
