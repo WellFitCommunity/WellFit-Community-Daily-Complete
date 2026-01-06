@@ -83,7 +83,34 @@ export const LawEnforcementService = {
 
       if (error) throw error;
 
-      const result = data as any;
+      // Type assertion for RPC result matching WelfareCheckInfo database columns
+      const result = data as unknown as {
+        patient_id: string;
+        patient_name: string;
+        patient_age: number;
+        patient_phone: string;
+        patient_address: string;
+        building_location?: string;
+        floor_number?: string;
+        elevator_required?: boolean;
+        parking_instructions?: string;
+        mobility_status?: string;
+        medical_equipment?: string[];
+        communication_needs?: string;
+        access_instructions?: string;
+        pets?: string;
+        response_priority?: string;
+        special_instructions?: string;
+        emergency_contacts?: Array<{ name: string; phone: string; relationship: string; email?: string; is_primary?: boolean }>;
+        neighbor_name?: string;
+        neighbor_address?: string;
+        neighbor_phone?: string;
+        fall_risk?: boolean;
+        cognitive_impairment?: boolean;
+        oxygen_dependent?: boolean;
+        last_check_in_time?: string;
+        hours_since_check_in?: number;
+      } | null;
 
       return result ? {
         patientId: result.patient_id,
@@ -93,20 +120,30 @@ export const LawEnforcementService = {
         patientAddress: result.patient_address,
         buildingLocation: result.building_location,
         floorNumber: result.floor_number,
-        elevatorRequired: result.elevator_required || false,
+        elevatorRequired: result.elevator_required ?? false,
         parkingInstructions: result.parking_instructions,
-        mobilityStatus: result.mobility_status,
+        mobilityStatus: result.mobility_status || 'Unknown',
         medicalEquipment: result.medical_equipment || [],
-        communicationNeeds: result.communication_needs,
-        accessInstructions: result.access_instructions,
+        communicationNeeds: result.communication_needs || 'None specified',
+        accessInstructions: result.access_instructions || 'No special instructions',
         pets: result.pets,
-        responsePriority: result.response_priority as ResponsePriority,
+        responsePriority: (result.response_priority as ResponsePriority) || 'standard',
         specialInstructions: result.special_instructions,
-        emergencyContacts: result.emergency_contacts || [],
-        neighborInfo: result.neighbor_info,
-        fallRisk: result.fall_risk,
-        cognitiveImpairment: result.cognitive_impairment,
-        oxygenDependent: result.oxygen_dependent,
+        emergencyContacts: (result.emergency_contacts || []).map(c => ({
+          name: c.name,
+          relationship: c.relationship,
+          phone: c.phone,
+          email: c.email,
+          isPrimary: c.is_primary ?? false
+        })),
+        neighborInfo: result.neighbor_name ? {
+          name: result.neighbor_name,
+          address: result.neighbor_address || '',
+          phone: result.neighbor_phone || ''
+        } : undefined,
+        fallRisk: result.fall_risk ?? false,
+        cognitiveImpairment: result.cognitive_impairment ?? false,
+        oxygenDependent: result.oxygen_dependent ?? false,
         lastCheckInTime: result.last_check_in_time,
         hoursSinceCheckIn: result.hours_since_check_in
       } : null;
@@ -127,17 +164,31 @@ export const LawEnforcementService = {
 
       if (error) throw error;
 
-      return (data || []).map((row: any) => ({
+      // Type for RPC result rows
+      type AlertRow = {
+        patient_id: string;
+        patient_name: string;
+        patient_address: string;
+        patient_phone: string;
+        hours_since_check_in: number;
+        response_priority: string;
+        mobility_status?: string;
+        special_needs?: string;
+        emergency_contact_name?: string;
+        emergency_contact_phone?: string;
+        urgency_score: number;
+      };
+      return ((data || []) as AlertRow[]).map((row) => ({
         patientId: row.patient_id,
         patientName: row.patient_name,
         patientAddress: row.patient_address,
         patientPhone: row.patient_phone,
         hoursSinceCheckIn: row.hours_since_check_in,
-        responsePriority: row.response_priority as ResponsePriority,
-        mobilityStatus: row.mobility_status,
-        specialNeeds: row.special_needs,
-        emergencyContactName: row.emergency_contact_name,
-        emergencyContactPhone: row.emergency_contact_phone,
+        responsePriority: (row.response_priority as ResponsePriority) || 'standard',
+        mobilityStatus: row.mobility_status || 'Unknown',
+        specialNeeds: row.special_needs || 'None',
+        emergencyContactName: row.emergency_contact_name || 'Not provided',
+        emergencyContactPhone: row.emergency_contact_phone || 'Not provided',
         urgencyScore: row.urgency_score
       }));
     } catch {
@@ -165,13 +216,21 @@ export const LawEnforcementService = {
 
       if (error) throw error;
 
-      return (data || []).map((patient: any) => {
+      // Type for Supabase join result
+      type PatientRow = {
+        id: string;
+        full_name: string;
+        address: string;
+        check_ins?: Array<{ created_at: string }>;
+        law_enforcement_response_info?: Array<{ response_priority?: string; escalation_delay_hours?: number }>;
+      };
+      return ((data || []) as PatientRow[]).map((patient) => {
         const lastCheckIn = patient.check_ins?.[0]?.created_at;
         const hoursSinceCheckIn = lastCheckIn
           ? (Date.now() - new Date(lastCheckIn).getTime()) / (1000 * 60 * 60)
           : null;
 
-        const priority: ResponsePriority = patient.law_enforcement_response_info?.[0]?.response_priority || 'standard';
+        const priority: ResponsePriority = (patient.law_enforcement_response_info?.[0]?.response_priority as ResponsePriority) || 'standard';
         const escalationDelay = patient.law_enforcement_response_info?.[0]?.escalation_delay_hours || 6;
 
         let status: SeniorCheckInStatus['status'] = 'ok';
@@ -261,8 +320,9 @@ export const LawEnforcementService = {
 
       if (error) throw error;
 
-      const emergencyContacts = patient.emergency_contacts || [];
-      const primaryContact = emergencyContacts.find((c: any) => c.isPrimary) || emergencyContacts[0];
+      type EmergencyContact = { name?: string; phone?: string; isPrimary?: boolean };
+      const emergencyContacts = (patient.emergency_contacts || []) as EmergencyContact[];
+      const primaryContact = emergencyContacts.find((c) => c.isPrimary) || emergencyContacts[0];
 
       if (primaryContact?.phone) {
         await supabase.functions.invoke('notify-family-missed-check-in', {
@@ -289,90 +349,158 @@ export const LawEnforcementService = {
 
   /**
    * Transform database record to TypeScript interface
+   * Uses type assertion at database boundary per CLAUDE.md guidelines
    */
-  transformFromDb(data: any): EmergencyResponseInfo {
+  transformFromDb(data: Record<string, unknown>): EmergencyResponseInfo {
+    // Database row transformation - cast at boundary
+    const row = data as unknown as {
+      id: string;
+      tenant_id: string;
+      patient_id: string;
+      bed_bound?: boolean;
+      wheelchair_bound?: boolean;
+      walker_required?: boolean;
+      cane_required?: boolean;
+      mobility_notes?: string;
+      oxygen_dependent?: boolean;
+      oxygen_tank_location?: string;
+      dialysis_required?: boolean;
+      dialysis_schedule?: string;
+      medical_equipment?: string[];
+      hearing_impaired?: boolean;
+      hearing_impaired_notes?: string;
+      vision_impaired?: boolean;
+      vision_impaired_notes?: string;
+      cognitive_impairment?: boolean;
+      cognitive_impairment_type?: string;
+      cognitive_impairment_notes?: string;
+      non_verbal?: boolean;
+      language_barrier?: string;
+      floor_number?: string;
+      building_quadrant?: string;
+      elevator_required?: boolean;
+      elevator_access_code?: string;
+      building_type?: string;
+      stairs_to_unit?: number;
+      door_code?: string;
+      key_location?: string;
+      access_instructions?: string;
+      door_opens_inward?: boolean;
+      security_system?: boolean;
+      security_system_code?: string;
+      pets_in_home?: string;
+      parking_instructions?: string;
+      gated_community_code?: string;
+      lobby_access_instructions?: string;
+      best_entrance?: string;
+      intercom_instructions?: string;
+      fall_risk_high?: boolean;
+      fall_history?: string;
+      home_hazards?: string;
+      neighbor_name?: string;
+      neighbor_address?: string;
+      neighbor_phone?: string;
+      building_manager_name?: string;
+      building_manager_phone?: string;
+      response_priority?: string;
+      escalation_delay_hours?: number;
+      special_instructions?: string;
+      critical_medications?: string[];
+      medication_location?: string;
+      medical_conditions_summary?: string;
+      consent_obtained?: boolean;
+      consent_date?: string;
+      consent_given_by?: string;
+      hipaa_authorization?: boolean;
+      created_at: string;
+      updated_at: string;
+      created_by?: string;
+      updated_by?: string;
+      last_verified_date?: string;
+    };
+
     return {
-      id: data.id,
-      tenantId: data.tenant_id,
-      patientId: data.patient_id,
+      id: row.id,
+      tenantId: row.tenant_id,
+      patientId: row.patient_id,
 
-      bedBound: data.bed_bound,
-      wheelchairBound: data.wheelchair_bound,
-      walkerRequired: data.walker_required,
-      caneRequired: data.cane_required,
-      mobilityNotes: data.mobility_notes,
+      bedBound: row.bed_bound ?? false,
+      wheelchairBound: row.wheelchair_bound ?? false,
+      walkerRequired: row.walker_required ?? false,
+      caneRequired: row.cane_required ?? false,
+      mobilityNotes: row.mobility_notes,
 
-      oxygenDependent: data.oxygen_dependent,
-      oxygenTankLocation: data.oxygen_tank_location,
-      dialysisRequired: data.dialysis_required,
-      dialysisSchedule: data.dialysis_schedule,
-      medicalEquipment: data.medical_equipment || [],
+      oxygenDependent: row.oxygen_dependent ?? false,
+      oxygenTankLocation: row.oxygen_tank_location,
+      dialysisRequired: row.dialysis_required ?? false,
+      dialysisSchedule: row.dialysis_schedule,
+      medicalEquipment: row.medical_equipment || [],
 
-      hearingImpaired: data.hearing_impaired,
-      hearingImpairedNotes: data.hearing_impaired_notes,
-      visionImpaired: data.vision_impaired,
-      visionImpairedNotes: data.vision_impaired_notes,
-      cognitiveImpairment: data.cognitive_impairment,
-      cognitiveImpairmentType: data.cognitive_impairment_type,
-      cognitiveImpairmentNotes: data.cognitive_impairment_notes,
-      nonVerbal: data.non_verbal,
-      languageBarrier: data.language_barrier,
+      hearingImpaired: row.hearing_impaired ?? false,
+      hearingImpairedNotes: row.hearing_impaired_notes,
+      visionImpaired: row.vision_impaired ?? false,
+      visionImpairedNotes: row.vision_impaired_notes,
+      cognitiveImpairment: row.cognitive_impairment ?? false,
+      cognitiveImpairmentType: row.cognitive_impairment_type,
+      cognitiveImpairmentNotes: row.cognitive_impairment_notes,
+      nonVerbal: row.non_verbal ?? false,
+      languageBarrier: row.language_barrier,
 
-      floorNumber: data.floor_number,
-      buildingQuadrant: data.building_quadrant,
-      elevatorRequired: data.elevator_required,
-      elevatorAccessCode: data.elevator_access_code,
-      buildingType: data.building_type,
-      stairsToUnit: data.stairs_to_unit,
+      floorNumber: row.floor_number,
+      buildingQuadrant: row.building_quadrant,
+      elevatorRequired: row.elevator_required ?? false,
+      elevatorAccessCode: row.elevator_access_code,
+      buildingType: row.building_type,
+      stairsToUnit: row.stairs_to_unit,
 
-      doorCode: data.door_code,
-      keyLocation: data.key_location,
-      accessInstructions: data.access_instructions,
-      doorOpensInward: data.door_opens_inward,
-      securitySystem: data.security_system,
-      securitySystemCode: data.security_system_code,
-      petsInHome: data.pets_in_home,
-      parkingInstructions: data.parking_instructions,
-      gatedCommunityCode: data.gated_community_code,
-      lobbyAccessInstructions: data.lobby_access_instructions,
-      bestEntrance: data.best_entrance,
-      intercomInstructions: data.intercom_instructions,
+      doorCode: row.door_code,
+      keyLocation: row.key_location,
+      accessInstructions: row.access_instructions,
+      doorOpensInward: row.door_opens_inward ?? false,
+      securitySystem: row.security_system ?? false,
+      securitySystemCode: row.security_system_code,
+      petsInHome: row.pets_in_home,
+      parkingInstructions: row.parking_instructions,
+      gatedCommunityCode: row.gated_community_code,
+      lobbyAccessInstructions: row.lobby_access_instructions,
+      bestEntrance: row.best_entrance,
+      intercomInstructions: row.intercom_instructions,
 
-      fallRiskHigh: data.fall_risk_high,
-      fallHistory: data.fall_history,
-      homeHazards: data.home_hazards,
+      fallRiskHigh: row.fall_risk_high ?? false,
+      fallHistory: row.fall_history,
+      homeHazards: row.home_hazards,
 
-      neighborName: data.neighbor_name,
-      neighborAddress: data.neighbor_address,
-      neighborPhone: data.neighbor_phone,
-      buildingManagerName: data.building_manager_name,
-      buildingManagerPhone: data.building_manager_phone,
+      neighborName: row.neighbor_name,
+      neighborAddress: row.neighbor_address,
+      neighborPhone: row.neighbor_phone,
+      buildingManagerName: row.building_manager_name,
+      buildingManagerPhone: row.building_manager_phone,
 
-      responsePriority: data.response_priority as ResponsePriority,
-      escalationDelayHours: data.escalation_delay_hours,
-      specialInstructions: data.special_instructions,
+      responsePriority: (row.response_priority as ResponsePriority) || 'standard',
+      escalationDelayHours: row.escalation_delay_hours ?? 6,
+      specialInstructions: row.special_instructions,
 
-      criticalMedications: data.critical_medications || [],
-      medicationLocation: data.medication_location,
-      medicalConditionsSummary: data.medical_conditions_summary,
+      criticalMedications: row.critical_medications || [],
+      medicationLocation: row.medication_location,
+      medicalConditionsSummary: row.medical_conditions_summary,
 
-      consentObtained: data.consent_obtained,
-      consentDate: data.consent_date,
-      consentGivenBy: data.consent_given_by,
-      hipaaAuthorization: data.hipaa_authorization,
+      consentObtained: row.consent_obtained ?? false,
+      consentDate: row.consent_date,
+      consentGivenBy: row.consent_given_by,
+      hipaaAuthorization: row.hipaa_authorization ?? false,
 
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      createdBy: data.created_by,
-      updatedBy: data.updated_by,
-      lastVerifiedDate: data.last_verified_date
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      createdBy: row.created_by,
+      updatedBy: row.updated_by,
+      lastVerifiedDate: row.last_verified_date
     };
   },
 
   /**
    * Transform TypeScript interface to database record
    */
-  transformToDb(data: Partial<EmergencyResponseFormData>): any {
+  transformToDb(data: Partial<EmergencyResponseFormData>): Record<string, unknown> {
     return {
       bed_bound: data.bedBound,
       wheelchair_bound: data.wheelchairBound,
