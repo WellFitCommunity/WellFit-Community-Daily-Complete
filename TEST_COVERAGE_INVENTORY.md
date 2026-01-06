@@ -1,6 +1,6 @@
 # Test Coverage Inventory
 
-> **Generated:** 2026-01-05
+> **Generated:** 2026-01-06
 > **Purpose:** Comprehensive list of all code requiring tests for systematic coverage improvement
 
 ---
@@ -9,8 +9,8 @@
 
 | Metric | Count | With Tests | Coverage |
 |--------|-------|------------|----------|
-| Component Directories | 57 | 20 | 35% |
-| Service Files | 118 | 21 | 17.8% |
+| Component Directories | 57 | 21 | 36.8% |
+| Service Files | 119 | 22 | 18.5% |
 | Hook Files | 32 | 6 | 18.8% |
 | Edge Functions | 123 | 11 | 8.9% |
 
@@ -47,7 +47,6 @@
 | **search/** | 1 | LOW | Search |
 | **security/** | 2 | HIGH | Security features |
 | **shared/** | 3 | LOW | Shared utilities |
-| **smart/** | 11 | HIGH | Smart scribe |
 | **soc/** | 4 | HIGH | SOC2 compliance |
 | **social-worker/** | 1 | LOW | Social worker portal |
 | **specialist/** | 2 | LOW | Specialist portal |
@@ -66,6 +65,7 @@
 | **patient/** | 19 | 1 | 5.3% | Patient features |
 | **patient-avatar/** | 9 | 1 | 11.1% | Avatar system |
 | **superAdmin/** | 16 | 2 | 12.5% | Super admin |
+| **smart/** | 11 | 2 | 18.2% | SmartScribe/Compass Riley |
 | **ai/** | 5 | 0 | 0% | Has __tests__ folder |
 | **guardian/** | 2 | 0 | 0% | Has __tests__ folder |
 
