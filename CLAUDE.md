@@ -168,6 +168,16 @@ const result = processData(input as unknown as ExpectedType); // NO
 
 **Current lint warning count: 799** (down from 1,605) - mostly `any` types that must be eliminated.
 
+### Lint Warning Policy - ZERO NEW WARNINGS
+
+**Do NOT introduce new lint warnings unless absolutely necessary for a future build or development course.**
+
+- Every PR/commit must not increase the lint warning count
+- If you must add a warning temporarily, document WHY and create a task to fix it
+- Before committing: run `npm run lint` and verify warning count did not increase
+- New features must be lint-clean from the start
+- This is a hard gate - work is not complete if it introduces new warnings
+
 ---
 
 ## Test Standards - MANDATORY
