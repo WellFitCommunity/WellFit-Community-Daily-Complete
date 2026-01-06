@@ -70,6 +70,7 @@
 ### 1. User-Facing Features (22 features)
 For **Patients & Seniors**
 - Daily check-ins, games, meal tracking
+
 - Telehealth appointments
 - Health dashboards and insights
 - Emergency alerts and caregiver access

@@ -5,7 +5,7 @@
 // Redesigned with Envision Atlus design system for clinical clarity
 // Refactored: Split into memoized child components for performance (2025-12-13)
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useSmartScribe } from './hooks/useSmartScribe';
 import { VoiceLearningService } from '../../services/voiceLearningService';
 import { supabase } from '../../lib/supabaseClient';
@@ -20,6 +20,8 @@ import { LiveTranscript } from './LiveTranscript';
 import { BillingCodesList } from './BillingCodesList';
 import { SOAPNote } from './SOAPNote';
 import { VoiceCorrectionModal } from './VoiceCorrectionModal';
+import { ScribeModeSwitcher } from './ScribeModeSwitcher';
+import { SessionFeedback } from './SessionFeedback';
 
 /**
  * Scribe Mode:
@@ -37,8 +39,11 @@ interface RealTimeSmartScribeProps {
 }
 
 const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
-  const { mode = 'compass-riley' } = props;
-  const isSmartScribeMode = mode === 'smartscribe';
+  const { mode: initialMode = 'compass-riley' } = props;
+
+  // Local mode state - allows toggling between modes
+  const [currentMode, setCurrentMode] = useState<ScribeMode>(initialMode);
+  const isSmartScribeMode = currentMode === 'smartscribe';
 
   // Check if demo mode is enabled globally (from DemoPage or elsewhere)
   const { isDemo: globalDemoMode, enableDemo, disableDemo } = useDemoMode();
@@ -62,6 +67,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     correctionsAppliedCount,
     assistanceSettings,
     isDemoMode,
+    showFeedbackPrompt,
     setShowCorrectionModal,
     setCorrectionHeard,
     setCorrectionCorrect,
@@ -70,7 +76,9 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     startRecording,
     stopRecording,
     handleAssistanceLevelChange,
-  } = useSmartScribe({ ...props, forceDemoMode: globalDemoMode || undefined });
+    handleFeedbackSubmit,
+    handleFeedbackSkip,
+  } = useSmartScribe({ ...props, forceDemoMode: globalDemoMode || undefined, scribeMode: currentMode });
 
   // Handler for saving voice corrections
   const handleSaveCorrection = useCallback(async () => {
@@ -115,6 +123,13 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
 
   return (
     <div className="space-y-4">
+      {/* Mode Switcher - Toggle between SmartScribe and Compass Riley */}
+      <ScribeModeSwitcher
+        mode={currentMode}
+        onModeChange={setCurrentMode}
+        disabled={isRecording}
+      />
+
       {/* Header Section */}
       <ScribeHeader
         isDemoMode={isDemoMode}
@@ -124,7 +139,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
         suggestedCodesCount={isSmartScribeMode ? 0 : suggestedCodes.length}
         onEnableDemo={handleEnableDemo}
         onDisableDemo={disableDemo}
-        mode={mode}
+        mode={currentMode}
       />
 
       {/* Assistance Level Control */}
@@ -218,6 +233,13 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
           </EACardContent>
         </EACard>
       )}
+
+      {/* Session Feedback - Thumbs up/down after session */}
+      <SessionFeedback
+        isVisible={showFeedbackPrompt && !isRecording}
+        onSubmit={handleFeedbackSubmit}
+        onSkip={handleFeedbackSkip}
+      />
 
       {/* Privacy Notice */}
       <div className="text-center py-2">

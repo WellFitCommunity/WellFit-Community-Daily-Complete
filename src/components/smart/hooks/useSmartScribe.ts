@@ -10,6 +10,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { auditLogger } from '../../../services/auditLogger';
 import { VoiceLearningService, ProviderVoiceProfile } from '../../../services/voiceLearningService';
+import { submitScribeFeedback, SessionFeedbackData } from '../../../services/scribeFeedbackService';
+
+// Re-export feedback types for consumers
+export type { SessionFeedbackData } from '../../../services/scribeFeedbackService';
 
 // Check if demo mode is enabled
 const DEMO_MODE = import.meta.env.VITE_COMPASS_DEMO === 'true';
@@ -151,6 +155,8 @@ export interface UseSmartScribeProps {
   onSessionComplete?: (sessionId: string) => void;
   /** Force demo mode regardless of env var. When true, simulates a patient visit. */
   forceDemoMode?: boolean;
+  /** Scribe mode - 'smartscribe' for nurses, 'compass-riley' for physicians */
+  scribeMode?: 'smartscribe' | 'compass-riley';
 }
 
 // ============================================================================
@@ -158,7 +164,7 @@ export interface UseSmartScribeProps {
 // ============================================================================
 
 export function useSmartScribe(props: UseSmartScribeProps) {
-  const { selectedPatientId, onSessionComplete, forceDemoMode } = props;
+  const { selectedPatientId, onSessionComplete, forceDemoMode, scribeMode = 'compass-riley' } = props;
 
   // Core state
   const [transcript, setTranscript] = useState('');
@@ -188,6 +194,12 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const [correctionCorrect, setCorrectionCorrect] = useState('');
   const [selectedTextForCorrection, setSelectedTextForCorrection] = useState('');
   const [correctionsAppliedCount, setCorrectionsAppliedCount] = useState(0);
+
+  // Session feedback state
+  const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+  const [lastSessionDuration, setLastSessionDuration] = useState<number>(0);
 
   // Refs for audio resources (will be set by audioProcessor)
   const wsRef = useRef<WebSocket | null>(null);
@@ -482,9 +494,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
    */
   const stopDemoRecording = useCallback(() => {
     cleanupDemo();
+    const duration = recordingStartTime ? Math.floor((Date.now() - recordingStartTime) / 1000) : 0;
     setIsRecording(false);
     setRecordingStartTime(null);
     setStatus('Demo Mode - Session ended');
+    setLastSessionDuration(duration);
 
     // Ensure all demo data is shown when stopping early
     if (suggestedCodes.length < DEMO_CODES.length) {
@@ -496,7 +510,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     if (scribeSuggestions.length === 0) {
       setScribeSuggestions(DEMO_SUGGESTIONS);
     }
-  }, [cleanupDemo, suggestedCodes.length, soapNote, scribeSuggestions.length]);
+
+    // Show feedback prompt after demo session
+    setShowFeedbackPrompt(true);
+    setFeedbackSubmitted(false);
+  }, [cleanupDemo, suggestedCodes.length, soapNote, scribeSuggestions.length, recordingStartTime]);
 
   // Cleanup demo on unmount
   useEffect(() => {
@@ -709,6 +727,8 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           duration: durationSeconds,
         });
         setStatus(`Recording saved! Duration: ${Math.floor(durationSeconds / 60)} min`);
+        setLastSessionId(session.id);
+        setLastSessionDuration(durationSeconds);
 
         if (onSessionComplete && session?.id) {
           onSessionComplete(session.id);
@@ -718,6 +738,10 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       setIsRecording(false);
       setRecordingStartTime(null);
       setElapsedSeconds(0);
+
+      // Show feedback prompt after recording stops
+      setShowFeedbackPrompt(true);
+      setFeedbackSubmitted(false);
     } catch (error) {
       auditLogger.error(
         'SCRIBE_STOP_RECORDING_ERROR',
@@ -804,6 +828,51 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     }
   };
 
+  /**
+   * Handle session feedback submission
+   */
+  const handleFeedbackSubmit = useCallback(async (feedback: SessionFeedbackData) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await submitScribeFeedback({
+        sessionId: lastSessionId || undefined,
+        providerId: user.id,
+        rating: feedback.rating as 'positive' | 'negative',
+        issues: feedback.issues,
+        comment: feedback.comment,
+        scribeMode,
+        sessionDurationSeconds: lastSessionDuration,
+      });
+
+      setFeedbackSubmitted(true);
+      setShowFeedbackPrompt(false);
+
+      auditLogger.info('SCRIBE_FEEDBACK_SUBMITTED', {
+        rating: feedback.rating,
+        scribeMode,
+        sessionId: lastSessionId,
+      });
+    } catch (err: unknown) {
+      auditLogger.error(
+        'SCRIBE_FEEDBACK_SUBMIT_ERROR',
+        err instanceof Error ? err : new Error(String(err)),
+        { scribeMode }
+      );
+    }
+  }, [lastSessionId, lastSessionDuration, scribeMode]);
+
+  /**
+   * Skip feedback prompt
+   */
+  const handleFeedbackSkip = useCallback(() => {
+    setShowFeedbackPrompt(false);
+    auditLogger.info('SCRIBE_FEEDBACK_SKIPPED', { scribeMode });
+  }, [scribeMode]);
+
   // ============================================================================
   // RETURN VALUES
   // ============================================================================
@@ -831,6 +900,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     correctionsAppliedCount,
     assistanceSettings,
     isDemoMode,
+    showFeedbackPrompt,
+    feedbackSubmitted,
+    scribeMode,
 
     // Setters
     setTranscript,
@@ -845,6 +917,8 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     startRecording,
     stopRecording,
     handleAssistanceLevelChange,
+    handleFeedbackSubmit,
+    handleFeedbackSkip,
 
     // Helpers
     getAssistanceSettings,
