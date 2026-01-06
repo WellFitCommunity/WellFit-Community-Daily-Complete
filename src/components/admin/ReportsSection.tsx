@@ -275,7 +275,7 @@ const ReportsSection: React.FC = () => {
       addToast('info', 'Preparing engagement summary...');
 
       // Helper function to escape CSV values
-      const escapeCsvValue = (value: any): string => {
+      const escapeCsvValue = (value: unknown): string => {
         if (value === null || value === undefined) return '';
         const str = String(value);
         // Escape quotes and wrap in quotes if contains comma, quote, or newline
@@ -286,7 +286,7 @@ const ReportsSection: React.FC = () => {
       };
 
       // Helper function to convert array of objects to CSV
-      const arrayToCsv = (data: any[], headers: string[]): string => {
+      const arrayToCsv = (data: Record<string, unknown>[], headers: string[]): string => {
         const headerRow = headers.map(escapeCsvValue).join(',');
         const dataRows = data.map(row =>
           headers.map(header => escapeCsvValue(row[header])).join(',')
@@ -348,7 +348,7 @@ const ReportsSection: React.FC = () => {
       }
 
       // Helper function to escape CSV values
-      const escapeCsvValue = (value: any): string => {
+      const escapeCsvValue = (value: unknown): string => {
         if (value === null || value === undefined) return '';
         const str = String(value);
         // Escape quotes and wrap in quotes if contains comma, quote, or newline
@@ -359,7 +359,7 @@ const ReportsSection: React.FC = () => {
       };
 
       // Helper function to convert array of objects to CSV
-      const arrayToCsv = (data: any[], headers: string[]): string => {
+      const arrayToCsv = (data: Record<string, unknown>[], headers: string[]): string => {
         const headerRow = headers.map(escapeCsvValue).join(',');
         const dataRows = data.map(row =>
           headers.map(header => escapeCsvValue(row[header])).join(',')
@@ -415,7 +415,7 @@ const ReportsSection: React.FC = () => {
       ]);
 
       // Helper function to escape CSV values
-      const escapeCsvValue = (value: any): string => {
+      const escapeCsvValue = (value: unknown): string => {
         if (value === null || value === undefined) return '';
         const str = String(value);
         // Escape quotes and wrap in quotes if contains comma, quote, or newline
@@ -426,7 +426,7 @@ const ReportsSection: React.FC = () => {
       };
 
       // Helper function to convert array of objects to CSV
-      const arrayToCsv = (data: any[], headers: string[]): string => {
+      const arrayToCsv = (data: Record<string, unknown>[], headers: string[]): string => {
         const headerRow = headers.map(escapeCsvValue).join(',');
         const dataRows = data.map(row =>
           headers.map(header => escapeCsvValue(row[header])).join(',')

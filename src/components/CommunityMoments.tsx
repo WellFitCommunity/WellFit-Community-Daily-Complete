@@ -327,7 +327,7 @@ const CommunityMoments: React.FC = () => {
     setTimeout(() => setShowConfetti(false), 800);
   };
 
-  const handleEmojiClick = (emojiObj: any) => {
+  const handleEmojiClick = (emojiObj: { emoji?: string }) => {
     setEmoji(emojiObj?.emoji ?? '');
     setShowEmojiPicker(false);
   };
@@ -368,7 +368,17 @@ const CommunityMoments: React.FC = () => {
 
       const { data: publicUrlData } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
 
-      const insertBody: any = {
+      const insertBody: {
+        user_id: string;
+        title: string;
+        description: string;
+        emoji: string;
+        tags: string;
+        is_gallery_high: boolean;
+        approval_status: string;
+        file_path: string;
+        file_url: string;
+      } = {
         user_id: sessionUserId,
         title: t,
         description: d,
@@ -435,8 +445,8 @@ const CommunityMoments: React.FC = () => {
       setPage(1);
       setHasMore(normalized.length === PAGE_SIZE);
       setError('');
-    } catch (err: any) {
-      setError(err?.message || 'Unexpected error.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unexpected error.');
     } finally {
       setUploading(false);
       setInitialLoading(false);
