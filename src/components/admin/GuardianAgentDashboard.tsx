@@ -241,7 +241,7 @@ const HealthBadge: React.FC<{ status: 'healthy' | 'degraded' | 'critical' }> = (
 
 const MetricCard: React.FC<{
   title: string;
-  value: any;
+  value: React.ReactNode;
   icon: string;
   subtitle?: string;
   trend?: 'up' | 'down';
@@ -304,7 +304,7 @@ const IssueCard: React.FC<{ issue: DetectedIssue }> = ({ issue }) => {
   );
 };
 
-const HealingCard: React.FC<{ action: any }> = ({ action }) => (
+const HealingCard: React.FC<{ action: { strategy: string; description: string; steps: unknown[]; expectedOutcome: string } }> = ({ action }) => (
   <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-sm">
     <div className="flex items-center space-x-2 mb-2">
       <div className="animate-spin">⚙️</div>
@@ -359,7 +359,7 @@ const HealingResultCard: React.FC<{ result: HealingResult }> = ({ result }) => (
   </div>
 );
 
-const KnowledgeCard: React.FC<{ knowledge: any }> = ({ knowledge }) => (
+const KnowledgeCard: React.FC<{ knowledge: { pattern: string; successRate: number; effectiveness: number; timesEncountered: number } }> = ({ knowledge }) => (
   <div className="bg-purple-900/20 border border-purple-500/30 p-4 rounded-sm">
     <div className="text-sm font-semibold mb-2 truncate">{knowledge.pattern}</div>
     <div className="space-y-1 text-xs text-gray-400">
@@ -379,7 +379,7 @@ const KnowledgeCard: React.FC<{ knowledge: any }> = ({ knowledge }) => (
   </div>
 );
 
-const StatRow: React.FC<{ label: string; value: any; critical?: boolean }> = ({
+const StatRow: React.FC<{ label: string; value: React.ReactNode; critical?: boolean }> = ({
   label,
   value,
   critical
