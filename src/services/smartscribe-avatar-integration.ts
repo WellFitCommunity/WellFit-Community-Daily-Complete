@@ -14,7 +14,7 @@ import {
   Laterality,
 } from '../types/patientAvatar';
 import {
-  MARKER_TYPE_LIBRARY,
+  MARKER_TYPE_LIBRARY as _MARKER_TYPE_LIBRARY,
   findMarkerTypeByKeywords,
   calculateMarkerPosition,
 } from '../components/patient-avatar/constants/markerTypeLibrary';

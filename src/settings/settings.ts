@@ -25,7 +25,7 @@ export const SUPABASE_URL = SB_URL;
 export const SUPABASE_PUBLISHABLE_API_KEY = SB_PUBLISHABLE_API_KEY;
 
 // Small invariant helper you can reuse elsewhere
-export function invariant(cond: any, msg: string): asserts cond {
+export function invariant(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new Error(msg);
 }
 

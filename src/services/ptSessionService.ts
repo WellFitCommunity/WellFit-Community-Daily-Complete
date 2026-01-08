@@ -307,7 +307,7 @@ export class PTSessionService {
       const filtered = (data || []).filter(
         (session: PTTreatmentSession) =>
           session.plan_modifications &&
-          (session.plan_modifications as any).requested_from === supervisorId
+          (session.plan_modifications as { requested_from?: string })?.requested_from === supervisorId
       );
 
       return { success: true, data: filtered };

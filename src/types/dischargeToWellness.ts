@@ -5,7 +5,7 @@
 // Zero tech debt: Full type safety for Methodist demo
 // ============================================================================
 
-import type { DischargePlan } from './dischargePlanning';
+import type { DischargePlan as _DischargePlan } from './dischargePlanning';
 import type { DailyCheckIn } from '../services/patientOutreachService';
 
 // ============================================================================

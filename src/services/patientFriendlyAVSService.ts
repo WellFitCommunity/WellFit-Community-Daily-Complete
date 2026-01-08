@@ -718,7 +718,7 @@ interface AVSDbRecord {
 }
 
 // Override language in AVSRecord to accept database value
-type AVSDbLanguage = 'en' | 'es' | string;
+type _AVSDbLanguage = 'en' | 'es' | string;
 
 /**
  * Map database record to AVSRecord type

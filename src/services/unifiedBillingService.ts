@@ -98,7 +98,7 @@ export interface WorkflowStep {
   startTime: string;
   endTime?: string;
   duration?: number;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   error?: string;
 }
 
@@ -195,7 +195,7 @@ export class UnifiedBillingService {
 
         // Pre-populate CPT codes from AI suggestions if not already provided
         if ((!input.procedures || input.procedures.length === 0) && scribeSession.suggested_cpt_codes) {
-          input.procedures = (scribeSession.suggested_cpt_codes as any[]).map(c => ({
+          input.procedures = (scribeSession.suggested_cpt_codes as Array<{ code: string; description?: string }>).map(c => ({
             cptCode: c.code,
             description: c.description
           }));
@@ -208,7 +208,7 @@ export class UnifiedBillingService {
 
         // Pre-populate ICD-10 codes from AI suggestions if not already provided
         if ((!input.diagnoses || input.diagnoses.length === 0) && scribeSession.suggested_icd10_codes) {
-          input.diagnoses = (scribeSession.suggested_icd10_codes as any[]).map(c => ({
+          input.diagnoses = (scribeSession.suggested_icd10_codes as Array<{ code: string; description?: string }>).map(c => ({
             icd10Code: c.code,
             term: c.description
           }));
@@ -665,7 +665,7 @@ export class UnifiedBillingService {
   private static reconcileCodingSources(
     decisionTree?: DecisionTreeResult,
     aiSuggestions?: EnhancedCodingSuggestion | CodingSuggestion,
-    sdohAssessment?: SDOHAssessment
+    _sdohAssessment?: SDOHAssessment
   ): {
     cptCodes: Array<{ code: string; modifiers?: string[]; chargeAmount?: number }>;
     icd10Codes: Array<{ code: string; description?: string }>;
@@ -810,7 +810,7 @@ export class UnifiedBillingService {
     const errorCounts = new Map<string, { count: number; message: string }>();
     workflows?.forEach(w => {
       if (w.errors && Array.isArray(w.errors)) {
-        w.errors.forEach((error: any) => {
+        w.errors.forEach((error: { code: string; message?: string }) => {
           const existing = errorCounts.get(error.code);
           if (existing) {
             existing.count += 1;

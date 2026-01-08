@@ -15,7 +15,7 @@
 export function testAccessControl(
   userRole: string,
   allowedRoles: string[],
-  action: () => any
+  action: () => unknown
 ): void {
   if (!allowedRoles.includes(userRole)) {
     expect(action).toThrow(/unauthorized|forbidden|access denied/i);
@@ -346,8 +346,9 @@ export async function simulateBruteForce(
     try {
       await loginFn(username, password);
       attempts++;
-    } catch (error: any) {
-      if (error.message.includes('rate limit') || error.message.includes('locked')) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('rate limit') || errorMessage.includes('locked')) {
         blocked = true;
         break;
       }

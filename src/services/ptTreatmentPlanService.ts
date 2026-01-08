@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   PTTreatmentPlan,
+  PTTreatmentSession,
   CreateTreatmentPlanRequest,
   DischargeReadiness,
   SMARTGoal,
@@ -210,7 +211,7 @@ export class PTTreatmentPlanService {
    */
   static async getTreatmentPlanWithSessions(
     planId: string
-  ): Promise<PTApiResponse<any>> {
+  ): Promise<PTApiResponse<PTTreatmentPlan & { sessions: PTTreatmentSession[] }>> {
     try {
       const { data: plan, error: planError } = await supabase
         .from('pt_treatment_plans')
@@ -267,7 +268,7 @@ export class PTTreatmentPlanService {
     status: 'active' | 'on_hold' | 'modified' | 'completed' | 'discontinued'
   ): Promise<PTApiResponse<PTTreatmentPlan>> {
     try {
-      const updates: any = { status };
+      const updates: { status: typeof status; actual_end_date?: string } = { status };
 
       if (status === 'completed' || status === 'discontinued') {
         updates.actual_end_date = new Date().toISOString();

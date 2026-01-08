@@ -368,7 +368,7 @@ export interface DentalObservation {
   value_unit?: string;
   value_text?: string;
   value_boolean?: boolean;
-  value_codeable_concept?: Record<string, any>;
+  value_codeable_concept?: Record<string, unknown>;
 
   // Reference Ranges
   reference_range_low?: number;
@@ -381,7 +381,7 @@ export interface DentalObservation {
 
   // FHIR Mapping
   fhir_observation_id?: string;
-  fhir_resource?: Record<string, any>;
+  fhir_resource?: Record<string, unknown>;
 
   // Metadata
   created_at: string;
@@ -416,7 +416,7 @@ export interface DentalImaging {
   interpretation_date?: string;
 
   // DICOM Metadata
-  dicom_metadata?: Record<string, any>;
+  dicom_metadata?: Record<string, unknown>;
 
   // FHIR Mapping
   fhir_imaging_study_id?: string;

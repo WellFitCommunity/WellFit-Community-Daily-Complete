@@ -105,7 +105,7 @@ export interface ClaudeError {
   code: string;
   message: string;
   statusCode?: number;
-  originalError?: any;
+  originalError?: unknown;
   requestId?: string;
 }
 

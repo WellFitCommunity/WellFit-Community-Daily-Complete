@@ -3,7 +3,7 @@
  * Tests the browser-safe MCP client functionality
  */
 
-import { describe, test, expect, beforeEach, vi, type Mock } from 'vitest';
+import { describe, test, expect, beforeEach, vi, type Mock as _Mock } from 'vitest';
 import { MCPClient, createClaudeMCPClient } from '../mcpClient';
 
 // Mock import.meta.env

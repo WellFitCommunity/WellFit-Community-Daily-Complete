@@ -140,7 +140,7 @@ export interface ClaimStatusHistory {
   from_status?: string | null;
   to_status: string;
   note?: string | null;
-  payload?: Record<string, any> | null;
+  payload?: Record<string, unknown> | null;
   created_by: string;
   created_at: string;
 }
@@ -196,8 +196,8 @@ export interface Remittance {
   payer_id?: string | null;
   received_at: string;
   file_content?: string | null;
-  summary?: Record<string, any> | null;
-  details?: Record<string, any> | null;
+  summary?: Record<string, unknown> | null;
+  details?: Record<string, unknown> | null;
   created_by: string;
   created_at: string;
   updated_at: string;
