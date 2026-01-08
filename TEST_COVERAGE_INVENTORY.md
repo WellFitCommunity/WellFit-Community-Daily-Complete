@@ -1,377 +1,314 @@
 # Test Coverage Inventory
 
-> **Generated:** 2026-01-06
-> **Purpose:** Comprehensive list of all code requiring tests for systematic coverage improvement
+> **Last Updated:** 2026-01-08
+> **Total Tests:** 5,270 passing across 208 test files
+> **Test Suites:** 208
 
 ---
 
 ## Executive Summary
 
-| Metric | Count | With Tests | Coverage |
-|--------|-------|------------|----------|
-| Component Directories | 57 | 21 | 36.8% |
-| Service Files | 119 | 22 | 18.5% |
-| Hook Files | 32 | 6 | 18.8% |
-| Edge Functions | 123 | 11 | 8.9% |
+| Metric | Total | With Tests | Coverage | Status |
+|--------|-------|------------|----------|--------|
+| Component Directories | 50 | 24 | **48%** | +11% from Jan 6 |
+| Service Files | 119 | 38 | **32%** | +14% from Jan 6 |
+| Hook Files | 31 | 8 | **26%** | +7% from Jan 6 |
+| Edge Functions | 123 | 11 | 9% | No change |
+
+### Progress This Session (Jan 8, 2026)
+
+| Category | Tests Added | Files |
+|----------|-------------|-------|
+| alerts/ | 49 | 1 |
+| discharge/ | 130 | 3 |
+| soc/ | 138 | 4 |
+| billing/ | +194 enhanced | 5 |
+| **Total New** | **511+** | **13** |
 
 ---
 
 ## 1. Component Directories
 
-### HIGH PRIORITY (No Tests - Must Add)
+### ✅ COMPLETE (100% Coverage)
 
-| Directory | Components | Priority | Notes |
-|-----------|------------|----------|-------|
-| **auth/** | 4 | CRITICAL | Authentication flows |
-| **billing/** | 5 | CRITICAL | Financial components |
-| **ai-transparency/** | 5 | HIGH | AI compliance features |
-| **alerts/** | 1 | HIGH | Alert system |
-| **atlas/** | 6 | MEDIUM | Atlas features |
-| **case-manager/** | 1 | MEDIUM | Case manager portal |
-| **claude-care/** | 8 | HIGH | AI care assistant |
-| **collaboration/** | 3 | LOW | Collaboration tools |
-| **debug/** | 1 | LOW | Debug utilities |
-| **dental/** | 1 | LOW | Dental features |
-| **discharge/** | 3 | MEDIUM | Discharge planning |
-| **ems/** | 5 | MEDIUM | EMS integration |
-| **features/** | 3 | LOW | Feature management |
-| **handoff/** | 7 | MEDIUM | Patient handoff |
-| **layout/** | 6 | LOW | Layout components |
-| **mental-health/** | 1 | MEDIUM | Mental health |
-| **neuro/** | 3 | MEDIUM | Neurology features |
-| **neuro-suite/** | 3 | MEDIUM | Neuro suite |
-| **nurse/** | 6 | MEDIUM | Nurse portal |
-| **nurseos/** | 7 | MEDIUM | Nurse OS |
-| **physician/** | 7 | MEDIUM | Physician portal |
-| **sdoh/** | 4 | MEDIUM | Social determinants |
-| **search/** | 1 | LOW | Search |
-| **security/** | 2 | HIGH | Security features |
-| **shared/** | 3 | LOW | Shared utilities |
-| **soc/** | 4 | HIGH | SOC2 compliance |
-| **social-worker/** | 1 | LOW | Social worker portal |
-| **specialist/** | 2 | LOW | Specialist portal |
-| **system/** | 4 | LOW | System utilities |
-| **telehealth/** | 4 | MEDIUM | Telehealth |
-| **wearables/** | 1 | LOW | Wearables |
+| Directory | Components | Test Files | Tests | Status |
+|-----------|------------|------------|-------|--------|
+| auth/ | 4 | 4 | 78 | ✅ Complete |
+| billing/ | 5 | 5 | 194 | ✅ Complete |
+| ai-transparency/ | 5 | 5 | 80 | ✅ Complete |
+| alerts/ | 1 | 1 | 49 | ✅ Complete |
+| claude-care/ | 8 | 8 | 174 | ✅ Complete |
+| discharge/ | 3 | 3 | 130 | ✅ Complete |
+| security/ | 2 | 2 | 78 | ✅ Complete |
+| soc/ | 4 | 4 | 138 | ✅ Complete |
+| guardian/ | 2 | 2 | ~40 | ✅ Complete |
+| vitals/ | 1 | 1 | ~15 | ✅ Complete |
+| user/ | 1 | 1 | ~20 | ✅ Complete |
+| migration/ | 3 | 2 | ~35 | ✅ Complete |
+| chw/ | 7 | 4 | ~60 | ✅ Good |
 
-### NEEDS EXPANSION (Has Tests But Low Coverage)
+### 🟡 PARTIAL COVERAGE (Needs Expansion)
 
-| Directory | Components | Tests | Coverage | Notes |
-|-----------|------------|-------|----------|-------|
-| **admin/** | 61 | 6 | 9.8% | Admin dashboards |
-| **ui/** | 17 | 5 | 29.4% | Design system |
-| **envision-atlus/** | 19 | 3 | 15.8% | EA components |
-| **dashboard/** | 12 | 2 | 16.7% | Dashboards |
-| **patient/** | 19 | 1 | 5.3% | Patient features |
-| **patient-avatar/** | 9 | 1 | 11.1% | Avatar system |
-| **superAdmin/** | 16 | 2 | 12.5% | Super admin |
-| **smart/** | 11 | 2 | 18.2% | SmartScribe/Compass Riley |
-| **ai/** | 5 | 0 | 0% | Has __tests__ folder |
-| **guardian/** | 2 | 0 | 0% | Has __tests__ folder |
+| Directory | Components | Test Files | Gap | Priority |
+|-----------|------------|------------|-----|----------|
+| **admin/** | 61 | 6 | 55 | HIGH |
+| **patient/** | 19 | 5 | 14 | HIGH |
+| **envision-atlus/** | 19 | 3 | 16 | HIGH |
+| **superAdmin/** | 16 | 2 | 14 | MEDIUM |
+| **dashboard/** | 12 | 2 | 10 | MEDIUM |
+| **smart/** | 13 | 2 | 11 | MEDIUM |
+| **ui/** | 17 | 8 | 9 | MEDIUM |
+| **patient-avatar/** | 9 | 1 | 8 | LOW |
+| **wellness/** | 9 | 1 | 8 | LOW |
+| **time-clock/** | 5 | 1 | 4 | LOW |
 
-### GOOD COVERAGE (Keep Maintaining)
+### 🔴 NO TESTS (Must Add)
 
-| Directory | Components | Tests | Coverage |
-|-----------|------------|-------|----------|
-| chw/ | 7 | 4 | 57% |
-| vitals/ | 1 | 1 | 100% |
-| user/ | 1 | 1 | 100% |
-| app/ | 2 | 2 | 100% |
-| migration/ | 3 | 2 | 67% |
+| Directory | Components | Priority | Effort Est. |
+|-----------|------------|----------|-------------|
+| **nurse/** | 6 | HIGH | 2-3 hours |
+| **nurseos/** | 7 | HIGH | 2-3 hours |
+| **physician/** | 7 | HIGH | 2-3 hours |
+| **handoff/** | 7 | HIGH | 2-3 hours |
+| **atlas/** | 6 | MEDIUM | 2 hours |
+| **ems/** | 5 | MEDIUM | 2 hours |
+| **layout/** | 6 | MEDIUM | 1-2 hours |
+| **neuro/** | 3 | MEDIUM | 1 hour |
+| **neuro-suite/** | 3 | MEDIUM | 1 hour |
+| **sdoh/** | 4 | MEDIUM | 1.5 hours |
+| **telehealth/** | 4 | MEDIUM | 1.5 hours |
+| **system/** | 4 | LOW | 1 hour |
+| **collaboration/** | 3 | LOW | 1 hour |
+| **features/** | 3 | LOW | 1 hour |
+| **shared/** | 3 | LOW | 1 hour |
+| dental/, mental-health/, search/, specialist/, social-worker/, wearables/, case-manager/, debug/, questionnaires/, careCoordination/, referrals/ | 1-2 each | LOW | 30 min each |
+
+**Total Untested Components:** ~83 across 26 directories
+**Estimated Effort:** ~25-30 hours
 
 ---
 
-## 2. Services Without Tests (97 total)
+## 2. Services
 
-### CRITICAL - Must Test This Week
+### Current Status
+- **Total Services:** 119 files
+- **With Tests:** 38 files (32%)
+- **Gap:** 81 services
 
-| Service | Category | Risk |
-|---------|----------|------|
-| billingService.ts | Billing | Financial accuracy |
-| billingDecisionTreeService.ts | Billing | Complex logic |
-| claudeService.ts | AI | Core AI |
-| claudeCareAssistant.ts | AI | Key feature |
-| consentManagementService.ts | Legal | HIPAA |
-| auditLogger.ts | Compliance | Audit trail |
-| loginSecurityService.ts | Security | Auth security |
-| passkeyService.ts | Security | Passkey auth |
-| soc2MonitoringService.ts | Compliance | SOC2 |
-| superAdminService.ts | Admin | Access control |
-| tenantBrandingService.ts | Multi-tenant | Tenant isolation |
-| tenantModuleService.ts | Multi-tenant | Feature gates |
+### 🔴 CRITICAL (Must Test)
 
-### HIGH PRIORITY - This Month
+| Service | Category | Risk | Est. Time |
+|---------|----------|------|-----------|
+| billingService.ts | Billing | Financial | 2 hours |
+| billingDecisionTreeService.ts | Billing | Complex logic | 2 hours |
+| claudeService.ts | AI | Core AI | 2 hours |
+| claudeCareAssistant.ts | AI | Key feature | 1.5 hours |
+| consentManagementService.ts | Legal | HIPAA | 1.5 hours |
+| auditLogger.ts | Compliance | Audit trail | 1 hour |
+| loginSecurityService.ts | Security | Auth | 1.5 hours |
+| passkeyService.ts | Security | Auth | 1.5 hours |
+| soc2MonitoringService.ts | Compliance | SOC2 | 1.5 hours |
+| superAdminService.ts | Admin | Access | 1.5 hours |
+| tenantBrandingService.ts | Multi-tenant | Isolation | 1 hour |
+| tenantModuleService.ts | Multi-tenant | Features | 1 hour |
 
-| Service | Category |
-|---------|----------|
-| patientService.ts | Healthcare |
-| patientAdmissionService.ts | Healthcare |
-| dischargePlanningService.ts | Healthcare |
-| fhirResourceService.ts | FHIR |
-| fhirSecurityService.ts | FHIR |
-| handoffService.ts | Operations |
-| medicationReconciliationService.ts | Healthcare |
-| readmissionRiskPredictionService.ts | AI/Analytics |
-| guardianApprovalService.ts | Security |
-| guardianAgentClient.ts | AI |
+**Critical Services Effort:** ~18 hours
 
-### MEDIUM PRIORITY
+### 🟡 HIGH PRIORITY
 
-```
-aiAdapterAssistant.ts, aiTransparencyService.ts, atlasRevenueService.ts,
-bedManagementService.ts, behaviorTracking.ts, behavioralAnalyticsService.ts,
-careCoordinationService.ts, ccmAutopilotService.ts, communicationSilenceWindowService.ts,
-dashboardPersonalizationAI.ts, dentalHealthService.ts, dischargeToWellnessBridge.ts,
-emailService.ts, employeeService.ts, emsIntegrationService.ts, emsNotificationService.ts,
-encounterService.ts, engagementTracking.ts, enterpriseMigrationEngine.ts,
-EnterpriseFileUploadService.ts, errorReporter.ts, facilityService.ts,
-feeScheduleService.ts, fhirEncounterWrapper.ts, fhirInteroperabilityIntegrator.ts,
-fhirQuestionnaireService.ts, fhirSyncIntegration.ts, handoffNotificationService.ts,
-healthCheck.ts, healthcareIntegrationsService.ts, holisticRiskAssessment.ts,
-hospitalTransferIntegrationService.ts, initializeWearables.ts, inputValidator.ts,
-intelligentModelRouter.ts, jointCommissionFormService.ts, labResultVaultService.ts,
-mealInteractionService.ts, medicationLabelReader.ts, medicationTrackingService.ts,
-mentalHealthService.ts, neuroSuiteService.ts, notificationService.ts,
-offlineAudioService.ts, patientAvatarService.ts, patientOutreachService.ts,
-performanceMonitoring.ts, personalizedGreeting.ts, physicalTherapyService.ts,
-pillIdentifierService.ts, pinHashingService.ts, postAcuteFacilityMatcher.ts,
-postAcuteTransferService.ts, providerAffirmations.ts, psychMedClassifier.ts,
-ptAssessmentService.ts, ptSessionService.ts, ptTreatmentPlanService.ts,
-readmissionTrackingService.ts, resilienceHubService.ts, sdohBillingService.ts,
-sdohIndicatorService.ts, sdohPassiveDetection.ts, securityAutomationService.ts,
-seniorDataService.ts, shiftHandoffService.ts, smartSuggestionsService.ts,
-smartscribe-avatar-integration.ts, soapNoteService.ts, socDashboardService.ts,
-staffWellnessService.ts, tenantAssignmentService.ts, tenantDetection.ts,
-timeClockService.ts, userBehaviorTracking.ts, voiceCommandService.ts,
-voiceLearningService.ts, voiceSearchService.ts, wearableService.ts,
-workflowPreferences.ts
-```
+| Service | Category | Est. Time |
+|---------|----------|-----------|
+| patientService.ts | Healthcare | 2 hours |
+| patientAdmissionService.ts | Healthcare | 1.5 hours |
+| dischargePlanningService.ts | Healthcare | 1.5 hours |
+| fhirResourceService.ts | FHIR | 2 hours |
+| fhirSecurityService.ts | FHIR | 1.5 hours |
+| handoffService.ts | Operations | 1.5 hours |
+| medicationReconciliationService.ts | Healthcare | 1.5 hours |
+| readmissionRiskPredictionService.ts | AI | 1.5 hours |
+| guardianApprovalService.ts | Security | 1 hour |
+| guardianAgentClient.ts | AI | 1.5 hours |
+
+**High Priority Effort:** ~16 hours
+
+### Remaining Services (~60)
+**Estimated Effort:** ~45-60 hours (averaging 45-60 min each)
 
 ---
 
-## 3. Hooks Without Tests (26 total)
+## 3. Hooks
 
-### CRITICAL
+### Current Status
+- **Total Hooks:** 31 files
+- **With Tests:** 8 files (26%)
+- **Gap:** 23 hooks
 
-| Hook | Category | Risk |
-|------|----------|------|
-| useModuleAccess.ts | Auth | Feature gate failures |
-| useBillingData.ts | Billing | Financial data |
-| useIdleTimeout.ts | Security | Session security |
-| useHcaptcha.ts | Security | Bot protection |
-| useIsAdmin.ts | Auth | Permission checks |
+### 🔴 CRITICAL
 
-### HIGH PRIORITY
+| Hook | Category | Est. Time |
+|------|----------|-----------|
+| useModuleAccess.ts | Auth | 1 hour |
+| useBillingData.ts | Billing | 1 hour |
+| useIdleTimeout.ts | Security | 45 min |
+| useHcaptcha.ts | Security | 45 min |
+| useIsAdmin.ts | Auth | 30 min |
 
-| Hook | Category |
-|------|----------|
-| useTenantBranding.ts | Multi-tenant |
-| useTenantModules.ts | Multi-tenant |
-| usePresence.ts | Real-time |
-| useRealtimeSubscription.ts | Real-time |
-| useFhirData.ts | FHIR |
-| useFHIRIntegration.ts | FHIR |
-| useAuthorizationStatus.ts | Healthcare |
+### 🟡 HIGH PRIORITY
 
-### MEDIUM PRIORITY
+| Hook | Category | Est. Time |
+|------|----------|-----------|
+| useTenantBranding.ts | Multi-tenant | 45 min |
+| useTenantModules.ts | Multi-tenant | 45 min |
+| usePresence.ts | Real-time | 1 hour |
+| useRealtimeSubscription.ts | Real-time | 1 hour |
+| useFhirData.ts | FHIR | 1 hour |
+| useFHIRIntegration.ts | FHIR | 1 hour |
 
-```
-useBrowserHistoryProtection.ts, useClaudeRateLimit.ts, useCommunityMoments.ts,
-useConnectionQuality.ts, useFormDraftRecovery.ts, useKeyboardNavigation.ts,
-useMedicineCabinet.ts, usePassiveSDOHDetection.ts, useRealtimeCoding.ts,
-useSOCNotifications.ts, useStorageQuota.ts, useTheme.ts, useVoiceSearch.ts,
-useWearableData.ts, useWorkflowPreferences.ts
-```
+**Hooks Total Effort:** ~12-15 hours
 
 ---
 
-## 4. Edge Functions Without Tests (112 total)
+## 4. Edge Functions
 
-### CRITICAL - Security & Auth (22 functions)
+### Current Status
+- **Total Functions:** 123
+- **With Tests:** 11 (9%)
+- **Gap:** 112 functions
 
-| Function | Category |
-|----------|----------|
-| admin_register | Auth |
-| admin_set_pin | Security |
-| admin_start_session | Auth |
-| admin_end_session | Auth |
-| admin-user-questions | Admin |
-| envision-check-super-admin | Auth |
-| envision-verify-pin | Security |
-| guardian-agent | AI/Security |
-| guardian-agent-api | API |
-| guardian-pr-service | Automation |
-| hash-pin | Security |
-| login | Auth |
-| login-security | Security |
-| passkey-auth-finish | Auth |
-| passkey-auth-start | Auth |
-| passkey-register-finish | Auth |
-| passkey-register-start | Auth |
-| phi-encrypt | Security |
-| request-pin-reset | Security |
-| security-alert-processor | Security |
-| setup-admin-credentials | Admin |
-| smart-authorize | Auth |
-| verify-admin-pin | Security |
-| verify-hcaptcha | Security |
-| verify-pin-reset | Security |
+> **Note:** Edge functions require Deno testing setup. Consider deferring until component/service coverage is better.
 
-### HIGH PRIORITY - AI Functions (21 functions)
-
-| Function | Type |
-|----------|------|
-| ai-appointment-prep-instructions | AI |
-| ai-billing-suggester | AI/Billing |
-| ai-care-escalation-scorer | AI |
-| ai-care-plan-generator | AI |
-| ai-clinical-guideline-matcher | AI |
-| ai-contraindication-detector | AI |
-| ai-discharge-summary | AI |
-| ai-fall-risk-predictor | AI |
-| ai-fhir-semantic-mapper | AI |
-| ai-infection-risk-predictor | AI |
-| ai-medication-adherence-predictor | AI |
-| ai-medication-instructions | AI |
-| ai-medication-reconciliation | AI |
-| ai-missed-checkin-escalation | AI |
-| ai-patient-qa-bot | AI |
-| ai-progress-note-synthesizer | AI |
-| ai-provider-assistant | AI |
-| ai-readmission-predictor | AI |
-| ai-referral-letter | AI |
-| ai-schedule-optimizer | AI |
-| ai-soap-note-generator | AI |
-| ai-treatment-pathway | AI |
-
-### HIGH PRIORITY - Clinical (10 functions)
-
-| Function | Type |
-|----------|------|
-| ccda-export | Export |
-| coding-suggest | Billing |
-| create-checkin | Healthcare |
-| extract-patient-form | Forms |
-| fhir-r4 | FHIR |
-| generate-837p | Billing |
-| get-risk-assessments | Analytics |
-| hl7-receive | Integration |
-| pdf-health-summary | Export |
-| sdoh-coding-suggest | Billing |
-
-### MEDIUM PRIORITY - Remaining (59 functions)
-
-```
-bed-management, check-drug-interactions, claude-chat, claude-personalization,
-cleanup-temp-images, create-patient-telehealth-token, create-telehealth-room,
-daily-backup-verification, enrollClient, envision-login, envision-request-reset,
-envision-totp-setup, envision-totp-use-backup, envision-totp-verify, export-status,
-generate-api-key, get-personalized-greeting, log-ai-confidence-score,
-mcp-claude-server, mcp-clearinghouse-server, mcp-edge-functions-server,
-mcp-fhir-server, mcp-hl7-x12-server, mcp-medical-codes-server, mcp-postgres-server,
-mobile-sync, nightly-excel-backup, notify-stale-checkins, process-medical-transcript,
-process-vital-image, realtime_medical_transcription, register, save-fcm-token,
-send-appointment-reminder, send-check-in-reminder-sms, send-checkin-reminders,
-send-consecutive-missed-alerts, send-email, send-push-notification, send-sms,
-send-stale-reminders, send_email, send_welcome_email, smart-token, system-status,
-test-users, test_users, update-profile-note, update-voice-profile,
-user-data-management, validate-api-key
-```
+**Estimated Effort:** ~80-100 hours
 
 ---
 
-## Weekly Action Plan
+## Total Effort Estimate
 
-### Week 1: Foundation (Security & Auth)
-
-**Day 1-2: Auth Services**
-- [ ] authService.ts tests
-- [ ] loginSecurityService.ts tests
-- [ ] passkeyService.ts tests
-
-**Day 3-4: Auth Components**
-- [ ] auth/ directory (4 components)
-- [ ] security/ directory (2 components)
-
-**Day 5: Auth Edge Functions**
-- [ ] login edge function
-- [ ] passkey-auth-start/finish
-- [ ] verify-admin-pin
-
-### Week 2: Billing & Compliance
-
-**Day 1-2: Billing Services**
-- [ ] billingService.ts tests
-- [ ] billingDecisionTreeService.ts tests
-
-**Day 3-4: Billing Components**
-- [ ] billing/ directory (5 components)
-- [ ] ai-billing-suggester edge function
-
-**Day 5: Compliance**
-- [ ] auditLogger.ts tests
-- [ ] soc2MonitoringService.ts tests
-- [ ] consentManagementService.ts tests
-
-### Week 3: Healthcare Core
-
-**Day 1-2: Patient Services**
-- [ ] patientService.ts
-- [ ] patientAdmissionService.ts
-- [ ] dischargePlanningService.ts
-
-**Day 3-4: FHIR**
-- [ ] fhirResourceService.ts
-- [ ] fhirSecurityService.ts
-- [ ] fhir-r4 edge function
-
-**Day 5: Operations**
-- [ ] handoffService.ts
-- [ ] medicationReconciliationService.ts
-
-### Week 4: AI & UI
-
-**Day 1-2: AI Services**
-- [ ] claudeService.ts
-- [ ] claudeCareAssistant.ts
-- [ ] guardian edge functions
-
-**Day 3-4: UI Components**
-- [ ] Complete ui/ directory tests
-- [ ] envision-atlus/ components
-
-**Day 5: Hooks**
-- [ ] useModuleAccess.ts
-- [ ] useBillingData.ts
-- [ ] useIdleTimeout.ts
+| Category | Items | Hours |
+|----------|-------|-------|
+| Components (partial) | ~50 | 15-20 |
+| Components (none) | ~83 | 25-30 |
+| Services (critical) | 12 | 18 |
+| Services (high) | 10 | 16 |
+| Services (remaining) | ~60 | 45-60 |
+| Hooks | 23 | 12-15 |
+| Edge Functions | 112 | 80-100 |
+| **TOTAL** | | **211-259 hours** |
 
 ---
 
-## Test File Locations
+## Realistic Action Plan
 
-```
-src/components/{dir}/__tests__/{Component}.test.tsx
-src/services/__tests__/{service}.test.ts
-src/hooks/__tests__/{hook}.test.ts
-supabase/functions/{function}/__tests__/{function}.test.ts
-```
+### Phase 1: Critical Path (Week 1-2) - 40 hours
 
-## Running Tests
+**Goal:** Cover all CRITICAL services and remaining HIGH priority components
+
+| Day | Focus | Items | Hours |
+|-----|-------|-------|-------|
+| 1 | Services | billingService, billingDecisionTree | 4 |
+| 2 | Services | claudeService, claudeCareAssistant | 3.5 |
+| 3 | Services | auditLogger, loginSecurity, passkey | 4 |
+| 4 | Services | consent, soc2, superAdmin, tenant* | 5 |
+| 5 | Components | nurse/ (6), nurseos/ (7) | 5 |
+| 6 | Components | physician/ (7), handoff/ (7) | 5 |
+| 7 | Components | admin/ (first 20) | 5 |
+| 8 | Components | admin/ (next 20) | 5 |
+| 9 | Components | admin/ (remaining 15) | 4 |
+
+### Phase 2: High Priority (Week 3-4) - 35 hours
+
+| Focus | Items | Hours |
+|-------|-------|-------|
+| Services | patient*, fhir*, handoff, medication | 10 |
+| Hooks | Critical + High priority | 8 |
+| Components | patient/, envision-atlus/, superAdmin/ | 12 |
+| Components | smart/, dashboard/ | 5 |
+
+### Phase 3: Medium Priority (Week 5-6) - 30 hours
+
+| Focus | Items | Hours |
+|-------|-------|-------|
+| Components | atlas, ems, neuro*, sdoh, telehealth | 10 |
+| Components | layout, system, ui expansion | 8 |
+| Services | Medium priority batch 1 | 12 |
+
+### Phase 4: Completion (Week 7-8) - 30 hours
+
+| Focus | Items | Hours |
+|-------|-------|-------|
+| Services | Medium priority batch 2 | 15 |
+| Components | Low priority directories | 10 |
+| Hooks | Remaining hooks | 5 |
+
+### Phase 5: Edge Functions (Future)
+
+- Defer until component/service coverage is solid
+- Consider testing critical auth/security functions first
+- ~80-100 hours total
+
+---
+
+## Quick Wins (Can Do Today)
+
+These directories have 1-3 components and can be done in < 30 minutes each:
+
+1. `dental/` - 1 component
+2. `mental-health/` - 1 component
+3. `search/` - 1 component
+4. `wearables/` - 1 component
+5. `social-worker/` - 1 component
+6. `case-manager/` - 1 component
+7. `specialist/` - 2 components
+8. `referrals/` - 1 component
+9. `questionnaires/` - 1 component
+10. `careCoordination/` - 1 component
+
+**Quick Wins Effort:** ~4-5 hours for 10 directories
+
+---
+
+## Commands Reference
 
 ```bash
 # Run all tests
 npm test
 
 # Run specific directory
-npm test -- src/components/auth/__tests__/
+npm test -- --run src/components/admin/__tests__/
 
 # Run single file
-npm test -- src/services/__tests__/billingService.test.ts
+npm test -- --run src/services/__tests__/billingService.test.ts
 
-# Run with coverage
-npm test -- --coverage
+# Check test count
+npm test -- --run 2>&1 | grep -E "Test Files|Tests"
 ```
 
 ---
 
-**Next Update:** After Week 1 completion
+## Progress Tracking
+
+### Completed ✅
+- [x] auth/ (4/4)
+- [x] billing/ (5/5)
+- [x] ai-transparency/ (5/5)
+- [x] alerts/ (1/1)
+- [x] claude-care/ (8/8)
+- [x] discharge/ (3/3)
+- [x] security/ (2/2)
+- [x] soc/ (4/4)
+- [x] guardian/ (2/2)
+
+### In Progress 🟡
+- [ ] admin/ (6/61) - HIGH PRIORITY
+- [ ] patient/ (5/19)
+- [ ] envision-atlus/ (3/19)
+
+### Not Started 🔴
+- [ ] nurse/ (0/6)
+- [ ] nurseos/ (0/7)
+- [ ] physician/ (0/7)
+- [ ] handoff/ (0/7)
+- [ ] + 22 more directories
+
+---
+
+**Next Session:** Focus on CRITICAL services (billing, claude, audit) OR admin/ component expansion
