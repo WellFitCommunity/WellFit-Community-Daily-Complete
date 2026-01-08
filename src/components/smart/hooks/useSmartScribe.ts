@@ -138,6 +138,16 @@ export interface SOAPNote {
   ros: string;
 }
 
+// WebSocket response data for code suggestions
+export interface CodeSuggestionResponse {
+  type: 'code_suggestion';
+  codes?: CodeSuggestion[];
+  revenueIncrease?: number;
+  soapNote?: Partial<SOAPNote>;
+  conversational_note?: string;
+  suggestions?: string[];
+}
+
 export interface AssistanceSettings {
   label: string;
   description: string;
@@ -562,7 +572,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
             setCorrectionsAppliedCount(prev => prev + appliedCorrections);
           }
         },
-        onCodeSuggestion: (data: any) => {
+        onCodeSuggestion: (data: CodeSuggestionResponse) => {
           setSuggestedCodes(Array.isArray(data.codes) ? data.codes : []);
           setRevenueImpact(Number(data.revenueIncrease || 0));
 
@@ -578,13 +588,14 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           }
 
           if (data.conversational_note) {
+            const note = data.conversational_note;
             setConversationalMessages(prev => [
               ...prev,
               {
-                type: 'scribe',
-                message: data.conversational_note,
+                type: 'scribe' as const,
+                message: note,
                 timestamp: new Date(),
-                context: 'code',
+                context: 'code' as const,
               },
             ]);
           }
@@ -620,9 +631,10 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       wsRef.current = result.webSocket;
       mediaRecorderRef.current = result.mediaRecorder;
       streamRef.current = result.stream;
-    } catch (error: any) {
-      setStatus('Error: ' + (error?.message ?? 'Failed to start'));
-      auditLogger.error('SCRIBE_START_RECORDING_FAILED', error, {
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : 'Failed to start';
+      setStatus('Error: ' + errMessage);
+      auditLogger.error('SCRIBE_START_RECORDING_FAILED', error instanceof Error ? error : new Error(errMessage), {
         component: 'useSmartScribe',
         operation: 'startRecording',
       });

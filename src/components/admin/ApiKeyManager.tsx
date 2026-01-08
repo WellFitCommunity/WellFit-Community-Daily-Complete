@@ -432,11 +432,12 @@ const ApiKeyManager: React.FC = () => {
   };
 
   // Safer comparator casting (optional but robust)
-  const toComparable = (v: any) => {
+  const toComparable = (v: unknown): string | number | null => {
     if (v == null) return null;
     if (typeof v === 'string' && !isNaN(Date.parse(v))) return Date.parse(v);
     if (typeof v === 'string') return v.toLowerCase();
-    return v;
+    if (typeof v === 'number') return v;
+    return null;
   };
 
   // Filtering and sorting logic

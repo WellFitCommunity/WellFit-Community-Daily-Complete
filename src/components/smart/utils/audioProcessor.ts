@@ -7,11 +7,36 @@
 import { ProviderVoiceProfile, VoiceLearningService } from '../../../services/voiceLearningService';
 import { auditLogger } from '../../../services/auditLogger';
 
+// WebSocket response data for code suggestions - matches useSmartScribe.CodeSuggestionResponse
+export interface CodeSuggestionResponse {
+  type: 'code_suggestion';
+  codes?: Array<{
+    code: string;
+    type: 'CPT' | 'ICD10' | 'HCPCS';
+    description: string;
+    reimbursement: number;
+    confidence: number;
+    reasoning?: string;
+    missingDocumentation?: string;
+  }>;
+  revenueIncrease?: number;
+  soapNote?: {
+    subjective?: string;
+    objective?: string;
+    assessment?: string;
+    plan?: string;
+    hpi?: string;
+    ros?: string;
+  };
+  conversational_note?: string;
+  suggestions?: string[];
+}
+
 export interface AudioProcessorConfig {
   wsUrl: string;
   voiceProfile: ProviderVoiceProfile | null;
   onTranscript: (text: string, appliedCorrections: number) => void;
-  onCodeSuggestion: (data: any) => void;
+  onCodeSuggestion: (data: CodeSuggestionResponse) => void;
   onReady: () => void;
   onStatusChange: (status: string) => void;
   onRecordingStateChange: (isRecording: boolean) => void;
@@ -121,7 +146,7 @@ export async function initializeAudioRecording(
       webSocket: ws,
       stream,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error('Failed to start audio recording');
 
     // HIPAA Audit: Log medical transcription recording failures
@@ -130,7 +155,7 @@ export async function initializeAudioRecording(
       operation: 'initializeAudioRecording',
     });
 
-    config.onStatusChange('Error: ' + (error?.message ?? 'Failed to start'));
+    config.onStatusChange('Error: ' + err.message);
     config.onError(err);
 
     throw err;

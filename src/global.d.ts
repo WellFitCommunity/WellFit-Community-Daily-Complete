@@ -5,8 +5,8 @@ declare global {
   interface Window {
     /** injected by hCaptcha script */
     hcaptcha?: {
-      render: (...args: any[]) => any;
-      reset: (widgetId?: any) => void;
+      render: (...args: unknown[]) => string;
+      reset: (widgetId?: string) => void;
       onLoad?: () => void;
     };
     /** alias used in some implementations */

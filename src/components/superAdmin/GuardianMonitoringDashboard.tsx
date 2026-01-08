@@ -29,7 +29,7 @@ interface GuardianCronExecution {
   job_name: string;
   executed_at: string;
   status: string;
-  details: any;
+  details: Record<string, unknown>;
 }
 
 interface GuardianMetrics {

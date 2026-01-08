@@ -159,7 +159,7 @@ export function ClearinghouseConfigPanel() {
           <select
             value={config.provider}
             onChange={(e) => {
-              const provider = e.target.value as any;
+              const provider = e.target.value as 'waystar' | 'change_healthcare' | 'availity';
               const defaults = getProviderDefaults(provider);
               setConfig({ ...config, provider, apiUrl: defaults.apiUrl });
             }}

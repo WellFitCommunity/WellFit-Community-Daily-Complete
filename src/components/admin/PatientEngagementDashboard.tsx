@@ -214,7 +214,7 @@ const PatientEngagementDashboard: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as 'engagement_score' | 'last_activity')}
               className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="engagement_score">Engagement Score</option>
@@ -225,7 +225,7 @@ const PatientEngagementDashboard: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Filter Level</label>
             <select
               value={filterLevel}
-              onChange={(e) => setFilterLevel(e.target.value as any)}
+              onChange={(e) => setFilterLevel(e.target.value as 'all' | 'high' | 'medium' | 'low' | 'critical')}
               className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Patients</option>

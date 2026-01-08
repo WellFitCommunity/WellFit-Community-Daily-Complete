@@ -30,8 +30,8 @@ type Props = {
 
 const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
   ({ onVerify, onError, onExpire, size = 'invisible', theme = 'light' }, ref) => {
-    // Use `any` to avoid brittle lib type changes + null-init complaints
-    const widgetRef = useRef<any>(null);
+    // HCaptcha component ref - uses ElementRef to get the instance type
+    const widgetRef = useRef<React.ElementRef<typeof HCaptcha> | null>(null);
     const [token, setToken] = useState('');
 
     const resolveRef = useRef<null | ((t: string) => void)>(null);

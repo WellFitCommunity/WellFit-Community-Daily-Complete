@@ -38,7 +38,7 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ overview }) => {
     );
   }
 
-  const criticalIssues = (overview as any).criticalHealthIssues || 0;
+  const criticalIssues = overview.criticalHealthIssues || 0;
   const systemHealth = criticalIssues > 0 ? 'critical' :
     overview.suspendedTenants > 0 ? 'degraded' : 'healthy';
 

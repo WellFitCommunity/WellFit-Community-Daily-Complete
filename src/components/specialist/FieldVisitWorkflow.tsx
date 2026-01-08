@@ -9,15 +9,26 @@ import { fieldVisitManager } from '../../services/specialist-workflow-engine/Fie
 import { workflowRegistry } from '../../services/specialist-workflow-engine/templates';
 import { FieldVisit, WorkflowStep } from '../../services/specialist-workflow-engine/types';
 
+interface PatientInfo {
+  id: string;
+  full_name?: string;
+  date_of_birth?: string;
+  phone?: string;
+  address?: string;
+}
+
+// Extended type for visit with joined patient data from Supabase
+type FieldVisitWithPatient = FieldVisit & { patient?: PatientInfo };
+
 interface FieldVisitWorkflowProps {
   visitId: string;
 }
 
 export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId }) => {
-  const [visit, setVisit] = useState<FieldVisit | null>(null);
+  const [visit, setVisit] = useState<FieldVisitWithPatient | null>(null);
   const [currentStep, setCurrentStep] = useState<WorkflowStep | null>(null);
   const [engine, setEngine] = useState<SpecialistWorkflowEngine | null>(null);
-  const [stepData, setStepData] = useState<Record<string, any>>({});
+  const [stepData, setStepData] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [location, setLocation] = useState<GeolocationCoordinates | null>(null);
@@ -149,7 +160,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {(visit as any).patient?.full_name}
+              {visit.patient?.full_name}
             </h1>
             <p className="text-gray-600">{visit.visit_type}</p>
           </div>
@@ -260,7 +271,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
               {/* Generic field inputs */}
               <div className="space-y-4">
                 <textarea
-                  value={stepData.notes || ''}
+                  value={String(stepData.notes || '')}
                   onChange={e => setStepData({ ...stepData, notes: e.target.value })}
                   placeholder="Enter notes for this step..."
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

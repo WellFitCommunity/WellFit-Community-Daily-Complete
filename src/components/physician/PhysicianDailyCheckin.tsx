@@ -57,7 +57,7 @@ export const PhysicianDailyCheckin: React.FC<PhysicianDailyCheckinProps> = ({
       const combinedNotes = `${formData.notes ? formData.notes + ' | ' : ''}Prior Auth Frustration: ${formData.prior_auth_frustration}/10 | Clinical Complexity: ${formData.clinical_complexity}/10 | Had Lunch: ${formData.had_lunch ? 'Yes' : 'No'} | Charting Burden: ${formData.charting_burden}/10`;
 
       await submitDailyCheckin({
-        work_setting: formData.work_setting as any,
+        work_setting: formData.work_setting as 'office' | 'telehealth' | 'hospital_shift' | 'remote' | 'skilled_nursing',
         product_line: 'clarity', // Default to clarity for physicians
         stress_level: formData.stress_level,
         energy_level: formData.energy_level,

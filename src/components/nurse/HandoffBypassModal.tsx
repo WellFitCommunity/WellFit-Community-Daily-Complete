@@ -151,7 +151,7 @@ export const HandoffBypassModal: React.FC<HandoffBypassModalProps> = ({
             </label>
             <select
               value={formData.override_reason}
-              onChange={(e) => setFormData({ ...formData, override_reason: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, override_reason: e.target.value as 'system_glitch' | 'network_issue' | 'patient_emergency' | 'time_critical' | 'other' })}
               className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
               required
             >

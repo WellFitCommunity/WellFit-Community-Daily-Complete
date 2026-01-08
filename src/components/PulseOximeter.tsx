@@ -125,7 +125,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
         if ('applyConstraints' in track) {
           try {
             await track.applyConstraints({
-              advanced: [{ torch: true } as any]
+              advanced: [{ torch: true } as TorchConstraint]
             });
             setFlashlightStatus('on');
             setFlashlightError(null);

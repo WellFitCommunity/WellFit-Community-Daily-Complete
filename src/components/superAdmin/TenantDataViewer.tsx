@@ -17,6 +17,14 @@ interface TenantUser {
   lastSeenAt?: string;
 }
 
+interface RawProfileData {
+  id: string;
+  email?: string;
+  role?: string;
+  created_at: string;
+  last_seen_at?: string;
+}
+
 const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) => {
   const [activeSection, setActiveSection] = useState<'users' | 'patients' | 'activity'>('users');
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -39,7 +47,7 @@ const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) 
         if (usersError) throw usersError;
 
         setUsers(
-          (data || []).map((u: any) => ({
+          (data || []).map((u: RawProfileData) => ({
             id: u.id,
             email: u.email || 'No email',
             role: u.role || 'user',
