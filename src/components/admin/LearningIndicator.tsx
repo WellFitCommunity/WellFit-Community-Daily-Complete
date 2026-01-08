@@ -180,7 +180,7 @@ interface AnimatedSectionProps {
 export const AnimatedSection: React.FC<AnimatedSectionProps> = ({
   children,
   sectionId,
-  index
+  index: _index
 }) => {
   return (
     <motion.div

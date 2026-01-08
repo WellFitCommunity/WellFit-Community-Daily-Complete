@@ -17,7 +17,7 @@ interface SmartSession {
 
 const SmartSessionStatus: React.FC = () => {
   const [session, setSession] = useState<SmartSession | null>(null);
-  const [patientData, setPatientData] = useState<any>(null);
+  const [_patientData, setPatientData] = useState<unknown>(null);
 
   useEffect(() => {
     // Check for active SMART session

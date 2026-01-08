@@ -1152,7 +1152,7 @@ describe('Error Handling', () => {
 
   describe('Graceful Degradation', () => {
     it('should not fail report if tracking fails', () => {
-      const trackingFailed = true;
+      const _trackingFailed = true;
       const reportSucceeded = true;
 
       expect(reportSucceeded).toBe(true);

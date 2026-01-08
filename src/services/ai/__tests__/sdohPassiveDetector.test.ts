@@ -378,11 +378,11 @@ describe('SDOHPassiveDetector', () => {
 
     it.each(SDOH_PATTERN_TESTS)(
       'should detect $category from text patterns',
-      ({ category: _category, text, expectedZCode }) => {
+      ({ category: _category, text, expectedZCode: _expectedZCode }) => {
         const content = createValidSourceContent({ sourceText: text });
 
-        expect(content.sourceText).toContain(expectedZCode.length > 0 ? text.split(' ')[0] : '');
-        expect(expectedZCode).toMatch(/^Z\d+(\.\d+)?$/);
+        expect(content.sourceText).toContain(_expectedZCode.length > 0 ? text.split(' ')[0] : '');
+        expect(_expectedZCode).toMatch(/^Z\d+(\.\d+)?$/);
       }
     );
   });
@@ -402,7 +402,7 @@ describe('SDOHPassiveDetector', () => {
     it('should escalate risk for critical keywords', () => {
       const criticalKeywords = ['suicidal', 'homeless', 'domestic violence', 'no food'];
 
-      criticalKeywords.forEach(keyword => {
+      criticalKeywords.forEach(_keyword => {
         // High-risk keywords should trigger elevated risk levels
         expect(['moderate', 'high', 'critical']).toContain('high');
       });
@@ -429,7 +429,7 @@ describe('SDOHPassiveDetector', () => {
         emergency: 'immediate',
       };
 
-      Object.entries(urgencyTimeframes).forEach(([urgency, timeframe]) => {
+      Object.entries(urgencyTimeframes).forEach(([_urgency, timeframe]) => {
         expect(typeof timeframe).toBe('string');
         expect(timeframe.length).toBeGreaterThan(0);
       });

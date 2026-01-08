@@ -189,7 +189,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
     reconciliationPending: 0
   });
   const [patientMedications, setPatientMedications] = useState<PatientMedication[]>([]);
-  const [interactions, setInteractions] = useState<DrugInteraction[]>([]);
+  const [interactions, _setInteractions] = useState<DrugInteraction[]>([]);
   const [reconciliationTasks, setReconciliationTasks] = useState<ReconciliationTask[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PatientMedication | null>(null);
 

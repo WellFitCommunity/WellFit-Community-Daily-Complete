@@ -1030,7 +1030,6 @@ describe('PlainLanguageExplainer', () => {
 
   describe('Risk Factor Translation', () => {
     it('should translate prior admission to plain language', () => {
-      const _factor = 'Prior readmission within 30 days';
       const priorAdmissions = 2;
       const expectedTranslation = `you were in the hospital ${priorAdmissions} times recently`;
 
@@ -1039,7 +1038,6 @@ describe('PlainLanguageExplainer', () => {
     });
 
     it('should translate missed check-ins to plain language', () => {
-      const factor = 'Consecutive missed check-ins';
       const missedCount = 3;
       const expectedTranslation = `you missed ${missedCount} check-ins in a row`;
 
@@ -1091,7 +1089,6 @@ describe('PlainLanguageExplainer', () => {
 
   describe('Protective Factor Translation', () => {
     it('should translate family support to plain language', () => {
-      const factor = 'Strong family support';
       const expectedTranslation = 'You have family or friends who can help you.';
 
       expect(expectedTranslation).toContain('family');
@@ -1099,14 +1096,12 @@ describe('PlainLanguageExplainer', () => {
     });
 
     it('should translate scheduled follow-up to plain language', () => {
-      const factor = 'Follow-up appointment scheduled';
       const expectedTranslation = 'You have a doctor visit coming up soon.';
 
       expect(expectedTranslation).toContain('doctor visit');
     });
 
     it('should translate good check-in compliance to plain language', () => {
-      const factor = 'High check-in compliance';
       const expectedTranslation = 'You have been doing your daily check-ins.';
 
       expect(expectedTranslation).toContain('check-ins');
@@ -1367,8 +1362,8 @@ describe('Outcome Tracking', () => {
   describe('Accuracy Calculation', () => {
     it('should mark prediction accurate when high risk AND readmitted within 30 days', () => {
       const predictedRisk = 0.65; // High risk
-      const wasReadmitted = true;
       const daysToReadmission = 15;
+      const wasReadmitted = true;
 
       const predictedHighRisk = predictedRisk > 0.5;
       const wasReadmittedWithin30Days = wasReadmitted && daysToReadmission <= 30;
@@ -1381,11 +1376,9 @@ describe('Outcome Tracking', () => {
 
     it('should mark prediction accurate when low risk AND NOT readmitted', () => {
       const predictedRisk = 0.25; // Low risk
-      const wasReadmitted = false;
-      const daysToReadmission = undefined;
 
       const predictedHighRisk = predictedRisk > 0.5;
-      const wasReadmittedWithin30Days = wasReadmitted && (daysToReadmission ?? 999) <= 30;
+      const wasReadmittedWithin30Days = false;
       const isAccurate = predictedHighRisk === wasReadmittedWithin30Days;
 
       expect(predictedHighRisk).toBe(false);
@@ -1395,7 +1388,6 @@ describe('Outcome Tracking', () => {
 
     it('should mark prediction inaccurate when high risk but NOT readmitted', () => {
       const predictedRisk = 0.70; // High risk
-      const wasReadmitted = false;
 
       const predictedHighRisk = predictedRisk > 0.5;
       const wasReadmittedWithin30Days = false;
@@ -1408,8 +1400,8 @@ describe('Outcome Tracking', () => {
 
     it('should mark prediction inaccurate when low risk but readmitted', () => {
       const predictedRisk = 0.30; // Low-moderate risk
-      const wasReadmitted = true;
       const daysToReadmission = 10;
+      const wasReadmitted = true;
 
       const predictedHighRisk = predictedRisk > 0.5;
       const wasReadmittedWithin30Days = wasReadmitted && daysToReadmission <= 30;
@@ -1422,8 +1414,8 @@ describe('Outcome Tracking', () => {
 
     it('should not count readmission after 30 days as within window', () => {
       const predictedRisk = 0.65;
-      const wasReadmitted = true;
       const daysToReadmission = 45; // After 30-day window
+      const wasReadmitted = true;
 
       const predictedHighRisk = predictedRisk > 0.5;
       const wasReadmittedWithin30Days = wasReadmitted && daysToReadmission <= 30;
@@ -1837,7 +1829,7 @@ describe('Error Handling', () => {
 
   describe('Graceful Degradation', () => {
     it('should not fail prediction if care plan creation fails', () => {
-      const carePlanFailed = true;
+      const _carePlanFailed = true;
       const predictionSucceeded = true;
 
       // Prediction should still succeed even if care plan fails
@@ -1845,7 +1837,7 @@ describe('Error Handling', () => {
     });
 
     it('should not fail prediction if alert creation fails', () => {
-      const alertFailed = true;
+      const _alertFailed = true;
       const predictionSucceeded = true;
 
       // Prediction should still succeed even if alert fails
@@ -1853,7 +1845,7 @@ describe('Error Handling', () => {
     });
 
     it('should not fail prediction if accuracy tracking fails', () => {
-      const trackingFailed = true;
+      const _trackingFailed = true;
       const predictionSucceeded = true;
 
       // Prediction should still succeed even if tracking fails

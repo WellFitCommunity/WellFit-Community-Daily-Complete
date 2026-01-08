@@ -45,8 +45,7 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
   useEffect(() => {
     if (!hospitalName) return;
 
-    const subscription = subscribeToIncomingPatients(hospitalName, (payload) => {
-
+    const subscription = subscribeToIncomingPatients(hospitalName, (_payload) => {
       // Reload patients on any change
       loadPatients();
     });

@@ -11,7 +11,7 @@ interface Props {
   limit?: number;
 }
 
-const TaskHistoryViewer: React.FC<Props> = ({ userId, history, limit = 20 }) => {
+const TaskHistoryViewer: React.FC<Props> = ({ userId: _userId, history, limit = 20 }) => {
   const formatRelativeTime = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();

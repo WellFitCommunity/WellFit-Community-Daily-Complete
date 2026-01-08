@@ -490,7 +490,7 @@ function parseAdmissionDischargeCommand(normalized: string, transcript: string):
     if (match) {
       const filters: ParsedEntity['filters'] = {};
       const isAdmission = /admission/.test(normalized);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+       
       const _isDischarge = /discharge/.test(normalized);
 
       // Parse timeframe

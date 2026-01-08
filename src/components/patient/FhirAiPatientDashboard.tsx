@@ -48,7 +48,7 @@ const HealthScoreDisplay: React.FC<{ score: number; riskLevel: string }> = ({ sc
     return 'text-red-600';
   };
 
-  const getScoreMessage = (score: number, riskLevel: string) => {
+  const getScoreMessage = (score: number, _riskLevel: string) => {
     if (score >= 80) return "You're doing great! Keep up the excellent work.";
     if (score >= 60) return "Good progress! A few small improvements could help.";
     if (score >= 40) return "You're on the right track. Let's work together to improve.";
@@ -262,7 +262,7 @@ const EncouragementCard: React.FC<{
 };
 
 // Main Patient Dashboard Component
-const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, supabaseKey }) => {
+const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl: _supabaseUrl, supabaseKey: _supabaseKey }) => {
   const { user } = useAuth();
   const [insights, setInsights] = useState<PatientInsights | null>(null);
   const [healthMetrics, setHealthMetrics] = useState<HealthMetric[]>([]);

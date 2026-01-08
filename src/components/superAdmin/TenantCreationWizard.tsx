@@ -188,7 +188,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
       }
 
       // Call RPC to create tenant
-      const { data, error: rpcError } = await (await import('../../lib/supabaseClient')).supabase.rpc('create_tenant', {
+      const { data: _data, error: rpcError } = await (await import('../../lib/supabaseClient')).supabase.rpc('create_tenant', {
         p_name: formData.name,
         p_org_prefix: formData.orgPrefix.toUpperCase(),
         p_subdomain: formData.subdomain.toLowerCase(),

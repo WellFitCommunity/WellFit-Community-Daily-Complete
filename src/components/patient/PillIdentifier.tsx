@@ -9,7 +9,6 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   Camera,
-  Upload,
   Sparkles,
   AlertTriangle,
   CheckCircle,

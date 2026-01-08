@@ -125,7 +125,7 @@ describe('RequireAdminAuth', () => {
   });
 
   describe('Role Authorization - Default Roles', () => {
-    const defaultAllowedRoles: StaffRole[] = ['admin', 'super_admin', 'it_admin'];
+    const _defaultAllowedRoles: StaffRole[] = ['admin', 'super_admin', 'it_admin'];
 
     it('should render content for admin role by default', () => {
       mockUseAdminAuth.mockReturnValue({

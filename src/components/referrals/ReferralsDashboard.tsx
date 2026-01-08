@@ -17,7 +17,6 @@ import {
   XCircle,
   ExternalLink,
   Mail,
-  Phone,
 } from 'lucide-react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
@@ -140,7 +139,7 @@ export const ReferralsDashboard: React.FC = () => {
   const [alerts, setAlerts] = useState<ReferralAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSource, setSelectedSource] = useState<ReferralSource | null>(null);
+  const [_selectedSource, setSelectedSource] = useState<ReferralSource | null>(null);
 
   useEffect(() => {
     loadDashboard();

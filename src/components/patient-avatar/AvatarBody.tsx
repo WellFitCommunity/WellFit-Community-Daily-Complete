@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { cn } from '../../lib/utils';
-import { AvatarBodyProps, SkinTone, GenderPresentation, BodyView } from '../../types/patientAvatar';
+import { AvatarBodyProps, GenderPresentation, BodyView } from '../../types/patientAvatar';
 import { SKIN_TONE_COLORS } from './constants/skinTones';
 
 interface AvatarBodyComponentProps extends AvatarBodyProps {
@@ -364,7 +364,6 @@ export const AvatarBody: React.FC<AvatarBodyComponentProps> = React.memo(({
   onClick,
 }) => {
   const skinColor = SKIN_TONE_COLORS[skinTone];
-  const strokeColor = '#1e293b'; // slate-800
   const outlineColor = '#475569'; // slate-600
 
   const sizeClasses = size === 'thumbnail'

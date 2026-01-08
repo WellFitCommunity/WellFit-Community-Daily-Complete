@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FHIREncounterWrapper, FHIREncounter } from '../fhirEncounterWrapper';
+import { FHIREncounterWrapper } from '../fhirEncounterWrapper';
 import type { Encounter as BillingEncounter } from '../../types/billing';
 
 // Mock EncounterService

@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import VoiceInputModule from '../VoiceInputModule';
 
 // Mock ClaudeCareAssistant
@@ -24,7 +24,7 @@ vi.mock('../../../services/claudeCareAssistant', () => ({
 
 import { ClaudeCareAssistant } from '../../../services/claudeCareAssistant';
 
-const mockProcessVoiceInput = ClaudeCareAssistant.processVoiceInput as ReturnType<typeof vi.fn>;
+const _mockProcessVoiceInput = ClaudeCareAssistant.processVoiceInput as ReturnType<typeof vi.fn>;
 
 describe('VoiceInputModule', () => {
   beforeEach(() => {

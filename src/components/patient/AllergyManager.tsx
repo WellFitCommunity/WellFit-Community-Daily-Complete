@@ -15,7 +15,7 @@ interface AllergyManagerProps {
 
 const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = false }) => {
   // React Query hooks for automatic caching and data management
-  const { data: allergies = [], isLoading: loading, error } = useAllergies(userId);
+  const { data: allergies = [], isLoading: loading, error: _error } = useAllergies(userId);
   const createMutation = useCreateAllergy();
   const updateMutation = useUpdateAllergy();
   const deleteMutation = useDeleteAllergy();

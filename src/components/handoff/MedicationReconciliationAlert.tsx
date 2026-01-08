@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from 'react';
 import MedicationReconciliationService, {
-  type MedicationDiscrepancy,
   type MedRecReport
 } from '../../services/medicationReconciliationService';
 import JointCommissionFormService from '../../services/jointCommissionFormService';

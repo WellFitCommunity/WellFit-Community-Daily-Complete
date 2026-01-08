@@ -162,7 +162,7 @@ describe('ClaudeCareAssistant', () => {
           error: null,
         });
 
-        const mockUpdate = vi.fn().mockResolvedValue({ data: null, error: null });
+        const _mockUpdate = vi.fn().mockResolvedValue({ data: null, error: null });
 
         const mockChain = {
           select: vi.fn().mockReturnThis(),

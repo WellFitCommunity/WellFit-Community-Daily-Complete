@@ -8,7 +8,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '../../lib/utils';
-import { PatientMarker, SkinTone, GenderPresentation, BodyView, MarkerCategory, CATEGORY_COLORS } from '../../types/patientAvatar';
+import { PatientMarker, SkinTone, GenderPresentation, MarkerCategory, CATEGORY_COLORS } from '../../types/patientAvatar';
 import { AvatarBody } from './AvatarBody';
 import { AvatarMarker } from './AvatarMarker';
 import { StatusBadgeRing } from './StatusBadgeRing';
@@ -94,7 +94,7 @@ function isMarkerNew(marker: PatientMarker, since: Date): boolean {
  * AvatarThumbnail Component
  */
 export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
-  patientId,
+  patientId: _patientId,
   patientName,
   skinTone,
   genderPresentation,

@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DischargePlanningService } from '../../services/dischargePlanningService';
-import { PostAcuteFacilityMatcher } from '../../services/postAcuteFacilityMatcher';
+// PostAcuteFacilityMatcher import reserved for future facility matching feature
 import type {
   DischargePlan,
   UpdateDischargePlanRequest

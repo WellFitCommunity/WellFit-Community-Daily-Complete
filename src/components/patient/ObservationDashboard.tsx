@@ -13,7 +13,7 @@ type TabType = 'all' | 'vitals' | 'labs' | 'social';
 
 const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, readOnly = false }) => {
   // Use React Query for data fetching with automatic caching
-  const { data: observations = [], isLoading: loading, error } = useObservations(userId);
+  const { data: observations = [], isLoading: loading, error: _error } = useObservations(userId);
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [showAddForm, setShowAddForm] = useState(false);

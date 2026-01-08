@@ -44,7 +44,7 @@ interface EditingBannerProps {
 // ============================================================================
 
 export const EditingBanner: React.FC<EditingBannerProps> = React.memo(
-  ({ user, fieldName, onClose, className = '' }) => {
+  ({ user, fieldName, onClose: _onClose, className = '' }) => {
     return (
       <div
         className={`
@@ -185,7 +185,7 @@ interface CollaborativeFieldProps {
 }
 
 export const CollaborativeField: React.FC<CollaborativeFieldProps> = React.memo(
-  ({ fieldId, editingUser, isCurrentUserEditing = false, children, className = '' }) => {
+  ({ fieldId: _fieldId, editingUser, isCurrentUserEditing = false, children, className = '' }) => {
     const hasOtherEditor = editingUser && !isCurrentUserEditing;
 
     return (

@@ -149,15 +149,7 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
     }
   };
 
-  const getUrgencyColor = (level: string): string => {
-    const colors = {
-      routine: 'bg-blue-100 text-blue-800',
-      urgent: 'bg-yellow-100 text-yellow-800',
-      emergent: 'bg-orange-100 text-orange-800',
-      critical: 'bg-red-100 text-red-800',
-    };
-    return colors[level as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
+  // getUrgencyColor moved to PacketCard component where it's used
 
   if (loading) {
     return <TransferPacketSkeleton />;

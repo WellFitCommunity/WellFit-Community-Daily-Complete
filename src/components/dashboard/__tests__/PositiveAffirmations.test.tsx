@@ -25,7 +25,7 @@ describe('PositiveAffirmations', () => {
     render(<PositiveAffirmations />);
 
     const initialText = screen.getByText(/"/);
-    const initialAffirmation = initialText.textContent;
+    const _initialAffirmation = initialText.textContent;
 
     const button = screen.getByRole('button', { name: /new affirmation/i });
 

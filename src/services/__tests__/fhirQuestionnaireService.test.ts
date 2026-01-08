@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FHIRQuestionnaireService, FHIRQuestionnaire, FHIRQuestionnaireRecord } from '../fhirQuestionnaireService';
+import { FHIRQuestionnaireService, FHIRQuestionnaire } from '../fhirQuestionnaireService';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 // Mock fetch globally

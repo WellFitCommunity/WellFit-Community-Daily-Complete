@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Activity, Users, ClipboardList, TrendingUp, Calendar, FileText, Award, AlertTriangle, RefreshCw } from 'lucide-react';
-import { PhysicalTherapyService, PTApiResponse } from '../../services/physicalTherapyService';
+import { PhysicalTherapyService } from '../../services/physicalTherapyService';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
 import { useKeyboardShortcutsContextSafe } from '../envision-atlus/EAKeyboardShortcutsProvider';
@@ -92,7 +92,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
 
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [caseload, setCaseload] = useState<PTCaseloadPatient[]>([]);
-  const [recentAssessments, setRecentAssessments] = useState<PTFunctionalAssessment[]>([]);
+  const [_recentAssessments, _setRecentAssessments] = useState<PTFunctionalAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<PTCaseloadPatient | null>(null);

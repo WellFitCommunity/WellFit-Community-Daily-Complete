@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mock data
@@ -43,7 +43,7 @@ const createMockQueryBuilder = (resolveData: unknown[] | null = [], error: Error
 // Default mock that returns empty data
 let mockQueryBuilder = createMockQueryBuilder([]);
 
-const mockSupabase = {
+const _mockSupabase = {
   from: vi.fn(() => mockQueryBuilder),
 };
 

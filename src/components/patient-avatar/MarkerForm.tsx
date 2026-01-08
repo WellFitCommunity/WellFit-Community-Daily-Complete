@@ -48,7 +48,7 @@ const FormSection: React.FC<{
  * MarkerForm Component
  */
 export const MarkerForm: React.FC<MarkerFormProps> = ({
-  patientId,
+  patientId: _patientId,
   existingMarker,
   skinTone,
   genderPresentation,
@@ -85,8 +85,8 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
 
   const [saving, setSaving] = useState(false);
 
-  // Get marker types for selected category
-  const availableTypes = useMemo(() => {
+  // Get marker types for selected category (used in type selection dropdown)
+  const _availableTypes = useMemo(() => {
     const group = MARKER_TYPE_GROUPS.find((g) =>
       g.types.some((t) => t.category === category)
     );

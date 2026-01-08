@@ -13,7 +13,6 @@ import { cn } from '../../lib/utils';
 import { EACard, EACardHeader, EACardContent, EACardFooter } from '../envision-atlus/EACard';
 import { EAButton } from '../envision-atlus/EAButton';
 import { EABadge } from '../envision-atlus/EABadge';
-import { EAAlert } from '../envision-atlus/EAAlert';
 import {
   PatientMarker,
   SkinTone,
@@ -112,7 +111,7 @@ const PendingMarkersAlert: React.FC<{
  * AvatarFullBody Component
  */
 export const AvatarFullBody: React.FC<AvatarFullBodyProps> = ({
-  patientId,
+  patientId: _patientId,
   patientName,
   skinTone,
   genderPresentation,

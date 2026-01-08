@@ -48,7 +48,7 @@ export const EAKeyboardShortcutsProvider: React.FC<EAKeyboardShortcutsProviderPr
   const [pageShortcuts, setPageShortcuts] = React.useState<KeyboardShortcut[]>([]);
 
   const {
-    shortcuts,
+    shortcuts: _shortcuts,
     showHelp,
     setShowHelp,
     currentFilter,

@@ -151,7 +151,7 @@ import { useThemeInit } from './hooks/useTheme';
 import { useBrowserHistoryProtection } from './hooks/useBrowserHistoryProtection';
 
 const mockedUseAuth = vi.mocked(useAuth);
-const mockedGetCurrentBranding = vi.mocked(getCurrentBranding);
+const _mockedGetCurrentBranding = vi.mocked(getCurrentBranding);
 
 // ============================================================================
 // TEST WRAPPER
@@ -332,7 +332,7 @@ describe('App', () => {
 
   describe('React Query DevTools', () => {
     it('should render DevTools in development mode', () => {
-      const originalMode = import.meta.env.MODE;
+      const _originalMode = import.meta.env.MODE;
       // Note: Vitest runs in 'test' mode, so DevTools won't render
       // This test documents the expected behavior
       renderApp();

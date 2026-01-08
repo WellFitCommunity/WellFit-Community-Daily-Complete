@@ -18,10 +18,8 @@ import {
   ConsentManagementService,
   consentManagementService,
   type Consent,
-  type ConsentType,
   type GrantConsentParams,
   type SharingPermissions,
-  type ConsentVerificationResult,
   type ExpiringConsent,
   type ConsentVerificationLog,
 } from '../consentManagementService';

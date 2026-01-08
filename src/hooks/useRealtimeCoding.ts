@@ -65,7 +65,7 @@ export const useRealtimeCoding = (encounterId?: string) => {
           table: 'coding_recommendations',
           filter: `encounter_id=eq.${encounterId}`,
         },
-        (payload) => {
+        (_payload) => {
 
           fetchRecommendations();
         }

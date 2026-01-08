@@ -192,7 +192,7 @@ export const WearableDashboard: React.FC = () => {
         try {
           // Use a direct SMS function (not verification) - we'll invoke the send-check-in-reminder-sms style
           const patientName = profile ? ((profile.first_name || '') + ' ' + (profile.last_name || '')).trim() : '';
-          const smsMessage = `🚨 EMERGENCY ALERT: ${patientName || 'Your loved one'} has triggered an emergency SOS from WellFit. Please check on them immediately.${location ? ` Location: ${location}` : ''}`;
+          const _smsMessage = `🚨 EMERGENCY ALERT: ${patientName || 'Your loved one'} has triggered an emergency SOS from WellFit. Please check on them immediately.${location ? ` Location: ${location}` : ''}`;
 
           // Log that we're attempting SMS
           await auditLogger.info('EMERGENCY_SMS_ATTEMPT', {

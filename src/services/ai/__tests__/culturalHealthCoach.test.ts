@@ -126,7 +126,7 @@ const mockCachedContent = {
 // HELPER FUNCTIONS
 // ============================================================================
 
-function setupMocks(options: {
+function _setupMocks(options: {
   skillEnabled?: boolean;
   cacheHit?: boolean;
   translationResponse?: typeof mockTranslationResponse;

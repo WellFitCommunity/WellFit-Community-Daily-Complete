@@ -13,7 +13,7 @@ vi.mock('../../lib/supabaseClient', () => {
   const mockLimit = vi.fn(() => ({ single: mockSingle, then: (cb: (r: unknown) => void) => cb({ data: [] }) }));
   const mockOrder = vi.fn(() => ({ limit: mockLimit, single: mockSingle, then: (cb: (r: unknown) => void) => cb({ data: [] }) }));
   const mockLte = vi.fn(() => ({ order: mockOrder, limit: mockLimit }));
-  const mockGte = vi.fn(() => ({ lte: mockLte, order: mockOrder, limit: mockLimit }));
+  const _mockGte = vi.fn(() => ({ lte: mockLte, order: mockOrder, limit: mockLimit }));
   const mockIs = vi.fn(() => ({ is: vi.fn(), eq: vi.fn(), single: mockSingle }));
   const mockEq = vi.fn(() => ({ eq: mockEq, is: mockIs, select: vi.fn(), order: mockOrder, single: mockSingle }));
   const mockSelect = vi.fn(() => ({ eq: mockEq, is: mockIs, order: mockOrder, single: mockSingle }));

@@ -7,9 +7,8 @@
 // ============================================================================
 
 import React, { useState } from 'react';
-import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { submitDailyCheckin } from '../../services/resilienceHubService';
-import type { DailyCheckinFormData, WorkSetting } from '../../types/nurseos';
+import type { DailyCheckinFormData } from '../../types/nurseos';
 import { STRESS_LEVEL_LABELS } from '../../types/nurseos';
 
 interface DailyCheckinFormProps {
@@ -23,9 +22,6 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
   onClose,
   productLine = 'clarity',
 }) => {
-  const supabase = useSupabaseClient();
-  const user = useUser();
-
   // Form state
   const [formData, setFormData] = useState<DailyCheckinFormData>({
     work_setting: 'remote',

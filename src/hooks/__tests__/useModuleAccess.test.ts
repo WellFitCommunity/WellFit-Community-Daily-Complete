@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useModuleAccess, useModuleAccessMultiple, useModuleMetadata } from '../useModuleAccess';
-import type { ModuleName } from '../../types/tenantModules';
+// ModuleName type is mapped in the mock below
 
 // Mock the tenant module service
 const mockGetTenantModuleConfig = vi.fn();

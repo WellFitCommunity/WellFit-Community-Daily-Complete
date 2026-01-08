@@ -25,7 +25,7 @@ const mockCaptchaRef = { current: null };
 
 vi.mock('hooks/useHcaptcha', () => ({
   useHcaptcha: () => ({
-    HCaptcha: ({ sitekey, size, ref }: { sitekey: string; size: string; ref: React.RefObject<unknown> }) => (
+    HCaptcha: ({ sitekey, size, ref: _ref }: { sitekey: string; size: string; ref: React.RefObject<unknown> }) => (
       <div data-testid="hcaptcha-widget" data-sitekey={sitekey} data-size={size}>
         hCaptcha Widget
       </div>

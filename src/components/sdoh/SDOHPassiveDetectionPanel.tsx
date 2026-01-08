@@ -45,7 +45,7 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
       await SDOHPassiveDetectionService.reviewDetection(detectionId, createFactor, notes);
 
       // Remove from list
-      setDetections(prev => prev.filter(d => {
+      setDetections(prev => prev.filter(_d => {
         // Need to get detection ID from database - for now filter by source_id
         return true; // Will be fixed when we add ID to detection type
       }));

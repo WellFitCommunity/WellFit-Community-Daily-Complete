@@ -376,7 +376,7 @@ describe('WelfareCheckDispatcher', () => {
         critical: 'immediate_dispatch',
       };
 
-      Object.entries(priorityActionMap).forEach(([priority, action]) => {
+      Object.entries(priorityActionMap).forEach(([_priority, action]) => {
         expect(validActions).toContain(action);
       });
     });

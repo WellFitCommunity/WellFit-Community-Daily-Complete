@@ -105,8 +105,8 @@ const SuperAdminApiKeyManager: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<keyof ApiKey>('created_at');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortField, _setSortField] = useState<keyof ApiKey>('created_at');
+  const [sortDirection, _setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);

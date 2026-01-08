@@ -176,7 +176,7 @@ const AISkillsControlPanel: React.FC = () => {
     try {
       setActionLoading(`${tenantId}-${skillKey}`);
 
-      const { data, error: toggleError } = await supabase.rpc('toggle_tenant_ai_skill', {
+      const { data: _data, error: toggleError } = await supabase.rpc('toggle_tenant_ai_skill', {
         p_tenant_id: tenantId,
         p_skill_key: skillKey,
         p_enabled: !currentEnabled,

@@ -284,7 +284,7 @@ describe('SOC2MonitoringService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     service = new SOC2MonitoringService(mockSupabase as any);
   });
 
@@ -1064,7 +1064,7 @@ describe('SOC2MonitoringService', () => {
 
   describe('createSOC2MonitoringService', () => {
     it('should create a new SOC2MonitoringService instance', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const instance = createSOC2MonitoringService(mockSupabase as any);
 
       expect(instance).toBeInstanceOf(SOC2MonitoringService);
@@ -1077,7 +1077,7 @@ describe('SOC2MonitoringService', () => {
         error: null,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const instance = createSOC2MonitoringService(mockSupabase as any);
       const result = await instance.getSecurityMetrics();
 

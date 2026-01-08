@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { Alert, AlertDescription } from '../ui/alert';
-import { UserPlus, UserMinus, Shield, Search, Filter } from 'lucide-react';
+import { UserPlus, UserMinus, Search, Filter } from 'lucide-react';
 
 interface UserWithRole {
   id: string;

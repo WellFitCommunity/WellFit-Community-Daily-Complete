@@ -2,8 +2,8 @@
 // Daily.co integrated telehealth with SmartScribe real-time coding
 // Supports: Regular visits, ER telehealth, stethoscope audio streaming
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import DailyIframe, { DailyCall, DailyEvent, DailyEventObject } from '@daily-co/daily-js';
+import React, { useState, useEffect, useCallback } from 'react';
+import DailyIframe, { DailyCall, DailyEventObject } from '@daily-co/daily-js';
 import { useDaily, DailyProvider } from '@daily-co/daily-react';
 import { supabase } from '../../lib/supabaseClient';
 import RealTimeSmartScribe from '../smart/RealTimeSmartScribe';
@@ -14,12 +14,6 @@ interface TelehealthConsultationProps {
   patientName: string;
   encounterType: 'outpatient' | 'er' | 'urgent-care';
   onEndCall?: () => void;
-}
-
-interface ParticipantInfo {
-  user_id: string;
-  user_name: string;
-  session_id: string;
 }
 
 interface CallState {

@@ -41,9 +41,7 @@ vi.mock('../../utils/claudeModelSelection', () => ({
 }));
 
 import { loadAnthropicSDK } from '../anthropicLoader';
-import { auditLogger } from '../auditLogger';
 import { validateEnvironment } from '../../config/environment';
-import { ClaudeModel, UserRole, RequestType } from '../../types/claude';
 
 // ===========================================================================
 // TEST SETUP

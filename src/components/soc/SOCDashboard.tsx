@@ -27,7 +27,8 @@ import {
   SEVERITY_CONFIG,
   STATUS_CONFIG,
 } from '../../types/socDashboard';
-import { EACard, EACardHeader, EACardContent } from '../envision-atlus/EACard';
+// EACard, EACardHeader, EACardContent imported for future use
+// import { EACard, EACardHeader, EACardContent } from '../envision-atlus/EACard';
 import { EAButton } from '../envision-atlus/EAButton';
 import { EABadge } from '../envision-atlus/EABadge';
 import { AlertDetailPanel } from './AlertDetailPanel';

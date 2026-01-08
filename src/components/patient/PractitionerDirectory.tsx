@@ -10,7 +10,7 @@ interface PractitionerDirectoryProps {
 
 const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
   onSelectPractitioner,
-  readOnly = false,
+  readOnly: _readOnly = false,
 }) => {
   const [practitioners, setPractitioners] = useState<FHIRPractitioner[]>([]);
   const [filteredPractitioners, setFilteredPractitioners] = useState<FHIRPractitioner[]>([]);

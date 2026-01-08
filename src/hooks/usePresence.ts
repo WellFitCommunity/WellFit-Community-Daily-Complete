@@ -224,7 +224,7 @@ export function usePresence(options: UsePresenceOptions): UsePresenceReturn {
     });
 
     // Handle user leave
-    channel.on('presence', { event: 'leave' }, ({ key: leaveKey, leftPresences }) => {
+    channel.on('presence', { event: 'leave' }, ({ key: _leaveKey, leftPresences }) => {
       if (!mountedRef.current) return;
 
       auditLogger.debug('PRESENCE_USER_LEFT', {

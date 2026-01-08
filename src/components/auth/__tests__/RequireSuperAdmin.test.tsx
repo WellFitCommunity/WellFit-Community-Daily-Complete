@@ -42,7 +42,7 @@ vi.mock('../../../services/auditLogger', () => ({
 
 describe('RequireSuperAdmin', () => {
   // Store original localStorage
-  const originalLocalStorage = window.localStorage;
+  const _originalLocalStorage = window.localStorage;
 
   beforeEach(() => {
     vi.clearAllMocks();

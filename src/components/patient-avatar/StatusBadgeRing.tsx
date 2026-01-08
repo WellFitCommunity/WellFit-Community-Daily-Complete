@@ -21,7 +21,6 @@ import {
   Footprints,
   Hand,
   Wind,
-  Shield,
   ShieldCheck,
   Heart,
   HeartOff,
@@ -490,13 +489,6 @@ export const useBadgeOnboarding = () => {
 
   return { showTour, completeTour, skipTour, resetTour };
 };
-
-/**
- * Default icon for unknown badge types
- */
-const DefaultBadgeIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <HelpCircle className={className} />
-);
 
 /**
  * StatusBadgeRing Component

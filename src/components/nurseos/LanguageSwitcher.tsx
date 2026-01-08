@@ -48,7 +48,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ className = 
 
 // Hook to get current language
 export function useResilienceLanguage(): Language {
-  const [language, setLanguage] = useState<Language>(() => {
+  const [language] = useState<Language>(() => {
     const saved = localStorage.getItem('wellfit_resilience_language');
     return (saved as Language) || 'en';
   });

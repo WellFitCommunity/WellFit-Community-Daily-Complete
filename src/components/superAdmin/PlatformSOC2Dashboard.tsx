@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Shield, AlertTriangle, CheckCircle, TrendingUp, Building2, Users, FileText, Activity } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, TrendingUp, Building2, FileText, Activity } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
 
 interface TenantComplianceMetrics {

@@ -191,7 +191,7 @@ const CaregiverPortal: React.FC<CaregiverPortalProps> = ({ patientId, caregiverI
           </h3>
           {cognitiveHistory.length > 0 ? (
             <div className="space-y-3">
-              {cognitiveHistory.slice(0, 10).map((assessment, index) => (
+              {cognitiveHistory.slice(0, 10).map((assessment, _index) => (
                 <div key={assessment.id} className="flex items-center gap-4">
                   <div className="w-32 text-sm text-gray-600">
                     {new Date(assessment.assessment_date).toLocaleDateString()}

@@ -24,21 +24,21 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  const categoryColors = {
+  const _categoryColors = {
     medical: 'border-l-4 border-l-blue-600 bg-blue-50',
     administrative: 'border-l-4 border-l-purple-600 bg-purple-50',
     clinical: 'border-l-4 border-l-green-600 bg-green-50',
     revenue: 'border-l-4 border-l-amber-600 bg-amber-50'
   };
 
-  const badgeColors = {
+  const _badgeColors = {
     medical: 'bg-blue-600',
     administrative: 'bg-purple-600',
     clinical: 'bg-green-600',
     revenue: 'bg-amber-600'
   };
 
-  const categoryColorsBranded = {
+  const _categoryColorsBranded = {
     medical: 'border-l-4 border-l-[#1BA39C] bg-linear-to-r from-[#E0F7F6] to-white',
     administrative: 'border-l-4 border-l-[#C8E63D] bg-linear-to-r from-[#F4FADC] to-white',
     clinical: 'border-l-4 border-l-[#158A84] bg-linear-to-r from-[#E0F7F6] to-white',

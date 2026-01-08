@@ -70,7 +70,7 @@ const PhysicianPanel: React.FC = () => {
   // Cognitive load reduction state
   const [workflowMode, setWorkflowMode] = useState<WorkflowMode>('all');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
-  const [pinnedCommands, setPinnedCommands] = useState<string[]>([]);
+  const [pinnedCommands, _setPinnedCommands] = useState<string[]>([]);
 
   const loadDashboardStats = useCallback(async () => {
     try {
@@ -458,7 +458,7 @@ const PhysicianPanel: React.FC = () => {
               <SmartScribe
                 selectedPatientId={selectedPatient.user_id}
                 selectedPatientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
-                onSessionComplete={(sessionId) => {
+                onSessionComplete={(_sessionId) => {
 
                 }}
               />

@@ -25,7 +25,7 @@ export const SDOHDetailPanel: React.FC<SDOHDetailPanelProps> = ({
   factor,
   isOpen,
   onClose,
-  patientId,
+  patientId: _patientId,
   className = '',
   onUpdateFactor,
   onAddReferral

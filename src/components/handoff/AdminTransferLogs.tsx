@@ -153,7 +153,8 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
         }
 
         // Decrypt patient info for export (admins only)
-        const patientName = packet.patient_name_encrypted
+        // Note: patientName is decrypted but not included in export for PHI protection
+        const _patientName = packet.patient_name_encrypted
           ? await HandoffService.decryptPHI(packet.patient_name_encrypted)
           : 'N/A';
 

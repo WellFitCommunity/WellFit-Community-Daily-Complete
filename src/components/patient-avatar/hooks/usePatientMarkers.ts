@@ -11,7 +11,6 @@ import {
   PatientMarker,
   CreateMarkerRequest,
   UpdateMarkerRequest,
-  PatientMarkersResponse,
 } from '../../../types/patientAvatar';
 
 interface UsePatientMarkersResult {

@@ -45,7 +45,7 @@ describe('Role Permission Tests', () => {
         });
 
         const testUserId = 'test-super-admin-id';
-        const { data, error } = await supabase.rpc('get_role_access_scopes', {
+        const { data: _data, error } = await supabase.rpc('get_role_access_scopes', {
           check_user_id: testUserId,
         });
 
@@ -54,7 +54,7 @@ describe('Role Permission Tests', () => {
           check_user_id: testUserId,
         });
 
-        const scopes = data as RoleAccessScopes;
+        const scopes = _data as RoleAccessScopes;
         expect(scopes).toHaveProperty('canViewNurse');
         expect(scopes).toHaveProperty('canViewPhysician');
         expect(scopes).toHaveProperty('canViewAdmin');
@@ -69,11 +69,11 @@ describe('Role Permission Tests', () => {
           error: { message: 'User not found', code: 'P0001' }
         });
 
-        const { data, error } = await supabase.rpc('get_role_access_scopes', {
+        const { data: _data, error } = await supabase.rpc('get_role_access_scopes', {
           check_user_id: 'nonexistent-user',
         });
 
-        expect(data).toBeNull();
+        expect(_data).toBeNull();
         expect(error).not.toBeNull();
         expect(error?.message).toContain('not found');
       });
@@ -216,7 +216,7 @@ describe('Role Permission Tests', () => {
           select: mockSelect
         });
 
-        const { data, error } = await supabase
+        const { data: _data, error } = await supabase
           .from('user_roles')
           .select('*')
           .limit(1);
@@ -240,7 +240,7 @@ describe('Role Permission Tests', () => {
           select: mockSelect
         });
 
-        const { data, error } = await supabase
+        const { data: _data, error } = await supabase
           .from('staff_pins')
           .select('user_id, role')
           .limit(1);
@@ -264,7 +264,7 @@ describe('Role Permission Tests', () => {
           select: mockSelect
         });
 
-        const { data, error } = await supabase
+        const { data: _data, error } = await supabase
           .from('staff_auth_attempts')
           .select('id')
           .limit(1);
@@ -308,7 +308,7 @@ describe('Role Permission Tests', () => {
           select: mockSelect
         });
 
-        const { data, error } = await supabase
+        const { data: _data, error } = await supabase
           .from('staff_audit_log')
           .select('id')
           .limit(1);

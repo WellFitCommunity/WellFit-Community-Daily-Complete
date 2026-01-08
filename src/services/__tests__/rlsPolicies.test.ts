@@ -51,7 +51,7 @@ describe('RLS Policy Tests - HIPAA Compliance', () => {
       });
 
       // Act: Query would go through RLS
-      const result = await supabase.from('profiles').select('*');
+      const _result = await supabase.from('profiles').select('*');
 
       // Assert: RLS should filter to only tenant A data
       expect(supabase.from).toHaveBeenCalledWith('profiles');

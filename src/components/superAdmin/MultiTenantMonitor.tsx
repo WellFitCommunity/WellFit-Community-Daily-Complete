@@ -166,7 +166,7 @@ const MultiTenantMonitor: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             {tenants.map((tenant, index) => {
-              const color = getTenantColor(index);
+              const _color = getTenantColor(index);
               const isFullscreen = fullscreenTenant === tenant.tenantId;
               return (
                 <div

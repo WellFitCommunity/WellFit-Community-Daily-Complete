@@ -385,7 +385,7 @@ export function useRealtimeSubscription<T = unknown>(
         const currentEvent = eventRef.current;
         const currentFilter = filterRef.current;
         // SDK boundary - Supabase types don't perfectly match runtime API
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const subscription = channel.on('postgres_changes', {
           event: currentEvent === '*' ? '*' : (currentEvent as 'INSERT' | 'UPDATE' | 'DELETE'),
           schema: schema,

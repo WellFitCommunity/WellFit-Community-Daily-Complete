@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Heart,
   Gamepad2,
-  Calendar,
   Pill,
   Stethoscope,
   Activity,

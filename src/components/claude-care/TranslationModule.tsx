@@ -10,7 +10,7 @@ interface Props {
   userRole: string;
 }
 
-const TranslationModule: React.FC<Props> = ({ userRole }) => {
+const TranslationModule: React.FC<Props> = ({ userRole: _userRole }) => {
   const [sourceLanguage, setSourceLanguage] = useState<SupportedLanguage>('en');
   const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>('es');
   const [sourceText, setSourceText] = useState('');

@@ -277,7 +277,7 @@ describe('GuardianApprovalService', () => {
     vi.clearAllMocks();
     resetGuardianApprovalService();
     mockSupabase = createMockSupabase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     service = new GuardianApprovalService(mockSupabase as any);
   });
 
@@ -1014,9 +1014,9 @@ describe('GuardianApprovalService', () => {
 
   describe('getGuardianApprovalService', () => {
     it('should return singleton instance', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const instance1 = getGuardianApprovalService(mockSupabase as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const instance2 = getGuardianApprovalService(mockSupabase as any);
 
       expect(instance1).toBe(instance2);
@@ -1026,7 +1026,7 @@ describe('GuardianApprovalService', () => {
   describe('resetGuardianApprovalService', () => {
     it('should reset singleton and unsubscribe', () => {
       // Create and subscribe
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const instance = getGuardianApprovalService(mockSupabase as any);
       instance.subscribeToTickets(vi.fn(), vi.fn());
 
@@ -1034,7 +1034,7 @@ describe('GuardianApprovalService', () => {
       resetGuardianApprovalService();
 
       // New call should create new instance
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const newInstance = getGuardianApprovalService(mockSupabase as any);
       expect(newInstance).not.toBe(instance);
     });

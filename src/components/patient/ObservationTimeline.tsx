@@ -6,7 +6,7 @@ interface ObservationTimelineProps {
   userId: string;
 }
 
-interface TrendPoint {
+interface _TrendPoint {
   date: string;
   value: number;
   interpretation?: string;

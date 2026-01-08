@@ -22,7 +22,6 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  Settings,
   Edit2,
   Hash,
   Sliders,
@@ -30,9 +29,7 @@ import {
   Heart,
   Stethoscope,
   Layers,
-  Filter,
   Search,
-  Calendar,
   Shield,
   DollarSign
 } from 'lucide-react';

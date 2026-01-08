@@ -254,7 +254,7 @@ export class GarminAdapter implements WearableAdapter {
     return this.metadata.capabilities[feature as keyof typeof this.metadata.capabilities] || false;
   }
 
-  private async makeOAuthRequest(url: string, method: string, userId: string): Promise<Response> {
+  private async makeOAuthRequest(url: string, method: string, _userId: string): Promise<Response> {
     if (!this.config?.clientId || !this.config?.clientSecret) {
       throw new Error('Garmin credentials not configured');
     }
