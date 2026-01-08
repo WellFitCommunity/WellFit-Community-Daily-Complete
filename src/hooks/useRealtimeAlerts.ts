@@ -237,8 +237,8 @@ export function useRealtimeAlerts(
   }, [supabase, severityFilter, categoryFilter, maxAlerts, componentName]);
 
   // Handle new alert from realtime subscription
-  const handleNewAlert = useCallback((payload: any) => {
-    const newAlert = payload.new as RealtimeAlert;
+  const handleNewAlert = useCallback((payload: { new: Record<string, unknown> }) => {
+    const newAlert = payload.new as unknown as RealtimeAlert;
 
     // Prevent duplicate processing
     if (processedIds.current.has(newAlert.id)) {
@@ -286,8 +286,8 @@ export function useRealtimeAlerts(
   }, [severityFilter, categoryFilter, maxAlerts, enableSound, onNewAlert]);
 
   // Handle alert update
-  const handleAlertUpdate = useCallback((payload: any) => {
-    const updatedAlert = payload.new as RealtimeAlert;
+  const handleAlertUpdate = useCallback((payload: { new: Record<string, unknown> }) => {
+    const updatedAlert = payload.new as unknown as RealtimeAlert;
 
     setRecentAlerts(prev =>
       prev.map(a => a.id === updatedAlert.id ? updatedAlert : a)
@@ -295,7 +295,7 @@ export function useRealtimeAlerts(
   }, []);
 
   // Handle alert delete
-  const handleAlertDelete = useCallback((payload: any) => {
+  const handleAlertDelete = useCallback((payload: { old?: { id?: string } }) => {
     const deletedId = payload.old?.id;
     if (deletedId) {
       setRecentAlerts(prev => prev.filter(a => a.id !== deletedId));

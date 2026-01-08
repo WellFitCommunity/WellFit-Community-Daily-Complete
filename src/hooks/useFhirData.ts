@@ -619,7 +619,7 @@ export function useUpdateAllergy() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Record<string, unknown> }) => {
       const data = await AllergyIntoleranceService.update(id, updates);
       return data;
     },

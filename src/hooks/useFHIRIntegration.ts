@@ -402,11 +402,11 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
   const getSyncHistory = useCallback(async (
     connectionId: string,
     limit: number = 50
-  ): Promise<any[]> => {
+  ): Promise<SyncHistoryEntry[]> => {
     try {
       const response = await fhirSyncAPI.getSyncHistory(connectionId, limit);
       if (response.success && response.data) {
-        return response.data;
+        return response.data as unknown as SyncHistoryEntry[];
       } else {
         setError(response.error || 'Failed to fetch sync history');
         return [];
@@ -420,11 +420,11 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
   const getSyncStats = useCallback(async (
     connectionId: string,
     days: number = 30
-  ): Promise<any> => {
+  ): Promise<SyncStats | null> => {
     try {
       const response = await fhirSyncAPI.getSyncStatistics(connectionId, days);
       if (response.success && response.data) {
-        return response.data;
+        return response.data as unknown as SyncStats;
       } else {
         setError(response.error || 'Failed to fetch sync statistics');
         return null;
@@ -460,11 +460,11 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
   const getPatientMapping = useCallback(async (
     communityUserId: string,
     connectionId: string
-  ): Promise<any> => {
+  ): Promise<PatientMapping | null> => {
     try {
       const response = await fhirSyncAPI.getPatientMapping(communityUserId, connectionId);
       if (response.success) {
-        return response.data;
+        return response.data as unknown as PatientMapping | null;
       } else {
         return null;
       }
@@ -545,11 +545,11 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
   // ANALYTICS
   // ========================================================================
 
-  const getComplianceMetrics = useCallback(async (): Promise<any> => {
+  const getComplianceMetrics = useCallback(async (): Promise<ComplianceMetrics | null> => {
     try {
       const response = await fhirSyncAPI.getFHIRComplianceMetrics();
       if (response.success && response.data) {
-        return response.data;
+        return response.data as unknown as ComplianceMetrics;
       } else {
         setError(response.error || 'Failed to fetch compliance metrics');
         return null;

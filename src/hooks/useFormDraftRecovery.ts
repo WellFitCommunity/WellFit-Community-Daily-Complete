@@ -9,7 +9,7 @@ interface UseFormDraftRecoveryOptions<_T = unknown> {
   enabled?: boolean;
 }
 
-export function useFormDraftRecovery<T extends Record<string, any>>(
+export function useFormDraftRecovery<T extends Record<string, unknown>>(
   initialData: T,
   options: UseFormDraftRecoveryOptions<T>
 ) {
