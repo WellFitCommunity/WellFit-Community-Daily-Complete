@@ -691,29 +691,59 @@ export const PatientFriendlyAVSService = {
 };
 
 /**
+ * Database record shape from patient_friendly_avs table
+ */
+interface AVSDbRecord {
+  id: string;
+  tenant_id: string;
+  patient_id: string;
+  session_id: string | null;
+  encounter_id: string | null;
+  visit_date: string;
+  generated_at: string;
+  generated_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  content_json: PatientFriendlyAVS;
+  plain_text_content: string;
+  reading_grade_level: number;
+  language: string;
+  status: 'draft' | 'approved' | 'delivered' | 'archived';
+  delivery_method: 'email' | 'sms' | 'print' | 'portal' | null;
+  delivered_at: string | null;
+  patient_feedback: 'helpful' | 'incomplete' | 'confusing' | null;
+  feedback_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Override language in AVSRecord to accept database value
+type AVSDbLanguage = 'en' | 'es' | string;
+
+/**
  * Map database record to AVSRecord type
  */
-function mapDbToRecord(data: any): AVSRecord {
+function mapDbToRecord(data: AVSDbRecord): AVSRecord {
   return {
     id: data.id,
     tenantId: data.tenant_id,
     patientId: data.patient_id,
-    sessionId: data.session_id,
-    encounterId: data.encounter_id,
+    sessionId: data.session_id ?? undefined,
+    encounterId: data.encounter_id ?? undefined,
     visitDate: data.visit_date,
     generatedAt: data.generated_at,
-    generatedBy: data.generated_by,
-    approvedBy: data.approved_by,
-    approvedAt: data.approved_at,
+    generatedBy: data.generated_by ?? undefined,
+    approvedBy: data.approved_by ?? undefined,
+    approvedAt: data.approved_at ?? undefined,
     contentJson: data.content_json,
     plainTextContent: data.plain_text_content,
     readingGradeLevel: data.reading_grade_level,
-    language: data.language,
+    language: data.language as 'en' | 'es',
     status: data.status,
-    deliveryMethod: data.delivery_method,
-    deliveredAt: data.delivered_at,
-    patientFeedback: data.patient_feedback,
-    feedbackNotes: data.feedback_notes,
+    deliveryMethod: data.delivery_method ?? undefined,
+    deliveredAt: data.delivered_at ?? undefined,
+    patientFeedback: data.patient_feedback ?? undefined,
+    feedbackNotes: data.feedback_notes ?? undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   };

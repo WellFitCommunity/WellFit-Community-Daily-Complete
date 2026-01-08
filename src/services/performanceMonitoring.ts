@@ -17,13 +17,13 @@ interface PerformanceMetricData {
   metric_name: string;
   duration_ms: number;
   page_url?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface FeatureUsageData {
   feature_name: string;
   action: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 class PerformanceMonitor {

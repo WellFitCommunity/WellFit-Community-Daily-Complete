@@ -210,9 +210,9 @@ export async function getRoleSpecificStats(
   userId: string,
   role: string,
   tenantId?: string
-): Promise<Record<string, any>> {
+): Promise<Record<string, number>> {
   const roleLower = (role || '').toLowerCase();
-  const stats: Record<string, any> = {};
+  const stats: Record<string, number> = {};
 
   try {
     // Physician stats

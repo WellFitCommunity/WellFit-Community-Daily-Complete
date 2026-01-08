@@ -309,7 +309,12 @@ export class PhysicalTherapyService {
       if (!plan) throw new Error('Treatment plan not found');
 
       // Update the specific goal
-      const updatedGoals = plan.goals.map((goal: any) =>
+      interface TreatmentGoal {
+        goal_id: string;
+        progress_percentage?: number;
+        [key: string]: unknown;
+      }
+      const updatedGoals = (plan.goals as TreatmentGoal[]).map((goal) =>
         goal.goal_id === goalId
           ? { ...goal, progress_percentage: progressPercentage }
           : goal

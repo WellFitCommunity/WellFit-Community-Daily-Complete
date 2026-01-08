@@ -277,13 +277,16 @@ class PatientService {
         return failure(fromSupabaseError(error).code, error.message, error);
       }
 
-      // Transform joined data
-      const patients: PatientWithRisk[] = (data || []).map((row: any) => ({
-        ...row.profiles,
-        risk_level: row.risk_level,
-        risk_score: row.risk_score,
-        last_assessment_date: row.last_assessment_date,
-      }));
+      // Transform joined data - profiles is returned as array from join
+      const patients: PatientWithRisk[] = (data || []).map((row) => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        return {
+          ...profile,
+          risk_level: row.risk_level as 'low' | 'moderate' | 'high' | 'critical',
+          risk_score: row.risk_score as number,
+          last_assessment_date: row.last_assessment_date as string,
+        } as PatientWithRisk;
+      });
 
       await auditLogger.info('RISK_PATIENT_LIST_ACCESSED', {
         riskLevel,

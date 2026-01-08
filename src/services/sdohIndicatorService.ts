@@ -24,8 +24,7 @@ import type {
   SDOHInterventionStatus,
   SDOHReferral,
   SDOHResource,
-  SDOHScreening,
-  calculateComplexityTier
+  SDOHScreening
 } from '../types/sdohIndicators';
 
 /** SDOH observation record from database */

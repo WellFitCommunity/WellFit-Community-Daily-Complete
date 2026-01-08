@@ -20,6 +20,34 @@ import type { CodingSuggestion } from '../types/billing';
 import { BillingService } from './billingService';
 import { FeeScheduleService } from './feeScheduleService';
 
+/** Check-in record shape from database */
+interface CheckInRecord {
+  housing_situation?: string;
+  food_security?: string;
+  meals_missed?: number;
+  transportation_barriers?: boolean;
+  social_isolation_score?: number;
+  [key: string]: unknown;
+}
+
+/** Encounter record shape for audit readiness */
+interface EncounterRecord {
+  patient_id?: string;
+  clinical_notes?: Array<{ id: string; content: string }>;
+  diagnoses?: Array<{ code: string; description: string }>;
+  patient_consent?: boolean;
+  ccm_consent_obtained?: boolean;
+  care_plan?: unknown;
+  care_plan_updated?: boolean;
+  patient_access_provided?: boolean;
+  after_hours_access?: boolean;
+  sdoh_assessment?: unknown;
+  social_history?: unknown;
+  care_coordination_notes?: unknown;
+  documentation?: unknown;
+  [key: string]: unknown;
+}
+
 export class SDOHBillingService {
   // Z-Code and SDOH Assessment
   static async assessSDOHComplexity(patientId: string): Promise<SDOHAssessment> {
@@ -283,7 +311,7 @@ export class SDOHBillingService {
   }
 
   // Private helper methods
-  private static analyzeCheckInsForSDOH(checkIns: any[]): Record<string, SDOHFactor | null> {
+  private static analyzeCheckInsForSDOH(checkIns: CheckInRecord[]): Record<string, SDOHFactor | null> {
     const factors: Record<string, SDOHFactor | null> = {
       housing: null,
       nutrition: null,
@@ -399,7 +427,7 @@ export class SDOHBillingService {
   private static async enhanceWithSDOH(
     baseSuggestions: CodingSuggestion,
     sdohAssessment: SDOHAssessment,
-    _encounter: any
+    _encounter: Record<string, unknown>
   ): Promise<EnhancedCodingSuggestion> {
     // Add SDOH Z-codes to ICD-10 suggestions
     const sdohCodes = this.generateSDOHCodes(sdohAssessment);
@@ -529,7 +557,7 @@ export class SDOHBillingService {
     return codes;
   }
 
-  private static async calculateExpectedReimbursement(codes: any[]): Promise<number> {
+  private static async calculateExpectedReimbursement(codes: Array<{ code: string; [key: string]: unknown }>): Promise<number> {
     // Use database fee schedule service instead of hardcoded rates
     const codeList = codes.map(c => ({ code: c.code, units: 1 }));
     const { total } = await FeeScheduleService.calculateExpectedReimbursement(
@@ -583,7 +611,7 @@ export class SDOHBillingService {
     return base;
   }
 
-  private static assessAuditReadiness(suggestion: EnhancedCodingSuggestion, encounter: any) {
+  private static assessAuditReadiness(suggestion: EnhancedCodingSuggestion, encounter: EncounterRecord) {
     const missingElements = [];
     const recommendations = [];
     let score = 100;
@@ -633,7 +661,7 @@ export class SDOHBillingService {
     };
   }
 
-  private static checkDocumentationExists(requirement: string, encounter: any): boolean {
+  private static checkDocumentationExists(requirement: string, encounter: EncounterRecord): boolean {
     // Check for required documentation based on requirement type
     if (!encounter) return false;
 

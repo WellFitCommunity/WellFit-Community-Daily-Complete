@@ -196,8 +196,8 @@ export class PostAcuteTransferService {
     patientId: string,
     encounterId: string,
     dischargePlan: DischargePlan
-  ): Promise<Record<string, any>> {
-    const clinicalData: Record<string, any> = {
+  ): Promise<Record<string, unknown>> {
+    const clinicalData: Record<string, unknown> = {
       discharge_summary: {},
       medications: [],
       allergies: [],
@@ -340,7 +340,7 @@ export class PostAcuteTransferService {
   /**
    * Get all post-acute transfers for a patient
    */
-  static async getPatientPostAcuteTransfers(patientId: string): Promise<any[]> {
+  static async getPatientPostAcuteTransfers(patientId: string): Promise<Record<string, unknown>[]> {
     const { data, error } = await supabase
       .from('handoff_packets')
       .select('*')
@@ -358,7 +358,7 @@ export class PostAcuteTransferService {
   /**
    * Get post-acute transfer by discharge plan
    */
-  static async getTransferByDischargePlan(dischargePlanId: string): Promise<any | null> {
+  static async getTransferByDischargePlan(dischargePlanId: string): Promise<Record<string, unknown> | null> {
     // Get discharge plan to find handoff packet ID
     const { data: dischargePlan } = await supabase.from('discharge_plans').select('post_acute_handoff_packet_id').eq('id', dischargePlanId).single();
 

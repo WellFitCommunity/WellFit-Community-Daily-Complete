@@ -179,9 +179,20 @@ export async function logBulkPhiAccess(
 }
 
 /**
+ * Resource shape that may contain a patient ID
+ */
+interface PatientResource {
+  patient_id?: string;
+  patientId?: string;
+  patient?: { id?: string };
+  user_id?: string;
+  [key: string]: unknown; // Allow additional fields
+}
+
+/**
  * Helper to extract patient ID from encounter/resource
  */
-export function extractPatientId(resource: any): string | null {
+export function extractPatientId(resource: PatientResource): string | null {
   if (resource.patient_id) return resource.patient_id;
   if (resource.patientId) return resource.patientId;
   if (resource.patient?.id) return resource.patient.id;

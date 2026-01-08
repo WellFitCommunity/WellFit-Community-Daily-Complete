@@ -13,8 +13,8 @@ export interface TenantBrandingData extends BrandingConfig {
   name: string;
   subdomain: string;
   isActive: boolean;
-  customCss?: Record<string, any>;
-  themeSettings?: Record<string, any>;
+  customCss?: Record<string, string>;
+  themeSettings?: Record<string, string | number | boolean>;
   faviconUrl?: string;
   accentColor?: string;
 }
@@ -134,7 +134,17 @@ export async function fetchAllActiveTenants(): Promise<
       return [];
     }
 
-    return (data || []).map((tenant: any) => ({
+    interface TenantRow {
+      id: string;
+      name: string;
+      subdomain?: string;
+      app_name?: string;
+      logo_url?: string;
+      primary_color?: string;
+      secondary_color?: string;
+      is_active: boolean;
+    }
+    return (data || []).map((tenant: TenantRow) => ({
       id: tenant.id,
       name: tenant.name,
       subdomain: tenant.subdomain || '',
@@ -158,7 +168,7 @@ export async function updateTenantBranding(
   updates: Partial<TenantBrandingData>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const updateData: any = {};
+    const updateData: Record<string, string | boolean | Record<string, string | number | boolean> | undefined> = {};
 
     if (updates.appName !== undefined) updateData.app_name = updates.appName;
     if (updates.logoUrl !== undefined) updateData.logo_url = updates.logoUrl;

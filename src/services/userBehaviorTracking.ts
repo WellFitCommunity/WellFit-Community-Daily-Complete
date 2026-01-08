@@ -71,6 +71,14 @@ export class UserBehaviorTracker {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+      interface TrackingRecord {
+        section_id: string;
+        section_name: string;
+        action: string;
+        time_spent: number | null;
+        created_at: string;
+      }
+
       const query = supabase
         .from('admin_usage_tracking')
         .select('*')
@@ -79,7 +87,7 @@ export class UserBehaviorTracker {
 
       // Apply pagination limit to prevent unbounded queries
       // Limit to 200 most recent tracking events for performance
-      const data = await applyLimit<any>(query, PAGINATION_LIMITS.TRACKING_EVENTS);
+      const data = await applyLimit<TrackingRecord>(query, PAGINATION_LIMITS.TRACKING_EVENTS);
 
       // Aggregate usage data by section
       const sectionStats = new Map<string, {

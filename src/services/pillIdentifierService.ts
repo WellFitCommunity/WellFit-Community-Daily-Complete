@@ -132,17 +132,23 @@ const CONFIG = {
 // PILL IDENTIFIER SERVICE
 // ============================================================================
 
+/**
+ * Anthropic SDK types - using the actual SDK at runtime boundary
+ */
+type AnthropicSDK = Awaited<ReturnType<typeof loadAnthropicSDK>>;
+type AnthropicInstance = InstanceType<AnthropicSDK>;
+
 export class PillIdentifierService {
-  private anthropic: any = null;
+  private anthropic: AnthropicInstance | null = null;
   private apiKey: string | null = null;
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY || null;
 
     if (this.apiKey) {
-      loadAnthropicSDK().then((Anthropic: any) => {
+      loadAnthropicSDK().then((Anthropic) => {
         this.anthropic = new Anthropic({
-          apiKey: this.apiKey,
+          apiKey: this.apiKey!,
           dangerouslyAllowBrowser: true
         });
       });
