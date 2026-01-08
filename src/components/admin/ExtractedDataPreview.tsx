@@ -86,7 +86,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [showImage, setShowImage] = useState(false);
 
-  const handleFieldChange = (field: keyof ExtractedPatientData, value: any) => {
+  const handleFieldChange = (field: keyof ExtractedPatientData, value: ExtractedPatientData[keyof ExtractedPatientData]) => {
     setEditedData((prev) => ({ ...prev, [field]: value }));
   };
 

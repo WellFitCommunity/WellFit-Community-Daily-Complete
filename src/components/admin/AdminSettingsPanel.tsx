@@ -205,11 +205,11 @@ const AdminSettingsPanel: React.FC = memo(() => {
     }
   };
 
-  const updateSetting = useCallback((section: keyof AdminSettings, key: string, value: any) => {
+  const updateSetting = useCallback((section: keyof AdminSettings, key: string, value: string | number | boolean) => {
     setSettings(prev => ({
       ...prev,
       [section]: {
-        ...(prev[section] as Record<string, any>),
+        ...(prev[section] as Record<string, string | number | boolean>),
         [key]: value,
       },
     }));

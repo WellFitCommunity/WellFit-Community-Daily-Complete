@@ -18,10 +18,16 @@ interface SubscriptionHealth {
   avg_age_seconds: number;
 }
 
+interface MemoryCacheStats {
+  size: number;
+  maxSize: number;
+  utilizationPercent: number;
+}
+
 export const CacheMonitoringDashboard: React.FC = () => {
   const [cacheStats, setCacheStats] = useState<CacheStatistics[]>([]);
   const [connectionMetrics, setConnectionMetrics] = useState<ConnectionMetrics | null>(null);
-  const [memoryCacheStats, setMemoryCacheStats] = useState<any>(null);
+  const [memoryCacheStats, setMemoryCacheStats] = useState<MemoryCacheStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Subscribe to subscription health updates

@@ -34,7 +34,6 @@ import {
   Shield,
   RefreshCw,
   Search,
-  Filter,
   CheckCircle,
   XCircle,
   Clock,

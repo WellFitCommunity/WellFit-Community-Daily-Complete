@@ -105,9 +105,10 @@ export function ClearinghouseConfigPanel() {
         const errorText = await response.text();
         setMessage(`❌ Authentication failed: ${errorText}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setTestStatus('error');
-      setMessage(`❌ Connection error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setMessage(`❌ Connection error: ${errorMessage}`);
     }
 
     setTimeout(() => setTestStatus('idle'), 5000);

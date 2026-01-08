@@ -2,12 +2,19 @@ import React, { useState, useRef } from 'react';
 import { Camera, Upload, FileText, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
+interface ExtractedPatientData {
+  firstName?: string;
+  lastName?: string;
+  dob?: string;
+  mrn?: string;
+}
+
 interface UploadedForm {
   id: string;
   file: File;
   preview: string;
   status: 'uploading' | 'processing' | 'success' | 'error';
-  extractedData?: any;
+  extractedData?: ExtractedPatientData;
   error?: string;
 }
 
@@ -125,7 +132,7 @@ const PaperFormUploader: React.FC = () => {
   const updateFormStatus = (
     id: string,
     status: UploadedForm['status'],
-    extractedData?: any,
+    extractedData?: ExtractedPatientData,
     error?: string
   ) => {
     setUploadedForms((prev) =>

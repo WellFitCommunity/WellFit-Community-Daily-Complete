@@ -148,15 +148,16 @@ const HospitalAdapterManagementPanel: React.FC = () => {
       } else {
         alert(`❌ Connection failed:\n\n${result.error}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const statusMap = new Map(connections);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       statusMap.set(adapterId, {
         adapterId,
         status: 'error',
-        error: error.message
+        error: errorMessage
       });
       setConnections(statusMap);
-      alert(`❌ Test failed: ${error.message}`);
+      alert(`❌ Test failed: ${errorMessage}`);
     } finally {
       setTestingAdapter(null);
     }
@@ -193,9 +194,9 @@ const HospitalAdapterManagementPanel: React.FC = () => {
       loadConnectionStatuses();
       alert('✅ Adapter connected successfully!');
       setShowAddDialog(false);
-    } catch (error: any) {
-
-      alert(`❌ Connection failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`❌ Connection failed: ${errorMessage}`);
     }
   };
 
@@ -213,9 +214,9 @@ const HospitalAdapterManagementPanel: React.FC = () => {
 
       loadConnectionStatuses();
       alert('Adapter disconnected successfully.');
-    } catch (error: any) {
-
-      alert(`Failed to disconnect: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to disconnect: ${errorMessage}`);
     }
   };
 
@@ -463,7 +464,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                 </label>
                 <select
                   value={configForm.authType}
-                  onChange={(e) => setConfigForm({ ...configForm, authType: e.target.value as any })}
+                  onChange={(e) => setConfigForm({ ...configForm, authType: e.target.value as AdapterConfig['authType'] })}
                   className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
                 >
                   <option value="oauth2">OAuth 2.0</option>

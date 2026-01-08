@@ -13,12 +13,43 @@ import { supabase } from '../../lib/supabaseClient';
 import ExtractedDataPreview from './ExtractedDataPreview';
 import PatientEnrollmentForm from './PatientEnrollmentForm';
 
+interface ExtractedPatientData {
+  firstName?: string;
+  lastName?: string;
+  middleInitial?: string;
+  dob?: string;
+  gender?: string;
+  mrn?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  roomNumber?: string;
+  admissionDate?: string;
+  hospitalUnit?: string;
+  bedNumber?: string;
+  admissionSource?: string;
+  acuityLevel?: string;
+  codeStatus?: string;
+  primaryInsurance?: string;
+  insuranceId?: string;
+  insuranceGroupNumber?: string;
+  medicareNumber?: string;
+  medicaidNumber?: string;
+  clinicalNotes?: string;
+  allergies?: string[];
+}
+
 interface UploadedForm {
   id: string;
   file: File;
   preview: string;
   status: 'uploading' | 'processing' | 'success' | 'error' | 'enrolled';
-  extractedData?: any;
+  extractedData?: ExtractedPatientData;
   error?: string;
 }
 
@@ -141,7 +172,7 @@ const PaperFormScanner: React.FC = () => {
   const updateFormStatus = (
     id: string,
     status: UploadedForm['status'],
-    extractedData?: any,
+    extractedData?: ExtractedPatientData,
     error?: string
   ) => {
     setUploadedForms((prev) =>
@@ -159,7 +190,7 @@ const PaperFormScanner: React.FC = () => {
     });
   };
 
-  const handleEnrollPatient = async (formId: string, correctedData: any) => {
+  const handleEnrollPatient = async (formId: string, correctedData: ExtractedPatientData) => {
     try {
       // Convert date format from YYYY-MM-DD to database format
       const formatDate = (dateStr: string | undefined) => {
@@ -193,7 +224,7 @@ const PaperFormScanner: React.FC = () => {
 
       // Update additional hospital fields
       if (data) {
-        const updateFields: any = {};
+        const updateFields: Record<string, string | string[] | null> = {};
 
         if (correctedData.middleInitial) updateFields.middle_initial = correctedData.middleInitial;
         if (correctedData.address) updateFields.address = correctedData.address;

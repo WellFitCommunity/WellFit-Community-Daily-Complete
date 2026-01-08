@@ -32,6 +32,7 @@ import type {
   CreateFacility,
   UpdateFacility,
   FacilityType,
+  PlaceOfServiceCode,
 } from '../../types/facility';
 import { getFacilityTypeLabel } from '../../types/facility';
 
@@ -210,7 +211,7 @@ const FacilityManagementPanel: React.FC = () => {
           email: formData.email || undefined,
           npi: formData.npi || undefined,
           tax_id: formData.tax_id || undefined,
-          place_of_service_code: formData.place_of_service_code as any,
+          place_of_service_code: formData.place_of_service_code as PlaceOfServiceCode,
           is_primary: formData.is_primary,
           bed_count: formData.bed_count ? parseInt(formData.bed_count) : undefined,
         };
@@ -241,7 +242,7 @@ const FacilityManagementPanel: React.FC = () => {
           email: formData.email || undefined,
           npi: formData.npi || undefined,
           tax_id: formData.tax_id || undefined,
-          place_of_service_code: formData.place_of_service_code as any,
+          place_of_service_code: formData.place_of_service_code as PlaceOfServiceCode,
           is_primary: formData.is_primary,
           bed_count: formData.bed_count ? parseInt(formData.bed_count) : undefined,
         };

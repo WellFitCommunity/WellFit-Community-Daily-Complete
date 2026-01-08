@@ -75,6 +75,31 @@ import { auditLogger } from '../../services/auditLogger';
 import { usePresence } from '../../hooks/usePresence';
 import { PresenceAvatars, ActivityFeed, useActivityBroadcast } from '../collaboration';
 
+// Web Speech API types (browser API boundary)
+interface WebSpeechRecognitionEvent {
+  results: SpeechRecognitionResultList;
+}
+
+interface WebSpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: WebSpeechRecognitionEvent) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+interface WebSpeechRecognitionConstructor {
+  new(): WebSpeechRecognitionInstance;
+}
+
+type WindowWithSpeechRecognition = Window & {
+  webkitSpeechRecognition?: WebSpeechRecognitionConstructor;
+  SpeechRecognition?: WebSpeechRecognitionConstructor;
+};
+
 // Tab type - SIMPLIFIED from 5 tabs to 3 (ATLUS: reduce cognitive load)
 type TabType = 'real-time' | 'forecasts-ai' | 'learning';
 
@@ -134,7 +159,7 @@ const BedManagementPanel: React.FC = () => {
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<WebSpeechRecognitionInstance | null>(null);
 
   // Real-time presence tracking (ATLUS: Leading - team awareness)
   const { otherUsers, setEditing } = usePresence({
@@ -268,18 +293,19 @@ const BedManagementPanel: React.FC = () => {
 
   // Initialize voice recognition (ATLUS: Intuitive Technology)
   useEffect(() => {
-    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as unknown as WindowWithSpeechRecognition;
+    const SpeechRecognitionAPI = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     setVoiceSupported(!!SpeechRecognitionAPI);
 
     if (SpeechRecognitionAPI) {
-      const recognition = new SpeechRecognitionAPI();
+      const recognition = new SpeechRecognitionAPI() as unknown as WebSpeechRecognitionInstance;
       recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: WebSpeechRecognitionEvent) => {
         const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+          .map((result: SpeechRecognitionResult) => result[0].transcript)
           .join('');
         setVoiceTranscript(transcript);
 

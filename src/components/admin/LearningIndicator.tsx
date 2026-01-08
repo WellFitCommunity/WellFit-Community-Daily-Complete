@@ -139,7 +139,7 @@ interface LearningBadgeProps {
 }
 
 export const LearningBadge: React.FC<LearningBadgeProps> = ({
-  sectionId,
+  sectionId: _sectionId,
   frequencyScore,
   isTopSection
 }) => {

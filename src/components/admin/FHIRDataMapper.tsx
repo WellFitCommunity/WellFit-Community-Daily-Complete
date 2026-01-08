@@ -101,9 +101,9 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
   const loadSampleData = (type: string) => {
     const data = sampleData[type];
     setValue('sourceData', data);
-    setValue('sourceType', type as any);
+    setValue('sourceType', type as FormData['sourceType']);
     actions.setSourceData(data);
-    actions.setSourceType(type as any);
+    actions.setSourceType(type as FormData['sourceType']);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

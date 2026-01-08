@@ -29,7 +29,7 @@ export interface AdminWorkflowModeConfig {
   id: AdminWorkflowMode;
   label: string;
   description: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
   gradient: string;
   sections: string[];
 }

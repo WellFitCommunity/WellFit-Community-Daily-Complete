@@ -278,7 +278,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                           ) : (
                             <button
                               key={item.path}
-                              onClick={() => navigateTo(item.path!)}
+                              onClick={() => item.path && navigateTo(item.path)}
                               className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white flex items-center transition-colors"
                             >
                               {item.icon && <item.icon className="h-4 w-4 mr-3 text-slate-400" />}

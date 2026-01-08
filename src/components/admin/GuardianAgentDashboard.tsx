@@ -4,12 +4,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { getGuardianAgent } from '../../services/guardian-agent/GuardianAgent';
-import { AgentState, DetectedIssue, HealingResult } from '../../services/guardian-agent/types';
+import { AgentState, DetectedIssue, HealingResult, AgentStatistics, AgentHealth } from '../../services/guardian-agent/types';
 
 export const GuardianAgentDashboard: React.FC = () => {
   const [agentState, setAgentState] = useState<AgentState | null>(null);
-  const [statistics, setStatistics] = useState<any>(null);
-  const [health, setHealth] = useState<any>(null);
+  const [statistics, setStatistics] = useState<AgentStatistics | null>(null);
+  const [health, setHealth] = useState<AgentHealth | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   useEffect(() => {

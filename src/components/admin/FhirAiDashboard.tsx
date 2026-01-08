@@ -492,7 +492,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
   const [activeEhrConnections, setActiveEhrConnections] = useState<string[]>([]);
 
   // Store Supabase connection info for direct FHIR sync
-  const [connectionConfig] = useState({
+  const [_connectionConfig] = useState({
     supabaseUrl: supabaseUrl || import.meta.env.VITE_SUPABASE_URL,
     supabaseKey: supabaseKey || import.meta.env.VITE_SUPABASE_ANON_KEY,
     isConfigured: Boolean(supabaseUrl || import.meta.env.VITE_SUPABASE_URL)

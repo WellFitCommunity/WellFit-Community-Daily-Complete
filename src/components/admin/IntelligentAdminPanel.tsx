@@ -37,7 +37,7 @@ import {
   MilestoneCelebration
 } from './LearningIndicator';
 import { Clock, TrendingUp, Zap } from 'lucide-react';
-import { SectionLoadingFallback } from './sections/sectionDefinitions';
+import { SectionLoadingFallback as _SectionLoadingFallback } from './sections/sectionDefinitions';
 // VoiceCommandBar removed - now handled by ClinicalModeComponents
 import { useWorkflowPreferences } from '../../hooks/useWorkflowPreferences';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';

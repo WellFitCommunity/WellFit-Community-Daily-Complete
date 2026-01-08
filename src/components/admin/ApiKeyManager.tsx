@@ -390,7 +390,7 @@ const ApiKeyManager: React.FC = () => {
     }
   };
 
-  const displayableApiKeyRepresentation = (hash: string | undefined, orgName: string) => {
+  const displayableApiKeyRepresentation = (hash: string | undefined, _orgName: string) => {
     if (!hash) return 'N/A (No Hash)';
     // Use hash instead of org name to prevent information leakage
     const hashPrefix = hash.slice(0, 8);

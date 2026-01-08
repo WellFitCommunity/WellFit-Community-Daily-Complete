@@ -177,3 +177,34 @@ export interface NotificationChannel {
   severity: SeverityLevel[];
   config: Record<string, unknown>;
 }
+
+export interface AgentStatistics {
+  uptime: number;
+  agentMetrics: {
+    successRate: number;
+    issuesDetected: number;
+    issuesHealed: number;
+    avgTimeToDetect: number;
+    avgTimeToHeal: number;
+  };
+  monitoringStats: {
+    metricsCollected: number;
+    anomaliesDetected: number;
+    anomaliesHealed: number;
+  };
+  securityStats: {
+    total: number;
+    bySeverity: {
+      critical?: number;
+      high?: number;
+      medium?: number;
+      low?: number;
+    };
+  };
+}
+
+export interface AgentHealth {
+  status: 'healthy' | 'degraded' | 'critical';
+  lastCheck?: Date;
+  issues?: string[];
+}

@@ -31,10 +31,21 @@ interface EnrollmentResult {
 // MAIN COMPONENT
 // ============================================================================
 
+interface HospitalPatientRecord {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  age: number;
+  room_number?: string;
+  mrn?: string;
+  enrollment_notes?: string;
+  enrollment_date: string;
+}
+
 const HospitalPatientEnrollment: React.FC = () => {
   const [enrollmentMode, setEnrollmentMode] = useState<'single' | 'bulk'>('single');
   const [loading, setLoading] = useState(false);
-  const [hospitalPatients, setHospitalPatients] = useState<any[]>([]);
+  const [hospitalPatients, setHospitalPatients] = useState<HospitalPatientRecord[]>([]);
   const [enrollmentResult, setEnrollmentResult] = useState<EnrollmentResult[] | null>(null);
 
   // Single patient form state
@@ -123,12 +134,13 @@ const HospitalPatientEnrollment: React.FC = () => {
         // ACTUAL ERROR - No patient ID returned
         throw new Error(error?.message || 'Enrollment failed - no patient ID returned');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setEnrollmentResult([{
         patientId: null,
         patientName: `${formData.firstName} ${formData.lastName}`,
         roomNumber: formData.roomNumber || 'N/A',
-        status: `✗ Failed: ${error.message}`
+        status: `✗ Failed: ${errorMessage}`
       }]);
     } finally {
       setLoading(false);
@@ -197,8 +209,9 @@ const HospitalPatientEnrollment: React.FC = () => {
 
       setEnrollmentResult(data || []);
       await loadHospitalPatients();
-    } catch (error: any) {
-      alert(`Bulk enrollment failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Bulk enrollment failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

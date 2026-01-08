@@ -295,11 +295,11 @@ Format your response as a clear, professional message that can be sent to the pa
       };
 
       setAiSuggestion(aiSuggestion);
-    } catch (error: any) {
-
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       // Provide helpful fallback message
       setAiSuggestion({
-        response: `Unable to generate AI suggestion at this time. Error: ${error.message || 'Unknown error'}. Please provide a manual response based on your clinical judgment.`,
+        response: `Unable to generate AI suggestion at this time. Error: ${errorMessage}. Please provide a manual response based on your clinical judgment.`,
         confidence: 0,
         reasoning: 'AI service temporarily unavailable',
         resources: [],
@@ -435,7 +435,7 @@ Format your response as a clear, professional message that can be sent to the pa
                   user_id: '',
                   question_text: q.question,
                   category: 'general' as const,
-                  status: q.status as any,
+                  status: q.status as Question['status'],
                   urgency: 'medium' as const,
                   created_at: q.asked_at,
                   patient_profile: {
@@ -468,7 +468,7 @@ Format your response as a clear, professional message that can be sent to the pa
             <Filter size={20} className="text-gray-400" />
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
+              onChange={(e) => setFilterStatus(e.target.value as 'all' | 'pending' | 'answered')}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Status</option>
@@ -481,7 +481,7 @@ Format your response as a clear, professional message that can be sent to the pa
             <AlertTriangle size={20} className="text-gray-400" />
             <select
               value={filterUrgency}
-              onChange={(e) => setFilterUrgency(e.target.value as any)}
+              onChange={(e) => setFilterUrgency(e.target.value as 'all' | 'low' | 'medium' | 'high')}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Priority</option>
