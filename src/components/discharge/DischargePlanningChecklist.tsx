@@ -2,7 +2,7 @@
 // Joint Commission compliant discharge checklist interface
 // Prevents $6.6M/year in readmission penalties
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DischargePlanningService } from '../../services/dischargePlanningService';
 // PostAcuteFacilityMatcher import reserved for future facility matching feature
 import type {
@@ -30,11 +30,7 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
   type TabId = 'checklist' | 'risk' | 'facility';
   const [activeTab, setActiveTab] = useState<TabId>('checklist');
 
-  useEffect(() => {
-    loadDischargePlan();
-  }, [patientId, encounterId]);
-
-  const loadDischargePlan = async () => {
+  const loadDischargePlan = useCallback(async () => {
     try {
       setLoading(true);
       const plan = await DischargePlanningService.getDischargePlanByEncounter(encounterId);
@@ -46,7 +42,11 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
     } finally {
       setLoading(false);
     }
-  };
+  }, [encounterId]);
+
+  useEffect(() => {
+    loadDischargePlan();
+  }, [patientId, encounterId, loadDischargePlan]);
 
   const updatePlan = async (updates: UpdateDischargePlanRequest) => {
     if (!dischargePlan) return;

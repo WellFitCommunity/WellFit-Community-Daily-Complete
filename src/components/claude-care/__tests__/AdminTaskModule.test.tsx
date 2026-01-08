@@ -418,7 +418,7 @@ describe('AdminTaskModule', () => {
     });
 
     it('should show loading state during generation', async () => {
-      let resolveTask: (value: unknown) => void;
+      let resolveTask: (value: unknown) => void = () => {};
       const taskPromise = new Promise((resolve) => {
         resolveTask = resolve;
       });
@@ -448,7 +448,7 @@ describe('AdminTaskModule', () => {
 
       expect(screen.getByText('Generating...')).toBeInTheDocument();
 
-      resolveTask!({ generatedContent: 'Content', taskId: 'task-1' });
+      resolveTask({ generatedContent: 'Content', taskId: 'task-1' });
 
       await waitFor(() => {
         expect(screen.queryByText('Generating...')).not.toBeInTheDocument();

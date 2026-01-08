@@ -341,7 +341,7 @@ describe('CrossRoleContextModule', () => {
     });
 
     it('should show loading state while sharing', async () => {
-      let resolveShare: () => void;
+      let resolveShare: () => void = () => {};
       const sharePromise = new Promise<void>((resolve) => {
         resolveShare = resolve;
       });
@@ -360,7 +360,7 @@ describe('CrossRoleContextModule', () => {
 
       expect(screen.getByText('Sharing...')).toBeInTheDocument();
 
-      resolveShare!();
+      resolveShare();
 
       await waitFor(() => {
         expect(screen.queryByText('Sharing...')).not.toBeInTheDocument();

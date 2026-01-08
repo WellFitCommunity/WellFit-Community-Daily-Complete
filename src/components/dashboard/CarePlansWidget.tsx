@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../contexts/AuthContext';
 import FHIRService from '../../services/fhirResourceService';
@@ -11,13 +11,7 @@ const CarePlansWidget: React.FC = () => {
   const [activePlans, setActivePlans] = useState<FHIRCarePlan[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadCarePlans();
-    }
-  }, [user?.id]);
-
-  const loadCarePlans = async () => {
+  const loadCarePlans = useCallback(async () => {
     if (!user?.id) return;
 
     try {
@@ -37,7 +31,13 @@ const CarePlansWidget: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadCarePlans();
+    }
+  }, [user?.id, loadCarePlans]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';

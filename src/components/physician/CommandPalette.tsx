@@ -105,6 +105,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // =====================================================
+  // ACTION EXECUTION
+  // =====================================================
+
+  const executeAction = useCallback((action: CommandAction) => {
+    action.action();
+    onActionExecute?.(action.id);
+    setIsOpen(false);
+    setQuery('');
+    setSelectedIndex(0);
+  }, [onActionExecute]);
+
+  // =====================================================
   // KEYBOARD SHORTCUTS
   // =====================================================
 
@@ -143,7 +155,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, selectedIndex, filteredActions]);
+  }, [isOpen, selectedIndex, filteredActions, executeAction]);
 
   // Focus input when opened
   useEffect(() => {
@@ -158,18 +170,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     setFilteredActions(results);
     setSelectedIndex(0);
   }, [query, actions]);
-
-  // =====================================================
-  // ACTION EXECUTION
-  // =====================================================
-
-  const executeAction = (action: CommandAction) => {
-    action.action();
-    onActionExecute?.(action.id);
-    setIsOpen(false);
-    setQuery('');
-    setSelectedIndex(0);
-  };
 
   // =====================================================
   // ORGANIZE ACTIONS

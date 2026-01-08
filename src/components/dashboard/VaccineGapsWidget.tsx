@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FHIRService from '../../services/fhirResourceService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -17,13 +17,7 @@ const VaccineGapsWidget: React.FC = () => {
   const [gaps, setGaps] = useState<VaccineGap[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadVaccineGaps();
-    }
-  }, [user?.id]);
-
-  const loadVaccineGaps = async () => {
+  const loadVaccineGaps = useCallback(async () => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -36,7 +30,13 @@ const VaccineGapsWidget: React.FC = () => {
 
     }
     setLoading(false);
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadVaccineGaps();
+    }
+  }, [user?.id, loadVaccineGaps]);
 
   const getVaccineIcon = (vaccineName: string) => {
     if (vaccineName.toLowerCase().includes('influenza') || vaccineName.toLowerCase().includes('flu')) return '💉';

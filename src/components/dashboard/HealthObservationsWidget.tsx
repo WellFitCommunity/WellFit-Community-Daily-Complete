@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../contexts/AuthContext';
 import FHIRService from '../../services/fhirResourceService';
@@ -10,13 +10,7 @@ const HealthObservationsWidget: React.FC = () => {
   const [latestObservations, setLatestObservations] = useState<Observation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadLatestObservations();
-    }
-  }, [user?.id]);
-
-  const loadLatestObservations = async () => {
+  const loadLatestObservations = useCallback(async () => {
     if (!user?.id) return;
 
     try {
@@ -30,7 +24,13 @@ const HealthObservationsWidget: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadLatestObservations();
+    }
+  }, [user?.id, loadLatestObservations]);
 
   const formatValue = (obs: Observation) => {
     if (obs.components && obs.components.length > 0) {

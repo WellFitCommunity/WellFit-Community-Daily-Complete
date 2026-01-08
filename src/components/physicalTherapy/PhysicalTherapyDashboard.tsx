@@ -100,13 +100,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
   const [patientPlan, setPatientPlan] = useState<PTTreatmentPlan | null>(null);
   const [patientOutcomes, setPatientOutcomes] = useState<PTOutcomeMeasure[]>([]);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadDashboard();
-    }
-  }, [user?.id]);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -156,7 +150,13 @@ export const PhysicalTherapyDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadDashboard();
+    }
+  }, [user?.id, loadDashboard]);
 
   const loadPatientDetails = async (patient: PTCaseloadPatient) => {
     setSelectedPatient(patient);

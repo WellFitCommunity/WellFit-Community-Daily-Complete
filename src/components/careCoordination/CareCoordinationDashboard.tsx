@@ -287,14 +287,14 @@ export const CareCoordinationDashboard: React.FC = () => {
                         <EAButton
                           size="sm"
                           variant="secondary"
-                          onClick={() => handleAlertAction(alert.id!, 'acknowledged')}
+                          onClick={() => alert.id && handleAlertAction(alert.id, 'acknowledged')}
                         >
                           Acknowledge
                         </EAButton>
                         <EAButton
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleAlertAction(alert.id!, 'resolved')}
+                          onClick={() => alert.id && handleAlertAction(alert.id, 'resolved')}
                         >
                           Resolve
                         </EAButton>
@@ -484,7 +484,8 @@ const PlanDetailModal: React.FC<PlanDetailModalProps> = ({ plan, onClose, onUpda
 
   const handleCompletePlan = async () => {
     try {
-      await CareCoordinationService.completeCarePlan(plan.id!, 'Plan completed successfully');
+      if (!plan.id) return;
+      await CareCoordinationService.completeCarePlan(plan.id, 'Plan completed successfully');
       onUpdate();
       onClose();
     } catch {

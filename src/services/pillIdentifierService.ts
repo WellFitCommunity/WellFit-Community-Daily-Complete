@@ -146,9 +146,10 @@ export class PillIdentifierService {
     this.apiKey = apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY || null;
 
     if (this.apiKey) {
+      const key = this.apiKey; // Capture for closure
       loadAnthropicSDK().then((Anthropic) => {
         this.anthropic = new Anthropic({
-          apiKey: this.apiKey!,
+          apiKey: key,
           dangerouslyAllowBrowser: true
         });
       });

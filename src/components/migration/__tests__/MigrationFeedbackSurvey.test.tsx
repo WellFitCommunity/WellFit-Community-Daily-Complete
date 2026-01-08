@@ -228,7 +228,7 @@ describe('MigrationFeedbackSurvey', () => {
       const star4 = screen.getByRole('img', { name: /4 star/i });
       const starButton = star4.closest('button');
       expect(starButton).toBeInTheDocument();
-      fireEvent.click(starButton!);
+      if (starButton) fireEvent.click(starButton);
 
       expect(defaultProps.onRated).toHaveBeenCalledWith(4);
     });
@@ -239,7 +239,7 @@ describe('MigrationFeedbackSurvey', () => {
       // Click on 5 star rating
       const star5 = screen.getByRole('img', { name: /5 star/i });
       const starButton = star5.closest('button');
-      fireEvent.click(starButton!);
+      if (starButton) fireEvent.click(starButton);
 
       await waitFor(() => {
         expect(screen.getByText('Thanks for your feedback!')).toBeInTheDocument();
@@ -252,7 +252,7 @@ describe('MigrationFeedbackSurvey', () => {
       // Click on 5 star rating
       const star5 = screen.getByRole('img', { name: /5 star/i });
       const starButton = star5.closest('button');
-      fireEvent.click(starButton!);
+      if (starButton) fireEvent.click(starButton);
 
       await waitFor(() => {
         expect(screen.getByText(/glad the migration went well/i)).toBeInTheDocument();
@@ -265,7 +265,7 @@ describe('MigrationFeedbackSurvey', () => {
       // Click on 2 star rating
       const star2 = screen.getByRole('img', { name: /2 star/i });
       const starButton = star2.closest('button');
-      fireEvent.click(starButton!);
+      if (starButton) fireEvent.click(starButton);
 
       await waitFor(() => {
         expect(screen.getByText(/work on making it better/i)).toBeInTheDocument();
@@ -303,7 +303,7 @@ describe('MigrationFeedbackSurvey', () => {
       // Click on 3 star rating
       const star3 = screen.getByRole('img', { name: /3 star/i });
       const starButton = star3.closest('button');
-      fireEvent.click(starButton!);
+      if (starButton) fireEvent.click(starButton);
 
       await waitFor(() => {
         expect(screen.getByText(/share more details/i)).toBeInTheDocument();
@@ -400,7 +400,7 @@ describe('MigrationFeedbackSurvey', () => {
       // Click on 5 star rating using accessible query
       const star5 = screen.getByRole('img', { name: /5 star/i });
       const starButton = star5.closest('button');
-      fireEvent.click(starButton!);
+      if (starButton) fireEvent.click(starButton);
 
       await waitFor(() => {
         expect(screen.getByRole('img', { name: /celebration/i })).toBeInTheDocument();

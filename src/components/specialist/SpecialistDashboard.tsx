@@ -3,7 +3,7 @@
  * Universal dashboard for all specialist types
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { fieldVisitManager } from '../../services/specialist-workflow-engine/FieldVisitManager';
 import { offlineSync } from '../../services/specialist-workflow-engine/OfflineDataSync';
 import { workflowRegistry } from '../../services/specialist-workflow-engine/templates';
@@ -45,6 +45,23 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
 
   const workflow = workflowRegistry.getByType(specialistType)[0];
 
+  const loadVisits = useCallback(async () => {
+    try {
+      const today = await fieldVisitManager.getTodaysVisits(specialistId) as FieldVisitWithPatient[];
+      setTodaysVisits(today);
+
+      const upcoming = await fieldVisitManager.getVisitsForSpecialist(
+        specialistId,
+        'scheduled'
+      ) as FieldVisitWithPatient[];
+      setUpcomingVisits(upcoming.filter(v => !today.find(t => t.id === v.id)));
+    } catch {
+      // Silently handle error - visits will remain empty
+    } finally {
+      setLoading(false);
+    }
+  }, [specialistId]);
+
   useEffect(() => {
     loadVisits();
     initializeOfflineSync();
@@ -60,24 +77,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [specialistId]);
-
-  const loadVisits = async () => {
-    try {
-      const today = await fieldVisitManager.getTodaysVisits(specialistId) as FieldVisitWithPatient[];
-      setTodaysVisits(today);
-
-      const upcoming = await fieldVisitManager.getVisitsForSpecialist(
-        specialistId,
-        'scheduled'
-      ) as FieldVisitWithPatient[];
-      setUpcomingVisits(upcoming.filter(v => !today.find(t => t.id === v.id)));
-    } catch {
-      // Silently handle error - visits will remain empty
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [specialistId, loadVisits]);
 
   const initializeOfflineSync = async () => {
     try {

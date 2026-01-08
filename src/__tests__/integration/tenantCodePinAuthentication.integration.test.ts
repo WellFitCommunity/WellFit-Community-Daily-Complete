@@ -96,7 +96,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         .maybeSingle();
 
       expect(data).not.toBeNull();
-      expect(data!.tenant_id).toBeNull();
+      expect(data?.tenant_id).toBeNull();
 
       // Tenant code should NOT be fetched
       expect(supabase.from).not.toHaveBeenCalledWith('tenants');
@@ -173,16 +173,16 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         .maybeSingle();
 
       expect(profile).not.toBeNull();
-      expect(profile!.tenant_id).toBe(tenantData.id);
+      expect(profile?.tenant_id).toBe(tenantData.id);
 
       // Fetch tenant code
       const { data: tenant } = await supabase.from('tenants')
         .select('tenant_code')
-        .eq('id', profile!.tenant_id)
+        .eq('id', profile?.tenant_id ?? '')
         .single();
 
       expect(tenant).not.toBeNull();
-      expect(tenant!.tenant_code).toBe('MH-6702');
+      expect(tenant?.tenant_code).toBe('MH-6702');
     });
 
     test('should authenticate with TenantCode-PIN format', async () => {
@@ -219,7 +219,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
 
       const { data: tenant } = await supabase.from('tenants')
         .select('tenant_code')
-        .eq('id', profile!.tenant_id)
+        .eq('id', profile?.tenant_id ?? '')
         .single();
 
       expect(tenant).not.toBeNull();
@@ -227,7 +227,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
       // Validate input matches
       const userInput = 'MH-6702-1234';
       const [inputCode] = userInput.split('-');
-      const [expectedCode] = tenant!.tenant_code.split('-');
+      const [expectedCode] = (tenant?.tenant_code ?? '').split('-');
 
       expect(inputCode).toBe(expectedCode);
     });
@@ -501,16 +501,16 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         .maybeSingle();
 
       expect(profile).not.toBeNull();
-      expect(profile!.tenant_id).toBe('tenant-methodist');
+      expect(profile?.tenant_id).toBe('tenant-methodist');
 
       // Step 3: Fetch tenant code
       const { data: tenant } = await supabase.from('tenants')
         .select('tenant_code')
-        .eq('id', profile!.tenant_id)
+        .eq('id', profile?.tenant_id ?? '')
         .single();
 
       expect(tenant).not.toBeNull();
-      expect(tenant!.tenant_code).toBe('MH-6702');
+      expect(tenant?.tenant_code).toBe('MH-6702');
 
       // Step 4: User enters MH-6702-1234 (tenant code + PIN)
       const userInput = 'MH-6702-1234';

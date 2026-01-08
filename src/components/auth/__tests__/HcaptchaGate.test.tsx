@@ -80,7 +80,7 @@ describe('HcaptchaGate', () => {
       render(<HcaptchaGate onVerified={mockOnVerified} />);
 
       const form = screen.getByRole('button').closest('form');
-      fireEvent.submit(form!);
+      if (form) fireEvent.submit(form);
 
       await waitFor(() => {
         expect(mockExecute).toHaveBeenCalledTimes(1);

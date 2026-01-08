@@ -3,7 +3,7 @@
 // Supports FHIR Questionnaire standard
 // White-label ready - uses Envision Atlus design system
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   ClipboardList,
   Users,
@@ -111,14 +111,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('deployments');
 
-  useEffect(() => {
-    loadDashboard();
-    // Refresh every 5 minutes
-    const interval = setInterval(loadDashboard, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -210,7 +203,14 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    loadDashboard();
+    // Refresh every 5 minutes
+    const interval = setInterval(loadDashboard, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [loadDashboard]);
 
   const getStatusBadgeVariant = (status: string): 'normal' | 'elevated' | 'info' | 'neutral' => {
     switch (status) {

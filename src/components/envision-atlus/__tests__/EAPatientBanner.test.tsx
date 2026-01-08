@@ -234,7 +234,7 @@ describe('EAPatientBanner', () => {
       // The backdrop is a fixed div with inset-0
       const backdrop = document.querySelector('.fixed.inset-0');
       expect(backdrop).toBeInTheDocument();
-      await userEvent.click(backdrop!);
+      if (backdrop) await userEvent.click(backdrop);
 
       await waitFor(() => {
         expect(screen.queryByText('Recent Patients')).not.toBeInTheDocument();

@@ -3,7 +3,7 @@
  * Step-by-step workflow execution for any specialist type
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { SpecialistWorkflowEngine } from '../../services/specialist-workflow-engine/SpecialistWorkflowEngine';
 import { fieldVisitManager } from '../../services/specialist-workflow-engine/FieldVisitManager';
 import { workflowRegistry } from '../../services/specialist-workflow-engine/templates';
@@ -33,12 +33,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
   const [saving, setSaving] = useState(false);
   const [location, setLocation] = useState<GeolocationCoordinates | null>(null);
 
-  useEffect(() => {
-    loadVisit();
-    getCurrentLocation();
-  }, [visitId]);
-
-  const loadVisit = async () => {
+  const loadVisit = useCallback(async () => {
     try {
       const visitData = await fieldVisitManager.getVisit(visitId);
       if (!visitData) {
@@ -65,7 +60,12 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
     } finally {
       setLoading(false);
     }
-  };
+  }, [visitId]);
+
+  useEffect(() => {
+    loadVisit();
+    getCurrentLocation();
+  }, [visitId, loadVisit]);
 
   const getCurrentLocation = async () => {
     const coords = await fieldVisitManager.getCurrentLocation();

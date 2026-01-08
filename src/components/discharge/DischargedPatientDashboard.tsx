@@ -5,7 +5,7 @@
 // Methodist Demo: This is the dashboard they'll love
 // ============================================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { DischargeToWellnessBridgeService } from '../../services/dischargeToWellnessBridge';
 import type {
   CareTeamDashboardMetrics,
@@ -28,7 +28,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
   const [filterHighRisk, setFilterHighRisk] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<DischargedPatientSummary | null>(null);
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       setError(null);
       const result = await DischargeToWellnessBridgeService.getCareTeamDashboard({
@@ -47,7 +47,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterNeedsAttention, filterHighRisk]);
 
   useEffect(() => {
     loadDashboard();
@@ -56,7 +56,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
       const interval = setInterval(loadDashboard, refreshIntervalSeconds * 1000);
       return () => clearInterval(interval);
     }
-  }, [filterNeedsAttention, filterHighRisk, autoRefresh, refreshIntervalSeconds]);
+  }, [filterNeedsAttention, filterHighRisk, autoRefresh, refreshIntervalSeconds, loadDashboard]);
 
   const getRiskColor = (category: string) => {
     switch (category) {

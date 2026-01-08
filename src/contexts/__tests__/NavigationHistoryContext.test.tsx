@@ -108,6 +108,7 @@ describe('NavigationHistoryContext', () => {
     );
 
     // Initial route should be in history
+    expect(navRef).not.toBeNull();
     expect(navRef!.historyStack).toContain('/dashboard');
   });
 
@@ -121,6 +122,7 @@ describe('NavigationHistoryContext', () => {
     );
 
     // Login route should NOT be in history
+    expect(navRef).not.toBeNull();
     expect(navRef!.historyStack).not.toContain('/login');
   });
 
@@ -133,9 +135,11 @@ describe('NavigationHistoryContext', () => {
       </TestWrapper>
     );
 
+    expect(navRef).not.toBeNull();
+
     // Clear history
     act(() => {
-      navRef?.clearHistory();
+      navRef!.clearHistory();
     });
 
     expect(navRef!.historyStack).toHaveLength(0);
@@ -151,6 +155,7 @@ describe('NavigationHistoryContext', () => {
       </TestWrapper>
     );
 
+    expect(navRef).not.toBeNull();
     // Even without history, goBack should use fallback
     expect(navRef!.goBack).toBeDefined();
     expect(typeof navRef!.goBack).toBe('function');
@@ -166,6 +171,7 @@ describe('NavigationHistoryContext', () => {
       </TestWrapper>
     );
 
+    expect(navRef).not.toBeNull();
     // Should have /profile in history (current route)
     expect(navRef!.historyStack).toContain('/profile');
   });
@@ -198,6 +204,7 @@ describe('NavigationHistoryContext - Auth Route Filtering', () => {
         </TestWrapper>
       );
 
+      expect(navRef).not.toBeNull();
       expect(navRef!.historyStack).not.toContain(route);
     });
   });
@@ -228,6 +235,7 @@ describe('NavigationHistoryContext - Protected Route Tracking', () => {
         </TestWrapper>
       );
 
+      expect(navRef).not.toBeNull();
       expect(navRef!.historyStack).toContain(route);
     });
   });

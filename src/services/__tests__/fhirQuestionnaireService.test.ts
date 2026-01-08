@@ -268,7 +268,7 @@ describe('FHIRQuestionnaireService', () => {
         expect.objectContaining({
           has_scoring: true,
           scoring_algorithm: 'PHQ-9',
-          scoring_rules: questionnaireWithScoring.scoring!.rules,
+          scoring_rules: questionnaireWithScoring.scoring?.rules,
         })
       );
     });

@@ -330,7 +330,7 @@ describe('SecurityPanel', () => {
 
       // Click on an alert
       const alertCard = screen.getByText('Suspicious Login Attempt').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(alertCard!);
+      if (alertCard) fireEvent.click(alertCard);
 
       // Should show details panel
       expect(screen.getByText('Alert Details')).toBeInTheDocument();
@@ -340,7 +340,7 @@ describe('SecurityPanel', () => {
       render(<SecurityPanel />);
 
       const alertCard = screen.getByText('Suspicious Login Attempt').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(alertCard!);
+      if (alertCard) fireEvent.click(alertCard);
 
       expect(alertCard).toHaveClass('border-blue-500');
     });
@@ -349,7 +349,7 @@ describe('SecurityPanel', () => {
       render(<SecurityPanel />);
 
       const alertCard = screen.getByText('Suspicious Login Attempt').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(alertCard!);
+      if (alertCard) fireEvent.click(alertCard);
 
       expect(screen.getByText('Additional Details')).toBeInTheDocument();
     });
@@ -360,7 +360,7 @@ describe('SecurityPanel', () => {
       render(<SecurityPanel />);
 
       const alertCard = screen.getByText('Suspicious Login Attempt').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(alertCard!);
+      if (alertCard) fireEvent.click(alertCard);
 
       expect(screen.getByRole('button', { name: /acknowledge/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /resolve/i })).toBeInTheDocument();
@@ -374,7 +374,7 @@ describe('SecurityPanel', () => {
       await userEvent.click(screen.getByRole('button', { name: /all alerts/i }));
 
       const alertCard = screen.getByText('Unauthorized Access Attempt').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(alertCard!);
+      if (alertCard) fireEvent.click(alertCard);
 
       // Action buttons should not appear for acknowledged alert
       expect(screen.queryByRole('button', { name: /acknowledge/i })).not.toBeInTheDocument();
@@ -470,7 +470,7 @@ describe('SecurityPanel', () => {
       render(<SecurityPanel />);
 
       const alertCard = screen.getByText('Suspicious Login Attempt').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(alertCard!);
+      if (alertCard) fireEvent.click(alertCard);
 
       // Should show formatted date
       expect(screen.getByText(/created/i)).toBeInTheDocument();

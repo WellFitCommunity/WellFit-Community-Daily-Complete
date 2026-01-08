@@ -207,7 +207,7 @@ describe('TranslationModule', () => {
     });
 
     it('should show loading state during translation', async () => {
-      let resolveTranslation: (value: unknown) => void;
+      let resolveTranslation: (value: unknown) => void = () => {};
       const translationPromise = new Promise((resolve) => {
         resolveTranslation = resolve;
       });
@@ -221,7 +221,7 @@ describe('TranslationModule', () => {
 
       expect(screen.getByText('Translating...')).toBeInTheDocument();
 
-      resolveTranslation!({ translatedText: 'Hola', culturalNotes: [], cached: false });
+      resolveTranslation({ translatedText: 'Hola', culturalNotes: [], cached: false });
 
       await waitFor(() => {
         expect(screen.queryByText('Translating...')).not.toBeInTheDocument();

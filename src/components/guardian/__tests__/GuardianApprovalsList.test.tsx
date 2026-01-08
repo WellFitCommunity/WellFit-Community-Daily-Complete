@@ -397,7 +397,7 @@ describe('GuardianApprovalsList', () => {
 
       // Click on the first ticket row
       const row = screen.getByText('Security').closest('tr');
-      fireEvent.click(row!);
+      if (row) fireEvent.click(row);
 
       expect(mockNavigate).toHaveBeenCalledWith('/guardian/approval/ticket-1');
     });

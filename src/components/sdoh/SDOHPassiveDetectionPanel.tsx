@@ -5,7 +5,7 @@
  * for clinician review and validation. Complements structured assessments.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { SDOHPassiveDetectionService, type SDOHDetection } from '../../services/sdohPassiveDetection';
 import { SDOHIndicatorBadge } from './SDOHIndicatorBadge';
 
@@ -23,11 +23,7 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadDetections();
-  }, [patientId]);
-
-  const loadDetections = async () => {
+  const loadDetections = useCallback(async () => {
     setLoading(true);
     try {
       const unreviewed = await SDOHPassiveDetectionService.getUnreviewedDetections(patientId);
@@ -37,7 +33,11 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
     } finally {
       setLoading(false);
     }
-  };
+  }, [patientId]);
+
+  useEffect(() => {
+    loadDetections();
+  }, [patientId, loadDetections]);
 
   const handleReview = async (detectionId: string, createFactor: boolean, notes?: string) => {
     setReviewingId(detectionId);

@@ -148,14 +148,7 @@ export const ReferralsDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [_selectedSource, setSelectedSource] = useState<ReferralSource | null>(null);
 
-  useEffect(() => {
-    loadDashboard();
-    // Refresh every 5 minutes
-    const interval = setInterval(loadDashboard, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -234,7 +227,14 @@ export const ReferralsDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    loadDashboard();
+    // Refresh every 5 minutes
+    const interval = setInterval(loadDashboard, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [loadDashboard]);
 
   const handleAcceptReferral = async (referralId: string) => {
     try {

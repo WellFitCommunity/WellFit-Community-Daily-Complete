@@ -220,7 +220,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
     } finally {
       setSaving(false);
     }
-  }, [user, supabase, formData, currentStep, navigate, requireUserIdOrSetError]);
+  }, [supabase, formData, currentStep, navigate, requireUserIdOrSetError]);
 
   const skipToConsent = useCallback(async () => {
     setSaving(true);
@@ -249,7 +249,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
     } finally {
       setSaving(false);
     }
-  }, [user, supabase, navigate, requireUserIdOrSetError]);
+  }, [supabase, navigate, requireUserIdOrSetError]);
 
   const handleSubmit = useCallback(async () => {
     setSubmitting(true);
@@ -291,7 +291,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
     } finally {
       setSubmitting(false);
     }
-  }, [user, supabase, formData, navigate, requireUserIdOrSetError]);
+  }, [supabase, formData, navigate, requireUserIdOrSetError]);
 
   return {
     formData,

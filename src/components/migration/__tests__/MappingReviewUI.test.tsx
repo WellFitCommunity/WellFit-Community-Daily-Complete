@@ -228,7 +228,7 @@ describe('MappingReviewUI', () => {
 
       // Click on "Unmapped" stat card
       const unmappedCard = screen.getByText('Unmapped').closest('button');
-      await user.click(unmappedCard!);
+      if (unmappedCard) await user.click(unmappedCard);
 
       // Should only show unmapped field
       expect(screen.getByText('unknown_field')).toBeInTheDocument();
@@ -242,7 +242,7 @@ describe('MappingReviewUI', () => {
 
       // Apply filter
       const unmappedCard = screen.getByText('Unmapped').closest('button');
-      await user.click(unmappedCard!);
+      if (unmappedCard) await user.click(unmappedCard);
 
       // Clear filter should appear
       const clearButton = screen.getByText('Clear filter');
@@ -331,14 +331,19 @@ describe('MappingReviewUI', () => {
 
       // Initial skipped count should be 0
       const skippedCard = screen.getByText('Skipped').closest('button');
-      expect(within(skippedCard!).getByText('0')).toBeInTheDocument();
+      expect(skippedCard).not.toBeNull();
+      if (skippedCard) {
+        expect(within(skippedCard).getByText('0')).toBeInTheDocument();
+      }
 
       // Skip a mapping
       const skipButton = screen.getAllByText('Skip')[0];
       await user.click(skipButton);
 
       // Skipped count should be 1
-      expect(within(skippedCard!).getByText('1')).toBeInTheDocument();
+      if (skippedCard) {
+        expect(within(skippedCard).getByText('1')).toBeInTheDocument();
+      }
     });
   });
 

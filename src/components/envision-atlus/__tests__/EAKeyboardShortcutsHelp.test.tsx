@@ -127,7 +127,7 @@ describe('EAKeyboardShortcutsHelp', () => {
       const backdrop = document.querySelector('.fixed.inset-0');
       expect(backdrop).toBeInTheDocument();
 
-      await userEvent.click(backdrop!);
+      if (backdrop) await userEvent.click(backdrop);
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
