@@ -1235,8 +1235,9 @@ const BedManagementPanel: React.FC = () => {
                   } else {
                     setAiError(result.error?.message || 'Failed to generate report');
                   }
-                } catch (err: any) {
-                  setAiError(err.message || 'Failed to generate AI report');
+                } catch (err: unknown) {
+                  const message = err instanceof Error ? err.message : 'Failed to generate AI report';
+                  setAiError(message);
                 } finally {
                   setLoadingAiReport(false);
                 }

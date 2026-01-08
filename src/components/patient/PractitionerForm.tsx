@@ -294,7 +294,7 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
               <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
               <select
                 value={gender}
-                onChange={(e) => setGender(e.target.value as any)}
+                onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other' | 'unknown')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="male">Male</option>

@@ -127,11 +127,11 @@ const SystemConfigurationPanel: React.FC = () => {
         type: 'success',
         text: 'System configuration saved successfully'
       });
-    } catch (error: any) {
-
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to save configuration';
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to save configuration'
+        text: message
       });
     } finally {
       setSaving(false);

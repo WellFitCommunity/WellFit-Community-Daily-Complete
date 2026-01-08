@@ -74,7 +74,6 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
   // Play sound effects
   const playSound = useCallback((type: 'lock' | 'gear' | 'open' | 'granted') => {
     // Web Audio API - using oscillator for now (you can replace with actual audio files)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- webkitAudioContext is a legacy vendor-prefixed API not in TypeScript's lib
     const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();

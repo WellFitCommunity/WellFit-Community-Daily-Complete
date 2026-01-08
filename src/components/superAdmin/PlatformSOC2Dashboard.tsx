@@ -35,6 +35,13 @@ interface PlatformMetrics {
   warningsTotal: number;
 }
 
+// Raw tenant data from database query
+interface TenantRow {
+  id: string;
+  name: string;
+  tenant_code: string | null;
+}
+
 const PlatformSOC2Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +74,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
 
       // Calculate compliance metrics for each tenant
       const tenantComplianceData: TenantComplianceMetrics[] = await Promise.all(
-        (tenants || []).map(async (tenant: any) => {
+        (tenants || []).map(async (tenant: TenantRow) => {
           // Get audit log count for this tenant (as a compliance indicator)
           const { count: auditCount } = await supabase
             .from('admin_audit_logs')

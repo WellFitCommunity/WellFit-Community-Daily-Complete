@@ -72,9 +72,9 @@ export const X12ClaimGenerator: React.FC<X12ClaimGeneratorProps> = ({
       toast.success('X12 837P claim generated successfully ✅');
 
       onClaimGenerated?.(returnedClaimId || fallbackId, normalized);
-    } catch (err: any) {
-
-      toast.error(`Failed to generate claim: ${err?.message ?? String(err)}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Failed to generate claim: ${message}`);
     } finally {
       setIsGenerating(false);
     }

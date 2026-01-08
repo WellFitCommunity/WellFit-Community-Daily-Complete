@@ -432,8 +432,9 @@ export const CommunityReadmissionDashboard: React.FC = () => {
       setMembers(demoMembers);
       setAlerts(demoAlerts);
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -809,7 +810,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <select
                       value={riskFilter}
-                      onChange={(e) => setRiskFilter(e.target.value as any)}
+                      onChange={(e) => setRiskFilter(e.target.value as 'all' | 'high' | 'critical')}
                       className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white"
                     >
                       <option value="all">All Risk Levels</option>

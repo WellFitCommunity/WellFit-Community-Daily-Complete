@@ -30,6 +30,13 @@ interface PlatformAIMetrics {
   highestCostTenant: string | null;
 }
 
+// Raw tenant data from database query
+interface TenantRow {
+  id: string;
+  name: string;
+  tenant_code: string | null;
+}
+
 const PlatformAICostDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +74,7 @@ const PlatformAICostDashboard: React.FC = () => {
 
       // Get AI usage data for each tenant
       const tenantCostData: TenantAICost[] = await Promise.all(
-        (tenants || []).map(async (tenant: any) => {
+        (tenants || []).map(async (tenant: TenantRow) => {
           // Query MCP cost tracking table (if exists) or audit logs for AI usage
           const { data: usageData } = await supabase
             .from('mcp_usage_logs')

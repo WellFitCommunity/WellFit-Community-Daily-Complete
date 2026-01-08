@@ -5,7 +5,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Activity, Users, ClipboardList, TrendingUp, Calendar, FileText, Award, AlertTriangle, RefreshCw } from 'lucide-react';
 import { PhysicalTherapyService } from '../../services/physicalTherapyService';
-import { useSupabaseClient } from '../../contexts/AuthContext';
+import { useUser } from '../../contexts/AuthContext';
 import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
 import { useKeyboardShortcutsContextSafe } from '../envision-atlus/EAKeyboardShortcutsProvider';
 import {
@@ -23,6 +23,7 @@ import type {
   PTTreatmentPlan,
   PTFunctionalAssessment,
   PTOutcomeMeasure,
+  SMARTGoal,
 } from '../../types/physicalTherapy';
 
 interface DashboardMetrics {
@@ -35,7 +36,7 @@ interface DashboardMetrics {
 }
 
 export const PhysicalTherapyDashboard: React.FC = () => {
-  const { user } = useSupabaseClient() as any;
+  const user = useUser();
   const { selectPatient } = usePatientContext();
   const keyboardShortcuts = useKeyboardShortcutsContextSafe();
 
@@ -536,7 +537,7 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
             <div>
               <h3 className="text-lg font-semibold text-white mb-3">Treatment Goals</h3>
               <div className="space-y-3">
-                {plan.goals.map((goal: any, index: number) => (
+                {plan.goals.map((goal: SMARTGoal, index: number) => (
                   <div key={goal.goal_id || index} className="bg-slate-700/50 p-4 rounded-lg">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">

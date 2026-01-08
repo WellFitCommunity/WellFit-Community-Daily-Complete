@@ -442,8 +442,9 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = React.memo(({ onSave
       } else {
         alert(`Error: ${response.error}`);
       }
-    } catch (error: any) {
-      alert(`Error: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Error: ${message}`);
     } finally {
       setSaving(false);
     }

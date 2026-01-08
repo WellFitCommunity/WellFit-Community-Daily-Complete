@@ -233,7 +233,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
 
     setFormData(prev => ({
       ...prev,
-      risk_level: aiAnalysis.suggestedRiskLevel as any,
+      risk_level: aiAnalysis.suggestedRiskLevel as 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL',
       risk_factors: [...(prev.risk_factors || []), ...aiAnalysis.riskFactors.filter(f => !prev.risk_factors?.includes(f))],
       recommended_actions: [...(prev.recommended_actions || []), ...aiAnalysis.recommendations.filter(r => !prev.recommended_actions?.includes(r))],
       assessment_notes: prev.assessment_notes ?
@@ -638,7 +638,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
               <label className="text-sm font-medium">Review Frequency</label>
               <select
                 value={formData.review_frequency || 'monthly'}
-                onChange={(e) => setFormData(prev => ({ ...prev, review_frequency: e.target.value as any }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, review_frequency: e.target.value as 'weekly' | 'biweekly' | 'monthly' | 'quarterly' }))}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="weekly">Weekly</option>

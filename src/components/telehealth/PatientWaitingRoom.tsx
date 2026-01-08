@@ -132,12 +132,12 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
           isInCall: providerInRoom,
         }));
       }
-    } catch (error: any) {
-
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to join telehealth session';
       setRoomState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to join telehealth session',
+        error: errorMessage,
       }));
     }
   }, [daily, sessionId, patientName]);

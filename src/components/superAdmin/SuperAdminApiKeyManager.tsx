@@ -175,7 +175,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
         usage_count: 0,
         last_used: null,
         user_id: key.created_by,
-        tenant_name: (key.tenants as any)?.name || 'Platform-level'
+        tenant_name: (key.tenants as { name?: string } | null)?.name || 'Platform-level'
       }));
 
       setApiKeys(transformedData as ApiKey[]);

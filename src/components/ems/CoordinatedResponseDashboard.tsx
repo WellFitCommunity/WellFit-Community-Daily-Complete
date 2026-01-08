@@ -223,7 +223,7 @@ const StatCard: React.FC<{ label: string; value: number; color: string }> = ({ l
 const DepartmentCard: React.FC<{
   dispatch: CoordinatedResponseStatus;
   onAcknowledge: (id: string, name: string) => void;
-  onMarkReady: (id: string, name: string, actions: any) => void;
+  onMarkReady: (id: string, name: string, actions: string[] | null | undefined) => void;
 }> = ({ dispatch, onAcknowledge, onMarkReady }) => {
   const statusColors: Record<string, string> = {
     pending: '#ef4444',

@@ -98,7 +98,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
     setCognitiveStatus(status);
   }, [formData, assessmentTool]);
 
-  const handleInputChange = (field: keyof CreateCognitiveAssessmentRequest, value: any) => {
+  const handleInputChange = (field: keyof CreateCognitiveAssessmentRequest, value: CreateCognitiveAssessmentRequest[keyof CreateCognitiveAssessmentRequest]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

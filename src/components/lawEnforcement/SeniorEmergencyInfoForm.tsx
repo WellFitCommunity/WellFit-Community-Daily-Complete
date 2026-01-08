@@ -136,7 +136,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
     }
   };
 
-  const updateField = (field: keyof EmergencyResponseFormData, value: any) => {
+  const updateField = (field: keyof EmergencyResponseFormData, value: EmergencyResponseFormData[keyof EmergencyResponseFormData]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

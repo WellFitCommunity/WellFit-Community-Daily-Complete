@@ -104,7 +104,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
     }
   }, [formData.symptom_onset, formData.assessment_date]);
 
-  const handleInputChange = (field: keyof CreateStrokeAssessmentRequest, value: any) => {
+  const handleInputChange = (field: keyof CreateStrokeAssessmentRequest, value: CreateStrokeAssessmentRequest[keyof CreateStrokeAssessmentRequest]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

@@ -144,9 +144,9 @@ const UserRoleManager: React.FC = () => {
       setSelectedUser(null);
       setSelectedRole('');
       await loadUsers();
-    } catch (error: any) {
-
-      setMessage({ type: 'error', text: error.message || 'Failed to grant role' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to grant role';
+      setMessage({ type: 'error', text: message });
     } finally {
       setActionLoading(false);
     }
@@ -181,9 +181,9 @@ const UserRoleManager: React.FC = () => {
 
       setMessage({ type: 'success', text: `Successfully revoked ${role} role from ${userEmail}` });
       await loadUsers();
-    } catch (error: any) {
-
-      setMessage({ type: 'error', text: error.message || 'Failed to revoke role' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to revoke role';
+      setMessage({ type: 'error', text: message });
     } finally {
       setActionLoading(false);
     }

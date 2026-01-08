@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { LawEnforcementService } from '../../services/lawEnforcementService';
-import type { MissedCheckInAlert, WelfareCheckInfo } from '../../types/lawEnforcement';
+import type { MissedCheckInAlert, WelfareCheckInfo, EmergencyContact } from '../../types/lawEnforcement';
 import {
   EACard,
   EACardHeader,
@@ -350,7 +350,7 @@ export const ConstableDispatchDashboard: React.FC = () => {
                 <h3 className="text-lg font-semibold text-white">Emergency Contacts</h3>
               </EACardHeader>
               <EACardContent className="space-y-4">
-                {welfareCheckInfo.emergencyContacts?.map((contact: any, i: number) => (
+                {welfareCheckInfo.emergencyContacts?.map((contact: EmergencyContact, i: number) => (
                   <div key={i} className="flex items-center gap-4 p-3 bg-slate-800/50 rounded-lg border-l-4 border-[#00857a]">
                     <div className="w-10 h-10 rounded-full bg-[#00857a]/20 flex items-center justify-center">
                       <User className="h-5 w-5 text-[#00857a]" />

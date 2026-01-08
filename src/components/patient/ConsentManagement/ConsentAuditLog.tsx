@@ -25,6 +25,18 @@ interface AuditEntry {
   created_at: string;
 }
 
+// Raw database entry shape before transformation
+// Note: Supabase can return joined relations as object or array depending on relationship type
+interface RawAuditEntry {
+  id: string;
+  event_type: string;
+  app?: { client_name?: string } | Array<{ client_name?: string }>;
+  resource_type?: string;
+  details?: Record<string, unknown>;
+  ip_address?: string;
+  created_at: string;
+}
+
 type FilterType = 'all' | 'app_access' | 'data_export' | 'consent_changes';
 
 const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate }) => {
@@ -71,10 +83,10 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
       const { data, error } = await query;
 
       if (!error && data) {
-        const mappedEntries = data.map((entry: any) => ({
+        const mappedEntries = data.map((entry: RawAuditEntry) => ({
           id: entry.id,
           event_type: entry.event_type,
-          app_name: entry.app?.client_name,
+          app_name: Array.isArray(entry.app) ? entry.app[0]?.client_name : entry.app?.client_name,
           resource_type: entry.resource_type,
           details: entry.details,
           ip_address: entry.ip_address,
