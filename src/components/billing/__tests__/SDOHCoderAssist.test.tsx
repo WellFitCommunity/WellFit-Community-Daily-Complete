@@ -2,7 +2,7 @@
  * Tests for SDOHCoderAssist Component
  *
  * Purpose: Verify SDOH-enhanced billing coder functionality
- * Coverage: Tabs, SDOH analysis, CCM recommendations, compliance validation
+ * Coverage: Tabs, SDOH analysis, CCM recommendations, compliance validation, error handling
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -58,8 +58,8 @@ describe('SDOHCoderAssist', () => {
       ],
     },
     procedureCodes: {
-      cpt: [{ code: '99213', rationale: 'Office visit' }],
-      hcpcs: [],
+      cpt: [{ code: '99213', rationale: 'Office visit', modifiers: ['25'] }],
+      hcpcs: [{ code: 'G2211', rationale: 'Complex visit add-on' }],
     },
     sdohAssessment: {
       patientId: 'patient-456',
@@ -100,6 +100,19 @@ describe('SDOHCoderAssist', () => {
     auditFlags: [],
   };
 
+  const mockValidationWithIssues = {
+    isValid: false,
+    errors: [
+      { code: 'MISSING_DOC', field: 'carePlan', message: 'Care plan not found', severity: 'error' as const },
+    ],
+    warnings: [
+      { code: 'FOOD_INSECURITY', field: 'icd10.Z59.4', message: 'Patient has food insecurity', recommendation: 'Consider referral' },
+    ],
+    auditFlags: [
+      { type: 'documentation' as const, risk: 'high' as const, description: 'Missing documentation', remediation: 'Add care plan' },
+    ],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(SDOHBillingService.analyzeEncounter).mockResolvedValue(mockEnhancedSuggestion);
@@ -111,17 +124,27 @@ describe('SDOHCoderAssist', () => {
   });
 
   describe('Rendering', () => {
-    it('should render component with header', () => {
+    it('should render component with title "SDOH Billing Encoder"', () => {
       render(<SDOHCoderAssist {...defaultProps} />);
 
       expect(screen.getByText('SDOH Billing Encoder')).toBeInTheDocument();
-      expect(screen.getByText(/Advanced coding with social determinants/)).toBeInTheDocument();
     });
 
-    it('should render Analyze and Save buttons', () => {
+    it('should render subtitle about advanced coding', () => {
+      render(<SDOHCoderAssist {...defaultProps} />);
+
+      expect(screen.getByText(/Advanced coding with social determinants analysis/)).toBeInTheDocument();
+    });
+
+    it('should render Analyze Encounter button', () => {
       render(<SDOHCoderAssist {...defaultProps} />);
 
       expect(screen.getByRole('button', { name: /Analyze Encounter/i })).toBeInTheDocument();
+    });
+
+    it('should render Accept & Save button', () => {
+      render(<SDOHCoderAssist {...defaultProps} />);
+
       expect(screen.getByRole('button', { name: /Accept & Save/i })).toBeInTheDocument();
     });
 
@@ -136,10 +159,22 @@ describe('SDOHCoderAssist', () => {
 
       expect(screen.getByRole('button', { name: /Accept & Save/i })).toBeDisabled();
     });
+
+    it('should disable Analyze Encounter when missing encounterId', () => {
+      render(<SDOHCoderAssist encounterId="" patientId="patient-456" />);
+
+      expect(screen.getByRole('button', { name: /Analyze Encounter/i })).toBeDisabled();
+    });
+
+    it('should disable Analyze Encounter when missing patientId', () => {
+      render(<SDOHCoderAssist encounterId="encounter-123" patientId="" />);
+
+      expect(screen.getByRole('button', { name: /Analyze Encounter/i })).toBeDisabled();
+    });
   });
 
-  describe('Analysis Flow', () => {
-    it('should call SDOHBillingService.analyzeEncounter on analyze', async () => {
+  describe('Analyze Encounter Button', () => {
+    it('should call SDOHBillingService.analyzeEncounter on click', async () => {
       render(<SDOHCoderAssist {...defaultProps} />);
 
       fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
@@ -159,7 +194,7 @@ describe('SDOHCoderAssist', () => {
       });
     });
 
-    it('should show loading state during analysis', async () => {
+    it('should show "Analyzing..." while loading', async () => {
       vi.mocked(SDOHBillingService.analyzeEncounter).mockImplementation(
         () => new Promise(() => {}) // Never resolves
       );
@@ -172,34 +207,59 @@ describe('SDOHCoderAssist', () => {
         expect(screen.getByText(/Analyzing…/i)).toBeInTheDocument();
       });
     });
+  });
 
-    it('should show tabs after successful analysis', async () => {
+  describe('Tab Navigation', () => {
+    beforeEach(async () => {
       render(<SDOHCoderAssist {...defaultProps} />);
-
       fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
-
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Codes/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /SDOH Analysis/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /CCM Recommendation/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Compliance/i })).toBeInTheDocument();
       });
     });
 
-    it('should show error on analysis failure', async () => {
-      vi.mocked(SDOHBillingService.analyzeEncounter).mockRejectedValue(new Error('Service unavailable'));
+    it('should show Codes tab', () => {
+      expect(screen.getByRole('button', { name: /Codes/i })).toBeInTheDocument();
+    });
 
-      render(<SDOHCoderAssist {...defaultProps} />);
+    it('should show SDOH Analysis tab', () => {
+      expect(screen.getByRole('button', { name: /SDOH Analysis/i })).toBeInTheDocument();
+    });
 
-      fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
+    it('should show CCM Recommendation tab', () => {
+      expect(screen.getByRole('button', { name: /CCM Recommendation/i })).toBeInTheDocument();
+    });
+
+    it('should show Compliance tab', () => {
+      expect(screen.getByRole('button', { name: /Compliance/i })).toBeInTheDocument();
+    });
+
+    it('should switch to SDOH Analysis tab when clicked', async () => {
+      fireEvent.click(screen.getByRole('button', { name: /SDOH Analysis/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/Service unavailable/)).toBeInTheDocument();
+        expect(screen.getByText('SDOH Complexity Assessment')).toBeInTheDocument();
+      });
+    });
+
+    it('should switch to CCM Recommendation tab when clicked', async () => {
+      fireEvent.click(screen.getByRole('button', { name: /CCM Recommendation/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('CCM Billing Recommendation')).toBeInTheDocument();
+      });
+    });
+
+    it('should switch to Compliance tab when clicked', async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Compliance/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Billing Compliance Status')).toBeInTheDocument();
       });
     });
   });
 
-  describe('Codes Tab', () => {
+  describe('Codes Tab Content', () => {
     beforeEach(async () => {
       render(<SDOHCoderAssist {...defaultProps} />);
       fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
@@ -217,16 +277,24 @@ describe('SDOHCoderAssist', () => {
       expect(screen.getByText('SDOH Code')).toBeInTheDocument();
     });
 
-    it('should show principal diagnosis badge', () => {
+    it('should show Principal badge for principal diagnosis', () => {
       expect(screen.getByText('Principal')).toBeInTheDocument();
     });
 
     it('should display CPT codes', () => {
       expect(screen.getByText('99213')).toBeInTheDocument();
     });
+
+    it('should display HCPCS codes', () => {
+      expect(screen.getByText('G2211')).toBeInTheDocument();
+    });
+
+    it('should display code rationale', () => {
+      expect(screen.getByText('Office visit')).toBeInTheDocument();
+    });
   });
 
-  describe('SDOH Analysis Tab', () => {
+  describe('SDOH Analysis Tab Content', () => {
     beforeEach(async () => {
       render(<SDOHCoderAssist {...defaultProps} />);
       fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
@@ -236,9 +304,8 @@ describe('SDOHCoderAssist', () => {
       fireEvent.click(screen.getByRole('button', { name: /SDOH Analysis/i }));
     });
 
-    it('should display complexity score', async () => {
+    it('should display SDOH complexity score', async () => {
       await waitFor(() => {
-        // The complexity score appears in multiple places, so we use getAllByText
         const scores = screen.getAllByText('65');
         expect(scores.length).toBeGreaterThan(0);
         expect(screen.getByText('Complexity Score')).toBeInTheDocument();
@@ -252,6 +319,13 @@ describe('SDOHCoderAssist', () => {
       });
     });
 
+    it('should display CCM tier', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('CCM Tier:')).toBeInTheDocument();
+        expect(screen.getByText('standard')).toBeInTheDocument();
+      });
+    });
+
     it('should display SDOH factors', async () => {
       await waitFor(() => {
         expect(screen.getByText('Food Insecurity')).toBeInTheDocument();
@@ -261,7 +335,7 @@ describe('SDOHCoderAssist', () => {
     });
   });
 
-  describe('CCM Recommendation Tab', () => {
+  describe('CCM Recommendation Tab Content', () => {
     beforeEach(async () => {
       render(<SDOHCoderAssist {...defaultProps} />);
       fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
@@ -280,7 +354,6 @@ describe('SDOHCoderAssist', () => {
     it('should display expected reimbursement', async () => {
       await waitFor(() => {
         expect(screen.getByText('Expected Reimbursement:')).toBeInTheDocument();
-        // Reimbursement may appear in multiple places, use getAllByText
         const amounts = screen.getAllByText('$62.43');
         expect(amounts.length).toBeGreaterThan(0);
       });
@@ -291,6 +364,20 @@ describe('SDOHCoderAssist', () => {
         expect(screen.getByText('Required Documentation')).toBeInTheDocument();
         expect(screen.getByText('Care plan')).toBeInTheDocument();
         expect(screen.getByText('Time documentation')).toBeInTheDocument();
+        expect(screen.getByText('Patient consent')).toBeInTheDocument();
+      });
+    });
+
+    it('should display CCM tier', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Tier:')).toBeInTheDocument();
+      });
+    });
+
+    it('should display justification', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Justification:')).toBeInTheDocument();
+        expect(screen.getByText(/Patient has chronic conditions/)).toBeInTheDocument();
       });
     });
 
@@ -301,7 +388,7 @@ describe('SDOHCoderAssist', () => {
     });
   });
 
-  describe('Compliance Tab', () => {
+  describe('Compliance Tab Content', () => {
     beforeEach(async () => {
       render(<SDOHCoderAssist {...defaultProps} />);
       fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
@@ -326,6 +413,62 @@ describe('SDOHCoderAssist', () => {
     });
   });
 
+  describe('Compliance Status Display', () => {
+    it('should show "Issues Found" when validation has errors', async () => {
+      vi.mocked(SDOHBillingService.validateBillingCompliance).mockResolvedValue(mockValidationWithIssues);
+
+      render(<SDOHCoderAssist {...defaultProps} />);
+      fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Compliance/i })).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Compliance/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Issues Found')).toBeInTheDocument();
+      });
+    });
+
+    it('should display errors when present', async () => {
+      vi.mocked(SDOHBillingService.validateBillingCompliance).mockResolvedValue(mockValidationWithIssues);
+
+      render(<SDOHCoderAssist {...defaultProps} />);
+      fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Compliance/i })).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Compliance/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Errors/)).toBeInTheDocument();
+        expect(screen.getByText('MISSING_DOC')).toBeInTheDocument();
+      });
+    });
+
+    it('should display audit flags when present', async () => {
+      vi.mocked(SDOHBillingService.validateBillingCompliance).mockResolvedValue(mockValidationWithIssues);
+
+      render(<SDOHCoderAssist {...defaultProps} />);
+      fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Compliance/i })).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Compliance/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Audit Flags/)).toBeInTheDocument();
+        expect(screen.getByText(/Missing documentation/)).toBeInTheDocument();
+        expect(screen.getByText('high risk')).toBeInTheDocument();
+      });
+    });
+  });
+
   describe('Summary Footer', () => {
     beforeEach(async () => {
       render(<SDOHCoderAssist {...defaultProps} />);
@@ -335,17 +478,44 @@ describe('SDOHCoderAssist', () => {
       });
     });
 
-    it('should display confidence score', () => {
+    it('should display confidence score in footer', () => {
       expect(screen.getByText('88%')).toBeInTheDocument();
     });
 
-    it('should display audit readiness score', () => {
+    it('should display audit readiness score in footer', () => {
       expect(screen.getByText('Audit Readiness')).toBeInTheDocument();
       expect(screen.getByText('85%')).toBeInTheDocument();
     });
 
-    it('should display expected revenue', () => {
+    it('should display expected revenue in footer', () => {
       expect(screen.getByText('Expected Revenue')).toBeInTheDocument();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should show error on analysis failure', async () => {
+      vi.mocked(SDOHBillingService.analyzeEncounter).mockRejectedValue(new Error('Service unavailable'));
+
+      render(<SDOHCoderAssist {...defaultProps} />);
+
+      fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Service unavailable/)).toBeInTheDocument();
+      });
+    });
+
+    it('should display error in styled error box', async () => {
+      vi.mocked(SDOHBillingService.analyzeEncounter).mockRejectedValue(new Error('API Error'));
+
+      render(<SDOHCoderAssist {...defaultProps} />);
+
+      fireEvent.click(screen.getByRole('button', { name: /Analyze Encounter/i }));
+
+      await waitFor(() => {
+        const errorBox = screen.getByText(/API Error/).closest('div');
+        expect(errorBox).toHaveClass('bg-red-50');
+      });
     });
   });
 
@@ -372,7 +542,7 @@ describe('SDOHCoderAssist', () => {
       });
     });
 
-    it('should call onSaved callback', async () => {
+    it('should call onSaved callback with results', async () => {
       const onSaved = vi.fn();
       render(<SDOHCoderAssist {...defaultProps} onSaved={onSaved} />);
 
