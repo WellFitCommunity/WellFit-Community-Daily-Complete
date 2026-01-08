@@ -58,7 +58,7 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
         if (isMounted) {
           setCredentials(creds);
         }
-      } catch (err: any) {
+      } catch {
         // Silent error - credentials optional
       }
     };
@@ -76,8 +76,8 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
     try {
       const creds = await getUserPasskeys();
       setCredentials(creds);
-    } catch (err: any) {
-
+    } catch {
+      // Silent error
     }
   };
 

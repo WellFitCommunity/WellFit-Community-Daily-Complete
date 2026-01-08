@@ -5,7 +5,7 @@
 
 import { supabase } from '../../lib/supabaseClient';
 import { psychMedClassifier, type PsychMedAlert } from '../../services/psychMedClassifier';
-import type { ApiResponse, Medication } from './types';
+import type { ApiResponse, Medication, PsychMedAlertRecord } from './types';
 
 /**
  * Check if user has multiple psychiatric medications and create/update alerts
@@ -140,7 +140,7 @@ export async function checkMultiplePsychMeds(
  */
 export async function getPsychMedAlerts(
   userId: string
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<PsychMedAlertRecord[]>> {
   try {
     const { data, error } = await supabase
       .from('psych_med_alerts')
@@ -153,7 +153,7 @@ export async function getPsychMedAlerts(
 
     return {
       success: true,
-      data: data || []
+      data: (data || []) as PsychMedAlertRecord[]
     };
   } catch (error) {
     return {

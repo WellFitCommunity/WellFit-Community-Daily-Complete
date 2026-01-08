@@ -2,6 +2,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Heart, Activity, X, Flashlight, FlashlightOff, AlertCircle } from 'lucide-react';
 
+// Extended constraint for non-standard torch property (browser API boundary)
+interface TorchConstraint extends MediaTrackConstraintSet {
+  torch?: boolean;
+}
+
 interface PulseOximeterProps {
   onMeasurementComplete: (heartRate: number, spo2: number) => void;
   onClose: () => void;
@@ -58,12 +63,11 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
 
     try {
       await track.applyConstraints({
-        advanced: [{ torch: enable } as any]
+        advanced: [{ torch: enable } as TorchConstraint]
       });
       setFlashlightStatus(enable ? 'on' : 'off');
       setFlashlightError(null);
-    } catch (e) {
-
+    } catch {
       setFlashlightStatus('error');
       setFlashlightError('Failed to control flashlight. It may not be supported on this device.');
     }
@@ -79,10 +83,10 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: 'environment', // Back camera
-            advanced: [{ torch: true } as any] // Enable flashlight
+            advanced: [{ torch: true } as TorchConstraint] // Enable flashlight
           }
         });
-      } catch (torchError) {
+      } catch {
         // Fallback: Try without torch constraint if initial request fails
 
         try {

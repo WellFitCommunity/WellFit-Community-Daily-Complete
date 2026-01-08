@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
-import type { ApiResponse, Medication, MedicationDoseTaken } from './types';
+import type { ApiResponse, Medication, MedicationDoseTaken, MedicationAdherenceRate, UpcomingReminder } from './types';
 
 /**
  * Record a dose taken
@@ -41,7 +41,7 @@ export async function getMedicationAdherence(
   userId: string,
   medicationId?: string,
   daysBack: number = 30
-): Promise<ApiResponse<any>> {
+): Promise<ApiResponse<MedicationAdherenceRate[]>> {
   try {
     const { data, error } = await supabase
       .rpc('get_medication_adherence_rate', {
@@ -51,14 +51,16 @@ export async function getMedicationAdherence(
 
     if (error) throw error;
 
+    const adherenceData = (data || []) as MedicationAdherenceRate[];
+
     // Filter by medication if specified
     const result = medicationId
-      ? data?.filter((item: any) => item.medication_id === medicationId)
-      : data;
+      ? adherenceData.filter((item) => item.medication_id === medicationId)
+      : adherenceData;
 
     return {
       success: true,
-      data: result || []
+      data: result
     };
   } catch (error) {
     return {
@@ -102,7 +104,7 @@ export async function getMedicationsNeedingRefill(
 export async function getUpcomingReminders(
   userId: string,
   hoursAhead: number = 24
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<UpcomingReminder[]>> {
   try {
     const { data, error } = await supabase
       .rpc('get_upcoming_reminders', {
@@ -114,7 +116,7 @@ export async function getUpcomingReminders(
 
     return {
       success: true,
-      data: data || []
+      data: (data || []) as UpcomingReminder[]
     };
   } catch (error) {
     return {

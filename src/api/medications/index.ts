@@ -17,7 +17,7 @@ import * as MedicationAdherence from './MedicationAdherence';
 import * as PillIdentification from './PillIdentification';
 import * as PsychMedManagement from './PsychMedManagement';
 
-export type { ApiResponse, Medication, MedicationReminder, MedicationDoseTaken } from './types';
+export type { ApiResponse, Medication, MedicationReminder, MedicationDoseTaken, PsychMedAlertRecord } from './types';
 
 // CRUD Operations
 export {

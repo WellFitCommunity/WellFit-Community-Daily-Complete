@@ -110,8 +110,7 @@ const HealthHistory: React.FC = () => {
         if (checkInsError && selfReportsError) {
           throw new Error('Unable to load health data');
         }
-      } catch (err: any) {
-
+      } catch {
         setError('Unable to load your health history');
       } finally {
         setLoading(false);

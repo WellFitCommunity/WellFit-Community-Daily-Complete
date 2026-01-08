@@ -5,7 +5,7 @@
 
 import { supabase } from '../../lib/supabaseClient';
 import { pillIdentifier, type PillIdentificationResult, type PillLabelComparison } from '../../services/pillIdentifierService';
-import type { ApiResponse } from './types';
+import type { ApiResponse, PillIdentificationRecord, PillComparisonRecord } from './types';
 import { getMedication } from './MedicationCrud';
 
 /**
@@ -130,7 +130,7 @@ export async function comparePillWithLabel(
 export async function getPillIdentificationHistory(
   userId: string,
   limit: number = 50
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<PillIdentificationRecord[]>> {
   try {
     const { data, error } = await supabase
       .from('pill_identifications')
@@ -143,7 +143,7 @@ export async function getPillIdentificationHistory(
 
     return {
       success: true,
-      data: data || []
+      data: (data || []) as PillIdentificationRecord[]
     };
   } catch (error) {
     return {
@@ -159,7 +159,7 @@ export async function getPillIdentificationHistory(
 export async function getPillComparisonHistory(
   medicationId: string,
   limit: number = 10
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<PillComparisonRecord[]>> {
   try {
     const { data, error } = await supabase
       .from('pill_label_comparisons')
@@ -172,7 +172,7 @@ export async function getPillComparisonHistory(
 
     return {
       success: true,
-      data: data || []
+      data: (data || []) as PillComparisonRecord[]
     };
   } catch (error) {
     return {

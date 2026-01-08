@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import medicationAPI, { Medication, MedicationReminder } from '../api/medications';
+import type { PsychMedAlertRecord } from '../api/medications/types';
 import { LabelExtractionResult, MedicationInfo } from '../services/medicationLabelReader';
 import { PsychMedAlert } from '../services/psychMedClassifier';
 
@@ -22,6 +23,26 @@ interface ExtendedPsychMedAlert extends PsychMedAlert {
   id?: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
   acknowledged?: boolean;
+}
+
+// Map database records to ExtendedPsychMedAlert format
+function mapRecordToAlert(record: PsychMedAlertRecord): ExtendedPsychMedAlert {
+  return {
+    // PsychMedAlert required fields
+    hasMultiplePsychMeds: record.psych_med_count > 1,
+    psychMedCount: record.psych_med_count,
+    medications: record.medication_ids.map((id: string, index: number) => ({
+      id,
+      name: record.medication_names[index] || '',
+      category: record.categories[index] || '',
+    })),
+    warnings: record.warnings,
+    requiresReview: record.requires_review,
+    // ExtendedPsychMedAlert additions
+    id: record.id,
+    severity: record.severity === 'warning' ? 'medium' : 'critical',
+    acknowledged: record.acknowledged,
+  };
 }
 
 interface UseMedicineCabinetReturn {
@@ -299,7 +320,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
       }
 
       if (alertsResponse.success && alertsResponse.data) {
-        setPsychAlerts(alertsResponse.data);
+        setPsychAlerts(alertsResponse.data.map(mapRecordToAlert));
       }
     } catch (err) {
 

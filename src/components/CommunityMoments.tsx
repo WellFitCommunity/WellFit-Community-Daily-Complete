@@ -216,7 +216,8 @@ const CommunityMoments: React.FC = () => {
 
         if (error) throw error;
         if (cancelled) return;
-        const rows = (data ?? []) as any[];
+        // Database boundary cast - normalized to Moment interface
+        const rows = (data ?? []) as Moment[];
         const normalized: Moment[] = rows.map((r) => ({
           id: r.id,
           user_id: r.user_id,
@@ -261,7 +262,8 @@ const CommunityMoments: React.FC = () => {
         .order('created_at', { ascending: false })
         .range(from, to);
       if (error) throw error;
-      const rows = (data ?? []) as any[];
+      // Database boundary cast
+      const rows = (data ?? []) as Moment[];
       const normalized: Moment[] = rows.map((r) => ({
         id: r.id,
         user_id: r.user_id,
@@ -425,7 +427,8 @@ const CommunityMoments: React.FC = () => {
         .eq('approval_status', 'approved')
         .order('created_at', { ascending: false })
         .range(0, PAGE_SIZE - 1);
-      const rows = (data ?? []) as any[];
+      // Database boundary cast
+      const rows = (data ?? []) as Moment[];
       const normalized: Moment[] = rows.map((r) => ({
         id: r.id,
         user_id: r.user_id,

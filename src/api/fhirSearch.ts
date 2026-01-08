@@ -30,10 +30,10 @@ export interface FHIRSearchParams {
   subject?: string;
 
   // Resource-specific parameters will be added dynamically
-  [key: string]: any;
+  [key: string]: string | number | string[] | undefined;
 }
 
-export interface FHIRSearchResult<T = any> {
+export interface FHIRSearchResult<T = unknown> {
   resourceType: 'Bundle';
   type: 'searchset';
   total: number;
@@ -50,8 +50,15 @@ export interface FHIRSearchResult<T = any> {
 // SEARCH BUILDER
 // ============================================================================
 
-class FHIRSearchBuilder<T = any> {
-  public query: any;
+interface FHIRResource {
+  id: string;
+}
+
+// PostgrestFilterBuilder allows for method chaining (.eq, .order, .limit, etc.)
+type PostgrestQueryBuilder = ReturnType<ReturnType<typeof supabase.from>['select']>;
+
+class FHIRSearchBuilder<T extends FHIRResource = FHIRResource> {
+  public query: PostgrestQueryBuilder;
   private table: string;
   private params: FHIRSearchParams;
 
@@ -86,8 +93,9 @@ class FHIRSearchBuilder<T = any> {
    * Apply date filters
    */
   filterByDate(dateField: string): this {
-    if (this.params.date) {
-      const dateParam = this.params.date;
+    const dateValue = this.params.date;
+    if (dateValue && typeof dateValue === 'string') {
+      const dateParam = dateValue;
 
       // Support FHIR date search prefixes: eq, ne, lt, le, gt, ge, sa, eb
       if (dateParam.startsWith('eq')) {
@@ -171,7 +179,7 @@ class FHIRSearchBuilder<T = any> {
   /**
    * Apply sorting
    */
-  applySort(defaultSort: string = 'created_at', defaultOrder: 'asc' | 'desc' = 'desc'): this {
+  applySort(defaultSort: string = 'created_at', _defaultOrder: 'asc' | 'desc' = 'desc'): this {
     const sortParam = this.params._sort || defaultSort;
     const ascending = sortParam.startsWith('-') ? false : true;
     const sortField = sortParam.replace(/^-/, '');
@@ -198,11 +206,13 @@ class FHIRSearchBuilder<T = any> {
 
       if (error) throw error;
 
+      const resources = (data || []) as T[];
+
       const bundle: FHIRSearchResult<T> = {
         resourceType: 'Bundle',
         type: 'searchset',
-        total: data?.length || 0,
-        entry: (data || []).map((resource: T) => ({
+        total: resources.length,
+        entry: resources.map((resource) => ({
           fullUrl: this.getFullUrl(resource),
           resource,
           search: {
@@ -212,8 +222,7 @@ class FHIRSearchBuilder<T = any> {
       };
 
       return bundle;
-    } catch (error) {
-
+    } catch {
       return {
         resourceType: 'Bundle',
         type: 'searchset',
@@ -223,7 +232,7 @@ class FHIRSearchBuilder<T = any> {
     }
   }
 
-  private getFullUrl(resource: any): string {
+  private getFullUrl(resource: T): string {
     const resourceType = this.getResourceType();
     return `${resourceType}/${resource.id}`;
   }

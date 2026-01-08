@@ -3,11 +3,90 @@
  * Shared types for Medicine Cabinet operations
  */
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
   message?: string;
+}
+
+export interface MedicationAdherenceRate {
+  medication_id: string;
+  medication_name: string;
+  adherence_rate: number;
+  doses_taken: number;
+  doses_expected: number;
+  streak_days: number;
+}
+
+export interface MedicationReminder {
+  id: string;
+  medication_id: string;
+  user_id: string;
+  time_of_day: string;
+  days_of_week?: number[];
+  enabled: boolean;
+  notification_method: 'push' | 'sms' | 'email' | 'all';
+  last_reminded_at?: string;
+  next_reminder_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpcomingReminder {
+  id: string;
+  medication_id: string;
+  medication_name: string;
+  scheduled_time: string;
+  reminder_type: string;
+}
+
+export interface PillIdentificationRecord {
+  id: string;
+  user_id: string;
+  image_size: number;
+  image_type: string;
+  identification_data: Record<string, unknown>;
+  confidence_score: number;
+  identification_success: boolean;
+  processing_time_ms: number;
+  model_used: string;
+  api_sources: string[];
+  created_at: string;
+}
+
+export interface PillComparisonRecord {
+  id: string;
+  user_id: string;
+  medication_id: string;
+  pill_medication_name: string;
+  label_medication_name: string;
+  match: boolean;
+  match_confidence: number;
+  discrepancies: string[];
+  safety_recommendation: string;
+  requires_pharmacist_review: boolean;
+  created_at: string;
+}
+
+export interface PsychMedAlertRecord {
+  id: string;
+  user_id: string;
+  alert_type: string;
+  severity: 'warning' | 'critical';
+  psych_med_count: number;
+  medication_ids: string[];
+  medication_names: string[];
+  categories: string[];
+  warnings: string[];
+  requires_review: boolean;
+  acknowledged: boolean;
+  acknowledged_by?: string;
+  acknowledged_at?: string;
+  resolved: boolean;
+  resolved_at?: string;
+  resolved_notes?: string;
+  created_at: string;
 }
 
 export interface Medication {
@@ -49,20 +128,6 @@ export interface Medication {
   psych_category?: string;
   psych_subcategory?: string;
   psych_classification_confidence?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface MedicationReminder {
-  id: string;
-  medication_id: string;
-  user_id: string;
-  time_of_day: string; // "08:00:00"
-  days_of_week?: number[]; // [0,1,2,3,4,5,6]
-  enabled: boolean;
-  notification_method: 'push' | 'sms' | 'email' | 'all';
-  last_reminded_at?: string;
-  next_reminder_at?: string;
   created_at: string;
   updated_at: string;
 }

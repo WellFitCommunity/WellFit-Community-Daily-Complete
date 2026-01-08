@@ -23,15 +23,15 @@ interface UserQuestionsProps {
   onSubmitQuestion?: (questionData: { question_text: string; category: string }) => Promise<void>;
   onSubmitResponse?: (questionId: string, responseText: string) => Promise<void>;
   onLoadQuestions?: () => Promise<UserQuestion[]>;
-  currentUser?: any;
+  currentUser?: { id: string; email?: string };
 }
 
-export default function UserQuestions({ 
+export default function UserQuestions({
   isAdmin = false,
   onSubmitQuestion,
   onSubmitResponse,
   onLoadQuestions,
-  currentUser
+  currentUser: _currentUser
 }: UserQuestionsProps) {
   const [questions, setQuestions] = useState<UserQuestion[]>([]);
   const [loading, setLoading] = useState(false);

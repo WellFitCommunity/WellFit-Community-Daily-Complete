@@ -258,8 +258,8 @@ const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
 };
 
 // Higher-order component for easy integration
-export const withFhirAiDashboard = (Component: React.ComponentType<any>) => {
-  return (props: any) => (
+export const withFhirAiDashboard = <P extends Record<string, unknown>>(Component: React.ComponentType<P>) => {
+  return (props: P) => (
     <div className="space-y-6">
       <Component {...props} />
       <div className="border-t pt-6">

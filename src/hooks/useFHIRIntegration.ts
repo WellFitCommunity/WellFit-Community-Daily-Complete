@@ -149,7 +149,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
     }
   }, [loadConnections]);
 
-  const testConnection = useCallback(async (connectionId: string) => {
+  const testConnection = useCallback(async (connectionId: string): Promise<{ success: boolean; message: string; metadata?: Record<string, unknown> }> => {
     setLoading(true);
     setError(null);
     try {
@@ -160,7 +160,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
       return {
         success: response.success,
         message: response.message || '',
-        metadata: response.data
+        metadata: response.data as Record<string, unknown> | undefined
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
@@ -474,11 +474,11 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
     }
   }, []);
 
-  const getAllPatientMappings = useCallback(async (connectionId: string): Promise<any[]> => {
+  const getAllPatientMappings = useCallback(async (connectionId: string): Promise<PatientMapping[]> => {
     try {
       const response = await fhirSyncAPI.getAllPatientMappings(connectionId);
       if (response.success && response.data) {
-        return response.data;
+        return response.data as PatientMapping[];
       } else {
         setError(response.error || 'Failed to fetch patient mappings');
         return [];

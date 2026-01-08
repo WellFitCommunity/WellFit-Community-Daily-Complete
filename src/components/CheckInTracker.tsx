@@ -10,6 +10,32 @@ import PulseOximeter from './PulseOximeter';
 import { WellnessSuggestions } from './wellness/WellnessSuggestions';
 import { offlineStorage, isOnline } from '../utils/offlineStorage';
 
+// Web Speech API types (browser API boundary)
+interface WebSpeechRecognitionEvent {
+  results: SpeechRecognitionResultList;
+}
+
+interface WebSpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: WebSpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+interface WebSpeechRecognitionConstructor {
+  new(): WebSpeechRecognitionInstance;
+}
+
+// Extend window type for Speech Recognition API
+type WindowWithSpeechRecognition = Window & {
+  webkitSpeechRecognition?: WebSpeechRecognitionConstructor;
+  SpeechRecognition?: WebSpeechRecognitionConstructor;
+};
+
 const ENABLE_LOCAL_HISTORY = false; // HIPAA: keep PHI out of localStorage
 
 type CheckIn = {
@@ -122,7 +148,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
   const feedbackRef = useRef<HTMLDivElement>(null);
 
   // Voice recognition refs
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<WebSpeechRecognitionInstance | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [currentField, setCurrentField] = useState<string | null>(null);
 
@@ -175,17 +201,21 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
 
   // Initialize speech recognition
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition =
-        (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
+    const speechWindow = window as unknown as WindowWithSpeechRecognition;
+    if (speechWindow.webkitSpeechRecognition || speechWindow.SpeechRecognition) {
+      const SpeechRecognitionClass =
+        speechWindow.webkitSpeechRecognition || speechWindow.SpeechRecognition;
+      if (SpeechRecognitionClass) {
+        // Browser API boundary cast
+        recognitionRef.current = new SpeechRecognitionClass() as unknown as WebSpeechRecognitionInstance;
+      }
 
       if (recognitionRef.current) {
         recognitionRef.current.continuous = false;
         recognitionRef.current.interimResults = false;
         recognitionRef.current.lang = 'en-US';
 
-        recognitionRef.current.onresult = (event: any) => {
+        recognitionRef.current.onresult = (event: WebSpeechRecognitionEvent) => {
           const transcript = event.results[0][0].transcript;
 
           if (currentField === 'symptoms') {
@@ -433,8 +463,9 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
         setSymptoms('');
         setActivityNotes('');
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Try offline save as fallback
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
       if (userId) {
         try {
           await offlineStorage.savePendingReport(userId, {
@@ -453,13 +484,13 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
         } catch {
           setInfoMessage({
             type: 'error',
-            text: `Save failed: ${e?.message || 'Unknown error'}`,
+            text: `Save failed: ${errorMessage}`,
           });
         }
       } else {
         setInfoMessage({
           type: 'error',
-          text: `Local save OK. Cloud save failed: ${e?.message || 'Unknown error'}`,
+          text: `Local save OK. Cloud save failed: ${errorMessage}`,
         });
       }
     } finally {

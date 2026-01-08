@@ -12,11 +12,25 @@ import { fhirIntegrator, FHIRConnection, SyncResult } from '../services/fhirInte
 // API RESPONSE TYPES
 // ============================================================================
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
   message?: string;
+}
+
+export interface SyncLogEntry {
+  id: string;
+  connection_id: string;
+  direction: 'pull' | 'push' | 'bidirectional';
+  status: 'success' | 'partial' | 'failed';
+  started_at: string;
+  completed_at?: string;
+  records_processed: number;
+  records_succeeded: number;
+  records_failed: number;
+  error_message?: string;
+  created_at: string;
 }
 
 // ============================================================================
@@ -212,7 +226,7 @@ export async function syncBidirectional(
 export async function getSyncHistory(
   connectionId: string,
   limit: number = 50
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<SyncLogEntry[]>> {
   try {
     const { data, error } = await supabase
       .from('fhir_sync_logs')

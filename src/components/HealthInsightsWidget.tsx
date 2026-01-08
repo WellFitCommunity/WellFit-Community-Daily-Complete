@@ -22,7 +22,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
   const [insights, setInsights] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<SmartSuggestion[]>([]);
-  const [suggestionSource, setSuggestionSource] = useState<'haiku' | 'fallback' | 'local'>('local');
+  const [_suggestionSource, setSuggestionSource] = useState<'haiku' | 'fallback' | 'local'>('local');
 
   useEffect(() => {
     if (hasHealthData(healthData)) {
@@ -33,8 +33,8 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [healthData]);
 
-  const hasHealthData = (data: any): boolean => {
-    return data.mood || data.bp_systolic || data.blood_sugar || data.blood_oxygen || data.heart_rate || data.symptoms;
+  const hasHealthData = (data: HealthInsightsProps['healthData']): boolean => {
+    return !!(data.mood || data.bp_systolic || data.blood_sugar || data.blood_oxygen || data.heart_rate || data.symptoms);
   };
 
   const generateInsights = async () => {
@@ -92,7 +92,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
     }
   };
 
-  const generateFallbackInsights = (data: any): string => {
+  const generateFallbackInsights = (data: HealthInsightsProps['healthData']): string => {
     const insights = [];
 
     if (data.mood) {
