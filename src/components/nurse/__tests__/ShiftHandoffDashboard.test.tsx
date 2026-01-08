@@ -8,7 +8,6 @@
  * The component requires extensive real-time collaboration infrastructure.
  */
 
-import React from 'react';
 import { ShiftHandoffDashboard } from '../ShiftHandoffDashboard';
 
 describe('ShiftHandoffDashboard', () => {

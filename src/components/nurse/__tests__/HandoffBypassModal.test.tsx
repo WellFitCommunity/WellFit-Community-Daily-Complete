@@ -8,7 +8,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HandoffBypassModal, type BypassFormData } from '../HandoffBypassModal';
+import { HandoffBypassModal } from '../HandoffBypassModal';
 
 // Mock AuthContext
 vi.mock('../../../contexts/AuthContext', () => ({
@@ -108,7 +108,8 @@ describe('HandoffBypassModal', () => {
     it('should have all reason options', () => {
       render(<HandoffBypassModal {...defaultProps} />);
 
-      const select = screen.getByRole('combobox');
+      // Verify combobox exists (used to query options)
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
 
       expect(screen.getByText('System Glitch / Bug')).toBeInTheDocument();
       expect(screen.getByText('Network / Connection Issue')).toBeInTheDocument();
@@ -168,8 +169,8 @@ describe('HandoffBypassModal', () => {
       await userEvent.type(signatureInput, 'John Nurse');
 
       // Submit form directly to bypass HTML5 validation
-      const form = document.querySelector('form');
-      fireEvent.submit(form!);
+      const form = document.querySelector('form') as HTMLFormElement;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Explanation is required')).toBeInTheDocument();
@@ -183,8 +184,8 @@ describe('HandoffBypassModal', () => {
       await userEvent.type(textarea, 'This is a valid explanation text');
 
       // Submit form directly to bypass HTML5 validation
-      const form = document.querySelector('form');
-      fireEvent.submit(form!);
+      const form = document.querySelector('form') as HTMLFormElement;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Signature is required')).toBeInTheDocument();

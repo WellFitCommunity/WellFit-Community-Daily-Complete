@@ -8,8 +8,6 @@
  * The component requires PatientContext, react-router-dom, and many child components.
  */
 
-import React from 'react';
-
 // Need to mock before import
 vi.mock('../../../contexts/AuthContext', () => ({
   useSupabaseClient: vi.fn(() => ({

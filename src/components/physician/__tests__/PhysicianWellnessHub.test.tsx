@@ -415,8 +415,8 @@ describe('PhysicianWellnessHub', () => {
       });
 
       // Find the button in quick actions (the one with Evidence-based subtitle)
-      const quickActionButton = screen.getByText('Evidence-based').closest('button');
-      await userEvent.click(quickActionButton!);
+      const quickActionButton = screen.getByText('Evidence-based').closest('button') as HTMLElement;
+      await userEvent.click(quickActionButton);
 
       expect(screen.getByTestId('mock-resilience-library')).toBeInTheDocument();
     });

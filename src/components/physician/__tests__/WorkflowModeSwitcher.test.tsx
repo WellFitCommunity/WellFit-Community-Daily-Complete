@@ -101,8 +101,8 @@ describe('WorkflowModeSwitcher', () => {
     it('should call onModeChange when a mode is clicked', async () => {
       render(<WorkflowModeSwitcher {...defaultProps} />);
 
-      const clinicalButton = screen.getByText('Clinical Focus').closest('button');
-      await userEvent.click(clinicalButton!);
+      const clinicalButton = screen.getByText('Clinical Focus').closest('button') as HTMLElement;
+      await userEvent.click(clinicalButton);
 
       expect(mockOnModeChange).toHaveBeenCalledWith('clinical');
     });
@@ -110,8 +110,8 @@ describe('WorkflowModeSwitcher', () => {
     it('should save preference to database when mode changes', async () => {
       render(<WorkflowModeSwitcher {...defaultProps} />);
 
-      const clinicalButton = screen.getByText('Clinical Focus').closest('button');
-      await userEvent.click(clinicalButton!);
+      const clinicalButton = screen.getByText('Clinical Focus').closest('button') as HTMLElement;
+      await userEvent.click(clinicalButton);
 
       await waitFor(() => {
         expect(mockUpsert).toHaveBeenCalled();
@@ -121,8 +121,8 @@ describe('WorkflowModeSwitcher', () => {
     it('should not save preference when switching to all mode', async () => {
       render(<WorkflowModeSwitcher {...defaultProps} currentMode="clinical" />);
 
-      const allButton = screen.getByText('All Sections').closest('button');
-      await userEvent.click(allButton!);
+      const allButton = screen.getByText('All Sections').closest('button') as HTMLElement;
+      await userEvent.click(allButton);
 
       // Wait a bit to ensure async operations complete
       await new Promise(resolve => setTimeout(resolve, 100));

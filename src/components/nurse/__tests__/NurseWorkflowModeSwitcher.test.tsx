@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   NurseWorkflowModeSwitcher,
@@ -105,8 +105,8 @@ describe('NurseWorkflowModeSwitcher', () => {
     it('should call onModeChange when a mode is clicked', async () => {
       render(<NurseWorkflowModeSwitcher {...defaultProps} />);
 
-      const clinicalButton = screen.getByText('Clinical Care').closest('button');
-      await userEvent.click(clinicalButton!);
+      const clinicalButton = screen.getByText('Clinical Care').closest('button') as HTMLElement;
+      await userEvent.click(clinicalButton);
 
       expect(mockOnModeChange).toHaveBeenCalledWith('clinical');
     });
@@ -114,8 +114,8 @@ describe('NurseWorkflowModeSwitcher', () => {
     it('should save preference to database when mode changes', async () => {
       render(<NurseWorkflowModeSwitcher {...defaultProps} />);
 
-      const clinicalButton = screen.getByText('Clinical Care').closest('button');
-      await userEvent.click(clinicalButton!);
+      const clinicalButton = screen.getByText('Clinical Care').closest('button') as HTMLElement;
+      await userEvent.click(clinicalButton);
 
       await waitFor(() => {
         expect(mockUpsert).toHaveBeenCalled();
@@ -125,8 +125,8 @@ describe('NurseWorkflowModeSwitcher', () => {
     it('should not save preference when switching to all mode', async () => {
       render(<NurseWorkflowModeSwitcher {...defaultProps} currentMode="clinical" />);
 
-      const allButton = screen.getByText('All Sections').closest('button');
-      await userEvent.click(allButton!);
+      const allButton = screen.getByText('All Sections').closest('button') as HTMLElement;
+      await userEvent.click(allButton);
 
       // Wait a bit to ensure async operations complete
       await new Promise(resolve => setTimeout(resolve, 100));

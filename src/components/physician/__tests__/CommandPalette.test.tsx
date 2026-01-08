@@ -106,8 +106,8 @@ describe('CommandPalette', () => {
       fireEvent.keyDown(window, { key: 'k', metaKey: true });
 
       // Click backdrop (the outer div)
-      const backdrop = document.querySelector('.fixed.inset-0');
-      await userEvent.click(backdrop!);
+      const backdrop = document.querySelector('.fixed.inset-0') as HTMLElement;
+      await userEvent.click(backdrop);
 
       await waitFor(() => {
         expect(screen.queryByPlaceholderText(/Search commands/)).not.toBeInTheDocument();

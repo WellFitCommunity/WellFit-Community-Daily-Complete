@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PhysicianClinicalResources from '../PhysicianClinicalResources';
 import type { ResilienceResource } from '../../../types/nurseos';
@@ -244,8 +244,8 @@ describe('PhysicianClinicalResources', () => {
         expect(screen.getByText('Emergency Protocol: Code Blue')).toBeInTheDocument();
       });
 
-      const resourceCard = screen.getByText('Emergency Protocol: Code Blue').closest('div');
-      await userEvent.click(resourceCard!);
+      const resourceCard = screen.getByText('Emergency Protocol: Code Blue').closest('div') as HTMLElement;
+      await userEvent.click(resourceCard);
 
       expect(mockTrackResourceView).toHaveBeenCalledWith('resource-1');
 
@@ -262,8 +262,8 @@ describe('PhysicianClinicalResources', () => {
         expect(screen.getByText('Emergency Protocol: Code Blue')).toBeInTheDocument();
       });
 
-      const resourceCard = screen.getByText('Emergency Protocol: Code Blue').closest('div');
-      await userEvent.click(resourceCard!);
+      const resourceCard = screen.getByText('Emergency Protocol: Code Blue').closest('div') as HTMLElement;
+      await userEvent.click(resourceCard);
 
       expect(mockOpen).toHaveBeenCalledWith(
         'https://example.com/code-blue',
@@ -296,8 +296,8 @@ describe('PhysicianClinicalResources', () => {
 
       // Find the resource card by its description text (more unique)
       const descriptionText = screen.getByText('Contact list for hospital specialists');
-      const resourceCard = descriptionText.closest('div[class*="rounded-lg"]');
-      await userEvent.click(resourceCard!);
+      const resourceCard = descriptionText.closest('div[class*="rounded-lg"]') as HTMLElement;
+      await userEvent.click(resourceCard);
 
       // Should still track view
       expect(mockTrackResourceView).toHaveBeenCalledWith('resource-4');

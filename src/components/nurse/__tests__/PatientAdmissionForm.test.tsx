@@ -189,8 +189,8 @@ describe('PatientAdmissionForm', () => {
       );
 
       // Get form and submit it directly to bypass HTML5 validation
-      const form = document.querySelector('form');
-      fireEvent.submit(form!);
+      const form = document.querySelector('form') as HTMLFormElement;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Patient and room number are required')).toBeInTheDocument();
@@ -212,8 +212,8 @@ describe('PatientAdmissionForm', () => {
       fireEvent.change(select, { target: { value: 'patient-1' } });
 
       // Submit form directly to bypass HTML5 validation
-      const form = document.querySelector('form');
-      fireEvent.submit(form!);
+      const form = document.querySelector('form') as HTMLFormElement;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Patient and room number are required')).toBeInTheDocument();
@@ -230,8 +230,8 @@ describe('PatientAdmissionForm', () => {
       await userEvent.type(roomInput, '401B');
 
       // Submit form directly to bypass HTML5 validation
-      const form = document.querySelector('form');
-      fireEvent.submit(form!);
+      const form = document.querySelector('form') as HTMLFormElement;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Patient and room number are required')).toBeInTheDocument();
