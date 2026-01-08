@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Clock, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { AlertCircle as _AlertCircle, Clock, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { NeuroSuiteService } from '../../services/neuroSuiteService';
 import { toast } from 'react-toastify';
 import type {

@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
-import { FileText, Download, Filter, Search, Calendar } from 'lucide-react';
+import { FileText, Download, Filter as _Filter, Search, Calendar as _Calendar } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
 
 interface AuditLog {
@@ -30,7 +30,7 @@ interface AuditLog {
   severity: 'info' | 'warning' | 'error' | 'critical';
   message: string;
   ip_address?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export const TenantAuditLogs: React.FC = () => {

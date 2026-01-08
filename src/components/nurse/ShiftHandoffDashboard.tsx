@@ -27,7 +27,7 @@ import type {
 import {
   RISK_LEVEL_COLORS,
   RISK_LEVEL_ICONS,
-  formatTimeSince,
+  formatTimeSince as _formatTimeSince,
   sortHandoffByPriority,
 } from '../../types/shiftHandoff';
 import { AvatarThumbnail } from '../patient-avatar';

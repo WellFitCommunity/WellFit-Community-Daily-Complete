@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
-import { Shield, AlertTriangle, Users, Activity, Eye, Lock } from 'lucide-react';
+import { Shield, AlertTriangle, Users, Activity as _Activity, Eye, Lock } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
 
 interface SecurityMetric {

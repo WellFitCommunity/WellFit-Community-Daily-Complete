@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { Home, Building2, HeartPulse, Bed, Clock, AlertTriangle, Hospital, X } from 'lucide-react';
+import { Home, Building2, HeartPulse, Bed, Clock as _Clock, AlertTriangle, Hospital, X } from 'lucide-react';
 import type { DischargeDisposition } from '../../types/dischargePlanning';
 
 interface DischargeDispositionOption {

@@ -40,7 +40,7 @@ interface DashboardMetrics {
 }
 
 export const CareCoordinationDashboard: React.FC = () => {
-  const { user } = useSupabaseClient() as any;
+  const { user: _user } = useSupabaseClient() as unknown as { user: unknown };
   const { selectPatient } = usePatientContext();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [plansNeedingReview, setPlansNeedingReview] = useState<CarePlan[]>([]);

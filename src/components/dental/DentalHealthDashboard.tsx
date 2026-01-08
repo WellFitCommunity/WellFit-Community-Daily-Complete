@@ -26,7 +26,7 @@ import {
   EAButton,
   EABadge,
   EAAlert,
-  EAMetricCard,
+  EAMetricCard as _EAMetricCard,
   EARiskIndicator,
   EAPageLayout,
 } from '../envision-atlus';

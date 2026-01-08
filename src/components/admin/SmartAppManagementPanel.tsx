@@ -16,7 +16,7 @@ import {
   Trash2,
   Search,
   RefreshCw,
-  CheckCircle,
+  CheckCircle as _CheckCircle,
   XCircle,
   Shield,
   Key,

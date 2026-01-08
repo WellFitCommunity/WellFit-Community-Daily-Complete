@@ -15,7 +15,7 @@ import type {
   PendingMentalHealthSession,
   DischargeBlocker,
   RiskLevel,
-  Priority,
+  Priority as _Priority,
 } from '../../types/mentalHealth';
 import {
   RISK_LEVEL_COLORS,

@@ -22,13 +22,13 @@ import {
   Eye,
   Copy,
   Search,
-  Filter,
-  ChevronDown,
-  ChevronUp,
+  Filter as _Filter,
+  ChevronDown as _ChevronDown,
+  ChevronUp as _ChevronUp,
   AlertCircle,
   CheckCircle,
 } from 'lucide-react';
-import { EACard, EACardHeader, EACardContent } from '../envision-atlus/EACard';
+import { EACard, EACardHeader as _EACardHeader, EACardContent } from '../envision-atlus/EACard';
 import { EAButton } from '../envision-atlus/EAButton';
 import { EABadge } from '../envision-atlus/EABadge';
 

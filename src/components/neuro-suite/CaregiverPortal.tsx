@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Users, Heart, TrendingDown, Phone, Calendar, BookOpen } from 'lucide-react';
+import { Users, Heart, TrendingDown, Phone, Calendar as _Calendar, BookOpen } from 'lucide-react';
 import { NeuroSuiteService } from '../../services/neuroSuiteService';
 import type {
   CognitiveAssessment,
@@ -17,7 +17,7 @@ interface CaregiverPortalProps {
   caregiverId: string;
 }
 
-const CaregiverPortal: React.FC<CaregiverPortalProps> = ({ patientId, caregiverId }) => {
+const CaregiverPortal: React.FC<CaregiverPortalProps> = ({ patientId, caregiverId: _caregiverId }) => {
   const [cognitiveHistory, setCognitiveHistory] = useState<CognitiveAssessment[]>([]);
   const [stagingHistory, setStagingHistory] = useState<DementiaStaging[]>([]);
   const [burdenHistory, setBurdenHistory] = useState<CaregiverAssessment[]>([]);

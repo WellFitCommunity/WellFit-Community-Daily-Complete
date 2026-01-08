@@ -20,7 +20,7 @@ import {
   Bed,
   ArrowRight,
   Eye,
-  Plus,
+  Plus as _Plus,
   FileText,
   UserMinus,
 } from 'lucide-react';

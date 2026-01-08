@@ -21,8 +21,10 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
   language = 'en',
   onComplete = () => {},
   onBack = () => {},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSkip = () => {}
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);

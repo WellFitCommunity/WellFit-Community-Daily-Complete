@@ -11,19 +11,19 @@
  * - Persists open/closed state
  */
 
-import React, { useState, useCallback, useEffect, createContext, useContext } from 'react';
+import React, { useState, useCallback, useEffect as _useEffect, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
-  ChevronLeft,
+  ChevronLeft as _ChevronLeft,
   ChevronRight,
   AlertTriangle,
   Volume2,
   VolumeX,
-  Mic,
-  MicOff,
+  Mic as _Mic,
+  MicOff as _MicOff,
   Activity,
-  Zap,
+  Zap as _Zap,
   X,
   ExternalLink,
   Wifi,

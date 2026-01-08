@@ -23,7 +23,7 @@ interface MemoryClinicDashboardProps {
 
 const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId }) => {
   // Loading and saving states
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
   // Active tab
   const [activeTab, setActiveTab] = useState<'cognitive' | 'staging' | 'caregiver'>('cognitive');

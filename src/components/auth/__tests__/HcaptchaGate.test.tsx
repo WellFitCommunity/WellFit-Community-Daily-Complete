@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import HcaptchaGate from '../HcaptchaGate';
 
 // Mock import.meta.env

@@ -14,6 +14,7 @@ interface TelehealthLobbyProps {
 }
 
 export const TelehealthLobby: React.FC<TelehealthLobbyProps> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   visitId = 'demo-visit-001',
   patientName = 'Demo Patient',
   language = 'en',

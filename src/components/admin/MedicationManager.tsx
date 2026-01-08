@@ -35,7 +35,7 @@ import {
   RefreshCw,
   Search,
   CheckCircle,
-  XCircle,
+  XCircle as _XCircle,
   Clock,
   Activity,
   FileText,

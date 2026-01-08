@@ -13,7 +13,7 @@ import {
   BarChart3,
   PieChart,
   Calendar,
-  CheckCircle,
+  CheckCircle as _CheckCircle,
   Clock,
   FileText,
   Send,
