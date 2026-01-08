@@ -154,7 +154,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
               <select
                 value={formData.allergen_type}
                 onChange={(e) =>
-                  setFormData({ ...formData, allergen_type: e.target.value as any })
+                  setFormData({ ...formData, allergen_type: e.target.value as 'medication' | 'food' | 'environment' | 'biologic' })
                 }
                 className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                 required
@@ -185,7 +185,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
               <select
                 value={formData.criticality}
                 onChange={(e) =>
-                  setFormData({ ...formData, criticality: e.target.value as any })
+                  setFormData({ ...formData, criticality: e.target.value as 'low' | 'high' | 'unable-to-assess' })
                 }
                 className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
@@ -199,7 +199,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
               <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
               <select
                 value={formData.severity}
-                onChange={(e) => setFormData({ ...formData, severity: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, severity: e.target.value as 'mild' | 'moderate' | 'severe' })}
                 className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
                 <option value="mild">Mild</option>

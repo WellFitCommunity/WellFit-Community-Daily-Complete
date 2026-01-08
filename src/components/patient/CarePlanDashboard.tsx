@@ -22,7 +22,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
   const [selectedPlan, setSelectedPlan] = useState<FHIRCarePlan | null>(null);
 
   // Activity summaries (future enhancement - currently not loaded)
-  const activitySummaries: Record<string, any> = {};
+  const activitySummaries: Record<string, { total_activities: number; completed_activities: number }> = {};
 
   // Filter plans based on active tab (memoized)
   const filteredPlans = useMemo(() => {

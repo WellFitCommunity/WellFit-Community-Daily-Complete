@@ -15,8 +15,19 @@ import {
   type TenantBrandingData,
 } from '../../services/tenantBrandingService';
 
+interface TenantListItem {
+  id: string;
+  name: string;
+  subdomain: string;
+  appName: string;
+  logoUrl: string;
+  primaryColor: string;
+  secondaryColor: string;
+  isActive: boolean;
+}
+
 const TenantBrandingManager: React.FC = () => {
-  const [tenants, setTenants] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<TenantListItem[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [currentBranding, setCurrentBranding] = useState<TenantBrandingData | null>(null);
   const [loading, setLoading] = useState(false);

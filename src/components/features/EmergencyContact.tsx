@@ -55,7 +55,7 @@ const EmergencyContact: React.FC = () => {
             .eq('id', user.id)
             .single(); // keep runtime typing simple
 
-          if (profileError && (profileError as any).code !== 'PGRST116') {
+          if (profileError && profileError.code !== 'PGRST116') {
             throw profileError;
           }
 

@@ -60,6 +60,15 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   );
 };
 
+// Patient profile type from care_team query
+interface PatientProfile {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth?: string;
+  room_number?: string;
+}
+
 // Enrollment Section for Nurses
 const NurseEnrollPatientSection: React.FC = () => {
   const { invokeAdminFunction } = useAdminAuth();
@@ -124,8 +133,9 @@ const NurseEnrollPatientSection: React.FC = () => {
         // ACTUAL FAILURE
         throw new Error(error?.message || 'No user ID returned - enrollment failed');
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
       // HIPAA Audit: Log enrollment failure (CRITICAL - uses proper audit logging)
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('NURSE_ENROLLMENT_FAILED', error, {
         attemptedPhone: phone,
         patientName: `${firstName} ${lastName}`
@@ -236,7 +246,7 @@ const NursePanel: React.FC = () => {
     first_name: string;
     last_name: string;
   } | null>(null);
-  const [myPatients, setMyPatients] = useState<any[]>([]);
+  const [myPatients, setMyPatients] = useState<PatientProfile[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
 
   // Load nurse's assigned patients (from care_team table)
@@ -263,10 +273,19 @@ const NursePanel: React.FC = () => {
           .eq('nurse_id', user.id);
 
         if (assignments) {
-          const patients = assignments
-            .map(a => a.profiles)
-            .filter(p => p !== null);
-          setMyPatients(patients as any[]);
+          // Supabase returns joined relations - profiles may be an array or single object depending on foreign key setup
+          const patients: PatientProfile[] = [];
+          for (const a of assignments) {
+            const profile = a.profiles;
+            if (profile && !Array.isArray(profile)) {
+              // Single profile object
+              patients.push(profile as PatientProfile);
+            } else if (Array.isArray(profile) && profile.length > 0) {
+              // Array of profiles (take first)
+              patients.push(profile[0] as PatientProfile);
+            }
+          }
+          setMyPatients(patients);
         }
       } catch (error) {
         auditLogger.error('NURSE_LOAD_PATIENTS_FAILED', error instanceof Error ? error : new Error('Failed to load patients'));
@@ -382,7 +401,7 @@ const NursePanel: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {myPatients.map((patient: any) => (
+                  {myPatients.map((patient) => (
                     <button
                       key={patient.user_id}
                       onClick={() => setSelectedPatient(patient)}

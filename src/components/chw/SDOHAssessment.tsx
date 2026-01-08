@@ -128,7 +128,7 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
 
   const t = translations[language];
 
-  const handleAnswer = (questionId: string, value: any) => {
+  const handleAnswer = (questionId: string, value: boolean | string) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: value

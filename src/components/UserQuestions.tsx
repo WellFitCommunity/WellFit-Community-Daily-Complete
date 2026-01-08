@@ -206,7 +206,7 @@ export default function UserQuestions({
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
+                onChange={(e) => setCategory(e.target.value as 'general' | 'health' | 'technical' | 'account')}
                 className="block w-full border border-gray-300 rounded-md px-3 py-2"
               >
                 <option value="general">General</option>

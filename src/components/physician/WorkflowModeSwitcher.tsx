@@ -13,6 +13,7 @@ import {
   Zap,
   CheckCircle,
   Settings,
+  type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,7 +28,7 @@ export interface WorkflowModeConfig {
   id: WorkflowMode;
   label: string;
   description: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   gradient: string;
   sections: string[]; // IDs of sections to show/prioritize
 }

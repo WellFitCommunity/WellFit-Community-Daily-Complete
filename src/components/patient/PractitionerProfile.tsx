@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { PractitionerService, PractitionerRoleService } from '../../services/fhirResourceService';
-import type { FHIRPractitioner, FHIRPractitionerRole } from '../../types/fhir';
+import type { FHIRPractitioner, FHIRPractitionerRole, FHIRAddress, FHIRPractitionerQualification } from '../../types/fhir';
+
+// Type for availability hours entries
+interface AvailabilityHours {
+  start: string;
+  end: string;
+}
 
 interface PractitionerProfileProps {
   practitionerId: string;
@@ -153,7 +159,7 @@ const PractitionerProfile: React.FC<PractitionerProfileProps> = ({
             <div className="mt-4">
               <p className="text-sm font-medium text-gray-600 mb-2">Addresses</p>
               <div className="space-y-2">
-                {(practitioner.addresses as any[]).map((address, idx) => (
+                {(practitioner.addresses as FHIRAddress[]).map((address, idx) => (
                   <div key={idx} className="bg-gray-50 p-3 rounded-md">
                     {address.use && (
                       <span className="text-xs font-medium text-gray-500 uppercase">
@@ -179,7 +185,7 @@ const PractitionerProfile: React.FC<PractitionerProfileProps> = ({
           <section>
             <h2 className="text-xl font-semibold mb-3 text-gray-800">Credentials & Qualifications</h2>
             <div className="space-y-3">
-              {(practitioner.qualifications as any[]).map((qual, idx) => (
+              {(practitioner.qualifications as FHIRPractitionerQualification[]).map((qual, idx) => (
                 <div key={idx} className="border-l-4 border-blue-500 pl-4 py-2">
                   <p className="font-medium text-gray-900">
                     {qual.code?.text || qual.identifier?.value}
@@ -295,7 +301,7 @@ const PractitionerProfile: React.FC<PractitionerProfileProps> = ({
           <section>
             <h2 className="text-xl font-semibold mb-3 text-gray-800">Office Hours</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {Object.entries(practitioner.availability_hours).map(([day, hours]: [string, any]) => (
+              {Object.entries(practitioner.availability_hours).map(([day, hours]: [string, AvailabilityHours]) => (
                 <div key={day} className="flex justify-between py-2 border-b border-gray-200">
                   <span className="font-medium text-gray-700 capitalize">{day}</span>
                   <span className="text-gray-600">

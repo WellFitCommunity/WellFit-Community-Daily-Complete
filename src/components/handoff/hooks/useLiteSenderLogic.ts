@@ -13,11 +13,13 @@ import type {
   Medication,
   Allergy,
   CreateHandoffPacketRequest,
+  LabResult,
+  HandoffPacket,
 } from '../../../types/handoff';
 
 export interface UseLiteSenderLogicProps {
   facilityName?: string;
-  onPacketCreated?: (packet: any, accessUrl: string) => void;
+  onPacketCreated?: (packet: HandoffPacket, accessUrl: string) => void;
 }
 
 export interface UseLiteSenderLogicReturn {
@@ -30,7 +32,7 @@ export interface UseLiteSenderLogicReturn {
   medicationsPrescribed: Medication[];
   medicationsCurrent: Medication[];
   allergies: Allergy[];
-  labs: any[];
+  labs: LabResult[];
   attachments: File[];
   isLookingUpPatient: boolean;
 
@@ -71,7 +73,7 @@ export interface UseLiteSenderLogicReturn {
 
   // Lab management
   addLab: () => void;
-  updateLab: (index: number, field: string, value: any) => void;
+  updateLab: (index: number, field: keyof LabResult, value: string | boolean) => void;
   removeLab: (index: number) => void;
 
   // File handling
@@ -126,7 +128,7 @@ export function useLiteSenderLogic({
   const [medicationsPrescribed, setMedicationsPrescribed] = useState<Medication[]>([]);
   const [medicationsCurrent, setMedicationsCurrent] = useState<Medication[]>([]);
   const [allergies, setAllergies] = useState<Allergy[]>([]);
-  const [labs, setLabs] = useState<any[]>([]);
+  const [labs, setLabs] = useState<LabResult[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isLookingUpPatient, setIsLookingUpPatient] = useState(false);
 
@@ -308,8 +310,9 @@ export function useLiteSenderLogic({
       if (onPacketCreated) {
         onPacketCreated(packet, access_url);
       }
-    } catch (error: any) {
-      toast.error(`Failed to submit: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to submit: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -391,7 +394,7 @@ export function useLiteSenderLogic({
     ]);
   };
 
-  const updateLab = (index: number, field: string, value: any) => {
+  const updateLab = (index: number, field: keyof LabResult, value: string | boolean) => {
     const updated = [...labs];
     updated[index] = { ...updated[index], [field]: value };
     setLabs(updated);

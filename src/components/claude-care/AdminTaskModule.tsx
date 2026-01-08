@@ -28,7 +28,7 @@ const AdminTaskModule: React.FC<Props> = ({
 }) => {
   const [templates, setTemplates] = useState<AdminTaskTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<AdminTaskTemplate | null>(null);
-  const [inputData, setInputData] = useState<Record<string, any>>({});
+  const [inputData, setInputData] = useState<Record<string, string>>({});
   const [generatedContent, setGeneratedContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [taskHistory, setTaskHistory] = useState<AdminTaskHistory[]>([]);
@@ -57,7 +57,7 @@ const AdminTaskModule: React.FC<Props> = ({
         setError(null);
 
         // Initialize input data with the transcription in a relevant field
-        const initialData: Record<string, any> = {};
+        const initialData: Record<string, string> = {};
         Object.keys(template.requiredFields).forEach((field) => {
           initialData[field] = '';
         });
@@ -116,14 +116,14 @@ const AdminTaskModule: React.FC<Props> = ({
     setError(null);
 
     // Initialize input data with empty values for required fields
-    const initialData: Record<string, any> = {};
+    const initialData: Record<string, string> = {};
     Object.keys(template.requiredFields).forEach((field) => {
       initialData[field] = '';
     });
     setInputData(initialData);
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string) => {
     setInputData((prev) => ({
       ...prev,
       [field]: value,

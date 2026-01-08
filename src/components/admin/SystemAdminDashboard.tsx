@@ -47,6 +47,17 @@ interface ActiveSession {
   last_activity?: string;
 }
 
+interface RawSessionData {
+  id: string;
+  user_id: string;
+  profiles?: { email?: string };
+  device_type?: string;
+  browser?: string;
+  os?: string;
+  session_start: string;
+  last_activity?: string;
+}
+
 interface DatabaseTable {
   table_name: string;
   row_count: number;
@@ -116,7 +127,7 @@ export const SystemAdminDashboard: React.FC = () => {
 
       // Set active sessions with user emails
       if (sessionsData.data) {
-        const sessions = sessionsData.data.map((session: any) => ({
+        const sessions = sessionsData.data.map((session: RawSessionData) => ({
           id: session.id,
           user_id: session.user_id,
           user_email: session.profiles?.email,

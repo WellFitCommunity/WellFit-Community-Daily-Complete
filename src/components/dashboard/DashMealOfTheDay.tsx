@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { allRecipes } from '../../data/allRecipes';
+import type { Recipe } from '../../data/types';
 
 const DashMealOfTheDay: React.FC = () => {
   const navigate = useNavigate();
-  const [todaysMeal, setTodaysMeal] = useState<any>(null);
+  const [todaysMeal, setTodaysMeal] = useState<Recipe | null>(null);
 
   useEffect(() => {
     // Get today's meal based on date

@@ -34,7 +34,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
     note: '',
   });
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | string[]) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -98,7 +98,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
     setActivities(newActivities);
   };
 
-  const updateActivity = (index: number, field: string, value: any) => {
+  const updateActivity = (index: number, field: string, value: string) => {
     const newActivities = [...activities];
     if (field.startsWith('detail.')) {
       const detailField = field.substring(7);

@@ -7,7 +7,7 @@ import type { FHIRCarePlan } from '../../types/fhir';
 const CarePlansWidget: React.FC = () => {
   const navigate = useNavigate();
   const user = useUser();
-  const [currentPlan, setCurrentPlan] = useState<any | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<FHIRCarePlan | null>(null);
   const [activePlans, setActivePlans] = useState<FHIRCarePlan[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,10 +45,10 @@ const CarePlansWidget: React.FC = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const getActivityProgress = (plan: any) => {
+  const getActivityProgress = (plan: FHIRCarePlan) => {
     if (!plan.activities || plan.activities.length === 0) return null;
 
-    const completed = plan.activities.filter((a: any) => a.status === 'completed').length;
+    const completed = plan.activities.filter((a) => a.status === 'completed').length;
     const total = plan.activities.length;
     const percentage = Math.round((completed / total) * 100);
 

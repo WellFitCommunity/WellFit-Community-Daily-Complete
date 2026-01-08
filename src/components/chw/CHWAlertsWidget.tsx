@@ -14,7 +14,7 @@ interface SpecialistAlert {
   visit_id: string;
   alert_rule_id: string;
   severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
-  triggered_by: any;
+  triggered_by: Record<string, unknown>;
   triggered_at: string;
   notify_role: string;
   message: string;
@@ -24,6 +24,18 @@ interface SpecialistAlert {
   resolved_at?: string;
   patient_name?: string;
   chw_name?: string;
+}
+
+/** Raw database row type with joined relations */
+interface SpecialistAlertRow extends Omit<SpecialistAlert, 'patient_name'> {
+  field_visits?: {
+    patient_id: string;
+    specialist_id: string;
+    profiles?: {
+      first_name: string;
+      last_name: string;
+    };
+  };
 }
 
 interface CHWAlertsWidgetProps {
@@ -51,7 +63,7 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
   };
 
   // Enterprise-grade subscription with automatic cleanup
-  const { data: allAlerts, loading, refresh } = useRealtimeSubscription<any>({
+  const { data: allAlerts, loading, refresh } = useRealtimeSubscription<SpecialistAlert>({
     table: 'specialist_alerts',
     event: '*',
     schema: 'public',
@@ -82,7 +94,8 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
       if (error) throw error;
 
       // Flatten patient info
-      return (data || []).map((alert: any) => ({
+      const rows = (data || []) as SpecialistAlertRow[];
+      return rows.map((alert) => ({
         ...alert,
         patient_name: alert.field_visits?.profiles
           ? `${alert.field_visits.profiles.first_name} ${alert.field_visits.profiles.last_name}`

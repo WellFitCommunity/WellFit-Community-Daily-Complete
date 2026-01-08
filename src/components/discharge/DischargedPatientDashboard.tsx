@@ -42,8 +42,8 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
       } else {
         setError(result.error || 'Failed to load dashboard');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }

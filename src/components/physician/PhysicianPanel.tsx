@@ -51,6 +51,23 @@ import { WorkflowModeSwitcher, type WorkflowMode } from './WorkflowModeSwitcher'
 // Protected clinical decision-making workspace for physicians
 // ============================================================================
 
+// Type for vital sign observation from FHIR service
+interface VitalSignObservation {
+  code: string;
+  value: number;
+  effective_datetime: string;
+}
+
+// Type for condition data from FHIR service
+interface ConditionData {
+  clinical_status: string;
+  category?: Array<{
+    coding?: Array<{
+      code?: string;
+    }>;
+  }>;
+}
+
 const PhysicianPanel: React.FC = () => {
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
@@ -134,11 +151,12 @@ const PhysicianPanel: React.FC = () => {
       // Parse latest vitals from RPC response (simplified format)
       const latestVitals: PatientVitals = {};
       if (vitalsData && vitalsData.data && vitalsData.data.length > 0) {
-        const vitals = vitalsData.data;
+        // Cast to unknown first, then to VitalSignObservation[] - RPC returns simplified format
+        const vitals = vitalsData.data as unknown as VitalSignObservation[];
 
         // Group vitals by code and get most recent of each type
-        const vitalsByCode: { [key: string]: any } = {};
-        vitals.forEach((obs: any) => {
+        const vitalsByCode: Record<string, VitalSignObservation> = {};
+        vitals.forEach((obs: VitalSignObservation) => {
           if (!vitalsByCode[obs.code] || new Date(obs.effective_datetime) > new Date(vitalsByCode[obs.code].effective_datetime)) {
             vitalsByCode[obs.code] = obs;
           }
@@ -202,8 +220,8 @@ const PhysicianPanel: React.FC = () => {
         }
       }
 
-      const conditionsList = conditionsData?.data || [];
-      const chronicConditions = conditionsList.filter((c: any) =>
+      const conditionsList = (conditionsData?.data || []) as ConditionData[];
+      const chronicConditions = conditionsList.filter((c: ConditionData) =>
         c.clinical_status === 'active' && c.category?.[0]?.coding?.[0]?.code === 'problem-list-item'
       ).length || 0;
 

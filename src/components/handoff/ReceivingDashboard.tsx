@@ -38,9 +38,10 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
         if (isMounted) {
           setPackets(data);
         }
-      } catch (_error: any) {
+      } catch (_error: unknown) {
         if (isMounted) {
-          toast.error(`Failed to load transfers: ${_error.message}`);
+          const message = _error instanceof Error ? _error.message : String(_error);
+          toast.error(`Failed to load transfers: ${message}`);
         }
       } finally {
         if (isMounted) {
@@ -86,8 +87,9 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
         status: 'sent', // Only show sent packets awaiting acknowledgement
       });
       setPackets(data);
-    } catch (_error: any) {
-      toast.error(`Failed to load transfers: ${_error.message}`);
+    } catch (_error: unknown) {
+      const message = _error instanceof Error ? _error.message : String(_error);
+      toast.error(`Failed to load transfers: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -118,7 +120,7 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
 
       // Step 2: Integrate transfer into patient chart (creates patient, encounter, vitals, billing)
 
-      const integrationResult = await integrateHospitalTransfer(packetId, packet as any);
+      const integrationResult = await integrateHospitalTransfer(packetId, packet);
 
       if (integrationResult.success) {
         // Integration complete - logged via audit system
@@ -130,9 +132,10 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
 
       // Refresh to ensure sync with server
       loadPackets();
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       // Rollback on error - reload all packets
-      toast.error(`Failed to acknowledge: ${_error.message}`);
+      const message = _error instanceof Error ? _error.message : String(_error);
+      toast.error(`Failed to acknowledge: ${message}`);
       loadPackets();
     } finally {
       setAcknowledging(false);
@@ -144,8 +147,9 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
       const url = await HandoffService.getAttachmentUrl(attachment);
       window.open(url, '_blank');
       toast.success('Opening attachment...');
-    } catch (_error: any) {
-      toast.error(`Failed to download attachment: ${_error.message}`);
+    } catch (_error: unknown) {
+      const message = _error instanceof Error ? _error.message : String(_error);
+      toast.error(`Failed to download attachment: ${message}`);
     }
   };
 

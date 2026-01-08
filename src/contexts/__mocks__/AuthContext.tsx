@@ -104,6 +104,6 @@ export const resetAuthMocks = () => {
 };
 
 // Utility function mock
-export function withAuthErrorHandling<T extends (...args: any[]) => Promise<any>>(fn: T): T {
+export function withAuthErrorHandling<T extends (...args: unknown[]) => Promise<unknown>>(fn: T): T {
   return fn;
 }

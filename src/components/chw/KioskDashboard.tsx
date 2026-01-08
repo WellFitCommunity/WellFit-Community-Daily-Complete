@@ -6,6 +6,14 @@
 import React, { useState, useEffect } from 'react';
 import { chwService } from '../../services/chwService';
 
+interface SyncResult {
+  visits: number;
+  assessments: number;
+  photos: number;
+  alerts: number;
+  errors?: string[];
+}
+
 interface KioskDashboardProps {
   kioskId?: string;
   locationName?: string;
@@ -23,7 +31,7 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
   });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncing, setSyncing] = useState(false);
-  const [lastSyncResult, setLastSyncResult] = useState<any>(null);
+  const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
 
   useEffect(() => {
     // Update online status

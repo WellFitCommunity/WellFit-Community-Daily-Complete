@@ -24,6 +24,25 @@ interface Session {
   location?: string;
 }
 
+// Database row type from user_sessions table with joined profiles
+interface UserSessionRow {
+  id: string;
+  user_id: string;
+  device_type?: string;
+  browser?: string;
+  os?: string;
+  ip_address?: string;
+  session_start: string;
+  last_activity?: string;
+  location?: string;
+  session_end?: string;
+  profiles?: {
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+  } | null;
+}
+
 const ActiveSessionManager: React.FC = () => {
   const supabase = useSupabaseClient();
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -48,7 +67,7 @@ const ActiveSessionManager: React.FC = () => {
 
       if (sessionsError) throw sessionsError;
 
-      const formattedSessions: Session[] = (sessionsData || []).map((session: any) => ({
+      const formattedSessions: Session[] = ((sessionsData || []) as UserSessionRow[]).map((session) => ({
         id: session.id,
         user_id: session.user_id,
         user_email: session.profiles?.email,
@@ -111,11 +130,11 @@ const ActiveSessionManager: React.FC = () => {
       });
 
       await loadSessions(true);
-    } catch (error: any) {
-
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to revoke session';
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to revoke session'
+        text: errorMessage
       });
     } finally {
       setActionLoading(null);
@@ -146,11 +165,11 @@ const ActiveSessionManager: React.FC = () => {
       });
 
       await loadSessions(true);
-    } catch (error: any) {
-
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to revoke sessions';
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to revoke sessions'
+        text: errorMessage
       });
     } finally {
       setActionLoading(null);

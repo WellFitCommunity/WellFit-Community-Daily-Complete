@@ -48,8 +48,9 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
       const validationResults = await SDOHBillingService.validateBillingCompliance(enhancedSuggestion);
       setValidation(validationResults);
 
-    } catch (e: any) {
-      setError(e?.message || 'Failed to get enhanced coding suggestions');
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Failed to get enhanced coding suggestions';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -80,8 +81,9 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
           validationResults: validation
         });
       }
-    } catch (e: any) {
-      setError(e?.message || 'Failed to save recommendation');
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Failed to save recommendation';
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -96,15 +98,19 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
       const timeTracking = await SDOHBillingService.trackCCMTime(encounterId, patientId, activities);
       setCCMTimeTracking(timeTracking);
       setShowTimeTracker(false);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to save CCM time tracking');
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Failed to save CCM time tracking';
+      setError(errorMessage);
     }
   };
 
+  // Define tab type for type safety
+  type TabType = 'codes' | 'sdoh' | 'ccm' | 'compliance';
+
   // Components
-  const TabButton = ({ tab, label, count }: { tab: string; label: string; count?: number }) => (
+  const TabButton = ({ tab, label, count }: { tab: TabType; label: string; count?: number }) => (
     <button
-      onClick={() => setActiveTab(tab as any)}
+      onClick={() => setActiveTab(tab)}
       className={`px-4 py-2 rounded-t-lg border-b-2 ${
         activeTab === tab
           ? 'border-blue-500 text-blue-600 bg-blue-50'
@@ -120,9 +126,20 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
     </button>
   );
 
+  // Define a union type for all code types used in the CodeSection
+  type BillingCode = {
+    code: string;
+    rationale: string;
+    principal?: boolean;
+    category?: 'medical' | 'sdoh';
+    modifiers?: string[];
+    timeRequired?: number;
+    sdohJustification?: string;
+  };
+
   const CodeSection = ({ title, codes, type }: {
     title: string;
-    codes: any[];
+    codes: BillingCode[];
     type: 'icd10' | 'cpt' | 'hcpcs';
   }) => (
     <div className="border rounded-lg p-4 mb-4">
@@ -154,7 +171,7 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
                   )}
                 </div>
                 <div className="text-right">
-                  {code.modifiers?.length > 0 && (
+                  {code.modifiers && code.modifiers.length > 0 && (
                     <div className="text-xs text-gray-600">Mod: {code.modifiers.join(', ')}</div>
                   )}
                   {code.timeRequired && (
@@ -255,7 +272,16 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
     );
   };
 
-  const CCMRecommendationView = ({ recommendation }: { recommendation: any }) => (
+  // Define the CCM recommendation type matching EnhancedCodingSuggestion.ccmRecommendation
+  type CCMRecommendation = {
+    eligible: boolean;
+    tier: 'standard' | 'complex' | 'non-eligible';
+    justification: string;
+    expectedReimbursement: number;
+    requiredDocumentation: string[];
+  };
+
+  const CCMRecommendationView = ({ recommendation }: { recommendation: CCMRecommendation }) => (
     <div className="space-y-4">
       <div className="bg-green-50 p-4 rounded-lg">
         <h4 className="font-semibold mb-2">CCM Billing Recommendation</h4>

@@ -162,8 +162,8 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
 
       setRiskData(risks);
       setError(null);
-    } catch (err: any) {
-      auditLogger.error('patient_risk_strip_fetch_failed', err instanceof Error ? err : new Error(err?.message || 'Unknown error'));
+    } catch (err: unknown) {
+      auditLogger.error('patient_risk_strip_fetch_failed', err instanceof Error ? err : new Error(String(err)));
       setError('Failed to load risk data');
     } finally {
       setLoading(false);

@@ -85,8 +85,24 @@ interface DashboardMetrics {
   riskFlagsToday: number;
 }
 
+// Database row types for questionnaire data with joined tables
+interface QuestionnaireResponseRow extends QuestionnaireResponse {
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
+}
+
+interface QuestionTemplateRow {
+  id: string;
+  question_text?: string;
+  category?: string;
+  times_used?: number;
+  updated_at?: string;
+}
+
 export const QuestionnaireAnalyticsDashboard: React.FC = () => {
-  const { supabase } = useSupabaseClient() as any;
+  const supabase = useSupabaseClient();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [deployments, setDeployments] = useState<QuestionnaireDeployment[]>([]);
   const [recentResponses, setRecentResponses] = useState<QuestionnaireResponse[]>([]);
@@ -129,7 +145,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
         .limit(20);
 
       if (!responsesError && responsesData) {
-        const formatted = responsesData.map((r: any) => ({
+        const formatted = responsesData.map((r: QuestionnaireResponseRow) => ({
           ...r,
           respondent_name: r.profiles
             ? `${r.profiles.first_name || ''} ${r.profiles.last_name || ''}`.trim()
@@ -146,7 +162,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
         .limit(20);
 
       if (!templatesError && templatesData) {
-        setTemplates(templatesData.map((t: any) => ({
+        setTemplates(templatesData.map((t: QuestionTemplateRow) => ({
           id: t.id,
           name: t.question_text?.substring(0, 50) || 'Unnamed Template',
           description: t.category || '',

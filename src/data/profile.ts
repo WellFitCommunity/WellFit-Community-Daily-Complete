@@ -30,7 +30,7 @@ export async function fetchMyProfile(): Promise<Profile | null> {
     .maybeSingle(); // ✅ no exception when missing
   if (error) {
     // PGRST116 = no rows; treat as null
-    if ((error as any).code !== 'PGRST116') // Removed console statement
+    if (error.code !== 'PGRST116') // Removed console statement
     return null;
   }
   return (data as Profile) ?? null;

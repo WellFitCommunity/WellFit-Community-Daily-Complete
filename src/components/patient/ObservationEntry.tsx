@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import FHIRService from '../../services/fhirResourceService';
 import type { CreateObservation } from '../../types/fhir';
 
+interface ObservationTemplate {
+  code: string;
+  display: string;
+  unit: string;
+  category: string;
+}
+
 interface ObservationEntryProps {
   userId: string;
   onSuccess: () => void;
@@ -42,7 +49,7 @@ const ObservationEntry: React.FC<ObservationEntryProps> = ({ userId, onSuccess, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categoryTab, setCategoryTab] = useState<'vitals' | 'labs' | 'social' | 'custom'>('vitals');
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<ObservationTemplate | null>(null);
 
   const [formData, setFormData] = useState<{
     code: string;
@@ -66,7 +73,7 @@ const ObservationEntry: React.FC<ObservationEntryProps> = ({ userId, onSuccess, 
     effective_datetime: new Date().toISOString().slice(0, 16),
   });
 
-  const handleTemplateSelect = (template: any) => {
+  const handleTemplateSelect = (template: ObservationTemplate) => {
     setSelectedTemplate(template);
     setFormData({
       ...formData,

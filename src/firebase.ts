@@ -4,6 +4,7 @@ import {
   getMessaging,
   isSupported,
   type Messaging,
+  type MessagePayload,
   getToken,
   onMessage,
 } from 'firebase/messaging';
@@ -102,7 +103,8 @@ export async function getFcmToken(): Promise<string | null> {
   }
 
   // Ensure we pass the SW registration to getToken if available
-  const vapidKey = (FIREBASE as any)?.vapidKey as string | undefined;
+  const cfg = FIREBASE as unknown as FirebaseClientConfig;
+  const vapidKey = cfg?.vapidKey;
   const registration = swReg ?? (await ensureMessagingServiceWorker());
 
   try {
@@ -118,7 +120,7 @@ export async function getFcmToken(): Promise<string | null> {
 
 /** Foreground message helper – plug this into a toast/UX layer */
 export async function onForegroundMessage(
-  handler: (payload: any) => void
+  handler: (payload: MessagePayload) => void
 ): Promise<() => void> {
   const msg = await getFirebaseMessaging();
   if (!msg) return () => {};

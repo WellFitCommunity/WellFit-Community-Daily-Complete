@@ -24,6 +24,10 @@ interface SessionTimeoutContextType {
   resetTimeout: () => void;
 }
 
+interface BroadcastMessage {
+  type: 'LOGOUT' | 'ACTIVITY';
+}
+
 const SessionTimeoutContext = createContext<SessionTimeoutContextType | undefined>(undefined);
 
 export const useSessionTimeout = (): SessionTimeoutContextType => {
@@ -63,18 +67,17 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
     warningRef.current = null;
   }, []);
 
-  const safePostMessage = useCallback((message: any) => {
+  const safePostMessage = useCallback((message: BroadcastMessage) => {
     try {
       if (bcRef.current && !isChannelClosedRef.current) {
         bcRef.current.postMessage(message);
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'InvalidStateError') {
-
+        // Channel is closed - mark it as such
         isChannelClosedRef.current = true;
-      } else {
-
       }
+      // Other errors are silently ignored for session management
     }
   }, []);
 
@@ -131,7 +134,8 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
       'mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll',
     ];
 
-    const handleActivity = () => resetTimeout();
+    // Typed as EventListener to avoid any casts in removeEventListener
+    const handleActivity: EventListener = () => resetTimeout();
 
     // Window activity listeners
     windowEvents.forEach((evt) =>
@@ -147,15 +151,20 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
     // BroadcastChannel listeners
     const bc = bcRef.current;
     if (bc) {
-      bc.onmessage = (ev) => {
-        const type = (ev?.data && (ev.data as any).type) as 'LOGOUT' | 'ACTIVITY' | undefined;
-        if (type === 'LOGOUT') logout();
-        if (type === 'ACTIVITY') scheduleTimeouts();
+      bc.onmessage = (ev: MessageEvent<unknown>) => {
+        const data = ev?.data;
+        const isBroadcastMessage = (d: unknown): d is BroadcastMessage =>
+          typeof d === 'object' && d !== null && 'type' in d &&
+          (d.type === 'LOGOUT' || d.type === 'ACTIVITY');
+        if (isBroadcastMessage(data)) {
+          if (data.type === 'LOGOUT') logout();
+          if (data.type === 'ACTIVITY') scheduleTimeouts();
+        }
       };
     }
 
     return () => {
-      windowEvents.forEach((evt) => window.removeEventListener(evt, handleActivity as any));
+      windowEvents.forEach((evt) => window.removeEventListener(evt, handleActivity));
       document.removeEventListener('visibilitychange', handleVisibility);
       if (bc) {
         bc.onmessage = null;

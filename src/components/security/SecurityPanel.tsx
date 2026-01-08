@@ -22,7 +22,7 @@ interface SecurityAlert {
   message: string;
   created_at: string;
   status: 'pending' | 'acknowledged' | 'resolved' | 'ignored';
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   resolved_at?: string;
   resolved_by?: string;
   acknowledged_at?: string;
@@ -66,7 +66,7 @@ export const SecurityPanel: React.FC = () => {
 
   const updateAlertStatus = async (alertId: string, status: 'acknowledged' | 'resolved' | 'ignored') => {
     try {
-      const updates: any = { status };
+      const updates: Partial<Pick<SecurityAlert, 'status' | 'acknowledged_at' | 'acknowledged_by' | 'resolved_at' | 'resolved_by'>> = { status };
       const timestamp = new Date().toISOString();
 
       if (status === 'acknowledged') {

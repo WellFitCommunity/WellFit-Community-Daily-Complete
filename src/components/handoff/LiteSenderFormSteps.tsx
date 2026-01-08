@@ -9,6 +9,7 @@ import type {
   UrgencyLevel,
   Medication,
   Allergy,
+  LabResult,
 } from '../../types/handoff';
 import type { UseLiteSenderLogicReturn } from './hooks/useLiteSenderLogic';
 
@@ -34,7 +35,7 @@ interface LiteSenderFormStepsProps {
   addAllergy: UseLiteSenderLogicReturn['addAllergy'];
   updateAllergy: UseLiteSenderLogicReturn['updateAllergy'];
   removeAllergy: UseLiteSenderLogicReturn['removeAllergy'];
-  labs: any[];
+  labs: LabResult[];
   addLab: UseLiteSenderLogicReturn['addLab'];
   updateLab: UseLiteSenderLogicReturn['updateLab'];
   removeLab: UseLiteSenderLogicReturn['removeLab'];

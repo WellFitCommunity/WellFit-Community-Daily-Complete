@@ -27,7 +27,8 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'checklist' | 'risk' | 'facility'>('checklist');
+  type TabId = 'checklist' | 'risk' | 'facility';
+  const [activeTab, setActiveTab] = useState<TabId>('checklist');
 
   useEffect(() => {
     loadDischargePlan();
@@ -39,8 +40,9 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
       const plan = await DischargePlanningService.getDischargePlanByEncounter(encounterId);
       setDischargePlan(plan);
       setError(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -60,8 +62,9 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
         onPlanUpdated(updatedPlan);
       }
       setError(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -87,8 +90,9 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
       setSaving(true);
       await DischargePlanningService.markPlanReady(dischargePlan.id);
       await loadDischargePlan();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -101,8 +105,9 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
       setSaving(true);
       await DischargePlanningService.markPatientDischarged(dischargePlan.id);
       await loadDischargePlan();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -204,14 +209,14 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
       <div className="bg-white rounded-lg shadow-sm">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
-            {[
+            {([
               { id: 'checklist', label: 'Checklist' },
               { id: 'risk', label: 'Risk Assessment' },
               { id: 'facility', label: 'Post-Acute Placement' }
-            ].map(tab => (
+            ] as const).map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600'

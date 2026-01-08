@@ -13,6 +13,7 @@ import { SDOHStatusBar } from '../sdoh/SDOHStatusBar';
 import { SDOHIndicatorService } from '../../services/sdohIndicatorService';
 import { PatientRiskStrip } from './PatientRiskStrip';
 import type { SDOHProfile } from '../../types/sdohIndicators';
+import type { EmergencyAlert, CareRecommendation, VitalsTrend } from '../admin/FhirAiService';
 
 interface PatientDashboardProps {
   supabaseUrl: string;
@@ -24,9 +25,9 @@ interface PatientInsights {
   riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   adherenceScore: number;
   lastCheckIn: string;
-  emergencyAlerts: any[];
-  careRecommendations: any[];
-  vitalsTrends: any[];
+  emergencyAlerts: EmergencyAlert[];
+  careRecommendations: CareRecommendation[];
+  vitalsTrends: VitalsTrend[];
   nextActions: string[];
   encouragement: string;
 }
@@ -130,7 +131,7 @@ const HealthMetrics: React.FC<{ metrics: HealthMetric[] }> = ({ metrics }) => {
 };
 
 // Care Recommendations Component
-const CareRecommendations: React.FC<{ recommendations: any[]; nextActions: string[] }> = ({
+const CareRecommendations: React.FC<{ recommendations: CareRecommendation[]; nextActions: string[] }> = ({
   recommendations,
   nextActions
 }) => {
@@ -185,7 +186,7 @@ const CareRecommendations: React.FC<{ recommendations: any[]; nextActions: strin
 };
 
 // Emergency Alerts Component
-const EmergencyAlerts: React.FC<{ alerts: any[] }> = ({ alerts }) => {
+const EmergencyAlerts: React.FC<{ alerts: EmergencyAlert[] }> = ({ alerts }) => {
   if (alerts.length === 0) return null;
 
   return (
@@ -322,11 +323,11 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl: 
       };
 
       // Transform vitals trends into health metrics
-      const metrics: HealthMetric[] = (aiInsights.vitalsTrends || []).map((trend: any) => ({
+      const metrics: HealthMetric[] = (aiInsights.vitalsTrends || []).map((trend: VitalsTrend) => ({
         name: getMetricDisplayName(trend.metric),
         value: `${trend.current} ${getMetricUnit(trend.metric)}`,
         status: trend.isAbnormal ? 'concerning' : 'good',
-        trend: trend.trend?.toLowerCase() || 'stable',
+        trend: trend.trend?.toLowerCase() as HealthMetric['trend'] || 'stable',
         recommendation: trend.recommendation
       }));
 

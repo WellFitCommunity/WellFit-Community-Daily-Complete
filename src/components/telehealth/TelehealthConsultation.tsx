@@ -110,9 +110,9 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
       if (encounterError) throw encounterError;
 
       return encounter.id;
-    } catch (error: any) {
+    } catch (err: unknown) {
 
-      throw error;
+      throw err;
     }
   }, [patientId, encounterType]);
 
@@ -149,11 +149,11 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
         await daily.join({ url: room_url });
         setCallState((prev) => ({ ...prev, isInCall: true, isJoining: false }));
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
 
       setCallState((prev) => ({
         ...prev,
-        error: error.message || 'Failed to create telehealth session',
+        error: err instanceof Error ? err.message : 'Failed to create telehealth session',
         isJoining: false,
       }));
     }

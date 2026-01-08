@@ -72,13 +72,13 @@ export const DentalHealthDashboard: React.FC = () => {
       } else {
         setError(response.error || 'Failed to load dashboard');
       }
-    } catch (err: any) {
-      await auditLogger.error('DENTAL_DASHBOARD_LOAD_FAILED', err, {
+    } catch (err: unknown) {
+      await auditLogger.error('DENTAL_DASHBOARD_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         userId: user?.id,
         resource_type: 'dashboard',
         operation: 'load'
       });
-      setError(err.message || 'An unexpected error occurred');
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }

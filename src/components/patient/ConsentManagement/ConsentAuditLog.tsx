@@ -20,7 +20,7 @@ interface AuditEntry {
   event_type: string;
   app_name?: string;
   resource_type?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ip_address?: string;
   created_at: string;
 }

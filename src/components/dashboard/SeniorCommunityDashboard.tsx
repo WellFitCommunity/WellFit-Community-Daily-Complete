@@ -13,7 +13,20 @@ import EmergencyContact from '../features/EmergencyContact';
 import WhatsNewSeniorModal from '../WhatsNewSeniorModal';
 import UpcomingAppointmentBanner from './UpcomingAppointmentBanner';
 import { allRecipes } from '../../data/allRecipes';
+import type { Recipe } from '../../data/types';
 // Health widgets removed - now accessible via My Health Hub page
+
+/** Check-in button configuration */
+interface CheckInButton {
+  id: string;
+  emoji: string;
+  text: string;
+  response: string;
+  color: string;
+  needsNavigation?: boolean;
+  needsFollowUp?: boolean;
+  emergency?: 'red' | 'yellow';
+}
 
 const SeniorCommunityDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -31,7 +44,7 @@ const SeniorCommunityDashboard: React.FC = () => {
   const [needsSupport, setNeedsSupport] = useState<boolean | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [recentCommunityPhoto, setRecentCommunityPhoto] = useState<string | null>(null);
-  const [todaysMeal, setTodaysMeal] = useState<any>(null);
+  const [todaysMeal, setTodaysMeal] = useState<Recipe | null>(null);
   const [caregiverPhone, setCaregiverPhone] = useState<string | null>(null);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [emergencyBannerTimeoutId, setEmergencyBannerTimeoutId] = useState<NodeJS.Timeout | null>(null);
@@ -112,7 +125,7 @@ const SeniorCommunityDashboard: React.FC = () => {
     }
   }, []);
 
-  const checkInButtons = [
+  const checkInButtons: CheckInButton[] = [
     {
       id: 'great',
       emoji: '😊',
@@ -175,7 +188,7 @@ const SeniorCommunityDashboard: React.FC = () => {
     }
   ];
 
-  const handleCheckIn = async (button: any) => {
+  const handleCheckIn = async (button: CheckInButton) => {
     // Set the check-in status and show response message for all buttons
     setCheckedInToday(button.id);
     setFeedbackMessage(button.response);
@@ -287,7 +300,7 @@ const SeniorCommunityDashboard: React.FC = () => {
     }
   };
 
-  const logCheckIn = async (_type: string, label: string, response: string, metadata?: any) => {
+  const logCheckIn = async (_type: string, label: string, response: string, metadata?: Record<string, unknown>) => {
     try {
       // Use session.user.id to match RLS auth.uid()
       const { data: { session } } = await supabase.auth.getSession();

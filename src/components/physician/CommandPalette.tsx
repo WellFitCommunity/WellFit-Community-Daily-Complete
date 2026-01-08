@@ -14,6 +14,7 @@ import Brain from 'lucide-react/dist/esm/icons/brain';
 import Zap from 'lucide-react/dist/esm/icons/zap';
 import Star from 'lucide-react/dist/esm/icons/star';
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
+import type { LucideIcon } from 'lucide-react';
 
 // =====================================================
 // TYPES
@@ -23,7 +24,7 @@ export interface CommandAction {
   id: string;
   label: string;
   description?: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   category: 'clinical' | 'admin' | 'wellness' | 'quick-access';
   keywords: string[];
   action: () => void;

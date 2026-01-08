@@ -54,11 +54,44 @@ interface PatientAlert {
   timestamp: string;
 }
 
+/** Interface for active stroke patient data returned from RPC */
+interface ActiveStrokePatient {
+  patient_id: string;
+  patient_name: string;
+  mrn?: string;
+  room_number?: string;
+  stroke_type: string;
+  nihss_score: number;
+  days_since_stroke: number;
+  next_assessment_due: string;
+  tpa_eligible?: boolean;
+  tpa_administered?: boolean;
+}
+
+/** Interface for dementia patient needing reassessment returned from RPC */
+interface DementiaPatient {
+  patient_id: string;
+  patient_name: string;
+  mrn?: string;
+  room_number?: string;
+  dementia_stage: string;
+  last_assessment_date: string;
+  days_overdue: number;
+}
+
+/** Interface for high-burden caregiver data returned from RPC */
+interface HighBurdenCaregiver {
+  patient_id: string;
+  caregiver_name: string;
+  zarit_score: number;
+  respite_care_needed?: boolean;
+}
+
 export const NeuroSuiteDashboard: React.FC = () => {
   const { user } = useAuth();
   const { selectPatient } = usePatientContext();
-  const [activeStrokePatients, setActiveStrokePatients] = useState<any[]>([]);
-  const [dementiaPatients, setDementiaPatients] = useState<any[]>([]);
+  const [activeStrokePatients, setActiveStrokePatients] = useState<ActiveStrokePatient[]>([]);
+  const [dementiaPatients, setDementiaPatients] = useState<DementiaPatient[]>([]);
   const [recentAlerts, setRecentAlerts] = useState<PatientAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('stroke');
@@ -105,20 +138,23 @@ export const NeuroSuiteDashboard: React.FC = () => {
       // Load active stroke patients
       const strokeResponse = await NeuroSuiteService.getActiveStrokePatients(user.id);
       if (strokeResponse.success && strokeResponse.data) {
-        setActiveStrokePatients(strokeResponse.data);
+        // Cast at boundary from RPC response - types verified against database schema
+        setActiveStrokePatients(strokeResponse.data as unknown as ActiveStrokePatient[]);
       }
 
       // Load dementia patients needing reassessment
       const dementiaResponse = await NeuroSuiteService.getDementiaPatientsNeedingReassessment();
       if (dementiaResponse.success && dementiaResponse.data) {
-        setDementiaPatients(dementiaResponse.data);
+        // Cast at boundary from RPC response - types verified against database schema
+        setDementiaPatients(dementiaResponse.data as unknown as DementiaPatient[]);
       }
 
       // Load high-burden caregivers
       const caregiversResponse = await NeuroSuiteService.identifyHighBurdenCaregivers();
       if (caregiversResponse.success && caregiversResponse.data) {
-        // Convert to alerts
-        const caregiverAlerts: PatientAlert[] = caregiversResponse.data.map((cg: any) => ({
+        // Convert to alerts - cast at boundary from RPC response
+        const caregivers = caregiversResponse.data as unknown as HighBurdenCaregiver[];
+        const caregiverAlerts: PatientAlert[] = caregivers.map((cg) => ({
           patientId: cg.patient_id,
           patientName: 'Patient',
           alertType: 'caregiver_burden' as const,

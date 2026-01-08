@@ -81,8 +81,15 @@ interface DashboardMetrics {
   engagementRate: number;
 }
 
+// Database row type for patient referrals with joined source data
+interface PatientReferralRow extends PatientReferral {
+  external_referral_sources?: {
+    organization_name: string;
+  } | null;
+}
+
 export const ReferralsDashboard: React.FC = () => {
-  const { supabase } = useSupabaseClient() as any;
+  const supabase = useSupabaseClient();
   const { selectPatient } = usePatientContext();
   const keyboardShortcuts = useKeyboardShortcutsContextSafe();
 
@@ -175,7 +182,7 @@ export const ReferralsDashboard: React.FC = () => {
         .limit(50);
 
       if (pendingError) throw pendingError;
-      const formattedPending = (pending || []).map((r: any) => ({
+      const formattedPending = (pending || []).map((r: PatientReferralRow) => ({
         ...r,
         source_name: r.external_referral_sources?.organization_name,
       }));
@@ -193,7 +200,7 @@ export const ReferralsDashboard: React.FC = () => {
         .limit(50);
 
       if (activeError) throw activeError;
-      const formattedActive = (active || []).map((r: any) => ({
+      const formattedActive = (active || []).map((r: PatientReferralRow) => ({
         ...r,
         source_name: r.external_referral_sources?.organization_name,
       }));

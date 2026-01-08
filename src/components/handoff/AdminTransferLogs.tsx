@@ -92,8 +92,9 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
       ]);
       setPackets(packetsData);
       setStats(statsData);
-    } catch (error: any) {
-      toast.error(`Failed to load data: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to load data';
+      toast.error(`Failed to load data: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -244,8 +245,9 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
       window.URL.revokeObjectURL(url);
 
       toast.success('Export completed successfully!');
-    } catch (error: any) {
-      toast.error(`Failed to export: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Export failed';
+      toast.error(`Failed to export: ${message}`);
     } finally {
       setExporting(false);
     }
@@ -296,8 +298,9 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
       if (result?.packet) {
         setSelectedPacket(result.packet);
       }
-    } catch (error: any) {
-      toast.error(`Failed to create transfer: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Transfer creation failed';
+      toast.error(`Failed to create transfer: ${message}`);
     } finally {
       setCreatingTransfer(false);
     }

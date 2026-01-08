@@ -9,6 +9,25 @@ import { offlineSync } from '../../services/specialist-workflow-engine/OfflineDa
 import { workflowRegistry } from '../../services/specialist-workflow-engine/templates';
 import { FieldVisit } from '../../services/specialist-workflow-engine/types';
 
+/** Sync status returned by offlineSync.getSyncStatus() */
+interface SyncStatus {
+  pending: {
+    visits: number;
+    assessments: number;
+    photos: number;
+    alerts: number;
+  };
+  lastSync?: number;
+}
+
+/** Extended FieldVisit with joined patient data */
+interface FieldVisitWithPatient extends FieldVisit {
+  patient?: {
+    full_name?: string;
+    address?: string;
+  };
+}
+
 interface SpecialistDashboardProps {
   specialistId: string;
   specialistType: string;
@@ -18,10 +37,10 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
   specialistId,
   specialistType
 }) => {
-  const [todaysVisits, setTodaysVisits] = useState<FieldVisit[]>([]);
-  const [upcomingVisits, setUpcomingVisits] = useState<FieldVisit[]>([]);
+  const [todaysVisits, setTodaysVisits] = useState<FieldVisitWithPatient[]>([]);
+  const [upcomingVisits, setUpcomingVisits] = useState<FieldVisitWithPatient[]>([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [syncStatus, setSyncStatus] = useState<any>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   const workflow = workflowRegistry.getByType(specialistType)[0];
@@ -45,16 +64,16 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
 
   const loadVisits = async () => {
     try {
-      const today = await fieldVisitManager.getTodaysVisits(specialistId);
+      const today = await fieldVisitManager.getTodaysVisits(specialistId) as FieldVisitWithPatient[];
       setTodaysVisits(today);
 
       const upcoming = await fieldVisitManager.getVisitsForSpecialist(
         specialistId,
         'scheduled'
-      );
+      ) as FieldVisitWithPatient[];
       setUpcomingVisits(upcoming.filter(v => !today.find(t => t.id === v.id)));
-    } catch (error) {
-
+    } catch {
+      // Silently handle error - visits will remain empty
     } finally {
       setLoading(false);
     }
@@ -67,8 +86,8 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
 
       const status = await offlineSync.getSyncStatus();
       setSyncStatus(status);
-    } catch (error) {
-
+    } catch {
+      // Silently handle error - sync status will remain null
     }
   };
 
@@ -76,8 +95,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
     try {
       await fieldVisitManager.startVisit(visitId);
       window.location.href = `/specialist/visit/${visitId}`;
-    } catch (error) {
-
+    } catch {
       alert('Failed to start visit. Please try again.');
     }
   };
@@ -87,8 +105,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
       const result = await offlineSync.syncAll();
       setSyncStatus(await offlineSync.getSyncStatus());
       alert(`Synced: ${result.visits} visits, ${result.assessments} assessments, ${result.photos} photos`);
-    } catch (error) {
-
+    } catch {
       alert('Sync failed. Will retry automatically.');
     }
   };
@@ -164,7 +181,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                         'bg-gray-300'
                       }`}></div>
                       <h3 className="text-lg font-medium text-gray-900">
-                        {(visit as any).patient?.full_name || 'Patient'}
+                        {visit.patient?.full_name || 'Patient'}
                       </h3>
                     </div>
 
@@ -173,7 +190,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                         hour: 'numeric',
                         minute: '2-digit'
                       }) : 'Not scheduled'}</span>
-                      <span>📍 {(visit as any).patient?.address || 'Address not available'}</span>
+                      <span>📍 {visit.patient?.address || 'Address not available'}</span>
                       <span>📋 {visit.visit_type}</span>
                     </div>
 
@@ -240,7 +257,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium text-gray-900">
-                      {(visit as any).patient?.full_name || 'Patient'}
+                      {visit.patient?.full_name || 'Patient'}
                     </h3>
                     <p className="text-sm text-gray-600">
                       {visit.scheduled_at ? new Date(visit.scheduled_at).toLocaleDateString('en-US', {
