@@ -13,29 +13,48 @@ import { SOCPresence } from '../../../types/socDashboard';
 // Mock operators data
 const mockOperators: SOCPresence[] = [
   {
+    id: 'presence-1',
     user_id: 'user-1',
     user_name: 'Alice Smith',
+    user_email: 'alice@example.com',
     status: 'online',
-    last_seen: new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
+    session_started_at: new Date().toISOString(),
+    current_alert_id: null,
+    user_agent: 'Mozilla/5.0',
   },
   {
+    id: 'presence-2',
     user_id: 'user-2',
     user_name: 'Bob Jones',
+    user_email: 'bob@example.com',
     status: 'busy',
+    last_seen_at: new Date().toISOString(),
+    session_started_at: new Date().toISOString(),
     current_alert_id: 'alert-123',
-    last_seen: new Date().toISOString(),
+    user_agent: 'Mozilla/5.0',
   },
   {
+    id: 'presence-3',
     user_id: 'user-3',
     user_name: 'Charlie Brown',
+    user_email: 'charlie@example.com',
     status: 'away',
-    last_seen: new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
+    session_started_at: new Date().toISOString(),
+    current_alert_id: null,
+    user_agent: 'Mozilla/5.0',
   },
   {
+    id: 'presence-4',
     user_id: 'user-4',
     user_name: 'Diana Prince',
+    user_email: 'diana@example.com',
     status: 'online',
-    last_seen: new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
+    session_started_at: new Date().toISOString(),
+    current_alert_id: null,
+    user_agent: 'Mozilla/5.0',
   },
 ];
 
@@ -239,10 +258,15 @@ describe('PresenceIndicator', () => {
     it('should handle operators with short names', () => {
       const shortNameOperators: SOCPresence[] = [
         {
+          id: 'presence-short',
           user_id: 'user-1',
           user_name: 'Zara',
+          user_email: 'zara@example.com',
           status: 'online',
-          last_seen: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+          session_started_at: new Date().toISOString(),
+          current_alert_id: null,
+          user_agent: 'Mozilla/5.0',
         },
       ];
 
@@ -256,10 +280,15 @@ describe('PresenceIndicator', () => {
     it('should handle all offline status', () => {
       const offlineOperators: SOCPresence[] = [
         {
+          id: 'presence-offline',
           user_id: 'user-1',
           user_name: 'Offline User',
+          user_email: 'offline@example.com',
           status: 'offline',
-          last_seen: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+          session_started_at: new Date().toISOString(),
+          current_alert_id: null,
+          user_agent: 'Mozilla/5.0',
         },
       ];
 

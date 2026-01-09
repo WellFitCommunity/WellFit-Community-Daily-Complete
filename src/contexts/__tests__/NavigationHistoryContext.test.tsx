@@ -7,7 +7,8 @@ import { NavigationHistoryProvider, useNavigationHistory } from '../NavigationHi
 type NavigationHistoryType = ReturnType<typeof useNavigationHistory>;
 
 // Helper to assert non-null and return typed value
-function assertDefined<T>(value: T | null | undefined): T {
+// Uses explicit cast for test assertions
+function assertDefined(value: NavigationHistoryType | null): NavigationHistoryType {
   if (value === null || value === undefined) {
     throw new Error('Expected value to be defined');
   }

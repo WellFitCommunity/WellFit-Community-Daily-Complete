@@ -73,6 +73,7 @@ const sampleStats: ResilienceHubDashboardStats = {
   avg_stress_7_days: 5.5,
   stress_trend: 'improving' as const,
   has_checked_in_today: false,
+  check_in_streak_days: 5,
   modules_completed: 3,
   modules_in_progress: 1,
   my_support_circles: 2,
@@ -82,7 +83,8 @@ const sampleStats: ResilienceHubDashboardStats = {
 const sampleCheckins: ProviderDailyCheckin[] = [
   {
     id: 'checkin-1',
-    provider_id: 'user-123',
+    practitioner_id: 'practitioner-123',
+    user_id: 'user-123',
     checkin_date: new Date().toISOString(),
     stress_level: 5,
     energy_level: 6,
@@ -93,7 +95,8 @@ const sampleCheckins: ProviderDailyCheckin[] = [
   },
   {
     id: 'checkin-2',
-    provider_id: 'user-123',
+    practitioner_id: 'practitioner-123',
+    user_id: 'user-123',
     checkin_date: new Date(Date.now() - 86400000).toISOString(),
     stress_level: 6,
     energy_level: 5,

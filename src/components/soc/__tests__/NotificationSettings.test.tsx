@@ -52,6 +52,10 @@ const defaultPreferences: SOCNotificationPreferences = {
   id: 'pref-1',
   user_id: 'user-1',
   sound_enabled: false,
+  sound_critical: 'critical-alert.mp3',
+  sound_high: 'high-alert.mp3',
+  sound_medium: 'medium-alert.mp3',
+  sound_low: 'low-alert.mp3',
   browser_notifications_enabled: false,
   desktop_notifications_enabled: false,
   notify_on_critical: true,
@@ -413,7 +417,7 @@ describe('NotificationSettings', () => {
 
     it('should show "Saving..." text while saving', async () => {
       // Make onSave take some time
-      const slowSave = vi.fn(() => new Promise((resolve) => setTimeout(resolve, 100)));
+      const slowSave = vi.fn((): Promise<void> => new Promise((resolve) => setTimeout(resolve, 100)));
 
       render(
         <NotificationSettings

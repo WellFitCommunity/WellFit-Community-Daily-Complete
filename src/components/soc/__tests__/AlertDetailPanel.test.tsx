@@ -95,23 +95,51 @@ const createMockAlert = (overrides: Partial<SecurityAlert> = {}): SecurityAlert 
   confidence_score: 0.85,
   escalated: false,
   metadata: { user_agent: 'Mozilla/5.0' },
+  // Assignment fields
+  assigned_to: null,
+  assigned_at: null,
+  assigned_by: null,
+  // Escalation fields
+  escalated_at: null,
+  escalation_level: 0,
+  // Notification fields
+  notification_sent: false,
+  notification_channels: [],
+  notification_sent_at: null,
+  // Affected user
+  affected_user_id: null,
+  // Detection
+  threshold_value: null,
+  actual_value: null,
+  // Resolution
+  resolution_time: null,
+  resolution_notes: null,
   ...overrides,
 });
 
 // Mock operators
 const mockOperators: SOCPresence[] = [
   {
+    id: 'presence-1',
     user_id: 'op-1',
     user_name: 'Alice Smith',
+    user_email: 'alice@example.com',
     status: 'online',
-    last_seen: new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
+    session_started_at: new Date().toISOString(),
+    current_alert_id: null,
+    user_agent: 'Mozilla/5.0',
   },
   {
+    id: 'presence-2',
     user_id: 'op-2',
     user_name: 'Bob Jones',
+    user_email: 'bob@example.com',
     status: 'busy',
+    last_seen_at: new Date().toISOString(),
+    session_started_at: new Date().toISOString(),
     current_alert_id: 'other-alert',
-    last_seen: new Date().toISOString(),
+    user_agent: 'Mozilla/5.0',
   },
 ];
 

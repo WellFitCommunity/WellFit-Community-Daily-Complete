@@ -33,7 +33,7 @@ vi.mock('../../../lib/supabaseClient', () => ({
 
 // Mock patientAdmissionService
 vi.mock('../../../services/patientAdmissionService', () => ({
-  admitPatient: vi.fn(() => Promise.resolve({ success: true })),
+  admitPatient: vi.fn(() => Promise.resolve('admission-123')),
 }));
 
 import { admitPatient } from '../../../services/patientAdmissionService';
@@ -300,7 +300,7 @@ describe('PatientAdmissionForm', () => {
 
     it('should show loading state during submission', async () => {
       vi.mocked(admitPatient).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
+        () => new Promise((resolve) => setTimeout(() => resolve('admission-123'), 100))
       );
 
       render(
