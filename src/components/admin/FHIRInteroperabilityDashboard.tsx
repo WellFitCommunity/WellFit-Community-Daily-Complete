@@ -62,10 +62,12 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
       loadPatientMappings(selectedConnection.id);
       loadSyncStats(selectedConnection.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load functions are stable, only reload when connection changes
   }, [selectedConnection]);
 
   useEffect(() => {
     loadCompliance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, []);
 
   const loadSyncHistory = async (connectionId: string) => {

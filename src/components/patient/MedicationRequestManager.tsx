@@ -89,7 +89,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
     }
   }, [filter, allMedicationsQuery, activeMedicationsQuery, historyMedicationsQuery]);
 
-  const medications = currentQuery.data || [];
+  const medications = useMemo(() => currentQuery.data || [], [currentQuery.data]);
   const loading = currentQuery.isLoading;
   const error = currentQuery.error?.message || null;
 

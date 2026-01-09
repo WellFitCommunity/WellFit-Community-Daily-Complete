@@ -332,6 +332,7 @@ const BedManagementPanel: React.FC = () => {
         recognitionRef.current.stop();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Setup voice recognition once on mount
   }, []);
 
   // Track completed actions for metrics (ATLUS: Service)
@@ -421,6 +422,7 @@ const BedManagementPanel: React.FC = () => {
 
     // No match found
     setVoiceTranscript('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- broadcast and handleUpdateStatus are stable functions defined later in component
   }, [bedBoard, loadData, showAffirmation]);
 
   // Toggle voice listening

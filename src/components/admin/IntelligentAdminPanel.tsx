@@ -263,9 +263,9 @@ const IntelligentAdminPanel: React.FC = () => {
   // Categories are now lazy-loaded independently
 
   // Helper function to add learning events
-  const addLearningEvent = (event: Omit<LearningEvent, 'timestamp'> & { timestamp: Date }) => {
+  const addLearningEvent = useCallback((event: Omit<LearningEvent, 'timestamp'> & { timestamp: Date }) => {
     setLearningEvents(prev => [...prev, event].slice(-10)); // Keep last 10 events
-  };
+  }, []);
 
   // Check for learning milestones
   const checkMilestones = (profile: UserBehaviorProfile) => {

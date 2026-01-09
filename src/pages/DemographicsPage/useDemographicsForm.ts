@@ -49,13 +49,13 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
   const totalSteps = userRole === 'senior' ? 5 : 4;
 
   // ✅ Single guard used by all write actions - returns userId or null
-  const requireUserIdOrSetError = (): string | null => {
+  const requireUserIdOrSetError = useCallback((): string | null => {
     if (!user?.id) {
       setError('Your session is still loading. Please wait a moment and try again.');
       return null;
     }
     return user.id;
-  };
+  }, [user?.id]);
 
   // Load existing profile data
   useEffect(() => {

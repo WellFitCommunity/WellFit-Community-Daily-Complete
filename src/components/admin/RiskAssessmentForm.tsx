@@ -106,7 +106,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
       const average = (medical_risk_score + mobility_risk_score + cognitive_risk_score + social_risk_score) / 4;
       setFormData(prev => ({ ...prev, overall_score: Math.round(average * 10) / 10 }));
     }
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only recalculate when individual scores change
   }, [formData.medical_risk_score, formData.mobility_risk_score, formData.cognitive_risk_score, formData.social_risk_score]);
 
   // Auto-calculate risk level based on overall score

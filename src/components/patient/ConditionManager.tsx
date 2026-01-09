@@ -97,7 +97,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
     }
   }, [filter, showEncounterDiagnoses, encounterId, allConditionsQuery, activeConditionsQuery, chronicConditionsQuery, problemListQuery, encounterConditionsQuery]);
 
-  const conditions = currentQuery.data || [];
+  const conditions = useMemo(() => currentQuery.data || [], [currentQuery.data]);
   const loading = currentQuery.isLoading;
   const error = currentQuery.error?.message || null;
 
