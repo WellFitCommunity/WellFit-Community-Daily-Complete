@@ -16,22 +16,25 @@ vi.mock('../../../lib/supabaseClient', () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => {
-          // patient_admissions query returns admitted patient IDs
+          // patient_admissions query: .eq('is_active', true)
           if (table === 'patient_admissions') {
             return Promise.resolve({
-              data: [{ patient_id: 'patient-3' }], // patient-3 is already admitted
+              data: [{ patient_id: 'senior-3' }], // senior-3 is already admitted
               error: null,
             });
           }
-          // profiles query returns all seniors
-          return Promise.resolve({
-            data: [
-              { user_id: 'patient-1', first_name: 'John', last_name: 'Doe' },
-              { user_id: 'patient-2', first_name: 'Jane', last_name: 'Smith' },
-              { user_id: 'patient-3', first_name: 'Bob', last_name: 'Wilson' }, // Already admitted
-            ],
-            error: null,
-          });
+          // profiles query: .eq('role_id', 4) - seniors only for hospital admission
+          if (table === 'profiles') {
+            return Promise.resolve({
+              data: [
+                { user_id: 'senior-1', first_name: 'John', last_name: 'Doe' },
+                { user_id: 'senior-2', first_name: 'Jane', last_name: 'Smith' },
+                { user_id: 'senior-3', first_name: 'Bob', last_name: 'Wilson' }, // Already admitted
+              ],
+              error: null,
+            });
+          }
+          return Promise.resolve({ data: [], error: null });
         }),
       })),
     })),
@@ -159,9 +162,9 @@ describe('PatientAdmissionForm', () => {
       });
 
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'patient-1' } });
+      fireEvent.change(select, { target: { value: 'senior-1' } });
 
-      expect(select).toHaveValue('patient-1');
+      expect(select).toHaveValue('senior-1');
     });
 
     it('should update room number input', async () => {
@@ -225,7 +228,7 @@ describe('PatientAdmissionForm', () => {
 
       // Select a patient but leave room empty
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'patient-1' } });
+      fireEvent.change(select, { target: { value: 'senior-1' } });
 
       // Submit form directly to bypass HTML5 validation
       const form = document.querySelector('form') as HTMLFormElement;
@@ -268,7 +271,7 @@ describe('PatientAdmissionForm', () => {
 
       // Select patient
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'patient-1' } });
+      fireEvent.change(select, { target: { value: 'senior-1' } });
 
       // Type room number
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
@@ -281,7 +284,7 @@ describe('PatientAdmissionForm', () => {
       await waitFor(() => {
         expect(admitPatient).toHaveBeenCalledWith(
           expect.objectContaining({
-            patient_id: 'patient-1',
+            patient_id: 'senior-1',
             room_number: '401B',
           })
         );
@@ -300,7 +303,7 @@ describe('PatientAdmissionForm', () => {
 
       // Fill form
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'patient-1' } });
+      fireEvent.change(select, { target: { value: 'senior-1' } });
 
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
       await userEvent.type(roomInput, '401B');
@@ -330,7 +333,7 @@ describe('PatientAdmissionForm', () => {
 
       // Fill form
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'patient-1' } });
+      fireEvent.change(select, { target: { value: 'senior-1' } });
 
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
       await userEvent.type(roomInput, '401B');
@@ -359,7 +362,7 @@ describe('PatientAdmissionForm', () => {
 
       // Fill form
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'patient-1' } });
+      fireEvent.change(select, { target: { value: 'senior-1' } });
 
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
       await userEvent.type(roomInput, '401B');
@@ -387,7 +390,7 @@ describe('PatientAdmissionForm', () => {
 
       // Fill form
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'patient-1' } });
+      fireEvent.change(select, { target: { value: 'senior-1' } });
 
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
       await userEvent.type(roomInput, '401B');

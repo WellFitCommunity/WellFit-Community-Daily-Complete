@@ -45,11 +45,12 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
 
       const admittedPatientIds = (admittedData || []).map(a => a.patient_id);
 
-      // Then get all seniors
+      // Get seniors eligible for hospital admission (role_id: 4=senior)
+      // Note: role_id=19 (patient) are outpatient referrals, not hospital admissions
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, first_name, last_name')
-        .eq('role', 'senior');
+        .eq('role_id', 4);
 
       if (profilesError) throw profilesError;
 
