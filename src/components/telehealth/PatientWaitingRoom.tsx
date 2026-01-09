@@ -173,6 +173,7 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
       daily.off('participant-joined', handleParticipantJoined);
       daily.off('participant-left', handleParticipantLeft);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleCallEnded is stable callback prop
   }, [daily]);
 
   // Join on mount

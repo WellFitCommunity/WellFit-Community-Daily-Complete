@@ -228,6 +228,7 @@ export const WearableDashboard: React.FC = () => {
       // Reset status after 10 seconds
       setTimeout(() => setEmergencyStatus('idle'), 10000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- showToast is stable utility
   }, [userId, supabase]);
 
   const handleFallResponse = async (fallId: string) => {

@@ -237,6 +237,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userId, onStatsUpdate }) => {
 
   React.useEffect(() => {
     loadConsents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadConsents is stable, userId captures trigger
   }, [userId]);
 
   const loadConsents = async () => {
@@ -423,6 +424,7 @@ const ProvidersTab: React.FC<ProvidersTabProps> = ({ userId }) => {
 
   React.useEffect(() => {
     loadProviders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadProviders is stable, userId captures trigger
   }, [userId]);
 
   const loadProviders = async () => {

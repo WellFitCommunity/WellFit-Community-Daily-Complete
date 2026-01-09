@@ -262,6 +262,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
     } catch {
 
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sessionId accessed via callState
   }, [daily, callState.encounterId, onEndCall]);
 
   // Connect stethoscope audio

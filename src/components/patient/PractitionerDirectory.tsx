@@ -23,7 +23,6 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
 
   useEffect(() => {
     loadPractitioners();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, []);
 
   useEffect(() => {

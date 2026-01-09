@@ -204,6 +204,7 @@ export const GlobalSearchBar: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleResultSelect is stable callback
   }, [isOpen, results, selectedIndex]);
 
   // Focus input when opened
@@ -294,6 +295,7 @@ export const GlobalSearchBar: React.FC = () => {
         setIsSearching(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- results.length not needed for search logic
     [supabase]
   );
 

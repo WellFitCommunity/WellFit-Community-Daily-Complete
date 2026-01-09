@@ -26,6 +26,7 @@ const PractitionerProfile: React.FC<PractitionerProfileProps> = ({
 
   useEffect(() => {
     loadPractitionerData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, practitionerId captures trigger
   }, [practitionerId]);
 
   const loadPractitionerData = async () => {

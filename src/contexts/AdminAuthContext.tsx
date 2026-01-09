@@ -326,6 +326,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scheduleExpiryTimer is stable internal function
   }, [fetchAccessScopes]);
 
   const logoutAdmin = useCallback(() => {

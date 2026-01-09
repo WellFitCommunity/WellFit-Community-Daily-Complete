@@ -148,6 +148,7 @@ export const TelehealthLobby: React.FC<TelehealthLobbyProps> = ({
         audioContextRef.current.close();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Cleanup refs on unmount only
   }, []);
 
   const allDevicesWorking = deviceCheck.camera && deviceCheck.microphone && deviceCheck.speakers;

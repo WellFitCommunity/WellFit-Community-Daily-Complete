@@ -66,6 +66,7 @@ const SimpleFhirAiWidget: React.FC = () => {
     // Refresh every 15 minutes
     const interval = setInterval(loadHealthStatus, 900000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fhirService is stable singleton, user.id captures trigger
   }, [user?.id]);
 
   // Helper functions for senior-friendly messaging

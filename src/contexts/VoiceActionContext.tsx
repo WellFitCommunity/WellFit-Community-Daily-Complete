@@ -942,6 +942,7 @@ export const VoiceActionProvider: React.FC<{ children: ReactNode }> = ({ childre
     if (currentPath === targetRoute || currentPath.startsWith(targetRoute)) {
       executeSearch(currentAction);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- executeSearch is stable function
   }, [location.pathname, currentAction]);
 
   const executeSearch = async (action: VoiceAction) => {
@@ -1034,6 +1035,7 @@ export const VoiceActionProvider: React.FC<{ children: ReactNode }> = ({ childre
       setCurrentAction({ ...action, status: 'navigating' });
       navigate(targetRoute);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- executeSearch is stable function
   }, [location.pathname, navigate]);
 
   const selectResult = useCallback((result: SearchResult) => {
@@ -1054,6 +1056,7 @@ export const VoiceActionProvider: React.FC<{ children: ReactNode }> = ({ childre
     setTimeout(() => {
       clearAction();
     }, 300);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- clearAction is stable function
   }, [currentAction]);
 
   const clearAction = useCallback(() => {
