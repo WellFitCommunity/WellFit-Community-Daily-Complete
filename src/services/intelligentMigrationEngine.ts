@@ -7,11 +7,13 @@
  * - Pattern Recognition: Detects NPI, phone, dates, emails automatically
  * - Confidence Scoring: Ranks mapping suggestions by likelihood
  * - Institutional Memory: Remembers what worked for similar sources
+ * - AI-Assisted Hybrid Mapping: Falls back to Claude AI for complex/ambiguous mappings
  *
  * The more migrations you run, the smarter it gets.
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { auditLogger } from './auditLogger';
 
 // =============================================================================
 // TYPES
@@ -39,6 +41,15 @@ export type DataPattern =
   | 'CODE'          // Short codes (role codes, dept codes)
   | 'TEXT_SHORT'    // Short text < 50 chars
   | 'TEXT_LONG'     // Long text > 50 chars
+  // Clinical FHIR code systems
+  | 'SNOMED_CT'     // SNOMED CT clinical codes (6-18 digits)
+  | 'LOINC'         // LOINC observation codes (e.g., 12345-6)
+  | 'RXNORM'        // RxNorm medication codes
+  | 'ICD10'         // ICD-10 diagnosis codes
+  | 'CPT'           // CPT procedure codes
+  | 'NDC'           // National Drug Code
+  | 'FHIR_RESOURCE_TYPE' // FHIR resource type names
+  | 'FHIR_REFERENCE' // FHIR reference (e.g., Patient/123)
   | 'UNKNOWN';
 
 /** Column fingerprint - the "DNA" of a single column */
@@ -116,6 +127,33 @@ export interface MigrationResult {
   };
 }
 
+/** AI-assisted mapping configuration */
+export interface AIAssistConfig {
+  enabled: boolean;
+  confidenceThreshold: number;   // Below this, use AI (default: 0.6)
+  apiEndpoint: string;           // Claude API endpoint
+  maxTokens: number;             // Max tokens for AI response
+  model?: string;                // Claude model to use
+  cacheResponses: boolean;       // Cache AI suggestions
+}
+
+/** AI mapping suggestion from Claude */
+export interface AIMappingSuggestion {
+  sourceColumn: string;
+  suggestedTable: string;
+  suggestedColumn: string;
+  fhirResource?: string;
+  fhirPath?: string;
+  confidence: number;
+  reasoning: string;
+  transformation?: string;
+  alternativeMappings?: Array<{
+    table: string;
+    column: string;
+    confidence: number;
+  }>;
+}
+
 // =============================================================================
 // PATTERN DETECTION - The "Genetic Sequencer"
 // =============================================================================
@@ -150,6 +188,43 @@ export class PatternDetector {
     CODE: [/^[A-Z_]{2,20}$/],
     TEXT_SHORT: [/.{1,50}/],
     TEXT_LONG: [/.{51,}/],
+    // Clinical FHIR code system patterns
+    SNOMED_CT: [
+      /^\d{6,18}$/,  // SNOMED CT codes are 6-18 digit numbers
+      /^http:\/\/snomed\.info\/sct\|\d+$/  // FHIR URI format
+    ],
+    LOINC: [
+      /^\d{1,5}-\d$/,  // LOINC format: 12345-6
+      /^LP\d{5,7}-\d$/,  // LOINC panel codes
+      /^http:\/\/loinc\.org\|\d+-\d$/  // FHIR URI format
+    ],
+    RXNORM: [
+      /^\d{5,7}$/,  // RxNorm CUIs are typically 5-7 digits
+      /^http:\/\/www\.nlm\.nih\.gov\/research\/umls\/rxnorm\|\d+$/  // FHIR URI
+    ],
+    ICD10: [
+      /^[A-TV-Z]\d{2}(\.\d{1,4})?$/,  // ICD-10-CM: A00-T88, V00-Y99, Z00-Z99
+      /^[A-Z]\d{2}\.\d{1,2}$/,  // ICD-10 with decimal
+      /^http:\/\/hl7\.org\/fhir\/sid\/icd-10(-cm)?\|[A-Z]\d{2}/  // FHIR URI
+    ],
+    CPT: [
+      /^\d{5}$/,  // CPT codes are 5 digits
+      /^99\d{3}$/,  // E/M codes (99201-99499)
+      /^http:\/\/www\.ama-assn\.org\/go\/cpt\|\d{5}$/  // FHIR URI
+    ],
+    NDC: [
+      /^\d{4}-\d{4}-\d{2}$/,  // 4-4-2 format
+      /^\d{5}-\d{3}-\d{2}$/,  // 5-3-2 format
+      /^\d{5}-\d{4}-\d{1}$/,  // 5-4-1 format
+      /^\d{11}$/  // 11-digit format (no dashes)
+    ],
+    FHIR_RESOURCE_TYPE: [
+      /^(Patient|Observation|Condition|MedicationRequest|Procedure|AllergyIntolerance|Immunization|DiagnosticReport|Encounter|CarePlan|Practitioner|Organization|Location|Device|Specimen|ServiceRequest|ClinicalImpression|Goal|RiskAssessment|FamilyMemberHistory)$/
+    ],
+    FHIR_REFERENCE: [
+      /^(Patient|Practitioner|Organization|Location|Encounter|Observation|Condition|Procedure)\/[a-zA-Z0-9-]+$/,  // Resource/id
+      /^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i  // URN format
+    ],
     UNKNOWN: [/.*/]
   };
 
@@ -160,8 +235,12 @@ export class PatternDetector {
     const detected: DataPattern[] = [];
     const trimmed = value.trim();
 
-    // Check patterns in priority order
+    // Check patterns in priority order (clinical codes first for healthcare data)
     const priorityOrder: DataPattern[] = [
+      // Clinical FHIR codes (high priority for healthcare migration)
+      'LOINC', 'ICD10', 'CPT', 'NDC', 'SNOMED_CT', 'RXNORM',
+      'FHIR_REFERENCE', 'FHIR_RESOURCE_TYPE',
+      // Standard healthcare identifiers
       'NPI', 'SSN', 'EMAIL', 'PHONE', 'DATE_ISO', 'DATE',
       'STATE_CODE', 'ZIP', 'ID_UUID', 'CURRENCY', 'PERCENTAGE',
       'BOOLEAN', 'NAME_FULL', 'ID_NUMERIC', 'ID_ALPHANUMERIC',
@@ -327,6 +406,10 @@ export class DataDNAGenerator {
   private static createSignatureVector(columns: ColumnDNA[]): number[] {
     // Pattern frequency vector (one slot per pattern type)
     const patternTypes: DataPattern[] = [
+      // Clinical FHIR codes
+      'SNOMED_CT', 'LOINC', 'RXNORM', 'ICD10', 'CPT', 'NDC',
+      'FHIR_RESOURCE_TYPE', 'FHIR_REFERENCE',
+      // Standard patterns
       'NPI', 'SSN', 'PHONE', 'EMAIL', 'DATE', 'DATE_ISO',
       'NAME_FULL', 'NAME_FIRST', 'NAME_LAST', 'STATE_CODE', 'ZIP',
       'CURRENCY', 'PERCENTAGE', 'BOOLEAN', 'ID_NUMERIC', 'ID_UUID',
@@ -498,11 +581,329 @@ export class MappingIntelligence {
       zip: ['ZIP'],
       phone: ['PHONE'],
       cms_certification_number: ['ID_ALPHANUMERIC']
+    },
+
+    // =========================================================================
+    // FHIR R4 Clinical Resources - Maps to standard FHIR resource structures
+    // =========================================================================
+
+    fhir_patient: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      identifier_mrn: ['ID_ALPHANUMERIC', 'ID_NUMERIC'],
+      identifier_ssn: ['SSN'],
+      name_given: ['NAME_FIRST', 'TEXT_SHORT'],
+      name_family: ['NAME_LAST', 'TEXT_SHORT'],
+      name_prefix: ['CODE', 'TEXT_SHORT'],
+      name_suffix: ['CODE', 'TEXT_SHORT'],
+      birth_date: ['DATE', 'DATE_ISO'],
+      gender: ['CODE'],
+      deceased_boolean: ['BOOLEAN'],
+      deceased_datetime: ['DATE_ISO'],
+      address_line: ['TEXT_SHORT'],
+      address_city: ['TEXT_SHORT'],
+      address_state: ['STATE_CODE'],
+      address_postal_code: ['ZIP'],
+      address_country: ['CODE', 'TEXT_SHORT'],
+      telecom_phone: ['PHONE'],
+      telecom_email: ['EMAIL'],
+      marital_status: ['CODE'],
+      multiple_birth_boolean: ['BOOLEAN'],
+      communication_language: ['CODE'],
+      general_practitioner: ['FHIR_REFERENCE'],
+      managing_organization: ['FHIR_REFERENCE']
+    },
+
+    fhir_observation: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      status: ['CODE'],
+      category_code: ['LOINC', 'SNOMED_CT', 'CODE'],
+      code_loinc: ['LOINC'],
+      code_snomed: ['SNOMED_CT'],
+      code_display: ['TEXT_SHORT'],
+      subject: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      effective_datetime: ['DATE_ISO'],
+      effective_period_start: ['DATE_ISO'],
+      effective_period_end: ['DATE_ISO'],
+      issued: ['DATE_ISO'],
+      performer: ['FHIR_REFERENCE'],
+      value_quantity: ['CURRENCY', 'PERCENTAGE', 'ID_NUMERIC'],
+      value_quantity_unit: ['CODE', 'TEXT_SHORT'],
+      value_string: ['TEXT_SHORT', 'TEXT_LONG'],
+      value_boolean: ['BOOLEAN'],
+      value_codeable_concept: ['SNOMED_CT', 'LOINC', 'CODE'],
+      interpretation: ['CODE'],
+      note: ['TEXT_LONG'],
+      body_site: ['SNOMED_CT', 'CODE'],
+      method: ['SNOMED_CT', 'CODE'],
+      specimen: ['FHIR_REFERENCE'],
+      device: ['FHIR_REFERENCE'],
+      reference_range_low: ['ID_NUMERIC'],
+      reference_range_high: ['ID_NUMERIC']
+    },
+
+    fhir_condition: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      clinical_status: ['CODE'],
+      verification_status: ['CODE'],
+      category: ['CODE'],
+      severity: ['SNOMED_CT', 'CODE'],
+      code_icd10: ['ICD10'],
+      code_snomed: ['SNOMED_CT'],
+      code_display: ['TEXT_SHORT'],
+      body_site: ['SNOMED_CT', 'CODE'],
+      subject: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      onset_datetime: ['DATE_ISO'],
+      onset_age: ['ID_NUMERIC'],
+      onset_period_start: ['DATE_ISO'],
+      onset_period_end: ['DATE_ISO'],
+      onset_string: ['TEXT_SHORT'],
+      abatement_datetime: ['DATE_ISO'],
+      abatement_age: ['ID_NUMERIC'],
+      abatement_string: ['TEXT_SHORT'],
+      recorded_date: ['DATE_ISO'],
+      recorder: ['FHIR_REFERENCE'],
+      asserter: ['FHIR_REFERENCE'],
+      stage_summary: ['SNOMED_CT', 'CODE'],
+      evidence_code: ['SNOMED_CT', 'ICD10', 'CODE'],
+      note: ['TEXT_LONG']
+    },
+
+    fhir_medication_request: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      status: ['CODE'],
+      status_reason: ['CODE'],
+      intent: ['CODE'],
+      category: ['CODE'],
+      priority: ['CODE'],
+      do_not_perform: ['BOOLEAN'],
+      medication_rxnorm: ['RXNORM'],
+      medication_ndc: ['NDC'],
+      medication_display: ['TEXT_SHORT'],
+      subject: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      authored_on: ['DATE_ISO'],
+      requester: ['FHIR_REFERENCE'],
+      performer: ['FHIR_REFERENCE'],
+      reason_code: ['SNOMED_CT', 'ICD10', 'CODE'],
+      reason_reference: ['FHIR_REFERENCE'],
+      dosage_text: ['TEXT_SHORT', 'TEXT_LONG'],
+      dosage_timing: ['TEXT_SHORT'],
+      dosage_route: ['SNOMED_CT', 'CODE'],
+      dosage_method: ['SNOMED_CT', 'CODE'],
+      dosage_dose_quantity: ['ID_NUMERIC'],
+      dosage_dose_unit: ['CODE', 'TEXT_SHORT'],
+      dispense_quantity: ['ID_NUMERIC'],
+      dispense_unit: ['CODE', 'TEXT_SHORT'],
+      days_supply: ['ID_NUMERIC'],
+      number_of_refills: ['ID_NUMERIC'],
+      substitution_allowed: ['BOOLEAN'],
+      note: ['TEXT_LONG']
+    },
+
+    fhir_procedure: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      status: ['CODE'],
+      status_reason: ['CODE'],
+      category: ['SNOMED_CT', 'CODE'],
+      code_cpt: ['CPT'],
+      code_snomed: ['SNOMED_CT'],
+      code_display: ['TEXT_SHORT'],
+      subject: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      performed_datetime: ['DATE_ISO'],
+      performed_period_start: ['DATE_ISO'],
+      performed_period_end: ['DATE_ISO'],
+      recorder: ['FHIR_REFERENCE'],
+      asserter: ['FHIR_REFERENCE'],
+      performer: ['FHIR_REFERENCE'],
+      performer_role: ['CODE'],
+      location: ['FHIR_REFERENCE'],
+      reason_code: ['SNOMED_CT', 'ICD10', 'CODE'],
+      reason_reference: ['FHIR_REFERENCE'],
+      body_site: ['SNOMED_CT', 'CODE'],
+      outcome: ['SNOMED_CT', 'CODE'],
+      complication: ['SNOMED_CT', 'ICD10', 'CODE'],
+      follow_up: ['SNOMED_CT', 'CODE'],
+      note: ['TEXT_LONG'],
+      used_reference: ['FHIR_REFERENCE']
+    },
+
+    fhir_encounter: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      status: ['CODE'],
+      status_history: ['CODE'],
+      class_code: ['CODE'],
+      type: ['SNOMED_CT', 'CPT', 'CODE'],
+      service_type: ['SNOMED_CT', 'CODE'],
+      priority: ['SNOMED_CT', 'CODE'],
+      subject: ['FHIR_REFERENCE'],
+      participant: ['FHIR_REFERENCE'],
+      participant_type: ['CODE'],
+      period_start: ['DATE_ISO'],
+      period_end: ['DATE_ISO'],
+      length_value: ['ID_NUMERIC'],
+      length_unit: ['CODE'],
+      reason_code: ['SNOMED_CT', 'ICD10', 'CODE'],
+      reason_reference: ['FHIR_REFERENCE'],
+      diagnosis: ['FHIR_REFERENCE'],
+      diagnosis_use: ['CODE'],
+      diagnosis_rank: ['ID_NUMERIC'],
+      account: ['FHIR_REFERENCE'],
+      hospitalization_admit_source: ['CODE'],
+      hospitalization_discharge_disposition: ['CODE'],
+      location: ['FHIR_REFERENCE'],
+      service_provider: ['FHIR_REFERENCE'],
+      part_of: ['FHIR_REFERENCE']
+    },
+
+    fhir_diagnostic_report: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      status: ['CODE'],
+      category: ['LOINC', 'SNOMED_CT', 'CODE'],
+      code_loinc: ['LOINC'],
+      code_snomed: ['SNOMED_CT'],
+      code_display: ['TEXT_SHORT'],
+      subject: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      effective_datetime: ['DATE_ISO'],
+      effective_period_start: ['DATE_ISO'],
+      effective_period_end: ['DATE_ISO'],
+      issued: ['DATE_ISO'],
+      performer: ['FHIR_REFERENCE'],
+      results_interpreter: ['FHIR_REFERENCE'],
+      specimen: ['FHIR_REFERENCE'],
+      result: ['FHIR_REFERENCE'],
+      imaging_study: ['FHIR_REFERENCE'],
+      conclusion: ['TEXT_LONG'],
+      conclusion_code: ['SNOMED_CT', 'ICD10', 'CODE'],
+      presented_form: ['TEXT_SHORT']
+    },
+
+    fhir_allergy_intolerance: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      clinical_status: ['CODE'],
+      verification_status: ['CODE'],
+      type: ['CODE'],
+      category: ['CODE'],
+      criticality: ['CODE'],
+      code_rxnorm: ['RXNORM'],
+      code_snomed: ['SNOMED_CT'],
+      code_ndc: ['NDC'],
+      code_display: ['TEXT_SHORT'],
+      patient: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      onset_datetime: ['DATE_ISO'],
+      onset_age: ['ID_NUMERIC'],
+      onset_string: ['TEXT_SHORT'],
+      recorded_date: ['DATE_ISO'],
+      recorder: ['FHIR_REFERENCE'],
+      asserter: ['FHIR_REFERENCE'],
+      last_occurrence: ['DATE_ISO'],
+      note: ['TEXT_LONG'],
+      reaction_substance: ['RXNORM', 'SNOMED_CT', 'CODE'],
+      reaction_manifestation: ['SNOMED_CT', 'CODE'],
+      reaction_severity: ['CODE'],
+      reaction_onset: ['DATE_ISO'],
+      reaction_note: ['TEXT_LONG']
+    },
+
+    fhir_immunization: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      status: ['CODE'],
+      status_reason: ['CODE'],
+      vaccine_code_cvx: ['CODE', 'ID_NUMERIC'],
+      vaccine_code_snomed: ['SNOMED_CT'],
+      vaccine_code_display: ['TEXT_SHORT'],
+      patient: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      occurrence_datetime: ['DATE_ISO'],
+      occurrence_string: ['TEXT_SHORT'],
+      recorded: ['DATE_ISO'],
+      primary_source: ['BOOLEAN'],
+      report_origin: ['CODE'],
+      location: ['FHIR_REFERENCE'],
+      manufacturer: ['TEXT_SHORT', 'FHIR_REFERENCE'],
+      lot_number: ['ID_ALPHANUMERIC'],
+      expiration_date: ['DATE', 'DATE_ISO'],
+      site: ['SNOMED_CT', 'CODE'],
+      route: ['SNOMED_CT', 'CODE'],
+      dose_quantity: ['ID_NUMERIC'],
+      dose_unit: ['CODE'],
+      performer: ['FHIR_REFERENCE'],
+      performer_function: ['CODE'],
+      note: ['TEXT_LONG'],
+      reason_code: ['SNOMED_CT', 'CODE'],
+      is_subpotent: ['BOOLEAN'],
+      subpotent_reason: ['CODE']
+    },
+
+    fhir_care_plan: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      status: ['CODE'],
+      intent: ['CODE'],
+      category: ['SNOMED_CT', 'CODE'],
+      title: ['TEXT_SHORT'],
+      description: ['TEXT_LONG'],
+      subject: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      period_start: ['DATE_ISO'],
+      period_end: ['DATE_ISO'],
+      created: ['DATE_ISO'],
+      author: ['FHIR_REFERENCE'],
+      contributor: ['FHIR_REFERENCE'],
+      care_team: ['FHIR_REFERENCE'],
+      addresses: ['FHIR_REFERENCE'],
+      supporting_info: ['FHIR_REFERENCE'],
+      goal: ['FHIR_REFERENCE'],
+      activity_detail_status: ['CODE'],
+      activity_detail_code: ['SNOMED_CT', 'CPT', 'CODE'],
+      activity_detail_description: ['TEXT_LONG'],
+      activity_detail_scheduled: ['DATE_ISO', 'TEXT_SHORT'],
+      activity_detail_performer: ['FHIR_REFERENCE'],
+      note: ['TEXT_LONG']
+    },
+
+    fhir_risk_assessment: {
+      resource_id: ['ID_UUID', 'FHIR_REFERENCE'],
+      resource_type: ['FHIR_RESOURCE_TYPE'],
+      status: ['CODE'],
+      method: ['SNOMED_CT', 'CODE'],
+      code: ['SNOMED_CT', 'LOINC', 'CODE'],
+      subject: ['FHIR_REFERENCE'],
+      encounter: ['FHIR_REFERENCE'],
+      occurrence_datetime: ['DATE_ISO'],
+      occurrence_period_start: ['DATE_ISO'],
+      occurrence_period_end: ['DATE_ISO'],
+      condition: ['FHIR_REFERENCE'],
+      performer: ['FHIR_REFERENCE'],
+      reason_code: ['SNOMED_CT', 'ICD10', 'CODE'],
+      reason_reference: ['FHIR_REFERENCE'],
+      basis: ['FHIR_REFERENCE'],
+      prediction_outcome: ['CODE', 'SNOMED_CT'],
+      prediction_probability: ['PERCENTAGE', 'ID_NUMERIC'],
+      prediction_qualitative_risk: ['CODE'],
+      prediction_when: ['DATE_ISO', 'TEXT_SHORT'],
+      prediction_rationale: ['TEXT_LONG'],
+      mitigation: ['TEXT_LONG'],
+      note: ['TEXT_LONG']
     }
   };
 
   // Column name synonyms for matching
   private static synonyms: Record<string, string[]> = {
+    // Staff/Person identifiers
     first_name: ['fname', 'firstname', 'first', 'given_name', 'givenname', 'forename'],
     last_name: ['lname', 'lastname', 'last', 'surname', 'family_name', 'familyname'],
     middle_name: ['mname', 'middlename', 'middle', 'mi', 'middle_initial'],
@@ -531,15 +932,136 @@ export class MappingIntelligence {
     employment_status: ['status', 'emp_status', 'active_status', 'employee_status'],
     employment_type: ['emp_type', 'job_type', 'position_type', 'work_type'],
     gender: ['sex', 'gender_code'],
-    preferred_name: ['nickname', 'goes_by', 'known_as', 'alias']
+    preferred_name: ['nickname', 'goes_by', 'known_as', 'alias'],
+
+    // =========================================================================
+    // FHIR Clinical Synonyms - Common variations in healthcare data
+    // =========================================================================
+
+    // Patient identifiers
+    identifier_mrn: ['mrn', 'medical_record_number', 'med_rec_num', 'patient_id', 'patient_number', 'chart_number', 'account_number'],
+    identifier_ssn: ['ssn', 'social_security', 'social_security_number', 'ssn_last_4'],
+    name_given: ['first_name', 'given', 'fname', 'patient_first_name', 'pt_first'],
+    name_family: ['last_name', 'family', 'lname', 'patient_last_name', 'pt_last', 'surname'],
+    birth_date: ['dob', 'date_of_birth', 'birthdate', 'birthday', 'patient_dob', 'pt_dob'],
+    telecom_phone: ['phone', 'telephone', 'contact_phone', 'patient_phone', 'pt_phone'],
+    telecom_email: ['email', 'patient_email', 'contact_email', 'pt_email'],
+    address_line: ['address', 'street_address', 'patient_address', 'home_address', 'addr1'],
+    address_postal_code: ['zip', 'zipcode', 'zip_code', 'postal_code', 'patient_zip'],
+    address_city: ['city', 'patient_city', 'home_city'],
+    address_state: ['state', 'patient_state', 'home_state', 'state_code'],
+    marital_status: ['marital', 'marital_code', 'marriage_status'],
+
+    // Observation/Vital signs
+    code_loinc: ['loinc', 'loinc_code', 'loinc_num', 'observation_code', 'test_code', 'lab_code'],
+    code_snomed: ['snomed', 'snomed_code', 'snomed_ct', 'clinical_code', 'diagnosis_code'],
+    value_quantity: ['result', 'value', 'result_value', 'test_result', 'lab_value', 'numeric_result'],
+    value_quantity_unit: ['unit', 'units', 'uom', 'result_unit', 'measurement_unit'],
+    value_string: ['result_text', 'text_result', 'string_result', 'narrative_result'],
+    effective_datetime: ['observation_date', 'result_date', 'test_date', 'collected_date', 'specimen_date'],
+    reference_range_low: ['low_range', 'ref_low', 'normal_low', 'range_low'],
+    reference_range_high: ['high_range', 'ref_high', 'normal_high', 'range_high'],
+    interpretation: ['abnormal_flag', 'result_flag', 'interp', 'interpretation_code'],
+
+    // Condition/Diagnosis
+    code_icd10: ['icd10', 'icd_10', 'icd10_code', 'diagnosis_code', 'dx_code', 'icd_code'],
+    clinical_status: ['status', 'condition_status', 'dx_status', 'active_inactive'],
+    verification_status: ['verified', 'confirmed', 'verification', 'dx_verification'],
+    onset_datetime: ['onset', 'onset_date', 'diagnosis_date', 'dx_date', 'start_date', 'diagnosed_on'],
+    abatement_datetime: ['resolved', 'resolved_date', 'end_date', 'resolution_date'],
+    recorded_date: ['entry_date', 'documented_date', 'record_date', 'charted_date'],
+    severity: ['acuity', 'condition_severity', 'dx_severity', 'priority'],
+    body_site: ['location', 'anatomical_site', 'site', 'body_part', 'laterality'],
+
+    // Medication
+    medication_rxnorm: ['rxnorm', 'rxnorm_code', 'rx_code', 'drug_code', 'ndc_rxnorm'],
+    medication_ndc: ['ndc', 'ndc_code', 'national_drug_code', 'drug_ndc'],
+    medication_display: ['medication', 'drug_name', 'med_name', 'prescription', 'rx_name'],
+    dosage_text: ['dosage', 'dose', 'sig', 'instructions', 'dosing_instructions', 'directions'],
+    dosage_route: ['route', 'admin_route', 'route_of_administration', 'delivery_route'],
+    dosage_dose_quantity: ['dose_amount', 'quantity', 'dose_qty', 'amount'],
+    dosage_dose_unit: ['dose_unit', 'strength_unit', 'dosage_unit'],
+    dispense_quantity: ['quantity_dispensed', 'qty', 'amount_dispensed', 'fill_qty'],
+    number_of_refills: ['refills', 'refill_count', 'refills_remaining', 'refill_number'],
+    days_supply: ['supply_days', 'day_supply', 'days'],
+    authored_on: ['prescription_date', 'rx_date', 'order_date', 'written_date'],
+
+    // Procedure
+    code_cpt: ['cpt', 'cpt_code', 'procedure_code', 'service_code', 'billing_code'],
+    performed_datetime: ['procedure_date', 'service_date', 'performed_date', 'surgery_date'],
+    performer: ['provider', 'performing_provider', 'surgeon', 'physician', 'practitioner'],
+    outcome: ['result', 'procedure_outcome', 'surgery_outcome'],
+
+    // Encounter/Visit
+    class_code: ['encounter_type', 'visit_type', 'patient_class', 'service_type'],
+    period_start: ['admit_date', 'admission_date', 'visit_date', 'start_date', 'arrival_date'],
+    period_end: ['discharge_date', 'end_date', 'departure_date', 'checkout_date'],
+    hospitalization_admit_source: ['admit_source', 'referral_source', 'admission_source'],
+    hospitalization_discharge_disposition: ['discharge_disposition', 'discharge_status', 'discharge_type'],
+    reason_code: ['chief_complaint', 'reason_for_visit', 'presenting_problem', 'visit_reason'],
+    service_provider: ['facility', 'hospital', 'clinic', 'organization'],
+
+    // Diagnostic Report
+    conclusion: ['impression', 'findings', 'result_summary', 'report_conclusion', 'interpretation'],
+    conclusion_code: ['finding_code', 'impression_code', 'result_code'],
+    results_interpreter: ['radiologist', 'pathologist', 'interpreting_physician', 'reading_physician'],
+
+    // Allergy
+    criticality: ['severity', 'allergy_severity', 'reaction_severity', 'risk_level'],
+    code_rxnorm: ['allergen_rxnorm', 'substance_code', 'drug_allergen'],
+    reaction_manifestation: ['reaction', 'symptom', 'adverse_reaction', 'reaction_type'],
+    last_occurrence: ['last_reaction', 'most_recent_reaction', 'last_episode'],
+
+    // Immunization/Vaccine
+    vaccine_code_cvx: ['cvx', 'cvx_code', 'vaccine_code', 'immunization_code'],
+    lot_number: ['lot', 'batch_number', 'lot_num', 'vaccine_lot'],
+    site: ['injection_site', 'admin_site', 'body_site'],
+    route: ['admin_route', 'administration_route', 'injection_route'],
+
+    // Care Plan
+    title: ['plan_name', 'care_plan_name', 'plan_title'],
+    description: ['plan_description', 'care_plan_description', 'summary'],
+    goal: ['treatment_goal', 'care_goal', 'objective'],
+    activity_detail_code: ['intervention', 'activity_code', 'treatment_code'],
+
+    // Risk Assessment
+    prediction_probability: ['risk_score', 'probability', 'likelihood', 'risk_percentage', 'risk_level'],
+    prediction_outcome: ['predicted_outcome', 'risk_outcome', 'projected_outcome'],
+    mitigation: ['intervention', 'prevention', 'risk_mitigation', 'action_plan'],
+
+    // Common FHIR references
+    subject: ['patient', 'patient_reference', 'subject_reference', 'pt_ref'],
+    encounter: ['visit', 'encounter_reference', 'visit_reference', 'admission'],
+    requester: ['ordering_provider', 'prescriber', 'ordered_by', 'requesting_physician'],
+    recorder: ['documenter', 'entered_by', 'documented_by', 'charted_by'],
+    asserter: ['reported_by', 'informant', 'source', 'information_source']
   };
 
-  constructor(supabase: SupabaseClient, organizationId?: string) {
+  // AI-assisted mapping configuration
+  private aiConfig: AIAssistConfig;
+  private aiCache: Map<string, AIMappingSuggestion> = new Map();
+
+  constructor(supabase: SupabaseClient, organizationId?: string, aiConfig?: Partial<AIAssistConfig>) {
     this.supabase = supabase;
     this.organizationId = organizationId;
+
+    // Default AI configuration - hybrid mode enabled
+    this.aiConfig = {
+      enabled: aiConfig?.enabled ?? true,
+      confidenceThreshold: aiConfig?.confidenceThreshold ?? 0.6,
+      apiEndpoint: aiConfig?.apiEndpoint ?? '/api/anthropic-chats',
+      maxTokens: aiConfig?.maxTokens ?? 2000,
+      model: aiConfig?.model,
+      cacheResponses: aiConfig?.cacheResponses ?? true
+    };
   }
 
-  /** Generate mapping suggestions for a source DNA */
+  /** Update AI configuration */
+  setAIConfig(config: Partial<AIAssistConfig>): void {
+    this.aiConfig = { ...this.aiConfig, ...config };
+  }
+
+  /** Generate mapping suggestions for a source DNA (hybrid: pattern + AI) */
   async suggestMappings(sourceDNA: SourceDNA): Promise<MappingSuggestion[]> {
     const suggestions: MappingSuggestion[] = [];
 
@@ -615,10 +1137,38 @@ export class MappingIntelligence {
     // Sort by score
     candidates.sort((a, b) => b.score - a.score);
 
-    // Build suggestion
+    // Build suggestion from pattern matching
     const best = candidates[0];
     const alternatives = candidates.slice(1, 4);
+    const patternConfidence = best?.score || 0;
 
+    // HYBRID: If pattern confidence is below threshold, use AI assistance
+    if (this.aiConfig.enabled && patternConfidence < this.aiConfig.confidenceThreshold) {
+      const aiSuggestion = await this.getAIMappingSuggestion(column, sourceDNA);
+
+      if (aiSuggestion && aiSuggestion.confidence > patternConfidence) {
+        // AI suggestion is better - use it
+        return {
+          sourceColumn: column.originalName,
+          targetTable: aiSuggestion.suggestedTable,
+          targetColumn: aiSuggestion.suggestedColumn,
+          confidence: aiSuggestion.confidence,
+          reasons: [`AI-assisted mapping: ${aiSuggestion.reasoning}`],
+          transformRequired: aiSuggestion.transformation || this.determineTransform(column, aiSuggestion.suggestedColumn),
+          alternativeMappings: aiSuggestion.alternativeMappings?.map(a => ({
+            targetTable: a.table,
+            targetColumn: a.column,
+            confidence: a.confidence
+          })) || alternatives.map(a => ({
+            targetTable: a.table,
+            targetColumn: a.column,
+            confidence: a.score
+          }))
+        };
+      }
+    }
+
+    // Use pattern-based suggestion (or fallback if AI also low confidence)
     return {
       sourceColumn: column.originalName,
       targetTable: best?.table || 'UNMAPPED',
@@ -632,6 +1182,231 @@ export class MappingIntelligence {
         confidence: a.score
       }))
     };
+  }
+
+  // ===========================================================================
+  // AI-ASSISTED MAPPING - Claude Integration for Complex Cases
+  // ===========================================================================
+
+  /** Get AI-assisted mapping suggestion for a column */
+  private async getAIMappingSuggestion(
+    column: ColumnDNA,
+    sourceDNA: SourceDNA
+  ): Promise<AIMappingSuggestion | null> {
+    // Check cache first
+    const cacheKey = `${sourceDNA.sourceSystem || 'unknown'}_${column.normalizedName}_${column.primaryPattern}`;
+    if (this.aiConfig.cacheResponses && this.aiCache.has(cacheKey)) {
+      return this.aiCache.get(cacheKey)!;
+    }
+
+    try {
+      await auditLogger.info('DNA_MAPPER_AI_ASSIST_START', {
+        column: column.originalName,
+        pattern: column.primaryPattern,
+        sourceSystem: sourceDNA.sourceSystem
+      });
+
+      const response = await fetch(this.aiConfig.apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: this.getAISystemPrompt()
+            },
+            {
+              role: 'user',
+              content: this.buildAIPrompt(column, sourceDNA)
+            }
+          ],
+          max_tokens: this.aiConfig.maxTokens
+        })
+      });
+
+      if (!response.ok) {
+        await auditLogger.warn('DNA_MAPPER_AI_ASSIST_FAILED', {
+          column: column.originalName,
+          status: response.status,
+          error: response.statusText
+        });
+        return null;
+      }
+
+      const data = await response.json() as { content?: Array<{ text?: string }> };
+
+      if (!data.content || !data.content[0]?.text) {
+        return null;
+      }
+
+      // Parse AI response
+      const suggestion = this.parseAIResponse(data.content[0].text, column.originalName);
+
+      if (suggestion) {
+        // Cache successful response
+        if (this.aiConfig.cacheResponses) {
+          this.aiCache.set(cacheKey, suggestion);
+        }
+
+        await auditLogger.info('DNA_MAPPER_AI_ASSIST_SUCCESS', {
+          column: column.originalName,
+          suggestedTable: suggestion.suggestedTable,
+          suggestedColumn: suggestion.suggestedColumn,
+          confidence: suggestion.confidence
+        });
+      }
+
+      return suggestion;
+    } catch (err: unknown) {
+      await auditLogger.error('DNA_MAPPER_AI_ASSIST_ERROR',
+        err instanceof Error ? err : new Error(String(err)),
+        { column: column.originalName }
+      );
+      return null;
+    }
+  }
+
+  /** System prompt for AI mapping assistant */
+  private getAISystemPrompt(): string {
+    // Get list of available target tables and their columns
+    const availableTables = Object.entries(MappingIntelligence.targetSchema)
+      .map(([table, cols]) => `${table}: ${Object.keys(cols).join(', ')}`)
+      .join('\n');
+
+    return `You are an expert healthcare data migration specialist with deep knowledge of FHIR R4, HL7, and clinical data standards.
+
+Your task is to analyze a source column and suggest the best target table and column mapping.
+
+AVAILABLE TARGET TABLES AND COLUMNS:
+${availableTables}
+
+CLINICAL CODE SYSTEMS TO RECOGNIZE:
+- LOINC: Lab/observation codes (format: 12345-6)
+- SNOMED CT: Clinical codes (6-18 digit numbers)
+- ICD-10: Diagnosis codes (format: A00.1)
+- CPT: Procedure codes (5 digits)
+- RxNorm: Medication codes (5-7 digits)
+- NDC: Drug codes (4-4-2, 5-3-2, or 5-4-1 format)
+- NPI: Provider identifiers (10 digits with Luhn check)
+
+RESPOND WITH JSON ONLY - NO MARKDOWN:
+{
+  "suggestedTable": "table_name",
+  "suggestedColumn": "column_name",
+  "fhirResource": "FHIR resource if applicable (Patient, Observation, etc.)",
+  "fhirPath": "FHIR path if applicable",
+  "confidence": 0.85,
+  "reasoning": "Brief explanation of why this mapping is suggested",
+  "transformation": "Transformation needed, if any (e.g., NORMALIZE_PHONE, CONVERT_DATE_TO_ISO)",
+  "alternativeMappings": [
+    {"table": "alt_table", "column": "alt_column", "confidence": 0.6}
+  ]
+}`;
+  }
+
+  /** Build the AI prompt for a specific column */
+  private buildAIPrompt(column: ColumnDNA, sourceDNA: SourceDNA): string {
+    return `Analyze this source column and suggest the best mapping:
+
+SOURCE COLUMN:
+- Name: ${column.originalName}
+- Normalized Name: ${column.normalizedName}
+- Detected Pattern: ${column.primaryPattern}
+- All Detected Patterns: ${column.detectedPatterns.join(', ')}
+- Inferred Data Type: ${column.dataTypeInferred}
+- Average Length: ${Math.round(column.avgLength)}
+- Sample Values: ${column.sampleValues.slice(0, 3).map(v => `"${v}"`).join(', ')}
+- Unique %: ${Math.round(column.uniquePercentage * 100)}%
+- Null %: ${Math.round(column.nullPercentage * 100)}%
+
+SOURCE CONTEXT:
+- Source System: ${sourceDNA.sourceSystem || 'Unknown'}
+- Source Type: ${sourceDNA.sourceType}
+- Total Columns: ${sourceDNA.columnCount}
+
+Provide your mapping suggestion as JSON.`;
+  }
+
+  /** Parse AI response into structured suggestion */
+  private parseAIResponse(responseText: string, sourceColumn: string): AIMappingSuggestion | null {
+    try {
+      // Clean up response (remove markdown if present)
+      const jsonText = responseText
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+
+      const parsed = JSON.parse(jsonText) as {
+        suggestedTable?: string;
+        suggestedColumn?: string;
+        fhirResource?: string;
+        fhirPath?: string;
+        confidence?: number;
+        reasoning?: string;
+        transformation?: string;
+        alternativeMappings?: Array<{ table: string; column: string; confidence: number }>;
+      };
+
+      // Validate required fields
+      if (!parsed.suggestedTable || !parsed.suggestedColumn) {
+        return null;
+      }
+
+      // Validate suggested table exists
+      if (!MappingIntelligence.targetSchema[parsed.suggestedTable]) {
+        // Try to find a close match
+        const availableTables = Object.keys(MappingIntelligence.targetSchema);
+        const matchingTable = availableTables.find(t =>
+          t.toLowerCase().includes(parsed.suggestedTable?.toLowerCase() || '') ||
+          (parsed.suggestedTable?.toLowerCase() || '').includes(t.toLowerCase())
+        );
+        if (matchingTable) {
+          parsed.suggestedTable = matchingTable;
+        } else {
+          return null;
+        }
+      }
+
+      // Validate suggested column exists in table
+      const tableSchema = MappingIntelligence.targetSchema[parsed.suggestedTable];
+      if (!tableSchema[parsed.suggestedColumn]) {
+        // Try to find a close match
+        const availableColumns = Object.keys(tableSchema);
+        const matchingColumn = availableColumns.find(c =>
+          c.toLowerCase().includes(parsed.suggestedColumn?.toLowerCase() || '') ||
+          (parsed.suggestedColumn?.toLowerCase() || '').includes(c.toLowerCase())
+        );
+        if (matchingColumn) {
+          parsed.suggestedColumn = matchingColumn;
+        }
+        // Allow unmapped columns for FHIR resources
+      }
+
+      return {
+        sourceColumn,
+        suggestedTable: parsed.suggestedTable,
+        suggestedColumn: parsed.suggestedColumn,
+        fhirResource: parsed.fhirResource,
+        fhirPath: parsed.fhirPath,
+        confidence: Math.min(parsed.confidence || 0.7, 0.95), // Cap AI confidence at 95%
+        reasoning: parsed.reasoning || 'AI-suggested mapping',
+        transformation: parsed.transformation,
+        alternativeMappings: parsed.alternativeMappings?.filter(alt =>
+          MappingIntelligence.targetSchema[alt.table]
+        )
+      };
+    } catch (err: unknown) {
+      auditLogger.warn('DNA_MAPPER_AI_PARSE_FAILED', {
+        error: err instanceof Error ? err.message : String(err),
+        sourceColumn
+      });
+      return null;
+    }
+  }
+
+  /** Clear AI suggestion cache */
+  clearAICache(): void {
+    this.aiCache.clear();
   }
 
   /** Find previously learned mapping */
@@ -854,10 +1629,24 @@ export class IntelligentMigrationService {
   private organizationId: string;
   private intelligence: MappingIntelligence;
 
-  constructor(supabase: SupabaseClient, organizationId: string) {
+  constructor(
+    supabase: SupabaseClient,
+    organizationId: string,
+    aiConfig?: Partial<AIAssistConfig>
+  ) {
     this.supabase = supabase;
     this.organizationId = organizationId;
-    this.intelligence = new MappingIntelligence(supabase, organizationId);
+    this.intelligence = new MappingIntelligence(supabase, organizationId, aiConfig);
+  }
+
+  /** Update AI configuration for hybrid mapping */
+  setAIConfig(config: Partial<AIAssistConfig>): void {
+    this.intelligence.setAIConfig(config);
+  }
+
+  /** Clear AI suggestion cache */
+  clearAICache(): void {
+    this.intelligence.clearAICache();
   }
 
   /**
