@@ -22,7 +22,11 @@ interface State {
   error: Error | null;
 }
 
-class InnerErrorBoundary extends React.Component<Props, State> {
+/**
+ * RootErrorBoundary - Use this when wrapping OUTSIDE the Router context
+ * Does not use any React Router hooks.
+ */
+export class RootErrorBoundary extends React.Component<Props, State> {
   state: State = { hasError: false, error: null };
 
   static getDerivedStateFromError(error: Error): State {
@@ -137,5 +141,5 @@ export default function ErrorBoundary(props: Omit<Props, 'resetKeys'> & { resetK
     [routeKey, resetKeysStr]
   );
 
-  return <InnerErrorBoundary {...props} resetKeys={combinedKeys} />;
+  return <RootErrorBoundary {...props} resetKeys={combinedKeys} />;
 }

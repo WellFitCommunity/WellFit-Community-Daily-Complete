@@ -17,7 +17,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Error boundary & Providers
-import ErrorBoundary from './ErrorBoundary';
+import { RootErrorBoundary } from './ErrorBoundary';
 import { register, promptUpdate, UPDATE_EVENT_NAME } from './serviceWorkerRegistration';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
@@ -131,7 +131,7 @@ root.render(
         <AdminAuthProvider>
           <DemoModeBridge>
             <QueryClientProvider client={queryClient}>
-              <ErrorBoundary>
+              <RootErrorBoundary>
                 <RouterProvider router={router} />
                 {/* Global toast container */}
                 <ToastContainer
@@ -144,7 +144,7 @@ root.render(
                   limit={2}
                   autoClose={4000}
                 />
-              </ErrorBoundary>
+              </RootErrorBoundary>
               {/* React Query DevTools - Only visible in development */}
               {import.meta.env.MODE === 'development' && (
                 <ReactQueryDevtools initialIsOpen={false} />
