@@ -27,8 +27,8 @@ describe('EmailService', () => {
     });
 
     it('should support optional name field', () => {
-      const recipientWithName = { email: 'test@example.com', name: 'Test User' };
-      const recipientWithoutName = { email: 'test@example.com' };
+      const recipientWithName: { email: string; name?: string } = { email: 'test@example.com', name: 'Test User' };
+      const recipientWithoutName: { email: string; name?: string } = { email: 'test@example.com' };
 
       expect(recipientWithName.name).toBe('Test User');
       expect(recipientWithoutName.name).toBeUndefined();
