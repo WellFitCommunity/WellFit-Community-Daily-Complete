@@ -31,6 +31,11 @@ CREATE INDEX IF NOT EXISTS idx_scribe_session_feedback_created
 -- Enable RLS
 ALTER TABLE public.scribe_session_feedback ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies to allow re-running
+DROP POLICY IF EXISTS scribe_session_feedback_insert_own ON public.scribe_session_feedback;
+DROP POLICY IF EXISTS scribe_session_feedback_select_own ON public.scribe_session_feedback;
+DROP POLICY IF EXISTS scribe_session_feedback_admin_select ON public.scribe_session_feedback;
+
 -- RLS Policy: Providers can insert their own feedback
 CREATE POLICY scribe_session_feedback_insert_own ON public.scribe_session_feedback
     FOR INSERT

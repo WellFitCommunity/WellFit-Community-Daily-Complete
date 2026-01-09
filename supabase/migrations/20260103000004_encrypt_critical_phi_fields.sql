@@ -245,6 +245,17 @@ CREATE TRIGGER encrypt_fhir_practitioners_dob
 -- PART 4: Create Decrypted Views for Authorized Access
 -- =============================================================================
 
+-- Drop existing views first to allow column changes
+DROP VIEW IF EXISTS billing_providers_decrypted CASCADE;
+DROP VIEW IF EXISTS facilities_decrypted CASCADE;
+DROP VIEW IF EXISTS hc_organization_decrypted CASCADE;
+DROP VIEW IF EXISTS hc_provider_group_decrypted CASCADE;
+DROP VIEW IF EXISTS profiles_decrypted CASCADE;
+DROP VIEW IF EXISTS senior_demographics_decrypted CASCADE;
+DROP VIEW IF EXISTS patient_referrals_decrypted CASCADE;
+DROP VIEW IF EXISTS hc_staff_decrypted CASCADE;
+DROP VIEW IF EXISTS fhir_practitioners_decrypted CASCADE;
+
 -- 4.1 billing_providers_decrypted view
 CREATE OR REPLACE VIEW billing_providers_decrypted AS
 SELECT
