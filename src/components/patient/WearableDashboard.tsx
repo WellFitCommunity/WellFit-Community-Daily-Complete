@@ -30,6 +30,7 @@ import type {
 } from '../../types/neuroSuite';
 import { auditLogger } from '../../services/auditLogger';
 import { useToast } from '../../hooks/useToast';
+import { WearableConnectCard } from '../wearables/WearableConnectCard';
 
 export const WearableDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -522,68 +523,36 @@ export const WearableDashboard: React.FC = () => {
             )}
           </div>
 
-          {/* Add New Device */}
-          <div className="bg-blue-50 rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold mb-4">Connect New Device</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <button
-                onClick={() => handleConnectDevice('apple_watch')}
-                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
-              >
-                <div className="text-4xl mb-2">⌚</div>
-                <div className="font-bold">Apple Watch</div>
-                <div className="text-sm text-gray-600">Fall detection, vitals, ECG</div>
-              </button>
-              <button
-                onClick={() => handleConnectDevice('fitbit')}
-                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
-              >
-                <div className="text-4xl mb-2">📊</div>
-                <div className="font-bold">Fitbit</div>
-                <div className="text-sm text-gray-600">Activity, sleep, heart rate</div>
-              </button>
-              <button
-                onClick={() => handleConnectDevice('garmin')}
-                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
-              >
-                <div className="text-4xl mb-2">🏃</div>
-                <div className="font-bold">Garmin</div>
-                <div className="text-sm text-gray-600">Activity, GPS, vitals</div>
-              </button>
-              <button
-                onClick={() => handleConnectDevice('samsung_health')}
-                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
-              >
-                <div className="text-4xl mb-2">📱</div>
-                <div className="font-bold">Samsung Health</div>
-                <div className="text-sm text-gray-600">Galaxy Watch, BP, ECG</div>
-              </button>
-              <button
-                onClick={() => handleConnectDevice('withings')}
-                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
-              >
-                <div className="text-4xl mb-2">⚖️</div>
-                <div className="font-bold">Withings</div>
-                <div className="text-sm text-gray-600">Scales, BP, sleep tracking</div>
-              </button>
-              <button
-                onClick={() => handleConnectDevice('amazfit')}
-                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
-              >
-                <div className="text-4xl mb-2">⏱️</div>
-                <div className="font-bold">Amazfit</div>
-                <div className="text-sm text-gray-600">Activity, heart rate, SpO2</div>
-              </button>
-              <button
-                onClick={() => handleConnectDevice('ihealth')}
-                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
-              >
-                <div className="text-4xl mb-2">🩺</div>
-                <div className="font-bold">iHealth</div>
-                <div className="text-sm text-gray-600">BP monitors, scales, glucose</div>
-              </button>
-            </div>
-          </div>
+          {/* Connect New Device - uses registry-based WearableConnectCard */}
+          <WearableConnectCard
+            userId={userId}
+            onConnect={(adapterId) => {
+              // Map adapter ID to device type for the mutation
+              const deviceTypeMap: Record<string, WearableDeviceType> = {
+                'apple-healthkit': 'apple_watch',
+                'fitbit': 'fitbit',
+                'garmin': 'garmin',
+                'samsung-health': 'samsung_health',
+                'withings': 'withings',
+                'amazfit': 'amazfit',
+                'ihealth': 'ihealth',
+              };
+              const deviceType = deviceTypeMap[adapterId];
+              if (deviceType) {
+                handleConnectDevice(deviceType);
+              }
+            }}
+            onDisconnect={(adapterId) => {
+              // Find connection by adapter ID and disconnect
+              const connection = connectedDevices.find(d =>
+                d.device_type.replace('_', '-') === adapterId ||
+                d.device_type === adapterId.replace('-', '_')
+              );
+              if (connection) {
+                handleDisconnectDevice(connection.id);
+              }
+            }}
+          />
         </div>
       )}
     </div>
