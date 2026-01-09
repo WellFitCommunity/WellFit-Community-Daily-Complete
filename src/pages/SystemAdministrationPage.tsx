@@ -38,9 +38,7 @@ const TenantAIUsageDashboard = React.lazy(() => import('../components/admin/Tena
 const PerformanceMonitoringDashboard = React.lazy(() => import('../components/admin/PerformanceMonitoringDashboard'));
 const CacheMonitoringDashboard = React.lazy(() => import('../components/admin/CacheMonitoringDashboard'));
 const ComplianceDashboard = React.lazy(() => import('../components/admin/ComplianceDashboard'));
-const SOC2SecurityDashboard = React.lazy(() =>
-  import('../components/admin/SOC2SecurityDashboard').then(m => ({ default: m.SOC2SecurityDashboard }))
-);
+const SOC2ComplianceDashboard = React.lazy(() => import('../components/admin/SOC2ComplianceDashboard'));
 const ClaudeBillingMonitoringDashboard = React.lazy(() => import('../components/admin/ClaudeBillingMonitoringDashboard'));
 
 type SystemTabKey = 'overview' | 'users' | 'sessions' | 'database' | 'config' | 'security' | 'ai-usage' | 'performance' | 'compliance';
@@ -309,7 +307,7 @@ const SystemAdministrationPage: React.FC = () => {
                 defaultOpen={true}
               >
                 <Suspense fallback={<LoadingFallback />}>
-                  <SOC2SecurityDashboard />
+                  <SOC2ComplianceDashboard />
                 </Suspense>
               </CollapsibleSection>
             </div>

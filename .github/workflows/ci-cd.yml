@@ -125,9 +125,7 @@ jobs:
 
       - name: Run ${{ matrix.name }} tests
         id: unit-tests
-        run: |
-         npm test:unit:${{ matrix.shard }}
- 
+        run: npm run test:unit:${{ matrix.shard }}
         env:
           CI: true
           NODE_OPTIONS: "--max-old-space-size=4096"
@@ -168,16 +166,17 @@ jobs:
         run: |
           touch .env
           # Use secrets if available, otherwise use placeholders
-          if [ -n "${{ secrets.REACT_APP_SUPABASE_URL }}" ]; then
-            echo "REACT_APP_SUPABASE_URL=${{ secrets.REACT_APP_SUPABASE_URL }}" >> .env
+          # Note: Vite uses VITE_ prefix, not REACT_APP_
+          if [ -n "${{ secrets.VITE_SUPABASE_URL }}" ]; then
+            echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env
           else
-            echo "REACT_APP_SUPABASE_URL=https://placeholder.supabase.co" >> .env
+            echo "VITE_SUPABASE_URL=https://placeholder.supabase.co" >> .env
           fi
 
-          if [ -n "${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}" ]; then
-            echo "REACT_APP_SUPABASE_ANON_KEY=${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}" >> .env
+          if [ -n "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
+            echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
           else
-            echo "REACT_APP_SUPABASE_ANON_KEY=placeholder-key" >> .env
+            echo "VITE_SUPABASE_ANON_KEY=placeholder-key" >> .env
           fi
 
       - name: Build application
