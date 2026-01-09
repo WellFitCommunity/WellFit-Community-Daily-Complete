@@ -51,7 +51,7 @@ describe('AppleHealthKitAdapter', () => {
   beforeEach(() => {
     adapter = new AppleHealthKitAdapter();
     mockConfig = {
-      authType: 'api_key', // Apple adapter doesn't use OAuth from web
+      authType: 'api-key', // Apple adapter doesn't use OAuth from web
       userId: 'test-user-123',
     } as WearableAdapterConfig & { userId: string };
     vi.clearAllMocks();
@@ -92,7 +92,7 @@ describe('AppleHealthKitAdapter', () => {
     });
 
     it('should throw error when userId is missing', async () => {
-      const invalidConfig = { authType: 'api_key' } as WearableAdapterConfig;
+      const invalidConfig = { authType: 'api-key' } as WearableAdapterConfig;
       await expect(adapter.connect(invalidConfig)).rejects.toThrow(
         'Apple HealthKit adapter requires userId to read synced data'
       );
