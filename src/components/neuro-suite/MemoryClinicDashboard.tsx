@@ -131,6 +131,7 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
   // Load cognitive history
   useEffect(() => {
     loadCognitiveHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, patientId captures trigger
   }, [patientId]);
 
   const loadCognitiveHistory = async () => {

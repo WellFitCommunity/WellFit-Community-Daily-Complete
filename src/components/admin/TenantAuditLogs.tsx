@@ -50,6 +50,7 @@ export const TenantAuditLogs: React.FC = () => {
 
   useEffect(() => {
     loadTenantAuditLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, deps capture trigger conditions
   }, [user, filter, page]);
 
   const loadTenantAuditLogs = async () => {

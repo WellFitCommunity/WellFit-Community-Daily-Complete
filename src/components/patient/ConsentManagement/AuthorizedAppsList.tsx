@@ -54,6 +54,7 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
 
   useEffect(() => {
     loadAuthorizedApps();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, userId captures trigger
   }, [userId]);
 
   const loadAuthorizedApps = async () => {

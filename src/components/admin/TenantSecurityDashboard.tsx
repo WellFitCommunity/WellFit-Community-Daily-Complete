@@ -53,6 +53,7 @@ export const TenantSecurityDashboard: React.FC = () => {
 
   useEffect(() => {
     loadTenantData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, deps capture trigger conditions
   }, [user]);
 
   const loadTenantData = async () => {

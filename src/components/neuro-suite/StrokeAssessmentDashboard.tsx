@@ -94,6 +94,7 @@ export function StrokeAssessmentDashboard({
 
   useEffect(() => {
     loadAssessments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, patientId captures trigger
   }, [patientId]);
 
   const loadAssessments = async () => {

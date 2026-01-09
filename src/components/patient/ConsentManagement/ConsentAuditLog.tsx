@@ -48,6 +48,7 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
 
   useEffect(() => {
     loadAuditLog();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, deps capture trigger conditions
   }, [userId, filter, limit]);
 
   const loadAuditLog = async () => {

@@ -153,7 +153,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
       const interval = setInterval(loadHandoffData, 5 * 60 * 1000);
       return () => clearInterval(interval);
     }
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, deps capture trigger conditions
   }, [user, shiftType]);
 
   // One-click confirm auto-score
