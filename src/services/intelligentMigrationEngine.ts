@@ -1196,7 +1196,10 @@ export class MappingIntelligence {
     // Check cache first
     const cacheKey = `${sourceDNA.sourceSystem || 'unknown'}_${column.normalizedName}_${column.primaryPattern}`;
     if (this.aiConfig.cacheResponses && this.aiCache.has(cacheKey)) {
-      return this.aiCache.get(cacheKey)!;
+      const cached = this.aiCache.get(cacheKey);
+      if (cached !== undefined) {
+        return cached;
+      }
     }
 
     try {
