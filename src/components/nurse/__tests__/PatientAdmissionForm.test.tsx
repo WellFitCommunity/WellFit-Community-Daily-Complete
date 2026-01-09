@@ -13,21 +13,37 @@ import { PatientAdmissionForm } from '../PatientAdmissionForm';
 // Mock Supabase - must match the actual query chain in the component
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
-    from: vi.fn(() => ({
+    from: vi.fn((table: string) => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          not: vi.fn(() =>
-            Promise.resolve({
-              data: [
-                { user_id: 'patient-1', first_name: 'John', last_name: 'Doe' },
-                { user_id: 'patient-2', first_name: 'Jane', last_name: 'Smith' },
-              ],
+        eq: vi.fn(() => {
+          // patient_admissions query returns admitted patient IDs
+          if (table === 'patient_admissions') {
+            return Promise.resolve({
+              data: [{ patient_id: 'patient-3' }], // patient-3 is already admitted
               error: null,
-            })
-          ),
-        })),
+            });
+          }
+          // profiles query returns all seniors
+          return Promise.resolve({
+            data: [
+              { user_id: 'patient-1', first_name: 'John', last_name: 'Doe' },
+              { user_id: 'patient-2', first_name: 'Jane', last_name: 'Smith' },
+              { user_id: 'patient-3', first_name: 'Bob', last_name: 'Wilson' }, // Already admitted
+            ],
+            error: null,
+          });
+        }),
       })),
     })),
+  },
+}));
+
+// Mock auditLogger
+vi.mock('../../../services/auditLogger', () => ({
+  auditLogger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 

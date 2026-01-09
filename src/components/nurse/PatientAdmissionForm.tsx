@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { admitPatient, type PatientAdmission } from '../../services/patientAdmissionService';
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../../services/auditLogger';
 
 interface PatientOption {
   id: string;
@@ -34,25 +35,41 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
 
   const loadUnadmittedPatients = async () => {
     try {
-      // Get all seniors who don't have active admission
-      const { data, error } = await supabase
+      // First, get all currently admitted patient IDs
+      const { data: admittedData, error: admittedError } = await supabase
+        .from('patient_admissions')
+        .select('patient_id')
+        .eq('is_active', true);
+
+      if (admittedError) throw admittedError;
+
+      const admittedPatientIds = (admittedData || []).map(a => a.patient_id);
+
+      // Then get all seniors
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, first_name, last_name')
-        .eq('role', 'senior')
-        .not('user_id', 'in', `(
-          SELECT patient_id FROM patient_admissions WHERE is_active = TRUE
-        )`);
+        .eq('role', 'senior');
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
+
+      // Filter out already admitted patients
+      const unadmittedPatients = (profilesData || []).filter(
+        p => !admittedPatientIds.includes(p.user_id)
+      );
 
       setPatients(
-        (data || []).map(p => ({
+        unadmittedPatients.map(p => ({
           id: p.user_id,
           name: `${p.first_name} ${p.last_name}`,
         }))
       );
-    } catch (err) {
-
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'LOAD_UNADMITTED_PATIENTS_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { component: 'PatientAdmissionForm' }
+      );
       setError('Failed to load patient list');
     }
   };
@@ -70,8 +87,9 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
     try {
       await admitPatient(formData);
       onSuccess();
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
