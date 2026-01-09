@@ -22,6 +22,7 @@ import type {
   WearableVitalData,
   WearableActivityData,
 } from '../UniversalWearableRegistry';
+import { auditLogger } from '../../../services/auditLogger';
 
 interface SamsungHealthConfig extends WearableAdapterConfig {
   // Samsung-specific config
@@ -271,8 +272,12 @@ export class SamsungHealthAdapter implements WearableAdapter {
             });
           }
         }
-      } catch (error) {
-        
+      } catch (err: unknown) {
+        await auditLogger.error(
+          'SAMSUNG_VITAL_FETCH_FAILED',
+          err instanceof Error ? err : new Error(String(err)),
+          { vitalType: type, userId: params.userId }
+        );
       }
     }
 

@@ -27,7 +27,9 @@ export const PHIUtils = {
    * Query check-ins with decrypted PHI data
    */
   async getCheckIns(userId?: string) {
-    let query = supabase.from('check_ins_decrypted').select('*');
+    let query = supabase.from('check_ins_decrypted').select(
+      'id, user_id, label, is_emergency, emotional_state, heart_rate, pulse_oximeter, bp_systolic, bp_diastolic, glucose_mg_dl, created_at, updated_at'
+    );
 
     if (userId) {
       query = query.eq('user_id', userId);
@@ -40,7 +42,9 @@ export const PHIUtils = {
    * Query risk assessments with decrypted PHI data
    */
   async getRiskAssessments(patientId?: string) {
-    let query = supabase.from('risk_assessments_decrypted').select('*');
+    let query = supabase.from('risk_assessments_decrypted').select(
+      'id, patient_id, assessor_id, risk_level, priority, medical_risk_score, mobility_risk_score, cognitive_risk_score, social_risk_score, overall_score, assessment_notes, risk_factors, recommended_actions, next_assessment_due, review_frequency, created_at, updated_at'
+    );
 
     if (patientId) {
       query = query.eq('patient_id', patientId);

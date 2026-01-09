@@ -1,20 +1,24 @@
 /**
  * Apple HealthKit Adapter
  *
- * Enterprise-grade adapter for Apple HealthKit integration
- * Supports Apple Watch, iPhone Health app, and third-party HealthKit apps
+ * IMPORTANT: Apple HealthKit has NO public REST API.
+ * This adapter reads HealthKit data that has been synced to the WellFit backend
+ * by a companion iOS app using the native HealthKit SDK.
  *
- * Documentation: https://developer.apple.com/documentation/healthkit
+ * Architecture:
+ * 1. iOS companion app (Swift) reads HealthKit data on-device
+ * 2. iOS app syncs data to WellFit backend via /api/wearables/apple/sync endpoint
+ * 3. This adapter reads the synced data from the wearable_data table
  *
- * Features:
- * - OAuth2 via Apple Sign In
- * - Real-time health data sync
- * - HealthKit data types mapping
- * - Background sync support
- * - Fall detection (Apple Watch Series 4+)
- * - ECG data (Apple Watch Series 4+)
+ * For iOS app implementation, see: /docs/adapters/apple-healthkit-ios-setup.md
+ *
+ * Supported data (when synced from iOS):
+ * - Heart rate, SpO2, blood pressure, temperature
+ * - Steps, distance, calories, exercise minutes
+ * - Sleep analysis with stages
+ * - Fall detection events (Apple Watch Series 4+)
+ * - ECG readings (Apple Watch Series 4+)
  * - Blood oxygen (Apple Watch Series 6+)
- * - Rate limiting compliance
  */
 
 import type {
@@ -26,73 +30,82 @@ import type {
   WearableFallEvent,
   WearableECGData,
 } from '../UniversalWearableRegistry';
+import { auditLogger } from '../../../services/auditLogger';
+import { supabase } from '../../../lib/supabaseClient';
 
 interface AppleHealthKitConfig extends WearableAdapterConfig {
-  // Apple-specific fields
-  appleTeamId?: string;
-  bundleId?: string;
-  environment?: 'production' | 'sandbox';
+  /** User ID in WellFit system */
+  userId: string;
+  /** Tenant ID for data isolation */
+  tenantId?: string;
 }
 
-/** API response types for Apple HealthKit endpoints */
-interface AppleVitalSample {
+/** Database row types for synced Apple Health data */
+interface AppleHealthSyncedVital {
+  id: string;
+  user_id: string;
+  vital_type: string;
   value: number;
   unit: string;
-  timestamp: string;
-  metadata?: {
-    context?: string;
-    confidence?: number;
-  };
-  source?: {
-    name?: string;
-  };
+  recorded_at: string;
+  device_model?: string;
+  source_app?: string;
+  metadata?: Record<string, unknown>;
 }
 
-interface AppleActivityRecord {
+interface AppleHealthSyncedActivity {
+  id: string;
+  user_id: string;
   date: string;
   steps: number;
-  distance: number;
-  calories: number;
-  activeMinutes: number;
-  sleepMinutes?: number;
-  goals?: Record<string, unknown>;
-}
-
-interface AppleSleepSession {
-  date: string;
-  duration: number;
-  stages?: {
-    deep: number;
-    light: number;
-    rem: number;
-    awake: number;
-  };
-}
-
-interface AppleFallEvent {
-  timestamp: string;
-  severity?: 'minor' | 'moderate' | 'severe' | 'unknown';
-  location?: { latitude: number; longitude: number };
-  userResponded: boolean;
-  emergencyContacted: boolean;
+  distance_meters: number;
+  calories_burned: number;
+  active_minutes: number;
+  sleep_minutes?: number;
   metadata?: Record<string, unknown>;
 }
 
-interface AppleECGReading {
+interface AppleHealthSyncedSleep {
+  id: string;
+  user_id: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  deep_minutes?: number;
+  light_minutes?: number;
+  rem_minutes?: number;
+  awake_minutes?: number;
+}
+
+interface AppleHealthSyncedFall {
+  id: string;
+  user_id: string;
+  timestamp: string;
+  severity: 'minor' | 'moderate' | 'severe' | 'unknown';
+  latitude?: number;
+  longitude?: number;
+  user_responded: boolean;
+  emergency_contacted: boolean;
+}
+
+interface AppleHealthSyncedECG {
+  id: string;
+  user_id: string;
   timestamp: string;
   classification: 'sinus_rhythm' | 'afib' | 'high_heart_rate' | 'low_heart_rate' | 'inconclusive';
-  heartRate: number;
-  waveform?: number[];
-  duration: number;
-  metadata?: Record<string, unknown>;
+  heart_rate: number;
+  duration_seconds: number;
+  waveform_data?: number[];
 }
 
-interface AppleDevice {
+interface AppleHealthDevice {
   id: string;
-  name: string;
-  model: string;
-  lastSync: string;
-  batteryLevel?: number;
+  user_id: string;
+  device_id: string;
+  device_name: string;
+  device_model: string;
+  last_sync_at: string;
+  battery_level?: number;
 }
 
 export class AppleHealthKitAdapter implements WearableAdapter {
@@ -100,7 +113,7 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     id: 'apple-healthkit',
     name: 'Apple HealthKit Adapter',
     vendor: 'Apple Inc.',
-    version: '1.0.0',
+    version: '2.0.0',
     deviceTypes: ['smartwatch', 'smartphone'],
     capabilities: {
       heartRate: true,
@@ -115,88 +128,102 @@ export class AppleHealthKitAdapter implements WearableAdapter {
       exerciseMinutes: true,
       fallDetection: true,
       ecg: true,
-      gaitAnalysis: true,
+      gaitAnalysis: false, // Not yet synced from iOS
       glucoseMonitoring: true,
     },
     setupGuide: '/docs/adapters/apple-healthkit-setup.md',
-    oauthRequired: true,
+    oauthRequired: false, // Data comes from iOS app, not OAuth
     certifications: ['Apple HealthKit'],
   };
 
-  private accessToken: string = '';
-  private refreshToken: string = '';
-  private tokenExpiry: Date | null = null;
   private config: AppleHealthKitConfig | null = null;
   private status: 'connected' | 'disconnected' | 'error' = 'disconnected';
-  private apiBaseUrl: string = 'https://api.health.apple.com/v1'; // Hypothetical - Apple doesn't have public API
 
-  // HealthKit data type mappings
-  private readonly HEALTHKIT_TYPES = {
-    heartRate: 'HKQuantityTypeIdentifierHeartRate',
-    bloodPressureSystolic: 'HKQuantityTypeIdentifierBloodPressureSystolic',
-    bloodPressureDiastolic: 'HKQuantityTypeIdentifierBloodPressureDiastolic',
-    oxygenSaturation: 'HKQuantityTypeIdentifierOxygenSaturation',
-    bodyTemperature: 'HKQuantityTypeIdentifierBodyTemperature',
-    respiratoryRate: 'HKQuantityTypeIdentifierRespiratoryRate',
-    stepCount: 'HKQuantityTypeIdentifierStepCount',
-    distanceWalkingRunning: 'HKQuantityTypeIdentifierDistanceWalkingRunning',
-    activeEnergyBurned: 'HKQuantityTypeIdentifierActiveEnergyBurned',
-    appleExerciseTime: 'HKQuantityTypeIdentifierAppleExerciseTime',
-    sleepAnalysis: 'HKCategoryTypeIdentifierSleepAnalysis',
-  };
-
+  /**
+   * Connect to synced Apple Health data for a user.
+   * Note: Actual HealthKit connection happens on iOS device.
+   */
   async connect(config: WearableAdapterConfig): Promise<void> {
     this.config = config as AppleHealthKitConfig;
 
-    if (config.authType === 'oauth2') {
-      // OAuth2 flow required
-      if (!config.clientId || !config.clientSecret) {
-        throw new Error('Apple HealthKit OAuth2 requires clientId and clientSecret');
-      }
+    if (!this.config.userId) {
+      throw new Error('Apple HealthKit adapter requires userId to read synced data');
+    }
 
-      // Note: In reality, Apple HealthKit data is accessed through on-device SDK
-      // For cloud access, you'd need Apple Sign In + CloudKit + HealthKit entitlements
-      // This adapter assumes a hypothetical Apple Health Cloud API
+    // Verify user has synced data
+    const { count, error } = await supabase
+      .from('wearable_apple_health_vitals')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', this.config.userId)
+      .limit(1);
+
+    if (error) {
+      await auditLogger.error('APPLE_HEALTH_CONNECT_FAILED', error, {
+        userId: this.config.userId,
+      });
+      this.status = 'error';
+      throw new Error(`Failed to verify Apple Health data: ${error.message}`);
+    }
+
+    if (count === 0) {
+      await auditLogger.warn('APPLE_HEALTH_NO_DATA', {
+        userId: this.config.userId,
+        message: 'No synced Apple Health data found. Ensure iOS companion app is set up.',
+      });
     }
 
     this.status = 'connected';
+    await auditLogger.info('APPLE_HEALTH_CONNECTED', {
+      userId: this.config.userId,
+      recordCount: count,
+    });
   }
 
   async disconnect(): Promise<void> {
-    this.accessToken = '';
-    this.refreshToken = '';
     this.config = null;
     this.status = 'disconnected';
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-    try {
-      // Test by fetching user profile
-      const response = await this.makeRequest('/user/profile', 'GET');
-
-      if (response.ok) {
-        const data = await response.json() as { id?: string; devices?: unknown[] };
-        return {
-          success: true,
-          message: 'Connection successful',
-          details: {
-            userId: data.id,
-            connectedDevices: data.devices || [],
-          },
-        };
-      }
-
-
+    if (!this.config?.userId) {
       return {
         success: false,
-        message: `Connection test failed: ${response.status} ${response.statusText}`,
+        message: 'Not connected. Call connect() first with userId.',
+      };
+    }
+
+    try {
+      const { count, error } = await supabase
+        .from('wearable_apple_health_vitals')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', this.config.userId);
+
+      if (error) throw error;
+
+      const { data: devices } = await supabase
+        .from('wearable_apple_health_devices')
+        .select('device_name, device_model, last_sync_at')
+        .eq('user_id', this.config.userId)
+        .order('last_sync_at', { ascending: false })
+        .limit(5);
+
+      return {
+        success: true,
+        message: `Connected. Found ${count || 0} synced vital records.`,
+        details: {
+          vitalRecords: count || 0,
+          devices: devices || [],
+          lastSync: devices?.[0]?.last_sync_at || 'Never',
+        },
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Connection test failed';
-      return {
-        success: false,
-        message,
-      };
+      await auditLogger.error(
+        'APPLE_HEALTH_TEST_FAILED',
+        err instanceof Error ? err : new Error(message),
+        { userId: this.config.userId }
+      );
+      return { success: false, message };
     }
   }
 
@@ -204,153 +231,80 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     return this.status;
   }
 
-  // OAuth2 Implementation
-  getAuthorizationUrl(scopes: string[]): string {
-    if (!this.config?.clientId) {
-      throw new Error('Client ID not configured');
-    }
-
-    const baseUrl = 'https://appleid.apple.com/auth/authorize';
-    const params = new URLSearchParams({
-      client_id: this.config.clientId,
-      redirect_uri: this.config.redirectUri || '',
-      response_type: 'code',
-      scope: scopes.join(' '),
-      response_mode: 'form_post',
-    });
-
-    return `${baseUrl}?${params.toString()}`;
+  /**
+   * Apple HealthKit does not use OAuth from web.
+   * Authorization happens on iOS device via HealthKit permission prompts.
+   */
+  getAuthorizationUrl(_scopes: string[]): string {
+    throw new Error(
+      'Apple HealthKit authorization is handled on iOS device, not via web OAuth. ' +
+      'Install the WellFit iOS companion app to authorize HealthKit access.'
+    );
   }
 
-  async handleOAuthCallback(code: string): Promise<{ accessToken: string; refreshToken?: string }> {
-    if (!this.config?.clientId || !this.config?.clientSecret) {
-      throw new Error('OAuth credentials not configured');
-    }
-
-    const tokenUrl = 'https://appleid.apple.com/auth/token';
-
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: this.config.clientId,
-        client_secret: this.config.clientSecret,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: this.config.redirectUri || '',
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OAuth token exchange failed: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token;
-
-    // Calculate token expiry (typically 1 hour)
-    this.tokenExpiry = new Date(Date.now() + (data.expires_in || 3600) * 1000);
-
-    return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-    };
+  async handleOAuthCallback(_code: string): Promise<{ accessToken: string; refreshToken?: string }> {
+    throw new Error(
+      'Apple HealthKit does not use OAuth callback flow. ' +
+      'Data is synced from iOS companion app.'
+    );
   }
 
-  async refreshAccessToken(refreshToken: string): Promise<string> {
-    if (!this.config?.clientId || !this.config?.clientSecret) {
-      throw new Error('OAuth credentials not configured');
-    }
-
-    const tokenUrl = 'https://appleid.apple.com/auth/token';
-
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: this.config.clientId,
-        client_secret: this.config.clientSecret,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Token refresh failed: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    this.accessToken = data.access_token;
-    this.tokenExpiry = new Date(Date.now() + (data.expires_in || 3600) * 1000);
-
-    return data.access_token;
+  async refreshAccessToken(_refreshToken: string): Promise<string> {
+    throw new Error('Apple HealthKit does not use refresh tokens.');
   }
 
-  // Data Fetching Methods
   async fetchVitals(params: {
     userId: string;
     startDate?: Date;
     endDate?: Date;
     types?: Array<'heart_rate' | 'blood_pressure' | 'spo2' | 'temperature' | 'respiratory_rate'>;
   }): Promise<WearableVitalData[]> {
-    const vitals: WearableVitalData[] = [];
-
     const types = params.types || ['heart_rate', 'blood_pressure', 'spo2', 'temperature', 'respiratory_rate'];
+    const vitals: WearableVitalData[] = [];
 
     for (const type of types) {
       try {
-        const data = await this.fetchVitalType(params.userId, type, params.startDate, params.endDate);
-        vitals.push(...data);
-      } catch (error) {
-        
+        let query = supabase
+          .from('wearable_apple_health_vitals')
+          .select('id, vital_type, value, unit, recorded_at, device_model, metadata')
+          .eq('user_id', params.userId)
+          .eq('vital_type', type)
+          .order('recorded_at', { ascending: false })
+          .limit(100);
+
+        if (params.startDate) {
+          query = query.gte('recorded_at', params.startDate.toISOString());
+        }
+        if (params.endDate) {
+          query = query.lte('recorded_at', params.endDate.toISOString());
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        for (const row of (data || []) as AppleHealthSyncedVital[]) {
+          vitals.push({
+            type: row.vital_type as 'heart_rate' | 'blood_pressure' | 'spo2' | 'temperature' | 'respiratory_rate',
+            value: row.value,
+            unit: row.unit,
+            timestamp: new Date(row.recorded_at),
+            metadata: {
+              deviceModel: row.device_model || 'Apple Watch',
+              context: row.metadata?.context as string | undefined,
+            },
+          });
+        }
+      } catch (err: unknown) {
+        await auditLogger.error(
+          'APPLE_HEALTH_VITAL_FETCH_FAILED',
+          err instanceof Error ? err : new Error(String(err)),
+          { vitalType: type, userId: params.userId }
+        );
       }
     }
 
     return vitals;
-  }
-
-  private async fetchVitalType(
-    userId: string,
-    type: string,
-    startDate?: Date,
-    endDate?: Date
-  ): Promise<WearableVitalData[]> {
-    const queryParams = new URLSearchParams({
-      user_id: userId,
-      type: this.mapVitalTypeToHealthKit(type),
-    });
-
-    if (startDate) {
-      queryParams.set('start_date', startDate.toISOString());
-    }
-    if (endDate) {
-      queryParams.set('end_date', endDate.toISOString());
-    }
-
-    const response = await this.makeRequest(`/vitals?${queryParams}`, 'GET');
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${type}: ${response.statusText}`);
-    }
-
-    const data = await response.json() as { samples: AppleVitalSample[] };
-
-    return data.samples.map((sample: AppleVitalSample) => ({
-      type: type as 'heart_rate' | 'blood_pressure' | 'spo2' | 'temperature' | 'respiratory_rate',
-      value: sample.value,
-      unit: sample.unit,
-      timestamp: new Date(sample.timestamp),
-      metadata: {
-        context: sample.metadata?.context,
-        deviceModel: sample.source?.name || 'Apple Watch',
-        confidence: sample.metadata?.confidence,
-      },
-    }));
   }
 
   async fetchActivity(params: {
@@ -358,31 +312,34 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     startDate: Date;
     endDate: Date;
   }): Promise<WearableActivityData[]> {
-    const queryParams = new URLSearchParams({
-      user_id: params.userId,
-      start_date: params.startDate.toISOString(),
-      end_date: params.endDate.toISOString(),
-    });
+    try {
+      const { data, error } = await supabase
+        .from('wearable_apple_health_activity')
+        .select('id, date, steps, distance_meters, calories_burned, active_minutes, sleep_minutes, metadata')
+        .eq('user_id', params.userId)
+        .gte('date', params.startDate.toISOString().split('T')[0])
+        .lte('date', params.endDate.toISOString().split('T')[0])
+        .order('date', { ascending: false });
 
-    const response = await this.makeRequest(`/activity?${queryParams}`, 'GET');
+      if (error) throw error;
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch activity: ${response.statusText}`);
+      return ((data || []) as AppleHealthSyncedActivity[]).map((row) => ({
+        date: new Date(row.date),
+        steps: row.steps,
+        distanceMeters: row.distance_meters,
+        caloriesBurned: row.calories_burned,
+        activeMinutes: row.active_minutes,
+        sleepMinutes: row.sleep_minutes,
+        metadata: row.metadata,
+      }));
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'APPLE_HEALTH_ACTIVITY_FETCH_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { userId: params.userId }
+      );
+      return [];
     }
-
-    const data = await response.json() as { activities: AppleActivityRecord[] };
-
-    return data.activities.map((activity: AppleActivityRecord) => ({
-      date: new Date(activity.date),
-      steps: activity.steps,
-      distanceMeters: activity.distance,
-      caloriesBurned: activity.calories,
-      activeMinutes: activity.activeMinutes,
-      sleepMinutes: activity.sleepMinutes,
-      metadata: {
-        goals: activity.goals,
-      },
-    }));
   }
 
   async fetchSleep(params: {
@@ -392,37 +349,37 @@ export class AppleHealthKitAdapter implements WearableAdapter {
   }): Promise<{
     date: Date;
     duration: number;
-    stages?: {
-      deep: number;
-      light: number;
-      rem: number;
-      awake: number;
-    };
+    stages?: { deep: number; light: number; rem: number; awake: number };
   }[]> {
-    const queryParams = new URLSearchParams({
-      user_id: params.userId,
-      start_date: params.startDate.toISOString(),
-      end_date: params.endDate.toISOString(),
-    });
+    try {
+      const { data, error } = await supabase
+        .from('wearable_apple_health_sleep')
+        .select('id, start_time, duration_minutes, deep_minutes, light_minutes, rem_minutes, awake_minutes')
+        .eq('user_id', params.userId)
+        .gte('start_time', params.startDate.toISOString())
+        .lte('start_time', params.endDate.toISOString())
+        .order('start_time', { ascending: false });
 
-    const response = await this.makeRequest(`/sleep?${queryParams}`, 'GET');
+      if (error) throw error;
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch sleep: ${response.statusText}`);
+      return ((data || []) as AppleHealthSyncedSleep[]).map((row) => ({
+        date: new Date(row.start_time),
+        duration: row.duration_minutes,
+        stages: row.deep_minutes !== undefined ? {
+          deep: row.deep_minutes || 0,
+          light: row.light_minutes || 0,
+          rem: row.rem_minutes || 0,
+          awake: row.awake_minutes || 0,
+        } : undefined,
+      }));
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'APPLE_HEALTH_SLEEP_FETCH_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { userId: params.userId }
+      );
+      return [];
     }
-
-    const data = await response.json() as { sleepSessions: AppleSleepSession[] };
-
-    return data.sleepSessions.map((session: AppleSleepSession) => ({
-      date: new Date(session.date),
-      duration: session.duration,
-      stages: session.stages ? {
-        deep: session.stages.deep || 0,
-        light: session.stages.light || 0,
-        rem: session.stages.rem || 0,
-        awake: session.stages.awake || 0,
-      } : undefined,
-    }));
   }
 
   async fetchFallDetection(params: {
@@ -430,28 +387,34 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     startDate: Date;
     endDate: Date;
   }): Promise<WearableFallEvent[]> {
-    const queryParams = new URLSearchParams({
-      user_id: params.userId,
-      start_date: params.startDate.toISOString(),
-      end_date: params.endDate.toISOString(),
-    });
+    try {
+      const { data, error } = await supabase
+        .from('wearable_apple_health_falls')
+        .select('id, timestamp, severity, latitude, longitude, user_responded, emergency_contacted')
+        .eq('user_id', params.userId)
+        .gte('timestamp', params.startDate.toISOString())
+        .lte('timestamp', params.endDate.toISOString())
+        .order('timestamp', { ascending: false });
 
-    const response = await this.makeRequest(`/fall-detection?${queryParams}`, 'GET');
+      if (error) throw error;
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch fall detection: ${response.statusText}`);
+      return ((data || []) as AppleHealthSyncedFall[]).map((row) => ({
+        timestamp: new Date(row.timestamp),
+        severity: row.severity,
+        location: row.latitude && row.longitude
+          ? { latitude: row.latitude, longitude: row.longitude }
+          : undefined,
+        userResponded: row.user_responded,
+        emergencyContacted: row.emergency_contacted,
+      }));
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'APPLE_HEALTH_FALL_FETCH_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { userId: params.userId }
+      );
+      return [];
     }
-
-    const data = await response.json() as { falls: AppleFallEvent[] };
-
-    return data.falls.map((fall: AppleFallEvent) => ({
-      timestamp: new Date(fall.timestamp),
-      severity: fall.severity || 'unknown',
-      location: fall.location,
-      userResponded: fall.userResponded,
-      emergencyContacted: fall.emergencyContacted,
-      metadata: fall.metadata,
-    }));
   }
 
   async fetchECG(params: {
@@ -459,33 +422,40 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     startDate?: Date;
     endDate?: Date;
   }): Promise<WearableECGData[]> {
-    const queryParams = new URLSearchParams({
-      user_id: params.userId,
-    });
+    try {
+      let query = supabase
+        .from('wearable_apple_health_ecg')
+        .select('id, timestamp, classification, heart_rate, duration_seconds, waveform_data')
+        .eq('user_id', params.userId)
+        .order('timestamp', { ascending: false })
+        .limit(50);
 
-    if (params.startDate) {
-      queryParams.set('start_date', params.startDate.toISOString());
+      if (params.startDate) {
+        query = query.gte('timestamp', params.startDate.toISOString());
+      }
+      if (params.endDate) {
+        query = query.lte('timestamp', params.endDate.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      return ((data || []) as AppleHealthSyncedECG[]).map((row) => ({
+        timestamp: new Date(row.timestamp),
+        classification: row.classification,
+        heartRate: row.heart_rate,
+        duration: row.duration_seconds,
+        waveformData: row.waveform_data,
+      }));
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'APPLE_HEALTH_ECG_FETCH_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { userId: params.userId }
+      );
+      return [];
     }
-    if (params.endDate) {
-      queryParams.set('end_date', params.endDate.toISOString());
-    }
-
-    const response = await this.makeRequest(`/ecg?${queryParams}`, 'GET');
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ECG: ${response.statusText}`);
-    }
-
-    const data = await response.json() as { ecgReadings: AppleECGReading[] };
-
-    return data.ecgReadings.map((reading: AppleECGReading) => ({
-      timestamp: new Date(reading.timestamp),
-      classification: reading.classification,
-      heartRate: reading.heartRate,
-      waveformData: reading.waveform,
-      duration: reading.duration,
-      metadata: reading.metadata,
-    }));
   }
 
   async listConnectedDevices(userId: string): Promise<{
@@ -495,21 +465,30 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     lastSyncDate: Date;
     batteryLevel?: number;
   }[]> {
-    const response = await this.makeRequest(`/devices?user_id=${userId}`, 'GET');
+    try {
+      const { data, error } = await supabase
+        .from('wearable_apple_health_devices')
+        .select('device_id, device_name, device_model, last_sync_at, battery_level')
+        .eq('user_id', userId)
+        .order('last_sync_at', { ascending: false });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch devices: ${response.statusText}`);
+      if (error) throw error;
+
+      return ((data || []) as AppleHealthDevice[]).map((row) => ({
+        deviceId: row.device_id,
+        name: row.device_name,
+        model: row.device_model,
+        lastSyncDate: new Date(row.last_sync_at),
+        batteryLevel: row.battery_level,
+      }));
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'APPLE_HEALTH_DEVICES_FETCH_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { userId }
+      );
+      return [];
     }
-
-    const data = await response.json() as { devices: AppleDevice[] };
-
-    return data.devices.map((device: AppleDevice) => ({
-      deviceId: device.id,
-      name: device.name,
-      model: device.model,
-      lastSyncDate: new Date(device.lastSync),
-      batteryLevel: device.batteryLevel,
-    }));
   }
 
   getCapabilities(): WearableAdapterMetadata['capabilities'] {
@@ -518,43 +497,5 @@ export class AppleHealthKitAdapter implements WearableAdapter {
 
   supportsFeature(feature: string): boolean {
     return this.metadata.capabilities[feature as keyof typeof this.metadata.capabilities] || false;
-  }
-
-  // Helper Methods
-  private mapVitalTypeToHealthKit(type: string): string {
-    const mapping: Record<string, string> = {
-      heart_rate: this.HEALTHKIT_TYPES.heartRate,
-      blood_pressure: this.HEALTHKIT_TYPES.bloodPressureSystolic,
-      spo2: this.HEALTHKIT_TYPES.oxygenSaturation,
-      temperature: this.HEALTHKIT_TYPES.bodyTemperature,
-      respiratory_rate: this.HEALTHKIT_TYPES.respiratoryRate,
-    };
-
-    return mapping[type] || type;
-  }
-
-  private async makeRequest(path: string, method: string, body?: Record<string, unknown>): Promise<Response> {
-    // Check if token needs refresh
-    if (this.tokenExpiry && new Date() >= this.tokenExpiry && this.refreshToken) {
-      await this.refreshAccessToken(this.refreshToken);
-    }
-
-    const url = path.startsWith('http') ? path : `${this.apiBaseUrl}${path}`;
-
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${this.accessToken}`,
-      'Content-Type': 'application/json',
-    };
-
-    const options: RequestInit = {
-      method,
-      headers,
-    };
-
-    if (body && method !== 'GET') {
-      options.body = JSON.stringify(body);
-    }
-
-    return await fetch(url, options);
   }
 }
