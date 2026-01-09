@@ -50,6 +50,7 @@ import {
   EATabsContent,
   EABadge
 } from '../envision-atlus';
+import { useBranding } from '../../BrandingContext';
 
 // Types
 interface CommunityMember {
@@ -57,8 +58,8 @@ interface CommunityMember {
   first_name: string;
   last_name: string;
   phone?: string;
-  mrn?: string; // Methodist Medical Record Number
-  discharge_facility?: string; // Which Methodist facility
+  mrn?: string; // Hospital Medical Record Number
+  discharge_facility?: string; // Which hospital facility
   primary_diagnosis?: string;
   risk_score: number;
   risk_category: 'low' | 'moderate' | 'high' | 'critical';
@@ -131,6 +132,11 @@ const getRiskBgColor = (score: number): string => {
 };
 
 export const CommunityReadmissionDashboard: React.FC = () => {
+  // White-label branding from tenant configuration
+  const { branding } = useBranding();
+  const hospitalName = branding.appName || 'Partner Hospital System';
+  const tenantCode = branding.contactInfo?.split(' ')[0] || 'DEMO-0001';
+
   // Note: supabase client available via useSupabaseClient() for production data fetching
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState<string | null>(null);
@@ -144,8 +150,8 @@ export const CommunityReadmissionDashboard: React.FC = () => {
   const [alerts, setAlerts] = useState<CommunityAlert[]>([]);
   const [selectedMember, setSelectedMember] = useState<CommunityMember | null>(null);
 
-  // Demo data for Methodist Hospital System presentation
-  // Shows how WellFit Community members who are also Methodist patients
+  // Demo data for hospital presentation (white-label)
+  // Shows how WellFit Community members who are also hospital patients
   // are tracked for readmission risk - demonstrating hospital ROI
   const demoMetrics: DashboardMetrics = {
     total_high_risk_members: 47,
@@ -160,15 +166,15 @@ export const CommunityReadmissionDashboard: React.FC = () => {
     critical_alerts: 5
   };
 
-  // Methodist Hospital System + WellFit Community Members
+  // Hospital System + WellFit Community Members (white-label demo data)
   const demoMembers: CommunityMember[] = [
     {
       id: '1',
       first_name: 'Eleanor',
       last_name: 'Richardson',
       phone: '(713) 555-0142',
-      mrn: 'MHS-2024-118742',
-      discharge_facility: 'Methodist Hospital - Texas Medical Center',
+      mrn: 'HSP-2024-118742',
+      discharge_facility: `${hospitalName} - Main Campus`,
       primary_diagnosis: 'CHF Exacerbation (I50.9)',
       risk_score: 92,
       risk_category: 'critical',
@@ -194,8 +200,8 @@ export const CommunityReadmissionDashboard: React.FC = () => {
       first_name: 'James',
       last_name: 'Martinez',
       phone: '(713) 555-0287',
-      mrn: 'MHS-2024-093156',
-      discharge_facility: 'Methodist West Houston Hospital',
+      mrn: 'HSP-2024-093156',
+      discharge_facility: `${hospitalName} - West Campus`,
       primary_diagnosis: 'COPD Exacerbation (J44.1)',
       risk_score: 85,
       risk_category: 'critical',
@@ -219,8 +225,8 @@ export const CommunityReadmissionDashboard: React.FC = () => {
       first_name: 'Dorothy',
       last_name: 'Chen',
       phone: '(713) 555-0391',
-      mrn: 'MHS-2024-156789',
-      discharge_facility: 'Houston Methodist Sugar Land',
+      mrn: 'HSP-2024-156789',
+      discharge_facility: `${hospitalName} - South Campus`,
       primary_diagnosis: 'Pneumonia (J18.9)',
       risk_score: 78,
       risk_category: 'high',
@@ -245,8 +251,8 @@ export const CommunityReadmissionDashboard: React.FC = () => {
       first_name: 'Robert',
       last_name: 'Washington',
       phone: '(713) 555-0456',
-      mrn: 'MHS-2024-078234',
-      discharge_facility: 'Methodist Hospital - Texas Medical Center',
+      mrn: 'HSP-2024-078234',
+      discharge_facility: `${hospitalName} - Main Campus`,
       primary_diagnosis: 'Acute MI Follow-up (I21.9)',
       risk_score: 72,
       risk_category: 'high',
@@ -270,8 +276,8 @@ export const CommunityReadmissionDashboard: React.FC = () => {
       first_name: 'Maria',
       last_name: 'Santos',
       phone: '(713) 555-0567',
-      mrn: 'MHS-2024-134567',
-      discharge_facility: 'Houston Methodist Willowbrook',
+      mrn: 'HSP-2024-134567',
+      discharge_facility: `${hospitalName} - North Campus`,
       primary_diagnosis: 'T2DM with Complications (E11.65)',
       risk_score: 65,
       risk_category: 'high',
@@ -295,8 +301,8 @@ export const CommunityReadmissionDashboard: React.FC = () => {
       first_name: 'William',
       last_name: 'Thompson',
       phone: '(713) 555-0678',
-      mrn: 'MHS-2024-112345',
-      discharge_facility: 'Houston Methodist Baytown',
+      mrn: 'HSP-2024-112345',
+      discharge_facility: `${hospitalName} - East Campus`,
       primary_diagnosis: 'Hip Replacement Follow-up (Z96.641)',
       risk_score: 48,
       risk_category: 'moderate',
@@ -319,8 +325,8 @@ export const CommunityReadmissionDashboard: React.FC = () => {
       first_name: 'Helen',
       last_name: 'Patterson',
       phone: '(713) 555-0789',
-      mrn: 'MHS-2024-098765',
-      discharge_facility: 'Houston Methodist Clear Lake',
+      mrn: 'HSP-2024-098765',
+      discharge_facility: `${hospitalName} - Lakeside Campus`,
       primary_diagnosis: 'Atrial Fibrillation (I48.91)',
       risk_score: 35,
       risk_category: 'low',
@@ -464,16 +470,16 @@ export const CommunityReadmissionDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      {/* Header - Methodist Hospital Integration */}
+      {/* Header - Hospital Integration (White-Label) */}
       <div className="bg-linear-to-r from-[#003087] via-slate-800 to-slate-900 border-b border-slate-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2 py-0.5 bg-[#003087] text-white text-xs rounded-sm border border-blue-400/50 font-medium">
-                Houston Methodist Hospital System
+                {hospitalName}
               </span>
               <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-sm border border-slate-600">
-                Tenant: MH-0001
+                Tenant: {tenantCode}
               </span>
             </div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -481,7 +487,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
               Community Readmission Prevention
             </h1>
             <p className="text-slate-400 mt-1">
-              WellFit Community + Houston Methodist - CMS Star Rating & Readmission Penalty Prevention
+              WellFit Community + {hospitalName} - CMS Star Rating & Readmission Penalty Prevention
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -514,13 +520,13 @@ export const CommunityReadmissionDashboard: React.FC = () => {
               Refresh
             </button>
 
-            {/* Methodist Hospital Portal Button */}
+            {/* Hospital Portal Button (White-Label) */}
             <button
               onClick={() => window.location.href = '/envision/login'}
               className="px-4 py-2 bg-[#003087] hover:bg-[#002266] text-white rounded-lg transition-colors flex items-center gap-2 border border-blue-400/30"
             >
               <Stethoscope size={16} />
-              Methodist Portal
+              Clinical Portal
             </button>
           </div>
         </div>
