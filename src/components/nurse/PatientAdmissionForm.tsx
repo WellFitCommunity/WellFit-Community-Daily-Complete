@@ -6,12 +6,80 @@ import { auditLogger } from '../../services/auditLogger';
 interface PatientOption {
   id: string;
   name: string;
+  careProtocolGeriatric: boolean;
+  careProtocolDisability: boolean;
+  careProtocolMentalHealth: boolean;
+  careLevel: string;
 }
 
 interface PatientAdmissionFormProps {
   onSuccess: () => void;
   onCancel: () => void;
 }
+
+// Care protocol badge component
+const CareProtocolBadges: React.FC<{ patient: PatientOption }> = ({ patient }) => {
+  const badges: Array<{ label: string; title: string; bgColor: string; textColor: string }> = [];
+
+  if (patient.careProtocolGeriatric) {
+    badges.push({
+      label: 'GER',
+      title: 'Geriatric Protocol',
+      bgColor: 'bg-purple-100',
+      textColor: 'text-purple-700',
+    });
+  }
+
+  if (patient.careProtocolDisability) {
+    badges.push({
+      label: 'DIS',
+      title: 'Disability Accommodations',
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-700',
+    });
+  }
+
+  if (patient.careProtocolMentalHealth) {
+    badges.push({
+      label: 'MH',
+      title: 'Mental Health Protocol',
+      bgColor: 'bg-teal-100',
+      textColor: 'text-teal-700',
+    });
+  }
+
+  if (patient.careLevel === 'intensive') {
+    badges.push({
+      label: 'HIGH',
+      title: 'Intensive Care Level',
+      bgColor: 'bg-red-100',
+      textColor: 'text-red-700',
+    });
+  } else if (patient.careLevel === 'elevated') {
+    badges.push({
+      label: 'ELEV',
+      title: 'Elevated Care Level',
+      bgColor: 'bg-orange-100',
+      textColor: 'text-orange-700',
+    });
+  }
+
+  if (badges.length === 0) return null;
+
+  return (
+    <span className="ml-2 inline-flex gap-1">
+      {badges.map((badge, idx) => (
+        <span
+          key={idx}
+          className={`px-1.5 py-0.5 text-xs font-medium rounded ${badge.bgColor} ${badge.textColor}`}
+          title={badge.title}
+        >
+          {badge.label}
+        </span>
+      ))}
+    </span>
+  );
+};
 
 export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
   onSuccess,
@@ -27,6 +95,9 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
     attending_physician_id: '',
     admission_diagnosis: '',
   });
+
+  // Get selected patient for displaying badges
+  const selectedPatient = patients.find(p => p.id === formData.patient_id);
 
   // Load unadmitted patients
   useEffect(() => {
@@ -45,12 +116,20 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
 
       const admittedPatientIds = (admittedData || []).map(a => a.patient_id);
 
-      // Get seniors eligible for hospital admission (role_id: 4=senior)
-      // Note: role_id=19 (patient) are outpatient referrals, not hospital admissions
+      // Get all eligible patients (seniors and patients) with care protocol flags
+      // role_id: 4=senior, 19=patient - both can be admitted to hospital
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name')
-        .eq('role_id', 4);
+        .select(`
+          user_id,
+          first_name,
+          last_name,
+          care_protocol_geriatric,
+          care_protocol_disability,
+          care_protocol_mental_health,
+          care_level
+        `)
+        .in('role_id', [4, 19]);
 
       if (profilesError) throw profilesError;
 
@@ -59,10 +138,37 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
         p => !admittedPatientIds.includes(p.user_id)
       );
 
+      // Sort: patients with care protocols first, then alphabetically
+      const sortedPatients = unadmittedPatients.sort((a, b) => {
+        const aHasProtocol = a.care_protocol_geriatric || a.care_protocol_disability || a.care_protocol_mental_health;
+        const bHasProtocol = b.care_protocol_geriatric || b.care_protocol_disability || b.care_protocol_mental_health;
+
+        // Intensive care level first
+        if (a.care_level === 'intensive' && b.care_level !== 'intensive') return -1;
+        if (b.care_level === 'intensive' && a.care_level !== 'intensive') return 1;
+
+        // Then elevated
+        if (a.care_level === 'elevated' && b.care_level === 'standard') return -1;
+        if (b.care_level === 'elevated' && a.care_level === 'standard') return 1;
+
+        // Then any protocol vs no protocol
+        if (aHasProtocol && !bHasProtocol) return -1;
+        if (bHasProtocol && !aHasProtocol) return 1;
+
+        // Finally alphabetical
+        const nameA = `${a.first_name} ${a.last_name}`.toLowerCase();
+        const nameB = `${b.first_name} ${b.last_name}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
       setPatients(
-        unadmittedPatients.map(p => ({
+        sortedPatients.map(p => ({
           id: p.user_id,
           name: `${p.first_name} ${p.last_name}`,
+          careProtocolGeriatric: p.care_protocol_geriatric || false,
+          careProtocolDisability: p.care_protocol_disability || false,
+          careProtocolMentalHealth: p.care_protocol_mental_health || false,
+          careLevel: p.care_level || 'standard',
         }))
       );
     } catch (err: unknown) {
@@ -96,10 +202,44 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
     }
   };
 
+  // Build display text for option with inline badges
+  const getPatientDisplayText = (patient: PatientOption): string => {
+    const badges: string[] = [];
+    if (patient.careProtocolGeriatric) badges.push('GER');
+    if (patient.careProtocolDisability) badges.push('DIS');
+    if (patient.careProtocolMentalHealth) badges.push('MH');
+    if (patient.careLevel === 'intensive') badges.push('HIGH');
+    else if (patient.careLevel === 'elevated') badges.push('ELEV');
+
+    if (badges.length > 0) {
+      return `${patient.name} [${badges.join('][')}]`;
+    }
+    return patient.name;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h2 className="text-2xl font-bold mb-4">Admit Patient</h2>
+
+        {/* Care Protocol Legend */}
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg text-xs">
+          <div className="font-medium text-gray-700 mb-2">Care Protocol Badges:</div>
+          <div className="flex flex-wrap gap-2">
+            <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">GER</span>
+            <span className="text-gray-600">Geriatric</span>
+            <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">DIS</span>
+            <span className="text-gray-600">Disability</span>
+            <span className="px-1.5 py-0.5 rounded bg-teal-100 text-teal-700">MH</span>
+            <span className="text-gray-600">Mental Health</span>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-1">
+            <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700">HIGH</span>
+            <span className="text-gray-600">Intensive</span>
+            <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">ELEV</span>
+            <span className="text-gray-600">Elevated</span>
+          </div>
+        </div>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -124,10 +264,19 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
               <option value="">Select a patient...</option>
               {patients.map(p => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
+                  {getPatientDisplayText(p)}
                 </option>
               ))}
             </select>
+
+            {/* Selected patient badges display */}
+            {selectedPatient && (
+              <div className="mt-2 flex items-center">
+                <span className="text-sm text-gray-600">Selected:</span>
+                <span className="ml-2 font-medium">{selectedPatient.name}</span>
+                <CareProtocolBadges patient={selectedPatient} />
+              </div>
+            )}
           </div>
 
           {/* Room Number */}

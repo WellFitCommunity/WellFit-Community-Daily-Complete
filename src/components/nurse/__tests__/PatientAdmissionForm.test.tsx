@@ -2,7 +2,7 @@
  * Tests for PatientAdmissionForm Component
  *
  * Purpose: Modal form for admitting patients to the hospital
- * Tests: Form rendering, validation, submission, patient loading, error handling
+ * Tests: Form rendering, validation, submission, patient loading, care protocol badges
  */
 
 import React from 'react';
@@ -19,17 +19,53 @@ vi.mock('../../../lib/supabaseClient', () => ({
           // patient_admissions query: .eq('is_active', true)
           if (table === 'patient_admissions') {
             return Promise.resolve({
-              data: [{ patient_id: 'senior-3' }], // senior-3 is already admitted
+              data: [{ patient_id: 'patient-3' }], // patient-3 is already admitted
               error: null,
             });
           }
-          // profiles query: .eq('role_id', 4) - seniors only for hospital admission
+          return Promise.resolve({ data: [], error: null });
+        }),
+        in: vi.fn(() => {
+          // profiles query: .in('role_id', [4, 19]) with care protocol fields
           if (table === 'profiles') {
             return Promise.resolve({
               data: [
-                { user_id: 'senior-1', first_name: 'John', last_name: 'Doe' },
-                { user_id: 'senior-2', first_name: 'Jane', last_name: 'Smith' },
-                { user_id: 'senior-3', first_name: 'Bob', last_name: 'Wilson' }, // Already admitted
+                {
+                  user_id: 'patient-1',
+                  first_name: 'Gloria',
+                  last_name: 'Simmons',
+                  care_protocol_geriatric: true,
+                  care_protocol_disability: false,
+                  care_protocol_mental_health: true,
+                  care_level: 'intensive',
+                },
+                {
+                  user_id: 'patient-2',
+                  first_name: 'Harold',
+                  last_name: 'Washington',
+                  care_protocol_geriatric: true,
+                  care_protocol_disability: true,
+                  care_protocol_mental_health: false,
+                  care_level: 'elevated',
+                },
+                {
+                  user_id: 'patient-3',
+                  first_name: 'Bob',
+                  last_name: 'Wilson',
+                  care_protocol_geriatric: false,
+                  care_protocol_disability: false,
+                  care_protocol_mental_health: false,
+                  care_level: 'standard',
+                }, // Already admitted
+                {
+                  user_id: 'patient-4',
+                  first_name: 'Maria',
+                  last_name: 'Santos',
+                  care_protocol_geriatric: false,
+                  care_protocol_disability: false,
+                  care_protocol_mental_health: false,
+                  care_level: 'standard',
+                },
               ],
               error: null,
             });
@@ -125,6 +161,17 @@ describe('PatientAdmissionForm', () => {
       const requiredIndicators = screen.getAllByText('*');
       expect(requiredIndicators.length).toBe(2);
     });
+
+    it('should render care protocol legend', () => {
+      render(
+        <PatientAdmissionForm onSuccess={mockOnSuccess} onCancel={mockOnCancel} />
+      );
+
+      expect(screen.getByText('Care Protocol Badges:')).toBeInTheDocument();
+      expect(screen.getByText('Geriatric')).toBeInTheDocument();
+      expect(screen.getByText('Disability')).toBeInTheDocument();
+      expect(screen.getByText('Mental Health')).toBeInTheDocument();
+    });
   });
 
   describe('Patient Loading', () => {
@@ -148,6 +195,44 @@ describe('PatientAdmissionForm', () => {
       const select = screen.getByRole('combobox');
       expect(select).toHaveValue('');
     });
+
+    it('should display care protocol badges in patient options', async () => {
+      render(
+        <PatientAdmissionForm onSuccess={mockOnSuccess} onCancel={mockOnCancel} />
+      );
+
+      await waitFor(() => {
+        const select = screen.getByRole('combobox');
+        expect(select.querySelectorAll('option').length).toBeGreaterThan(1);
+      });
+
+      // Check that badges appear in option text
+      const select = screen.getByRole('combobox');
+      const options = select.querySelectorAll('option');
+
+      // Gloria should have GER, MH, HIGH badges
+      const gloriaOption = Array.from(options).find(opt => opt.textContent?.includes('Gloria'));
+      expect(gloriaOption?.textContent).toContain('[GER]');
+      expect(gloriaOption?.textContent).toContain('[MH]');
+      expect(gloriaOption?.textContent).toContain('[HIGH]');
+    });
+
+    it('should sort patients by care level (intensive first)', async () => {
+      render(
+        <PatientAdmissionForm onSuccess={mockOnSuccess} onCancel={mockOnCancel} />
+      );
+
+      await waitFor(() => {
+        const select = screen.getByRole('combobox');
+        expect(select.querySelectorAll('option').length).toBeGreaterThan(1);
+      });
+
+      const select = screen.getByRole('combobox');
+      const options = Array.from(select.querySelectorAll('option')).slice(1); // Skip placeholder
+
+      // First option should be Gloria (intensive care level)
+      expect(options[0].textContent).toContain('Gloria');
+    });
   });
 
   describe('Form Input', () => {
@@ -162,9 +247,29 @@ describe('PatientAdmissionForm', () => {
       });
 
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'senior-1' } });
+      fireEvent.change(select, { target: { value: 'patient-1' } });
 
-      expect(select).toHaveValue('senior-1');
+      expect(select).toHaveValue('patient-1');
+    });
+
+    it('should show selected patient badges below dropdown', async () => {
+      render(
+        <PatientAdmissionForm onSuccess={mockOnSuccess} onCancel={mockOnCancel} />
+      );
+
+      await waitFor(() => {
+        const select = screen.getByRole('combobox');
+        expect(select.querySelectorAll('option').length).toBeGreaterThan(1);
+      });
+
+      const select = screen.getByRole('combobox');
+      fireEvent.change(select, { target: { value: 'patient-1' } });
+
+      // Should show "Selected:" with patient name and badges
+      await waitFor(() => {
+        expect(screen.getByText('Selected:')).toBeInTheDocument();
+        expect(screen.getByText('Gloria Simmons')).toBeInTheDocument();
+      });
     });
 
     it('should update room number input', async () => {
@@ -228,7 +333,7 @@ describe('PatientAdmissionForm', () => {
 
       // Select a patient but leave room empty
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'senior-1' } });
+      fireEvent.change(select, { target: { value: 'patient-1' } });
 
       // Submit form directly to bypass HTML5 validation
       const form = document.querySelector('form') as HTMLFormElement;
@@ -271,7 +376,7 @@ describe('PatientAdmissionForm', () => {
 
       // Select patient
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'senior-1' } });
+      fireEvent.change(select, { target: { value: 'patient-1' } });
 
       // Type room number
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
@@ -284,7 +389,7 @@ describe('PatientAdmissionForm', () => {
       await waitFor(() => {
         expect(admitPatient).toHaveBeenCalledWith(
           expect.objectContaining({
-            patient_id: 'senior-1',
+            patient_id: 'patient-1',
             room_number: '401B',
           })
         );
@@ -303,7 +408,7 @@ describe('PatientAdmissionForm', () => {
 
       // Fill form
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'senior-1' } });
+      fireEvent.change(select, { target: { value: 'patient-1' } });
 
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
       await userEvent.type(roomInput, '401B');
@@ -333,7 +438,7 @@ describe('PatientAdmissionForm', () => {
 
       // Fill form
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'senior-1' } });
+      fireEvent.change(select, { target: { value: 'patient-1' } });
 
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
       await userEvent.type(roomInput, '401B');
@@ -362,7 +467,7 @@ describe('PatientAdmissionForm', () => {
 
       // Fill form
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'senior-1' } });
+      fireEvent.change(select, { target: { value: 'patient-1' } });
 
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
       await userEvent.type(roomInput, '401B');
@@ -390,7 +495,7 @@ describe('PatientAdmissionForm', () => {
 
       // Fill form
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'senior-1' } });
+      fireEvent.change(select, { target: { value: 'patient-1' } });
 
       const roomInput = screen.getByPlaceholderText('e.g., 301A');
       await userEvent.type(roomInput, '401B');
@@ -437,6 +542,44 @@ describe('PatientAdmissionForm', () => {
 
       const formContainer = container.querySelector('.bg-white.rounded-lg');
       expect(formContainer).toBeInTheDocument();
+    });
+  });
+
+  describe('Care Protocol Filtering', () => {
+    it('should exclude already admitted patients from list', async () => {
+      render(
+        <PatientAdmissionForm onSuccess={mockOnSuccess} onCancel={mockOnCancel} />
+      );
+
+      await waitFor(() => {
+        const select = screen.getByRole('combobox');
+        expect(select.querySelectorAll('option').length).toBeGreaterThan(1);
+      });
+
+      const select = screen.getByRole('combobox');
+      const options = select.querySelectorAll('option');
+
+      // patient-3 (Bob Wilson) is admitted and should not appear
+      const bobOption = Array.from(options).find(opt => opt.textContent?.includes('Bob'));
+      expect(bobOption).toBeUndefined();
+    });
+
+    it('should show patients without protocols with no badges', async () => {
+      render(
+        <PatientAdmissionForm onSuccess={mockOnSuccess} onCancel={mockOnCancel} />
+      );
+
+      await waitFor(() => {
+        const select = screen.getByRole('combobox');
+        expect(select.querySelectorAll('option').length).toBeGreaterThan(1);
+      });
+
+      const select = screen.getByRole('combobox');
+      const options = select.querySelectorAll('option');
+
+      // Maria should have no badges (standard care, no protocols)
+      const mariaOption = Array.from(options).find(opt => opt.textContent?.includes('Maria'));
+      expect(mariaOption?.textContent).not.toContain('[');
     });
   });
 });
