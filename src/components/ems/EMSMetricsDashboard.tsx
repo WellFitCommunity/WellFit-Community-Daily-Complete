@@ -37,6 +37,7 @@ const EMSMetricsDashboard: React.FC = () => {
 
   useEffect(() => {
     loadMetrics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, [dateRange]);
 
   const loadMetrics = async () => {

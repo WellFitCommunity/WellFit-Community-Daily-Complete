@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DischargedPatientDashboard } from '../DischargedPatientDashboard';
 import { DischargeToWellnessBridgeService } from '../../../services/dischargeToWellnessBridge';

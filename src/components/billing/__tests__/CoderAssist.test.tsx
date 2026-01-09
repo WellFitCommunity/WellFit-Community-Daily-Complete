@@ -9,12 +9,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CoderAssist } from '../CoderAssist';
 
-// Mock functions to track calls
-const mockInvoke = vi.fn();
-const mockInsert = vi.fn();
-const mockSelect = vi.fn();
-const mockSingle = vi.fn();
-
 // Mock Supabase
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
@@ -64,8 +58,7 @@ describe('CoderAssist', () => {
           single: vi.fn().mockResolvedValue({ data: { id: 'rec-123' }, error: null }),
         }),
       }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
   });
 
   afterEach(() => {
@@ -199,8 +192,7 @@ describe('CoderAssist', () => {
             single: vi.fn().mockImplementation(() => new Promise(() => {})),
           }),
         }),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      } as unknown as ReturnType<typeof supabase.from>);
 
       render(<CoderAssist {...defaultProps} />);
 
@@ -417,8 +409,7 @@ describe('CoderAssist', () => {
             single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Save failed' } }),
           }),
         }),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      } as unknown as ReturnType<typeof supabase.from>);
 
       render(<CoderAssist {...defaultProps} />);
 

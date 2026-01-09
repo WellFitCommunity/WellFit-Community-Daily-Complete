@@ -52,7 +52,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
     const interval = setInterval(loadIncidents, 30000);
 
     return () => clearInterval(interval);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, []);
 
   const handleResolveIncident = async () => {

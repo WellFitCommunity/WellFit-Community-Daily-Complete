@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   DischargeDispositionSelector,
@@ -243,7 +243,7 @@ describe('DischargeDispositionSelector', () => {
         />
       );
 
-      let amaCard = screen.getByText('Left Against Medical Advice').closest('button');
+      const amaCard = screen.getByText('Left Against Medical Advice').closest('button');
       expect(amaCard).toHaveClass('border-red-500');
 
       rerender(

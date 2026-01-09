@@ -16,10 +16,6 @@ vi.mock('../../../contexts/AuthContext', () => ({
   }),
 }));
 
-// Store mock functions for assertions
-const mockRpc = vi.fn();
-const mockFromFn = vi.fn();
-
 // Mock Supabase - factory must be self-contained
 vi.mock('../../../lib/supabaseClient', () => {
   const mockClaimsData = [

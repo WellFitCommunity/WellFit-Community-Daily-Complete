@@ -534,7 +534,6 @@ describe('NotificationSettings', () => {
       );
 
       const switches = screen.getAllByRole('switch');
-      const allChecked = switches.every((s) => (s as HTMLInputElement).checked);
       // Not all switches should be checked because browser_notifications toggle
       // is controlled by permission state, not just preference
       expect(switches.length).toBeGreaterThan(0);

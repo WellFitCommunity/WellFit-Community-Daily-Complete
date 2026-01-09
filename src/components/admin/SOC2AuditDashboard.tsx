@@ -53,7 +53,7 @@ export const SOC2AuditDashboard: React.FC = () => {
     const interval = setInterval(loadAuditData, 60000);
 
     return () => clearInterval(interval);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, []);
 
   const getRiskLevelColor = (risk: string) => {

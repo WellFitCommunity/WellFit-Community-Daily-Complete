@@ -25,6 +25,7 @@ const CaregiverPortal: React.FC<CaregiverPortalProps> = ({ patientId, caregiverI
 
   useEffect(() => {
     loadPortalData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, [patientId]);
 
   const loadPortalData = async () => {

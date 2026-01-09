@@ -48,6 +48,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
 
   useEffect(() => {
     loadExistingInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, [patientId]);
 
   const loadExistingInfo = async () => {

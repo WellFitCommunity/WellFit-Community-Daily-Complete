@@ -48,6 +48,7 @@ const TenantBrandingManager: React.FC = () => {
   // Load all tenants on mount
   useEffect(() => {
     loadTenants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, []);
 
   // Load branding when tenant is selected

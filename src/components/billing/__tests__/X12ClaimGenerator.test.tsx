@@ -23,10 +23,6 @@ vi.mock('react-toastify', () => ({
   },
 }));
 
-// Store mock functions for assertions
-const mockInvoke = vi.fn();
-const mockGetSession = vi.fn();
-
 // Mock Supabase
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {

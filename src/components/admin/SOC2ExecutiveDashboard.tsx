@@ -56,7 +56,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
     const interval = setInterval(loadExecutiveData, 60000);
 
     return () => clearInterval(interval);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, []);
 
   const getComplianceGrade = (score: number): string => {

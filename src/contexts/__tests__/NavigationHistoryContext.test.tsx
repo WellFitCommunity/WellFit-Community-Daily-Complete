@@ -6,6 +6,14 @@ import { NavigationHistoryProvider, useNavigationHistory } from '../NavigationHi
 // Type for the navigation history context
 type NavigationHistoryType = ReturnType<typeof useNavigationHistory>;
 
+// Helper to assert non-null and return typed value
+function assertDefined<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined) {
+    throw new Error('Expected value to be defined');
+  }
+  return value;
+}
+
 // Mock AuthContext - provide the user object that NavigationHistoryContext needs
 vi.mock('../AuthContext', () => ({
   useAuth: () => ({
@@ -109,7 +117,7 @@ describe('NavigationHistoryContext', () => {
 
     // Initial route should be in history
     expect(navRef).not.toBeNull();
-    expect(navRef!.historyStack).toContain('/dashboard');
+    expect(assertDefined(navRef).historyStack).toContain('/dashboard');
   });
 
   it('should NOT track auth routes like /login', async () => {
@@ -123,7 +131,7 @@ describe('NavigationHistoryContext', () => {
 
     // Login route should NOT be in history
     expect(navRef).not.toBeNull();
-    expect(navRef!.historyStack).not.toContain('/login');
+    expect(assertDefined(navRef).historyStack).not.toContain('/login');
   });
 
   it('should clear history when clearHistory is called', async () => {
@@ -139,11 +147,11 @@ describe('NavigationHistoryContext', () => {
 
     // Clear history
     act(() => {
-      navRef!.clearHistory();
+      assertDefined(navRef).clearHistory();
     });
 
-    expect(navRef!.historyStack).toHaveLength(0);
-    expect(navRef!.canGoBack).toBe(false);
+    expect(assertDefined(navRef).historyStack).toHaveLength(0);
+    expect(assertDefined(navRef).canGoBack).toBe(false);
   });
 
   it('should provide context-aware fallback when no history', () => {
@@ -157,8 +165,8 @@ describe('NavigationHistoryContext', () => {
 
     expect(navRef).not.toBeNull();
     // Even without history, goBack should use fallback
-    expect(navRef!.goBack).toBeDefined();
-    expect(typeof navRef!.goBack).toBe('function');
+    expect(assertDefined(navRef).goBack).toBeDefined();
+    expect(typeof assertDefined(navRef).goBack).toBe('function');
   });
 
   it('should get previous route when available', async () => {
@@ -173,7 +181,7 @@ describe('NavigationHistoryContext', () => {
 
     expect(navRef).not.toBeNull();
     // Should have /profile in history (current route)
-    expect(navRef!.historyStack).toContain('/profile');
+    expect(assertDefined(navRef).historyStack).toContain('/profile');
   });
 });
 
@@ -205,7 +213,7 @@ describe('NavigationHistoryContext - Auth Route Filtering', () => {
       );
 
       expect(navRef).not.toBeNull();
-      expect(navRef!.historyStack).not.toContain(route);
+      expect(assertDefined(navRef).historyStack).not.toContain(route);
     });
   });
 });
@@ -236,7 +244,7 @@ describe('NavigationHistoryContext - Protected Route Tracking', () => {
       );
 
       expect(navRef).not.toBeNull();
-      expect(navRef!.historyStack).toContain(route);
+      expect(assertDefined(navRef).historyStack).toContain(route);
     });
   });
 });

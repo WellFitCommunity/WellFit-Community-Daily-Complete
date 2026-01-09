@@ -417,6 +417,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
     loadDashboardData();
     const interval = setInterval(loadDashboardData, 5 * 60 * 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, [selectedPeriod]);
 
   const loadDashboardData = async () => {

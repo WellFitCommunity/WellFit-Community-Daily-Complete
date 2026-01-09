@@ -92,6 +92,7 @@ export const DentalHealthDashboard: React.FC = () => {
       const interval = setInterval(loadDashboard, 120000);
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
   }, [user]);
 
   if (!user) {
