@@ -21,6 +21,7 @@
 import { supabase } from '../../lib/supabaseClient';
 import { ServiceResult, success, failure } from '../_base/ServiceResult';
 import { auditLogger } from '../auditLogger';
+import { getNotificationService } from '../notificationService';
 
 // ============================================================================
 // Types
@@ -208,6 +209,67 @@ export const MedicationAdherencePredictorService = {
         barrierCount: data.assessment?.barrierCount,
         category: 'CLINICAL',
       });
+
+      const assessment = data.assessment as AdherencePrediction;
+
+      // CRITICAL: Send notification for very poor adherence or critical barriers
+      const hasCriticalBarriers = assessment.barriers?.some(b => b.severity === 'critical');
+      const isVeryPoorAdherence = assessment.adherenceCategory === 'very_poor' || assessment.adherenceCategory === 'poor';
+
+      if (hasCriticalBarriers || isVeryPoorAdherence) {
+        try {
+          const notificationService = getNotificationService();
+          const criticalBarrierList = assessment.barriers
+            ?.filter(b => b.severity === 'critical' || b.severity === 'high')
+            .map(b => b.barrier)
+            .slice(0, 3)
+            .join(', ') || 'Multiple barriers identified';
+
+          await notificationService.sendClinicalNotification(
+            { userId: assessorId },
+            `⚠️ Medication Adherence Alert - Patient ${patientId.substring(0, 8)}`,
+            `Predicted adherence: ${assessment.adherenceCategory?.toUpperCase()} (Score: ${assessment.overallAdherenceScore}/100). ` +
+            `${hasCriticalBarriers ? 'CRITICAL BARRIERS: ' + criticalBarrierList + '. ' : ''}` +
+            `${assessment.requiresPharmacistReview ? 'Pharmacist review required. ' : ''}` +
+            `High-risk medications: ${assessment.highRiskMedications?.slice(0, 3).join(', ') || 'None flagged'}.`,
+            {
+              priority: hasCriticalBarriers ? 'urgent' : 'high',
+              actionUrl: `/patients/${patientId}/medications`,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+            }
+          );
+
+          // Also notify pharmacy if pharmacist review required
+          if (assessment.requiresPharmacistReview) {
+            await notificationService.sendClinicalNotification(
+              { roleIds: ['pharmacist'] }, // Notify pharmacists
+              `📋 Pharmacist Review Required - Patient ${patientId.substring(0, 8)}`,
+              `Medication adherence prediction indicates pharmacist intervention needed. ` +
+              `Adherence category: ${assessment.adherenceCategory}. ` +
+              `Barriers: ${criticalBarrierList}. ` +
+              `Urgent interventions: ${assessment.urgentInterventions?.join(', ') || 'See full assessment'}.`,
+              {
+                priority: 'high',
+                actionUrl: `/patients/${patientId}/medications`,
+                expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() // 48 hours
+              }
+            );
+          }
+
+          await auditLogger.info('MEDICATION_ADHERENCE_ALERT_SENT', {
+            patientId: patientId.substring(0, 8) + '...',
+            adherenceCategory: assessment.adherenceCategory,
+            hasCriticalBarriers,
+            requiresPharmacistReview: assessment.requiresPharmacistReview,
+          });
+        } catch (notifyErr: unknown) {
+          // Log but don't fail the prediction if notification fails
+          await auditLogger.error('MEDICATION_ADHERENCE_NOTIFICATION_FAILED',
+            notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)),
+            { patientId: patientId.substring(0, 8) + '...' }
+          );
+        }
+      }
 
       return success(data as AdherenceResponse);
     } catch (err: unknown) {

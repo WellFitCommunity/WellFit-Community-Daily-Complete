@@ -12,6 +12,7 @@
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../auditLogger';
 import { ServiceResult, success, failure } from '../_base';
+import { getNotificationService } from '../notificationService';
 
 // ============================================================================
 // Types
@@ -114,7 +115,96 @@ export const MissedCheckInEscalationService = {
         category: 'CLINICAL',
       });
 
-      return success(data as EscalationResponse);
+      const response = data as EscalationResponse;
+      const escalation = response.escalation;
+
+      // CRITICAL: Send immediate notifications based on escalation result
+      // Day 1 fix: Send notification immediately, don't wait for Day 3
+      if (escalation && (escalation.notifyCaregiver || escalation.notifyEmergencyContact || escalation.notifyTenant)) {
+        try {
+          const notificationService = getNotificationService();
+
+          // Immediate notification for ANY missed check-in (Day 1)
+          if (escalation.notifyCaregiver || escalation.escalationLevel !== 'none') {
+            // Get patient profile for caregiver contact
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name, first_name, last_name, caregiver_email, emergency_contact_email')
+              .eq('id', patientId)
+              .single();
+
+            const patientName = profile?.full_name ||
+              `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() ||
+              `Patient ${patientId.substring(0, 8)}`;
+
+            // Send in-app + push notification for missed check-in (Day 1)
+            await notificationService.send({
+              title: `⚠️ Missed Check-In Alert: ${patientName}`,
+              body: escalation.message?.body ||
+                `${patientName} has missed their scheduled check-in. ` +
+                `Escalation level: ${escalation.escalationLevel}. ` +
+                `${escalation.recommendedActions?.slice(0, 2).join('. ') || 'Please follow up.'}`,
+              category: 'wellness',
+              priority: escalation.escalationLevel === 'emergency' ? 'urgent' :
+                        escalation.escalationLevel === 'high' ? 'high' : 'normal',
+              target: { roleIds: ['caregiver'] },
+              actionUrl: `/patients/${patientId}/check-ins`,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+            });
+
+            // If caregiver email is available, also send email
+            if (profile?.caregiver_email && escalation.notifyCaregiver) {
+              await notificationService.send({
+                title: `WellFit Alert: ${patientName} Missed Check-In`,
+                body: `${patientName} has missed their scheduled wellness check-in with WellFit Community. ` +
+                  `This is ${triggerType === 'consecutive_missed' ? `the ${consecutiveMissedCount || 1} consecutive missed check-in` : 'a missed check-in'}. ` +
+                  `Please attempt to contact them. If you cannot reach them, consider requesting a welfare check. ` +
+                  `${escalation.riskFactors?.length ? 'Risk factors: ' + escalation.riskFactors.slice(0, 2).join(', ') + '.' : ''}`,
+                category: 'wellness',
+                priority: escalation.escalationLevel === 'emergency' ? 'urgent' : 'high',
+                target: { email: profile.caregiver_email },
+                actionUrl: `/patients/${patientId}/check-ins`,
+                expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() // 48 hours
+              });
+            }
+
+            // Emergency contact notification for high/emergency escalation
+            if (escalation.notifyEmergencyContact && profile?.emergency_contact_email) {
+              await notificationService.send({
+                title: `🚨 Urgent: ${patientName} - Wellness Check Needed`,
+                body: `This is an urgent message from WellFit Community. ${patientName} has not responded to wellness check-ins. ` +
+                  `Escalation level: ${escalation.escalationLevel?.toUpperCase()}. ` +
+                  `Please attempt to contact them or request a welfare check if you cannot reach them. ` +
+                  `If this is an emergency, please dial 911.`,
+                category: 'alert',
+                priority: 'urgent',
+                target: { email: profile.emergency_contact_email },
+                actionUrl: `/patients/${patientId}/check-ins`,
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+              });
+            }
+
+            await auditLogger.info('MISSED_CHECKIN_NOTIFICATIONS_SENT', {
+              patientId: patientId.substring(0, 8) + '...',
+              escalationLevel: escalation.escalationLevel,
+              notifiedCaregiver: escalation.notifyCaregiver,
+              notifiedEmergencyContact: escalation.notifyEmergencyContact,
+              triggerType,
+            });
+          }
+        } catch (notifyErr: unknown) {
+          // Log but don't fail the escalation analysis if notifications fail
+          await auditLogger.error('MISSED_CHECKIN_NOTIFICATION_FAILED',
+            notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)),
+            {
+              patientId: patientId.substring(0, 8) + '...',
+              escalationLevel: escalation.escalationLevel,
+            }
+          );
+        }
+      }
+
+      return success(response);
     } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('MISSED_CHECKIN_ESCALATION_ERROR', error, {

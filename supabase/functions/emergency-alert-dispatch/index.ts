@@ -84,12 +84,13 @@ User ID: ${userId}`;
 }
 
 // Helper function to send email with retry logic
+// CRITICAL: For emergency alerts, we use 5 retries to ensure delivery
 async function sendEmailWithRetry(
   supabaseClient: SupabaseClient,
   emailPayload: EmailPayload,
   recipient: string,
   logger: AuditLogger,
-  maxRetries: number = 2
+  maxRetries: number = 5  // Increased from 2 - emergency alerts are life-critical
 ): Promise<EmailResult> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {

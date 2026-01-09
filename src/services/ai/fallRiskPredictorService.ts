@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { ServiceResult, success, failure } from '../_base/ServiceResult';
 import { auditLogger } from '../auditLogger';
 import { AccuracyTrackingService, createAccuracyTrackingService } from './accuracyTrackingService';
+import { getNotificationService } from '../notificationService';
 
 // ============================================================================
 // Types
@@ -199,6 +200,35 @@ export class FallRiskPredictorService {
         assessment.reviewReasons = assessment.reviewReasons || [];
         if (!assessment.reviewReasons.includes('Very high fall risk - urgent review required')) {
           assessment.reviewReasons.push('Very high fall risk - urgent review required');
+        }
+
+        // CRITICAL: Send immediate notification to care team for very high risk
+        try {
+          const notificationService = getNotificationService();
+          await notificationService.sendClinicalNotification(
+            { userId: request.assessorId }, // Notify the assessor first
+            `⚠️ URGENT: Very High Fall Risk - Patient ${request.patientId.substring(0, 8)}`,
+            `Fall risk score: ${assessment.overallRiskScore}/100 (${assessment.riskCategory}). ` +
+            `Immediate review required. Top risk factors: ${assessment.riskFactors.slice(0, 3).map(f => f.factor).join(', ')}. ` +
+            `Recommended interventions: ${assessment.interventions.filter(i => i.priority === 'urgent').map(i => i.intervention).join(', ') || 'See assessment details'}.`,
+            {
+              priority: 'urgent',
+              actionUrl: `/patients/${request.patientId}/fall-risk`,
+              expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString() // 4 hours
+            }
+          );
+
+          auditLogger.info('fall_risk_urgent_notification_sent', {
+            patientId: request.patientId.substring(0, 8) + '...',
+            riskScore: assessment.overallRiskScore,
+            assessorId: request.assessorId.substring(0, 8) + '...'
+          });
+        } catch (notifyErr: unknown) {
+          // Log but don't fail the assessment if notification fails
+          auditLogger.error('fall_risk_notification_failed',
+            notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)),
+            { patientId: request.patientId.substring(0, 8) + '...' }
+          );
         }
       }
 

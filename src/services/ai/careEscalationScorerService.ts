@@ -14,6 +14,7 @@
 import { supabase } from '../../lib/supabaseClient';
 import { ServiceResult, success, failure } from '../_base/ServiceResult';
 import { auditLogger } from '../auditLogger';
+import { getNotificationService } from '../notificationService';
 
 // ============================================================================
 // Types
@@ -149,6 +150,81 @@ export const CareEscalationScorerService = {
         overallScore: data.assessment?.overallEscalationScore,
         category: 'CLINICAL',
       });
+
+      const assessment = data.assessment as EscalationScore;
+
+      // CRITICAL: Send immediate notification for emergency escalation or rapid response
+      const isEmergency = assessment.escalationCategory === 'emergency';
+      const needsRapidResponse = assessment.requiresRapidResponse;
+      const isCriticalUrgency = assessment.urgencyLevel === 'critical';
+
+      if (isEmergency || needsRapidResponse || isCriticalUrgency) {
+        try {
+          const notificationService = getNotificationService();
+          const criticalIndicators = assessment.clinicalIndicators
+            ?.filter(i => i.concernLevel === 'critical' || i.concernLevel === 'high')
+            .map(i => `${i.indicator}: ${i.currentValue} (${i.trend})`)
+            .slice(0, 3)
+            .join('; ') || 'See assessment';
+
+          const immediateActions = assessment.recommendations
+            ?.filter(r => r.urgency === 'immediate' || r.urgency === 'urgent')
+            .map(r => r.action)
+            .slice(0, 3)
+            .join('; ') || 'Review patient immediately';
+
+          // Send URGENT notification to assessor and on-call team
+          await notificationService.sendClinicalNotification(
+            { userId: assessorId },
+            `🚨 ${isEmergency ? 'EMERGENCY' : 'URGENT'}: Care Escalation - Patient ${patientId.substring(0, 8)}`,
+            `Escalation: ${assessment.escalationCategory?.toUpperCase()} (Score: ${assessment.overallEscalationScore}/100). ` +
+            `Urgency: ${assessment.urgencyLevel?.toUpperCase()}. ` +
+            `${needsRapidResponse ? '⚡ RAPID RESPONSE REQUIRED. ' : ''}` +
+            `Critical indicators: ${criticalIndicators}. ` +
+            `Immediate actions: ${immediateActions}.`,
+            {
+              priority: 'urgent',
+              actionUrl: `/patients/${patientId}/escalation`,
+              expiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString() // 1 hour (urgent!)
+            }
+          );
+
+          // Also notify physician if physician review required
+          if (assessment.requiresPhysicianReview) {
+            await notificationService.sendClinicalNotification(
+              { roleIds: ['physician'] }, // Notify on-call physicians
+              `🩺 Physician Review Required - Patient ${patientId.substring(0, 8)}`,
+              `Care escalation score indicates physician intervention needed. ` +
+              `Category: ${assessment.escalationCategory}. Urgency: ${assessment.urgencyLevel}. ` +
+              `${needsRapidResponse ? 'RAPID RESPONSE TEAM may be needed. ' : ''}` +
+              `Summary: ${assessment.clinicalSummary?.substring(0, 200) || 'See full assessment'}...`,
+              {
+                priority: 'urgent',
+                actionUrl: `/patients/${patientId}/escalation`,
+                expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() // 2 hours
+              }
+            );
+          }
+
+          await auditLogger.info('CARE_ESCALATION_ALERT_SENT', {
+            patientId: patientId.substring(0, 8) + '...',
+            escalationCategory: assessment.escalationCategory,
+            urgencyLevel: assessment.urgencyLevel,
+            requiresRapidResponse: needsRapidResponse,
+            requiresPhysicianReview: assessment.requiresPhysicianReview,
+          });
+        } catch (notifyErr: unknown) {
+          // CRITICAL: For emergency alerts, we should log this prominently but not fail
+          await auditLogger.error('CARE_ESCALATION_NOTIFICATION_FAILED',
+            notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)),
+            {
+              patientId: patientId.substring(0, 8) + '...',
+              escalationCategory: assessment.escalationCategory,
+              CRITICAL: 'Emergency notification delivery failed - manual intervention may be required'
+            }
+          );
+        }
+      }
 
       return success(data as EscalationResponse);
     } catch (err: unknown) {
