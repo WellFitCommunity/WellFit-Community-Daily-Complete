@@ -22,15 +22,13 @@ const firebaseConfig = {
 };
 
 // Check if all required config values are present (after potential replacement)
-if (firebaseConfig.apiKey && firebaseConfig.apiKey.startsWith('%REACT_APP_')) {
-  console.error('Firebase SW Error: Firebase config placeholders not replaced. Notifications will not work.');
-} else {
+// If config is invalid (placeholders not replaced), silently skip initialization
+if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('%REACT_APP_')) {
   firebase.initializeApp(firebaseConfig);
   const messaging = firebase.messaging();
 
   messaging.onBackgroundMessage(function(payload) {
-    console.log('[firebase-messaging-sw.js] Received background message ', payload);
-    // Customize notification here
+    // Handle background push notification
     const notificationTitle = payload.notification?.title || 'New Message';
     const notificationOptions = {
       body: payload.notification?.body || 'You have a new message.',
@@ -40,15 +38,3 @@ if (firebaseConfig.apiKey && firebaseConfig.apiKey.startsWith('%REACT_APP_')) {
     self.registration.showNotification(notificationTitle, notificationOptions);
   });
 }
-
-messaging.onBackgroundMessage(function(payload) {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  // Customize notification here
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/icon-512x512.png' // Optional: path to your app icon
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});

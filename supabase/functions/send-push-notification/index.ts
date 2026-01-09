@@ -236,9 +236,10 @@ serve(async (req) => {
       );
 
       // Fetch FCM tokens for specified users
+      // NOTE: Using fcm_tokens table (canonical) instead of push_subscriptions
       const { data: subscriptions, error } = await supabase
-        .from('push_subscriptions')
-        .select('user_id, fcm_token')
+        .from('fcm_tokens')
+        .select('user_id, token')
         .in('user_id', user_ids);
 
       if (error) {
@@ -247,7 +248,7 @@ serve(async (req) => {
         for (const sub of subscriptions) {
           const message: FCMMessage = {
             message: {
-              token: sub.fcm_token,
+              token: sub.token,
               notification: { title, body },
               data,
               android: { priority },
@@ -256,7 +257,7 @@ serve(async (req) => {
           };
 
           const result = await sendFCMMessage(accessToken, projectId, message);
-          results.push({ token: sub.fcm_token.slice(0, 10) + '...', ...result });
+          results.push({ token: sub.token.slice(0, 10) + '...', ...result });
 
           if (!result.success) {
             logger.warn('Failed to send to token', {
@@ -279,9 +280,10 @@ serve(async (req) => {
         SB_SECRET_KEY ?? ''
       );
 
+      // NOTE: Using fcm_tokens table (canonical) instead of push_subscriptions
       const { data: allTokens, error } = await supabase
-        .from('push_subscriptions')
-        .select('fcm_token');
+        .from('fcm_tokens')
+        .select('token');
 
       if (error) {
         logger.error('Failed to fetch all push subscriptions', { error: error.message });
@@ -289,7 +291,7 @@ serve(async (req) => {
         for (const sub of allTokens) {
           const message: FCMMessage = {
             message: {
-              token: sub.fcm_token,
+              token: sub.token,
               notification: { title, body },
               data,
               android: { priority },
@@ -298,7 +300,7 @@ serve(async (req) => {
           };
 
           const result = await sendFCMMessage(accessToken, projectId, message);
-          results.push({ token: sub.fcm_token.slice(0, 10) + '...', ...result });
+          results.push({ token: sub.token.slice(0, 10) + '...', ...result });
         }
         logger.info('Broadcast notification sent', {
           attempted: allTokens.length,
