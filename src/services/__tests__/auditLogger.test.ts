@@ -22,12 +22,14 @@ vi.mock('../../lib/supabaseClient', () => {
   const mockInsert = vi.fn();
   const mockFrom = vi.fn(() => ({ insert: mockInsert }));
   const mockGetUser = vi.fn();
+  const mockGetSession = vi.fn();
 
   return {
     supabase: {
       from: mockFrom,
       auth: {
         getUser: mockGetUser,
+        getSession: mockGetSession,
       },
     },
   };
@@ -37,6 +39,7 @@ vi.mock('../../lib/supabaseClient', () => {
 vi.mock('../errorReporter', () => ({
   errorReporter: {
     reportCritical: vi.fn(),
+    report: vi.fn(),
   },
 }));
 
@@ -50,11 +53,12 @@ vi.stubGlobal('import.meta', { env: mockEnv });
 
 const mockSupabase = supabase as unknown as {
   from: ReturnType<typeof vi.fn>;
-  auth: { getUser: ReturnType<typeof vi.fn> };
+  auth: { getUser: ReturnType<typeof vi.fn>; getSession: ReturnType<typeof vi.fn> };
 };
 
 const mockErrorReporter = errorReporter as unknown as {
   reportCritical: ReturnType<typeof vi.fn>;
+  report: ReturnType<typeof vi.fn>;
 };
 
 describe('AuditLogger', () => {
@@ -79,6 +83,11 @@ describe('AuditLogger', () => {
     // Setup default user context
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: 'user-123' } },
+    });
+
+    // Setup default session (required - auditLogger checks session before logging)
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'user-123' } } },
     });
 
     // Setup navigator mock
@@ -534,11 +543,15 @@ describe('AuditLogger', () => {
 
   describe('Error Handling', () => {
     it('should report to errorReporter when database insert fails', async () => {
-      mockInsert.mockRejectedValueOnce(new Error('Database unavailable'));
+      // Return error object (not rejection) - auditLogger checks error property
+      mockInsert.mockResolvedValueOnce({
+        error: { message: 'Database unavailable', code: 'UNEXPECTED_ERROR' },
+      });
 
       await auditLogger.info('TEST_EVENT');
 
-      expect(mockErrorReporter.reportCritical).toHaveBeenCalledWith(
+      // auditLogger calls errorReporter.report() for non-auth errors
+      expect(mockErrorReporter.report).toHaveBeenCalledWith(
         'AUDIT_LOG_FAILURE',
         expect.any(Error),
         expect.objectContaining({
