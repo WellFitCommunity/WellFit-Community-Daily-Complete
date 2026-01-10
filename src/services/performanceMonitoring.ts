@@ -75,6 +75,11 @@ class PerformanceMonitor {
     if (!this.supabase) return;
 
     try {
+      // Check for authenticated session before database operations
+      // Prevents 401 errors when called before user login
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
       const { error } = await this.supabase.from('error_logs').insert({
         ...data,
         user_id: this.userId,
@@ -122,6 +127,11 @@ class PerformanceMonitor {
     if (!this.supabase) return;
 
     try {
+      // Check for authenticated session before database operations
+      // Prevents 401 errors when called before user login
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
       await this.supabase.from('performance_metrics').insert({
         ...data,
         user_id: this.userId
@@ -177,6 +187,11 @@ class PerformanceMonitor {
     if (!this.supabase) return;
 
     try {
+      // Check for authenticated session before database operations
+      // Prevents 401 errors when called before user login
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
       await this.supabase.from('feature_usage').insert({
         ...data,
         user_id: this.userId
@@ -190,34 +205,51 @@ class PerformanceMonitor {
   // SESSION TRACKING
   // ========================================================================
 
-  private startSession() {
+  private async startSession() {
     if (!this.supabase || typeof window === 'undefined') return;
 
-    this.sessionId = crypto.randomUUID();
+    try {
+      // Check for authenticated session before database operations
+      // Prevents 401 errors when called before user login
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (!session?.user?.id) return;
 
-    // Log session start
-    this.supabase.from('user_sessions').insert({
-      id: this.sessionId,
-      user_id: this.userId,
-      device_type: this.getDeviceType(),
-      browser: this.getBrowserName(),
-      os: this.getOS()
-    });
+      this.sessionId = crypto.randomUUID();
 
-    // Update session on page unload
-    window.addEventListener('beforeunload', () => {
-      this.endSession();
-    });
+      // Log session start
+      await this.supabase.from('user_sessions').insert({
+        id: this.sessionId,
+        user_id: this.userId,
+        device_type: this.getDeviceType(),
+        browser: this.getBrowserName(),
+        os: this.getOS()
+      });
+
+      // Update session on page unload
+      window.addEventListener('beforeunload', () => {
+        this.endSession();
+      });
+    } catch {
+      // Fail silently - session tracking is non-critical
+    }
   }
 
-  private endSession() {
+  private async endSession() {
     if (!this.supabase || !this.sessionId) return;
 
-    const now = new Date().toISOString();
-    // Fire and forget - don't wait for response
-    this.supabase.from('user_sessions')
-      .update({ session_end: now })
-      .eq('id', this.sessionId);
+    try {
+      // Check for authenticated session before database operations
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
+      const now = new Date().toISOString();
+      // Fire and forget - don't wait for response
+      await this.supabase.from('user_sessions')
+        .update({ session_end: now })
+        .eq('id', this.sessionId);
+    } catch {
+      // Fail silently - session end tracking is non-critical
+    }
   }
 
   // ========================================================================

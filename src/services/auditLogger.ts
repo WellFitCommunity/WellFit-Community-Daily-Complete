@@ -74,6 +74,15 @@ class AuditLogger {
     let context: { userId?: string; ipAddress?: string | null; userAgent?: string } = {};
 
     try {
+      // Check for authenticated session before attempting database operations
+      // This prevents 401 errors when audit logging is called before user login
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        // No authenticated session - skip database logging to prevent 401 errors
+        // Audit logs require authentication per RLS policies
+        return;
+      }
+
       context = await this.getUserContext();
 
       const auditEntry: AuditLogEntry = {
