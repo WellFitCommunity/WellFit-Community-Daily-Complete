@@ -2,6 +2,67 @@
 
 ---
 
+## Quick Reference - The 10 Commandments
+
+| # | Rule | Violation = Reject |
+|---|------|-------------------|
+| 1 | **STOP AND ASK** if unclear, blocked, or choosing between approaches | Guessing, improvising |
+| 2 | **No `any` type** - use `unknown` + type guards (see [TypeScript Standards](#typescript-standards)) | `data: any`, `catch (err: any)` |
+| 3 | **No `console.log`** - use `auditLogger` for all logging | Any console.* in production |
+| 4 | **Run `npm run typecheck`** before considering work done | Skipping type verification |
+| 5 | **All 5,564 tests must pass** - no skips, no deletions | `.skip()`, `.only()`, deleting tests |
+| 6 | **No workarounds** - if blocked, ask Maria | "temporary fix", "for now", "hack" |
+| 7 | **Vite environment** - `import.meta.env.VITE_*` only | `process.env.REACT_APP_*` |
+| 8 | **No PHI in browser** - patient IDs only, data stays server-side | Names, SSN, DOB in frontend |
+| 9 | **Run migrations you create** - `npx supabase db push` | Unexecuted migration files |
+
+### Before Every Task
+```bash
+git log --oneline -3     # Review recent commits
+npm run typecheck        # Verify types compile
+npm run lint             # Check for warnings
+npm test                 # All tests pass
+```
+
+### Error Handling Template
+```typescript
+catch (err: unknown) {
+  await auditLogger.error('OPERATION_FAILED',
+    err instanceof Error ? err : new Error(String(err)),
+    { context: 'data here' }
+  );
+  return failure('OPERATION_FAILED', 'User-friendly message');
+}
+```
+
+---
+
+## Common AI Mistakes - Why These Rules Exist
+
+This codebase eliminated 1,400+ `any` violations and 1,671 total lint warnings in January 2026. These rules exist because AI coding assistants consistently make these mistakes:
+
+| AI Mistake | Our Prevention | Why AIs Do This |
+|------------|----------------|-----------------|
+| `catch (err)` or `catch (e: any)` | Requires `err: unknown` | AIs copy legacy patterns from training data |
+| `console.log` debugging left in code | Requires `auditLogger` | Quick output during generation |
+| Creating new files instead of editing | "Prefer editing existing files" | Starting fresh feels easier than understanding |
+| Guessing when blocked | STOP AND ASK protocol | AIs want to appear helpful, not "stuck" |
+| "Temporary" workarounds | No workarounds policy | Solves immediate problem, defers pain |
+| `process.env.REACT_APP_*` | Requires `import.meta.env.VITE_*` | CRA patterns dominate training data |
+| `forwardRef()` wrapper | React 19 ref-as-prop | Pre-React 19 patterns in training |
+| Deleting "unused" code aggressively | "Tables that exist are FEATURES" | Cleanup instinct without context |
+| Skipping tests with `.skip()` | Explicitly forbidden | Makes the error "go away" |
+| Over-engineering simple requests | "Surgeon, not butcher" | AIs love showing off abstractions |
+| Not verifying routes are wired | Route connectivity check | Writes component, forgets App.tsx |
+| Silent error swallowing | Must log + return `failure()` | Empty catch blocks "handle" errors |
+| PHI in frontend code | HIPAA section | Doesn't understand data sensitivity |
+| Committing without running typecheck | Required before completion | Eager to show "done" |
+| Using `as Error` instead of narrowing | `err instanceof Error ? ...` | Shorter = seems better |
+
+**The STOP AND ASK protocol is the highest-value rule.** Most AI mistakes stem from continuing when uncertain rather than asking.
+
+---
+
 # ⛔ NO SHORTCUTS. NO EXCUSES. NO EXCEPTIONS. ⛔
 
 **THIS CODEBASE REQUIRES ANTHROPIC-QUALITY ENGINEERING.**
@@ -13,11 +74,9 @@ We do NOT accept:
 - Ignoring CLAUDE.md rules to save time
 - Sub-agent work that isn't verified before completion
 - ANY pattern that prioritizes speed over correctness
-- **The `any` type - it is a LAST RESORT (see TypeScript Standards below)**
 
 We REQUIRE:
 - **Seasoned, stable, careful coding** that Anthropic is known for
-- Every catch block properly typed (`err: unknown`) with `auditLogger`
 - Every change verified with `npm run typecheck` before considering it done
 - Reading and following EVERY rule in this document
 - Asking questions when uncertain instead of guessing
@@ -77,16 +136,11 @@ These are not suggestions. They are requirements.
 
 ---
 
-### TypeScript Standards - `any` IS A LAST RESORT
+### TypeScript Standards
 
-**The `any` type should only be used as a last resort when no other option exists.**
+<a id="typescript-standards"></a>
 
-Using `any` is:
-- Technical debt that costs time and money to fix later
-- A runtime bug waiting to happen that TypeScript can't catch
-- A violation of the "do it right the first time" principle
-
-**Instead of `any`, use:**
+**The `any` type is forbidden. Use `unknown` + type guards or define interfaces.**
 
 | Situation | Wrong | Right |
 |-----------|-------|-------|
@@ -95,6 +149,7 @@ Using `any` is:
 | JSON parsing | `JSON.parse(str) as any` | Generic: `parseJSON<T>(str): T` |
 | Function parameters | `(data: any)` | `(data: unknown)` or proper interface |
 | Third-party data | `response: any` | Define expected interface |
+| Error handling | `catch (err: any)` | `catch (err: unknown)` |
 
 **Proper patterns:**
 
@@ -120,6 +175,12 @@ function parseJSON<T>(str: string): T | null {
 // Unknown data - narrow with type guards
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+// Error handling - always use unknown
+catch (err: unknown) {
+  const error = err instanceof Error ? err : new Error(String(err));
+  await auditLogger.error('OPERATION_FAILED', error, { context });
 }
 ```
 
@@ -602,7 +663,7 @@ export async function analyzePatientRisk(
 
 ## Error Handling Pattern - REQUIRED
 
-**All error handling MUST follow this pattern:**
+**All error handling MUST follow this pattern** (see [TypeScript Standards](#typescript-standards) for `unknown` vs `any`):
 
 ```typescript
 try {
@@ -619,14 +680,11 @@ try {
 ### Rules
 | Do This | Not This |
 |---------|----------|
-| `catch (err: unknown)` | `catch (err: any)` |
 | `err instanceof Error ? err : new Error(String(err))` | `err as Error` |
 | `auditLogger.error(...)` | `console.error(...)` |
 | Return `failure()` result | Throw exceptions |
 
 ### Never
-- `catch (err: any)` - always use `unknown`
-- `catch (err)` without type annotation
 - Swallow errors silently
 - Use `console.log/error/warn` for error logging
 
