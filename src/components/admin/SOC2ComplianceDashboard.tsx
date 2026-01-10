@@ -11,8 +11,13 @@
  * Consolidates: SOC2AuditDashboard, SOC2SecurityDashboard, SOC2IncidentResponseDashboard
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+
+// Polling configuration with exponential backoff
+const INITIAL_POLL_INTERVAL = 30000; // 30 seconds
+const MAX_POLL_INTERVAL = 300000; // 5 minutes max
+const MAX_CONSECUTIVE_ERRORS = 5;
 import {
   createSOC2MonitoringService,
   PHIAccessAudit,
@@ -133,6 +138,12 @@ const SOC2ComplianceDashboard: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
+  // Polling and error handling state
+  const [pollingPaused, setPollingPaused] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const consecutiveErrorsRef = useRef(0);
+  const currentIntervalRef = useRef(INITIAL_POLL_INTERVAL);
+
   // Audit Trail State
   const [phiAccess, setPhiAccess] = useState<PHIAccessAudit[]>([]);
   const [auditStats, setAuditStats] = useState<AuditSummaryStats[]>([]);
@@ -196,21 +207,63 @@ const SOC2ComplianceDashboard: React.FC = () => {
   }, [supabase]);
 
   const loadAllData = useCallback(async () => {
+    // Don't poll if access was denied (403)
+    if (accessDenied) return;
+
     setLoading(true);
-    await Promise.all([loadAuditData(), loadSecurityData(), loadIncidentData()]);
-    setLastRefresh(new Date());
-    setLoading(false);
-  }, [loadAuditData, loadSecurityData, loadIncidentData]);
+    try {
+      await Promise.all([loadAuditData(), loadSecurityData(), loadIncidentData()]);
+      setLastRefresh(new Date());
+
+      // Reset error counter on success
+      consecutiveErrorsRef.current = 0;
+      currentIntervalRef.current = INITIAL_POLL_INTERVAL;
+    } catch (error: unknown) {
+      // Increment consecutive errors and apply backoff
+      consecutiveErrorsRef.current += 1;
+
+      // Check if error indicates access denied
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('403') || errorMessage.includes('401') || errorMessage.includes('permission denied')) {
+        setAccessDenied(true);
+        setPollingPaused(true);
+      } else if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+        setPollingPaused(true);
+      } else {
+        // Exponential backoff: double the interval up to max
+        currentIntervalRef.current = Math.min(
+          currentIntervalRef.current * 2,
+          MAX_POLL_INTERVAL
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [loadAuditData, loadSecurityData, loadIncidentData, accessDenied]);
 
   // Initial load and auto-refresh
   useEffect(() => {
     loadAllData();
     auditLogger.info('SOC2_COMPLIANCE_DASHBOARD_VIEW', { tab: activeTab });
 
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(loadAllData, 30000);
-    return () => clearInterval(interval);
-  }, [loadAllData, activeTab]);
+    // Dynamic polling interval with backoff
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const startPolling = () => {
+      if (pollingPaused) return;
+      intervalId = setInterval(() => {
+        if (!pollingPaused) {
+          loadAllData();
+        }
+      }, currentIntervalRef.current);
+    };
+
+    startPolling();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [loadAllData, activeTab, pollingPaused]);
 
   // Refresh handler
   const handleRefresh = async () => {
@@ -301,10 +354,29 @@ const SOC2ComplianceDashboard: React.FC = () => {
   const totalOpenIncidents = incidents.filter((i) => !i.investigated).length;
 
   // ============================================================================
+  // Access Denied State
+  // ============================================================================
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-slate-900 p-6">
+        <div className="bg-amber-900/30 border-2 border-amber-500/50 rounded-xl p-8 text-center max-w-lg mx-auto mt-20">
+          <div className="text-5xl mb-4">🔒</div>
+          <h3 className="text-xl font-semibold text-amber-200 mb-3">Access Restricted</h3>
+          <p className="text-amber-100/80">
+            You don&apos;t have permission to view SOC 2 compliance data.
+            Contact your administrator if you need access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================================
   // Loading State
   // ============================================================================
 
-  if (loading) {
+  if (loading && phiAccess.length === 0 && !securityMetrics) {
     return (
       <div className="min-h-screen bg-slate-900 p-6">
         <div className="animate-pulse space-y-4">

@@ -1,5 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+
+// Polling configuration with exponential backoff
+const INITIAL_POLL_INTERVAL = 30000; // 30 seconds
+const MAX_POLL_INTERVAL = 300000; // 5 minutes max
+const MAX_CONSECUTIVE_ERRORS = 5;
 
 interface ErrorLog {
   id: string;
@@ -34,17 +39,34 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
     warning: 0,
     info: 0
   });
+  const [pollingPaused, setPollingPaused] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const consecutiveErrorsRef = useRef(0);
+  const currentIntervalRef = useRef(INITIAL_POLL_INTERVAL);
 
   const loadMonitoringData = useCallback(async () => {
+    // Don't poll if access was denied (403)
+    if (accessDenied) return;
+
     try {
       setLoading(true);
 
       // Load recent errors
-      const { data: errorData } = await supabase
+      const { data: errorData, error: errorLogsError } = await supabase
         .from('error_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
+
+      // Check for 403/401 errors - stop polling if access denied
+      if (errorLogsError) {
+        const errorCode = (errorLogsError as { code?: string }).code;
+        if (errorCode === 'PGRST301' || errorCode === '42501') {
+          setAccessDenied(true);
+          setPollingPaused(true);
+          return;
+        }
+      }
 
       if (errorData) {
         setErrors(errorData);
@@ -59,29 +81,68 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
       }
 
       // Load recent performance metrics
-      const { data: metricsData } = await supabase
+      const { data: metricsData, error: metricsError } = await supabase
         .from('performance_metrics')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
 
+      // Check for 403/401 errors
+      if (metricsError) {
+        const errorCode = (metricsError as { code?: string }).code;
+        if (errorCode === 'PGRST301' || errorCode === '42501') {
+          setAccessDenied(true);
+          setPollingPaused(true);
+          return;
+        }
+      }
+
       if (metricsData) {
         setMetrics(metricsData);
       }
+
+      // Reset error counter on success
+      consecutiveErrorsRef.current = 0;
+      currentIntervalRef.current = INITIAL_POLL_INTERVAL;
     } catch {
-      // Error handled silently - monitoring should not interrupt user flow
+      // Increment consecutive errors and apply backoff
+      consecutiveErrorsRef.current += 1;
+
+      if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+        setPollingPaused(true);
+      } else {
+        // Exponential backoff: double the interval up to max
+        currentIntervalRef.current = Math.min(
+          currentIntervalRef.current * 2,
+          MAX_POLL_INTERVAL
+        );
+      }
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, accessDenied]);
 
   useEffect(() => {
     loadMonitoringData();
 
-    // Refresh every 30 seconds
-    const interval = setInterval(loadMonitoringData, 30000);
-    return () => clearInterval(interval);
-  }, [loadMonitoringData]);
+    // Dynamic polling interval with backoff
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const startPolling = () => {
+      if (pollingPaused) return;
+      intervalId = setInterval(() => {
+        if (!pollingPaused) {
+          loadMonitoringData();
+        }
+      }, currentIntervalRef.current);
+    };
+
+    startPolling();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [loadMonitoringData, pollingPaused]);
 
   const getSeverityColor = (severity: string) => {
     const colors = {
@@ -108,7 +169,23 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
     return `${(ms / 1000).toFixed(2)}s`;
   };
 
-  if (loading) {
+  // Show access denied message if user lacks permissions
+  if (accessDenied) {
+    return (
+      <div className={`${className} p-6`}>
+        <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-6 text-center">
+          <div className="text-4xl mb-4">🔒</div>
+          <h3 className="text-lg font-semibold text-amber-800 mb-2">Access Restricted</h3>
+          <p className="text-sm text-amber-700">
+            You don&apos;t have permission to view performance monitoring data.
+            Contact your administrator if you need access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && errors.length === 0 && metrics.length === 0) {
     return (
       <div className={`${className} animate-pulse`}>
         <div className="space-y-4">

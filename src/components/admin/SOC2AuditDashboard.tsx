@@ -7,9 +7,14 @@
  * Zero tech debt - surgeon not a butcher
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { createSOC2MonitoringService, PHIAccessAudit, AuditSummaryStats, ComplianceStatus } from '../../services/soc2MonitoringService';
+
+// Polling configuration with exponential backoff
+const INITIAL_POLL_INTERVAL = 60000; // 60 seconds
+const MAX_POLL_INTERVAL = 300000; // 5 minutes max
+const MAX_CONSECUTIVE_ERRORS = 5;
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
 
@@ -22,8 +27,15 @@ export const SOC2AuditDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [filterRiskLevel, setFilterRiskLevel] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL');
+  const [pollingPaused, setPollingPaused] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const consecutiveErrorsRef = useRef(0);
+  const currentIntervalRef = useRef(INITIAL_POLL_INTERVAL);
 
   const loadAuditData = async () => {
+    // Don't poll if access was denied (403)
+    if (accessDenied) return;
+
     try {
       setError(null);
       const service = createSOC2MonitoringService(supabase);
@@ -34,11 +46,35 @@ export const SOC2AuditDashboard: React.FC = () => {
         service.getComplianceStatus()
       ]);
 
+      // Check if any data indicates access denied (empty arrays may indicate RLS blocked access)
+      // The service wraps errors, so we check if we got valid data
+
       setPhiAccess(phiData);
       setAuditStats(statsData);
       setComplianceStatus(complianceData);
       setLastRefresh(new Date());
-    } catch (err) {
+
+      // Reset error counter on success
+      consecutiveErrorsRef.current = 0;
+      currentIntervalRef.current = INITIAL_POLL_INTERVAL;
+    } catch (err: unknown) {
+      // Increment consecutive errors and apply backoff
+      consecutiveErrorsRef.current += 1;
+
+      // Check if error indicates access denied
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes('403') || errorMessage.includes('401') || errorMessage.includes('permission denied')) {
+        setAccessDenied(true);
+        setPollingPaused(true);
+      } else if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+        setPollingPaused(true);
+      } else {
+        // Exponential backoff: double the interval up to max
+        currentIntervalRef.current = Math.min(
+          currentIntervalRef.current * 2,
+          MAX_POLL_INTERVAL
+        );
+      }
 
       setError('Failed to load audit and compliance data');
     } finally {
@@ -49,12 +85,25 @@ export const SOC2AuditDashboard: React.FC = () => {
   useEffect(() => {
     loadAuditData();
 
-    // Auto-refresh every 60 seconds
-    const interval = setInterval(loadAuditData, 60000);
+    // Dynamic polling interval with backoff
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
-  }, []);
+    const startPolling = () => {
+      if (pollingPaused) return;
+      intervalId = setInterval(() => {
+        if (!pollingPaused) {
+          loadAuditData();
+        }
+      }, currentIntervalRef.current);
+    };
+
+    startPolling();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only, with polling state
+  }, [pollingPaused, accessDenied]);
 
   const getRiskLevelColor = (risk: string) => {
     switch (risk) {
@@ -95,7 +144,23 @@ export const SOC2AuditDashboard: React.FC = () => {
   const totalControls = complianceStatus.length;
   const complianceScore = totalControls > 0 ? Math.round((compliantControls / totalControls) * 100) : 0;
 
-  if (loading) {
+  // Show access denied message if user lacks permissions
+  if (accessDenied) {
+    return (
+      <div className="p-6">
+        <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-6 text-center max-w-lg mx-auto">
+          <div className="text-4xl mb-4">🔒</div>
+          <h3 className="text-lg font-semibold text-amber-800 mb-2">Access Restricted</h3>
+          <p className="text-sm text-amber-700">
+            You don&apos;t have permission to view SOC 2 audit and compliance data.
+            Contact your administrator if you need access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && phiAccess.length === 0 && auditStats.length === 0) {
     return (
       <div className="space-y-4">
         <div className="animate-pulse">

@@ -7,8 +7,13 @@
  * Design: Envision Atlus Clinical Design System
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+
+// Polling configuration with exponential backoff
+const INITIAL_POLL_INTERVAL = 60000; // 60 seconds
+const MAX_POLL_INTERVAL = 300000; // 5 minutes max
+const MAX_CONSECUTIVE_ERRORS = 5;
 import {
   EACard,
   EACardHeader,
@@ -72,8 +77,15 @@ export const SystemAdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [pollingPaused, setPollingPaused] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const consecutiveErrorsRef = useRef(0);
+  const currentIntervalRef = useRef(INITIAL_POLL_INTERVAL);
 
   const loadSystemData = async () => {
+    // Don't poll if access was denied (403)
+    if (accessDenied) return;
+
     try {
       setError(null);
 
@@ -103,6 +115,24 @@ export const SystemAdminDashboard: React.FC = () => {
           .select('duration_ms')
           .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       ]);
+
+      // Check for 403/401 errors - stop polling if access denied
+      const checkAccessDenied = (result: { error?: { code?: string } | null }) => {
+        if (result.error) {
+          const errorCode = result.error.code;
+          if (errorCode === 'PGRST301' || errorCode === '42501') {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      if (checkAccessDenied(errorsData) || checkAccessDenied(metricsData)) {
+        setAccessDenied(true);
+        setPollingPaused(true);
+        setLoading(false);
+        return;
+      }
 
       // Calculate average response time
       const avgResponseTime = metricsData.data && metricsData.data.length > 0
@@ -141,7 +171,23 @@ export const SystemAdminDashboard: React.FC = () => {
       }
 
       setLastRefresh(new Date());
-    } catch (err) {
+
+      // Reset error counter on success
+      consecutiveErrorsRef.current = 0;
+      currentIntervalRef.current = INITIAL_POLL_INTERVAL;
+    } catch {
+      // Increment consecutive errors and apply backoff
+      consecutiveErrorsRef.current += 1;
+
+      if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+        setPollingPaused(true);
+      } else {
+        // Exponential backoff: double the interval up to max
+        currentIntervalRef.current = Math.min(
+          currentIntervalRef.current * 2,
+          MAX_POLL_INTERVAL
+        );
+      }
 
       setError('Failed to load system monitoring data');
     } finally {
@@ -152,12 +198,25 @@ export const SystemAdminDashboard: React.FC = () => {
   useEffect(() => {
     loadSystemData();
 
-    // Auto-refresh every 60 seconds
-    const interval = setInterval(loadSystemData, 60000);
+    // Dynamic polling interval with backoff
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only
-  }, []);
+    const startPolling = () => {
+      if (pollingPaused) return;
+      intervalId = setInterval(() => {
+        if (!pollingPaused) {
+          loadSystemData();
+        }
+      }, currentIntervalRef.current);
+    };
+
+    startPolling();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Load on mount only, with polling state
+  }, [pollingPaused, accessDenied]);
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -200,7 +259,23 @@ export const SystemAdminDashboard: React.FC = () => {
     return { status: 'healthy', color: 'emerald', icon: '🟢' };
   };
 
-  if (loading) {
+  // Show access denied message if user lacks permissions
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8">
+        <div className="bg-amber-900/30 border-2 border-amber-500/50 rounded-xl p-8 text-center max-w-lg mx-auto mt-20">
+          <div className="text-5xl mb-4">🔒</div>
+          <h3 className="text-xl font-semibold text-amber-200 mb-3">Access Restricted</h3>
+          <p className="text-amber-100/80">
+            You don&apos;t have permission to view system administration data.
+            Contact your administrator if you need access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && !metrics) {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8">
         <div className="animate-pulse space-y-6">
