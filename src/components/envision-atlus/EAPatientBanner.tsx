@@ -20,7 +20,6 @@ import React, { useState } from 'react';
 import { cn } from '../../lib/utils';
 import { usePatientContextSafe, SelectedPatient } from '../../contexts/PatientContext';
 import { PatientAvatar } from '../patient-avatar/PatientAvatar';
-import { AvatarThumbnail } from '../patient-avatar';
 import {
   User,
   X,
@@ -29,7 +28,6 @@ import {
   AlertTriangle,
   Building2,
   Hash,
-  Maximize2,
   Minimize2
 } from 'lucide-react';
 
@@ -105,25 +103,20 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
       role="banner"
       aria-label="Selected patient"
     >
-      {/* Patient Avatar/Icon */}
+      {/* Patient Avatar/Icon - Uses PatientAvatar in compact mode which auto-fetches data */}
       {showAvatar ? (
-        <button
-          onClick={() => setShowFullAvatar(!showFullAvatar)}
-          className="relative group"
+        <div
+          className="cursor-pointer"
           title="Click to view clinical avatar with markers"
         >
-          <AvatarThumbnail
+          <PatientAvatar
             patientId={selectedPatient.id}
             patientName={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
-            skinTone="medium"
-            genderPresentation="neutral"
-            markers={[]}
-            className="border-2 border-teal-500/30 hover:border-teal-400 transition-colors"
+            initialMode="compact"
+            editable={false}
+            onMarkerClick={() => setShowFullAvatar(true)}
           />
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <Maximize2 className="w-2.5 h-2.5 text-teal-400" />
-          </div>
-        </button>
+        </div>
       ) : (
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30">
           <User className="w-4 h-4 text-teal-400" />
