@@ -63,27 +63,26 @@ class AuditLogger {
 
   /**
    * Core audit logging method
+   *
+   * IMPORTANT: This method is designed to NEVER block the UI or cause cascading errors.
+   * - Fails silently on auth/RLS errors (401, 403)
+   * - Does not retry on failure
+   * - Does not trigger error reporting for expected failures
    */
   private async log(entry: Partial<AuditLogEntry>, _level: AuditLogLevel = 'info'): Promise<void> {
-    // Development logging disabled for HIPAA compliance
-    // All audit logs are stored in audit_logs table
-
     // Skip database logging if disabled (for testing)
     if (!this.loggingEnabled) return;
-
-    let context: { userId?: string; ipAddress?: string | null; userAgent?: string } = {};
 
     try {
       // Check for authenticated session before attempting database operations
       // This prevents 401 errors when audit logging is called before user login
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
-        // No authenticated session - skip database logging to prevent 401 errors
-        // Audit logs require authentication per RLS policies
+        // No authenticated session - skip silently (expected during login flow)
         return;
       }
 
-      context = await this.getUserContext();
+      const context = await this.getUserContext();
 
       const auditEntry: AuditLogEntry = {
         event_type: entry.event_type || 'UNKNOWN_EVENT',
@@ -100,16 +99,27 @@ class AuditLogger {
         metadata: entry.metadata
       };
 
-      await supabase.from('audit_logs').insert(auditEntry);
-    } catch (error) {
-      // Critical: audit logging failed - use error reporter as fallback
-      errorReporter.reportCritical('AUDIT_LOG_FAILURE', error as Error, {
-        event_type: entry.event_type,
-        event_category: entry.event_category,
-        actor_user_id: context.userId || entry.actor_user_id,
-      });
+      // Fire and check result - DO NOT await in a way that blocks UI
+      const { error } = await supabase.from('audit_logs').insert(auditEntry);
 
-      // Error is tracked by errorReporter above
+      // Silently ignore auth/RLS errors - these are expected when session is stale
+      // Do NOT report these as critical errors - they would cause cascading issues
+      if (error) {
+        const errorCode = (error as { code?: string }).code;
+        // 42501 = RLS violation, PGRST301 = JWT expired, 403 codes
+        if (errorCode === '42501' || errorCode === 'PGRST301' || error.message?.includes('403')) {
+          // Expected auth failure - fail silently, don't cascade
+          return;
+        }
+        // Only report unexpected errors (not auth-related)
+        errorReporter.report('AUDIT_LOG_FAILURE', new Error(error.message), {
+          event_type: entry.event_type,
+          code: errorCode
+        });
+      }
+    } catch {
+      // Swallow all errors - audit logging must NEVER break the app
+      // This is intentional: logging failure should not cascade to UI stalls
     }
   }
 

@@ -7,8 +7,12 @@ import { auditLogger } from '../services/auditLogger';
 // Storage key pattern for Supabase auth tokens
 const SUPABASE_AUTH_KEY_PATTERN = /^sb-.*$/;
 
-// REST endpoint that is currently spamming failures
+// REST endpoints that can spam failures - skip audit logging for these to prevent loops
 const REALTIME_SUBSCRIPTION_REGISTRY_PATH = '/rest/v1/realtime_subscription_registry';
+const AUDIT_LOGS_PATH = '/rest/v1/audit_logs';
+
+// Endpoints where we should NOT trigger audit logging (prevents infinite loops)
+const SKIP_AUDIT_LOGGING_PATHS = [AUDIT_LOGS_PATH, REALTIME_SUBSCRIPTION_REGISTRY_PATH];
 
 // Throttle repeated log entries so we get signal instead of a log storm
 const FAILURE_LOG_COOLDOWN_MS = 2000;
@@ -111,6 +115,19 @@ export function createAuthAwareFetch(): typeof fetch {
     const isRestEndpoint = url.includes('/rest/v1/');
     const isFunctionsEndpoint = url.includes('/functions/v1/');
 
+    // CRITICAL: Skip audit logging for endpoints that could cause infinite loops
+    // If audit_logs itself fails, we don't want to try logging that failure to audit_logs
+    const shouldSkipAuditLogging = SKIP_AUDIT_LOGGING_PATHS.some(path => url.includes(path));
+
+    // Helper to conditionally log - prevents infinite loops
+    const safeAuditLog = (eventType: string, severity: 'low' | 'medium' | 'high' | 'critical', metadata: Record<string, unknown>) => {
+      if (!shouldSkipAuditLogging) {
+        auditLogger.security(eventType, severity, metadata).catch(() => {
+          // Swallow - logging failure should never cascade
+        });
+      }
+    };
+
     const status = response.status;
     const isUnauthorized = status === 401;
     const isBadRequest = status === 400;
@@ -155,7 +172,7 @@ export function createAuthAwareFetch(): typeof fetch {
       // Edge Functions can legitimately return 401 for app-level authorization.
       // Do NOT destroy the user's session here.
       if (isFunctionsEndpoint) {
-        auditLogger.security('EDGE_FUNCTION_401', 'low', {
+        safeAuditLog('EDGE_FUNCTION_401', 'low', {
           source: 'authAwareFetch',
           url,
           method,
@@ -168,7 +185,7 @@ export function createAuthAwareFetch(): typeof fetch {
       // /auth/v1/user can return non-actionable 401/403 depending on how it's called.
       // Never nuke session based on that endpoint alone.
       if (isAuthUserEndpoint) {
-        auditLogger.security('AUTH_USER_ENDPOINT_UNAUTHORIZED', 'low', {
+        safeAuditLog('AUTH_USER_ENDPOINT_UNAUTHORIZED', 'low', {
           source: 'authAwareFetch',
           url,
           method,
@@ -198,7 +215,7 @@ export function createAuthAwareFetch(): typeof fetch {
           handleAuthFailure(`jwt_invalid: ${rawMessage || 'unknown'}`);
         } else {
           // Log for diagnostics, but do NOT logout
-          auditLogger.security('SUPABASE_401_NON_STRONG_SIGNAL', 'low', {
+          safeAuditLog('SUPABASE_401_NON_STRONG_SIGNAL', 'low', {
             source: 'authAwareFetch',
             url,
             method,
@@ -212,7 +229,7 @@ export function createAuthAwareFetch(): typeof fetch {
       } catch {
         // CRITICAL CHANGE:
         // Do NOT logout on unparseable 401. This was nuking sessions during legitimate gates.
-        auditLogger.security('SUPABASE_401_UNPARSEABLE', 'low', {
+        safeAuditLog('SUPABASE_401_UNPARSEABLE', 'low', {
           source: 'authAwareFetch',
           url,
           method,
@@ -270,7 +287,7 @@ export function createAuthAwareFetch(): typeof fetch {
           // ignore parse errors
         }
 
-        auditLogger.security('REALTIME_REGISTRY_PATCH_FAILED', 'low', {
+        safeAuditLog('REALTIME_REGISTRY_PATCH_FAILED', 'low', {
           source: 'authAwareFetch',
           url,
           method,
@@ -326,7 +343,7 @@ export function createAuthAwareFetch(): typeof fetch {
         // ignore parse errors
       }
 
-      auditLogger.security('REST_PAYLOAD_ERROR', 'low', {
+      safeAuditLog('REST_PAYLOAD_ERROR', 'low', {
         source: 'authAwareFetch',
         url,
         method,
