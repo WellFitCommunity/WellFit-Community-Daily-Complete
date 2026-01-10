@@ -19,6 +19,8 @@
 import React, { useState } from 'react';
 import { cn } from '../../lib/utils';
 import { usePatientContextSafe, SelectedPatient } from '../../contexts/PatientContext';
+import { PatientAvatar } from '../patient-avatar/PatientAvatar';
+import { AvatarThumbnail } from '../patient-avatar';
 import {
   User,
   X,
@@ -26,7 +28,9 @@ import {
   ChevronDown,
   AlertTriangle,
   Building2,
-  Hash
+  Hash,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 
 interface EAPatientBannerProps {
@@ -34,6 +38,8 @@ interface EAPatientBannerProps {
   showRecent?: boolean;
   /** Show risk level badge */
   showRisk?: boolean;
+  /** Show clinical avatar thumbnail */
+  showAvatar?: boolean;
   /** Compact mode for smaller screens */
   compact?: boolean;
   /** Additional class names */
@@ -52,12 +58,14 @@ const riskColors = {
 export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
   showRecent = true,
   showRisk = true,
+  showAvatar = true,
   compact = false,
   className,
   onPatientChange,
 }) => {
   const patientContext = usePatientContextSafe();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showFullAvatar, setShowFullAvatar] = useState(false);
 
   // Don't render if no patient context or no patient selected
   if (!patientContext || !patientContext.hasPatient) {
@@ -97,10 +105,30 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
       role="banner"
       aria-label="Selected patient"
     >
-      {/* Patient Icon */}
-      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30">
-        <User className="w-4 h-4 text-teal-400" />
-      </div>
+      {/* Patient Avatar/Icon */}
+      {showAvatar ? (
+        <button
+          onClick={() => setShowFullAvatar(!showFullAvatar)}
+          className="relative group"
+          title="Click to view clinical avatar with markers"
+        >
+          <AvatarThumbnail
+            patientId={selectedPatient.id}
+            patientName={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
+            skinTone="medium"
+            genderPresentation="neutral"
+            markers={[]}
+            className="border-2 border-teal-500/30 hover:border-teal-400 transition-colors"
+          />
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Maximize2 className="w-2.5 h-2.5 text-teal-400" />
+          </div>
+        </button>
+      ) : (
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30">
+          <User className="w-4 h-4 text-teal-400" />
+        </div>
+      )}
 
       {/* Patient Info */}
       <div className="flex-1 min-w-0">
@@ -224,6 +252,50 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
       >
         <X className="w-4 h-4" />
       </button>
+
+      {/* Full Avatar Panel (Expandable) */}
+      {showFullAvatar && selectedPatient && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setShowFullAvatar(false)}
+          />
+
+          {/* Avatar Panel */}
+          <div className="fixed right-4 top-20 z-50 w-[400px] max-h-[80vh] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700 bg-slate-800">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-100">
+                  Clinical Avatar
+                </h3>
+                <p className="text-sm text-slate-400">
+                  {selectedPatient.lastName}, {selectedPatient.firstName}
+                  {selectedPatient.roomNumber && ` • Room ${selectedPatient.roomNumber}`}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowFullAvatar(false)}
+                className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+                title="Close avatar view"
+              >
+                <Minimize2 className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Avatar Content */}
+            <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)]">
+              <PatientAvatar
+                patientId={selectedPatient.id}
+                patientName={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
+                initialMode="expanded"
+                editable={false}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
