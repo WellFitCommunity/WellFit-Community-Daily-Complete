@@ -495,7 +495,10 @@ const SeniorCommunityDashboard: React.FC = () => {
                         key={feeling}
                         onClick={() => handleFollowUpFeeling(feeling)}
                         aria-label={`Not feeling best ${feeling.toLowerCase()}`}
-                        className="w-full p-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition"
+                        className="w-full p-3 text-white rounded-lg transition-colors"
+                        style={{ backgroundColor: branding.primaryColor }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = branding.secondaryColor}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = branding.primaryColor}
                       >
                         {feeling}
                       </button>
@@ -514,7 +517,10 @@ const SeniorCommunityDashboard: React.FC = () => {
                     <button
                       onClick={() => handleSupportResponse(true)}
                       aria-label="Yes, I need to speak to someone"
-                      className="flex-1 p-3 bg-[#8cc63f] text-white rounded-lg hover:bg-[#003865] transition"
+                      className="flex-1 p-3 text-white rounded-lg transition-colors"
+                      style={{ backgroundColor: branding.secondaryColor }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = branding.primaryColor}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = branding.secondaryColor}
                     >
                       Yes, please
                     </button>
@@ -616,14 +622,11 @@ const SeniorCommunityDashboard: React.FC = () => {
                   disabled={checkedInToday === button.id && !button.needsFollowUp}
                   aria-label={`Check in: ${button.text}`}
                   aria-pressed={checkedInToday === button.id}
-                  className={`w-full p-4 rounded-xl font-semibold text-white text-lg transition-all duration-200 hover:scale-105 ${
-                    checkedInToday === button.id
-                      ? 'bg-[#8cc63f] scale-105'
-                      : 'bg-[#003865] hover:bg-[#8cc63f]'
-                  }`}
+                  className="w-full p-4 rounded-xl font-semibold text-white text-lg transition-all duration-200 hover:scale-105"
                   style={{
-                    backgroundColor: checkedInToday === button.id ? '#8cc63f' : '#003865',
-                    minHeight: checkedInToday === button.id && !button.needsFollowUp ? '80px' : '60px'
+                    backgroundColor: checkedInToday === button.id ? branding.secondaryColor : branding.primaryColor,
+                    minHeight: checkedInToday === button.id && !button.needsFollowUp ? '80px' : '60px',
+                    transform: checkedInToday === button.id ? 'scale(1.05)' : undefined
                   }}
                 >
                   {checkedInToday === button.id && !button.needsFollowUp ? (
@@ -674,7 +677,10 @@ const SeniorCommunityDashboard: React.FC = () => {
                   />
                   <label
                     htmlFor="photo-upload"
-                    className="block w-full p-3 bg-[#8cc63f] text-white rounded-lg cursor-pointer hover:bg-[#003865] transition"
+                    className="block w-full p-3 text-white rounded-lg cursor-pointer transition-colors text-center"
+                    style={{ backgroundColor: branding.secondaryColor }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = branding.primaryColor}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = branding.secondaryColor}
                   >
                     {t.dashboard.sharePhoto}
                   </label>
@@ -682,7 +688,10 @@ const SeniorCommunityDashboard: React.FC = () => {
                   <button
                     onClick={() => navigate('/community')}
                     aria-label="View all community moments"
-                    className="w-full p-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition"
+                    className="w-full p-3 text-white rounded-lg transition-colors"
+                    style={{ backgroundColor: branding.primaryColor }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = branding.secondaryColor}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = branding.primaryColor}
                   >
                     {t.dashboard.viewAllMoments}
                   </button>
@@ -727,7 +736,10 @@ const SeniorCommunityDashboard: React.FC = () => {
                     }
                   }}
                   aria-label="View today's meal recipe"
-                  className="w-full p-3 bg-[#8cc63f] text-white rounded-lg hover:bg-[#003865] transition"
+                  className="w-full p-3 text-white rounded-lg transition-colors"
+                  style={{ backgroundColor: branding.secondaryColor }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = branding.primaryColor}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = branding.secondaryColor}
                 >
                   {t.dashboard.viewRecipe}
                 </button>
@@ -777,7 +789,10 @@ const SeniorCommunityDashboard: React.FC = () => {
             <button
               onClick={() => navigate('/word-find')}
               aria-label="Play today's word find puzzle"
-              className="w-full p-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition text-lg"
+              className="w-full p-3 text-white rounded-lg transition-colors text-lg"
+              style={{ backgroundColor: branding.primaryColor }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = branding.secondaryColor}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = branding.primaryColor}
             >
               {t.dashboard.playPuzzle}
             </button>
@@ -795,7 +810,10 @@ const SeniorCommunityDashboard: React.FC = () => {
             <button
               onClick={() => navigate('/memory-lane-trivia')}
               aria-label="Visit Memory Lane trivia game"
-              className="w-full p-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition text-lg"
+              className="w-full p-3 text-white rounded-lg transition-colors text-lg"
+              style={{ backgroundColor: branding.primaryColor }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = branding.secondaryColor}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = branding.primaryColor}
             >
               {t.dashboard.visitMemoryLane}
             </button>
