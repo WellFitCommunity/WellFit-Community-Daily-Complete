@@ -101,6 +101,37 @@ These are not suggestions. They are requirements.
 
 ---
 
+### Default Assumption - PRODUCTION FIRST
+
+**ALL code in this codebase is enterprise-grade, HIPAA-compliant, production-ready.**
+
+There is no "quick version" followed by "real version."
+The first version IS the real version.
+
+- No hardcoded values that should be fetched from database
+- No placeholder implementations
+- No "we can improve this later"
+- No shortcuts that require a second commit to fix
+
+**Every line of code must be shippable to Methodist Hospital tomorrow.**
+
+---
+
+### Pre-Implementation Checklist - MANDATORY
+
+**Before writing ANY code, you MUST answer these questions:**
+
+1. **What data does this need?** Where does it come from? (Database, API, props, context?)
+2. **Am I hardcoding anything that should be dynamic?** (Values, IDs, config that varies by patient/tenant)
+3. **Is this the complete solution or a placeholder?** (If placeholder, STOP - do the real thing)
+4. **Would I ship this to Methodist Hospital tomorrow?** (If "no" - stop and do it right)
+
+**If you cannot answer "yes, this is production-ready" to #4 - do NOT write the code.**
+
+Ask Maria for clarification instead of implementing something incomplete.
+
+---
+
 ### NO WORKAROUNDS POLICY - ABSOLUTE
 
 - **Do NOT implement workarounds, hacks, or "temporary" solutions**
