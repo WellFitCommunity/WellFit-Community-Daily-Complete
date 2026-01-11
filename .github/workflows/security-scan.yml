@@ -45,6 +45,7 @@ jobs:
           echo "## 🔒 Security Scan – WellFit Community" >> $GITHUB_STEP_SUMMARY
           echo "Started at $(date -u '+%Y-%m-%d %H:%M:%S') UTC" >> $GITHUB_STEP_SUMMARY
           echo "FAIL=0" >> $GITHUB_ENV
+          echo "FAIL_REASONS=" >> $GITHUB_ENV
 
       # ============================================
       # Scan for insecure HTTP/WS protocols
@@ -101,6 +102,7 @@ jobs:
             fi
 
             echo "FAIL=1" >> $GITHUB_ENV
+            echo "FAIL_REASONS=${FAIL_REASONS:-}insecure-protocol|" >> $GITHUB_ENV
           else
             echo "✅ No insecure protocol references found." >> $GITHUB_STEP_SUMMARY
           fi
@@ -141,6 +143,7 @@ jobs:
             if [ "$HIGH" -gt 0 ] || [ "$CRIT" -gt 0 ]; then
               echo "### ❌ High/Critical vulnerabilities detected." >> $GITHUB_STEP_SUMMARY
               echo "FAIL=1" >> $GITHUB_ENV
+              echo "FAIL_REASONS=${FAIL_REASONS:-}npm-audit|" >> $GITHUB_ENV
             else
               echo "✅ No High/Critical vulnerabilities." >> $GITHUB_STEP_SUMMARY
             fi
@@ -162,7 +165,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          output: results
+          output: ${{ github.workspace }}/results
 
       - name: Check CodeQL Results
         run: |
@@ -171,7 +174,7 @@ jobs:
           MIN_SEVERITY=8.9
 
           shopt -s nullglob
-          files=(results/*.sarif results/**/*.sarif)
+          files=("${GITHUB_WORKSPACE}/results"/*.sarif "${GITHUB_WORKSPACE}/results"/**/*.sarif)
           
           if [ ${#files[@]} -eq 0 ]; then
             echo "ℹ️ No SARIF files found. Skipping CodeQL gate." >> $GITHUB_STEP_SUMMARY
@@ -203,6 +206,7 @@ jobs:
           if [ "$total" -gt 0 ]; then
             echo "### ❌ CodeQL detected $total high-severity issue(s)" >> $GITHUB_STEP_SUMMARY
             echo "FAIL=1" >> $GITHUB_ENV
+            echo "FAIL_REASONS=${FAIL_REASONS:-}codeql|" >> $GITHUB_ENV
           else
             echo "✅ CodeQL scan passed" >> $GITHUB_STEP_SUMMARY
           fi
@@ -214,35 +218,37 @@ jobs:
         run: |
           echo "## ESLint Security Scan" >> $GITHUB_STEP_SUMMARY
 
-          # Use the already-installed ESLint 9 with security plugin
-          # Security plugin is already in package.json devDependencies
-          npx eslint src/ --format json > eslint-security.json || true
+          # Always produce a file, even if eslint fails (redirect stderr to avoid jq failures)
+          npx eslint src/ --format json > eslint-security.json 2>/dev/null || true
 
-          if [ -s eslint-security.json ]; then
-            ISSUES=$(jq '[.[].messages] | flatten | length' eslint-security.json)
-
-            if [ "$ISSUES" -gt 0 ]; then
-              echo "### Findings: $ISSUES issue(s) (informational)" >> $GITHUB_STEP_SUMMARY
-
-              # Create GitHub Actions annotations for each finding
-              jq -r '
-                .[] | select(.messages | length > 0)
-                | .filePath as $file
-                | .messages[] |
-                  "::warning file=\($file),line=\(.line // 1),title=ESLint Security::\(.message)"
-              ' eslint-security.json || true
-
-              # Also add to summary
-              jq -r '
-                .[] | select(.messages | length > 0)
-                | .filePath as $file
-                | .messages[] | "- **\($file)**: \(.message) (Line \(.line))"
-              ' eslint-security.json >> $GITHUB_STEP_SUMMARY || echo "_Parse error_" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "✅ No security issues found." >> $GITHUB_STEP_SUMMARY
-            fi
+          # Validate JSON before jq touches it - prevents step failures on non-JSON output
+          if jq -e . eslint-security.json >/dev/null 2>&1; then
+            ISSUES=$(jq '[.[].messages] | flatten | length' eslint-security.json 2>/dev/null || echo "0")
           else
-            echo "ℹ️ ESLint produced no output." >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ ESLint output was not valid JSON (config or runtime error)." >> $GITHUB_STEP_SUMMARY
+            head -50 eslint-security.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+            ISSUES=0
+          fi
+
+          if [ "$ISSUES" -gt 0 ]; then
+            echo "### Findings: $ISSUES issue(s) (informational)" >> $GITHUB_STEP_SUMMARY
+
+            # Create GitHub Actions annotations for each finding
+            jq -r '
+              .[] | select(.messages | length > 0)
+              | .filePath as $file
+              | .messages[] |
+                "::warning file=\($file),line=\(.line // 1),title=ESLint Security::\(.message)"
+            ' eslint-security.json 2>/dev/null || true
+
+            # Also add to summary
+            jq -r '
+              .[] | select(.messages | length > 0)
+              | .filePath as $file
+              | .messages[] | "- **\($file)**: \(.message) (Line \(.line))"
+            ' eslint-security.json 2>/dev/null >> $GITHUB_STEP_SUMMARY || true
+          else
+            echo "✅ No security issues found (or output not parseable)." >> $GITHUB_STEP_SUMMARY
           fi
 
       # ============================================
@@ -287,6 +293,7 @@ jobs:
           if [ "$FOUND" = true ]; then
             echo "### ❌ Potential hardcoded secrets detected." >> $GITHUB_STEP_SUMMARY
             echo "FAIL=1" >> $GITHUB_ENV
+            echo "FAIL_REASONS=${FAIL_REASONS:-}hardcoded-secrets|" >> $GITHUB_ENV
           else
             echo "✅ No hardcoded secrets detected." >> $GITHUB_STEP_SUMMARY
           fi
@@ -303,6 +310,7 @@ jobs:
           if ! audit-ci --high; then
             echo "⚠️ audit-ci found vulnerabilities" >> $GITHUB_STEP_SUMMARY
             echo "FAIL=1" >> $GITHUB_ENV
+            echo "FAIL_REASONS=${FAIL_REASONS:-}audit-ci|" >> $GITHUB_ENV
           else
             echo "✅ No high/critical vulnerabilities in dependencies" >> $GITHUB_STEP_SUMMARY
           fi
@@ -367,6 +375,7 @@ jobs:
           if grep -R "Access-Control-Allow-Origin.*\*" supabase/ src/ --exclude-dir=".temp" --exclude-dir=".output*" 2>/dev/null | grep -v "Binary file"; then
             echo "### ❌ Wildcard CORS detected - this is a security risk!" >> $GITHUB_STEP_SUMMARY
             echo "FAIL=1" >> $GITHUB_ENV
+            echo "FAIL_REASONS=${FAIL_REASONS:-}wildcard-cors|" >> $GITHUB_ENV
           else
             echo "✅ No wildcard CORS found" >> $GITHUB_STEP_SUMMARY
           fi
@@ -392,7 +401,7 @@ jobs:
             audit-results.json
             eslint-security.json
             outdated.json
-            results/*.sarif
+            ${{ github.workspace }}/results/*.sarif
           if-no-files-found: ignore
           retention-days: 30
 
@@ -445,11 +454,25 @@ jobs:
               "html": "<!DOCTYPE html><html><head><style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }.header { background-color: #0066cc; color: white; padding: 20px; text-align: center; }.content { padding: 20px; }.status { padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid '"$STATUS_COLOR"'; background-color: '"$([ "${{ job.status }}" == "success" ] && echo "#d4edda" || echo "#f8d7da")"'; }.info { background-color: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #17a2b8; }.footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center; }a { color: #0066cc; text-decoration: none; }.button { display: inline-block; padding: 12px 24px; margin: 15px 0; background-color: #0066cc; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }ul { padding-left: 20px; }li { margin: 8px 0; }code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; }</style></head><body><div class=\"header\"><h1>🔒 WellFit Security Scan Report</h1></div><div class=\"content\"><div class=\"status\"><strong>Status:</strong> '"$STATUS_EMOJI $STATUS_TEXT"'</div><div class=\"info\"><h3>Scan Details</h3><ul><li><strong>Branch:</strong> ${{ github.ref_name }}</li><li><strong>Commit:</strong> <code>${{ github.sha }}</code></li><li><strong>Triggered by:</strong> ${{ github.event_name }}</li><li><strong>Time:</strong> ${{ github.event.head_commit.timestamp }}</li></ul></div><p style=\"text-align: center;\"><a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\" class=\"button\">View Full Report →</a></p><h3>Next Steps</h3><ul><li>Review the detailed scan results in the GitHub Actions workflow</li><li>Address any critical or high-severity findings immediately</li><li>Document remediation actions in the security log</li></ul></div><div class=\"footer\"><p><strong>Envision VirtualEdge Group LLC</strong> | WellFit Community Healthcare Platform</p><p>This is an automated security scan notification. Next scan: Monday at 02:00 UTC</p></div></body></html>"
             }' || echo "⚠️ Email notification failed, but continuing workflow"
 
+      - name: Report gate failure reasons
+        if: always()
+        run: |
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚦 Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **FAIL**: ${FAIL:-0}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${FAIL_REASONS:-}" ]; then
+            echo "- **Failed Gates**: ${FAIL_REASONS}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Failed Gates**: none" >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Fail job if critical issues found
         if: always()
         run: |
           if [ "${FAIL:-0}" = "1" ]; then
-            echo "🔴 Critical security issues detected. Please review the summary above."
+            echo "🔴 Critical security issues detected."
+            echo "Failed gates: ${FAIL_REASONS:-unknown}"
+            echo "Please review the summary above."
             exit 1
           else
             echo "🟢 No critical security issues found. All gates passed!"
