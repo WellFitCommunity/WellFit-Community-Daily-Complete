@@ -503,6 +503,13 @@ export const chwRoutes: RouteConfig[] = [
     category: 'chw',
   },
   {
+    path: '/appointment-analytics',
+    component: 'AppointmentAnalyticsDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'nurse_practitioner', 'case_manager', 'clinical_supervisor'],
+    category: 'clinical',
+  },
+  {
     path: '/chw/dashboard',
     component: 'CHWDashboardPage',
     auth: 'admin',

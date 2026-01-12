@@ -197,6 +197,7 @@ export const MedicationPhotoCapture = React.lazy(() => import('../components/chw
 export const SDOHAssessment = React.lazy(() => import('../components/chw/SDOHAssessment'));
 export const TelehealthLobby = React.lazy(() => import('../components/chw/TelehealthLobby'));
 export const ProviderAvailabilityEditor = React.lazy(() => import('../components/telehealth/ProviderAvailabilityEditor'));
+export const AppointmentAnalyticsDashboard = React.lazy(() => import('../components/telehealth/AppointmentAnalyticsDashboard'));
 export const KioskDashboard = React.lazy(() => import('../components/chw/KioskDashboard'));
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -356,6 +357,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   SDOHAssessment,
   TelehealthLobby,
   ProviderAvailabilityEditor,
+  AppointmentAnalyticsDashboard,
   KioskDashboard,
 
   // Workflow
