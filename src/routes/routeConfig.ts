@@ -496,6 +496,13 @@ export const chwRoutes: RouteConfig[] = [
     category: 'chw',
   },
   {
+    path: '/provider/availability',
+    component: 'ProviderAvailabilityEditor',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'np', 'pa'],
+    category: 'chw',
+  },
+  {
     path: '/chw/dashboard',
     component: 'CHWDashboardPage',
     auth: 'admin',

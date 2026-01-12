@@ -7,6 +7,7 @@ import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { InputValidator } from '../../services/inputValidator';
 import { auditLogger } from '../../services/auditLogger';
 import { AppointmentService, type ConflictingAppointment } from '../../services/appointmentService';
+import { AvailabilityService } from '../../services/availabilityService';
 
 interface Patient {
   user_id: string;
@@ -47,11 +48,12 @@ const TelehealthScheduler: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Conflict checking state
+  // Conflict and availability checking state
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false);
   const [conflictWarning, setConflictWarning] = useState<{
     hasConflict: boolean;
     conflicts: ConflictingAppointment[];
+    availabilityIssue?: string;
   } | null>(null);
 
   // Appointments list
@@ -205,7 +207,7 @@ const TelehealthScheduler: React.FC = () => {
     };
   }, [user?.id, supabase]);
 
-  // Check for appointment conflicts when date/time/duration changes
+  // Check for appointment conflicts and availability when date/time/duration changes
   const checkForConflicts = useCallback(async () => {
     if (!user?.id || !appointmentDate || !appointmentTime) {
       setConflictWarning(null);
@@ -222,6 +224,23 @@ const TelehealthScheduler: React.FC = () => {
         return;
       }
 
+      // Check provider availability (working hours and blocked times)
+      const availabilityResult = await AvailabilityService.checkProviderAvailability(
+        user.id,
+        appointmentDateTime,
+        duration
+      );
+
+      if (availabilityResult.success && !availabilityResult.data.isAvailable) {
+        setConflictWarning({
+          hasConflict: true,
+          conflicts: [],
+          availabilityIssue: availabilityResult.data.reason,
+        });
+        return;
+      }
+
+      // Check for conflicting appointments
       const result = await AppointmentService.checkAppointmentAvailability(
         user.id,
         appointmentDateTime,
@@ -528,26 +547,40 @@ const TelehealthScheduler: React.FC = () => {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-amber-800">Scheduling Conflict Detected</h4>
-                  <p className="text-sm text-amber-700 mt-1">
-                    You already have {conflictWarning.conflicts.length === 1 ? 'an appointment' : 'appointments'} scheduled during this time:
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {conflictWarning.conflicts.map((conflict) => (
-                      <li key={conflict.id} className="text-sm text-amber-800 font-medium">
-                        {conflict.patient_name} - {new Date(conflict.appointment_time).toLocaleString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })} ({conflict.duration_minutes} min)
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-sm text-amber-600 mt-2">
-                    Please choose a different time to avoid double-booking.
-                  </p>
+                  {conflictWarning.availabilityIssue ? (
+                    <>
+                      <h4 className="font-semibold text-amber-800">Not Available</h4>
+                      <p className="text-sm text-amber-700 mt-1">
+                        {conflictWarning.availabilityIssue}
+                      </p>
+                      <p className="text-sm text-amber-600 mt-2">
+                        Please choose a time within your working hours or remove the blocked time.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="font-semibold text-amber-800">Scheduling Conflict Detected</h4>
+                      <p className="text-sm text-amber-700 mt-1">
+                        You already have {conflictWarning.conflicts.length === 1 ? 'an appointment' : 'appointments'} scheduled during this time:
+                      </p>
+                      <ul className="mt-2 space-y-1">
+                        {conflictWarning.conflicts.map((conflict) => (
+                          <li key={conflict.id} className="text-sm text-amber-800 font-medium">
+                            {conflict.patient_name} - {new Date(conflict.appointment_time).toLocaleString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })} ({conflict.duration_minutes} min)
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-sm text-amber-600 mt-2">
+                        Please choose a different time to avoid double-booking.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
