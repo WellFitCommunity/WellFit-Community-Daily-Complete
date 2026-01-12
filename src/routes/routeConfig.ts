@@ -238,6 +238,14 @@ export const adminRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin'],
     category: 'admin',
   },
+  // SAFER Guides (ONC Certification - EHR Safety Self-Assessment)
+  {
+    path: '/admin/safer-guides',
+    component: 'SaferGuidesAssessment',
+    auth: 'admin',
+    roles: ['admin', 'super_admin'],
+    category: 'admin',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

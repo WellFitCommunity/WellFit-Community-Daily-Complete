@@ -106,6 +106,9 @@ export const AIRevenueDashboard = React.lazy(() => import('../components/ai/AIRe
 export const AIFinancialDashboard = React.lazy(() => import('../components/admin/AIFinancialDashboard'));
 export const SOC2ComplianceDashboard = React.lazy(() => import('../components/admin/SOC2ComplianceDashboard'));
 
+// SAFER Guides (ONC Certification)
+export const SaferGuidesAssessment = React.lazy(() => import('../components/admin/SaferGuidesAssessment'));
+
 // Healthcare Algorithms
 export const HealthcareAlgorithmsDashboard = React.lazy(() => import('../components/ai/HealthcareAlgorithmsDashboard'));
 export const FHIRConflictResolution = React.lazy(() =>
@@ -302,6 +305,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   AIRevenueDashboard,
   AIFinancialDashboard,
   SOC2ComplianceDashboard,
+  SaferGuidesAssessment,
   HealthcareAlgorithmsDashboard,
   FHIRConflictResolution,
   TimeClockPage,
