@@ -2,12 +2,13 @@
 // Provider UI for scheduling and managing telehealth appointments
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, Clock, Video, Search, UserPlus, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Calendar, Clock, Video, Search, UserPlus, CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { InputValidator } from '../../services/inputValidator';
 import { auditLogger } from '../../services/auditLogger';
 import { AppointmentService, type ConflictingAppointment } from '../../services/appointmentService';
 import { AvailabilityService } from '../../services/availabilityService';
+import RescheduleAppointmentModal, { type AppointmentToReschedule } from './RescheduleAppointmentModal';
 
 interface Patient {
   user_id: string;
@@ -59,6 +60,10 @@ const TelehealthScheduler: React.FC = () => {
   // Appointments list
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
+
+  // Reschedule modal state
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [appointmentToReschedule, setAppointmentToReschedule] = useState<AppointmentToReschedule | null>(null);
 
   // Search for patients
   useEffect(() => {
@@ -377,21 +382,37 @@ const TelehealthScheduler: React.FC = () => {
     if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
 
     try {
-      const { error } = await supabase
-        .from('telehealth_appointments')
-        .update({
-          status: 'cancelled',
-          cancelled_at: new Date().toISOString(),
-        })
-        .eq('id', appointmentId);
+      const result = await AppointmentService.cancelAppointment(appointmentId);
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to cancel appointment');
+      }
 
       setMessage({ type: 'success', text: 'Appointment cancelled successfully' });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setMessage({ type: 'error', text: `Failed to cancel: ${errorMessage}` });
     }
+  };
+
+  // Open reschedule modal
+  const handleOpenReschedule = (apt: Appointment) => {
+    setAppointmentToReschedule({
+      id: apt.id,
+      patientName: apt.patient_name,
+      providerId: user?.id || '',
+      currentTime: new Date(apt.appointment_time),
+      durationMinutes: apt.duration_minutes,
+      encounterType: apt.encounter_type,
+      reasonForVisit: apt.reason_for_visit,
+    });
+    setShowRescheduleModal(true);
+  };
+
+  // Handle successful reschedule
+  const handleRescheduled = () => {
+    setMessage({ type: 'success', text: 'Appointment rescheduled successfully! Patient will be notified.' });
+    setAppointmentToReschedule(null);
   };
 
   // Format date/time for display
@@ -719,18 +740,40 @@ const TelehealthScheduler: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleCancelAppointment(apt.id)}
-                    className="ml-4 px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
-                  >
-                    Cancel
-                  </button>
+                  <div className="flex flex-col gap-2 ml-4">
+                    <button
+                      onClick={() => handleOpenReschedule(apt)}
+                      className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Reschedule
+                    </button>
+                    <button
+                      onClick={() => handleCancelAppointment(apt.id)}
+                      className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Reschedule Modal */}
+      {appointmentToReschedule && (
+        <RescheduleAppointmentModal
+          appointment={appointmentToReschedule}
+          isOpen={showRescheduleModal}
+          onClose={() => {
+            setShowRescheduleModal(false);
+            setAppointmentToReschedule(null);
+          }}
+          onRescheduled={handleRescheduled}
+        />
+      )}
     </div>
   );
 };

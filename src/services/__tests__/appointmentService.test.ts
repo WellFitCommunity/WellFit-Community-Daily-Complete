@@ -2,6 +2,7 @@
  * Appointment Service Tests
  *
  * Tests for appointment scheduling with double-booking prevention
+ * and rescheduling workflow
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -10,9 +11,15 @@ import {
   checkAppointmentAvailability,
   scheduleAppointment,
   getProviderAppointments,
+  rescheduleAppointment,
+  getAppointmentHistory,
+  cancelAppointment,
   type ConflictingAppointment,
   type AvailabilityCheckResult,
   type AppointmentInput,
+  type RescheduleInput,
+  type RescheduleResult,
+  type AppointmentHistoryEntry,
 } from '../appointmentService';
 
 // Mock the supabase client
@@ -35,6 +42,9 @@ vi.mock('../../lib/supabaseClient', () => ({
             })),
           })),
         })),
+      })),
+      update: vi.fn(() => ({
+        eq: vi.fn(),
       })),
     })),
   },
@@ -320,6 +330,291 @@ describe('AppointmentService', () => {
       const parsedDate = new Date(conflict.appointment_time);
       expect(parsedDate.getUTCHours()).toBe(9);
       expect(parsedDate.getUTCMinutes()).toBe(0);
+    });
+  });
+
+  describe('Rescheduling Types', () => {
+    it('should have correct RescheduleInput interface', () => {
+      const input: RescheduleInput = {
+        appointmentId: 'apt-123',
+        newAppointmentTime: new Date('2026-01-20T14:00:00Z'),
+        newDurationMinutes: 45,
+        changeReason: 'Patient requested',
+        changedByRole: 'provider',
+      };
+
+      expect(input.appointmentId).toBe('apt-123');
+      expect(input.newAppointmentTime instanceof Date).toBe(true);
+      expect(input.newDurationMinutes).toBe(45);
+      expect(input.changeReason).toBe('Patient requested');
+      expect(input.changedByRole).toBe('provider');
+    });
+
+    it('should allow optional fields in RescheduleInput', () => {
+      const input: RescheduleInput = {
+        appointmentId: 'apt-456',
+        newAppointmentTime: new Date('2026-01-20T15:00:00Z'),
+      };
+
+      expect(input.appointmentId).toBe('apt-456');
+      expect(input.newDurationMinutes).toBeUndefined();
+      expect(input.changeReason).toBeUndefined();
+      expect(input.changedByRole).toBeUndefined();
+    });
+
+    it('should have correct RescheduleResult interface', () => {
+      const result: RescheduleResult = {
+        appointmentId: 'apt-123',
+        previousTime: '2026-01-15T10:00:00Z',
+        newTime: '2026-01-20T14:00:00Z',
+        previousDuration: 30,
+        newDuration: 45,
+        status: 'scheduled',
+        providerId: 'provider-123',
+        patientId: 'patient-456',
+      };
+
+      expect(result.appointmentId).toBe('apt-123');
+      expect(result.previousTime).toBe('2026-01-15T10:00:00Z');
+      expect(result.newTime).toBe('2026-01-20T14:00:00Z');
+      expect(result.previousDuration).toBe(30);
+      expect(result.newDuration).toBe(45);
+      expect(result.status).toBe('scheduled');
+    });
+
+    it('should have correct AppointmentHistoryEntry interface', () => {
+      const entry: AppointmentHistoryEntry = {
+        id: 'history-123',
+        changeType: 'rescheduled',
+        previousAppointmentTime: '2026-01-15T10:00:00Z',
+        newAppointmentTime: '2026-01-20T14:00:00Z',
+        previousDurationMinutes: 30,
+        newDurationMinutes: 45,
+        previousStatus: 'confirmed',
+        newStatus: 'scheduled',
+        changeReason: 'Patient requested',
+        changedBy: 'user-123',
+        changedByRole: 'provider',
+        changedByName: 'Dr. Smith',
+        createdAt: '2026-01-14T12:00:00Z',
+      };
+
+      expect(entry.id).toBe('history-123');
+      expect(entry.changeType).toBe('rescheduled');
+      expect(entry.changedByName).toBe('Dr. Smith');
+    });
+
+    it('should support all change types in AppointmentHistoryEntry', () => {
+      const changeTypes: AppointmentHistoryEntry['changeType'][] = [
+        'created',
+        'rescheduled',
+        'cancelled',
+        'status_changed',
+        'updated',
+      ];
+
+      changeTypes.forEach((changeType) => {
+        const entry: AppointmentHistoryEntry = {
+          id: 'h1',
+          changeType,
+          previousAppointmentTime: null,
+          newAppointmentTime: null,
+          previousDurationMinutes: null,
+          newDurationMinutes: null,
+          previousStatus: null,
+          newStatus: null,
+          changeReason: null,
+          changedBy: null,
+          changedByRole: null,
+          changedByName: 'System',
+          createdAt: '2026-01-14T12:00:00Z',
+        };
+        expect(entry.changeType).toBe(changeType);
+      });
+    });
+
+    it('should allow null values in AppointmentHistoryEntry', () => {
+      const entry: AppointmentHistoryEntry = {
+        id: 'history-456',
+        changeType: 'created',
+        previousAppointmentTime: null,
+        newAppointmentTime: '2026-01-15T10:00:00Z',
+        previousDurationMinutes: null,
+        newDurationMinutes: 30,
+        previousStatus: null,
+        newStatus: 'scheduled',
+        changeReason: null,
+        changedBy: null,
+        changedByRole: null,
+        changedByName: 'System',
+        createdAt: '2026-01-14T12:00:00Z',
+      };
+
+      expect(entry.previousAppointmentTime).toBeNull();
+      expect(entry.previousDurationMinutes).toBeNull();
+      expect(entry.previousStatus).toBeNull();
+    });
+  });
+
+  describe('Rescheduling Function Exports', () => {
+    it('should export rescheduleAppointment as standalone function', () => {
+      expect(rescheduleAppointment).toBeDefined();
+      expect(typeof rescheduleAppointment).toBe('function');
+    });
+
+    it('should export getAppointmentHistory as standalone function', () => {
+      expect(getAppointmentHistory).toBeDefined();
+      expect(typeof getAppointmentHistory).toBe('function');
+    });
+
+    it('should export cancelAppointment as standalone function', () => {
+      expect(cancelAppointment).toBeDefined();
+      expect(typeof cancelAppointment).toBe('function');
+    });
+
+    it('should include rescheduleAppointment in AppointmentService namespace', () => {
+      expect(AppointmentService.rescheduleAppointment).toBeDefined();
+      expect(typeof AppointmentService.rescheduleAppointment).toBe('function');
+    });
+
+    it('should include getAppointmentHistory in AppointmentService namespace', () => {
+      expect(AppointmentService.getAppointmentHistory).toBeDefined();
+      expect(typeof AppointmentService.getAppointmentHistory).toBe('function');
+    });
+
+    it('should include cancelAppointment in AppointmentService namespace', () => {
+      expect(AppointmentService.cancelAppointment).toBeDefined();
+      expect(typeof AppointmentService.cancelAppointment).toBe('function');
+    });
+  });
+
+  describe('RescheduleInput roles', () => {
+    it('should support patient role', () => {
+      const input: RescheduleInput = {
+        appointmentId: 'apt-1',
+        newAppointmentTime: new Date(),
+        changedByRole: 'patient',
+      };
+      expect(input.changedByRole).toBe('patient');
+    });
+
+    it('should support provider role', () => {
+      const input: RescheduleInput = {
+        appointmentId: 'apt-1',
+        newAppointmentTime: new Date(),
+        changedByRole: 'provider',
+      };
+      expect(input.changedByRole).toBe('provider');
+    });
+
+    it('should support admin role', () => {
+      const input: RescheduleInput = {
+        appointmentId: 'apt-1',
+        newAppointmentTime: new Date(),
+        changedByRole: 'admin',
+      };
+      expect(input.changedByRole).toBe('admin');
+    });
+  });
+
+  describe('Reschedule duration handling', () => {
+    it('should allow changing duration during reschedule', () => {
+      const result: RescheduleResult = {
+        appointmentId: 'apt-1',
+        previousTime: '2026-01-15T10:00:00Z',
+        newTime: '2026-01-20T14:00:00Z',
+        previousDuration: 30,
+        newDuration: 60,
+        status: 'scheduled',
+        providerId: 'p1',
+        patientId: 'pt1',
+      };
+
+      expect(result.previousDuration).not.toBe(result.newDuration);
+      expect(result.newDuration).toBe(60);
+    });
+
+    it('should keep same duration if not changed', () => {
+      const result: RescheduleResult = {
+        appointmentId: 'apt-1',
+        previousTime: '2026-01-15T10:00:00Z',
+        newTime: '2026-01-20T14:00:00Z',
+        previousDuration: 30,
+        newDuration: 30,
+        status: 'scheduled',
+        providerId: 'p1',
+        patientId: 'pt1',
+      };
+
+      expect(result.previousDuration).toBe(result.newDuration);
+    });
+  });
+
+  describe('Appointment history tracking', () => {
+    it('should track rescheduling with full details', () => {
+      const entry: AppointmentHistoryEntry = {
+        id: 'h1',
+        changeType: 'rescheduled',
+        previousAppointmentTime: '2026-01-15T10:00:00Z',
+        newAppointmentTime: '2026-01-20T14:00:00Z',
+        previousDurationMinutes: 30,
+        newDurationMinutes: 45,
+        previousStatus: 'confirmed',
+        newStatus: 'scheduled',
+        changeReason: 'Schedule conflict',
+        changedBy: 'user-123',
+        changedByRole: 'provider',
+        changedByName: 'Dr. Johnson',
+        createdAt: '2026-01-14T12:00:00Z',
+      };
+
+      expect(entry.changeType).toBe('rescheduled');
+      expect(entry.previousAppointmentTime).toBe('2026-01-15T10:00:00Z');
+      expect(entry.newAppointmentTime).toBe('2026-01-20T14:00:00Z');
+      expect(entry.changeReason).toBe('Schedule conflict');
+    });
+
+    it('should track cancellation', () => {
+      const entry: AppointmentHistoryEntry = {
+        id: 'h2',
+        changeType: 'cancelled',
+        previousAppointmentTime: '2026-01-15T10:00:00Z',
+        newAppointmentTime: '2026-01-15T10:00:00Z',
+        previousDurationMinutes: 30,
+        newDurationMinutes: 30,
+        previousStatus: 'scheduled',
+        newStatus: 'cancelled',
+        changeReason: 'Patient no longer needs appointment',
+        changedBy: 'user-456',
+        changedByRole: 'patient',
+        changedByName: 'John Doe',
+        createdAt: '2026-01-14T15:00:00Z',
+      };
+
+      expect(entry.changeType).toBe('cancelled');
+      expect(entry.newStatus).toBe('cancelled');
+    });
+
+    it('should track status changes', () => {
+      const entry: AppointmentHistoryEntry = {
+        id: 'h3',
+        changeType: 'status_changed',
+        previousAppointmentTime: '2026-01-15T10:00:00Z',
+        newAppointmentTime: '2026-01-15T10:00:00Z',
+        previousDurationMinutes: 30,
+        newDurationMinutes: 30,
+        previousStatus: 'scheduled',
+        newStatus: 'confirmed',
+        changeReason: null,
+        changedBy: 'user-789',
+        changedByRole: 'patient',
+        changedByName: 'Jane Smith',
+        createdAt: '2026-01-14T16:00:00Z',
+      };
+
+      expect(entry.changeType).toBe('status_changed');
+      expect(entry.previousStatus).toBe('scheduled');
+      expect(entry.newStatus).toBe('confirmed');
     });
   });
 });

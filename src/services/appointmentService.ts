@@ -5,6 +5,7 @@
  * - Conflict detection (double-booking prevention)
  * - Appointment CRUD operations
  * - Availability checking
+ * - Rescheduling with audit trail
  *
  * @module appointmentService
  */
@@ -38,6 +39,41 @@ export interface AppointmentInput {
   durationMinutes: number;
   encounterType: 'outpatient' | 'er' | 'urgent-care';
   reasonForVisit?: string;
+}
+
+export interface RescheduleInput {
+  appointmentId: string;
+  newAppointmentTime: Date;
+  newDurationMinutes?: number;
+  changeReason?: string;
+  changedByRole?: 'patient' | 'provider' | 'admin';
+}
+
+export interface RescheduleResult {
+  appointmentId: string;
+  previousTime: string;
+  newTime: string;
+  previousDuration: number;
+  newDuration: number;
+  status: string;
+  providerId: string;
+  patientId: string;
+}
+
+export interface AppointmentHistoryEntry {
+  id: string;
+  changeType: 'created' | 'rescheduled' | 'cancelled' | 'status_changed' | 'updated';
+  previousAppointmentTime: string | null;
+  newAppointmentTime: string | null;
+  previousDurationMinutes: number | null;
+  newDurationMinutes: number | null;
+  previousStatus: string | null;
+  newStatus: string | null;
+  changeReason: string | null;
+  changedBy: string | null;
+  changedByRole: string | null;
+  changedByName: string;
+  createdAt: string;
 }
 
 // ============================================================================
@@ -270,11 +306,211 @@ export async function getProviderAppointments(
   }
 }
 
+/**
+ * Reschedule an existing appointment to a new time.
+ * Includes conflict checking, availability validation, and audit logging.
+ *
+ * @param input - Reschedule details including new time and reason
+ * @returns ServiceResult with reschedule information or error
+ */
+export async function rescheduleAppointment(
+  input: RescheduleInput
+): Promise<ServiceResult<RescheduleResult>> {
+  try {
+    const { data, error } = await supabase.rpc('reschedule_appointment', {
+      p_appointment_id: input.appointmentId,
+      p_new_appointment_time: input.newAppointmentTime.toISOString(),
+      p_new_duration_minutes: input.newDurationMinutes || null,
+      p_change_reason: input.changeReason || null,
+      p_changed_by_role: input.changedByRole || 'provider',
+    });
+
+    if (error) {
+      const errorMessage = typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : String(error);
+      await auditLogger.error(
+        'APPOINTMENT_RESCHEDULE_FAILED',
+        error instanceof Error ? error : new Error(errorMessage),
+        { appointmentId: input.appointmentId, newTime: input.newAppointmentTime.toISOString() }
+      );
+      return failure('DATABASE_ERROR', errorMessage, error);
+    }
+
+    // Handle RPC response
+    const result = data as Record<string, unknown>;
+
+    if (!result || result.success === false) {
+      const errorCode = String(result?.error || 'UNKNOWN_ERROR');
+      const errorMessage = String(result?.message || 'Failed to reschedule appointment');
+
+      await auditLogger.warn('APPOINTMENT_RESCHEDULE_BLOCKED', {
+        appointmentId: input.appointmentId,
+        error: errorCode,
+        message: errorMessage,
+      });
+
+      // Map database errors to service error codes
+      if (errorCode === 'APPOINTMENT_NOT_FOUND') {
+        return failure('NOT_FOUND', errorMessage);
+      }
+      if (errorCode === 'PERMISSION_DENIED') {
+        return failure('FORBIDDEN', errorMessage);
+      }
+      if (errorCode === 'APPOINTMENT_CONFLICT' || errorCode === 'PROVIDER_UNAVAILABLE') {
+        return failure('CONSTRAINT_VIOLATION', errorMessage);
+      }
+
+      return failure('VALIDATION_ERROR', errorMessage);
+    }
+
+    const rescheduleResult: RescheduleResult = {
+      appointmentId: String(result.appointment_id || ''),
+      previousTime: String(result.previous_time || ''),
+      newTime: String(result.new_time || ''),
+      previousDuration: Number(result.previous_duration || 0),
+      newDuration: Number(result.new_duration || 0),
+      status: String(result.status || ''),
+      providerId: String(result.provider_id || ''),
+      patientId: String(result.patient_id || ''),
+    };
+
+    await auditLogger.info('APPOINTMENT_RESCHEDULED', {
+      appointmentId: rescheduleResult.appointmentId,
+      previousTime: rescheduleResult.previousTime,
+      newTime: rescheduleResult.newTime,
+      reason: input.changeReason,
+    });
+
+    return success(rescheduleResult);
+  } catch (err: unknown) {
+    await auditLogger.error(
+      'APPOINTMENT_RESCHEDULE_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { appointmentId: input.appointmentId }
+    );
+    return failure('UNKNOWN_ERROR', 'Failed to reschedule appointment');
+  }
+}
+
+/**
+ * Get the change history for an appointment.
+ * Shows all reschedules, cancellations, and status changes.
+ *
+ * @param appointmentId - The appointment UUID
+ * @returns ServiceResult with history entries
+ */
+export async function getAppointmentHistory(
+  appointmentId: string
+): Promise<ServiceResult<AppointmentHistoryEntry[]>> {
+  try {
+    const { data, error } = await supabase.rpc('get_appointment_history', {
+      p_appointment_id: appointmentId,
+    });
+
+    if (error) {
+      const errorMessage = typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : String(error);
+
+      if (errorMessage.includes('Permission denied')) {
+        return failure('FORBIDDEN', 'You do not have access to view this appointment history');
+      }
+
+      await auditLogger.error(
+        'GET_APPOINTMENT_HISTORY_FAILED',
+        error instanceof Error ? error : new Error(errorMessage),
+        { appointmentId }
+      );
+      return failure('DATABASE_ERROR', errorMessage, error);
+    }
+
+    const history: AppointmentHistoryEntry[] = ((data || []) as Record<string, unknown>[]).map(
+      (entry) => ({
+        id: String(entry.id || ''),
+        changeType: entry.change_type as AppointmentHistoryEntry['changeType'],
+        previousAppointmentTime: entry.previous_appointment_time ? String(entry.previous_appointment_time) : null,
+        newAppointmentTime: entry.new_appointment_time ? String(entry.new_appointment_time) : null,
+        previousDurationMinutes: entry.previous_duration_minutes ? Number(entry.previous_duration_minutes) : null,
+        newDurationMinutes: entry.new_duration_minutes ? Number(entry.new_duration_minutes) : null,
+        previousStatus: entry.previous_status ? String(entry.previous_status) : null,
+        newStatus: entry.new_status ? String(entry.new_status) : null,
+        changeReason: entry.change_reason ? String(entry.change_reason) : null,
+        changedBy: entry.changed_by ? String(entry.changed_by) : null,
+        changedByRole: entry.changed_by_role ? String(entry.changed_by_role) : null,
+        changedByName: String(entry.changed_by_name || 'Unknown'),
+        createdAt: String(entry.created_at || ''),
+      })
+    );
+
+    return success(history);
+  } catch (err: unknown) {
+    await auditLogger.error(
+      'GET_APPOINTMENT_HISTORY_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { appointmentId }
+    );
+    return failure('UNKNOWN_ERROR', 'Failed to get appointment history');
+  }
+}
+
+/**
+ * Cancel an appointment with reason tracking.
+ *
+ * @param appointmentId - The appointment UUID
+ * @param cancellationReason - Reason for cancellation
+ * @returns ServiceResult with success status
+ */
+export async function cancelAppointment(
+  appointmentId: string,
+  cancellationReason?: string
+): Promise<ServiceResult<{ cancelled: boolean }>> {
+  try {
+    const { error } = await supabase
+      .from('telehealth_appointments')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: cancellationReason || null,
+      })
+      .eq('id', appointmentId);
+
+    if (error) {
+      const errorMessage = typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : String(error);
+      await auditLogger.error(
+        'APPOINTMENT_CANCEL_FAILED',
+        error instanceof Error ? error : new Error(errorMessage),
+        { appointmentId }
+      );
+      return failure('DATABASE_ERROR', errorMessage, error);
+    }
+
+    await auditLogger.info('APPOINTMENT_CANCELLED', {
+      appointmentId,
+      reason: cancellationReason,
+    });
+
+    return success({ cancelled: true });
+  } catch (err: unknown) {
+    await auditLogger.error(
+      'APPOINTMENT_CANCEL_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { appointmentId }
+    );
+    return failure('UNKNOWN_ERROR', 'Failed to cancel appointment');
+  }
+}
+
 // Export as a namespace object for consistent usage pattern
 export const AppointmentService = {
   checkAppointmentAvailability,
   scheduleAppointment,
   getProviderAppointments,
+  rescheduleAppointment,
+  getAppointmentHistory,
+  cancelAppointment,
 };
 
 export default AppointmentService;
