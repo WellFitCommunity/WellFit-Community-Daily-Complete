@@ -1,11 +1,12 @@
 // src/components/telehealth/TelehealthScheduler.tsx
 // Provider UI for scheduling and managing telehealth appointments
 
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Video, Search, UserPlus, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar, Clock, Video, Search, UserPlus, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { InputValidator } from '../../services/inputValidator';
 import { auditLogger } from '../../services/auditLogger';
+import { AppointmentService, type ConflictingAppointment } from '../../services/appointmentService';
 
 interface Patient {
   user_id: string;
@@ -45,6 +46,13 @@ const TelehealthScheduler: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Conflict checking state
+  const [isCheckingConflicts, setIsCheckingConflicts] = useState(false);
+  const [conflictWarning, setConflictWarning] = useState<{
+    hasConflict: boolean;
+    conflicts: ConflictingAppointment[];
+  } | null>(null);
 
   // Appointments list
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -197,6 +205,51 @@ const TelehealthScheduler: React.FC = () => {
     };
   }, [user?.id, supabase]);
 
+  // Check for appointment conflicts when date/time/duration changes
+  const checkForConflicts = useCallback(async () => {
+    if (!user?.id || !appointmentDate || !appointmentTime) {
+      setConflictWarning(null);
+      return;
+    }
+
+    setIsCheckingConflicts(true);
+    try {
+      const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+
+      // Validate the date is valid
+      if (isNaN(appointmentDateTime.getTime())) {
+        setConflictWarning(null);
+        return;
+      }
+
+      const result = await AppointmentService.checkAppointmentAvailability(
+        user.id,
+        appointmentDateTime,
+        duration
+      );
+
+      if (result.success) {
+        setConflictWarning({
+          hasConflict: result.data.hasConflict,
+          conflicts: result.data.conflictingAppointments,
+        });
+      } else {
+        // Don't block scheduling if conflict check fails, the database trigger will catch it
+        setConflictWarning(null);
+      }
+    } catch {
+      setConflictWarning(null);
+    } finally {
+      setIsCheckingConflicts(false);
+    }
+  }, [user?.id, appointmentDate, appointmentTime, duration]);
+
+  // Debounced conflict checking
+  useEffect(() => {
+    const debounce = setTimeout(checkForConflicts, 500);
+    return () => clearTimeout(debounce);
+  }, [checkForConflicts]);
+
   // Select patient from search results
   const handleSelectPatient = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -220,6 +273,15 @@ const TelehealthScheduler: React.FC = () => {
       return;
     }
 
+    // Block if there's a known conflict
+    if (conflictWarning?.hasConflict) {
+      setMessage({
+        type: 'error',
+        text: 'Cannot schedule: You have a conflicting appointment at this time. Please choose a different time.',
+      });
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
 
@@ -227,22 +289,31 @@ const TelehealthScheduler: React.FC = () => {
       // Combine date and time
       const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
 
-      // Insert appointment
-      const { data: appointment, error: insertError } = await supabase
-        .from('telehealth_appointments')
-        .insert({
-          patient_id: selectedPatient.user_id,
-          provider_id: user?.id,
-          appointment_time: appointmentDateTime.toISOString(),
-          duration_minutes: duration,
-          encounter_type: encounterType,
-          reason_for_visit: reasonForVisit || null,
-          status: 'scheduled',
-        })
-        .select()
-        .single();
+      // Use the appointment service which includes conflict checking
+      const scheduleResult = await AppointmentService.scheduleAppointment({
+        patientId: selectedPatient.user_id,
+        providerId: user?.id || '',
+        appointmentTime: appointmentDateTime,
+        durationMinutes: duration,
+        encounterType: encounterType,
+        reasonForVisit: reasonForVisit || undefined,
+      });
 
-      if (insertError) throw insertError;
+      if (!scheduleResult.success) {
+        // Handle conflict error specifically
+        if (scheduleResult.error?.code === 'CONSTRAINT_VIOLATION') {
+          setMessage({
+            type: 'error',
+            text: `Scheduling conflict: ${scheduleResult.error.message}`,
+          });
+          // Refresh conflict check
+          await checkForConflicts();
+          return;
+        }
+        throw new Error(scheduleResult.error?.message || 'Failed to schedule appointment');
+      }
+
+      const appointment = scheduleResult.data;
 
       // Send notification
       const { error: notifError } = await supabase.functions.invoke(
@@ -270,6 +341,7 @@ const TelehealthScheduler: React.FC = () => {
       setDuration(30);
       setEncounterType('outpatient');
       setReasonForVisit('');
+      setConflictWarning(null);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setMessage({
@@ -443,6 +515,44 @@ const TelehealthScheduler: React.FC = () => {
             </div>
           </div>
 
+          {/* Conflict Warning */}
+          {isCheckingConflicts && (
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span>Checking availability...</span>
+            </div>
+          )}
+
+          {conflictWarning?.hasConflict && (
+            <div className="p-4 bg-amber-50 border border-amber-300 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-amber-800">Scheduling Conflict Detected</h4>
+                  <p className="text-sm text-amber-700 mt-1">
+                    You already have {conflictWarning.conflicts.length === 1 ? 'an appointment' : 'appointments'} scheduled during this time:
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {conflictWarning.conflicts.map((conflict) => (
+                      <li key={conflict.id} className="text-sm text-amber-800 font-medium">
+                        {conflict.patient_name} - {new Date(conflict.appointment_time).toLocaleString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })} ({conflict.duration_minutes} min)
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-sm text-amber-600 mt-2">
+                    Please choose a different time to avoid double-booking.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Duration and Type */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -496,7 +606,7 @@ const TelehealthScheduler: React.FC = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading || !selectedPatient}
+            disabled={loading || !selectedPatient || conflictWarning?.hasConflict}
             className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
           >
             {loading ? (
