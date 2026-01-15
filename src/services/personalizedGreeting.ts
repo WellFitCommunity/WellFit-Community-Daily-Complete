@@ -129,6 +129,22 @@ export function getRoleSpecificMessage(role: string, timeOfDay: string): string 
 }
 
 /**
+ * Extract name from email as fallback (e.g., "maria@company.com" -> "Maria")
+ */
+function extractNameFromEmail(email: string): string {
+  if (!email) return '';
+  const emailName = email.split('@')[0];
+  if (!emailName || emailName.length === 0) return '';
+
+  // Remove numbers and underscores, take first part before dots
+  const cleanName = emailName.split('.')[0].replace(/[0-9_]/g, '');
+  if (cleanName && cleanName.length > 1) {
+    return cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase();
+  }
+  return '';
+}
+
+/**
  * Fetch user profile from database
  */
 export async function fetchUserProfile(
@@ -158,11 +174,17 @@ export async function fetchUserProfile(
       tenantName = tenant?.name;
     }
 
+    // Use email-based name as fallback if first_name is empty
+    let firstName = profile.first_name || '';
+    if (!firstName && profile.email) {
+      firstName = extractNameFromEmail(profile.email);
+    }
+
     return {
       userId,
-      firstName: profile.first_name || '',
+      firstName,
       lastName: profile.last_name || '',
-      fullName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+      fullName: `${firstName} ${profile.last_name || ''}`.trim(),
       role: profile.role || 'user',
       email: profile.email || '',
       tenantId: profile.tenant_id,

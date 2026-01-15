@@ -169,8 +169,26 @@ serve(async (req) => {
       timeGreeting = 'Good evening'
     }
 
-    // Determine name to use
-    const displayName = preferences?.preferred_name || profile?.first_name || 'there'
+    // Determine name to use - with smart fallbacks
+    let displayName = preferences?.preferred_name || profile?.first_name;
+
+    // If no name, try to extract from email (e.g., "maria@company.com" -> "Maria")
+    if (!displayName && user.email) {
+      const emailName = user.email.split('@')[0];
+      // Capitalize first letter and handle common email patterns
+      if (emailName && emailName.length > 0) {
+        // Remove numbers and underscores, take first part before dots
+        const cleanName = emailName.split('.')[0].replace(/[0-9_]/g, '');
+        if (cleanName && cleanName.length > 1) {
+          displayName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase();
+        }
+      }
+    }
+
+    // Final fallback
+    if (!displayName) {
+      displayName = 'there';
+    }
 
     // Add title based on role
     let title = ''

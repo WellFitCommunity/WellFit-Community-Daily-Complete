@@ -1,6 +1,6 @@
 # AI Skills Roadmap & Tracker
 
-> Last Updated: December 2025
+> Last Updated: January 2026
 
 ---
 
@@ -97,7 +97,7 @@
 | 35 | Schedule Optimizer | ✅ | Haiku 4.5 | `src/services/ai/scheduleOptimizerService.ts` | Shift scheduling with coverage & fairness |
 | 36 | Audit Report Generator | ✅ | Haiku 4.5 | `src/services/ai/auditReportGeneratorService.ts` | SOC2, HIPAA compliance report generation |
 | 37 | Performance Summary Generator | 📋 | Haiku 4.5 | `StaffFinancialSavingsTracker.tsx` | Staff summaries |
-| 38 | Billing Optimization Engine | 📋 | Sonnet 4.5 | `BillingDashboard.tsx` | Advanced coding optimization |
+| 38 | Billing Optimization Engine | ✅ | Sonnet 4.5 | `src/services/ai/billingOptimizationEngineService.ts` | Advanced coding optimization |
 
 ---
 
@@ -129,7 +129,7 @@
 | 46 | Cognitive Decline Tracker | 📋 | Sonnet 4.5 | NeuroSuite | Pattern detection + interventions |
 | 47 | Dental Treatment Planner | 📋 | Sonnet 4.5 | `dentalHealthService.ts` | Treatment from findings |
 | 48 | CDT Code Suggester | 📋 | Haiku 4.5 | Dental service | Dental procedure codes |
-| 49 | Field Visit Optimizer | 📋 | Haiku 4.5 | `FieldVisitManager.ts` | Route optimization |
+| 49 | Field Visit Optimizer | ✅ | Haiku 4.5 | `src/services/ai/fieldVisitOptimizerService.ts` | Route optimization for CHWs |
 
 ---
 
@@ -160,7 +160,7 @@
 | 56 | Patient Q&A Bot | ✅ | Sonnet 4.5 | `supabase/functions/ai-patient-qa-bot/` | Health question answering |
 | 57 | Provider Assistant | ✅ | Sonnet 4.5 | `src/services/ai/providerAssistantService.ts` | Role-adaptive for all staff |
 | 58 | Care Team Chat Summarizer | ✅ | Haiku 4.5 | `src/services/ai/careTeamChatSummarizerService.ts` | Team communication summaries, action item extraction |
-| 59 | Admin Chat Assistant | 📋 | Haiku 4.5 | `IntelligentAdminPanel.tsx` | Conversational admin help |
+| 59 | Admin Chat Assistant | ✅ | Haiku 4.5 | `src/services/ai/adminChatAssistantService.ts` | Conversational admin help |
 
 ---
 
@@ -190,14 +190,14 @@
 | Decision Support | 4 | 0 | 0 | 4 |
 | Patient Engagement | 3 | 0 | 0 | 3 |
 | Risk Prediction | 5 | 0 | 0 | 5 |
-| Admin Automation | 2 | 0 | 2 | 4 |
+| Admin Automation | 3 | 0 | 1 | 4 |
 | Analytics | 1 | 0 | 2 | 3 |
 | Voice/NLP | 1 | 0 | 2 | 3 |
-| Specialty | 0 | 0 | 5 | 5 |
+| Specialty | 1 | 0 | 4 | 5 |
 | Interoperability | 2 | 0 | 1 | 3 |
 | Security | 3 | 0 | 0 | 3 |
-| Conversational | 3 | 0 | 1 | 4 |
-| **TOTAL** | **46** | **0** | **13** | **59** |
+| Conversational | 4 | 0 | 0 | 4 |
+| **TOTAL** | **49** | **0** | **10** | **59** |
 
 ---
 
@@ -306,6 +306,9 @@ await accuracyService.recordOutcome({
 
 | Date | Change |
 |------|--------|
+| 2026-01-15 | Completed Admin Chat Assistant (#59) - Conversational admin help with role-adaptive suggestions |
+| 2026-01-15 | Completed Billing Optimization Engine (#38) - Advanced coding optimization with denial prevention |
+| 2026-01-15 | Completed Field Visit Optimizer (#49) - Route optimization for CHWs with geographic clustering |
 | 2025-12-26 | Completed Care Team Chat Summarizer (#58) - Team communication summaries with action item extraction |
 | 2025-12-26 | Completed HIPAA Violation Predictor (#55) - Predictive compliance with violation risk scoring |
 | 2025-12-26 | Completed PHI Exposure Risk Scorer (#54) - Risk assessment and exposure analysis |
