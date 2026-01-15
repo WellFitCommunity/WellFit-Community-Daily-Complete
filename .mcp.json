@@ -13,18 +13,18 @@
       "enabled": true,
       "env": {
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
-        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+        "SUPABASE_URL": "${VITE_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SB_SECRET_KEY}"
       }
     },
     "postgres": {
       "transport": "http",
-      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-postgres-server",
+      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-postgres-server",
       "description": "PostgreSQL MCP server for safe database queries",
       "enabled": true,
       "env": {
-        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+        "SUPABASE_URL": "${VITE_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SB_SECRET_KEY}"
       },
       "tools": [
         "execute_query",
@@ -51,12 +51,12 @@
     },
     "edge-functions": {
       "transport": "http",
-      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-edge-functions-server",
+      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-edge-functions-server",
       "description": "Edge Functions MCP server for workflow orchestration",
       "enabled": true,
       "env": {
-        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+        "SUPABASE_URL": "${VITE_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SB_SECRET_KEY}"
       },
       "tools": [
         "invoke_function",
@@ -74,12 +74,12 @@
     },
     "medical-codes": {
       "transport": "http",
-      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-medical-codes-server",
+      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-medical-codes-server",
       "description": "Medical Codes MCP server for CPT, ICD-10, HCPCS lookups",
       "enabled": true,
       "env": {
-        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+        "SUPABASE_URL": "${VITE_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SB_SECRET_KEY}"
       },
       "tools": [
         "search_cpt",
@@ -95,12 +95,12 @@
     },
     "fhir": {
       "transport": "http",
-      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-fhir-server",
+      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-fhir-server",
       "description": "FHIR R4 MCP server for healthcare interoperability",
       "enabled": true,
       "env": {
-        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+        "SUPABASE_URL": "${VITE_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SB_SECRET_KEY}"
       },
       "tools": [
         "export_patient_bundle",
@@ -147,12 +147,12 @@
     },
     "hl7-x12": {
       "transport": "http",
-      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-hl7-x12-server",
+      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-hl7-x12-server",
       "description": "HL7/X12 Transformer MCP server for healthcare message conversion",
       "enabled": true,
       "env": {
-        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+        "SUPABASE_URL": "${VITE_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SB_SECRET_KEY}"
       },
       "tools": [
         "parse_hl7",
@@ -192,12 +192,12 @@
     },
     "clearinghouse": {
       "transport": "http",
-      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-clearinghouse-server",
+      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-clearinghouse-server",
       "description": "Clearinghouse MCP server for claims submission and eligibility",
       "enabled": true,
       "env": {
-        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+        "SUPABASE_URL": "${VITE_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SB_SECRET_KEY}"
       },
       "tools": [
         "submit_claim",
