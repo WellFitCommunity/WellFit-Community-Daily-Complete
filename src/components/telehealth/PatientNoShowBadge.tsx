@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, AlertCircle, Ban, CheckCircle, Info } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Ban, CheckCircle, Info as _Info } from 'lucide-react'; // _Info reserved for tooltips
 import {
   NoShowDetectionService,
   type PatientNoShowStats,

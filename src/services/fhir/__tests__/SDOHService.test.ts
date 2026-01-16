@@ -26,7 +26,7 @@ const mockEq: ReturnType<typeof vi.fn> = vi.fn(() => ({
   }),
 }));
 
-const mockIn = vi.fn(() => ({
+const _mockIn = vi.fn(() => ({
   order: mockOrder,
   eq: mockEq,
 }));

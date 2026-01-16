@@ -140,7 +140,7 @@ function detectCategory(query: string): AdminQueryCategory {
 
 function generateFollowUpQuestions(
   category: AdminQueryCategory,
-  query: string
+  _query: string
 ): string[] {
   const followUps: Record<AdminQueryCategory, string[]> = {
     workflow: [
@@ -481,7 +481,7 @@ export const AdminChatAssistantService = {
 function generateFallbackResponse(
   query: string,
   category: AdminQueryCategory,
-  adminContext: AdminContext
+  _adminContext: AdminContext
 ): AdminChatResponse {
   const fallbackResponses: Record<AdminQueryCategory, string> = {
     workflow:

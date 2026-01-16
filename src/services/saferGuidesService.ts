@@ -172,6 +172,7 @@ export async function getOrCreateAssessment(
 ): Promise<ServiceResult<AssessmentSummary>> {
   try {
     // Check for existing assessment
+    // eslint-disable-next-line prefer-const -- assessment is reassigned if not found
     let { data: assessment, error: fetchError } = await supabase
       .from('safer_guide_assessments')
       .select('*')
@@ -508,7 +509,7 @@ export async function attestAssessment(
     });
 
     // Update assessment as attested
-    const { data, error } = await supabase
+    const { data: _data, error } = await supabase
       .from('safer_guide_assessments')
       .update({
         status: 'attested',

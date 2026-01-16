@@ -335,7 +335,9 @@ describe('PatientNoShowBadge', () => {
       });
 
       const badge = screen.getByText('3 no-shows').closest('button');
-      await user.hover(badge!);
+      if (badge) {
+        await user.hover(badge);
+      }
 
       await waitFor(() => {
         expect(screen.getByText('No-Show History')).toBeInTheDocument();

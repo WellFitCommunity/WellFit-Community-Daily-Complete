@@ -411,7 +411,7 @@ export const FieldVisitOptimizerService = {
     const startTime = Date.now();
 
     try {
-      const { visits, workers, date, tenantId, allowReassignment = true, optimizationPreference = 'balanced' } = request;
+      const { visits, workers, date, tenantId: _tenantId, allowReassignment = true, optimizationPreference = 'balanced' } = request;
 
       if (!visits || visits.length === 0) {
         return failure('VALIDATION_ERROR', 'At least one visit is required');
@@ -653,7 +653,7 @@ function optimizeLocally(
 ): OptimizationResult {
   const workStart = parseTime(worker.workingHours.start);
   const workEnd = parseTime(worker.workingHours.end);
-  const availableMinutes = workEnd - workStart;
+  const _availableMinutes = workEnd - workStart; // Reserved for future capacity calculations
 
   // Sort by priority first
   const sortedVisits = sortByPriority(visits);
@@ -689,7 +689,7 @@ function optimizeLocally(
 
       // Check time window constraints
       if (visit.timeWindow) {
-        const earliest = parseTime(visit.timeWindow.earliest);
+        const _earliest = parseTime(visit.timeWindow.earliest); // Reserved for wait-time optimization
         const latest = parseTime(visit.timeWindow.latest);
         const arrivalTime = currentTime + travelTime;
 

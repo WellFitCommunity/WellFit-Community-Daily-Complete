@@ -12,7 +12,7 @@ import {
   Clock,
   Users,
   TrendingUp,
-  TrendingDown,
+  TrendingDown as _TrendingDown, // Reserved for trend indicators
   AlertTriangle,
   CheckCircle,
   XCircle,
