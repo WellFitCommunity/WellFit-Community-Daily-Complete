@@ -1,7 +1,9 @@
 // Comprehensive billing service for WellFit Community
 // Production-grade database operations and business logic
+// HIPAA §164.312(b): PHI access logging enabled for patient-related operations
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type {
   BillingProvider,
@@ -273,6 +275,16 @@ export class BillingService {
     suggestion: CodingSuggestion,
     confidence?: number
   ): Promise<CodingRecommendation> {
+    // HIPAA §164.312(b): Log PHI access
+    if (patientId) {
+      await auditLogger.phi('CODING_RECOMMENDATION_CREATE', patientId, {
+        resourceType: 'CodingRecommendation',
+        operation: 'saveCodingRecommendation',
+        encounterId,
+        confidence,
+      });
+    }
+
     const { data, error } = await supabase
       .from('coding_recommendations')
       .insert({

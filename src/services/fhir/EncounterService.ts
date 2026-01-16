@@ -2,10 +2,13 @@
  * FHIR Encounter Service
  * Manages patient encounter records (visits, admissions, etc.) (FHIR R4)
  *
+ * HIPAA §164.312(b): PHI access logging enabled
+ *
  * @see https://hl7.org/fhir/R4/encounter.html
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../auditLogger';
 
 type EncounterRow = Record<string, unknown>;
 type EncounterCreateInput = Record<string, unknown>;
@@ -17,6 +20,13 @@ export const EncounterService = {
     patientId: string,
     options: { status?: string; class_code?: string } = {}
   ): Promise<EncounterRow[]> {
+    // HIPAA §164.312(b): Log PHI access
+    await auditLogger.phi('ENCOUNTER_LIST_READ', patientId, {
+      resourceType: 'Encounter',
+      operation: 'getAll',
+      filters: options,
+    });
+
     let query = supabase
       .from('encounters')
       .select('*')
@@ -38,6 +48,12 @@ export const EncounterService = {
 
   // Get active encounters (status = 'in-progress')
   async getActive(patientId: string): Promise<EncounterRow[]> {
+    // HIPAA §164.312(b): Log PHI access
+    await auditLogger.phi('ENCOUNTER_ACTIVE_READ', patientId, {
+      resourceType: 'Encounter',
+      operation: 'getActive',
+    });
+
     const { data, error } = await supabase
       .from('encounters')
       .select('*')
@@ -51,6 +67,13 @@ export const EncounterService = {
 
   // Get by encounter class (inpatient, outpatient, emergency)
   async getByClass(patientId: string, classCode: string): Promise<EncounterRow[]> {
+    // HIPAA §164.312(b): Log PHI access
+    await auditLogger.phi('ENCOUNTER_BY_CLASS_READ', patientId, {
+      resourceType: 'Encounter',
+      operation: 'getByClass',
+      classCode,
+    });
+
     const { data, error } = await supabase
       .from('encounters')
       .select('*')
@@ -64,6 +87,13 @@ export const EncounterService = {
 
   // Get recent encounters (last N days)
   async getRecent(patientId: string, days = 30): Promise<EncounterRow[]> {
+    // HIPAA §164.312(b): Log PHI access
+    await auditLogger.phi('ENCOUNTER_RECENT_READ', patientId, {
+      resourceType: 'Encounter',
+      operation: 'getRecent',
+      daysBack: days,
+    });
+
     const since = new Date();
     since.setDate(since.getDate() - days);
 
@@ -80,6 +110,16 @@ export const EncounterService = {
 
   // Create encounter
   async create(encounter: EncounterCreateInput): Promise<EncounterRow> {
+    // HIPAA §164.312(b): Log PHI write
+    const patientId = encounter.patient_id as string | undefined;
+    if (patientId) {
+      await auditLogger.phi('ENCOUNTER_CREATE', patientId, {
+        resourceType: 'Encounter',
+        operation: 'create',
+        classCode: encounter.class_code as string | undefined,
+      });
+    }
+
     const { data, error } = await supabase
       .from('encounters')
       .insert([encounter])

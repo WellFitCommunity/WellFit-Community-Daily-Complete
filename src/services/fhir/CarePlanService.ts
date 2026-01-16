@@ -5,12 +5,15 @@
  * FHIR R4 Resource: CarePlan
  * Purpose: Records patient care plans, treatment goals, and planned activities
  *
+ * HIPAA §164.312(b): PHI access logging enabled
+ *
  * @see https://hl7.org/fhir/R4/careplan.html
  */
 
 import { supabase } from '../../lib/supabaseClient';
 import { getErrorMessage } from '../../lib/getErrorMessage';
 import type { FHIRCarePlan, FHIRApiResponse } from '../../types/fhir';
+import { auditLogger } from '../auditLogger';
 
 type RpcRow = Record<string, unknown>;
 
@@ -22,6 +25,12 @@ export class CarePlanService {
    */
   static async getByPatient(patientId: string): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CARE_PLAN_LIST_READ', patientId, {
+        resourceType: 'CarePlan',
+        operation: 'getByPatient',
+      });
+
       const { data, error } = await supabase
         .from('fhir_care_plans')
         .select('*')
@@ -74,6 +83,12 @@ export class CarePlanService {
    */
   static async getActive(patientId: string): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CARE_PLAN_ACTIVE_READ', patientId, {
+        resourceType: 'CarePlan',
+        operation: 'getActive',
+      });
+
       const { data, error } = await supabase.rpc('get_active_care_plans', {
         p_patient_id: patientId,
       });
@@ -99,6 +114,12 @@ export class CarePlanService {
    */
   static async getCurrent(patientId: string): Promise<FHIRApiResponse<FHIRCarePlan | null>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CARE_PLAN_CURRENT_READ', patientId, {
+        resourceType: 'CarePlan',
+        operation: 'getCurrent',
+      });
+
       const { data, error } = await supabase.rpc('get_current_care_plan', {
         p_patient_id: patientId,
       });
@@ -127,6 +148,13 @@ export class CarePlanService {
    */
   static async getByStatus(patientId: string, status: string): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CARE_PLAN_BY_STATUS_READ', patientId, {
+        resourceType: 'CarePlan',
+        operation: 'getByStatus',
+        status,
+      });
+
       const { data, error } = await supabase.rpc('get_care_plans_by_status', {
         p_patient_id: patientId,
         p_status: status,
@@ -154,6 +182,13 @@ export class CarePlanService {
    */
   static async getByCategory(patientId: string, category: string): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CARE_PLAN_BY_CATEGORY_READ', patientId, {
+        resourceType: 'CarePlan',
+        operation: 'getByCategory',
+        category,
+      });
+
       const { data, error } = await supabase.rpc('get_care_plans_by_category', {
         p_patient_id: patientId,
         p_category: category,
@@ -209,6 +244,15 @@ export class CarePlanService {
    */
   static async create(carePlan: Partial<FHIRCarePlan>): Promise<FHIRApiResponse<FHIRCarePlan>> {
     try {
+      // HIPAA §164.312(b): Log PHI write
+      if (carePlan.patient_id) {
+        await auditLogger.phi('CARE_PLAN_CREATE', carePlan.patient_id, {
+          resourceType: 'CarePlan',
+          operation: 'create',
+          category: carePlan.category,
+        });
+      }
+
       const { data, error } = await supabase.from('fhir_care_plans').insert([carePlan]).select().single();
 
       if (error) throw error;
@@ -286,6 +330,20 @@ export class CarePlanService {
     toDate?: string;
   }): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access if patient-specific search
+      if (params.patientId) {
+        await auditLogger.phi('CARE_PLAN_SEARCH', params.patientId, {
+          resourceType: 'CarePlan',
+          operation: 'search',
+          filters: {
+            status: params.status,
+            category: params.category,
+            fromDate: params.fromDate,
+            toDate: params.toDate,
+          },
+        });
+      }
+
       let query = supabase.from('fhir_care_plans').select('*');
 
       if (params.patientId) {

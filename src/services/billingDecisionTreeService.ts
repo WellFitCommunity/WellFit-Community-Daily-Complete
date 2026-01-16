@@ -1,6 +1,7 @@
 // Billing Decision Tree Service
 // Implements integral minimum logic for smart billing and coding
 // Follows the 80/20 rule: handles common scenarios efficiently, routes complex cases to manual review
+// HIPAA §164.312(b): PHI access logging enabled
 
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
@@ -71,6 +72,14 @@ export class BillingDecisionTreeService {
     const warnings: ValidationIssue[] = [];
     let requiresManualReview = false;
     let manualReviewReason: string | undefined;
+
+    // HIPAA §164.312(b): Log PHI access for billing processing
+    await auditLogger.phi('BILLING_DECISION_TREE_PROCESS', input.patientId, {
+      resourceType: 'Claim',
+      operation: 'processEncounter',
+      encounterType: input.encounterType,
+      payerId: input.payerId,
+    });
 
     try {
       // NODE A: Eligibility and Authorization Validation
@@ -535,6 +544,13 @@ export class BillingDecisionTreeService {
     patientId: string,
     payerId: string
   ): Promise<EligibilityCheckResult> {
+    // HIPAA §164.312(b): Log PHI access for eligibility check
+    await auditLogger.phi('BILLING_ELIGIBILITY_CHECK', patientId, {
+      resourceType: 'Eligibility',
+      operation: 'validateEligibility',
+      payerId,
+    });
+
     try {
       // Check patient insurance in database
       const { data: patient, error: patientError } = await supabase
@@ -1448,6 +1464,12 @@ export class BillingDecisionTreeService {
     if (!result.success || !result.claimLine) {
       return result;
     }
+
+    // HIPAA §164.312(b): Log PHI access for SDOH assessment
+    await auditLogger.phi('BILLING_SDOH_ENHANCEMENT', patientId, {
+      resourceType: 'SDOHAssessment',
+      operation: 'enhanceWithSDOH',
+    });
 
     try {
       // Get SDOH assessment

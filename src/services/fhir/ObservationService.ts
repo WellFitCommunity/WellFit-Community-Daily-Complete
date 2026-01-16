@@ -5,6 +5,8 @@
  * FHIR R4 Resource: Observation
  * Purpose: Records measurements and assertions (vitals, labs, social history, etc.)
  *
+ * HIPAA §164.312(b): PHI access logging enabled
+ *
  * @see https://hl7.org/fhir/R4/observation.html
  */
 
@@ -14,6 +16,7 @@ import type {
   CreateObservation,
   FHIRApiResponse,
 } from '../../types/fhir';
+import { auditLogger } from '../auditLogger';
 
 export class ObservationService {
   /**
@@ -23,6 +26,12 @@ export class ObservationService {
    */
   static async getByPatient(patientId: string): Promise<FHIRApiResponse<Observation[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('OBSERVATION_LIST_READ', patientId, {
+        resourceType: 'Observation',
+        operation: 'getByPatient',
+      });
+
       const { data, error } = await supabase
         .from('fhir_observations')
         .select('*')
@@ -54,6 +63,13 @@ export class ObservationService {
     days: number = 30
   ): Promise<FHIRApiResponse<Observation[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('OBSERVATION_VITAL_SIGNS_READ', patientId, {
+        resourceType: 'Observation',
+        operation: 'getVitalSigns',
+        daysBack: days,
+      });
+
       const { data, error } = await supabase.rpc('get_patient_vital_signs', {
         patient_id_param: patientId,
         days_param: days,
@@ -84,6 +100,13 @@ export class ObservationService {
     days: number = 90
   ): Promise<FHIRApiResponse<Observation[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('OBSERVATION_LAB_RESULTS_READ', patientId, {
+        resourceType: 'Observation',
+        operation: 'getLabResults',
+        daysBack: days,
+      });
+
       const { data, error } = await supabase.rpc('get_patient_lab_results', {
         patient_id_param: patientId,
         days_param: days,
@@ -110,6 +133,12 @@ export class ObservationService {
    */
   static async getSocialHistory(patientId: string): Promise<FHIRApiResponse<Observation[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('OBSERVATION_SOCIAL_HISTORY_READ', patientId, {
+        resourceType: 'Observation',
+        operation: 'getSocialHistory',
+      });
+
       const { data, error } = await supabase.rpc('get_patient_social_history', {
         patient_id_param: patientId,
       });
@@ -141,6 +170,14 @@ export class ObservationService {
     days: number = 365
   ): Promise<FHIRApiResponse<Observation[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('OBSERVATION_BY_CODE_READ', patientId, {
+        resourceType: 'Observation',
+        operation: 'getByCode',
+        code,
+        daysBack: days,
+      });
+
       const { data, error } = await supabase.rpc('get_observations_by_code', {
         patient_id_param: patientId,
         code_param: code,
@@ -174,6 +211,14 @@ export class ObservationService {
     days?: number
   ): Promise<FHIRApiResponse<Observation[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('OBSERVATION_BY_CATEGORY_READ', patientId, {
+        resourceType: 'Observation',
+        operation: 'getByCategory',
+        category,
+        daysBack: days,
+      });
+
       let query = supabase
         .from('fhir_observations')
         .select('*')
@@ -213,6 +258,13 @@ export class ObservationService {
    */
   static async create(observation: CreateObservation): Promise<FHIRApiResponse<Observation>> {
     try {
+      // HIPAA §164.312(b): Log PHI write
+      await auditLogger.phi('OBSERVATION_CREATE', observation.patient_id, {
+        resourceType: 'Observation',
+        operation: 'create',
+        category: observation.category,
+      });
+
       const { data, error } = await supabase
         .from('fhir_observations')
         .insert([observation])

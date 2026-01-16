@@ -2,14 +2,23 @@
  * FHIR AllergyIntolerance Service
  * Manages patient allergy and intolerance records (FHIR R4)
  *
+ * HIPAA §164.312(b): PHI access logging enabled
+ *
  * @see https://hl7.org/fhir/R4/allergyintolerance.html
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../auditLogger';
 
 export const AllergyIntoleranceService = {
   // Get all allergies for a patient
   async getAll(patientId: string) {
+    // HIPAA §164.312(b): Log PHI access
+    await auditLogger.phi('ALLERGY_LIST_READ', patientId, {
+      resourceType: 'AllergyIntolerance',
+      operation: 'getAll',
+    });
+
     const { data, error } = await supabase
       .from('allergy_intolerances')
       .select('*')
@@ -23,6 +32,12 @@ export const AllergyIntoleranceService = {
 
   // Get active allergies only (clinical_status = 'active')
   async getActive(patientId: string) {
+    // HIPAA §164.312(b): Log PHI access
+    await auditLogger.phi('ALLERGY_ACTIVE_READ', patientId, {
+      resourceType: 'AllergyIntolerance',
+      operation: 'getActive',
+    });
+
     const { data, error } = await supabase
       .rpc('get_active_allergies', { user_id_param: patientId });
 
@@ -35,6 +50,13 @@ export const AllergyIntoleranceService = {
     patientId: string,
     allergenType: 'medication' | 'food' | 'environment' | 'biologic'
   ) {
+    // HIPAA §164.312(b): Log PHI access
+    await auditLogger.phi('ALLERGY_BY_TYPE_READ', patientId, {
+      resourceType: 'AllergyIntolerance',
+      operation: 'getByType',
+      allergenType,
+    });
+
     const { data, error } = await supabase
       .from('allergy_intolerances')
       .select('*')
@@ -49,6 +71,12 @@ export const AllergyIntoleranceService = {
 
   // Get high-risk allergies (criticality = 'high')
   async getHighRisk(patientId: string) {
+    // HIPAA §164.312(b): Log PHI access
+    await auditLogger.phi('ALLERGY_HIGH_RISK_READ', patientId, {
+      resourceType: 'AllergyIntolerance',
+      operation: 'getHighRisk',
+    });
+
     const { data, error } = await supabase
       .from('allergy_intolerances')
       .select('*')
@@ -63,6 +91,13 @@ export const AllergyIntoleranceService = {
 
   // CRITICAL: Check if medication causes allergy
   async checkMedicationAllergy(patientId: string, medicationName: string) {
+    // HIPAA §164.312(b): Log PHI access (critical safety check)
+    await auditLogger.phi('ALLERGY_MEDICATION_CHECK', patientId, {
+      resourceType: 'AllergyIntolerance',
+      operation: 'checkMedicationAllergy',
+      medicationName,
+    });
+
     const { data, error } = await supabase
       .rpc('check_medication_allergy', {
         user_id_param: patientId,
@@ -75,6 +110,16 @@ export const AllergyIntoleranceService = {
 
   // Create new allergy
   async create(allergy: Record<string, unknown>) {
+    // HIPAA §164.312(b): Log PHI write
+    const patientId = allergy.patient_id as string | undefined;
+    if (patientId) {
+      await auditLogger.phi('ALLERGY_CREATE', patientId, {
+        resourceType: 'AllergyIntolerance',
+        operation: 'create',
+        allergenName: allergy.allergen_name as string | undefined,
+      });
+    }
+
     const { data, error } = await supabase
       .from('allergy_intolerances')
       .insert([allergy])

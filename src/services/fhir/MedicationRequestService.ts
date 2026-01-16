@@ -5,6 +5,8 @@
  * FHIR R4 Resource: MedicationRequest
  * Purpose: Records prescriptions, medication orders, and refill requests
  *
+ * HIPAA §164.312(b): PHI access logging enabled
+ *
  * @see https://hl7.org/fhir/R4/medicationrequest.html
  */
 
@@ -14,6 +16,7 @@ import type {
   CreateMedicationRequest,
   FHIRApiResponse,
 } from '../../types/fhir';
+import { auditLogger } from '../auditLogger';
 
 export class MedicationRequestService {
   /**
@@ -23,6 +26,12 @@ export class MedicationRequestService {
    */
   static async getByPatient(patientId: string): Promise<FHIRApiResponse<MedicationRequest[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('MEDICATION_REQUEST_LIST_READ', patientId, {
+        resourceType: 'MedicationRequest',
+        operation: 'getByPatient',
+      });
+
       const { data, error } = await supabase
         .from('fhir_medication_requests')
         .select('*')
@@ -48,6 +57,12 @@ export class MedicationRequestService {
    */
   static async getActive(patientId: string): Promise<FHIRApiResponse<MedicationRequest[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('MEDICATION_REQUEST_ACTIVE_READ', patientId, {
+        resourceType: 'MedicationRequest',
+        operation: 'getActive',
+      });
+
       const { data, error } = await supabase
         .rpc('get_active_medication_requests', { patient_id_param: patientId });
 
@@ -72,6 +87,13 @@ export class MedicationRequestService {
    */
   static async create(request: CreateMedicationRequest): Promise<FHIRApiResponse<MedicationRequest>> {
     try {
+      // HIPAA §164.312(b): Log PHI write
+      await auditLogger.phi('MEDICATION_REQUEST_CREATE', request.patient_id, {
+        resourceType: 'MedicationRequest',
+        operation: 'create',
+        medication: request.medication_display,
+      });
+
       // Check for allergies first
       const allergyCheck = await supabase.rpc('check_medication_allergy_from_request', {
         patient_id_param: request.patient_id,
@@ -167,6 +189,13 @@ export class MedicationRequestService {
     limit: number = 50
   ): Promise<FHIRApiResponse<MedicationRequest[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('MEDICATION_REQUEST_HISTORY_READ', patientId, {
+        resourceType: 'MedicationRequest',
+        operation: 'getHistory',
+        limit,
+      });
+
       const { data, error } = await supabase
         .rpc('get_medication_history', {
           patient_id_param: patientId,

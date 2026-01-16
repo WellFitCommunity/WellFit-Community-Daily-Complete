@@ -30,6 +30,7 @@ vi.mock('../auditLogger', () => ({
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
+    phi: vi.fn(),
   },
 }));
 

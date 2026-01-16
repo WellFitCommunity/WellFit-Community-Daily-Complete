@@ -5,6 +5,8 @@
  * FHIR R4 Resource: Condition
  * Purpose: Records clinical diagnoses, problems, and health concerns
  *
+ * HIPAA §164.312(b): PHI access logging enabled
+ *
  * @see https://hl7.org/fhir/R4/condition.html
  */
 
@@ -15,6 +17,7 @@ import type {
   FHIRApiResponse,
 } from '../../types/fhir';
 import { normalizeCondition, toFHIRCondition } from './utils/fhirNormalizers';
+import { auditLogger } from '../auditLogger';
 
 export class ConditionService {
   /**
@@ -24,6 +27,12 @@ export class ConditionService {
    */
   static async getByPatient(patientId: string): Promise<FHIRApiResponse<Condition[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CONDITION_LIST_READ', patientId, {
+        resourceType: 'Condition',
+        operation: 'getByPatient',
+      });
+
       const { data, error } = await supabase
         .from('fhir_conditions')
         .select('*')
@@ -53,6 +62,12 @@ export class ConditionService {
    */
   static async getActive(patientId: string): Promise<FHIRApiResponse<Condition[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CONDITION_ACTIVE_READ', patientId, {
+        resourceType: 'Condition',
+        operation: 'getActive',
+      });
+
       const { data, error } = await supabase
         .rpc('get_active_conditions', { patient_id_param: patientId });
 
@@ -79,6 +94,12 @@ export class ConditionService {
    */
   static async getProblemList(patientId: string): Promise<FHIRApiResponse<Condition[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CONDITION_PROBLEM_LIST_READ', patientId, {
+        resourceType: 'Condition',
+        operation: 'getProblemList',
+      });
+
       const { data, error } = await supabase
         .rpc('get_problem_list', { patient_id_param: patientId });
 
@@ -131,6 +152,13 @@ export class ConditionService {
     try {
       // Convert to FHIR format for database
       const fhirCondition = toFHIRCondition(condition);
+
+      // HIPAA §164.312(b): Log PHI write
+      await auditLogger.phi('CONDITION_CREATE', condition.patient_id, {
+        resourceType: 'Condition',
+        operation: 'create',
+        code: condition.code,
+      });
 
       const { data, error } = await supabase
         .from('fhir_conditions')
@@ -207,6 +235,12 @@ export class ConditionService {
    */
   static async getChronic(patientId: string): Promise<FHIRApiResponse<Condition[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await auditLogger.phi('CONDITION_CHRONIC_READ', patientId, {
+        resourceType: 'Condition',
+        operation: 'getChronic',
+      });
+
       const { data, error } = await supabase
         .rpc('get_chronic_conditions', { patient_id_param: patientId });
 
