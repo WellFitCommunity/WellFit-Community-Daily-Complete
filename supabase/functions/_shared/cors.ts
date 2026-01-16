@@ -66,18 +66,18 @@ export interface CorsOptions {
 /**
  * CSP for Edge Function responses.
  *
- * WHITE-LABEL NOTE: CSP is intentionally permissive for multi-tenant SaaS.
- * Each tenant's frontend should enforce its own strict CSP via meta tags or headers.
- * Edge functions return JSON data, not HTML, so CSP is less critical here.
+ * WHITE-LABEL NOTE: CORS handles multi-tenant origin validation dynamically.
+ * CSP is kept strict for security compliance (HIPAA, SOC2).
+ * Edge functions return JSON data - frame-ancestors 'none' prevents clickjacking.
  */
 const CSP_VALUE =
   "default-src 'self'; " +
-  "frame-ancestors *; " +  // Allow any tenant to embed
+  "frame-ancestors 'none'; " +  // Prevent clickjacking - API responses shouldn't be framed
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://hcaptcha.com https://www.gstatic.com https://www.google.com https://*.supabase.co https://*.supabase.io https://vercel.live https://*.vercel.app; " +
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
   "font-src 'self' https://fonts.gstatic.com; " +
   "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.io https://api.hcaptcha.com; " +
-  "connect-src *; " +  // Allow any tenant API calls
+  "connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co wss://*.supabase.io; " +  // Supabase APIs only
   "frame-src 'self' https://hcaptcha.com https://*.hcaptcha.com; " +
   "worker-src 'self' blob:; " +
   "media-src 'self' blob:; " +
