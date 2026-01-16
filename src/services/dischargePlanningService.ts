@@ -89,6 +89,16 @@ export class DischargePlanningService {
       // Generate AI-powered recommendations
       await this.generateDischargePlanRecommendations(plan.id, request.patient_id, request.encounter_id);
 
+      // HIPAA §164.312(b) - Log PHI access for discharge plan creation
+      await auditLogger.phi('DISCHARGE_PLAN_CREATED', request.patient_id, {
+        resourceType: 'discharge_plan',
+        action: 'CREATE',
+        planId: plan.id,
+        encounterId: request.encounter_id,
+        riskScore: calculatedRiskScore,
+        disposition: request.discharge_disposition
+      });
+
       return plan;
     } catch (err: unknown) {
       throw new Error(`Discharge plan creation failed: ${getErrorMessage(err)}`);
@@ -235,6 +245,16 @@ export class DischargePlanningService {
 
       // Get recent readmissions
       const recentReadmissions = await ReadmissionTrackingService.getPatientReadmissions(patientId);
+
+      // HIPAA §164.312(b) - Log PHI access for discharge plan AI recommendations
+      await auditLogger.phi('DISCHARGE_PLAN_AI_DATA_READ', patientId, {
+        resourceType: 'patient_profile_encounter',
+        action: 'READ',
+        planId,
+        encounterId,
+        purpose: 'ai_recommendations',
+        recentReadmissionCount: recentReadmissions.length
+      });
 
       const context: ClaudeRequestContext = {
         userId: 'discharge-planning-system',

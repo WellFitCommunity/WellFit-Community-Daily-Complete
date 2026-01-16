@@ -4,6 +4,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../lib/getErrorMessage';
+import { auditLogger } from './auditLogger';
 import type { HandoffPacket } from '../types/handoff';
 
 export interface HospitalTransferIntegrationResult {
@@ -57,6 +58,18 @@ export async function integrateHospitalTransfer(
     // Step 5: Link handoff packet to patient and encounter
     await linkHandoffToPatient(packetId, patientId, encounterId);
 
+    // HIPAA §164.312(b) - Log PHI access for hospital transfer integration
+    await auditLogger.phi('HOSPITAL_TRANSFER_INTEGRATED', patientId, {
+      resourceType: 'hospital_transfer',
+      action: 'CREATE',
+      packetId,
+      encounterId,
+      vitalsRecorded: vitalResults.length,
+      billingCodesGenerated: billingCodes.length,
+      sendingFacility: packet.sending_facility,
+      receivingFacility: packet.receiving_facility
+    });
+
     return {
       success: true,
       patientId,
@@ -95,6 +108,14 @@ async function createOrFindPatient(
       throw new Error('Failed to decrypt patient information');
     }
 
+    // HIPAA §164.312(b) - Log PHI decryption for hospital transfer
+    await auditLogger.phi('PATIENT_PHI_DECRYPTED', 'TRANSFER_PATIENT', {
+      resourceType: 'encrypted_patient_data',
+      action: 'DECRYPT',
+      purpose: 'hospital_transfer_integration',
+      mrn: packet.patient_mrn || 'unknown'
+    });
+
     // Try to find existing patient by MRN
     if (packet.patient_mrn) {
       const { data: existingPatients, error: searchError } = await supabase
@@ -128,6 +149,14 @@ async function createOrFindPatient(
       .single();
 
     if (profileError) throw profileError;
+
+    // HIPAA §164.312(b) - Log new patient record creation from transfer
+    await auditLogger.phi('TRANSFER_PATIENT_CREATED', profile.id, {
+      resourceType: 'patient_profile',
+      action: 'CREATE',
+      source: 'hospital_transfer',
+      mrn: packet.patient_mrn || 'unknown'
+    });
 
     return { success: true, patientId: profile.id };
   } catch (error: unknown) {
@@ -167,6 +196,16 @@ async function createTransferEncounter(
       .single();
 
     if (encounterError) throw encounterError;
+
+    // HIPAA §164.312(b) - Log encounter creation for hospital transfer
+    await auditLogger.phi('TRANSFER_ENCOUNTER_CREATED', patientId, {
+      resourceType: 'encounter',
+      action: 'CREATE',
+      encounterId: encounter.id,
+      encounterType,
+      urgencyLevel: packet.urgency_level,
+      sendingFacility: packet.sending_facility
+    });
 
     return { success: true, encounterId: encounter.id };
   } catch (error: unknown) {
@@ -303,6 +342,15 @@ async function documentTransferVitals(
 
     if (!error && data) {
       observationIds.push(...data.map((obs) => obs.id));
+
+      // HIPAA §164.312(b) - Log vitals creation from hospital transfer
+      await auditLogger.phi('TRANSFER_VITALS_CREATED', patientId, {
+        resourceType: 'ehr_observations',
+        action: 'CREATE',
+        encounterId,
+        observationCount: data.length,
+        source: packet.sending_facility
+      });
     }
   }
 

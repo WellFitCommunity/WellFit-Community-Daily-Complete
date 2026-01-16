@@ -5,6 +5,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../lib/getErrorMessage';
+import { auditLogger } from './auditLogger';
 import { HandoffService } from './handoffService';
 import type { CreateHandoffPacketRequest } from '../types/handoff';
 import type { DischargePlan } from './dischargePlanningService';
@@ -151,6 +152,17 @@ export class PostAcuteTransferService {
           post_acute_facility_phone: request.receiving_facility_phone,
         })
         .eq('id', request.discharge_plan_id);
+
+      // HIPAA §164.312(b) - Log PHI access for post-acute transfer creation
+      await auditLogger.phi('POST_ACUTE_TRANSFER_CREATED', request.patient_id, {
+        resourceType: 'post_acute_transfer',
+        action: 'CREATE',
+        handoffPacketId: handoffResult.packet.id,
+        dischargePlanId: request.discharge_plan_id,
+        encounterId: request.encounter_id,
+        facilityType: request.post_acute_facility_type,
+        receivingFacility: request.receiving_facility_name
+      });
 
       return {
         success: true,
@@ -317,6 +329,16 @@ export class PostAcuteTransferService {
           assessment_date: functionalStatus.assessment_date,
         };
       }
+      // HIPAA §164.312(b) - Log PHI access for clinical data gathering
+      await auditLogger.phi('TRANSFER_CLINICAL_DATA_READ', patientId, {
+        resourceType: 'clinical_data_bundle',
+        action: 'READ',
+        encounterId,
+        purpose: 'post_acute_transfer',
+        medicationCount: (clinicalData.medications as Array<unknown>).length,
+        allergyCount: (clinicalData.allergies as Array<unknown>).length,
+        diagnosisCount: (clinicalData.diagnoses as Array<unknown>).length
+      });
     } catch (_err: unknown) {
       // Continue with partial data
     }
@@ -350,6 +372,15 @@ export class PostAcuteTransferService {
 
     if (error) {
       return [];
+    }
+
+    // HIPAA §164.312(b) - Log PHI access for post-acute transfer history
+    if (data && data.length > 0) {
+      await auditLogger.phi('POST_ACUTE_TRANSFERS_READ', patientId, {
+        resourceType: 'post_acute_transfer_history',
+        action: 'READ',
+        transferCount: data.length
+      });
     }
 
     return data || [];

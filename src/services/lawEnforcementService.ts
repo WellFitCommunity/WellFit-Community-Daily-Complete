@@ -7,6 +7,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { getEmailService } from './emailService';
+import { auditLogger } from './auditLogger';
 import type {
   EmergencyResponseInfo,
   EmergencyResponseFormData,
@@ -36,6 +37,12 @@ export const LawEnforcementService = {
         throw error;
       }
 
+      // HIPAA §164.312(b) - Log PHI access for emergency response info
+      await auditLogger.phi('EMERGENCY_RESPONSE_INFO_READ', patientId, {
+        resourceType: 'law_enforcement_response_info',
+        action: 'READ'
+      });
+
       return this.transformFromDb(data);
     } catch {
       // Error logged server-side
@@ -64,6 +71,12 @@ export const LawEnforcementService = {
         .single();
 
       if (error) throw error;
+
+      // HIPAA §164.312(b) - Log PHI access for emergency response info update
+      await auditLogger.phi('EMERGENCY_RESPONSE_INFO_WRITE', patientId, {
+        resourceType: 'law_enforcement_response_info',
+        action: 'UPSERT'
+      });
 
       return this.transformFromDb(result);
     } catch {
@@ -111,6 +124,16 @@ export const LawEnforcementService = {
         last_check_in_time?: string;
         hours_since_check_in?: number;
       } | null;
+
+      if (result) {
+        // HIPAA §164.312(b) - Log PHI access for welfare check dispatch (HIGH SENSITIVITY)
+        await auditLogger.phi('WELFARE_CHECK_INFO_READ', patientId, {
+          resourceType: 'welfare_check_info',
+          action: 'READ',
+          purpose: 'welfare_check_dispatch',
+          sensitivity: 'high'
+        });
+      }
 
       return result ? {
         patientId: result.patient_id,
@@ -178,7 +201,19 @@ export const LawEnforcementService = {
         emergency_contact_phone?: string;
         urgency_score: number;
       };
-      return ((data || []) as AlertRow[]).map((row) => ({
+
+      // HIPAA §164.312(b) - Log bulk PHI access for missed check-in alerts
+      const alertData = (data || []) as AlertRow[];
+      if (alertData.length > 0) {
+        await auditLogger.phi('MISSED_CHECKIN_ALERTS_READ', 'BULK_ACCESS', {
+          resourceType: 'missed_check_in_alerts',
+          action: 'READ',
+          patientCount: alertData.length,
+          purpose: 'welfare_monitoring'
+        });
+      }
+
+      return alertData.map((row) => ({
         patientId: row.patient_id,
         patientName: row.patient_name,
         patientAddress: row.patient_address,
@@ -224,7 +259,20 @@ export const LawEnforcementService = {
         check_ins?: Array<{ created_at: string }>;
         law_enforcement_response_info?: Array<{ response_priority?: string; escalation_delay_hours?: number }>;
       };
-      return ((data || []) as PatientRow[]).map((patient) => {
+
+      const patientData = (data || []) as PatientRow[];
+
+      // HIPAA §164.312(b) - Log bulk PHI access for check-in status monitoring
+      if (patientData.length > 0) {
+        await auditLogger.phi('SENIOR_CHECKIN_STATUS_READ', 'BULK_ACCESS', {
+          resourceType: 'patient_check_in_status',
+          action: 'READ',
+          patientCount: patientData.length,
+          purpose: 'dashboard_monitoring'
+        });
+      }
+
+      return patientData.map((patient) => {
         const lastCheckIn = patient.check_ins?.[0]?.created_at;
         const hoursSinceCheckIn = lastCheckIn
           ? (Date.now() - new Date(lastCheckIn).getTime()) / (1000 * 60 * 60)
@@ -273,6 +321,13 @@ export const LawEnforcementService = {
 
       if (patientError) throw patientError;
 
+      // HIPAA §164.312(b) - Log PHI access for check-in reminder
+      await auditLogger.phi('CHECKIN_REMINDER_CONTACT_READ', patientId, {
+        resourceType: 'patient_contact_info',
+        action: 'READ',
+        purpose: 'check_in_reminder'
+      });
+
       // Send SMS reminder (if phone available)
       if (patient.phone) {
         await supabase.functions.invoke('send-check-in-reminder-sms', {
@@ -319,6 +374,13 @@ export const LawEnforcementService = {
         .single();
 
       if (error) throw error;
+
+      // HIPAA §164.312(b) - Log PHI access for family notification
+      await auditLogger.phi('FAMILY_NOTIFICATION_CONTACT_READ', patientId, {
+        resourceType: 'patient_emergency_contacts',
+        action: 'READ',
+        purpose: 'missed_checkin_notification'
+      });
 
       type EmergencyContact = { name?: string; phone?: string; isPrimary?: boolean };
       const emergencyContacts = (patient.emergency_contacts || []) as EmergencyContact[];

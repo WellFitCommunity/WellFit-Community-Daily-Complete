@@ -64,6 +64,18 @@ export async function integrateEMSHandoff(
       billingCodesGenerated: billingCodes.length,
     });
 
+    // HIPAA §164.312(b) - Log PHI access for EMS handoff integration
+    await auditLogger.phi('EMS_HANDOFF_PHI_ACCESS', patientId, {
+      resourceType: 'ems_handoff',
+      action: 'CREATE',
+      handoffId,
+      encounterId,
+      vitalsRecorded: vitalResults.length,
+      billingCodesGenerated: billingCodes.length,
+      emsUnit: handoffData.unit_number,
+      emsAgency: handoffData.ems_agency
+    });
+
     return {
       success: true,
       patientId,
@@ -142,6 +154,15 @@ async function createOrFindPatient(
       patientId: newUser.user.id,
       handoffId: handoff.id,
       unitNumber: handoff.unit_number,
+    });
+
+    // HIPAA §164.312(b) - Log PHI creation for EMS temp patient
+    await auditLogger.phi('EMS_TEMP_PATIENT_PHI_CREATED', newUser.user.id, {
+      resourceType: 'patient_profile',
+      action: 'CREATE',
+      source: 'ems_handoff',
+      handoffId: handoff.id,
+      emsUnit: handoff.unit_number
     });
 
     return { success: true, patientId: newUser.user.id };
@@ -256,6 +277,18 @@ async function documentEMSVitals(
 
       }
     }
+  }
+
+  // HIPAA §164.312(b) - Log PHI access for EMS vitals documentation
+  if (observationIds.length > 0) {
+    await auditLogger.phi('EMS_VITALS_DOCUMENTED', patientId, {
+      resourceType: 'ehr_observations',
+      action: 'CREATE',
+      encounterId,
+      observationCount: observationIds.length,
+      source: 'ems_handoff',
+      emsUnit: handoff.unit_number
+    });
   }
 
   return observationIds;

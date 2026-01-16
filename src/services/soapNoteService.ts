@@ -13,6 +13,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 
 /** FHIR condition record from database */
 interface FHIRConditionRecord {
@@ -389,6 +390,17 @@ export async function fetchClinicalDataForEncounter(
     frequency: m.dosage_instruction?.[0]?.timing?.code?.text || ''
   })) || [];
 
+  // HIPAA §164.312(b) - Log PHI access for SOAP note clinical data fetch
+  await auditLogger.phi('SOAP_NOTE_CLINICAL_DATA_READ', patientId, {
+    resourceType: 'clinical_data_bundle',
+    action: 'READ',
+    encounterId,
+    purpose: 'soap_note_generation',
+    hasVitals: Object.keys(vitals).length > 0,
+    diagnosisCount: diagnoses.length,
+    medicationCount: medications.length
+  });
+
   return {
     vitals,
     diagnoses,
@@ -524,6 +536,7 @@ function buildROSSection(ros: Record<string, string>): string {
 
 /**
  * Log SOAP note access for HIPAA audit compliance
+ * Uses standardized auditLogger.phi() per HIPAA §164.312(b)
  */
 async function logSOAPNoteAccess(
   encounterId: string,
@@ -531,15 +544,14 @@ async function logSOAPNoteAccess(
   action: 'CREATE' | 'READ' | 'UPDATE'
 ): Promise<void> {
   try {
-    await supabase.from('audit_phi_access').insert({
-      user_id: userId,
-      resource_type: 'clinical_note',
-      resource_id: encounterId,
+    // HIPAA §164.312(b) - Standardized PHI access logging
+    await auditLogger.phi(`SOAP_NOTE_${action}`, encounterId, {
+      resourceType: 'clinical_note',
       action,
-      ip_address: 'server-side' // In production, capture real IP
+      userId,
+      encounterId
     });
-  } catch (error) {
-
+  } catch {
     // Don't throw - audit logging failure shouldn't break clinical workflow
   }
 }

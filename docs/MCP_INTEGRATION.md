@@ -2,7 +2,30 @@
 
 ## Overview
 
-Model Context Protocol (MCP) has been integrated into WellFit to consolidate Claude AI operations, reduce costs through prompt caching, and improve code maintainability.
+Model Context Protocol (MCP) has been integrated into WellFit with **10 specialized MCP servers** providing **79 tools** for healthcare workflows. This includes AI operations, FHIR access, claims processing, code validation, and more.
+
+### MCP Server Inventory
+
+| Server | Tools | Purpose |
+|--------|-------|---------|
+| **mcp-fhir-server** | 14 | FHIR R4 resource access and EHR sync |
+| **mcp-prior-auth-server** | 11 | Prior authorization (CMS-0057-F compliant) |
+| **mcp-clearinghouse-server** | 9 | Claims submission, eligibility, remittance |
+| **mcp-medical-codes-server** | 9 | CPT/ICD-10/HCPCS search and validation |
+| **mcp-hl7-x12-server** | 9 | HL7 v2.x and X12 EDI transformation |
+| **mcp-npi-registry-server** | 8 | Provider NPI validation and lookup |
+| **mcp-cms-coverage-server** | 8 | Medicare LCD/NCD coverage lookups |
+| **mcp-postgres-server** | 4 | Safe database queries with RLS |
+| **mcp-edge-functions-server** | 4 | Edge function orchestration |
+| **mcp-claude-server** | 3 | AI analysis with PHI de-identification |
+
+**Total: 79 tools across 10 servers**
+
+---
+
+## Claude MCP Server Details
+
+The following section covers the Claude MCP server specifically for AI operations, cost reduction through prompt caching, and code maintainability.
 
 ## Architecture
 
@@ -402,6 +425,225 @@ ORDER BY date DESC;
 
 ---
 
+## Healthcare MCP Servers Reference
+
+### mcp-fhir-server
+
+**Purpose:** Standardized FHIR R4 resource access and EHR synchronization
+
+| Tool | Description |
+|------|-------------|
+| `export_patient_bundle` | Export complete FHIR Bundle for patient |
+| `get_resource` | Get specific FHIR resource by ID |
+| `search_resources` | Search FHIR resources with filters |
+| `create_resource` | Create new FHIR resource |
+| `update_resource` | Update existing FHIR resource |
+| `validate_resource` | Validate resource against FHIR schema |
+| `get_patient_summary` | Get CCD-style clinical summary |
+| `get_observations` | Get observations/vitals for patient |
+| `get_medication_list` | Get active/historical medications |
+| `get_condition_list` | Get diagnoses/conditions |
+| `get_sdoh_assessments` | Get SDOH assessments |
+| `get_care_team` | Get care team members |
+| `list_ehr_connections` | List EHR/FHIR connections |
+| `trigger_ehr_sync` | Trigger EHR synchronization |
+
+**Supported FHIR Resources:** Patient, MedicationRequest, Condition, DiagnosticReport, Procedure, Observation, Immunization, CarePlan, CareTeam, Practitioner, Encounter, DocumentReference, AllergyIntolerance, Goal
+
+---
+
+### mcp-prior-auth-server
+
+**Purpose:** FHIR-based Prior Authorization (CMS-0057-F Compliance)
+
+| Tool | Description |
+|------|-------------|
+| `create_prior_auth` | Create new PA request |
+| `submit_prior_auth` | Submit PA to payer |
+| `get_prior_auth` | Get PA details |
+| `get_patient_prior_auths` | Get all PAs for patient |
+| `record_decision` | Record payer decision |
+| `create_appeal` | Create appeal for denied PA |
+| `check_prior_auth_required` | Check if PA required |
+| `get_pending_prior_auths` | Get PAs approaching deadline |
+| `get_prior_auth_statistics` | Get PA dashboard metrics |
+| `cancel_prior_auth` | Cancel PA request |
+| `to_fhir_claim` | Convert PA to FHIR Claim |
+
+**Urgency SLAs:** stat (4 hours), urgent (72 hours), routine (7 days)
+
+---
+
+### mcp-clearinghouse-server
+
+**Purpose:** Healthcare clearinghouse operations for revenue cycle
+
+| Tool | Description |
+|------|-------------|
+| `submit_claim` | Submit 837P/837I claim |
+| `check_claim_status` | Check claim status (276/277) |
+| `verify_eligibility` | Verify insurance eligibility (270/271) |
+| `process_remittance` | Process ERA/835 remittance |
+| `submit_prior_auth` | Submit X12 278 PA request |
+| `test_connection` | Test clearinghouse credentials |
+| `get_payer_list` | Get supported payers |
+| `get_submission_stats` | Get submission statistics |
+| `get_rejection_reasons` | Get rejection codes and remediation |
+
+---
+
+### mcp-medical-codes-server
+
+**Purpose:** Unified medical code search and validation
+
+| Tool | Description |
+|------|-------------|
+| `search_cpt` | Search CPT codes |
+| `search_icd10` | Search ICD-10 diagnosis codes |
+| `search_hcpcs` | Search HCPCS codes |
+| `get_modifiers` | Get applicable modifiers |
+| `validate_code_combination` | Validate CPT/ICD-10/modifier combo |
+| `check_bundling` | Check for bundling issues |
+| `get_code_details` | Get detailed code info |
+| `suggest_codes` | Suggest codes from description |
+| `get_sdoh_codes` | Get ICD-10 Z-codes for SDOH |
+
+---
+
+### mcp-hl7-x12-server
+
+**Purpose:** Bidirectional HL7 v2.x and X12 EDI transformation
+
+| Tool | Description |
+|------|-------------|
+| `parse_hl7` | Parse HL7 v2.x message |
+| `hl7_to_fhir` | Convert HL7 to FHIR R4 Bundle |
+| `generate_hl7_ack` | Generate HL7 ACK response |
+| `validate_hl7` | Validate HL7 message structure |
+| `generate_837p` | Generate X12 837P claim |
+| `validate_x12` | Validate X12 837P structure |
+| `parse_x12` | Parse X12 837P to structured data |
+| `x12_to_fhir` | Convert X12 to FHIR Claim |
+| `get_message_types` | Get supported message types |
+
+**Supported:** HL7 ADT, ORU, ORM (v2.3-2.8), X12 837P (005010X222A1)
+
+---
+
+### mcp-npi-registry-server
+
+**Purpose:** National Provider Identifier validation and lookup
+
+| Tool | Description |
+|------|-------------|
+| `validate_npi` | Validate NPI using Luhn algorithm |
+| `lookup_npi` | Get detailed provider info |
+| `search_providers` | Search by name, specialty, location |
+| `search_by_specialty` | Search by taxonomy code |
+| `get_taxonomy_codes` | Get taxonomy codes for specialty |
+| `bulk_validate_npis` | Validate multiple NPIs (max 50) |
+| `get_provider_identifiers` | Get all provider identifiers |
+| `check_npi_deactivation` | Check deactivation status |
+
+---
+
+### mcp-cms-coverage-server
+
+**Purpose:** Medicare coverage lookups (LCD/NCD)
+
+| Tool | Description |
+|------|-------------|
+| `search_lcd` | Search Local Coverage Determinations |
+| `search_ncd` | Search National Coverage Determinations |
+| `get_coverage_requirements` | Get coverage requirements for code |
+| `check_prior_auth_required` | Check if PA required for Medicare |
+| `get_lcd_details` | Get detailed LCD info |
+| `get_ncd_details` | Get detailed NCD info |
+| `get_coverage_articles` | Get billing guidance articles |
+| `get_mac_contractors` | Get MAC contractor info |
+
+---
+
+### mcp-postgres-server
+
+**Purpose:** Safe, controlled database operations with RLS
+
+| Tool | Description |
+|------|-------------|
+| `execute_query` | Execute pre-approved query |
+| `list_queries` | List available queries |
+| `get_table_schema` | Get schema for allowed tables |
+| `get_row_count` | Get row count with tenant filter |
+
+**Whitelisted Queries:** get_patient_count_by_risk, get_readmission_risk_summary, get_encounter_summary, get_sdoh_flags_summary, get_medication_adherence_stats, get_claims_status_summary, get_billing_revenue_summary, get_care_plan_summary, get_task_completion_rate, get_referral_summary, get_bed_availability, get_shift_handoff_summary, get_dashboard_metrics, get_quality_metrics
+
+---
+
+### mcp-edge-functions-server
+
+**Purpose:** Orchestrate Supabase Edge Functions
+
+| Tool | Description |
+|------|-------------|
+| `invoke_function` | Invoke whitelisted function |
+| `list_functions` | List available functions |
+| `get_function_info` | Get function details |
+| `batch_invoke` | Invoke multiple functions |
+
+**Whitelisted Functions:** get-welfare-priorities, calculate-readmission-risk, sdoh-passive-detect, generate-engagement-report, generate-quality-report, enhanced-fhir-export, hl7-receive, generate-837p, process-shift-handoff, create-care-alert, send-sms, hash-pin, verify-pin
+
+---
+
+## Rate Limits
+
+| Server | Requests/Minute |
+|--------|-----------------|
+| postgres | 60 |
+| fhir | 30 |
+| clearinghouse | 20 |
+| medicalCodes | 100 |
+| hl7x12 | 40 |
+| claude | 15 |
+| edgeFunctions | 50 |
+
+---
+
+## Clinical Workflow Examples
+
+### Patient Intake Flow
+```typescript
+// 1. Validate provider NPI
+const provider = await mcpNpiClient.lookupNpi(referringNpi);
+
+// 2. Verify patient eligibility
+const eligibility = await mcpClearinghouseClient.verifyEligibility(patient);
+
+// 3. Check coverage requirements
+const coverage = await mcpCmsCoverageClient.getCoverageRequirements(cptCode);
+
+// 4. Create prior auth if needed
+if (coverage.prior_auth_required) {
+  await mcpPriorAuthClient.createPriorAuth(paRequest);
+}
+```
+
+### Claims Submission Flow
+```typescript
+// 1. Validate billing codes
+const validation = await mcpMedicalCodesClient.validateCodeCombination(codes);
+
+// 2. Check for bundling issues
+const bundling = await mcpMedicalCodesClient.checkBundling(cptCodes);
+
+// 3. Generate 837P
+const claim = await mcpHl7X12Client.generate837p(encounterId);
+
+// 4. Submit to clearinghouse
+const submission = await mcpClearinghouseClient.submitClaim(claim);
+```
+
+---
+
 **Status**: Ready for deployment
-**Last Updated**: 2025-10-19
-**Version**: 1.0.0
+**Last Updated**: 2026-01-16
+**Version**: 2.0.0
