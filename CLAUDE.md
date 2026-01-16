@@ -10,7 +10,7 @@
 | 2 | **No `any` type** - use `unknown` + type guards (see [TypeScript Standards](#typescript-standards)) | `data: any`, `catch (err: any)` |
 | 3 | **No `console.log`** - use `auditLogger` for all logging | Any console.* in production |
 | 4 | **Run `npm run typecheck`** before considering work done | Skipping type verification |
-| 5 | **All 6,613 tests must pass** - no skips, no deletions | `.skip()`, `.only()`, deleting tests |
+| 5 | **All 6,663 tests must pass** - no skips, no deletions | `.skip()`, `.only()`, deleting tests |
 | 6 | **No workarounds** - if blocked, ask Maria | "temporary fix", "for now", "hack" |
 | 7 | **Vite environment** - `import.meta.env.VITE_*` only | `process.env.REACT_APP_*` |
 | 8 | **No PHI in browser** - patient IDs only, data stays server-side | Names, SSN, DOB in frontend |
@@ -277,8 +277,8 @@ const result = processData(input as unknown as ExpectedType); // NO
 ### Test Baseline
 | Metric | Current |
 |--------|---------|
-| Total Tests | 6,613 |
-| Test Suites | 260 |
+| Total Tests | 6,663 |
+| Test Suites | 262 |
 | Pass Rate Required | 100% |
 
 ### Test Rules
@@ -587,7 +587,7 @@ npm test           # Run tests
 
 1. `npm run lint` - Must pass with 0 errors
 2. `npm run typecheck` - Verify TypeScript types
-3. `npm test` - All 6,613 tests must pass
+3. `npm test` - All 6,663 tests must pass
 4. Visual inspection - Ensure UI/UX functions correctly
 5. Route verification - New pages are accessible
 
@@ -977,4 +977,4 @@ VITE_FEATURE_NEURO_SUITE=true
 - **UI**: Envision Atlus design system migration in progress
 - **Build**: Vite + React 19 (migrated December 2025)
 - **CSS**: Tailwind CSS 4.1.18 (migrated December 2025)
-- **Tests**: 6,613 tests across 260 suites (100% pass rate, 0 skipped)
+- **Tests**: 6,663 tests across 262 suites (100% pass rate, 0 skipped)
