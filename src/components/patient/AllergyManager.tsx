@@ -7,6 +7,7 @@ import {
 } from '../../hooks/useFhirData';
 import type { AllergyIntolerance } from '../../api/allergies';
 import { useToast } from '../../hooks/useToast';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 
 interface AllergyManagerProps {
   userId: string;
@@ -14,6 +15,13 @@ interface AllergyManagerProps {
 }
 
 const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = false }) => {
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.ALLERGY_LIST,
+    resourceId: userId,
+    action: 'VIEW',
+  });
+
   // React Query hooks for automatic caching and data management
   const { data: allergies = [], isLoading: loading, error: _error } = useAllergies(userId);
   const createMutation = useCreateAllergy();

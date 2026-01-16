@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import EnhancedFhirService from '../admin/EnhancedFhirService';
 import { auditLogger } from '../../services/auditLogger';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 import { SDOHStatusBar } from '../sdoh/SDOHStatusBar';
 import { SDOHIndicatorService } from '../../services/sdohIndicatorService';
 import { PatientRiskStrip } from './PatientRiskStrip';
@@ -265,6 +266,14 @@ const EncouragementCard: React.FC<{
 // Main Patient Dashboard Component
 const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl: _supabaseUrl, supabaseKey: _supabaseKey }) => {
   const { user } = useAuth();
+
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.PATIENT_DASHBOARD,
+    resourceId: user?.id,
+    action: 'VIEW',
+  });
+
   const [insights, setInsights] = useState<PatientInsights | null>(null);
   const [healthMetrics, setHealthMetrics] = useState<HealthMetric[]>([]);
   const [loading, setLoading] = useState(true);

@@ -8,6 +8,7 @@ import type { FHIRImmunization } from '../../types/fhir';
 import { SENIOR_VACCINE_CODES } from '../../types/fhir';
 import ImmunizationTimeline from './ImmunizationTimeline';
 import ImmunizationEntry from './ImmunizationEntry';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 
 interface ImmunizationDashboardProps {
   userId: string;
@@ -25,6 +26,13 @@ interface VaccineGap {
 }
 
 const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, readOnly = false }) => {
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.IMMUNIZATION_LIST,
+    resourceId: userId,
+    action: 'VIEW',
+  });
+
   // React Query hooks for automatic caching
   const { data: immunizations = [], isLoading: loading, error: queryError } = useImmunizations(userId);
   const { data: completedImmunizations = [] } = useCompletedImmunizations(userId);

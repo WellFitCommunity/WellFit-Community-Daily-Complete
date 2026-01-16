@@ -3,6 +3,7 @@ import { useObservations } from '../../hooks/useFhirData';
 import type { Observation } from '../../types/fhir';
 import ObservationTimeline from './ObservationTimeline';
 import ObservationEntry from './ObservationEntry';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 
 interface ObservationDashboardProps {
   userId: string;
@@ -12,6 +13,13 @@ interface ObservationDashboardProps {
 type TabType = 'all' | 'vitals' | 'labs' | 'social';
 
 const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, readOnly = false }) => {
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.OBSERVATION_HISTORY,
+    resourceId: userId,
+    action: 'VIEW',
+  });
+
   // Use React Query for data fetching with automatic caching
   const { data: observations = [], isLoading: loading, error: _error } = useObservations(userId);
 

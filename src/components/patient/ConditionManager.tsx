@@ -17,6 +17,7 @@ import {
 } from '../../hooks/useFhirData';
 import type { Condition, CreateCondition } from '../../types/fhir';
 import { useToast } from '../../hooks/useToast';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 
 // Category options based on FHIR ValueSet
 const CONDITION_CATEGORIES = [
@@ -57,6 +58,13 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   encounterId,
   onConditionUpdate,
 }) => {
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.CONDITION_LIST,
+    resourceId: patientId,
+    action: 'VIEW',
+  });
+
   const { showToast, ToastContainer } = useToast();
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

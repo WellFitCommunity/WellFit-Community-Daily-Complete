@@ -17,6 +17,7 @@ import { useMedicineCabinet } from '../../hooks/useMedicineCabinet';
 import { Medication } from '../../api/medications';
 import { toast } from 'react-toastify';
 import { MedicationInfo, LabelExtractionResult } from '../../services/medicationLabelReader';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 
 // Tab type for navigation
 type TabId = 'all' | 'scan' | 'identify' | 'verify' | 'adherence' | 'reminders';
@@ -61,6 +62,14 @@ import { PillIdentifier } from './PillIdentifier';
 export function MedicineCabinet() {
   const user = useUser();
   const userId = user?.id || '';
+
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.MEDICATION_LIST,
+    resourceId: userId || undefined,
+    action: 'VIEW',
+    skip: !userId,
+  });
 
   const {
     medications,

@@ -65,6 +65,10 @@ const createMockContext = (options?: {
   selectPatient: vi.fn(),
   getPatientDisplayName: vi.fn().mockReturnValue('Doe, John'),
   clearHistory: vi.fn(),
+  // HIPAA compliance: New properties for ID-only localStorage
+  pendingPatientId: null,
+  pendingHistoryIds: [],
+  markPendingLoaded: vi.fn(),
 });
 
 vi.mock('../../../contexts/PatientContext', () => ({

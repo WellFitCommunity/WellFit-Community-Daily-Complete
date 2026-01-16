@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import FHIRService from '../../services/fhirResourceService';
 import type { FHIRImmunization } from '../../types/fhir';
 import { VACCINE_NAMES, SENIOR_VACCINE_CODES } from '../../types/fhir';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 
 interface ImmunizationTimelineProps {
   userId: string;
@@ -14,6 +15,14 @@ interface TimelineEvent {
 }
 
 const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onBack }) => {
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.IMMUNIZATION_LIST,
+    resourceId: userId,
+    action: 'VIEW',
+    metadata: { view: 'timeline' },
+  });
+
   const [immunizations, setImmunizations] = useState<FHIRImmunization[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVaccine, setSelectedVaccine] = useState<string | null>(null);

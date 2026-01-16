@@ -15,6 +15,7 @@ import {
 } from '../../hooks/useFhirData';
 import type { MedicationRequest, CreateMedicationRequest } from '../../types/fhir';
 import { useToast } from '../../hooks/useToast';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 
 // Intent options
 const INTENT_OPTIONS = [
@@ -56,6 +57,13 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
   readOnly = false,
   onMedicationUpdate,
 }) => {
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.MEDICATION_LIST,
+    resourceId: patientId,
+    action: 'VIEW',
+  });
+
   const { showToast, ToastContainer } = useToast();
   const [allergyWarning, setAllergyWarning] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);

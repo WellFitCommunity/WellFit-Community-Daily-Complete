@@ -9,10 +9,52 @@
  *
  * Powers the Intelligent Admin Panel's adaptive layout and predictive suggestions
  *
- * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
+ * HIPAA COMPLIANCE (January 2026):
+ * - This service tracks ADMIN/USER behavior, NOT patient data
+ * - Metadata field is sanitized to remove any PHI-like fields
+ * - Never pass patient names, DOB, SSN, MRN, or diagnoses to this service
+ *
+ * Copyright © 2025-2026 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+
+/**
+ * HIPAA-COMPLIANT: List of field names that may contain PHI and must be stripped
+ */
+const PHI_FIELD_PATTERNS = [
+  'patient', 'name', 'firstName', 'first_name', 'lastName', 'last_name',
+  'dob', 'dateOfBirth', 'date_of_birth', 'birthDate', 'birth_date',
+  'ssn', 'socialSecurity', 'social_security',
+  'mrn', 'medicalRecordNumber', 'medical_record_number',
+  'diagnosis', 'condition', 'medication', 'allergy',
+  'email', 'phone', 'address', 'city', 'state', 'zip',
+  'insurance', 'policy', 'member_id', 'memberId'
+];
+
+/**
+ * HIPAA-COMPLIANT: Strip any PHI-like fields from metadata
+ */
+function sanitizeMetadata(metadata?: Record<string, unknown>): Record<string, unknown> | undefined {
+  if (!metadata) return undefined;
+
+  const sanitized: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(metadata)) {
+    const lowerKey = key.toLowerCase();
+    // Skip if key matches any PHI pattern
+    const isPHI = PHI_FIELD_PATTERNS.some(pattern =>
+      lowerKey.includes(pattern.toLowerCase())
+    );
+
+    if (!isPHI) {
+      sanitized[key] = value;
+    }
+    // PHI fields are silently dropped - no logging to avoid PHI in logs
+  }
+
+  return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+}
 
 export interface BehaviorEvent {
   userId: string;
@@ -69,6 +111,8 @@ export async function trackBehaviorEvent(
     const now = new Date();
     const fullEvent: BehaviorEvent = {
       ...event,
+      // HIPAA: Sanitize metadata to strip any PHI-like fields
+      metadata: sanitizeMetadata(event.metadata),
       timestamp: now,
       timeOfDay: getTimeOfDay(),
       dayOfWeek: now.getDay()

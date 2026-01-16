@@ -3,6 +3,7 @@ import { useCarePlans, useActiveCarePlans, useCurrentCarePlan } from '../../hook
 import type { FHIRCarePlan, CarePlanActivity } from '../../types/fhir';
 import { CARE_PLAN_CATEGORY_NAMES } from '../../types/fhir';
 import CarePlanEntry from './CarePlanEntry';
+import { usePhiAccessLogging, PHI_RESOURCE_TYPES } from '../../hooks/usePhiAccessLogging';
 
 interface CarePlanDashboardProps {
   userId: string;
@@ -12,6 +13,13 @@ interface CarePlanDashboardProps {
 type TabType = 'all' | 'active' | 'completed';
 
 const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly = false }) => {
+  // HIPAA §164.312(b): Log PHI access on component mount
+  usePhiAccessLogging({
+    resourceType: PHI_RESOURCE_TYPES.CARE_PLAN_LIST,
+    resourceId: userId,
+    action: 'VIEW',
+  });
+
   // React Query hooks for automatic caching
   const { data: carePlans = [], isLoading: loading } = useCarePlans(userId);
   const { data: activePlans = [] } = useActiveCarePlans(userId);
