@@ -49,11 +49,11 @@ const VERCEL_PATTERN = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
 
 /**
  * WHITE-LABEL MODE: When enabled, allows any HTTPS origin.
- * This is required for multi-tenant SaaS where each tenant has their own domain.
- * Set WHITE_LABEL_MODE=true in Supabase secrets to enable.
+ * DISABLED by default - use ALLOWED_ORIGINS env var to configure tenant domains.
+ * Only set WHITE_LABEL_MODE=true in Supabase secrets if you need dynamic tenant onboarding.
  */
 const WHITE_LABEL_MODE: boolean =
-  (getEnv("WHITE_LABEL_MODE") || "true").toLowerCase() === "true";
+  (getEnv("WHITE_LABEL_MODE") || "false").toLowerCase() === "true";
 
 /** Options for CORS header generation */
 export interface CorsOptions {
