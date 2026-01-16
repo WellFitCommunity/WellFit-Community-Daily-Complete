@@ -30,6 +30,9 @@ export { OrganizationService } from './OrganizationService';
 export { MedicationService } from './MedicationService';
 export { ProvenanceService } from './ProvenanceService';
 
+// CMS-0057-F Prior Authorization (2027 Mandate)
+export { PriorAuthorizationService } from './PriorAuthorizationService';
+
 // WellFit Innovative Services (Differentiators)
 export { SDOHService } from './SDOHService';
 export { MedicationAffordabilityService } from './MedicationAffordabilityService';
