@@ -10,11 +10,12 @@
 | 2 | **No `any` type** - use `unknown` + type guards (see [TypeScript Standards](#typescript-standards)) | `data: any`, `catch (err: any)` |
 | 3 | **No `console.log`** - use `auditLogger` for all logging | Any console.* in production |
 | 4 | **Run `npm run typecheck`** before considering work done | Skipping type verification |
-| 5 | **All 6,663 tests must pass** - no skips, no deletions | `.skip()`, `.only()`, deleting tests |
+| 5 | **All 6,695 tests must pass** - no skips, no deletions | `.skip()`, `.only()`, deleting tests |
 | 6 | **No workarounds** - if blocked, ask Maria | "temporary fix", "for now", "hack" |
 | 7 | **Vite environment** - `import.meta.env.VITE_*` only | `process.env.REACT_APP_*` |
 | 8 | **No PHI in browser** - patient IDs only, data stays server-side | Names, SSN, DOB in frontend |
 | 9 | **Run migrations you create** - `npx supabase db push` | Unexecuted migration files |
+| 10 | **No CORS/CSP wildcards** - use explicit `ALLOWED_ORIGINS` only | `frame-ancestors *`, `connect-src *`, `WHITE_LABEL_MODE=true` |
 
 ### Before Every Task
 ```bash
@@ -58,6 +59,7 @@ This codebase eliminated 1,400+ `any` violations and 1,671 total lint warnings i
 | PHI in frontend code | HIPAA section | Doesn't understand data sensitivity |
 | Committing without running typecheck | Required before completion | Eager to show "done" |
 | Using `as Error` instead of narrowing | `err instanceof Error ? ...` | Shorter = seems better |
+| CORS/CSP wildcards (`*`) | Explicit `ALLOWED_ORIGINS` required | "Permissive = easier" mentality |
 
 **The STOP AND ASK protocol is the highest-value rule.** Most AI mistakes stem from continuing when uncertain rather than asking.
 
@@ -339,7 +341,7 @@ Tenant codes follow the format: `{ORG}-{LICENSE}{SEQUENCE}`
 
 ### White-Label Architecture
 - **Multi-tenant**: Multiple organizations use the same codebase with their own domains
-- **Dynamic origins**: CORS must accept any tenant's HTTPS domain (no hardcoded allowlists)
+- **Explicit origins**: CORS uses `ALLOWED_ORIGINS` env var - add tenant domains as they onboard (no wildcards)
 - **Tenant branding**: Each tenant can customize appearance via `useBranding()` hook
 - **Shared backend**: All tenants share Supabase database with RLS for isolation
 
@@ -900,6 +902,27 @@ serve(async (req) => {
   });
 });
 ```
+
+### CORS/CSP Security - NO WILDCARDS
+
+**NEVER use wildcards in CORS or CSP configurations. This is a security violation.**
+
+| Forbidden | Required Instead |
+|-----------|------------------|
+| `frame-ancestors *` | `frame-ancestors 'none'` or explicit domains |
+| `connect-src *` | `connect-src 'self' https://*.supabase.co ...` |
+| `WHITE_LABEL_MODE=true` | `ALLOWED_ORIGINS` env var with explicit tenant domains |
+
+**Why this matters:**
+- Wildcards fail GitHub security scans
+- Wildcards violate HIPAA § 164.312(e)(1) transmission security
+- Wildcards enable clickjacking and data exfiltration attacks
+
+**To add a new tenant domain:**
+1. Add domain to `ALLOWED_ORIGINS` in Supabase secrets (comma-separated)
+2. Redeploy edge functions: `npx supabase functions deploy --no-verify-jwt`
+
+**DO NOT** enable `WHITE_LABEL_MODE` unless explicitly approved by Maria for dynamic tenant onboarding.
 
 ---
 
