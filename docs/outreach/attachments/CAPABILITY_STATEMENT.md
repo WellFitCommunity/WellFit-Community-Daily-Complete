@@ -123,6 +123,7 @@
 
 | What Sets Us Apart | Why It Matters |
 |--------------------|----------------|
+| **Clinical Leadership** | Co-founded by RN with 23 years nursing + 15 years case management — not just technologists |
 | **AI-First Architecture** | Purpose-built for AI operation and maintenance, not retrofitted legacy systems |
 | **Rural-Native Design** | Built for low-bandwidth, distributed environments from day one |
 | **Senior-Accessible UX** | Voice commands, large touch targets, high contrast — not an afterthought |
@@ -154,13 +155,46 @@
 
 ---
 
-### Contact Information
+### Leadership Team
+
+<table>
+<tr>
+<td width="50%" valign="top">
 
 **Maria [Last Name]**
-Founder & CEO
+*Founder & CEO*
+
+- Technology and business strategy
+- Enterprise healthcare deployments
+- AI-first architecture design
+
+Email: maria@wellfitcommunity.com
+
+</td>
+<td width="50%" valign="top">
+
+**Akima Taylor, RN**
+*Co-Founder & Chief Clinical Officer*
+
+- **23 years** Registered Nurse
+- **15 years** Case Management
+- Clinical workflow design
+- Healthcare operations expertise
+
+Email: akima@wellfitcommunity.com
+
+</td>
+</tr>
+</table>
+
+---
+
+### Contact Information
 
 | Method | Contact |
 |--------|---------|
+| Primary Contact | Maria [Last Name], CEO |
+| Clinical Contact | Akima Taylor, RN, CCO |
 | Email | maria@wellfitcommunity.com |
 | Phone | [Phone Number] |
 | Website | [Website URL] |

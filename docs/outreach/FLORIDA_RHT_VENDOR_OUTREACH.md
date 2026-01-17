@@ -92,6 +92,13 @@ We would like to:
 3. Explore partnership opportunities with regional collaboratives
 4. Register as an approved vendor for RHTP-related procurements
 
+### Our Team
+
+Our leadership combines deep clinical expertise with healthcare technology:
+
+- **Maria [Last Name]**, Founder & CEO — Technology strategy and enterprise deployments
+- **Akima Taylor, RN**, Co-Founder & CCO — 23 years registered nurse, 15 years case management
+
 ### Contact Information
 
 **Maria [Last Name]**

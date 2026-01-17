@@ -78,6 +78,13 @@ We would welcome the opportunity to:
 
 We are prepared to respond to RFPs, participate in pilot programs, or engage in any procurement process appropriate for the RHT program.
 
+### Our Team
+
+Our leadership combines deep clinical expertise with healthcare technology:
+
+- **Maria [Last Name]**, Founder & CEO — Technology strategy and enterprise deployments
+- **Akima Taylor, RN**, Co-Founder & CCO — 23 years registered nurse, 15 years case management
+
 ### Contact Information
 
 **Maria [Last Name]**
