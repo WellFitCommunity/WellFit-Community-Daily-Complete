@@ -2,66 +2,66 @@
   "mcpServers": {
     "cms-coverage": {
       "type": "http",
-      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-cms-coverage-server",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-cms-coverage-server",
       "headers": {
-        "Authorization": "Bearer ${SB_ANON_KEY}",
-        "apikey": "${SB_ANON_KEY}"
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
       }
     },
     "npi-registry": {
       "type": "http",
-      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-npi-registry-server",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-npi-registry-server",
       "headers": {
-        "Authorization": "Bearer ${SB_ANON_KEY}",
-        "apikey": "${SB_ANON_KEY}"
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
       }
     },
     "postgres": {
       "type": "http",
-      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-postgres-server",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-postgres-server",
       "headers": {
-        "Authorization": "Bearer ${SB_ANON_KEY}",
-        "apikey": "${SB_ANON_KEY}"
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
       }
     },
     "edge-functions": {
       "type": "http",
-      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-edge-functions-server",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-edge-functions-server",
       "headers": {
-        "Authorization": "Bearer ${SB_ANON_KEY}",
-        "apikey": "${SB_ANON_KEY}"
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
       }
     },
     "medical-codes": {
       "type": "http",
-      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-medical-codes-server",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-medical-codes-server",
       "headers": {
-        "Authorization": "Bearer ${SB_ANON_KEY}",
-        "apikey": "${SB_ANON_KEY}"
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
       }
     },
     "fhir": {
       "type": "http",
-      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-fhir-server",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-fhir-server",
       "headers": {
-        "Authorization": "Bearer ${SB_ANON_KEY}",
-        "apikey": "${SB_ANON_KEY}"
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
       }
     },
     "hl7-x12": {
       "type": "http",
-      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-hl7-x12-server",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-hl7-x12-server",
       "headers": {
-        "Authorization": "Bearer ${SB_ANON_KEY}",
-        "apikey": "${SB_ANON_KEY}"
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
       }
     },
     "clearinghouse": {
       "type": "http",
-      "url": "${VITE_SUPABASE_URL}/functions/v1/mcp-clearinghouse-server",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-clearinghouse-server",
       "headers": {
-        "Authorization": "Bearer ${SB_ANON_KEY}",
-        "apikey": "${SB_ANON_KEY}"
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
       }
     }
   }
