@@ -9,18 +9,18 @@
 
 | Detail | Information |
 |--------|-------------|
-| **Company Name** | Envision VirtualEdge Group |
+| **Company Name** | Envision VirtualEdge Group LLC |
 | **DBA** | WellFit Community |
-| **Business Type** | [LLC / Corporation - fill in] |
-| **UEI Number** | [Insert UEI] |
-| **CAGE Code** | [Insert if applicable] |
+| **Business Type** | Limited Liability Company (LLC) |
+| **UEI Number** | [Pending - apply at SAM.gov] |
+| **CAGE Code** | [Pending - assigned after SAM.gov registration] |
 | **NAICS Codes** | 541511 - Custom Computer Programming Services |
 | | 541512 - Computer Systems Design Services |
 | | 518210 - Computing Infrastructure Providers |
 | | 621399 - Offices of All Other Health Practitioners |
 | | 624190 - Other Individual and Family Services |
-| **Year Founded** | [Insert Year] |
-| **Headquarters** | [City, State] |
+| **Year Founded** | 2025 |
+| **Headquarters** | Houston, Texas |
 
 ---
 
@@ -161,7 +161,7 @@
 <tr>
 <td width="50%" valign="top">
 
-**Maria [Last Name]**
+**Maria LeBlanc**
 *Founder & CEO*
 
 - Technology and business strategy
@@ -193,13 +193,13 @@ Email: akima@wellfitcommunity.com
 
 | Method | Contact |
 |--------|---------|
-| Primary Contact | Maria [Last Name], CEO |
+| Primary Contact | Maria LeBlanc, CEO |
 | Clinical Contact | Akima Taylor, RN, CCO |
 | Email | maria@wellfitcommunity.com |
-| Phone | [Phone Number] |
-| Website | [Website URL] |
-| Address | [Street Address] |
-| | [City, State ZIP] |
+| Phone | (832) 576-3448 |
+| Website | https://thewellfitcommunity.org |
+| Address | Houston, Texas |
+| | [Full address available upon request] |
 
 ---
 

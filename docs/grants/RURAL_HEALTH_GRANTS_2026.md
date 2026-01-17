@@ -408,7 +408,7 @@ HHS has published a Request for Information on accelerating AI adoption in clini
 
 ### Leadership
 
-- **Maria [Last Name]**, Founder & CEO — Technology strategy, AI architecture
+- **Maria LeBlanc**, Founder & CEO — Technology strategy, AI architecture
 - **Akima Taylor, RN**, Co-Founder & CCO — 23 years nursing, 15 years case management
 
 ---

@@ -96,22 +96,22 @@ We would like to:
 
 Our leadership combines deep clinical expertise with healthcare technology:
 
-- **Maria [Last Name]**, Founder & CEO — Technology strategy and enterprise deployments
+- **Maria LeBlanc**, Founder & CEO — Technology strategy and enterprise deployments
 - **Akima Taylor, RN**, Co-Founder & CCO — 23 years registered nurse, 15 years case management
 
 ### Contact Information
 
-**Maria [Last Name]**
+**Maria LeBlanc**
 Founder & CEO, Envision VirtualEdge Group
 Email: maria@wellfitcommunity.com
-Phone: [Phone Number]
-Website: [Website URL]
+Phone: (832) 576-3448
+Website: https://thewellfitcommunity.org
 
 We are committed to helping Florida's rural communities access the same quality of AI-enabled healthcare available in urban centers.
 
 Respectfully,
 
-Maria [Last Name]
+Maria LeBlanc
 Envision VirtualEdge Group
 
 ---
