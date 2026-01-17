@@ -963,6 +963,7 @@ Detailed documentation for specific features is in the `docs/` folder:
 | Document | Description |
 |----------|-------------|
 | [docs/AI_FIRST_ARCHITECTURE.md](docs/AI_FIRST_ARCHITECTURE.md) | AI-first design paradigm & MCP server architecture |
+| [docs/AI_DEVELOPMENT_METHODOLOGY.md](docs/AI_DEVELOPMENT_METHODOLOGY.md) | How to build software with AI (patterns, counter-measures, governance) |
 | [docs/REFERRAL_SYSTEM.md](docs/REFERRAL_SYSTEM.md) | External referral & reporting system |
 | [docs/CAREGIVER_SUITE.md](docs/CAREGIVER_SUITE.md) | Family caregiver PIN-based access |
 | [docs/REGISTRATION_FLOWS.md](docs/REGISTRATION_FLOWS.md) | Three registration flows |
