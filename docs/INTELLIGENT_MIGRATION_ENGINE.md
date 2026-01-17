@@ -2,7 +2,7 @@
 
 ## Data DNA Fingerprinting & Adaptive Field Mapping
 
-The Intelligent Migration Engine is WellFit's proprietary system for migrating healthcare data from legacy EHR systems. Unlike traditional migration tools that require manual field mapping, this engine learns from each migration and gets smarter over time.
+The Intelligent Migration Engine is Envision VirtualEdge Group LLC's proprietary system for migrating healthcare data from legacy EHR systems. Unlike traditional migration tools that require manual field mapping, this engine learns from each migration and gets smarter over time.
 
 ---
 
@@ -66,7 +66,7 @@ The Intelligent Migration Engine solves this with:
 |----------|--------------|------|
 | Epic consultant manual migration | $200K - $500K | 6-12 months |
 | Generic ETL tool + mapping | $50K - $100K | 3-6 months |
-| **Intelligent Migration Engine** | **Included** | **Days to weeks** |
+| **Envision VirtualEdge Migration Engine** | **Included** | **Days to weeks** |
 
 ---
 
@@ -797,4 +797,4 @@ npm test -- --run src/services/migration-engine/__tests__/
 
 For issues or questions:
 - GitHub: https://github.com/WellFitCommunity/WellFit-Community-Daily-Complete/issues
-- Contact: info@thewellfitcommunity.org
+- Contact: info@envisionvirtualedge.com
