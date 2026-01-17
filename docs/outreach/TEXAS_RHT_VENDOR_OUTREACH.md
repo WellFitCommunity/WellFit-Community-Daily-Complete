@@ -65,7 +65,7 @@ Our platforms directly address the RHT program's technology priorities:
 ### Technical Readiness
 
 - **HIPAA compliant** — Full audit logging, PHI protection, encryption at rest and in transit
-- **Enterprise deployed** — Currently serving health systems including Methodist Hospital
+- **Enterprise deployed** — White-label platform serving multiple health systems
 - **White-label ready** — Multi-tenant architecture for deployment across Texas rural health networks
 - **Interoperable** — HL7 FHIR, X12 EDI (837/835/270/271/278), NPI Registry integration
 
@@ -119,6 +119,6 @@ Envision VirtualEdge Group
 1. **Company Overview** (1-2 pages)
 2. **Platform Technical Specifications**
 3. **HIPAA Compliance Documentation**
-4. **Case Study: Methodist Hospital Deployment**
+4. **Case Study: Enterprise Health System Deployment**
 5. **References from Current Clients**
 6. **Pricing/Licensing Options**

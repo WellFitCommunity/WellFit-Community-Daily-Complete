@@ -402,7 +402,7 @@ HHS has published a Request for Information on accelerating AI adoption in clini
 ### Technical Readiness
 
 - HIPAA compliant with full audit logging
-- Enterprise deployed (Methodist Hospital)
+- Enterprise deployed (white-label, multiple health systems)
 - White-label multi-tenant architecture
 - AI-first architecture optimized for scalability
 

@@ -80,7 +80,7 @@ Envision VirtualEdge Group has developed two complementary healthcare platforms 
 ### Technical Readiness
 
 - **HIPAA compliant** — Full audit logging, PHI protection, encryption
-- **Enterprise deployed** — Currently serving health systems including Methodist Hospital
+- **Enterprise deployed** — White-label platform serving multiple health systems
 - **Interoperable** — HL7 FHIR, X12 EDI (837/835/270/271/278), NPI Registry
 - **Scalable** — Multi-tenant architecture ready for statewide deployment
 
@@ -163,7 +163,7 @@ Florida's program emphasizes **regional collaboratives** submitting grant propos
 1. **Company Capability Statement** (1-2 pages)
 2. **Platform Technical Specifications**
 3. **HIPAA Compliance Documentation**
-4. **Case Study: Methodist Hospital Deployment**
+4. **Case Study: Enterprise Health System Deployment**
 5. **References from Current Clients**
 6. **Pricing/Licensing Options for Regional Deployment**
 7. **Florida-Specific Implementation Plan**
