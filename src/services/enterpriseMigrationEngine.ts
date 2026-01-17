@@ -19,13 +19,13 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
   IntelligentMigrationService,
-  PatternDetector,
+  PatternDetectorStatic,
   DataDNAGenerator, // eslint-disable-line @typescript-eslint/no-unused-vars -- Reserved for DNA fingerprinting features
   SourceDNA,
   MappingSuggestion,
   MigrationResult
-} from './intelligentMigrationEngine';
-import type { ColumnDNA as _ColumnDNA, DataPattern as _DataPattern } from './intelligentMigrationEngine';
+} from './migration-engine';
+import type { ColumnDNA as _ColumnDNA, DataPattern as _DataPattern } from './migration-engine';
 import { auditLogger } from './auditLogger';
 
 // =============================================================================
@@ -1965,7 +1965,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
 
     // NPI validation with Luhn
     if (column === 'npi' && strValue) {
-      if (!PatternDetector.validateNPI(strValue)) {
+      if (!PatternDetectorStatic.validateNPI(strValue)) {
         return { valid: false, error: 'Invalid NPI (failed Luhn check)' };
       }
     }

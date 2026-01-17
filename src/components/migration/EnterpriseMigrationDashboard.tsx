@@ -22,7 +22,7 @@ import {
   MigrationSnapshot,
   RetryQueueItem
 } from '../../services/enterpriseMigrationEngine';
-import { SourceDNA, MappingSuggestion, DataDNAGenerator } from '../../services/intelligentMigrationEngine';
+import { SourceDNA, MappingSuggestion, DataDNAGeneratorStatic } from '../../services/migration-engine';
 import {
   EACard,
   EACardHeader,
@@ -319,7 +319,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
 
       // Generate DNA
       const columns = Object.keys(data[0] || {});
-      const dna = DataDNAGenerator.generateDNA('CSV', columns, data);
+      const dna = DataDNAGeneratorStatic.generateDNA('CSV', columns, data);
       setSourceDNA(dna);
 
       // Get mapping suggestions

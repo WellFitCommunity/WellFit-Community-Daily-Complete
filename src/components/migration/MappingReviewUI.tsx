@@ -15,7 +15,7 @@ import {
   SourceDNA,
   ColumnDNA,
   IntelligentMigrationService
-} from '../../services/intelligentMigrationEngine';
+} from '../../services/migration-engine';
 
 // =============================================================================
 // TYPES

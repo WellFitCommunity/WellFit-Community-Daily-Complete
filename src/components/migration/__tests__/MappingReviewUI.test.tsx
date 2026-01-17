@@ -8,7 +8,7 @@ import { render, screen, within } from '@testing-library/react';
 import { fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MappingReviewUI, ConfirmedMapping } from '../MappingReviewUI';
-import { MappingSuggestion, SourceDNA, IntelligentMigrationService, DataPattern, ColumnDNA } from '../../../services/intelligentMigrationEngine';
+import { MappingSuggestion, SourceDNA, IntelligentMigrationService, DataPattern, ColumnDNA } from '../../../services/migration-engine';
 
 // =============================================================================
 // MOCK DATA
