@@ -590,7 +590,7 @@ async function handleToolCallRequest(
 }
 
 // =====================================================
-// Main Handler
+// Main Handler (MCP JSON-RPC Protocol)
 // =====================================================
 
 serve(async (req) => {
@@ -610,62 +610,91 @@ serve(async (req) => {
       return createRateLimitResponse(rateLimitResult, corsHeaders);
     }
 
-    const url = new URL(req.url);
-    const path = url.pathname.split("/").pop();
+    // Parse JSON-RPC request
+    const body = await req.json();
+    const { method, params, id } = body;
 
-    // MCP Protocol endpoints
-    if (path === "tools" && req.method === "GET") {
-      const response = await handleToolsListRequest();
-      const body = await response.text();
-      return new Response(body, {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+    // Handle MCP JSON-RPC methods
+    switch (method) {
+      case "tools/list": {
+        const tools = Object.entries(TOOLS).map(([name, def]) => ({
+          name,
+          description: def.description,
+          inputSchema: def.inputSchema
+        }));
+
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: { tools },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "tools/call": {
+        const { name, arguments: args } = params || {};
+        const startTime = Date.now();
+
+        await logger.info("CMS Coverage tool call", { tool: name, args });
+
+        const response = await handleToolCallRequest(name, args || {});
+        const responseBody = await response.text();
+        const result = JSON.parse(responseBody);
+
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: {
+            ...result,
+            metadata: {
+              tool: name,
+              executionTimeMs: Date.now() - startTime
+            }
+          },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "initialize": {
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: {
+            protocolVersion: "2024-11-05",
+            serverInfo: {
+              name: "mcp-cms-coverage-server",
+              version: "1.0.0"
+            },
+            capabilities: {
+              tools: {}
+            }
+          },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      default:
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          error: { code: -32601, message: `Method not found: ${method}` },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
     }
-
-    if (path === "call" && req.method === "POST") {
-      const body = await req.json();
-      const { name, arguments: args } = body;
-
-      await logger.info("CMS Coverage tool call", { tool: name, args });
-
-      const response = await handleToolCallRequest(name, args || {});
-      const responseBody = await response.text();
-
-      return new Response(responseBody, {
-        status: response.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    // Health check
-    if (path === "health" || path === "") {
-      return new Response(JSON.stringify({
-        status: "healthy",
-        server: "mcp-cms-coverage-server",
-        version: "1.0.0",
-        tools: Object.keys(TOOLS).length,
-        features: [
-          "LCD search",
-          "NCD search",
-          "Coverage requirements",
-          "Prior auth checking",
-          "MAC contractor lookup"
-        ]
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    return new Response(JSON.stringify({ error: "Not found" }), {
-      status: 404,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    });
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
     await logger.error("CMS Coverage server error", error);
 
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32603, message: error.message },
+      id: null
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
