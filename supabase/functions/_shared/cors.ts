@@ -48,12 +48,10 @@ const CODESPACES_PATTERN = /^https:\/\/[a-z0-9-]+\.app\.github\.dev$/;
 const VERCEL_PATTERN = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
 
 /**
- * WHITE-LABEL MODE: When enabled, allows any HTTPS origin.
- * DISABLED by default - use ALLOWED_ORIGINS env var to configure tenant domains.
- * Only set WHITE_LABEL_MODE=true in Supabase secrets if you need dynamic tenant onboarding.
+ * WHITE-LABEL MODE: REMOVED - Security violation per CLAUDE.md.
+ * Use ALLOWED_ORIGINS env var to configure tenant domains explicitly.
+ * Add new tenant domains to ALLOWED_ORIGINS as they onboard.
  */
-const WHITE_LABEL_MODE: boolean =
-  (getEnv("WHITE_LABEL_MODE") || "false").toLowerCase() === "true";
 
 /** Options for CORS header generation */
 export interface CorsOptions {
@@ -66,7 +64,7 @@ export interface CorsOptions {
 /**
  * CSP for Edge Function responses.
  *
- * WHITE-LABEL NOTE: CORS handles multi-tenant origin validation dynamically.
+ * MULTI-TENANT NOTE: CORS validates origins via ALLOWED_ORIGINS env var.
  * CSP is kept strict for security compliance (HIPAA, SOC2).
  * Edge functions return JSON data - frame-ancestors 'none' prevents clickjacking.
  */
@@ -147,10 +145,8 @@ export function cors(
       // Check for Vercel deployment URLs (preview and production)
       const isVercel = VERCEL_PATTERN.test(normalized);
 
-      // WHITE-LABEL: Allow any HTTPS origin for multi-tenant SaaS
-      const isWhiteLabelAllowed = WHITE_LABEL_MODE && isHttps;
-
-      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces || isVercel || isWhiteLabelAllowed) {
+      // Allow origin if: explicitly listed, local dev, Codespaces, or Vercel
+      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces || isVercel) {
         headers["Access-Control-Allow-Origin"] = normalized;
         headers["Access-Control-Allow-Credentials"] = "true";
         allowed = true;

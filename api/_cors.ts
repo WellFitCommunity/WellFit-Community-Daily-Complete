@@ -11,10 +11,13 @@ const ALLOWLIST = raw.split(',').map(s => s.trim()).filter(Boolean);
 function matchesOrigin(origin: string | undefined): string | null {
   if (!origin) return null;
   for (const pattern of ALLOWLIST) {
-    if (pattern === '*') return origin;
+    // SECURITY: Reject bare "*" wildcard - violates HIPAA/SOC2 compliance
+    if (pattern === '*') {
+      continue; // Silently skip - wildcard origins are forbidden
+    }
     if (pattern.includes('*')) {
-      // very light wildcard: https://*.vercel.app
-      const re = new RegExp('^' + pattern.split('*').map(escapeRe).join('.*') + '$', 'i');
+      // Allow limited subdomain wildcards: https://*.vercel.app, https://*.github.dev
+      const re = new RegExp('^' + pattern.split('*').map(escapeRe).join('[a-z0-9-]+') + '$', 'i');
       if (re.test(origin)) return origin;
     } else if (origin.toLowerCase() === pattern.toLowerCase()) {
       return origin;
