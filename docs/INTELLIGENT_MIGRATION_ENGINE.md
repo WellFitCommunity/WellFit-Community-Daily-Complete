@@ -797,4 +797,4 @@ npm test -- --run src/services/migration-engine/__tests__/
 
 For issues or questions:
 - GitHub: https://github.com/WellFitCommunity/WellFit-Community-Daily-Complete/issues
-- Contact: info@envisionvirtualedge.com
+- Contact: info@thewellfitcommunity.org
