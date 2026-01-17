@@ -1,8 +1,8 @@
 # Test Coverage Inventory
 
-> **Last Updated:** 2026-01-08
-> **Total Tests:** 5,270 passing across 208 test files
-> **Test Suites:** 208
+> **Last Updated:** 2026-01-17
+> **Total Tests:** 6,803 passing across 269 test files
+> **Test Suites:** 269
 
 ---
 
@@ -10,14 +10,14 @@
 
 | Metric | Total | With Tests | Coverage | Status |
 |--------|-------|------------|----------|--------|
-| Component Directories | 50 | 24 | **48%** | +11% from Jan 6 |
-| Service Files | 119 | 38 | **32%** | 1,315 tests |
-| Hook Files | 31 | 8 | **26%** | +7% from Jan 6 |
+| Component Directories | 50 | 24 | **48%** | No change |
+| Service Files | 119 | 44 | **37%** | +6 files Jan 17 |
+| Hook Files | 31 | 8 | **26%** | No change |
 | Edge Functions | 123 | 11 | 9% | No change |
 
 ### Critical Services Status: ✅ ALL COVERED
 
-All 12 critical services have comprehensive tests (verified Jan 8, 2026):
+All 12 critical services have comprehensive tests (verified Jan 17, 2026):
 - billingService (62), billingDecisionTreeService (43)
 - claudeService (41), claudeCareAssistant (35)
 - auditLogger (49), soc2MonitoringService (57)
@@ -25,7 +25,24 @@ All 12 critical services have comprehensive tests (verified Jan 8, 2026):
 - consentManagementService (43), fhirSecurityService (75)
 - patientService (56), guardianApprovalService (47)
 
-### Progress This Session (Jan 8, 2026)
+**New HIPAA Coverage (Jan 17, 2026):**
+- dischargePlanningService (25), soapNoteService (25)
+- emsIntegrationService (8), hospitalTransferIntegrationService (6)
+- postAcuteTransferService (14), GuardianAgent (30)
+
+### Progress This Session (Jan 17, 2026)
+
+| Category | Tests Added | Files |
+|----------|-------------|-------|
+| services/dischargePlanningService | 25 | 1 |
+| services/emsIntegrationService | 8 | 1 |
+| services/hospitalTransferIntegrationService | 6 | 1 |
+| services/postAcuteTransferService | 14 | 1 |
+| services/soapNoteService | 25 | 1 |
+| guardian-agent/GuardianAgent | 30 | 1 |
+| **Total New** | **108** | **6** |
+
+### Previous Session (Jan 8, 2026)
 
 | Category | Tests Added | Files |
 |----------|-------------|-------|
@@ -102,9 +119,9 @@ All 12 critical services have comprehensive tests (verified Jan 8, 2026):
 
 ### Current Status ✅
 - **Total Services:** 119 files
-- **With Tests:** 38 files (32%)
-- **Test Count:** 1,315 tests
-- **Gap:** 81 services (mostly medium/low priority)
+- **With Tests:** 44 files (37%)
+- **Test Count:** 1,423 tests
+- **Gap:** 75 services (mostly medium/low priority)
 
 ### ✅ CRITICAL - ALL COVERED
 
@@ -126,6 +143,12 @@ All critical services have comprehensive tests:
 | patientService.ts | 56 | ✅ |
 | guardianApprovalService.ts | 47 | ✅ |
 | guardianAgentClient.ts | 32 | ✅ |
+| dischargePlanningService.ts | 25 | ✅ |
+| emsIntegrationService.ts | 8 | ✅ |
+| hospitalTransferIntegrationService.ts | 6 | ✅ |
+| postAcuteTransferService.ts | 14 | ✅ |
+| soapNoteService.ts | 25 | ✅ |
+| GuardianAgent.ts | 30 | ✅ |
 
 ### 🟡 MEDIUM PRIORITY (Not Yet Tested)
 
@@ -134,7 +157,6 @@ All critical services have comprehensive tests:
 | tenantBrandingService.ts | Multi-tenant |
 | tenantModuleService.ts | Multi-tenant |
 | patientAdmissionService.ts | Healthcare |
-| dischargePlanningService.ts | Healthcare |
 | handoffService.ts | Operations |
 | medicationReconciliationService.ts | Healthcare |
 | readmissionRiskPredictionService.ts | AI |
@@ -319,4 +341,4 @@ npm test -- --run 2>&1 | grep -E "Test Files|Tests"
 
 ---
 
-**Next Session:** Focus on CRITICAL services (billing, claude, audit) OR admin/ component expansion
+**Next Session:** Focus on untested services (tenant*, patientAdmission, medication, handoff) OR admin/ component expansion
