@@ -6,7 +6,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { MappingIntelligence } from '../MappingIntelligence';
 import { DataDNAGenerator } from '../DataDNAGenerator';
-import type { SourceDNA, ColumnDNA } from '../types';
+import type { SourceDNA as _SourceDNA, ColumnDNA as _ColumnDNA } from '../types';
 
 // Mock Supabase client
 const mockSupabase = {
@@ -237,7 +237,7 @@ describe('MappingIntelligence', () => {
         { person_given_name: 'John' },
       ]);
 
-      const suggestions = await intelligence.suggestMappings(dna);
+      const _suggestions = await intelligence.suggestMappings(dna);
 
       // AI should have been called
       expect(global.fetch).toHaveBeenCalled();

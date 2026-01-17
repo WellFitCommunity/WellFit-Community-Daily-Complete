@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PatternDetector } from '../PatternDetector';
-import type { DataPattern } from '../types';
+import type { DataPattern as _DataPattern } from '../types';
 
 describe('PatternDetector', () => {
   let detector: PatternDetector;

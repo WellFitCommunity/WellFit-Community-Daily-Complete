@@ -16,7 +16,6 @@ import type {
   SourceAnalysisResult,
   ValidationResult,
   TableMigrationResult,
-  ColumnDNA,
 } from './types';
 import { DataDNAGenerator } from './DataDNAGenerator';
 import { MappingIntelligence } from './MappingIntelligence';
