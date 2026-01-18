@@ -28,6 +28,7 @@
 |----------|---------|--------|----------|--------|
 | [CMS_ACCESS_MODEL_APPLICATION.md](CMS_ACCESS_MODEL_APPLICATION.md) | CMS ACCESS Model | $990K/yr (ongoing) | April 1, 2026 | Complete |
 | [NIH_PAR-25-170_GRANT_APPLICATION.md](NIH_PAR-25-170_GRANT_APPLICATION.md) | NIH Digital Biomarkers | $3M/5 years | June 22, 2026 | Complete |
+| [AHRQ_R21_R33_APPLICATION.md](AHRQ_R21_R33_APPLICATION.md) | AHRQ Digital Healthcare | $1M/5 years | Rolling | Complete (needs academic partner) |
 | [USDA_DLT_GRANT_APPLICATION.md](USDA_DLT_GRANT_APPLICATION.md) | USDA Telehealth | $500K | Spring 2026 | Template (needs partner) |
 
 ## Executive Summaries
@@ -36,6 +37,7 @@
 |----------|-------------|
 | [CMS_ACCESS_MODEL_EXECUTIVE_SUMMARY.md](CMS_ACCESS_MODEL_EXECUTIVE_SUMMARY.md) | 2-page CMS ACCESS summary |
 | [NIH_PAR-25-170_EXECUTIVE_SUMMARY.md](NIH_PAR-25-170_EXECUTIVE_SUMMARY.md) | 2-page NIH summary with checklist |
+| [AHRQ_R21_R33_EXECUTIVE_SUMMARY.md](AHRQ_R21_R33_EXECUTIVE_SUMMARY.md) | 1-page AHRQ summary with requirements |
 
 ## Reference Documents
 
@@ -78,7 +80,7 @@
 | Program | Agency | Amount | Deadline | Application |
 |---------|--------|--------|----------|-------------|
 | AI Healthcare Safety (R18) | AHRQ | Up to $1.5M | Rolling | Not started |
-| Digital Healthcare (R21/R33) | AHRQ | $275K-$2M | Rolling | Not started |
+| Digital Healthcare (R21/R33) | AHRQ | $1M/5 years | Rolling | **Complete** |
 | ONC LEAP | ONC | $200K-$500K | Spring 2026 | Not started |
 | Chronic Care Telehealth | HRSA | TBD (large) | April 24, 2026 | Not started |
 | Tech-enabled Learning | HRSA | $475K | Feb 2, 2026 | Not started |

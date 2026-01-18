@@ -55,12 +55,13 @@ Supports research examining whether and how AI systems affect patient safety, an
 
 ---
 
-## AHRQ PA-24-266: Digital Healthcare Solutions (R21/R33)
+## AHRQ PA-24-266: Digital Healthcare Solutions (R21/R33) ✅ APPLICATION COMPLETE
 
 **Agency:** AHRQ
 **Mechanism:** R21/R33 Phased Innovation Award
-**Amount:** R21: Up to $275K/2 years; R33: Up to $500K/year for 3 years
-**Deadline:** Standard due dates (typically February, June, October)
+**Amount:** R21: Up to $280K/2 years; R33: Up to $720K/3 years ($1M total)
+**Deadline:** Standard due dates (February 16, June 16, October 16)
+**Application:** [AHRQ_R21_R33_APPLICATION.md](AHRQ_R21_R33_APPLICATION.md)
 
 ### Program Focus
 Tests promising digital healthcare interventions at the point of care to improve quality of care and care delivery using:
