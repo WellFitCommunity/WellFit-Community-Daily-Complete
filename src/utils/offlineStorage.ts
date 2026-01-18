@@ -1,8 +1,18 @@
 // src/utils/offlineStorage.ts - Offline Storage for Rural Healthcare
 // Stores health reports locally when offline, syncs when online
+// HIPAA: PHI is encrypted at rest using AES-256-GCM (see offlineCrypto.ts)
+
+import {
+  encryptForOfflineStorage,
+  decryptFromOfflineStorage,
+  encryptMeasurement,
+  decryptMeasurement,
+  isEncryptionAvailable,
+  clearEncryptionCache
+} from './offlineCrypto';
 
 const DB_NAME = 'WellFitOfflineDB';
-const DB_VERSION = 3; // v3: Added synced index to measurements for background sync
+const DB_VERSION = 4; // v4: Added encryption for PHI at rest
 const REPORTS_STORE = 'pendingReports';
 const MEASUREMENTS_STORE = 'measurements';
 
@@ -15,7 +25,9 @@ interface PendingReport {
   id: string;
   timestamp: number;
   userId: string;
-  data: Record<string, unknown>;
+  data: Record<string, unknown>;  // Decrypted data (only in memory)
+  encryptedData?: string;         // Encrypted data (stored in IndexedDB)
+  encrypted: boolean;             // Whether data is encrypted
   synced: boolean;
   attempts: number;
   lastAttemptTime?: number;
@@ -25,8 +37,33 @@ interface PendingReport {
 interface OfflineMeasurement {
   id: string;
   userId: string;
-  heartRate: number;
-  spo2: number;
+  heartRate: number;              // Decrypted (only in memory)
+  spo2: number;                   // Decrypted (only in memory)
+  encryptedData?: string;         // Encrypted vitals (stored in IndexedDB)
+  encrypted: boolean;             // Whether data is encrypted
+  timestamp: number;
+  synced: boolean;
+  syncedAt?: string;
+}
+
+// Storage format (what's actually in IndexedDB)
+interface StoredReport {
+  id: string;
+  timestamp: number;
+  userId: string;
+  encryptedData: string;          // PHI is always encrypted
+  encrypted: true;
+  synced: boolean;
+  attempts: number;
+  lastAttemptTime?: number;
+  permanentlyFailed?: boolean;
+}
+
+interface StoredMeasurement {
+  id: string;
+  userId: string;
+  encryptedData: string;          // Vitals are always encrypted
+  encrypted: true;
   timestamp: number;
   synced: boolean;
   syncedAt?: string;
@@ -101,15 +138,24 @@ class OfflineStorage {
     });
   }
 
-  // Save a health report for later sync
+  // Save a health report for later sync (PHI is encrypted at rest)
   async savePendingReport(userId: string, reportData: Record<string, unknown>): Promise<string> {
     if (!this.db) await this.initialize();
 
-    const report: PendingReport = {
+    // Verify encryption is available
+    if (!isEncryptionAvailable()) {
+      throw new Error('WebCrypto not available - cannot securely store PHI offline');
+    }
+
+    // Encrypt PHI before storage
+    const encryptedData = await encryptForOfflineStorage(userId, reportData);
+
+    const storedReport: StoredReport = {
       id: `offline_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       timestamp: Date.now(),
       userId,
-      data: reportData,
+      encryptedData,
+      encrypted: true,
       synced: false,
       attempts: 0
     };
@@ -123,13 +169,13 @@ class OfflineStorage {
 
       const transaction = db.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
-      const request = store.add(report);
+      const request = store.add(storedReport);
 
       request.onsuccess = () => {
         // Register for background sync so data syncs even if tab closes
         // This is fire-and-forget - we don't block on it
         void this.triggerBackgroundSync();
-        resolve(report.id);
+        resolve(storedReport.id);
       };
 
       request.onerror = () => {
@@ -164,7 +210,7 @@ class OfflineStorage {
     }
   }
 
-  // Get all pending (unsynced) reports
+  // Get all pending (unsynced) reports (decrypts PHI in memory)
   async getPendingReports(userId?: string): Promise<PendingReport[]> {
     if (!this.db) await this.initialize();
 
@@ -179,17 +225,42 @@ class OfflineStorage {
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.getAll();
 
-      request.onsuccess = () => {
-        let reports = request.result as PendingReport[];
+      request.onsuccess = async () => {
+        let storedReports = request.result as (StoredReport | PendingReport)[];
 
         // Filter by synced status and userId
-        reports = reports.filter(r => !r.synced);
+        storedReports = storedReports.filter(r => !r.synced);
 
         if (userId) {
-          reports = reports.filter(r => r.userId === userId);
+          storedReports = storedReports.filter(r => r.userId === userId);
         }
 
-        resolve(reports);
+        // Decrypt reports
+        const decryptedReports: PendingReport[] = [];
+        for (const stored of storedReports) {
+          try {
+            if ('encryptedData' in stored && stored.encrypted && stored.encryptedData) {
+              // Encrypted report - decrypt
+              const data = await decryptFromOfflineStorage(stored.userId, stored.encryptedData);
+              decryptedReports.push({
+                ...stored,
+                data,
+                encrypted: true
+              });
+            } else if ('data' in stored) {
+              // Legacy unencrypted report (migration needed)
+              decryptedReports.push({
+                ...stored,
+                encrypted: false
+              });
+            }
+          } catch {
+            // Skip reports that fail to decrypt (different user/device)
+            // Decryption failures are expected for data from other users
+          }
+        }
+
+        resolve(decryptedReports);
       };
 
       request.onerror = () => {
@@ -361,16 +432,26 @@ class OfflineStorage {
     return { success, failed, skipped, permanentlyFailed: permanentlyFailedCount };
   }
 
-  // Save a pulse oximeter measurement offline
+  // Save a pulse oximeter measurement offline (vitals encrypted at rest)
   async saveMeasurement(userId: string, heartRate: number, spo2: number): Promise<string> {
     if (!this.db) await this.initialize();
 
-    const measurement: OfflineMeasurement = {
-      id: `measurement_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+    // Verify encryption is available
+    if (!isEncryptionAvailable()) {
+      throw new Error('WebCrypto not available - cannot securely store vitals offline');
+    }
+
+    const timestamp = Date.now();
+
+    // Encrypt vitals before storage
+    const encryptedData = await encryptMeasurement(userId, { heartRate, spo2, timestamp });
+
+    const storedMeasurement: StoredMeasurement = {
+      id: `measurement_${timestamp}_${Math.random().toString(36).substring(2, 11)}`,
       userId,
-      heartRate,
-      spo2,
-      timestamp: Date.now(),
+      encryptedData,
+      encrypted: true,
+      timestamp,
       synced: false
     };
 
@@ -383,19 +464,19 @@ class OfflineStorage {
 
       const transaction = db.transaction([MEASUREMENTS_STORE], 'readwrite');
       const store = transaction.objectStore(MEASUREMENTS_STORE);
-      const request = store.add(measurement);
+      const request = store.add(storedMeasurement);
 
       request.onsuccess = () => {
         // Register for background sync so measurement syncs even if tab closes
         void this.triggerBackgroundSync();
-        resolve(measurement.id);
+        resolve(storedMeasurement.id);
       };
 
       request.onerror = () => reject(request.error);
     });
   }
 
-  // Get recent measurements
+  // Get recent measurements (decrypts vitals in memory)
   async getRecentMeasurements(userId: string, limit: number = 10): Promise<OfflineMeasurement[]> {
     if (!this.db) await this.initialize();
 
@@ -411,11 +492,42 @@ class OfflineStorage {
       const index = store.index('userId');
       const request = index.getAll(userId);
 
-      request.onsuccess = () => {
-        const measurements = (request.result as OfflineMeasurement[])
+      request.onsuccess = async () => {
+        const storedMeasurements = (request.result as (StoredMeasurement | OfflineMeasurement)[])
           .sort((a, b) => b.timestamp - a.timestamp)
           .slice(0, limit);
-        resolve(measurements);
+
+        // Decrypt measurements
+        const decryptedMeasurements: OfflineMeasurement[] = [];
+        for (const stored of storedMeasurements) {
+          try {
+            if ('encryptedData' in stored && stored.encrypted && stored.encryptedData) {
+              // Encrypted measurement - decrypt
+              const vitals = await decryptMeasurement(userId, stored.encryptedData);
+              decryptedMeasurements.push({
+                id: stored.id,
+                userId: stored.userId,
+                heartRate: vitals.heartRate,
+                spo2: vitals.spo2,
+                timestamp: vitals.timestamp,
+                synced: stored.synced,
+                syncedAt: stored.syncedAt,
+                encrypted: true
+              });
+            } else if ('heartRate' in stored) {
+              // Legacy unencrypted measurement
+              decryptedMeasurements.push({
+                ...stored,
+                encrypted: false
+              });
+            }
+          } catch {
+            // Skip measurements that fail to decrypt (different user/device)
+            // Decryption failures are expected for data from other users
+          }
+        }
+
+        resolve(decryptedMeasurements);
       };
 
       request.onerror = () => reject(request.error);
@@ -509,6 +621,9 @@ class OfflineStorage {
   async clearAllData(): Promise<void> {
     if (!this.db) await this.initialize();
 
+    // Clear encryption cache on logout
+    clearEncryptionCache();
+
     return new Promise((resolve, reject) => {
       const db = this.db;
       if (!db) {
@@ -529,6 +644,9 @@ class OfflineStorage {
     });
   }
 }
+
+// Re-export encryption utilities for external use
+export { clearEncryptionCache, isEncryptionAvailable } from './offlineCrypto';
 
 // Singleton instance
 export const offlineStorage = new OfflineStorage();

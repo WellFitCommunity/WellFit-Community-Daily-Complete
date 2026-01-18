@@ -31,8 +31,43 @@ import type {
 import { auditLogger } from '../../services/auditLogger';
 import { useToast } from '../../hooks/useToast';
 import { WearableConnectCard } from '../wearables/WearableConnectCard';
+import { isFeatureEnabled } from '../../config/featureFlags';
+
+/**
+ * Pilot Program Notice Component
+ * Shown when wearables feature is disabled
+ */
+const WearablesPilotNotice: React.FC = () => (
+  <div className="min-h-[60vh] flex items-center justify-center p-8">
+    <div className="max-w-lg text-center">
+      <div className="text-6xl mb-4">⌚</div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        Wearable Integration - Pilot Program
+      </h1>
+      <p className="text-lg text-gray-600 mb-6">
+        Wearable device integration is currently in pilot testing with select healthcare partners.
+      </p>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+        <h3 className="font-semibold text-blue-800 mb-2">Coming Soon:</h3>
+        <ul className="text-blue-700 space-y-1">
+          <li>• Apple Health & HealthKit sync</li>
+          <li>• Fitbit heart rate & activity tracking</li>
+          <li>• Fall detection alerts</li>
+          <li>• Emergency SOS functionality</li>
+        </ul>
+      </div>
+      <p className="text-sm text-gray-500 mt-6">
+        Contact your care coordinator for pilot program availability.
+      </p>
+    </div>
+  </div>
+);
 
 export const WearableDashboard: React.FC = () => {
+  // Check feature flag - show pilot notice if disabled
+  if (!isFeatureEnabled('wearableIntegration')) {
+    return <WearablesPilotNotice />;
+  }
   const { user } = useAuth();
   const supabase = useSupabaseClient();
   const { showToast, ToastContainer } = useToast();

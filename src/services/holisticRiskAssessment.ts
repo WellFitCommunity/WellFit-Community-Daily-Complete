@@ -1,10 +1,45 @@
 // services/holisticRiskAssessment.ts
-// Holistic Risk Assessment System - God's vision for comprehensive senior care
+// Holistic Risk Assessment System - Comprehensive senior care risk evaluation
 // Integrates ALL dimensions of wellbeing to identify at-risk patients
+//
+// CLINICAL SAFETY NOTICE:
+// This system provides decision SUPPORT, not clinical decisions.
+// All risk scores must be reviewed by qualified healthcare professionals.
+// See CLINICAL_DISCLAIMER constant for required disclosures.
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { logPhiAccess } from './phiAccessLogger';
 import { getMedicationTrackingService } from './medicationTrackingService';
+
+/**
+ * CLINICAL SAFETY DISCLAIMER
+ * Required for HIPAA compliance and clinical governance.
+ * Must be displayed wherever risk scores are shown.
+ */
+export const CLINICAL_DISCLAIMER = {
+  short: 'Risk scores are for clinical decision support only. Not a diagnosis.',
+  full: `CLINICAL DECISION SUPPORT NOTICE: This risk assessment system provides
+decision support information to assist healthcare professionals. Risk scores
+are NOT diagnoses and should NOT be used as the sole basis for clinical
+decisions. All findings must be reviewed and validated by qualified
+healthcare providers before any clinical action is taken. This system
+does not replace professional medical judgment. If you are experiencing
+a medical emergency, call 911 immediately.`,
+  version: '1.0.0',
+  lastUpdated: '2026-01-18',
+};
+
+/**
+ * CLINICAL GOVERNANCE METADATA
+ * Tracks validation and review requirements for risk scoring.
+ */
+export interface ClinicalGovernance {
+  disclaimer: string;
+  requiresClinicianReview: boolean;
+  validationStatus: 'pending_review' | 'clinician_reviewed' | 'auto_generated';
+  scoringVersion: string;
+  evidenceBasis: string;
+}
 
 /**
  * HOLISTIC RISK DIMENSIONS
@@ -48,6 +83,9 @@ export interface HolisticRiskScores {
     social_interactions_30d: number;
     activity_logs_30d: number;
   };
+
+  // Clinical safety governance (REQUIRED for funder compliance)
+  clinical_governance: ClinicalGovernance;
 }
 
 /**
@@ -662,6 +700,15 @@ export async function calculateHolisticRiskAssessment(
         mood_entries_30d: mentalHealth.dataPoints,
         social_interactions_30d: socialIsolation.dataPoints,
         activity_logs_30d: physicalActivity.dataPoints
+      },
+
+      // Clinical governance - REQUIRED for funder compliance and patient safety
+      clinical_governance: {
+        disclaimer: CLINICAL_DISCLAIMER.short,
+        requiresClinicianReview: riskLevel === 'HIGH' || riskLevel === 'CRITICAL',
+        validationStatus: 'auto_generated',
+        scoringVersion: CLINICAL_DISCLAIMER.version,
+        evidenceBasis: 'Multi-dimensional risk scoring based on engagement, vitals, mental health, social, physical activity, medication adherence, and clinical assessment data.'
       }
     };
   } catch (err) {
