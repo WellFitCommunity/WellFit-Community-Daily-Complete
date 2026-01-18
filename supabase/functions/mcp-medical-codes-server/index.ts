@@ -431,12 +431,37 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { method, params } = await req.json();
+    const body = await req.json();
+    const { method, params, id } = body;
+
+    // MCP Protocol: Initialize handshake
+    if (method === "initialize") {
+      return new Response(JSON.stringify({
+        jsonrpc: "2.0",
+        result: {
+          protocolVersion: "2024-11-05",
+          serverInfo: {
+            name: "mcp-medical-codes-server",
+            version: "1.0.0"
+          },
+          capabilities: {
+            tools: {}
+          }
+        },
+        id
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
 
     // MCP Protocol: List tools
     if (method === "tools/list") {
       return new Response(JSON.stringify({
-        tools: Object.entries(TOOLS).map(([name, def]) => ({ name, ...def }))
+        jsonrpc: "2.0",
+        result: {
+          tools: Object.entries(TOOLS).map(([name, def]) => ({ name, ...def }))
+        },
+        id
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });

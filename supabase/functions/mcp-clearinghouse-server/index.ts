@@ -892,6 +892,25 @@ serve(async (req: Request) => {
 
     // Handle different MCP methods
     switch (body.method) {
+      case 'initialize':
+        return new Response(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            result: {
+              protocolVersion: '2024-11-05',
+              serverInfo: {
+                name: 'mcp-clearinghouse-server',
+                version: '1.0.0'
+              },
+              capabilities: {
+                tools: {}
+              }
+            },
+            id: body.id
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+
       case 'tools/list':
         return new Response(
           JSON.stringify({
