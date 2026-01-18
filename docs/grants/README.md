@@ -56,6 +56,7 @@
 | [RURAL_PARTNER_OUTREACH.md](RURAL_PARTNER_OUTREACH.md) | Outreach letters, emails, follow-up sequences |
 | [PROSPECT_TRACKING.md](PROSPECT_TRACKING.md) | Pipeline tracking template |
 | [TEXAS_PROSPECT_LIST.md](TEXAS_PROSPECT_LIST.md) | Texas-specific prospects and contacts |
+| [AHRQ_PILOT_PROSPECTS.md](AHRQ_PILOT_PROSPECTS.md) | Academic partners & pilot sites for AHRQ R21/R33 |
 
 ---
 
