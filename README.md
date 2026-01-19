@@ -22,7 +22,7 @@ A white-label multi-tenant healthcare platform containing **two separate product
 | **Supabase** | PostgreSQL 17 | Database, Auth, Edge Functions |
 | **Deno** | Latest | Edge Functions runtime |
 
-**Test Coverage:** 6,613 tests across 260 suites (100% pass rate)
+**Test Coverage:** 6,960 tests across 278 suites (100% pass rate)
 
 ## 📚 Documentation
 
@@ -152,7 +152,7 @@ npm run dev        # Start Vite dev server
 npm run build      # Production build
 npm run lint       # Run ESLint
 npm run typecheck  # Run TypeScript type checking
-npm test           # Run Vitest tests (6,613 tests)
+npm test           # Run Vitest tests (6,960 tests)
 ```
 
 ### Working with Supabase
