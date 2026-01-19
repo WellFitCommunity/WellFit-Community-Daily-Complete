@@ -244,6 +244,34 @@ serve(async (req: Request) => {
       });
     }
 
+    // ========================================================================
+    // ADT BED AUTOMATION: Auto-update bed status for ADT events
+    // ========================================================================
+    if (msh.messageType === 'ADT') {
+      const bedUpdateResult = await processADTBedUpdate(
+        supabase,
+        resolvedTenantId,
+        msh.eventType,
+        message,
+        msh.messageControlId,
+        logger
+      );
+
+      if (bedUpdateResult.success) {
+        logger.info("ADT bed update processed", {
+          eventType: msh.eventType,
+          action: bedUpdateResult.action,
+          bedId: bedUpdateResult.bedId,
+        });
+      } else if (bedUpdateResult.error) {
+        // Log but don't fail the message - bed update is secondary
+        logger.warn("ADT bed update failed", {
+          eventType: msh.eventType,
+          error: bedUpdateResult.error,
+        });
+      }
+    }
+
     // Generate and return ACK
     const ack = generateACK(msh, 'AA');
 
@@ -363,6 +391,168 @@ function escapeHL7(text: string): string {
     .replace(/~/g, '\\R\\')
     .replace(/\r/g, '')
     .replace(/\n/g, '');
+}
+
+// ============================================================================
+// ADT BED AUTOMATION
+// ============================================================================
+
+interface BedUpdateResult {
+  success: boolean;
+  action?: string;
+  bedId?: string;
+  error?: string;
+}
+
+interface Logger {
+  info: (msg: string, data: Record<string, unknown>) => void;
+  warn: (msg: string, data: Record<string, unknown>) => void;
+  error: (msg: string, data: Record<string, unknown>) => void;
+}
+
+/**
+ * Process ADT event to update bed status
+ */
+async function processADTBedUpdate(
+  supabase: ReturnType<typeof createClient>,
+  tenantId: string,
+  eventType: string,
+  rawMessage: string,
+  messageControlId: string,
+  logger: Logger
+): Promise<BedUpdateResult> {
+  // Only process bed-relevant events
+  const bedRelevantEvents = ['A01', 'A02', 'A03', 'A04', 'A11', 'A12', 'A13'];
+  if (!bedRelevantEvents.includes(eventType)) {
+    return { success: true, action: 'ignored' };
+  }
+
+  try {
+    // Parse PV1 segment to get location info
+    const pv1Location = parsePV1Location(rawMessage);
+    const previousLocation = parsePreviousLocation(rawMessage);
+    const patientId = parsePatientId(rawMessage);
+
+    if (!pv1Location.room && eventType !== 'A03' && eventType !== 'A11' && eventType !== 'A13') {
+      // For admits/transfers, we need a room
+      return {
+        success: true,
+        action: 'skipped',
+        error: 'No room number in PV1 segment',
+      };
+    }
+
+    // Call database function
+    const { data, error } = await supabase.rpc('process_adt_bed_update', {
+      p_tenant_id: tenantId,
+      p_event_type: eventType,
+      p_patient_id: patientId,
+      p_bed_room: pv1Location.room,
+      p_bed_position: pv1Location.bed || 'A',
+      p_unit_code: pv1Location.unit,
+      p_previous_bed_room: previousLocation?.room,
+      p_previous_bed_position: previousLocation?.bed || 'A',
+      p_expected_los_days: null,
+      p_discharge_disposition: parseDischargeDisposition(rawMessage),
+      p_adt_message_id: messageControlId,
+      p_changed_by: null,
+    });
+
+    if (error) {
+      logger.error("ADT bed update RPC failed", {
+        code: error.code,
+        message: error.message,
+      });
+      return { success: false, error: error.message };
+    }
+
+    const result = data as BedUpdateResult;
+    return result;
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("ADT bed update exception", { message: errorMessage });
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Parse PV1 segment to extract current location
+ */
+function parsePV1Location(message: string): { room?: string; bed?: string; unit?: string } {
+  const segments = message.split('\r');
+  const pv1 = segments.find((s) => s.startsWith('PV1'));
+
+  if (!pv1) return {};
+
+  const fields = pv1.split('|');
+  // PV1-3 is Assigned Patient Location (PL data type)
+  // Format: point_of_care^room^bed^facility^...
+  const locationField = fields[3] || '';
+  const locationParts = locationField.split('^');
+
+  return {
+    unit: locationParts[0] || undefined,  // Point of care (unit)
+    room: locationParts[1] || undefined,  // Room
+    bed: locationParts[2] || undefined,   // Bed
+  };
+}
+
+/**
+ * Parse previous location for transfers (from PV1-6)
+ */
+function parsePreviousLocation(message: string): { room?: string; bed?: string; unit?: string } | undefined {
+  const segments = message.split('\r');
+  const pv1 = segments.find((s) => s.startsWith('PV1'));
+
+  if (!pv1) return undefined;
+
+  const fields = pv1.split('|');
+  // PV1-6 is Prior Patient Location
+  const locationField = fields[6] || '';
+  if (!locationField) return undefined;
+
+  const locationParts = locationField.split('^');
+
+  return {
+    unit: locationParts[0] || undefined,
+    room: locationParts[1] || undefined,
+    bed: locationParts[2] || undefined,
+  };
+}
+
+/**
+ * Parse patient ID from PID segment
+ */
+function parsePatientId(message: string): string | null {
+  const segments = message.split('\r');
+  const pid = segments.find((s) => s.startsWith('PID'));
+
+  if (!pid) return null;
+
+  const fields = pid.split('|');
+  // PID-3 is Patient Identifier List
+  // Format: ID^check_digit^check_digit_scheme^assigning_authority^ID_type
+  const idField = fields[3] || '';
+  const idParts = idField.split('^');
+
+  // Return the ID portion (first component)
+  // Note: This is typically the MRN, not a UUID
+  // The actual patient_id lookup should happen in the database
+  return idParts[0] || null;
+}
+
+/**
+ * Parse discharge disposition from PV1-36
+ */
+function parseDischargeDisposition(message: string): string | null {
+  const segments = message.split('\r');
+  const pv1 = segments.find((s) => s.startsWith('PV1'));
+
+  if (!pv1) return null;
+
+  const fields = pv1.split('|');
+  // PV1-36 is Discharge Disposition
+  return fields[36] || null;
 }
 
 /**
