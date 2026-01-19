@@ -7,7 +7,8 @@
  * Copyright © 2026 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import type { AcuityLevel, BedStatus } from './bed';
+// Re-export bed types for consumers who import from healthSystem
+export type { AcuityLevel, BedStatus } from './bed';
 
 // ============================================================================
 // ENUMS

@@ -20,7 +20,7 @@ jobs:
     name: TypeScript Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true  # Non-blocking for launch week - will enforce post-launch
+    # ENFORCED: Quality gate - typecheck must pass for pilot/grant readiness
 
     steps:
       - name: Checkout code
@@ -37,7 +37,6 @@ jobs:
       - name: Run TypeScript type check
         id: typecheck
         run: npm run typecheck
-        continue-on-error: true
 
       - name: Report to summary
         if: always()
@@ -46,7 +45,7 @@ jobs:
           if [ "${{ steps.typecheck.outcome }}" == "success" ]; then
             echo "✅ TypeScript type check passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Type check has errors (non-blocking)" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Type check failed - must fix before merge" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ============================================
@@ -56,7 +55,7 @@ jobs:
     name: ESLint Code Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true  # Non-blocking for launch week - will enforce post-launch
+    # ENFORCED: Quality gate - lint must pass for pilot/grant readiness
 
     steps:
       - name: Checkout code
@@ -73,7 +72,6 @@ jobs:
       - name: Run ESLint
         id: eslint
         run: npm run lint
-        continue-on-error: true
 
       - name: Report to summary
         if: always()
@@ -82,7 +80,7 @@ jobs:
           if [ "${{ steps.eslint.outcome }}" == "success" ]; then
             echo "✅ ESLint passed with no errors" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ ESLint found issues (non-blocking)" >> $GITHUB_STEP_SUMMARY
+            echo "❌ ESLint failed - must fix before merge" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ============================================

@@ -64,10 +64,8 @@ const WearablesPilotNotice: React.FC = () => (
 );
 
 export const WearableDashboard: React.FC = () => {
-  // Check feature flag - show pilot notice if disabled
-  if (!isFeatureEnabled('wearableIntegration')) {
-    return <WearablesPilotNotice />;
-  }
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
+  // (React Rules of Hooks - no hooks after early returns)
   const { user } = useAuth();
   const supabase = useSupabaseClient();
   const { showToast, ToastContainer } = useToast();
@@ -75,10 +73,6 @@ export const WearableDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'vitals' | 'activity' | 'falls' | 'devices'>('overview');
   const [emergencyLoading, setEmergencyLoading] = useState(false);
   const [emergencyStatus, setEmergencyStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-
-  // React Query hooks for automatic caching and data management
-  const { data: connectedDevices = [], isLoading: devicesLoading } = useConnectedDevices(userId);
-  const { data: vitals = [], isLoading: vitalsLoading } = useVitalsTrend(userId, 'heart_rate', 7);
 
   // Calculate activity date range (last 7 days)
   const { startDate, endDate } = useMemo(() => {
@@ -90,8 +84,15 @@ export const WearableDashboard: React.FC = () => {
     };
   }, []);
 
-  const { data: activities = [], isLoading: activitiesLoading } = useActivitySummary(userId, startDate, endDate);
-  const { data: falls = [], isLoading: fallsLoading } = useFallHistory(userId, 30);
+  // React Query hooks for automatic caching and data management
+  // Note: These hooks are called even when feature is disabled (hooks must be unconditional)
+  // They will simply return empty data when userId is empty
+  const featureEnabled = isFeatureEnabled('wearableIntegration');
+  const effectiveUserId = featureEnabled ? userId : '';
+  const { data: connectedDevices = [], isLoading: devicesLoading } = useConnectedDevices(effectiveUserId);
+  const { data: vitals = [], isLoading: vitalsLoading } = useVitalsTrend(effectiveUserId, 'heart_rate', 7);
+  const { data: activities = [], isLoading: activitiesLoading } = useActivitySummary(effectiveUserId, startDate, endDate);
+  const { data: falls = [], isLoading: fallsLoading } = useFallHistory(effectiveUserId, 30);
 
   // Mutations
   const connectMutation = useConnectDevice();
@@ -100,36 +101,6 @@ export const WearableDashboard: React.FC = () => {
 
   // Combined loading state
   const loading = devicesLoading || vitalsLoading || activitiesLoading || fallsLoading;
-
-  const handleConnectDevice = async (deviceType: WearableDeviceType) => {
-    if (!userId) return;
-
-    try {
-      const authCode = prompt('Enter device authorization code:');
-      if (!authCode) return;
-
-      await connectMutation.mutateAsync({
-        user_id: userId,
-        device_type: deviceType,
-        auth_code: authCode,
-      });
-
-      showToast('success', 'Device connected successfully!');
-    } catch (error) {
-      showToast('error', error instanceof Error ? error.message : 'Failed to connect device');
-    }
-  };
-
-  const handleDisconnectDevice = async (connectionId: string) => {
-    if (!window.confirm('Are you sure you want to disconnect this device?')) return;
-
-    try {
-      await disconnectMutation.mutateAsync(connectionId);
-      showToast('success', 'Device disconnected successfully');
-    } catch (error) {
-      showToast('error', error instanceof Error ? error.message : 'Failed to disconnect device');
-    }
-  };
 
   /**
    * SAFETY-CRITICAL: Emergency SOS Handler
@@ -228,7 +199,7 @@ export const WearableDashboard: React.FC = () => {
         try {
           // Use a direct SMS function (not verification) - we'll invoke the send-check-in-reminder-sms style
           const patientName = profile ? ((profile.first_name || '') + ' ' + (profile.last_name || '')).trim() : '';
-          const _smsMessage = `🚨 EMERGENCY ALERT: ${patientName || 'Your loved one'} has triggered an emergency SOS from WellFit. Please check on them immediately.${location ? ` Location: ${location}` : ''}`;
+          const _smsMessage = `EMERGENCY ALERT: ${patientName || 'Your loved one'} has triggered an emergency SOS from WellFit. Please check on them immediately.${location ? ` Location: ${location}` : ''}`;
 
           // Log that we're attempting SMS
           await auditLogger.info('EMERGENCY_SMS_ATTEMPT', {
@@ -264,8 +235,42 @@ export const WearableDashboard: React.FC = () => {
       // Reset status after 10 seconds
       setTimeout(() => setEmergencyStatus('idle'), 10000);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- showToast is stable utility
-  }, [userId, supabase]);
+  }, [userId, supabase, showToast]);
+
+  // Check feature flag AFTER all hooks are called (React Rules of Hooks)
+  if (!featureEnabled) {
+    return <WearablesPilotNotice />;
+  }
+
+  const handleConnectDevice = async (deviceType: WearableDeviceType) => {
+    if (!userId) return;
+
+    try {
+      const authCode = prompt('Enter device authorization code:');
+      if (!authCode) return;
+
+      await connectMutation.mutateAsync({
+        user_id: userId,
+        device_type: deviceType,
+        auth_code: authCode,
+      });
+
+      showToast('success', 'Device connected successfully!');
+    } catch (error) {
+      showToast('error', error instanceof Error ? error.message : 'Failed to connect device');
+    }
+  };
+
+  const handleDisconnectDevice = async (connectionId: string) => {
+    if (!window.confirm('Are you sure you want to disconnect this device?')) return;
+
+    try {
+      await disconnectMutation.mutateAsync(connectionId);
+      showToast('success', 'Device disconnected successfully');
+    } catch (error) {
+      showToast('error', error instanceof Error ? error.message : 'Failed to disconnect device');
+    }
+  };
 
   const handleFallResponse = async (fallId: string) => {
     try {
