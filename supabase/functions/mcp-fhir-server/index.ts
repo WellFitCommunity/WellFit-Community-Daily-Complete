@@ -1023,7 +1023,7 @@ serve(async (req: Request) => {
       });
 
       return new Response(JSON.stringify({
-        content: [{ type: "json", data: result }],
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         metadata: {
           tool: toolName,
           executionTimeMs

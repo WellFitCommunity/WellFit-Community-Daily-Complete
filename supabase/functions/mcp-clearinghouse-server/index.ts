@@ -974,7 +974,7 @@ serve(async (req: Request) => {
           JSON.stringify({
             jsonrpc: '2.0',
             result: {
-              content: [{ type: 'json', data: result }],
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
               metadata: {
                 tool: name,
                 executionTimeMs: Date.now() - startTime

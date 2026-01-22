@@ -718,7 +718,7 @@ async function handleToolCallRequest(
   }
 
   return new Response(JSON.stringify({
-    content: [{ type: "json", data: result }]
+    content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
   }), {
     headers: { "Content-Type": "application/json" }
   });

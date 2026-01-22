@@ -575,7 +575,7 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({
         jsonrpc: "2.0",
         result: {
-          content: [{ type: "json", data: result }],
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
           metadata: {
             rowsReturned,
             executionTimeMs,
