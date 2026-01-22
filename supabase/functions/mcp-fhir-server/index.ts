@@ -47,6 +47,57 @@ const FHIR_TABLES: Record<string, string> = {
 const SUPPORTED_RESOURCES = Object.keys(FHIR_TABLES);
 
 // =====================================================
+// Type Definitions
+// =====================================================
+
+interface FHIRResource {
+  resourceType?: string;
+  id: string;
+  [key: string]: unknown;
+}
+
+interface ProfileRecord {
+  id: string;
+  mrn?: string;
+  first_name?: string;
+  last_name?: string;
+  middle_name?: string;
+  gender?: string;
+  date_of_birth?: string;
+  phone?: string;
+  email?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface PractitionerRecord {
+  id: string;
+  name?: string;
+  specialty?: string;
+  phone?: string;
+  email?: string;
+}
+
+interface CareTeamParticipant {
+  practitioner_id?: string;
+  role?: string;
+  display?: string;
+}
+
+interface PatientSummary {
+  patient_id: string;
+  generated_at: string;
+  sections: Record<string, unknown>;
+}
+
+type ToolResult = FHIRResource | FHIRResource[] | PatientSummary | Record<string, unknown>;
+
+// =====================================================
 // MCP Tools Definition
 // =====================================================
 
@@ -257,7 +308,7 @@ const TOOLS = {
 // FHIR Bundle Builder
 // =====================================================
 
-function createFHIRBundle(resources: any[], type: 'searchset' | 'collection' | 'document' = 'collection') {
+function createFHIRBundle(resources: FHIRResource[], type: 'searchset' | 'collection' | 'document' = 'collection') {
   return {
     resourceType: 'Bundle',
     type,
@@ -270,7 +321,7 @@ function createFHIRBundle(resources: any[], type: 'searchset' | 'collection' | '
   };
 }
 
-function toFHIRPatient(profile: any) {
+function toFHIRPatient(profile: ProfileRecord): FHIRResource {
   return {
     resourceType: 'Patient',
     id: profile.id,
@@ -318,7 +369,7 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
   Encounter: ['patient_id', 'status', 'class_code'],
 };
 
-function validateResource(resourceType: string, data: any): { valid: boolean; errors: string[] } {
+function validateResource(resourceType: string, data: Record<string, unknown>): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   const required = REQUIRED_FIELDS[resourceType] || [];
 
@@ -330,7 +381,8 @@ function validateResource(resourceType: string, data: any): { valid: boolean; er
 
   // Type-specific validation
   if (resourceType === 'Observation' && data.value_quantity) {
-    if (typeof data.value_quantity.value !== 'number') {
+    const valueQuantity = data.value_quantity as Record<string, unknown>;
+    if (typeof valueQuantity.value !== 'number') {
       errors.push('value_quantity.value must be a number');
     }
   }
@@ -400,7 +452,7 @@ async function getPatientBundle(
   resources: string[] = SUPPORTED_RESOURCES,
   options: { startDate?: string; endDate?: string; includeAI?: boolean } = {}
 ) {
-  const bundleResources: any[] = [];
+  const bundleResources: FHIRResource[] = [];
 
   // Get patient demographics
   const { data: patient, error: patientError } = await sb
@@ -526,7 +578,7 @@ async function getPatientSummary(
   patientId: string,
   sections: string[] = ['demographics', 'conditions', 'medications', 'allergies', 'immunizations', 'vitals', 'procedures', 'goals', 'careplans']
 ) {
-  const summary: Record<string, any> = {
+  const summary: PatientSummary = {
     patient_id: patientId,
     generated_at: new Date().toISOString(),
     sections: {}
@@ -690,7 +742,7 @@ serve(async (req: Request) => {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
-      let result: any;
+      let result: ToolResult;
 
       switch (toolName) {
         case "export_patient_bundle": {
@@ -906,21 +958,21 @@ serve(async (req: Request) => {
           if (error) throw new Error(`Query failed: ${error.message}`);
 
           // Get practitioner details if contact info requested
-          let practitioners: any[] = [];
+          let practitioners: PractitionerRecord[] = [];
           if (include_contact_info && careTeams?.length) {
             const practitionerIds = careTeams.flatMap(ct =>
-              ct.participants?.map((p: any) => p.practitioner_id).filter(Boolean) || []
+              (ct.participants as CareTeamParticipant[] | undefined)?.map((p: CareTeamParticipant) => p.practitioner_id).filter(Boolean) || []
             );
 
             if (practitionerIds.length) {
               const { data } = await sb.from('fhir_practitioners')
                 .select('*')
                 .in('id', practitionerIds);
-              practitioners = data || [];
+              practitioners = (data || []) as PractitionerRecord[];
             }
           }
 
-          const practitionerMap = new Map(practitioners.map(p => [p.id, p]));
+          const practitionerMap = new Map(practitioners.map((p: PractitionerRecord) => [p.id, p]));
 
           result = {
             patient_id,
@@ -929,8 +981,8 @@ serve(async (req: Request) => {
               name: ct.name,
               category: ct.category,
               status: ct.status,
-              members: ct.participants?.map((p: any) => {
-                const pract = practitionerMap.get(p.practitioner_id);
+              members: (ct.participants as CareTeamParticipant[] | undefined)?.map((p: CareTeamParticipant) => {
+                const pract = practitionerMap.get(p.practitioner_id || '');
                 return {
                   role: p.role,
                   name: p.display || pract?.name,
