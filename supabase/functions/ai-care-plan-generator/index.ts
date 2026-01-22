@@ -132,6 +132,57 @@ interface PatientContext {
   careGaps: string[];
 }
 
+// Database record types
+interface FHIRConditionRecord {
+  code?: { coding?: Array<{ code?: string; display?: string }> };
+  clinical_status?: string;
+}
+
+interface DiagnosisRecord {
+  diagnosis_name?: string;
+  icd10_code?: string;
+  is_primary?: boolean;
+  status?: string;
+}
+
+interface FHIRMedicationRecord {
+  medication_codeable_concept?: { coding?: Array<{ display?: string }> };
+  dosage_instruction?: Array<{ dose_and_rate?: Array<{ dose_quantity?: { value?: number } }>; timing?: { code?: { text?: string } } }>;
+}
+
+interface ReadmissionRecord {
+  admission_date: string;
+  facility_type?: string;
+}
+
+interface FHIRAllergyRecord {
+  code?: { coding?: Array<{ display?: string }>; text?: string };
+}
+
+// Parsed AI response structure
+interface ParsedCarePlanResponse {
+  title?: string;
+  description?: string;
+  planType?: string;
+  priority?: "critical" | "high" | "medium" | "low";
+  goals?: CarePlanGoal[];
+  interventions?: CarePlanIntervention[];
+  barriers?: CarePlanBarrier[];
+  activities?: CarePlanActivity[];
+  careTeam?: Array<{ role: string; responsibilities: string[] }>;
+  estimatedDuration?: string;
+  reviewSchedule?: string;
+  successCriteria?: string[];
+  riskFactors?: string[];
+  icd10Codes?: Array<{ code: string; display: string }>;
+  ccmEligible?: boolean;
+  tcmEligible?: boolean;
+  confidence?: number;
+  evidenceSources?: string[];
+  requiresReview?: boolean;
+  reviewReasons?: string[];
+}
+
 // PHI Redaction
 const redact = (s: string): string =>
   s
@@ -309,7 +360,8 @@ async function gatherPatientContext(
       .limit(15);
 
     if (fhirConditions) {
-      context.conditions = fhirConditions.map((c: any) => ({
+      const typedConditions = fhirConditions as FHIRConditionRecord[];
+      context.conditions = typedConditions.map((c) => ({
         code: c.code?.coding?.[0]?.code || "",
         display: c.code?.coding?.[0]?.display || "",
         status: c.clinical_status || "active",
@@ -318,17 +370,18 @@ async function gatherPatientContext(
     }
 
     if (diagnoses) {
-      diagnoses.forEach((d: any) => {
+      const typedDiagnoses = diagnoses as DiagnosisRecord[];
+      typedDiagnoses.forEach((d) => {
         // Merge with existing or add new
         const existing = context.conditions.find((c) => c.code === d.icd10_code);
         if (existing) {
-          existing.isPrimary = d.is_primary;
+          existing.isPrimary = d.is_primary ?? false;
         } else {
           context.conditions.push({
             code: d.icd10_code || "",
             display: d.diagnosis_name || "",
-            status: d.status,
-            isPrimary: d.is_primary,
+            status: d.status || "active",
+            isPrimary: d.is_primary ?? false,
           });
         }
       });
@@ -344,7 +397,8 @@ async function gatherPatientContext(
         .limit(20);
 
       if (medications) {
-        context.medications = medications.map((m: any) => ({
+        const typedMeds = medications as FHIRMedicationRecord[];
+        context.medications = typedMeds.map((m) => ({
           name: m.medication_codeable_concept?.coding?.[0]?.display || "",
           dosage: m.dosage_instruction?.[0]?.dose_and_rate?.[0]?.dose_quantity?.value?.toString() || "",
           frequency: m.dosage_instruction?.[0]?.timing?.code?.text || "",
@@ -418,7 +472,8 @@ async function gatherPatientContext(
       .gte("admission_date", ninetyDaysAgo);
 
     if (readmissions) {
-      readmissions.forEach((r: any) => {
+      const typedReadmissions = readmissions as ReadmissionRecord[];
+      typedReadmissions.forEach((r) => {
         const isRecent = new Date(r.admission_date) >= new Date(thirtyDaysAgo);
         if (r.facility_type === "emergency") {
           if (isRecent) context.utilizationHistory.edVisits30Days++;
@@ -449,8 +504,9 @@ async function gatherPatientContext(
       .limit(10);
 
     if (allergies) {
-      context.allergies = allergies
-        .map((a: any) => a.code?.coding?.[0]?.display || a.code?.text)
+      const typedAllergies = allergies as FHIRAllergyRecord[];
+      context.allergies = typedAllergies
+        .map((a) => a.code?.coding?.[0]?.display || a.code?.text || "")
         .filter(Boolean);
     }
 
@@ -671,7 +727,7 @@ Respond with ONLY the JSON object, no other text.`;
  * Normalize the AI response
  */
 function normalizeCarePlanResponse(
-  parsed: any,
+  parsed: ParsedCarePlanResponse,
   planType: string,
   context: PatientContext
 ): GeneratedCarePlan {

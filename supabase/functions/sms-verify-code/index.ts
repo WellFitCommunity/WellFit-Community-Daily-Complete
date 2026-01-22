@@ -8,6 +8,45 @@ import { createLogger } from "../_shared/auditLogger.ts";
 // Allowed country codes for phone numbers
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
+// Twilio Verification API response structure
+interface TwilioVerificationResponse {
+  status?: string;
+  code?: number;
+  message?: string;
+}
+
+// Type guard for Twilio response
+function isTwilioResponse(value: unknown): value is TwilioVerificationResponse {
+  return typeof value === 'object' && value !== null;
+}
+
+// Supabase auth createUser payload
+interface CreateUserPayload {
+  email: string;
+  email_confirm: boolean;
+  password: string;
+  phone?: string;
+  phone_confirm?: boolean;
+  user_metadata: {
+    role_code: string;
+    role_slug: string;
+    first_name: string;
+    last_name: string;
+    registration_method: string;
+    registered_at: string;
+    actual_phone: string;
+    is_shared_phone: boolean;
+    generated_email: boolean;
+  };
+}
+
+// Supabase auth signIn payload
+interface SignInPayload {
+  password: string;
+  phone?: string;
+  email?: string;
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   const logger = createLogger('sms-verify-code', req);
 
@@ -63,7 +102,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Parse and normalize to E.164 format for Twilio consistency
       const phoneNumber = parsePhoneNumber(phone, 'US');
-      if (!ALLOWED_COUNTRIES.includes(phoneNumber.country as any)) {
+      if (!(ALLOWED_COUNTRIES as readonly string[]).includes(phoneNumber.country ?? '')) {
         return new Response(JSON.stringify({ error: `Phone numbers from ${phoneNumber.country} are not currently supported` }), { status: 400, headers });
       }
 
@@ -107,8 +146,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
 
     const txt = await resp.text();
-    let json: unknown = {};
-    try { json = JSON.parse(txt); } catch { /* text fallback */ }
+    let json: TwilioVerificationResponse = {};
+    try { json = JSON.parse(txt) as TwilioVerificationResponse; } catch { /* text fallback */ }
 
     // Log Twilio's response for debugging
     logger.info("Twilio VerificationCheck response", {
@@ -116,15 +155,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       ok: resp.ok,
       normalizedPhone: normalizedPhone,
       responseBody: txt,
-      verificationStatus: typeof json === "object" && json !== null ? (json as any).status : null
+      verificationStatus: isTwilioResponse(json) ? json.status : null
     });
 
     // Check for Twilio configuration errors (404 = Service SID not found)
-    if (resp.status === 404 && typeof json === "object" && json !== null && (json as any).code === 20404) {
+    if (resp.status === 404 && isTwilioResponse(json) && json.code === 20404) {
       logger.error("Twilio Verify Service not found - check TWILIO_VERIFY_SERVICE_SID", {
         twilioServiceSid: VERIFY_SID,
         twilioError: json,
-        message: (json as any).message,
+        message: json.message,
         normalizedPhone: normalizedPhone
       });
       return new Response(JSON.stringify({
@@ -137,10 +176,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const approved =
       resp.ok &&
-      typeof json === "object" &&
-      json !== null &&
-      // deno-lint-ignore no-explicit-any
-      (json as any).status === "approved";
+      isTwilioResponse(json) &&
+      json.status === "approved";
 
     if (!approved) {
       // Provide specific error messages based on Twilio response
@@ -156,8 +193,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         normalizedPhone: normalizedPhone,
         twilioStatus: resp.status,
         responseDetails: txt,
-        twilioErrorCode: typeof json === "object" && json !== null ? (json as any).code : null,
-        twilioMessage: typeof json === "object" && json !== null ? (json as any).message : null
+        twilioErrorCode: isTwilioResponse(json) ? json.code : null,
+        twilioMessage: isTwilioResponse(json) ? json.message : null
       });
       return new Response(JSON.stringify({
         error: errorMessage,
@@ -308,7 +345,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
 
       // Create the actual user account
-      const createUserPayload: any = {
+      const createUserPayload: CreateUserPayload = {
         email: authEmail,
         email_confirm: true, // Always true - skip email verification (real emails verified via SMS, generated emails are internal)
         password: userPassword,
@@ -473,7 +510,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // Auto sign-in the user after successful registration
       // This creates a session so they don't have to manually login
       // For shared phones, use email (generated or real) instead of phone
-      const signInPayload: any = { password: userPassword };
+      const signInPayload: SignInPayload = { password: userPassword };
 
       if (authPhone) {
         // Not a shared phone - can login with phone

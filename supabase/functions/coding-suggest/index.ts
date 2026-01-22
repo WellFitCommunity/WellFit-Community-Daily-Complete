@@ -26,6 +26,22 @@ type CodingSuggestion = {
   confidence?: number;
 };
 
+// Claude API response structure
+interface ClaudeMessageResponse {
+  content?: Array<{ type?: string; text?: string }>;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+  };
+}
+
+// De-identified payload with age band
+interface DeidentifiedPayload {
+  age_band?: string;
+  time_frame?: string;
+  [key: string]: unknown;
+}
+
 // ---------- Env ----------
 const SERVICE_KEY = SB_SECRET_KEY;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("CLAUDE_API_KEY");
@@ -61,7 +77,7 @@ function ageBandFromDOB(dob?: string | null): string | null {
   return "65+";
 }
 
-function deepDeidentify(obj: any): any {
+function deepDeidentify(obj: unknown): unknown {
   if (obj == null) return obj;
   if (Array.isArray(obj)) return obj.map(deepDeidentify);
   if (typeof obj === "string") return redact(obj);
@@ -74,7 +90,7 @@ function deepDeidentify(obj: any): any {
       // strip internal identifiers as well:
       "patient_id","person_id","user_id","uid"
     ]);
-    const out: any = {};
+    const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
       if (strip.has(k)) continue;
       out[k] = deepDeidentify(v);
@@ -100,7 +116,7 @@ Rules:
 - If uncertain, lower the confidence and explain in notes.
 - Output JSON only—no extra text.`;
 
-function userPrompt(payload: Record<string, any>) {
+function userPrompt(payload: Record<string, unknown>) {
   return [
     "Analyze this de-identified encounter and propose medical codes.",
     "Return ONLY JSON, no markdown, no commentary.",
@@ -118,10 +134,10 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 }
 
 // Safe JSON parse (handles missing/invalid body)
-async function safeJson(req: Request): Promise<any> {
+async function safeJson(req: Request): Promise<unknown> {
   const text = await req.text();
   if (!text) throw new Error("Empty request body");
-  try { return JSON.parse(text); } catch { throw new Error("Invalid JSON body"); }
+  try { return JSON.parse(text) as unknown; } catch { throw new Error("Invalid JSON body"); }
 }
 
 // ---------- Handler ----------
@@ -147,27 +163,27 @@ serve(async (req) => {
   }
 
   try {
-    const body = await safeJson(req);
-    const encounter = body?.encounter ?? body;
-    const encounterId = encounter?.id as string | undefined;
+    const body = await safeJson(req) as Record<string, unknown> | null;
+    const encounter = (body?.encounter ?? body) as Record<string, unknown> | null;
+    const encounterId = (encounter?.id as string | undefined);
     if (!encounterId) {
       return new Response(JSON.stringify({ error: "Missing encounter.id in payload" }), { headers, status: 400 });
     }
 
     // De-ID
-    const payload = deepDeidentify(encounter);
-    const dob = encounter?.dob ?? encounter?.date_of_birth;
+    const deidentified = deepDeidentify(encounter) as DeidentifiedPayload;
+    const dob = (encounter?.dob ?? encounter?.date_of_birth) as string | undefined;
     const band = ageBandFromDOB(dob);
-    if (band) (payload as any).age_band = band;
-    (payload as any).time_frame = "recent";
+    if (band) deidentified.age_band = band;
+    deidentified.time_frame = "recent";
 
     // Claude call (model: claude-sonnet-4-5-20250929 - latest for best medical coding)
     const model = "claude-sonnet-4-5-20250929";
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
     let text = "";
-    let lastErr: any = null;
-    let claudeResponse: any = null;
+    let lastErr: unknown = null;
+    let claudeResponse: ClaudeMessageResponse | null = null;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
@@ -176,12 +192,12 @@ serve(async (req) => {
             model,
             max_tokens: 1024,
             system: SYSTEM_PROMPT,
-            messages: [{ role: "user", content: userPrompt(payload) }],
-          } as any),
+            messages: [{ role: "user", content: userPrompt(deidentified) }],
+          }),
           45_000
-        );
+        ) as ClaudeMessageResponse;
         claudeResponse = res;
-        const first = (res as any)?.content?.[0];
+        const first = res?.content?.[0];
         text = first?.text ?? "";
         if (!text) throw new Error("Empty response from model");
         lastErr = null;

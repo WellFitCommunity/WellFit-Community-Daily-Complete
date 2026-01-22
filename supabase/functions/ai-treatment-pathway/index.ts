@@ -121,6 +121,46 @@ interface PatientContext {
   vitals: Record<string, { value: number; unit: string }>;
 }
 
+// Database record types for FHIR data
+interface FHIRConditionRecord {
+  code?: { coding?: Array<{ code?: string; display?: string }> };
+  clinical_status?: string;
+}
+
+interface FHIRMedicationRecord {
+  medication_codeable_concept?: { coding?: Array<{ display?: string }>; rxcui?: string };
+}
+
+interface FHIRAllergyRecord {
+  code?: { coding?: Array<{ display?: string }>; text?: string };
+  criticality?: string;
+}
+
+// Parsed pathway response from AI
+interface ParsedPathwayResponse {
+  condition?: string;
+  conditionCode?: string;
+  pathwayTitle?: string;
+  summary?: string;
+  severity?: string;
+  treatmentGoal?: string;
+  steps?: Array<Partial<TreatmentStep>>;
+  medications?: Array<Partial<MedicationRecommendation>>;
+  lifestyle?: LifestyleRecommendation[];
+  referrals?: Array<{ specialty: string; reason: string; urgency: string }>;
+  monitoringPlan?: Array<{ parameter: string; frequency: string; target: string }>;
+  followUpSchedule?: string;
+  redFlags?: string[];
+  patientEducation?: string[];
+  guidelinesSummary?: Array<{ guideline: string; year: number; recommendation: string }>;
+  contraindications?: string[];
+  allergyConflicts?: string[];
+  confidence?: number;
+  requiresReview?: boolean;
+  reviewReasons?: string[];
+  disclaimer?: string;
+}
+
 // =====================================================
 // CLINICAL GUIDELINES REFERENCE
 // =====================================================
@@ -315,7 +355,8 @@ async function gatherPatientContext(
       .limit(20);
 
     if (conditions) {
-      context.conditions = conditions.map((c: any) => ({
+      const typedConditions = conditions as FHIRConditionRecord[];
+      context.conditions = typedConditions.map((c) => ({
         code: c.code?.coding?.[0]?.code || "",
         display: c.code?.coding?.[0]?.display || "",
       }));
@@ -330,7 +371,8 @@ async function gatherPatientContext(
       .limit(30);
 
     if (medications) {
-      context.medications = medications.map((m: any) => ({
+      const typedMedications = medications as FHIRMedicationRecord[];
+      context.medications = typedMedications.map((m) => ({
         name: m.medication_codeable_concept?.coding?.[0]?.display || "",
         rxcui: m.medication_codeable_concept?.rxcui,
       }));
@@ -344,8 +386,9 @@ async function gatherPatientContext(
       .limit(20);
 
     if (allergies) {
-      context.allergies = allergies.map(
-        (a: any) => a.code?.coding?.[0]?.display || a.code?.text || ""
+      const typedAllergies = allergies as FHIRAllergyRecord[];
+      context.allergies = typedAllergies.map(
+        (a) => a.code?.coding?.[0]?.display || a.code?.text || ""
       ).filter(Boolean);
     }
 
@@ -753,7 +796,7 @@ Respond with ONLY the JSON object, no other text.`;
 }
 
 function normalizePathwayResponse(
-  parsed: any,
+  parsed: ParsedPathwayResponse,
   condition: string,
   conditionCode: string,
   allergyConflicts: string[],
@@ -767,16 +810,16 @@ function normalizePathwayResponse(
     summary: parsed.summary || "Treatment pathway requiring clinician review.",
     severity: parsed.severity || "moderate",
     treatmentGoal: parsed.treatmentGoal || "Symptom management and disease control",
-    steps: (parsed.steps || []).map((s: any, i: number) => ({
+    steps: (parsed.steps || []).map((s, i: number) => ({
       ...s,
       stepNumber: s.stepNumber || i + 1,
       phase: s.phase || "first_line",
       evidenceLevel: s.evidenceLevel || "C",
-    })),
-    medications: (parsed.medications || []).map((m: any) => ({
+    })) as TreatmentStep[],
+    medications: (parsed.medications || []).map((m) => ({
       ...m,
       requiresReview: true, // SAFETY: Always require review
-    })),
+    })) as MedicationRecommendation[],
     lifestyle: parsed.lifestyle || [],
     referrals: parsed.referrals || [],
     monitoringPlan: parsed.monitoringPlan || [],

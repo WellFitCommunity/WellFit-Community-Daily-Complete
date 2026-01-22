@@ -67,6 +67,40 @@ interface EncounterContext {
   medicalHistory: string[];
 }
 
+// Database record types for FHIR data
+interface FHIRConditionRecord {
+  code?: { coding?: Array<{ code?: string; display?: string }> };
+  clinical_status?: string;
+}
+
+interface FHIRMedicationRecord {
+  medication_codeable_concept?: { coding?: Array<{ display?: string }> };
+  dosage_instruction?: Array<{ dose_and_rate?: Array<{ dose_quantity?: { value?: number } }>; timing?: { code?: { text?: string } } }>;
+  status?: string;
+}
+
+interface FHIRAllergyRecord {
+  code?: { coding?: Array<{ display?: string }>; text?: string };
+}
+
+interface DiagnosisRecord {
+  diagnosis_name: string;
+}
+
+// Parsed AI response structure
+interface ParsedSOAPResponse {
+  subjective?: string | SOAPNoteSection;
+  objective?: string | SOAPNoteSection;
+  assessment?: string | SOAPNoteSection;
+  plan?: string | SOAPNoteSection;
+  hpi?: string | SOAPNoteSection;
+  ros?: string | SOAPNoteSection;
+  icd10Suggestions?: Array<{ code: string; display: string; confidence: number }>;
+  cptSuggestions?: Array<{ code: string; display: string; confidence: number }>;
+  requiresReview?: boolean;
+  reviewReasons?: string[];
+}
+
 // PHI Redaction - HIPAA Compliance
 const redact = (s: string): string =>
   s
@@ -258,7 +292,8 @@ async function gatherEncounterContext(
           .limit(15);
 
         if (conditionsData) {
-          context.diagnoses = conditionsData.map((c: any) => ({
+          const typedConditions = conditionsData as FHIRConditionRecord[];
+          context.diagnoses = typedConditions.map((c) => ({
             code: c.code?.coding?.[0]?.code || "",
             display: c.code?.coding?.[0]?.display || "",
             status: c.clinical_status || "active",
@@ -275,7 +310,8 @@ async function gatherEncounterContext(
           .limit(20);
 
         if (medsData) {
-          context.medications = medsData.map((m: any) => ({
+          const typedMeds = medsData as FHIRMedicationRecord[];
+          context.medications = typedMeds.map((m) => ({
             name: m.medication_codeable_concept?.coding?.[0]?.display || "",
             dosage: m.dosage_instruction?.[0]?.dose_and_rate?.[0]?.dose_quantity?.value?.toString() || "",
             frequency: m.dosage_instruction?.[0]?.timing?.code?.text || "",
@@ -289,8 +325,9 @@ async function gatherEncounterContext(
           .eq("patient_id", resolvedPatientId);
 
         if (allergiesData) {
-          context.allergies = allergiesData.map(
-            (a: any) => a.code?.coding?.[0]?.display || a.code?.text || ""
+          const typedAllergies = allergiesData as FHIRAllergyRecord[];
+          context.allergies = typedAllergies.map(
+            (a) => a.code?.coding?.[0]?.display || a.code?.text || ""
           ).filter(Boolean);
         }
 
@@ -303,7 +340,8 @@ async function gatherEncounterContext(
           .limit(10);
 
         if (historyData) {
-          context.medicalHistory = historyData.map((h: any) => h.diagnosis_name);
+          const typedHistory = historyData as DiagnosisRecord[];
+          context.medicalHistory = typedHistory.map((h) => h.diagnosis_name);
         }
 
         // Get transcript if requested
@@ -503,8 +541,8 @@ Respond with ONLY the JSON object, no other text.`;
 /**
  * Normalize the AI response to ensure consistent structure
  */
-function normalizeSOAPResponse(parsed: any): GeneratedSOAPNote {
-  const normalizeSection = (section: any, defaultContent: string): SOAPNoteSection => {
+function normalizeSOAPResponse(parsed: ParsedSOAPResponse): GeneratedSOAPNote {
+  const normalizeSection = (section: string | SOAPNoteSection | undefined, defaultContent: string): SOAPNoteSection => {
     if (typeof section === "string") {
       return { content: section, confidence: 0.8, sources: [] };
     }

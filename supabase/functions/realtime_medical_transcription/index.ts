@@ -18,6 +18,33 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createAdminClient } from '../_shared/supabaseClient.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
 import { strictDeidentify, validateDeidentification } from '../_shared/phiDeidentifier.ts';
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+// Audit logger interface
+interface AuditLogger {
+  info: (message: string, data?: Record<string, unknown>) => void;
+  warn: (message: string, data?: Record<string, unknown>) => void;
+  error: (message: string, data?: Record<string, unknown>) => void;
+  security: (message: string, data?: Record<string, unknown>) => void;
+  phi: (message: string, data?: Record<string, unknown>) => void;
+}
+
+// Parsed transcription analysis response
+interface TranscriptionAnalysis {
+  conversational_note?: string;
+  suggestedCodes?: Array<{ code: string; type?: string; description?: string; reimbursement?: number; confidence?: number; reasoning?: string }>;
+  totalRevenueIncrease?: number;
+  complianceRisk?: string;
+  conversational_suggestions?: string[];
+  soapNote?: {
+    subjective?: string;
+    objective?: string;
+    assessment?: string;
+    plan?: string;
+    hpi?: string;
+    ros?: string;
+  };
+}
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
@@ -45,7 +72,7 @@ const ANALYSIS_INTERVAL_MS = 15_000;
  * De-identify PHI using the robust NLP-based service
  * Validates output and logs any concerns
  */
-function deidentify(text: string, logger: any): string {
+function deidentify(text: string, logger: AuditLogger): string {
   const result = strictDeidentify(text);
 
   // Validate the de-identification
@@ -202,7 +229,7 @@ serve(async (req: Request) => {
 });
 
 // 4) Periodic coding analysis (de-identified) - NOW WITH CONVERSATIONAL AI
-async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: any, logger: any) {
+async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger) {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
 
@@ -356,8 +383,8 @@ Return ONLY strict JSON:
     const text: string = data?.content?.[0]?.text ?? "";
     const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
-    let parsed: any;
-    try { parsed = JSON.parse(cleaned); }
+    let parsed: TranscriptionAnalysis;
+    try { parsed = JSON.parse(cleaned) as TranscriptionAnalysis; }
     catch (e) {
       logger.error("Claude JSON parse failed", { error: e instanceof Error ? e.message : String(e), responsePreview: cleaned.slice(0, 400) });
 
@@ -426,18 +453,18 @@ Return ONLY strict JSON:
           interaction_type: 'code_recommendation',
           scribe_message: parsed.conversational_note || null,
           scribe_action: {
-            suggested_codes: parsed.suggestedCodes?.map((c: any) => c.code) || [],
+            suggested_codes: parsed.suggestedCodes?.map((c) => c.code) || [],
             revenue_impact: parsed.totalRevenueIncrease || 0
           },
           session_phase: 'active'
-        }).catch((err: any) => logger.error('Failed to log interaction', { error: err.message })),
+        }).catch((err: unknown) => logger.error('Failed to log interaction', { error: err instanceof Error ? err.message : String(err) })),
 
         supabaseClient.rpc('learn_from_interaction', {
           p_provider_id: userId,
           p_interaction_type: 'code_recommendation',
           p_was_helpful: null,
           p_sentiment: null
-        }).catch((err: any) => logger.error('Failed to update learning', { error: err.message }))
+        }).catch((err: unknown) => logger.error('Failed to update learning', { error: err instanceof Error ? err.message : String(err) }))
       ]);
     }
 

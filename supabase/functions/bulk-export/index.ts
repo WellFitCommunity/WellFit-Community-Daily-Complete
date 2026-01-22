@@ -8,20 +8,69 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { createLogger } from '../_shared/auditLogger.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
+interface ExportFilters {
+  dateFrom: string;
+  dateTo: string;
+  userTypes: string[];
+  includeArchived: boolean;
+  format: 'csv' | 'xlsx' | 'json';
+  compression: boolean;
+}
+
 interface ExportRequest {
   jobId: string;
   exportType: 'check_ins' | 'risk_assessments' | 'users_profiles' | 'billing_claims' | 'fhir_resources' | 'audit_logs';
-  filters: {
-    dateFrom: string;
-    dateTo: string;
-    userTypes: string[];
-    includeArchived: boolean;
-    format: 'csv' | 'xlsx' | 'json';
-    compression: boolean;
-  };
+  filters: ExportFilters;
   requestedBy: string;
   tenantId?: string; // Optional override for super-admins
 }
+
+// Profile with roles join result
+interface ProfileWithRoles {
+  tenant_id: string | null;
+  is_admin: boolean | null;
+  role_id: string | null;
+  roles: { name: string } | null;
+}
+
+// Generic export record for CSV/FHIR conversion
+interface ExportRecord {
+  id?: string;
+  user_id?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  email?: string;
+  dob?: string;
+  address?: string;
+  mood?: string;
+  bp_systolic?: number;
+  bp_diastolic?: number;
+  blood_oxygen?: number;
+  spo2?: number;
+  blood_sugar?: number;
+  weight?: number;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
+// FHIR Bundle entry structure
+interface FHIRBundleEntry {
+  fullUrl: string;
+  resource: Record<string, unknown>;
+}
+
+// Audit logger interface
+interface AuditLogger {
+  info: (message: string, data?: Record<string, unknown>) => void;
+  warn: (message: string, data?: Record<string, unknown>) => void;
+  error: (message: string, data?: Record<string, unknown>) => void;
+  security: (message: string, data?: Record<string, unknown>) => void;
+  debug: (message: string, data?: Record<string, unknown>) => void;
+}
+
+// Supabase client type import
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 serve(async (req) => {
   const logger = createLogger('bulk-export', req);
@@ -87,8 +136,9 @@ serve(async (req) => {
     }
 
     // Check if user is admin
-    const roleName = (profile.roles as any)?.name;
-    const isAdmin = profile.is_admin || ['admin', 'super_admin'].includes(roleName);
+    const typedProfile = profile as ProfileWithRoles;
+    const roleName = typedProfile.roles?.name ?? '';
+    const isAdmin = typedProfile.is_admin || ['admin', 'super_admin'].includes(roleName);
 
     if (!isAdmin) {
       logger.security('Bulk export denied - non-admin user', { userId: user.id });
@@ -317,11 +367,11 @@ serve(async (req) => {
 async function processExportInBackground(
   jobId: string,
   exportType: string,
-  filters: any,
+  filters: ExportFilters,
   totalRecords: number,
   tenantId: string, // REQUIRED: tenant_id for filtering
-  supabaseAdmin: any,
-  logger: any
+  supabaseAdmin: SupabaseClient,
+  logger: AuditLogger
 ) {
   const processingStartTime = Date.now();
 
@@ -335,7 +385,7 @@ async function processExportInBackground(
 
     const batchSize = 1000;
     let processedRecords = 0;
-    const exportedData: any[] = [];
+    const exportedData: ExportRecord[] = [];
 
     // Process data in batches
     // SECURITY: All queries filtered by tenant_id
@@ -531,7 +581,7 @@ async function processExportInBackground(
 }
 
 // Helper function to convert array of objects to CSV
-function convertToCSV(data: any[]): string {
+function convertToCSV(data: ExportRecord[]): string {
   if (!data || data.length === 0) {
     return '';
   }
@@ -561,9 +611,9 @@ function convertToCSV(data: any[]): string {
 }
 
 // Helper function to convert profiles/self_reports data to FHIR R4 Bundle
-function convertToFHIRBundle(data: any[], tenantId: string): object {
+function convertToFHIRBundle(data: ExportRecord[], tenantId: string): object {
   const bundleId = `bundle-${tenantId}-${Date.now()}`;
-  const entries: any[] = [];
+  const entries: FHIRBundleEntry[] = [];
 
   for (const record of data) {
     // Detect if this is a profile record or a self_report record

@@ -9,16 +9,24 @@
 
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+
+interface AuditLogPayload {
+  event_type?: string;
+  severity?: string;
+  description?: string;
+  requires_investigation?: boolean;
+}
 
 interface GuardianRequest {
   action: 'security_scan' | 'audit_log' | 'monitor_health';
-  payload: any;
+  payload?: AuditLogPayload;
 }
 
 interface GuardianResponse {
   success: boolean;
-  data?: any;
+  data?: Record<string, unknown>;
   error?: string;
 }
 
@@ -98,7 +106,7 @@ Deno.serve(async (req) => {
  * Handle security scan request
  */
 async function handleSecurityScan(
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string
 ): Promise<GuardianResponse> {
   try {
@@ -142,9 +150,9 @@ async function handleSecurityScan(
  * Handle audit log request
  */
 async function handleAuditLog(
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string,
-  payload: any
+  payload: AuditLogPayload | undefined
 ): Promise<GuardianResponse> {
   try {
     const {
@@ -152,7 +160,7 @@ async function handleAuditLog(
       severity = 'MEDIUM',
       description,
       requires_investigation = false
-    } = payload;
+    } = payload ?? {};
 
     // Insert audit log entry
     const { error } = await supabase
@@ -194,7 +202,7 @@ async function handleAuditLog(
  * Handle health monitoring request
  */
 async function handleMonitorHealth(
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string
 ): Promise<GuardianResponse> {
   try {

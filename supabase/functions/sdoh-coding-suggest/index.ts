@@ -19,6 +19,39 @@ interface SDOHCodingRequest {
   }
 }
 
+// Database record types
+interface DiagnosisRecord {
+  code?: string;
+}
+
+interface ProcedureRecord {
+  code?: string;
+}
+
+interface ClinicalNoteRecord {
+  type?: string;
+  content?: string;
+}
+
+// Analysis context for AI
+interface AnalysisContext {
+  encounter: {
+    id: string;
+    date: string | null;
+    existingDiagnoses: string[];
+    existingProcedures: string[];
+  };
+  patient: {
+    age: number | null;
+    hasChronicConditions: boolean;
+  };
+  clinicalNotes: Array<{ type?: string; content?: string }>;
+  recentCheckIns: Array<Record<string, unknown>>;
+  existingSDOH: Record<string, unknown> | null;
+}
+
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 serve(async (req) => {
   // Handle CORS preflight with dynamic origin validation
   if (req.method === 'OPTIONS') {
@@ -95,21 +128,25 @@ serve(async (req) => {
       .limit(1)
 
     // Prepare context for AI analysis
-    const analysisContext = {
+    const typedDiagnoses = (encounter.diagnoses || []) as DiagnosisRecord[];
+    const typedProcedures = (encounter.procedures || []) as ProcedureRecord[];
+    const typedClinicalNotes = (encounter.clinical_notes || []) as ClinicalNoteRecord[];
+
+    const analysisContext: AnalysisContext = {
       encounter: {
         id: encounterId,
         date: encounter.date_of_service,
-        existingDiagnoses: encounter.diagnoses?.map((d: any) => d.code) || [],
-        existingProcedures: encounter.procedures?.map((p: any) => p.code) || []
+        existingDiagnoses: typedDiagnoses.map((d) => d.code || '').filter(Boolean),
+        existingProcedures: typedProcedures.map((p) => p.code || '').filter(Boolean)
       },
       patient: {
         age: calculateAge(encounter.patient?.dob),
-        hasChronicConditions: hasChronicConditions(encounter.diagnoses || [])
+        hasChronicConditions: hasChronicConditions(typedDiagnoses)
       },
-      clinicalNotes: encounter.clinical_notes?.map((note: any) => ({
+      clinicalNotes: typedClinicalNotes.map((note) => ({
         type: note.type,
         content: note.content
-      })) || [],
+      })),
       recentCheckIns: checkIns?.slice(0, 3).map(checkIn => ({
         date: checkIn.created_at,
         housingStatus: checkIn.housing_situation,
@@ -153,7 +190,7 @@ serve(async (req) => {
   }
 })
 
-async function analyzeWithClaude(context: any, userId: string | null, encounterId: string, supabaseClient: any) {
+async function analyzeWithClaude(context: AnalysisContext, userId: string | null, encounterId: string, supabaseClient: SupabaseClient) {
   const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY')
 
   if (!claudeApiKey) {
@@ -447,7 +484,7 @@ function calculateAge(dob: string | null): number | null {
   return age
 }
 
-function hasChronicConditions(diagnoses: any[]): boolean {
+function hasChronicConditions(diagnoses: DiagnosisRecord[]): boolean {
   // Common chronic condition ICD-10 prefixes
   const chronicPrefixes = [
     'E10', 'E11', // Diabetes

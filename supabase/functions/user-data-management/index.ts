@@ -13,6 +13,63 @@ interface DataRequest {
   confirmDeletion?: boolean;
 }
 
+// Joined roles structure
+interface ProfileWithRoles {
+  tenant_id: string | null;
+  is_admin: boolean | null;
+  role_id: string | null;
+  roles: { name: string } | null;
+}
+
+// User data export structure
+interface UserDataExport {
+  profile?: Record<string, unknown> | null;
+  checkIns?: unknown[];
+  communityMoments?: unknown[];
+  alerts?: unknown[];
+  medications?: unknown[];
+  medicationRequests?: unknown[];
+  allergies?: unknown[];
+  conditions?: unknown[];
+  procedures?: unknown[];
+  immunizations?: unknown[];
+  observations?: unknown[];
+  labResults?: unknown[];
+  diagnosticReports?: unknown[];
+  clinicalNotes?: unknown[];
+  carePlans?: unknown[];
+  encounters?: unknown[];
+  careTeam?: unknown[];
+  goals?: unknown[];
+  sdohAssessments?: unknown[];
+  provenance?: unknown[];
+  exportInfo?: {
+    exportedAt: string;
+    exportedBy: string;
+    tenantId: string | null;
+    complianceNote: string;
+    dataTypes: string[];
+    totalRecords: number;
+  };
+}
+
+// Deletion log structure
+interface DeletionLog {
+  userId: string;
+  tenantId: string | null;
+  deletedAt: string;
+  deletedTables: Array<{ table: string; count?: number | null; action?: string }>;
+  authUserDeleted?: boolean;
+}
+
+// User data status structure
+interface UserDataStatus {
+  userId: string;
+  tenantId: string | null;
+  dataSummary?: Record<string, unknown>;
+  totalRecords?: number;
+}
+
 const supabase = createClient(
   SUPABASE_URL ?? "",
   SB_SECRET_KEY ?? ""
@@ -68,8 +125,9 @@ serve(async (req) => {
     }
 
     const requesterTenantId = requesterProfile.tenant_id;
-    const roleName = (requesterProfile.roles as any)?.name;
-    const isAdmin = requesterProfile.is_admin || ['admin', 'super_admin'].includes(roleName);
+    const typedProfile = requesterProfile as ProfileWithRoles;
+    const roleName = typedProfile.roles?.name ?? '';
+    const isAdmin = typedProfile.is_admin || ['admin', 'super_admin'].includes(roleName);
 
     // Check if super admin (can access any tenant's data)
     const { data: superAdminData } = await supabase
@@ -166,7 +224,7 @@ serve(async (req) => {
 });
 
 async function exportUserData(userId: string) {
-  const userData: any = {};
+  const userData: UserDataExport = {};
 
   // Get profile data - already scoped to specific user
   const { data: profile } = await supabase
@@ -398,8 +456,8 @@ async function exportUserData(userId: string) {
     complianceNote: 'This export includes all Electronic Health Information (EHI) per 21st Century Cures Act requirements',
     dataTypes: Object.keys(userData).filter(key => key !== 'exportInfo'),
     totalRecords: Object.values(userData)
-      .filter(v => Array.isArray(v))
-      .reduce((sum, arr: any) => sum + arr.length, 0)
+      .filter((v): v is unknown[] => Array.isArray(v))
+      .reduce((sum, arr) => sum + arr.length, 0)
   };
 
   return new Response(JSON.stringify(userData, null, 2), {
@@ -412,7 +470,7 @@ async function exportUserData(userId: string) {
 }
 
 async function deleteUserData(userId: string) {
-  const deletionLog: any = {
+  const deletionLog: DeletionLog = {
     userId,
     tenantId: currentTenantId,
     deletedAt: new Date().toISOString(),
@@ -523,7 +581,7 @@ async function deleteUserData(userId: string) {
 }
 
 async function getUserDataStatus(userId: string) {
-  const status: any = { userId, tenantId: currentTenantId };
+  const status: UserDataStatus = { userId, tenantId: currentTenantId };
 
   // Get profile first to verify tenant
   const { data: profile } = await supabase
