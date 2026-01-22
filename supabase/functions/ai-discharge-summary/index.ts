@@ -180,6 +180,92 @@ interface PatientContext {
   };
 }
 
+// Database record types for query results
+interface AllergyRecord {
+  code?: { coding?: Array<{ display?: string }>; text?: string };
+  criticality?: string;
+}
+
+interface ConditionRecord {
+  code?: { coding?: Array<{ code?: string; display?: string }> };
+  clinical_status?: string;
+  onset_datetime?: string;
+}
+
+interface ProcedureRecord {
+  code?: { coding?: Array<{ code?: string; display?: string }> };
+  performed_datetime?: string;
+  status?: string;
+}
+
+interface MedicationRequestRecord {
+  medication_codeable_concept?: { coding?: Array<{ display?: string }> };
+  dosage_instruction?: Array<{
+    dose_and_rate?: Array<{ dose_quantity?: { value?: string } }>;
+    timing?: { code?: { text?: string } };
+  }>;
+  status?: string;
+  intent?: string;
+}
+
+interface VitalRecord {
+  code?: { coding?: Array<{ code?: string }> };
+  value_quantity_value?: number;
+  value_quantity_unit?: string;
+}
+
+interface LabRecord {
+  code?: { coding?: Array<{ display?: string }>; text?: string };
+  value_quantity_value?: number | null;
+  value_quantity_unit?: string;
+  effective_datetime?: string;
+  interpretation?: { coding?: Array<{ code?: string }> };
+}
+
+interface NoteRecord {
+  note_type?: string;
+  content?: string;
+  created_at?: string;
+}
+
+interface ParsedSummary {
+  patientName?: string;
+  dateOfBirth?: string;
+  admissionDate?: string;
+  dischargeDate?: string;
+  lengthOfStay?: number;
+  attendingPhysician?: string;
+  dischargeDisposition?: string;
+  chiefComplaint?: string;
+  admissionDiagnosis?: string;
+  hospitalCourse?: string;
+  dischargeDiagnoses?: DischargeDiagnosis[];
+  proceduresPerformed?: ProcedurePerformed[];
+  medicationReconciliation?: {
+    continued?: MedicationEntry[];
+    new?: MedicationEntry[];
+    changed?: MedicationChange[];
+    discontinued?: MedicationEntry[];
+    interactions?: string[];
+  };
+  dischargePharmacy?: string;
+  followUpAppointments?: FollowUpAppointment[];
+  pendingTests?: string[];
+  pendingConsults?: string[];
+  patientInstructions?: PatientInstruction[];
+  warningSigns?: WarningSign[];
+  activityRestrictions?: string[];
+  dietaryInstructions?: string[];
+  homeHealthOrdered?: boolean;
+  homeHealthAgency?: string;
+  dmeOrdered?: boolean;
+  dmeItems?: string[];
+  readmissionRiskScore?: number;
+  confidence?: number;
+  reviewReasons?: string[];
+  disclaimer?: string;
+}
+
 // PHI Redaction
 const redact = (s: string): string =>
   s
@@ -360,8 +446,9 @@ async function gatherPatientContext(
       .limit(20);
 
     if (allergies) {
-      context.allergies = allergies.map(
-        (a: any) => {
+      const typedAllergies = allergies as AllergyRecord[];
+      context.allergies = typedAllergies.map(
+        (a: AllergyRecord) => {
           const display = a.code?.coding?.[0]?.display || a.code?.text || "";
           const criticality = a.criticality === "high" ? " (SEVERE)" : "";
           return display + criticality;
@@ -378,7 +465,8 @@ async function gatherPatientContext(
       .limit(20);
 
     if (conditions) {
-      context.conditions = conditions.map((c: any) => ({
+      const typedConditions = conditions as ConditionRecord[];
+      context.conditions = typedConditions.map((c: ConditionRecord) => ({
         code: c.code?.coding?.[0]?.code || "",
         display: c.code?.coding?.[0]?.display || "",
       })).filter((c) => c.display);
@@ -394,7 +482,8 @@ async function gatherPatientContext(
       .limit(20);
 
     if (procedures) {
-      context.procedures = procedures.map((p: any) => ({
+      const typedProcedures = procedures as ProcedureRecord[];
+      context.procedures = typedProcedures.map((p: ProcedureRecord) => ({
         code: p.code?.coding?.[0]?.code || "",
         display: p.code?.coding?.[0]?.display || "",
         date: p.performed_datetime || "",
@@ -411,7 +500,8 @@ async function gatherPatientContext(
       .limit(30);
 
     if (admissionMeds) {
-      context.admissionMedications = admissionMeds.map((m: any) => ({
+      const typedAdmissionMeds = admissionMeds as MedicationRequestRecord[];
+      context.admissionMedications = typedAdmissionMeds.map((m: MedicationRequestRecord) => ({
         name: m.medication_codeable_concept?.coding?.[0]?.display || "",
         dose: m.dosage_instruction?.[0]?.dose_and_rate?.[0]?.dose_quantity?.value || "",
         frequency: m.dosage_instruction?.[0]?.timing?.code?.text || "",
@@ -428,7 +518,8 @@ async function gatherPatientContext(
       .limit(30);
 
     if (dischargeMeds) {
-      context.dischargeMedications = dischargeMeds.map((m: any) => ({
+      const typedDischargeMeds = dischargeMeds as MedicationRequestRecord[];
+      context.dischargeMedications = typedDischargeMeds.map((m: MedicationRequestRecord) => ({
         name: m.medication_codeable_concept?.coding?.[0]?.display || "",
         dose: m.dosage_instruction?.[0]?.dose_and_rate?.[0]?.dose_quantity?.value || "",
         frequency: m.dosage_instruction?.[0]?.timing?.code?.text || "",
@@ -477,9 +568,10 @@ async function gatherPatientContext(
       .limit(30);
 
     if (labs) {
-      context.labResults = labs
-        .filter((l: any) => l.value_quantity_value != null)
-        .map((l: any) => ({
+      const typedLabs = labs as LabRecord[];
+      context.labResults = typedLabs
+        .filter((l: LabRecord) => l.value_quantity_value != null)
+        .map((l: LabRecord) => ({
           name: l.code?.coding?.[0]?.display || l.code?.text || "",
           value: String(l.value_quantity_value),
           unit: l.value_quantity_unit || "",
@@ -501,7 +593,8 @@ async function gatherPatientContext(
       .limit(10);
 
     if (notes) {
-      context.notes = notes.map((n: any) => `${n.note_type}: ${n.content}`);
+      const typedNotes = notes as NoteRecord[];
+      context.notes = typedNotes.map((n: NoteRecord) => `${n.note_type || ""}: ${n.content || ""}`);
     }
 
     // Get discharge plan if available
@@ -749,7 +842,7 @@ Respond with ONLY the JSON object, no other text.`;
 }
 
 function normalizeSummaryResponse(
-  parsed: any,
+  parsed: ParsedSummary,
   context: PatientContext,
   dischargeDisposition: string,
   attendingPhysician: string
