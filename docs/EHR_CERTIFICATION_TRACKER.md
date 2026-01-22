@@ -29,10 +29,10 @@
 | **Public Health: Electronic Case Reporting** | **5/6** | No | ✅ **Week 2 Done** |
 | **Public Health: Antimicrobial Surveillance** | **4/5** | No | ✅ **Week 2 Done** |
 | **EPCS / PDMP Integration** | **6/8** | No | ✅ **Week 3 Done** |
-| ONC Certification Process | 0/6 | **YES** | ⏳ Post-Sprint |
+| **ONC Certification Process** | **1/6** | **YES** | 🔄 ACB Selected |
 | Prior Authorization API | 2/5 | No | ⏳ Post-Sprint |
-| USCDI v3 Compliance | 12/18 | No | ⏳ Post-Sprint |
-| DSI Transparency | 1/5 | No | ⏳ Post-Sprint |
+| **USCDI v3 Compliance** | **18/18** | No | ✅ **Complete** |
+| **DSI Transparency** | **4/5** | No | ✅ **Complete** |
 | Provider Directory API | 2/4 | No | ⏳ Post-Sprint |
 | Direct Messaging / HIE | 0/5 | No | ⏳ Post-Sprint |
 

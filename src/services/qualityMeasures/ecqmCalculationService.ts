@@ -387,8 +387,8 @@ async function evaluateMeasureCriteria(
 function evaluateCMS122(
   data: PatientMeasureData,
   result: PatientMeasureResult,
-  periodStart: Date,
-  periodEnd: Date
+  _periodStart: Date,
+  _periodEnd: Date
 ): PatientMeasureResult {
   const { patient, encounters, conditions, observations } = data;
 
@@ -441,8 +441,8 @@ function evaluateCMS122(
 function evaluateCMS165(
   data: PatientMeasureData,
   result: PatientMeasureResult,
-  periodStart: Date,
-  periodEnd: Date
+  _periodStart: Date,
+  _periodEnd: Date
 ): PatientMeasureResult {
   const { patient, encounters, conditions, observations } = data;
 

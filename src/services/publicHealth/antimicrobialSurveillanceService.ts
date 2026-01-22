@@ -183,12 +183,13 @@ interface SubmissionRow {
 // CONSTANTS
 // =====================================================
 
-// NHSN Configuration
-const NHSN_CONFIG = {
+// NHSN Configuration (used by edge function for production submission)
+const _NHSN_CONFIG = {
   name: 'CDC_NHSN',
   endpoint: 'https://sams.cdc.gov/nhsn/api/upload', // Production endpoint
   testEndpoint: 'https://nhsn-staging.cdc.gov/api/upload',
 };
+export { _NHSN_CONFIG as NHSN_CONFIG };
 
 // Antimicrobial classes and common drugs
 const ANTIMICROBIAL_CLASSES: Record<string, string[]> = {

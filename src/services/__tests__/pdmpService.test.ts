@@ -64,7 +64,6 @@ import {
   queryPDMP,
   getPDMPQuery,
   getPDMPPrescriptionHistory,
-  getPatientPDMPQueries,
   hasRecentPDMPQuery,
   getPDMPStats,
   type PDMPQueryInput,

@@ -640,8 +640,8 @@ export async function queryPDMP(
  * Simulate PDMP query response (production would call actual API)
  */
 async function simulatePDMPQuery(
-  queryId: string,
-  input: PDMPQueryInput
+  _queryId: string,
+  _input: PDMPQueryInput
 ): Promise<{
   status: ResponseStatus;
   prescriptions: PDMPPrescriptionHistory[];

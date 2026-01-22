@@ -55,7 +55,6 @@ import {
   calculateAggregateResults,
   getAggregateResults,
   type MeasureDefinition,
-  type AggregateResult,
 } from '../ecqmCalculationService';
 import { supabase } from '../../../lib/supabaseClient';
 

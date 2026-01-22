@@ -566,8 +566,9 @@ function buildRXASegment(options: {
   // Completion status
   const completionStatus = 'CP'; // Completed
 
-  // Information source
-  const infoSource = imm.informationSource === '01' ? '01^Historical information - source unspecified^NIP001' : '00^New immunization record^NIP001';
+  // Information source (reserved for RXA.9 when supported by registry)
+  const _infoSource = imm.informationSource === '01' ? '01^Historical information - source unspecified^NIP001' : '00^New immunization record^NIP001';
+  void _infoSource; // Will be used in RXA.9 field when registry supports it
 
   const fields = [
     'RXA',

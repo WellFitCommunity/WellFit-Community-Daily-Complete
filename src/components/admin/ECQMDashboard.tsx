@@ -39,7 +39,7 @@ import {
   type AggregateResult,
   type CalculationJob
 } from '../../services/qualityMeasures/ecqmCalculationService';
-import { exportQRDAI, exportQRDAIII } from '../../services/qualityMeasures/qrdaExportService';
+import { exportQRDAIII } from '../../services/qualityMeasures/qrdaExportService';
 import { auditLogger } from '../../services/auditLogger';
 
 // =====================================================

@@ -66,7 +66,6 @@ import {
   getProviderRegistration,
   verifyProviderAuthorization,
   createPrescription,
-  getPrescription,
   getPatientPrescriptions,
   signPrescription,
   cancelPrescription,
