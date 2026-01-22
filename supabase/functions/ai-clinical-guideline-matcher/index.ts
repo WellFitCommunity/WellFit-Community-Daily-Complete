@@ -126,6 +126,54 @@ interface PatientContext {
   lastScreenings: Record<string, string>; // screening name -> date
 }
 
+// Database record types
+interface ConditionRecord {
+  code?: { coding?: Array<{ code?: string; display?: string }> };
+  clinical_status?: string;
+}
+
+interface MedicationRecord {
+  medication_codeable_concept?: { coding?: Array<{ display?: string }>; rxcui?: string };
+}
+
+interface AllergyRecord {
+  code?: { coding?: Array<{ display?: string }>; text?: string };
+  criticality?: string;
+}
+
+// Parsed AI response types
+interface ParsedRecommendation {
+  recommendationId?: string;
+  guideline?: ClinicalGuideline;
+  category?: string;
+  recommendation?: string;
+  rationale?: string;
+  evidenceLevel?: string;
+  urgency?: string;
+  targetValue?: string;
+  currentValue?: string;
+  gap?: string;
+  actionItems?: string[];
+}
+
+interface ParsedGap {
+  gapId?: string;
+  guideline?: ClinicalGuideline;
+  gapType?: string;
+  description?: string;
+  expectedCare?: string;
+  currentState?: string;
+  recommendation?: string;
+  priority?: string;
+}
+
+interface ParsedMatchResult {
+  recommendations?: ParsedRecommendation[];
+  adherenceGaps?: ParsedGap[];
+  confidence?: number;
+  reviewReasons?: string[];
+}
+
 // =====================================================
 // CLINICAL GUIDELINES DATABASE
 // =====================================================
@@ -418,7 +466,8 @@ async function gatherPatientContext(
       .limit(30);
 
     if (conditions) {
-      context.conditions = conditions.map((c: any) => ({
+      const typedConditions = conditions as ConditionRecord[];
+      context.conditions = typedConditions.map((c: ConditionRecord) => ({
         code: c.code?.coding?.[0]?.code || "",
         display: c.code?.coding?.[0]?.display || "",
       }));
@@ -433,7 +482,8 @@ async function gatherPatientContext(
       .limit(50);
 
     if (medications) {
-      context.medications = medications.map((m: any) => ({
+      const typedMedications = medications as MedicationRecord[];
+      context.medications = typedMedications.map((m: MedicationRecord) => ({
         name: m.medication_codeable_concept?.coding?.[0]?.display || "",
         rxcui: m.medication_codeable_concept?.rxcui,
       }));
@@ -447,8 +497,9 @@ async function gatherPatientContext(
       .limit(20);
 
     if (allergies) {
-      context.allergies = allergies
-        .map((a: any) => a.code?.coding?.[0]?.display || a.code?.text || "")
+      const typedAllergies = allergies as AllergyRecord[];
+      context.allergies = typedAllergies
+        .map((a: AllergyRecord) => a.code?.coding?.[0]?.display || a.code?.text || "")
         .filter(Boolean);
     }
 
@@ -865,43 +916,39 @@ Respond with ONLY the JSON object, no other text.`;
 }
 
 function normalizeMatchResult(
-  parsed: any,
+  parsed: ParsedMatchResult,
   matchedGuidelines: ClinicalGuideline[],
   preventiveScreenings: PreventiveScreening[],
-  context: PatientContext
+  _context: PatientContext
 ): GuidelineMatchResult {
-  const recommendations = (parsed.recommendations || []).map((r: any, i: number) => ({
+  const defaultGuideline: ClinicalGuideline = {
+    guidelineId: "unknown",
+    guidelineName: "Clinical Guidelines",
+    organization: "Unknown",
+    year: 2024,
+    condition: "Unknown",
+  };
+
+  const recommendations = (parsed.recommendations || []).map((r: ParsedRecommendation, i: number) => ({
     ...r,
     recommendationId: r.recommendationId || `rec-${i + 1}-${Date.now()}`,
-    guideline: r.guideline || matchedGuidelines[0] || {
-      guidelineId: "unknown",
-      guidelineName: "Clinical Guidelines",
-      organization: "Unknown",
-      year: 2024,
-      condition: "Unknown",
-    },
+    guideline: r.guideline || matchedGuidelines[0] || defaultGuideline,
     category: r.category || "treatment",
     evidenceLevel: r.evidenceLevel || "C",
     urgency: r.urgency || "routine",
     actionItems: r.actionItems || [],
   }));
 
-  const adherenceGaps = (parsed.adherenceGaps || []).map((g: any, i: number) => ({
+  const adherenceGaps = (parsed.adherenceGaps || []).map((g: ParsedGap, i: number) => ({
     ...g,
     gapId: g.gapId || `gap-${i + 1}-${Date.now()}`,
-    guideline: g.guideline || matchedGuidelines[0] || {
-      guidelineId: "unknown",
-      guidelineName: "Clinical Guidelines",
-      organization: "Unknown",
-      year: 2024,
-      condition: "Unknown",
-    },
+    guideline: g.guideline || matchedGuidelines[0] || defaultGuideline,
     gapType: g.gapType || "suboptimal_control",
     priority: g.priority || "medium",
   }));
 
-  const criticalGaps = adherenceGaps.filter((g: any) => g.priority === "critical").length;
-  const highPriorityGaps = adherenceGaps.filter((g: any) => g.priority === "high").length;
+  const criticalGaps = adherenceGaps.filter((g: { priority?: string }) => g.priority === "critical").length;
+  const highPriorityGaps = adherenceGaps.filter((g: { priority?: string }) => g.priority === "high").length;
   const overdueScreenings = preventiveScreenings.filter((s) => s.status === "overdue").length;
 
   const reviewReasons = [
