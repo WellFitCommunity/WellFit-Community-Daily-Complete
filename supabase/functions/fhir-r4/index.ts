@@ -30,6 +30,114 @@ import { SUPABASE_URL, SB_SECRET_KEY } from '../_shared/env.ts';
 const FHIR_VERSION = "4.0.1";
 const FHIR_MIME_TYPE = "application/fhir+json";
 
+// =============================================================================
+// TYPE DEFINITIONS
+// =============================================================================
+
+interface AllergyRecord {
+  id: string;
+  clinical_status?: string;
+  verification_status?: string;
+  allergen_type?: string;
+  allergen_name: string;
+  criticality?: string;
+  created_at: string;
+  reaction_description?: string;
+  severity?: string;
+}
+
+interface ConditionRecord {
+  id: string;
+  clinical_status?: string;
+  verification_status?: string;
+  code?: string;
+  code_system?: string;
+  code_display?: string;
+  onset_datetime?: string;
+  recorded_date?: string;
+}
+
+interface MedicationRecord {
+  id: string;
+  medication_name: string;
+  status?: string;
+  created_at: string;
+  instructions?: string;
+  dosage?: string;
+  frequency?: string;
+}
+
+interface ObservationRecord {
+  id: string;
+  status?: string;
+  category?: string;
+  code?: string;
+  code_display?: string;
+  effective_datetime?: string;
+  value_quantity?: number;
+  value_unit?: string;
+  value_string?: string;
+}
+
+interface ImmunizationRecord {
+  id: string;
+  status?: string;
+  vaccine_code?: string;
+  vaccine_display?: string;
+  occurrence_datetime?: string;
+  lot_number?: string;
+}
+
+interface ProcedureRecord {
+  id: string;
+  status?: string;
+  code?: string;
+  code_system?: string;
+  code_display?: string;
+  performed_datetime?: string;
+}
+
+interface DiagnosticReportRecord {
+  id: string;
+  status?: string;
+  category?: string;
+  code?: string;
+  code_display?: string;
+  effective_datetime?: string;
+  issued?: string;
+  conclusion?: string;
+}
+
+interface CarePlanRecord {
+  id: string;
+  status?: string;
+  title?: string;
+  description?: string;
+  period_start?: string;
+  period_end?: string;
+}
+
+interface CareTeamRecord {
+  id: string;
+  status?: string;
+  name?: string;
+  participants?: unknown[];
+}
+
+interface GoalRecord {
+  id: string;
+  lifecycle_status?: string;
+  description?: string;
+  start_date?: string;
+  target_date?: string;
+}
+
+interface DocumentRecord {
+  id: string;
+  created_at: string;
+  content?: string;
+}
+
 // Create service role client for data access
 const supabase = createClient(SUPABASE_URL ?? "", SB_SECRET_KEY ?? "");
 
@@ -112,8 +220,8 @@ serve(async (req) => {
     }
 
   } catch (err: unknown) {
-    const error = err as Error;
-    return fhirError('exception', error.message, 500, fhirHeaders);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return fhirError('exception', errorMessage, 500, fhirHeaders);
   }
 });
 
@@ -316,14 +424,16 @@ async function handleAllergyIntolerance(patientId: string, resourceId: string | 
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedAllergies = (allergies || []) as AllergyRecord[];
+
   if (resourceId) {
-    if (!allergies || allergies.length === 0) {
+    if (typedAllergies.length === 0) {
       return fhirError('not-found', 'AllergyIntolerance not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapAllergyToFHIR(allergies[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapAllergyToFHIR(typedAllergies[0], patientId)), { headers });
   }
 
-  const entries = (allergies || []).map(a => ({
+  const entries = typedAllergies.map((a: AllergyRecord) => ({
     resource: mapAllergyToFHIR(a, patientId),
     fullUrl: `AllergyIntolerance/${a.id}`
   }));
@@ -352,14 +462,16 @@ async function handleCondition(patientId: string, resourceId: string | undefined
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedConditions = (conditions || []) as ConditionRecord[];
+
   if (resourceId) {
-    if (!conditions || conditions.length === 0) {
+    if (typedConditions.length === 0) {
       return fhirError('not-found', 'Condition not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapConditionToFHIR(conditions[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapConditionToFHIR(typedConditions[0], patientId)), { headers });
   }
 
-  const entries = (conditions || []).map(c => ({
+  const entries = typedConditions.map((c: ConditionRecord) => ({
     resource: mapConditionToFHIR(c, patientId),
     fullUrl: `Condition/${c.id}`
   }));
@@ -388,14 +500,16 @@ async function handleMedicationRequest(patientId: string, resourceId: string | u
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedMedications = (medications || []) as MedicationRecord[];
+
   if (resourceId) {
-    if (!medications || medications.length === 0) {
+    if (typedMedications.length === 0) {
       return fhirError('not-found', 'MedicationRequest not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapMedicationToFHIR(medications[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapMedicationToFHIR(typedMedications[0], patientId)), { headers });
   }
 
-  const entries = (medications || []).map(m => ({
+  const entries = typedMedications.map((m: MedicationRecord) => ({
     resource: mapMedicationToFHIR(m, patientId),
     fullUrl: `MedicationRequest/${m.id}`
   }));
@@ -430,14 +544,16 @@ async function handleObservation(patientId: string, resourceId: string | undefin
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedObservations = (observations || []) as ObservationRecord[];
+
   if (resourceId) {
-    if (!observations || observations.length === 0) {
+    if (typedObservations.length === 0) {
       return fhirError('not-found', 'Observation not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapObservationToFHIR(observations[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapObservationToFHIR(typedObservations[0], patientId)), { headers });
   }
 
-  const entries = (observations || []).map(o => ({
+  const entries = typedObservations.map((o: ObservationRecord) => ({
     resource: mapObservationToFHIR(o, patientId),
     fullUrl: `Observation/${o.id}`
   }));
@@ -466,14 +582,16 @@ async function handleImmunization(patientId: string, resourceId: string | undefi
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedImmunizations = (immunizations || []) as ImmunizationRecord[];
+
   if (resourceId) {
-    if (!immunizations || immunizations.length === 0) {
+    if (typedImmunizations.length === 0) {
       return fhirError('not-found', 'Immunization not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapImmunizationToFHIR(immunizations[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapImmunizationToFHIR(typedImmunizations[0], patientId)), { headers });
   }
 
-  const entries = (immunizations || []).map(i => ({
+  const entries = typedImmunizations.map((i: ImmunizationRecord) => ({
     resource: mapImmunizationToFHIR(i, patientId),
     fullUrl: `Immunization/${i.id}`
   }));
@@ -502,14 +620,16 @@ async function handleProcedure(patientId: string, resourceId: string | undefined
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedProcedures = (procedures || []) as ProcedureRecord[];
+
   if (resourceId) {
-    if (!procedures || procedures.length === 0) {
+    if (typedProcedures.length === 0) {
       return fhirError('not-found', 'Procedure not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapProcedureToFHIR(procedures[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapProcedureToFHIR(typedProcedures[0], patientId)), { headers });
   }
 
-  const entries = (procedures || []).map(p => ({
+  const entries = typedProcedures.map((p: ProcedureRecord) => ({
     resource: mapProcedureToFHIR(p, patientId),
     fullUrl: `Procedure/${p.id}`
   }));
@@ -538,14 +658,16 @@ async function handleDiagnosticReport(patientId: string, resourceId: string | un
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedReports = (reports || []) as DiagnosticReportRecord[];
+
   if (resourceId) {
-    if (!reports || reports.length === 0) {
+    if (typedReports.length === 0) {
       return fhirError('not-found', 'DiagnosticReport not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapDiagnosticReportToFHIR(reports[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapDiagnosticReportToFHIR(typedReports[0], patientId)), { headers });
   }
 
-  const entries = (reports || []).map(r => ({
+  const entries = typedReports.map((r: DiagnosticReportRecord) => ({
     resource: mapDiagnosticReportToFHIR(r, patientId),
     fullUrl: `DiagnosticReport/${r.id}`
   }));
@@ -574,14 +696,16 @@ async function handleCarePlan(patientId: string, resourceId: string | undefined,
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedCarePlans = (carePlans || []) as CarePlanRecord[];
+
   if (resourceId) {
-    if (!carePlans || carePlans.length === 0) {
+    if (typedCarePlans.length === 0) {
       return fhirError('not-found', 'CarePlan not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapCarePlanToFHIR(carePlans[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapCarePlanToFHIR(typedCarePlans[0], patientId)), { headers });
   }
 
-  const entries = (carePlans || []).map(cp => ({
+  const entries = typedCarePlans.map((cp: CarePlanRecord) => ({
     resource: mapCarePlanToFHIR(cp, patientId),
     fullUrl: `CarePlan/${cp.id}`
   }));
@@ -610,14 +734,16 @@ async function handleCareTeam(patientId: string, resourceId: string | undefined,
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedCareTeams = (careTeams || []) as CareTeamRecord[];
+
   if (resourceId) {
-    if (!careTeams || careTeams.length === 0) {
+    if (typedCareTeams.length === 0) {
       return fhirError('not-found', 'CareTeam not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapCareTeamToFHIR(careTeams[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapCareTeamToFHIR(typedCareTeams[0], patientId)), { headers });
   }
 
-  const entries = (careTeams || []).map(ct => ({
+  const entries = typedCareTeams.map((ct: CareTeamRecord) => ({
     resource: mapCareTeamToFHIR(ct, patientId),
     fullUrl: `CareTeam/${ct.id}`
   }));
@@ -646,14 +772,16 @@ async function handleGoal(patientId: string, resourceId: string | undefined, par
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedGoals = (goals || []) as GoalRecord[];
+
   if (resourceId) {
-    if (!goals || goals.length === 0) {
+    if (typedGoals.length === 0) {
       return fhirError('not-found', 'Goal not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapGoalToFHIR(goals[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapGoalToFHIR(typedGoals[0], patientId)), { headers });
   }
 
-  const entries = (goals || []).map(g => ({
+  const entries = typedGoals.map((g: GoalRecord) => ({
     resource: mapGoalToFHIR(g, patientId),
     fullUrl: `Goal/${g.id}`
   }));
@@ -682,14 +810,16 @@ async function handleDocumentReference(patientId: string, resourceId: string | u
     return fhirError('exception', error.message, 500, headers);
   }
 
+  const typedDocuments = (documents || []) as DocumentRecord[];
+
   if (resourceId) {
-    if (!documents || documents.length === 0) {
+    if (typedDocuments.length === 0) {
       return fhirError('not-found', 'DocumentReference not found', 404, headers);
     }
-    return new Response(JSON.stringify(mapDocumentToFHIR(documents[0], patientId)), { headers });
+    return new Response(JSON.stringify(mapDocumentToFHIR(typedDocuments[0], patientId)), { headers });
   }
 
-  const entries = (documents || []).map(d => ({
+  const entries = typedDocuments.map((d: DocumentRecord) => ({
     resource: mapDocumentToFHIR(d, patientId),
     fullUrl: `DocumentReference/${d.id}`
   }));
@@ -715,7 +845,7 @@ function mapGender(gender: string | null): string {
   return 'unknown';
 }
 
-function mapAllergyToFHIR(allergy: any, patientId: string) {
+function mapAllergyToFHIR(allergy: AllergyRecord, patientId: string) {
   return {
     resourceType: "AllergyIntolerance",
     id: allergy.id,
@@ -749,7 +879,7 @@ function mapAllergyToFHIR(allergy: any, patientId: string) {
   };
 }
 
-function mapConditionToFHIR(condition: any, patientId: string) {
+function mapConditionToFHIR(condition: ConditionRecord, patientId: string) {
   return {
     resourceType: "Condition",
     id: condition.id,
@@ -788,7 +918,7 @@ function mapConditionToFHIR(condition: any, patientId: string) {
   };
 }
 
-function mapMedicationToFHIR(medication: any, patientId: string) {
+function mapMedicationToFHIR(medication: MedicationRecord, patientId: string) {
   return {
     resourceType: "MedicationRequest",
     id: medication.id,
@@ -812,7 +942,7 @@ function mapMedicationToFHIR(medication: any, patientId: string) {
   };
 }
 
-function mapObservationToFHIR(observation: any, patientId: string) {
+function mapObservationToFHIR(observation: ObservationRecord, patientId: string) {
   return {
     resourceType: "Observation",
     id: observation.id,
@@ -845,7 +975,7 @@ function mapObservationToFHIR(observation: any, patientId: string) {
   };
 }
 
-function mapImmunizationToFHIR(immunization: any, patientId: string) {
+function mapImmunizationToFHIR(immunization: ImmunizationRecord, patientId: string) {
   return {
     resourceType: "Immunization",
     id: immunization.id,
@@ -868,7 +998,7 @@ function mapImmunizationToFHIR(immunization: any, patientId: string) {
   };
 }
 
-function mapProcedureToFHIR(procedure: any, patientId: string) {
+function mapProcedureToFHIR(procedure: ProcedureRecord, patientId: string) {
   return {
     resourceType: "Procedure",
     id: procedure.id,
@@ -889,7 +1019,7 @@ function mapProcedureToFHIR(procedure: any, patientId: string) {
   };
 }
 
-function mapDiagnosticReportToFHIR(report: any, patientId: string) {
+function mapDiagnosticReportToFHIR(report: DiagnosticReportRecord, patientId: string) {
   return {
     resourceType: "DiagnosticReport",
     id: report.id,
@@ -918,7 +1048,7 @@ function mapDiagnosticReportToFHIR(report: any, patientId: string) {
   };
 }
 
-function mapCarePlanToFHIR(carePlan: any, patientId: string) {
+function mapCarePlanToFHIR(carePlan: CarePlanRecord, patientId: string) {
   return {
     resourceType: "CarePlan",
     id: carePlan.id,
@@ -943,7 +1073,7 @@ function mapCarePlanToFHIR(carePlan: any, patientId: string) {
   };
 }
 
-function mapCareTeamToFHIR(careTeam: any, patientId: string) {
+function mapCareTeamToFHIR(careTeam: CareTeamRecord, patientId: string) {
   return {
     resourceType: "CareTeam",
     id: careTeam.id,
@@ -957,7 +1087,7 @@ function mapCareTeamToFHIR(careTeam: any, patientId: string) {
   };
 }
 
-function mapGoalToFHIR(goal: any, patientId: string) {
+function mapGoalToFHIR(goal: GoalRecord, patientId: string) {
   return {
     resourceType: "Goal",
     id: goal.id,
@@ -976,7 +1106,7 @@ function mapGoalToFHIR(goal: any, patientId: string) {
   };
 }
 
-function mapDocumentToFHIR(document: any, patientId: string) {
+function mapDocumentToFHIR(document: DocumentRecord, patientId: string) {
   return {
     resourceType: "DocumentReference",
     id: document.id,
