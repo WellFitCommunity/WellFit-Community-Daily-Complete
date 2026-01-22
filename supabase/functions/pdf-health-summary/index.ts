@@ -10,8 +10,140 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createUserClient, createAdminClient, batchQueries } from '../_shared/supabaseClient.ts';
+import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+
+// =============================================================================
+// TYPE DEFINITIONS
+// =============================================================================
+
+interface Profile {
+  user_id: string;
+  first_name?: string;
+  last_name?: string;
+  dob?: string;
+  phone?: string;
+  email?: string;
+}
+
+interface Medication {
+  id: string;
+  user_id: string;
+  medication_name?: string;
+  dosage?: string;
+  strength?: string;
+  frequency?: string;
+  instructions?: string;
+  prescribed_by?: string;
+  purpose?: string;
+  status: string;
+}
+
+interface Allergy {
+  id: string;
+  user_id: string;
+  allergen_name?: string;
+  allergen_type?: string;
+  reaction_description?: string;
+  criticality?: 'high' | 'low' | 'moderate' | 'unknown';
+  severity?: string;
+}
+
+interface Condition {
+  id: string;
+  patient_id: string;
+  code?: string;
+  code_display?: string;
+  clinical_status?: string;
+  severity_code?: string;
+  onset_datetime?: string;
+  recorded_date?: string;
+  note?: string;
+}
+
+interface Procedure {
+  id: string;
+  patient_id: string;
+  code_display?: string;
+  performed_datetime?: string;
+  status?: string;
+}
+
+interface Immunization {
+  id: string;
+  patient_id: string;
+  vaccine_display?: string;
+  occurrence_datetime?: string;
+  status?: string;
+}
+
+interface Observation {
+  id: string;
+  patient_id: string;
+  code?: string;
+  code_display?: string;
+  category?: string;
+  value_quantity?: number;
+  value_string?: string;
+  value_unit?: string;
+  effective_datetime?: string;
+  reference_range_low?: number;
+  reference_range_high?: number;
+}
+
+interface LabResult {
+  id: string;
+  patient_mrn: string;
+  test_name?: string;
+  value?: string | number;
+  unit?: string;
+  reference_range?: string;
+  abnormal?: boolean;
+  extracted_at?: string;
+}
+
+interface CarePlan {
+  id: string;
+  patient_id: string;
+  title?: string;
+  description?: string;
+  status?: string;
+  period_start?: string;
+}
+
+interface ClinicalNote {
+  id: string;
+  author_id: string;
+  content?: string;
+  created_at?: string;
+}
+
+interface DiagnosticReport {
+  id: string;
+  patient_id: string;
+  code_display?: string;
+  category?: string;
+  issued?: string;
+  effective_datetime?: string;
+  status?: string;
+}
+
+interface CheckIn {
+  id: string;
+  user_id: string;
+  heart_rate?: number;
+  bp_systolic?: number;
+  bp_diastolic?: number;
+  pulse_oximeter?: number;
+  glucose_mg_dl?: number;
+  created_at?: string;
+}
+
+interface VitalReading {
+  value: string | number;
+  unit: string;
+  date: string;
+}
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -108,27 +240,27 @@ serve(async (req) => {
     });
 
   } catch (err: unknown) {
-    const error = err as Error;
+    const message = err instanceof Error ? err.message : String(err);
     return new Response(
-      JSON.stringify({ error: 'Failed to generate health summary', details: error.message }),
+      JSON.stringify({ error: 'Failed to generate health summary', details: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
 interface HealthData {
-  profile: any;
-  medications: any[];
-  allergies: any[];
-  conditions: any[];
-  procedures: any[];
-  immunizations: any[];
-  observations: any[];
-  labResults: any[];
-  carePlans: any[];
-  clinicalNotes: any[];
-  diagnosticReports: any[];
-  checkIns: any[];
+  profile: Profile | null;
+  medications: Medication[];
+  allergies: Allergy[];
+  conditions: Condition[];
+  procedures: Procedure[];
+  immunizations: Immunization[];
+  observations: Observation[];
+  labResults: LabResult[];
+  carePlans: CarePlan[];
+  clinicalNotes: ClinicalNote[];
+  diagnosticReports: DiagnosticReport[];
+  checkIns: CheckIn[];
   generatedAt: string;
 }
 
@@ -151,8 +283,8 @@ function generateHealthSummaryHTML(data: HealthData): string {
   const dob = profile?.dob ? formatDate(profile.dob) : 'Not provided';
 
   // Group observations by category
-  const vitalSigns = observations.filter((o: any) => o.category?.includes('vital-signs'));
-  const labObservations = observations.filter((o: any) => o.category?.includes('laboratory'));
+  const vitalSigns = observations.filter((o) => o.category?.includes('vital-signs'));
+  const labObservations = observations.filter((o) => o.category?.includes('laboratory'));
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -353,7 +485,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
     <h2>⚠️ Allergies & Intolerances</h2>
     ${allergies.length === 0
       ? '<div class="empty-state">No known allergies recorded</div>'
-      : allergies.map((a: any) => `
+      : allergies.map((a) => `
         <div class="allergy-card ${a.criticality === 'high' ? 'high' : ''}">
           <h4>${escapeHtml(a.allergen_name || 'Unknown Allergen')}</h4>
           <p><strong>Type:</strong> ${escapeHtml(a.allergen_type || 'Unknown')}</p>
@@ -373,7 +505,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
     <h2>💊 Current Medications</h2>
     ${medications.length === 0
       ? '<div class="empty-state">No active medications recorded</div>'
-      : medications.map((m: any) => `
+      : medications.map((m) => `
         <div class="medication-card">
           <h4>${escapeHtml(m.medication_name || 'Unknown Medication')}</h4>
           ${m.dosage || m.strength ? `<p><strong>Dose:</strong> ${escapeHtml(m.dosage || m.strength || '')}</p>` : ''}
@@ -390,7 +522,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
     <h2>🏥 Health Conditions</h2>
     ${conditions.length === 0
       ? '<div class="empty-state">No conditions recorded</div>'
-      : conditions.map((c: any) => `
+      : conditions.map((c) => `
         <div class="condition-card">
           <h4>${escapeHtml(c.code_display || 'Unknown Condition')}</h4>
           ${c.code ? `<p><strong>Code:</strong> ${escapeHtml(c.code)}</p>` : ''}
@@ -426,7 +558,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
             </tr>
           </thead>
           <tbody>
-            ${immunizations.map((i: any) => `
+            ${immunizations.map((i) => `
               <tr>
                 <td>${escapeHtml(i.vaccine_display || 'Unknown Vaccine')}</td>
                 <td>${formatDate(i.occurrence_datetime)}</td>
@@ -451,7 +583,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
             </tr>
           </thead>
           <tbody>
-            ${procedures.map((p: any) => `
+            ${procedures.map((p) => `
               <tr>
                 <td>${escapeHtml(p.code_display || 'Unknown Procedure')}</td>
                 <td>${formatDate(p.performed_datetime)}</td>
@@ -477,7 +609,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
             </tr>
           </thead>
           <tbody>
-            ${labResults.map((l: any) => `
+            ${labResults.map((l) => `
               <tr${l.abnormal ? ' style="background: #fef2f2;"' : ''}>
                 <td>${escapeHtml(l.test_name || 'Unknown Test')}</td>
                 <td><strong>${escapeHtml(l.value?.toString() || 'N/A')}</strong> ${escapeHtml(l.unit || '')}</td>
@@ -485,7 +617,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
                 <td>${formatDate(l.extracted_at)}</td>
               </tr>
             `).join('')}
-            ${labObservations.map((o: any) => `
+            ${labObservations.map((o) => `
               <tr>
                 <td>${escapeHtml(o.code_display || 'Unknown Test')}</td>
                 <td><strong>${escapeHtml(o.value_quantity?.toString() || o.value_string || 'N/A')}</strong></td>
@@ -502,7 +634,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
     <h2>📝 Care Plans</h2>
     ${carePlans.length === 0
       ? '<div class="empty-state">No active care plans</div>'
-      : carePlans.map((cp: any) => `
+      : carePlans.map((cp) => `
         <div class="item-card">
           <h4>${escapeHtml(cp.title || 'Care Plan')}</h4>
           ${cp.description ? `<p>${escapeHtml(cp.description)}</p>` : ''}
@@ -530,7 +662,7 @@ function generateHealthSummaryHTML(data: HealthData): string {
         </tr>
       </thead>
       <tbody>
-        ${diagnosticReports.map((dr: any) => `
+        ${diagnosticReports.map((dr) => `
           <tr>
             <td>${escapeHtml(dr.code_display || 'Unknown Report')}</td>
             <td>${escapeHtml(dr.category || 'N/A')}</td>
@@ -566,9 +698,9 @@ function generateHealthSummaryHTML(data: HealthData): string {
 </html>`;
 }
 
-function generateVitalsSection(observations: any[], checkIns: any[]): string {
+function generateVitalsSection(observations: Observation[], checkIns: CheckIn[]): string {
   // Get most recent vitals from either source
-  const recentVitals: { [key: string]: { value: any; unit: string; date: string } } = {};
+  const recentVitals: Record<string, VitalReading> = {};
 
   // From FHIR observations
   for (const obs of observations) {

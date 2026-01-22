@@ -22,6 +22,100 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
+// =============================================================================
+// TYPE DEFINITIONS
+// =============================================================================
+
+interface Profile {
+  user_id: string;
+  first_name?: string;
+  last_name?: string;
+  dob?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  gender?: string;
+}
+
+interface Medication {
+  id: string;
+  user_id: string;
+  medication_name?: string;
+  dosage?: string;
+  strength?: string;
+  frequency?: string;
+  instructions?: string;
+  status: string;
+}
+
+interface Allergy {
+  id: string;
+  user_id: string;
+  allergen_name?: string;
+  allergen_type?: string;
+  reaction_description?: string;
+  severity?: string;
+  clinical_status?: string;
+}
+
+interface Condition {
+  id: string;
+  patient_id: string;
+  code?: string;
+  code_display?: string;
+  clinical_status?: string;
+  onset_datetime?: string;
+}
+
+interface Procedure {
+  id: string;
+  patient_id: string;
+  code?: string;
+  code_display?: string;
+  performed_datetime?: string;
+  status?: string;
+}
+
+interface Immunization {
+  id: string;
+  patient_id: string;
+  vaccine_code?: string;
+  vaccine_display?: string;
+  occurrence_datetime?: string;
+  status?: string;
+  lot_number?: string;
+}
+
+interface Observation {
+  id: string;
+  patient_id: string;
+  code?: string;
+  code_display?: string;
+  value_quantity?: number;
+  value_string?: string;
+  value_unit?: string;
+  effective_datetime?: string;
+}
+
+interface LabResult {
+  id: string;
+  patient_mrn: string;
+  test_name?: string;
+  value?: string | number;
+  unit?: string;
+  reference_range?: string;
+  extracted_at?: string;
+}
+
+interface CarePlan {
+  id: string;
+  patient_id: string;
+  title?: string;
+  description?: string;
+  status?: string;
+  period_start?: string;
+}
+
 const CCDA_VERSION = "2.1";
 const TEMPLATE_OID = {
   CCD: "2.16.840.1.113883.10.20.22.1.2",
@@ -109,24 +203,24 @@ serve(async (req) => {
     });
 
   } catch (err: unknown) {
-    const error = err as Error;
+    const message = err instanceof Error ? err.message : String(err);
     return new Response(
-      JSON.stringify({ error: 'Failed to generate C-CDA', details: error.message }),
+      JSON.stringify({ error: 'Failed to generate C-CDA', details: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
 interface CCDAData {
-  profile: any;
-  medications: any[];
-  allergies: any[];
-  conditions: any[];
-  procedures: any[];
-  immunizations: any[];
-  observations: any[];
-  labResults: any[];
-  carePlans: any[];
+  profile: Profile | null;
+  medications: Medication[];
+  allergies: Allergy[];
+  conditions: Condition[];
+  procedures: Procedure[];
+  immunizations: Immunization[];
+  observations: Observation[];
+  labResults: LabResult[];
+  carePlans: CarePlan[];
   documentId: string;
   createdAt: string;
 }
@@ -240,7 +334,7 @@ function generateCCDA(data: CCDAData): string {
 </ClinicalDocument>`;
 }
 
-function generateAllergiesSection(allergies: any[]): string {
+function generateAllergiesSection(allergies: Allergy[]): string {
   const hasData = allergies.length > 0;
 
   return `
@@ -324,7 +418,7 @@ function generateAllergiesSection(allergies: any[]): string {
       </component>`;
 }
 
-function generateMedicationsSection(medications: any[]): string {
+function generateMedicationsSection(medications: Medication[]): string {
   const hasData = medications.length > 0;
 
   return `
@@ -380,7 +474,7 @@ function generateMedicationsSection(medications: any[]): string {
       </component>`;
 }
 
-function generateProblemsSection(conditions: any[]): string {
+function generateProblemsSection(conditions: Condition[]): string {
   const hasData = conditions.length > 0;
 
   return `
@@ -439,7 +533,7 @@ function generateProblemsSection(conditions: any[]): string {
       </component>`;
 }
 
-function generateProceduresSection(procedures: any[]): string {
+function generateProceduresSection(procedures: Procedure[]): string {
   const hasData = procedures.length > 0;
 
   return `
@@ -484,7 +578,7 @@ function generateProceduresSection(procedures: any[]): string {
       </component>`;
 }
 
-function generateImmunizationsSection(immunizations: any[]): string {
+function generateImmunizationsSection(immunizations: Immunization[]): string {
   const hasData = immunizations.length > 0;
 
   return `
@@ -537,7 +631,7 @@ function generateImmunizationsSection(immunizations: any[]): string {
       </component>`;
 }
 
-function generateVitalSignsSection(observations: any[]): string {
+function generateVitalSignsSection(observations: Observation[]): string {
   const hasData = observations.length > 0;
 
   return `
@@ -593,7 +687,7 @@ function generateVitalSignsSection(observations: any[]): string {
       </component>`;
 }
 
-function generateResultsSection(labResults: any[]): string {
+function generateResultsSection(labResults: LabResult[]): string {
   const hasData = labResults.length > 0;
 
   return `
@@ -650,7 +744,7 @@ function generateResultsSection(labResults: any[]): string {
       </component>`;
 }
 
-function generatePlanOfCareSection(carePlans: any[]): string {
+function generatePlanOfCareSection(carePlans: CarePlan[]): string {
   const hasData = carePlans.length > 0;
 
   return `
