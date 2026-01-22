@@ -380,11 +380,13 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ success: true, expires_at: expires.toISOString(), admin_token }),
       { status: 200, headers }
     );
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    const errorStack = e instanceof Error ? e.stack : undefined;
     logger.error("Fatal error in verify-admin-pin", {
-      error: e?.message ?? String(e),
-      stack: e?.stack
+      error: errorMessage,
+      stack: errorStack
     });
-    return new Response(JSON.stringify({ error: e?.message ?? "Internal error" }), { status: 500, headers });
+    return new Response(JSON.stringify({ error: errorMessage || "Internal error" }), { status: 500, headers });
   }
 });

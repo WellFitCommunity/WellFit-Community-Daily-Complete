@@ -2,6 +2,25 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts"
 import { createLogger } from '../_shared/auditLogger.ts'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// Device info structure for mobile vitals
+interface DeviceInfo {
+  device_id?: string;
+  device_model?: string;
+  device_manufacturer?: string;
+  os_version?: string;
+  app_version?: string;
+}
+
+// Vital signs snapshot for emergency incidents
+interface VitalSignsSnapshot {
+  heart_rate?: number;
+  spo2?: number;
+  blood_pressure_systolic?: number;
+  blood_pressure_diastolic?: number;
+  measured_at?: string;
+}
 
 // ❌ REMOVED WILDCARD CORS - Using secure cors() function instead
 // const corsHeaders = {
@@ -29,7 +48,7 @@ interface VitalData {
   measurement_quality?: string
   confidence_score?: number
   measured_at: string
-  device_info?: any
+  device_info?: DeviceInfo
 }
 
 interface GeofenceEvent {
@@ -48,7 +67,7 @@ interface EmergencyIncident {
   auto_detected: boolean
   location_latitude?: number
   location_longitude?: number
-  vital_signs?: any
+  vital_signs?: VitalSignsSnapshot
   description?: string
   triggered_at: string
 }
@@ -345,7 +364,7 @@ serve(async (req: Request) => {
 })
 
 // Helper function to trigger AI vitals analysis
-async function triggerVitalsAnalysis(supabaseClient: any, patientId: string, vitals: VitalData[]) {
+async function triggerVitalsAnalysis(supabaseClient: SupabaseClient, patientId: string, vitals: VitalData[]) {
   const logger = createLogger('mobile-sync');
   try {
     // Check for abnormal vitals and batch create alerts
@@ -391,7 +410,7 @@ async function triggerVitalsAnalysis(supabaseClient: any, patientId: string, vit
 }
 
 // Helper function to check geofence alerts
-async function checkGeofenceAlerts(supabaseClient: any, patientId: string, events: GeofenceEvent[]) {
+async function checkGeofenceAlerts(supabaseClient: SupabaseClient, patientId: string, events: GeofenceEvent[]) {
   const logger = createLogger('mobile-sync');
   try {
     const breachEvents = events.filter(e => e.event_type === 'breach' || e.event_type === 'exit')
@@ -415,7 +434,7 @@ async function checkGeofenceAlerts(supabaseClient: any, patientId: string, event
 }
 
 // Helper function to trigger emergency response
-async function triggerEmergencyResponse(supabaseClient: any, patientId: string, incidents: EmergencyIncident[]) {
+async function triggerEmergencyResponse(supabaseClient: SupabaseClient, patientId: string, incidents: EmergencyIncident[]) {
   const logger = createLogger('mobile-sync');
   try {
     const criticalIncidents = incidents.filter(i => i.severity === 'critical' || i.severity === 'high')

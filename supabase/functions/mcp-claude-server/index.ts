@@ -32,7 +32,7 @@ const redact = (s: string): string =>
     .replace(/\b\d{1,5}\s+[A-Za-z0-9'.\- ]+\b/g, (m) => (m.length > 6 ? "[ADDRESS]" : m))
     .replace(/\b(19|20)\d{2}[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])\b/g, "[DATE]");
 
-function deepDeidentify(obj: any): any {
+function deepDeidentify(obj: unknown): unknown {
   if (obj == null) return obj;
   if (Array.isArray(obj)) return obj.map(deepDeidentify);
   if (typeof obj === "string") return redact(obj);
@@ -44,7 +44,7 @@ function deepDeidentify(obj: any): any {
       "mrn","member_id","insurance_id","subscriber_name",
       "patient_id","person_id","user_id","uid"
     ]);
-    const out: any = {};
+    const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
       if (strip.has(k)) continue;
       out[k] = deepDeidentify(v);

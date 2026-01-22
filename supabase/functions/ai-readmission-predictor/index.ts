@@ -17,6 +17,19 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false }
 });
 
+// Patient readmission data interface
+interface PatientReadmissionData {
+  readmissionCount: number;
+  sdohRiskFactors: number;
+  checkInCompletionRate: number;
+  hasActiveCarePlan: boolean;
+}
+
+// Check-in status record
+interface CheckInRecord {
+  status: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
@@ -186,8 +199,8 @@ serve(async (req) => {
   }
 });
 
-async function gatherPatientData(patientId: string, tenantId: string): Promise<any> {
-  const data: any = {
+async function gatherPatientData(patientId: string, tenantId: string): Promise<PatientReadmissionData> {
+  const data: PatientReadmissionData = {
     readmissionCount: 0,
     sdohRiskFactors: 0,
     checkInCompletionRate: 0,
@@ -225,7 +238,8 @@ async function gatherPatientData(patientId: string, tenantId: string): Promise<a
       .gte('check_in_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
     if (checkIns && checkIns.length > 0) {
-      const completed = checkIns.filter((c: any) => c.status === 'completed').length;
+      const typedCheckIns = checkIns as CheckInRecord[];
+      const completed = typedCheckIns.filter((c) => c.status === 'completed').length;
       data.checkInCompletionRate = completed / 30;
     }
 

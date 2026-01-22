@@ -14,10 +14,10 @@ import {
 } from "../shared/types.ts";
 
 interface BackupData {
-  checkIns: any[];
-  communityMoments: any[];
-  adminActions: any[];
-  interactionLog: any[];
+  checkIns: Record<string, unknown>[];
+  communityMoments: Record<string, unknown>[];
+  adminActions: Record<string, unknown>[];
+  interactionLog: Record<string, unknown>[];
 }
 
 interface MailerSendEmail {

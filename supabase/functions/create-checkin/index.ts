@@ -70,7 +70,8 @@ serve(async (req: Request) => {
     }
 
     return new Response(JSON.stringify({ success: true }), { status: 200, headers });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message || "Server error" }), { status: 500, headers });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    return new Response(JSON.stringify({ error: errorMessage || "Server error" }), { status: 500, headers });
   }
 });

@@ -2,6 +2,16 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { cors } from "../_shared/cors.ts"
 import { createLogger } from '../_shared/auditLogger.ts'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// Logger interface for typed logging
+interface Logger {
+  debug: (message: string, data?: Record<string, unknown>) => void;
+  info: (message: string, data?: Record<string, unknown>) => void;
+  warn: (message: string, data?: Record<string, unknown>) => void;
+  error: (message: string, data?: Record<string, unknown>) => void;
+  phi: (message: string, data?: Record<string, unknown>) => void;
+}
 
 // Strict CORS policy matching other functions
 const ALLOWED_ORIGINS = [
@@ -166,13 +176,13 @@ serve(async (req) => {
 })
 
 async function generateEnhancedFHIRBundle(
-  supabaseClient: any,
+  supabaseClient: SupabaseClient,
   patientId: string,
   startDate: string,
   endDate: string,
   includeMobileData: boolean,
   includeAIAssessments: boolean,
-  logger: any
+  logger: Logger
 ) {
   const bundleId = `bundle-${patientId}-${Date.now()}`
   const entries = []

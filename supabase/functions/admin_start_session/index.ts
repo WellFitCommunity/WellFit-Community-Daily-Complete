@@ -98,10 +98,11 @@ serve(async (req: Request): Promise<Response> => {
         headers: { "Content-Type": "application/json" },
       }),
     );
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
     return withCors(
       req,
-      new Response(JSON.stringify({ ok: false, error: e?.message || "Unexpected error" }), {
+      new Response(JSON.stringify({ ok: false, error: errorMessage || "Unexpected error" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       }),

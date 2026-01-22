@@ -114,7 +114,7 @@ export default async function handler(req: Request): Promise<Response> {
     const parsed = RegisterSchema.safeParse(raw);
 
     if (!parsed.success) {
-      const details = parsed.error.issues.map((i: any) => ({
+      const details = parsed.error.issues.map((i) => ({
         path: (i.path as (string | number)[]).map(String).join("."),
         message: i.message
       }));

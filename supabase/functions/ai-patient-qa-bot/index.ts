@@ -42,6 +42,25 @@ interface SafetyCheck {
   blockedTopics: string[];
 }
 
+// Database record for allergies
+interface AllergyRecord {
+  code?: {
+    coding?: Array<{ display?: string }>;
+    text?: string;
+  };
+}
+
+// Parsed response from Claude for QA
+interface ParsedQAResponse {
+  answer?: string;
+  readingLevel?: string;
+  confidence?: number;
+  relatedTopics?: string[];
+  sources?: string[];
+  disclaimers?: string[];
+  suggestedFollowUp?: string;
+}
+
 interface QAResponse {
   answer: string;
   readingLevel: string;
@@ -373,9 +392,10 @@ async function gatherPatientContext(
       .limit(10);
 
     if (allergies) {
-      context.allergies = allergies
-        .map((a: any) => a.code?.coding?.[0]?.display || a.code?.text)
-        .filter(Boolean);
+      const typedAllergies = allergies as AllergyRecord[];
+      context.allergies = typedAllergies
+        .map((a) => a.code?.coding?.[0]?.display || a.code?.text)
+        .filter(Boolean) as string[];
     }
 
     // Get patient profile for age group
@@ -560,7 +580,7 @@ Respond with a JSON object as specified in the system prompt.`;
 /**
  * Normalize the AI response
  */
-function normalizeQAResponse(parsed: any, safetyCheck: SafetyCheck): QAResponse {
+function normalizeQAResponse(parsed: ParsedQAResponse, safetyCheck: SafetyCheck): QAResponse {
   const baseDisclaimers = [
     "This information is for educational purposes only.",
     "Please consult your healthcare provider for personalized advice.",

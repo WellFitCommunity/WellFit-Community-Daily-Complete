@@ -17,6 +17,23 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// GitHub PR status response from API
+interface PRStatusResponse {
+  number: number;
+  html_url: string;
+  state: string;
+  title: string;
+  merged: boolean;
+  mergeable: boolean | null;
+  mergeable_state: string;
+  user: { login: string };
+  head: { ref: string; sha: string };
+  base: { ref: string };
+  created_at: string;
+  updated_at: string;
+}
 
 interface CodeChange {
   filePath: string;
@@ -132,7 +149,7 @@ serve(async (req) => {
  * Create a pull request with Guardian Agent changes
  */
 async function createPullRequest(
-  supabase: any,
+  supabase: SupabaseClient,
   githubToken: string,
   owner: string,
   repo: string,
@@ -369,7 +386,7 @@ async function getPRStatus(
   owner: string,
   repo: string,
   prNumber: number
-): Promise<any> {
+): Promise<PRStatusResponse> {
   const prResponse = await fetch(
     `https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}`,
     {
@@ -391,7 +408,7 @@ async function getPRStatus(
  * Merge PR
  */
 async function mergePR(
-  supabase: any,
+  supabase: SupabaseClient,
   githubToken: string,
   owner: string,
   repo: string,
@@ -481,7 +498,7 @@ function generatePRDescription(prRequest: PRRequest): string {
  * Log PR creation to audit trail
  */
 async function logPRCreation(
-  supabase: any,
+  supabase: SupabaseClient,
   prRequest: PRRequest,
   prData: GitHubPRResponse
 ): Promise<void> {
@@ -509,7 +526,7 @@ async function logPRCreation(
  * Log PR error to audit trail
  */
 async function logPRError(
-  supabase: any,
+  supabase: SupabaseClient,
   prRequest: PRRequest,
   error: string
 ): Promise<void> {
@@ -532,7 +549,7 @@ async function logPRError(
 /**
  * Log PR merge to audit trail
  */
-async function logPRMerge(supabase: any, prNumber: number): Promise<void> {
+async function logPRMerge(supabase: SupabaseClient, prNumber: number): Promise<void> {
   await supabase.from('audit_logs').insert({
     event_type: 'GUARDIAN_PR_MERGED',
     event_category: 'SYSTEM',

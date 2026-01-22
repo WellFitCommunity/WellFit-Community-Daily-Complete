@@ -4,6 +4,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z, type ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
@@ -26,7 +27,7 @@ const AdminResponseSchema = z.object({
 });
 
 // ---------- AUTH HELPERS ----------
-async function requireUser(req: Request, admin: any) {
+async function requireUser(req: Request, admin: SupabaseClient) {
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     throw new Response(JSON.stringify({ error: "Authorization required" }), { status: 401 });
@@ -48,7 +49,7 @@ interface AdminInfo {
   isSuperAdmin: boolean;
 }
 
-async function requireAdmin(_req: Request, admin: any, userId: string): Promise<AdminInfo> {
+async function requireAdmin(_req: Request, admin: SupabaseClient, userId: string): Promise<AdminInfo> {
   // Check if user has admin role and get tenant context
   const { data, error } = await admin
     .from("profiles")

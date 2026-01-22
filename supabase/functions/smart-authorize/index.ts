@@ -19,6 +19,12 @@ import { SUPABASE_URL, SB_SECRET_KEY } from '../_shared/env.ts';
 
 const supabase = createClient(SUPABASE_URL ?? "", SB_SECRET_KEY ?? "");
 
+// Registered SMART App interface
+interface SMARTApp {
+  client_name: string;
+  logo_uri?: string;
+}
+
 // Token expiration times
 const ACCESS_TOKEN_EXPIRY = 60 * 60; // 1 hour
 const REFRESH_TOKEN_EXPIRY = 60 * 60 * 24 * 30; // 30 days
@@ -490,7 +496,7 @@ function renderConsentPage(
   state: string | null,
   codeChallenge: string | null,
   codeChallengeMethod: string | null,
-  app: any,
+  app: SMARTApp,
   corsHeaders: Record<string, string>
 ) {
   const scopes = scope.split(' ').filter(s => s);

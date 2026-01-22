@@ -19,6 +19,11 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false }
 });
 
+// Database record types
+interface ConditionRecord {
+  code?: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
@@ -182,7 +187,7 @@ async function processSingleEncounter(
     encounterStart: encounter.period_start,
     encounterEnd: encounter.period_end,
     chiefComplaint: encounter.reason_code_text,
-    diagnosisCodes: conditions?.map((c: any) => c.code) || [],
+    diagnosisCodes: (conditions as ConditionRecord[] | null)?.map((c) => c.code) || [],
     observations: observations || []
   };
 

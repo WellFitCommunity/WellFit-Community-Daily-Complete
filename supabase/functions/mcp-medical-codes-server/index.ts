@@ -476,7 +476,7 @@ serve(async (req: Request) => {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
-      let result: any;
+      let result: unknown;
       let codesReturned = 0;
 
       switch (toolName) {

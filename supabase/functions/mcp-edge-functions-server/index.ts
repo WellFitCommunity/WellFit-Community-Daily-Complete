@@ -325,10 +325,10 @@ async function logFunctionInvocation(params: {
 
 async function invokeFunction(
   functionName: string,
-  payload: Record<string, any>,
+  payload: Record<string, unknown>,
   authToken?: string,
   timeout = 30000
-): Promise<{ success: boolean; data?: any; error?: string; executionTimeMs: number }> {
+): Promise<{ success: boolean; data?: unknown; error?: string; executionTimeMs: number }> {
   const startTime = Date.now();
 
   try {
@@ -465,7 +465,7 @@ serve(async (req: Request) => {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
-      let result: any;
+      let result: unknown;
 
       switch (toolName) {
         case "invoke_function": {
@@ -527,7 +527,7 @@ serve(async (req: Request) => {
           const results: Array<{
             function_name: string;
             success: boolean;
-            data?: any;
+            data?: unknown;
             error?: string;
             executionTimeMs: number;
           }> = [];

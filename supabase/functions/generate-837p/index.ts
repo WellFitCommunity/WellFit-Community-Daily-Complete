@@ -9,6 +9,61 @@ import { createLogger } from "../_shared/auditLogger.ts";
 
 const logger = createLogger("generate-837p");
 
+// 837P Data Interfaces
+interface PatientInfo {
+  last_name?: string;
+  first_name?: string;
+  member_id?: string;
+  address_line1?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  dob?: string;
+  gender?: string;
+}
+
+interface DiagnosisRecord {
+  code: string;
+  sequence?: number;
+}
+
+interface ProcedureRecord {
+  code: string;
+  charge_amount: number | null;
+  units: number | null;
+  modifiers?: string[] | null;
+  service_date?: string;
+}
+
+interface EncounterData {
+  id: string;
+  patient?: PatientInfo;
+  procedures?: ProcedureRecord[];
+  diagnoses?: DiagnosisRecord[];
+  date_of_service?: string;
+  subscriber_relation_code?: string;
+  claim_frequency_code?: string;
+}
+
+interface ProviderData {
+  organization_name?: string;
+  submitter_id?: string;
+  contact_phone?: string;
+  taxonomy_code?: string;
+  npi?: string;
+  address_line1?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  ein?: string;
+}
+
+interface PayerData {
+  name?: string;
+  receiver_id?: string;
+  clearinghouse_id?: string;
+}
+
 /* ------------------------- CORS helpers (using shared module) ------------------------- */
 function corsHeaders(req: Request, extra: HeadersInit = {}): HeadersInit {
   const { headers } = corsFromRequest(req);
@@ -188,7 +243,7 @@ function buildSV1(proc: { code: string; charge_amount: number | null; units: num
   const units = String(proc.units || 1);
   return ["SV1", `HC:${code}${mods}`, charge, "UN", units].join("*");
 }
-function build837P(enc: any, prov: any, payer: any, stControl: number) {
+function build837P(enc: EncounterData, prov: ProviderData, payer: PayerData, stControl: number) {
   const stCtrl = padLeft(stControl, 4, "0");
   const segs: string[] = [];
 
@@ -266,12 +321,12 @@ function build837P(enc: any, prov: any, payer: any, stControl: number) {
   segs.push(["DMG", "D8", formatD8(p.dob, "19800101"), safeText((p.gender || "U").substring(0, 1))].join("*"));
 
   // Claim
-  const totalCharge = (enc.procedures ?? []).reduce((sum: number, pr: any) => sum + (Number(pr.charge_amount) || 0), 0);
+  const totalCharge = (enc.procedures ?? []).reduce((sum: number, pr: ProcedureRecord) => sum + (Number(pr.charge_amount) || 0), 0);
   segs.push(["CLM", safeText(enc.id), totalCharge.toFixed(2), "", "", "", safeText(enc.claim_frequency_code || "1")].join("*"));
   segs.push(["DTP", "434", "D8", formatD8(enc.date_of_service)].join("*"));
 
   // Diagnoses
-  const diags = (enc.diagnoses ?? []).sort((a: any, b: any) => (a.sequence ?? 999) - (b.sequence ?? 999));
+  const diags = (enc.diagnoses ?? []).sort((a: DiagnosisRecord, b: DiagnosisRecord) => (a.sequence ?? 999) - (b.sequence ?? 999));
   if (diags.length > 0) {
     segs.push(["HI", `BK:${removeICDDot(diags[0].code)}`].join("*"));
     for (let i = 1; i < diags.length; i++) segs.push(["HI", `BF:${removeICDDot(diags[i].code)}`].join("*"));
@@ -286,7 +341,7 @@ function build837P(enc: any, prov: any, payer: any, stControl: number) {
     segs.push(buildSV1({ code: "99213", charge_amount: 150, units: 1, modifiers: [] }));
     segs.push(["DTP", "472", "D8", formatD8(enc.date_of_service)].join("*"));
   } else {
-    procs.forEach((pr: any, idx: number) => {
+    procs.forEach((pr: ProcedureRecord, idx: number) => {
       segs.push(["LX", String(idx + 1)].join("*"));
       segs.push(buildSV1(pr));
       segs.push(["DTP", "472", "D8", formatD8(pr.service_date || enc.date_of_service)].join("*"));

@@ -19,6 +19,35 @@ if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials
 
 const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
+// FHIR Resource Interface (generic for bundle entries)
+interface FHIRResource {
+  resourceType: string;
+  id: string;
+  [key: string]: unknown;
+}
+
+// FHIR Bundle interface
+interface FHIRBundle {
+  resourceType: 'Bundle';
+  type: string;
+  entry?: Array<{ resource: FHIRResource }>;
+}
+
+// FHIR Claim interface
+interface FHIRClaim extends FHIRResource {
+  resourceType: 'Claim';
+  status: string;
+  type: { coding: Array<{ system: string; code: string }> };
+  use: string;
+  created: string;
+  provider: { display: string };
+  insurer: { display: string };
+  patient: { display: string };
+  total: { value: number; currency: string };
+  diagnosis: Array<{ sequence: number; diagnosisCodeableConcept: { coding: Array<{ system: string; code: string }> } }>;
+  item: Array<{ sequence: number; productOrService: { coding: Array<{ system: string; code: string }> }; unitPrice: { value: number; currency: string } }>;
+}
+
 // =====================================================
 // HL7 v2.x Parser
 // =====================================================
@@ -151,8 +180,8 @@ function parseHL7Message(rawMessage: string): ParseResult {
 // HL7 to FHIR Conversion
 // =====================================================
 
-function hl7ToFHIR(hl7Message: HL7Message): { bundle: any; resourceCount: number } {
-  const resources: any[] = [];
+function hl7ToFHIR(hl7Message: HL7Message): { bundle: FHIRBundle; resourceCount: number } {
+  const resources: FHIRResource[] = [];
   const componentSep = '^';
 
   // Extract patient from PID segment
@@ -771,7 +800,7 @@ function parseX12(x12Content: string): {
 // X12 to FHIR Conversion
 // =====================================================
 
-function x12ToFHIR(x12Content: string): { claim: any; bundle: any } {
+function x12ToFHIR(x12Content: string): { claim: FHIRClaim; bundle: FHIRBundle } {
   const parsed = parseX12(x12Content);
 
   const claim = {
@@ -958,7 +987,7 @@ serve(async (req: Request) => {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
-      let result: any;
+      let result: unknown;
 
       switch (toolName) {
         case "parse_hl7": {
