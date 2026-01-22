@@ -2,20 +2,25 @@
 // This is the backend service that monitors the system and creates security alerts
 // Guardian Eyes recording functionality is integrated here
 
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
 import { createLogger } from "../_shared/auditLogger.ts";
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const logger = createLogger("guardian-agent");
+
+// =============================================================================
+// TYPE DEFINITIONS
+// =============================================================================
 
 interface GuardianEyesSnapshot {
   timestamp: string;
   type: 'error' | 'security' | 'performance' | 'audit';
   component: string;
   action: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   severity: 'critical' | 'high' | 'medium' | 'low';
 }
 
@@ -24,8 +29,49 @@ interface SecurityAlert {
   category: string;
   title: string;
   message: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   guardian_eyes_recording?: GuardianEyesSnapshot[];
+}
+
+interface FailedLoginRecord {
+  id: string;
+  ip_address?: string;
+  created_at: string;
+}
+
+interface SystemErrorRecord {
+  id: string;
+  error_type?: string;
+  created_at: string;
+}
+
+interface PhiAccessRecord {
+  id: string;
+  user_id: string;
+  records_accessed: number;
+  accessed_at: string;
+}
+
+interface SlowQueryRecord {
+  query_id: string;
+  duration_ms: number;
+}
+
+interface GuardianRecording {
+  id: string;
+  type: 'error' | 'security' | 'performance' | 'audit';
+  component: string;
+  action: string;
+  severity: string;
+  recorded_at: string;
+}
+
+interface StoredAlert {
+  id: string;
+  category: string;
+  title: string;
+  severity: string;
+  metadata?: Record<string, unknown>;
 }
 
 serve(async (req) => {
@@ -93,7 +139,7 @@ serve(async (req) => {
   }
 })
 
-async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
+async function runMonitoringChecks(supabase: SupabaseClient): Promise<SecurityAlert[]> {
   const alerts: SecurityAlert[] = []
 
   // Batch all monitoring queries in parallel for better performance
@@ -131,7 +177,7 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
       category: 'security',
       title: 'Multiple Failed Login Attempts',
       message: `Detected ${failedLogins.length} failed login attempts in the last hour`,
-      metadata: { attempts: failedLogins.length, ips: [...new Set(failedLogins.map((l: any) => l.ip_address))] }
+      metadata: { attempts: failedLogins.length, ips: [...new Set((failedLogins as FailedLoginRecord[]).map((l) => l.ip_address))] }
     })
   }
 
@@ -144,7 +190,7 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
       message: `${dbErrors.length} database errors in the last hour`,
       metadata: {
         error_count: dbErrors.length,
-        error_types: [...new Set(dbErrors.map((e: any) => e.error_type))],
+        error_types: [...new Set((dbErrors as SystemErrorRecord[]).map((e) => e.error_type))],
         // NO PHI: only counts and types
       }
     })
@@ -152,7 +198,8 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
 
   // Check 3: PHI access patterns
   if (phiAccess) {
-    const unusualAccess = phiAccess.filter((access: any) => {
+    const typedPhiAccess = phiAccess as PhiAccessRecord[];
+    const unusualAccess = typedPhiAccess.filter((access) => {
       // Check for unusual patterns (e.g., accessing many records quickly)
       return access.records_accessed > 50
     })
@@ -165,7 +212,7 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
         message: 'Detected potentially unauthorized PHI access',
         metadata: {
           user_count: unusualAccess.length,
-          max_records_accessed: Math.max(...unusualAccess.map((a: any) => a.records_accessed)),
+          max_records_accessed: Math.max(...unusualAccess.map((a) => a.records_accessed)),
           // NO PHI: only aggregate counts
         }
       })
@@ -174,14 +221,15 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
 
   // Check 4: Performance issues
   if (slowQueries && slowQueries.length > 0) {
+    const typedSlowQueries = slowQueries as SlowQueryRecord[];
     alerts.push({
       severity: 'low',
       category: 'performance',
       title: 'Slow Database Queries',
-      message: `${slowQueries.length} queries exceeding 1000ms`,
+      message: `${typedSlowQueries.length} queries exceeding 1000ms`,
       metadata: {
-        query_count: slowQueries.length,
-        avg_duration_ms: slowQueries.reduce((sum: number, q: any) => sum + q.duration_ms, 0) / slowQueries.length,
+        query_count: typedSlowQueries.length,
+        avg_duration_ms: typedSlowQueries.reduce((sum: number, q) => sum + q.duration_ms, 0) / typedSlowQueries.length,
         // NO PHI: only performance metrics
       }
     })
@@ -208,7 +256,7 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
 }
 
 // Send email notification for critical alerts
-async function sendAlertEmail(supabase: any, alerts: SecurityAlert[]) {
+async function sendAlertEmail(_supabase: SupabaseClient, alerts: SecurityAlert[]) {
   try {
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@wellfitcommunity.org';
     const SUPABASE_URL = SUPABASE_URL;
@@ -268,7 +316,7 @@ This is an automated alert from Guardian monitoring system.
   }
 }
 
-async function recordSnapshot(supabase: any, snapshot: GuardianEyesSnapshot) {
+async function recordSnapshot(supabase: SupabaseClient, snapshot: GuardianEyesSnapshot) {
   // Store Guardian Eyes recording
   await supabase
     .from('guardian_eyes_recordings')
@@ -298,7 +346,7 @@ async function recordSnapshot(supabase: any, snapshot: GuardianEyesSnapshot) {
   }
 }
 
-async function analyzeRecordings(supabase: any) {
+async function analyzeRecordings(supabase: SupabaseClient) {
   // Get recent recordings
   const { data: recordings } = await supabase
     .from('guardian_eyes_recordings')
@@ -315,42 +363,44 @@ async function analyzeRecordings(supabase: any) {
   const anomalies: string[] = []
 
   // Group by component
-  const componentGroups = recordings.reduce((acc: any, rec: any) => {
+  const typedRecordings = recordings as GuardianRecording[];
+  const componentGroups = typedRecordings.reduce((acc: Record<string, GuardianRecording[]>, rec: GuardianRecording) => {
     if (!acc[rec.component]) acc[rec.component] = []
     acc[rec.component].push(rec)
     return acc
-  }, {})
+  }, {} as Record<string, GuardianRecording[]>)
 
   // Check for repeated errors
   for (const [component, recs] of Object.entries(componentGroups)) {
-    const errors = (recs as any[]).filter(r => r.type === 'error')
+    const errors = (recs as GuardianRecording[]).filter((r: GuardianRecording) => r.type === 'error')
     if (errors.length > 3) {
       patterns.push(`Repeated errors in ${component}: ${errors.length} occurrences`)
     }
   }
 
   // Check for security anomalies
-  const securityEvents = recordings.filter(r => r.type === 'security')
+  const securityEvents = typedRecordings.filter((r: GuardianRecording) => r.type === 'security')
   if (securityEvents.length > 0) {
     anomalies.push(`${securityEvents.length} security events detected`)
   }
 
-  return { patterns, anomalies, totalRecordings: recordings.length }
+  return { patterns, anomalies, totalRecordings: typedRecordings.length }
 }
 
-async function autoHeal(supabase: any, alertId: string) {
+async function autoHeal(supabase: SupabaseClient, alertId: string) {
   // Get the alert
-  const { data: alert } = await supabase
+  const { data: alertData } = await supabase
     .from('security_alerts')
     .select('*')
     .eq('id', alertId)
     .single()
 
-  if (!alert) {
+  if (!alertData) {
     throw new Error('Alert not found')
   }
 
-  let healingAction = null
+  const alert = alertData as StoredAlert;
+  let healingAction: string | null = null
 
   // Auto-healing based on alert type
   switch (alert.category) {
