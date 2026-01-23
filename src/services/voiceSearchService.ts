@@ -33,14 +33,21 @@ interface PatientRecord {
   acuity_level?: number;
 }
 
-interface _BedRecord {
+/** Bed record with joined profile data for search results */
+interface BedSearchRow {
   id: string;
   bed_id: string;
   room_number: string;
   unit: string;
   status: string;
-  patient_id?: string;
-  patient_name?: string;
+  current_patient_id?: string;
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  } | Array<{
+    first_name: string | null;
+    last_name: string | null;
+  }> | null;
 }
 
 interface ProviderRecord {
@@ -379,8 +386,8 @@ export async function searchBeds(
       return [];
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const results: SearchResult[] = data.map((bed: any) => {
+    const typedData = data as BedSearchRow[];
+    const results: SearchResult[] = typedData.map((bed) => {
       let matchScore = 0;
 
       if (filters.bedId) {
@@ -413,7 +420,7 @@ export async function searchBeds(
           roomNumber: bed.room_number,
           unit: bed.unit,
           status: bed.status,
-          patientId: bed.patient_id,
+          patientId: bed.current_patient_id,
           patientName,
         },
       };

@@ -8,8 +8,29 @@
  * @author WellFit Systems Architecture Team
  */
 
-import { SupabaseClient as _SupabaseClient } from '@supabase/supabase-js';
 import { auditLogger } from '../services/auditLogger';
+
+/**
+ * Internal interface for Supabase query builder methods used by pagination
+ * This is a minimal contract at the SDK boundary - actual callers pass
+ * PostgrestFilterBuilder which is compatible at runtime
+ */
+interface QueryBuilderMethods {
+  select: (columns: string, options?: { count?: 'exact'; head?: boolean }) => PromiseLike<{
+    count: number | null;
+    error: { message: string } | null;
+  }>;
+  range: (from: number, to: number) => PromiseLike<{
+    data: unknown[] | null;
+    error: { message: string } | null;
+  }>;
+}
+
+/**
+ * Supabase query builder type at SDK boundary
+ * Uses unknown externally, cast to QueryBuilderMethods internally
+ */
+type SupabaseQueryBuilder = unknown;
 
 /**
  * Standard pagination configuration for different data types
@@ -193,18 +214,17 @@ export function buildPaginationMeta(
  * const result = await applyPagination(query, { page: 2, pageSize: 50 });
  */
 export async function applyPagination<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  query: any,
+  query: SupabaseQueryBuilder,
   options: PaginationOptions,
   defaultPageSize: number = PAGINATION_LIMITS.DEFAULT
 ): Promise<PaginatedResult<T>> {
   const { offset, limit, page, pageSize } = calculatePagination(options, defaultPageSize);
 
+  // Cast to internal interface at SDK boundary
+  const typedQuery = query as QueryBuilderMethods;
+
   // Get total count (expensive, consider caching)
-  const countResult = await query.select('*', { count: 'exact', head: true }) as {
-    count: number | null;
-    error: { message: string } | null;
-  };
+  const countResult = await typedQuery.select('*', { count: 'exact', head: true });
 
   if (countResult.error) {
     throw new Error(`Failed to get total count: ${countResult.error.message}`);
@@ -213,10 +233,7 @@ export async function applyPagination<T>(
   const total = countResult.count || 0;
 
   // Get paginated data
-  const dataResult = await query.range(offset, offset + limit - 1) as {
-    data: unknown[] | null;
-    error: { message: string } | null;
-  };
+  const dataResult = await typedQuery.range(offset, offset + limit - 1);
 
   if (dataResult.error) {
     throw new Error(`Pagination query failed: ${dataResult.error.message}`);
@@ -237,15 +254,14 @@ export async function applyPagination<T>(
  * const data = await applyLimit(query, PAGINATION_LIMITS.LABS);
  */
 export async function applyLimit<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  query: any,
+  query: SupabaseQueryBuilder,
   limit: number = PAGINATION_LIMITS.DEFAULT,
   offset: number = 0
 ): Promise<T[]> {
-  const result = await query.range(offset, offset + limit - 1) as {
-    data: unknown[] | null;
-    error: { message: string } | null;
-  };
+  // Cast to internal interface at SDK boundary
+  const typedQuery = query as QueryBuilderMethods;
+
+  const result = await typedQuery.range(offset, offset + limit - 1);
 
   if (result.error) {
     throw new Error(`Query with limit failed: ${result.error.message}`);
@@ -389,8 +405,7 @@ export async function applyCursorPagination<T extends Record<string, unknown>>(
  * Client-side code should not directly access PHI data.
  */
 export async function applyPHIPagination<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  query: any,
+  query: SupabaseQueryBuilder,
   options: PaginationOptions,
   auditContext: {
     userId: string;
