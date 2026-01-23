@@ -332,16 +332,10 @@ ON CONFLICT (code) DO NOTHING;
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'audit_logs') THEN
-    INSERT INTO audit_logs (
-      action,
-      entity_type,
-      entity_id,
-      new_data,
-      performed_at
-    ) VALUES (
+    INSERT INTO audit_logs (event_type, event_category, metadata)
+    VALUES (
       'USCDI_V3_MIGRATION',
-      'database',
-      'migration',
+      'SYSTEM_EVENT',
       jsonb_build_object(
         'elements_added', ARRAY[
           'tribal_affiliation',
@@ -353,8 +347,7 @@ BEGIN
         ],
         'uscdi_version', 'v3',
         'compliance_date', '2026-01-22'
-      ),
-      NOW()
+      )
     );
   END IF;
 END $$;
