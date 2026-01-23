@@ -112,9 +112,7 @@ export function useVoiceSearch(options: VoiceSearchOptions = {}): VoiceSearchRet
     autoScrollToResult = false,
   } = options;
 
-  const supabaseClient = useSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = (supabaseClient as any)?.supabase || supabaseClient;
+  const supabase = useSupabaseClient();
   const voiceAction = useVoiceActionSafe();
   const { selectPatient } = usePatientContext();
 

@@ -127,9 +127,7 @@ export const GlobalSearchBar: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const supabaseClient = useSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = (supabaseClient as any)?.supabase || supabaseClient;
+  const supabase = useSupabaseClient();
   const { selectPatient } = usePatientContext();
 
   // Voice command integration

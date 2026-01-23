@@ -24,10 +24,10 @@ serve(async (req) => {
     // Required fields
     issuer: baseUrl,
     authorization_endpoint: `${baseUrl}/smart-authorize`,
-    token_endpoint: `${baseUrl}/smart-authorize`,
+    token_endpoint: `${baseUrl}/smart-token`,
 
     // Token introspection (optional but recommended)
-    introspection_endpoint: `${baseUrl}/smart-authorize?action=introspect`,
+    introspection_endpoint: `${baseUrl}/smart-token?action=introspect`,
 
     // PKCE support (required for public apps)
     code_challenge_methods_supported: ["S256"],
@@ -96,10 +96,10 @@ serve(async (req) => {
 
     // FHIR endpoints
     management_endpoint: `${baseUrl}/smart-apps`,  // App management UI
-    revocation_endpoint: `${baseUrl}/smart-authorize?action=revoke`,
+    revocation_endpoint: `${baseUrl}/smart-revoke`,
 
     // Registration
-    registration_endpoint: `${baseUrl}/smart-authorize?action=register`
+    registration_endpoint: `${baseUrl}/smart-register`
   };
 
   return new Response(JSON.stringify(smartConfiguration, null, 2), {

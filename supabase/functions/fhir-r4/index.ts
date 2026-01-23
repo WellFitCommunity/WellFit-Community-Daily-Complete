@@ -253,10 +253,21 @@ async function validateAccessToken(token: string): Promise<TokenValidation> {
     return { valid: false };
   }
 
+  // Handle scopes - DB stores as TEXT[] (array), but handle string fallback defensively
+  let parsedScopes: string[];
+  if (Array.isArray(tokenData.scopes)) {
+    parsedScopes = tokenData.scopes;
+  } else if (typeof tokenData.scopes === 'string') {
+    // Defensive fallback: if somehow stored as space-delimited string
+    parsedScopes = tokenData.scopes.split(' ').filter(Boolean);
+  } else {
+    parsedScopes = [];
+  }
+
   return {
     valid: true,
     patientId: tokenData.patient_id,
-    scopes: tokenData.scopes?.split(' ') || [],
+    scopes: parsedScopes,
     appId: tokenData.app_id
   };
 }
@@ -325,7 +336,7 @@ function getCapabilityStatement(baseUrl: string) {
         extension: [{
           url: "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
           extension: [
-            { url: "token", valueUri: `${baseUrl}/smart-authorize` },
+            { url: "token", valueUri: `${baseUrl}/smart-token` },
             { url: "authorize", valueUri: `${baseUrl}/smart-authorize` }
           ]
         }]

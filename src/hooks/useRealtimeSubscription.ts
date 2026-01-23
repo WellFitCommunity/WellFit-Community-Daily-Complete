@@ -45,6 +45,17 @@ import { errorReporter } from '../services/errorReporter';
 // TYPES
 // ============================================================================
 
+/**
+ * Supabase Realtime postgres_changes filter configuration
+ * Used at SDK boundary where types may not perfectly match runtime API
+ */
+interface PostgresChangesFilter {
+  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  schema: string;
+  table: string;
+  filter?: string;
+}
+
 export interface RealtimeSubscriptionOptions<T = unknown> {
   /** Table to subscribe to */
   table: string;
@@ -384,15 +395,25 @@ export function useRealtimeSubscription<T = unknown>(
         // Build subscription using refs to avoid dependency issues
         const currentEvent = eventRef.current;
         const currentFilter = filterRef.current;
-        // SDK boundary - Supabase types don't perfectly match runtime API
-         
-        const subscription = channel.on('postgres_changes', {
+
+        // SDK boundary - Supabase realtime types don't perfectly match runtime API
+        // Build filter config with proper typing, then cast at SDK boundary
+        const filterConfig: PostgresChangesFilter = {
           event: currentEvent === '*' ? '*' : (currentEvent as 'INSERT' | 'UPDATE' | 'DELETE'),
           schema: schema,
           table: table,
           filter: currentFilter,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any, (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+        };
+
+        // Cast at SDK initialization boundary per CLAUDE.md Type Cast Boundaries
+        type RealtimeCallback = (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
+        const onPostgresChanges = channel.on.bind(channel) as (
+          type: string,
+          filter: PostgresChangesFilter,
+          callback: RealtimeCallback
+        ) => typeof channel;
+
+        const subscription = onPostgresChanges('postgres_changes', filterConfig, (payload) => {
           if (isCleanedUp || !mountedRef.current) return;
 
           auditLogger.debug('REALTIME_EVENT_RECEIVED', {

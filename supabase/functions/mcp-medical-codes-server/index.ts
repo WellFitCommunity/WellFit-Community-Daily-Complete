@@ -13,6 +13,44 @@ import { createLogger } from "../_shared/auditLogger.ts";
 
 const logger = createLogger("mcp-medical-codes-server");
 
+// =====================================================
+// Type Definitions for Medical Codes
+// =====================================================
+
+interface CPTCode {
+  code: string;
+  short_description?: string;
+  long_description?: string;
+  category?: string;
+  work_rvu?: number;
+  facility_rvu?: number;
+  description?: string; // alternate table
+}
+
+interface ICD10Code {
+  code: string;
+  description: string;
+  chapter?: string;
+  category?: string;
+  is_billable?: boolean;
+}
+
+interface HCPCSCode {
+  code: string;
+  short_description?: string;
+  long_description?: string;
+  level?: string;
+  pricing_indicator?: string;
+}
+
+type MedicalCode = CPTCode | ICD10Code | HCPCSCode;
+
+interface CodeSuggestions {
+  cpt?: CPTCode[];
+  icd10?: ICD10Code[];
+  hcpcs?: HCPCSCode[];
+}
+
 // Environment
 const SERVICE_KEY = SB_SECRET_KEY;
 
@@ -270,7 +308,7 @@ async function logCodeLookup(params: {
 // Search Functions
 // =====================================================
 
-async function searchCPT(query: string, category?: string, limit = 20) {
+async function searchCPT(query: string, category?: string, limit = 20): Promise<CPTCode[]> {
   let queryBuilder = sb
     .from('code_cpt')
     .select('code, short_description, long_description, category, work_rvu, facility_rvu')
@@ -298,7 +336,7 @@ async function searchCPT(query: string, category?: string, limit = 20) {
   return data || [];
 }
 
-async function searchICD10(query: string, chapter?: string, limit = 20) {
+async function searchICD10(query: string, chapter?: string, limit = 20): Promise<ICD10Code[]> {
   let queryBuilder = sb
     .from('code_icd10')
     .select('code, description, chapter, category, is_billable')
@@ -326,7 +364,7 @@ async function searchICD10(query: string, chapter?: string, limit = 20) {
   return data || [];
 }
 
-async function searchHCPCS(query: string, level?: string, limit = 20) {
+async function searchHCPCS(query: string, level?: string, limit = 20): Promise<HCPCSCode[]> {
   let queryBuilder = sb
     .from('code_hcpcs')
     .select('code, short_description, long_description, level, pricing_indicator')
@@ -574,7 +612,7 @@ serve(async (req: Request) => {
         case "suggest_codes": {
           const { description, code_types = ["cpt", "icd10"], limit = 5 } = toolArgs;
 
-          const suggestions: Record<string, any[]> = {};
+          const suggestions: CodeSuggestions = {};
 
           if (code_types.includes("cpt")) {
             suggestions.cpt = await searchCPT(description, undefined, limit);
