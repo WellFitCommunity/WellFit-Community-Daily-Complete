@@ -9,18 +9,16 @@
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-
-// CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-metrics-key',
-};
+import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return handleOptions(req);
   }
+
+  // Get CORS headers for this request
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     // Verify authentication
@@ -93,6 +91,7 @@ serve(async (req: Request) => {
       },
     });
   } catch (err) {
+    const { headers: corsHeaders } = corsFromRequest(req);
     console.error('Prometheus metrics error:', err);
     return new Response(
       JSON.stringify({
