@@ -667,21 +667,30 @@ export interface LearningSignal {
   };
 }
 
+interface MedicalCode {
+  code: string;
+  description?: string;
+}
+
+interface DocumentationWithCodes {
+  medicalCodes?: MedicalCode[];
+}
+
 /**
  * Analyze provider's interaction to extract learning signals
  * This would be called after each interaction to update preferences
  */
 export function extractLearningSignals(
-  originalSuggestion: any,
-  finalDocumentation: any,
+  originalSuggestion: DocumentationWithCodes,
+  finalDocumentation: DocumentationWithCodes,
   providerFeedback?: string
 ): LearningSignal {
   const signals: LearningSignal = {};
 
   // Compare suggested codes with final codes
   if (originalSuggestion.medicalCodes && finalDocumentation.medicalCodes) {
-    const suggestedCodes = new Set(originalSuggestion.medicalCodes.map((c: any) => c.code as string));
-    const finalCodes = new Set(finalDocumentation.medicalCodes.map((c: any) => c.code as string));
+    const suggestedCodes = new Set(originalSuggestion.medicalCodes.map((c) => c.code));
+    const finalCodes = new Set(finalDocumentation.medicalCodes.map((c) => c.code));
 
     signals.accepted_codes = Array.from(finalCodes).filter(code => suggestedCodes.has(code)) as string[];
     signals.rejected_codes = Array.from(suggestedCodes).filter(code => !finalCodes.has(code)) as string[];

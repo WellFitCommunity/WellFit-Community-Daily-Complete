@@ -243,7 +243,9 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (pinErr) {
-      if ((pinErr as any).code === "PGRST116") {
+      // PGRST116 = "The result contains 0 rows" (no PIN configured)
+      const errCode = (pinErr as { code?: string }).code;
+      if (errCode === "PGRST116") {
         return new Response(JSON.stringify({ error: "PIN not set" }), { status: 400, headers });
       }
       throw pinErr;

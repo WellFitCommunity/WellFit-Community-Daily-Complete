@@ -30,6 +30,13 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 const SESSION_TTL_MINUTES = 30; // Pending session valid for 30 minutes (allows time for TOTP setup)
 
+/** Lockout check result from RPC */
+interface LockoutCheckResult {
+  is_locked: boolean;
+  failed_count: number;
+  unlock_at: string | null;
+}
+
 /** Prefer robust, side-effect-free env reads */
 const getEnv = (...keys: string[]): string => {
   for (const k of keys) {
@@ -182,7 +189,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const failedCount = (lockoutData as any)?.[0]?.failed_count ?? 0;
+    const lockoutRecord = lockoutData as LockoutCheckResult[] | null;
+    const failedCount = lockoutRecord?.[0]?.failed_count ?? 0;
 
     // ═══════════════════════════════════════════════════════════════
     // PASSWORD VERIFICATION - Try standalone hash first, then Supabase Auth

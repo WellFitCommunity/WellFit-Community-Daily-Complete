@@ -67,8 +67,8 @@ serve(async (req) => {
     // Parse body
     let org_name: unknown;
     try {
-      const body = await req.json();
-      org_name = (body as any)?.org_name;
+      const body = await req.json() as Record<string, unknown>;
+      org_name = body?.org_name;
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers });
     }

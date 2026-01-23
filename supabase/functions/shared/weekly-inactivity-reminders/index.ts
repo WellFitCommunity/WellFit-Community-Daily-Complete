@@ -102,7 +102,7 @@ class InactivityReminderService {
         body: JSON.stringify({ ...message, to: token }),
       });
 
-      const result = await res.json().catch(() => ({} as any));
+      const result = await res.json().catch(() => ({} as Record<string, unknown>));
       if (!res.ok || (result && result.failure === 1)) {
         this.logger.warn("FCM send failed", {
           token: token.slice(0, 10) + "...",

@@ -18,7 +18,7 @@
 export type AuditLogLevel = 'debug' | 'info' | 'warn' | 'error' | 'phi' | 'security';
 
 export interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
   userId?: string;
   patientId?: string;
   requestId?: string;

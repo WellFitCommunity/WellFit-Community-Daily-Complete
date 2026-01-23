@@ -13,6 +13,7 @@ const logger = createLogger("register");
 
 // Allowed country codes for phone numbers
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
+type AllowedCountry = typeof ALLOWED_COUNTRIES[number];
 
 // ---------- ENV ----------
 const SB_URL = SUPABASE_URL || Deno.env.get("SB_URL") || "";
@@ -30,7 +31,8 @@ const RegisterBase = z.object({
 
         // Check allowed countries
         const phoneNumber = parsePhoneNumber(phone, 'US');
-        return ALLOWED_COUNTRIES.includes(phoneNumber.country as any);
+        const country = phoneNumber.country as AllowedCountry | undefined;
+        return !!country && ALLOWED_COUNTRIES.includes(country);
       } catch {
         return false;
       }

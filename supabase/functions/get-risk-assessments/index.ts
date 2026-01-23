@@ -5,6 +5,14 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
+// Profile with joined role data
+interface ProfileWithRole {
+  tenant_id: string | null;
+  is_admin: boolean;
+  role_id: string | null;
+  roles: { name: string } | null;
+}
+
 // Safely extract patient_id from GET ?patient_id=… or POST { patient_id: "…" }
 async function getPatientId(req: Request): Promise<string | null> {
   try {
@@ -86,7 +94,8 @@ serve(async (req: Request) => {
     }
 
     // Check if user has clinical/admin role (required for viewing risk assessments)
-    const roleName = (profile.roles as any)?.name;
+    const typedProfile = profile as ProfileWithRole;
+    const roleName = typedProfile.roles?.name;
     const allowedRoles = ["admin", "super_admin", "nurse", "physician", "doctor", "case_manager", "nurse_practitioner"];
     const hasAccess = profile.is_admin || allowedRoles.includes(roleName);
 

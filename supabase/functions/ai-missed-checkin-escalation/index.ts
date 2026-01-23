@@ -73,6 +73,17 @@ interface EscalationResult {
   protectiveFactors: string[];
 }
 
+// Type for caregiver relationship with joined profile data
+interface CaregiverRelationshipWithProfile {
+  caregiver_id: string;
+  relationship: string;
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+  } | null;
+}
+
 // PHI Redaction for logging
 const redact = (s: string): string =>
   s
@@ -321,11 +332,11 @@ async function gatherEscalationContext(
       .eq("is_active", true);
 
     if (caregivers) {
-      context.caregivers = caregivers.map((c) => ({
+      context.caregivers = (caregivers as CaregiverRelationshipWithProfile[]).map((c) => ({
         id: c.caregiver_id,
-        name: `${(c.profiles as any)?.first_name || ""} ${(c.profiles as any)?.last_name || ""}`.trim(),
+        name: `${c.profiles?.first_name || ""} ${c.profiles?.last_name || ""}`.trim(),
         relationship: c.relationship,
-        phone: (c.profiles as any)?.phone,
+        phone: c.profiles?.phone ?? undefined,
       }));
     }
 

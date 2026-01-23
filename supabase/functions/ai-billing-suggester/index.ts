@@ -24,6 +24,13 @@ interface ConditionRecord {
   code?: string;
 }
 
+interface ProfileWithRole {
+  tenant_id: string | null;
+  is_admin: boolean;
+  role_id: string | null;
+  roles: { name: string } | null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
@@ -70,7 +77,8 @@ serve(async (req) => {
     }
 
     // Check if user has clinical/admin role (billing suggester requires elevated access)
-    const roleName = (profile.roles as any)?.name;
+    const typedProfile = profile as ProfileWithRole;
+    const roleName = typedProfile.roles?.name;
     const allowedRoles = ['admin', 'super_admin', 'physician', 'nurse', 'billing_specialist', 'case_manager'];
     const hasAccess = profile.is_admin || allowedRoles.includes(roleName);
 

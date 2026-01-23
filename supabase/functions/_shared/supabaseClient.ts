@@ -192,8 +192,8 @@ export async function withQueryMetrics<T>(
   queryName: string,
   queryFn: () => Promise<T>,
   logger?: {
-    warn?: (message: string, metadata: Record<string, any>) => void | Promise<void>;
-    error?: (message: string, error: any, metadata: Record<string, any>) => void | Promise<void>;
+    warn?: (message: string, metadata: Record<string, unknown>) => void | Promise<void>;
+    error?: (message: string, error: unknown, metadata: Record<string, unknown>) => void | Promise<void>;
   }
 ): Promise<T> {
   const startTime = performance.now();
@@ -273,9 +273,9 @@ export async function batchQueries<T extends readonly unknown[] | []>(
  * ]);
  */
 export async function sequentialQueries<T extends readonly unknown[] | []>(
-  queries: readonly ((prev?: any) => Promise<T[number]>)[]
+  queries: readonly ((prev?: unknown) => Promise<T[number]>)[]
 ): Promise<T> {
-  const results: any[] = [];
+  const results: unknown[] = [];
 
   for (const query of queries) {
     const result = await query(results[results.length - 1]);

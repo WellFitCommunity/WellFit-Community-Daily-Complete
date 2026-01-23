@@ -6,6 +6,7 @@ import { createLogger } from "../_shared/auditLogger.ts";
 
 // Allowed country codes for phone numbers
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
+type AllowedCountry = typeof ALLOWED_COUNTRIES[number];
 
 /** Prefer robust, side-effect-free env reads */
 const getEnv = (...keys: string[]): string => {
@@ -30,7 +31,8 @@ function validatePhone(phone: string): { valid: boolean; error?: string } {
     }
 
     const phoneNumber = parsePhoneNumber(phone, 'US');
-    if (!ALLOWED_COUNTRIES.includes(phoneNumber.country as any)) {
+    const country = phoneNumber.country as AllowedCountry | undefined;
+    if (!country || !ALLOWED_COUNTRIES.includes(country)) {
       return { valid: false, error: `Phone numbers from ${phoneNumber.country} are not currently supported` };
     }
 
@@ -86,7 +88,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const body = await req.json().catch(() => ({} as any));
+    const body = await req.json().catch(() => ({} as Record<string, unknown>));
     const phone = body?.phone as string | undefined;
     const channel = (body?.channel as "sms" | "call" | undefined) ?? "sms";
 

@@ -1,11 +1,18 @@
 // supabase/functions/_shared/env.ts
 // Safe env access for Deno Edge Functions (no circular imports).
 
+// Deno runtime interface for type safety
+interface DenoRuntime {
+  env: {
+    get: (name: string) => string | undefined;
+  };
+}
+
 const envGet = (name: string): string => {
   try {
-    // deno on Edge
-    // @ts-ignore
-    return (globalThis as any)?.Deno?.env?.get?.(name) ?? "";
+    // deno on Edge - access Deno global at runtime boundary
+    const denoGlobal = (globalThis as unknown as { Deno?: DenoRuntime }).Deno;
+    return denoGlobal?.env?.get?.(name) ?? "";
   } catch {
     return "";
   }

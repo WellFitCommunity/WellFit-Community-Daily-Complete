@@ -103,8 +103,8 @@ async function insertBatch(batch: Meal[], batchNum: number): Promise<void> {
       }
       console.log(`✅ Batch ${batchNum} (${batch.length} rows)`);
       return;
-    } catch (err: any) {
-      const msg = err?.message || String(err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       const isLast = attempt === MAX_RETRIES;
       console.warn(
         `⚠️  Batch ${batchNum} attempt ${attempt}/${MAX_RETRIES} failed: ${msg}`
@@ -125,7 +125,7 @@ const allMeals: Meal[] = transform([
   ...recipesWeek3,
   ...recipesWeek4,
   ...recipesBonus,
-] as any[]);
+] as Recipe[]);
 
   // Optional: de-dup by name within the incoming set (prevents same-name rows in single run)
   const seen = new Set<string>();
