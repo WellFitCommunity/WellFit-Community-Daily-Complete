@@ -7,6 +7,8 @@
  * - Allergy checking
  * - Drug interaction alerts
  * - Medication reconciliation
+ *
+ * ATLUS Unity: Falls back to PatientContext when URL param is missing
  */
 
 import React from 'react';
@@ -14,11 +16,15 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pill, AlertTriangle } from 'lucide-react';
 import { MedicationRequestManager } from '../components/patient/MedicationRequestManager';
 import AdminHeader from '../components/admin/AdminHeader';
+import { usePatientContext } from '../contexts/PatientContext';
 
 const MedicationManagementPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const patientId = searchParams.get('patientId');
+  const { selectedPatient } = usePatientContext();
+
+  // ATLUS Unity: Fall back to PatientContext when URL param is missing
+  const patientId = searchParams.get('patientId') || selectedPatient?.id || null;
 
   if (!patientId) {
     return (

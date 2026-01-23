@@ -10,14 +10,22 @@
  * HIPAA COMPLIANCE (January 2026):
  * - localStorage stores ONLY patient IDs (no PHI)
  * - Patient data (names, DOB, MRN) kept in memory only
- * - On page refresh, IDs are restored but data must be re-fetched
+ * - On page refresh, IDs are restored and data is auto-rehydrated
  * - This prevents PHI exposure via browser developer tools
+ *
+ * AUTO-REHYDRATION (January 2026):
+ * - On page refresh, pendingPatientId is detected
+ * - Patient data is automatically fetched from profiles table
+ * - selectPatient() is called to restore full patient context
+ * - No manual consumer needed - context handles it internally
  *
  * Copyright 2025-2026 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from '../services/auditLogger';
 
 // localStorage keys - ONLY store IDs, never PHI
 const STORAGE_KEY = 'wf_selected_patient_id'; // Changed: only ID
@@ -152,6 +160,84 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     }
   }, [user]);
+
+  // Track if rehydration is in progress to prevent duplicate fetches
+  const rehydrationInProgress = useRef(false);
+
+  // AUTO-REHYDRATION: Fetch patient data when pendingPatientId exists after page refresh
+  useEffect(() => {
+    // Only rehydrate if:
+    // 1. User is logged in
+    // 2. There's a pending patient ID
+    // 3. No patient is currently selected (not already loaded)
+    // 4. Rehydration isn't already in progress
+    if (!user || !pendingPatientId || selectedPatient || rehydrationInProgress.current) {
+      return;
+    }
+
+    const rehydratePatient = async () => {
+      rehydrationInProgress.current = true;
+
+      try {
+        auditLogger.debug('PATIENT_CONTEXT_REHYDRATING', {
+          pendingPatientId,
+          action: 'auto_rehydrate_after_refresh'
+        });
+
+        // Fetch patient data from profiles table
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name, dob')
+          .eq('user_id', pendingPatientId)
+          .single();
+
+        if (error || !data) {
+          // Patient not found - clear pending state
+          auditLogger.warn('PATIENT_CONTEXT_REHYDRATION_FAILED', {
+            pendingPatientId,
+            reason: error?.message || 'Patient not found'
+          });
+          setPendingPatientId(null);
+          savePatientId(null);
+          return;
+        }
+
+        // Build SelectedPatient from fetched data
+        const rehydratedPatient: SelectedPatient = {
+          id: data.user_id,
+          firstName: data.first_name || '',
+          lastName: data.last_name || '',
+          dateOfBirth: data.dob || undefined,
+        };
+
+        // Set patient in memory (this also clears pendingPatientId)
+        setSelectedPatient(rehydratedPatient);
+        setPendingPatientId(null);
+
+        // Update recent history in memory
+        setRecentPatients(prev => {
+          const filtered = prev.filter(p => p.id !== rehydratedPatient.id);
+          return [rehydratedPatient, ...filtered].slice(0, 10);
+        });
+
+        auditLogger.info('PATIENT_CONTEXT_REHYDRATED', {
+          patientId: data.user_id,
+          action: 'refresh_recovery_complete'
+        });
+
+      } catch (err: unknown) {
+        auditLogger.error('PATIENT_CONTEXT_REHYDRATION_ERROR',
+          err instanceof Error ? err : new Error(String(err)),
+          { pendingPatientId }
+        );
+        setPendingPatientId(null);
+      } finally {
+        rehydrationInProgress.current = false;
+      }
+    };
+
+    rehydratePatient();
+  }, [user, pendingPatientId, selectedPatient]);
 
   // Select a patient
   const selectPatient = useCallback((patient: SelectedPatient) => {
