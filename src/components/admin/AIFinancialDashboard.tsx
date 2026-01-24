@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient, useAuth } from '../../contexts/AuthContext';
-import { mcpOptimizer } from '../../services/mcp/mcpCostOptimizer';
+import { mcpOptimizer } from '../../services/mcp/mcp-cost-optimizer';
 import { batchInference } from '../../services/ai/batchInference';
 import type { QueueStats } from '../../services/ai/batchInference';
 import { ccmEligibilityScorer } from '../../services/ai/ccmEligibilityScorer';

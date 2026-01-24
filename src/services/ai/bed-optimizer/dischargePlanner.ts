@@ -1,7 +1,7 @@
 // Bed Optimizer - Discharge Planner
 // AI-powered discharge recommendations
 
-import type { MCPCostOptimizer } from '../../mcp/mcpCostOptimizer';
+import type { MCPCostOptimizer } from '../../mcp/mcp-cost-optimizer';
 import type { BedBoardEntry } from '../../../types/bed';
 import type { DischargeRecommendation, LOSBenchmark } from './types';
 import { parseJSONArray } from './utils';

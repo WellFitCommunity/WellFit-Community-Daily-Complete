@@ -47,7 +47,7 @@ export {
 } from './mcpClient';
 
 // Cost optimizer
-export { MCPCostOptimizer, mcpOptimizer } from './mcpCostOptimizer';
+export { MCPCostOptimizer, mcpOptimizer } from './mcp-cost-optimizer';
 
 // =====================================================
 // POSTGRESQL MCP (Database Queries)

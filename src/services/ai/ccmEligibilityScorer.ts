@@ -12,8 +12,8 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
-import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
-import type { MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
+import { mcpOptimizer } from '../mcp/mcp-cost-optimizer';
+import type { MCPCostOptimizer } from '../mcp/mcp-cost-optimizer';
 import { FeeScheduleService } from '../feeScheduleService';
 import { createAccuracyTrackingService, type AccuracyTrackingService } from './accuracyTrackingService';
 

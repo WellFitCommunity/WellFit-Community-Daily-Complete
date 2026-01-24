@@ -29,7 +29,7 @@ vi.mock('../../../lib/supabaseClient', () => ({
 }));
 
 const mockOptimizerCall = vi.fn();
-vi.mock('../../mcp/mcpCostOptimizer', () => ({
+vi.mock('../../mcp/mcp-cost-optimizer', () => ({
   mcpOptimizer: {
     call: (params: Record<string, unknown>) => mockOptimizerCall(params),
   },

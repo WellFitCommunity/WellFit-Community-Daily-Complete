@@ -25,7 +25,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
-import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
+import { mcpOptimizer } from '../mcp/mcp-cost-optimizer';
 
 // ============================================================================
 // TYPES & INTERFACES

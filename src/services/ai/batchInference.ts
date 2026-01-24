@@ -15,7 +15,7 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
-import { mcpOptimizer, MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
+import { mcpOptimizer, MCPCostOptimizer } from '../mcp/mcp-cost-optimizer';
 import { ServiceResult, success, failure } from '../_base';
 import { auditLogger } from '../auditLogger';
 

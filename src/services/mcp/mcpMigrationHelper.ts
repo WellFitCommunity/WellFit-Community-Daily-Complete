@@ -4,7 +4,7 @@
 // Provides backward compatibility while using MCP under the hood
 // =====================================================
 
-import { mcpOptimizer } from './mcpCostOptimizer';
+import { mcpOptimizer } from './mcp-cost-optimizer';
 
 /**
  * Drop-in replacement for existing claudeService

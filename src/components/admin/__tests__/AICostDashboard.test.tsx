@@ -16,7 +16,7 @@ vi.mock('../../../contexts/AuthContext', () => ({
   }),
 }));
 
-vi.mock('../../../services/mcp/mcpCostOptimizer', () => ({
+vi.mock('../../../services/mcp/mcp-cost-optimizer', () => ({
   mcpOptimizer: {
     getMetrics: vi.fn().mockReturnValue({
       totalCalls: 150,

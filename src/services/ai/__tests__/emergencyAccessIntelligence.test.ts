@@ -36,7 +36,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
   },
 }));
 
-vi.mock('../../mcp/mcpCostOptimizer', () => ({
+vi.mock('../../mcp/mcp-cost-optimizer', () => ({
   mcpOptimizer: {
     calculateCost: vi.fn().mockReturnValue(0.002),
   },

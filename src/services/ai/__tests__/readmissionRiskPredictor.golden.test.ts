@@ -47,7 +47,7 @@ vi.mock('../../../lib/supabaseClient', () => ({
 
 // Mock mcpOptimizer with deterministic AI response
 const mockMcpCall = vi.fn();
-vi.mock('../../mcp/mcpCostOptimizer', () => ({
+vi.mock('../../mcp/mcp-cost-optimizer', () => ({
   mcpOptimizer: {
     call: (...args: unknown[]) => mockMcpCall(...args),
   },

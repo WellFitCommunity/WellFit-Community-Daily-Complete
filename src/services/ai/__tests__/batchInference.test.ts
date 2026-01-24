@@ -20,7 +20,7 @@ vi.mock('../../../lib/supabaseClient', () => ({
 }));
 
 // Mock MCP optimizer
-vi.mock('../../mcp/mcpCostOptimizer', () => ({
+vi.mock('../../mcp/mcp-cost-optimizer', () => ({
   mcpOptimizer: {
     call: vi.fn().mockResolvedValue({
       response: JSON.stringify([

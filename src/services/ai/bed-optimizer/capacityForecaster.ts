@@ -1,7 +1,7 @@
 // Bed Optimizer - Capacity Forecaster
 // AI-powered capacity forecasting for shifts
 
-import type { MCPCostOptimizer } from '../../mcp/mcpCostOptimizer';
+import type { MCPCostOptimizer } from '../../mcp/mcp-cost-optimizer';
 import type { AccuracyTrackingService } from '../accuracyTrackingService';
 import type { BedBoardEntry, UnitCapacity } from '../../../types/bed';
 import type { CapacityForecast, HistoricalCensusSnapshot, ScheduledArrival } from './types';

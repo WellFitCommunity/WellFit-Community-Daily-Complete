@@ -2,8 +2,8 @@
 // AI-powered bed capacity optimization for hospital operations
 
 import { supabase } from '../../../lib/supabaseClient';
-import { mcpOptimizer } from '../../mcp/mcpCostOptimizer';
-import type { MCPCostOptimizer } from '../../mcp/mcpCostOptimizer';
+import { mcpOptimizer } from '../../mcp/mcp-cost-optimizer';
+import type { MCPCostOptimizer } from '../../mcp/mcp-cost-optimizer';
 import { createAccuracyTrackingService, type AccuracyTrackingService } from '../accuracyTrackingService';
 import { ServiceResult, success, failure } from '../../_base';
 

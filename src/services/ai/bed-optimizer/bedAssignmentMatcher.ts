@@ -1,7 +1,7 @@
 // Bed Optimizer - Bed Assignment Matcher
 // AI-powered optimal bed matching for incoming patients
 
-import type { MCPCostOptimizer } from '../../mcp/mcpCostOptimizer';
+import type { MCPCostOptimizer } from '../../mcp/mcp-cost-optimizer';
 import type { AccuracyTrackingService } from '../accuracyTrackingService';
 import { ServiceResult, success, failure } from '../../_base';
 import type { IncomingPatient, BedAssignmentRecommendation, AvailableBedWithUnit } from './types';

@@ -12,8 +12,8 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
-import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
-import type { MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
+import { mcpOptimizer } from '../mcp/mcp-cost-optimizer';
+import type { MCPCostOptimizer } from '../mcp/mcp-cost-optimizer';
 import { ReadmissionTrackingService as _ReadmissionTrackingService } from '../readmissionTrackingService';
 import { featureExtractor } from './readmissionFeatureExtractor';
 import type { ReadmissionRiskFeatures } from '../../types/readmissionRiskFeatures';
