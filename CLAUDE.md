@@ -10,7 +10,7 @@
 | 2 | **No `any` type** - use `unknown` + type guards (see [TypeScript Standards](#typescript-standards)) | `data: any`, `catch (err: any)` |
 | 3 | **No `console.log`** - use `auditLogger` for all logging | Any console.* in production |
 | 4 | **Run `npm run typecheck`** before considering work done | Skipping type verification |
-| 5 | **All 7,072 tests must pass** - no skips, no deletions | `.skip()`, `.only()`, deleting tests |
+| 5 | **All tests must pass** - no skips, no deletions | `.skip()`, `.only()`, deleting tests |
 | 6 | **No workarounds** - if blocked, ask Maria | "temporary fix", "for now", "hack" |
 | 7 | **Vite environment** - `import.meta.env.VITE_*` only | `process.env.REACT_APP_*` |
 | 8 | **No PHI in browser** - patient IDs only, data stays server-side | Names, SSN, DOB in frontend |
@@ -49,14 +49,14 @@ npm run typecheck && npm run lint && npm test
 ```
 ✅ typecheck: 0 errors
 ✅ lint: 0 errors, 0 warnings
-✅ tests: 7,072 passed, 0 failed
+✅ tests: 7,109 passed, 0 failed
 ```
 
 Or if failing:
 ```
 ❌ typecheck: 3 errors (list them)
 ❌ lint: 1 error in src/components/Foo.tsx:42
-❌ tests: 7,070 passed, 2 failed (list failed test names)
+❌ tests: X passed, Y failed (list failed test names)
 ```
 
 **Rules:**
@@ -316,7 +316,7 @@ const result = processData(input as unknown as ExpectedType); // NO
 ### Test Baseline
 | Metric | Current |
 |--------|---------|
-| Total Tests | 7,072 |
+| Total Tests | 7,109 |
 | Test Suites | 287 |
 | Pass Rate Required | 100% |
 
@@ -1039,4 +1039,4 @@ VITE_FEATURE_NEURO_SUITE=true
 - **UI**: Envision Atlus design system migration in progress
 - **Build**: Vite + React 19 (migrated December 2025)
 - **CSS**: Tailwind CSS 4.1.18 (migrated December 2025)
-- **Tests**: 7,072 tests across 287 suites (100% pass rate, 0 skipped)
+- **Tests**: 7,109 tests across 288 suites (100% pass rate, 0 skipped)
