@@ -49,7 +49,7 @@ vi.mock('../sdohBillingService', () => ({
 }));
 
 // Import after mocks
-import { BillingDecisionTreeService } from '../billingDecisionTreeService';
+import { BillingDecisionTreeService } from '../billing-decision-tree';
 import { supabase } from '../../lib/supabaseClient';
 import type { DecisionTreeInput } from '../../types/billingDecisionTree';
 

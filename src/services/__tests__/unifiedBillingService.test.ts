@@ -47,7 +47,7 @@ vi.mock('../sdohBillingService', () => ({
   },
 }));
 
-vi.mock('../billingDecisionTreeService', () => ({
+vi.mock('../billing-decision-tree', () => ({
   BillingDecisionTreeService: {
     processEncounter: vi.fn(),
   },
@@ -56,7 +56,7 @@ vi.mock('../billingDecisionTreeService', () => ({
 import { supabase } from '../../lib/supabaseClient';
 import { BillingService } from '../billingService';
 import { SDOHBillingService } from '../sdohBillingService';
-import { BillingDecisionTreeService } from '../billingDecisionTreeService';
+import { BillingDecisionTreeService } from '../billing-decision-tree';
 
 // ============================================================================
 // Test Data

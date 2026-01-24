@@ -16,7 +16,7 @@ import { logPhiAccess } from './phiAccessLogger';
 import { auditLogger } from './auditLogger';
 import { BillingService } from './billingService';
 import { SDOHBillingService } from './sdohBillingService';
-import { BillingDecisionTreeService } from './billingDecisionTreeService';
+import { BillingDecisionTreeService } from './billing-decision-tree';
 import type {
   Claim,
   ClaimLine,
