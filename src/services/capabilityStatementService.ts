@@ -250,8 +250,6 @@ function generateCapabilityStatement(
   config: CapabilityStatementConfig
 ): ServiceResult<FhirCapabilityStatement> {
   try {
-    const now = new Date().toISOString();
-
     const capabilityStatement: FhirCapabilityStatement = {
       resourceType: 'CapabilityStatement',
       id: 'wellfit-fhir-server',
@@ -337,8 +335,8 @@ function generateRestDefinition(config: CapabilityStatementConfig): RestDefiniti
   };
 
   // Add SMART capabilities
-  if (config.smartEnabled) {
-    rest.security!.service.push({
+  if (config.smartEnabled && rest.security) {
+    rest.security.service.push({
       coding: [
         {
           system: 'http://terminology.hl7.org/CodeSystem/restful-security-service',
@@ -347,22 +345,22 @@ function generateRestDefinition(config: CapabilityStatementConfig): RestDefiniti
         },
       ],
     });
-    rest.security!.description += ' Supports SMART on FHIR authorization including launch sequences and standalone apps.';
+    rest.security.description += ' Supports SMART on FHIR authorization including launch sequences and standalone apps.';
   }
 
   // Add Bulk Export operation
-  if (config.bulkExportEnabled) {
-    rest.operation!.push({
+  if (config.bulkExportEnabled && rest.operation) {
+    rest.operation.push({
       name: 'export',
       definition: 'http://hl7.org/fhir/uv/bulkdata/OperationDefinition/export',
       documentation: 'Bulk Data Export (system-level). Supports async pattern with polling.',
     });
-    rest.operation!.push({
+    rest.operation.push({
       name: 'export',
       definition: 'http://hl7.org/fhir/uv/bulkdata/OperationDefinition/patient-export',
       documentation: 'Patient-level Bulk Data Export.',
     });
-    rest.operation!.push({
+    rest.operation.push({
       name: 'export',
       definition: 'http://hl7.org/fhir/uv/bulkdata/OperationDefinition/group-export',
       documentation: 'Group-level Bulk Data Export.',
@@ -375,7 +373,7 @@ function generateRestDefinition(config: CapabilityStatementConfig): RestDefiniti
 /**
  * Generate resource definitions for each supported type
  */
-function generateResourceDefinitions(config: CapabilityStatementConfig): ResourceDefinition[] {
+function generateResourceDefinitions(_config: CapabilityStatementConfig): ResourceDefinition[] {
   const supportedResources = Object.keys(US_CORE_PROFILES);
 
   return supportedResources.map((resourceType) => {

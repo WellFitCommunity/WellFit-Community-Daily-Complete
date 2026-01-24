@@ -135,9 +135,9 @@ async function createChannel(
 
     return success(data.id);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('CHANNEL_CREATE_FAILED', error, { tenantId, channel });
-    return failure('OPERATION_FAILED', 'Failed to create notification channel', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('CHANNEL_CREATE_FAILED', wrappedError, { tenantId, channel });
+    return failure('OPERATION_FAILED', 'Failed to create notification channel', wrappedError);
   }
 }
 
@@ -172,8 +172,8 @@ async function getChannels(
 
     return success(channels);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get channels', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get channels', wrappedError);
   }
 }
 
@@ -204,8 +204,8 @@ async function updateChannel(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to update channel', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to update channel', wrappedError);
   }
 }
 
@@ -229,8 +229,8 @@ async function deleteChannel(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to delete channel', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to delete channel', wrappedError);
   }
 }
 
@@ -270,8 +270,8 @@ async function testChannel(
       message: result.success ? 'Test notification sent successfully' : (result.error || 'Failed to send test'),
     });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to test channel', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to test channel', wrappedError);
   }
 }
 
@@ -340,9 +340,9 @@ async function sendAlert(
 
     return success(results);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('ALERT_SEND_FAILED', error, { alertId: alert.id });
-    return failure('OPERATION_FAILED', 'Failed to send alert', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('ALERT_SEND_FAILED', wrappedError, { alertId: alert.id });
+    return failure('OPERATION_FAILED', 'Failed to send alert', wrappedError);
   }
 }
 
@@ -359,17 +359,26 @@ async function sendToChannel(
   try {
     switch (channelType) {
       case 'slack':
-        return await sendToSlack(channel.id as string, config.webhookUrl!, alert);
+        if (!config.webhookUrl) {
+          return { channelId: channel.id as string, channelType, success: false, error: 'Slack webhook URL not configured' };
+        }
+        return await sendToSlack(channel.id as string, config.webhookUrl, alert);
 
       case 'pagerduty':
+        if (!config.routingKey) {
+          return { channelId: channel.id as string, channelType, success: false, error: 'PagerDuty routing key not configured' };
+        }
         return await sendToPagerDuty(
           channel.id as string,
-          config.routingKey!,
+          config.routingKey,
           alert
         );
 
       case 'webhook':
-        return await sendToWebhook(channel.id as string, config.webhookUrl!, alert);
+        if (!config.webhookUrl) {
+          return { channelId: channel.id as string, channelType, success: false, error: 'Webhook URL not configured' };
+        }
+        return await sendToWebhook(channel.id as string, config.webhookUrl, alert);
 
       case 'email':
         return await sendEmail(channel.id as string, config.emailAddresses || [], alert);
@@ -640,8 +649,8 @@ async function acknowledgePagerDutyIncident(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to acknowledge PagerDuty incident', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to acknowledge PagerDuty incident', wrappedError);
   }
 }
 
@@ -676,8 +685,8 @@ async function resolvePagerDutyIncident(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to resolve PagerDuty incident', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to resolve PagerDuty incident', wrappedError);
   }
 }
 
@@ -718,8 +727,8 @@ async function getAlertNotificationHistory(
 
     return success(history);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get notification history', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get notification history', wrappedError);
   }
 }
 

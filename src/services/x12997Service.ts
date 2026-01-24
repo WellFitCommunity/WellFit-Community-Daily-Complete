@@ -14,15 +14,8 @@ import { ServiceResult, success, failure } from './_base';
 import {
   x12997Parser,
   Parsed997,
-  TransactionSetAcknowledgment,
-  isAccepted,
   isRejected,
   getGroupAckDescription,
-  getTransactionAckDescription,
-  getSegmentErrorDescription,
-  getElementErrorDescription,
-  formatX12Date,
-  formatX12Time,
   AcknowledgmentStatusCode,
   TransactionAckCode,
 } from './x12997Parser';
@@ -268,9 +261,9 @@ async function processAcknowledgment(
       },
     });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_PROCESSING_FAILED', error, { tenantId });
-    return failure('OPERATION_FAILED', 'Failed to process 997 acknowledgment', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_PROCESSING_FAILED', wrappedError, { tenantId });
+    return failure('OPERATION_FAILED', 'Failed to process 997 acknowledgment', wrappedError);
   }
 }
 
@@ -312,9 +305,9 @@ async function getAcknowledgment(
       clearinghouseProvider: data.clearinghouse_provider,
     });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_GET_FAILED', error, { acknowledgmentId });
-    return failure('OPERATION_FAILED', 'Failed to get acknowledgment', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_GET_FAILED', wrappedError, { acknowledgmentId });
+    return failure('OPERATION_FAILED', 'Failed to get acknowledgment', wrappedError);
   }
 }
 
@@ -351,9 +344,9 @@ async function getRecentAcknowledgments(
 
     return success(summaries);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_LIST_FAILED', error, { tenantId });
-    return failure('OPERATION_FAILED', 'Failed to get acknowledgments', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_LIST_FAILED', wrappedError, { tenantId });
+    return failure('OPERATION_FAILED', 'Failed to get acknowledgments', wrappedError);
   }
 }
 
@@ -390,9 +383,9 @@ async function getRejectedTransactions(
 
     return success(rejections);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_REJECTIONS_FAILED', error, { tenantId });
-    return failure('OPERATION_FAILED', 'Failed to get rejected transactions', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_REJECTIONS_FAILED', wrappedError, { tenantId });
+    return failure('OPERATION_FAILED', 'Failed to get rejected transactions', wrappedError);
   }
 }
 
@@ -426,9 +419,9 @@ async function getTransactionSets(
 
     return success(transactionSets);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_TS_GET_FAILED', error, { acknowledgmentId });
-    return failure('OPERATION_FAILED', 'Failed to get transaction sets', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_TS_GET_FAILED', wrappedError, { acknowledgmentId });
+    return failure('OPERATION_FAILED', 'Failed to get transaction sets', wrappedError);
   }
 }
 
@@ -465,9 +458,9 @@ async function getSegmentErrors(
 
     return success(errors);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_ERRORS_GET_FAILED', error, { transactionSetId });
-    return failure('OPERATION_FAILED', 'Failed to get segment errors', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_ERRORS_GET_FAILED', wrappedError, { transactionSetId });
+    return failure('OPERATION_FAILED', 'Failed to get segment errors', wrappedError);
   }
 }
 
@@ -507,9 +500,9 @@ async function getStatistics(
       }>,
     });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_STATS_FAILED', error, { tenantId });
-    return failure('OPERATION_FAILED', 'Failed to get statistics', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_STATS_FAILED', wrappedError, { tenantId });
+    return failure('OPERATION_FAILED', 'Failed to get statistics', wrappedError);
   }
 }
 
@@ -537,9 +530,9 @@ async function linkToClaims(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_LINK_FAILED', error, { acknowledgmentId });
-    return failure('OPERATION_FAILED', 'Failed to link claims', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_LINK_FAILED', wrappedError, { acknowledgmentId });
+    return failure('OPERATION_FAILED', 'Failed to link claims', wrappedError);
   }
 }
 
@@ -575,9 +568,9 @@ async function getAcknowledgmentsForClaim(
 
     return success(summaries);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('997_CLAIM_LOOKUP_FAILED', error, { claimId });
-    return failure('OPERATION_FAILED', 'Failed to get acknowledgments for claim', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('997_CLAIM_LOOKUP_FAILED', wrappedError, { claimId });
+    return failure('OPERATION_FAILED', 'Failed to get acknowledgments for claim', wrappedError);
   }
 }
 
@@ -611,8 +604,8 @@ async function getErrorCodeInfo(
       remediation: data.remediation,
     });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get error code info', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get error code info', wrappedError);
   }
 }
 
@@ -648,7 +641,8 @@ function validate(x12Content: string): ServiceResult<{
     });
   }
 
-  const parsed = parseResult.data!;
+  // parseResult.success is true at this point, so data exists
+  const parsed = parseResult.data as NonNullable<typeof parseResult.data>;
 
   // Validate ISA
   if (!parsed.isa.interchangeControlNumber) {

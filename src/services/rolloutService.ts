@@ -109,9 +109,9 @@ async function evaluateFeature(
       cached: data?.cached || false,
     });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('FEATURE_EVALUATION_FAILED', error, { userId, featureKey });
-    return failure('OPERATION_FAILED', 'Failed to evaluate feature flag', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('FEATURE_EVALUATION_FAILED', wrappedError, { userId, featureKey });
+    return failure('OPERATION_FAILED', 'Failed to evaluate feature flag', wrappedError);
   }
 }
 
@@ -139,9 +139,9 @@ async function getUserFeatures(
 
     return success(features);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('USER_FEATURES_FAILED', error, { userId });
-    return failure('OPERATION_FAILED', 'Failed to get user features', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('USER_FEATURES_FAILED', wrappedError, { userId });
+    return failure('OPERATION_FAILED', 'Failed to get user features', wrappedError);
   }
 }
 
@@ -175,9 +175,9 @@ async function createRollout(
 
     return success(data as string);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('ROLLOUT_CREATE_FAILED', error, { featureKey: input.featureKey });
-    return failure('OPERATION_FAILED', 'Failed to create rollout', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('ROLLOUT_CREATE_FAILED', wrappedError, { featureKey: input.featureKey });
+    return failure('OPERATION_FAILED', 'Failed to create rollout', wrappedError);
   }
 }
 
@@ -204,8 +204,8 @@ async function getRollout(
 
     return success(mapRollout(data));
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get rollout', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get rollout', wrappedError);
   }
 }
 
@@ -236,8 +236,8 @@ async function getRolloutByKey(
 
     return success(data ? mapRollout(data) : null);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get rollout', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get rollout', wrappedError);
   }
 }
 
@@ -270,8 +270,8 @@ async function listRollouts(
 
     return success((data || []).map(mapRollout));
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to list rollouts', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to list rollouts', wrappedError);
   }
 }
 
@@ -307,9 +307,9 @@ async function updateRollout(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('ROLLOUT_UPDATE_FAILED', error, { rolloutId });
-    return failure('OPERATION_FAILED', 'Failed to update rollout', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('ROLLOUT_UPDATE_FAILED', wrappedError, { rolloutId });
+    return failure('OPERATION_FAILED', 'Failed to update rollout', wrappedError);
   }
 }
 
@@ -370,9 +370,9 @@ async function updatePercentage(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('ROLLOUT_PERCENTAGE_FAILED', error, { rolloutId });
-    return failure('OPERATION_FAILED', 'Failed to update percentage', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('ROLLOUT_PERCENTAGE_FAILED', wrappedError, { rolloutId });
+    return failure('OPERATION_FAILED', 'Failed to update percentage', wrappedError);
   }
 }
 
@@ -400,8 +400,8 @@ async function setEnabled(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to update enabled status', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to update enabled status', wrappedError);
   }
 }
 
@@ -425,8 +425,8 @@ async function deleteRollout(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to delete rollout', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to delete rollout', wrappedError);
   }
 }
 
@@ -460,8 +460,8 @@ async function getRolloutHistory(
 
     return success(history);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get rollout history', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get rollout history', wrappedError);
   }
 }
 
@@ -506,8 +506,8 @@ async function addTargetUser(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to add target user', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to add target user', wrappedError);
   }
 }
 
@@ -552,8 +552,8 @@ async function excludeUser(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to exclude user', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to exclude user', wrappedError);
   }
 }
 

@@ -191,6 +191,7 @@ export function useFeatureRollouts(featureKeys: string[]): UseFeatureRolloutsRes
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- memoizedKeys triggers re-evaluation when feature keys change
   }, [memoizedKeys]);
 
   useEffect(() => {

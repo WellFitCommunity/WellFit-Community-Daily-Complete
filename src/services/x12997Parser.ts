@@ -512,7 +512,8 @@ export class X12997Parser {
     const transactionSets: TransactionSetAcknowledgment[] = [];
 
     // Find segment indices
-    let inTransactionSet = false;
+    // Note: _inTransactionSet tracks parsing state for potential future validation
+    let _inTransactionSet = false;
     let currentTx: Partial<TransactionSetAcknowledgment> | null = null;
     let currentSegmentError: Partial<SegmentError> | null = null;
 
@@ -530,7 +531,7 @@ export class X12997Parser {
             ak2: this.parseAK2Elements(elements),
             segmentErrors: [],
           };
-          inTransactionSet = true;
+          _inTransactionSet = true;
           break;
 
         case 'AK3':
@@ -562,7 +563,7 @@ export class X12997Parser {
             transactionSets.push(currentTx as TransactionSetAcknowledgment);
             currentTx = null;
           }
-          inTransactionSet = false;
+          _inTransactionSet = false;
           break;
 
         default:

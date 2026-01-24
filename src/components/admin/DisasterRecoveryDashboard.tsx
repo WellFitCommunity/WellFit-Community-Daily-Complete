@@ -12,7 +12,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Shield,
   Database,
-  Clock,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -24,7 +23,6 @@ import {
   AlertOctagon,
   ChevronDown,
   ChevronUp,
-  Users,
   Target,
 } from 'lucide-react';
 import {

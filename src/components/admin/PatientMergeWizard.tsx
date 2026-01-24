@@ -15,7 +15,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Users,
   GitMerge,
   AlertTriangle,
   CheckCircle,
@@ -26,12 +25,10 @@ import {
   ArrowLeft,
   ArrowRight,
   Undo2,
-  FileText,
   History,
 } from 'lucide-react';
 import {
   EACard,
-  EACardHeader,
   EACardContent,
   EAButton,
   EAAlert,

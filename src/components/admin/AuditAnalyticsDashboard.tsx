@@ -23,7 +23,6 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
-  Calendar,
 } from 'lucide-react';
 import {
   EACard,
@@ -142,7 +141,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
   useEffect(() => {
     fetchStats();
     searchLogs();
-  }, [fetchStats]);
+  }, [fetchStats, searchLogs]);
 
   // Handle export
   const handleExport = async (format: 'json' | 'csv') => {

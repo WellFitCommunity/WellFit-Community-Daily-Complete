@@ -130,9 +130,9 @@ async function createProgram(
 
     return success(data.id);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('BETA_PROGRAM_CREATE_FAILED', error, { programKey: input.programKey });
-    return failure('OPERATION_FAILED', 'Failed to create beta program', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('BETA_PROGRAM_CREATE_FAILED', wrappedError, { programKey: input.programKey });
+    return failure('OPERATION_FAILED', 'Failed to create beta program', wrappedError);
   }
 }
 
@@ -159,8 +159,8 @@ async function getProgram(
 
     return success(mapProgram(data));
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get beta program', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get beta program', wrappedError);
   }
 }
 
@@ -191,8 +191,8 @@ async function getProgramByKey(
 
     return success(data ? mapProgram(data) : null);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get beta program', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get beta program', wrappedError);
   }
 }
 
@@ -225,8 +225,8 @@ async function listPrograms(
 
     return success((data || []).map(mapProgram));
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to list beta programs', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to list beta programs', wrappedError);
   }
 }
 
@@ -260,8 +260,8 @@ async function listAvailablePrograms(
 
     return success(available);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to list available programs', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to list available programs', wrappedError);
   }
 }
 
@@ -297,9 +297,9 @@ async function updateProgram(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('BETA_PROGRAM_UPDATE_FAILED', error, { programId });
-    return failure('OPERATION_FAILED', 'Failed to update beta program', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('BETA_PROGRAM_UPDATE_FAILED', wrappedError, { programId });
+    return failure('OPERATION_FAILED', 'Failed to update beta program', wrappedError);
   }
 }
 
@@ -340,8 +340,8 @@ async function completeProgram(
 
     return updateProgram(programId, { status: 'completed' });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to complete program', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to complete program', wrappedError);
   }
 }
 
@@ -376,9 +376,9 @@ async function enroll(
 
     return success(data as string);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    await auditLogger.error('BETA_ENROLLMENT_FAILED', error, { programId });
-    return failure('OPERATION_FAILED', 'Failed to enroll in beta program', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    await auditLogger.error('BETA_ENROLLMENT_FAILED', wrappedError, { programId });
+    return failure('OPERATION_FAILED', 'Failed to enroll in beta program', wrappedError);
   }
 }
 
@@ -407,8 +407,8 @@ async function getMyEnrollment(
 
     return success(data ? mapEnrollment(data) : null);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get enrollment', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get enrollment', wrappedError);
   }
 }
 
@@ -431,8 +431,8 @@ async function getProgramEnrollments(
 
     return success((data || []).map(mapEnrollment));
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get enrollments', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get enrollments', wrappedError);
   }
 }
 
@@ -469,8 +469,8 @@ async function getMyPrograms(): Promise<ServiceResult<BetaProgram[]>> {
 
     return success(programs);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get user programs', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get user programs', wrappedError);
   }
 }
 
@@ -493,8 +493,8 @@ async function approveEnrollment(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to approve enrollment', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to approve enrollment', wrappedError);
   }
 }
 
@@ -519,8 +519,8 @@ async function rejectEnrollment(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to reject enrollment', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to reject enrollment', wrappedError);
   }
 }
 
@@ -562,8 +562,8 @@ async function removeParticipant(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to remove participant', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to remove participant', wrappedError);
   }
 }
 
@@ -602,8 +602,8 @@ async function submitFeedback(
 
     return success(undefined);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to submit feedback', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to submit feedback', wrappedError);
   }
 }
 
@@ -645,8 +645,8 @@ async function getFeedbackSummary(
       ratingDistribution,
     });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    return failure('OPERATION_FAILED', 'Failed to get feedback summary', err);
+    const wrappedError = err instanceof Error ? err : new Error(String(err));
+    return failure('OPERATION_FAILED', 'Failed to get feedback summary', wrappedError);
   }
 }
 

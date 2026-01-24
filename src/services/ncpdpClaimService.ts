@@ -283,7 +283,7 @@ async function processClaimResponse(
       return failure('DATABASE_ERROR', 'Failed to process claim response', error);
     }
 
-    const result = data as { success: boolean; claim_id: string; status: string };
+    const _result = data as { success: boolean; claim_id: string; status: string };
 
     const newStatus: ClaimStatus = responseStatus === 'A' ? 'accepted' : responseStatus === 'P' ? 'paid' : 'rejected';
 

@@ -570,7 +570,8 @@ async function unmergePatients(request: UnmergeRequest): Promise<ServiceResult<M
     });
 
     // 3. Restore deprecated patient profile from snapshot
-    const deprecatedSnapshot = typedHistory.deprecated_record_snapshot as unknown as PatientSnapshot;
+    // Note: Snapshot preserved for audit trail, direct profile restoration handled via identity records
+    const _deprecatedSnapshot = typedHistory.deprecated_record_snapshot as unknown as PatientSnapshot;
 
     // Re-activate the deprecated patient's identity record
     await supabase

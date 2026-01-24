@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle,
-  XCircle,
   RefreshCw,
   Bell,
   BellOff,
