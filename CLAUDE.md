@@ -16,6 +16,7 @@
 | 8 | **No PHI in browser** - patient IDs only, data stays server-side | Names, SSN, DOB in frontend |
 | 9 | **Run migrations you create** - `npx supabase db push` | Unexecuted migration files |
 | 10 | **No CORS/CSP wildcards** - use explicit `ALLOWED_ORIGINS` only | `frame-ancestors *`, `connect-src *`, `WHITE_LABEL_MODE=true` |
+| 11 | **Report verification counts** - typecheck/lint/test pass counts before commit | "I checked" without numbers |
 
 ### Before Every Task
 ```bash
@@ -35,6 +36,36 @@ catch (err: unknown) {
   return failure('OPERATION_FAILED', 'User-friendly message');
 }
 ```
+
+### Mandatory Verification Checkpoint - NO EXCEPTIONS
+
+**Before ANY commit or declaring work "done", you MUST run and report:**
+
+```bash
+npm run typecheck && npm run lint && npm test
+```
+
+**Report format (copy exactly):**
+```
+✅ typecheck: 0 errors
+✅ lint: 0 errors, 0 warnings
+✅ tests: 7,072 passed, 0 failed
+```
+
+Or if failing:
+```
+❌ typecheck: 3 errors (list them)
+❌ lint: 1 error in src/components/Foo.tsx:42
+❌ tests: 7,070 passed, 2 failed (list failed test names)
+```
+
+**Rules:**
+1. **Run the actual commands** - Do not skip or claim "I already checked"
+2. **Report the final counts** - Not 500 lines, just the summary numbers
+3. **If ANY fail, FIX FIRST** - Do not commit broken code
+4. **If stuck fixing for 2+ attempts, STOP AND ASK** - Don't keep iterating blindly
+
+**This is a HARD GATE. Work is not complete without this checkpoint.**
 
 ---
 
@@ -60,6 +91,8 @@ This codebase eliminated 1,400+ `any` violations and 1,671 total lint warnings i
 | Committing without running typecheck | Required before completion | Eager to show "done" |
 | Using `as Error` instead of narrowing | `err instanceof Error ? ...` | Shorter = seems better |
 | CORS/CSP wildcards (`*`) | Explicit `ALLOWED_ORIGINS` required | "Permissive = easier" mentality |
+| Claiming "I verified" without proof | Must report pass/fail counts | Poor self-debugging; sees intent not reality |
+| Iterating on broken code instead of stopping | STOP AND ASK when stuck | Wants to appear helpful, not stuck |
 
 **The STOP AND ASK protocol is the highest-value rule.** Most AI mistakes stem from continuing when uncertain rather than asking.
 
@@ -154,8 +187,12 @@ Ask Maria for clarification instead of implementing something incomplete.
 - You're about to delete anything (tables, functions, files, tests)
 - The "right" solution seems harder than a shortcut
 - You're unsure if something violates these rules
+- **You've tried to fix the same error 2+ times** - you likely have a blind spot
+- **Tests or typecheck keep failing** - stop iterating, ask for help
 
 **Do NOT guess. Do NOT improvise. ASK.**
+
+**AI models have poor fine motor skills for self-debugging.** We see what we *intended* to write, not what we *actually* wrote. When stuck in a debug loop, the fastest path forward is to STOP and let Maria or adversarial checking identify the blind spot.
 
 ---
 
