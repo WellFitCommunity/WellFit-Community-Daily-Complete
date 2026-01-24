@@ -54,7 +54,7 @@ export {
   type CapacityInsight,
   type OptimizationReport,
   type IncomingPatient
-} from './bedOptimizer';
+} from './bed-optimizer';
 
 // Batch inference (P2 optimization - 10x cost reduction)
 export {

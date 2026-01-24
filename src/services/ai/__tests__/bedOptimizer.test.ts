@@ -11,14 +11,14 @@
  * - Accuracy tracking
  */
 
-import { BedOptimizerService } from '../bedOptimizer';
+import { BedOptimizerService } from '../bed-optimizer';
 import type {
   IncomingPatient,
   CapacityForecast,
   DischargeRecommendation,
   BedAssignmentRecommendation,
   CapacityInsight
-} from '../bedOptimizer';
+} from '../bed-optimizer';
 import type { UnitCapacity, BedBoardEntry } from '../../../types/bed';
 
 // Mock supabaseClient
