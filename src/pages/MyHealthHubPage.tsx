@@ -1,7 +1,8 @@
 // src/pages/MyHealthHubPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
+import { DeviceService, type DeviceType } from '../services/deviceService';
 
 interface HealthNavigationTile {
   id: string;
@@ -18,13 +19,49 @@ interface DeviceTile {
   title: string;
   description: string;
   route: string;
+  deviceType?: DeviceType;
   connected?: boolean;
 }
+
+// Device type mapping for fetching connection status
+const DEVICE_TYPE_MAP: Record<string, DeviceType> = {
+  'scale': 'smart_scale',
+  'bp-monitor': 'bp_monitor',
+  'glucometer': 'glucometer',
+  'pulse-ox': 'pulse_oximeter',
+};
 
 const MyHealthHubPage: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<Record<string, boolean>>({});
+
+  // Fetch device connection status on mount
+  useEffect(() => {
+    const fetchConnectionStatus = async () => {
+      try {
+        const result = await DeviceService.getAllConnections();
+        if (result.success && result.data) {
+          const status: Record<string, boolean> = {};
+          result.data.forEach(conn => {
+            // Map device_type back to tile id
+            const tileId = Object.entries(DEVICE_TYPE_MAP).find(
+              ([, type]) => type === conn.device_type
+            )?.[0];
+            if (tileId) {
+              status[tileId] = conn.connected;
+            }
+          });
+          setConnectionStatus(status);
+        }
+      } catch {
+        // Silently fail - will show as not connected
+      }
+    };
+
+    fetchConnectionStatus();
+  }, []);
 
   // Use branding colors for tile accents - alternating pattern
   const getTileAccentColor = (index: number) => {
@@ -43,7 +80,7 @@ const MyHealthHubPage: React.FC = () => {
     }
   };
 
-  // Connected Devices tiles
+  // Connected Devices tiles - connection status fetched dynamically
   const deviceTiles: DeviceTile[] = [
     {
       id: 'smartwatch',
@@ -51,7 +88,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'Smartwatch',
       description: 'Fall detection, heart rate, steps & activity',
       route: '/wearables',
-      connected: true,
+      connected: connectionStatus['smartwatch'] ?? false,
     },
     {
       id: 'scale',
@@ -59,7 +96,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'Smart Scale',
       description: 'Track weight, BMI, and body composition',
       route: '/devices/scale',
-      connected: true,
+      connected: connectionStatus['scale'] ?? false,
     },
     {
       id: 'bp-monitor',
@@ -67,7 +104,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'BP Monitor',
       description: 'Blood pressure and pulse readings',
       route: '/devices/blood-pressure',
-      connected: true,
+      connected: connectionStatus['bp-monitor'] ?? false,
     },
     {
       id: 'glucometer',
@@ -75,7 +112,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'Glucometer',
       description: 'Blood glucose monitoring for diabetes care',
       route: '/devices/glucometer',
-      connected: true,
+      connected: connectionStatus['glucometer'] ?? false,
     },
     {
       id: 'pulse-ox',
@@ -83,7 +120,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'Pulse Oximeter',
       description: 'Blood oxygen (SpO2) and pulse rate',
       route: '/devices/pulse-oximeter',
-      connected: true,
+      connected: connectionStatus['pulse-ox'] ?? false,
     },
   ];
 
