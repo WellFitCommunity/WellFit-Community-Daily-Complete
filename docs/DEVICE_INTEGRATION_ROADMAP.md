@@ -87,18 +87,20 @@ Device tiles now fetch real connection status from `DeviceService.getAllConnecti
 
 ### Priority 2: User Experience
 
-#### 2.1 Data Visualization - Trend Charts
-**Issue:** Readings shown as flat lists. No visual trends over time.
+#### 2.1 Data Visualization - Trend Charts ✅
+**Status:** Complete
 
-**Required:**
-- Line charts for weight, BP, glucose, SpO2 over 7/30/90 days
-- Goal lines (target weight, healthy BP range)
-- Color coding for in-range vs out-of-range
-- Consider: Recharts or Chart.js integration
+Implemented reusable `VitalTrendChart` component using Recharts:
+- Line charts for all vital types (weight, BP, glucose, SpO2)
+- Time range selection (7/30/90 days)
+- Reference lines for healthy ranges
+- Color-coded data series
+- Responsive design
 
-**Impact:** Hard for users to understand health trends.
-
-**Effort:** Medium-Large (4-6 hours per device)
+Files:
+- `src/components/devices/VitalTrendChart.tsx` - Reusable chart component
+- 10 tests in `VitalTrendChart.test.tsx`
+- Integrated into all 4 device pages
 
 ---
 
@@ -245,8 +247,8 @@ Phase 2A - Quick Wins ✅ COMPLETE
 ├── ✅ 1.2 Add DeviceService tests
 └── ✅ 3.2 Reading validation
 
-Phase 2B - User Experience (1-2 sprints) ← NEXT
-├── 2.1 Trend charts (start with weight/BP)
+Phase 2B - User Experience (1-2 sprints) ← IN PROGRESS
+├── ✅ 2.1 Trend charts (all devices)
 ├── 2.2 Manual entry forms
 └── 3.1 Critical value alerts
 

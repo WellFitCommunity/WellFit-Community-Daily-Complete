@@ -1,8 +1,9 @@
 // src/pages/devices/SmartScalePage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type WeightReading } from '../../services/deviceService';
+import VitalTrendChart, { type ChartDataPoint, type DataSeries } from '../../components/devices/VitalTrendChart';
 
 const SmartScalePage: React.FC = () => {
   const navigate = useNavigate();
@@ -71,6 +72,20 @@ const SmartScalePage: React.FC = () => {
     });
   };
 
+  // Prepare chart data
+  const chartData: ChartDataPoint[] = useMemo(() => {
+    return readings.map((reading) => ({
+      date: formatDate(reading.measured_at),
+      timestamp: new Date(reading.measured_at).getTime(),
+      weight: reading.weight,
+      bmi: reading.bmi || 0,
+    }));
+  }, [readings]);
+
+  const weightSeries: DataSeries[] = [
+    { key: 'weight', label: 'Weight', color: '#8b5cf6', unit: 'lbs' },
+  ];
+
   return (
     <div className="min-h-screen pb-20" style={{ background: branding.gradient }}>
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-3xl">
@@ -129,6 +144,18 @@ const SmartScalePage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Weight Trend Chart */}
+        {isConnected && readings.length > 0 && (
+          <div className="mb-6">
+            <VitalTrendChart
+              data={chartData}
+              series={weightSeries}
+              title="Weight Trends"
+              primaryColor={branding.primaryColor}
+            />
+          </div>
+        )}
 
         {/* Weight History */}
         {isConnected && (

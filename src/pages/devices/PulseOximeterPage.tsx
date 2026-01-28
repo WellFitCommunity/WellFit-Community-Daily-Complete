@@ -1,8 +1,9 @@
 // src/pages/devices/PulseOximeterPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type SpO2Reading } from '../../services/deviceService';
+import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
 
 type SpO2Status = 'normal' | 'low' | 'critical';
 
@@ -91,6 +92,25 @@ const PulseOximeterPage: React.FC = () => {
       setIsConnected(false);
     }
   };
+
+  // Prepare chart data
+  const chartData: ChartDataPoint[] = useMemo(() => {
+    return readings.map((reading) => ({
+      date: formatDateTime(reading.measured_at).date,
+      timestamp: new Date(reading.measured_at).getTime(),
+      spo2: reading.spo2,
+      pulse: reading.pulse_rate,
+    }));
+  }, [readings]);
+
+  const spo2Series: DataSeries[] = [
+    { key: 'spo2', label: 'SpO2', color: '#06b6d4', unit: '%' },
+  ];
+
+  const spo2ReferenceLines: ReferenceRange[] = [
+    { label: 'Normal', value: 95, color: '#22c55e', strokeDasharray: '5 5' },
+    { label: 'Low', value: 90, color: '#eab308', strokeDasharray: '3 3' },
+  ];
 
   return (
     <div
@@ -192,6 +212,20 @@ const PulseOximeterPage: React.FC = () => {
             *Normal SpO2 may vary for individuals with certain conditions. Consult your healthcare provider for your personal targets.
           </p>
         </div>
+
+        {/* SpO2 Trend Chart */}
+        {isConnected && readings.length > 0 && (
+          <div className="mb-6">
+            <VitalTrendChart
+              data={chartData}
+              series={spo2Series}
+              title="Blood Oxygen Trends"
+              referenceLines={spo2ReferenceLines}
+              yAxisDomain={[80, 100]}
+              primaryColor={branding.primaryColor}
+            />
+          </div>
+        )}
 
         {/* SpO2 History */}
         {isConnected && (

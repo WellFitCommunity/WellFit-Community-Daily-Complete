@@ -1,8 +1,9 @@
 // src/pages/devices/BloodPressureMonitorPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type BPReading } from '../../services/deviceService';
+import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
 
 type BPStatus = 'normal' | 'elevated' | 'high' | 'low';
 
@@ -94,6 +95,27 @@ const BloodPressureMonitorPage: React.FC = () => {
       setIsConnected(false);
     }
   };
+
+  // Prepare chart data
+  const chartData: ChartDataPoint[] = useMemo(() => {
+    return readings.map((reading) => ({
+      date: formatDate(reading.measured_at),
+      timestamp: new Date(reading.measured_at).getTime(),
+      systolic: reading.systolic,
+      diastolic: reading.diastolic,
+      pulse: reading.pulse,
+    }));
+  }, [readings]);
+
+  const bpSeries: DataSeries[] = [
+    { key: 'systolic', label: 'Systolic', color: '#ef4444', unit: 'mmHg' },
+    { key: 'diastolic', label: 'Diastolic', color: '#3b82f6', unit: 'mmHg' },
+  ];
+
+  const bpReferenceLines: ReferenceRange[] = [
+    { label: 'Normal Systolic', value: 120, color: '#22c55e', strokeDasharray: '5 5' },
+    { label: 'Normal Diastolic', value: 80, color: '#22c55e', strokeDasharray: '3 3' },
+  ];
 
   return (
     <div
@@ -187,6 +209,20 @@ const BloodPressureMonitorPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* BP Trend Chart */}
+        {isConnected && readings.length > 0 && (
+          <div className="mb-6">
+            <VitalTrendChart
+              data={chartData}
+              series={bpSeries}
+              title="Blood Pressure Trends"
+              referenceLines={bpReferenceLines}
+              yAxisDomain={[40, 200]}
+              primaryColor={branding.primaryColor}
+            />
+          </div>
+        )}
 
         {/* BP History */}
         {isConnected && (

@@ -1,8 +1,9 @@
 // src/pages/devices/GlucometerPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type GlucoseReading } from '../../services/deviceService';
+import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
 
 type GlucoseStatus = 'normal' | 'low' | 'high' | 'critical';
 
@@ -120,6 +121,25 @@ const GlucometerPage: React.FC = () => {
     }
   };
 
+  // Prepare chart data
+  const chartData: ChartDataPoint[] = useMemo(() => {
+    return readings.map((reading) => ({
+      date: formatDateTime(reading.measured_at).date,
+      timestamp: new Date(reading.measured_at).getTime(),
+      glucose: reading.value,
+    }));
+  }, [readings]);
+
+  const glucoseSeries: DataSeries[] = [
+    { key: 'glucose', label: 'Glucose', color: '#f59e0b', unit: 'mg/dL' },
+  ];
+
+  const glucoseReferenceLines: ReferenceRange[] = [
+    { label: 'Target High', value: 180, color: '#eab308', strokeDasharray: '5 5' },
+    { label: 'Target Low', value: 80, color: '#22c55e', strokeDasharray: '5 5' },
+    { label: 'Low', value: 70, color: '#3b82f6', strokeDasharray: '3 3' },
+  ];
+
   return (
     <div
       className="min-h-screen pb-20"
@@ -211,6 +231,20 @@ const GlucometerPage: React.FC = () => {
             *These are general guidelines. Consult your healthcare provider for your personal targets.
           </p>
         </div>
+
+        {/* Glucose Trend Chart */}
+        {isConnected && readings.length > 0 && (
+          <div className="mb-6">
+            <VitalTrendChart
+              data={chartData}
+              series={glucoseSeries}
+              title="Blood Glucose Trends"
+              referenceLines={glucoseReferenceLines}
+              yAxisDomain={[40, 300]}
+              primaryColor={branding.primaryColor}
+            />
+          </div>
+        )}
 
         {/* Glucose History */}
         {isConnected && (
