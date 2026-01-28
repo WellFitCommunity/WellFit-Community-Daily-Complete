@@ -335,8 +335,9 @@ describe('PulseOximeterPage', () => {
 
       renderPage();
 
+      // Wait for loading to complete (button is disabled while loading)
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /connect pulse ox/i })).toBeInTheDocument();
+        expect(screen.getByText('Not Connected')).toBeInTheDocument();
       });
 
       fireEvent.click(screen.getByRole('button', { name: /connect pulse ox/i }));
@@ -416,8 +417,9 @@ describe('PulseOximeterPage', () => {
 
       renderPage();
 
+      // Wait for loading to complete (button is disabled while loading)
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /connect pulse ox/i })).toBeInTheDocument();
+        expect(screen.getByText('Not Connected')).toBeInTheDocument();
       });
 
       fireEvent.click(screen.getByRole('button', { name: /connect pulse ox/i }));

@@ -255,8 +255,9 @@ describe('SmartScalePage', () => {
 
       renderPage();
 
+      // Wait for loading to complete (button is disabled while loading)
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /connect scale/i })).toBeInTheDocument();
+        expect(screen.getByText('Not Connected')).toBeInTheDocument();
       });
 
       fireEvent.click(screen.getByRole('button', { name: /connect scale/i }));
