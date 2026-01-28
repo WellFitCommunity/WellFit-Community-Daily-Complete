@@ -68,6 +68,178 @@ export interface DeviceApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+  warning?: string;
+}
+
+// =============================================================================
+// VALIDATION
+// =============================================================================
+
+export interface ValidationResult {
+  valid: boolean;
+  error?: string;
+  warning?: string;
+}
+
+/**
+ * Validation thresholds for vital signs
+ * Based on physiologically possible and clinically relevant ranges
+ */
+const VALIDATION_THRESHOLDS = {
+  weight: {
+    min: 1,        // 1 lb minimum (infants)
+    max: 1500,     // World record is ~1400 lbs
+    unit: 'lbs',
+  },
+  spo2: {
+    min: 0,
+    max: 100,      // Percentage cannot exceed 100
+  },
+  pulse: {
+    min: 20,       // Severe bradycardia
+    max: 300,      // Extreme tachycardia
+  },
+  systolic: {
+    min: 40,       // Severe hypotension
+    max: 300,      // Hypertensive crisis
+  },
+  diastolic: {
+    min: 20,       // Severe hypotension
+    max: 200,      // Hypertensive crisis
+  },
+  glucose: {
+    min: 10,       // Severe hypoglycemia
+    max: 800,      // Severe hyperglycemia
+  },
+  bmi: {
+    min: 5,        // Severely underweight
+    max: 100,      // Extreme obesity
+  },
+  bodyFat: {
+    min: 1,
+    max: 70,       // Percentage
+  },
+  muscleMass: {
+    min: 1,
+    max: 100,      // Percentage
+  },
+} as const;
+
+/**
+ * Validate weight reading
+ */
+function validateWeightReading(reading: { weight: number; bmi?: number; body_fat?: number; muscle_mass?: number }): ValidationResult {
+  const { weight, bmi, body_fat, muscle_mass } = reading;
+
+  // Check for impossible values
+  if (weight <= 0) {
+    return { valid: false, error: 'Weight must be greater than 0' };
+  }
+  if (weight > VALIDATION_THRESHOLDS.weight.max) {
+    return { valid: false, error: `Weight cannot exceed ${VALIDATION_THRESHOLDS.weight.max} lbs` };
+  }
+
+  // BMI validation if provided
+  if (bmi !== undefined) {
+    if (bmi < VALIDATION_THRESHOLDS.bmi.min || bmi > VALIDATION_THRESHOLDS.bmi.max) {
+      return { valid: false, error: `BMI must be between ${VALIDATION_THRESHOLDS.bmi.min} and ${VALIDATION_THRESHOLDS.bmi.max}` };
+    }
+  }
+
+  // Body fat validation if provided
+  if (body_fat !== undefined) {
+    if (body_fat < VALIDATION_THRESHOLDS.bodyFat.min || body_fat > VALIDATION_THRESHOLDS.bodyFat.max) {
+      return { valid: false, error: `Body fat must be between ${VALIDATION_THRESHOLDS.bodyFat.min}% and ${VALIDATION_THRESHOLDS.bodyFat.max}%` };
+    }
+  }
+
+  // Muscle mass validation if provided
+  if (muscle_mass !== undefined) {
+    if (muscle_mass < VALIDATION_THRESHOLDS.muscleMass.min || muscle_mass > VALIDATION_THRESHOLDS.muscleMass.max) {
+      return { valid: false, error: `Muscle mass must be between ${VALIDATION_THRESHOLDS.muscleMass.min}% and ${VALIDATION_THRESHOLDS.muscleMass.max}%` };
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate blood pressure reading
+ */
+function validateBPReading(reading: { systolic: number; diastolic: number; pulse: number }): ValidationResult {
+  const { systolic, diastolic, pulse } = reading;
+
+  // Systolic validation
+  if (systolic < VALIDATION_THRESHOLDS.systolic.min) {
+    return { valid: false, error: `Systolic pressure cannot be below ${VALIDATION_THRESHOLDS.systolic.min} mmHg` };
+  }
+  if (systolic > VALIDATION_THRESHOLDS.systolic.max) {
+    return { valid: false, error: `Systolic pressure cannot exceed ${VALIDATION_THRESHOLDS.systolic.max} mmHg` };
+  }
+
+  // Diastolic validation
+  if (diastolic < VALIDATION_THRESHOLDS.diastolic.min) {
+    return { valid: false, error: `Diastolic pressure cannot be below ${VALIDATION_THRESHOLDS.diastolic.min} mmHg` };
+  }
+  if (diastolic > VALIDATION_THRESHOLDS.diastolic.max) {
+    return { valid: false, error: `Diastolic pressure cannot exceed ${VALIDATION_THRESHOLDS.diastolic.max} mmHg` };
+  }
+
+  // Systolic must be greater than diastolic
+  if (systolic <= diastolic) {
+    return { valid: false, error: 'Systolic pressure must be greater than diastolic pressure' };
+  }
+
+  // Pulse validation
+  if (pulse < VALIDATION_THRESHOLDS.pulse.min) {
+    return { valid: false, error: `Pulse cannot be below ${VALIDATION_THRESHOLDS.pulse.min} bpm` };
+  }
+  if (pulse > VALIDATION_THRESHOLDS.pulse.max) {
+    return { valid: false, error: `Pulse cannot exceed ${VALIDATION_THRESHOLDS.pulse.max} bpm` };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate glucose reading
+ */
+function validateGlucoseReading(reading: { value: number }): ValidationResult {
+  const { value } = reading;
+
+  if (value < VALIDATION_THRESHOLDS.glucose.min) {
+    return { valid: false, error: `Glucose cannot be below ${VALIDATION_THRESHOLDS.glucose.min} mg/dL` };
+  }
+  if (value > VALIDATION_THRESHOLDS.glucose.max) {
+    return { valid: false, error: `Glucose cannot exceed ${VALIDATION_THRESHOLDS.glucose.max} mg/dL` };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate SpO2 reading
+ */
+function validateSpO2Reading(reading: { spo2: number; pulse_rate: number }): ValidationResult {
+  const { spo2, pulse_rate } = reading;
+
+  // SpO2 validation
+  if (spo2 < VALIDATION_THRESHOLDS.spo2.min) {
+    return { valid: false, error: 'SpO2 cannot be negative' };
+  }
+  if (spo2 > VALIDATION_THRESHOLDS.spo2.max) {
+    return { valid: false, error: 'SpO2 cannot exceed 100%' };
+  }
+
+  // Pulse rate validation
+  if (pulse_rate < VALIDATION_THRESHOLDS.pulse.min) {
+    return { valid: false, error: `Pulse rate cannot be below ${VALIDATION_THRESHOLDS.pulse.min} bpm` };
+  }
+  if (pulse_rate > VALIDATION_THRESHOLDS.pulse.max) {
+    return { valid: false, error: `Pulse rate cannot exceed ${VALIDATION_THRESHOLDS.pulse.max} bpm` };
+  }
+
+  return { valid: true };
 }
 
 // =============================================================================
@@ -232,6 +404,13 @@ export class DeviceService {
 
   static async saveWeightReading(reading: Omit<WeightReading, 'id' | 'user_id'>): Promise<DeviceApiResponse<WeightReading>> {
     try {
+      // Validate reading
+      const validation = validateWeightReading(reading);
+      if (!validation.valid) {
+        await auditLogger.warn('WEIGHT_READING_REJECTED', { reason: validation.error, reading });
+        return { success: false, error: validation.error };
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
@@ -290,6 +469,13 @@ export class DeviceService {
 
   static async saveBPReading(reading: Omit<BPReading, 'id' | 'user_id'>): Promise<DeviceApiResponse<BPReading>> {
     try {
+      // Validate reading
+      const validation = validateBPReading(reading);
+      if (!validation.valid) {
+        await auditLogger.warn('BP_READING_REJECTED', { reason: validation.error, reading });
+        return { success: false, error: validation.error };
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
@@ -348,6 +534,13 @@ export class DeviceService {
 
   static async saveGlucoseReading(reading: Omit<GlucoseReading, 'id' | 'user_id'>): Promise<DeviceApiResponse<GlucoseReading>> {
     try {
+      // Validate reading
+      const validation = validateGlucoseReading(reading);
+      if (!validation.valid) {
+        await auditLogger.warn('GLUCOSE_READING_REJECTED', { reason: validation.error, reading });
+        return { success: false, error: validation.error };
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
@@ -404,6 +597,13 @@ export class DeviceService {
 
   static async saveSpO2Reading(reading: Omit<SpO2Reading, 'id' | 'user_id'>): Promise<DeviceApiResponse<SpO2Reading>> {
     try {
+      // Validate reading
+      const validation = validateSpO2Reading(reading);
+      if (!validation.valid) {
+        await auditLogger.warn('SPO2_READING_REJECTED', { reason: validation.error, reading });
+        return { success: false, error: validation.error };
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 

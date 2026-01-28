@@ -493,6 +493,244 @@ describe('DeviceService', () => {
   });
 
   // ===========================================================================
+  // VALIDATION
+  // ===========================================================================
+
+  describe('Validation - Weight Readings', () => {
+    it('rejects negative weight', async () => {
+      const result = await DeviceService.saveWeightReading({
+        device_id: 'device-1',
+        weight: -10,
+        unit: 'lbs',
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('greater than 0');
+    });
+
+    it('rejects weight exceeding maximum', async () => {
+      const result = await DeviceService.saveWeightReading({
+        device_id: 'device-1',
+        weight: 2000,
+        unit: 'lbs',
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('cannot exceed');
+    });
+
+    it('rejects invalid BMI', async () => {
+      const result = await DeviceService.saveWeightReading({
+        device_id: 'device-1',
+        weight: 150,
+        unit: 'lbs',
+        bmi: 150,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('BMI must be between');
+    });
+
+    it('rejects invalid body fat percentage', async () => {
+      const result = await DeviceService.saveWeightReading({
+        device_id: 'device-1',
+        weight: 150,
+        unit: 'lbs',
+        body_fat: 85,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Body fat must be between');
+    });
+
+    it('rejects invalid muscle mass percentage', async () => {
+      const result = await DeviceService.saveWeightReading({
+        device_id: 'device-1',
+        weight: 150,
+        unit: 'lbs',
+        muscle_mass: 150,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Muscle mass must be between');
+    });
+  });
+
+  describe('Validation - Blood Pressure Readings', () => {
+    it('rejects systolic below minimum', async () => {
+      const result = await DeviceService.saveBPReading({
+        device_id: 'device-1',
+        systolic: 30,
+        diastolic: 20,
+        pulse: 72,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Systolic pressure cannot be below');
+    });
+
+    it('rejects systolic above maximum', async () => {
+      const result = await DeviceService.saveBPReading({
+        device_id: 'device-1',
+        systolic: 350,
+        diastolic: 80,
+        pulse: 72,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Systolic pressure cannot exceed');
+    });
+
+    it('rejects diastolic below minimum', async () => {
+      const result = await DeviceService.saveBPReading({
+        device_id: 'device-1',
+        systolic: 120,
+        diastolic: 10,
+        pulse: 72,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Diastolic pressure cannot be below');
+    });
+
+    it('rejects diastolic above maximum', async () => {
+      const result = await DeviceService.saveBPReading({
+        device_id: 'device-1',
+        systolic: 250,
+        diastolic: 220,
+        pulse: 72,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Diastolic pressure cannot exceed');
+    });
+
+    it('rejects systolic less than or equal to diastolic', async () => {
+      const result = await DeviceService.saveBPReading({
+        device_id: 'device-1',
+        systolic: 80,
+        diastolic: 90,
+        pulse: 72,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Systolic pressure must be greater than diastolic');
+    });
+
+    it('rejects pulse below minimum', async () => {
+      const result = await DeviceService.saveBPReading({
+        device_id: 'device-1',
+        systolic: 120,
+        diastolic: 80,
+        pulse: 10,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Pulse cannot be below');
+    });
+
+    it('rejects pulse above maximum', async () => {
+      const result = await DeviceService.saveBPReading({
+        device_id: 'device-1',
+        systolic: 120,
+        diastolic: 80,
+        pulse: 350,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Pulse cannot exceed');
+    });
+  });
+
+  describe('Validation - Glucose Readings', () => {
+    it('rejects glucose below minimum', async () => {
+      const result = await DeviceService.saveGlucoseReading({
+        device_id: 'device-1',
+        value: 5,
+        meal_context: 'fasting',
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Glucose cannot be below');
+    });
+
+    it('rejects glucose above maximum', async () => {
+      const result = await DeviceService.saveGlucoseReading({
+        device_id: 'device-1',
+        value: 900,
+        meal_context: 'after_meal',
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Glucose cannot exceed');
+    });
+  });
+
+  describe('Validation - SpO2 Readings', () => {
+    it('rejects negative SpO2', async () => {
+      const result = await DeviceService.saveSpO2Reading({
+        device_id: 'device-1',
+        spo2: -5,
+        pulse_rate: 72,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('cannot be negative');
+    });
+
+    it('rejects SpO2 above 100%', async () => {
+      const result = await DeviceService.saveSpO2Reading({
+        device_id: 'device-1',
+        spo2: 105,
+        pulse_rate: 72,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('cannot exceed 100%');
+    });
+
+    it('rejects pulse rate below minimum', async () => {
+      const result = await DeviceService.saveSpO2Reading({
+        device_id: 'device-1',
+        spo2: 98,
+        pulse_rate: 10,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Pulse rate cannot be below');
+    });
+
+    it('rejects pulse rate above maximum', async () => {
+      const result = await DeviceService.saveSpO2Reading({
+        device_id: 'device-1',
+        spo2: 98,
+        pulse_rate: 400,
+        measured_at: '2026-01-28T08:00:00Z',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Pulse rate cannot exceed');
+    });
+  });
+
+  // ===========================================================================
   // ERROR HANDLING
   // ===========================================================================
 

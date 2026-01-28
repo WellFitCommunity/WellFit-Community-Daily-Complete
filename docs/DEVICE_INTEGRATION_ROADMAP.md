@@ -1,7 +1,7 @@
 # Connected Health Devices - Integration Roadmap
 
 > Last Updated: 2026-01-28
-> Status: Phase 1 Complete
+> Status: Phase 2A Complete
 
 ---
 
@@ -65,40 +65,23 @@ wearable_vital_signs (
 
 ## Known Gaps (Phase 2 Backlog)
 
-### Priority 1: Critical Fixes
+### Priority 1: Critical Fixes - COMPLETE
 
-#### 1.1 MyHealthHubPage - Dynamic Connection Status
-**Issue:** Device tiles show hardcoded `connected: true` instead of real status.
+#### 1.1 MyHealthHubPage - Dynamic Connection Status ✅
+**Status:** Complete (commit `0fdd5487`)
 
-**Current Code:**
-```typescript
-const deviceTiles: DeviceTile[] = [
-  { id: 'scale', connected: true, ... },  // Hardcoded
-];
-```
-
-**Required:** Fetch from `DeviceService.getAllConnections()` on mount.
-
-**Impact:** Users see incorrect connection status.
-
-**Effort:** Small (1-2 hours)
+Device tiles now fetch real connection status from `DeviceService.getAllConnections()`.
 
 ---
 
-#### 1.2 DeviceService Test Coverage
-**Issue:** Service has no unit tests despite being critical infrastructure.
+#### 1.2 DeviceService Test Coverage ✅
+**Status:** Complete (commit `0fdd5487`)
 
-**Required Tests:**
-- `connectDevice()` - new connection, reconnection, error cases
-- `disconnectDevice()` - success, not found, error cases
-- `getConnectionStatus()` - connected, not connected, error
-- `getAllConnections()` - multiple devices, empty, error
-- Save/get methods for each reading type
-- Mapper functions for data transformation
-
-**Impact:** Risk of regressions in core functionality.
-
-**Effort:** Medium (3-4 hours)
+38 tests covering all DeviceService methods including:
+- Connection management (connect, disconnect, status)
+- All reading types (weight, BP, glucose, SpO2)
+- Validation (see 3.2)
+- Error handling
 
 ---
 
@@ -160,17 +143,18 @@ const deviceTiles: DeviceTile[] = [
 
 ---
 
-#### 3.2 Reading Validation
-**Issue:** No validation of reading values before storage.
+#### 3.2 Reading Validation ✅
+**Status:** Complete
 
-**Required:**
-- Reject physically impossible values (SpO2 > 100%, negative weight)
-- Warn on unlikely values (weight change > 20 lbs in 1 day)
-- Require confirmation for outliers
+Implemented validation in `DeviceService`:
+- Weight: 1-1500 lbs, BMI 5-100, body fat 1-70%, muscle mass 1-100%
+- Blood Pressure: systolic 40-300, diastolic 20-200, systolic > diastolic, pulse 20-300
+- Glucose: 10-800 mg/dL
+- SpO2: 0-100%, pulse rate 20-300 bpm
 
-**Impact:** Data quality issues.
+Invalid readings are rejected with clear error messages and logged via `auditLogger.warn()`.
 
-**Effort:** Small (1-2 hours)
+18 validation tests added to `deviceService.test.ts`.
 
 ---
 
@@ -256,12 +240,12 @@ const deviceTiles: DeviceTile[] = [
 ## Recommended Implementation Order
 
 ```
-Phase 2A - Quick Wins (1 sprint)
-├── 1.1 Fix MyHealthHubPage dynamic status
-├── 1.2 Add DeviceService tests
-└── 3.2 Reading validation
+Phase 2A - Quick Wins ✅ COMPLETE
+├── ✅ 1.1 Fix MyHealthHubPage dynamic status
+├── ✅ 1.2 Add DeviceService tests
+└── ✅ 3.2 Reading validation
 
-Phase 2B - User Experience (1-2 sprints)
+Phase 2B - User Experience (1-2 sprints) ← NEXT
 ├── 2.1 Trend charts (start with weight/BP)
 ├── 2.2 Manual entry forms
 └── 3.1 Critical value alerts
