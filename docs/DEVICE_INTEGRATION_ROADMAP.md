@@ -104,18 +104,19 @@ Files:
 
 ---
 
-#### 2.2 Manual Entry Forms
-**Issue:** "Enter Manually" buttons navigate away to `/health-observations`.
+#### 2.2 Manual Entry Forms ✅
+**Status:** Complete
 
-**Required:**
-- Inline forms on each device page
-- Pre-filled device type and current timestamp
-- Validation for reasonable ranges
-- Success confirmation
+Implemented reusable `ManualEntryForm` component with inline forms:
+- Form configs for all vital types (BP, glucose, SpO2, weight)
+- Real-time validation with min/max constraints
+- Success confirmation with "Add Another" option
+- Integrated into all 4 device pages
 
-**Impact:** Friction in manual data entry workflow.
-
-**Effort:** Medium (2-3 hours per device)
+Files:
+- `src/components/devices/ManualEntryForm.tsx` - Reusable form component
+- 20+ tests in `ManualEntryForm.test.tsx`
+- All device pages updated with inline forms
 
 ---
 
@@ -247,9 +248,9 @@ Phase 2A - Quick Wins ✅ COMPLETE
 ├── ✅ 1.2 Add DeviceService tests
 └── ✅ 3.2 Reading validation
 
-Phase 2B - User Experience (1-2 sprints) ← NEARLY COMPLETE
+Phase 2B - User Experience ✅ COMPLETE
 ├── ✅ 2.1 Trend charts (all devices)
-├── 2.2 Manual entry forms
+├── ✅ 2.2 Manual entry forms
 └── ✅ 3.1 Critical value alerts
 
 Phase 3 - Device Connectivity (2-3 sprints)

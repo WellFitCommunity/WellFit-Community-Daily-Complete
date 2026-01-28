@@ -370,7 +370,7 @@ describe('PulseOximeterPage', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/my-health');
     });
 
-    it('navigates to health observations for manual entry', async () => {
+    it('shows inline manual entry form when Add Reading clicked', async () => {
       vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
         success: true,
         data: null,
@@ -383,12 +383,16 @@ describe('PulseOximeterPage', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /enter spo2 reading manually/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /add reading/i })).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByRole('button', { name: /enter spo2 reading manually/i }));
+      fireEvent.click(screen.getByRole('button', { name: /add reading/i }));
 
-      expect(mockNavigate).toHaveBeenCalledWith('/health-observations');
+      await waitFor(() => {
+        expect(screen.getByText('Oxygen Saturation Reading')).toBeInTheDocument();
+        expect(screen.getByLabelText(/SpO2/)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Pulse Rate/)).toBeInTheDocument();
+      });
     });
   });
 

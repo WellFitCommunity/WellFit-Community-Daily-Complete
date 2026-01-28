@@ -5,6 +5,7 @@ import { useBranding } from '../../BrandingContext';
 import { DeviceService, type SpO2Reading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
 import CriticalValueAlert, { checkSpO2CriticalValues, type CriticalAlert } from '../../components/devices/CriticalValueAlert';
+import ManualEntryForm from '../../components/devices/ManualEntryForm';
 
 type SpO2Status = 'normal' | 'low' | 'critical';
 
@@ -17,6 +18,7 @@ const PulseOximeterPage: React.FC = () => {
   const [readings, setReadings] = useState<SpO2Reading[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+  const [showManualEntry, setShowManualEntry] = useState(false);
 
   // Load connection status and readings on mount
   useEffect(() => {
@@ -125,6 +127,21 @@ const PulseOximeterPage: React.FC = () => {
 
   const handleDismissAlert = (alertId: string) => {
     setDismissedAlerts((prev) => new Set([...prev, alertId]));
+  };
+
+  const handleManualSave = async (data: Record<string, unknown>) => {
+    const result = await DeviceService.saveSpO2Reading({
+      device_id: 'manual',
+      spo2: data.spo2 as number,
+      pulse_rate: data.pulse_rate as number,
+      measured_at: data.measured_at as string,
+    });
+
+    if (result.success) {
+      await loadData();
+    }
+
+    return result;
   };
 
   return (
@@ -340,22 +357,36 @@ const PulseOximeterPage: React.FC = () => {
 
         {/* Manual Entry */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: branding.primaryColor }}
-          >
-            Manual Entry
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Don't have a connected pulse oximeter? You can manually enter your readings.
-          </p>
-          <button
-            onClick={() => navigate('/health-observations')}
-            className="px-6 py-3 rounded-xl font-semibold text-lg text-white transition-all duration-300 hover:opacity-90"
-            style={{ backgroundColor: branding.secondaryColor }}
-          >
-            Enter SpO2 Reading Manually
-          </button>
+          <div className="flex items-center justify-between mb-4">
+            <h2
+              className="text-2xl font-bold"
+              style={{ color: branding.primaryColor }}
+            >
+              Manual Entry
+            </h2>
+            {!showManualEntry && (
+              <button
+                onClick={() => setShowManualEntry(true)}
+                className="px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 hover:opacity-90"
+                style={{ backgroundColor: branding.primaryColor }}
+              >
+                + Add Reading
+              </button>
+            )}
+          </div>
+
+          {showManualEntry ? (
+            <ManualEntryForm
+              vitalType="spo2"
+              onSave={handleManualSave}
+              onCancel={() => setShowManualEntry(false)}
+              primaryColor={branding.primaryColor}
+            />
+          ) : (
+            <p className="text-gray-600">
+              Don't have a connected pulse oximeter? Click "Add Reading" to manually enter your SpO2 level.
+            </p>
+          )}
         </div>
 
         {/* Back Button */}

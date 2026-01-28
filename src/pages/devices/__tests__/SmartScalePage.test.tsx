@@ -290,7 +290,7 @@ describe('SmartScalePage', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/my-health');
     });
 
-    it('navigates to health observations for manual entry', async () => {
+    it('shows inline manual entry form when Add Reading clicked', async () => {
       vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
         success: true,
         data: null,
@@ -303,12 +303,15 @@ describe('SmartScalePage', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /enter weight manually/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /add reading/i })).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByRole('button', { name: /enter weight manually/i }));
+      fireEvent.click(screen.getByRole('button', { name: /add reading/i }));
 
-      expect(mockNavigate).toHaveBeenCalledWith('/health-observations');
+      await waitFor(() => {
+        expect(screen.getByText('Weight Measurement')).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Weight/)).toBeInTheDocument();
+      });
     });
   });
 

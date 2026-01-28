@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type WeightReading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries } from '../../components/devices/VitalTrendChart';
+import ManualEntryForm from '../../components/devices/ManualEntryForm';
 
 const SmartScalePage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const SmartScalePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [readings, setReadings] = useState<WeightReading[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [showManualEntry, setShowManualEntry] = useState(false);
 
   // Load connection status and readings on mount
   useEffect(() => {
@@ -70,6 +72,23 @@ const SmartScalePage: React.FC = () => {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const handleManualSave = async (data: Record<string, unknown>) => {
+    const result = await DeviceService.saveWeightReading({
+      device_id: 'manual',
+      weight: data.weight as number,
+      unit: 'lbs',
+      bmi: data.bmi as number | undefined,
+      body_fat: data.body_fat as number | undefined,
+      measured_at: data.measured_at as string,
+    });
+
+    if (result.success) {
+      await loadData();
+    }
+
+    return result;
   };
 
   // Prepare chart data
@@ -209,19 +228,33 @@ const SmartScalePage: React.FC = () => {
 
         {/* Manual Entry */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
-            Manual Entry
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Don't have a smart scale? You can manually enter your weight.
-          </p>
-          <button
-            onClick={() => navigate('/health-observations')}
-            className="px-6 py-3 rounded-xl font-semibold text-lg text-white transition-all duration-300 hover:opacity-90"
-            style={{ backgroundColor: branding.secondaryColor }}
-          >
-            Enter Weight Manually
-          </button>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
+              Manual Entry
+            </h2>
+            {!showManualEntry && (
+              <button
+                onClick={() => setShowManualEntry(true)}
+                className="px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 hover:opacity-90"
+                style={{ backgroundColor: branding.primaryColor }}
+              >
+                + Add Reading
+              </button>
+            )}
+          </div>
+
+          {showManualEntry ? (
+            <ManualEntryForm
+              vitalType="weight"
+              onSave={handleManualSave}
+              onCancel={() => setShowManualEntry(false)}
+              primaryColor={branding.primaryColor}
+            />
+          ) : (
+            <p className="text-gray-600">
+              Don't have a smart scale? Click "Add Reading" to manually enter your weight.
+            </p>
+          )}
         </div>
 
         {/* Back Button */}

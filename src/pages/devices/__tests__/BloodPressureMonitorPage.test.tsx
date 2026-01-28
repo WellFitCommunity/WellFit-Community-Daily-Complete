@@ -317,7 +317,7 @@ describe('BloodPressureMonitorPage', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/my-health');
     });
 
-    it('navigates to health observations for manual entry', async () => {
+    it('shows inline manual entry form when Add Reading clicked', async () => {
       vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
         success: true,
         data: null,
@@ -330,12 +330,16 @@ describe('BloodPressureMonitorPage', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /enter bp reading manually/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /add reading/i })).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByRole('button', { name: /enter bp reading manually/i }));
+      fireEvent.click(screen.getByRole('button', { name: /add reading/i }));
 
-      expect(mockNavigate).toHaveBeenCalledWith('/health-observations');
+      await waitFor(() => {
+        expect(screen.getByText('Blood Pressure Reading')).toBeInTheDocument();
+        expect(screen.getByLabelText(/Systolic/)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Diastolic/)).toBeInTheDocument();
+      });
     });
   });
 

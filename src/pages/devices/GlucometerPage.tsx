@@ -5,6 +5,7 @@ import { useBranding } from '../../BrandingContext';
 import { DeviceService, type GlucoseReading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
 import CriticalValueAlert, { checkGlucoseCriticalValues, type CriticalAlert } from '../../components/devices/CriticalValueAlert';
+import ManualEntryForm from '../../components/devices/ManualEntryForm';
 
 type GlucoseStatus = 'normal' | 'low' | 'high' | 'critical';
 
@@ -17,6 +18,7 @@ const GlucometerPage: React.FC = () => {
   const [readings, setReadings] = useState<GlucoseReading[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+  const [showManualEntry, setShowManualEntry] = useState(false);
 
   // Load connection status and readings on mount
   useEffect(() => {
@@ -153,6 +155,21 @@ const GlucometerPage: React.FC = () => {
 
   const handleDismissAlert = (alertId: string) => {
     setDismissedAlerts((prev) => new Set([...prev, alertId]));
+  };
+
+  const handleManualSave = async (data: Record<string, unknown>) => {
+    const result = await DeviceService.saveGlucoseReading({
+      device_id: 'manual',
+      value: data.value as number,
+      meal_context: data.meal_context as GlucoseReading['meal_context'],
+      measured_at: data.measured_at as string,
+    });
+
+    if (result.success) {
+      await loadData();
+    }
+
+    return result;
   };
 
   return (
@@ -349,22 +366,36 @@ const GlucometerPage: React.FC = () => {
 
         {/* Manual Entry */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: branding.primaryColor }}
-          >
-            Manual Entry
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Don't have a connected glucometer? You can manually enter your readings.
-          </p>
-          <button
-            onClick={() => navigate('/health-observations')}
-            className="px-6 py-3 rounded-xl font-semibold text-lg text-white transition-all duration-300 hover:opacity-90"
-            style={{ backgroundColor: branding.secondaryColor }}
-          >
-            Enter Glucose Reading Manually
-          </button>
+          <div className="flex items-center justify-between mb-4">
+            <h2
+              className="text-2xl font-bold"
+              style={{ color: branding.primaryColor }}
+            >
+              Manual Entry
+            </h2>
+            {!showManualEntry && (
+              <button
+                onClick={() => setShowManualEntry(true)}
+                className="px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 hover:opacity-90"
+                style={{ backgroundColor: branding.primaryColor }}
+              >
+                + Add Reading
+              </button>
+            )}
+          </div>
+
+          {showManualEntry ? (
+            <ManualEntryForm
+              vitalType="glucose"
+              onSave={handleManualSave}
+              onCancel={() => setShowManualEntry(false)}
+              primaryColor={branding.primaryColor}
+            />
+          ) : (
+            <p className="text-gray-600">
+              Don't have a connected glucometer? Click "Add Reading" to manually enter your glucose level.
+            </p>
+          )}
         </div>
 
         {/* Back Button */}
