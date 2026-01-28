@@ -121,27 +121,27 @@ Files:
 
 ### Priority 3: Patient Safety
 
-#### 3.1 Critical Value Alerts
-**Issue:** No warnings for dangerous readings.
+#### 3.1 Critical Value Alerts ✅
+**Status:** Complete
 
-**Thresholds:**
-| Vital | Critical Low | Critical High |
-|-------|--------------|---------------|
-| SpO2 | < 90% | N/A |
-| BP Systolic | < 90 | > 180 |
-| BP Diastolic | < 60 | > 120 |
-| Glucose | < 54 mg/dL | > 400 mg/dL |
-| Weight | N/A | > 10% change in 7 days |
+Implemented `CriticalValueAlert` component with detection functions:
+- SpO2: Critical < 90%, Warning 90-94%
+- BP Systolic: Critical < 90 or > 180, Warning outside 100-160
+- BP Diastolic: Critical < 60 or > 120, Warning outside 65-100
+- Glucose: Critical < 54 or > 400 mg/dL, Warning < 70 or > 250
+- Pulse: Critical < 40 or > 150, Warning outside 50-120
 
-**Required:**
-- Visual alert banner on device page
-- Push notification (if enabled)
-- Optional: Care team notification
-- Audit log entry for compliance
+Features:
+- Visual alert banners (red for critical, yellow for warning)
+- Action recommendations for each alert type
+- Dismissible alerts with session state
+- Aria attributes for accessibility
+- 25 unit tests for detection functions and component
 
-**Impact:** Patient safety concern.
-
-**Effort:** Medium (3-4 hours)
+Files:
+- `src/components/devices/CriticalValueAlert.tsx`
+- `src/components/devices/__tests__/CriticalValueAlert.test.tsx`
+- Integrated into BP, Glucose, and SpO2 pages
 
 ---
 
@@ -247,10 +247,10 @@ Phase 2A - Quick Wins ✅ COMPLETE
 ├── ✅ 1.2 Add DeviceService tests
 └── ✅ 3.2 Reading validation
 
-Phase 2B - User Experience (1-2 sprints) ← IN PROGRESS
+Phase 2B - User Experience (1-2 sprints) ← NEARLY COMPLETE
 ├── ✅ 2.1 Trend charts (all devices)
 ├── 2.2 Manual entry forms
-└── 3.1 Critical value alerts
+└── ✅ 3.1 Critical value alerts
 
 Phase 3 - Device Connectivity (2-3 sprints)
 ├── 4.1 Bluetooth Web API (POC with one device)

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type BPReading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
+import CriticalValueAlert, { checkBPCriticalValues, type CriticalAlert } from '../../components/devices/CriticalValueAlert';
 
 type BPStatus = 'normal' | 'elevated' | 'high' | 'low';
 
@@ -15,6 +16,7 @@ const BloodPressureMonitorPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [readings, setReadings] = useState<BPReading[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
 
   // Load connection status and readings on mount
   useEffect(() => {
@@ -117,6 +119,20 @@ const BloodPressureMonitorPage: React.FC = () => {
     { label: 'Normal Diastolic', value: 80, color: '#22c55e', strokeDasharray: '3 3' },
   ];
 
+  // Check for critical values in recent readings (only check most recent)
+  const criticalAlerts: CriticalAlert[] = useMemo(() => {
+    if (readings.length === 0) return [];
+    // Check only the most recent reading for alerts
+    const latestReading = readings[0];
+    return checkBPCriticalValues(latestReading).filter(
+      (alert) => !dismissedAlerts.has(alert.id)
+    );
+  }, [readings, dismissedAlerts]);
+
+  const handleDismissAlert = (alertId: string) => {
+    setDismissedAlerts((prev) => new Set([...prev, alertId]));
+  };
+
   return (
     <div
       className="min-h-screen pb-20"
@@ -134,6 +150,12 @@ const BloodPressureMonitorPage: React.FC = () => {
             Track your blood pressure and pulse readings
           </p>
         </div>
+
+        {/* Critical Value Alerts */}
+        <CriticalValueAlert
+          alerts={criticalAlerts}
+          onDismiss={handleDismissAlert}
+        />
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6">

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type SpO2Reading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
+import CriticalValueAlert, { checkSpO2CriticalValues, type CriticalAlert } from '../../components/devices/CriticalValueAlert';
 
 type SpO2Status = 'normal' | 'low' | 'critical';
 
@@ -15,6 +16,7 @@ const PulseOximeterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [readings, setReadings] = useState<SpO2Reading[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
 
   // Load connection status and readings on mount
   useEffect(() => {
@@ -112,6 +114,19 @@ const PulseOximeterPage: React.FC = () => {
     { label: 'Low', value: 90, color: '#eab308', strokeDasharray: '3 3' },
   ];
 
+  // Check for critical values in recent readings
+  const criticalAlerts: CriticalAlert[] = useMemo(() => {
+    if (readings.length === 0) return [];
+    const latestReading = readings[0];
+    return checkSpO2CriticalValues(latestReading).filter(
+      (alert) => !dismissedAlerts.has(alert.id)
+    );
+  }, [readings, dismissedAlerts]);
+
+  const handleDismissAlert = (alertId: string) => {
+    setDismissedAlerts((prev) => new Set([...prev, alertId]));
+  };
+
   return (
     <div
       className="min-h-screen pb-20"
@@ -129,6 +144,12 @@ const PulseOximeterPage: React.FC = () => {
             Monitor your blood oxygen levels (SpO2) and pulse rate
           </p>
         </div>
+
+        {/* Critical Value Alerts */}
+        <CriticalValueAlert
+          alerts={criticalAlerts}
+          onDismiss={handleDismissAlert}
+        />
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6">
