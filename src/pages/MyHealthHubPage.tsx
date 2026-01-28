@@ -77,6 +77,14 @@ const MyHealthHubPage: React.FC = () => {
       route: '/devices/glucometer',
       connected: false,
     },
+    {
+      id: 'pulse-ox',
+      icon: '🫁',
+      title: 'Pulse Oximeter',
+      description: 'Blood oxygen (SpO2) and pulse rate',
+      route: '/devices/pulse-oximeter',
+      connected: false,
+    },
   ];
 
   const healthTiles: HealthNavigationTile[] = [

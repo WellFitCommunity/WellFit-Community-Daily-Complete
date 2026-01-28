@@ -191,6 +191,7 @@ export const DentalHealthDashboard = React.lazy(() => import('../components/dent
 export const SmartScalePage = React.lazy(() => import('../pages/devices/SmartScalePage'));
 export const BloodPressureMonitorPage = React.lazy(() => import('../pages/devices/BloodPressureMonitorPage'));
 export const GlucometerPage = React.lazy(() => import('../pages/devices/GlucometerPage'));
+export const PulseOximeterPage = React.lazy(() => import('../pages/devices/PulseOximeterPage'));
 export const HealthRecordsDownloadPage = React.lazy(() => import('../pages/HealthRecordsDownloadPage'));
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -357,6 +358,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   SmartScalePage,
   BloodPressureMonitorPage,
   GlucometerPage,
+  PulseOximeterPage,
   HealthRecordsDownloadPage,
 
   // CHW
