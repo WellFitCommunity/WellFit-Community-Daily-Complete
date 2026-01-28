@@ -187,6 +187,12 @@ export const WearableDashboard = React.lazy(() => import('../components/patient/
 export const CommunityMoments = React.lazy(() => import('../components/CommunityMoments'));
 export const DentalHealthDashboard = React.lazy(() => import('../components/dental/DentalHealthDashboard'));
 
+// Connected Devices & Health Records
+export const SmartScalePage = React.lazy(() => import('../pages/devices/SmartScalePage'));
+export const BloodPressureMonitorPage = React.lazy(() => import('../pages/devices/BloodPressureMonitorPage'));
+export const GlucometerPage = React.lazy(() => import('../pages/devices/GlucometerPage'));
+export const HealthRecordsDownloadPage = React.lazy(() => import('../pages/HealthRecordsDownloadPage'));
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHW (Community Health Worker) COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -348,6 +354,10 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   WearableDashboard,
   CommunityMoments,
   DentalHealthDashboard,
+  SmartScalePage,
+  BloodPressureMonitorPage,
+  GlucometerPage,
+  HealthRecordsDownloadPage,
 
   // CHW
   CHWDashboardPage,

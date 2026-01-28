@@ -1,7 +1,8 @@
 // src/pages/MyHealthHubPage.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
+
 interface HealthNavigationTile {
   id: string;
   icon: string;
@@ -11,15 +12,72 @@ interface HealthNavigationTile {
   color: string;
 }
 
+interface DeviceTile {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  route: string;
+  connected?: boolean;
+}
+
 const MyHealthHubPage: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Use branding colors for tile accents - alternating pattern
   const getTileAccentColor = (index: number) => {
     // Alternate between primary and secondary colors
     return index % 2 === 0 ? branding.primaryColor : branding.secondaryColor;
   };
+
+  // Handle health records download
+  const handleDownloadRecords = async () => {
+    setIsDownloading(true);
+    try {
+      // Navigate to download page or trigger download modal
+      navigate('/health-records-download');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Connected Devices tiles
+  const deviceTiles: DeviceTile[] = [
+    {
+      id: 'smartwatch',
+      icon: '⌚',
+      title: 'Smartwatch',
+      description: 'Fall detection, heart rate, steps & activity',
+      route: '/wearables',
+      connected: false,
+    },
+    {
+      id: 'scale',
+      icon: '⚖️',
+      title: 'Smart Scale',
+      description: 'Track weight, BMI, and body composition',
+      route: '/devices/scale',
+      connected: false,
+    },
+    {
+      id: 'bp-monitor',
+      icon: '❤️',
+      title: 'BP Monitor',
+      description: 'Blood pressure and pulse readings',
+      route: '/devices/blood-pressure',
+      connected: false,
+    },
+    {
+      id: 'glucometer',
+      icon: '🩸',
+      title: 'Glucometer',
+      description: 'Blood glucose monitoring for diabetes care',
+      route: '/devices/glucometer',
+      connected: false,
+    },
+  ];
 
   const healthTiles: HealthNavigationTile[] = [
     {
@@ -78,14 +136,6 @@ const MyHealthHubPage: React.FC = () => {
       route: '/conditions',
       color: '', // Will use branding color
     },
-    {
-      id: 'wearables',
-      icon: '⌚',
-      title: 'My Wearables',
-      description: 'Connect your smartwatch for fall detection and vitals',
-      route: '/wearables',
-      color: '', // Will use branding color
-    },
   ];
 
   return (
@@ -101,9 +151,75 @@ const MyHealthHubPage: React.FC = () => {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
             My Health Records
           </h1>
-          <p className="text-xl sm:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow-sm">
+          <p className="text-xl sm:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow-sm mb-6">
             Access your complete health information in one place
           </p>
+
+          {/* Download Button */}
+          <button
+            onClick={handleDownloadRecords}
+            disabled={isDownloading}
+            aria-label="Download all my health records"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="text-2xl" aria-hidden="true">📥</span>
+            <span>{isDownloading ? 'Preparing Download...' : 'Download My Records'}</span>
+          </button>
+        </div>
+
+        {/* Connected Devices Section */}
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-4xl" aria-hidden="true">📱</span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+              My Connected Devices
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6" role="navigation" aria-label="Connected health devices">
+            {deviceTiles.map((device) => (
+              <button
+                key={device.id}
+                onClick={() => navigate(device.route)}
+                aria-label={`${device.connected ? 'Connected' : 'Connect'} ${device.title}: ${device.description}`}
+                className="group relative bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-6 text-center"
+                style={{ minHeight: '180px' }}
+              >
+                {/* Connection Status Indicator */}
+                <div
+                  className={`absolute top-3 right-3 w-3 h-3 rounded-full ${
+                    device.connected ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                  title={device.connected ? 'Connected' : 'Not connected'}
+                />
+
+                {/* Icon */}
+                <div className="text-5xl sm:text-6xl mb-3 relative z-10 transform group-hover:scale-110 transition-transform duration-300" aria-hidden="true">
+                  {device.icon}
+                </div>
+
+                {/* Title */}
+                <h3
+                  className="text-lg sm:text-xl font-bold mb-2 relative z-10"
+                  style={{ color: branding.primaryColor }}
+                >
+                  {device.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-sm sm:text-base text-gray-600 leading-snug relative z-10">
+                  {device.description}
+                </p>
+
+                {/* Connect/View Label */}
+                <div
+                  className="mt-3 text-sm font-semibold opacity-70 group-hover:opacity-100 transition-opacity"
+                  style={{ color: branding.primaryColor }}
+                >
+                  {device.connected ? 'View Data →' : 'Tap to Connect →'}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Navigation Tiles Grid - First row has Appointments, second row has 2x2 grid */}
