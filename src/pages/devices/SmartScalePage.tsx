@@ -1,49 +1,79 @@
 // src/pages/devices/SmartScalePage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
-
-interface WeightReading {
-  id: string;
-  date: string;
-  weight: number;
-  bmi?: number;
-  bodyFat?: number;
-  muscleMass?: number;
-}
+import { DeviceService, type WeightReading } from '../../services/deviceService';
 
 const SmartScalePage: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [readings, setReadings] = useState<WeightReading[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock weight readings for demonstration
-  const mockReadings: WeightReading[] = [
-    { id: '1', date: '2026-01-28', weight: 165.2, bmi: 24.5, bodyFat: 22.1, muscleMass: 45.3 },
-    { id: '2', date: '2026-01-25', weight: 165.8, bmi: 24.6, bodyFat: 22.3, muscleMass: 45.1 },
-    { id: '3', date: '2026-01-22', weight: 166.1, bmi: 24.7, bodyFat: 22.5, muscleMass: 44.9 },
-  ];
+  // Load connection status and readings on mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [connectionResult, readingsResult] = await Promise.all([
+        DeviceService.getConnectionStatus('smart_scale'),
+        DeviceService.getWeightReadings(10),
+      ]);
+
+      if (connectionResult.success && connectionResult.data) {
+        setIsConnected(connectionResult.data.connected);
+      }
+
+      if (readingsResult.success && readingsResult.data) {
+        setReadings(readingsResult.data);
+      }
+    } catch (err) {
+      setError('Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleConnect = async () => {
     setIsConnecting(true);
-    // Simulate connection process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsConnected(true);
-    setIsConnecting(false);
+    setError(null);
+    try {
+      const result = await DeviceService.connectDevice('smart_scale', 'Smart Scale');
+      if (result.success) {
+        setIsConnected(true);
+        await loadData();
+      } else {
+        setError(result.error || 'Failed to connect');
+      }
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
-  const handleDisconnect = () => {
-    setIsConnected(false);
+  const handleDisconnect = async () => {
+    const result = await DeviceService.disconnectDevice('smart_scale');
+    if (result.success) {
+      setIsConnected(false);
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   };
 
   return (
-    <div
-      className="min-h-screen pb-20"
-      style={{ background: branding.gradient }}
-    >
+    <div className="min-h-screen pb-20" style={{ background: branding.gradient }}>
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-3xl">
-
         {/* Header */}
         <div className="text-center mb-8">
           <div className="text-6xl sm:text-7xl mb-4">⚖️</div>
@@ -55,22 +85,26 @@ const SmartScalePage: React.FC = () => {
           </p>
         </div>
 
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6">
+            {error}
+          </div>
+        )}
+
         {/* Connection Card */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div
-                className={`w-4 h-4 rounded-full ${
-                  isConnected ? 'bg-green-500' : 'bg-gray-300'
-                }`}
+                className={`w-4 h-4 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`}
               />
               <span className="text-lg font-semibold text-gray-700">
-                {isConnected ? 'Connected' : 'Not Connected'}
+                {isLoading ? 'Loading...' : isConnected ? 'Connected' : 'Not Connected'}
               </span>
             </div>
             <button
               onClick={isConnected ? handleDisconnect : handleConnect}
-              disabled={isConnecting}
+              disabled={isConnecting || isLoading}
               className={`px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
                 isConnected
                   ? 'bg-red-100 text-red-600 hover:bg-red-200'
@@ -82,7 +116,7 @@ const SmartScalePage: React.FC = () => {
             </button>
           </div>
 
-          {!isConnected && (
+          {!isConnected && !isLoading && (
             <div className="bg-blue-50 rounded-xl p-4 text-blue-700">
               <h3 className="font-semibold mb-2">Compatible Smart Scales:</h3>
               <ul className="list-disc list-inside space-y-1 text-sm">
@@ -99,56 +133,56 @@ const SmartScalePage: React.FC = () => {
         {/* Weight History */}
         {isConnected && (
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-            <h2
-              className="text-2xl font-bold mb-6"
-              style={{ color: branding.primaryColor }}
-            >
+            <h2 className="text-2xl font-bold mb-6" style={{ color: branding.primaryColor }}>
               Recent Measurements
             </h2>
-            <div className="space-y-4">
-              {mockReadings.map((reading) => (
-                <div
-                  key={reading.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-                >
-                  <div>
-                    <div className="text-sm text-gray-500">{reading.date}</div>
-                    <div className="text-2xl font-bold text-gray-800">
-                      {reading.weight} lbs
+            {readings.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                No readings yet. Step on your scale to record your first measurement.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {readings.map(reading => (
+                  <div
+                    key={reading.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+                  >
+                    <div>
+                      <div className="text-sm text-gray-500">{formatDate(reading.measured_at)}</div>
+                      <div className="text-2xl font-bold text-gray-800">
+                        {reading.weight} {reading.unit}
+                      </div>
+                    </div>
+                    <div className="text-right grid grid-cols-3 gap-4">
+                      {reading.bmi && (
+                        <div>
+                          <div className="text-xs text-gray-500">BMI</div>
+                          <div className="font-semibold">{reading.bmi.toFixed(1)}</div>
+                        </div>
+                      )}
+                      {reading.body_fat && (
+                        <div>
+                          <div className="text-xs text-gray-500">Body Fat</div>
+                          <div className="font-semibold">{reading.body_fat.toFixed(1)}%</div>
+                        </div>
+                      )}
+                      {reading.muscle_mass && (
+                        <div>
+                          <div className="text-xs text-gray-500">Muscle</div>
+                          <div className="font-semibold">{reading.muscle_mass.toFixed(1)}%</div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right grid grid-cols-3 gap-4">
-                    {reading.bmi && (
-                      <div>
-                        <div className="text-xs text-gray-500">BMI</div>
-                        <div className="font-semibold">{reading.bmi}</div>
-                      </div>
-                    )}
-                    {reading.bodyFat && (
-                      <div>
-                        <div className="text-xs text-gray-500">Body Fat</div>
-                        <div className="font-semibold">{reading.bodyFat}%</div>
-                      </div>
-                    )}
-                    {reading.muscleMass && (
-                      <div>
-                        <div className="text-xs text-gray-500">Muscle</div>
-                        <div className="font-semibold">{reading.muscleMass}%</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* Manual Entry */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: branding.primaryColor }}
-          >
+          <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             Manual Entry
           </h2>
           <p className="text-gray-600 mb-4">

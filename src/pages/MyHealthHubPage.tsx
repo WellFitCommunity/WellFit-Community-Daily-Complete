@@ -51,7 +51,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'Smartwatch',
       description: 'Fall detection, heart rate, steps & activity',
       route: '/wearables',
-      connected: false,
+      connected: true,
     },
     {
       id: 'scale',
@@ -59,7 +59,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'Smart Scale',
       description: 'Track weight, BMI, and body composition',
       route: '/devices/scale',
-      connected: false,
+      connected: true,
     },
     {
       id: 'bp-monitor',
@@ -67,7 +67,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'BP Monitor',
       description: 'Blood pressure and pulse readings',
       route: '/devices/blood-pressure',
-      connected: false,
+      connected: true,
     },
     {
       id: 'glucometer',
@@ -75,7 +75,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'Glucometer',
       description: 'Blood glucose monitoring for diabetes care',
       route: '/devices/glucometer',
-      connected: false,
+      connected: true,
     },
     {
       id: 'pulse-ox',
@@ -83,7 +83,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'Pulse Oximeter',
       description: 'Blood oxygen (SpO2) and pulse rate',
       route: '/devices/pulse-oximeter',
-      connected: false,
+      connected: true,
     },
   ];
 

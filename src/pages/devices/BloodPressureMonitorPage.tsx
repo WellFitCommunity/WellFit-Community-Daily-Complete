@@ -1,32 +1,55 @@
 // src/pages/devices/BloodPressureMonitorPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
+import { DeviceService, type BPReading } from '../../services/deviceService';
 
-interface BPReading {
-  id: string;
-  date: string;
-  systolic: number;
-  diastolic: number;
-  pulse: number;
-  status: 'normal' | 'elevated' | 'high' | 'low';
-}
+type BPStatus = 'normal' | 'elevated' | 'high' | 'low';
 
 const BloodPressureMonitorPage: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [readings, setReadings] = useState<BPReading[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock BP readings for demonstration
-  const mockReadings: BPReading[] = [
-    { id: '1', date: '2026-01-28', systolic: 118, diastolic: 76, pulse: 72, status: 'normal' },
-    { id: '2', date: '2026-01-27', systolic: 122, diastolic: 78, pulse: 74, status: 'normal' },
-    { id: '3', date: '2026-01-26', systolic: 128, diastolic: 82, pulse: 76, status: 'elevated' },
-    { id: '4', date: '2026-01-25', systolic: 115, diastolic: 74, pulse: 70, status: 'normal' },
-  ];
+  // Load connection status and readings on mount
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const getStatusColor = (status: BPReading['status']) => {
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [connectionResult, readingsResult] = await Promise.all([
+        DeviceService.getConnectionStatus('bp_monitor'),
+        DeviceService.getBPReadings(10),
+      ]);
+
+      if (connectionResult.success && connectionResult.data) {
+        setIsConnected(connectionResult.data.connected);
+      }
+
+      if (readingsResult.success && readingsResult.data) {
+        setReadings(readingsResult.data);
+      }
+    } catch {
+      setError('Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getBPStatus = (systolic: number, diastolic: number): BPStatus => {
+    if (systolic < 90 || diastolic < 60) return 'low';
+    if (systolic < 120 && diastolic < 80) return 'normal';
+    if (systolic < 130 && diastolic < 80) return 'elevated';
+    return 'high';
+  };
+
+  const getStatusColor = (status: BPStatus) => {
     switch (status) {
       case 'normal':
         return 'bg-green-100 text-green-700';
@@ -41,16 +64,35 @@ const BloodPressureMonitorPage: React.FC = () => {
     }
   };
 
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    // Simulate connection process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsConnected(true);
-    setIsConnecting(false);
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   };
 
-  const handleDisconnect = () => {
-    setIsConnected(false);
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    setError(null);
+    try {
+      const result = await DeviceService.connectDevice('bp_monitor', 'Blood Pressure Monitor');
+      if (result.success) {
+        setIsConnected(true);
+        await loadData();
+      } else {
+        setError(result.error || 'Failed to connect');
+      }
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    const result = await DeviceService.disconnectDevice('bp_monitor');
+    if (result.success) {
+      setIsConnected(false);
+    }
   };
 
   return (
@@ -71,6 +113,12 @@ const BloodPressureMonitorPage: React.FC = () => {
           </p>
         </div>
 
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6">
+            {error}
+          </div>
+        )}
+
         {/* Connection Card */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
@@ -81,12 +129,12 @@ const BloodPressureMonitorPage: React.FC = () => {
                 }`}
               />
               <span className="text-lg font-semibold text-gray-700">
-                {isConnected ? 'Connected' : 'Not Connected'}
+                {isLoading ? 'Loading...' : isConnected ? 'Connected' : 'Not Connected'}
               </span>
             </div>
             <button
               onClick={isConnected ? handleDisconnect : handleConnect}
-              disabled={isConnecting}
+              disabled={isConnecting || isLoading}
               className={`px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
                 isConnected
                   ? 'bg-red-100 text-red-600 hover:bg-red-200'
@@ -98,7 +146,7 @@ const BloodPressureMonitorPage: React.FC = () => {
             </button>
           </div>
 
-          {!isConnected && (
+          {!isConnected && !isLoading && (
             <div className="bg-blue-50 rounded-xl p-4 text-blue-700">
               <h3 className="font-semibold mb-2">Compatible BP Monitors:</h3>
               <ul className="list-disc list-inside space-y-1 text-sm">
@@ -149,34 +197,41 @@ const BloodPressureMonitorPage: React.FC = () => {
             >
               Recent Readings
             </h2>
-            <div className="space-y-4">
-              {mockReadings.map((reading) => (
-                <div
-                  key={reading.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-                >
-                  <div>
-                    <div className="text-sm text-gray-500">{reading.date}</div>
-                    <div className="text-2xl font-bold text-gray-800">
-                      {reading.systolic}/{reading.diastolic}
-                      <span className="text-lg font-normal text-gray-500 ml-2">mmHg</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500 mb-1">
-                      Pulse: {reading.pulse} bpm
-                    </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                        reading.status
-                      )}`}
+            {readings.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                No readings yet. Take a blood pressure measurement to record your first reading.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {readings.map((reading) => {
+                  const status = getBPStatus(reading.systolic, reading.diastolic);
+                  return (
+                    <div
+                      key={reading.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
                     >
-                      {reading.status.charAt(0).toUpperCase() + reading.status.slice(1)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      <div>
+                        <div className="text-sm text-gray-500">{formatDate(reading.measured_at)}</div>
+                        <div className="text-2xl font-bold text-gray-800">
+                          {reading.systolic}/{reading.diastolic}
+                          <span className="text-lg font-normal text-gray-500 ml-2">mmHg</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500 mb-1">
+                          Pulse: {reading.pulse} bpm
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}
+                        >
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

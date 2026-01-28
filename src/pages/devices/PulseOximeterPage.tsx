@@ -1,33 +1,48 @@
 // src/pages/devices/PulseOximeterPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
+import { DeviceService, type SpO2Reading } from '../../services/deviceService';
 
-interface SpO2Reading {
-  id: string;
-  date: string;
-  time: string;
-  spo2: number;
-  pulseRate: number;
-  status: 'normal' | 'low' | 'critical';
-}
+type SpO2Status = 'normal' | 'low' | 'critical';
 
 const PulseOximeterPage: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [readings, setReadings] = useState<SpO2Reading[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock SpO2 readings for demonstration
-  const mockReadings: SpO2Reading[] = [
-    { id: '1', date: '2026-01-28', time: '08:00 AM', spo2: 98, pulseRate: 72, status: 'normal' },
-    { id: '2', date: '2026-01-28', time: '02:00 PM', spo2: 97, pulseRate: 76, status: 'normal' },
-    { id: '3', date: '2026-01-27', time: '09:00 AM', spo2: 96, pulseRate: 74, status: 'normal' },
-    { id: '4', date: '2026-01-27', time: '08:00 PM', spo2: 95, pulseRate: 70, status: 'normal' },
-    { id: '5', date: '2026-01-26', time: '07:30 AM', spo2: 98, pulseRate: 68, status: 'normal' },
-  ];
+  // Load connection status and readings on mount
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const getStatusColor = (status: SpO2Reading['status']) => {
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [connectionResult, readingsResult] = await Promise.all([
+        DeviceService.getConnectionStatus('pulse_oximeter'),
+        DeviceService.getSpO2Readings(10),
+      ]);
+
+      if (connectionResult.success && connectionResult.data) {
+        setIsConnected(connectionResult.data.connected);
+      }
+
+      if (readingsResult.success && readingsResult.data) {
+        setReadings(readingsResult.data);
+      }
+    } catch {
+      setError('Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: SpO2Status) => {
     switch (status) {
       case 'normal':
         return 'bg-green-100 text-green-700';
@@ -40,22 +55,41 @@ const PulseOximeterPage: React.FC = () => {
     }
   };
 
-  const getSpO2Status = (spo2: number): SpO2Reading['status'] => {
+  const getSpO2Status = (spo2: number): SpO2Status => {
     if (spo2 >= 95) return 'normal';
     if (spo2 >= 90) return 'low';
     return 'critical';
   };
 
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    // Simulate connection process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsConnected(true);
-    setIsConnecting(false);
+  const formatDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+    };
   };
 
-  const handleDisconnect = () => {
-    setIsConnected(false);
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    setError(null);
+    try {
+      const result = await DeviceService.connectDevice('pulse_oximeter', 'Pulse Oximeter');
+      if (result.success) {
+        setIsConnected(true);
+        await loadData();
+      } else {
+        setError(result.error || 'Failed to connect');
+      }
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    const result = await DeviceService.disconnectDevice('pulse_oximeter');
+    if (result.success) {
+      setIsConnected(false);
+    }
   };
 
   return (
@@ -76,6 +110,12 @@ const PulseOximeterPage: React.FC = () => {
           </p>
         </div>
 
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6">
+            {error}
+          </div>
+        )}
+
         {/* Connection Card */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
@@ -86,12 +126,12 @@ const PulseOximeterPage: React.FC = () => {
                 }`}
               />
               <span className="text-lg font-semibold text-gray-700">
-                {isConnected ? 'Connected' : 'Not Connected'}
+                {isLoading ? 'Loading...' : isConnected ? 'Connected' : 'Not Connected'}
               </span>
             </div>
             <button
               onClick={isConnected ? handleDisconnect : handleConnect}
-              disabled={isConnecting}
+              disabled={isConnecting || isLoading}
               className={`px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
                 isConnected
                   ? 'bg-red-100 text-red-600 hover:bg-red-200'
@@ -103,7 +143,7 @@ const PulseOximeterPage: React.FC = () => {
             </button>
           </div>
 
-          {!isConnected && (
+          {!isConnected && !isLoading && (
             <div className="bg-blue-50 rounded-xl p-4 text-blue-700">
               <h3 className="font-semibold mb-2">Compatible Pulse Oximeters:</h3>
               <ul className="list-disc list-inside space-y-1 text-sm">
@@ -162,36 +202,44 @@ const PulseOximeterPage: React.FC = () => {
             >
               Recent Readings
             </h2>
-            <div className="space-y-4">
-              {mockReadings.map((reading) => (
-                <div
-                  key={reading.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-                >
-                  <div>
-                    <div className="text-sm text-gray-500">
-                      {reading.date} at {reading.time}
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800">
-                      {reading.spo2}%
-                      <span className="text-lg font-normal text-gray-500 ml-2">SpO2</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500 mb-1">
-                      Pulse: {reading.pulseRate} bpm
-                    </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                        getSpO2Status(reading.spo2)
-                      )}`}
+            {readings.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                No readings yet. Take an SpO2 measurement to record your first reading.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {readings.map((reading) => {
+                  const { date, time } = formatDateTime(reading.measured_at);
+                  const status = getSpO2Status(reading.spo2);
+                  return (
+                    <div
+                      key={reading.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
                     >
-                      {getSpO2Status(reading.spo2).charAt(0).toUpperCase() + getSpO2Status(reading.spo2).slice(1)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      <div>
+                        <div className="text-sm text-gray-500">
+                          {date} at {time}
+                        </div>
+                        <div className="text-2xl font-bold text-gray-800">
+                          {reading.spo2}%
+                          <span className="text-lg font-normal text-gray-500 ml-2">SpO2</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500 mb-1">
+                          Pulse: {reading.pulse_rate} bpm
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}
+                        >
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
