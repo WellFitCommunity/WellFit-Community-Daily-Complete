@@ -2,8 +2,8 @@ name: Cleanup Pending Registrations
 
 on:
   schedule:
-    # Run every 15 minutes
-    - cron: '*/15 * * * *'
+    # Run every hour at minute 0 (reduced from every 15 min to avoid noise)
+    - cron: '0 * * * *'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
@@ -11,11 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Cleanup expired pending registrations
+        env:
+          # Try multiple secret names for compatibility (per CLAUDE.md key migration guide)
+          # Order: new format -> legacy Supabase default -> legacy alias
+          SERVICE_KEY: ${{ secrets.SB_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY || secrets.SB_SECRET_KEY }}
         run: |
+          # Check if we have a valid service key
+          if [ -z "$SERVICE_KEY" ]; then
+            echo "⚠️ No Supabase service role key configured."
+            echo "Please add one of these secrets to the repository:"
+            echo "  - SB_SERVICE_ROLE_KEY (recommended)"
+            echo "  - SUPABASE_SERVICE_ROLE_KEY"
+            echo "  - SB_SECRET_KEY"
+            echo ""
+            echo "Skipping cleanup - this is not a failure, just unconfigured."
+            exit 0
+          fi
+
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             'https://xkybsjnvuohpqpbkikyn.supabase.co/rest/v1/rpc/cleanup_expired_pending_registrations' \
-            -H "apikey: ${{ secrets.SB_SECRET_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SB_SECRET_KEY }}" \
+            -H "apikey: $SERVICE_KEY" \
+            -H "Authorization: Bearer $SERVICE_KEY" \
             -H "Content-Type: application/json")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
@@ -24,10 +40,13 @@ jobs:
           echo "HTTP Status: $HTTP_CODE"
           echo "Response: $BODY"
 
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "Error: Cleanup failed with status $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Cleanup completed successfully"
+            echo "Records affected: $BODY"
+          elif [ "$HTTP_CODE" = "204" ]; then
+            echo "✅ Cleanup completed (no records to delete)"
+          else
+            echo "❌ Cleanup failed with status $HTTP_CODE"
+            echo "Response: $BODY"
             exit 1
           fi
-
-          echo "✅ Cleanup completed successfully"
-          echo "Records deleted: $BODY"
