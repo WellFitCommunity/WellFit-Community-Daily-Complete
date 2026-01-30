@@ -724,7 +724,7 @@ async function handleToolCall(toolName: string, args: Record<string, unknown>) {
 }
 
 // =====================================================
-// HTTP Server
+// MCP JSON-RPC Server
 // =====================================================
 
 serve(async (req) => {
@@ -734,74 +734,111 @@ serve(async (req) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
-  const url = new URL(req.url);
-  const path = url.pathname.split("/").pop() || "";
 
   try {
-    // Health check
-    if (path === "health" || path === "") {
-      return new Response(
-        JSON.stringify({
-          status: "healthy",
-          server: "mcp-prior-auth-server",
-          version: "1.0.0",
-          compliance: "CMS-0057-F",
-          tools: Object.keys(TOOLS).length,
-          timestamp: new Date().toISOString()
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Rate limiting
+    const requestId = getRequestIdentifier(req);
+    const rateLimitResult = checkMCPRateLimit(requestId, MCP_RATE_LIMITS.prior_auth);
+
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult, MCP_RATE_LIMITS.prior_auth, corsHeaders);
     }
 
-    // List available tools
-    if (path === "tools") {
-      return new Response(
-        JSON.stringify({ tools: TOOLS }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Parse JSON-RPC request
+    const body = await req.json();
+    const { method, params, id } = body;
 
-    // Handle tool calls
-    if (path === "call" && req.method === "POST") {
-      // Rate limiting
-      const requestId = getRequestIdentifier(req);
-      const rateLimitResult = checkMCPRateLimit(requestId, 'prior_auth', MCP_RATE_LIMITS.prior_auth);
-
-      if (!rateLimitResult.allowed) {
-        return createRateLimitResponse(rateLimitResult, corsHeaders);
+    // Handle MCP JSON-RPC methods
+    switch (method) {
+      case "initialize": {
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: {
+            protocolVersion: "2024-11-05",
+            serverInfo: {
+              name: "mcp-prior-auth-server",
+              version: "1.0.0"
+            },
+            capabilities: {
+              tools: {}
+            }
+          },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
 
-      const body = await req.json();
-      const { name, arguments: args } = body;
+      case "tools/list": {
+        const tools = Object.entries(TOOLS).map(([name, def]) => ({
+          name,
+          description: def.description,
+          inputSchema: def.inputSchema
+        }));
 
-      if (!name || !TOOLS[name as keyof typeof TOOLS]) {
-        return new Response(
-          JSON.stringify({ error: `Unknown tool: ${name}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: { tools },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
 
-      const result = await handleToolCall(name, args || {});
+      case "tools/call": {
+        const { name, arguments: args } = params || {};
+        const startTime = Date.now();
 
-      return new Response(
-        JSON.stringify({
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        if (!name || !TOOLS[name as keyof typeof TOOLS]) {
+          return new Response(JSON.stringify({
+            jsonrpc: "2.0",
+            error: { code: -32602, message: `Unknown tool: ${name}` },
+            id
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        await logger.log("PRIOR_AUTH_TOOL_CALL", { tool: name });
+
+        const result = await handleToolCall(name, args || {});
+
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            metadata: {
+              tool: name,
+              executionTimeMs: Date.now() - startTime
+            }
+          },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      default:
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          error: { code: -32601, message: `Method not found: ${method}` },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
     }
 
-    return new Response(
-      JSON.stringify({ error: "Not found" }),
-      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
-    await logger.error("PRIOR_AUTH_API_ERROR", { error });
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    await logger.error("PRIOR_AUTH_API_ERROR", error);
 
-    return new Response(
-      JSON.stringify({ error }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32603, message: error.message },
+      id: null
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
   }
 });

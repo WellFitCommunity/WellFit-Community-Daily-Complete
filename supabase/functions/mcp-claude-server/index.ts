@@ -139,14 +139,9 @@ function calculateCost(model: string, inputTokens: number, outputTokens: number)
 
 // MCP Request Handler
 serve(async (req: Request) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        // CORS handled by shared module,
-        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization"
-      }
-    });
+    return handleOptions(req);
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
@@ -159,12 +154,41 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { method, params } = await req.json();
+    const { method, params, id } = await req.json();
+
+    // MCP Protocol: Initialize
+    if (method === "initialize") {
+      return new Response(JSON.stringify({
+        jsonrpc: "2.0",
+        result: {
+          protocolVersion: "2024-11-05",
+          serverInfo: {
+            name: "mcp-claude-server",
+            version: "1.0.0"
+          },
+          capabilities: {
+            tools: {}
+          }
+        },
+        id
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
 
     // MCP Protocol: List tools
     if (method === "tools/list") {
-      return new Response(JSON.stringify({ tools: Object.entries(TOOLS).map(([name, def]) => ({ name, ...def })) }), {
-        headers: { "Content-Type": "application/json" }
+      const tools = Object.entries(TOOLS).map(([name, def]) => ({
+        name,
+        description: def.description,
+        inputSchema: def.inputSchema
+      }));
+      return new Response(JSON.stringify({
+        jsonrpc: "2.0",
+        result: { tools },
+        id
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
@@ -234,32 +258,43 @@ serve(async (req: Request) => {
       const result = content.type === "text" ? content.text : "";
 
       return new Response(JSON.stringify({
-        content: [{ type: "text", text: result }],
-        metadata: {
-          inputTokens,
-          outputTokens,
-          cost,
-          responseTimeMs,
-          model
-        }
+        jsonrpc: "2.0",
+        result: {
+          content: [{ type: "text", text: result }],
+          metadata: {
+            inputTokens,
+            outputTokens,
+            cost,
+            responseTimeMs,
+            model
+          }
+        },
+        id
       }), {
-        headers: { "Content-Type": "application/json" }
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    throw new Error(`Unknown MCP method: ${method}`);
+    // Unknown method
+    return new Response(JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32601, message: `Method not found: ${method}` },
+      id
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
 
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.error("Claude server error", { errorMessage: error.message });
 
     return new Response(JSON.stringify({
-      error: {
-        code: "internal_error",
-        message: errorMessage
-      }
+      jsonrpc: "2.0",
+      error: { code: -32603, message: error.message },
+      id: null
     }), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 });

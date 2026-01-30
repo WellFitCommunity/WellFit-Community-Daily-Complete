@@ -77,6 +77,27 @@ export const MCP_RATE_LIMITS = {
     maxRequests: 50,
     windowMs: 60 * 1000,
     keyPrefix: 'mcp:edge'
+  },
+
+  // Prior Authorization MCP - moderate limits
+  prior_auth: {
+    maxRequests: 40,
+    windowMs: 60 * 1000,
+    keyPrefix: 'mcp:prior_auth'
+  },
+
+  // CMS Coverage MCP - generous limits (read-only lookups)
+  cms_coverage: {
+    maxRequests: 100,
+    windowMs: 60 * 1000,
+    keyPrefix: 'mcp:cms_coverage'
+  },
+
+  // NPI Registry MCP - generous limits (read-only lookups)
+  npi_registry: {
+    maxRequests: 100,
+    windowMs: 60 * 1000,
+    keyPrefix: 'mcp:npi'
   }
 };
 

@@ -1,5 +1,13 @@
 {
   "mcpServers": {
+    "claude": {
+      "type": "http",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-claude-server",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
+      }
+    },
     "cms-coverage": {
       "type": "http",
       "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-cms-coverage-server",
@@ -59,6 +67,14 @@
     "clearinghouse": {
       "type": "http",
       "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-clearinghouse-server",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
+      }
+    },
+    "prior-auth": {
+      "type": "http",
+      "url": "https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/mcp-prior-auth-server",
       "headers": {
         "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E",
         "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E"
