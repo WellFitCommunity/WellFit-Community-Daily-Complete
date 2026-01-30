@@ -419,7 +419,7 @@ const EnhancedQuestionsPage: React.FC = () => {
                 onChange={(e) => setCurrentQuestion(e.target.value)}
                 placeholder="Type your question here, or use the microphone to speak..."
                 rows={4}
-                className="w-full p-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 pr-16"
+                className="w-full p-4 text-lg text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 pr-16 placeholder:text-gray-400"
                 maxLength={1000}
               />
 

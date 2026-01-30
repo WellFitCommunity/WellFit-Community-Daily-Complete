@@ -72,6 +72,13 @@ class EdgeFunctionLogger {
   }
 
   /**
+   * Alias for info() - prevents "logger.log is not a function" errors
+   */
+  log(message: string, context?: LogContext): void {
+    this.info(message, context);
+  }
+
+  /**
    * Warning-level logging (non-critical issues)
    */
   warn(message: string, context?: LogContext): void {
