@@ -10,14 +10,32 @@
  * - Connection testing
  *
  * Supports: Waystar, Change Healthcare, Availity
+ *
+ * TIER 1 (external_api): No Supabase required, external clearinghouse APIs only
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from '../_shared/mcpRateLimiter.ts';
-import { createLogger } from '../_shared/auditLogger.ts';
+import {
+  initMCPServer,
+  createInitializeResponse,
+  createToolsListResponse,
+  PING_TOOL,
+  handlePing,
+  type MCPInitResult
+} from '../_shared/mcpServerBase.ts';
 
-const logger = createLogger('mcp-clearinghouse-server');
+// Server configuration
+const SERVER_CONFIG = {
+  name: 'mcp-clearinghouse-server',
+  version: '1.1.0',
+  tier: 'external_api' as const
+};
+
+// Initialize with tiered approach - Tier 1 doesn't require Supabase
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
+const { logger } = initResult;
 
 // =====================================================
 // Types
@@ -88,7 +106,8 @@ interface PriorAuthRequest {
 // Tool Definitions
 // =====================================================
 
-const TOOLS = {
+const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required: string[] } }> = {
+  'ping': PING_TOOL,
   'submit_claim': {
     description: 'Submit an 837P/837I claim to the clearinghouse for processing',
     inputSchema: {
@@ -894,30 +913,13 @@ serve(async (req: Request) => {
     switch (body.method) {
       case 'initialize':
         return new Response(
-          JSON.stringify({
-            jsonrpc: '2.0',
-            result: {
-              protocolVersion: '2024-11-05',
-              serverInfo: {
-                name: 'mcp-clearinghouse-server',
-                version: '1.0.0'
-              },
-              capabilities: {
-                tools: {}
-              }
-            },
-            id: body.id
-          }),
+          JSON.stringify(createInitializeResponse(SERVER_CONFIG, body.id)),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 
       case 'tools/list':
         return new Response(
-          JSON.stringify({
-            jsonrpc: '2.0',
-            result: { tools: Object.entries(TOOLS).map(([name, def]) => ({ name, ...def })) },
-            id: body.id
-          }),
+          JSON.stringify(createToolsListResponse(TOOLS, body.id)),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 
@@ -932,6 +934,9 @@ serve(async (req: Request) => {
         let result: Record<string, unknown>;
 
         switch (name) {
+          case 'ping':
+            result = handlePing(SERVER_CONFIG, initResult);
+            break;
           case 'submit_claim':
             result = await handleSubmitClaim(client, args.claim, 'tenant-id');
             break;

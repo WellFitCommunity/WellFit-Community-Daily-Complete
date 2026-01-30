@@ -22,13 +22,20 @@ const envGet = (name: string): string => {
 export const SUPABASE_URL: string =
   envGet("SUPABASE_URL") || envGet("SB_URL");
 
+// Service role key - ADMIN access (bypasses RLS)
+// Fallback chain: new sb_secret_* format → legacy JWT service role keys
+// When Supabase retires legacy keys, new format will be primary
 export const SB_SECRET_KEY: string =
   envGet("SB_SECRET_KEY") || envGet("SB_SERVICE_ROLE_KEY") || envGet("SUPABASE_SERVICE_ROLE_KEY");
 
-// For auth operations, prefer SB_ANON_KEY (JWT format) which works with Supabase auth
-// The sb_publishable_* format is not yet fully supported for auth
-export const SB_PUBLISHABLE_API_KEY: string =
+// Anon key - USER access (respects RLS)
+// Fallback chain: JWT anon keys (required for auth) → new sb_publishable_* format
+// JWT format is required until Supabase SDK fully supports new publishable keys
+export const SB_ANON_KEY: string =
   envGet("SB_ANON_KEY") || envGet("SUPABASE_ANON_KEY") || envGet("SB_PUBLISHABLE_API_KEY");
+
+// Alias for backward compatibility
+export const SB_PUBLISHABLE_API_KEY: string = SB_ANON_KEY;
 
 // ---- hCaptcha ----
 export const HCAPTCHA_SECRET: string =

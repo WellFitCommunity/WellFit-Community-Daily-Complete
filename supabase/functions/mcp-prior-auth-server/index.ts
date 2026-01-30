@@ -4,23 +4,36 @@
 // Purpose: FHIR-based Prior Authorization API
 // Features: Submit PA, check status, manage appeals
 // Standards: Da Vinci PAS IG, HL7 FHIR R4
+// Tier: ADMIN (requires service role for database writes)
 // =====================================================
 
-import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
-import { createLogger } from "../_shared/auditLogger.ts";
+import {
+  initMCPServer,
+  createInitializeResponse,
+  createToolsListResponse,
+  createErrorResponse,
+  handlePing,
+  PING_TOOL,
+  MCPInitResult
+} from "../_shared/mcpServerBase.ts";
 
-const logger = createLogger("mcp-prior-auth-server");
+// Initialize as Tier 3 (admin) - requires service role key for DB writes
+const SERVER_CONFIG = {
+  name: "mcp-prior-auth-server",
+  version: "1.1.0",
+  tier: "admin" as const
+};
 
-// Environment
-const SERVICE_KEY = SB_SECRET_KEY;
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
+const { supabase: sb, logger, canRateLimit } = initResult;
 
-if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");
-
-const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+// If init failed, this server cannot operate
+if (!sb) {
+  throw new Error(`MCP Prior Auth server requires service role key: ${initResult.error}`);
+}
 
 // =====================================================
 // Types
@@ -255,11 +268,11 @@ async function handleCreatePriorAuth(args: Record<string, unknown>) {
 
   if (error) throw error;
 
-  await logger.log('PRIOR_AUTH_CREATED', {
+  logger.info('PRIOR_AUTH_CREATED', {
     prior_auth_id: data.id,
-    patient_id: args.patient_id,
-    payer_id: args.payer_id,
-    service_codes: args.service_codes
+    patient_id: args.patient_id as string,
+    payer_id: args.payer_id as string,
+    service_codes: args.service_codes as string[]
   });
 
   return {
@@ -318,8 +331,8 @@ async function handleSubmitPriorAuth(args: Record<string, unknown>) {
 
   if (error) throw error;
 
-  await logger.log('PRIOR_AUTH_SUBMITTED', {
-    prior_auth_id: args.prior_auth_id,
+  logger.info('PRIOR_AUTH_SUBMITTED', {
+    prior_auth_id: args.prior_auth_id as string,
     auth_number: authNumber,
     urgency,
     decision_due_at: decisionDueAt.toISOString()
@@ -455,10 +468,10 @@ async function handleRecordDecision(args: Record<string, unknown>) {
 
   if (updateError) throw updateError;
 
-  await logger.log('PRIOR_AUTH_DECISION', {
-    prior_auth_id: args.prior_auth_id,
+  logger.info('PRIOR_AUTH_DECISION', {
+    prior_auth_id: args.prior_auth_id as string,
     decision_id: decision.id,
-    decision_type: args.decision_type
+    decision_type: args.decision_type as string
   });
 
   return {
@@ -505,8 +518,8 @@ async function handleCreateAppeal(args: Record<string, unknown>) {
     })
     .eq('id', args.prior_auth_id);
 
-  await logger.log('PRIOR_AUTH_APPEAL_CREATED', {
-    prior_auth_id: args.prior_auth_id,
+  logger.info('PRIOR_AUTH_APPEAL_CREATED', {
+    prior_auth_id: args.prior_auth_id as string,
     appeal_id: appeal.id,
     appeal_level: nextLevel
   });
@@ -591,9 +604,9 @@ async function handleCancelPriorAuth(args: Record<string, unknown>) {
 
   if (error) throw error;
 
-  await logger.log('PRIOR_AUTH_CANCELLED', {
-    prior_auth_id: args.prior_auth_id,
-    reason: args.reason
+  logger.info('PRIOR_AUTH_CANCELLED', {
+    prior_auth_id: args.prior_auth_id as string,
+    reason: args.reason as string
   });
 
   return {
@@ -799,7 +812,7 @@ serve(async (req) => {
           });
         }
 
-        await logger.log("PRIOR_AUTH_TOOL_CALL", { tool: name });
+        logger.info("PRIOR_AUTH_TOOL_CALL", { tool: name });
 
         const result = await handleToolCall(name, args || {});
 
@@ -830,7 +843,7 @@ serve(async (req) => {
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    await logger.error("PRIOR_AUTH_API_ERROR", error);
+    logger.error("PRIOR_AUTH_API_ERROR", { errorMessage: error.message });
 
     return new Response(JSON.stringify({
       jsonrpc: "2.0",

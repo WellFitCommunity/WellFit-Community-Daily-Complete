@@ -2,23 +2,36 @@
 // MCP PostgreSQL Server
 // Purpose: Safe, controlled database operations via MCP
 // Features: RLS enforcement, query whitelisting, audit logging
+// Tier: ADMIN (requires service role key for database access)
 // =====================================================
 
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, createRateLimitHeaders, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
-import { createLogger } from "../_shared/auditLogger.ts";
+import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import {
+  initMCPServer,
+  createInitializeResponse,
+  createToolsListResponse,
+  createErrorResponse,
+  handlePing,
+  PING_TOOL,
+  MCPInitResult
+} from "../_shared/mcpServerBase.ts";
 
-const logger = createLogger("mcp-postgres-server");
+// Initialize as Tier 3 (admin) - requires service role key
+const SERVER_CONFIG = {
+  name: "mcp-postgres-server",
+  version: "1.1.0",
+  tier: "admin" as const
+};
 
-// Environment
-const SERVICE_KEY = SB_SECRET_KEY;
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
+const { supabase: sb, logger, canRateLimit } = initResult;
 
-if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");
-
-const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+// If init failed, this server cannot operate
+if (!sb) {
+  throw new Error(`MCP Postgres server requires service role key: ${initResult.error}`);
+}
 
 // =====================================================
 // SECURITY: Query Whitelist
@@ -327,7 +340,8 @@ const TOOLS = {
       },
       required: ["table_name"]
     }
-  }
+  },
+  "ping": PING_TOOL
 };
 
 // Safe tables that can have schema/counts retrieved
@@ -396,7 +410,7 @@ serve(async (req: Request) => {
 
   const { headers: corsHeaders } = corsFromRequest(req);
 
-  // Rate limiting
+  // Rate limiting (Supabase-backed since we have service role)
   const identifier = getRequestIdentifier(req);
   const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.postgres);
   if (!rateLimitResult.allowed) {
@@ -409,33 +423,18 @@ serve(async (req: Request) => {
 
     // MCP Protocol: Initialize handshake
     if (method === "initialize") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          protocolVersion: "2024-11-05",
-          serverInfo: {
-            name: "mcp-postgres-server",
-            version: "1.0.0"
-          },
-          capabilities: {
-            tools: {}
-          }
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(
+        createInitializeResponse(SERVER_CONFIG, id)
+      ), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     // MCP Protocol: List tools
     if (method === "tools/list") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          tools: Object.entries(TOOLS).map(([name, def]) => ({ name, ...def }))
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(
+        createToolsListResponse(TOOLS, id)
+      ), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
@@ -443,6 +442,21 @@ serve(async (req: Request) => {
     // MCP Protocol: Call tool
     if (method === "tools/call") {
       const { name: toolName, arguments: toolArgs } = params;
+
+      // Handle ping tool
+      if (toolName === "ping") {
+        const pingResult = handlePing(SERVER_CONFIG, initResult);
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: {
+            content: [{ type: "text", text: JSON.stringify(pingResult, null, 2) }]
+          },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
       const startTime = Date.now();
 
       if (!TOOLS[toolName as keyof typeof TOOLS]) {
@@ -599,7 +613,7 @@ serve(async (req: Request) => {
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    await logger.error("MCP Postgres server error", error);
+    logger.error("MCP Postgres server error", { errorMessage: error.message });
 
     return new Response(JSON.stringify({
       jsonrpc: "2.0",

@@ -2,22 +2,36 @@
 // MCP FHIR Server
 // Purpose: Standardized FHIR R4 resource access and operations
 // Features: Bundle export, resource CRUD, validation, EHR sync
+//
+// TIER 3 (admin): Requires service role key for FHIR operations
 // =====================================================
 
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createLogger } from "../_shared/auditLogger.ts";
+import {
+  initMCPServer,
+  createInitializeResponse,
+  createToolsListResponse,
+  PING_TOOL,
+  handlePing,
+  type MCPInitResult
+} from "../_shared/mcpServerBase.ts";
 
-const logger = createLogger("mcp-fhir-server");
+// Server configuration
+const SERVER_CONFIG = {
+  name: "mcp-fhir-server",
+  version: "1.1.0",
+  tier: "admin" as const
+};
 
-// Environment
-const SERVICE_KEY = SB_SECRET_KEY;
+// Initialize with tiered approach - Tier 3 requires service role
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
+const { logger, supabase: sb } = initResult;
 
-if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");
-
-const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+// Tier 3 requires service role - fail fast if not available
+if (!sb) {
+  throw new Error(`MCP FHIR server requires service role key: ${initResult.error}`);
+}
 
 // =====================================================
 // FHIR Resource Type Mapping
@@ -101,7 +115,8 @@ type ToolResult = FHIRResource | FHIRResource[] | PatientSummary | Record<string
 // MCP Tools Definition
 // =====================================================
 
-const TOOLS = {
+const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required: string[] } }> = {
+  "ping": PING_TOOL,
   "export_patient_bundle": {
     description: "Export a complete FHIR Bundle for a patient",
     inputSchema: {
@@ -702,33 +717,14 @@ serve(async (req: Request) => {
 
     // MCP Protocol: Initialize handshake
     if (method === "initialize") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          protocolVersion: "2024-11-05",
-          serverInfo: {
-            name: "mcp-fhir-server",
-            version: "1.0.0"
-          },
-          capabilities: {
-            tools: {}
-          }
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(createInitializeResponse(SERVER_CONFIG, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     // MCP Protocol: List tools
     if (method === "tools/list") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          tools: Object.entries(TOOLS).map(([name, def]) => ({ name, ...def }))
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
@@ -745,6 +741,11 @@ serve(async (req: Request) => {
       let result: ToolResult;
 
       switch (toolName) {
+        case "ping": {
+          result = handlePing(SERVER_CONFIG, initResult);
+          break;
+        }
+
         case "export_patient_bundle": {
           const { patient_id, resources, start_date, end_date, include_ai_assessments } = toolArgs;
           result = await getPatientBundle(patient_id, resources, {

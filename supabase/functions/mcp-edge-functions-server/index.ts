@@ -2,23 +2,40 @@
 // MCP Edge Functions Server
 // Purpose: Orchestrate and monitor Supabase Edge Functions via MCP
 // Features: Function discovery, invocation, status tracking, audit logging
+//
+// TIER 3 (admin): Requires service role key to invoke edge functions
 // =====================================================
 
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createLogger } from "../_shared/auditLogger.ts";
+import {
+  initMCPServer,
+  createInitializeResponse,
+  createToolsListResponse,
+  PING_TOOL,
+  handlePing,
+  type MCPInitResult
+} from "../_shared/mcpServerBase.ts";
 
-const logger = createLogger("mcp-edge-functions-server");
+// Server configuration
+const SERVER_CONFIG = {
+  name: "mcp-edge-functions-server",
+  version: "1.1.0",
+  tier: "admin" as const
+};
 
-// Environment
+// Initialize with tiered approach - Tier 3 requires service role
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
+const { logger, supabase: sb } = initResult;
+
+// Tier 3 requires service role - fail fast if not available
+if (!sb) {
+  throw new Error(`MCP Edge Functions server requires service role key: ${initResult.error}`);
+}
+
+// Keep SERVICE_KEY reference for function invocation
 const SERVICE_KEY = SB_SECRET_KEY;
-const ANON_KEY = SB_PUBLISHABLE_API_KEY;
-
-if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");
-
-const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
 // =====================================================
 // SECURITY: Function Whitelist
@@ -197,7 +214,8 @@ const BLOCKED_FUNCTIONS = new Set([
 // MCP Tools Definition
 // =====================================================
 
-const TOOLS = {
+const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required: string[] } }> = {
+  "ping": PING_TOOL,
   "invoke_function": {
     description: "Invoke a whitelisted Supabase Edge Function",
     inputSchema: {
@@ -426,33 +444,14 @@ serve(async (req: Request) => {
 
     // MCP Protocol: Initialize handshake
     if (method === "initialize") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          protocolVersion: "2024-11-05",
-          serverInfo: {
-            name: "mcp-edge-functions-server",
-            version: "1.0.0"
-          },
-          capabilities: {
-            tools: {}
-          }
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(createInitializeResponse(SERVER_CONFIG, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     // MCP Protocol: List tools
     if (method === "tools/list") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          tools: Object.entries(TOOLS).map(([name, def]) => ({ name, ...def }))
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
@@ -468,6 +467,11 @@ serve(async (req: Request) => {
       let result: unknown;
 
       switch (toolName) {
+        case "ping": {
+          result = handlePing(SERVER_CONFIG, initResult);
+          break;
+        }
+
         case "invoke_function": {
           const { function_name, payload = {}, timeout } = toolArgs;
 

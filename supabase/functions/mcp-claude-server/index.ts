@@ -1,26 +1,45 @@
+// =====================================================
 // Self-hosted MCP Server for Claude operations
 // Consolidates your 3 Claude integration points
 // Adds prompt caching for 30-40% cost reduction
 // Uses your existing audit logging and de-identification
+//
+// TIER 3 (admin): Requires service role key for audit logging
+// =====================================================
 
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
-import { createLogger } from "../_shared/auditLogger.ts";
+import {
+  initMCPServer,
+  createInitializeResponse,
+  createToolsListResponse,
+  PING_TOOL,
+  handlePing,
+  type MCPInitResult
+} from "../_shared/mcpServerBase.ts";
 
-const logger = createLogger("mcp-claude-server");
+// Server configuration
+const SERVER_CONFIG = {
+  name: "mcp-claude-server",
+  version: "1.1.0",
+  tier: "admin" as const
+};
 
-// Environment
-const SERVICE_KEY = SB_SECRET_KEY;
+// Initialize with tiered approach - Tier 3 requires service role
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
+const { logger, supabase: sb } = initResult;
+
+// Tier 3 requires service role - fail fast if not available
+if (!sb) {
+  throw new Error(`MCP Claude server requires service role key: ${initResult.error}`);
+}
+
+// Anthropic API key for Claude operations
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("CLAUDE_API_KEY");
-
-if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");
 if (!ANTHROPIC_API_KEY) throw new Error("Missing Anthropic API key");
 
-const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
 // De-identification (copied from your coding-suggest function)
@@ -55,7 +74,8 @@ function deepDeidentify(obj: unknown): unknown {
 }
 
 // MCP Tools
-const TOOLS = {
+const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required: string[] } }> = {
+  "ping": PING_TOOL,
   "analyze-text": {
     description: "Analyze text with Claude AI",
     inputSchema: {
@@ -158,36 +178,14 @@ serve(async (req: Request) => {
 
     // MCP Protocol: Initialize
     if (method === "initialize") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          protocolVersion: "2024-11-05",
-          serverInfo: {
-            name: "mcp-claude-server",
-            version: "1.0.0"
-          },
-          capabilities: {
-            tools: {}
-          }
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(createInitializeResponse(SERVER_CONFIG, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     // MCP Protocol: List tools
     if (method === "tools/list") {
-      const tools = Object.entries(TOOLS).map(([name, def]) => ({
-        name,
-        description: def.description,
-        inputSchema: def.inputSchema
-      }));
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: { tools },
-        id
-      }), {
+      return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
@@ -199,6 +197,20 @@ serve(async (req: Request) => {
 
       if (!TOOLS[toolName as keyof typeof TOOLS]) {
         throw new Error(`Unknown tool: ${toolName}`);
+      }
+
+      // Handle ping tool first
+      if (toolName === "ping") {
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: {
+            content: [{ type: "text", text: JSON.stringify(handlePing(SERVER_CONFIG, initResult), null, 2) }],
+            metadata: { tool: toolName, responseTimeMs: Date.now() - startTime }
+          },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
 
       // De-identify input data

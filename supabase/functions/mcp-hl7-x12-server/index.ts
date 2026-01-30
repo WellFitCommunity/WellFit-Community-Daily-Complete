@@ -2,22 +2,36 @@
 // MCP HL7/X12 Transformer Server
 // Purpose: Bidirectional HL7 v2.x, X12, and FHIR transformation
 // Features: Message parsing, validation, conversion, generation
+//
+// TIER 3 (admin): Requires service role key for audit logging
 // =====================================================
 
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createLogger } from "../_shared/auditLogger.ts";
+import {
+  initMCPServer,
+  createInitializeResponse,
+  createToolsListResponse,
+  PING_TOOL,
+  handlePing,
+  type MCPInitResult
+} from "../_shared/mcpServerBase.ts";
 
-const logger = createLogger("mcp-hl7-x12-server");
+// Server configuration
+const SERVER_CONFIG = {
+  name: "mcp-hl7-x12-server",
+  version: "1.1.0",
+  tier: "admin" as const
+};
 
-// Environment
-const SERVICE_KEY = SB_SECRET_KEY;
+// Initialize with tiered approach - Tier 3 requires service role
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
+const { logger, supabase: sb } = initResult;
 
-if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");
-
-const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+// Tier 3 requires service role - fail fast if not available
+if (!sb) {
+  throw new Error(`MCP HL7/X12 server requires service role key: ${initResult.error}`);
+}
 
 // FHIR Resource Interface (generic for bundle entries)
 interface FHIRResource {
@@ -606,7 +620,8 @@ function validateX12(x12Content: string): ValidationResult {
 // MCP Tools Definition
 // =====================================================
 
-const TOOLS = {
+const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required: string[] } }> = {
+  "ping": PING_TOOL,
   "parse_hl7": {
     description: "Parse an HL7 v2.x message and extract structured data",
     inputSchema: {
@@ -947,33 +962,14 @@ serve(async (req: Request) => {
 
     // MCP Protocol: Initialize handshake
     if (method === "initialize") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          protocolVersion: "2024-11-05",
-          serverInfo: {
-            name: "mcp-hl7-x12-server",
-            version: "1.0.0"
-          },
-          capabilities: {
-            tools: {}
-          }
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(createInitializeResponse(SERVER_CONFIG, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     // MCP Protocol: List tools
     if (method === "tools/list") {
-      return new Response(JSON.stringify({
-        jsonrpc: "2.0",
-        result: {
-          tools: Object.entries(TOOLS).map(([name, def]) => ({ name, ...def }))
-        },
-        id
-      }), {
+      return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
@@ -990,6 +986,11 @@ serve(async (req: Request) => {
       let result: unknown;
 
       switch (toolName) {
+        case "ping": {
+          result = handlePing(SERVER_CONFIG, initResult);
+          break;
+        }
+
         case "parse_hl7": {
           const { message } = toolArgs;
           const parseResult = parseHL7Message(message);

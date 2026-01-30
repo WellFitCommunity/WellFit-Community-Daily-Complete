@@ -53,3 +53,35 @@ verify_jwt = false
 
 # Note: admin-login, wellfit-admin-login, wellfit-verify-pin were deleted
 # Use standard Supabase auth + envision-login + envision-verify-pin instead
+
+# MCP Servers - verify_jwt = false because they use API key auth internally
+# These servers implement rate limiting and tool-level authorization
+[functions.mcp-claude-server]
+verify_jwt = false
+
+[functions.mcp-cms-coverage-server]
+verify_jwt = false
+
+[functions.mcp-npi-registry-server]
+verify_jwt = false
+
+[functions.mcp-postgres-server]
+verify_jwt = false
+
+[functions.mcp-edge-functions-server]
+verify_jwt = false
+
+[functions.mcp-medical-codes-server]
+verify_jwt = false
+
+[functions.mcp-fhir-server]
+verify_jwt = false
+
+[functions.mcp-hl7-x12-server]
+verify_jwt = false
+
+[functions.mcp-clearinghouse-server]
+verify_jwt = false
+
+[functions.mcp-prior-auth-server]
+verify_jwt = false

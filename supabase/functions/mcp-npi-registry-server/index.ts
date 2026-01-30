@@ -3,23 +3,30 @@
 // Purpose: National Provider Identifier validation and lookup
 // Features: NPI search, validation, provider details, taxonomy codes
 // API: CMS NPI Registry API (https://npiregistry.cms.hhs.gov/api)
+// Tier: EXTERNAL_API (no Supabase required - calls public CMS API)
 // =====================================================
 
-import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse } from "../_shared/mcpRateLimiter.ts";
-import { createLogger } from "../_shared/auditLogger.ts";
+import { getRequestIdentifier } from "../_shared/mcpRateLimiter.ts";
+import {
+  initMCPServer,
+  createInitializeResponse,
+  createToolsListResponse,
+  createErrorResponse,
+  handlePing,
+  checkInMemoryRateLimit,
+  PING_TOOL
+} from "../_shared/mcpServerBase.ts";
 
-const logger = createLogger("mcp-npi-registry-server");
+// Initialize as Tier 1 (external_api) - no Supabase required
+const SERVER_CONFIG = {
+  name: "mcp-npi-registry-server",
+  version: "1.1.0",
+  tier: "external_api" as const
+};
 
-// Environment
-const SERVICE_KEY = SB_SECRET_KEY;
-
-if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");
-
-const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+const { logger, canRateLimit } = initMCPServer(SERVER_CONFIG);
 
 // CMS NPI Registry API
 const NPI_API_BASE = "https://npiregistry.cms.hhs.gov/api";
@@ -133,7 +140,8 @@ const TOOLS = {
       },
       required: ["npi"]
     }
-  }
+  },
+  "ping": PING_TOOL
 };
 
 // =====================================================
@@ -233,7 +241,7 @@ async function callNPIRegistry(params: Record<string, string | number>): Promise
     return data;
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    await logger.error("NPI Registry API call failed", error);
+    logger.error("NPI Registry API call failed", { errorMessage: error.message });
 
     // Return empty result on error
     return { result_count: 0, results: [] };
@@ -737,12 +745,23 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
-    // Rate limiting
+    // Rate limiting (in-memory fallback since we don't require Supabase)
     const identifier = getRequestIdentifier(req);
-    const rateLimitResult = await checkMCPRateLimit(sb, identifier, "npi_registry");
+    const rateLimitResult = checkInMemoryRateLimit(identifier, 100, 60000); // 100 req/min
 
     if (!rateLimitResult.allowed) {
-      return createRateLimitResponse(rateLimitResult, corsHeaders);
+      return new Response(JSON.stringify({
+        jsonrpc: "2.0",
+        error: { code: -32000, message: "Rate limit exceeded" },
+        id: null
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "Retry-After": String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
+        }
+      });
     }
 
     // Parse JSON-RPC request
@@ -751,18 +770,18 @@ serve(async (req) => {
 
     // Handle MCP JSON-RPC methods
     switch (method) {
-      case "tools/list": {
-        const tools = Object.entries(TOOLS).map(([name, def]) => ({
-          name,
-          description: def.description,
-          inputSchema: def.inputSchema
-        }));
+      case "initialize": {
+        return new Response(JSON.stringify(
+          createInitializeResponse(SERVER_CONFIG, id)
+        ), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
 
-        return new Response(JSON.stringify({
-          jsonrpc: "2.0",
-          result: { tools },
-          id
-        }), {
+      case "tools/list": {
+        return new Response(JSON.stringify(
+          createToolsListResponse(TOOLS, id)
+        ), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
@@ -771,7 +790,21 @@ serve(async (req) => {
         const { name, arguments: args } = params || {};
         const startTime = Date.now();
 
-        await logger.info("NPI Registry tool call", { tool: name });
+        logger.info("NPI Registry tool call", { tool: name });
+
+        // Handle ping tool specially
+        if (name === "ping") {
+          const pingResult = handlePing(SERVER_CONFIG, { supabase: null, logger, canRateLimit });
+          return new Response(JSON.stringify({
+            jsonrpc: "2.0",
+            result: {
+              content: [{ type: "text", text: JSON.stringify(pingResult, null, 2) }]
+            },
+            id
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
 
         const response = await handleToolCallRequest(name, args || {});
         const responseBody = await response.text();
@@ -792,44 +825,21 @@ serve(async (req) => {
         });
       }
 
-      case "initialize": {
-        return new Response(JSON.stringify({
-          jsonrpc: "2.0",
-          result: {
-            protocolVersion: "2024-11-05",
-            serverInfo: {
-              name: "mcp-npi-registry-server",
-              version: "1.0.0"
-            },
-            capabilities: {
-              tools: {}
-            }
-          },
-          id
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-
       default:
-        return new Response(JSON.stringify({
-          jsonrpc: "2.0",
-          error: { code: -32601, message: `Method not found: ${method}` },
-          id
-        }), {
+        return new Response(JSON.stringify(
+          createErrorResponse(-32601, `Method not found: ${method}`, id)
+        ), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
     }
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    await logger.error("NPI Registry server error", error);
+    logger.error("NPI Registry server error", { errorMessage: error.message });
 
-    return new Response(JSON.stringify({
-      jsonrpc: "2.0",
-      error: { code: -32603, message: error.message },
-      id: null
-    }), {
+    return new Response(JSON.stringify(
+      createErrorResponse(-32603, error.message, null)
+    ), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
