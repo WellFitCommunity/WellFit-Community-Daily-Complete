@@ -85,7 +85,7 @@ export interface PsychMedAlertRecord {
   acknowledged_at?: string;
   resolved: boolean;
   resolved_at?: string;
-  resolved_notes?: string;
+  resolution_notes?: string;
   created_at: string;
 }
 

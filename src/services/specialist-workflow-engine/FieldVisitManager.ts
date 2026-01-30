@@ -244,7 +244,7 @@ export class FieldVisitManager {
       .from('field_visits')
       .select(`
         *,
-        patient:profiles!field_visits_patient_id_fkey(id, full_name, date_of_birth, phone),
+        patient:profiles!field_visits_patient_id_fkey(id, full_name, dob, phone),
         specialist:specialist_providers!field_visits_specialist_id_fkey(id, user_id)
       `)
       .eq('specialist_id', specialistId)
@@ -269,7 +269,7 @@ export class FieldVisitManager {
       .from('field_visits')
       .select(`
         *,
-        patient:profiles!field_visits_patient_id_fkey(id, full_name, date_of_birth, phone, address),
+        patient:profiles!field_visits_patient_id_fkey(id, full_name, dob, phone, address),
         specialist:specialist_providers!field_visits_specialist_id_fkey(id, user_id, specialist_type)
       `)
       .eq('id', visitId)

@@ -56,7 +56,7 @@ export async function checkAndAlertMultiplePsychMeds(userId: string): Promise<vo
         .update({
           resolved: true,
           resolved_at: new Date().toISOString(),
-          resolved_notes: `Auto-resolved: Psych medication count reduced to ${analysis.psychMedCount}`
+          resolution_notes: `Auto-resolved: Psych medication count reduced to ${analysis.psychMedCount}`
         })
         .eq('user_id', userId)
         .eq('alert_type', 'multiple_psych_meds')
