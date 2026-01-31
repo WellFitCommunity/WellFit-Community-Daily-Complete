@@ -14,8 +14,16 @@ import {
   createToolsListResponse,
   PING_TOOL,
   handlePing,
+  handleHealthCheck,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
+import {
+  verifyAdminAccess,
+  getRequestId,
+  createForbiddenResponse,
+  createUnauthorizedResponse,
+  CallerIdentity
+} from "../_shared/mcpAuthGate.ts";
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -26,12 +34,15 @@ const SERVER_CONFIG = {
 
 // Initialize with tiered approach - Tier 3 requires service role
 const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
-const { logger, supabase: sb } = initResult;
+const { logger } = initResult;
 
 // Tier 3 requires service role - fail fast if not available
-if (!sb) {
+if (!initResult.supabase) {
   throw new Error(`MCP HL7/X12 server requires service role key: ${initResult.error}`);
 }
+
+// Non-null after guard - TypeScript needs this explicit assignment
+const sb = initResult.supabase;
 
 // FHIR Resource Interface (generic for bundle entries)
 interface FHIRResource {
@@ -44,7 +55,8 @@ interface FHIRResource {
 interface FHIRBundle {
   resourceType: 'Bundle';
   type: string;
-  entry?: Array<{ resource: FHIRResource }>;
+  timestamp?: string;
+  entry?: Array<{ fullUrl?: string; resource: FHIRResource }>;
 }
 
 // FHIR Claim interface
@@ -818,8 +830,8 @@ function parseX12(x12Content: string): {
 function x12ToFHIR(x12Content: string): { claim: FHIRClaim; bundle: FHIRBundle } {
   const parsed = parseX12(x12Content);
 
-  const claim = {
-    resourceType: 'Claim',
+  const claim: FHIRClaim = {
+    resourceType: 'Claim' as const,
     id: `claim-${parsed.claimId || Date.now()}`,
     status: 'active',
     type: {
@@ -870,15 +882,14 @@ function x12ToFHIR(x12Content: string): { claim: FHIRClaim; bundle: FHIRBundle }
     } : undefined
   };
 
-  return {
-    claim,
-    bundle: {
-      resourceType: 'Bundle',
-      type: 'collection',
-      timestamp: new Date().toISOString(),
-      entry: [{ fullUrl: `urn:uuid:${claim.id}`, resource: claim }]
-    }
+  const bundle: FHIRBundle = {
+    resourceType: 'Bundle' as const,
+    type: 'collection',
+    timestamp: new Date().toISOString(),
+    entry: [{ fullUrl: `urn:uuid:${claim.id}`, resource: claim }]
   };
+
+  return { claim, bundle };
 }
 
 // =====================================================
@@ -950,11 +961,18 @@ async function logTransformation(params: {
 // =====================================================
 
 serve(async (req: Request) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return handleOptions(req);
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+  const requestId = getRequestId(req);
+
+  // Health check endpoint (GET request)
+  if (req.method === "GET") {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
 
   try {
     const body = await req.json();
@@ -980,8 +998,46 @@ serve(async (req: Request) => {
       const startTime = Date.now();
 
       if (!TOOLS[toolName as keyof typeof TOOLS]) {
-        throw new Error(`Unknown tool: ${toolName}`);
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          error: { code: -32602, message: `Unknown tool: ${toolName}`, data: { requestId } },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
+
+      // ============================================================
+      // AUTH GATE: Verify caller has admin access
+      // HL7/X12 transformation requires admin/technical access
+      // ============================================================
+      const authResult = await verifyAdminAccess(req, {
+        serverName: SERVER_CONFIG.name,
+        toolName,
+        logger
+      });
+
+      if (!authResult.authorized) {
+        logger.security("HL7_X12_ACCESS_DENIED", {
+          requestId,
+          tool: toolName,
+          reason: authResult.error
+        });
+
+        if (authResult.statusCode === 401) {
+          return createUnauthorizedResponse(authResult.error || "Unauthorized", requestId, corsHeaders);
+        }
+        return createForbiddenResponse(authResult.error || "Forbidden", requestId, corsHeaders);
+      }
+
+      const caller = authResult.caller as CallerIdentity;
+      logger.info("HL7_X12_TOOL_CALL", {
+        requestId,
+        tool: toolName,
+        userId: caller.userId,
+        role: caller.role,
+        tenantId: caller.tenantId
+      });
 
       let result: unknown;
 
@@ -1156,7 +1212,7 @@ serve(async (req: Request) => {
 
       // Audit log
       await logTransformation({
-        userId: toolArgs.userId,
+        userId: caller.userId,
         operation: toolName,
         inputFormat: toolName.includes('hl7') ? 'HL7' : toolName.includes('x12') ? 'X12' : 'mixed',
         outputFormat: toolName.includes('fhir') ? 'FHIR' : toolName.includes('ack') ? 'HL7' : 'structured',
@@ -1165,26 +1221,45 @@ serve(async (req: Request) => {
       });
 
       return new Response(JSON.stringify({
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-        metadata: {
-          tool: toolName,
-          executionTimeMs
-        }
+        jsonrpc: "2.0",
+        result: {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          metadata: {
+            tool: toolName,
+            executionTimeMs,
+            requestId,
+            caller: {
+              userId: caller.userId,
+              role: caller.role
+            }
+          }
+        },
+        id
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    throw new Error(`Unknown MCP method: ${method}`);
+    return new Response(JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32601, message: `Method not found: ${method}`, data: { requestId } },
+      id
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logger.error("HL7_X12_API_ERROR", { requestId, errorMessage });
 
     return new Response(JSON.stringify({
+      jsonrpc: "2.0",
       error: {
-        code: "internal_error",
-        message: errorMessage
-      }
+        code: -32603,
+        message: errorMessage,
+        data: { requestId }
+      },
+      id: null
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }

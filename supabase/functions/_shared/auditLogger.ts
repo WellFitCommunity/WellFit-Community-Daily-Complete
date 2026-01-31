@@ -31,7 +31,7 @@ export interface LogContext {
  * Provides structured logging with automatic context enrichment
  * All logs are output to stdout/stderr for Supabase logging aggregation
  */
-class EdgeFunctionLogger {
+export class EdgeFunctionLogger {
   private functionName: string;
   private requestId: string;
 

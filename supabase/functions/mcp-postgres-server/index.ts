@@ -2,7 +2,7 @@
 // MCP PostgreSQL Server
 // Purpose: Safe, controlled database operations via MCP
 // Features: RLS enforcement, query whitelisting, audit logging
-// Tier: ADMIN (requires service role key for database access)
+// Tier: USER_SCOPED (uses anon key + RLS for tenant isolation)
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -14,24 +14,29 @@ import {
   createToolsListResponse,
   createErrorResponse,
   handlePing,
+  handleHealthCheck,
   PING_TOOL,
   MCPInitResult
 } from "../_shared/mcpServerBase.ts";
+import { getRequestId } from "../_shared/mcpAuthGate.ts";
 
-// Initialize as Tier 3 (admin) - requires service role key
+// Initialize as Tier 2 (user_scoped) - uses anon key with RLS
 const SERVER_CONFIG = {
   name: "mcp-postgres-server",
-  version: "1.1.0",
-  tier: "admin" as const
+  version: "1.2.0",
+  tier: "user_scoped" as const
 };
 
 const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
-const { supabase: sb, logger, canRateLimit } = initResult;
+const { logger, canRateLimit } = initResult;
 
 // If init failed, this server cannot operate
-if (!sb) {
-  throw new Error(`MCP Postgres server requires service role key: ${initResult.error}`);
+if (!initResult.supabase) {
+  throw new Error(`MCP Postgres server requires Supabase configuration: ${initResult.error}`);
 }
+
+// Non-null after guard
+const sb = initResult.supabase;
 
 // =====================================================
 // SECURITY: Query Whitelist
@@ -365,6 +370,7 @@ async function logMCPRequest(params: {
   executionTimeMs: number;
   success: boolean;
   errorMessage?: string;
+  requestId?: string;
 }) {
   try {
     await sb.from("mcp_query_logs").insert({
@@ -376,6 +382,7 @@ async function logMCPRequest(params: {
       execution_time_ms: params.executionTimeMs,
       success: params.success,
       error_message: params.errorMessage,
+      request_id: params.requestId,
       created_at: new Date().toISOString()
     });
   } catch (err) {
@@ -383,7 +390,7 @@ async function logMCPRequest(params: {
     try {
       await sb.from("claude_usage_logs").insert({
         user_id: params.userId,
-        request_id: crypto.randomUUID(),
+        request_id: params.requestId || crypto.randomUUID(),
         request_type: `mcp_postgres_${params.tool}`,
         response_time_ms: params.executionTimeMs,
         success: params.success,
@@ -393,7 +400,8 @@ async function logMCPRequest(params: {
     } catch (innerErr: unknown) {
       logger.error("Audit log fallback failed", {
         originalError: err instanceof Error ? err.message : String(err),
-        fallbackError: innerErr instanceof Error ? innerErr.message : String(innerErr)
+        fallbackError: innerErr instanceof Error ? innerErr.message : String(innerErr),
+        requestId: params.requestId
       });
     }
   }
@@ -410,7 +418,15 @@ serve(async (req: Request) => {
 
   const { headers: corsHeaders } = corsFromRequest(req);
 
-  // Rate limiting (Supabase-backed since we have service role)
+  // Health check endpoint for infrastructure monitoring
+  if (req.method === "GET" && new URL(req.url).pathname.endsWith("/health")) {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
+
+  // Request correlation ID for distributed tracing
+  const requestId = getRequestId(req);
+
+  // Rate limiting (Supabase-backed since we have anon key)
   const identifier = getRequestIdentifier(req);
   const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.postgres);
   if (!rateLimitResult.allowed) {
@@ -487,7 +503,8 @@ serve(async (req: Request) => {
               queryName: query_name,
               errorCode: error.code,
               errorMessage: error.message,
-              hint: error.hint
+              hint: error.hint,
+              requestId
             });
             throw new Error(`Query '${query_name}' failed: ${error.message}`);
           }
@@ -504,13 +521,14 @@ serve(async (req: Request) => {
         }
 
         case "list_queries": {
-          result = Object.entries(WHITELISTED_QUERIES).map(([name, def]) => ({
+          const queries = Object.entries(WHITELISTED_QUERIES).map(([name, def]) => ({
             name,
             description: def.description,
             parameters: def.parameters,
             maxRows: def.maxRows
           }));
-          rowsReturned = result.length;
+          result = queries;
+          rowsReturned = queries.length;
           break;
         }
 
@@ -583,7 +601,8 @@ serve(async (req: Request) => {
         queryName: toolArgs.query_name,
         rowsReturned,
         executionTimeMs,
-        success: true
+        success: true,
+        requestId
       });
 
       return new Response(JSON.stringify({
@@ -593,12 +612,17 @@ serve(async (req: Request) => {
           metadata: {
             rowsReturned,
             executionTimeMs,
-            queryName: toolArgs.query_name
+            queryName: toolArgs.query_name,
+            requestId
           }
         },
         id
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "X-Request-Id": requestId
+        }
       });
     }
 
@@ -608,12 +632,19 @@ serve(async (req: Request) => {
       id
     }), {
       status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "X-Request-Id": requestId
+      }
     });
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    logger.error("MCP Postgres server error", { errorMessage: error.message });
+    logger.error("MCP Postgres server error", {
+      errorMessage: error.message,
+      requestId
+    });
 
     return new Response(JSON.stringify({
       jsonrpc: "2.0",
@@ -621,7 +652,11 @@ serve(async (req: Request) => {
       id: null
     }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "X-Request-Id": requestId
+      }
     });
   }
 });

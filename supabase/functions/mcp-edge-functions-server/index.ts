@@ -15,8 +15,16 @@ import {
   createToolsListResponse,
   PING_TOOL,
   handlePing,
+  handleHealthCheck,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
+import {
+  verifyAdminAccess,
+  getRequestId,
+  createForbiddenResponse,
+  createUnauthorizedResponse,
+  CallerIdentity
+} from "../_shared/mcpAuthGate.ts";
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -27,12 +35,15 @@ const SERVER_CONFIG = {
 
 // Initialize with tiered approach - Tier 3 requires service role
 const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
-const { logger, supabase: sb } = initResult;
+const { logger } = initResult;
 
 // Tier 3 requires service role - fail fast if not available
-if (!sb) {
+if (!initResult.supabase) {
   throw new Error(`MCP Edge Functions server requires service role key: ${initResult.error}`);
 }
+
+// Non-null after guard - TypeScript needs this explicit assignment
+const sb = initResult.supabase;
 
 // Keep SERVICE_KEY reference for function invocation
 const SERVICE_KEY = SB_SECRET_KEY;
@@ -433,6 +444,12 @@ serve(async (req: Request) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+  const requestId = getRequestId(req);
+
+  // Health check endpoint (GET request)
+  if (req.method === "GET") {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
 
   try {
     const body = await req.json();
@@ -459,10 +476,49 @@ serve(async (req: Request) => {
     // MCP Protocol: Call tool
     if (method === "tools/call") {
       const { name: toolName, arguments: toolArgs } = params;
+      const startTime = Date.now();
 
       if (!TOOLS[toolName as keyof typeof TOOLS]) {
-        throw new Error(`Unknown tool: ${toolName}`);
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          error: { code: -32602, message: `Unknown tool: ${toolName}`, data: { requestId } },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
+
+      // ============================================================
+      // AUTH GATE: Verify caller has admin access
+      // Edge function orchestration requires admin privileges
+      // ============================================================
+      const authResult = await verifyAdminAccess(req, {
+        serverName: SERVER_CONFIG.name,
+        toolName: toolName,
+        logger
+      });
+
+      if (!authResult.authorized) {
+        logger.security("EDGE_FUNCTIONS_ACCESS_DENIED", {
+          requestId,
+          tool: toolName,
+          reason: authResult.error
+        });
+
+        if (authResult.statusCode === 401) {
+          return createUnauthorizedResponse(authResult.error || "Unauthorized", requestId, corsHeaders);
+        }
+        return createForbiddenResponse(authResult.error || "Forbidden", requestId, corsHeaders);
+      }
+
+      const caller = authResult.caller as CallerIdentity;
+      logger.info("EDGE_FUNCTIONS_TOOL_CALL", {
+        requestId,
+        tool: toolName,
+        userId: caller.userId,
+        role: caller.role,
+        tenantId: caller.tenantId
+      });
 
       let result: unknown;
 
@@ -484,7 +540,7 @@ serve(async (req: Request) => {
 
           // Audit log
           await logFunctionInvocation({
-            userId: toolArgs.userId,
+            userId: caller.userId,
             tenantId: payload.tenant_id,
             functionName: function_name,
             success: invocationResult.success,
@@ -500,10 +556,8 @@ serve(async (req: Request) => {
         case "list_functions": {
           const { category } = toolArgs;
 
-          let functions = Object.entries(ALLOWED_FUNCTIONS).map(([name, def]) => ({
-            name,
-            ...def
-          }));
+          // FunctionDefinition already has name property, just use def directly
+          let functions = Object.values(ALLOWED_FUNCTIONS);
 
           if (category) {
             functions = functions.filter(f => f.category === category);
@@ -521,7 +575,8 @@ serve(async (req: Request) => {
             throw new Error(`Function '${function_name}' not found`);
           }
 
-          result = { name: function_name, ...funcDef };
+          // funcDef already has name property
+          result = funcDef;
           break;
         }
 
@@ -552,7 +607,7 @@ serve(async (req: Request) => {
 
             // Audit log each invocation
             await logFunctionInvocation({
-              userId: toolArgs.userId,
+              userId: caller.userId,
               tenantId: payload.tenant_id,
               functionName: function_name,
               success: invocationResult.success,
@@ -580,25 +635,45 @@ serve(async (req: Request) => {
       }
 
       return new Response(JSON.stringify({
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-        metadata: {
-          tool: toolName
-        }
+        jsonrpc: "2.0",
+        result: {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          metadata: {
+            tool: toolName,
+            executionTimeMs: Date.now() - startTime,
+            requestId,
+            caller: {
+              userId: caller.userId,
+              role: caller.role
+            }
+          }
+        },
+        id
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    throw new Error(`Unknown MCP method: ${method}`);
+    return new Response(JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32601, message: `Method not found: ${method}`, data: { requestId } },
+      id
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logger.error("EDGE_FUNCTIONS_API_ERROR", { requestId, errorMessage });
 
     return new Response(JSON.stringify({
+      jsonrpc: "2.0",
       error: {
-        code: "internal_error",
-        message: errorMessage
-      }
+        code: -32603,
+        message: errorMessage,
+        data: { requestId }
+      },
+      id: null
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }

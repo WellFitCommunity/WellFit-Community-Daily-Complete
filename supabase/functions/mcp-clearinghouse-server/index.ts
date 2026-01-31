@@ -21,10 +21,13 @@ import {
   initMCPServer,
   createInitializeResponse,
   createToolsListResponse,
+  createErrorResponse,
   PING_TOOL,
   handlePing,
+  handleHealthCheck,
   type MCPInitResult
 } from '../_shared/mcpServerBase.ts';
+import { getRequestId } from '../_shared/mcpAuthGate.ts';
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -888,6 +891,12 @@ serve(async (req: Request) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+  const requestId = getRequestId(req);
+
+  // Handle GET /health for infrastructure monitoring
+  if (req.method === 'GET') {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
 
   // Rate limiting - strict for expensive clearinghouse calls
   const identifier = getRequestIdentifier(req);
@@ -1003,14 +1012,16 @@ serve(async (req: Request) => {
   } catch (error: unknown) {
     logger.error("Clearinghouse MCP error", {
       errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined
+      errorStack: error instanceof Error ? error.stack : undefined,
+      requestId
     });
     return new Response(
       JSON.stringify({
         jsonrpc: '2.0',
         error: {
           code: -32603,
-          message: error instanceof Error ? error.message : 'Internal error'
+          message: error instanceof Error ? error.message : 'Internal error',
+          data: { requestId }
         },
         id: null
       }),

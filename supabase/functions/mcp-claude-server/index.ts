@@ -9,16 +9,24 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1";
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import {
   initMCPServer,
   createInitializeResponse,
   createToolsListResponse,
+  handleHealthCheck,
   PING_TOOL,
   handlePing,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
+import {
+  verifyAdminAccess,
+  getRequestId,
+  createForbiddenResponse,
+  createUnauthorizedResponse,
+  CallerIdentity
+} from "../_shared/mcpAuthGate.ts";
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -29,12 +37,15 @@ const SERVER_CONFIG = {
 
 // Initialize with tiered approach - Tier 3 requires service role
 const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
-const { logger, supabase: sb } = initResult;
+const { logger } = initResult;
 
 // Tier 3 requires service role - fail fast if not available
-if (!sb) {
+if (!initResult.supabase) {
   throw new Error(`MCP Claude server requires service role key: ${initResult.error}`);
 }
+
+// Non-null after guard
+const sb = initResult.supabase;
 
 // Anthropic API key for Claude operations
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("CLAUDE_API_KEY");
@@ -165,6 +176,14 @@ serve(async (req: Request) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+  const requestId = getRequestId(req);
+
+  // Health check endpoint (GET request)
+  if (req.method === "GET") {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders, [
+      { name: "anthropic", ready: !!ANTHROPIC_API_KEY }
+    ]);
+  }
 
   // Strict rate limiting for expensive AI calls
   const identifier = getRequestIdentifier(req);
@@ -176,14 +195,14 @@ serve(async (req: Request) => {
   try {
     const { method, params, id } = await req.json();
 
-    // MCP Protocol: Initialize
+    // MCP Protocol: Initialize (no auth required - discovery)
     if (method === "initialize") {
       return new Response(JSON.stringify(createInitializeResponse(SERVER_CONFIG, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    // MCP Protocol: List tools
+    // MCP Protocol: List tools (no auth required - discovery)
     if (method === "tools/list") {
       return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -194,6 +213,30 @@ serve(async (req: Request) => {
     if (method === "tools/call") {
       const { name: toolName, arguments: toolArgs } = params;
       const startTime = Date.now();
+
+      // ============================================================
+      // AUTH GATE: Verify caller has admin access for AI operations
+      // ============================================================
+      const authResult = await verifyAdminAccess(req, {
+        serverName: SERVER_CONFIG.name,
+        toolName,
+        logger
+      });
+
+      if (!authResult.authorized) {
+        logger.security("CLAUDE_ACCESS_DENIED", {
+          requestId,
+          tool: toolName,
+          reason: authResult.error
+        });
+
+        if (authResult.statusCode === 401) {
+          return createUnauthorizedResponse(authResult.error || "Unauthorized", requestId, corsHeaders);
+        }
+        return createForbiddenResponse(authResult.error || "Forbidden", requestId, corsHeaders);
+      }
+
+      const caller = authResult.caller as CallerIdentity;
 
       if (!TOOLS[toolName as keyof typeof TOOLS]) {
         throw new Error(`Unknown tool: ${toolName}`);
@@ -214,21 +257,22 @@ serve(async (req: Request) => {
       }
 
       // De-identify input data
-      const sanitizedArgs = deepDeidentify(toolArgs);
+      // De-identify input data - cast to Record for property access
+      const sanitizedArgs = deepDeidentify(toolArgs) as Record<string, unknown>;
 
       let userPrompt = "";
-      let model = toolArgs.model || "claude-sonnet-4-5-20250929";
+      const model = (toolArgs.model as string) || "claude-sonnet-4-5-20250929";
 
       // Tool-specific logic
       switch (toolName) {
         case "analyze-text":
-          userPrompt = `${sanitizedArgs.prompt}\n\nText to analyze:\n${sanitizedArgs.text}`;
+          userPrompt = `${String(sanitizedArgs.prompt || '')}\n\nText to analyze:\n${String(sanitizedArgs.text || '')}`;
           break;
         case "generate-suggestion":
-          userPrompt = `Task: ${sanitizedArgs.task}\n\nContext: ${JSON.stringify(sanitizedArgs.context, null, 2)}`;
+          userPrompt = `Task: ${String(sanitizedArgs.task || '')}\n\nContext: ${JSON.stringify(sanitizedArgs.context, null, 2)}`;
           break;
         case "summarize":
-          userPrompt = `Summarize the following content in ${sanitizedArgs.maxLength || 500} words or less:\n\n${sanitizedArgs.content}`;
+          userPrompt = `Summarize the following content in ${Number(sanitizedArgs.maxLength) || 500} words or less:\n\n${String(sanitizedArgs.content || '')}`;
           break;
         default:
           throw new Error(`Tool ${toolName} not implemented`);
@@ -254,9 +298,9 @@ serve(async (req: Request) => {
       const outputTokens = response.usage.output_tokens;
       const cost = calculateCost(model, inputTokens, outputTokens);
 
-      // Audit log
+      // Audit log with caller identity
       await logMCPRequest({
-        userId: toolArgs.userId,
+        userId: caller.userId,
         tool: toolName,
         model,
         inputTokens,
@@ -278,7 +322,12 @@ serve(async (req: Request) => {
             outputTokens,
             cost,
             responseTimeMs,
-            model
+            model,
+            requestId,
+            caller: {
+              userId: caller.userId,
+              role: caller.role
+            }
           }
         },
         id
@@ -290,7 +339,7 @@ serve(async (req: Request) => {
     // Unknown method
     return new Response(JSON.stringify({
       jsonrpc: "2.0",
-      error: { code: -32601, message: `Method not found: ${method}` },
+      error: { code: -32601, message: `Method not found: ${method}`, data: { requestId } },
       id
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -298,11 +347,11 @@ serve(async (req: Request) => {
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    logger.error("Claude server error", { errorMessage: error.message });
+    logger.error("Claude server error", { requestId, errorMessage: error.message });
 
     return new Response(JSON.stringify({
       jsonrpc: "2.0",
-      error: { code: -32603, message: error.message },
+      error: { code: -32603, message: error.message, data: { requestId } },
       id: null
     }), {
       status: 500,

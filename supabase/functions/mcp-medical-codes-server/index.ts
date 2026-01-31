@@ -3,7 +3,7 @@
 // Purpose: Unified access to CPT, ICD-10, HCPCS, and modifier codes
 // Features: Smart search, code validation, bundling rules, audit logging
 //
-// TIER 3 (admin): Requires service role key for database operations
+// TIER 2 (user_scoped): Uses ANON key + RLS for public reference data
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -13,26 +13,32 @@ import {
   initMCPServer,
   createInitializeResponse,
   createToolsListResponse,
+  createErrorResponse,
   PING_TOOL,
   handlePing,
+  handleHealthCheck,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
+import { getRequestId } from "../_shared/mcpAuthGate.ts";
 
 // Server configuration
 const SERVER_CONFIG = {
   name: "mcp-medical-codes-server",
-  version: "1.1.0",
-  tier: "admin" as const
+  version: "1.2.0",
+  tier: "user_scoped" as const
 };
 
-// Initialize with tiered approach - Tier 3 requires service role
+// Initialize with tiered approach - Tier 2 uses ANON key + RLS
 const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
-const { logger, supabase: sb } = initResult;
+const { logger, canRateLimit } = initResult;
 
-// Tier 3 requires service role - fail fast if not available
-if (!sb) {
-  throw new Error(`MCP Medical Codes server requires service role key: ${initResult.error}`);
+// Tier 2 requires Supabase for code lookups
+if (!initResult.supabase) {
+  throw new Error(`MCP Medical Codes server requires SUPABASE_URL and SB_ANON_KEY: ${initResult.error}`);
 }
+
+// Non-null after guard
+const sb = initResult.supabase;
 
 // =====================================================
 // Type Definitions for Medical Codes
@@ -290,8 +296,10 @@ async function logCodeLookup(params: {
   codesReturned: number;
   executionTimeMs: number;
 }) {
+  // Audit logging with graceful degradation for user_scoped tier
+  // Note: RLS policies may restrict write access, so we handle failures gracefully
   try {
-    await sb.from("mcp_code_lookup_logs").insert({
+    const { error } = await sb.from("mcp_code_lookup_logs").insert({
       user_id: params.userId,
       tool_name: params.tool,
       search_query: params.query,
@@ -299,23 +307,20 @@ async function logCodeLookup(params: {
       execution_time_ms: params.executionTimeMs,
       created_at: new Date().toISOString()
     });
-  } catch (err) {
-    // Fallback to claude_usage_logs
-    try {
-      await sb.from("claude_usage_logs").insert({
-        user_id: params.userId,
-        request_id: crypto.randomUUID(),
-        request_type: `mcp_medical_code_${params.tool}`,
-        response_time_ms: params.executionTimeMs,
-        success: true,
-        created_at: new Date().toISOString()
-      });
-    } catch (innerErr: unknown) {
-      logger.error("Audit log fallback failed", {
-        originalError: err instanceof Error ? err.message : String(err),
-        fallbackError: innerErr instanceof Error ? innerErr.message : String(innerErr)
+
+    if (error) {
+      // RLS may block writes for ANON key - this is expected behavior
+      logger.debug("Audit log skipped (RLS restriction)", {
+        tool: params.tool,
+        error: error.message
       });
     }
+  } catch (err: unknown) {
+    // Silently handle audit failures - code lookups should not fail due to logging
+    logger.debug("Audit log failed", {
+      tool: params.tool,
+      error: err instanceof Error ? err.message : String(err)
+    });
   }
 }
 
@@ -476,6 +481,11 @@ serve(async (req: Request) => {
 
   const { headers: corsHeaders } = corsFromRequest(req);
 
+  // Health endpoint for monitoring
+  if (new URL(req.url).pathname.endsWith("/health")) {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
+
   // Rate limiting
   const identifier = getRequestIdentifier(req);
   const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.medicalCodes);
@@ -484,6 +494,9 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Request correlation
+    const requestId = getRequestId(req);
+
     const body = await req.json();
     const { method, params, id } = body;
 
@@ -521,29 +534,33 @@ serve(async (req: Request) => {
 
         case "search_cpt": {
           const { query, category, limit } = toolArgs;
-          result = await searchCPT(query, category, limit);
-          codesReturned = result.length;
+          const cptResults = await searchCPT(query, category, limit);
+          result = cptResults;
+          codesReturned = cptResults.length;
           break;
         }
 
         case "search_icd10": {
           const { query, chapter, limit } = toolArgs;
-          result = await searchICD10(query, chapter, limit);
-          codesReturned = result.length;
+          const icd10Results = await searchICD10(query, chapter, limit);
+          result = icd10Results;
+          codesReturned = icd10Results.length;
           break;
         }
 
         case "search_hcpcs": {
           const { query, level, limit } = toolArgs;
-          result = await searchHCPCS(query, level, limit);
-          codesReturned = result.length;
+          const hcpcsResults = await searchHCPCS(query, level, limit);
+          result = hcpcsResults;
+          codesReturned = hcpcsResults.length;
           break;
         }
 
         case "get_modifiers": {
           const { code, code_type } = toolArgs;
-          result = await getModifiers(code, code_type);
-          codesReturned = result.length;
+          const modifierResults = await getModifiers(code, code_type);
+          result = modifierResults;
+          codesReturned = modifierResults.length;
           break;
         }
 
@@ -590,22 +607,23 @@ serve(async (req: Request) => {
 
         case "get_code_details": {
           const { code, code_type } = toolArgs;
+          let detailResults: unknown[];
 
           switch (code_type) {
             case "cpt":
-              result = await searchCPT(code, undefined, 1);
+              detailResults = await searchCPT(code, undefined, 1);
               break;
             case "icd10":
-              result = await searchICD10(code, undefined, 1);
+              detailResults = await searchICD10(code, undefined, 1);
               break;
             case "hcpcs":
-              result = await searchHCPCS(code, undefined, 1);
+              detailResults = await searchHCPCS(code, undefined, 1);
               break;
             default:
               throw new Error(`Invalid code_type: ${code_type}`);
           }
 
-          result = result[0] || null;
+          result = detailResults[0] || null;
           codesReturned = result ? 1 : 0;
           break;
         }
@@ -651,7 +669,7 @@ serve(async (req: Request) => {
 
       const executionTimeMs = Date.now() - startTime;
 
-      // Audit log
+      // Audit log (graceful failure for user_scoped tier)
       await logCodeLookup({
         userId: toolArgs.userId,
         tool: toolName,
@@ -661,28 +679,39 @@ serve(async (req: Request) => {
       });
 
       return new Response(JSON.stringify({
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-        metadata: {
-          codesReturned,
-          executionTimeMs,
-          tool: toolName
-        }
+        jsonrpc: "2.0",
+        result: {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          metadata: {
+            codesReturned,
+            executionTimeMs,
+            tool: toolName,
+            requestId
+          }
+        },
+        id
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    throw new Error(`Unknown MCP method: ${method}`);
+    return new Response(JSON.stringify(
+      createErrorResponse(-32601, `Method not found: ${method}`, id)
+    ), {
+      status: 404,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
 
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.error("Medical codes server error", {
+      errorMessage: error.message,
+      stack: error.stack
+    });
 
-    return new Response(JSON.stringify({
-      error: {
-        code: "internal_error",
-        message: errorMessage
-      }
-    }), {
+    return new Response(JSON.stringify(
+      createErrorResponse(-32603, error.message, null)
+    ), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });

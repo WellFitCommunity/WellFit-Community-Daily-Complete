@@ -12,10 +12,18 @@ import {
   initMCPServer,
   createInitializeResponse,
   createToolsListResponse,
+  handleHealthCheck,
   PING_TOOL,
   handlePing,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
+import {
+  verifyClinicalAccess,
+  getRequestId,
+  createForbiddenResponse,
+  createUnauthorizedResponse,
+  CallerIdentity
+} from "../_shared/mcpAuthGate.ts";
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -26,12 +34,15 @@ const SERVER_CONFIG = {
 
 // Initialize with tiered approach - Tier 3 requires service role
 const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
-const { logger, supabase: sb } = initResult;
+const { logger } = initResult;
 
 // Tier 3 requires service role - fail fast if not available
-if (!sb) {
+if (!initResult.supabase) {
   throw new Error(`MCP FHIR server requires service role key: ${initResult.error}`);
 }
+
+// Non-null after guard
+const sb = initResult.supabase;
 
 // =====================================================
 // FHIR Resource Type Mapping
@@ -710,19 +721,25 @@ serve(async (req: Request) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+  const requestId = getRequestId(req);
+
+  // Health check endpoint (GET request)
+  if (req.method === "GET") {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
 
   try {
     const body = await req.json();
     const { method, params, id } = body;
 
-    // MCP Protocol: Initialize handshake
+    // MCP Protocol: Initialize handshake (no auth required - discovery)
     if (method === "initialize") {
       return new Response(JSON.stringify(createInitializeResponse(SERVER_CONFIG, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    // MCP Protocol: List tools
+    // MCP Protocol: List tools (no auth required - discovery)
     if (method === "tools/list") {
       return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -735,8 +752,46 @@ serve(async (req: Request) => {
       const startTime = Date.now();
 
       if (!TOOLS[toolName as keyof typeof TOOLS]) {
-        throw new Error(`Unknown tool: ${toolName}`);
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          error: { code: -32602, message: `Unknown tool: ${toolName}`, data: { requestId } },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
+
+      // ============================================================
+      // AUTH GATE: Verify caller has clinical access for FHIR operations
+      // FHIR operations involve PHI and require clinical authorization
+      // ============================================================
+      const authResult = await verifyClinicalAccess(req, {
+        serverName: SERVER_CONFIG.name,
+        toolName,
+        logger
+      });
+
+      if (!authResult.authorized) {
+        logger.security("FHIR_ACCESS_DENIED", {
+          requestId,
+          tool: toolName,
+          reason: authResult.error
+        });
+
+        if (authResult.statusCode === 401) {
+          return createUnauthorizedResponse(authResult.error || "Unauthorized", requestId, corsHeaders);
+        }
+        return createForbiddenResponse(authResult.error || "Forbidden", requestId, corsHeaders);
+      }
+
+      const caller = authResult.caller as CallerIdentity;
+      logger.info("FHIR_TOOL_CALL", {
+        requestId,
+        tool: toolName,
+        userId: caller.userId,
+        role: caller.role,
+        tenantId: caller.tenantId
+      });
 
       let result: ToolResult;
 
@@ -1064,10 +1119,10 @@ serve(async (req: Request) => {
 
       const executionTimeMs = Date.now() - startTime;
 
-      // Audit log
+      // Audit log with caller identity
       await logFHIROperation({
-        userId: toolArgs.userId,
-        tenantId: toolArgs.tenant_id,
+        userId: caller.userId,
+        tenantId: caller.tenantId || toolArgs.tenant_id,
         operation: toolName,
         resourceType: toolArgs.resource_type,
         resourceId: toolArgs.resource_id || toolArgs.patient_id,
@@ -1076,26 +1131,45 @@ serve(async (req: Request) => {
       });
 
       return new Response(JSON.stringify({
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-        metadata: {
-          tool: toolName,
-          executionTimeMs
-        }
+        jsonrpc: "2.0",
+        result: {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          metadata: {
+            tool: toolName,
+            executionTimeMs,
+            requestId,
+            caller: {
+              userId: caller.userId,
+              role: caller.role
+            }
+          }
+        },
+        id
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    throw new Error(`Unknown MCP method: ${method}`);
+    return new Response(JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32601, message: `Unknown MCP method: ${method}`, data: { requestId } },
+      id: null
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logger.error("FHIR_SERVER_ERROR", { requestId, errorMessage });
 
     return new Response(JSON.stringify({
+      jsonrpc: "2.0",
       error: {
-        code: "internal_error",
-        message: errorMessage
-      }
+        code: -32603,
+        message: errorMessage,
+        data: { requestId }
+      },
+      id: null
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }

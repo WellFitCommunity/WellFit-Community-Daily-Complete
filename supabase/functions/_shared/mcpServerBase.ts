@@ -191,7 +191,7 @@ export const PING_TOOL: MCPToolDefinition = {
 };
 
 /**
- * Handle ping request
+ * Handle ping request (via MCP tools/call)
  */
 export function handlePing(config: MCPServerConfig, initResult: MCPInitResult): Record<string, unknown> {
   return {
@@ -205,6 +205,77 @@ export function handlePing(config: MCPServerConfig, initResult: MCPInitResult): 
       rateLimit: initResult.canRateLimit
     }
   };
+}
+
+/**
+ * Extended health check for infrastructure monitoring
+ *
+ * Returns detailed status including:
+ * - Build version (from env or git SHA)
+ * - Dependency readiness (boolean flags only, never values)
+ * - Server tier and capabilities
+ *
+ * @param config - Server configuration
+ * @param initResult - MCP initialization result
+ * @param externalDeps - Optional external dependency checks
+ */
+export interface ExternalDependency {
+  name: string;
+  ready: boolean;
+}
+
+export function createHealthResponse(
+  config: MCPServerConfig,
+  initResult: MCPInitResult,
+  externalDeps?: ExternalDependency[]
+): Record<string, unknown> {
+  // Get build version from env or default to version
+  const buildVersion = Deno.env.get("BUILD_VERSION") ||
+                       Deno.env.get("GIT_SHA") ||
+                       config.version;
+
+  const deps: Record<string, boolean> = {
+    supabase: initResult.supabase !== null,
+    rateLimit: initResult.canRateLimit
+  };
+
+  // Add external dependencies if provided
+  if (externalDeps) {
+    for (const dep of externalDeps) {
+      deps[dep.name] = dep.ready;
+    }
+  }
+
+  return {
+    ok: !initResult.error,
+    server: config.name,
+    version: buildVersion,
+    tier: config.tier,
+    deps,
+    timestamp: new Date().toISOString(),
+    error: initResult.error || undefined
+  };
+}
+
+/**
+ * HTTP handler for /health endpoint (infrastructure monitoring)
+ *
+ * This is a standalone HTTP handler, not an MCP method.
+ * Use for load balancer health checks, uptime monitoring, etc.
+ */
+export function handleHealthCheck(
+  req: Request,
+  config: MCPServerConfig,
+  initResult: MCPInitResult,
+  corsHeaders: Record<string, string>,
+  externalDeps?: ExternalDependency[]
+): Response {
+  const health = createHealthResponse(config, initResult, externalDeps);
+
+  return new Response(JSON.stringify(health), {
+    status: health.ok ? 200 : 503,
+    headers: { ...corsHeaders, "Content-Type": "application/json" }
+  });
 }
 
 /**
@@ -251,6 +322,8 @@ export default {
   createToolsListResponse,
   createErrorResponse,
   handlePing,
+  createHealthResponse,
+  handleHealthCheck,
   checkInMemoryRateLimit,
   PING_TOOL
 };

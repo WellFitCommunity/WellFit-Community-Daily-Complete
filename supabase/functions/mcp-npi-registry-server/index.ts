@@ -15,9 +15,11 @@ import {
   createToolsListResponse,
   createErrorResponse,
   handlePing,
+  handleHealthCheck,
   checkInMemoryRateLimit,
   PING_TOOL
 } from "../_shared/mcpServerBase.ts";
+import { getRequestId } from "../_shared/mcpAuthGate.ts";
 
 // Initialize as Tier 1 (external_api) - no Supabase required
 const SERVER_CONFIG = {
@@ -26,7 +28,8 @@ const SERVER_CONFIG = {
   tier: "external_api" as const
 };
 
-const { logger, canRateLimit } = initMCPServer(SERVER_CONFIG);
+const initResult = initMCPServer(SERVER_CONFIG);
+const { logger, canRateLimit } = initResult;
 
 // CMS NPI Registry API
 const NPI_API_BASE = "https://npiregistry.cms.hhs.gov/api";
@@ -743,6 +746,12 @@ serve(async (req) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+  const requestId = getRequestId(req);
+
+  // Handle GET /health for infrastructure monitoring
+  if (req.method === "GET") {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
 
   try {
     // Rate limiting (in-memory fallback since we don't require Supabase)
@@ -835,11 +844,16 @@ serve(async (req) => {
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    logger.error("NPI Registry server error", { errorMessage: error.message });
+    logger.error("NPI Registry server error", { errorMessage: error.message, requestId });
 
-    return new Response(JSON.stringify(
-      createErrorResponse(-32603, error.message, null)
-    ), {
+    const errorResponse = createErrorResponse(-32603, error.message, null);
+    return new Response(JSON.stringify({
+      ...errorResponse,
+      error: {
+        ...(errorResponse.error as Record<string, unknown>),
+        data: { requestId }
+      }
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });

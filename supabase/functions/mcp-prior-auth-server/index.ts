@@ -16,9 +16,17 @@ import {
   createToolsListResponse,
   createErrorResponse,
   handlePing,
+  handleHealthCheck,
   PING_TOOL,
   MCPInitResult
 } from "../_shared/mcpServerBase.ts";
+import {
+  verifyClinicalAccess,
+  getRequestId,
+  createForbiddenResponse,
+  createUnauthorizedResponse,
+  CallerIdentity
+} from "../_shared/mcpAuthGate.ts";
 
 // Initialize as Tier 3 (admin) - requires service role key for DB writes
 const SERVER_CONFIG = {
@@ -28,12 +36,15 @@ const SERVER_CONFIG = {
 };
 
 const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
-const { supabase: sb, logger, canRateLimit } = initResult;
+const { logger, canRateLimit } = initResult;
 
 // If init failed, this server cannot operate
-if (!sb) {
+if (!initResult.supabase) {
   throw new Error(`MCP Prior Auth server requires service role key: ${initResult.error}`);
 }
+
+// Non-null after guard - TypeScript needs this explicit assignment
+const sb = initResult.supabase;
 
 // =====================================================
 // Types
@@ -747,11 +758,17 @@ serve(async (req) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+  const requestId = getRequestId(req);
+
+  // Health check endpoint (GET request)
+  if (req.method === "GET") {
+    return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
 
   try {
     // Rate limiting
-    const requestId = getRequestIdentifier(req);
-    const rateLimitResult = checkMCPRateLimit(requestId, MCP_RATE_LIMITS.prior_auth);
+    const rateLimitId = getRequestIdentifier(req);
+    const rateLimitResult = checkMCPRateLimit(rateLimitId, MCP_RATE_LIMITS.prior_auth);
 
     if (!rateLimitResult.allowed) {
       return createRateLimitResponse(rateLimitResult, MCP_RATE_LIMITS.prior_auth, corsHeaders);
@@ -764,13 +781,14 @@ serve(async (req) => {
     // Handle MCP JSON-RPC methods
     switch (method) {
       case "initialize": {
+        // No auth required for initialize - discovery method
         return new Response(JSON.stringify({
           jsonrpc: "2.0",
           result: {
             protocolVersion: "2024-11-05",
             serverInfo: {
               name: "mcp-prior-auth-server",
-              version: "1.0.0"
+              version: "1.1.0"
             },
             capabilities: {
               tools: {}
@@ -783,6 +801,7 @@ serve(async (req) => {
       }
 
       case "tools/list": {
+        // No auth required for tools/list - discovery method
         const tools = Object.entries(TOOLS).map(([name, def]) => ({
           name,
           description: def.description,
@@ -805,14 +824,44 @@ serve(async (req) => {
         if (!name || !TOOLS[name as keyof typeof TOOLS]) {
           return new Response(JSON.stringify({
             jsonrpc: "2.0",
-            error: { code: -32602, message: `Unknown tool: ${name}` },
+            error: { code: -32602, message: `Unknown tool: ${name}`, data: { requestId } },
             id
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
         }
 
-        logger.info("PRIOR_AUTH_TOOL_CALL", { tool: name });
+        // ============================================================
+        // AUTH GATE: Verify caller has clinical/admin access
+        // Prior auth operations require authenticated clinical staff
+        // ============================================================
+        const authResult = await verifyClinicalAccess(req, {
+          serverName: SERVER_CONFIG.name,
+          toolName: name,
+          logger
+        });
+
+        if (!authResult.authorized) {
+          logger.security("PRIOR_AUTH_ACCESS_DENIED", {
+            requestId,
+            tool: name,
+            reason: authResult.error
+          });
+
+          if (authResult.statusCode === 401) {
+            return createUnauthorizedResponse(authResult.error || "Unauthorized", requestId, corsHeaders);
+          }
+          return createForbiddenResponse(authResult.error || "Forbidden", requestId, corsHeaders);
+        }
+
+        const caller = authResult.caller as CallerIdentity;
+        logger.info("PRIOR_AUTH_TOOL_CALL", {
+          requestId,
+          tool: name,
+          userId: caller.userId,
+          role: caller.role,
+          tenantId: caller.tenantId
+        });
 
         const result = await handleToolCall(name, args || {});
 
@@ -822,7 +871,12 @@ serve(async (req) => {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             metadata: {
               tool: name,
-              executionTimeMs: Date.now() - startTime
+              executionTimeMs: Date.now() - startTime,
+              requestId,
+              caller: {
+                userId: caller.userId,
+                role: caller.role
+              }
             }
           },
           id
@@ -834,7 +888,7 @@ serve(async (req) => {
       default:
         return new Response(JSON.stringify({
           jsonrpc: "2.0",
-          error: { code: -32601, message: `Method not found: ${method}` },
+          error: { code: -32601, message: `Method not found: ${method}`, data: { requestId } },
           id
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -843,11 +897,11 @@ serve(async (req) => {
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    logger.error("PRIOR_AUTH_API_ERROR", { errorMessage: error.message });
+    logger.error("PRIOR_AUTH_API_ERROR", { requestId, errorMessage: error.message });
 
     return new Response(JSON.stringify({
       jsonrpc: "2.0",
-      error: { code: -32603, message: error.message },
+      error: { code: -32603, message: error.message, data: { requestId } },
       id: null
     }), {
       status: 500,
