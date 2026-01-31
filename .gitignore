@@ -82,3 +82,6 @@ scripts/fix-pg-net.sql
 # Temporary Supabase files
 supabase/.temp/
 .encryption-key-SECURE.txt
+
+# MCP configuration (contains tokens - use .mcp.example.json as template)
+.mcp.json

@@ -1,10 +1,11 @@
 // Quick test to see what Supabase client receives
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  'https://xkybsjnvuohpqpbkikyn.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NjA5ODMsImV4cCI6MjA2MTUzNjk4M30.Y5quJr7mTi1ilYf0Mjgcfk2jgbFFI8RyP7h4eWBKQ2E'
-);
+// Configuration - Set via environment variables
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://your-project.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'your-supabase-anon-key';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function test() {
   console.log('Testing compliance_status view...\n');

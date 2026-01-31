@@ -319,8 +319,8 @@ Create `mobile-companion-app/.env`:
 
 ```env
 # Copy these from your web app .env
-REACT_APP_SUPABASE_URL=https://xkybsjnvuohpqpbkikyn.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY0MzkxNDIsImV4cCI6MjA0MjAxNTE0Mn0.5bA5f_kU1j-k-l8g3UNiYwVpHJxZCj4qnX0wjKrTWFc
+REACT_APP_SUPABASE_URL=https://your-project-ref.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your-supabase-anon-key-here
 
 # Get Google Maps API key from https://console.cloud.google.com/
 GOOGLE_MAPS_API_KEY=your_key_here

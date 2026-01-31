@@ -1,0 +1,84 @@
+{
+  "mcpServers": {
+    "claude": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-claude-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "cms-coverage": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-cms-coverage-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "npi-registry": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-npi-registry-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "postgres": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-postgres-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "edge-functions": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-edge-functions-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "medical-codes": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-medical-codes-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "fhir": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-fhir-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "hl7-x12": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-hl7-x12-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "clearinghouse": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-clearinghouse-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "prior-auth": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-prior-auth-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    }
+  }
+}

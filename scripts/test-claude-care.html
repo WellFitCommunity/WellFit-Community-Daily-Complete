@@ -17,8 +17,9 @@
 
     <script>
         // Initialize Supabase client
-        const supabaseUrl = 'https://xkybsjnvuohpqpbkikyn.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5NjQ5NzAsImV4cCI6MjA0NDU0MDk3MH0.S8vHGFzB3qvBMxkVNw5DFKDgM8LHj5fOzWFXuMFYOH4';
+        // NOTE: Replace these with your actual values or set window.SUPABASE_URL/SUPABASE_ANON_KEY
+        const supabaseUrl = window.SUPABASE_URL || 'https://your-project.supabase.co';
+        const supabaseKey = window.SUPABASE_ANON_KEY || 'your-supabase-anon-key';
         const supabase = supabasejs.createClient(supabaseUrl, supabaseKey);
 
         async function checkTables() {
