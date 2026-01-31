@@ -3,7 +3,9 @@
 // Purpose: Medicare coverage lookups for prior authorization
 // Features: LCD/NCD search, coverage requirements, article lookup
 // API: CMS Medicare Coverage Database API
-// Tier: EXTERNAL_API (no Supabase required - calls public CMS API)
+//
+// TIER 1 (external_api): No Supabase required - calls public CMS API
+// Auth: Supabase apikey header only (for edge function access)
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";

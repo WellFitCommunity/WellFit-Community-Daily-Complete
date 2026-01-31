@@ -2,7 +2,9 @@
 // MCP PostgreSQL Server
 // Purpose: Safe, controlled database operations via MCP
 // Features: RLS enforcement, query whitelisting, audit logging
-// Tier: USER_SCOPED (uses anon key + RLS for tenant isolation)
+//
+// TIER 2 (user_scoped): Uses ANON key + RLS for tenant isolation
+// Auth: Supabase apikey + user JWT (RLS enforced)
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";

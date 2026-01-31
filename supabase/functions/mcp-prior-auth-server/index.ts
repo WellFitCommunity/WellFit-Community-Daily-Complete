@@ -4,7 +4,9 @@
 // Purpose: FHIR-based Prior Authorization API
 // Features: Submit PA, check status, manage appeals
 // Standards: Da Vinci PAS IG, HL7 FHIR R4
-// Tier: ADMIN (requires service role for database writes)
+//
+// TIER 3 (admin): Requires service role key for database writes
+// Auth: Supabase apikey + service role key + clinical role verification
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";

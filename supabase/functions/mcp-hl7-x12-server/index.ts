@@ -4,6 +4,7 @@
 // Features: Message parsing, validation, conversion, generation
 //
 // TIER 3 (admin): Requires service role key for audit logging
+// Auth: Supabase apikey + service role key + admin role verification
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";

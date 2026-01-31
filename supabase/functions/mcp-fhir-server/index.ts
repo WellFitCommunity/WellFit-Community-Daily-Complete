@@ -4,6 +4,7 @@
 // Features: Bundle export, resource CRUD, validation, EHR sync
 //
 // TIER 3 (admin): Requires service role key for FHIR operations
+// Auth: Supabase apikey + service role key + clinical role verification
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";

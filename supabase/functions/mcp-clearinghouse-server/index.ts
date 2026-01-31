@@ -1,18 +1,13 @@
-/**
- * Clearinghouse MCP Server
- *
- * MCP server for healthcare clearinghouse operations:
- * - Claim submission (837P/837I)
- * - Claim status inquiry (276/277)
- * - Eligibility verification (270/271)
- * - Remittance processing (835)
- * - Prior authorization (278)
- * - Connection testing
- *
- * Supports: Waystar, Change Healthcare, Availity
- *
- * TIER 1 (external_api): No Supabase required, external clearinghouse APIs only
- */
+// =====================================================
+// MCP Clearinghouse Server
+// Purpose: Healthcare clearinghouse EDI operations
+// Features: Claims (837P/837I), status (276/277), eligibility (270/271),
+//           remittance (835), prior auth (278), connection testing
+// Supports: Waystar, Change Healthcare, Availity
+//
+// TIER 1 (external_api): No Supabase required - external clearinghouse APIs
+// Auth: Supabase apikey header only (for edge function access)
+// =====================================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';

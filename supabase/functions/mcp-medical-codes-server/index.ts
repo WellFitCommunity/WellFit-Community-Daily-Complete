@@ -4,6 +4,7 @@
 // Features: Smart search, code validation, bundling rules, audit logging
 //
 // TIER 2 (user_scoped): Uses ANON key + RLS for public reference data
+// Auth: Supabase apikey + user JWT (RLS enforced)
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";

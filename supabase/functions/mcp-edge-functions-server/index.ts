@@ -4,6 +4,7 @@
 // Features: Function discovery, invocation, status tracking, audit logging
 //
 // TIER 3 (admin): Requires service role key to invoke edge functions
+// Auth: Supabase apikey + service role key + admin role verification
 // =====================================================
 
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
