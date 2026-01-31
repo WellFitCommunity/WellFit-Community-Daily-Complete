@@ -906,14 +906,9 @@ serve(async (req: Request) => {
   }
 
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: { code: -32000, message: 'Unauthorized' } }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Tier 1 (external_api): No Bearer token required
+    // Authentication is handled by Supabase apikey header at the edge function level
+    // This server only calls external clearinghouse APIs, no internal data access
 
     // Parse request
     const body = await req.json();
