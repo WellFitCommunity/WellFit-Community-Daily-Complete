@@ -1,12 +1,18 @@
-// src/AuthGate.tsx — profiles-only, schema-aware, fail-safe (READY TO PASTE)
+// src/AuthGate.tsx — centralized role authority, schema-aware, fail-safe
 import { useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSupabaseClient, useSession, useUser } from "./contexts/AuthContext";
+import {
+  checkAdminFromProfile,
+  checkAdminFromUserRoles,
+  type UserRoleData,
+  type ProfileRoleData,
+} from "./lib/roleAuthority";
 
 type ProfileRow = {
   force_password_change?: boolean | null;
   onboarded?: boolean | null;
-  demographics_complete?: boolean | null; // Also check this for backwards compatibility
+  demographics_complete?: boolean | null;
   consent?: boolean | null;
   // role hints (no joins)
   is_admin?: boolean | null;
@@ -15,24 +21,30 @@ type ProfileRow = {
   role_id?: number | null;
 };
 
-const ADMIN_WORDS = new Set(["admin", "super_admin", "staff", "moderator"]);
+/**
+ * Check if user has admin access using centralized role authority
+ * Uses user_roles table as primary source, profiles as fallback
+ */
+function isAdminish(
+  profile?: ProfileRow | null,
+  userRoles?: UserRoleData[] | null
+): boolean {
+  // Priority 1: Check user_roles table (authoritative)
+  if (userRoles && userRoles.length > 0) {
+    return checkAdminFromUserRoles(userRoles);
+  }
 
-function isAdminish(p?: ProfileRow | null): boolean {
-  if (!p) return false;
-  if (p.is_admin) return true;
-  const name = (p.role || "").toLowerCase().trim();
-  if (name && ADMIN_WORDS.has(name)) return true;
+  // Priority 2: Check profiles table (legacy fallback)
+  if (profile) {
+    const profileData: ProfileRoleData = {
+      role_code: profile.role_code,
+      role: profile.role,
+      is_admin: profile.is_admin,
+    };
+    return checkAdminFromProfile(profileData);
+  }
 
-  // Check numeric role codes for admin roles:
-  if (
-    typeof p.role_code === "number" &&
-    (p.role_code === 1 ||
-      p.role_code === 2 ||
-      p.role_code === 3 ||
-      p.role_code === 12)
-  )
-    return true; // admin=1, super_admin=2, staff=3, contractor_nurse=12
-  if (typeof p.role_id === "number" && p.role_id <= 5) return false; // conservative: don't assume admin on small ids
+  // Deny by default
   return false;
 }
 
@@ -63,7 +75,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         path === "/verify" ||
         path === "/";
 
-      // Read ONLY from profiles; no joins = no RLS surprises
+      // Fetch profile data
       const { data, error } = await supabase
         .from("profiles")
         .select(
@@ -80,6 +92,16 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
       const p: ProfileRow = data || {};
 
+      // Fetch user_roles (authoritative source for role checks)
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("role, created_at")
+        .eq("user_id", user.id);
+
+      if (cancelled) return;
+
+      const userRoles = (rolesData || []) as UserRoleData[];
+
       // 1) Password change hard-stop
       if (p.force_password_change) {
         if (!isGatePage && path !== "/change-password") {
@@ -89,7 +111,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       }
 
       // 2) Admin/staff bypass demographics (optionally mark onboarded)
-      if (isAdminish(p)) {
+      if (isAdminish(p, userRoles)) {
         if (p.onboarded === false || p.onboarded == null) {
           // fire-and-forget; don’t block navigation
           supabase

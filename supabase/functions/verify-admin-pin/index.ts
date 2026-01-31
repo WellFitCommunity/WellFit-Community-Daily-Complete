@@ -4,6 +4,11 @@ import { z } from "https://esm.sh/zod@3.23.8?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { verifyPin, generateSecureToken, isClientHashedPin } from "../_shared/crypto.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import {
+  determineRoleAccess,
+  type UserRoleRow,
+  type ProfileRow
+} from "../_shared/roleAuthority.ts";
 
 const ADMIN_SESSION_TTL_MIN = 30; // 30 minutes for enhanced security (B2B2C healthcare platform) - rebuilt 2025-12-25
 
@@ -63,13 +68,31 @@ Deno.serve(async (req: Request) => {
     const user_id = u?.user?.id;
     if (!user_id) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
 
-    const { data: profile } = await supabase
+    // Use centralized role authority for admin check
+    // Priority 1: user_roles table (authoritative)
+    const { data: userRolesData } = await supabase
+      .from("user_roles")
+      .select("role, created_at")
+      .eq("user_id", user_id);
+
+    // Priority 2: profiles table (legacy fallback)
+    const { data: profileData } = await supabase
       .from("profiles")
-      .select("is_admin")
+      .select("role_code, role, is_admin")
       .eq("user_id", user_id)
       .single();
 
-    if (!profile?.is_admin) {
+    const userRoles = (userRolesData || []) as UserRoleRow[];
+    const profile = profileData as ProfileRow | null;
+    const roleResult = determineRoleAccess(userRoles, profile);
+
+    if (!roleResult.hasAdminAccess) {
+      logger.security("Admin access denied - insufficient role", {
+        userId: user_id,
+        clientIp,
+        roles: roleResult.roles,
+        source: roleResult.source
+      });
       return new Response(JSON.stringify({ error: "Admin required" }), { status: 403, headers });
     }
 

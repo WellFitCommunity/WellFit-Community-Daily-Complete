@@ -1,9 +1,14 @@
-// src/contexts/AuthContext.tsx — PRODUCTION-READY (roles-based admin)
+// src/contexts/AuthContext.tsx — PRODUCTION-READY (centralized role authority)
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from '../services/auditLogger';
 import { resetAuthFailureFlag } from '../lib/authAwareFetch';
+import {
+  checkAdminFromMetadata,
+  checkAdminFromUserRoles,
+  type UserRoleData,
+} from '../lib/roleAuthority';
 
 type AuthContextValue = {
   supabase: typeof supabase;
@@ -24,7 +29,7 @@ type AuthContextValue = {
   signUp: (opts: { phone?: string; email?: string; password?: string; captchaToken?: string }) => Promise<void>;
 
   signOut: () => Promise<void>;
-  isAdmin: boolean; // computed from metadata + DB user_roles
+  isAdmin: boolean; // computed from DB user_roles (authoritative) + metadata fallback
 
   // Error handling
   handleAuthError: (error: unknown) => Promise<boolean>;
@@ -32,18 +37,12 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-// ---- helpers ----
+// ---- helpers using centralized role authority ----
 function metaIsAdmin(u: User | null): boolean {
   if (!u) return false;
   const app = (u.app_metadata || {}) as Record<string, unknown>;
   const usr = (u.user_metadata || {}) as Record<string, unknown>;
-  return Boolean(
-    app.role === 'admin' ||
-    app.role === 'super_admin' ||
-    app.is_admin === true ||
-    usr.role === 'admin' ||
-    usr.role === 'super_admin'
-  );
+  return checkAdminFromMetadata(app, usr);
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -125,10 +124,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setDbAdmin(null);
         return;
       }
-      // Expect table: public.user_roles(user_id uuid, role text) with RLS allowing self-read
+      // Fetch from user_roles table (authoritative source)
       const { data, error: selErr } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('role, created_at')
         .eq('user_id', u.id);
 
       if (selErr) {
@@ -145,8 +144,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      const roles = (data || []).map((r: { role: string }) => String(r.role));
-      const hasAdmin = roles.includes('admin') || roles.includes('super_admin');
+      // Use centralized role authority to check admin access
+      const userRoles = (data || []) as UserRoleData[];
+      const hasAdmin = checkAdminFromUserRoles(userRoles);
       setDbAdmin(hasAdmin);
     } catch (e: unknown) {
       const err = e as { message?: string } | null;
