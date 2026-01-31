@@ -226,21 +226,33 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --ignore-scripts
 
+      - name: Check for integration tests
+        id: check-integration
+        run: |
+          if find src/integration -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" 2>/dev/null | grep -q .; then
+            echo "has_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_tests=false" >> $GITHUB_OUTPUT
+            echo "No integration tests found - skipping"
+          fi
+
       - name: Run integration tests
         id: integration-tests
+        if: steps.check-integration.outputs.has_tests == 'true'
         run: npm run test:integration
         env:
           CI: true
-        continue-on-error: true
 
       - name: Report to summary
         if: always()
         run: |
           echo "## 🔗 Integration Tests" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.integration-tests.outcome }}" == "success" ]; then
+          if [ "${{ steps.check-integration.outputs.has_tests }}" == "false" ]; then
+            echo "⏭️ No integration tests found - skipped" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.integration-tests.outcome }}" == "success" ]; then
             echo "✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Integration tests had issues (non-blocking)" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Integration tests failed" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ============================================
