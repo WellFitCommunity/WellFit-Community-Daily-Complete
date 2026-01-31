@@ -10,6 +10,10 @@ interface ErrorLogData {
   component_name?: string;
   page_url?: string;
   severity?: 'critical' | 'error' | 'warning' | 'info';
+  /** Correlation ID for error tracing (e.g., err_xyz123) */
+  correlation_id?: string;
+  /** Session ID for user session tracing (e.g., ses_uuid) */
+  session_id?: string;
 }
 
 interface PerformanceMetricData {

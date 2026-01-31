@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
 import { performanceMonitor } from '../services/performanceMonitoring';
+import { generateErrorCorrelationId, getSessionId } from '../lib/correlationId';
 
 interface Props {
   children: ReactNode;
@@ -12,29 +13,34 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  correlationId: string | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, correlationId: null };
   }
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    // Generate correlation ID when error occurs for tracing
+    const correlationId = generateErrorCorrelationId();
+    return { hasError: true, error, correlationId };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    const { correlationId } = this.state;
 
-
-    // Log to performance monitoring system
+    // Log to performance monitoring system with correlation context
     performanceMonitor.logError({
       error_message: error.message,
       error_stack: error.stack,
       error_type: 'react_error_boundary',
       component_name: errorInfo.componentStack?.split('\n')[1]?.trim() || 'Unknown',
       page_url: window.location.href,
-      severity: 'critical'
+      severity: 'critical',
+      correlation_id: correlationId || undefined,
+      session_id: getSessionId(),
     });
 
     this.props.onError?.(error, errorInfo);
@@ -59,6 +65,11 @@ export class ErrorBoundary extends Component<Props, State> {
                 <p className="text-sm text-gray-600 mt-1">
                   {this.state.error?.message || 'An unexpected error occurred'}
                 </p>
+                {this.state.correlationId && (
+                  <p className="text-xs text-gray-500 mt-2 font-mono">
+                    Error ID: {this.state.correlationId}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button
