@@ -643,7 +643,7 @@ Deno.test("MCP FHIR Server Tests", async (t) => {
     const response = {
       jsonrpc: "2.0",
       result: {
-        protocolVersion: "2024-11-05",
+        protocolVersion: "2025-11-25",
         serverInfo: {
           name: "mcp-fhir-server",
           version: "1.0.0"
@@ -657,7 +657,7 @@ Deno.test("MCP FHIR Server Tests", async (t) => {
 
     assertEquals(response.jsonrpc, "2.0");
     assertEquals(response.result.serverInfo.name, "mcp-fhir-server");
-    assertEquals(response.result.protocolVersion, "2024-11-05");
+    assertEquals(response.result.protocolVersion, "2025-11-25");
   });
 
   await t.step("should return MCP tools/list response format", () => {

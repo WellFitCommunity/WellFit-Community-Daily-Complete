@@ -787,7 +787,7 @@ serve(async (req) => {
         return new Response(JSON.stringify({
           jsonrpc: "2.0",
           result: {
-            protocolVersion: "2024-11-05",
+            protocolVersion: "2025-11-25",
             serverInfo: {
               name: "mcp-prior-auth-server",
               version: "1.1.0"

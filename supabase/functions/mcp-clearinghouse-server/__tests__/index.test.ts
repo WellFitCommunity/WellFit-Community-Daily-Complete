@@ -656,7 +656,7 @@ Deno.test("Clearinghouse MCP Server Tests", async (t) => {
 
   await t.step("should return protocol version on initialize", () => {
     const result = {
-      protocolVersion: '2024-11-05',
+      protocolVersion: '2025-11-25',
       serverInfo: {
         name: 'mcp-clearinghouse-server',
         version: '1.0.0'
@@ -664,7 +664,7 @@ Deno.test("Clearinghouse MCP Server Tests", async (t) => {
       capabilities: { tools: {} }
     };
 
-    assertEquals(result.protocolVersion, '2024-11-05');
+    assertEquals(result.protocolVersion, '2025-11-25');
     assertEquals(result.serverInfo.name, 'mcp-clearinghouse-server');
   });
 

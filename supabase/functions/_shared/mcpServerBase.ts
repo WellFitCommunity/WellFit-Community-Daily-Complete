@@ -129,7 +129,7 @@ export function createInitializeResponse(
   return {
     jsonrpc: "2.0",
     result: {
-      protocolVersion: "2024-11-05",
+      protocolVersion: "2025-11-25",
       serverInfo: {
         name: config.name,
         version: config.version

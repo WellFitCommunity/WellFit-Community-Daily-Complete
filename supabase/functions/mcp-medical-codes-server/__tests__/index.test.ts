@@ -439,7 +439,7 @@ Deno.test("MCP Medical Codes Server Tests", async (t) => {
     const response = {
       jsonrpc: "2.0",
       result: {
-        protocolVersion: "2024-11-05",
+        protocolVersion: "2025-11-25",
         serverInfo: {
           name: "mcp-medical-codes-server",
           version: "1.0.0"
