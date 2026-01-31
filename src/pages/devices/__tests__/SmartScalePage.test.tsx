@@ -340,11 +340,16 @@ describe('SmartScalePage', () => {
 
       renderPage();
 
+      // Wait for loading to complete (button is disabled while loading)
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /connect scale/i })).toBeInTheDocument();
+        expect(screen.getByText('Not Connected')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByRole('button', { name: /connect scale/i }));
+      // Now the button should be enabled
+      const connectButton = screen.getByRole('button', { name: /connect scale/i });
+      expect(connectButton).not.toBeDisabled();
+
+      fireEvent.click(connectButton);
 
       await waitFor(() => {
         expect(DeviceService.connectDevice).toHaveBeenCalledWith('smart_scale', 'Smart Scale');

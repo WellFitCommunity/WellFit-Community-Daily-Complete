@@ -51,9 +51,12 @@
 export type PatientId = string;
 
 /**
- * Risk level classification (consistent across all modules)
+ * Patient risk level classification for context aggregation
+ *
+ * Note: Uses lowercase values to match database storage conventions.
+ * For clinical risk assessments, see RiskLevel from riskAssessment.ts
  */
-export type RiskLevel = 'low' | 'moderate' | 'high' | 'critical';
+export type PatientRiskLevel = 'low' | 'moderate' | 'high' | 'critical';
 
 /**
  * Patient enrollment pathway
@@ -325,7 +328,7 @@ export interface PatientTimelineSummary {
  */
 export interface PatientRiskSummary {
   /** Overall risk level */
-  risk_level: RiskLevel;
+  risk_level: PatientRiskLevel;
 
   /** Risk score (0-100 scale) */
   risk_score: number | null;

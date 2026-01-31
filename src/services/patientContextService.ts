@@ -55,7 +55,7 @@ import {
   PatientContextOptions,
   DataSourceRecord,
   DEFAULT_PATIENT_CONTEXT_OPTIONS,
-  RiskLevel,
+  PatientRiskLevel,
 } from '../types/patientContext';
 
 // =============================================================================
@@ -700,7 +700,7 @@ class PatientContextService {
       const row = riskData as Record<string, unknown>;
 
       const riskSummary: PatientRiskSummary = {
-        risk_level: (row.risk_level as RiskLevel) || 'low',
+        risk_level: (row.risk_level as PatientRiskLevel) || 'low',
         risk_score: typeof row.risk_score === 'number' ? row.risk_score : null,
         risk_factors: Array.isArray(row.risk_factors) ? row.risk_factors as string[] : [],
         last_assessment_date: row.last_assessment_date ? String(row.last_assessment_date) : null,
