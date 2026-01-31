@@ -49,6 +49,29 @@ describe('roleAuthority', () => {
     });
   });
 
+  describe('CLINICAL_ROLE_NAMES and CLINICAL_ROLE_CODES consistency', () => {
+    it('should have matching clinical role names and codes', () => {
+      // Clinical roles: nurse(3), physician(5), physical_therapist(12), etc.
+      expect(CLINICAL_ROLE_NAMES).toContain('nurse');
+      expect(CLINICAL_ROLE_NAMES).toContain('physician');
+      expect(CLINICAL_ROLE_NAMES).toContain('physical_therapist');
+
+      expect(CLINICAL_ROLE_CODES).toContain(RoleCode.NURSE); // 3
+      expect(CLINICAL_ROLE_CODES).toContain(RoleCode.PHYSICIAN); // 5
+      expect(CLINICAL_ROLE_CODES).toContain(RoleCode.PHYSICAL_THERAPIST); // 12
+    });
+
+    it('should NOT include admin roles', () => {
+      expect(CLINICAL_ROLE_NAMES).not.toContain('super_admin');
+      expect(CLINICAL_ROLE_NAMES).not.toContain('admin');
+      expect(CLINICAL_ROLE_NAMES).not.toContain('it_admin');
+
+      expect(CLINICAL_ROLE_CODES).not.toContain(RoleCode.SUPER_ADMIN); // 1
+      expect(CLINICAL_ROLE_CODES).not.toContain(RoleCode.ADMIN); // 2
+      expect(CLINICAL_ROLE_CODES).not.toContain(RoleCode.IT_ADMIN); // 19
+    });
+  });
+
   describe('isAdminRoleName', () => {
     it('returns true for admin role names', () => {
       expect(isAdminRoleName('super_admin')).toBe(true);
