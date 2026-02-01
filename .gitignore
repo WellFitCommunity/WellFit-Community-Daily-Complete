@@ -86,3 +86,6 @@ supabase/.temp/
 # MCP configuration (contains tokens - use .mcp.example.json as template)
 .mcp.json
 MCP_KEYS_SECURE.md
+
+# Private governance documents (IP-protected, never commit)
+private/
