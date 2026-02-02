@@ -87,5 +87,5 @@ supabase/.temp/
 .mcp.json
 MCP_KEYS_SECURE.md
 
-# Private governance documents (IP-protected, never commit)
+# Private documents (IP-protected, business strategy - never commit)
 private/
