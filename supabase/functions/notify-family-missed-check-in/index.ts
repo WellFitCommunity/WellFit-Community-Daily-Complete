@@ -1,6 +1,6 @@
 // Supabase Edge Function: notify-family-missed-check-in
 // Notifies family/emergency contacts when senior misses check-in
-// Used by law enforcement "Are You OK" program
+// Used by law enforcement SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch)
 // Deno runtime
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -64,7 +64,7 @@ serve(async (req) => {
     }
 
     // Compose message for emergency contact
-    const message = `ALERT: ${seniorName} has missed their scheduled check-in for the WellFit Community "Are You OK?" program. This message is being sent to you as their emergency contact. Please attempt to contact ${seniorName} or request a welfare check if you cannot reach them. If this is an emergency, please dial 911 immediately.`;
+    const message = `ALERT: ${seniorName} has missed their scheduled check-in for the WellFit Community SHIELD Program. This message is being sent to you as their emergency contact. Please attempt to contact ${seniorName} or request a welfare check if you cannot reach them. If this is an emergency, please dial 911 immediately.`;
 
     // Send SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;

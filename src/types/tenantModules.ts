@@ -629,7 +629,7 @@ export const MODULE_METADATA: Record<ModuleName, Omit<ModuleMetadata, 'key'>> = 
   },
   law_enforcement_enabled: {
     name: 'Law Enforcement',
-    description: 'Welfare check coordination, Precinct 3 integration',
+    description: 'SHIELD Program - welfare check coordination for seniors and vulnerable populations',
     category: 'public_safety',
     requiredTier: 'premium',
     icon: 'Shield',

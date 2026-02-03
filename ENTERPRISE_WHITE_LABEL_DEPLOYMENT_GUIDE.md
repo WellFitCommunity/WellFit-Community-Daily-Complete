@@ -47,13 +47,13 @@ White-labeling allows you to deploy separate branded instances of the WellFit pl
         ┌────────────┼────────────┬────────────────┐
         │            │            │                │
    ┌────▼────┐  ┌───▼────┐  ┌───▼─────┐    ┌────▼──────┐
-   │Methodist│  │Houston │  │Precinct │    │ Seattle   │
-   │Hospital │  │Senior  │  │3 Sheriff│    │Community  │
-   │(MH-6702)│  │Services│  │(P3-1234)│    │Health     │
+   │Methodist│  │Houston │  │Law Enf. │    │ Seattle   │
+   │Hospital │  │Senior  │  │ Agency  │    │Community  │
+   │(MH-6702)│  │Services│  │(LE-1234)│    │Health     │
    └─────────┘  └────────┘  └─────────┘    └───────────┘
       │              │           │               │
    Patients     Seniors    Law Enforcement  Patients
-   Providers    Admins     Constables       Providers
+   Providers    Admins     Officers         Providers
 ```
 
 ### Database Isolation
@@ -68,7 +68,7 @@ Each tenant gets their own subdomain:
 
 - `methodist.thewellfitcommunity.org` → Methodist Hospital
 - `houston.thewellfitcommunity.org` → Houston Senior Services
-- `precinct3.thewellfitcommunity.org` → Precinct 3 Sheriff
+- `agency.thewellfitcommunity.org` → Law Enforcement Agency
 - `seattle.thewellfitcommunity.org` → Seattle Community Health
 
 ---
@@ -117,9 +117,9 @@ Each tenant gets their own subdomain:
 
 ### Scenario 3: Law Enforcement Partnership
 
-**Client:** Precinct 3 Constable Office
-**Use Case:** Senior welfare checks, emergency response coordination
-**Users:** 200 seniors, 25 constables
+**Client:** Law Enforcement Agency
+**Use Case:** Senior welfare checks, emergency response coordination (The SHIELD Program)
+**Users:** 200 seniors, 25 officers
 **License:** Premium
 
 #### Features Enabled:
@@ -454,7 +454,7 @@ curl -X POST https://methodist.thewellfitcommunity.org/api/telehealth/create-roo
 ```sql
 UPDATE tenant_module_config
 SET law_enforcement_module = true
-WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'P3-1234');
+WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'LE-1234');
 ```
 
 #### 2. Configure Emergency Response Info
@@ -487,7 +487,7 @@ INSERT INTO law_enforcement_response_info (
   escalation_delay_hours,
   special_instructions
 ) VALUES (
-  (SELECT id FROM tenants WHERE tenant_code = 'P3-1234'),
+  (SELECT id FROM tenants WHERE tenant_code = 'LE-1234'),
   '<patient_id>',
   false,
   true,
@@ -508,7 +508,7 @@ INSERT INTO law_enforcement_response_info (
 #### 3. Grant Constable Access
 
 ```sql
--- Create constable user
+-- Create officer user
 INSERT INTO profiles (
   id,
   tenant_id,
@@ -517,20 +517,20 @@ INSERT INTO profiles (
   role
 ) VALUES (
   '<user_id>',
-  (SELECT id FROM tenants WHERE tenant_code = 'P3-1234'),
-  'constable.jones@precinct3.gov',
-  'Deputy Jones',
+  (SELECT id FROM tenants WHERE tenant_code = 'LE-1234'),
+  'officer@agency.gov',
+  'Officer Jones',
   'admin'
 );
 
--- Grant admin role for constable dispatch dashboard access
+-- Grant admin role for law enforcement dispatch dashboard access
 INSERT INTO user_roles (user_id, role)
 VALUES ('<user_id>', 'admin');
 ```
 
 #### 4. Test Welfare Check Workflow
 
-1. Login as constable: `https://precinct3.thewellfitcommunity.org/admin-login`
+1. Login as officer: `https://agency.thewellfitcommunity.org/admin-login`
 2. Navigate to `/constable-dispatch`
 3. View missed check-in alerts
 4. Click on senior to view welfare check info
@@ -737,7 +737,7 @@ Coming soon: iOS and Android white-label mobile apps with custom branding and pe
 ### Tenant Codes by Organization Type
 
 - **Hospitals:** `MH-` prefix (Methodist Hospital: MH-6702)
-- **Law Enforcement:** `P3-` prefix (Precinct 3: P3-1234)
+- **Law Enforcement:** `LE-` prefix (Law Enforcement Agency: LE-1234)
 - **Senior Care:** `SC-` prefix (Senior Care: SC-5001)
 - **Envision Internal:** `EVG-` prefix (EVG-0001)
 

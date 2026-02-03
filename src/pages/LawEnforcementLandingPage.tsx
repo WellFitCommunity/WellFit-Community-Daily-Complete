@@ -2,7 +2,7 @@
  * Law Enforcement Landing Page
  *
  * Dedicated landing page for law enforcement agencies (Constable, Sheriff)
- * Displays "Are You OK?" senior welfare check program information
+ * Displays The SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch)
  * Design: Envision Atlus Clinical Design System
  */
 
@@ -63,9 +63,9 @@ export const LawEnforcementLandingPage: React.FC = () => {
             <Shield className="w-14 h-14 text-white" />
           </div>
           <h1 className="text-5xl font-bold text-white mb-6">
-            Are You OK?
+            The SHIELD Program
           </h1>
-          <p className="text-2xl text-[#33bfb7] mb-4">Senior Welfare Check Program</p>
+          <p className="text-2xl text-[#33bfb7] mb-4">Senior & Health-Impaired Emergency Liaison Dispatch</p>
           <p className="text-xl text-slate-400 max-w-3xl mx-auto">
             Protecting our seniors through daily check-ins and rapid emergency response coordination
           </p>
@@ -212,7 +212,7 @@ export const LawEnforcementLandingPage: React.FC = () => {
               Envision Atlus Clinical Platform • Powered by Envision VirtualEdge Group
             </p>
             <p className="text-xs text-[#00857a] mt-1">
-              Protecting seniors through technology and community partnership
+              Protecting seniors and vulnerable populations through technology and community partnership
             </p>
           </div>
         </div>

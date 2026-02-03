@@ -214,7 +214,7 @@ CREATE TABLE welfare_check_reports (
 3. **Mobile App:** Deferred - web dashboard is MVP for pilot.
 
 ### Open Questions
-1. Which precinct/agency is first pilot deployment?
+1. Which agency is first pilot deployment?
 2. What's the target pilot date?
 3. Are welfare check reports required for pilot, or can officers use paper?
 

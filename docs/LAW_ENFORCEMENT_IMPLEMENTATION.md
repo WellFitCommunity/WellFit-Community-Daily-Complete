@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implemented comprehensive "Are You OK?" senior welfare check system for Precinct 3 constables. Built on existing WellFit multi-tenant white-label platform with full tenant isolation.
+Implemented comprehensive SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch) senior welfare check system for law enforcement agencies. Built on existing WellFit multi-tenant white-label platform with full tenant isolation.
 
 **Status:** ✅ Core system complete and ready for deployment
 **Time to implement:** 45 minutes
@@ -135,7 +135,7 @@ Implemented comprehensive "Are You OK?" senior welfare check system for Precinct
 
 ### Reused Components:
 - ✅ Patient/User authentication
-- ✅ Check-in system (for "Are You OK" daily prompts)
+- ✅ Check-in system (for SHIELD Program daily prompts)
 - ✅ Multi-tenant architecture
 - ✅ HIPAA compliance layer
 - ✅ SOC 2 audit logging
@@ -173,7 +173,7 @@ Implemented comprehensive "Are You OK?" senior welfare check system for Precinct
 
 ### Daily Workflow:
 
-**10:00 AM** - System sends "Are You OK?" check-in prompt to all seniors
+**10:00 AM** - System sends SHIELD Program daily check-in prompt to all seniors
 - SMS: "Good morning! Please confirm you're OK by replying YES or clicking this link."
 - App notification
 - Voice call option for non-smartphone users
@@ -219,7 +219,7 @@ This creates:
 - Helper functions
 - RLS policies
 
-### Step 2: Enable Law Enforcement Module for Precinct 3
+### Step 2: Enable Law Enforcement Module for the Deploying Agency
 
 Add to tenant configuration (via admin panel or direct SQL):
 ```sql
@@ -229,7 +229,7 @@ SET module_configs = jsonb_set(
   '{law_enforcement_enabled}',
   'true'
 )
-WHERE tenant_id = 'precinct-3-tenant-id';
+WHERE tenant_id = '<law-enforcement-tenant-id>';
 ```
 
 ### Step 3: Add Routes
@@ -249,18 +249,18 @@ Add to routing configuration (`src/App.tsx` or router):
 ### Step 4: Google Maps Setup (Optional - for map view)
 
 1. Go to https://console.cloud.google.com/
-2. Create project: "WellFit Precinct 3"
+2. Create project: "WellFit Law Enforcement"
 3. Enable APIs:
    - Maps JavaScript API
    - Geocoding API
 4. Create API key
-5. Restrict to domain: `precinct3.wellfit.com`
+5. Restrict to domain: `<tenant-domain>.wellfit.com`
 6. Add to `.env.production`:
    ```
-   REACT_APP_GOOGLE_MAPS_API_KEY=your_key_here
+   VITE_GOOGLE_MAPS_API_KEY=your_key_here
    ```
 
-**Cost:** FREE for first $200/month (plenty for Precinct 3)
+**Cost:** FREE for first $200/month (plenty for typical agency deployments)
 
 ### Step 5: SMS Integration (for check-in reminders)
 
@@ -346,7 +346,7 @@ Using existing Twilio setup:
 - Family can request data deletion (Right to be Forgotten)
 
 ### Access Control:
-- Only constables assigned to Precinct 3 tenant can view
+- Only constables assigned to the law enforcement tenant can view
 - Role-based access (dispatcher vs. field officer)
 - Audit trail of who viewed what information
 
@@ -355,12 +355,12 @@ Using existing Twilio setup:
 ## Google Maps API - Easy Setup
 
 **Time:** 5 minutes
-**Cost:** FREE for Precinct 3 usage levels
+**Cost:** FREE for typical agency usage levels
 
 ### Steps:
 1. Visit https://console.cloud.google.com/
 2. Click "New Project"
-3. Name: "WellFit Precinct 3"
+3. Name: "WellFit Law Enforcement"
 4. Go to "APIs & Services" → "Library"
 5. Search "Maps JavaScript API" → Enable
 6. Search "Geocoding API" → Enable
@@ -368,14 +368,14 @@ Using existing Twilio setup:
 8. Copy key
 9. Click "Restrict Key":
    - Application restrictions: HTTP referrers
-   - Add: `precinct3.wellfit.com/*` and `*.wellfit.com/*`
+   - Add: `<tenant-domain>.wellfit.com/*` and `*.wellfit.com/*`
    - API restrictions: Select "Maps JavaScript API" and "Geocoding API"
 10. Save
 
 ### Add to Project:
 ```bash
 # .env.production
-REACT_APP_GOOGLE_MAPS_API_KEY=AIza...your_key
+VITE_GOOGLE_MAPS_API_KEY=AIza...your_key
 ```
 
 ### Usage in Code:
@@ -410,7 +410,7 @@ import { GoogleMap, Marker } from '@react-google-maps/api';
 1. ✅ Run build: `npm run build`
 2. ✅ Deploy database migration
 3. ✅ Test form in development
-4. ✅ Create Precinct 3 tenant in admin panel
+4. ✅ Create law enforcement tenant in admin panel
 
 ### This Week:
 1. Onboard 5-10 pilot seniors with families
@@ -455,18 +455,18 @@ import { GoogleMap, Marker } from '@react-google-maps/api';
 
 ## Summary
 
-Built complete senior welfare check system for Precinct 3 in 45 minutes by leveraging existing WellFit white-label platform:
+Built complete SHIELD Program senior welfare check system in 45 minutes by leveraging existing WellFit white-label platform:
 
 ✅ **Database:** Emergency response info table with RLS
 ✅ **Service Layer:** Full CRUD operations + welfare check queries
 ✅ **Senior Onboarding:** Comprehensive form collecting all emergency info
 ✅ **Dispatch Dashboard:** Real-time constable interface with prioritized queue
 ✅ **Family Portal:** Update emergency info anytime
-✅ **Multi-tenant Isolated:** Precinct 3 data separate from healthcare tenants
+✅ **Multi-tenant Isolated:** Law enforcement data separate from healthcare tenants
 ✅ **HIPAA Compliant:** Consent, encryption, audit logging
 ✅ **Reuses 90%:** Check-ins, alerts, SMS, emergency contacts already built
 
-**Ready for pilot deployment with Precinct 3!** 🚔
+**Ready for pilot deployment with law enforcement agencies!**
 
 ---
 

@@ -1,4 +1,4 @@
-# Law Enforcement "Are You OK?" Deployment Guide
+# Law Enforcement "The SHIELD Program" Deployment Guide
 
 **Deploy a white-labeled instance for law enforcement agencies in 20 minutes**
 
@@ -30,13 +30,13 @@ This guide walks you through deploying WellFit for law enforcement agencies (Con
 
 ### Use Cases
 
-- **Constable "Are You OK?" Programs** - Daily welfare checks for isolated seniors
+- **Constable SHIELD Programs** (Senior & Health-Impaired Emergency Liaison Dispatch) - Daily welfare checks for isolated seniors
 - **Sheriff Senior Safety Programs** - Community policing for elderly residents
 - **Police Department Senior Services** - Proactive senior welfare monitoring
 
 ---
 
-## Quick Start: Precinct 3 Constable Deployment
+## Quick Start: Your Agency Deployment
 
 ### Step 1: Create Tenant (3 minutes)
 
@@ -51,10 +51,10 @@ INSERT INTO tenants (
   secondary_color,
   is_active
 ) VALUES (
-  'Precinct 3 Constable',
-  'precinct3',
-  'P3-1234',
-  'Precinct 3 Senior Safety',
+  'Your Agency Name',
+  'youragency',
+  'LE-1234',
+  'Your Agency Senior Safety',
   '#003366',  -- Dark blue (law enforcement blue)
   '#FFD700',  -- Gold (badge color)
   true
@@ -106,7 +106,7 @@ SET
   -- License tier
   license_tier = 'premium'
 
-WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'P3-1234');
+WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'LE-1234');
 ```
 
 ### Step 3: Set Custom Landing Page (2 minutes)
@@ -122,7 +122,7 @@ SET theme_settings = jsonb_set(
   '{defaultLandingPage}',
   '"law-enforcement"'
 )
-WHERE tenant_code = 'P3-1234';
+WHERE tenant_code = 'LE-1234';
 ```
 
 **Option B: Add Route Manually**
@@ -146,29 +146,29 @@ If you want to manually control routing, add this to App.tsx:
 
 ```bash
 # Upload constable badge/logo
-supabase storage upload tenant-logos/precinct3-badge.png ./precinct3-badge.png
+supabase storage upload tenant-logos/youragency-badge.png ./youragency-badge.png
 ```
 
 ```sql
 UPDATE tenants
 SET
-  logo_url = 'https://yourproject.supabase.co/storage/v1/object/public/tenant-logos/precinct3-badge.png',
+  logo_url = 'https://yourproject.supabase.co/storage/v1/object/public/tenant-logos/youragency-badge.png',
   gradient = 'linear-gradient(to bottom right, #003366, #FFD700)',
-  custom_footer = '© 2025 Precinct 3 Constable Office. Protecting our senior community.'
-WHERE tenant_code = 'P3-1234';
+  custom_footer = '© 2025 Your Agency Name. Protecting our senior community.'
+WHERE tenant_code = 'LE-1234';
 ```
 
 ### Step 5: Configure DNS (3 minutes)
 
 ```
 Type: CNAME
-Name: precinct3
+Name: youragency
 Value: cname.vercel-dns.com
 TTL: 3600
 ```
 
 Add to Vercel:
-- Domain: `precinct3.thewellfitcommunity.org`
+- Domain: `youragency.thewellfitcommunity.org`
 - Wait for SSL
 
 ### Step 6: Create Officer Accounts (2 minutes)
@@ -183,9 +183,9 @@ INSERT INTO profiles (
   role
 ) VALUES (
   '<user_id>',
-  (SELECT id FROM tenants WHERE tenant_code = 'P3-1234'),
-  'deputy.jones@precinct3.gov',
-  'Deputy Michael Jones',
+  (SELECT id FROM tenants WHERE tenant_code = 'LE-1234'),
+  'officer@youragency.gov',
+  'Officer Michael Jones',
   'admin'
 );
 
@@ -331,19 +331,19 @@ When enrolling seniors, collect this information (displayed in Constable Dispatc
 
 ### 1. Verify Landing Page
 
-Visit: `https://precinct3.thewellfitcommunity.org`
+Visit: `https://youragency.thewellfitcommunity.org`
 
 - [ ] Should show law enforcement landing page (not standard WelcomePage)
 - [ ] Branding shows constable badge
 - [ ] Colors are law enforcement blue/gold
-- [ ] Explains "Are You OK?" program
+- [ ] Explains The SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch)
 
 ### 2. Test Officer Login
 
 1. Navigate to `/admin-login`
 2. Enter:
-   - Email: deputy.jones@precinct3.gov
-   - Tenant Code: P3-1234
+   - Email: officer@youragency.gov
+   - Tenant Code: LE-1234
    - PIN: (officer PIN)
 3. Should redirect to `/admin`
 
@@ -410,7 +410,7 @@ WHERE patient_id = '<low_risk_senior_id>';
 
 1. **Daily Check-In Reminder** (if missed)
    - Sent to senior's phone
-   - Example: "Hi Mary, this is your daily check-in reminder from Precinct 3 Senior Safety. Please complete your check-in at your earliest convenience."
+   - Example: "Hi Mary, this is your daily check-in reminder from Your Agency Senior Safety. Please complete your check-in at your earliest convenience."
 
 2. **Family Notification** (if missed + escalated)
    - Sent to emergency contact
@@ -428,7 +428,7 @@ TWILIO_FROM_NUMBER=+15551234567
 Test SMS:
 
 ```bash
-curl -X POST https://precinct3.thewellfitcommunity.org/api/functions/send-check-in-reminder-sms \
+curl -X POST https://youragency.thewellfitcommunity.org/api/functions/send-check-in-reminder-sms \
   -d '{"phone": "+15559876543", "name": "Mary"}'
 ```
 
@@ -478,7 +478,7 @@ curl -X POST https://precinct3.thewellfitcommunity.org/api/functions/send-check-
 ```sql
 -- Verify feature flags are set correctly
 SELECT * FROM tenant_module_config
-WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'P3-1234');
+WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'LE-1234');
 
 -- Should show false for medical features
 -- If not, run the configuration SQL from Step 2 again
@@ -491,7 +491,7 @@ WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'P3-1234');
 **Solution:**
 1. Check tenant settings:
    ```sql
-   SELECT theme_settings FROM tenants WHERE tenant_code = 'P3-1234';
+   SELECT theme_settings FROM tenants WHERE tenant_code = 'LE-1234';
    ```
 2. Set law enforcement landing:
    ```sql
@@ -501,7 +501,7 @@ WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'P3-1234');
      '{defaultLandingPage}',
      '"law-enforcement"'
    )
-   WHERE tenant_code = 'P3-1234';
+   WHERE tenant_code = 'LE-1234';
    ```
 
 ### Constable Dispatch Dashboard Not Accessible
@@ -563,4 +563,4 @@ WHERE tenant_id = (SELECT id FROM tenants WHERE tenant_code = 'P3-1234');
 **Difficulty:** Easy
 **Cost:** Premium tier (~$500-1000/month for 200 seniors)
 
-**You're all set!** Precinct 3 Constable Office now has a dedicated senior welfare check platform with NO medical features cluttering the interface.
+**You're all set!** Your agency now has a dedicated senior welfare check platform with NO medical features cluttering the interface.

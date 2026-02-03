@@ -287,7 +287,7 @@ Support law enforcement welfare checks and emergency response with critical pati
 
 ### Configuration
 **Table:** `law_enforcement_response_info` ✅ (`20251111110000_law_enforcement_emergency_response.sql`)
-**Integration:** Precinct 3 "Are You OK" program
+**Integration:** The SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch)
 
 ### Information Provided
 - **Access Information**: Door codes, key location, security systems

@@ -1,7 +1,7 @@
 /**
  * Law Enforcement Service
  *
- * Service layer for Precinct 3 "Are You OK" senior welfare check program
+ * Service layer for The SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch)
  * Handles emergency response information and welfare check dispatch
  */
 

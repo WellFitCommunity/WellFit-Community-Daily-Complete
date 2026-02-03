@@ -68,7 +68,7 @@ COMMENT ON COLUMN tenant_module_config.caregiver_portal_enabled IS 'Family careg
 
 COMMENT ON COLUMN tenant_module_config.ems_metrics_enabled IS 'Emergency medical services integration, response tracking';
 COMMENT ON COLUMN tenant_module_config.coordinated_response_enabled IS 'Multi-agency emergency coordination, incident management';
-COMMENT ON COLUMN tenant_module_config.law_enforcement_enabled IS 'Welfare check coordination, Precinct 3 integration';
+COMMENT ON COLUMN tenant_module_config.law_enforcement_enabled IS 'SHIELD Program - welfare check coordination for seniors and vulnerable populations';
 
 -- ============================================================================
 -- UPDATE RPC FUNCTION TO INCLUDE NEW MODULES

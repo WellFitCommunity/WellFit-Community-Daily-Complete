@@ -1,5 +1,5 @@
 // Supabase Edge Function: send-check-in-reminder-sms
-// Sends welfare check reminder SMS to seniors for law enforcement "Are You OK" program
+// Sends welfare check reminder SMS to seniors for law enforcement SHIELD Program
 // Deno runtime
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -57,7 +57,7 @@ serve(async (req) => {
     }
 
     // Compose message for senior welfare check
-    const message = `Hi ${name}, this is your daily check-in reminder from the WellFit Community "Are You OK?" program. Please complete your check-in at your earliest convenience. If you need assistance, please contact your emergency contact or dial 911. Thank you!`;
+    const message = `Hi ${name}, this is your daily check-in reminder from the WellFit Community SHIELD Program. Please complete your check-in at your earliest convenience. If you need assistance, please contact your emergency contact or dial 911. Thank you!`;
 
     // Send SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;

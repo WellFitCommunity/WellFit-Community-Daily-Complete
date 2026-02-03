@@ -205,7 +205,7 @@ patients safe at home.
 ### "Why do you need Epic integration?"
 ```
 To pull patient demographics (name, DOB, address, phone) when seniors enroll
-in constable-run "Are You OK?" programs. Ensures accurate addresses for
+in constable-run SHIELD Program wellness checks. Ensures accurate addresses for
 emergency welfare checks. Manually copying data leads to errors.
 ```
 
@@ -245,7 +245,7 @@ for Epic's review and approval. We understand scope approval is ongoing.
 **When Epic asks about volume/impact:**
 
 ```
-PILOT: 50-100 seniors in [County/Precinct]
+PILOT: 50-100 seniors in [County/Agency]
 YEAR 1: 500-1,000 seniors across [Region]
 YEAR 3: 2,000-5,000 seniors statewide
 

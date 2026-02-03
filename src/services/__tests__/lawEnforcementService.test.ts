@@ -1,6 +1,6 @@
 /**
  * Law Enforcement Service Tests
- * Comprehensive test suite for Precinct 3 welfare check system
+ * Comprehensive test suite for The SHIELD Program welfare check system
  */
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { LawEnforcementService } from '../lawEnforcementService';

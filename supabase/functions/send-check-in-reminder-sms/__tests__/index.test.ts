@@ -50,9 +50,9 @@ Deno.test("Send Check-in Reminder SMS Edge Function Tests", async (t) => {
 
   await t.step("should compose check-in reminder message", () => {
     const name = "John";
-    const message = `Hi ${name}, this is your daily check-in reminder from the WellFit Community "Are You OK?" program. Please complete your check-in at your earliest convenience. If you need assistance, please contact your emergency contact or dial 911. Thank you!`;
+    const message = `Hi ${name}, this is your daily check-in reminder from the WellFit Community SHIELD Program. Please complete your check-in at your earliest convenience. If you need assistance, please contact your emergency contact or dial 911. Thank you!`;
 
-    assertEquals(message.includes("Are You OK?"), true);
+    assertEquals(message.includes("SHIELD Program"), true);
     assertEquals(message.includes(name), true);
     assertEquals(message.includes("check-in"), true);
     assertEquals(message.includes("911"), true);

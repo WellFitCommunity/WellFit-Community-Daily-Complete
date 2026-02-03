@@ -63,11 +63,11 @@ Deno.test("Notify Family Missed Check-in Tests", async (t) => {
     const seniorName = "John Doe";
     const contactName = "Jane Doe";
 
-    const message = `ALERT: ${seniorName} has missed their scheduled check-in for the WellFit Community "Are You OK?" program. This message is being sent to you as their emergency contact. Please attempt to contact ${seniorName} or request a welfare check if you cannot reach them. If this is an emergency, please dial 911 immediately.`;
+    const message = `ALERT: ${seniorName} has missed their scheduled check-in for the WellFit Community SHIELD Program. This message is being sent to you as their emergency contact. Please attempt to contact ${seniorName} or request a welfare check if you cannot reach them. If this is an emergency, please dial 911 immediately.`;
 
     assertExists(message);
     assertEquals(message.includes(seniorName), true);
-    assertEquals(message.includes("Are You OK?"), true);
+    assertEquals(message.includes("SHIELD Program"), true);
     assertEquals(message.includes("dial 911"), true);
     assertEquals(message.length > 0, true);
   });

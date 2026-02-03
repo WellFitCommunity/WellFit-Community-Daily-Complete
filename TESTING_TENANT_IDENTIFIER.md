@@ -157,7 +157,7 @@ psql -d your_database -f tenant_identifier.security.test.sql
 ### Authentication Flows
 - ✅ Master Super Admin (Envision): PIN only
 - ✅ Tenant Super Admin (Methodist Hospital): MH-6702-1234
-- ✅ Tenant Admin (Precinct 3): P3-1234-5678
+- ✅ Tenant Admin (Law Enforcement Agency): LE-1234-5678
 - ✅ Failed authentication handling
 - ✅ Session expiration (2 hours)
 
@@ -204,9 +204,9 @@ const mockTenants = [
   },
   {
     tenantId: 'tenant-2',
-    tenantName: 'Precinct 3 Constable',
-    tenantCode: 'P3-1234',
-    subdomain: 'precinct3'
+    tenantName: 'Law Enforcement Agency',
+    tenantCode: 'LE-1234',
+    subdomain: 'agency'
   },
   {
     tenantId: 'tenant-3',

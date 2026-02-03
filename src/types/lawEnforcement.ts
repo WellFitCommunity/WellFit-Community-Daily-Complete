@@ -1,7 +1,7 @@
 /**
  * Law Enforcement Types
  *
- * Types for Precinct 3 "Are You OK" senior welfare check program
+ * Types for The SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch)
  * Emergency response information for constable dispatch
  */
 
@@ -326,7 +326,7 @@ export interface LawEnforcementModuleConfig {
   familyNotificationEnabled: boolean;
 
   // Branding
-  organizationName: string; // "Precinct 3"
+  organizationName: string; // e.g. "County Sheriff", "City Police"
   organizationType: 'police' | 'sheriffs' | 'constables';
 }
 

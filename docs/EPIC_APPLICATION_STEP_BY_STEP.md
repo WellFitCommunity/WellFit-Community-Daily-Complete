@@ -6,7 +6,7 @@ This guide walks you through EXACTLY how to complete your Epic App Orchard appli
 
 **Positioning:** Community-facing patient engagement app for senior wellness and law enforcement welfare checks
 
-**What Epic Should See:** Simple app that pulls patient demographics for enrollment in "Are You OK?" programs
+**What Epic Should See:** Simple app that pulls patient demographics for enrollment in SHIELD Program wellness checks
 
 **What Epic Should NOT See:** Comprehensive FHIR R4 EHR integration with all clinical resources
 
@@ -39,7 +39,7 @@ Have these ready before starting:
 
 4. **Partner Information:**
    - Partner hospital/health system name: [Name of local hospital using Epic]
-   - Constable office / law enforcement agency: [Name and county/precinct]
+   - Constable office / law enforcement agency: [Name and county/agency]
    - Contact person at hospital: [Name, title, email]
 
 5. **Documentation (have these URLs ready):**
@@ -149,7 +149,7 @@ https://thewellfitcommunity.org
 ```
 Envision VirtualEdge Group develops patient engagement solutions for community
 health and public safety. Our WellFit Community platform helps law enforcement
-constables coordinate "Are You OK?" wellness check programs for seniors living
+constables coordinate SHIELD Program wellness check programs for seniors living
 at home. We integrate with Epic to pull patient demographics for enrollment,
 enabling safer and more effective emergency welfare checks. We serve seniors,
 family caregivers, and law enforcement - not clinical providers.
@@ -248,12 +248,12 @@ This is the MOST IMPORTANT part of your application. Epic reviewers read this ca
 
 ```markdown
 WellFit Community is a patient-facing mobile and web application that helps seniors
-stay safe at home through daily "Are You OK?" wellness check-ins, while enabling
+stay safe at home through daily SHIELD Program wellness check-ins, while enabling
 law enforcement constables to perform more effective emergency welfare checks.
 
 THE PROBLEM:
 Many seniors live alone and are at risk of falls, medical emergencies, or incidents
-where they cannot call for help. Law enforcement agencies run "Are You OK?" programs
+where they cannot call for help. Law enforcement agencies run SHIELD Program wellness checks
 to check on seniors, but frequent in-person welfare checks strain resources and may
 miss time-sensitive emergencies.
 
@@ -280,7 +280,7 @@ and emergency contacts.
 
 EPIC INTEGRATION (READ-ONLY, LIMITED SCOPE):
 WellFit Community connects to Epic ONLY to pull patient demographics (name, date
-of birth, address, phone number) when seniors enroll in "Are You OK?" programs.
+of birth, address, phone number) when seniors enroll in SHIELD Program wellness checks.
 This ensures constables have accurate addresses for emergency welfare checks and
 eliminates manual data entry errors.
 
@@ -444,7 +444,7 @@ Required for SMART on FHIR launch flow when patient authenticates.
 **patient/Patient.read:**
 ```
 Required to pull patient demographics (name, date of birth, address, phone number)
-when seniors enroll in constable-run "Are You OK?" programs. Ensures accurate
+when seniors enroll in constable-run SHIELD Program wellness checks. Ensures accurate
 patient identification and correct address for emergency welfare checks. Demographics
 synced weekly to keep contact information current.
 ```
@@ -588,7 +588,7 @@ Example: Methodist Hospital System
 
 **Partner Relationship:**
 ```
-Healthcare Partner - Providing Epic patient demographics for "Are You OK?" program
+Healthcare Partner - Providing Epic patient demographics for SHIELD Program
 ```
 
 **Partner Contact:**
@@ -608,7 +608,7 @@ Phone: [Contact's phone]
 **Partner Name:**
 ```
 [Name of constable office or law enforcement agency]
-Example: Harris County Precinct 3 Constable Office
+Example: County Sheriff Office
 ```
 
 **Partner Relationship:**
@@ -716,7 +716,7 @@ deletion within 90 days.
 **Answer:**
 ```
 No. Epic data (patient demographics) is used ONLY for the stated purpose: enrolling
-seniors in "Are You OK?" wellness check programs and ensuring constables have
+seniors in SHIELD Program wellness check programs and ensuring constables have
 accurate contact information for emergency welfare checks. We do NOT:
 - Sell or share Epic data with third parties
 - Use Epic data for marketing or advertising
@@ -929,7 +929,7 @@ Re: Letter of Support for WellFit Community Application
 
 [Hospital Name] supports the WellFit Community application for Epic App Orchard
 approval. We are partnering with [Constable Office / Law Enforcement Agency] to
-pilot an "Are You OK?" senior welfare check program using WellFit Community.
+pilot a SHIELD Program senior welfare check program using WellFit Community.
 
 WellFit Community will integrate with our Epic EHR system to pull patient demographics
 (name, date of birth, address, phone number) for seniors who consent to enroll in
@@ -973,7 +973,7 @@ Sincerely,
 
 **CORRECT ANSWER:**
 ```
-WellFit Community needs to link seniors enrolled in constable-run "Are You OK?"
+WellFit Community needs to link seniors enrolled in constable-run SHIELD Program
 programs to their Epic patient records. When a senior enrolls (at the constable
 office or community center), we pull their demographics from Epic to ensure we
 have the correct address and contact information for emergency welfare checks.
@@ -1032,7 +1032,7 @@ to document clinical care. That belongs in Epic.
 **SAFE ANSWER:**
 ```
 We have no current plans to request additional scopes. Patient demographics and
-emergency contacts are sufficient for the "Are You OK?" program use case. If we
+emergency contacts are sufficient for the SHIELD Program use case. If we
 were to expand functionality in the future (for example, medication reminders for
 seniors, which would require MedicationRequest.read), we would submit a new scope
 request with clear justification and use cases for Epic's review and approval.

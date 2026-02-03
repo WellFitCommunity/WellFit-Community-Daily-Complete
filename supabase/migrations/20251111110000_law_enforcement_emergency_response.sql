@@ -1,6 +1,6 @@
 -- Law Enforcement Emergency Response Information System
 -- Stores critical emergency response data for senior welfare checks
--- Used by Precinct 3 "Are You OK" program
+-- Used by The SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch)
 
 -- ============================================================================
 -- ENSURE PROFILES TABLE HAS REQUIRED CONSTRAINTS

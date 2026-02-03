@@ -2,7 +2,7 @@
  * Senior Emergency Information Form
  *
  * Collects emergency response information during senior onboarding
- * For Precinct 3 "Are You OK" welfare check program
+ * For The SHIELD Program (Senior & Health-Impaired Emergency Liaison Dispatch)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -630,7 +630,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               required
             />
             <span className="text-sm">
-              <span className="font-medium">I consent</span> to sharing this emergency response information with Precinct 3 constables for welfare check purposes. I understand this information will be kept confidential and used only for emergency response.
+              <span className="font-medium">I consent</span> to sharing this emergency response information with authorized law enforcement officers for welfare check purposes. I understand this information will be kept confidential and used only for emergency response.
             </span>
           </label>
 
