@@ -15,6 +15,8 @@ import {
   recordLoginAttempt,
 } from '../services/loginSecurityService';
 import { auditLogger } from '../services/auditLogger';
+import { isFeatureEnabled } from '../config/featureFlags';
+import { DemoPersonaSwitcher } from '../components/demo/DemoPersonaSwitcher';
 
 type Mode = 'senior' | 'patient' | 'admin';
 
@@ -55,6 +57,10 @@ const LoginPage: React.FC = () => {
   // passkey state
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+
+  // demo mode state
+  const [demoLoading, setDemoLoading] = useState(false);
+  const isDemoMode = isFeatureEnabled('demoMode');
 
   // colors from branding config
   const primary = branding.primaryColor;
@@ -116,6 +122,57 @@ const LoginPage: React.FC = () => {
 
     setPhone(formatted);
   };
+
+  // ---- DEMO PERSONA LOGIN ---------------------------------------------------
+  const handleDemoPersona = async (persona: {
+    loginType: 'phone' | 'email';
+    credential: string;
+    password: string;
+  }) => {
+    setError('');
+    setDemoLoading(true);
+
+    try {
+      // Execute captcha first
+      let token = '';
+      try {
+        token = await ensureCaptcha();
+      } catch {
+        // Captcha failed
+      }
+
+      if (!token) {
+        setError('Please complete the captcha verification.');
+        refreshCaptcha();
+        setDemoLoading(false);
+        return;
+      }
+
+      const signInParams = persona.loginType === 'phone'
+        ? { phone: persona.credential, password: persona.password, options: { captchaToken: token } }
+        : { email: persona.credential, password: persona.password, options: { captchaToken: token } };
+
+      const { error: signInError } = await supabase.auth.signInWithPassword(signInParams);
+
+      if (signInError) {
+        auditLogger.auth('LOGIN_FAILED', false, { method: 'demo_persona', credential: persona.credential, error: signInError.message });
+        setError(`Demo login failed: ${signInError.message}`);
+        refreshCaptcha();
+        return;
+      }
+
+      auditLogger.auth('LOGIN', true, { method: 'demo_persona', credential: persona.credential });
+      const route = await nextRouteForUser();
+      navigate(route, { replace: true });
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Demo login failed.';
+      auditLogger.auth('LOGIN_FAILED', false, { method: 'demo_persona', error: errMsg });
+      setError(errMsg);
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+  // --------------------------------------------------------------------------
 
   // ---- PROFILE GATE --------------------------------------------------------
   const nextRouteForUser = async (): Promise<string> => {
@@ -582,6 +639,27 @@ const LoginPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-center mb-2" style={{ color: primary }}>
           {branding.appName}
         </h1>
+
+      {/* Demo Persona Switcher - shown when VITE_DEMO_MODE=true */}
+      {isDemoMode && (
+        <>
+          <DemoPersonaSwitcher
+            onSelectPersona={handleDemoPersona}
+            disabled={loading || demoLoading}
+          />
+          {error && demoLoading === false && (
+            <p role="alert" className="text-red-500 text-sm font-semibold mb-4">{error}</p>
+          )}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">OR LOG IN MANUALLY</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Mode Toggle - Mobile-optimized with larger tap targets */}
       <div className="grid grid-cols-2 gap-2 mb-6 sm:flex sm:justify-center sm:flex-wrap">
