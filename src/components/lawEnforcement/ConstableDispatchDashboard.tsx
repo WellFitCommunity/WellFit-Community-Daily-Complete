@@ -5,6 +5,12 @@
  * Shows missed check-ins prioritized by urgency
  *
  * Design: Envision Atlus Clinical Design System
+ *
+ * Phase 4 UX Polish:
+ * - 4.1: Real-time updates via useRealtimeSubscription
+ * - 4.2: Error boundaries per panel
+ * - 4.3: Skeleton loaders for loading states
+ * - 4.4: Keyboard navigation (j/k/Enter/r)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -12,6 +18,8 @@ import { LawEnforcementService } from '../../services/lawEnforcementService';
 import type { MissedCheckInAlert, WelfareCheckInfo, EmergencyContact } from '../../types/lawEnforcement';
 import { WelfareCheckReportModal } from './WelfareCheckReportModal';
 import { WelfareCheckReportHistory } from './WelfareCheckReportHistory';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
+import { ErrorBoundary } from '../ErrorBoundary';
 import {
   EACard,
   EACardHeader,
@@ -38,27 +46,157 @@ import {
   FileText,
 } from 'lucide-react';
 
+// ============================================================================
+// Skeleton Loaders (Phase 4.3)
+// ============================================================================
+
+/** Skeleton for the left panel alerts queue */
+const AlertsQueueSkeleton: React.FC = () => (
+  <div className="p-2 space-y-2" data-testid="alerts-queue-skeleton">
+    {Array.from({ length: 4 }).map((_, i) => (
+      <div key={i} className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 animate-pulse">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="h-4 w-32 bg-slate-700 rounded" />
+            <div className="h-3 w-48 bg-slate-700/60 rounded" />
+          </div>
+          <div className="h-6 w-10 bg-slate-700 rounded-full ml-2" />
+        </div>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-5 w-16 bg-slate-700 rounded" />
+          <div className="h-3 w-14 bg-slate-700/60 rounded" />
+        </div>
+        <div className="h-3 w-40 bg-slate-700/40 rounded" />
+      </div>
+    ))}
+  </div>
+);
+
+/** Skeleton for the right panel welfare check details */
+const WelfareDetailsSkeleton: React.FC = () => (
+  <div className="p-6 space-y-6" data-testid="welfare-details-skeleton">
+    {/* Avatar + name */}
+    <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700 animate-pulse">
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-16 h-16 rounded-full bg-slate-700" />
+        <div className="space-y-2">
+          <div className="h-6 w-40 bg-slate-700 rounded" />
+          <div className="h-4 w-16 bg-slate-700/60 rounded" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <div className="h-3 w-14 bg-slate-700/40 rounded" />
+          <div className="h-4 w-44 bg-slate-700 rounded" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-3 w-12 bg-slate-700/40 rounded" />
+          <div className="h-4 w-28 bg-slate-700 rounded" />
+        </div>
+      </div>
+    </div>
+    {/* Emergency info */}
+    <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700 animate-pulse">
+      <div className="h-5 w-48 bg-slate-700 rounded mb-4" />
+      <div className="space-y-3">
+        <div className="h-4 w-full bg-slate-700/60 rounded" />
+        <div className="h-4 w-3/4 bg-slate-700/60 rounded" />
+        <div className="h-4 w-1/2 bg-slate-700/60 rounded" />
+      </div>
+    </div>
+    {/* Contact cards */}
+    <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700 animate-pulse">
+      <div className="h-5 w-40 bg-slate-700 rounded mb-4" />
+      {Array.from({ length: 2 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 p-3 bg-slate-800 rounded-lg mb-2">
+          <div className="w-10 h-10 rounded-full bg-slate-700" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-28 bg-slate-700 rounded" />
+            <div className="h-3 w-16 bg-slate-700/60 rounded" />
+          </div>
+          <div className="h-4 w-20 bg-slate-700 rounded" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ============================================================================
+// Error Boundary Fallbacks (Phase 4.2)
+// ============================================================================
+
+/** Fallback for left panel (alerts queue) errors */
+const AlertsPanelFallback: React.FC = () => (
+  <div className="flex flex-col items-center justify-center h-full p-8 bg-slate-900/50" data-testid="alerts-panel-fallback">
+    <div className="p-3 bg-red-500/20 rounded-full mb-4">
+      <Shield className="h-8 w-8 text-red-400" />
+    </div>
+    <p className="text-lg font-medium text-white mb-1">Unable to load alerts</p>
+    <p className="text-sm text-slate-400 mb-4">An error occurred in the alerts panel</p>
+    <button
+      onClick={() => window.location.reload()}
+      className="px-4 py-2 bg-[#00857a] text-white rounded-lg hover:bg-[#006d64] transition-colors"
+    >
+      Reload Dashboard
+    </button>
+  </div>
+);
+
+/** Fallback for right panel (details) errors */
+const DetailsPanelFallback: React.FC = () => (
+  <div className="flex flex-col items-center justify-center h-full p-8" data-testid="details-panel-fallback">
+    <div className="p-3 bg-red-500/20 rounded-full mb-4">
+      <AlertTriangle className="h-8 w-8 text-red-400" />
+    </div>
+    <p className="text-lg font-medium text-white mb-1">Unable to load details</p>
+    <p className="text-sm text-slate-400 mb-4">An error occurred loading patient details</p>
+    <button
+      onClick={() => window.location.reload()}
+      className="px-4 py-2 bg-[#00857a] text-white rounded-lg hover:bg-[#006d64] transition-colors"
+    >
+      Reload Dashboard
+    </button>
+  </div>
+);
+
 export const ConstableDispatchDashboard: React.FC = () => {
   const [alerts, setAlerts] = useState<MissedCheckInAlert[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
   const [welfareCheckInfo, setWelfareCheckInfo] = useState<WelfareCheckInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportHistoryKey, setReportHistoryKey] = useState(0);
 
+  // ---- Real-time subscriptions (Phase 4.1) ----
+  // New check-ins may clear alerts
+  useRealtimeSubscription({
+    table: 'daily_check_ins',
+    event: 'INSERT',
+    componentName: 'ConstableDispatchDashboard-checkins',
+    onChange: () => loadAlerts(),
+  });
+
+  // Filed reports update history
+  useRealtimeSubscription({
+    table: 'welfare_check_reports',
+    event: '*',
+    componentName: 'ConstableDispatchDashboard-reports',
+    onChange: () => {
+      loadAlerts();
+      setReportHistoryKey((prev) => prev + 1);
+    },
+  });
+
+  // Initial load on mount (manual refresh kept as fallback)
   useEffect(() => {
     loadAlerts();
-
-    // Auto-refresh every 2 minutes
-    const interval = setInterval(loadAlerts, 2 * 60 * 1000);
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
   }, []);
 
   useEffect(() => {
     if (selectedPatient) {
+      setDetailsLoading(true);
+      setWelfareCheckInfo(null);
       loadWelfareCheckInfo(selectedPatient);
     }
   }, [selectedPatient]);
@@ -73,6 +211,7 @@ export const ConstableDispatchDashboard: React.FC = () => {
   const loadWelfareCheckInfo = async (patientId: string) => {
     const info = await LawEnforcementService.getWelfareCheckInfo(patientId);
     setWelfareCheckInfo(info);
+    setDetailsLoading(false);
   };
 
   const handleReportSaved = useCallback(() => {
@@ -80,6 +219,56 @@ export const ConstableDispatchDashboard: React.FC = () => {
     // Force re-render of report history by changing key
     setReportHistoryKey((prev) => prev + 1);
   }, []);
+
+  // ---- Keyboard navigation (Phase 4.4) ----
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keys when modal is open
+      if (reportModalOpen) return;
+
+      // Don't handle keys when input/textarea/select is focused
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      const selectedIndex = alerts.findIndex((a) => a.patientId === selectedPatient);
+
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'j': {
+          e.preventDefault();
+          const nextIndex = selectedIndex < alerts.length - 1 ? selectedIndex + 1 : 0;
+          if (alerts[nextIndex]) {
+            setSelectedPatient(alerts[nextIndex].patientId);
+          }
+          break;
+        }
+        case 'ArrowUp':
+        case 'k': {
+          e.preventDefault();
+          const prevIndex = selectedIndex > 0 ? selectedIndex - 1 : alerts.length - 1;
+          if (alerts[prevIndex]) {
+            setSelectedPatient(alerts[prevIndex].patientId);
+          }
+          break;
+        }
+        case 'Enter': {
+          if (selectedPatient) {
+            e.preventDefault();
+            setReportModalOpen(true);
+          }
+          break;
+        }
+        case 'r': {
+          e.preventDefault();
+          loadAlerts();
+          break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [alerts, selectedPatient, reportModalOpen]);
 
   const getRiskLevel = (urgency: number): 'critical' | 'high' | 'elevated' | 'normal' => {
     if (urgency >= 100) return 'critical';
@@ -97,6 +286,7 @@ export const ConstableDispatchDashboard: React.FC = () => {
   return (
     <div className="flex h-screen bg-linear-to-br from-slate-900 to-slate-800">
       {/* Left Panel - Alerts List */}
+      <ErrorBoundary fallback={<AlertsPanelFallback />}>
       <div className="w-[380px] bg-slate-900/50 border-r border-slate-700 overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-slate-900/90 backdrop-blur-xs border-b border-slate-700 p-4 z-10">
@@ -125,7 +315,9 @@ export const ConstableDispatchDashboard: React.FC = () => {
 
         {/* Alerts List */}
         <div className="p-2 space-y-2">
-          {alerts.length === 0 ? (
+          {loading && alerts.length === 0 ? (
+            <AlertsQueueSkeleton />
+          ) : alerts.length === 0 ? (
             <div className="p-8 text-center">
               <div className="w-16 h-16 mx-auto bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
                 <CheckCircle className="h-8 w-8 text-emerald-400" />
@@ -187,10 +379,14 @@ export const ConstableDispatchDashboard: React.FC = () => {
           )}
         </div>
       </div>
+      </ErrorBoundary>
 
       {/* Right Panel - Welfare Check Details */}
+      <ErrorBoundary fallback={<DetailsPanelFallback />}>
       <div className="flex-1 overflow-y-auto">
-        {selectedPatient && welfareCheckInfo ? (
+        {selectedPatient && detailsLoading && !welfareCheckInfo ? (
+          <WelfareDetailsSkeleton />
+        ) : selectedPatient && welfareCheckInfo ? (
           <div className="p-6 space-y-6">
             {/* Senior Info Header */}
             <EACard variant="elevated">
@@ -445,6 +641,7 @@ export const ConstableDispatchDashboard: React.FC = () => {
           </div>
         )}
       </div>
+      </ErrorBoundary>
 
       {/* Report Filing Modal */}
       {selectedPatient && (() => {
