@@ -1,7 +1,7 @@
 # Law Enforcement Vertical - Live Tracker
 
 > **Last Updated:** 2026-02-04
-> **Overall Progress:** 87% Complete
+> **Overall Progress:** 100% Phases 1-3 Complete
 > **Status:** Pre-Pilot Development
 
 ---
@@ -12,10 +12,10 @@
 |----------|----------|-------------|-------------|-------|
 | Core Features | 10 | 0 | 0 | 10 |
 | Test Coverage | 6 | 0 | 0 | 6 |
-| Report System | 0 | 0 | 4 | 4 |
+| Report System | 4 | 0 | 0 | 4 |
 | UX Polish | 0 | 0 | 4 | 4 |
 | Integrations | 0 | 0 | 5 | 5 |
-| **TOTAL** | **16** | **0** | **13** | **29** |
+| **TOTAL** | **20** | **0** | **9** | **29** |
 
 ---
 
@@ -99,56 +99,19 @@ These are production-ready and deployed.
 
 ---
 
-## Phase 3: Report Filing System (PRIORITY - Pre-Pilot Required)
+## Phase 3: Report Filing System (COMPLETE)
 
-| # | Item | Status | File/Location | Assigned | Due Date |
-|---|------|--------|---------------|----------|----------|
-| 3.1 | Database: welfare_check_reports table | ⬜ Not Started | `supabase/migrations/YYYYMMDD_welfare_check_reports.sql` | - | - |
-| 3.2 | Service: saveWelfareCheckReport() | ⬜ Not Started | `src/services/lawEnforcementService.ts` | - | - |
-| 3.3 | UI: Report Filing Modal | ⬜ Not Started | `src/components/lawEnforcement/WelfareCheckReportModal.tsx` | - | - |
-| 3.4 | UI: Report History View | ⬜ Not Started | `src/components/lawEnforcement/WelfareCheckReportHistory.tsx` | - | - |
+| # | Item | Status | File/Location | Notes |
+|---|------|--------|---------------|-------|
+| 3.1 | Database: welfare_check_reports table | ✅ Done | `supabase/migrations/20260204120000_welfare_check_reports.sql` | 7-value outcome enum, computed response_time_minutes, RLS, unique constraint |
+| 3.2 | Service: saveWelfareCheckReport() + getWelfareCheckReports() | ✅ Done | `src/services/lawEnforcementService.ts` | Upsert + query with HIPAA audit logging |
+| 3.3 | UI: Report Filing Modal | ✅ Done | `src/components/lawEnforcement/WelfareCheckReportModal.tsx` | 7 outcomes, conditional transport/follow-up, validation, accessibility |
+| 3.4 | UI: Report History View | ✅ Done | `src/components/lawEnforcement/WelfareCheckReportHistory.tsx` | Expandable timeline, color-coded badges, response time display |
 
-### Report Schema Design
-
-```sql
--- Proposed schema for 3.1
-CREATE TABLE welfare_check_reports (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id),
-  patient_id UUID NOT NULL REFERENCES profiles(user_id),
-  officer_id UUID NOT NULL REFERENCES profiles(user_id),
-
-  -- Check details
-  check_initiated_at TIMESTAMPTZ NOT NULL,
-  check_completed_at TIMESTAMPTZ NOT NULL,
-  response_time_minutes INTEGER GENERATED ALWAYS AS (
-    EXTRACT(EPOCH FROM (check_completed_at - check_initiated_at)) / 60
-  ) STORED,
-
-  -- Outcome
-  outcome TEXT NOT NULL CHECK (outcome IN (
-    'senior_ok',
-    'senior_ok_needs_followup',
-    'senior_not_home',
-    'medical_emergency',
-    'non_medical_emergency',
-    'unable_to_contact',
-    'refused_check'
-  )),
-  outcome_notes TEXT,
-
-  -- Actions taken
-  ems_called BOOLEAN DEFAULT FALSE,
-  family_notified BOOLEAN DEFAULT FALSE,
-  followup_required BOOLEAN DEFAULT FALSE,
-  followup_date DATE,
-  followup_notes TEXT,
-
-  -- Audit
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+### Additional Phase 3 Deliverables
+- **Dashboard wiring:** Complete Check button opens modal, history panel in right panel
+- **Types updated:** `WelfareCheckOutcome` (7-value), `WelfareCheckReportFormData`, `getOutcomeLabel()`, `getOutcomeSeverity()`
+- **Tests:** 26 modal tests, 12 history tests, 7 service tests (45 new tests total, 7,476 suite-wide)
 
 ---
 
@@ -178,8 +141,8 @@ CREATE TABLE welfare_check_reports (
 ## Deployment Checklist
 
 ### Pre-Pilot Requirements
-- [ ] All Phase 2 tests passing
-- [ ] Phase 3 report filing complete
+- [x] All Phase 2 tests passing
+- [x] Phase 3 report filing complete
 - [ ] Tenant configured (`law_enforcement_enabled: true`)
 - [ ] Officer accounts created
 - [ ] Senior enrollment process tested
@@ -201,6 +164,7 @@ CREATE TABLE welfare_check_reports (
 |------|------|---------------|-------|
 | 2026-02-02 | Tracker Created | - | Initial assessment: 70% complete |
 | 2026-02-04 | Phase 2 Complete | ⬜ → ✅ | All 5 test suites passing (117 tests). Fixed async timing bug in SeniorEmergencyInfoForm test. Fixed 7 `as any` → `as unknown as` in service tests. |
+| 2026-02-04 | Phase 3 Complete | ⬜ → ✅ | All 4 items done. Migration deployed. 45 new tests (7,476 total). Patched `@isaacs/brace-expansion` CVE. Security scan green. |
 
 ---
 
@@ -227,6 +191,7 @@ _None currently identified_
 |----------|-----------|
 | **Database** | |
 | Schema | `supabase/migrations/20251111110000_law_enforcement_emergency_response.sql` |
+| Reports | `supabase/migrations/20260204120000_welfare_check_reports.sql` |
 | **Types** | |
 | Main Types | `src/types/lawEnforcement.ts` |
 | Module Config | `src/types/tenantModules.ts` |
@@ -236,6 +201,8 @@ _None currently identified_
 | Senior Form | `src/components/lawEnforcement/SeniorEmergencyInfoForm.tsx` |
 | Dispatch Dashboard | `src/components/lawEnforcement/ConstableDispatchDashboard.tsx` |
 | Family Panel | `src/components/lawEnforcement/FamilyEmergencyInfoPanel.tsx` |
+| Report Modal | `src/components/lawEnforcement/WelfareCheckReportModal.tsx` |
+| Report History | `src/components/lawEnforcement/WelfareCheckReportHistory.tsx` |
 | **Pages** | |
 | Landing Page | `src/pages/LawEnforcementLandingPage.tsx` |
 | **Routes** | |
