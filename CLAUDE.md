@@ -1071,16 +1071,16 @@ Detailed documentation for specific features is in the `docs/` folder:
 
 | Document | Description |
 |----------|-------------|
-| [docs/AI_FIRST_ARCHITECTURE.md](docs/AI_FIRST_ARCHITECTURE.md) | AI-first design paradigm & MCP server architecture |
-| [docs/AI_DEVELOPMENT_METHODOLOGY.md](docs/AI_DEVELOPMENT_METHODOLOGY.md) | How to build software with AI (patterns, counter-measures, governance) |
-| [docs/REFERRAL_SYSTEM.md](docs/REFERRAL_SYSTEM.md) | External referral & reporting system |
-| [docs/CAREGIVER_SUITE.md](docs/CAREGIVER_SUITE.md) | Family caregiver PIN-based access |
-| [docs/REGISTRATION_FLOWS.md](docs/REGISTRATION_FLOWS.md) | Three registration flows |
-| [docs/ENVISION_ATLUS_DESIGN.md](docs/ENVISION_ATLUS_DESIGN.md) | EA design system components |
-| [docs/FEATURE_DASHBOARDS.md](docs/FEATURE_DASHBOARDS.md) | Feature dashboard routes & config |
-| [docs/VOICE_COMMANDS.md](docs/VOICE_COMMANDS.md) | Voice command infrastructure |
-| [docs/PATIENT_AVATAR.md](docs/PATIENT_AVATAR.md) | Patient avatar visualization system |
-| [docs/PATIENT_CONTEXT_SPINE.md](docs/PATIENT_CONTEXT_SPINE.md) | Canonical patient data access |
+| [docs/architecture/AI_FIRST_ARCHITECTURE.md](docs/architecture/AI_FIRST_ARCHITECTURE.md) | AI-first design paradigm & MCP server architecture |
+| [docs/architecture/AI_DEVELOPMENT_METHODOLOGY.md](docs/architecture/AI_DEVELOPMENT_METHODOLOGY.md) | How to build software with AI (patterns, counter-measures, governance) |
+| [docs/architecture/ENVISION_ATLUS_DESIGN.md](docs/architecture/ENVISION_ATLUS_DESIGN.md) | EA design system components |
+| [docs/product/REFERRAL_SYSTEM.md](docs/product/REFERRAL_SYSTEM.md) | External referral & reporting system |
+| [docs/clinical/CAREGIVER_SUITE.md](docs/clinical/CAREGIVER_SUITE.md) | Family caregiver PIN-based access |
+| [docs/product/REGISTRATION_FLOWS.md](docs/product/REGISTRATION_FLOWS.md) | Three registration flows |
+| [docs/product/FEATURE_DASHBOARDS.md](docs/product/FEATURE_DASHBOARDS.md) | Feature dashboard routes & config |
+| [docs/product/VOICE_COMMANDS.md](docs/product/VOICE_COMMANDS.md) | Voice command infrastructure |
+| [docs/clinical/PATIENT_AVATAR.md](docs/clinical/PATIENT_AVATAR.md) | Patient avatar visualization system |
+| [docs/clinical/PATIENT_CONTEXT_SPINE.md](docs/clinical/PATIENT_CONTEXT_SPINE.md) | Canonical patient data access |
 | [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) | Current dev status & ATLUS alignment |
 
 ---
