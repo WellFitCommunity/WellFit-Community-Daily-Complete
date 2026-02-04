@@ -1,7 +1,7 @@
 # Law Enforcement Vertical - Live Tracker
 
 > **Last Updated:** 2026-02-04
-> **Overall Progress:** 100% Phases 1-3 Complete
+> **Overall Progress:** 100% Phases 1-4 Complete
 > **Status:** Pre-Pilot Development
 
 ---
@@ -13,9 +13,9 @@
 | Core Features | 10 | 0 | 0 | 10 |
 | Test Coverage | 6 | 0 | 0 | 6 |
 | Report System | 4 | 0 | 0 | 4 |
-| UX Polish | 0 | 0 | 4 | 4 |
+| UX Polish | 4 | 0 | 0 | 4 |
 | Integrations | 0 | 0 | 5 | 5 |
-| **TOTAL** | **20** | **0** | **9** | **29** |
+| **TOTAL** | **24** | **0** | **5** | **29** |
 
 ---
 
@@ -44,7 +44,7 @@ These are production-ready and deployed.
 |---|------|--------|-------------|-------|-------|
 | 2.1 | Type Helper Tests | ✅ Done | `src/types/__tests__/lawEnforcement.test.ts` | - | Complete |
 | 2.2 | SeniorEmergencyInfoForm Tests | ✅ Done | `src/components/lawEnforcement/__tests__/SeniorEmergencyInfoForm.test.tsx` | 32 | Rendering, loading, interaction, consent, submission, accessibility |
-| 2.3 | ConstableDispatchDashboard Tests | ✅ Done | `src/components/lawEnforcement/__tests__/ConstableDispatchDashboard.test.tsx` | 24 | Queue, alerts, selection, details, auto-refresh, empty state |
+| 2.3 | ConstableDispatchDashboard Tests | ✅ Done | `src/components/lawEnforcement/__tests__/ConstableDispatchDashboard.test.tsx` | 33 | Queue, alerts, selection, details, refresh, empty state, skeleton, keyboard, realtime, error boundaries |
 | 2.4 | FamilyEmergencyInfoPanel Tests | ✅ Done | `src/components/lawEnforcement/__tests__/FamilyEmergencyInfoPanel.test.tsx` | 21 | View/edit modes, cancel, save, data loading, integration |
 | 2.5 | LawEnforcementLandingPage Tests | ✅ Done | `src/pages/__tests__/LawEnforcementLandingPage.test.tsx` | 31 | Header, features, how-it-works, stats, CTA, navigation, responsive |
 | 2.6 | lawEnforcementService Tests | ✅ Done | `src/services/__tests__/lawEnforcementService.test.ts` | 9 | CRUD, RPC, transforms, error handling |
@@ -115,14 +115,19 @@ These are production-ready and deployed.
 
 ---
 
-## Phase 4: UX Polish (Post-Pilot OK)
+## Phase 4: UX Polish (COMPLETE)
 
 | # | Item | Status | File/Location | Priority | Notes |
 |---|------|--------|---------------|----------|-------|
-| 4.1 | Real-time Dashboard Updates | ⬜ Not Started | `ConstableDispatchDashboard.tsx` | Medium | Replace polling with Supabase realtime |
-| 4.2 | Error Boundaries | ⬜ Not Started | `src/components/lawEnforcement/` | Low | Graceful error handling |
-| 4.3 | Skeleton Loaders | ⬜ Not Started | `src/components/lawEnforcement/` | Low | Better loading UX |
-| 4.4 | Keyboard Navigation | ⬜ Not Started | `ConstableDispatchDashboard.tsx` | Low | Arrow keys for queue navigation |
+| 4.1 | Real-time Dashboard Updates | ✅ Done | `ConstableDispatchDashboard.tsx` | Medium | Replaced setInterval polling with `useRealtimeSubscription` for `daily_check_ins` (INSERT) and `welfare_check_reports` (*) |
+| 4.2 | Error Boundaries | ✅ Done | `ConstableDispatchDashboard.tsx` | Low | Left/right panels wrapped with `ErrorBoundary`, dark-themed fallback components |
+| 4.3 | Skeleton Loaders | ✅ Done | `ConstableDispatchDashboard.tsx` | Low | `AlertsQueueSkeleton` (4 cards) + `WelfareDetailsSkeleton` (avatar/info/contacts) with dark theme |
+| 4.4 | Keyboard Navigation | ✅ Done | `ConstableDispatchDashboard.tsx` | Low | ArrowDown/j, ArrowUp/k, Enter (open modal), r (refresh). Guarded for modal + input focus |
+
+### Additional Phase 4 Deliverables
+- **Tests:** 14 new tests (33 total for dispatch dashboard, 7,490 suite-wide)
+- **No new files:** All features implemented inline, reusing existing `useRealtimeSubscription`, `ErrorBoundary`, and `Skeleton` infrastructure
+- **Architecture note:** Polling removed; manual refresh button retained as fallback. Realtime requires tables enabled in Supabase realtime settings.
 
 ---
 
@@ -165,13 +170,14 @@ These are production-ready and deployed.
 | 2026-02-02 | Tracker Created | - | Initial assessment: 70% complete |
 | 2026-02-04 | Phase 2 Complete | ⬜ → ✅ | All 5 test suites passing (117 tests). Fixed async timing bug in SeniorEmergencyInfoForm test. Fixed 7 `as any` → `as unknown as` in service tests. |
 | 2026-02-04 | Phase 3 Complete | ⬜ → ✅ | All 4 items done. Migration deployed. 45 new tests (7,476 total). Patched `@isaacs/brace-expansion` CVE. Security scan green. |
+| 2026-02-04 | Phase 4 Complete | ⬜ → ✅ | All 4 UX polish items done. Realtime subscriptions replace polling. Skeleton loaders, error boundaries, keyboard nav (j/k/Enter/r). 14 new tests (7,490 total). |
 
 ---
 
 ## Notes & Decisions
 
 ### Architecture Decisions
-1. **Polling vs Real-time:** Currently using 2-minute polling. Real-time deferred to Phase 4.
+1. **Polling vs Real-time:** Migrated from 2-minute polling to Supabase realtime subscriptions in Phase 4. Manual refresh retained as fallback.
 2. **Report Storage:** Will use separate table (not embedded in alerts) for query flexibility.
 3. **Mobile App:** Deferred - web dashboard is MVP for pilot.
 
