@@ -48,9 +48,6 @@ export interface FeatureFlags {
   soc2Dashboards: boolean;
   performanceMonitoring: boolean;
   aiCostTracking: boolean;
-
-  // Demo
-  demoMode: boolean;
 }
 
 // Environment-based feature flag configuration
@@ -105,9 +102,6 @@ const getFeatureFlags = (): FeatureFlags => {
     soc2Dashboards: env.VITE_FEATURE_SOC2_DASHBOARDS === 'true',
     performanceMonitoring: env.VITE_FEATURE_PERFORMANCE_MONITORING === 'true',
     aiCostTracking: env.VITE_FEATURE_AI_COST_TRACKING === 'true',
-
-    // Demo mode (shows persona switcher on login page)
-    demoMode: env.VITE_DEMO_MODE === 'true',
   };
 };
 

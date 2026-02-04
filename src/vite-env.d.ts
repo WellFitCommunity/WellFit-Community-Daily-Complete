@@ -81,9 +81,6 @@ interface ImportMetaEnv {
   readonly VITE_FEATURE_SOC2_DASHBOARDS?: string;
   readonly VITE_FEATURE_PERFORMANCE_MONITORING?: string;
   readonly VITE_FEATURE_AI_COST_TRACKING?: string;
-
-  // Demo Mode
-  readonly VITE_DEMO_MODE?: string;
 }
 
 interface ImportMeta {
