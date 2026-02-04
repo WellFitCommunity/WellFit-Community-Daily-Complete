@@ -57,7 +57,7 @@ describe('LawEnforcementService', () => {
             })
           })
         })
-      } as any);
+      } as unknown as ReturnType<typeof supabase.from>);
 
       const result = await LawEnforcementService.getEmergencyResponseInfo('patient-123');
 
@@ -78,7 +78,7 @@ describe('LawEnforcementService', () => {
             })
           })
         })
-      } as any);
+      } as unknown as ReturnType<typeof supabase.from>);
 
       const result = await LawEnforcementService.getEmergencyResponseInfo('patient-123');
       expect(result).toBeNull();
@@ -129,7 +129,7 @@ describe('LawEnforcementService', () => {
             })
           })
         })
-      } as any);
+      } as unknown as ReturnType<typeof supabase.from>);
 
       const result = await LawEnforcementService.upsertEmergencyResponseInfo(
         'patient-123',
@@ -152,7 +152,7 @@ describe('LawEnforcementService', () => {
             })
           })
         })
-      } as any);
+      } as unknown as ReturnType<typeof supabase.from>);
 
       await expect(
         LawEnforcementService.upsertEmergencyResponseInfo('patient-123', {})
@@ -189,7 +189,7 @@ describe('LawEnforcementService', () => {
           data: mockData,
           error: null
         })
-      } as any);
+      } as unknown as ReturnType<typeof supabase.rpc>);
 
       const result = await LawEnforcementService.getWelfareCheckInfo('patient-123');
 
@@ -235,7 +235,7 @@ describe('LawEnforcementService', () => {
       mockSupabase.rpc.mockResolvedValue({
         data: mockAlerts,
         error: null
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
 
       const result = await LawEnforcementService.getMissedCheckInAlerts();
 
@@ -249,7 +249,7 @@ describe('LawEnforcementService', () => {
       mockSupabase.rpc.mockResolvedValue({
         data: [],
         error: null
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
 
       const result = await LawEnforcementService.getMissedCheckInAlerts();
       expect(result).toEqual([]);

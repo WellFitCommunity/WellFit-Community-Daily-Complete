@@ -166,10 +166,19 @@ describe('SeniorEmergencyInfoForm', () => {
 
       render(<SeniorEmergencyInfoForm patientId="patient-123" />);
 
+      // First wait for the async service call to complete
       await waitFor(() => {
-        const wheelchairCheckbox = screen.getByRole('checkbox', { name: /Wheelchair user/i });
-        expect(wheelchairCheckbox).toBeChecked();
+        expect(mockGetEmergencyResponseInfo).toHaveBeenCalledWith('patient-123');
       });
+
+      // Then wait for React to flush the state update from the async effect
+      await waitFor(
+        () => {
+          const wheelchairCheckbox = screen.getByRole('checkbox', { name: /Wheelchair user/i });
+          expect(wheelchairCheckbox).toBeChecked();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it('should handle no existing data gracefully', async () => {
