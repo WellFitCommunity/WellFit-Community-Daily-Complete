@@ -4,7 +4,7 @@
  */
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { LawEnforcementService } from '../lawEnforcementService';
-import type { EmergencyResponseFormData, ResponsePriority } from '../../types/lawEnforcement';
+import type { EmergencyResponseFormData, ResponsePriority, WelfareCheckReportFormData } from '../../types/lawEnforcement';
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase client
@@ -253,6 +253,231 @@ describe('LawEnforcementService', () => {
 
       const result = await LawEnforcementService.getMissedCheckInAlerts();
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('saveWelfareCheckReport', () => {
+    it('should save a welfare check report', async () => {
+      const formData: WelfareCheckReportFormData = {
+        tenantId: 'tenant-123',
+        patientId: 'patient-123',
+        officerId: 'officer-001',
+        officerName: 'Officer Smith',
+        checkInitiatedAt: '2026-02-04T08:00:00Z',
+        checkCompletedAt: '2026-02-04T08:30:00Z',
+        outcome: 'senior_ok',
+        outcomeNotes: 'Senior in good health',
+        emsCalled: false,
+        familyNotified: false,
+        actionsTaken: [],
+        followupRequired: false,
+      };
+
+      const mockResponse = {
+        id: 'report-001',
+        tenant_id: 'tenant-123',
+        patient_id: 'patient-123',
+        officer_id: 'officer-001',
+        officer_name: 'Officer Smith',
+        check_initiated_at: '2026-02-04T08:00:00Z',
+        check_completed_at: '2026-02-04T08:30:00Z',
+        response_time_minutes: 30,
+        outcome: 'senior_ok',
+        outcome_notes: 'Senior in good health',
+        ems_called: false,
+        family_notified: false,
+        actions_taken: [],
+        followup_required: false,
+        created_at: '2026-02-04T08:30:00Z',
+        updated_at: '2026-02-04T08:30:00Z',
+      };
+
+      mockSupabase.from.mockReturnValue({
+        upsert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: mockResponse,
+              error: null,
+            }),
+          }),
+        }),
+      } as unknown as ReturnType<typeof supabase.from>);
+
+      const result = await LawEnforcementService.saveWelfareCheckReport(formData);
+
+      expect(result).toBeDefined();
+      expect(result.id).toBe('report-001');
+      expect(result.patientId).toBe('patient-123');
+      expect(result.outcome).toBe('senior_ok');
+      expect(result.responseTimeMinutes).toBe(30);
+    });
+
+    it('should throw error when save fails', async () => {
+      const formData: WelfareCheckReportFormData = {
+        tenantId: 'tenant-123',
+        patientId: 'patient-123',
+        officerId: 'officer-001',
+        officerName: 'Officer Smith',
+        checkInitiatedAt: '2026-02-04T08:00:00Z',
+        checkCompletedAt: '2026-02-04T08:30:00Z',
+        outcome: 'senior_ok',
+        emsCalled: false,
+        familyNotified: false,
+        actionsTaken: [],
+        followupRequired: false,
+      };
+
+      mockSupabase.from.mockReturnValue({
+        upsert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: { message: 'Database error' },
+            }),
+          }),
+        }),
+      } as unknown as ReturnType<typeof supabase.from>);
+
+      await expect(
+        LawEnforcementService.saveWelfareCheckReport(formData)
+      ).rejects.toThrow('Failed to save welfare check report');
+    });
+  });
+
+  describe('getWelfareCheckReports', () => {
+    it('should retrieve welfare check reports for a patient', async () => {
+      const mockReports = [
+        {
+          id: 'report-001',
+          tenant_id: 'tenant-123',
+          patient_id: 'patient-123',
+          officer_id: 'officer-001',
+          officer_name: 'Officer Smith',
+          check_initiated_at: '2026-02-04T08:00:00Z',
+          check_completed_at: '2026-02-04T08:30:00Z',
+          response_time_minutes: 30,
+          outcome: 'senior_ok',
+          ems_called: false,
+          family_notified: false,
+          actions_taken: [],
+          followup_required: false,
+          created_at: '2026-02-04T08:30:00Z',
+          updated_at: '2026-02-04T08:30:00Z',
+        },
+      ];
+
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
+                data: mockReports,
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      } as unknown as ReturnType<typeof supabase.from>);
+
+      const result = await LawEnforcementService.getWelfareCheckReports('patient-123');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].patientId).toBe('patient-123');
+      expect(result[0].outcome).toBe('senior_ok');
+    });
+
+    it('should return empty array when no reports exist', async () => {
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      } as unknown as ReturnType<typeof supabase.from>);
+
+      const result = await LawEnforcementService.getWelfareCheckReports('patient-123');
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array on database error', async () => {
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Connection lost' },
+              }),
+            }),
+          }),
+        }),
+      } as unknown as ReturnType<typeof supabase.from>);
+
+      const result = await LawEnforcementService.getWelfareCheckReports('patient-123');
+      expect(result).toEqual([]);
+    });
+
+    it('should respect limit parameter', async () => {
+      const mockLimitFn = vi.fn().mockResolvedValue({ data: [], error: null });
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: mockLimitFn,
+            }),
+          }),
+        }),
+      } as unknown as ReturnType<typeof supabase.from>);
+
+      await LawEnforcementService.getWelfareCheckReports('patient-123', 25);
+
+      expect(mockLimitFn).toHaveBeenCalledWith(25);
+    });
+  });
+
+  describe('transformReportFromDb', () => {
+    it('should transform welfare check report from database format', () => {
+      const dbRecord = {
+        id: 'report-001',
+        tenant_id: 'tenant-123',
+        patient_id: 'patient-123',
+        officer_id: 'officer-001',
+        officer_name: 'Officer Smith',
+        check_initiated_at: '2026-02-04T08:00:00Z',
+        check_completed_at: '2026-02-04T08:30:00Z',
+        response_time_minutes: 30,
+        outcome: 'medical_emergency',
+        outcome_notes: 'Found on floor',
+        ems_called: true,
+        family_notified: true,
+        actions_taken: ['Called EMS', 'Secured home'],
+        transported_to: 'Memorial Hospital',
+        transport_reason: 'Fall injury',
+        followup_required: true,
+        followup_date: '2026-02-05',
+        followup_notes: 'Check on return',
+        created_at: '2026-02-04T08:30:00Z',
+        updated_at: '2026-02-04T08:30:00Z',
+      };
+
+      const result = LawEnforcementService.transformReportFromDb(dbRecord);
+
+      expect(result.id).toBe('report-001');
+      expect(result.patientId).toBe('patient-123');
+      expect(result.officerName).toBe('Officer Smith');
+      expect(result.responseTimeMinutes).toBe(30);
+      expect(result.outcome).toBe('medical_emergency');
+      expect(result.emsCalled).toBe(true);
+      expect(result.familyNotified).toBe(true);
+      expect(result.actionsTaken).toEqual(['Called EMS', 'Secured home']);
+      expect(result.transportedTo).toBe('Memorial Hospital');
+      expect(result.followupRequired).toBe(true);
+      expect(result.followupDate).toBe('2026-02-05');
     });
   });
 

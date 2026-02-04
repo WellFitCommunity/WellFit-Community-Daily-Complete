@@ -75,9 +75,20 @@ const _mockWelfareCheckInfo: WelfareCheckInfo = {
   hoursSinceCheckIn: 8.5,
 };
 
+// Mock AuthContext for WelfareCheckReportModal
+vi.mock('../../../contexts/AuthContext', () => ({
+  useUser: () => ({
+    id: 'officer-001',
+    email: 'officer@test.com',
+    user_metadata: { full_name: 'Officer Test' },
+  }),
+}));
+
 // Mock the service before importing the component
 vi.mock('../../../services/lawEnforcementService', () => ({
   LawEnforcementService: {
+    getWelfareCheckReports: vi.fn().mockResolvedValue([]),
+    saveWelfareCheckReport: vi.fn().mockResolvedValue({ id: 'report-1' }),
     getMissedCheckInAlerts: vi.fn().mockResolvedValue([
       {
         patientId: 'patient-1',

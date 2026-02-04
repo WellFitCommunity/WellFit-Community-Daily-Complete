@@ -7,9 +7,11 @@
  * Design: Envision Atlus Clinical Design System
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { LawEnforcementService } from '../../services/lawEnforcementService';
 import type { MissedCheckInAlert, WelfareCheckInfo, EmergencyContact } from '../../types/lawEnforcement';
+import { WelfareCheckReportModal } from './WelfareCheckReportModal';
+import { WelfareCheckReportHistory } from './WelfareCheckReportHistory';
 import {
   EACard,
   EACardHeader,
@@ -33,6 +35,7 @@ import {
   Users,
   Key,
   Activity,
+  FileText,
 } from 'lucide-react';
 
 export const ConstableDispatchDashboard: React.FC = () => {
@@ -40,6 +43,8 @@ export const ConstableDispatchDashboard: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
   const [welfareCheckInfo, setWelfareCheckInfo] = useState<WelfareCheckInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportHistoryKey, setReportHistoryKey] = useState(0);
 
   useEffect(() => {
     loadAlerts();
@@ -69,6 +74,12 @@ export const ConstableDispatchDashboard: React.FC = () => {
     const info = await LawEnforcementService.getWelfareCheckInfo(patientId);
     setWelfareCheckInfo(info);
   };
+
+  const handleReportSaved = useCallback(() => {
+    loadAlerts();
+    // Force re-render of report history by changing key
+    setReportHistoryKey((prev) => prev + 1);
+  }, []);
 
   const getRiskLevel = (urgency: number): 'critical' | 'high' | 'elevated' | 'normal' => {
     if (urgency >= 100) return 'critical';
@@ -402,10 +413,25 @@ export const ConstableDispatchDashboard: React.FC = () => {
                 size="lg"
                 icon={<CheckCircle className="h-5 w-5" />}
                 className="py-4"
+                onClick={() => setReportModalOpen(true)}
               >
                 Complete Check
               </EAButton>
             </div>
+
+            {/* Report History */}
+            <EACard>
+              <EACardHeader icon={<FileText className="h-5 w-5" />}>
+                <h3 className="text-lg font-semibold text-white">Welfare Check History</h3>
+              </EACardHeader>
+              <EACardContent>
+                <WelfareCheckReportHistory
+                  key={reportHistoryKey}
+                  patientId={selectedPatient}
+                  tenantId=""
+                />
+              </EACardContent>
+            </EACard>
           </div>
         ) : (
           <div className="flex items-center justify-center h-full">
@@ -419,6 +445,21 @@ export const ConstableDispatchDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Report Filing Modal */}
+      {selectedPatient && (() => {
+        const selectedAlert = alerts.find((a) => a.patientId === selectedPatient);
+        if (!selectedAlert) return null;
+        return (
+          <WelfareCheckReportModal
+            isOpen={reportModalOpen}
+            onClose={() => setReportModalOpen(false)}
+            onSaved={handleReportSaved}
+            alert={selectedAlert}
+            tenantId=""
+          />
+        );
+      })()}
     </div>
   );
 };

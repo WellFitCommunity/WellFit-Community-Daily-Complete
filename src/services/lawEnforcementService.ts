@@ -12,6 +12,9 @@ import type {
   EmergencyResponseInfo,
   EmergencyResponseFormData,
   WelfareCheckInfo,
+  WelfareCheckReport,
+  WelfareCheckReportFormData,
+  WelfareCheckOutcome,
   MissedCheckInAlert,
   SeniorCheckInStatus,
   ResponsePriority
@@ -403,6 +406,154 @@ export const LawEnforcementService = {
       // Error logged server-side
       return false;
     }
+  },
+
+  // ============================================================================
+  // WELFARE CHECK REPORTS
+  // ============================================================================
+
+  /**
+   * Save a welfare check report after officer completes a check
+   */
+  async saveWelfareCheckReport(
+    report: WelfareCheckReportFormData
+  ): Promise<WelfareCheckReport> {
+    try {
+      const dbData = {
+        tenant_id: report.tenantId,
+        patient_id: report.patientId,
+        officer_id: report.officerId,
+        officer_name: report.officerName,
+        check_initiated_at: report.checkInitiatedAt,
+        check_completed_at: report.checkCompletedAt,
+        outcome: report.outcome,
+        outcome_notes: report.outcomeNotes || null,
+        ems_called: report.emsCalled,
+        family_notified: report.familyNotified,
+        actions_taken: report.actionsTaken,
+        transported_to: report.transportedTo || null,
+        transport_reason: report.transportReason || null,
+        followup_required: report.followupRequired,
+        followup_date: report.followupDate || null,
+        followup_notes: report.followupNotes || null,
+      };
+
+      const { data, error } = await supabase
+        .from('welfare_check_reports')
+        .upsert(dbData, {
+          onConflict: 'patient_id,officer_id,check_initiated_at'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // HIPAA §164.312(b) - Log PHI access for welfare check report filing
+      await auditLogger.phi('WELFARE_CHECK_REPORT_WRITE', report.patientId, {
+        resourceType: 'welfare_check_reports',
+        action: 'UPSERT',
+        outcome: report.outcome,
+        officerId: report.officerId,
+      });
+
+      return this.transformReportFromDb(data);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      await auditLogger.error('WELFARE_CHECK_REPORT_SAVE_FAILED', error, {
+        patientId: report.patientId,
+        officerId: report.officerId,
+      });
+      throw new Error('Failed to save welfare check report');
+    }
+  },
+
+  /**
+   * Get welfare check reports for a patient
+   */
+  async getWelfareCheckReports(
+    patientId: string,
+    limit: number = 50
+  ): Promise<WelfareCheckReport[]> {
+    try {
+      const { data, error } = await supabase
+        .from('welfare_check_reports')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('check_completed_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      const reports = (data || []) as Array<Record<string, unknown>>;
+
+      if (reports.length > 0) {
+        // HIPAA §164.312(b) - Log PHI access for welfare check report reads
+        await auditLogger.phi('WELFARE_CHECK_REPORTS_READ', patientId, {
+          resourceType: 'welfare_check_reports',
+          action: 'READ',
+          reportCount: reports.length,
+        });
+      }
+
+      return reports.map((row) => this.transformReportFromDb(row));
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      await auditLogger.error('WELFARE_CHECK_REPORTS_READ_FAILED', error, {
+        patientId,
+      });
+      return [];
+    }
+  },
+
+  /**
+   * Transform a welfare check report database row to TypeScript interface
+   */
+  transformReportFromDb(data: Record<string, unknown>): WelfareCheckReport {
+    const row = data as unknown as {
+      id: string;
+      tenant_id: string;
+      patient_id: string;
+      officer_id: string;
+      officer_name: string;
+      check_initiated_at: string;
+      check_completed_at: string;
+      response_time_minutes: number;
+      outcome: WelfareCheckOutcome;
+      outcome_notes?: string;
+      ems_called: boolean;
+      family_notified: boolean;
+      actions_taken: string[];
+      transported_to?: string;
+      transport_reason?: string;
+      followup_required: boolean;
+      followup_date?: string;
+      followup_notes?: string;
+      created_at: string;
+      updated_at: string;
+    };
+
+    return {
+      id: row.id,
+      tenantId: row.tenant_id,
+      patientId: row.patient_id,
+      officerId: row.officer_id,
+      officerName: row.officer_name,
+      checkInitiatedAt: row.check_initiated_at,
+      checkCompletedAt: row.check_completed_at,
+      responseTimeMinutes: Number(row.response_time_minutes) || 0,
+      outcome: row.outcome,
+      outcomeNotes: row.outcome_notes,
+      emsCalled: row.ems_called ?? false,
+      familyNotified: row.family_notified ?? false,
+      actionsTaken: row.actions_taken || [],
+      transportedTo: row.transported_to,
+      transportReason: row.transport_reason,
+      followupRequired: row.followup_required ?? false,
+      followupDate: row.followup_date,
+      followupNotes: row.followup_notes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   },
 
   // ============================================================================

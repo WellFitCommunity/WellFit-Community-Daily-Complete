@@ -200,6 +200,18 @@ export interface SeniorCheckInStatus {
 }
 
 /**
+ * Welfare check outcome values (7-value enum matching database)
+ */
+export type WelfareCheckOutcome =
+  | 'senior_ok'
+  | 'senior_ok_needs_followup'
+  | 'senior_not_home'
+  | 'medical_emergency'
+  | 'non_medical_emergency'
+  | 'unable_to_contact'
+  | 'refused_check';
+
+/**
  * Welfare check report (after officer completes check)
  */
 export interface WelfareCheckReport {
@@ -209,24 +221,89 @@ export interface WelfareCheckReport {
   officerId: string;
   officerName: string;
 
-  checkDateTime: string;
-  outcome: 'ok' | 'assisted' | 'transported' | 'deceased' | 'not_home';
-  outcomeNotes: string;
+  checkInitiatedAt: string;
+  checkCompletedAt: string;
+  responseTimeMinutes: number;
 
-  // If transported
+  outcome: WelfareCheckOutcome;
+  outcomeNotes?: string;
+
+  emsCalled: boolean;
+  familyNotified: boolean;
+  actionsTaken: string[];
+
   transportedTo?: string;
   transportReason?: string;
 
-  // Actions taken
-  actionsTaken: string[];
-  familyNotified: boolean;
-  familyNotifiedTime?: string;
-
-  // Follow-up
-  followUpRequired: boolean;
-  followUpNotes?: string;
+  followupRequired: boolean;
+  followupDate?: string;
+  followupNotes?: string;
 
   createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Form data for filing a welfare check report
+ */
+export interface WelfareCheckReportFormData {
+  tenantId: string;
+  patientId: string;
+  officerId: string;
+  officerName: string;
+
+  checkInitiatedAt: string;
+  checkCompletedAt: string;
+
+  outcome: WelfareCheckOutcome;
+  outcomeNotes?: string;
+
+  emsCalled: boolean;
+  familyNotified: boolean;
+  actionsTaken: string[];
+
+  transportedTo?: string;
+  transportReason?: string;
+
+  followupRequired: boolean;
+  followupDate?: string;
+  followupNotes?: string;
+}
+
+/**
+ * Get human-readable label for a welfare check outcome
+ */
+export function getOutcomeLabel(outcome: WelfareCheckOutcome): string {
+  switch (outcome) {
+    case 'senior_ok': return 'Senior OK';
+    case 'senior_ok_needs_followup': return 'OK - Needs Follow-up';
+    case 'senior_not_home': return 'Not Home';
+    case 'medical_emergency': return 'Medical Emergency';
+    case 'non_medical_emergency': return 'Non-Medical Emergency';
+    case 'unable_to_contact': return 'Unable to Contact';
+    case 'refused_check': return 'Refused Check';
+    default: return 'Unknown';
+  }
+}
+
+/**
+ * Get severity level for outcome color coding
+ */
+export function getOutcomeSeverity(outcome: WelfareCheckOutcome): 'success' | 'warning' | 'error' {
+  switch (outcome) {
+    case 'senior_ok':
+      return 'success';
+    case 'senior_ok_needs_followup':
+    case 'senior_not_home':
+    case 'unable_to_contact':
+    case 'refused_check':
+      return 'warning';
+    case 'medical_emergency':
+    case 'non_medical_emergency':
+      return 'error';
+    default:
+      return 'warning';
+  }
 }
 
 /**
