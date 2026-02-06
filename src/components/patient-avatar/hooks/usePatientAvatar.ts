@@ -1,11 +1,13 @@
 /**
  * usePatientAvatar Hook
  *
- * React hook for managing patient avatar preferences (skin tone, gender).
+ * React hook for managing patient avatar preferences (skin tone, gender)
+ * with real-time sync across clinician sessions.
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { PatientAvatarService } from '../../../services/patientAvatarService';
+import { useRealtimeSubscription } from '../../../hooks/useRealtimeSubscription';
 import {
   PatientAvatar,
   SkinTone,
@@ -50,6 +52,22 @@ export function usePatientAvatar(patientId: string | undefined): UsePatientAvata
   useEffect(() => {
     loadAvatar();
   }, [loadAvatar]);
+
+  // Real-time subscription: auto-refresh avatar when settings change
+  useRealtimeSubscription({
+    table: 'patient_avatars',
+    event: 'UPDATE',
+    filter: patientId ? `patient_id=eq.${patientId}` : undefined,
+    componentName: 'usePatientAvatar',
+    initialFetch: patientId ? async () => {
+      const result = await PatientAvatarService.getPatientAvatar(patientId);
+      if (result.success) {
+        setAvatar(result.data);
+        return [result.data];
+      }
+      return [];
+    } : undefined,
+  });
 
   const updateSkinTone = useCallback(
     async (skinTone: SkinTone): Promise<boolean> => {

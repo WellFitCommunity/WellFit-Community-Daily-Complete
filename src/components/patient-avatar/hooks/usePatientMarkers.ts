@@ -1,12 +1,14 @@
 /**
  * usePatientMarkers Hook
  *
- * React hook for managing patient markers data.
+ * React hook for managing patient markers data with real-time sync.
+ * Two clinicians viewing the same patient see marker changes instantly.
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { PatientAvatarService } from '../../../services/patientAvatarService';
+import { useRealtimeSubscription } from '../../../hooks/useRealtimeSubscription';
 import {
   PatientMarker,
   CreateMarkerRequest,
@@ -64,6 +66,24 @@ export function usePatientMarkers(patientId: string | undefined): UsePatientMark
   useEffect(() => {
     loadMarkers();
   }, [loadMarkers]);
+
+  // Real-time subscription: auto-refresh markers when any change occurs
+  useRealtimeSubscription({
+    table: 'patient_markers',
+    event: '*',
+    filter: patientId ? `patient_id=eq.${patientId}` : undefined,
+    componentName: 'usePatientMarkers',
+    initialFetch: patientId ? async () => {
+      const result = await PatientAvatarService.getPatientMarkers(patientId);
+      if (result.success) {
+        setMarkers(result.data.markers);
+        setPendingCount(result.data.pending_count);
+        setAttentionCount(result.data.attention_count);
+        return result.data.markers;
+      }
+      return [];
+    } : undefined,
+  });
 
   const createMarker = useCallback(
     async (request: Omit<CreateMarkerRequest, 'patient_id'>): Promise<PatientMarker | null> => {

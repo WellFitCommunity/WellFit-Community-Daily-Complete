@@ -21,6 +21,11 @@ export {
   BADGE_DESCRIPTIONS,
 } from './StatusBadgeRing';
 
+// Page-level components
+export { PatientAvatarPage } from './PatientAvatarPage';
+export { PatientAvatarProfileSection } from './PatientAvatarProfileSection';
+export { CarePlanAvatarView } from './CarePlanAvatarView';
+
 // Form components
 export { MarkerForm } from './MarkerForm';
 export { MarkerDetailPopover } from './MarkerDetailPopover';

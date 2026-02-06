@@ -154,6 +154,16 @@ export const CommunityReadmissionDashboard = React.lazy(() => import('../compone
 // AI Medical Scribe
 export const CompassRileyPage = React.lazy(() => import('../components/smart/RealTimeSmartScribe'));
 
+// Patient Avatar
+export const PatientAvatarPage = React.lazy(() =>
+  import('../components/patient-avatar/PatientAvatarPage').then(m => ({ default: m.PatientAvatarPage }))
+);
+
+// Nurse Census Board
+export const NurseCensusBoard = React.lazy(() =>
+  import('../components/nurse/NurseCensusBoard').then(m => ({ default: m.NurseCensusBoard }))
+);
+
 // Neuro Suite
 export const NeuroSuiteDashboard = React.lazy(() => import('../components/neuro/NeuroSuiteDashboard'));
 export const MemoryClinicDashboard = React.lazy(() => import('../components/neuro-suite/MemoryClinicDashboard'));
@@ -329,6 +339,10 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   SOCDashboard,
   GuardianApprovalsList,
   GuardianApprovalForm,
+
+  // Patient Avatar
+  PatientAvatarPage,
+  NurseCensusBoard,
 
   // Clinical
   NursePanel,

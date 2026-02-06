@@ -7,6 +7,7 @@
 
 import { auditLogger } from './auditLogger';
 import { PatientAvatarService } from './patientAvatarService';
+import { supabase } from '../lib/supabaseClient';
 import {
   SmartScribeOutputWithEntities,
   SmartScribeAvatarEntity,
@@ -277,10 +278,91 @@ export async function processSmartScribeForAvatar(
 }
 
 /**
+ * AI-powered entity extraction via edge function
+ *
+ * Calls the ai-avatar-entity-extractor edge function for context-aware
+ * extraction with dynamic confidence. Falls back to regex on failure.
+ */
+interface AIExtractionResponse {
+  entities: Array<{
+    entity_type: string;
+    raw_text: string;
+    normalized_type: string;
+    confidence: number;
+    reasoning?: string;
+    body_region?: string;
+    laterality?: string;
+    icd10_suggestion?: string;
+  }>;
+  fallback: boolean;
+}
+
+export async function extractAvatarEntitiesWithAI(
+  transcriptText: string,
+  patientId: string,
+  tenantId?: string
+): Promise<SmartScribeAvatarEntity[]> {
+  try {
+    const { data, error } = await supabase.functions.invoke<AIExtractionResponse>(
+      'ai-avatar-entity-extractor',
+      {
+        body: { transcriptText, patientId, tenantId },
+      }
+    );
+
+    if (error) {
+      auditLogger.warn('AI_AVATAR_EXTRACTION_EDGE_ERROR', {
+        error: error.message,
+        patientId,
+      });
+      // Fall back to regex
+      return extractAvatarEntities(transcriptText);
+    }
+
+    if (!data || data.fallback || !data.entities || data.entities.length === 0) {
+      auditLogger.info('AI_AVATAR_EXTRACTION_FALLBACK', {
+        reason: data?.fallback ? 'ai_failed' : 'no_entities',
+        patientId,
+      });
+      // Fall back to regex
+      return extractAvatarEntities(transcriptText);
+    }
+
+    // Map AI response to SmartScribeAvatarEntity
+    const entities: SmartScribeAvatarEntity[] = data.entities.map((e) => ({
+      entity_type: e.entity_type as SmartScribeAvatarEntity['entity_type'],
+      raw_text: e.raw_text,
+      normalized_type: e.normalized_type,
+      confidence: e.confidence,
+      body_region: e.body_region,
+      laterality: e.laterality as Laterality | undefined,
+      icd10_suggestion: e.icd10_suggestion,
+    }));
+
+    auditLogger.info('AI_AVATAR_EXTRACTION_SUCCESS', {
+      patientId,
+      entityCount: entities.length,
+    });
+
+    return entities;
+  } catch (err: unknown) {
+    auditLogger.error(
+      'AI_AVATAR_EXTRACTION_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { patientId }
+    );
+    // Fall back to regex
+    return extractAvatarEntities(transcriptText);
+  }
+}
+
+/**
  * Integration hook for SmartScribe
  *
  * Call this function when a SmartScribe transcription is completed
  * to automatically detect and create avatar markers.
+ *
+ * Uses AI extraction (Claude Haiku) with regex fallback.
  */
 export async function onSmartScribeComplete(
   transcriptionId: string,
@@ -288,8 +370,8 @@ export async function onSmartScribeComplete(
   providerId: string,
   transcriptText: string
 ): Promise<{ created: number; removed: number; errors: string[] }> {
-  // Extract entities from text
-  const entities = extractAvatarEntities(transcriptText);
+  // Extract entities using AI (falls back to regex automatically)
+  const entities = await extractAvatarEntitiesWithAI(transcriptText, patientId);
 
   if (entities.length === 0) {
     return { created: 0, removed: 0, errors: [] };
@@ -310,6 +392,7 @@ export async function onSmartScribeComplete(
  */
 export const SmartScribeAvatarIntegration = {
   extractAvatarEntities,
+  extractAvatarEntitiesWithAI,
   processSmartScribeForAvatar,
   onSmartScribeComplete,
   MIN_CONFIDENCE_THRESHOLD,

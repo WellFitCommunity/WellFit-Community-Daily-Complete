@@ -12,6 +12,18 @@ import { AvatarMarker } from '../AvatarMarker';
 import { AvatarThumbnail } from '../AvatarThumbnail';
 import { PatientMarker } from '../../../types/patientAvatar';
 
+// Mock realtime subscription
+vi.mock('../../../hooks/useRealtimeSubscription', () => ({
+  useRealtimeSubscription: () => ({
+    data: null,
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    isSubscribed: true,
+    subscriptionId: 'test',
+  }),
+}));
+
 // Mock the hooks
 vi.mock('../hooks/usePatientAvatar', () => ({
   usePatientAvatar: () => ({

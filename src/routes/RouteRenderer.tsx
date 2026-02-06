@@ -104,6 +104,27 @@ export const MemoryClinicDashboardWrapper: React.FC = () => {
 };
 
 /**
+ * Wrapper for PatientAvatarPage to extract patient ID from route
+ */
+export const PatientAvatarPageWrapper: React.FC = () => {
+  const { patientId } = useParams<{ patientId: string }>();
+
+  if (!patientId) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500">No patient ID provided</p>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Patient Avatar...</div>}>
+      <LazyComponents.PatientAvatarPage patientId={patientId} />
+    </Suspense>
+  );
+};
+
+/**
  * Wrapper for CoordinatedResponseDashboard to extract handoff context
  */
 export const CoordinatedResponseDashboardWrapper: React.FC = () => {
@@ -218,6 +239,7 @@ const wrapperComponentMap: Record<string, React.FC> = {
   SpecialistDashboardWrapper,
   FieldVisitWorkflowWrapper,
   MemoryClinicDashboardWrapper,
+  PatientAvatarPageWrapper,
   CoordinatedResponseDashboardWrapper,
   ReceivingDashboardWrapper,
 };

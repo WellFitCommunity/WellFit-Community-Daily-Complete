@@ -449,6 +449,22 @@ export const clinicalRoutes: RouteConfig[] = [
     category: 'clinical',
     featureFlag: 'revenueDashboard',
   },
+  // Patient Avatar (full-page body map)
+  {
+    path: '/patient-avatar/:patientId',
+    component: 'PatientAvatarPageWrapper',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'physician', 'nurse_practitioner', 'care_coordinator', 'clinical_staff', 'clinical_supervisor'],
+    category: 'clinical',
+  },
+  // Nurse Census Board
+  {
+    path: '/nurse-census',
+    component: 'NurseCensusBoard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor'],
+    category: 'clinical',
+  },
   // Specialist Dashboard
   {
     path: '/specialist/dashboard/:specialistType',
