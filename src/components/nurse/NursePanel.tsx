@@ -426,12 +426,20 @@ const NursePanel: React.FC = () => {
                   <span className="text-teal-300">
                     Selected: <strong className="text-white">{selectedPatient.first_name} {selectedPatient.last_name}</strong>
                   </span>
-                  <button
-                    onClick={() => setSelectedPatient(null)}
-                    className="text-xs text-slate-400 hover:text-white"
-                  >
-                    Clear
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => navigate(`/patient-chart/${selectedPatient.user_id}?tab=overview`)}
+                      className="text-xs px-3 py-1 bg-teal-600 text-white rounded-lg hover:bg-teal-500 transition-colors"
+                    >
+                      Open Chart
+                    </button>
+                    <button
+                      onClick={() => setSelectedPatient(null)}
+                      className="text-xs text-slate-400 hover:text-white"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

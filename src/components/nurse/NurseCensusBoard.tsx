@@ -164,7 +164,7 @@ export const NurseCensusBoard: React.FC = () => {
   }, [loadPatients]);
 
   const handleViewAvatar = useCallback((patientId: string) => {
-    navigate(`/patient-avatar/${patientId}`);
+    navigate(`/patient-chart/${patientId}?tab=overview`);
   }, [navigate]);
 
   if (loading) {

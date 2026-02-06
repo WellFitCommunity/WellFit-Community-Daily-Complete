@@ -125,6 +125,27 @@ export const PatientAvatarPageWrapper: React.FC = () => {
 };
 
 /**
+ * Wrapper for PatientChartNavigator to extract patient ID from route
+ */
+export const PatientChartNavigatorWrapper: React.FC = () => {
+  const { patientId } = useParams<{ patientId: string }>();
+
+  if (!patientId) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900">
+        <p className="text-slate-400">No patient ID provided. Please select a patient first.</p>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen bg-slate-900"><p className="text-slate-400">Loading Patient Chart...</p></div>}>
+      <LazyComponents.PatientChartNavigator patientId={patientId} />
+    </Suspense>
+  );
+};
+
+/**
  * Wrapper for CoordinatedResponseDashboard to extract handoff context
  */
 export const CoordinatedResponseDashboardWrapper: React.FC = () => {
@@ -240,6 +261,7 @@ const wrapperComponentMap: Record<string, React.FC> = {
   FieldVisitWorkflowWrapper,
   MemoryClinicDashboardWrapper,
   PatientAvatarPageWrapper,
+  PatientChartNavigatorWrapper,
   CoordinatedResponseDashboardWrapper,
   ReceivingDashboardWrapper,
 };

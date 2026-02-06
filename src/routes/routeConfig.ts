@@ -465,6 +465,14 @@ export const clinicalRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor'],
     category: 'clinical',
   },
+  // Unified Patient Chart Navigator
+  {
+    path: '/patient-chart/:patientId',
+    component: 'PatientChartNavigatorWrapper',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'physician', 'nurse_practitioner', 'physician_assistant', 'care_coordinator', 'clinical_staff', 'clinical_supervisor', 'case_manager', 'doctor'],
+    category: 'clinical',
+  },
   // Specialist Dashboard
   {
     path: '/specialist/dashboard/:specialistType',

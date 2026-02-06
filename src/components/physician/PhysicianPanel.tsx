@@ -565,7 +565,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  navigate(`/my-health?patientId=${selectedPatient.user_id}`);
+                  navigate(`/patient-chart/${selectedPatient.user_id}?tab=overview`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -591,7 +591,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  navigate(`/medication-management?patientId=${selectedPatient.user_id}`);
+                  navigate(`/patient-chart/${selectedPatient.user_id}?tab=medications`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -617,7 +617,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  navigate(`/care-plans?patientId=${selectedPatient.user_id}`);
+                  navigate(`/patient-chart/${selectedPatient.user_id}?tab=care-plans`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -643,7 +643,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  navigate(`/health-observations?patientId=${selectedPatient.user_id}`);
+                  navigate(`/patient-chart/${selectedPatient.user_id}?tab=observations`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -669,7 +669,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  navigate(`/immunizations?patientId=${selectedPatient.user_id}`);
+                  navigate(`/patient-chart/${selectedPatient.user_id}?tab=immunizations`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${

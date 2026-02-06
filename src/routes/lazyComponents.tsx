@@ -164,6 +164,11 @@ export const NurseCensusBoard = React.lazy(() =>
   import('../components/nurse/NurseCensusBoard').then(m => ({ default: m.NurseCensusBoard }))
 );
 
+// Patient Chart Navigator (unified chart with tabs)
+export const PatientChartNavigator = React.lazy(() =>
+  import('../components/chart/PatientChartNavigator').then(m => ({ default: m.PatientChartNavigator }))
+);
+
 // Neuro Suite
 export const NeuroSuiteDashboard = React.lazy(() => import('../components/neuro/NeuroSuiteDashboard'));
 export const MemoryClinicDashboard = React.lazy(() => import('../components/neuro-suite/MemoryClinicDashboard'));
@@ -343,6 +348,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   // Patient Avatar
   PatientAvatarPage,
   NurseCensusBoard,
+  PatientChartNavigator,
 
   // Clinical
   NursePanel,
