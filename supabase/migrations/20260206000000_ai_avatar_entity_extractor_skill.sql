@@ -5,6 +5,7 @@
 INSERT INTO ai_skills (
   skill_number,
   skill_key,
+  name,
   description,
   model,
   is_active,
@@ -14,6 +15,7 @@ INSERT INTO ai_skills (
 ) VALUES (
   37,
   'smartscribe_avatar_extractor',
+  'SmartScribe Avatar Entity Extractor',
   'Extracts medical entities (device insertions, removals, conditions) from SmartScribe transcription text for automatic avatar marker creation. Uses Claude Haiku 4.5 for fast, context-aware parsing with dynamic confidence scoring. Falls back to regex extraction on failure.',
   'claude-haiku-4-5-20251001',
   true,
