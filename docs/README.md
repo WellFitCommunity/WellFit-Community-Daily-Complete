@@ -93,6 +93,7 @@ Complete documentation index for the WellFit Community and Envision Atlus platfo
 - [Anthology Fund Demo Script](demo/ANTHOLOGY_FUND_DEMO_SCRIPT.md) - Anthology Fund demo walkthrough
 
 ### Business Strategy
+- [Platform Technical Assessment](business/PLATFORM_ASSESSMENT.md) - Independent codebase assessment of MCP servers, AI skills, and strategic positioning
 - See `docs/business/` for monetization strategy and outreach materials
 
 ### Grants & Funding
