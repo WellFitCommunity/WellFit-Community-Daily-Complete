@@ -58,6 +58,10 @@ Complete documentation index for the WellFit Community and Envision Atlus platfo
 ## For Compliance & Security
 
 ### Compliance
+- [HIPAA Risk Assessment](compliance/HIPAA_RISK_ASSESSMENT.md) - Formal risk assessment per 45 CFR 164.308(a)(1)
+- [PHI Data Flow](compliance/PHI_DATA_FLOW.md) - PHI entry, processing, storage, and transmission map
+- [Access Control Matrix](compliance/ACCESS_CONTROL_MATRIX.md) - 25 roles mapped to data access permissions
+- [Data Retention Policy](compliance/DATA_RETENTION_POLICY.md) - Retention periods for all data categories
 - [Compliance Status (Current)](compliance/COMPLIANCE_STATUS_CURRENT.md) - Current compliance status
 - [SOC2/FHIR Compliance Audit](compliance/SOC2_FHIR_COMPLIANCE_AUDIT.md) - SOC2 + FHIR audit
 - [Logging Final Assessment](compliance/LOGGING_FINAL_ASSESSMENT.md) - Audit logging assessment
