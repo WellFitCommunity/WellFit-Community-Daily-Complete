@@ -468,12 +468,12 @@ npm run build
 ### Step 5: Configure Environment Variables
 
 **Required**:
-- `REACT_APP_SUPABASE_URL` - Supabase project URL
-- `REACT_APP_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 
 **Optional** (for enhanced features):
-- `REACT_APP_FHIR_SERVER_URL` - External FHIR server endpoint
-- `REACT_APP_BILLING_SYSTEM_URL` - Claims submission endpoint
+- `VITE_FHIR_SERVER_URL` - External FHIR server endpoint
+- `VITE_BILLING_SYSTEM_URL` - Claims submission endpoint
 
 ### Step 6: Test Core Flows
 
@@ -609,17 +609,8 @@ npm run build
 
 ## 👥 Team & Support
 
-### For Technical Questions
-- **Development Team**: dev@wellfit.org
-- **GitHub Issues**: [WellFit-Community-Daily-Complete/issues](link)
-
-### For Clinical Questions
-- **Clinical Advisory Board**: clinical@wellfit.org
-- **Dental Subject Matter Experts**: dental-sme@wellfit.org
-
-### For Business/Grant Questions
-- **Partnerships Team**: partnerships@wellfit.org
-- **Grant Writing Support**: grants@wellfit.org
+### Questions & Support
+- **Contact**: maria@wellfitcommunity.com
 
 ---
 
@@ -648,11 +639,9 @@ npm run build
 
 ## 📝 License & Attribution
 
-**Copyright**: WellFit Community Health Platform
-**License**: [Specify license here]
-**Attribution**: Built with support from [funders/partners]
+**Copyright**: WellFit Community, LLC
 
-**Open Source Components**:
+**Key Technologies**:
 - Supabase (PostgreSQL, RLS, Auth)
 - React + TypeScript
 - FHIR R4 Standard (HL7)
@@ -664,12 +653,8 @@ npm run build
 
 ## 📞 Contact
 
-**WellFit Community Health Platform**
-- Website: www.wellfit.org
-- Email: info@wellfit.org
-- Phone: [phone number]
-
-**Schedule a Demo**: [demo link]
+**WellFit Community, LLC**
+- Email: maria@wellfitcommunity.com
 
 ---
 

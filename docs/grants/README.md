@@ -13,7 +13,7 @@
 | Priority | Opportunity | Deadline | Action Now |
 |----------|-------------|----------|------------|
 | **1** | CMS ACCESS Model | **April 1, 2026** | Register on CMS Portal |
-| **2** | HRSA Tech-enabled Learning | **Feb 2, 2026** | Monitor NOFO posting |
+| **2** | ~~HRSA Tech-enabled Learning~~ | ~~Feb 2, 2026~~ | **MISSED** - deadline passed |
 | **3** | USDA DLT Grant | **Spring 2026** | Find rural partner |
 | **4** | HRSA Chronic Care Telehealth | **April 24, 2026** | Find academic partner |
 | **5** | NIH PAR-25-170 | **June 22, 2026** | Finalize draft |
@@ -84,7 +84,7 @@
 | Digital Healthcare (R21/R33) | AHRQ | $1M/5 years | Rolling | **Complete** |
 | ONC LEAP | ONC | $200K-$500K | Spring 2026 | Not started |
 | Chronic Care Telehealth | HRSA | TBD (large) | April 24, 2026 | Not started |
-| Tech-enabled Learning | HRSA | $475K | Feb 2, 2026 | Not started |
+| ~~Tech-enabled Learning~~ | ~~HRSA~~ | ~~$475K~~ | ~~Feb 2, 2026~~ | **Missed deadline** |
 | CMS QIO Partnership | CMS | Vendor contract | Ongoing | Not started |
 
 ## Estimated Total Potential Funding
@@ -95,7 +95,7 @@
 | 2026-2031 | NIH PAR-25-170 | $3,000,000 |
 | Ongoing | ACCESS Model payments | $990K-$9.9M/year |
 | 2026-2028 | AHRQ AI/CDS (R21/R33) | $275K-$2M |
-| 2026-2030 | ONC LEAP + HRSA Tech | $700K-$1M |
+| 2026-2030 | ONC LEAP | $200K-$500K |
 | **TOTAL** | **All Programs** | **$5M-$15M+** |
 
 ---
@@ -139,6 +139,7 @@
 - [ ] Contact TORCH
 
 ## February 2026
+- ~~[ ] HRSA Tech-enabled Learning~~ - **Missed (Feb 2 deadline)**
 - [ ] Discovery calls with rural partners
 - [ ] CMS ACCESS application refinement
 - [ ] Begin Medicare Part B enrollment (if needed)

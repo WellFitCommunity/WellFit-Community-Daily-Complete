@@ -22,7 +22,7 @@ A white-label multi-tenant healthcare platform containing **two separate product
 | **Supabase** | PostgreSQL 17 | Database, Auth, Edge Functions |
 | **Deno** | Latest | Edge Functions runtime |
 
-**Test Coverage:** 6,960 tests across 278 suites (100% pass rate)
+**Test Coverage:** 7,490 tests across 306 suites (100% pass rate)
 
 ## 📚 Documentation
 
@@ -152,7 +152,7 @@ npm run dev        # Start Vite dev server
 npm run build      # Production build
 npm run lint       # Run ESLint
 npm run typecheck  # Run TypeScript type checking
-npm test           # Run Vitest tests (6,960 tests)
+npm test           # Run Vitest tests (7,490 tests)
 ```
 
 ### Working with Supabase
@@ -204,7 +204,7 @@ This is a healthcare application with strict PHI (Protected Health Information) 
 - **Multi-tenant**: Multiple organizations share the codebase with their own domains
 - **White-label**: Each tenant can customize branding via `useBranding()` hook
 - **RLS Security**: Row Level Security isolates tenant data in Supabase
-- **Dynamic CORS**: Accepts any tenant's HTTPS domain (no hardcoded allowlists)
+- **Explicit CORS**: Tenant domains configured via `ALLOWED_ORIGINS` env var (no wildcards)
 
 ### Tenant ID Convention
 
