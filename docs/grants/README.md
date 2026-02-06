@@ -104,19 +104,10 @@
 
 ## Texas State Office of Rural Health
 
-| Name | Role | Email | Phone |
-|------|------|-------|-------|
-| Eva Cruz | Lead Coordinator (FLEX) | Eva.Cruz@TexasAgriculture.gov | (512) 936-7880 |
-| Albert Ruiz | Rural Health Specialist | Albert.Ruiz@TexasAgriculture.gov | (512) 936-6730 |
-| General | SORH | RuralHealth@TexasAgriculture.gov | (512) 936-6730 |
-
-## TORCH (Texas Rural Hospitals)
-
-| Field | Information |
-|-------|-------------|
-| Phone | (512) 873-0045 |
-| Email | cruiz@torchnet.org |
-| Website | [torchnet.org](https://www.torchnet.org) |
+| Resource | Contact |
+|----------|---------|
+| SORH General | RuralHealth@TexasAgriculture.gov / (512) 936-6730 |
+| TORCH (Texas Rural Hospitals) | [torchnet.org](https://www.torchnet.org) / (512) 873-0045 |
 
 ## Federal Program Contacts
 

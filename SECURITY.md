@@ -179,6 +179,6 @@ If you discover a security vulnerability, please:
 
 ---
 
-**Last Updated**: September 20, 2025
-**Next Review**: December 20, 2025
+**Last Updated**: February 6, 2026
+**Next Review**: May 6, 2026
 **Security Contact**: security@thewellfitcommunity.org

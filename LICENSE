@@ -1,21 +1,41 @@
-MIT License
+Proprietary License
 
-Copyright (c) 2021 Supabase, Inc. and contributors
+Copyright (c) 2025-2026 WellFit Community, LLC. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software and associated documentation files (the "Software") are the
+exclusive property of WellFit Community, LLC ("Company").
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+NOTICE: All information contained herein is, and remains the property of
+WellFit Community, LLC. The intellectual and technical concepts contained
+herein are proprietary to WellFit Community, LLC and may be covered by
+U.S. and foreign patents, patents in process, and are protected by trade
+secret or copyright law.
+
+RESTRICTIONS:
+1. You may not copy, modify, distribute, sell, or lease any part of this
+   Software without prior written permission from the Company.
+2. You may not reverse engineer, decompile, or disassemble the Software.
+3. You may not use the Software to create derivative works.
+4. You may not sublicense or transfer the Software to any third party.
+
+CONFIDENTIALITY:
+This Software contains trade secrets and confidential information of
+WellFit Community, LLC. Unauthorized use, disclosure, or distribution of
+this Software is strictly prohibited and may result in civil and criminal
+penalties.
+
+HIPAA COMPLIANCE:
+This Software is designed to handle Protected Health Information (PHI) in
+compliance with the Health Insurance Portability and Accountability Act
+(HIPAA). Any use of this Software must comply with applicable HIPAA
+regulations and the Company's Business Associate Agreement.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+WELLFIT COMMUNITY, LLC BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+For licensing inquiries, contact: maria@wellfitcommunity.com

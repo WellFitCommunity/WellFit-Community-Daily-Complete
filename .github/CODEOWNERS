@@ -1,0 +1,20 @@
+# Code Owners for WellFit Community
+# These users will be automatically requested for review on PRs.
+
+# Default owner for everything
+* @WellFitCommunity
+
+# Security-sensitive files require explicit review
+SECURITY.md @WellFitCommunity
+LICENSE @WellFitCommunity
+.github/workflows/ @WellFitCommunity
+supabase/migrations/ @WellFitCommunity
+supabase/functions/_shared/cors.ts @WellFitCommunity
+
+# Governance documents
+CLAUDE.md @WellFitCommunity
+CONTRIBUTING.md @WellFitCommunity
+
+# Clinical modules
+src/services/patientContextService.ts @WellFitCommunity
+src/types/patientContext.ts @WellFitCommunity

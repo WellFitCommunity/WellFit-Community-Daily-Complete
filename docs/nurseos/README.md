@@ -1,7 +1,7 @@
 # NurseOS Emotional Resilience Hub - Documentation
 
 **Status:** ✅ Database deployed, ready for code implementation
-**Last Updated:** 2025-10-18
+**Last Updated:** 2026-02-06
 
 ---
 
@@ -238,5 +238,5 @@ This Resilience Hub can help thousands of nurses avoid burnout and continue serv
 
 ---
 
-**Last Updated:** 2025-10-18
-**Maintained By:** Engineering team
+**Last Updated:** 2026-02-06
+**Maintained By:** WellFit Community, LLC
