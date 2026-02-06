@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'TOOL CHECK: Use Grep instead of grep/rg. Use Glob instead of find/ls. Use Read instead of cat/head/tail. Bash is for git, npm, builds, and tests only.' >&2; exit 0"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'CLAUDE.MD RULES:' >&2; echo '  - No console.log (use auditLogger)' >&2; echo '  - No any type (use unknown + type guards)' >&2; echo '  - No CORS/CSP wildcards (use ALLOWED_ORIGINS)' >&2; echo '  - catch(err: unknown) pattern required' >&2; echo '  - No forwardRef (React 19 ref-as-prop)' >&2; echo '  - import.meta.env.VITE_* only (no process.env)' >&2; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
