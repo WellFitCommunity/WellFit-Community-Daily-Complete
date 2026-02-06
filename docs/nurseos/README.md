@@ -239,4 +239,4 @@ This Resilience Hub can help thousands of nurses avoid burnout and continue serv
 ---
 
 **Last Updated:** 2026-02-06
-**Maintained By:** WellFit Community, LLC
+**Maintained By:** Envision Virtual Edge Group LLC

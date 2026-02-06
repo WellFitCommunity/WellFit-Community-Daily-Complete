@@ -639,7 +639,7 @@ npm run build
 
 ## 📝 License & Attribution
 
-**Copyright**: WellFit Community, LLC
+**Copyright**: Envision Virtual Edge Group LLC
 
 **Key Technologies**:
 - Supabase (PostgreSQL, RLS, Auth)
@@ -653,7 +653,7 @@ npm run build
 
 ## 📞 Contact
 
-**WellFit Community, LLC**
+**Envision Virtual Edge Group LLC**
 - Email: maria@wellfitcommunity.com
 
 ---

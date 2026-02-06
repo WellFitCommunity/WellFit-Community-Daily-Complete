@@ -82,5 +82,5 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-*Maintained by WellFit Community, LLC*
+*Maintained by Envision Virtual Edge Group LLC*
 *Contact: maria@wellfitcommunity.com*

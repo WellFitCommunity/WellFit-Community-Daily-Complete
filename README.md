@@ -237,7 +237,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for code standards, PR process, and revie
 
 ## License
 
-Proprietary. Copyright (c) 2025-2026 WellFit Community, LLC. All rights reserved.
+Proprietary. Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.
 
 See [LICENSE](LICENSE) for terms.
 
