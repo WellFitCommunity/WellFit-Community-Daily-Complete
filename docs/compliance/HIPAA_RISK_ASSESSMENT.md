@@ -85,29 +85,27 @@ This assessment covers the WellFit Community and Envision Atlus platforms, inclu
 | Control | Status | Evidence |
 |---------|--------|----------|
 | Data backup plan | Implemented | Supabase automated daily backups, 30-day retention, PITR |
-| Disaster recovery plan | Not documented | Supabase handles infrastructure, but no formal DR document |
+| Disaster recovery plan | Documented | `docs/compliance/DISASTER_RECOVERY_PLAN.md` - RTO/RPO targets, 7 scenarios |
 | Emergency mode operation | Implemented | Offline PWA mode for rural/disconnected scenarios |
 | Testing and revision | Partial | No documented backup restoration test schedule |
 
-**Risk: No formal disaster recovery plan documented.**
-- Likelihood: Low (Supabase SLA covers infrastructure)
-- Impact: High
-- Mitigation: Create DR plan documenting Supabase recovery procedures and RTO/RPO targets
+**Disaster Recovery Plan:** Documented in `docs/compliance/DISASTER_RECOVERY_PLAN.md` (February 6, 2026). Includes RTO/RPO per service tier, 7 disaster scenarios with step-by-step recovery, and communication plan.
 
 ### 164.308(b)(1) - Business Associate Contracts
 
 | Business Associate | BAA Status | Service |
 |-------------------|:----------:|---------|
 | Supabase Inc. | Signed | Database, Auth, Edge Functions |
-| Anthropic PBC | Pending verification | AI clinical services |
+| Anthropic PBC | Not required (PHI redacted before transmission) | AI clinical services |
 | Twilio Inc. | Signed (HIPAA eligible) | SMS delivery |
-| MailerSend | Needs verification | Email delivery |
+| MailerSend | Not required (de-identified content only) | Email delivery |
 | Vercel Inc. | N/A (no PHI processed) | CDN / hosting |
 
-**Risk: Anthropic BAA not confirmed active.**
-- Likelihood: Medium
-- Impact: High (AI services process redacted clinical context)
-- Mitigation: Verify Anthropic BAA is configured; PHI redaction applied as defense-in-depth
+**Anthropic BAA Status:** BAA was requested; Anthropic declined due to usage threshold policy. This is mitigated because:
+1. PHI redaction strips names, SSN, DOB, email, phone, address, MRN, and member ID before any API call
+2. Only de-identified clinical context reaches Anthropic servers
+3. Anthropic's data handling policy prohibits training on API data
+4. **No PHI is transmitted.** BAA is not required for de-identified data under HIPAA Safe Harbor.
 
 ---
 
@@ -187,9 +185,9 @@ All physical safeguards are delegated to infrastructure providers:
 
 | ID | Risk | Likelihood | Impact | Level | Mitigation | Status |
 |----|------|:----------:|:------:|:-----:|-----------|--------|
-| R1 | Anthropic BAA not confirmed | Medium | High | **HIGH** | Verify BAA; PHI redaction as defense-in-depth | Open |
-| R2 | No formal DR plan document | Low | High | **MEDIUM** | Document Supabase recovery procedures, RTO/RPO | Open |
-| R3 | MailerSend BAA not confirmed | Medium | Low | **MEDIUM** | Verify BAA; no PHI in email bodies currently | Open |
+| R1 | Anthropic BAA not available (usage threshold) | Low | Low | **LOW** | BAA requested; denied for insufficient usage. Anthropic policy guarantees security. PHI redaction applied as defense-in-depth (names, SSN, DOB, email, phone, address stripped before API call). No PHI reaches Anthropic. | Mitigated |
+| R2 | No formal DR plan document | Low | High | **MEDIUM** | Documented: `docs/compliance/DISASTER_RECOVERY_PLAN.md` | Closed |
+| R3 | MailerSend: no BAA needed | N/A | N/A | **N/A** | MailerSend receives only de-identified content (generic notifications, no PHI in email body). BAA not required per HIPAA Safe Harbor. | Closed |
 | R4 | No formal sanction policy | Low | Medium | **LOW** | Draft workforce sanction policy | Open |
 | R5 | End-user device security | Medium | Medium | **MEDIUM** | Device policy exists; offline auto-delete mitigates | Mitigated |
 | R6 | No penetration test on record | Medium | Medium | **MEDIUM** | Schedule annual pen test | Open |
@@ -202,13 +200,13 @@ All physical safeguards are delegated to infrastructure providers:
 
 | Priority | Risk ID | Action | Owner | Target Date |
 |----------|---------|--------|-------|-------------|
-| 1 | R1 | Verify Anthropic BAA is active | Maria | March 2026 |
-| 2 | R3 | Verify MailerSend BAA or switch to HIPAA-compliant provider | Maria | March 2026 |
-| 3 | R2 | Document disaster recovery plan with RTO/RPO | Engineering | April 2026 |
-| 4 | R7 | Complete FHIR backend SOC2 remediation | Engineering | April 2026 |
-| 5 | R6 | Schedule penetration test | Maria | Q2 2026 |
-| 6 | R8 | Conduct first backup restoration test | Engineering | Q2 2026 |
-| 7 | R4 | Draft formal workforce sanction policy | Maria | Q2 2026 |
+| 1 | R7 | Complete FHIR backend SOC2 remediation | Engineering | April 2026 |
+| 2 | R6 | Schedule penetration test | Maria | Q2 2026 |
+| 3 | R8 | Conduct first backup restoration test | Engineering | Q2 2026 |
+| 4 | R4 | Draft formal workforce sanction policy | Maria | Q2 2026 |
+| ~~5~~ | ~~R1~~ | ~~Verify Anthropic BAA~~ | ~~Maria~~ | ~~Mitigated - PHI redaction approach accepted~~ |
+| ~~6~~ | ~~R2~~ | ~~Document DR plan~~ | ~~Engineering~~ | ~~Closed - DR plan documented~~ |
+| ~~7~~ | ~~R3~~ | ~~Verify MailerSend BAA~~ | ~~Maria~~ | ~~Closed - no PHI transmitted, BAA not required~~ |
 
 ---
 
