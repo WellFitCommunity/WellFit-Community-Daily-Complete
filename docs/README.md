@@ -6,7 +6,11 @@ Complete documentation index for the WellFit Community and Envision Atlus platfo
 
 ## For Developers
 
+### Getting Started
+- [Developer Onboarding](DEVELOPER_ONBOARDING.md) - Environment setup, architecture overview, first-task walkthrough
+
 ### Architecture
+- [API Reference](architecture/API_REFERENCE.md) - 10 MCP servers, 130+ Edge Functions, authentication, protocols
 - [AI-First Architecture](architecture/AI_FIRST_ARCHITECTURE.md) - AI-first design paradigm & MCP server architecture
 - [AI Development Methodology](architecture/AI_DEVELOPMENT_METHODOLOGY.md) - How to build software with AI (patterns, counter-measures, governance)
 - [Envision Atlus Design System](architecture/ENVISION_ATLUS_DESIGN.md) - EA design system components
@@ -62,6 +66,8 @@ Complete documentation index for the WellFit Community and Envision Atlus platfo
 - [PHI Data Flow](compliance/PHI_DATA_FLOW.md) - PHI entry, processing, storage, and transmission map
 - [Access Control Matrix](compliance/ACCESS_CONTROL_MATRIX.md) - 25 roles mapped to data access permissions
 - [Data Retention Policy](compliance/DATA_RETENTION_POLICY.md) - Retention periods for all data categories
+- [Disaster Recovery Plan](compliance/DISASTER_RECOVERY_PLAN.md) - RTO/RPO targets, recovery procedures, communication plan
+- [Service Level Agreement](compliance/SERVICE_LEVEL_AGREEMENT.md) - Uptime commitments, support tiers, SLA credits
 - [Compliance Status (Current)](compliance/COMPLIANCE_STATUS_CURRENT.md) - Current compliance status
 - [SOC2/FHIR Compliance Audit](compliance/SOC2_FHIR_COMPLIANCE_AUDIT.md) - SOC2 + FHIR audit
 - [Logging Final Assessment](compliance/LOGGING_FINAL_ASSESSMENT.md) - Audit logging assessment
