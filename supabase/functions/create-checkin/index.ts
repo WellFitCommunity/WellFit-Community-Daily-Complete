@@ -1,4 +1,5 @@
 // supabase/functions/create-checkin/index.ts
+// Creates a check-in record in public.check_ins with tenant isolation.
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -19,10 +20,10 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Missing or invalid Authorization" }), { status: 401, headers });
     }
 
-    // ✅ SB_* env names (no "supabase" in names)
-    const SB_URL = Deno.env.get("SB_URL");
-    const SB_ANON_KEY = Deno.env.get("SB_ANON_KEY");
-    const sb = createClient(SB_URL, SB_ANON_KEY, {
+    // ✅ SB_* env names with fallbacks
+    const SB_URL = Deno.env.get("SB_URL") || Deno.env.get("SUPABASE_URL");
+    const SB_ANON_KEY = Deno.env.get("SB_ANON_KEY") || Deno.env.get("SUPABASE_ANON_KEY");
+    const sb = createClient(SB_URL!, SB_ANON_KEY!, {
       global: { headers: { Authorization: auth } },
     });
 
@@ -32,12 +33,32 @@ serve(async (req: Request) => {
     }
     const uid = userData.user.id;
 
+    // Resolve tenant_id from user profile (required — check_ins.tenant_id is NOT NULL)
+    const { data: profileData, error: profileErr } = await sb
+      .from("profiles")
+      .select("tenant_id")
+      .eq("user_id", uid)
+      .single();
+
+    if (profileErr || !profileData?.tenant_id) {
+      return new Response(
+        JSON.stringify({ error: "Unable to resolve tenant for user" }),
+        { status: 400, headers },
+      );
+    }
+    const tenant_id = profileData.tenant_id;
+
     const body = await req.json().catch(() => ({}));
     const now = new Date().toISOString();
 
     const clamp = (n: unknown, lo: number, hi: number) => {
       const x = typeof n === "number" ? n : Number(n);
       return Number.isFinite(x) && x >= lo && x <= hi ? x : null;
+    };
+
+    const safeStr = (val: unknown, maxLen: number): string | null => {
+      if (val == null || val === "") return null;
+      return String(val).slice(0, maxLen);
     };
 
     const label = String(body?.label ?? "Daily Self-Report").slice(0, 128);
@@ -51,8 +72,9 @@ serve(async (req: Request) => {
       is_quick ? (is_emergency ? "Emergency" : "Quick Update")
                : (String(body?.emotional_state ?? "").slice(0, 64) || null);
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       user_id: uid,
+      tenant_id,
       timestamp: now,
       label,
       is_emergency,
@@ -62,6 +84,11 @@ serve(async (req: Request) => {
       bp_systolic: is_quick ? null : clamp(body?.bp_systolic, 70, 250),
       bp_diastolic: is_quick ? null : clamp(body?.bp_diastolic, 40, 150),
       glucose_mg_dl: is_quick ? null : clamp(body?.glucose_mg_dl, 40, 600),
+      weight: is_quick ? null : clamp(body?.weight, 50, 800),
+      physical_activity: is_quick ? null : safeStr(body?.physical_activity, 128),
+      social_engagement: is_quick ? null : safeStr(body?.social_engagement, 128),
+      symptoms: is_quick ? null : safeStr(body?.symptoms, 500),
+      notes: is_quick ? null : safeStr(body?.activity_notes, 500),
     };
 
     const { error: insErr } = await sb.from("check_ins").insert(payload);

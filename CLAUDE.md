@@ -17,6 +17,7 @@
 | 9 | **Run migrations you create** - `npx supabase db push` | Unexecuted migration files |
 | 10 | **No CORS/CSP wildcards** - use explicit `ALLOWED_ORIGINS` only | `frame-ancestors *`, `connect-src *`, `WHITE_LABEL_MODE=true` |
 | 11 | **Report verification counts** - typecheck/lint/test pass counts before commit | "I checked" without numbers |
+| 12 | **No god files** - 600 line max per file, decompose don't degrade | Any file exceeding 600 lines |
 
 ### Before Every Task
 ```bash
@@ -93,6 +94,10 @@ This codebase eliminated 1,400+ `any` violations and 1,671 total lint warnings i
 | CORS/CSP wildcards (`*`) | Explicit `ALLOWED_ORIGINS` required | "Permissive = easier" mentality |
 | Claiming "I verified" without proof | Must report pass/fail counts | Poor self-debugging; sees intent not reality |
 | Iterating on broken code instead of stopping | STOP AND ASK when stuck | Wants to appear helpful, not stuck |
+| Writing junk tests (`toBeTruthy`, "renders") | Deletion Test: would it fail for empty `<div>`? | Optimizes for test count, not test quality |
+| Testing CSS classes instead of behavior | Test user-visible outcomes | CSS tests are easy, behavior tests require understanding |
+| Creating god files (600+ lines) | Decompose into focused modules | Bolting features onto one file is easiest path |
+| Claiming refactor was done without verifying | Check `wc -l` on the actual file | AI sees intent ("I planned to") as completion ("I did it") |
 
 **The STOP AND ASK protocol is the highest-value rule.** Most AI mistakes stem from continuing when uncertain rather than asking.
 
@@ -316,17 +321,103 @@ const result = processData(input as unknown as ExpectedType); // NO
 ### Test Baseline
 | Metric | Current |
 |--------|---------|
-| Total Tests | 7,490 |
+| Total Tests | 7,490 (under quality audit - meaningful count ~5,100) |
 | Test Suites | 306 |
 | Pass Rate Required | 100% |
+
+### Test Quality Standard - THE DELETION TEST
+
+**Every test must answer YES to this question:**
+
+> "If I deleted the component's logic and left an empty `<div />`, would this test fail?"
+
+If the answer is NO, the test is junk. Do not write it.
+
+### Junk Test Patterns - FORBIDDEN
+
+| Junk Pattern | Why It's Junk | Write This Instead |
+|--------------|---------------|-------------------|
+| `expect(component).toBeTruthy()` | Passes for empty `<div />` | Assert specific content renders |
+| `"renders without crashing"` (no assertions) | Tests React, not your code | Assert the component's actual output |
+| `"module exports a React component"` | Tests the import system | Test what the component does |
+| `"should have animate-pulse class"` | Tests CSS, not behavior | Test what triggers the animation state |
+| `expect(wrapper.find('div')).toHaveLength(1)` | Every component has a div | Assert meaningful DOM structure |
+| `"matches snapshot"` (alone) | Approves anything on first run | Pair with behavioral assertions |
+| `"should render X children"` (static count) | Breaks on any UI change, tests nothing | Test that dynamic data renders correctly |
+
+### What Meaningful Tests Look Like
+
+```typescript
+// ❌ JUNK - passes for any component, even an empty <div>
+it('renders without crashing', () => {
+  render(<PatientDashboard patientId="123" />);
+  expect(screen.getByTestId('dashboard')).toBeTruthy();
+});
+
+// ✅ MEANINGFUL - tests actual behavior
+it('displays patient risk level from context data', () => {
+  render(<PatientDashboard patientId="123" />);
+  expect(screen.getByText('High Risk')).toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveClass('risk-high');
+});
+
+// ❌ JUNK - tests that an export exists
+it('exports a React component', () => {
+  expect(typeof PatientDashboard).toBe('function');
+});
+
+// ✅ MEANINGFUL - tests error boundary behavior
+it('shows error message when patient data fails to load', async () => {
+  server.use(rest.get('/api/patient', (req, res, ctx) => res(ctx.status(500))));
+  render(<PatientDashboard patientId="123" />);
+  expect(await screen.findByText(/failed to load/i)).toBeInTheDocument();
+});
+
+// ❌ JUNK - tests CSS existence
+it('should have animate-pulse class', () => {
+  const { container } = render(<LoadingSpinner />);
+  expect(container.firstChild).toHaveClass('animate-pulse');
+});
+
+// ✅ MEANINGFUL - tests loading state lifecycle
+it('shows loading spinner while fetching, then displays data', async () => {
+  render(<PatientDashboard patientId="123" />);
+  expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  expect(await screen.findByText('John D.')).toBeInTheDocument();
+  expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+});
+```
+
+### Test Quality Tiers
+
+| Tier | What It Tests | Example | Value |
+|------|--------------|---------|-------|
+| **Tier 1: Behavior** | User-visible actions and outcomes | Click submit, form validates, error shows | Highest |
+| **Tier 2: State** | Data flow, loading/error/success states | Fetches data, shows loading, displays results | High |
+| **Tier 3: Integration** | Service calls, context interactions | Calls API with correct params, updates context | High |
+| **Tier 4: Edge Cases** | Null data, empty arrays, timeouts, permissions | No patients returns empty state message | Medium |
+| **Tier 5: Structure** | Static rendering checks with no behavior | "has a div", "exports function" | **Zero - Do not write** |
+
+**New tests MUST be Tier 1-4. Tier 5 tests are forbidden.**
 
 ### Test Rules
 - **All tests must pass before any work is considered complete**
 - New components MUST include corresponding test files
-- Do NOT delete, skip, or disable existing tests
+- **New tests MUST pass the Deletion Test** (would fail if component logic removed)
+- Do NOT delete, skip, or disable existing tests **unless replacing junk tests with meaningful ones**
 - Do NOT use `.skip()` or `.only()` in committed code
 - Location: `src/components/admin/__tests__/ComponentName.test.tsx`
-- Minimum coverage: Rendering, loading states, data display, error handling
+- Minimum coverage: User interactions, loading/error/success states, data display, error handling
+- **When editing a component with junk tests, upgrade the tests in the same PR**
+
+### Legacy Test Cleanup (In Progress)
+~2,200 tests are Tier 5 junk from early AI-generated code. These are being systematically replaced, not deleted. The total count may decrease temporarily during cleanup. This is expected and approved.
+
+**Cleanup rules:**
+- Replace junk tests with meaningful behavioral tests (Tier 1-4)
+- Net test count may go down - that is OK if quality goes up
+- Never delete a test without a replacement unless the component itself was deleted
+- Track progress: meaningful test count matters more than total count
 
 ---
 
@@ -409,6 +500,68 @@ Tenant codes follow the format: `{ORG}-{LICENSE}{SEQUENCE}`
 3. Review the affected schema/database tables
 4. Identify existing patterns in similar code
 5. If unclear, **STOP and ASK**
+
+### No God Files - 600 Line Maximum Per File - ENFORCED
+
+**No single file may exceed 600 lines. This is a hard limit.**
+
+You are an AI. You can handle modular architecture easily. There is zero excuse for a 2,000-line component.
+
+#### The Rule
+- **Maximum 600 lines per file** (components, services, hooks, utils — everything)
+- Before adding code to any file, run `wc -l` on it first
+- If a file is approaching 500 lines, **proactively decompose** before it hits the limit
+- If a file already exceeds 600 lines, **it must be decomposed before any new features are added to it**
+
+#### How to Decompose (Don't Degrade)
+When splitting a file, the result must be **equally innovative and complete** — never reduce quality or functionality:
+
+1. **Extract by responsibility** — each sub-module owns one clear concern
+2. **Barrel re-export** — the original file becomes a thin barrel that re-exports from sub-modules (zero breaking changes to importers)
+3. **Shared types** — extract interfaces to a `.types.ts` file
+4. **Verify after decomposition** — `npm run typecheck && npm test` must pass, all routes must still work
+
+#### Decomposition Pattern (Proven in This Codebase)
+```
+# BEFORE: One god file
+src/services/fhirResourceService.ts (3,498 lines)
+
+# AFTER: Modular architecture
+src/services/fhir/
+├── index.ts                        # Barrel re-export (148 lines)
+├── PatientService.ts               # Patient CRUD (120 lines)
+├── EncounterService.ts             # Encounters (110 lines)
+├── AllergyIntoleranceService.ts    # Allergies (110 lines)
+├── PractitionerService.ts          # Providers (165 lines)
+└── ... (14 focused modules)
+
+# Result: 96% reduction in main file, zero breaking changes
+```
+
+#### Verification After Any Decomposition
+```bash
+# 1. Check no file exceeds 600 lines
+wc -l src/components/feature-name/*.tsx
+
+# 2. Verify types compile
+npm run typecheck
+
+# 3. Verify tests pass
+npm test
+
+# 4. Verify routes still work (if component was routed)
+# Manual check or smoke test
+```
+
+#### Current God Files (Flagged for Mandatory Refactoring)
+| File | Lines | Status |
+|------|-------|--------|
+| `src/components/admin/BedManagementPanel.tsx` | 2,049 | Awaiting decomposition plan |
+| `src/components/community/CommunityReadmissionDashboard.tsx` | 1,387 | Awaiting decomposition plan |
+| `src/components/admin/SmartAppManagementPanel.tsx` | 1,124 | Awaiting decomposition plan |
+| `src/components/CheckInTracker.tsx` | 1,085 | Awaiting decomposition plan |
+
+**Do NOT add features to these files. Decompose first.**
 
 ---
 
