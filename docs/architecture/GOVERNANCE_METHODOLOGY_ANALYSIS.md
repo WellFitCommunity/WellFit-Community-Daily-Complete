@@ -93,6 +93,78 @@ This progression — from code writer to infrastructure operator — changed wha
 
 The governance methodology scaled with the tool's capabilities. As Claude Code gained the ability to do more, the governance document added rules to ensure it did so safely.
 
+### What AI Can't Do — The Operational Reality
+
+The "AI built my app" narrative omits the hardest parts of building software. AI writes code. Humans fight infrastructure.
+
+**Twilio Certification**
+
+The most difficult non-coding challenge in the entire project was Twilio's A2P 10DLC registration process — the carrier-level verification required to send SMS messages in the United States.
+
+For a healthcare platform that sends check-in reminders to seniors, missed check-in alerts to caregivers, appointment notifications, family escalation messages, and welfare check alerts, this meant:
+
+- Business identity verification with carrier networks
+- Campaign registration for each SMS use case (each reviewed separately)
+- Content approval for healthcare-related messages (HIPAA scrutiny)
+- Trust score management (low trust = throttled messages)
+- Opt-in/opt-out compliance documentation
+- Rejection appeals when campaigns were denied
+
+No AI could navigate this process. ChatGPT can write code that calls the Twilio API. It cannot argue with Twilio support about a trust score, figure out why messages are being carrier-filtered, or understand why a campaign registration was rejected for the third time. This was manual, human work — researching requirements, filling out forms, responding to compliance questions, and iterating until approved.
+
+**The Full Operational Stack**
+
+Every software project has an operational layer that AI tools cannot automate:
+
+| Operational Task | Can AI Help? | Who Actually Does It |
+|-----------------|-------------|---------------------|
+| Domain registration and DNS | No | Human |
+| SSL certificate configuration | Minimal | Human |
+| Twilio carrier verification | No | Human |
+| Supabase project setup and configuration | Minimal | Human |
+| Environment variable management | No | Human |
+| API key procurement and rotation | No | Human |
+| Deployment pipeline configuration | Partial | Human |
+| Vendor support interactions | No | Human |
+| Compliance documentation for external services | No | Human |
+| Billing and subscription management | No | Human |
+
+This operational reality is invisible in most AI development stories. But it represents a significant portion of the actual work — and it requires a completely different skill set from directing AI to write code. It requires persistence, reading documentation, trial and error, and the willingness to spend days on a single vendor integration that has nothing to do with code.
+
+### Secrets Management — A Hard Lesson
+
+One of the most important operational lessons learned during the project: **AI coding assistants will commit secrets to git if you don't stop them.**
+
+ChatGPT taught the founder a critical security practice early in the project: never commit environment variables, API keys, or secrets to the git repository. Always store them in:
+
+- **Supabase Secrets** — for edge function environment variables
+- **Vercel Environment Variables** — for frontend deployment configuration
+- **GitHub Actions Secrets** — for CI/CD pipeline credentials
+
+This lesson was learned proactively — before a breach, not after one.
+
+However, Claude Code has a persistent tendency to include secrets in committed code. It will:
+
+- Hardcode an API key in a configuration file and commit it
+- Include environment variable values in code instead of references
+- Add secrets to files that are tracked by git
+- Not recognize that a value it just received is sensitive
+
+When this happens, the secret is exposed in the git history — even if the commit is immediately reverted. The only remediation is to **rotate the secret entirely**: generate a new key, update it in all environments, and revoke the old one. If the key was just obtained (sometimes after a lengthy vendor process), this is extremely frustrating.
+
+**The governance response:**
+
+This experience led to several rules and practices:
+
+1. **`.gitignore` is carefully maintained** — `.env` files, secret configurations, and credential files are excluded from git tracking
+2. **Pre-commit awareness** — the founder reviews staged files before allowing commits, specifically watching for hardcoded values
+3. **Environment variable pattern enforcement** — CLAUDE.md requires `import.meta.env.VITE_*` for client-side configuration, never hardcoded values
+4. **Secrets never in code** — any value that varies by environment must come from environment variables or Supabase secrets, never from source code
+
+**The broader lesson:** AI tools do not understand the concept of a secret. They see a string value and treat it like any other string. The human directing the AI must be the security layer. This is not a failure of the AI — it is a fundamental limitation that governance must account for.
+
+ChatGPT taught the security practice. Claude Code demonstrated why it was necessary. The governance framework ensures it is enforced.
+
 ---
 
 ## The Core Insight
