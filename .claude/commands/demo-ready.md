@@ -1,6 +1,6 @@
-# Methodist Hospital Demo Readiness Check
+# Hospital Demo Readiness Check
 
-Run a comprehensive validation to ensure everything is ready for the **Methodist Houston demo on December 5th, 2025**.
+Run a comprehensive validation to ensure everything is ready for a **hospital pilot demo**.
 
 ## What to Check
 
@@ -12,7 +12,7 @@ Run a comprehensive validation to ensure everything is ready for the **Methodist
 
 ### 2. FHIR Integration (DEMO FEATURE)
 - Verify FHIR service is operational
-- Check Epic integration connectivity
+- Check EHR integration connectivity (Epic, Cerner, etc.)
 - Test FHIR resource creation (Patient, Observation, MedicationRequest)
 - Validate US Core profile compliance
 
@@ -36,6 +36,7 @@ SELECT * FROM ai_skill_config WHERE tenant_id = (SELECT id FROM tenants LIMIT 1)
 - ✅ Care Gap Detection (missing vaccines, overdue screenings)
 - ✅ Readmission Risk Predictor (30-day risk scores)
 - ✅ Clinical Note Summarization (MCP-powered)
+- ✅ Unified Patient Chart Navigator (fluid tab-based chart navigation at `/patient-chart/:patientId`)
 
 ### 4. Security & Compliance (HOSPITAL REQUIREMENT)
 
@@ -102,7 +103,7 @@ du -sh build/static/js/*.js | sort -h
 **Verify branding:**
 - Logo configured
 - Color scheme set
-- Organization name: "Methodist Houston" (for demo)
+- Organization name configured for target hospital
 - Custom domain (if applicable)
 
 ### 9. Mobile Responsiveness
@@ -130,52 +131,51 @@ du -sh build/static/js/*.js | sort -h
 ## Success Output
 
 ```
-🎯 METHODIST HOSPITAL DEMO READINESS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Demo Date: December 5th, 2025 (19 days)
+🎯 HOSPITAL DEMO READINESS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [1/10] Code Quality...
 ✅ Linting: Clean
 ✅ Type Checking: 0 errors
-✅ Tests: 627 passing
+✅ Tests: 7,490 passing
 
 [2/10] FHIR Integration...
 ✅ FHIR service operational
-✅ Epic integration active
+✅ EHR integration active
 ✅ US Core profiles validated
 
 [3/10] AI Features...
 ✅ Billing Code Suggester: Active
 ✅ Medication Cabinet AI: Active
-✅ Care Gap Detection: 47 gaps detected
+✅ Care Gap Detection: Active
 ✅ Readmission Predictor: Active
 ✅ Clinical Summarization: Active
+✅ Patient Chart Navigator: Active
 
 [4/10] Security & Compliance...
 ✅ HIPAA controls: All passing
 ✅ PHI encryption: Enabled
 ✅ Audit logging: Active
-✅ RLS policies: 87/87 tables
+✅ RLS policies: All tables covered
 ✅ GPG signing: Verified
 
 [5/10] Care Coordination...
 ✅ Guardian Agent: Operational
-✅ Self-healing: 12 recoveries (last 7 days)
+✅ Self-healing: Active
 ✅ Quality metrics: Generated
 
 [6/10] Performance...
-✅ Bundle size: 1.4 MB (target: <2 MB)
-✅ Load time: 2.1s (target: <3s)
+✅ Bundle size: Under target
+✅ Load time: Under 3s target
 
 [7/10] Demo Data...
-✅ Test accounts: 4 created
+✅ Test accounts: Created
 ✅ Sample data: Loaded
-✅ Medications: 27 total
-✅ Encounters: 15 completed
+✅ Medications: Loaded
+✅ Encounters: Loaded
 
 [8/10] White-Label...
-✅ Branding: Methodist Houston
+✅ Branding: Configured for target hospital
 ✅ Logo: Configured
 ✅ Colors: Set
 
@@ -189,12 +189,12 @@ Demo Date: December 5th, 2025 (19 days)
 ✅ No warnings
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ DEMO READY - ALL SYSTEMS GO! 🚀
+✅ DEMO READY - ALL SYSTEMS GO!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🎯 Key Demo Talking Points:
-  1. FHIR R4 Compliance - Full interoperability
-  2. Epic Integration - Real-time data sync
+  1. FHIR R4 Compliance - Full EHR interoperability
+  2. Unified Patient Chart Navigator - 6-tab clinical workflow
   3. AI-Powered Billing - 95% accuracy, auto-coding
   4. Care Gap Detection - Proactive quality metrics
   5. Guardian Agent - Self-healing system
@@ -203,69 +203,66 @@ Demo Date: December 5th, 2025 (19 days)
 🎁 Demo Highlights:
   - Show Medication Cabinet with AI pill recognition
   - Demonstrate care gap detection (vaccines, screenings)
-  - Show real-time Epic FHIR sync
-  - Display unified patient view
+  - Show real-time EHR FHIR sync
+  - Walk through Unified Patient Chart Navigator (6-tab clinical workflow)
+  - Display Patient Avatar body map
   - Highlight autonomous error recovery
 
 ⚠️ Remember:
-  - Run this check again on Dec 4th (day before demo)
+  - Run this check again the day before demo
   - Have backup demo environment ready
   - Practice demo script
-  - Test all features one more time morning of Dec 5th
+  - Test all features one more time morning of demo
 
-Days until demo: 19
 Status: 🟢 READY
 ```
 
 ## Failure Output
 
 ```
-🎯 METHODIST HOSPITAL DEMO READINESS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Demo Date: December 5th, 2025 (19 days)
+🎯 HOSPITAL DEMO READINESS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [1/10] Code Quality...
 ❌ Tests: 3 failures
 
 Failed Tests:
-  ✗ FhirService › should sync with Epic
+  ✗ FhirService › should sync with EHR
   ✗ MedicationCabinet › should identify pills
   ✗ CareGapDetector › should detect vaccine gaps
 
 [2/10] FHIR Integration...
-⚠️ WARNING: Epic integration not tested in 7 days
+⚠️ WARNING: EHR integration not tested in 7 days
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ❌ NOT DEMO READY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🔴 CRITICAL ISSUES (Must fix before demo):
-  1. Fix 3 failing tests (FHIR, Medication, Care Gap)
-  2. Test Epic integration with real credentials
+  1. Fix failing tests
+  2. Test EHR integration with real credentials
   3. Verify FHIR sync is working end-to-end
 
 ⚠️ WARNINGS (Should fix):
-  - Epic integration last tested 7 days ago
+  - EHR integration last tested 7 days ago
   - Demo data needs refresh
 
 🚨 ACTION REQUIRED:
   1. Fix failing tests TODAY
-  2. Test Epic integration ASAP
+  2. Test EHR integration ASAP
   3. Re-run /demo-ready after fixes
   4. Schedule full demo rehearsal
 
-Days until demo: 19
 Status: 🔴 NOT READY - ACTION REQUIRED
 ```
 
 ## When to Run
 
-- **Daily:** Starting Nov 25th (10 days before demo)
-- **Dec 1st:** Full rehearsal check
-- **Dec 4th:** Final validation
-- **Dec 5th Morning:** Last check before demo
+- **10 days before demo:** Start running daily
+- **2 days before:** Full rehearsal check
+- **Day before:** Final validation
+- **Morning of demo:** Last check
 
 ## Notes
 
-This command is specifically tailored for the **Methodist Houston pilot meeting**. After the demo, consider creating a generic `/production-ready` command for regular deployments.
+This command validates demo readiness for any hospital pilot. Configure tenant branding and demo data for the specific hospital before running.

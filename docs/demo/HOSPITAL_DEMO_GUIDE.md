@@ -1,16 +1,15 @@
-# Methodist Hospital Demo - Discharge-to-Wellness Bridge
+# Hospital Demo - Discharge-to-Wellness Bridge
 ## The Complete Care Continuum: From Bedside to Wellside
 
-**Demo Date:** February 5, 2025
 **Duration:** 15 minutes
-**Audience:** Methodist Hospital Leadership
+**Audience:** Hospital Leadership
 **Value Proposition:** Reduce 30-day readmissions by 40% through AI-powered wellness monitoring
 
 ---
 
 ## 🎯 THE PROBLEM WE SOLVE
 
-### Current State (Methodist's Pain Points):
+### Current State ([Hospital]'s Pain Points):
 - **20% readmission rate** within 30 days of discharge
 - **$15,000 CMS penalty per readmission** (average)
 - **Lost-to-follow-up patients** are highest risk
@@ -19,7 +18,7 @@
 - **Care coordinators overwhelmed** with manual follow-up calls
 
 ### Financial Impact:
-- Methodist discharges ~5,000 patients/year (est.)
+- [Hospital] discharges ~5,000 patients/year (est.)
 - 20% readmission rate = 1,000 readmissions/year
 - At $15K penalty each = **$15 million in annual CMS penalties**
 - **10% reduction saves $1.5M/year**
@@ -198,7 +197,37 @@ if (consecutiveLowMoodDays >= 3) {
 
 ---
 
-### **ACT 5: Care Team Dashboard** (3 min)
+### **ACT 5: Unified Patient Chart Navigator** (2 min)
+**Screen:** [Patient Chart Navigator](src/components/chart/PatientChartNavigator.tsx)
+
+**Route:** `/patient-chart/:patientId`
+
+**Narrative:**
+> "Before we look at the care team dashboard, let me show you how clinicians navigate a patient's complete chart.
+>
+> This is the **Unified Patient Chart Navigator** — one screen, six tabs, zero context loss:
+>
+> **Tab 1: Overview** — Quick links to every chart section at a glance
+> **Tab 2: Medications** — Full medication management with reconciliation
+> **Tab 3: Care Plans** — Active care plans and goals
+> **Tab 4: Labs & Vitals** — Observation dashboard with trends
+> **Tab 5: Immunizations** — Vaccine records and gaps
+> **Tab 6: Body Map** — Patient Avatar visualization showing conditions on a human body
+>
+> Watch — I can switch between Mrs. Johnson's medications and her labs without losing context. The patient header stays pinned at the top showing name, room, DOB, and patient ID.
+>
+> Every tab lazy-loads for speed. URL updates with each tab so you can bookmark or share a direct link to any chart section.
+>
+> This replaces the old workflow where clinicians had to navigate 4-5 different screens to piece together a patient's story."
+
+**Key Files:**
+- Component: [src/components/chart/PatientChartNavigator.tsx](src/components/chart/PatientChartNavigator.tsx)
+- Route: [src/routes/routeConfig.ts](src/routes/routeConfig.ts) (line 469)
+- Test: [src/components/chart/__tests__/PatientChartNavigator.test.tsx](src/components/chart/__tests__/PatientChartNavigator.test.tsx)
+
+---
+
+### **ACT 6: Care Team Dashboard** (3 min)
 **Screen:** [Discharged Patient Dashboard](src/components/discharge/DischargedPatientDashboard.tsx)
 
 **Narrative:**
@@ -248,7 +277,7 @@ if (consecutiveLowMoodDays >= 3) {
 >
 > **Outcome: NO READMISSION** ✅
 >
-> **Methodist saves $15,000 on this one patient.**
+> **[Hospital] saves $15,000 on this one patient.**
 >
 > Scale this across 1,000 high-risk patients:
 > - 40% readmission reduction (400 fewer readmissions)
@@ -340,12 +369,12 @@ if (consecutiveLowMoodDays >= 3) {
 - **Per-Patient-Per-Month:** $15
 - **Assumes:** 500 high-risk patients monitored
 
-### Methodist's Costs:
+### [Hospital]'s Costs:
 - Setup: $25,000
 - Monthly: $15 × 500 = $7,500/month
 - Annual: $115,000/year
 
-### Methodist's Savings:
+### [Hospital]'s Savings:
 - Current readmissions: 1,000/year × $15K = $15M penalties
 - 40% reduction: 400 fewer readmissions
 - Savings: 400 × $15K = **$6M/year**
@@ -356,7 +385,7 @@ if (consecutiveLowMoodDays >= 3) {
 
 ## 📈 SUCCESS METRICS
 
-### Track These for Methodist:
+### Track These for [Hospital]:
 
 1. **30-Day Readmission Rate**
    - Baseline: 20%
@@ -398,16 +427,16 @@ if (consecutiveLowMoodDays >= 3) {
 
 ## 🚀 POST-DEMO NEXT STEPS
 
-### If Methodist Says Yes:
+### If [Hospital] Says Yes:
 
 1. **Week 1: Pilot Setup**
-   - Deploy to Methodist test environment
+   - Deploy to [Hospital] test environment
    - Create 5 test patients
    - Train 3 care coordinators
 
 2. **Week 2-4: Pilot (50 patients)**
    - Monitor daily for issues
-   - Weekly sync with Methodist team
+   - Weekly sync with [Hospital] team
    - Collect feedback
 
 3. **Month 2: Full Rollout (500 patients)**
@@ -443,11 +472,11 @@ if (consecutiveLowMoodDays >= 3) {
 **Post-Demo Email Template:**
 
 ```
-Subject: Methodist Hospital - Discharge-to-Wellness Bridge Demo Follow-Up
+Subject: [Hospital] Hospital - Discharge-to-Wellness Bridge Demo Follow-Up
 
-Hi [Methodist Contact],
+Hi [[Hospital] Contact],
 
-Thank you for attending today's demo! As discussed, the Discharge-to-Wellness Bridge can help Methodist:
+Thank you for attending today's demo! As discussed, the Discharge-to-Wellness Bridge can help [Hospital]:
 
 ✅ Reduce readmissions by 40% (save $6M/year)
 ✅ Improve patient satisfaction
@@ -499,7 +528,7 @@ Best,
 - ✅ Real-time care team dashboard
 - ✅ Proven ROI model
 
-**Methodist will see:**
+**[Hospital] will see:**
 - ✅ Immediate value in the demo
 - ✅ Clear path to $6M annual savings
 - ✅ Better patient outcomes
@@ -509,4 +538,4 @@ Best,
 
 ---
 
-*Built with surgical precision. Zero tech debt. Ready for Methodist.*
+*Built with surgical precision. Zero tech debt. Ready for [Hospital].*
