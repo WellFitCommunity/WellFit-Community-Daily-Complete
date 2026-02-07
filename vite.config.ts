@@ -1,8 +1,7 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import type { UserConfig as VitestConfig } from 'vitest/config';
 
 // Node.js modules that should be stubbed for browser (MCP SDK, etc.)
 // Using empty object export instead of false (which doesn't work in Vite 7+)
@@ -132,7 +131,4 @@ export default defineConfig({
       VITE_SUPABASE_ANON_KEY: 'test-anon-key',
     },
   },
-} as UserConfig & { test: VitestConfig['test'] });
-
-// Type augmentation for Vite config with Vitest
-type UserConfig = ReturnType<typeof defineConfig>;
+});
