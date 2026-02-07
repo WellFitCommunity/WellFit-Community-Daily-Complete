@@ -8,8 +8,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock dependencies before imports
-vi.mock('../anthropicLoader', () => ({
-  loadAnthropicSDK: vi.fn(),
+vi.mock('../../lib/supabaseClient', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'test-jwt-token' } },
+      }),
+    },
+  },
 }));
 
 vi.mock('../auditLogger', () => ({
@@ -22,10 +28,6 @@ vi.mock('../auditLogger', () => ({
 }));
 
 vi.mock('../../config/environment', () => ({
-  env: {
-    VITE_ANTHROPIC_API_KEY: 'sk-ant-test-key-12345',
-    VITE_CLAUDE_TIMEOUT: 30000,
-  },
   validateEnvironment: vi.fn(() => ({ success: true, message: 'Valid' })),
 }));
 
@@ -40,7 +42,6 @@ vi.mock('../../utils/claudeModelSelection', () => ({
   })),
 }));
 
-import { loadAnthropicSDK } from '../anthropicLoader';
 import { validateEnvironment } from '../../config/environment';
 
 // ===========================================================================
@@ -48,31 +49,13 @@ import { validateEnvironment } from '../../config/environment';
 // ===========================================================================
 
 describe('ClaudeService', () => {
-  let mockAnthropicClient: {
-    messages: {
-      create: ReturnType<typeof vi.fn>;
-    };
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
 
-    // Setup mock Anthropic client
-    mockAnthropicClient = {
-      messages: {
-        create: vi.fn().mockResolvedValue({
-          content: [{ type: 'text', text: 'Test response from Claude' }],
-          usage: { input_tokens: 100, output_tokens: 50 },
-        }),
-      },
-    };
-
-    // Mock the Anthropic SDK loader - cast through unknown for SDK boundary
-    const MockAnthropicConstructor = vi.fn().mockReturnValue(mockAnthropicClient);
-    vi.mocked(loadAnthropicSDK).mockResolvedValue(
-      MockAnthropicConstructor as unknown as typeof import('@anthropic-ai/sdk').default
-    );
+    // Set env vars for edge function proxy
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key');
 
     vi.mocked(validateEnvironment).mockReturnValue({
       success: true,
@@ -247,34 +230,16 @@ describe('ClaudeService', () => {
       expect(module1.claudeService).toBe(module2.claudeService);
     });
 
-    it('should handle missing API key gracefully', async () => {
-      vi.mocked(validateEnvironment).mockReturnValue({
-        success: true,
-        message: 'Valid',
-      });
+    it('should handle missing Supabase URL gracefully', async () => {
+      // Remove Supabase URL — service should degrade gracefully
+      vi.stubEnv('VITE_SUPABASE_URL', '');
 
-      // Mock environment with no API key
-      vi.doMock('../../config/environment', () => ({
-        env: {
-          VITE_ANTHROPIC_API_KEY: '',
-          VITE_CLAUDE_TIMEOUT: 30000,
-        },
-        validateEnvironment: vi.fn(() => ({ success: true, message: 'Valid' })),
-      }));
-
-      // Service should not crash without API key
       const { claudeService } = await import('../claudeService');
       expect(claudeService).toBeDefined();
     });
 
-    it('should handle invalid API key format', async () => {
-      vi.doMock('../../config/environment', () => ({
-        env: {
-          VITE_ANTHROPIC_API_KEY: 'invalid-key-format',
-          VITE_CLAUDE_TIMEOUT: 30000,
-        },
-        validateEnvironment: vi.fn(() => ({ success: true, message: 'Valid' })),
-      }));
+    it('should initialize when Supabase URL is configured', async () => {
+      vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
 
       const { claudeService } = await import('../claudeService');
       expect(claudeService).toBeDefined();
@@ -286,10 +251,10 @@ describe('ClaudeService', () => {
   // ===========================================================================
 
   describe('Health Check', () => {
-    it('should return false when client is not initialized', async () => {
+    it('should return false when service is not initialized', async () => {
       const { claudeService } = await import('../claudeService');
 
-      // Without initialization, health check should return false
+      // Without initialization, health check should return false (edge function call fails)
       const isHealthy = await claudeService.healthCheck();
       expect(typeof isHealthy).toBe('boolean');
     });

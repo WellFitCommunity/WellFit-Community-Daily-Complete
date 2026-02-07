@@ -7,6 +7,18 @@ const logger = createLogger('validate-api-key');
 
 logger.info("Function initializing");
 
+/**
+ * Hash an API key using SHA-256 (Web Crypto API).
+ * The api_keys table stores key_hash, never the raw key.
+ */
+async function hashApiKey(key: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Initialize Supabase client with service role
 let supabaseAdminClient: SupabaseClient;
 try {
@@ -65,14 +77,17 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  reqLogger.debug("Attempting to validate API key", { keyPrefix: apiKey.substring(0, 10) });
+  reqLogger.debug("Attempting to validate API key", { keyPrefix: apiKey.substring(0, 8) });
 
   try {
-    // Validate key in database
+    // Hash the incoming key — the api_keys table stores SHA-256 hashes, never raw keys
+    const keyHash = await hashApiKey(apiKey);
+
+    // Validate key in database by hash (timing-safe: DB does the comparison)
     const { data: apiKeyData, error: fetchError } = await supabaseAdminClient
       .from('api_keys')
-      .select('id, org_name, active, usage_count') // Only select necessary fields
-      .eq('api_key', apiKey)
+      .select('id, label, created_by, revoked_at')
+      .eq('key_hash', keyHash)
       .single();
 
     if (fetchError || !apiKeyData) {
@@ -85,38 +100,20 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    if (!apiKeyData.active) {
-      reqLogger.security("API key is inactive", { keyId: apiKeyData.id });
-      return new Response(JSON.stringify({ error: 'API key is inactive.' }), {
+    if (apiKeyData.revoked_at) {
+      reqLogger.security("API key has been revoked", { keyId: apiKeyData.id });
+      return new Response(JSON.stringify({ error: 'API key has been revoked.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 403,
       });
     }
 
-    reqLogger.info("API key validated successfully", { orgName: apiKeyData.org_name });
-
-    // Update usage statistics (fire and forget for now, but log errors)
-    const newUsageCount = (apiKeyData.usage_count || 0) + 1;
-    const lastUsed = new Date().toISOString();
-
-    const { error: updateError } = await supabaseAdminClient
-      .from('api_keys')
-      .update({ usage_count: newUsageCount, last_used: lastUsed })
-      .eq('id', apiKeyData.id);
-
-    if (updateError) {
-      reqLogger.warn("Failed to update usage statistics", {
-        keyId: apiKeyData.id,
-        error: updateError.message
-      });
-    } else {
-      reqLogger.debug("Usage statistics updated", { keyId: apiKeyData.id });
-    }
+    reqLogger.info("API key validated successfully", { label: apiKeyData.label });
 
     // Return success response
     return new Response(JSON.stringify({
       message: 'API key validated successfully.',
-      org_name: apiKeyData.org_name,
+      org_name: apiKeyData.label,
       key_id: apiKeyData.id,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

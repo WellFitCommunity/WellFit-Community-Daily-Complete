@@ -1,7 +1,7 @@
 // Enhanced Claude AI Service for WellFit Community - Production Ready Implementation
-import { loadAnthropicSDK } from './anthropicLoader';
+import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
-import { env, validateEnvironment } from '../config/environment';
+import { validateEnvironment } from '../config/environment';
 import {
   UserRole,
   ClaudeModel,
@@ -230,25 +230,15 @@ class CircuitBreaker {
   }
 }
 
-// Anthropic client interface (dynamically loaded)
-interface AnthropicClient {
-  messages: {
-    create: (params: {
-      model: string;
-      max_tokens: number;
-      messages: Array<{ role: 'user' | 'assistant'; content: string }>;
-      metadata?: { user_id: string };
-    }) => Promise<{
-      content: Array<{ type: string; text?: string }>;
-      usage: { input_tokens: number; output_tokens: number };
-    }>;
-  };
+// Response shape from the claude-chat edge function (proxied Anthropic API response)
+interface EdgeFunctionResponse {
+  content: Array<{ type: string; text?: string }>;
+  usage: { input_tokens: number; output_tokens: number };
 }
 
 // Main Claude Service Class - Production Ready
 class ClaudeService {
   private static instance: ClaudeService | null = null;
-  private client: AnthropicClient | null = null;
   private rateLimiter: RateLimiter;
   private costTracker: CostTracker;
   private circuitBreaker: CircuitBreaker;
@@ -270,7 +260,9 @@ class ClaudeService {
   }
 
   /**
-   * Initialize Claude service with comprehensive error handling
+   * Initialize Claude service — verifies edge function proxy is configured.
+   * All Claude API calls route through the claude-chat edge function (server-side).
+   * The Anthropic API key is stored in Supabase secrets, never in the browser.
    */
   public async initialize(): Promise<void> {
     try {
@@ -282,35 +274,11 @@ class ClaudeService {
         );
       }
 
-      // Get API key from environment or process.env as fallback
-      const apiKey = env.VITE_ANTHROPIC_API_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY;
-
-      if (!apiKey) {
-        // Don't throw error, just log warning to prevent crashes
+      // Verify Supabase URL is configured for edge function calls
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        // No Supabase URL — service degrades gracefully
         return;
-      }
-
-      if (!apiKey.startsWith('sk-ant-')) {
-        return;
-      }
-
-      // Lazy load Anthropic SDK
-      const Anthropic = await loadAnthropicSDK();
-
-      // Initialize Anthropic client
-      this.client = new Anthropic({
-        apiKey: apiKey,
-        timeout: env.VITE_CLAUDE_TIMEOUT,
-        dangerouslyAllowBrowser: true, // Required for client-side usage
-        maxRetries: 3
-      }) as unknown as AnthropicClient;
-
-      // Test the connection with a minimal request
-      const healthCheckResult = await this.healthCheck();
-      if (healthCheckResult !== true) {
-        throw new ClaudeInitializationError(
-          'Failed to connect to Claude API during health check'
-        );
       }
 
       this.isInitialized = true;
@@ -319,9 +287,7 @@ class ClaudeService {
       const errorMessage = err instanceof Error ? err.message : 'Unknown initialization error';
       auditLogger.error('Failed to initialize Claude service', errorMessage);
 
-      // Reset state on failure
       this.isInitialized = false;
-      this.client = null;
 
       throw new ClaudeInitializationError(
         `Failed to initialize Claude service: ${errorMessage}`,
@@ -331,24 +297,18 @@ class ClaudeService {
   }
 
   /**
-   * Comprehensive health check
+   * Health check — sends a minimal request through the edge function proxy
    */
   public async healthCheck(): Promise<boolean> {
     try {
-      if (!this.client) {
-        return false;
-      }
-
-      const response = await this.client.messages.create({
-        model: ClaudeModel.HAIKU_3, // Use fastest model for health check
-        max_tokens: 50,
-        messages: [{ role: 'user', content: 'Hello' }]
-      });
+      const response = await this.callEdgeFunction(
+        [{ role: 'user', content: 'Hello' }],
+        ClaudeModel.HAIKU_3_5,
+        50
+      );
 
       this.lastHealthCheck = new Date();
-      const isHealthy = response.content.length > 0 && response.content[0]?.type === 'text';
-
-      return isHealthy;
+      return response.content.length > 0 && response.content[0]?.type === 'text';
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Health check failed';
       auditLogger.error('Claude health check failed', errorMessage);
@@ -360,14 +320,14 @@ class ClaudeService {
    * Check if service is available for requests
    */
   private isAvailable(): boolean {
-    return this.isInitialized && this.client !== null;
+    return this.isInitialized;
   }
 
   /**
    * Ensure service is properly initialized
    */
   private ensureInitialized(): void {
-    if (!this.isInitialized || !this.client) {
+    if (!this.isInitialized) {
       throw new ClaudeServiceError(
         'Claude service not initialized. Call initialize() first.',
         'NOT_INITIALIZED',
@@ -377,44 +337,95 @@ class ClaudeService {
   }
 
   /**
-   * Test connection method for debugging
+   * Test connection method for debugging — routes through edge function proxy
    */
   async testConnection(): Promise<{ success: boolean; message: string }> {
     if (!this.isAvailable()) {
       return {
         success: false,
-        message: "Claude AI client not initialized. Check API key configuration."
+        message: "Claude AI service not initialized. Check Supabase configuration."
       };
     }
 
     try {
-      const response = await this.client?.messages.create({
-        model: this.defaultModel,
-        max_tokens: 50,
-        messages: [{
-          role: 'user',
-          content: 'Hello, please respond with "Claude AI is working properly"'
-        }]
-      });
-
-      if (!response) {
-        return { success: false, message: '❌ Claude AI client not available' };
-      }
+      const response = await this.callEdgeFunction(
+        [{ role: 'user', content: 'Hello, please respond with "Claude AI is working properly"' }],
+        this.defaultModel,
+        50
+      );
 
       const content = response.content[0]?.type === 'text' ? response.content[0].text : '';
 
       return {
         success: true,
-        message: `✅ Claude AI connected successfully. Response: ${content}`
+        message: `Claude AI connected via edge function. Response: ${content}`
       };
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
-        message: `❌ Claude AI connection failed: ${errorMessage}`
+        message: `Claude AI connection failed: ${errorMessage}`
       };
     }
+  }
+
+  /**
+   * Call the claude-chat edge function (server-side Anthropic API proxy).
+   * The API key is stored in Supabase secrets, never exposed to the browser.
+   */
+  private async callEdgeFunction(
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+    model: string,
+    maxTokens: number,
+    system?: string
+  ): Promise<EdgeFunctionResponse> {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !anonKey) {
+      throw new ClaudeServiceError(
+        'Supabase configuration missing for edge function proxy',
+        'CONFIG_ERROR',
+        500
+      );
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new ClaudeServiceError(
+        'User not authenticated — cannot call Claude API proxy',
+        'AUTH_ERROR',
+        401
+      );
+    }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/claude-chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': anonKey,
+      },
+      body: JSON.stringify({
+        messages,
+        model,
+        max_tokens: maxTokens,
+        ...(system ? { system } : {}),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' })) as Record<string, unknown>;
+      const errorMsg = (errorData.error as string) || `Edge function returned ${response.status}`;
+      throw new ClaudeServiceError(
+        errorMsg,
+        'EDGE_FUNCTION_ERROR',
+        response.status
+      );
+    }
+
+    return await response.json() as EdgeFunctionResponse;
   }
 
   /**
@@ -678,25 +689,12 @@ class ClaudeService {
 
     try {
       const response = await this.circuitBreaker.execute(async () => {
-        return await this.client?.messages.create({
+        return await this.callEdgeFunction(
+          [{ role: 'user', content: prompt }],
           model,
-          max_tokens: maxTokens,
-          messages: [{ role: 'user', content: prompt }],
-          metadata: {
-            user_id: context.userId
-          }
-        });
-      });
-
-      if (!response) {
-        throw new ClaudeServiceError(
-          'No response from Claude API',
-          'NO_RESPONSE',
-          500,
-          undefined,
-          context.requestId
+          maxTokens
         );
-      }
+      });
 
       const responseTime = Date.now() - startTime;
       const actualCost = this.costTracker.calculateCost(
@@ -1042,10 +1040,10 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
   public getServiceStatus(): ServiceStatus {
     return {
       isInitialized: this.isInitialized,
-      isHealthy: this.client !== null,
+      isHealthy: this.isInitialized,
       lastHealthCheck: this.lastHealthCheck || new Date(0),
       circuitBreakerState: this.circuitBreaker.getState(),
-      apiKeyValid: !!env.VITE_ANTHROPIC_API_KEY,
+      apiKeyValid: !!import.meta.env.VITE_SUPABASE_URL,
       modelsAvailable: Object.values(ClaudeModel)
     };
   }
@@ -1079,7 +1077,6 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
    */
   public async resetService(): Promise<void> {
     this.isInitialized = false;
-    this.client = null;
     this.lastHealthCheck = undefined;
     await this.initialize();
   }
