@@ -339,6 +339,51 @@ This is a management skill, not a technical skill. It is closer to supervising a
 
 This will likely change as AI tools improve. But right now, today, the enforcement gap is real, and anyone who claims otherwise is selling something.
 
+### Why Governance Will Always Be Needed — The Training Data Problem
+
+There is a structural reason why AI governance does not become obsolete as AI models improve. It is rooted in how models learn.
+
+AI models are trained on massive datasets of existing code — billions of lines written over decades. This training data contains every pattern, every convention, every shortcut, and every mistake that programmers have ever committed to public repositories. When a model learns, the weight of this historical data becomes its default behavior. `catch (err)` has more training weight than `catch (err: unknown)` because there are more examples of it in the training corpus. `console.log` has more weight than any custom logging framework because it appears in virtually every JavaScript tutorial ever written.
+
+When a model is updated — new training data, fine-tuning, or a new version — the new patterns have to compete with the deeply entrenched old ones. There is always more old data than new data. The old patterns are reinforced across billions of tokens. The new patterns are a thin layer on top. The old way has more weight. Literally — in the mathematical sense of how neural network weights work.
+
+**This creates a permanent cycle:**
+
+```
+Model learns old patterns (massive weight)
+   ↓
+Model gets updated with new patterns (thin layer)
+   ↓
+New patterns compete with old patterns
+   ↓
+Old patterns win by default (more weight)
+   ↓
+Governance document corrects the drift
+   ↓
+Next model update arrives
+   ↓
+Cycle repeats
+```
+
+**Every model update resets the AI's behavior but does NOT reset the governance system.** The AI gets a new brain with new capabilities and new regressions. The governance document stays the same. The hooks stay the same. The CI/CD pipeline stays the same. The human enforcement layer stays the same.
+
+The governance system is the constant. The AI is the variable.
+
+This means governance does not become less important as AI improves — it becomes **more** important. Each update introduces new capabilities that need to be harnessed AND new regressions that need to be caught. A model that gains the ability to deploy infrastructure also gains new ways to make mistakes with that infrastructure. The governance framework must expand to cover the new capability while still enforcing all the existing rules.
+
+**The implication for anyone learning to direct AI:**
+
+No matter how good AI coding becomes, it will always need governance. The training data problem is structural — it is built into how models learn. As long as models are trained on historical data (which is the foreseeable future), the old patterns will always have more weight than the new ones. The person directing the AI will always need to:
+
+1. Know what the current model's default tendencies are
+2. Know which of those tendencies are wrong for their project
+3. Have a governance system that corrects those tendencies
+4. Actively enforce that system every session
+
+This is not a limitation that will be "solved" by the next model release. It is a characteristic of how machine learning works. The market for AI governance — the skill of directing AI tools toward reliable output — will grow with every organization that adopts AI, with every model update that shifts behavior, and with every new capability that expands what the AI can do (and therefore what it can do wrong).
+
+The people who understand this now — who are building governance methodologies while everyone else is writing prompts — are building a skill that the entire industry will need.
+
 ---
 
 ## Six Principles of the Governance Methodology
