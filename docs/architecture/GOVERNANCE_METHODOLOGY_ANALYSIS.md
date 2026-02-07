@@ -165,6 +165,53 @@ This experience led to several rules and practices:
 
 ChatGPT taught the security practice. Claude Code demonstrated why it was necessary. The governance framework ensures it is enforced.
 
+### From Secrets Incidents to a CI/CD Security Pipeline
+
+The secrets management failures did not just produce governance rules. They produced an entire automated security infrastructure. When you've had to rotate API keys because an AI committed them to git, you build systems to make sure it never happens again.
+
+**The CI/CD Pipeline** (`.github/workflows/ci-cd.yml`) runs on every push to main:
+
+| Stage | What It Checks | Why It Exists |
+|-------|---------------|---------------|
+| TypeScript Type Check | Zero type errors | AI introduces `any` types if unchecked |
+| ESLint Code Quality | Zero lint warnings | AI leaves `console.log` and bad patterns |
+| Unit Tests (4 parallel shards) | 7,490 tests across components, services, pages, and utilities | AI breaks things it didn't intend to touch |
+| Build Verification | Production build succeeds | AI can write code that compiles but doesn't bundle |
+| MCP Edge Function Tests | All 10 MCP servers respond | Catches runtime errors unit tests miss |
+| Bundle Size Analysis | Track JS/CSS/total output | Prevents accidental bundle bloat |
+| Email Notification | MailerSend alert to team | Know immediately when something breaks |
+
+**The Security Scan Pipeline** (`.github/workflows/security-scan.yml`) runs on every push AND weekly on Monday at 2 AM:
+
+| Scan | What It Catches | How It Started |
+|------|----------------|---------------|
+| Hardcoded Secrets Detection | API keys, passwords, tokens, private keys, JWTs in source code | Claude committed secrets to git |
+| Insecure Protocol Scan | `http://` or `ws://` in production code (excluding healthcare standard URIs) | AI defaulted to http instead of https |
+| NPM Security Audit | Known vulnerabilities in dependencies | Third-party risk management |
+| CodeQL Analysis | Static analysis for XSS, SQL injection, OWASP top 10 | Deep security scanning |
+| ESLint Security Plugin | Code-level security patterns | Catches what CodeQL misses |
+| Dependency Security (audit-ci) | High/critical vulnerability gate | Blocks deployment on known CVEs |
+| Security Headers Check | CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy | HIPAA transmission security |
+| CORS Configuration Check | Wildcard `*` origin detection | AI defaults to permissive CORS |
+| Email Report | HTML report to security team | Full visibility on every scan |
+
+**The pipeline fails the build** if any critical issue is found — hardcoded secrets, wildcard CORS, high-severity vulnerabilities, or CodeQL findings above severity 8.9. This is a hard gate. Code with security issues does not deploy.
+
+**How this connects to the methodology:**
+
+Every scan in the pipeline corresponds to a mistake that actually happened:
+
+- Hardcoded secrets scan exists because Claude committed API keys
+- Insecure protocol scan exists because AI used `http://` in fetch calls
+- CORS wildcard check exists because AI set `Access-Control-Allow-Origin: *` for convenience
+- Security headers check exists because AI forgot to include CSP headers in edge functions
+
+The pipeline is the automated enforcement layer for security — the same principle as hooks, but applied at the CI/CD level. It doesn't rely on the AI remembering security rules. It catches violations after the fact and blocks deployment.
+
+**The progression:** Secrets committed to git → manual rotation → governance rules → `.gitignore` enforcement → pre-commit review → automated CI/CD security scanning. Each incident made the system more robust. The pipeline that exists today is the accumulated result of every security mistake made during 9 months of development.
+
+This is governance in its most mature form: automated, continuous, and impossible to bypass.
+
 ---
 
 ## The Core Insight
