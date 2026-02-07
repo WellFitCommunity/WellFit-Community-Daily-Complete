@@ -1,5 +1,8 @@
 # Claude Instructions for WellFit-Community-Daily-Complete
 
+> **Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.**
+> Proprietary and confidential. This document and the software it governs are the exclusive property of Envision Virtual Edge Group LLC. Unauthorized use, disclosure, or distribution is strictly prohibited. See [LICENSE](LICENSE) for full terms. Contact: maria@wellfitcommunity.com
+
 ---
 
 ## Quick Reference - The 10 Commandments
