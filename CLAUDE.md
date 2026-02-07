@@ -557,14 +557,8 @@ npm test
 ```
 
 #### Current God Files (Flagged for Mandatory Refactoring)
-| File | Lines | Status |
-|------|-------|--------|
-| `src/components/admin/BedManagementPanel.tsx` | 2,049 | Awaiting decomposition plan |
-| `src/components/community/CommunityReadmissionDashboard.tsx` | 1,387 | Awaiting decomposition plan |
-| `src/components/admin/SmartAppManagementPanel.tsx` | 1,124 | Awaiting decomposition plan |
-| `src/components/CheckInTracker.tsx` | 1,085 | Awaiting decomposition plan |
 
-**Do NOT add features to these files. Decompose first.**
+All previously flagged god files have been decomposed to under 600 lines. No current violations.
 
 ---
 
