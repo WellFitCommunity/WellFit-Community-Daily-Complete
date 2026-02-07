@@ -107,11 +107,6 @@ describe('EncounterService', () => {
       expect(Array.isArray(result)).toBe(true);
     });
 
-    it('should include in-progress status', async () => {
-      // Active encounters include: arrived, triaged, in-progress, onleave
-      const activeStatuses = ['arrived', 'triaged', 'in-progress', 'onleave'];
-      expect(activeStatuses).toContain('in-progress');
-    });
   });
 
   describe('getByClass', () => {
@@ -247,95 +242,6 @@ describe('EncounterService', () => {
     it('should set period_end timestamp', async () => {
       const result = await EncounterService.complete('enc-1');
       expect(result).toBeDefined();
-    });
-  });
-
-  describe('encounter status values', () => {
-    it('should define all FHIR encounter statuses', () => {
-      const statuses = [
-        'planned',
-        'arrived',
-        'triaged',
-        'in-progress',
-        'onleave',
-        'finished',
-        'cancelled',
-        'entered-in-error',
-        'unknown',
-      ];
-      expect(statuses).toContain('in-progress');
-      expect(statuses).toContain('finished');
-      expect(statuses).toContain('planned');
-    });
-  });
-
-  describe('encounter class codes', () => {
-    it('should define common class codes', () => {
-      const classCodes = {
-        inpatient: 'IMP',
-        outpatient: 'AMB',
-        emergency: 'EMER',
-        home: 'HH',
-        virtual: 'VR',
-        shortStay: 'SS',
-        observation: 'OBSENC',
-      };
-      expect(classCodes.inpatient).toBe('IMP');
-      expect(classCodes.outpatient).toBe('AMB');
-      expect(classCodes.emergency).toBe('EMER');
-    });
-  });
-
-  describe('encounter type structure', () => {
-    it('should define encounter record structure', () => {
-      const encounter = {
-        id: 'enc-1',
-        patient_id: 'patient-1',
-        status: 'finished',
-        class_code: 'AMB',
-        period_start: '2026-01-15T09:00:00Z',
-        period_end: '2026-01-15T10:00:00Z',
-        service_type: 'primary-care',
-        reason_code: ['Annual exam'],
-        diagnosis: [{ condition_id: 'cond-1', use: 'billing' }],
-      };
-      expect(encounter.status).toBe('finished');
-      expect(encounter.class_code).toBe('AMB');
-    });
-  });
-
-  describe('hospitalization details', () => {
-    it('should support hospitalization fields', () => {
-      const hospitalization = {
-        admit_source: 'emergency',
-        re_admission: false,
-        diet_preference: 'regular',
-        special_arrangement: ['wheelchair'],
-        discharge_disposition: 'home',
-      };
-      expect(hospitalization.admit_source).toBe('emergency');
-      expect(hospitalization.discharge_disposition).toBe('home');
-    });
-
-    it('should define admit source codes', () => {
-      const admitSources = ['emergency', 'clinic', 'physician', 'hospital-transfer', 'nursing-home'];
-      expect(admitSources).toContain('emergency');
-    });
-
-    it('should define discharge disposition codes', () => {
-      const dispositions = [
-        'home',
-        'other-hcf',
-        'hosp',
-        'long',
-        'aadvice',
-        'exp',
-        'psy',
-        'rehab',
-        'snf',
-        'oth',
-      ];
-      expect(dispositions).toContain('home');
     });
   });
 

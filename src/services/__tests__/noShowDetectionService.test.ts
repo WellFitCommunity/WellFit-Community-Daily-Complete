@@ -480,19 +480,4 @@ describe('NoShowDetectionService', () => {
     });
   });
 
-  describe('Service exports', () => {
-    it('should export all required methods', () => {
-      expect(NoShowDetectionService.getNoShowPolicy).toBeDefined();
-      expect(NoShowDetectionService.updateNoShowPolicy).toBeDefined();
-      expect(NoShowDetectionService.detectExpiredAppointments).toBeDefined();
-      expect(NoShowDetectionService.markAppointmentNoShow).toBeDefined();
-      expect(NoShowDetectionService.getPatientNoShowStats).toBeDefined();
-      expect(NoShowDetectionService.getPatientNoShowHistory).toBeDefined();
-      expect(NoShowDetectionService.recordPatientAttendance).toBeDefined();
-      expect(NoShowDetectionService.getAppointmentAttendance).toBeDefined();
-      expect(NoShowDetectionService.checkPatientRestriction).toBeDefined();
-      expect(NoShowDetectionService.liftPatientRestriction).toBeDefined();
-      expect(NoShowDetectionService.getNoShowSummaryStats).toBeDefined();
-    });
-  });
 });

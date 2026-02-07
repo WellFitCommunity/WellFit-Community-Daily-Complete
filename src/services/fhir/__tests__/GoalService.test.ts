@@ -96,13 +96,6 @@ describe('GoalService', () => {
       expect(result.data).toBeDefined();
     });
 
-    it('should include proposed and planned goals', async () => {
-      // Active goals include: proposed, planned, accepted, active
-      const activeStatuses = ['proposed', 'planned', 'accepted', 'active'];
-      expect(activeStatuses).toContain('active');
-      expect(activeStatuses).toContain('proposed');
-    });
-
     it('should order by priority', async () => {
       const result = await GoalService.getActive('patient-1');
 
@@ -225,119 +218,6 @@ describe('GoalService', () => {
       const result = await GoalService.complete('goal-1');
 
       expect(result.success).toBe(true);
-    });
-  });
-
-  describe('lifecycle status values', () => {
-    it('should define all FHIR goal statuses', () => {
-      const statuses = [
-        'proposed',
-        'planned',
-        'accepted',
-        'active',
-        'on-hold',
-        'completed',
-        'cancelled',
-        'entered-in-error',
-        'rejected',
-      ];
-      expect(statuses).toContain('active');
-      expect(statuses).toContain('completed');
-      expect(statuses).toContain('on-hold');
-    });
-  });
-
-  describe('achievement status values', () => {
-    it('should define achievement statuses', () => {
-      const statuses = [
-        'in-progress',
-        'improving',
-        'worsening',
-        'no-change',
-        'achieved',
-        'sustaining',
-        'not-achieved',
-        'no-progress',
-        'not-attainable',
-      ];
-      expect(statuses).toContain('in-progress');
-      expect(statuses).toContain('achieved');
-    });
-  });
-
-  describe('goal category values', () => {
-    it('should define goal categories', () => {
-      const categories = ['dietary', 'safety', 'behavioral', 'nursing', 'physiologic'];
-      expect(categories).toContain('dietary');
-      expect(categories).toContain('behavioral');
-      expect(categories).toContain('physiologic');
-    });
-  });
-
-  describe('priority codes', () => {
-    it('should define priority levels', () => {
-      const priorities = ['high-priority', 'medium-priority', 'low-priority'];
-      expect(priorities).toContain('high-priority');
-      expect(priorities).toContain('medium-priority');
-    });
-  });
-
-  describe('goal structure', () => {
-    it('should define complete goal structure', () => {
-      const goal = {
-        id: 'goal-1',
-        patient_id: 'patient-1',
-        lifecycle_status: 'active',
-        achievement_status: 'in-progress',
-        category: ['physiologic'],
-        priority_code: 'high-priority',
-        description: 'Reduce A1C to below 7%',
-        subject_id: 'patient-1',
-        start_date: '2026-01-01',
-        target: [
-          {
-            measure: 'A1C',
-            detail: { value: 7.0, comparator: '<', unit: '%' },
-            due_date: '2026-06-01',
-          },
-        ],
-        status_date: '2026-01-15',
-        status_reason: null,
-        expressed_by_id: 'patient-1',
-        addresses: ['cond-1'], // Linked conditions
-        note: 'Patient motivated to improve diabetes control',
-        outcome_code: null,
-        outcome_reference: null,
-      };
-      expect(goal.lifecycle_status).toBe('active');
-      expect(goal.target).toHaveLength(1);
-    });
-  });
-
-  describe('common health goals', () => {
-    it('should recognize diabetes goals', () => {
-      const diabetesGoals = [
-        'Reduce A1C below 7%',
-        'Check blood sugar daily',
-        'Take medications as prescribed',
-        'Follow diabetic diet',
-      ];
-      expect(diabetesGoals).toContain('Reduce A1C below 7%');
-    });
-
-    it('should recognize cardiovascular goals', () => {
-      const cvGoals = [
-        'Maintain BP below 140/90',
-        'Exercise 30 minutes daily',
-        'Reduce sodium intake',
-        'Take statins as prescribed',
-      ];
-      expect(cvGoals).toContain('Maintain BP below 140/90');
-    });
-
-    it('should recognize weight management goals', () => {
-      const weightGoals = ['Lose 10 pounds', 'Walk 10,000 steps daily', 'Eat 5 servings of vegetables'];
-      expect(weightGoals).toContain('Lose 10 pounds');
     });
   });
 

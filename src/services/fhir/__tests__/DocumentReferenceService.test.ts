@@ -109,12 +109,6 @@ describe('DocumentReferenceService', () => {
       expect(Array.isArray(result)).toBe(true);
     });
 
-    it('should include multiple note types', async () => {
-      // Progress note, Summary, Discharge summary, Procedure note, Consultation note
-      const clinicalNoteCodes = ['11506-3', '34133-9', '18842-5', '28570-0', '11488-4'];
-      expect(clinicalNoteCodes).toContain('11506-3');
-      expect(clinicalNoteCodes).toContain('18842-5');
-    });
   });
 
   describe('getDischargeSummaries', () => {
@@ -123,11 +117,6 @@ describe('DocumentReferenceService', () => {
 
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
-    });
-
-    it('should use correct LOINC code', async () => {
-      const dischargeSummaryCode = '18842-5';
-      expect(dischargeSummaryCode).toBe('18842-5');
     });
   });
 
@@ -190,97 +179,6 @@ describe('DocumentReferenceService', () => {
       const result = await DocumentReferenceService.supersede('doc-1', newDoc);
 
       expect(result).toBeDefined();
-    });
-  });
-
-  describe('document status values', () => {
-    it('should define all FHIR document statuses', () => {
-      const statuses = ['current', 'superseded', 'entered-in-error'];
-      expect(statuses).toContain('current');
-      expect(statuses).toContain('superseded');
-    });
-  });
-
-  describe('common LOINC document codes', () => {
-    it('should define clinical note codes', () => {
-      const codes = {
-        progressNote: '11506-3',
-        summaryNote: '34133-9',
-        dischargeSummary: '18842-5',
-        procedureNote: '28570-0',
-        consultationNote: '11488-4',
-        historyAndPhysical: '34117-2',
-        operativeNote: '11504-8',
-        emergencyNote: '34878-9',
-      };
-      expect(codes.progressNote).toBe('11506-3');
-      expect(codes.dischargeSummary).toBe('18842-5');
-    });
-  });
-
-  describe('document reference structure', () => {
-    it('should define complete document structure', () => {
-      const document = {
-        id: 'doc-1',
-        patient_id: 'patient-1',
-        identifier: [{ system: 'urn:ietf:rfc:3986', value: 'doc-1' }],
-        status: 'current',
-        doc_status: 'final',
-        type_code: '11506-3',
-        type_display: 'Progress note',
-        type_system: 'http://loinc.org',
-        category: ['clinical-note'],
-        date: '2026-01-15T10:00:00Z',
-        author_id: 'pract-1',
-        authenticator_id: 'pract-1',
-        custodian_id: 'org-1',
-        description: 'Follow-up visit for diabetes management',
-        security_label: ['N'], // Normal confidentiality
-        content: [
-          {
-            attachment: {
-              content_type: 'application/pdf',
-              url: 'https://storage.example.com/doc-1.pdf',
-              size: 102400,
-              hash: 'abc123',
-              title: 'Progress Note',
-              creation: '2026-01-15T10:00:00Z',
-            },
-            format: {
-              code: 'urn:ihe:iti:xds-sd:pdf:2008',
-              display: 'PDF',
-            },
-          },
-        ],
-        context: {
-          encounter_id: 'enc-1',
-          event: ['office-visit'],
-          period_start: '2026-01-15T09:00:00Z',
-          period_end: '2026-01-15T09:30:00Z',
-          facility_type: 'outpatient',
-          practice_setting: 'general-practice',
-        },
-        related_to: null,
-      };
-      expect(document.status).toBe('current');
-      expect(document.type_code).toBe('11506-3');
-    });
-  });
-
-  describe('document categories', () => {
-    it('should define document categories', () => {
-      const categories = [
-        'clinical-note',
-        'imaging',
-        'laboratory',
-        'pathology',
-        'procedure',
-        'discharge',
-        'referral',
-        'consent',
-      ];
-      expect(categories).toContain('clinical-note');
-      expect(categories).toContain('discharge');
     });
   });
 

@@ -37,29 +37,6 @@ describe('ScheduleOptimizerService', () => {
     vi.clearAllMocks();
   });
 
-  describe('type definitions', () => {
-    it('should define all shift types', () => {
-      const shiftTypes = ['day', 'evening', 'night', 'custom'];
-      expect(shiftTypes).toHaveLength(4);
-      expect(shiftTypes).toContain('day');
-      expect(shiftTypes).toContain('night');
-    });
-
-    it('should define all staff roles', () => {
-      const roles = ['nurse', 'cna', 'physician', 'therapist', 'technician', 'admin', 'other'];
-      expect(roles).toHaveLength(7);
-      expect(roles).toContain('nurse');
-      expect(roles).toContain('physician');
-    });
-
-    it('should define all optimization goals', () => {
-      const goals = ['coverage', 'cost', 'fairness', 'balanced'];
-      expect(goals).toHaveLength(4);
-      expect(goals).toContain('coverage');
-      expect(goals).toContain('balanced');
-    });
-  });
-
   describe('service methods', () => {
     it('should validate required fields', async () => {
       const result = await ScheduleOptimizerService.optimizeSchedule({
@@ -274,60 +251,4 @@ describe('ScheduleOptimizerService', () => {
     });
   });
 
-  describe('constraint validation', () => {
-    it('should define max hours per week constraint', () => {
-      const constraints = {
-        maxConsecutiveShifts: 5,
-        minRestHoursBetweenShifts: 8,
-        maxOvertimeHours: 10,
-        requireSkillMix: true,
-      };
-
-      expect(constraints.maxConsecutiveShifts).toBe(5);
-      expect(constraints.minRestHoursBetweenShifts).toBe(8);
-      expect(constraints.maxOvertimeHours).toBe(10);
-      expect(constraints.requireSkillMix).toBe(true);
-    });
-  });
-
-  describe('staff member validation', () => {
-    it('should handle staff availability', () => {
-      const staff = {
-        id: 'nurse-1',
-        name: 'Jane Doe',
-        role: 'nurse' as const,
-        certifications: ['BLS', 'ACLS'],
-        maxHoursPerWeek: 40,
-        preferredShifts: ['day' as const, 'evening' as const],
-        unavailableDates: ['2025-01-05', '2025-01-06'],
-        currentHoursThisPeriod: 16,
-        fullTimeEquivalent: 1.0,
-      };
-
-      expect(staff.unavailableDates).toContain('2025-01-05');
-      expect(staff.certifications).toContain('ACLS');
-      expect(staff.preferredShifts).toContain('day');
-    });
-  });
-
-  describe('shift requirement validation', () => {
-    it('should handle shift requirements', () => {
-      const requirement = {
-        date: '2025-01-01',
-        shiftType: 'day' as const,
-        startTime: '07:00',
-        endTime: '15:00',
-        minStaff: 3,
-        optimalStaff: 4,
-        requiredRoles: ['nurse' as const, 'cna' as const],
-        requiredCertifications: ['BLS'],
-        currentAssignments: ['nurse-1'],
-      };
-
-      expect(requirement.minStaff).toBe(3);
-      expect(requirement.requiredRoles).toContain('nurse');
-      expect(requirement.requiredCertifications).toContain('BLS');
-      expect(requirement.currentAssignments).toContain('nurse-1');
-    });
-  });
 });

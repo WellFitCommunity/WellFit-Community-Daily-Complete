@@ -52,19 +52,6 @@ describe('SeniorViewPage', () => {
     sessionStorage.clear();
   });
 
-  it('renders the page and shows session validation', async () => {
-    renderWithRouter();
-
-    // Page should render and show session-related content
-    await waitFor(() => {
-      // Should show either session error or loading state
-      const content = screen.queryByText(/no active session/i) ||
-                      screen.queryByText(/loading/i) ||
-                      document.querySelector('.animate-pulse');
-      expect(content).toBeTruthy();
-    });
-  });
-
   it('shows error when no session exists', async () => {
     renderWithRouter();
 

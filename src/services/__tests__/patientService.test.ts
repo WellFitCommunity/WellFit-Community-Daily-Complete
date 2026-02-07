@@ -12,7 +12,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../auditLogger';
-import type { Patient, HospitalPatient, PatientWithRisk } from '../patientService';
 
 // Mock Supabase client
 vi.mock('../../lib/supabaseClient', () => {
@@ -1174,90 +1173,6 @@ describe('PatientService', () => {
       const result = await patientService.getPatientCount();
 
       expect(result.success).toBe(false);
-    });
-  });
-
-  // ===========================================================================
-  // Type Definitions Tests
-  // ===========================================================================
-
-  describe('Type Definitions', () => {
-    it('should export Patient interface correctly', async () => {
-      // Type check - Patient interface should have expected properties
-      const patient: Patient = {
-        user_id: 'test',
-        first_name: null,
-        last_name: null,
-        phone: null,
-        dob: null,
-        address: null,
-        city: null,
-        state: null,
-        zip: null,
-        gender: null,
-        role_code: null,
-        is_admin: false,
-        tenant_id: null,
-        created_at: null,
-        enrollment_type: null,
-      };
-
-      expect(patient.user_id).toBe('test');
-    });
-
-    it('should export HospitalPatient interface with extended fields', async () => {
-      const hospitalPatient: HospitalPatient = {
-        user_id: 'test',
-        first_name: null,
-        last_name: null,
-        phone: null,
-        dob: null,
-        address: null,
-        city: null,
-        state: null,
-        zip: null,
-        gender: null,
-        role_code: null,
-        is_admin: false,
-        tenant_id: null,
-        created_at: null,
-        enrollment_type: 'hospital',
-        mrn: 'MRN-123',
-        hospital_unit: 'unit-1',
-        room_number: '201',
-        bed_number: 'A',
-        acuity_level: 2,
-        code_status: 'Full Code',
-        admission_date: null,
-        attending_physician_id: null,
-      };
-
-      expect(hospitalPatient.mrn).toBe('MRN-123');
-    });
-
-    it('should export PatientWithRisk interface', async () => {
-      const riskPatient: PatientWithRisk = {
-        user_id: 'test',
-        first_name: null,
-        last_name: null,
-        phone: null,
-        dob: null,
-        address: null,
-        city: null,
-        state: null,
-        zip: null,
-        gender: null,
-        role_code: null,
-        is_admin: false,
-        tenant_id: null,
-        created_at: null,
-        enrollment_type: null,
-        risk_level: 'high',
-        risk_score: 85,
-        last_assessment_date: '2024-01-15',
-      };
-
-      expect(riskPatient.risk_level).toBe('high');
     });
   });
 

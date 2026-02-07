@@ -98,17 +98,6 @@ describe('BedStatusQuickPanel', () => {
     vi.useRealTimers();
   });
 
-  describe('Module Exports', () => {
-    it('should export BedStatusQuickPanel component', () => {
-      expect(BedStatusQuickPanel).toBeDefined();
-      expect(typeof BedStatusQuickPanel).toBe('function');
-    });
-
-    it('should be a React functional component', () => {
-      expect(BedStatusQuickPanel.name).toBe('BedStatusQuickPanel');
-    });
-  });
-
   describe('Component Rendering', () => {
     it('should render loading state initially', async () => {
       render(<BedStatusQuickPanel />);

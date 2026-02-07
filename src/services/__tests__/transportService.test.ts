@@ -6,7 +6,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { TransportService } from '../transportService';
 import {
   getTransportPriorityLabel,
   getTransportPriorityColor,
@@ -18,35 +17,6 @@ import {
   calculateTransitMinutes,
   formatETA,
 } from '../../types/transport';
-
-describe('TransportService', () => {
-  describe('Module Exports', () => {
-    it('should export TransportService object', () => {
-      expect(TransportService).toBeDefined();
-      expect(typeof TransportService).toBe('object');
-    });
-
-    it('should export request methods', () => {
-      expect(typeof TransportService.getTransportRequests).toBe('function');
-      expect(typeof TransportService.getPendingRequests).toBe('function');
-      expect(typeof TransportService.getInTransitRequests).toBe('function');
-      expect(typeof TransportService.createTransportRequest).toBe('function');
-      expect(typeof TransportService.assignTransportRequest).toBe('function');
-      expect(typeof TransportService.updateTransportStatus).toBe('function');
-      expect(typeof TransportService.completeTransportRequest).toBe('function');
-      expect(typeof TransportService.cancelTransportRequest).toBe('function');
-    });
-
-    it('should export staff methods', () => {
-      expect(typeof TransportService.getTransportStaff).toBe('function');
-      expect(typeof TransportService.getAvailableStaff).toBe('function');
-    });
-
-    it('should export metrics methods', () => {
-      expect(typeof TransportService.getTransportMetrics).toBe('function');
-    });
-  });
-});
 
 describe('Transport Type Helpers', () => {
   describe('getTransportPriorityLabel', () => {

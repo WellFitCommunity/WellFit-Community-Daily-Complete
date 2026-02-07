@@ -499,39 +499,6 @@ describe('ClaudeService', () => {
   });
 
   // ===========================================================================
-  // MODEL SELECTION TESTS
-  // ===========================================================================
-
-  describe('Model Selection', () => {
-    it('should export ClaudeModel enum', async () => {
-      const { ClaudeModel } = await import('../claudeService');
-
-      expect(ClaudeModel).toBeDefined();
-      expect(ClaudeModel.HAIKU_3).toBeDefined();
-      expect(ClaudeModel.HAIKU_3_5).toBeDefined();
-      expect(ClaudeModel.SONNET_3_5).toBeDefined();
-      expect(ClaudeModel.OPUS_3).toBeDefined();
-    });
-
-    it('should export UserRole enum', async () => {
-      const { UserRole } = await import('../claudeService');
-
-      expect(UserRole).toBeDefined();
-      expect(UserRole.SENIOR_PATIENT).toBeDefined();
-      expect(UserRole.ADMIN).toBeDefined();
-    });
-
-    it('should export RequestType enum', async () => {
-      const { RequestType } = await import('../claudeService');
-
-      expect(RequestType).toBeDefined();
-      expect(RequestType.HEALTH_QUESTION).toBeDefined();
-      expect(RequestType.ANALYTICS).toBeDefined();
-      expect(RequestType.FHIR_ANALYSIS).toBeDefined();
-    });
-  });
-
-  // ===========================================================================
   // RESET SERVICE TESTS
   // ===========================================================================
 

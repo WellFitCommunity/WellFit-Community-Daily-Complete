@@ -28,28 +28,6 @@ describe('ProviderAssistantService', () => {
     vi.clearAllMocks();
   });
 
-  describe('provider role definitions', () => {
-    it('should define all provider roles', () => {
-      const roles = ['physician', 'nurse', 'care_coordinator', 'pharmacist', 'admin', 'other'];
-      expect(roles).toHaveLength(6);
-      expect(roles).toContain('physician');
-      expect(roles).toContain('care_coordinator');
-    });
-
-    it('should define all query categories', () => {
-      const categories = ['clinical', 'medication', 'documentation', 'workflow', 'patient_specific', 'general'];
-      expect(categories).toHaveLength(6);
-      expect(categories).toContain('clinical');
-      expect(categories).toContain('medication');
-    });
-
-    it('should define all urgency levels', () => {
-      const urgencies = ['routine', 'soon', 'urgent', 'stat'];
-      expect(urgencies).toHaveLength(4);
-      expect(urgencies).toContain('stat');
-    });
-  });
-
   describe('service methods', () => {
     it('should validate required fields', async () => {
       const result = await ProviderAssistantService.query({
@@ -270,70 +248,4 @@ describe('ProviderAssistantService', () => {
     });
   });
 
-  describe('escalation detection', () => {
-    it('should require escalation for emergency keywords', () => {
-      // This tests the expected behavior - actual detection happens in edge function
-      const emergencyKeywords = ['code', 'arrest', 'emergency', 'stat', 'unstable'];
-      expect(emergencyKeywords).toContain('stat');
-      expect(emergencyKeywords).toContain('emergency');
-    });
-
-    it('should require physician for prescribing by non-physicians', () => {
-      // Test expected scope restrictions
-      const restrictedActions = ['prescribe', 'diagnose', 'order'];
-      const nonPhysicianRoles = ['nurse', 'care_coordinator', 'admin'];
-
-      expect(restrictedActions).toContain('prescribe');
-      expect(nonPhysicianRoles).not.toContain('physician');
-    });
-  });
-
-  describe('query classification', () => {
-    it('should classify medication queries', () => {
-      const medicationKeywords = ['drug', 'medication', 'dose', 'interaction', 'prescribe'];
-      expect(medicationKeywords).toContain('drug');
-      expect(medicationKeywords).toContain('interaction');
-    });
-
-    it('should classify documentation queries', () => {
-      const docKeywords = ['document', 'note', 'chart', 'record', 'icd', 'cpt'];
-      expect(docKeywords).toContain('icd');
-      expect(docKeywords).toContain('cpt');
-    });
-
-    it('should classify clinical queries', () => {
-      const clinicalKeywords = ['diagnos', 'treatment', 'symptom', 'guideline', 'protocol'];
-      expect(clinicalKeywords).toContain('treatment');
-      expect(clinicalKeywords).toContain('guideline');
-    });
-  });
-
-  describe('conversation context', () => {
-    it('should accept conversation history', () => {
-      const history = [
-        { role: 'user' as const, content: 'What are the side effects of metformin?' },
-        { role: 'assistant' as const, content: 'Common side effects include...' },
-      ];
-
-      expect(history).toHaveLength(2);
-      expect(history[0].role).toBe('user');
-      expect(history[1].role).toBe('assistant');
-    });
-  });
-
-  describe('patient context handling', () => {
-    it('should accept patient context', () => {
-      const patientContext = {
-        patientId: 'test-patient',
-        conditions: ['diabetes', 'hypertension'],
-        medications: ['metformin', 'lisinopril'],
-        allergies: ['penicillin'],
-        age: 65,
-      };
-
-      expect(patientContext.conditions).toContain('diabetes');
-      expect(patientContext.medications).toContain('metformin');
-      expect(patientContext.allergies).toContain('penicillin');
-    });
-  });
 });

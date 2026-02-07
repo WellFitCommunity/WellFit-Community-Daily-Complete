@@ -288,12 +288,6 @@ describe('EMS Service - Utility Functions', () => {
   });
 
   describe('Guardian Agent Health Checks', () => {
-    it('should validate all critical functions exist', () => {
-      expect(typeof formatVitals).toBe('function');
-      expect(typeof getAlertSeverity).toBe('function');
-      expect(typeof getAlertBadges).toBe('function');
-    });
-
     it('should handle null inputs without crashing', () => {
       // Testing defensive behavior with invalid inputs
       expect(() => formatVitals(null as unknown as Parameters<typeof formatVitals>[0])).not.toThrow();

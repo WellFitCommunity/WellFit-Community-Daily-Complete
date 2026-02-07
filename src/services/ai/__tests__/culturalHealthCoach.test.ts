@@ -361,17 +361,6 @@ describe('CulturalHealthCoach Validation', () => {
 // ============================================================================
 
 describe('TranslationRequest Structure', () => {
-  it('should have all required fields', () => {
-    const request = createValidRequest();
-
-    expect(request.tenantId).toBeDefined();
-    expect(request.contentType).toBeDefined();
-    expect(request.sourceLanguage).toBeDefined();
-    expect(request.targetLanguage).toBeDefined();
-    expect(request.sourceText).toBeDefined();
-    expect(request.includeCulturalAdaptation).toBeDefined();
-  });
-
   it('should allow optional patientId', () => {
     const requestWithPatient = createValidRequest({ patientId: validPatientId });
     const requestWithoutPatient = createValidRequest({ patientId: undefined });

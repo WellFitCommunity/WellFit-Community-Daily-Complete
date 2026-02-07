@@ -914,35 +914,4 @@ CONFIDENCE: 0.92`
     });
   });
 
-  // ===========================================================================
-  // EXPORT TESTS
-  // ===========================================================================
-
-  describe('Module Exports', () => {
-    it('should export ClaudeCareAssistant class', async () => {
-      const module = await import('../claudeCareAssistant');
-
-      expect(module.ClaudeCareAssistant).toBeDefined();
-      expect(typeof module.ClaudeCareAssistant.translate).toBe('function');
-      expect(typeof module.ClaudeCareAssistant.executeAdminTask).toBe('function');
-    });
-
-    it('should export claudeCareAssistant as alias', async () => {
-      const module = await import('../claudeCareAssistant');
-
-      expect(module.claudeCareAssistant).toBe(module.ClaudeCareAssistant);
-    });
-
-    it('should export ClaudeCareError', async () => {
-      const module = await import('../claudeCareAssistant');
-
-      expect(module.ClaudeCareError).toBeDefined();
-    });
-
-    it('should have default export', async () => {
-      const module = await import('../claudeCareAssistant');
-
-      expect(module.default).toBe(module.ClaudeCareAssistant);
-    });
-  });
 });

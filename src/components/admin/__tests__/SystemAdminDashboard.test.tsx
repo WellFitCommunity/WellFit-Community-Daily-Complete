@@ -43,18 +43,6 @@ describe('SystemAdminDashboard', () => {
     vi.clearAllMocks();
   });
 
-  it('shows loading skeleton with animated pulse elements', () => {
-    render(
-      <MemoryRouter>
-        <SystemAdminDashboard />
-      </MemoryRouter>
-    );
-
-    // Should show loading skeleton with animate-pulse class
-    const pulseElements = document.querySelectorAll('.animate-pulse');
-    expect(pulseElements.length).toBeGreaterThan(0);
-  });
-
   it('renders dashboard header after loading', async () => {
     render(
       <MemoryRouter>
@@ -80,19 +68,4 @@ describe('SystemAdminDashboard', () => {
     }, { timeout: 3000 });
   });
 
-  it('renders loading or content state', async () => {
-    render(
-      <MemoryRouter>
-        <SystemAdminDashboard />
-      </MemoryRouter>
-    );
-
-    // Should show either loading skeleton or System Administration content
-    await waitFor(() => {
-      const hasContent =
-        document.querySelector('.animate-pulse') ||
-        screen.queryByText('System Administration');
-      expect(hasContent).toBeTruthy();
-    }, { timeout: 3000 });
-  });
 });

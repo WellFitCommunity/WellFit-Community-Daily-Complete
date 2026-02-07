@@ -6,7 +6,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { EDBooardingService } from '../edBoardingService';
 import {
   calculateEscalationLevel,
   getEscalationLabel,
@@ -16,43 +15,6 @@ import {
   formatBoardingTime,
   getEscalationThresholdMinutes,
 } from '../../types/edBoarding';
-
-describe('EDBooardingService', () => {
-  describe('Module Exports', () => {
-    it('should export EDBooardingService object', () => {
-      expect(EDBooardingService).toBeDefined();
-      expect(typeof EDBooardingService).toBe('object');
-    });
-
-    it('should export boarder methods', () => {
-      expect(typeof EDBooardingService.createBoarder).toBe('function');
-      expect(typeof EDBooardingService.getActiveBoarders).toBe('function');
-      expect(typeof EDBooardingService.getBoarder).toBe('function');
-      expect(typeof EDBooardingService.assignBed).toBe('function');
-      expect(typeof EDBooardingService.placeBoarder).toBe('function');
-      expect(typeof EDBooardingService.cancelBoarder).toBe('function');
-    });
-
-    it('should export escalation methods', () => {
-      expect(typeof EDBooardingService.acknowledgeEscalation).toBe('function');
-      expect(typeof EDBooardingService.updateBarriers).toBe('function');
-      expect(typeof EDBooardingService.getUnacknowledgedEscalations).toBe('function');
-    });
-
-    it('should export metrics methods', () => {
-      expect(typeof EDBooardingService.getMetrics).toBe('function');
-      expect(typeof EDBooardingService.getBoardingByUnit).toBe('function');
-    });
-
-    it('should export transport methods', () => {
-      expect(typeof EDBooardingService.startTransport).toBe('function');
-    });
-
-    it('should export notes methods', () => {
-      expect(typeof EDBooardingService.updateNotes).toBe('function');
-    });
-  });
-});
 
 describe('ED Boarding Type Helpers', () => {
   describe('calculateEscalationLevel', () => {

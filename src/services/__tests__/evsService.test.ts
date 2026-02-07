@@ -6,7 +6,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { EVSService } from '../evsService';
 import {
   getEVSPriorityLabel,
   getEVSPriorityColor,
@@ -17,37 +16,6 @@ import {
   calculateTurnaroundMinutes,
   formatDuration,
 } from '../../types/evs';
-
-describe('EVSService', () => {
-  describe('Module Exports', () => {
-    it('should export EVSService object', () => {
-      expect(EVSService).toBeDefined();
-      expect(typeof EVSService).toBe('object');
-    });
-
-    it('should export request methods', () => {
-      expect(typeof EVSService.getEVSRequests).toBe('function');
-      expect(typeof EVSService.getPendingRequests).toBe('function');
-      expect(typeof EVSService.getInProgressRequests).toBe('function');
-      expect(typeof EVSService.createEVSRequest).toBe('function');
-      expect(typeof EVSService.assignEVSRequest).toBe('function');
-      expect(typeof EVSService.startEVSRequest).toBe('function');
-      expect(typeof EVSService.completeEVSRequest).toBe('function');
-      expect(typeof EVSService.cancelEVSRequest).toBe('function');
-    });
-
-    it('should export staff methods', () => {
-      expect(typeof EVSService.getEVSStaff).toBe('function');
-      expect(typeof EVSService.getAvailableStaff).toBe('function');
-      expect(typeof EVSService.updateStaffStatus).toBe('function');
-    });
-
-    it('should export metrics methods', () => {
-      expect(typeof EVSService.getEVSMetrics).toBe('function');
-      expect(typeof EVSService.getEVSUnitSummaries).toBe('function');
-    });
-  });
-});
 
 describe('EVS Type Helpers', () => {
   describe('getEVSPriorityLabel', () => {

@@ -37,45 +37,6 @@ describe('FHIRSemanticMapperService', () => {
     vi.clearAllMocks();
   });
 
-  describe('type definitions', () => {
-    it('should define all FHIR versions', () => {
-      const versions = ['R4', 'R4B', 'R5', 'STU3', 'DSTU2'];
-      expect(versions).toHaveLength(5);
-      expect(versions).toContain('R4');
-      expect(versions).toContain('R5');
-    });
-
-    it('should define all resource types', () => {
-      const types = [
-        'Patient', 'Observation', 'Condition', 'MedicationRequest',
-        'Procedure', 'Encounter', 'DiagnosticReport', 'AllergyIntolerance',
-        'Immunization', 'CarePlan', 'Goal', 'ServiceRequest', 'Other'
-      ];
-      expect(types).toHaveLength(13);
-      expect(types).toContain('Patient');
-      expect(types).toContain('Observation');
-    });
-
-    it('should define all mapping confidence levels', () => {
-      const confidences = ['exact', 'high', 'medium', 'low', 'none'];
-      expect(confidences).toHaveLength(5);
-      expect(confidences).toContain('exact');
-      expect(confidences).toContain('none');
-    });
-
-    it('should define validation severities', () => {
-      const severities = ['error', 'warning', 'information'];
-      expect(severities).toHaveLength(3);
-      expect(severities).toContain('error');
-    });
-
-    it('should define terminology equivalence types', () => {
-      const types = ['equivalent', 'wider', 'narrower', 'inexact'];
-      expect(types).toHaveLength(4);
-      expect(types).toContain('equivalent');
-    });
-  });
-
   describe('service methods', () => {
     it('should validate required fields', async () => {
       const result = await FHIRSemanticMapperService.mapToFHIR({

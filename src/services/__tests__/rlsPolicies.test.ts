@@ -88,51 +88,6 @@ describe('RLS Policy Tests - HIPAA Compliance', () => {
       expect(data).toBeNull();
     });
 
-    it('tenant admin should only see their own tenant data', async () => {
-      // Even admins are scoped to their tenant
-      const adminUserId = 'admin-tenant-a';
-      const tenantAId = 'tenant-a-uuid';
-
-      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: { user: { id: adminUserId } },
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: [
-              { id: '1', tenant_id: tenantAId }, // Own tenant - visible
-              // Tenant B data is NOT returned due to RLS
-            ],
-          }),
-        }),
-      });
-
-      // Document: RLS policy uses is_tenant_admin() which checks tenant_id match
-      expect(true).toBe(true); // Policy documented
-    });
-
-    it('super_admin should see all tenant data', async () => {
-      // Super admins bypass tenant isolation
-      const superAdminId = 'super-admin-user';
-
-      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: { user: { id: superAdminId } },
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
-        select: vi.fn().mockResolvedValue({
-          data: [
-            { id: '1', tenant_id: 'tenant-a' },
-            { id: '2', tenant_id: 'tenant-b' },
-            { id: '3', tenant_id: 'tenant-c' },
-          ],
-        }),
-      });
-
-      // Document: RLS policy includes OR is_super_admin()
-      expect(true).toBe(true); // Policy documented
-    });
   });
 
   describe('Audit Log Immutability', () => {
@@ -197,24 +152,6 @@ describe('RLS Policy Tests - HIPAA Compliance', () => {
       expect(result.data).toBeDefined();
     });
 
-    it('should protect all critical audit tables', () => {
-      // Document which tables are protected
-      const protectedAuditTables = [
-        'audit_logs',
-        'security_events',
-        'phi_access_log',
-        'claude_api_audit',
-        'login_attempts',
-        'admin_audit_logs',
-        'super_admin_audit_log',
-        'passkey_audit_log',
-        'consent_log',
-        'caregiver_access_log',
-      ];
-
-      expect(protectedAuditTables.length).toBe(10);
-      // All these tables have prevent_audit_log_modification trigger
-    });
   });
 
   describe('PHI Encryption Fail-Safe', () => {
@@ -265,25 +202,6 @@ describe('RLS Policy Tests - HIPAA Compliance', () => {
   });
 
   describe('Role-Based Access Control', () => {
-    it('should allow admins to view audit logs', async () => {
-      // Document: Admins can SELECT from audit_logs
-      const adminUserId = 'admin-user';
-
-      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: { user: { id: adminUserId } },
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
-        select: vi.fn().mockResolvedValue({
-          data: [{ id: '1', event_type: 'LOGIN' }],
-          error: null,
-        }),
-      });
-
-      // Policy: profiles.role IN ('admin', 'super_admin', 'nurse', 'physician', 'doctor')
-      expect(true).toBe(true);
-    });
-
     it('should prevent non-admins from viewing audit logs', async () => {
       // Document: Regular members cannot SELECT from audit_logs
       (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -311,122 +229,4 @@ describe('RLS Policy Tests - HIPAA Compliance', () => {
     });
   });
 
-  describe('Security Policy Documentation', () => {
-    it('documents tenant isolation policy pattern', () => {
-      // All tenant tables use this pattern:
-      const policyPattern = `
-        CREATE POLICY "{table}_tenant" ON {table} FOR ALL
-        USING (tenant_id = get_current_tenant_id() OR is_super_admin());
-      `;
-
-      expect(policyPattern).toContain('get_current_tenant_id()');
-      expect(policyPattern).toContain('is_super_admin()');
-    });
-
-    it('documents get_current_tenant_id implementation', () => {
-      // Function returns tenant from user's profile:
-      const implementation = `
-        RETURN COALESCE(
-          current_setting('app.current_tenant_id', true)::uuid,
-          (SELECT tenant_id FROM profiles WHERE user_id = auth.uid() LIMIT 1)
-        );
-      `;
-
-      expect(implementation).toContain('profiles');
-      expect(implementation).toContain('auth.uid()');
-    });
-
-    it('documents is_super_admin implementation', () => {
-      // Function checks role in profiles:
-      const implementation = `
-        RETURN EXISTS (
-          SELECT 1 FROM profiles
-          WHERE user_id = auth.uid()
-          AND role = 'super_admin'
-        );
-      `;
-
-      expect(implementation).toContain('super_admin');
-    });
-
-    it('documents tables protected by immutability triggers', () => {
-      const protectedTables = {
-        audit_logs: 'prevent_audit_logs_update, prevent_audit_logs_delete',
-        security_events: 'prevent_security_events_update, prevent_security_events_delete',
-        phi_access_log: 'prevent_phi_access_log_update, prevent_phi_access_log_delete',
-        claude_api_audit: 'prevent_claude_api_audit_update, prevent_claude_api_audit_delete',
-        login_attempts: 'prevent_login_attempts_update, prevent_login_attempts_delete',
-        admin_audit_logs: 'prevent_admin_audit_logs_update, prevent_admin_audit_logs_delete',
-        super_admin_audit_log: 'prevent_super_admin_audit_log_update, prevent_super_admin_audit_log_delete',
-        passkey_audit_log: 'prevent_passkey_audit_log_update, prevent_passkey_audit_log_delete',
-        consent_log: 'prevent_consent_log_update, prevent_consent_log_delete',
-        caregiver_access_log: 'prevent_caregiver_access_log_update, prevent_caregiver_access_log_delete',
-      };
-
-      expect(Object.keys(protectedTables).length).toBe(10);
-    });
-  });
-
-  describe('HIPAA Compliance Verification', () => {
-    it('HIPAA §164.312(a)(1) - Access Control implemented via RLS', () => {
-      // Access controls are implemented through:
-      const accessControls = [
-        'Row Level Security (RLS) on all PHI tables',
-        'Tenant isolation via get_current_tenant_id()',
-        'Role-based access via is_tenant_admin() and is_super_admin()',
-        'User-level access via auth.uid() checks',
-      ];
-
-      expect(accessControls.length).toBe(4);
-    });
-
-    it('HIPAA §164.312(b) - Audit Controls implemented via immutable logs', () => {
-      // Audit controls are implemented through:
-      const auditControls = [
-        'audit_logs table with RLS',
-        'Immutability triggers prevent modification',
-        'PHI access logged to phi_access_log',
-        'All AI operations logged to claude_api_audit',
-      ];
-
-      expect(auditControls.length).toBe(4);
-    });
-
-    it('HIPAA §164.312(a)(2)(iv) - Encryption implemented with fail-safe', () => {
-      // Encryption is implemented through:
-      const encryptionControls = [
-        'encrypt_phi_text() function with AES-256',
-        'Fail-safe: RAISE EXCEPTION on failure (not NULL)',
-        'Keys stored in Supabase Vault or Secrets',
-        'Decrypted views for authorized access only',
-      ];
-
-      expect(encryptionControls.length).toBe(4);
-    });
-  });
-});
-
-describe('RLS Coverage Statistics', () => {
-  it('documents current RLS coverage', () => {
-    // As of 2026-01-03 migration:
-    const coverage = {
-      totalTablesWithTenantId: 329,
-      tablesWithTenantPolicy: 329,
-      coveragePercentage: 100,
-      auditTablesProtected: 10,
-    };
-
-    expect(coverage.coveragePercentage).toBe(100);
-    expect(coverage.auditTablesProtected).toBe(10);
-  });
-
-  it('documents security migrations applied', () => {
-    const migrations = [
-      '_APPLIED_20260103000001_enforce_failsafe_phi_encryption.sql',
-      '_APPLIED_20260103000002_enforce_audit_log_immutability.sql',
-      '_APPLIED_20260103000003_fix_tenant_rls_gaps.sql',
-    ];
-
-    expect(migrations.length).toBe(3);
-  });
 });

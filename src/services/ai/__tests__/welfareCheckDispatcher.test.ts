@@ -413,17 +413,6 @@ describe('WelfareCheckDispatcher', () => {
   // WelfareCheckAssessment Structure Tests
   // --------------------------------------------------------------------------
   describe('WelfareCheckAssessment Structure', () => {
-    it('should have all required fields', () => {
-      expect(mockWelfareAssessment.seniorId).toBeDefined();
-      expect(mockWelfareAssessment.priorityScore).toBeDefined();
-      expect(mockWelfareAssessment.priorityCategory).toBeDefined();
-      expect(mockWelfareAssessment.daysSinceLastCheckin).toBeDefined();
-      expect(mockWelfareAssessment.mobilityRiskLevel).toBeDefined();
-      expect(mockWelfareAssessment.recommendedAction).toBeDefined();
-      expect(Array.isArray(mockWelfareAssessment.riskFactors)).toBe(true);
-      expect(mockWelfareAssessment.notes).toBeDefined();
-    });
-
     it('should have meaningful risk factors', () => {
       expect(mockWelfareAssessment.riskFactors.length).toBeGreaterThan(0);
       mockWelfareAssessment.riskFactors.forEach(factor => {
@@ -462,17 +451,6 @@ describe('WelfareCheckDispatcher', () => {
   // Officer Access Request Tests
   // --------------------------------------------------------------------------
   describe('OfficerAccessRequest Structure', () => {
-    it('should have all required fields', () => {
-      const request = createValidOfficerRequest();
-
-      expect(request.tenantId).toBeDefined();
-      expect(request.officerId).toBeDefined();
-      expect(request.officerName).toBeDefined();
-      expect(request.officerBadgeNumber).toBeDefined();
-      expect(request.departmentName).toBeDefined();
-      expect(request.requestReason).toBeDefined();
-    });
-
     it('should allow optional priority filter', () => {
       const withFilter = createValidOfficerRequest({ priorityFilter: 'critical' });
       const withoutFilter = createValidOfficerRequest({ priorityFilter: undefined });
@@ -494,14 +472,6 @@ describe('WelfareCheckDispatcher', () => {
   // Officer Access Log Tests
   // --------------------------------------------------------------------------
   describe('OfficerAccessLog Structure', () => {
-    it('should have all required fields', () => {
-      expect(mockAccessLog.accessId).toBeDefined();
-      expect(mockAccessLog.officerId).toBeDefined();
-      expect(mockAccessLog.accessedAt).toBeDefined();
-      expect(mockAccessLog.seniorsViewed).toBeDefined();
-      expect(mockAccessLog.reason).toBeDefined();
-    });
-
     it('should have valid timestamp', () => {
       expect(isNaN(new Date(mockAccessLog.accessedAt).getTime())).toBe(false);
     });

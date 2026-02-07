@@ -444,18 +444,6 @@ describe('EmergencyAccessIntelligence', () => {
   // Briefing Access Request Structure Tests
   // --------------------------------------------------------------------------
   describe('BriefingAccessRequest Structure', () => {
-    it('should have all required fields', () => {
-      const request = createValidAccessRequest();
-
-      expect(request.tenantId).toBeDefined();
-      expect(request.seniorId).toBeDefined();
-      expect(request.responderId).toBeDefined();
-      expect(request.responderName).toBeDefined();
-      expect(request.responderType).toBeDefined();
-      expect(request.incidentNumber).toBeDefined();
-      expect(request.accessReason).toBeDefined();
-    });
-
     it('should accept all responder types', () => {
       const types: ResponderType[] = ['911_dispatcher', 'ems', 'fire', 'police'];
 

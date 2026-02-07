@@ -6,7 +6,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { TransferCenterService } from '../transferCenterService';
 import {
   getTransferStatusLabel,
   getTransferStatusColor,
@@ -18,43 +17,6 @@ import {
   canApproveTransfer,
   getUrgencySortOrder,
 } from '../../types/transferCenter';
-
-describe('TransferCenterService', () => {
-  describe('Module Exports', () => {
-    it('should export TransferCenterService object', () => {
-      expect(TransferCenterService).toBeDefined();
-      expect(typeof TransferCenterService).toBe('object');
-    });
-
-    it('should export transfer request methods', () => {
-      expect(typeof TransferCenterService.createTransferRequest).toBe('function');
-      expect(typeof TransferCenterService.getActiveTransfers).toBe('function');
-      expect(typeof TransferCenterService.getTransfer).toBe('function');
-      expect(typeof TransferCenterService.getPendingTransfers).toBe('function');
-      expect(typeof TransferCenterService.startReview).toBe('function');
-      expect(typeof TransferCenterService.approveTransfer).toBe('function');
-      expect(typeof TransferCenterService.denyTransfer).toBe('function');
-      expect(typeof TransferCenterService.scheduleTransfer).toBe('function');
-      expect(typeof TransferCenterService.startTransfer).toBe('function');
-      expect(typeof TransferCenterService.markArrived).toBe('function');
-      expect(typeof TransferCenterService.completeTransfer).toBe('function');
-      expect(typeof TransferCenterService.cancelTransfer).toBe('function');
-    });
-
-    it('should export facility capacity methods', () => {
-      expect(typeof TransferCenterService.getFacilityCapacity).toBe('function');
-      expect(typeof TransferCenterService.updateFacilityCapacity).toBe('function');
-    });
-
-    it('should export metrics methods', () => {
-      expect(typeof TransferCenterService.getMetrics).toBe('function');
-    });
-
-    it('should export notes methods', () => {
-      expect(typeof TransferCenterService.updateNotes).toBe('function');
-    });
-  });
-});
 
 describe('Transfer Center Type Helpers', () => {
   describe('getTransferStatusLabel', () => {

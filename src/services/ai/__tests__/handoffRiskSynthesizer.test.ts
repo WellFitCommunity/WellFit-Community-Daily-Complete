@@ -354,17 +354,6 @@ describe('HandoffRiskSynthesizer', () => {
   // ShiftHandoffContext Structure Tests
   // --------------------------------------------------------------------------
   describe('ShiftHandoffContext Structure', () => {
-    it('should have all required fields', () => {
-      const context = createValidContext();
-
-      expect(context.tenantId).toBeDefined();
-      expect(context.shiftDate).toBeDefined();
-      expect(context.shiftType).toBeDefined();
-      expect(context.fromShift).toBeDefined();
-      expect(context.toShift).toBeDefined();
-      expect(Array.isArray(context.patientIds)).toBe(true);
-    });
-
     it('should allow optional unit name', () => {
       const contextWithUnit = createValidContext({ unitName: 'ICU' });
       const contextWithoutUnit = createValidContext({ unitName: undefined });
@@ -392,15 +381,6 @@ describe('HandoffRiskSynthesizer', () => {
   // CriticalAlert Structure Tests
   // --------------------------------------------------------------------------
   describe('CriticalAlert Structure', () => {
-    it('should have all required fields', () => {
-      mockCriticalAlerts.forEach(alert => {
-        expect(alert.patientId).toBeDefined();
-        expect(alert.alert).toBeDefined();
-        expect(alert.severity).toBeDefined();
-        expect(alert.timeframe).toBeDefined();
-      });
-    });
-
     it('should have valid severity levels', () => {
       const validSeverities = ['low', 'medium', 'high', 'critical'];
       mockCriticalAlerts.forEach(alert => {
@@ -413,16 +393,6 @@ describe('HandoffRiskSynthesizer', () => {
   // HighRiskPatient Structure Tests
   // --------------------------------------------------------------------------
   describe('HighRiskPatient Structure', () => {
-    it('should have all required fields', () => {
-      mockHighRiskPatients.forEach(patient => {
-        expect(patient.patientId).toBeDefined();
-        expect(patient.name).toBeDefined();
-        expect(Array.isArray(patient.riskFactors)).toBe(true);
-        expect(Array.isArray(patient.actionItems)).toBe(true);
-        expect(patient.priority).toBeDefined();
-      });
-    });
-
     it('should have valid priority levels', () => {
       const validPriorities = ['low', 'medium', 'high', 'critical'];
       mockHighRiskPatients.forEach(patient => {

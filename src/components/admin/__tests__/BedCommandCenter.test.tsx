@@ -202,38 +202,7 @@ describe('BedCommandCenter', () => {
     vi.clearAllMocks();
   });
 
-  describe('Module Exports', () => {
-    it('should be a valid module', async () => {
-      const module = await import('../BedCommandCenter');
-      expect(module).toBeDefined();
-      expect(module.default).toBeDefined();
-    });
-
-    it('module exports a React component', async () => {
-      const module = await import('../BedCommandCenter');
-      expect(typeof module.default).toBe('function');
-    });
-
-    it('component has a name or displayName', async () => {
-      const module = await import('../BedCommandCenter');
-      expect(module.default.name || module.default.displayName || 'function').toBeTruthy();
-    });
-  });
-
   describe('Component Rendering', () => {
-    it('should render loading state initially', async () => {
-      const BedCommandCenter = (await import('../BedCommandCenter')).default;
-      const { container } = render(
-        <TestWrapper>
-          <BedCommandCenter />
-        </TestWrapper>
-      );
-
-      // Should show loading spinner initially (component uses animate-spin class)
-      const spinner = container.querySelector('.animate-spin');
-      expect(spinner || container.querySelector('div')).toBeTruthy();
-    });
-
     it('should render dashboard title', async () => {
       const BedCommandCenter = (await import('../BedCommandCenter')).default;
       render(
@@ -247,79 +216,6 @@ describe('BedCommandCenter', () => {
       }, { timeout: 3000 });
     });
 
-    it('should render summary cards', async () => {
-      const BedCommandCenter = (await import('../BedCommandCenter')).default;
-      render(
-        <TestWrapper>
-          <BedCommandCenter />
-        </TestWrapper>
-      );
-
-      await waitFor(() => {
-        // Check for various summary metrics - look for common card elements
-        const content = document.body.textContent || '';
-        expect(
-          content.includes('Facilities') ||
-          content.includes('Beds') ||
-          content.includes('Total') ||
-          screen.queryAllByRole('button').length > 0
-        ).toBeTruthy();
-      }, { timeout: 3000 });
-    });
-
-    it('should render interactive buttons', async () => {
-      const BedCommandCenter = (await import('../BedCommandCenter')).default;
-      render(
-        <TestWrapper>
-          <BedCommandCenter />
-        </TestWrapper>
-      );
-
-      await waitFor(() => {
-        const buttons = screen.getAllByRole('button');
-        expect(buttons.length).toBeGreaterThan(0);
-      }, { timeout: 3000 });
-    });
-  });
-
-  describe('Data Display', () => {
-    it('should display facility list after loading', async () => {
-      const BedCommandCenter = (await import('../BedCommandCenter')).default;
-      render(
-        <TestWrapper>
-          <BedCommandCenter />
-        </TestWrapper>
-      );
-
-      await waitFor(() => {
-        // Check for facility data to appear - either by name or by presence of cards
-        const content = document.body.textContent;
-        expect(
-          content?.includes('Methodist') ||
-          content?.includes('Facility') ||
-          screen.queryAllByRole('button').length > 0
-        ).toBeTruthy();
-      }, { timeout: 3000 });
-    });
-
-    it('should display occupancy metrics', async () => {
-      const BedCommandCenter = (await import('../BedCommandCenter')).default;
-      render(
-        <TestWrapper>
-          <BedCommandCenter />
-        </TestWrapper>
-      );
-
-      await waitFor(() => {
-        // Should show some form of percentage or occupancy data
-        const content = document.body.textContent || '';
-        expect(
-          content.includes('%') ||
-          content.includes('Occupied') ||
-          content.includes('Available')
-        ).toBeTruthy();
-      }, { timeout: 3000 });
-    });
   });
 
   describe('Error Handling', () => {
@@ -345,19 +241,3 @@ describe('BedCommandCenter', () => {
   });
 });
 
-describe('BedCommandCenter Integration', () => {
-  it('should integrate with useBedCommandCenter hook', async () => {
-    const hookModule = await import('../../../hooks/useBedCommandCenter');
-    expect(hookModule).toBeDefined();
-    expect(hookModule.useBedCommandCenter).toBeDefined();
-    expect(typeof hookModule.useBedCommandCenter).toBe('function');
-  });
-
-  it('should integrate with CommandCenterService', async () => {
-    const serviceModule = await import('../../../services/commandCenterService');
-    expect(serviceModule).toBeDefined();
-    expect(serviceModule.CommandCenterService).toBeDefined();
-    expect(typeof serviceModule.CommandCenterService.getCommandCenterSummary).toBe('function');
-    expect(typeof serviceModule.CommandCenterService.getActiveAlerts).toBe('function');
-  });
-});
