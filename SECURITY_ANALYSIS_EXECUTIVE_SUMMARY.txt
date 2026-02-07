@@ -12,7 +12,7 @@ CRITICAL ISSUES (5):
 1. ⚠️  Hardcoded PHI Encryption Key Fallback
    Location: supabase/migrations/20251115180000_create_phi_encryption_functions.sql
    Risk: Development key used if Vault misconfigured
-   Action: REMOVE IMMEDIATELY - implement graceful failure
+   Action: REMOVE IMMEDIATELY - implement graceful failures
 
 2. ⚠️  NPM Vulnerability: Glob Command Injection (HIGH)
    Package: glob@10.2.0-10.4.5
