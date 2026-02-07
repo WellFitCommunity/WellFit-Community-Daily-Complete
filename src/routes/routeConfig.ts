@@ -327,6 +327,14 @@ export const clinicalRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'nurse', 'physician', 'doctor', 'case_manager'],
     category: 'clinical',
   },
+  // Remote Patient Monitoring
+  {
+    path: '/rpm-dashboard',
+    component: 'RpmDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'physician', 'doctor', 'nurse_practitioner', 'case_manager'],
+    category: 'clinical',
+  },
   // Medication Manager (Admin-level medication oversight)
   {
     path: '/medication-manager',

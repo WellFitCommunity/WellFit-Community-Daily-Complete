@@ -150,6 +150,7 @@ export const SocialWorkerPanel = React.lazy(() => import('../components/social-w
 export const ERDashboardPage = React.lazy(() => import('../pages/ERDashboardPage'));
 export const ClinicalAlertsDashboard = React.lazy(() => import('../components/alerts/ClinicalAlertsDashboard'));
 export const CommunityReadmissionDashboard = React.lazy(() => import('../components/community/CommunityReadmissionDashboard'));
+export const RpmDashboard = React.lazy(() => import('../components/rpm/RpmDashboard'));
 
 // AI Medical Scribe
 export const CompassRileyPage = React.lazy(() => import('../components/smart/RealTimeSmartScribe'));
@@ -358,6 +359,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   ERDashboardPage,
   ClinicalAlertsDashboard,
   CommunityReadmissionDashboard,
+  RpmDashboard,
   CompassRileyPage,
   NeuroSuiteDashboard,
   MemoryClinicDashboard,
