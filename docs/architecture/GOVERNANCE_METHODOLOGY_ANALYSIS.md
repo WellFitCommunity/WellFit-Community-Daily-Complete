@@ -295,6 +295,50 @@ Before the governance methodology existed, the project went through the same pha
 
 Prompt engineering is the training wheels. Governance is riding the bike.
 
+### The Enforcement Gap — What Nobody Tells You
+
+There is a truth about AI governance that this document would be dishonest to omit: **loading a governance document is not the same as the AI internalizing it.**
+
+CLAUDE.md loads into every Claude Code session automatically. Every rule, every table, every code example is present in the AI's context window from the first message. The AI can see all 600+ lines of it. And it will still default to `catch (err)` instead of `catch (err: unknown)`. It will still reach for `console.log` instead of `auditLogger`. It will still keep iterating on broken code instead of stopping to ask.
+
+This is not a failure of the document. It is a fundamental characteristic of how large language models process instructions. The governance document competes with the model's training weights — millions of lines of code the model learned from before it ever saw your rules. Training weights are gravity. The governance document is a sign that says "don't fall." The sign helps. Gravity still wins if nobody is watching.
+
+**The human enforcement layer:**
+
+Every session, the AI System Director must actively remind the AI to read and follow CLAUDE.md. Not once — repeatedly, throughout the session, whenever the AI starts drifting toward its trained defaults. This is not optional. Without verbal reinforcement:
+
+- The AI follows some rules and silently drops others
+- Rules at the top of the document get more attention than rules at the bottom
+- Complex rules (like the Deletion Test for test quality) are simplified or ignored
+- The AI's eagerness to produce output overrides its compliance with constraints
+
+This means the governance system has three layers, not two:
+
+| Layer | What It Does | Limitation |
+|-------|-------------|-----------|
+| **Governance document (CLAUDE.md)** | Provides persistent, version-controlled rules | AI sees it but doesn't always follow it |
+| **Automated hooks** | Fires reminders on every tool use | Operates at the action level, not the decision level |
+| **Human enforcement** | Director actively reminds AI each session | Requires the human to know what to watch for |
+
+The third layer — human enforcement — is the one that most people don't anticipate. They assume that writing the rules is sufficient. It is not. The person directing the AI must understand the rules well enough to notice when the AI deviates, and must be willing to interrupt the AI's workflow to correct it.
+
+**This is the actual skill of an AI System Director.** Not writing prompts. Not writing governance documents. Those are artifacts. The skill is active enforcement — reading the AI's output in real time and catching the moments when training weights override governance rules.
+
+**Why this matters for anyone who wants to teach or replicate this methodology:**
+
+You cannot hand someone a CLAUDE.md file and expect it to work. The document is necessary but not sufficient. The person using it must:
+
+1. **Understand every rule** — not the syntax, but the reasoning behind it
+2. **Recognize violations in real time** — know what `any` looks like, know what a junk test looks like, know when the AI is improvising instead of asking
+3. **Interrupt confidently** — stop the AI mid-task and redirect it, even when the AI insists it's on the right track
+4. **Reinforce consistently** — every session, not just the first one
+
+This is a management skill, not a technical skill. It is closer to supervising a construction crew than to writing code. The superintendent doesn't pour concrete — but they know when the concrete is being poured wrong, and they stop the crew before the foundation sets crooked.
+
+**The honest state of AI governance in 2026:** The tools are powerful enough to build enterprise software. The governance documents make the output reliable. But the human in the loop is still the enforcement mechanism. The AI is not self-governing. It is governed — by a human who learned, through 9 months of real work, exactly where and how the AI drifts.
+
+This will likely change as AI tools improve. But right now, today, the enforcement gap is real, and anyone who claims otherwise is selling something.
+
 ---
 
 ## Six Principles of the Governance Methodology
