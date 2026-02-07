@@ -56,6 +56,43 @@ The progression from white page to Word document to dummy app to real software i
 
 The methodology documented here exists because the founder did not accept iteration 3. The demand for real code over placeholder code was the first governance rule, and everything else followed from it.
 
+### The Compliance Escalation
+
+The platform did not start as HIPAA-compliant. It did not start with SOC 2 awareness. Compliance knowledge grew alongside the software — and each new requirement raised the bar for what the AI tools needed to produce.
+
+**Month 2: HIPAA**
+
+After two months of building, the founder began asking for HIPAA compliance. This was not in the original scope — it emerged from understanding what healthcare software actually requires. The AI tools were directed to add audit logging, PHI protection, encryption at rest, and access controls. Features that had been built without compliance were retrofitted. This is when `auditLogger` replaced `console.log` and the prohibition on PHI in the browser was established.
+
+**Month 5 (July): SOC 2**
+
+By July, the founder had read about SOC 2 compliance — security, availability, processing integrity, confidentiality, and privacy controls. This added another layer of requirements: session management, password rotation policies, account lockout mechanisms, data retention policies, GDPR deletion workflows, and consent management. The governance document expanded to cover these concerns.
+
+**The AI as Teacher**
+
+A critical part of this progression: the AI tools didn't just build — they taught. ChatGPT taught the founder SQL and Supabase. Not through a course or a tutorial, but through building real features together. The founder learned database concepts by asking the AI to explain what it was building and why. SQL, row-level security, migrations, indexes, foreign keys, JWT authentication — all learned in context, through production work, not through study.
+
+This is a different model of learning: **learn by directing, not by studying.** The founder never sat down to learn SQL syntax. She learned what a migration does by asking the AI to create one, watching it run, and asking questions when it failed.
+
+### The Tool Capability Progression
+
+The AI tools themselves evolved during the 9-month build. This is an underreported aspect of AI-assisted development — the tools are not static. Their capabilities expand, and a methodology must adapt to use them.
+
+**Claude Code's progression in this project:**
+
+| Phase | What Claude Code Did | Significance |
+|-------|---------------------|-------------|
+| Early | Wrote code in the editor | Standard AI code generation |
+| Middle | Ran tests, linting, typechecking | AI verifying its own output |
+| Later | Logged into Supabase, ran migrations | AI operating database infrastructure |
+| Current | Fixes errors inside Supabase, deploys edge functions, manages secrets | AI as infrastructure operator |
+
+This progression — from code writer to infrastructure operator — changed what was possible. In the early months, the founder had to manually run database commands, copy-paste migration SQL, and debug deployment errors. Now, Claude Code logs into Supabase directly, runs `npx supabase db push`, deploys edge functions, and diagnoses database errors from within the development session.
+
+**The implication:** The AI is no longer just writing code. It is operating the production infrastructure. This requires a higher level of trust — and a correspondingly higher level of governance. The CLAUDE.md rules about migrations ("ALWAYS run migrations you create"), deployment verification, and the mandatory checkpoint before any commit exist because the AI now has the power to modify production systems, not just source code.
+
+The governance methodology scaled with the tool's capabilities. As Claude Code gained the ability to do more, the governance document added rules to ensure it did so safely.
+
 ---
 
 ## The Core Insight
