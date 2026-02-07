@@ -116,8 +116,8 @@ When you pick this up:
 
 ## Remaining from Avatar Feature Build
 
-These still need to be done (were not done before battery died):
+All items completed (2026-02-07):
 
-1. **Run migration:** `npx supabase db push` (for ai_avatar_entity_extractor skill)
-2. **Deploy edge function:** `npx supabase functions deploy ai-avatar-entity-extractor --no-verify-jwt`
-3. **Pre-existing test failure:** `BloodPressureMonitorPage.test.tsx` — unrelated to avatar work, investigate separately
+1. ~~**Run migration:** `npx supabase db push`~~ — Already applied, database up to date
+2. ~~**Deploy edge function:** `npx supabase functions deploy ai-avatar-entity-extractor --no-verify-jwt`~~ — Deployed
+3. ~~**Pre-existing test failure:** `BloodPressureMonitorPage.test.tsx`~~ — Resolved, 14/14 tests passing
