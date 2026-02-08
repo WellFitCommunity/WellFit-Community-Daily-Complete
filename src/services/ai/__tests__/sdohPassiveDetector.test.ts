@@ -170,7 +170,7 @@ const SDOH_PATTERN_TESTS: Array<{
 // HELPER FUNCTIONS
 // ============================================================================
 
-function setupMocks(options: {
+function _setupMocks(options: {
   skillEnabled?: boolean;
   autoCreateIndicators?: boolean;
   confidenceThreshold?: number;
