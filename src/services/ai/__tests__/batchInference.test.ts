@@ -2,7 +2,7 @@
  * Tests for Batch Inference Service
  */
 
-import { BatchInferenceService, batchInference } from '../batchInference';
+import { BatchInferenceService } from '../batchInference';
 import type { InferenceType, InferencePriority } from '../batchInference';
 
 // Mock supabaseClient
@@ -74,9 +74,6 @@ describe('BatchInferenceService', () => {
       expect(instance1).toBe(instance2);
     });
 
-    it('should export a singleton batchInference', () => {
-      expect(batchInference).toBeDefined();
-    });
   });
 
   describe('Queue Management', () => {

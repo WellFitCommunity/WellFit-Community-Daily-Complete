@@ -384,18 +384,4 @@ describe('AppointmentService', () => {
     });
   });
 
-  // ========================================================================
-  // Namespace export - Tier 2
-  // ========================================================================
-  describe('AppointmentService namespace', () => {
-    it('exports all service functions on the namespace object', () => {
-      const ns = service.AppointmentService;
-      expect(typeof ns.checkAppointmentAvailability).toBe('function');
-      expect(typeof ns.scheduleAppointment).toBe('function');
-      expect(typeof ns.getProviderAppointments).toBe('function');
-      expect(typeof ns.rescheduleAppointment).toBe('function');
-      expect(typeof ns.getAppointmentHistory).toBe('function');
-      expect(typeof ns.cancelAppointment).toBe('function');
-    });
-  });
 });

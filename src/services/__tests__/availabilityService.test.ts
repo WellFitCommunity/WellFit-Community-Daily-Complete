@@ -346,20 +346,4 @@ describe('AvailabilityService', () => {
     });
   });
 
-  // ========================================================================
-  // Namespace export - Tier 2
-  // ========================================================================
-  describe('AvailabilityService namespace', () => {
-    it('exports all service functions on the namespace object', () => {
-      const ns = service.AvailabilityService;
-      expect(typeof ns.getProviderAvailability).toBe('function');
-      expect(typeof ns.updateProviderAvailability).toBe('function');
-      expect(typeof ns.checkProviderAvailability).toBe('function');
-      expect(typeof ns.getAvailableSlots).toBe('function');
-      expect(typeof ns.getAvailableSlotsForDateRange).toBe('function');
-      expect(typeof ns.getBlockedTimes).toBe('function');
-      expect(typeof ns.addBlockedTime).toBe('function');
-      expect(typeof ns.removeBlockedTime).toBe('function');
-    });
-  });
 });

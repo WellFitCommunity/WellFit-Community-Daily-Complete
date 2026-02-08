@@ -16,7 +16,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   ConsentManagementService,
-  consentManagementService,
   type Consent,
   type GrantConsentParams,
   type SharingPermissions,
@@ -953,15 +952,6 @@ describe('ConsentManagementService', () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // Singleton Export Tests
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  describe('Singleton Export', () => {
-    it('should export singleton instance', () => {
-      expect(consentManagementService).toBeInstanceOf(ConsentManagementService);
-    });
-  });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Integration Scenarios

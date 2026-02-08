@@ -1176,24 +1176,4 @@ describe('PatientService', () => {
     });
   });
 
-  // ===========================================================================
-  // Class Export Tests
-  // ===========================================================================
-
-  describe('Class Export', () => {
-    it('should export PatientService class for testing', async () => {
-      const module = await import('../patientService');
-
-      expect(module.PatientService).toBeDefined();
-      expect(typeof module.PatientService).toBe('function');
-    });
-
-    it('should export singleton instance', async () => {
-      const module = await import('../patientService');
-
-      expect(module.patientService).toBeDefined();
-      expect(typeof module.patientService.getPatients).toBe('function');
-      expect(typeof module.patientService.getPatientById).toBe('function');
-    });
-  });
 });

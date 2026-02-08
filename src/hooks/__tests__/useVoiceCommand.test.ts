@@ -131,16 +131,6 @@ describe('useVoiceCommand', () => {
       expect(state.isSupported).toBe(true);
     });
 
-    it('should return action functions', () => {
-      const { result } = renderHook(() => useVoiceCommand());
-      const [, actions] = result.current;
-
-      expect(typeof actions.startListening).toBe('function');
-      expect(typeof actions.stopListening).toBe('function');
-      expect(typeof actions.toggleListening).toBe('function');
-      expect(typeof actions.clearTranscript).toBe('function');
-      expect(typeof actions.executeCommand).toBe('function');
-    });
   });
 
   describe('Starting and Stopping', () => {

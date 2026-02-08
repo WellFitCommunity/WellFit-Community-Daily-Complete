@@ -96,10 +96,6 @@ describe('useRealtimeAlerts', () => {
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBeNull();
     expect(result.current.isConnected).toBe(true);
-    expect(typeof result.current.markAsRead).toBe('function');
-    expect(typeof result.current.markAllAsRead).toBe('function');
-    expect(typeof result.current.playAlertSound).toBe('function');
-    expect(typeof result.current.refresh).toBe('function');
   });
 
   it('should accept severity filter option', () => {

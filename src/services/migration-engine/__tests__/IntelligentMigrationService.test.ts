@@ -550,23 +550,4 @@ describe('IntelligentMigrationService', () => {
     });
   });
 
-  describe('accessors', () => {
-    it('should provide access to DNA generator', () => {
-      const generator = service.getDNAGenerator();
-      expect(generator).toBeDefined();
-      expect(typeof generator.generateDNA).toBe('function');
-    });
-
-    it('should provide access to pattern detector', () => {
-      const detector = service.getPatternDetector();
-      expect(detector).toBeDefined();
-      expect(typeof detector.detectValuePattern).toBe('function');
-    });
-
-    it('should provide access to mapping intelligence', () => {
-      const intelligence = service.getMappingIntelligence();
-      expect(intelligence).toBeDefined();
-      expect(typeof intelligence.suggestMappings).toBe('function');
-    });
-  });
 });

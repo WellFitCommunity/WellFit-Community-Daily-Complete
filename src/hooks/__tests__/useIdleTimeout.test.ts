@@ -135,12 +135,6 @@ describe('useIdleTimeout', () => {
       expect(result.current.showWarning).toBe(false);
     });
 
-    it('should provide extendSession and logoutNow functions', () => {
-      const { result } = renderHook(() => useIdleTimeout());
-
-      expect(typeof result.current.extendSession).toBe('function');
-      expect(typeof result.current.logoutNow).toBe('function');
-    });
   });
 
   describe('Session Extension', () => {

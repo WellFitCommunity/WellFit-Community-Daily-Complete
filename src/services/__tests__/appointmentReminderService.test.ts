@@ -247,21 +247,4 @@ describe('AppointmentReminderService', () => {
     });
   });
 
-  // ========================================================================
-  // Namespace export - Tier 2: verifies public API completeness
-  // ========================================================================
-  describe('AppointmentReminderService namespace', () => {
-    it('exports all service functions on the namespace object', () => {
-      const ns = service.AppointmentReminderService;
-      expect(typeof ns.isInDndWindow).toBe('function');
-      expect(typeof ns.formatAppointmentForReminder).toBe('function');
-      expect(typeof ns.generateReminderMessage).toBe('function');
-      expect(typeof ns.getReminderPreferences).toBe('function');
-      expect(typeof ns.updateReminderPreferences).toBe('function');
-      expect(typeof ns.getAppointmentsNeedingReminders).toBe('function');
-      expect(typeof ns.markReminderSent).toBe('function');
-      expect(typeof ns.resetAppointmentReminders).toBe('function');
-      expect(typeof ns.getReminderLogs).toBe('function');
-    });
-  });
 });

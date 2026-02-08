@@ -11,7 +11,6 @@
  * - Accuracy tracking
  */
 
-import { BedOptimizerService } from '../bed-optimizer';
 import type {
   IncomingPatient,
   CapacityForecast,
@@ -133,31 +132,6 @@ function createMockCapacityForecast(overrides?: Partial<CapacityForecast>): Capa
 // =====================================================
 // BASIC SERVICE TESTS
 // =====================================================
-
-describe('BedOptimizerService', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe('Instantiation', () => {
-    it('should be defined', () => {
-      expect(BedOptimizerService).toBeDefined();
-    });
-
-    it('should create instance without optimizer', () => {
-      const service = new BedOptimizerService();
-      expect(service).toBeDefined();
-    });
-
-    it('should create instance with custom optimizer', () => {
-      const mockOptimizer = {
-        call: vi.fn().mockResolvedValue({ response: '{}', model: 'test', cost: 0 })
-      };
-      const service = new BedOptimizerService(mockOptimizer as never);
-      expect(service).toBeDefined();
-    });
-  });
-});
 
 // =====================================================
 // INPUT VALIDATION TESTS

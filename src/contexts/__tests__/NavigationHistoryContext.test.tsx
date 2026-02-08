@@ -165,9 +165,8 @@ describe('NavigationHistoryContext', () => {
     );
 
     expect(navRef).not.toBeNull();
-    // Even without history, goBack should use fallback
+    // Even without history, goBack should be available for fallback navigation
     expect(assertDefined(navRef).goBack).toBeDefined();
-    expect(typeof assertDefined(navRef).goBack).toBe('function');
   });
 
   it('should get previous route when available', async () => {

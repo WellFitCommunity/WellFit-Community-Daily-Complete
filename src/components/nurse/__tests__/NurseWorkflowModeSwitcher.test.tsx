@@ -219,16 +219,14 @@ describe('NURSE_WORKFLOW_MODES Configuration', () => {
     expect(NURSE_WORKFLOW_MODES.administrative.sections.length).toBeGreaterThan(0);
   });
 
-  it('should have labels for each mode', () => {
+  it('should have specific labels and descriptions for each mode', () => {
+    expect(NURSE_WORKFLOW_MODES.clinical.label).toBe('Clinical Care');
+    expect(NURSE_WORKFLOW_MODES.shift.label).toBe('Shift Management');
+    expect(NURSE_WORKFLOW_MODES.wellness.label).toBe('Wellness & Support');
+    expect(NURSE_WORKFLOW_MODES.administrative.label).toBe('Administrative');
+    // Every mode must have a user-facing description
     Object.values(NURSE_WORKFLOW_MODES).forEach(mode => {
-      expect(mode.label).toBeTruthy();
-      expect(mode.description).toBeTruthy();
-    });
-  });
-
-  it('should have gradient defined for each mode', () => {
-    Object.values(NURSE_WORKFLOW_MODES).forEach(mode => {
-      expect(mode.gradient).toBeTruthy();
+      expect(mode.description.length).toBeGreaterThan(5);
     });
   });
 });

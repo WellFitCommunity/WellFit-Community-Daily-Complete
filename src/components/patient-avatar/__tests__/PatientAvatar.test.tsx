@@ -108,7 +108,7 @@ vi.mock('../../../contexts/AuthContext', () => ({
 }));
 
 describe('AvatarBody', () => {
-  it('renders without crashing', () => {
+  it('renders an SVG element with medium skin tone and neutral presentation', () => {
     render(
       <AvatarBody
         skinTone="medium"
@@ -118,7 +118,6 @@ describe('AvatarBody', () => {
       />
     );
 
-    // Check that the SVG is rendered
     const svg = document.querySelector('svg');
     expect(svg).toBeInTheDocument();
   });

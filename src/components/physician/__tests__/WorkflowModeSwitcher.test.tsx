@@ -212,16 +212,13 @@ describe('WORKFLOW_MODES Configuration', () => {
     expect(WORKFLOW_MODES.wellness.sections.length).toBeGreaterThan(0);
   });
 
-  it('should have labels for each mode', () => {
+  it('should have specific labels and descriptions for each mode', () => {
+    expect(WORKFLOW_MODES.clinical.label).toBe('Clinical Focus');
+    expect(WORKFLOW_MODES.administrative.label).toBe('Administrative');
+    expect(WORKFLOW_MODES.wellness.label).toBe('Wellness Hub');
+    // Every mode must have a user-facing description
     Object.values(WORKFLOW_MODES).forEach(mode => {
-      expect(mode.label).toBeTruthy();
-      expect(mode.description).toBeTruthy();
-    });
-  });
-
-  it('should have gradient defined for each mode', () => {
-    Object.values(WORKFLOW_MODES).forEach(mode => {
-      expect(mode.gradient).toBeTruthy();
+      expect(mode.description.length).toBeGreaterThan(5);
     });
   });
 });

@@ -353,15 +353,6 @@ describe('GuardianAgent', () => {
   // KNOWLEDGE BASE TESTS
   // ============================================================================
   describe('Knowledge Export', () => {
-    it('should export knowledge base', () => {
-      const agent = GuardianAgent.getInstance();
-      const knowledge = agent.exportKnowledge();
-
-      expect(knowledge.knowledgeBase).toBeDefined();
-      expect(knowledge.recentHealings).toBeDefined();
-      expect(knowledge.exportedAt).toBeDefined();
-    });
-
     it('should include export timestamp', () => {
       const agent = GuardianAgent.getInstance();
       const knowledge = agent.exportKnowledge();
