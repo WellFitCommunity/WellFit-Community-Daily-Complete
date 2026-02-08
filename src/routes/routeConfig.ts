@@ -235,6 +235,14 @@ export const adminRoutes: RouteConfig[] = [
     category: 'admin',
     featureFlag: 'billingReview',
   },
+  // Prior Authorization Center (CMS-0057-F)
+  {
+    path: '/admin/prior-auth',
+    component: 'PriorAuthDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'case_manager', 'billing_specialist'],
+    category: 'admin',
+  },
   // SMART on FHIR App Management
   {
     path: '/admin/smart-apps',

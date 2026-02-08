@@ -93,6 +93,7 @@ export const TemplateMaker = React.lazy(() =>
 );
 
 // Billing & Finance
+export const PriorAuthDashboard = React.lazy(() => import('../components/admin/PriorAuthDashboard'));
 export const BillingDashboard = React.lazy(() => import('../components/admin/BillingDashboard'));
 export const BillingReviewDashboard = React.lazy(() =>
   import('../components/billing/BillingReviewDashboard').then(m => ({ default: m.BillingReviewDashboard }))
@@ -322,6 +323,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   PhotoApprovalPage,
   ApiKeyManager,
   ReportsPrintPage,
+  PriorAuthDashboard,
   BillingDashboard,
   BillingReviewDashboard,
   AIAccuracyDashboard,

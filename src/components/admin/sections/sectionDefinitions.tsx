@@ -21,6 +21,7 @@ const CCMTimeline = lazy(() => import('../../atlas/CCMTimeline'));
 const RevenueDashboard = lazy(() => import('../../atlas/RevenueDashboard'));
 const ClaimsSubmissionPanel = lazy(() => import('../../atlas/ClaimsSubmissionPanel'));
 const ClaimsAppealsPanel = lazy(() => import('../../atlas/ClaimsAppealsPanel'));
+const PriorAuthDashboard = lazy(() => import('../PriorAuthDashboard'));
 const AdminTransferLogs = lazy(() => import('../../handoff/AdminTransferLogs'));
 const PatientEngagementDashboard = lazy(() => import('../PatientEngagementDashboard'));
 const HospitalPatientEnrollment = lazy(() => import('../HospitalPatientEnrollment'));
@@ -95,6 +96,17 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><ClaimsAppealsPanel /></Suspense>,
     category: 'revenue',
     priority: 'medium',
+  },
+  {
+    id: 'prior-auth',
+    title: 'Prior Authorization Center',
+    subtitle: 'CMS-0057-F compliant prior auth requests, decisions, and appeals',
+    icon: '🛡️',
+    headerColor: 'text-indigo-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><PriorAuthDashboard /></Suspense>,
+    category: 'revenue',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'case_manager', 'billing_specialist'],
   },
   {
     id: 'sdoh-billing',

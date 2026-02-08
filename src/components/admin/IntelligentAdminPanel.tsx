@@ -17,22 +17,13 @@ import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useUser } from '../../contexts/AuthContext';
-import { DashboardPersonalizationAI } from '../../services/dashboardPersonalizationAI';
 import { auditLogger } from '../../services/auditLogger';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
 import AdminHeader from './AdminHeader';
 import WhatsNewModal from './WhatsNewModal';
 import { PersonalizedGreeting } from '../ai-transparency';
 import {
-  getUserBehaviorProfile,
-  trackBehaviorEvent,
-  getSmartSuggestions,
-  UserBehaviorProfile
-} from '../../services/behaviorTracking';
-import { useSupabaseClient } from '../../contexts/AuthContext';
-import {
   LearningIndicator,
-  LearningEvent,
   SmartSuggestionCard,
   MilestoneCelebration
 } from './LearningIndicator';
@@ -42,6 +33,8 @@ import { SectionLoadingFallback as _SectionLoadingFallback } from './sections/se
 import { useWorkflowPreferences } from '../../hooks/useWorkflowPreferences';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 import { SearchResult } from '../../contexts/VoiceActionContext';
+import { useSupabaseClient } from '../../contexts/AuthContext';
+import { useAdminPersonalization } from '../../hooks/useAdminPersonalization';
 
 // Lazy-load category components for code splitting
 // This reduces the initial bundle size by ~30-40%
@@ -65,12 +58,6 @@ const IntelligentAdminPanel: React.FC = () => {
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const [showWhatsNew, setShowWhatsNew] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
-  const [learningEvents, setLearningEvents] = useState<LearningEvent[]>([]);
-  const [behaviorProfile, setBehaviorProfile] = useState<UserBehaviorProfile | null>(null);
-  const [showMilestone, setShowMilestone] = useState(false);
-  const [milestone, setMilestone] = useState('');
 
   // Use workflow preferences for role-based ordering
   const {
@@ -82,41 +69,11 @@ const IntelligentAdminPanel: React.FC = () => {
   // Category refs for voice command scrolling
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // ATLUS: Intuitive Technology - Voice search for patients, beds, providers
-  // When user says "patient Maria LeBlanc", this handles the search and result selection
-  const handlePatientSelected = useCallback((result: SearchResult) => {
-    auditLogger.info('VOICE_PATIENT_SELECTED', {
-      patientId: result.id,
-      patientName: result.primaryText,
-    });
-
-    // Scroll to patient-care category and expand it
-    const patientCareCategory = categoryRefs.current['patient-care'];
-    if (patientCareCategory) {
-      patientCareCategory.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      const button = patientCareCategory.querySelector('button');
-      if (button) button.click();
-    }
-
-    // Dispatch custom event for PatientCareCategory to highlight the patient
-    window.dispatchEvent(new CustomEvent('voicePatientSelected', {
-      detail: { patientId: result.id, patientName: result.primaryText, metadata: result.metadata }
-    }));
-  }, []);
-
-  // Register voice search for this dashboard
-  useVoiceSearch({
-    entityTypes: ['patient', 'provider'],
-    onPatientSelected: handlePatientSelected,
-    updatePatientContext: true, // Auto-update global patient context
-  });
-
-  // Voice command handlers
+  // Section/category scroll handlers for personalization hook
   const handleScrollToSection = useCallback((sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Flash the element to indicate it was found
       element.classList.add('ring-2', 'ring-teal-500');
       setTimeout(() => {
         element.classList.remove('ring-2', 'ring-teal-500');
@@ -128,7 +85,6 @@ const IntelligentAdminPanel: React.FC = () => {
     const categoryElement = categoryRefs.current[categoryId];
     if (categoryElement) {
       categoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Try to expand the category
       const button = categoryElement.querySelector('button');
       if (button) {
         button.click();
@@ -136,13 +92,56 @@ const IntelligentAdminPanel: React.FC = () => {
     }
   }, []);
 
+  // AI personalization (extracted hook)
+  const {
+    isLoading,
+    aiSuggestions,
+    learningEvents,
+    behaviorProfile,
+    showMilestone,
+    milestone,
+    setShowMilestone,
+    handleSuggestionClick,
+    loadPersonalizedDashboard,
+  } = useAdminPersonalization({
+    userId: user?.id,
+    adminRole,
+    supabase,
+    onScrollToSection: handleScrollToSection,
+    onOpenCategory: handleOpenCategory,
+  });
+
+  // ATLUS: Intuitive Technology - Voice search for patients, beds, providers
+  const handlePatientSelected = useCallback((result: SearchResult) => {
+    auditLogger.info('VOICE_PATIENT_SELECTED', {
+      patientId: result.id,
+      patientName: result.primaryText,
+    });
+
+    const patientCareCategory = categoryRefs.current['patient-care'];
+    if (patientCareCategory) {
+      patientCareCategory.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const button = patientCareCategory.querySelector('button');
+      if (button) button.click();
+    }
+
+    window.dispatchEvent(new CustomEvent('voicePatientSelected', {
+      detail: { patientId: result.id, patientName: result.primaryText, metadata: result.metadata }
+    }));
+  }, []);
+
+  // Register voice search for this dashboard
+  useVoiceSearch({
+    entityTypes: ['patient', 'provider'],
+    onPatientSelected: handlePatientSelected,
+    updatePatientContext: true,
+  });
+
   // Get category open states based on role-based preferences
   const getCategoryOpenStateForRole = useCallback((categoryId: string): boolean => {
-    // If preferences are loaded, use them
     if (!prefsLoading && categoryOrder.length > 0) {
       return getCategoryOpenState(categoryId);
     }
-    // Default fallback based on role
     if (adminRole === 'nurse' || adminRole === 'physician' || adminRole === 'doctor') {
       return categoryId === 'patient-care';
     }
@@ -152,7 +151,6 @@ const IntelligentAdminPanel: React.FC = () => {
     if (adminRole === 'it_admin') {
       return categoryId === 'security';
     }
-    // Default: revenue first for admin/super_admin
     return categoryId === 'revenue';
   }, [prefsLoading, categoryOrder, getCategoryOpenState, adminRole]);
 
@@ -161,11 +159,9 @@ const IntelligentAdminPanel: React.FC = () => {
     const defaultOrder = ['revenue', 'patient-care', 'clinical', 'security', 'admin'];
 
     if (!prefsLoading && categoryOrder.length > 0) {
-      // Use saved preferences
       return categoryOrder.map(c => c.categoryId);
     }
 
-    // Role-based defaults
     switch (adminRole) {
       case 'nurse':
       case 'physician':
@@ -173,13 +169,10 @@ const IntelligentAdminPanel: React.FC = () => {
       case 'case_manager':
       case 'social_worker':
         return ['patient-care', 'clinical', 'revenue', 'security', 'admin'];
-
       case 'billing_specialist':
         return ['revenue', 'patient-care', 'clinical', 'admin', 'security'];
-
       case 'it_admin':
         return ['security', 'admin', 'patient-care', 'clinical', 'revenue'];
-
       default:
         return defaultOrder;
     }
@@ -188,225 +181,41 @@ const IntelligentAdminPanel: React.FC = () => {
   // Category components map
   const categoryComponents: Record<string, React.ReactNode> = {
     revenue: (
-      <div
-        key="revenue"
-        ref={(el) => { categoryRefs.current['revenue'] = el; }}
-        data-category-id="revenue"
-      >
+      <div key="revenue" ref={(el) => { categoryRefs.current['revenue'] = el; }} data-category-id="revenue">
         <Suspense fallback={<CategoryLoadingFallback />}>
-          <RevenueBillingCategory
-            userRole={adminRole || 'admin'}
-            defaultOpen={getCategoryOpenStateForRole('revenue')}
-          />
+          <RevenueBillingCategory userRole={adminRole || 'admin'} defaultOpen={getCategoryOpenStateForRole('revenue')} />
         </Suspense>
       </div>
     ),
     'patient-care': (
-      <div
-        key="patient-care"
-        ref={(el) => { categoryRefs.current['patient-care'] = el; }}
-        data-category-id="patient-care"
-      >
+      <div key="patient-care" ref={(el) => { categoryRefs.current['patient-care'] = el; }} data-category-id="patient-care">
         <Suspense fallback={<CategoryLoadingFallback />}>
-          <PatientCareCategory
-            userRole={adminRole || 'admin'}
-            defaultOpen={getCategoryOpenStateForRole('patient-care')}
-          />
+          <PatientCareCategory userRole={adminRole || 'admin'} defaultOpen={getCategoryOpenStateForRole('patient-care')} />
         </Suspense>
       </div>
     ),
     clinical: (
-      <div
-        key="clinical"
-        ref={(el) => { categoryRefs.current['clinical'] = el; }}
-        data-category-id="clinical"
-      >
+      <div key="clinical" ref={(el) => { categoryRefs.current['clinical'] = el; }} data-category-id="clinical">
         <Suspense fallback={<CategoryLoadingFallback />}>
-          <ClinicalDataCategory
-            userRole={adminRole || 'admin'}
-            defaultOpen={getCategoryOpenStateForRole('clinical')}
-          />
+          <ClinicalDataCategory userRole={adminRole || 'admin'} defaultOpen={getCategoryOpenStateForRole('clinical')} />
         </Suspense>
       </div>
     ),
     security: (
-      <div
-        key="security"
-        ref={(el) => { categoryRefs.current['security'] = el; }}
-        data-category-id="security"
-      >
+      <div key="security" ref={(el) => { categoryRefs.current['security'] = el; }} data-category-id="security">
         <Suspense fallback={<CategoryLoadingFallback />}>
-          <SecurityComplianceCategory
-            userRole={adminRole || 'admin'}
-            defaultOpen={getCategoryOpenStateForRole('security')}
-          />
+          <SecurityComplianceCategory userRole={adminRole || 'admin'} defaultOpen={getCategoryOpenStateForRole('security')} />
         </Suspense>
       </div>
     ),
     admin: (
-      <div
-        key="admin"
-        ref={(el) => { categoryRefs.current['admin'] = el; }}
-        data-category-id="admin"
-      >
+      <div key="admin" ref={(el) => { categoryRefs.current['admin'] = el; }} data-category-id="admin">
         <Suspense fallback={<CategoryLoadingFallback />}>
-          <SystemAdminCategory
-            userRole={adminRole || 'admin'}
-            defaultOpen={getCategoryOpenStateForRole('admin')}
-          />
+          <SystemAdminCategory userRole={adminRole || 'admin'} defaultOpen={getCategoryOpenStateForRole('admin')} />
         </Suspense>
       </div>
     ),
   };
-
-  // NOTE: Section definitions moved to sections/sectionDefinitions.tsx for code splitting
-  // Categories are now lazy-loaded independently
-
-  // Helper function to add learning events
-  const addLearningEvent = useCallback((event: Omit<LearningEvent, 'timestamp'> & { timestamp: Date }) => {
-    setLearningEvents(prev => [...prev, event].slice(-10)); // Keep last 10 events
-  }, []);
-
-  // Check for learning milestones
-  const checkMilestones = (profile: UserBehaviorProfile) => {
-    const { totalSessions, sectionStats } = profile;
-
-    if (totalSessions === 10) {
-      setMilestone('🎯 10 Dashboard Visits - The system is learning your patterns!');
-      setShowMilestone(true);
-    } else if (totalSessions === 50) {
-      setMilestone('🚀 50 Dashboard Visits - Your dashboard is now highly personalized!');
-      setShowMilestone(true);
-    } else if (sectionStats.some(s => s.frequencyScore === 100)) {
-      setMilestone('⭐ Perfect Pattern - You have a favorite section!');
-      setShowMilestone(true);
-    }
-  };
-
-  // Handle suggestion click - Extract section/category from suggestion and navigate
-  const handleSuggestionClick = useCallback((suggestion: string) => {
-    // Normalize the suggestion text
-    const normalized = suggestion.toLowerCase();
-
-    // Map of known section/category names to their IDs and types
-    const sectionMap: Record<string, { id: string; type: 'section' | 'category' | 'route' }> = {
-      // Categories
-      'revenue': { id: 'revenue', type: 'category' },
-      'billing': { id: 'revenue', type: 'category' },
-      'patient care': { id: 'patient-care', type: 'category' },
-      'patient-care': { id: 'patient-care', type: 'category' },
-      'clinical': { id: 'clinical', type: 'category' },
-      'security': { id: 'security', type: 'category' },
-      'admin': { id: 'admin', type: 'category' },
-
-      // Sections
-      'smartscribe': { id: 'smartscribe-atlus', type: 'section' },
-      'smart scribe': { id: 'smartscribe-atlus', type: 'section' },
-      'scribe': { id: 'smartscribe-atlus', type: 'section' },
-      'patient engagement': { id: 'patient-engagement', type: 'section' },
-      'patient-engagement': { id: 'patient-engagement', type: 'section' },
-      'user management': { id: 'user-management', type: 'section' },
-      'user-management': { id: 'user-management', type: 'section' },
-      'patient list': { id: 'user-management', type: 'section' },
-      'billing dashboard': { id: 'billing-dashboard', type: 'section' },
-      'billing-dashboard': { id: 'billing-dashboard', type: 'section' },
-      'revenue dashboard': { id: 'revenue-dashboard', type: 'section' },
-      'revenue-dashboard': { id: 'revenue-dashboard', type: 'section' },
-      'ccm': { id: 'ccm-autopilot', type: 'section' },
-      'ccm autopilot': { id: 'ccm-autopilot', type: 'section' },
-      'ccm-autopilot': { id: 'ccm-autopilot', type: 'section' },
-      'fhir': { id: 'fhir-analytics', type: 'section' },
-      'fhir analytics': { id: 'fhir-analytics', type: 'section' },
-      'fhir-analytics': { id: 'fhir-analytics', type: 'section' },
-      'claims': { id: 'claims-submission', type: 'section' },
-      'claims submission': { id: 'claims-submission', type: 'section' },
-      'handoff': { id: 'patient-handoff', type: 'section' },
-      'patient handoff': { id: 'patient-handoff', type: 'section' },
-
-      // Routes
-      'er dashboard': { id: '/er-dashboard', type: 'route' },
-      'er-dashboard': { id: '/er-dashboard', type: 'route' },
-      'emergency': { id: '/er-dashboard', type: 'route' },
-      'nurse dashboard': { id: '/nurse-dashboard', type: 'route' },
-      'nurse-dashboard': { id: '/nurse-dashboard', type: 'route' },
-      'physician dashboard': { id: '/physician-dashboard', type: 'route' },
-      'physician-dashboard': { id: '/physician-dashboard', type: 'route' },
-      'neuro': { id: '/neuro-suite', type: 'route' },
-      'neuro suite': { id: '/neuro-suite', type: 'route' },
-      'neuro-suite': { id: '/neuro-suite', type: 'route' },
-      'physical therapy': { id: '/physical-therapy', type: 'route' },
-      'physical-therapy': { id: '/physical-therapy', type: 'route' },
-      'care coordination': { id: '/care-coordination', type: 'route' },
-      'care-coordination': { id: '/care-coordination', type: 'route' },
-      'referrals': { id: '/referrals', type: 'route' },
-    };
-
-    // Find matching section/category/route
-    let matched: { id: string; type: 'section' | 'category' | 'route' } | null = null;
-
-    for (const [keyword, target] of Object.entries(sectionMap)) {
-      if (normalized.includes(keyword)) {
-        matched = target;
-        break;
-      }
-    }
-
-    if (matched) {
-      if (matched.type === 'route') {
-        // Navigate to route
-        navigate(matched.id);
-        addLearningEvent({
-          type: 'suggestion_generated',
-          message: `Navigated to ${matched.id}`,
-          timestamp: new Date()
-        });
-      } else if (matched.type === 'category') {
-        // Scroll to category and expand it
-        handleOpenCategory(matched.id);
-        addLearningEvent({
-          type: 'suggestion_generated',
-          message: `Opened ${matched.id} category`,
-          timestamp: new Date()
-        });
-      } else {
-        // Scroll to section
-        handleScrollToSection(matched.id);
-        addLearningEvent({
-          type: 'suggestion_generated',
-          message: `Jumped to ${matched.id}`,
-          timestamp: new Date()
-        });
-      }
-    } else {
-      // Fallback: try to find element by ID from suggestion text
-      const words = suggestion.replace(/[^a-zA-Z0-9\s-]/g, '').toLowerCase().split(/\s+/);
-      for (const word of words) {
-        if (word.length > 3) {
-          const element = document.getElementById(word) ||
-                         document.getElementById(word.replace(/\s+/g, '-')) ||
-                         document.querySelector(`[data-category-id="${word}"]`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            element.classList.add('ring-2', 'ring-indigo-500');
-            setTimeout(() => element.classList.remove('ring-2', 'ring-indigo-500'), 2000);
-            addLearningEvent({
-              type: 'suggestion_generated',
-              message: `Found and scrolled to ${word}`,
-              timestamp: new Date()
-            });
-            return;
-          }
-        }
-      }
-
-      // If nothing matched, show a subtle notification
-      addLearningEvent({
-        type: 'suggestion_generated',
-        message: 'Suggestion noted - exploring...',
-        timestamp: new Date()
-      });
-    }
-  }, [navigate, handleOpenCategory, handleScrollToSection, addLearningEvent]);
 
   // Load personalized layout on mount
   useEffect(() => {
@@ -418,9 +227,8 @@ const IntelligentAdminPanel: React.FC = () => {
   useEffect(() => {
     const lastSeenVersion = localStorage.getItem('whatsNew_lastSeen');
     const permanentlyDismissed = localStorage.getItem('whatsNew_permanentlyDismissed');
-    const currentVersion = '2025-10-19'; // Update with new features
+    const currentVersion = '2025-10-19';
 
-    // Don't show if permanently dismissed OR if already seen this version
     if (permanentlyDismissed === 'true') {
       auditLogger.debug('[WhatsNew] Modal permanently dismissed by user');
       return;
@@ -431,84 +239,6 @@ const IntelligentAdminPanel: React.FC = () => {
       setTimeout(() => setShowWhatsNew(true), 1000);
     }
   }, []);
-
-  async function loadPersonalizedDashboard() {
-    if (!user?.id) {
-      // No user yet - set loading false to prevent infinite loading state
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Get user behavior profile
-      const profile = await getUserBehaviorProfile(supabase, user.id);
-      setBehaviorProfile(profile);
-
-      // Add learning event
-      addLearningEvent({
-        type: 'pattern_detected',
-        message: profile ? 'Loaded your personalized dashboard' : 'Starting to learn your patterns',
-        timestamp: new Date()
-      });
-
-      // Get AI-powered personalized layout
-      const layout = await DashboardPersonalizationAI.generatePersonalizedLayout(
-        user.id,
-        adminRole || 'admin',
-        new Date().getHours()
-      );
-
-      // Get behavior-based suggestions
-      const behaviorBasedSuggestions = getSmartSuggestions(profile);
-
-      // Merge AI suggestions with behavior suggestions
-      const combinedSuggestions = [
-        ...(layout.suggestions || []),
-        ...behaviorBasedSuggestions
-      ].slice(0, 5); // Limit to 5 total
-
-      // Set AI suggestions
-      setAiSuggestions(combinedSuggestions);
-
-      // Check for milestones
-      if (profile) {
-        checkMilestones(profile);
-      }
-
-      // Track dashboard view
-      if (user.id) {
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('tenant_id')
-          .eq('user_id', user.id)
-          .single();
-
-        await trackBehaviorEvent(supabase, {
-          userId: user.id,
-          tenantId: userProfile?.tenant_id || '',
-          eventType: 'navigation',
-          metadata: { page: 'admin_dashboard' }
-        });
-
-        addLearningEvent({
-          type: 'section_opened',
-          message: 'Dashboard visit tracked',
-          timestamp: new Date()
-        });
-      }
-    } catch (error) {
-      // HIPAA Audit: Log dashboard personalization failure
-      await auditLogger.error('ADMIN_DASHBOARD_PERSONALIZATION_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
-        userId: user?.id,
-        adminRole: adminRole || 'admin'
-      });
-      // Category components will still load with default settings
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   if (isLoading) {
     return (
