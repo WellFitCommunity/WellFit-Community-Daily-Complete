@@ -30,3 +30,52 @@ export {
   type QRDAExportOptions,
   type QRDAExportResult
 } from './qrdaExportService';
+
+// HEDIS
+export {
+  HedisService,
+  getHedisMeasures,
+  getHedisSummary,
+} from './hedis/hedisService';
+
+export type {
+  HedisMeasure,
+  HedisDomainGroup,
+  HedisMeasureWithResults,
+  HedisSummary,
+} from './hedis/hedisTypes';
+
+// MIPS
+export {
+  MipsCompositeService,
+  calculateMipsComposite,
+  getMipsComposite,
+  getImprovementActivities,
+  attestActivity,
+  calculatePaymentAdjustment,
+} from './mips/mipsCompositeService';
+
+export type {
+  MipsCompositeScore,
+  MipsQualityMeasureScore,
+  MipsImprovementActivity,
+  MipsPaymentAdjustment,
+  CalculateMipsOptions,
+} from './mips/mipsTypes';
+
+// Star Ratings
+export {
+  StarRatingsService,
+  calculateStarRatings,
+  getStarRatings,
+  calculateMeasureStar,
+  getDomainSummaries,
+} from './star/starRatingsService';
+
+export type {
+  StarRatingScore,
+  MeasureStarDetail,
+  StarCutPoints,
+  StarDomainSummary,
+  CalculateStarOptions,
+} from './star/starTypes';

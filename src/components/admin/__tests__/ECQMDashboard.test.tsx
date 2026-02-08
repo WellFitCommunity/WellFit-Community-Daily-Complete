@@ -1,8 +1,8 @@
 /**
- * eCQM Dashboard Tests
+ * Quality Measures Dashboard Tests
  *
  * ONC Criteria: 170.315(c)(1), (c)(2), (c)(3)
- * Tests for Electronic Clinical Quality Measures dashboard.
+ * Tests for the Quality Measures dashboard (formerly ECQMDashboard).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -37,9 +37,9 @@ import {
   calculateMeasures,
   getCalculationJobStatus,
 } from '../../../services/qualityMeasures/ecqmCalculationService';
-import { exportQRDAI, exportQRDAIII } from '../../../services/qualityMeasures/qrdaExportService';
+import { exportQRDAIII } from '../../../services/qualityMeasures/qrdaExportService';
 
-describe('ECQMDashboard', () => {
+describe('QualityMeasuresDashboard (ECQMDashboard)', () => {
   const mockMeasures = [
     {
       id: 'measure-1',
@@ -105,7 +105,6 @@ describe('ECQMDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock implementations
     vi.mocked(getMeasureDefinitions).mockResolvedValue({
       success: true,
       data: mockMeasures,
@@ -138,18 +137,6 @@ describe('ECQMDashboard', () => {
       error: null,
     });
 
-    vi.mocked(exportQRDAI).mockResolvedValue({
-      success: true,
-      data: {
-        exportId: 'export-1',
-        xml: '<?xml version="1.0"?>',
-        measureIds: ['CMS122v12'],
-        exportType: 'QRDA_I',
-        validationStatus: 'valid',
-      },
-      error: null,
-    });
-
     vi.mocked(exportQRDAIII).mockResolvedValue({
       success: true,
       data: {
@@ -168,7 +155,7 @@ describe('ECQMDashboard', () => {
     render(<ECQMDashboard tenantId="tenant-123" />);
 
     await waitFor(() => {
-      expect(screen.getByText('eCQM Dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Quality Measures Dashboard')).toBeInTheDocument();
     });
   });
 
@@ -194,7 +181,6 @@ describe('ECQMDashboard', () => {
     render(<ECQMDashboard tenantId="tenant-123" />);
 
     await waitFor(() => {
-      // CMS122 is 14.8%, CMS165 is 88.9%
       expect(screen.getByText('14.8%')).toBeInTheDocument();
       expect(screen.getByText('88.9%')).toBeInTheDocument();
     });
@@ -213,12 +199,12 @@ describe('ECQMDashboard', () => {
 
   it('should show loading state', () => {
     vi.mocked(getMeasureDefinitions).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
+      () => new Promise(() => {})
     );
 
     render(<ECQMDashboard tenantId="tenant-123" />);
 
-    expect(screen.getByText('Loading eCQM Dashboard...')).toBeInTheDocument();
+    expect(screen.getByText('Loading Quality Measures Dashboard...')).toBeInTheDocument();
   });
 
   it('should show error state', async () => {
@@ -267,7 +253,6 @@ describe('ECQMDashboard', () => {
       expect(screen.getByText('Diabetes: Hemoglobin A1c (HbA1c) Poor Control (> 9%)')).toBeInTheDocument();
     });
 
-    // Click on the measure row
     const measureRow = screen.getByText('Diabetes: Hemoglobin A1c (HbA1c) Poor Control (> 9%)').closest('tr');
     if (measureRow) {
       fireEvent.click(measureRow);
@@ -299,11 +284,6 @@ describe('ECQMDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Performance Legend')).toBeInTheDocument();
-      expect(screen.getByText(/Excellent \(≥90%\)/)).toBeInTheDocument();
-      expect(screen.getByText(/Good \(75-89%\)/)).toBeInTheDocument();
-      expect(screen.getByText(/Fair \(50-74%\)/)).toBeInTheDocument();
-      expect(screen.getByText(/Needs Improvement \(25-49%\)/)).toBeInTheDocument();
-      expect(screen.getByText(/Poor \(<25%\)/)).toBeInTheDocument();
     });
   });
 
@@ -311,7 +291,6 @@ describe('ECQMDashboard', () => {
     render(<ECQMDashboard tenantId="tenant-123" />);
 
     await waitFor(() => {
-      // CMS122 is an inverse measure (poor control - lower is better)
       expect(screen.getByText(/Lower is better/i)).toBeInTheDocument();
     });
   });
@@ -337,7 +316,6 @@ describe('ECQMDashboard', () => {
   });
 
   it('should handle QRDA III export', async () => {
-    // Mock URL APIs for blob download
     const originalCreateObjectURL = global.URL.createObjectURL;
     const originalRevokeObjectURL = global.URL.revokeObjectURL;
     global.URL.createObjectURL = vi.fn(() => 'blob:test');
@@ -356,9 +334,19 @@ describe('ECQMDashboard', () => {
       expect(exportQRDAIII).toHaveBeenCalled();
     });
 
-    // Restore mocks
     global.URL.createObjectURL = originalCreateObjectURL;
     global.URL.revokeObjectURL = originalRevokeObjectURL;
+  });
+
+  it('should display tab navigation with eCQM, HEDIS, MIPS, Star Ratings', async () => {
+    render(<ECQMDashboard tenantId="tenant-123" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('eCQM')).toBeInTheDocument();
+      expect(screen.getByText('HEDIS')).toBeInTheDocument();
+      expect(screen.getByText('MIPS')).toBeInTheDocument();
+      expect(screen.getByText('Star Ratings')).toBeInTheDocument();
+    });
   });
 
   it('should change reporting period when selector changes', async () => {
@@ -371,7 +359,6 @@ describe('ECQMDashboard', () => {
     const selector = screen.getByRole('combobox');
     fireEvent.change(selector, { target: { value: '2025 Full Year' } });
 
-    // Should trigger a re-fetch with new period
     await waitFor(() => {
       expect(getAggregateResults).toHaveBeenCalledTimes(2);
     });

@@ -33,6 +33,7 @@ const TenantModuleConfigPanel = lazy(() => import('../TenantModuleConfigPanel').
 const FacilityManagementPanel = lazy(() => import('../FacilityManagementPanel'));
 const StaffFinancialSavingsTracker = lazy(() => import('../StaffFinancialSavingsTracker'));
 const MfaComplianceDashboard = lazy(() => import('../MfaComplianceDashboard'));
+const QualityMeasuresDashboard = lazy(() => import('../quality-measures'));
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -204,6 +205,17 @@ export const getAllSections = (): DashboardSection[] => [
   },
 
   // ==================== CLINICAL DATA ====================
+  {
+    id: 'quality-measures',
+    title: 'Quality Measures Dashboard',
+    subtitle: 'eCQM, HEDIS, MIPS, and Star Ratings performance tracking',
+    icon: '📊',
+    headerColor: 'text-cyan-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><QualityMeasuresDashboard tenantId="" /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'case_manager', 'physician'],
+  },
   {
     id: 'fhir-analytics',
     title: 'AI-Enhanced FHIR Analytics',
