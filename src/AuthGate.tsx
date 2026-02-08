@@ -5,6 +5,8 @@ import { useSupabaseClient, useSession, useUser } from "./contexts/AuthContext";
 import {
   checkAdminFromProfile,
   checkAdminFromUserRoles,
+  checkClinicalFromUserRoles,
+  checkClinicalFromProfile,
   type UserRoleData,
   type ProfileRoleData,
 } from "./lib/roleAuthority";
@@ -48,6 +50,27 @@ function isAdminish(
   return false;
 }
 
+/**
+ * Check if user has admin OR clinical role (for MFA enforcement)
+ */
+function isAdminOrClinical(
+  profile?: ProfileRow | null,
+  userRoles?: UserRoleData[] | null
+): boolean {
+  if (userRoles && userRoles.length > 0) {
+    return checkAdminFromUserRoles(userRoles) || checkClinicalFromUserRoles(userRoles);
+  }
+  if (profile) {
+    const profileData: ProfileRoleData = {
+      role_code: profile.role_code,
+      role: profile.role,
+      is_admin: profile.is_admin,
+    };
+    return checkAdminFromProfile(profileData) || checkClinicalFromProfile(profileData);
+  }
+  return false;
+}
+
 export default function AuthGate({ children }: { children: ReactNode }) {
   const supabase = useSupabaseClient();
   const session = useSession();
@@ -68,6 +91,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         path === "/demographics" ||
         path === "/consent-photo" ||
         path === "/consent-privacy" ||
+        path === "/admin-mfa-setup" ||
         path === "/login" ||
         path === "/admin-login" ||
         path === "/envision" ||
@@ -113,12 +137,33 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       // 2) Admin/staff bypass demographics (optionally mark onboarded)
       if (isAdminish(p, userRoles)) {
         if (p.onboarded === false || p.onboarded == null) {
-          // fire-and-forget; don’t block navigation
+          // fire-and-forget; don't block navigation
           supabase
             .from("profiles")
             .update({ onboarded: true })
             .eq("user_id", user.id);
         }
+
+        // 2.5) MFA enforcement for admin/clinical roles
+        if (isAdminOrClinical(p, userRoles) && path !== "/admin-mfa-setup") {
+          const { data: mfaStatus } = await supabase.rpc(
+            "get_mfa_enrollment_status",
+            { p_user_id: user.id }
+          );
+
+          if (cancelled) return;
+
+          if (mfaStatus?.mfa_required && !mfaStatus?.mfa_enabled) {
+            // Grace period expired → hard redirect
+            if (mfaStatus.enforcement_status !== "grace_period" &&
+                mfaStatus.enforcement_status !== "exempt") {
+              navigate("/admin-mfa-setup", { replace: true });
+              return;
+            }
+            // Grace period active or exempt → allow through, nag banner handles UX
+          }
+        }
+
         return; // continue
       }
 

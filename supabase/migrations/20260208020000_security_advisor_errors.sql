@@ -88,6 +88,7 @@ REVOKE ALL ON public.pending_security_alerts FROM anon;
 -- migration_phi_field_definitions: PHI field pattern reference table
 -- Read-only for authenticated, admin-write
 ALTER TABLE public.migration_phi_field_definitions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "phi_field_defs_read_authenticated" ON public.migration_phi_field_definitions;
 CREATE POLICY "phi_field_defs_read_authenticated"
   ON public.migration_phi_field_definitions
   FOR SELECT

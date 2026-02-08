@@ -387,17 +387,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       /* ignore */
     }
 
-    // Determine 2FA method
-    // IMPORTANT: A user is "TOTP enabled" only if BOTH totp_enabled AND totp_secret are set
-    // If totp_enabled is true but totp_secret is missing, this is a partial/broken state
+    // Determine 2FA method — TOTP is mandatory for all Envision users
+    // A user is "TOTP enabled" only if BOTH totp_enabled AND totp_secret are set
     const totpEnabled = Boolean(superAdmin.totp_enabled && superAdmin.totp_secret);
     const totpPartialSetup = Boolean(superAdmin.totp_enabled && !superAdmin.totp_secret);
     const pinConfigured = Boolean(superAdmin.pin_hash);
 
-    // User needs 2FA setup if:
-    // 1. No TOTP fully configured AND no PIN configured, OR
-    // 2. TOTP is in a partial/broken state (enabled but no secret)
-    const needs2FASetup = (!totpEnabled && !pinConfigured) || totpPartialSetup;
+    // TOTP is always required — PIN alone is no longer sufficient
+    // Users with only PIN must set up TOTP
+    const needs2FASetup = !totpEnabled;
 
     // Log if partial TOTP state detected
     if (totpPartialSetup) {

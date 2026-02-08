@@ -42,6 +42,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: '/envision', component: 'EnvisionLoginPage', auth: 'none', category: 'public' },
   { path: '/envision/login', component: 'EnvisionLoginPage', auth: 'none', category: 'public' },
   { path: '/envision-2fa-setup', component: 'EnvisionTotpSetupPage', auth: 'none', category: 'public' },
+  { path: '/admin-mfa-setup', component: 'AdminMfaSetupPage', auth: 'user', category: 'public' },
   // Generic login (redirects based on tenant)
   { path: '/login', component: 'LoginPage', auth: 'none', category: 'public' },
   { path: '/metrics', component: 'MetricsPage', auth: 'none', category: 'public' },

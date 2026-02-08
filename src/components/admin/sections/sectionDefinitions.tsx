@@ -32,6 +32,7 @@ const TenantComplianceReport = lazy(() => import('../TenantComplianceReport'));
 const TenantModuleConfigPanel = lazy(() => import('../TenantModuleConfigPanel').then(m => ({ default: m.TenantModuleConfigPanel })));
 const FacilityManagementPanel = lazy(() => import('../FacilityManagementPanel'));
 const StaffFinancialSavingsTracker = lazy(() => import('../StaffFinancialSavingsTracker'));
+const MfaComplianceDashboard = lazy(() => import('../MfaComplianceDashboard'));
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -252,6 +253,17 @@ export const getAllSections = (): DashboardSection[] => [
   },
 
   // ==================== SECURITY & COMPLIANCE ====================
+  {
+    id: 'mfa-compliance',
+    title: 'MFA Compliance Dashboard',
+    subtitle: 'Monitor multi-factor authentication enrollment across admin and clinical staff',
+    icon: '🔐',
+    headerColor: 'text-blue-900',
+    component: <Suspense fallback={<SectionLoadingFallback />}><MfaComplianceDashboard /></Suspense>,
+    category: 'security',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'it_admin'],
+  },
   {
     id: 'tenant-security',
     title: 'Facility Security Dashboard',

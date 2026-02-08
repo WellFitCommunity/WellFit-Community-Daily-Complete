@@ -35,6 +35,7 @@ import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 import { SearchResult } from '../../contexts/VoiceActionContext';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { useAdminPersonalization } from '../../hooks/useAdminPersonalization';
+import MfaGracePeriodBanner from './MfaGracePeriodBanner';
 
 // Lazy-load category components for code splitting
 // This reduces the initial bundle size by ~30-40%
@@ -258,6 +259,9 @@ const IntelligentAdminPanel: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <AdminHeader title="🎯 Mission Control" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          {/* MFA Grace Period Warning */}
+          <MfaGracePeriodBanner />
+
           {/* Personalized Greeting with Role-Specific Stats */}
           <PersonalizedGreeting />
 
