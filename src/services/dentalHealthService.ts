@@ -9,7 +9,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
-import { DentalObservationService } from './fhir/DentalObservationService';
+import { DentalObservationService } from './fhir/dental';
 import type {
   DentalAssessment,
   DentalProcedure,

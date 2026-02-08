@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PriorAuthorizationService } from '../PriorAuthorizationService';
+import { PriorAuthorizationService } from '../prior-auth';
 
 // Mock getErrorMessage
 vi.mock('../../../lib/getErrorMessage', () => ({

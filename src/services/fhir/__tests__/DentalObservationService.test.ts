@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DentalObservationService } from '../DentalObservationService';
+import { DentalObservationService } from '../dental';
 
 // Mock getErrorMessage
 vi.mock('../../../lib/getErrorMessage', () => ({

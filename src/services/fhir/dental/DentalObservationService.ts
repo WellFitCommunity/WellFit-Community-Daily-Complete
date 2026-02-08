@@ -1,200 +1,33 @@
 /**
- * =====================================================
- * FHIR DENTAL OBSERVATION SERVICE
- * =====================================================
- * Purpose: FHIR R4 compliant mapping for dental observations
+ * FHIR Dental Observation Service
+ * FHIR R4 compliant mapping for dental observations
  * Resources: Observation, Procedure, Condition, DiagnosticReport
- * Standards: LOINC codes for dental observations, SNOMED CT for conditions
- * =====================================================
  */
 
-import { supabase } from '../../lib/supabaseClient';
-import { getErrorMessage } from '../../lib/getErrorMessage';
+import { supabase } from '../../../lib/supabaseClient';
+import { getErrorMessage } from '../../../lib/getErrorMessage';
 import type {
   DentalObservation,
   DentalAssessment,
   DentalProcedure,
-  ToothChartEntry as _ToothChartEntry,
-} from '../../types/dentalHealth';
-
-// =====================================================
-// FHIR RESOURCE TYPES
-// =====================================================
-
-export interface FHIRObservation {
-  resourceType: 'Observation';
-  id?: string;
-  status: 'registered' | 'preliminary' | 'final' | 'amended' | 'corrected' | 'cancelled';
-  category?: FHIRCodeableConcept[];
-  code: FHIRCodeableConcept;
-  subject: FHIRReference;
-  encounter?: FHIRReference;
-  effectiveDateTime?: string;
-  issued?: string;
-  performer?: FHIRReference[];
-  valueQuantity?: FHIRQuantity;
-  valueCodeableConcept?: FHIRCodeableConcept;
-  valueString?: string;
-  valueBoolean?: boolean;
-  interpretation?: FHIRCodeableConcept[];
-  note?: FHIRAnnotation[];
-  bodySite?: FHIRCodeableConcept;
-  referenceRange?: FHIRReferenceRange[];
-}
-
-export interface FHIRProcedure {
-  resourceType: 'Procedure';
-  id?: string;
-  status: 'preparation' | 'in-progress' | 'not-done' | 'on-hold' | 'stopped' | 'completed';
-  code: FHIRCodeableConcept;
-  subject: FHIRReference;
-  encounter?: FHIRReference;
-  performedDateTime?: string;
-  performer?: Array<{
-    actor: FHIRReference;
-    role?: FHIRCodeableConcept;
-  }>;
-  bodySite?: FHIRCodeableConcept[];
-  outcome?: FHIRCodeableConcept;
-  complication?: FHIRCodeableConcept[];
-  note?: FHIRAnnotation[];
-  usedCode?: FHIRCodeableConcept[];
-}
-
-export interface FHIRCondition {
-  resourceType: 'Condition';
-  id?: string;
-  clinicalStatus?: FHIRCodeableConcept;
-  verificationStatus?: FHIRCodeableConcept;
-  category?: FHIRCodeableConcept[];
-  severity?: FHIRCodeableConcept;
-  code: FHIRCodeableConcept;
-  bodySite?: FHIRCodeableConcept[];
-  subject: FHIRReference;
-  encounter?: FHIRReference;
-  onsetDateTime?: string;
-  recordedDate?: string;
-  recorder?: FHIRReference;
-  note?: FHIRAnnotation[];
-}
-
-export interface FHIRDiagnosticReport {
-  resourceType: 'DiagnosticReport';
-  id?: string;
-  status: 'registered' | 'partial' | 'preliminary' | 'final' | 'amended' | 'corrected' | 'cancelled';
-  category?: FHIRCodeableConcept[];
-  code: FHIRCodeableConcept;
-  subject: FHIRReference;
-  encounter?: FHIRReference;
-  effectiveDateTime?: string;
-  issued?: string;
-  performer?: FHIRReference[];
-  result?: FHIRReference[];
-  conclusion?: string;
-  conclusionCode?: FHIRCodeableConcept[];
-}
-
-// Supporting FHIR types
-export interface FHIRCodeableConcept {
-  coding?: FHIRCoding[];
-  text?: string;
-}
-
-export interface FHIRCoding {
-  system?: string;
-  version?: string;
-  code?: string;
-  display?: string;
-}
-
-export interface FHIRReference {
-  reference?: string;
-  type?: string;
-  display?: string;
-}
-
-export interface FHIRQuantity {
-  value?: number;
-  unit?: string;
-  system?: string;
-  code?: string;
-}
-
-export interface FHIRAnnotation {
-  authorReference?: FHIRReference;
-  time?: string;
-  text: string;
-}
-
-export interface FHIRReferenceRange {
-  low?: FHIRQuantity;
-  high?: FHIRQuantity;
-  type?: FHIRCodeableConcept;
-  text?: string;
-}
-
-export interface FHIRApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-// =====================================================
-// DENTAL LOINC CODES (Standardized observation codes)
-// =====================================================
-
-export const DENTAL_LOINC_CODES = {
-  PERIODONTAL_PROBING_DEPTH: '11381-2',
-  GINGIVAL_BLEEDING_INDEX: '86254-6',
-  PLAQUE_INDEX: '86253-8',
-  TOOTH_MOBILITY: '86255-3',
-  DENTAL_CARIES_RISK: '86256-1',
-  ORAL_HYGIENE_INDEX: '86257-9',
-  PERIODONTAL_DISEASE_SEVERITY: '86258-7',
-  TOOTH_CONDITION: '86259-5',
-  DENTAL_PAIN_SCORE: '72514-3',
-  DRY_MOUTH_SEVERITY: '86260-3',
-  GUM_RECESSION: '86261-1',
-};
-
-// =====================================================
-// SNOMED CT CODES FOR DENTAL CONDITIONS
-// =====================================================
-
-export const DENTAL_SNOMED_CODES = {
-  // Periodontal Conditions
-  HEALTHY_GUMS: '87715008',
-  GINGIVITIS: '66383009',
-  MILD_PERIODONTITIS: '2556008',
-  MODERATE_PERIODONTITIS: '109564002',
-  SEVERE_PERIODONTITIS: '27528006',
-
-  // Tooth Conditions
-  DENTAL_CARIES: '80967001',
-  TOOTH_FILLING: '234947003',
-  DENTAL_CROWN: '69993004',
-  DENTAL_BRIDGE: '257816003',
-  DENTAL_IMPLANT: '398044001',
-  ROOT_CANAL: '234952001',
-  TOOTH_EXTRACTION: '65546002',
-  MISSING_TOOTH: '247372009',
-  FRACTURED_TOOTH: '21824004',
-  TOOTH_ABSCESS: '109564002',
-  IMPACTED_TOOTH: '109564009',
-
-  // Procedures
-  DENTAL_PROPHYLAXIS: '234960005',
-  DENTAL_SCALING: '234961009',
-  FLUORIDE_APPLICATION: '234964001',
-  DENTAL_RESTORATION: '234947003',
-  TOOTH_EXTRACTION_PROCEDURE: '65546002',
-  ROOT_CANAL_THERAPY: '234952001',
-  DENTAL_CLEANING: '234961009',
-};
-
-// =====================================================
-// SERVICE CLASS
-// =====================================================
+} from '../../../types/dentalHealth';
+import type {
+  FHIRObservation,
+  FHIRProcedure,
+  FHIRCondition,
+  FHIRDiagnosticReport,
+  FHIRApiResponse,
+} from './types';
+import { DENTAL_LOINC_CODES } from './codes';
+import {
+  buildObservation,
+  interpretPlaqueIndex,
+  interpretBleedingIndex,
+  interpretPainScore,
+  getPeriodontalStatusConcept,
+  getPeriodontalSnomedCode,
+  mapProcedureStatus,
+} from './helpers';
 
 export class DentalObservationService {
   /**
@@ -209,7 +42,7 @@ export class DentalObservationService {
       // Plaque Index Observation
       if (assessment.plaque_index !== undefined && assessment.plaque_index !== null) {
         observations.push(
-          this.buildObservation({
+          buildObservation({
             code: DENTAL_LOINC_CODES.PLAQUE_INDEX,
             display: 'Plaque Index',
             patientId: assessment.patient_id,
@@ -223,7 +56,7 @@ export class DentalObservationService {
             },
             referenceRangeLow: 0,
             referenceRangeHigh: 1,
-            interpretation: this.interpretPlaqueIndex(assessment.plaque_index),
+            interpretation: interpretPlaqueIndex(assessment.plaque_index),
           })
         );
       }
@@ -231,7 +64,7 @@ export class DentalObservationService {
       // Bleeding Index Observation
       if (assessment.bleeding_index !== undefined && assessment.bleeding_index !== null) {
         observations.push(
-          this.buildObservation({
+          buildObservation({
             code: DENTAL_LOINC_CODES.GINGIVAL_BLEEDING_INDEX,
             display: 'Gingival Bleeding Index',
             patientId: assessment.patient_id,
@@ -245,7 +78,7 @@ export class DentalObservationService {
             },
             referenceRangeLow: 0,
             referenceRangeHigh: 1,
-            interpretation: this.interpretBleedingIndex(assessment.bleeding_index),
+            interpretation: interpretBleedingIndex(assessment.bleeding_index),
           })
         );
       }
@@ -253,7 +86,7 @@ export class DentalObservationService {
       // Pain Score Observation
       if (assessment.pain_level !== undefined && assessment.pain_level !== null) {
         observations.push(
-          this.buildObservation({
+          buildObservation({
             code: DENTAL_LOINC_CODES.DENTAL_PAIN_SCORE,
             display: 'Dental Pain Score',
             patientId: assessment.patient_id,
@@ -267,7 +100,7 @@ export class DentalObservationService {
             },
             referenceRangeLow: 0,
             referenceRangeHigh: 10,
-            interpretation: this.interpretPainScore(assessment.pain_level),
+            interpretation: interpretPainScore(assessment.pain_level),
             bodySite: assessment.pain_location,
           })
         );
@@ -276,13 +109,13 @@ export class DentalObservationService {
       // Periodontal Disease Severity Observation
       if (assessment.periodontal_status) {
         observations.push(
-          this.buildObservation({
+          buildObservation({
             code: DENTAL_LOINC_CODES.PERIODONTAL_DISEASE_SEVERITY,
             display: 'Periodontal Disease Severity',
             patientId: assessment.patient_id,
             performerId: assessment.provider_id,
             effectiveDateTime: assessment.visit_date,
-            valueCodeableConcept: this.getPeriodontalStatusConcept(assessment.periodontal_status),
+            valueCodeableConcept: getPeriodontalStatusConcept(assessment.periodontal_status),
           })
         );
       }
@@ -326,7 +159,7 @@ export class DentalObservationService {
     try {
       const fhirProcedure: FHIRProcedure = {
         resourceType: 'Procedure',
-        status: this.mapProcedureStatus(procedure.procedure_status),
+        status: mapProcedureStatus(procedure.procedure_status),
         code: {
           coding: [
             {
@@ -416,7 +249,7 @@ export class DentalObservationService {
 
       // Periodontal condition
       if (assessment.periodontal_status && assessment.periodontal_status !== 'healthy') {
-        const snomedCode = this.getPeriodontalSnomedCode(assessment.periodontal_status);
+        const snomedCode = getPeriodontalSnomedCode(assessment.periodontal_status);
 
         conditions.push({
           resourceType: 'Condition',
@@ -572,162 +405,5 @@ export class DentalObservationService {
     } catch (err: unknown) {
       return { success: false, error: getErrorMessage(err) };
     }
-  }
-
-  // =====================================================
-  // HELPER METHODS
-  // =====================================================
-
-  private static buildObservation(params: {
-    code: string;
-    display: string;
-    patientId: string;
-    performerId?: string | null;
-    effectiveDateTime: string;
-    valueQuantity?: FHIRQuantity;
-    valueCodeableConcept?: FHIRCodeableConcept;
-    valueString?: string;
-    referenceRangeLow?: number;
-    referenceRangeHigh?: number;
-    interpretation?: string;
-    bodySite?: string;
-  }): FHIRObservation {
-    const observation: FHIRObservation = {
-      resourceType: 'Observation',
-      status: 'final',
-      category: [
-        {
-          coding: [
-            {
-              system: 'http://terminology.hl7.org/CodeSystem/observation-category',
-              code: 'exam',
-              display: 'Exam',
-            },
-          ],
-        },
-      ],
-      code: {
-        coding: [
-          {
-            system: 'http://loinc.org',
-            code: params.code,
-            display: params.display,
-          },
-        ],
-        text: params.display,
-      },
-      subject: {
-        reference: `Patient/${params.patientId}`,
-        type: 'Patient',
-      },
-      effectiveDateTime: params.effectiveDateTime,
-      issued: new Date().toISOString(),
-    };
-
-    if (params.performerId) {
-      observation.performer = [
-        {
-          reference: `Practitioner/${params.performerId}`,
-          type: 'Practitioner',
-        },
-      ];
-    }
-
-    if (params.valueQuantity) {
-      observation.valueQuantity = params.valueQuantity;
-    }
-
-    if (params.valueCodeableConcept) {
-      observation.valueCodeableConcept = params.valueCodeableConcept;
-    }
-
-    if (params.valueString) {
-      observation.valueString = params.valueString;
-    }
-
-    if (params.interpretation) {
-      observation.interpretation = [
-        {
-          text: params.interpretation,
-        },
-      ];
-    }
-
-    if (params.bodySite) {
-      observation.bodySite = {
-        text: params.bodySite,
-      };
-    }
-
-    if (params.referenceRangeLow !== undefined && params.referenceRangeHigh !== undefined) {
-      observation.referenceRange = [
-        {
-          low: {
-            value: params.referenceRangeLow,
-          },
-          high: {
-            value: params.referenceRangeHigh,
-          },
-        },
-      ];
-    }
-
-    return observation;
-  }
-
-  private static interpretPlaqueIndex(value: number): string {
-    if (value <= 1.0) return 'normal';
-    if (value <= 2.0) return 'high';
-    return 'critical';
-  }
-
-  private static interpretBleedingIndex(value: number): string {
-    if (value <= 1.0) return 'normal';
-    if (value <= 2.0) return 'high';
-    return 'critical';
-  }
-
-  private static interpretPainScore(value: number): string {
-    if (value === 0) return 'normal';
-    if (value <= 3) return 'low';
-    if (value <= 6) return 'high';
-    return 'critical';
-  }
-
-  private static getPeriodontalStatusConcept(status: string): FHIRCodeableConcept {
-    const snomedCode = this.getPeriodontalSnomedCode(status);
-    return {
-      coding: [
-        {
-          system: 'http://snomed.info/sct',
-          code: snomedCode,
-          display: status.replace(/_/g, ' '),
-        },
-      ],
-      text: status.replace(/_/g, ' '),
-    };
-  }
-
-  private static getPeriodontalSnomedCode(status: string): string {
-    const mapping: Record<string, string> = {
-      healthy: DENTAL_SNOMED_CODES.HEALTHY_GUMS,
-      gingivitis: DENTAL_SNOMED_CODES.GINGIVITIS,
-      mild_periodontitis: DENTAL_SNOMED_CODES.MILD_PERIODONTITIS,
-      moderate_periodontitis: DENTAL_SNOMED_CODES.MODERATE_PERIODONTITIS,
-      severe_periodontitis: DENTAL_SNOMED_CODES.SEVERE_PERIODONTITIS,
-      advanced_periodontitis: DENTAL_SNOMED_CODES.SEVERE_PERIODONTITIS,
-    };
-    return mapping[status] || DENTAL_SNOMED_CODES.GINGIVITIS;
-  }
-
-  private static mapProcedureStatus(status: string): FHIRProcedure['status'] {
-    const mapping: Record<string, FHIRProcedure['status']> = {
-      scheduled: 'preparation',
-      in_progress: 'in-progress',
-      completed: 'completed',
-      cancelled: 'not-done',
-      on_hold: 'on-hold',
-    };
-    return mapping[status] || 'completed';
   }
 }
