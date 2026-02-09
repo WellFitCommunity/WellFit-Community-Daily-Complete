@@ -34,6 +34,9 @@ const FacilityManagementPanel = lazy(() => import('../FacilityManagementPanel'))
 const StaffFinancialSavingsTracker = lazy(() => import('../StaffFinancialSavingsTracker'));
 const MfaComplianceDashboard = lazy(() => import('../MfaComplianceDashboard'));
 const QualityMeasuresDashboard = lazy(() => import('../quality-measures'));
+const CardiologyDashboard = lazy(() => import('../../cardiology/CardiologyDashboard'));
+const LaborDeliveryDashboard = lazy(() => import('../../labor-delivery/LaborDeliveryDashboard'));
+const OncologyDashboard = lazy(() => import('../../oncology/OncologyDashboard'));
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -202,6 +205,41 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'admin',
     priority: 'high',
     defaultOpen: false,
+  },
+
+  // ==================== CLINICAL SPECIALTIES ====================
+  {
+    id: 'cardiology',
+    title: 'Cardiology Dashboard',
+    subtitle: 'ECG, echocardiography, heart failure management, cardiac rehab, and device monitoring',
+    icon: '🫀',
+    headerColor: 'text-red-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><CardiologyDashboard /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'case_manager'],
+  },
+  {
+    id: 'labor-delivery',
+    title: 'Labor & Delivery Dashboard',
+    subtitle: 'Prenatal care, labor tracking, fetal monitoring, delivery records, and postpartum assessments',
+    icon: '👶',
+    headerColor: 'text-pink-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><LaborDeliveryDashboard /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'case_manager'],
+  },
+  {
+    id: 'oncology',
+    title: 'Oncology Dashboard',
+    subtitle: 'Cancer registry, TNM staging, chemotherapy/radiation tracking, CTCAE side effects, and survivorship',
+    icon: '🎗️',
+    headerColor: 'text-purple-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><OncologyDashboard /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'case_manager'],
   },
 
   // ==================== CLINICAL DATA ====================

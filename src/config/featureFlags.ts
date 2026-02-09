@@ -10,6 +10,9 @@ export interface FeatureFlags {
   neuroSuite: boolean;
   wearableIntegration: boolean;
   physicalTherapy: boolean;
+  cardiology: boolean;
+  laborDelivery: boolean;
+  oncology: boolean;
 
   // Healthcare Integrations
   healthcareIntegrations: boolean;
@@ -64,6 +67,9 @@ const getFeatureFlags = (): FeatureFlags => {
     neuroSuite: env.VITE_FEATURE_NEURO_SUITE === 'true',
     wearableIntegration: env.VITE_FEATURE_WEARABLES === 'true',
     physicalTherapy: env.VITE_FEATURE_PHYSICAL_THERAPY === 'true',
+    cardiology: env.VITE_FEATURE_CARDIOLOGY === 'true',
+    laborDelivery: env.VITE_FEATURE_LABOR_DELIVERY === 'true',
+    oncology: env.VITE_FEATURE_ONCOLOGY === 'true',
 
     // Healthcare Integrations (default: disabled)
     healthcareIntegrations: env.VITE_FEATURE_HEALTHCARE_INTEGRATIONS === 'true',

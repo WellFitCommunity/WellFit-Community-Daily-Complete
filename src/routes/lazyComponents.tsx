@@ -204,6 +204,9 @@ export const MedicineCabinet = React.lazy(() => import('../components/patient/Me
 export const WearableDashboard = React.lazy(() => import('../components/patient/WearableDashboard'));
 export const CommunityMoments = React.lazy(() => import('../components/CommunityMoments'));
 export const DentalHealthDashboard = React.lazy(() => import('../components/dental/DentalHealthDashboard'));
+export const CardiologyDashboard = React.lazy(() => import('../components/cardiology/CardiologyDashboard'));
+export const LaborDeliveryDashboard = React.lazy(() => import('../components/labor-delivery/LaborDeliveryDashboard'));
+export const OncologyDashboard = React.lazy(() => import('../components/oncology/OncologyDashboard'));
 
 // Connected Devices & Health Records
 export const SmartScalePage = React.lazy(() => import('../pages/devices/SmartScalePage'));
@@ -380,6 +383,9 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   WearableDashboard,
   CommunityMoments,
   DentalHealthDashboard,
+  CardiologyDashboard,
+  LaborDeliveryDashboard,
+  OncologyDashboard,
   SmartScalePage,
   BloodPressureMonitorPage,
   GlucometerPage,

@@ -107,6 +107,11 @@ export const protectedRoutes: RouteConfig[] = [
   // Feature-flagged
   { path: '/time-clock', component: 'TimeClockPage', auth: 'user', category: 'protected', featureFlag: 'timeClock' },
   { path: '/mental-health', component: 'MentalHealthDashboard', auth: 'user', category: 'protected', featureFlag: 'mentalHealth' },
+
+  // Clinical Specialty Modules
+  { path: '/heart-health', component: 'CardiologyDashboard', auth: 'user', category: 'protected', featureFlag: 'cardiology' },
+  { path: '/pregnancy-care', component: 'LaborDeliveryDashboard', auth: 'user', category: 'protected', featureFlag: 'laborDelivery' },
+  { path: '/cancer-care', component: 'OncologyDashboard', auth: 'user', category: 'protected', featureFlag: 'oncology' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
