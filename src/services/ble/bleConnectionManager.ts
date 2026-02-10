@@ -120,7 +120,7 @@ async function requestDevice(
       serviceUuid: `0x${serviceUuid.toString(16)}`,
     });
 
-    const bluetooth = navigator.bluetooth;
+    const bluetooth = (navigator as Navigator & { bluetooth?: Bluetooth }).bluetooth;
     if (!bluetooth) {
       return failure(
         'EXTERNAL_SERVICE_ERROR',
