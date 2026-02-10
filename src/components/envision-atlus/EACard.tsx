@@ -9,38 +9,37 @@ import { cn } from '../../lib/utils';
 
 interface EACardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'elevated' | 'highlight';
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-export const EACard = React.forwardRef<HTMLDivElement, EACardProps>(
-  ({ className, variant = 'default', ...props }, ref) => {
-    const variants = {
-      default: 'bg-slate-800 border-slate-700',
-      elevated: 'bg-slate-800 border-slate-600 shadow-lg shadow-black/20',
-      highlight: 'bg-linear-to-br from-[#00857a]/10 to-slate-800 border-[#00857a]/30',
-    };
+export function EACard({ className, variant = 'default', ref, ...props }: EACardProps) {
+  const variants = {
+    default: 'bg-slate-800 border-slate-700',
+    elevated: 'bg-slate-800 border-slate-600 shadow-lg shadow-black/20',
+    highlight: 'bg-linear-to-br from-[#00857a]/10 to-slate-800 border-[#00857a]/30',
+  };
 
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          'rounded-lg border',
-          variants[variant],
-          className
-        )}
-        {...props}
-      />
-    );
-  }
-);
-EACard.displayName = 'EACard';
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'rounded-lg border',
+        variants[variant],
+        className
+      )}
+      {...props}
+    />
+  );
+}
 
 interface EACardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   icon?: React.ReactNode;
   action?: React.ReactNode;
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-export const EACardHeader = React.forwardRef<HTMLDivElement, EACardHeaderProps>(
-  ({ className, icon, action, children, ...props }, ref) => (
+export function EACardHeader({ className, icon, action, children, ref, ...props }: EACardHeaderProps) {
+  return (
     <div
       ref={ref}
       className={cn('flex items-center justify-between px-6 py-4 border-b border-slate-700', className)}
@@ -52,28 +51,27 @@ export const EACardHeader = React.forwardRef<HTMLDivElement, EACardHeaderProps>(
       </div>
       {action && <div>{action}</div>}
     </div>
-  )
-);
-EACardHeader.displayName = 'EACardHeader';
+  );
+}
 
-export const EACardContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('p-6', className)} {...props} />
-));
-EACardContent.displayName = 'EACardContent';
+interface EACardSubProps extends React.HTMLAttributes<HTMLDivElement> {
+  ref?: React.Ref<HTMLDivElement>;
+}
 
-export const EACardFooter = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex items-center px-6 py-4 border-t border-slate-700 bg-slate-900/50', className)}
-    {...props}
-  />
-));
-EACardFooter.displayName = 'EACardFooter';
+export function EACardContent({ className, ref, ...props }: EACardSubProps) {
+  return (
+    <div ref={ref} className={cn('p-6', className)} {...props} />
+  );
+}
+
+export function EACardFooter({ className, ref, ...props }: EACardSubProps) {
+  return (
+    <div
+      ref={ref}
+      className={cn('flex items-center px-6 py-4 border-t border-slate-700 bg-slate-900/50', className)}
+      {...props}
+    />
+  );
+}
 
 export default EACard;

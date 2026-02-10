@@ -3,10 +3,11 @@ import { cn } from '../../lib/utils';
 
 interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'destructive';
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
-  ({ className, variant = 'default', ...props }, ref) => (
+function Alert({ className, variant = 'default', ref, ...props }: AlertProps) {
+  return (
     <div
       ref={ref}
       role="alert"
@@ -20,20 +21,21 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       )}
       {...props}
     />
-  )
-);
-Alert.displayName = 'Alert';
+  );
+}
 
-const AlertDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('text-sm [&_p]:leading-relaxed', className)}
-    {...props}
-  />
-));
-AlertDescription.displayName = 'AlertDescription';
+interface AlertDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
+  ref?: React.Ref<HTMLParagraphElement>;
+}
+
+function AlertDescription({ className, ref, ...props }: AlertDescriptionProps) {
+  return (
+    <div
+      ref={ref}
+      className={cn('text-sm [&_p]:leading-relaxed', className)}
+      {...props}
+    />
+  );
+}
 
 export { Alert, AlertDescription };

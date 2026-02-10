@@ -37,8 +37,8 @@ vi.mock('../../components/dashboard/SeniorCommunityDashboard', () => ({
 }));
 
 describe('DashboardPage - Senior Facing Page', () => {
-  let mockSupabase: any;
-  let mockUser: any;
+  let mockSupabase: { from: ReturnType<typeof vi.fn>; select: ReturnType<typeof vi.fn>; eq: ReturnType<typeof vi.fn>; single: ReturnType<typeof vi.fn> };
+  let mockUser: { id: string; email: string };
 
   beforeEach(() => {
     vi.clearAllMocks();

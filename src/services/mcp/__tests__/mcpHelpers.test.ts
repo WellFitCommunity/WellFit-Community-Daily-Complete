@@ -12,7 +12,7 @@ vi.mock('../mcpClient', () => ({
 }));
 
 describe('MCP Helper Functions', () => {
-  let mockClient: any;
+  let mockClient: { callTool: ReturnType<typeof vi.fn>; initialize: ReturnType<typeof vi.fn>; listTools: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     // Create a fresh mock client for each test

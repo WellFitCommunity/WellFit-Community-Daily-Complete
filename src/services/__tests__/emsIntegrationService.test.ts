@@ -88,13 +88,13 @@ describe('EMSIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'provider-123' } },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       // Mock admin user creation for temp patient
       mockSupabase.auth.admin.createUser.mockResolvedValue({
         data: { user: { id: 'temp-patient-456' } },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
@@ -114,7 +114,7 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'encounters') {
           return {
@@ -129,7 +129,7 @@ describe('EMSIntegrationService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'ehr_observations') {
           return {
@@ -141,16 +141,16 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'prehospital_handoffs') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
-        return {} as any;
+        return {} as unknown as ReturnType<typeof vi.fn>;
       });
 
       const result = await integrateEMSHandoff('handoff-123', mockHandoff);
@@ -165,7 +165,7 @@ describe('EMSIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       const result = await integrateEMSHandoff('handoff-123', mockHandoff);
 
@@ -177,12 +177,12 @@ describe('EMSIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'provider-123' } },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       mockSupabase.auth.admin.createUser.mockResolvedValue({
         data: { user: { id: 'temp-patient-456' } },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
@@ -202,7 +202,7 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'encounters') {
           return {
@@ -217,7 +217,7 @@ describe('EMSIntegrationService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'ehr_observations') {
           return {
@@ -229,16 +229,16 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'prehospital_handoffs') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
-        return {} as any;
+        return {} as unknown as ReturnType<typeof vi.fn>;
       });
 
       const result = await integrateEMSHandoff('handoff-123', mockHandoff);
@@ -258,12 +258,12 @@ describe('EMSIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'provider-123' } },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       mockSupabase.auth.admin.createUser.mockResolvedValue({
         data: { user: { id: 'temp-patient-456' } },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
@@ -283,7 +283,7 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'encounters') {
           return {
@@ -298,7 +298,7 @@ describe('EMSIntegrationService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'ehr_observations') {
           return {
@@ -310,16 +310,16 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'prehospital_handoffs') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
-        return {} as any;
+        return {} as unknown as ReturnType<typeof vi.fn>;
       });
 
       const result = await integrateEMSHandoff('handoff-123', cardiacArrestHandoff);
@@ -348,7 +348,7 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'ehr_observations') {
           return {
@@ -358,9 +358,9 @@ describe('EMSIntegrationService', () => {
                 error: null
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
-        return {} as any;
+        return {} as unknown as ReturnType<typeof vi.fn>;
       });
 
       const result = await getHandoffIntegrationStatus('handoff-123');
@@ -387,9 +387,9 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
-        return {} as any;
+        return {} as unknown as ReturnType<typeof vi.fn>;
       });
 
       const result = await getHandoffIntegrationStatus('handoff-123');
@@ -407,7 +407,7 @@ describe('EMSIntegrationService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as ReturnType<typeof vi.fn>));
 
       const result = await getHandoffIntegrationStatus('handoff-123');
 
@@ -420,12 +420,12 @@ describe('EMSIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'provider-123' } },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       mockSupabase.auth.admin.createUser.mockResolvedValue({
         data: { user: { id: 'temp-patient-456' } },
         error: null
-      } as any);
+      } as unknown as ReturnType<typeof vi.fn>);
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
@@ -445,17 +445,17 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'encounters') {
-          let encounterInserted: any = null;
+          let encounterInserted: Record<string, unknown> | null = null;
           return {
-            insert: vi.fn((data: any) => {
-              encounterInserted = data;
+            insert: vi.fn((data: unknown) => {
+              encounterInserted = data as Record<string, unknown>;
               return {
                 select: vi.fn().mockReturnValue({
                   single: vi.fn().mockResolvedValue({
-                    data: { id: 'encounter-789', ...encounterInserted },
+                    data: { id: 'encounter-789', ...(encounterInserted ?? {}) },
                     error: null
                   })
                 })
@@ -464,7 +464,7 @@ describe('EMSIntegrationService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'ehr_observations') {
           return {
@@ -476,16 +476,16 @@ describe('EMSIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
         if (table === 'prehospital_handoffs') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as ReturnType<typeof vi.fn>;
         }
-        return {} as any;
+        return {} as unknown as ReturnType<typeof vi.fn>;
       });
 
       const cardiacArrestHandoff: PrehospitalHandoff = {

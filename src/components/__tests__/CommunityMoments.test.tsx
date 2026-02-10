@@ -45,15 +45,15 @@ vi.mock('react-confetti', () => ({
 
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-    img: (props: any) => <img {...props} alt={props.alt || ''} />,
+    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+    button: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <button {...props}>{children}</button>,
+    img: (props: { alt?: string; [key: string]: unknown }) => <img {...props} alt={props.alt || ''} />,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('emoji-picker-react', () => ({
-  default: function MockEmojiPicker({ onEmojiClick }: any) {
+  default: function MockEmojiPicker({ onEmojiClick }: { onEmojiClick: (emoji: { emoji: string }) => void }) {
     return (
       <div data-testid="emoji-picker">
         <button onClick={() => onEmojiClick({ emoji: '😊' })}>😊</button>
@@ -64,7 +64,7 @@ vi.mock('emoji-picker-react', () => ({
 }));
 
 // Helper to create chainable Supabase mock
-function createSupabaseMock(mockUser: any) {
+function createSupabaseMock(mockUser: { id: string; email: string }) {
   const mockMomentsData = [
     {
       id: '1',
@@ -85,9 +85,9 @@ function createSupabaseMock(mockUser: any) {
   ];
 
   // Create thenable chain for Supabase queries
-  const createQueryChain = (tableData: any) => {
+  const createQueryChain = (tableData: unknown[] | null) => {
     const result = { data: tableData, error: null, count: tableData?.length || 0 };
-    const chain: any = {};
+    const chain: Record<string, unknown> = {};
 
     // All chainable methods return the chain
     chain.select = vi.fn().mockReturnValue(chain);
@@ -100,13 +100,13 @@ function createSupabaseMock(mockUser: any) {
     chain.single = vi.fn().mockResolvedValue({ data: tableData?.[0] || null, error: null });
 
     // Make chain thenable (for await)
-    chain.then = (onFulfilled: any) => Promise.resolve(result).then(onFulfilled);
-    chain.catch = (onRejected: any) => Promise.resolve(result).catch(onRejected);
+    chain.then = (onFulfilled: (value: unknown) => unknown) => Promise.resolve(result).then(onFulfilled);
+    chain.catch = (onRejected: (reason: unknown) => unknown) => Promise.resolve(result).catch(onRejected);
 
     return chain;
   };
 
-  const mockSupabase: any = {
+  const mockSupabase: Record<string, unknown> = {
     from: vi.fn((table: string) => {
       if (table === 'community_moments') return createQueryChain(mockMomentsData);
       if (table === 'affirmations') return createQueryChain(mockAffirmationsData);
@@ -131,9 +131,9 @@ function createSupabaseMock(mockUser: any) {
 }
 
 describe('CommunityMoments - Senior Facing Component', () => {
-  let mockSupabase: any;
-  let mockUser: any;
-  let mockSession: any;
+  let mockSupabase: Record<string, unknown>;
+  let mockUser: { id: string; email: string };
+  let mockSession: { user: { id: string; email: string } };
 
   beforeEach(() => {
     vi.clearAllMocks();

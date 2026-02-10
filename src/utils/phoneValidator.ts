@@ -128,7 +128,7 @@ export function validatePhone(
  *   const e164 = validatePhoneStrict('555-123-4567');
  *   // '+15551234567'
  * } catch (error) {
- *   console.error('Invalid phone:', error.message);
+ *   // handle error: error.message
  * }
  * ```
  */

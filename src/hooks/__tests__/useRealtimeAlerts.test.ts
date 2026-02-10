@@ -10,7 +10,7 @@ import type { AlertSeverity as _AlertSeverity } from '../useRealtimeAlerts';
 const mockUseRealtimeSubscription = vi.fn();
 
 vi.mock('../useRealtimeSubscription', () => ({
-  useRealtimeSubscription: (...args: any[]) => mockUseRealtimeSubscription(...args),
+  useRealtimeSubscription: (...args: unknown[]) => mockUseRealtimeSubscription(...args),
 }));
 
 const mockFrom = vi.fn();

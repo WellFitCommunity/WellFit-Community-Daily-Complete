@@ -9,6 +9,8 @@ import { CHWService, VitalsData, SDOHData } from '../chwService';
 import { supabase } from '../../lib/supabaseClient';
 import { offlineSync } from '../specialist-workflow-engine/OfflineDataSync';
 
+
+interface MockAlert { id: string; triggered_at: string; triggered_by: unknown; severity: string; alert_rule_id: string; notify_role: string; message: string; visit_id?: string; }
 // Mock dependencies
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
@@ -75,7 +77,7 @@ describe('CHWService', () => {
         const alerts = (chwService as any).validateVitals(vitals);
 
         expect(alerts.length).toBeGreaterThanOrEqual(1);
-        const criticalAlert = alerts.find((a: any) => a.alert_rule_id === 'critical-bp-high');
+        const criticalAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-high');
         expect(criticalAlert).toBeDefined();
         expect(criticalAlert?.severity).toBe('critical');
       });
@@ -89,7 +91,7 @@ describe('CHWService', () => {
 
         const alerts = (chwService as any).validateVitals(vitals);
 
-        const criticalHighAlert = alerts.find((a: any) => a.alert_rule_id === 'critical-bp-high');
+        const criticalHighAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-high');
         expect(criticalHighAlert).toBeUndefined();
       });
     });
@@ -105,7 +107,7 @@ describe('CHWService', () => {
         const alerts = (chwService as any).validateVitals(vitals);
 
         expect(alerts.length).toBeGreaterThanOrEqual(1);
-        const shockAlert = alerts.find((a: any) => a.alert_rule_id === 'critical-bp-low');
+        const shockAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-low');
         expect(shockAlert).toBeDefined();
         expect(shockAlert?.severity).toBe('critical');
         expect(shockAlert?.message).toContain('shock');
@@ -121,7 +123,7 @@ describe('CHWService', () => {
 
         const alerts = (chwService as any).validateVitals(vitals);
 
-        const criticalLowAlert = alerts.find((a: any) => a.alert_rule_id === 'critical-bp-low');
+        const criticalLowAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-low');
         expect(criticalLowAlert).toBeDefined();
       });
 
@@ -134,7 +136,7 @@ describe('CHWService', () => {
 
         const alerts = (chwService as any).validateVitals(vitals);
 
-        const criticalLowAlert = alerts.find((a: any) => a.alert_rule_id === 'critical-bp-low');
+        const criticalLowAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-low');
         expect(criticalLowAlert).toBeUndefined();
       });
     });
@@ -149,7 +151,7 @@ describe('CHWService', () => {
         const alerts = (chwService as any).validateVitals(vitals);
 
         expect(alerts.length).toBeGreaterThanOrEqual(1);
-        const o2Alert = alerts.find((a: any) => a.alert_rule_id === 'critical-o2-low');
+        const o2Alert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-o2-low');
         expect(o2Alert).toBeDefined();
         expect(o2Alert?.severity).toBe('critical');
         expect(o2Alert?.message).toContain('85%');
@@ -164,7 +166,7 @@ describe('CHWService', () => {
 
         const alerts = (chwService as any).validateVitals(vitals);
 
-        const o2Alert = alerts.find((a: any) => a.alert_rule_id === 'critical-o2-low');
+        const o2Alert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-o2-low');
         expect(o2Alert).toBeDefined();
       });
 
@@ -176,7 +178,7 @@ describe('CHWService', () => {
 
         const alerts = (chwService as any).validateVitals(vitals);
 
-        const o2Alert = alerts.find((a: any) => a.alert_rule_id === 'critical-o2-low');
+        const o2Alert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-o2-low');
         expect(o2Alert).toBeUndefined();
       });
     });
@@ -191,7 +193,7 @@ describe('CHWService', () => {
 
         const alerts = (chwService as any).validateVitals(vitals);
 
-        const elevatedAlert = alerts.find((a: any) => a.alert_rule_id === 'high-bp-elevated');
+        const elevatedAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'high-bp-elevated');
         expect(elevatedAlert).toBeDefined();
         expect(elevatedAlert?.severity).toBe('high');
         expect(elevatedAlert?.message).toContain('within 4 hours');
@@ -206,7 +208,7 @@ describe('CHWService', () => {
 
         const alerts = (chwService as any).validateVitals(vitals);
 
-        const elevatedAlert = alerts.find((a: any) => a.alert_rule_id === 'high-bp-elevated');
+        const elevatedAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'high-bp-elevated');
         expect(elevatedAlert).toBeDefined();
       });
 
@@ -219,7 +221,7 @@ describe('CHWService', () => {
 
         const alerts = (chwService as any).validateVitals(vitals);
 
-        const elevatedAlert = alerts.find((a: any) => a.alert_rule_id === 'high-bp-elevated');
+        const elevatedAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'high-bp-elevated');
         expect(elevatedAlert).toBeUndefined();
       });
     });
@@ -236,8 +238,8 @@ describe('CHWService', () => {
         const alerts = (chwService as any).validateVitals(vitals);
 
         expect(alerts.length).toBeGreaterThanOrEqual(2);
-        const bpAlert = alerts.find((a: any) => a.alert_rule_id === 'critical-bp-low');
-        const o2Alert = alerts.find((a: any) => a.alert_rule_id === 'critical-o2-low');
+        const bpAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-low');
+        const o2Alert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-o2-low');
         expect(bpAlert).toBeDefined();
         expect(o2Alert).toBeDefined();
       });
@@ -404,7 +406,7 @@ describe('CHWService', () => {
 
       const alerts = (chwService as any).generateSDOHAlerts('visit-123', sdoh);
 
-      const foodAlert = alerts.find((a: any) => a.alert_rule_id === 'food-insecurity');
+      const foodAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'food-insecurity');
       expect(foodAlert).toBeDefined();
       expect(foodAlert?.severity).toBe('medium');
       expect(foodAlert?.notify_role).toBe('case_manager');
@@ -419,7 +421,7 @@ describe('CHWService', () => {
 
       const alerts = (chwService as any).generateSDOHAlerts('visit-123', sdoh);
 
-      const housingAlert = alerts.find((a: any) => a.alert_rule_id === 'housing-unstable');
+      const housingAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'housing-unstable');
       expect(housingAlert).toBeDefined();
       expect(housingAlert?.severity).toBe('high');
       expect(housingAlert?.notify_role).toBe('case_manager');
@@ -434,7 +436,7 @@ describe('CHWService', () => {
 
       const alerts = (chwService as any).generateSDOHAlerts('visit-123', sdoh);
 
-      const safetyAlert = alerts.find((a: any) => a.alert_rule_id === 'safety-concern');
+      const safetyAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'safety-concern');
       expect(safetyAlert).toBeDefined();
       expect(safetyAlert?.severity).toBe('critical');
       expect(safetyAlert?.notify_role).toBe('case_manager');
@@ -465,7 +467,7 @@ describe('CHWService', () => {
       const alerts = (chwService as any).generateSDOHAlerts('visit-xyz-789', sdoh);
 
       expect(alerts.length).toBe(3);
-      alerts.forEach((alert: any) => {
+      alerts.forEach((alert: MockAlert) => {
         expect(alert.visit_id).toBe('visit-xyz-789');
       });
     });

@@ -3,10 +3,11 @@ import { cn } from '../../lib/utils';
 
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'secondary' | 'destructive' | 'outline';
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
-  ({ className, variant = 'default', ...props }, ref) => (
+function Badge({ className, variant = 'default', ref, ...props }: BadgeProps) {
+  return (
     <div
       ref={ref}
       className={cn(
@@ -21,8 +22,7 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
       )}
       {...props}
     />
-  )
-);
-Badge.displayName = 'Badge';
+  );
+}
 
 export { Badge };

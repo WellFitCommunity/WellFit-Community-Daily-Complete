@@ -47,13 +47,13 @@ vi.mock('lucide-react', async (importOriginal) => {
 
 // Mock EACard components
 vi.mock('../../envision-atlus/EACard', () => ({
-  EACard: ({ children, className }: any) => <div className={className}>{children}</div>,
-  EACardHeader: ({ children, icon, action }: any) => <div>{icon}{children}{action}</div>,
-  EACardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
+  EACard: ({ children, className }: { children?: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  EACardHeader: ({ children, icon, action }: { children?: React.ReactNode; icon?: React.ReactNode; action?: React.ReactNode }) => <div>{icon}{children}{action}</div>,
+  EACardContent: ({ children, className }: { children?: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
 }));
 
 vi.mock('../../envision-atlus/EAButton', () => ({
-  EAButton: ({ children, onClick, icon, disabled, loading }: any) => (
+  EAButton: ({ children, onClick, icon, disabled, loading }: { children?: React.ReactNode; onClick?: () => void; icon?: React.ReactNode; disabled?: boolean; loading?: boolean }) => (
     <button onClick={onClick} disabled={disabled || loading}>{icon}{children}</button>
   ),
 }));

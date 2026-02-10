@@ -6,15 +6,25 @@
 import { describe, it, expect, vi, beforeEach as _beforeEach } from 'vitest';
 
 // Create chainable mock
-const createChainableMock = () => {
-  const mock: any = {
+interface ChainableMock {
+  select: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  in: ReturnType<typeof vi.fn>;
+  lte: ReturnType<typeof vi.fn>;
+  gte: ReturnType<typeof vi.fn>;
+  single: ReturnType<typeof vi.fn>;
+  then: (resolve: (value: { data: unknown[] | null; error: null }) => void) => void;
+}
+
+const createChainableMock = (): ChainableMock => {
+  const mock: ChainableMock = {
     select: vi.fn(() => mock),
     eq: vi.fn(() => mock),
     in: vi.fn(() => mock),
     lte: vi.fn(() => mock),
     gte: vi.fn(() => mock),
     single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-    then: (resolve: any) => resolve({ data: [], error: null }),
+    then: (resolve: (value: { data: unknown[] | null; error: null }) => void) => resolve({ data: [], error: null }),
   };
   return mock;
 };
