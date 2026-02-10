@@ -35,7 +35,7 @@ describe('SuperAdminService - Tenant Code Management', () => {
     email: 'admin@envisionvirtualedge.com',
     displayName: 'Test Admin',
     role: 'super_admin' as const,
-    permissions: ['tenants.manage'] as any[],
+    permissions: ['tenants.manage'] as unknown as string[],
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z'
   };

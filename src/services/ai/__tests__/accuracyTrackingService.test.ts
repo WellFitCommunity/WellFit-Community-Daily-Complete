@@ -6,6 +6,7 @@
  */
 
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { AccuracyTrackingService } from '../accuracyTrackingService';
 import { getOptimizedPrompt, getAvailableSkills, PROMPT_REGISTRY } from '../optimizedPrompts';
 
@@ -46,7 +47,7 @@ describe('AccuracyTrackingService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new AccuracyTrackingService(mockSupabase as any);
+    service = new AccuracyTrackingService(mockSupabase as unknown as SupabaseClient);
   });
 
   describe('recordPrediction', () => {
@@ -146,7 +147,7 @@ describe('AccuracyTrackingService', () => {
             gte: vi.fn().mockResolvedValueOnce({ data: mockPredictions, error: null })
           })
         })
-      } as any);
+      });
 
       const result = await service.getSkillAccuracy('readmission_risk', 30);
 
@@ -164,7 +165,7 @@ describe('AccuracyTrackingService', () => {
             gte: vi.fn().mockResolvedValueOnce({ data: [], error: null })
           })
         })
-      } as any);
+      });
 
       const result = await service.getSkillAccuracy('sdoh_detection', 30);
 
@@ -197,7 +198,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      } as any);
+      });
 
       const result = await service.getActivePrompt('billing_codes');
 
@@ -221,7 +222,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      } as any);
+      });
 
       // Mock insert
       (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
@@ -242,7 +243,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      } as any);
+      });
 
       const result = await service.createPromptVersion(
         'billing_codes',
@@ -262,7 +263,7 @@ describe('AccuracyTrackingService', () => {
     it('should calculate code acceptance rate correctly', async () => {
       (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
         insert: vi.fn().mockResolvedValueOnce({ error: null })
-      } as any);
+      });
       mockSupabase.rpc.mockResolvedValueOnce({ data: true, error: null });
 
       const result = await service.recordBillingCodeAccuracy(
@@ -298,7 +299,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      } as any);
+      });
 
       const result = await service.createExperiment({
         experimentName: 'billing-v2-vs-v3',
@@ -330,7 +331,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      } as any);
+      });
 
       const result = await service.getExperimentResults('exp-123');
 

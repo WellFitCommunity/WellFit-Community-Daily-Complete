@@ -6,6 +6,34 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { DischargePlanningService } from '../dischargePlanningService';
 import { supabase } from '../../lib/supabaseClient';
 
+// Type for Supabase query builder chain used in mocks
+interface MockQueryBuilder {
+  select: ReturnType<typeof vi.fn>;
+  insert: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  gte: ReturnType<typeof vi.fn>;
+  gt: ReturnType<typeof vi.fn>;
+  in: ReturnType<typeof vi.fn>;
+  lte: ReturnType<typeof vi.fn>;
+  order: ReturnType<typeof vi.fn>;
+  range: ReturnType<typeof vi.fn>;
+  single: ReturnType<typeof vi.fn>;
+  maybeSingle: ReturnType<typeof vi.fn>;
+}
+
+// Type for Supabase auth response used in mocks
+interface MockAuthResponse {
+  data: { user: { id: string } | null };
+  error: null | { message: string };
+}
+
+// Type for Supabase RPC response used in mocks
+interface MockRpcResponse {
+  data: number | null;
+  error: null | { message: string };
+}
+
 // Mock Supabase client
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
@@ -86,13 +114,13 @@ describe('DischargePlanningService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as MockAuthResponse);
 
       // Mock risk score calculation
       mockSupabase.rpc.mockResolvedValue({
         data: 65,
         error: null
-      } as any);
+      } as unknown as MockRpcResponse);
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'discharge_plans') {
@@ -108,7 +136,7 @@ describe('DischargePlanningService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as MockQueryBuilder;
         }
         if (table === 'profiles') {
           return {
@@ -120,7 +148,7 @@ describe('DischargePlanningService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as MockQueryBuilder;
         }
         if (table === 'encounters') {
           return {
@@ -132,9 +160,9 @@ describe('DischargePlanningService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as MockQueryBuilder;
         }
-        return {} as any;
+        return {} as unknown as MockQueryBuilder;
       });
 
       const result = await DischargePlanningService.createDischargePlan({
@@ -154,7 +182,7 @@ describe('DischargePlanningService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },
         error: null
-      } as any);
+      } as unknown as MockAuthResponse);
 
       await expect(
         DischargePlanningService.createDischargePlan({
@@ -171,13 +199,13 @@ describe('DischargePlanningService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as MockAuthResponse);
 
       // Mock risk score calculation failure
       mockSupabase.rpc.mockResolvedValue({
         data: null,
         error: { message: 'Calculation failed' }
-      } as any);
+      } as unknown as MockRpcResponse);
 
       const planWithFallbackRisk = { ...mockDischargePlan, readmission_risk_score: 50 };
 
@@ -195,7 +223,7 @@ describe('DischargePlanningService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as MockQueryBuilder;
         }
         if (table === 'profiles') {
           return {
@@ -204,7 +232,7 @@ describe('DischargePlanningService', () => {
                 single: vi.fn().mockResolvedValue({ data: null, error: null })
               })
             })
-          } as any;
+          } as unknown as MockQueryBuilder;
         }
         if (table === 'encounters') {
           return {
@@ -213,9 +241,9 @@ describe('DischargePlanningService', () => {
                 single: vi.fn().mockResolvedValue({ data: null, error: null })
               })
             })
-          } as any;
+          } as unknown as MockQueryBuilder;
         }
-        return {} as any;
+        return {} as unknown as MockQueryBuilder;
       });
 
       const result = await DischargePlanningService.createDischargePlan({
@@ -242,7 +270,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as MockQueryBuilder));
 
       const result = await DischargePlanningService.getDischargePlan('plan-123');
 
@@ -259,7 +287,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as MockQueryBuilder));
 
       await expect(
         DischargePlanningService.getDischargePlan('non-existent')
@@ -278,7 +306,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.getDischargePlanByEncounter('encounter-789');
 
@@ -295,7 +323,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.getDischargePlanByEncounter('encounter-no-plan');
 
@@ -318,7 +346,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.updateDischargePlan('plan-123', {
         status: 'ready'
@@ -355,9 +383,9 @@ describe('DischargePlanningService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await DischargePlanningService.updateDischargePlan('plan-123', {
@@ -383,7 +411,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.markPlanReady('plan-123');
 
@@ -410,7 +438,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.markPatientDischarged(
         'plan-123',
@@ -437,7 +465,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.getActiveDischargePlans();
 
@@ -465,7 +493,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.getHighRiskDischargePlans();
 
@@ -496,9 +524,9 @@ describe('DischargePlanningService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       await expect(
@@ -527,9 +555,9 @@ describe('DischargePlanningService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       await expect(
@@ -563,7 +591,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.getPendingFollowUps();
 
@@ -600,7 +628,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.getFollowUpsForPlan('plan-123');
 
@@ -613,7 +641,7 @@ describe('DischargePlanningService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       const completedFollowUp = {
         id: 'followup-1',
@@ -636,7 +664,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.completeFollowUp('followup-1', {
         outcome: 'stable',
@@ -651,7 +679,7 @@ describe('DischargePlanningService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       const readmittedFollowUp = {
         id: 'followup-1',
@@ -675,14 +703,14 @@ describe('DischargePlanningService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'care_team_alerts') {
           return {
             insert: vi.fn().mockResolvedValue({ error: null })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await DischargePlanningService.completeFollowUp('followup-1', {
@@ -697,7 +725,7 @@ describe('DischargePlanningService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       await expect(
         DischargePlanningService.completeFollowUp('followup-1', {})
@@ -730,7 +758,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.searchPostAcuteFacilities('skilled_nursing');
 
@@ -767,7 +795,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.searchPostAcuteFacilities('long_term_acute_care', '12345', 4);
 
@@ -803,7 +831,7 @@ describe('DischargePlanningService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await DischargePlanningService.getFacilitiesWithBeds('inpatient_rehab');
 
@@ -817,12 +845,12 @@ describe('DischargePlanningService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc.mockResolvedValue({
         data: 65,
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       const planWith48hrCall = {
         ...mockDischargePlan,
@@ -845,7 +873,7 @@ describe('DischargePlanningService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'profiles') {
           return {
@@ -854,7 +882,7 @@ describe('DischargePlanningService', () => {
                 single: vi.fn().mockResolvedValue({ data: null, error: null })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'encounters') {
           return {
@@ -863,9 +891,9 @@ describe('DischargePlanningService', () => {
                 single: vi.fn().mockResolvedValue({ data: null, error: null })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await DischargePlanningService.createDischargePlan({
@@ -883,12 +911,12 @@ describe('DischargePlanningService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc.mockResolvedValue({
         data: 85,
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       const planWith72hrCall = {
         ...mockDischargePlan,
@@ -911,7 +939,7 @@ describe('DischargePlanningService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'profiles') {
           return {
@@ -920,7 +948,7 @@ describe('DischargePlanningService', () => {
                 single: vi.fn().mockResolvedValue({ data: null, error: null })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'encounters') {
           return {
@@ -929,9 +957,9 @@ describe('DischargePlanningService', () => {
                 single: vi.fn().mockResolvedValue({ data: null, error: null })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await DischargePlanningService.createDischargePlan({

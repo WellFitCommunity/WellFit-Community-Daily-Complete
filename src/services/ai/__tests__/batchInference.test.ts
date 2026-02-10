@@ -62,7 +62,7 @@ describe('BatchInferenceService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset singleton for testing
-    (BatchInferenceService as any).instance = null;
+    (BatchInferenceService as unknown as Record<string, unknown>).instance = null;
     service = BatchInferenceService.getInstance();
     service.reset();
   });

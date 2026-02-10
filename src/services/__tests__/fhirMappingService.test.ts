@@ -261,7 +261,7 @@ describe('FHIRMappingService', () => {
         setAttribute: vi.fn(),
         click: vi.fn()
       };
-      vi.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
+      vi.spyOn(document, 'createElement').mockReturnValue(mockLink as unknown as HTMLElement);
 
       service.downloadMapping(mockMapping);
 

@@ -164,7 +164,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'clinical_notes') {
           return {
@@ -181,9 +181,9 @@ describe('SOAPNoteService', () => {
                 error: null
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await saveSOAPNote(soapNoteData);
@@ -216,7 +216,7 @@ describe('SOAPNoteService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const soapNoteData: SOAPNoteData = {
         encounter_id: 'non-existent',
@@ -243,7 +243,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'clinical_notes') {
           return {
@@ -253,9 +253,9 @@ describe('SOAPNoteService', () => {
                 error: { message: 'Insert failed' }
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const soapNoteData: SOAPNoteData = {
@@ -277,7 +277,7 @@ describe('SOAPNoteService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       const mockNotes = [
         { type: 'subjective', content: 'Chief Complaint: Chest pain' },
@@ -297,7 +297,7 @@ describe('SOAPNoteService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await getSOAPNote('encounter-123');
 
@@ -320,7 +320,7 @@ describe('SOAPNoteService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await getSOAPNote('encounter-no-notes');
 
@@ -337,7 +337,7 @@ describe('SOAPNoteService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       await expect(getSOAPNote('encounter-123')).rejects.toThrow('Failed to fetch');
     });
@@ -348,7 +348,7 @@ describe('SOAPNoteService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       mockSupabase.from.mockImplementation(() => ({
         update: vi.fn().mockReturnValue({
@@ -358,7 +358,7 @@ describe('SOAPNoteService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       const result = await updateSOAPNote('encounter-123', {
         assessment: 'Updated assessment',
@@ -372,7 +372,7 @@ describe('SOAPNoteService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       await expect(
         updateSOAPNote('encounter-123', { assessment: 'Updated' })
@@ -383,7 +383,7 @@ describe('SOAPNoteService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       mockSupabase.from.mockImplementation(() => ({
         update: vi.fn().mockReturnValue({
@@ -393,7 +393,7 @@ describe('SOAPNoteService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       await expect(
         updateSOAPNote('encounter-123', { assessment: 'Updated' })
@@ -404,7 +404,7 @@ describe('SOAPNoteService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       const mockUpdate = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -414,7 +414,7 @@ describe('SOAPNoteService', () => {
 
       mockSupabase.from.mockImplementation(() => ({
         update: mockUpdate
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       await updateSOAPNote('encounter-123', {
         subjective: 'Updated subjective',
@@ -443,7 +443,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_observations') {
           return {
@@ -470,7 +470,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_conditions') {
           return {
@@ -491,7 +491,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_medication_requests') {
           return {
@@ -517,9 +517,9 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await fetchClinicalDataForEncounter('encounter-123');
@@ -543,7 +543,7 @@ describe('SOAPNoteService', () => {
             })
           })
         })
-      } as any));
+      } as unknown as Record<string, unknown>));
 
       await expect(
         fetchClinicalDataForEncounter('non-existent')
@@ -562,7 +562,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_observations') {
           return {
@@ -576,7 +576,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_conditions') {
           return {
@@ -592,7 +592,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_medication_requests') {
           return {
@@ -608,9 +608,9 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await fetchClinicalDataForEncounter('encounter-123');
@@ -633,7 +633,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_observations') {
           return {
@@ -656,7 +656,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_conditions') {
           return {
@@ -669,7 +669,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_medication_requests') {
           return {
@@ -682,9 +682,9 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await fetchClinicalDataForEncounter('encounter-123');
@@ -715,7 +715,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_observations') {
           return {
@@ -726,7 +726,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_conditions') {
           return {
@@ -739,7 +739,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'fhir_medication_requests') {
           return {
@@ -752,9 +752,9 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       await fetchClinicalDataForEncounter('encounter-123');
@@ -785,7 +785,7 @@ describe('SOAPNoteService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'clinical_notes') {
           return {
@@ -795,9 +795,9 @@ describe('SOAPNoteService', () => {
                 error: null
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const soapNoteData: SOAPNoteData = {

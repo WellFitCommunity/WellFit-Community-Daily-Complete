@@ -86,8 +86,19 @@ function sameOriginPublicUrl(): boolean {
 }
 
 // Optional: expose console helpers
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-;(window as any).WF = Object.assign((window as any).WF || {}, {
+interface WFDebugHelpers {
+  swKill: () => Promise<void>;
+  swDisable: () => void;
+  swEnable: () => void;
+}
+
+declare global {
+  interface Window {
+    WF?: Partial<WFDebugHelpers>;
+  }
+}
+
+;(window as Window).WF = Object.assign((window as Window).WF || {}, {
   swKill: async () => {
     await hardUnregister();
     window.location.replace(window.location.pathname);

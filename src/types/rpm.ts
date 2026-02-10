@@ -97,6 +97,30 @@ export interface VitalAlert {
   };
 }
 
+// ── CPT Billing Eligibility ─────────────────────────────────────────────────
+
+export interface RpmBillingEligibility {
+  enrollment_id: string;
+  patient_id: string;
+  period_start: string;
+  period_end: string;
+  transmission_days: number;
+  required_days: number;
+  is_eligible_99454: boolean;
+  is_eligible_99457: boolean;
+  is_eligible_99458: boolean;
+  monitoring_minutes: number;
+  additional_20min_units: number;
+  transmission_dates: string[];
+}
+
+export interface RpmTransmissionDay {
+  date: string;
+  has_transmission: boolean;
+  source: 'check_in' | 'wearable' | 'device';
+  vital_count: number;
+}
+
 // ── Dashboard Summary ────────────────────────────────────────────────────────
 
 export interface RpmDashboardSummary {

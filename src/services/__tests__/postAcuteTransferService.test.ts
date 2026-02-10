@@ -42,6 +42,10 @@ const mockSupabase = supabase as unknown as {
   from: ReturnType<typeof vi.fn>;
 };
 
+interface PostAcuteTransferServiceStatic {
+  getFacilityTypeDescription(type: string): string;
+}
+
 describe('PostAcuteTransferService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -89,7 +93,7 @@ describe('PostAcuteTransferService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123', email: 'discharge@hospital.com' } },
         error: null
-      } as any);
+      });
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'discharge_plans') {
@@ -105,7 +109,7 @@ describe('PostAcuteTransferService', () => {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          };
         }
         if (table === 'profiles') {
           return {
@@ -117,7 +121,7 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
         if (table === 'encounters') {
           return {
@@ -129,7 +133,7 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
         if (table === 'patient_medications') {
           return {
@@ -143,7 +147,7 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
         if (table === 'patient_allergies') {
           return {
@@ -155,7 +159,7 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
         if (table === 'ehr_observations') {
           return {
@@ -170,7 +174,7 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
         if (table === 'encounter_diagnoses') {
           return {
@@ -180,7 +184,7 @@ describe('PostAcuteTransferService', () => {
                 error: null
               })
             })
-          } as any;
+          };
         }
         if (table === 'functional_assessments') {
           return {
@@ -193,16 +197,16 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
         if (table === 'handoff_packets') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          };
         }
-        return {} as any;
+        return {};
       });
 
       const result = await PostAcuteTransferService.createPostAcuteTransfer({
@@ -228,7 +232,7 @@ describe('PostAcuteTransferService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      });
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'discharge_plans') {
@@ -241,9 +245,9 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
-        return {} as any;
+        return {};
       });
 
       const result = await PostAcuteTransferService.createPostAcuteTransfer({
@@ -266,7 +270,7 @@ describe('PostAcuteTransferService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      });
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'discharge_plans') {
@@ -279,7 +283,7 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
         if (table === 'profiles') {
           return {
@@ -291,9 +295,9 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
-        return {} as any;
+        return {};
       });
 
       const result = await PostAcuteTransferService.createPostAcuteTransfer({
@@ -338,7 +342,7 @@ describe('PostAcuteTransferService', () => {
             })
           })
         })
-      } as any));
+      }));
 
       const result = await PostAcuteTransferService.getPatientPostAcuteTransfers('patient-456');
 
@@ -355,7 +359,7 @@ describe('PostAcuteTransferService', () => {
             })
           })
         })
-      } as any));
+      }));
 
       const result = await PostAcuteTransferService.getPatientPostAcuteTransfers('patient-456');
 
@@ -376,7 +380,7 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
         if (table === 'handoff_packets') {
           return {
@@ -392,9 +396,9 @@ describe('PostAcuteTransferService', () => {
                 })
               })
             })
-          } as any;
+          };
         }
-        return {} as any;
+        return {};
       });
 
       const result = await PostAcuteTransferService.getTransferByDischargePlan('plan-123');
@@ -413,7 +417,7 @@ describe('PostAcuteTransferService', () => {
             })
           })
         })
-      } as any));
+      }));
 
       const result = await PostAcuteTransferService.getTransferByDischargePlan('plan-123');
 
@@ -463,7 +467,7 @@ describe('PostAcuteTransferService', () => {
             })
           })
         })
-      } as any));
+      }));
 
       const summary = await PostAcuteTransferService.generateTransferSummary('packet-123');
 
@@ -484,7 +488,7 @@ describe('PostAcuteTransferService', () => {
             })
           })
         })
-      } as any));
+      }));
 
       const summary = await PostAcuteTransferService.generateTransferSummary('nonexistent');
 
@@ -495,22 +499,22 @@ describe('PostAcuteTransferService', () => {
   describe('facility type descriptions', () => {
     it('should return correct description for skilled nursing', () => {
       // Access private method via class prototype
-      const description = (PostAcuteTransferService as any).getFacilityTypeDescription('skilled_nursing');
+      const description = (PostAcuteTransferService as unknown as PostAcuteTransferServiceStatic).getFacilityTypeDescription('skilled_nursing');
       expect(description).toBe('Skilled Nursing Facility (SNF)');
     });
 
     it('should return correct description for inpatient rehab', () => {
-      const description = (PostAcuteTransferService as any).getFacilityTypeDescription('inpatient_rehab');
+      const description = (PostAcuteTransferService as unknown as PostAcuteTransferServiceStatic).getFacilityTypeDescription('inpatient_rehab');
       expect(description).toBe('Inpatient Rehabilitation Facility');
     });
 
     it('should return correct description for LTAC', () => {
-      const description = (PostAcuteTransferService as any).getFacilityTypeDescription('long_term_acute_care');
+      const description = (PostAcuteTransferService as unknown as PostAcuteTransferServiceStatic).getFacilityTypeDescription('long_term_acute_care');
       expect(description).toBe('Long-Term Acute Care (LTAC)');
     });
 
     it('should return correct description for hospice', () => {
-      const description = (PostAcuteTransferService as any).getFacilityTypeDescription('hospice');
+      const description = (PostAcuteTransferService as unknown as PostAcuteTransferServiceStatic).getFacilityTypeDescription('hospice');
       expect(description).toBe('Hospice Care');
     });
   });

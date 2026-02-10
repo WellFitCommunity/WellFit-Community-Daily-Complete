@@ -11,6 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   GuardianApprovalService,
   getGuardianApprovalService,
@@ -278,7 +279,7 @@ describe('GuardianApprovalService', () => {
     resetGuardianApprovalService();
     mockSupabase = createMockSupabase();
      
-    service = new GuardianApprovalService(mockSupabase as any);
+    service = new GuardianApprovalService(mockSupabase as unknown as SupabaseClient);
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1015,9 +1016,9 @@ describe('GuardianApprovalService', () => {
   describe('getGuardianApprovalService', () => {
     it('should return singleton instance', () => {
        
-      const instance1 = getGuardianApprovalService(mockSupabase as any);
+      const instance1 = getGuardianApprovalService(mockSupabase as unknown as SupabaseClient);
        
-      const instance2 = getGuardianApprovalService(mockSupabase as any);
+      const instance2 = getGuardianApprovalService(mockSupabase as unknown as SupabaseClient);
 
       expect(instance1).toBe(instance2);
     });
@@ -1027,7 +1028,7 @@ describe('GuardianApprovalService', () => {
     it('should reset singleton and unsubscribe', () => {
       // Create and subscribe
        
-      const instance = getGuardianApprovalService(mockSupabase as any);
+      const instance = getGuardianApprovalService(mockSupabase as unknown as SupabaseClient);
       instance.subscribeToTickets(vi.fn(), vi.fn());
 
       // Reset
@@ -1035,7 +1036,7 @@ describe('GuardianApprovalService', () => {
 
       // New call should create new instance
        
-      const newInstance = getGuardianApprovalService(mockSupabase as any);
+      const newInstance = getGuardianApprovalService(mockSupabase as unknown as SupabaseClient);
       expect(newInstance).not.toBe(instance);
     });
   });

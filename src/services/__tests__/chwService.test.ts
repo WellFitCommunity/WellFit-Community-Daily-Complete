@@ -11,6 +11,14 @@ import { offlineSync } from '../specialist-workflow-engine/OfflineDataSync';
 
 
 interface MockAlert { id: string; triggered_at: string; triggered_by: unknown; severity: string; alert_rule_id: string; notify_role: string; message: string; visit_id?: string; }
+
+interface CHWServicePrivate {
+  validateVitals(vitals: VitalsData): MockAlert[];
+  calculateSDOHRiskScore(sdoh: SDOHData): number;
+  countSDOHBarriers(sdoh: SDOHData): number;
+  generateSDOHAlerts(visitId: string, sdoh: SDOHData): MockAlert[];
+  generateUUID(): string;
+}
 // Mock dependencies
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
@@ -57,7 +65,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         expect(alerts).toHaveLength(1);
         expect(alerts[0].severity).toBe('critical');
@@ -74,7 +82,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         expect(alerts.length).toBeGreaterThanOrEqual(1);
         const criticalAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-high');
@@ -89,7 +97,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         const criticalHighAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-high');
         expect(criticalHighAlert).toBeUndefined();
@@ -104,7 +112,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         expect(alerts.length).toBeGreaterThanOrEqual(1);
         const shockAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-low');
@@ -121,7 +129,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         const criticalLowAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-low');
         expect(criticalLowAlert).toBeDefined();
@@ -134,7 +142,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         const criticalLowAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-low');
         expect(criticalLowAlert).toBeUndefined();
@@ -148,7 +156,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         expect(alerts.length).toBeGreaterThanOrEqual(1);
         const o2Alert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-o2-low');
@@ -164,7 +172,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         const o2Alert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-o2-low');
         expect(o2Alert).toBeDefined();
@@ -176,7 +184,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         const o2Alert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-o2-low');
         expect(o2Alert).toBeUndefined();
@@ -191,7 +199,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         const elevatedAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'high-bp-elevated');
         expect(elevatedAlert).toBeDefined();
@@ -206,7 +214,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         const elevatedAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'high-bp-elevated');
         expect(elevatedAlert).toBeDefined();
@@ -219,7 +227,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         const elevatedAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'high-bp-elevated');
         expect(elevatedAlert).toBeUndefined();
@@ -235,7 +243,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         expect(alerts.length).toBeGreaterThanOrEqual(2);
         const bpAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'critical-bp-low');
@@ -256,7 +264,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         expect(alerts).toHaveLength(0);
       });
@@ -270,7 +278,7 @@ describe('CHWService', () => {
           captured_at: new Date().toISOString(),
         };
 
-        const alerts = (chwService as any).validateVitals(vitals);
+        const alerts = (chwService as unknown as CHWServicePrivate).validateVitals(vitals);
 
         expect(alerts[0]).toHaveProperty('id');
         expect(alerts[0]).toHaveProperty('triggered_at');
@@ -297,7 +305,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const score = (chwService as any).calculateSDOHRiskScore(sdoh);
+      const score = (chwService as unknown as CHWServicePrivate).calculateSDOHRiskScore(sdoh);
 
       expect(score).toBe(0);
     });
@@ -315,7 +323,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const score = (chwService as any).calculateSDOHRiskScore(sdoh);
+      const score = (chwService as unknown as CHWServicePrivate).calculateSDOHRiskScore(sdoh);
 
       // Total would be 12, but should cap at 10
       expect(score).toBe(10);
@@ -329,7 +337,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const score = (chwService as any).calculateSDOHRiskScore(sdoh);
+      const score = (chwService as unknown as CHWServicePrivate).calculateSDOHRiskScore(sdoh);
 
       expect(score).toBe(4);
     });
@@ -342,7 +350,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const score = (chwService as any).calculateSDOHRiskScore(sdoh);
+      const score = (chwService as unknown as CHWServicePrivate).calculateSDOHRiskScore(sdoh);
 
       expect(score).toBe(6);
     });
@@ -363,9 +371,9 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      expect((chwService as any).calculateSDOHRiskScore(alwaysIsolated)).toBe(1);
-      expect((chwService as any).calculateSDOHRiskScore(oftenIsolated)).toBe(1);
-      expect((chwService as any).calculateSDOHRiskScore(sometimesIsolated)).toBe(0);
+      expect((chwService as unknown as CHWServicePrivate).calculateSDOHRiskScore(alwaysIsolated)).toBe(1);
+      expect((chwService as unknown as CHWServicePrivate).calculateSDOHRiskScore(oftenIsolated)).toBe(1);
+      expect((chwService as unknown as CHWServicePrivate).calculateSDOHRiskScore(sometimesIsolated)).toBe(0);
     });
   });
 
@@ -375,7 +383,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const count = (chwService as any).countSDOHBarriers(sdoh);
+      const count = (chwService as unknown as CHWServicePrivate).countSDOHBarriers(sdoh);
 
       expect(count).toBe(0);
     });
@@ -391,7 +399,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const count = (chwService as any).countSDOHBarriers(sdoh);
+      const count = (chwService as unknown as CHWServicePrivate).countSDOHBarriers(sdoh);
 
       expect(count).toBe(6);
     });
@@ -404,7 +412,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const alerts = (chwService as any).generateSDOHAlerts('visit-123', sdoh);
+      const alerts = (chwService as unknown as CHWServicePrivate).generateSDOHAlerts('visit-123', sdoh);
 
       const foodAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'food-insecurity');
       expect(foodAlert).toBeDefined();
@@ -419,7 +427,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const alerts = (chwService as any).generateSDOHAlerts('visit-123', sdoh);
+      const alerts = (chwService as unknown as CHWServicePrivate).generateSDOHAlerts('visit-123', sdoh);
 
       const housingAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'housing-unstable');
       expect(housingAlert).toBeDefined();
@@ -434,7 +442,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const alerts = (chwService as any).generateSDOHAlerts('visit-123', sdoh);
+      const alerts = (chwService as unknown as CHWServicePrivate).generateSDOHAlerts('visit-123', sdoh);
 
       const safetyAlert = alerts.find((a: MockAlert) => a.alert_rule_id === 'safety-concern');
       expect(safetyAlert).toBeDefined();
@@ -451,7 +459,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const alerts = (chwService as any).generateSDOHAlerts('visit-123', sdoh);
+      const alerts = (chwService as unknown as CHWServicePrivate).generateSDOHAlerts('visit-123', sdoh);
 
       expect(alerts).toHaveLength(0);
     });
@@ -464,7 +472,7 @@ describe('CHWService', () => {
         assessed_at: new Date().toISOString(),
       };
 
-      const alerts = (chwService as any).generateSDOHAlerts('visit-xyz-789', sdoh);
+      const alerts = (chwService as unknown as CHWServicePrivate).generateSDOHAlerts('visit-xyz-789', sdoh);
 
       expect(alerts.length).toBe(3);
       alerts.forEach((alert: MockAlert) => {
@@ -546,16 +554,16 @@ describe('CHWService', () => {
 
   describe('UUID Generation', () => {
     it('should generate valid UUID format', () => {
-      const uuid = (chwService as any).generateUUID();
+      const uuid = (chwService as unknown as CHWServicePrivate).generateUUID();
 
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       expect(uuid).toMatch(uuidRegex);
     });
 
     it('should generate unique UUIDs', () => {
-      const uuid1 = (chwService as any).generateUUID();
-      const uuid2 = (chwService as any).generateUUID();
-      const uuid3 = (chwService as any).generateUUID();
+      const uuid1 = (chwService as unknown as CHWServicePrivate).generateUUID();
+      const uuid2 = (chwService as unknown as CHWServicePrivate).generateUUID();
+      const uuid3 = (chwService as unknown as CHWServicePrivate).generateUUID();
 
       expect(uuid1).not.toBe(uuid2);
       expect(uuid2).not.toBe(uuid3);

@@ -7,6 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PriorAuthorizationService } from '../prior-auth';
+import type { PriorAuthorization, PriorAuthDecision } from '../prior-auth/types';
 
 // Mock getErrorMessage
 vi.mock('../../../lib/getErrorMessage', () => ({
@@ -700,7 +701,7 @@ describe('PriorAuthorizationService', () => {
 
   describe('toFHIRClaimResource', () => {
     it('should convert prior auth to FHIR Claim resource', () => {
-      const fhirClaim = PriorAuthorizationService.toFHIRClaimResource(mockPriorAuth as any);
+      const fhirClaim = PriorAuthorizationService.toFHIRClaimResource(mockPriorAuth as unknown as PriorAuthorization);
 
       expect(fhirClaim.resourceType).toBe('Claim');
       expect(fhirClaim.use).toBe('preauthorization');
@@ -709,23 +710,23 @@ describe('PriorAuthorizationService', () => {
 
     it('should map urgency to FHIR priority', () => {
       const urgentAuth = { ...mockPriorAuth, urgency: 'urgent' };
-      const fhirClaim = PriorAuthorizationService.toFHIRClaimResource(urgentAuth as any);
+      const fhirClaim = PriorAuthorizationService.toFHIRClaimResource(urgentAuth as unknown as PriorAuthorization);
 
-      expect((fhirClaim.priority as any)?.coding?.[0]?.code).toBe('urgent');
+      expect((fhirClaim.priority as unknown as { coding?: Array<{ code?: string }> })?.coding?.[0]?.code).toBe('urgent');
     });
 
     it('should include diagnosis codes in ICD-10 format', () => {
-      const fhirClaim = PriorAuthorizationService.toFHIRClaimResource(mockPriorAuth as any);
+      const fhirClaim = PriorAuthorizationService.toFHIRClaimResource(mockPriorAuth as unknown as PriorAuthorization);
 
       expect(Array.isArray(fhirClaim.diagnosis)).toBe(true);
-      expect((fhirClaim.diagnosis as any)?.[0]?.diagnosisCodeableConcept?.coding?.[0]?.system).toBe('http://hl7.org/fhir/sid/icd-10-cm');
+      expect((fhirClaim.diagnosis as unknown as Array<{ diagnosisCodeableConcept?: { coding?: Array<{ system?: string }> } }>)?.[0]?.diagnosisCodeableConcept?.coding?.[0]?.system).toBe('http://hl7.org/fhir/sid/icd-10-cm');
     });
 
     it('should include service codes as items', () => {
-      const fhirClaim = PriorAuthorizationService.toFHIRClaimResource(mockPriorAuth as any);
+      const fhirClaim = PriorAuthorizationService.toFHIRClaimResource(mockPriorAuth as unknown as PriorAuthorization);
 
       expect(Array.isArray(fhirClaim.item)).toBe(true);
-      expect((fhirClaim.item as any)?.[0]?.productOrService?.coding?.[0]?.system).toBe('http://www.ama-assn.org/go/cpt');
+      expect((fhirClaim.item as unknown as Array<{ productOrService?: { coding?: Array<{ system?: string }> } }>)?.[0]?.productOrService?.coding?.[0]?.system).toBe('http://www.ama-assn.org/go/cpt');
     });
   });
 
@@ -733,8 +734,8 @@ describe('PriorAuthorizationService', () => {
     it('should convert prior auth with decision to FHIR ClaimResponse', () => {
       const approvedAuth = { ...mockPriorAuth, status: 'approved', auth_number: 'AUTH-12345' };
       const fhirResponse = PriorAuthorizationService.toFHIRClaimResponseResource(
-        approvedAuth as any,
-        mockDecision as any
+        approvedAuth as unknown as PriorAuthorization,
+        mockDecision as unknown as PriorAuthDecision
       );
 
       expect(fhirResponse.resourceType).toBe('ClaimResponse');
@@ -746,8 +747,8 @@ describe('PriorAuthorizationService', () => {
     it('should set outcome to error for denied auth', () => {
       const deniedDecision = { ...mockDecision, decision_type: 'denied' };
       const fhirResponse = PriorAuthorizationService.toFHIRClaimResponseResource(
-        mockPriorAuth as any,
-        deniedDecision as any
+        mockPriorAuth as unknown as PriorAuthorization,
+        deniedDecision as unknown as PriorAuthDecision
       );
 
       expect(fhirResponse.outcome).toBe('error');

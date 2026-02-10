@@ -6,6 +6,14 @@
 import { SpecialistWorkflowEngine } from '../SpecialistWorkflowEngine';
 import { chwWorkflow } from '../templates/chwTemplate';
 
+/** Private method access for testing internal condition evaluation */
+interface EngineWithPrivateMethods {
+  evaluateCondition: (condition: string, data: Record<string, unknown>) => {
+    result: boolean;
+    value?: unknown;
+  };
+}
+
 // Mock Supabase
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
@@ -94,7 +102,7 @@ describe('SpecialistWorkflowEngine', () => {
 
   describe('Alert Rule Evaluation', () => {
     it('should evaluate simple greater-than conditions', () => {
-      const evaluation = (engine as any).evaluateCondition(
+      const evaluation = (engine as unknown as EngineWithPrivateMethods).evaluateCondition(
         'vitals.systolic > 180',
         { vitals: { systolic: 190 } }
       );
@@ -104,7 +112,7 @@ describe('SpecialistWorkflowEngine', () => {
     });
 
     it('should evaluate simple less-than conditions', () => {
-      const evaluation = (engine as any).evaluateCondition(
+      const evaluation = (engine as unknown as EngineWithPrivateMethods).evaluateCondition(
         'vitals.oxygen_saturation < 88',
         { vitals: { oxygen_saturation: 85 } }
       );
@@ -114,7 +122,7 @@ describe('SpecialistWorkflowEngine', () => {
     });
 
     it('should evaluate equality conditions', () => {
-      const evaluation = (engine as any).evaluateCondition(
+      const evaluation = (engine as unknown as EngineWithPrivateMethods).evaluateCondition(
         'medications.count == 0',
         { medications: { count: 0 } }
       );
@@ -123,7 +131,7 @@ describe('SpecialistWorkflowEngine', () => {
     });
 
     it('should handle nested property paths', () => {
-      const evaluation = (engine as any).evaluateCondition(
+      const evaluation = (engine as unknown as EngineWithPrivateMethods).evaluateCondition(
         'sdoh_prapare.food_insecurity == true',
         { sdoh_prapare: { food_insecurity: true } }
       );
@@ -132,7 +140,7 @@ describe('SpecialistWorkflowEngine', () => {
     });
 
     it('should return false for missing values', () => {
-      const evaluation = (engine as any).evaluateCondition(
+      const evaluation = (engine as unknown as EngineWithPrivateMethods).evaluateCondition(
         'vitals.systolic > 180',
         {}
       );

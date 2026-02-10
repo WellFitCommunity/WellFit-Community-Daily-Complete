@@ -475,13 +475,13 @@ describe('ClinicalGuidelineMatcherService', () => {
         }),
       });
 
-      vi.mocked(supabase.from).mockImplementation((table: string) => {
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'ai_guideline_matches') {
-          return { insert: mockInsert } as any;
+          return { insert: mockInsert };
         }
         return {
           insert: vi.fn().mockResolvedValue({ error: null }),
-        } as any;
+        };
       });
 
       const result = await ClinicalGuidelineMatcherService.saveMatchResult(
@@ -501,13 +501,13 @@ describe('ClinicalGuidelineMatcherService', () => {
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockImplementation((table: string) => {
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'ai_guideline_matches') {
-          return { update: mockUpdate } as any;
+          return { update: mockUpdate };
         }
         return {
           insert: vi.fn().mockResolvedValue({ error: null }),
-        } as any;
+        };
       });
 
       const result = await ClinicalGuidelineMatcherService.markAsReviewed(

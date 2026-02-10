@@ -43,8 +43,8 @@ const originalLocation = window.location;
 
 beforeAll(() => {
   // Mock window.location
-  delete (window as any).location;
-  (window as any).location = {
+  delete (window as unknown as Record<string, unknown>).location;
+  (window as unknown as Record<string, unknown>).location = {
     pathname: '/dashboard',
     href: 'http://localhost/dashboard',
   };
@@ -105,7 +105,7 @@ describe('EASessionResume', () => {
 
     it('should not render when already at last route', () => {
       mockGetLastRoute.mockReturnValue('/dashboard');
-      (window as any).location.pathname = '/dashboard';
+      (window as unknown as Record<string, Record<string, string>>).location.pathname = '/dashboard';
       const { container } = render(<EASessionResume />);
       expect(container.firstChild).toBeNull();
     });

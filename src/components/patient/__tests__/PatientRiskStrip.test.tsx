@@ -160,7 +160,7 @@ describe('PatientRiskStrip', () => {
         readmissionData: {
           ...mockReadmissionData,
           plain_language_explanation: null,
-        } as any,
+        } as unknown as typeof mockReadmissionData,
       });
       render(<PatientRiskStrip patientId="test-patient-id" variant="expanded" />);
 

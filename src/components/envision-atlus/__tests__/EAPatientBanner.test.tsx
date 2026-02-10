@@ -91,7 +91,7 @@ describe('EAPatientBanner', () => {
 
   describe('Rendering', () => {
     it('should render nothing when no patient context', () => {
-      mockedUsePatientContextSafe.mockReturnValue(null as any);
+      mockedUsePatientContextSafe.mockReturnValue(null as unknown as ReturnType<typeof mockedUsePatientContextSafe>);
       const { container } = render(<EAPatientBanner />);
       expect(container.firstChild).toBeNull();
     });

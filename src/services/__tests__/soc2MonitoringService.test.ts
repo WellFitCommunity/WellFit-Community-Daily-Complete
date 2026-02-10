@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   SOC2MonitoringService,
   createSOC2MonitoringService,
@@ -284,8 +285,7 @@ describe('SOC2MonitoringService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabase();
-     
-    service = new SOC2MonitoringService(mockSupabase as any);
+    service = new SOC2MonitoringService(mockSupabase as unknown as SupabaseClient);
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1064,8 +1064,7 @@ describe('SOC2MonitoringService', () => {
 
   describe('createSOC2MonitoringService', () => {
     it('should create a new SOC2MonitoringService instance', () => {
-       
-      const instance = createSOC2MonitoringService(mockSupabase as any);
+      const instance = createSOC2MonitoringService(mockSupabase as unknown as SupabaseClient);
 
       expect(instance).toBeInstanceOf(SOC2MonitoringService);
     });
@@ -1077,8 +1076,7 @@ describe('SOC2MonitoringService', () => {
         error: null,
       });
 
-       
-      const instance = createSOC2MonitoringService(mockSupabase as any);
+      const instance = createSOC2MonitoringService(mockSupabase as unknown as SupabaseClient);
       const result = await instance.getSecurityMetrics();
 
       expect(result).toEqual(mockMetrics);

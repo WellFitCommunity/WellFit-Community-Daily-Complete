@@ -169,7 +169,7 @@ describe('TreatmentPathwayService', () => {
       const result = await TreatmentPathwayService.generatePathway({
         patientId: 'patient-123',
         condition: 'Diabetes',
-        severity: 'invalid' as any,
+        severity: 'invalid' as unknown as 'mild',
       });
 
       expect(result.success).toBe(false);
@@ -483,16 +483,15 @@ describe('TreatmentPathwayService', () => {
 
   describe('savePathwayRecommendation', () => {
     it('should save pathway with pending_review status', async () => {
-      const mockFrom = vi.mocked(supabase.from);
       const mockInsert = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({ data: { id: 'recommendation-123' }, error: null }),
         }),
       });
 
-      mockFrom.mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         insert: mockInsert,
-      } as any);
+      });
 
       const result = await TreatmentPathwayService.savePathwayRecommendation(
         'patient-123',
@@ -557,7 +556,7 @@ describe('TreatmentPathwayService', () => {
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         update: mockUpdate,
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -569,7 +568,7 @@ describe('TreatmentPathwayService', () => {
             single: vi.fn().mockResolvedValue({ data: {}, error: null }),
           }),
         }),
-      } as any);
+      });
 
       const result = await TreatmentPathwayService.approvePathway('recommendation-123', 'clinician-456');
 
@@ -588,14 +587,14 @@ describe('TreatmentPathwayService', () => {
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         update: mockUpdate,
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({ data: {}, error: null }),
           }),
         }),
-      } as any);
+      });
 
       const result = await TreatmentPathwayService.rejectPathway(
         'recommendation-123',
@@ -637,7 +636,7 @@ describe('TreatmentPathwayService', () => {
 
   describe('checkContraindications', () => {
     it('should identify renal impairment contraindications', async () => {
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockResolvedValue({
@@ -646,7 +645,7 @@ describe('TreatmentPathwayService', () => {
             }),
           }),
         }),
-      } as any);
+      });
 
       const result = await TreatmentPathwayService.checkContraindications('patient-123');
 

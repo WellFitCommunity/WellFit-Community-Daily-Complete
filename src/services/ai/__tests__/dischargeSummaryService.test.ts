@@ -342,16 +342,15 @@ describe('DischargeSummaryService', () => {
 
   describe('saveSummary', () => {
     it('should save summary with draft status', async () => {
-      const mockFrom = vi.mocked(supabase.from);
       const mockInsert = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({ data: { id: 'summary-123' }, error: null }),
         }),
       });
 
-      mockFrom.mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         insert: mockInsert,
-      } as any);
+      });
 
       const result = await DischargeSummaryService.saveSummary(
         'patient-123',
@@ -419,7 +418,7 @@ describe('DischargeSummaryService', () => {
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         update: mockUpdate,
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -431,7 +430,7 @@ describe('DischargeSummaryService', () => {
             single: vi.fn().mockResolvedValue({ data: {}, error: null }),
           }),
         }),
-      } as any);
+      });
 
       const result = await DischargeSummaryService.approveSummary('summary-123', 'physician-456');
 
@@ -450,14 +449,14 @@ describe('DischargeSummaryService', () => {
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         update: mockUpdate,
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({ data: {}, error: null }),
           }),
         }),
-      } as any);
+      });
 
       const result = await DischargeSummaryService.rejectSummary(
         'summary-123',
@@ -481,7 +480,7 @@ describe('DischargeSummaryService', () => {
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         update: mockUpdate,
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -493,7 +492,7 @@ describe('DischargeSummaryService', () => {
             single: vi.fn().mockResolvedValue({ data: {}, error: null }),
           }),
         }),
-      } as any);
+      });
 
       const result = await DischargeSummaryService.releaseSummary(
         'summary-123',
@@ -507,13 +506,13 @@ describe('DischargeSummaryService', () => {
     });
 
     it('should reject releasing non-approved summary', async () => {
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({ data: { status: 'draft' }, error: null }),
           }),
         }),
-      } as any);
+      });
 
       const result = await DischargeSummaryService.releaseSummary(
         'summary-123',

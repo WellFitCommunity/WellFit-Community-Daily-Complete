@@ -9,6 +9,12 @@ import {
 import { supabase } from '../../lib/supabaseClient';
 import type { HandoffPacket } from '../../types/handoff';
 
+/** Supabase-style response for mocks at test boundaries */
+interface MockSupabaseResponse<T = unknown> {
+  data: T;
+  error: { message: string } | null;
+}
+
 // Mock Supabase client
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
@@ -77,12 +83,12 @@ describe('HospitalTransferIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123', email: 'provider@hospital.com' } },
         error: null
-      } as any);
+      } as unknown as MockSupabaseResponse);
 
       // Mock PHI decryption
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'John Doe', error: null } as any) // decrypt name
-        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as any); // decrypt DOB
+        .mockResolvedValueOnce({ data: 'John Doe', error: null } as unknown as MockSupabaseResponse) // decrypt name
+        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as unknown as MockSupabaseResponse); // decrypt DOB
 
       // Mock patient lookup - not found, create new
       mockSupabase.from.mockImplementation((table: string) => {
@@ -103,7 +109,7 @@ describe('HospitalTransferIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'encounters') {
           return {
@@ -115,7 +121,7 @@ describe('HospitalTransferIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'ehr_observations') {
           return {
@@ -129,7 +135,7 @@ describe('HospitalTransferIntegrationService', () => {
                 error: null
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'billing_codes') {
           return {
@@ -139,16 +145,16 @@ describe('HospitalTransferIntegrationService', () => {
                 error: null
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'handoff_packets') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
@@ -164,7 +170,7 @@ describe('HospitalTransferIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },
         error: { message: 'Not authenticated' }
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
 
@@ -176,12 +182,12 @@ describe('HospitalTransferIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc.mockResolvedValue({
         data: null,
         error: { message: 'Decryption failed' }
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
 
@@ -193,11 +199,11 @@ describe('HospitalTransferIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'John Doe', error: null } as any)
-        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as any);
+        .mockResolvedValueOnce({ data: 'John Doe', error: null } as unknown as Record<string, unknown>)
+        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as unknown as Record<string, unknown>);
 
       // Mock finding existing patient
       mockSupabase.from.mockImplementation((table: string) => {
@@ -213,7 +219,7 @@ describe('HospitalTransferIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'encounters') {
           return {
@@ -225,30 +231,30 @@ describe('HospitalTransferIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'ehr_observations') {
           return {
             insert: vi.fn().mockReturnValue({
               select: vi.fn().mockResolvedValue({ data: [], error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'billing_codes') {
           return {
             insert: vi.fn().mockReturnValue({
               select: vi.fn().mockResolvedValue({ data: [], error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'handoff_packets') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
@@ -266,11 +272,11 @@ describe('HospitalTransferIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'John Doe', error: null } as any)
-        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as any);
+        .mockResolvedValueOnce({ data: 'John Doe', error: null } as unknown as Record<string, unknown>)
+        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as unknown as Record<string, unknown>);
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
@@ -285,7 +291,7 @@ describe('HospitalTransferIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'encounters') {
           return {
@@ -297,14 +303,14 @@ describe('HospitalTransferIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'ehr_observations') {
           return {
             insert: vi.fn().mockReturnValue({
               select: vi.fn().mockResolvedValue({ data: [], error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'billing_codes') {
           return {
@@ -314,16 +320,16 @@ describe('HospitalTransferIntegrationService', () => {
                 error: null
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'handoff_packets') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await integrateHospitalTransfer('packet-123', criticalPacket);
@@ -338,11 +344,11 @@ describe('HospitalTransferIntegrationService', () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null
-      } as any);
+      } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'John Doe', error: null } as any)
-        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as any);
+        .mockResolvedValueOnce({ data: 'John Doe', error: null } as unknown as Record<string, unknown>)
+        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as unknown as Record<string, unknown>);
 
       let _insertedObservations: unknown[] = [];
 
@@ -359,7 +365,7 @@ describe('HospitalTransferIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'encounters') {
           return {
@@ -371,7 +377,7 @@ describe('HospitalTransferIntegrationService', () => {
                 })
               })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'ehr_observations') {
           return {
@@ -391,16 +397,16 @@ describe('HospitalTransferIntegrationService', () => {
             insert: vi.fn().mockReturnValue({
               select: vi.fn().mockResolvedValue({ data: [], error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
         if (table === 'handoff_packets') {
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null })
             })
-          } as any;
+          } as unknown as Record<string, unknown>;
         }
-        return {} as any;
+        return {} as unknown as Record<string, unknown>;
       });
 
       const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);

@@ -101,6 +101,7 @@ This codebase eliminated 1,400+ `any` violations and 1,671 total lint warnings i
 | Testing CSS classes instead of behavior | Test user-visible outcomes | CSS tests are easy, behavior tests require understanding |
 | Creating god files (600+ lines) | Decompose into focused modules | Bolting features onto one file is easiest path |
 | Claiming refactor was done without verifying | Check `wc -l` on the actual file | AI sees intent ("I planned to") as completion ("I did it") |
+| Sub-agents ignoring CLAUDE.md rules | Sub-Agent Governance: same rules, no exceptions | Lead agent delegates but forgets to enforce rules on workers |
 
 **The STOP AND ASK protocol is the highest-value rule.** Most AI mistakes stem from continuing when uncertain rather than asking.
 
@@ -201,6 +202,29 @@ Ask Maria for clarification instead of implementing something incomplete.
 **Do NOT guess. Do NOT improvise. ASK.**
 
 **AI models have poor fine motor skills for self-debugging.** We see what we *intended* to write, not what we *actually* wrote. When stuck in a debug loop, the fastest path forward is to STOP and let Maria or adversarial checking identify the blind spot.
+
+---
+
+### Sub-Agent Governance - SAME RULES, NO EXCEPTIONS
+
+**All sub-agents (background tasks, parallel workers, delegated operations) are subject to the EXACT same rules as the lead agent.**
+
+Sub-agents are NOT exempt from:
+- The `any` type ban — `unknown` + type guards required
+- The `console.log` ban — `auditLogger` required
+- The type cast boundary rules — proper casts at system boundaries only
+- The test quality standards — no junk tests, deletion test required
+- The 600-line file limit — decompose, don't degrade
+- The verification checkpoint — `npm run typecheck && npm run lint && npm test`
+- The STOP AND ASK protocol — if stuck, surface to lead agent
+
+**Sub-agent work MUST be verified before it is considered complete.** The lead agent is responsible for:
+1. Providing sub-agents with clear instructions that reference these rules
+2. Verifying sub-agent output against these rules before accepting it
+3. Rejecting and redoing sub-agent work that violates any rule
+4. Never committing sub-agent output without running the verification checkpoint
+
+**The lead agent owns the quality of all delegated work. "My sub-agent did it" is not an excuse.**
 
 ---
 

@@ -196,8 +196,7 @@ describe('PatientQAService', () => {
   describe('getSuggestedTopics', () => {
     it('should return suggested topics for a patient', async () => {
       // Mock successful patient diagnoses fetch
-      const mockFrom = vi.mocked(supabase.from);
-      mockFrom.mockReturnValueOnce({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
@@ -208,7 +207,7 @@ describe('PatientQAService', () => {
             }),
           }),
         }),
-      } as any);
+      });
 
       const result = await PatientQAService.getSuggestedTopics('patient-123');
 

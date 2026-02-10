@@ -128,7 +128,7 @@ describe('CarePlanAIService', () => {
     it('should reject invalid plan types', async () => {
       const result = await CarePlanAIService.generateCarePlan({
         patientId: 'patient-123',
-        planType: 'invalid_type' as any,
+        planType: 'invalid_type' as unknown as 'chronic_care',
       });
 
       expect(result.success).toBe(false);
@@ -277,16 +277,15 @@ describe('CarePlanAIService', () => {
 
   describe('saveGeneratedPlan', () => {
     it('should save plan in draft status', async () => {
-      const mockFrom = vi.mocked(supabase.from);
       const mockInsert = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({ data: { id: 'plan-123' }, error: null }),
         }),
       });
 
-      mockFrom.mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         insert: mockInsert,
-      } as any);
+      });
 
       const result = await CarePlanAIService.saveGeneratedPlan(
         'patient-123',
@@ -335,14 +334,14 @@ describe('CarePlanAIService', () => {
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         update: mockUpdate,
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({ data: {}, error: null }),
           }),
         }),
-      } as any);
+      });
 
       const result = await CarePlanAIService.approvePlan('plan-123', 'clinician-456');
 
@@ -361,14 +360,14 @@ describe('CarePlanAIService', () => {
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
         update: mockUpdate,
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({ data: {}, error: null }),
           }),
         }),
-      } as any);
+      });
 
       const result = await CarePlanAIService.rejectPlan(
         'plan-123',
