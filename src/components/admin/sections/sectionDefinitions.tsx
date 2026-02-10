@@ -38,6 +38,12 @@ const CardiologyDashboard = lazy(() => import('../../cardiology/CardiologyDashbo
 const LaborDeliveryDashboard = lazy(() => import('../../labor-delivery/LaborDeliveryDashboard'));
 const OncologyDashboard = lazy(() => import('../../oncology/OncologyDashboard'));
 
+// Regulatory Compliance (Gap Remediation)
+const BreachNotificationDashboard = lazy(() => import('../BreachNotificationDashboard'));
+const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
+const PatientAmendmentReviewQueue = lazy(() => import('../PatientAmendmentReviewQueue'));
+const TrainingComplianceDashboard = lazy(() => import('../TrainingComplianceDashboard'));
+
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center p-8">
@@ -346,6 +352,50 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'security',
     priority: 'low',
     roles: ['admin', 'super_admin', 'it_admin'],
+  },
+  {
+    id: 'breach-notification',
+    title: 'Breach Notification Engine',
+    subtitle: 'HIPAA breach incident tracking, risk assessment, and 60-day notification compliance',
+    icon: '🚨',
+    headerColor: 'text-red-900',
+    component: <Suspense fallback={<SectionLoadingFallback />}><BreachNotificationDashboard /></Suspense>,
+    category: 'security',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'compliance_officer'],
+  },
+  {
+    id: 'baa-tracking',
+    title: 'BAA Tracking Dashboard',
+    subtitle: 'Business associate agreement lifecycle management and renewal tracking',
+    icon: '📄',
+    headerColor: 'text-blue-900',
+    component: <Suspense fallback={<SectionLoadingFallback />}><BAATrackingDashboard /></Suspense>,
+    category: 'security',
+    priority: 'medium',
+    roles: ['admin', 'super_admin', 'compliance_officer'],
+  },
+  {
+    id: 'patient-amendment-review',
+    title: 'Patient Amendment Review Queue',
+    subtitle: 'Review and respond to patient requests to amend their health records (45 CFR 164.526)',
+    icon: '✏️',
+    headerColor: 'text-orange-900',
+    component: <Suspense fallback={<SectionLoadingFallback />}><PatientAmendmentReviewQueue /></Suspense>,
+    category: 'security',
+    priority: 'medium',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'compliance_officer'],
+  },
+  {
+    id: 'training-compliance',
+    title: 'Workforce Training Compliance',
+    subtitle: 'HIPAA workforce security awareness training tracking and compliance rates',
+    icon: '🎓',
+    headerColor: 'text-violet-900',
+    component: <Suspense fallback={<SectionLoadingFallback />}><TrainingComplianceDashboard /></Suspense>,
+    category: 'security',
+    priority: 'medium',
+    roles: ['admin', 'super_admin', 'compliance_officer'],
   },
 
   // ==================== SYSTEM ADMINISTRATION ====================

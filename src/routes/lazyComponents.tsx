@@ -56,10 +56,12 @@ export const ProfilePage = React.lazy(() => import('../pages/ProfilePage'));
 export const DemographicsPage = React.lazy(() => import('../pages/DemographicsPage'));
 export const LogoutPage = React.lazy(() => import('../pages/LogoutPage'));
 
-// Consent
+// Consent & Privacy
 export const ConsentPhotoPage = React.lazy(() => import('../pages/ConsentPhotoPage'));
 export const ConsentPrivacyPage = React.lazy(() => import('../pages/ConsentPrivacyPage'));
 export const ConsentManagementPage = React.lazy(() => import('../pages/ConsentManagementPage'));
+export const NoticeOfPrivacyPractices = React.lazy(() => import('../pages/NoticeOfPrivacyPractices'));
+export const MyAmendmentRequests = React.lazy(() => import('../pages/MyAmendmentRequests'));
 export const SelfReportingPage = React.lazy(() => import('../pages/SelfReportingPage'));
 export const DoctorsViewPage = React.lazy(() => import('../pages/DoctorsViewPage'));
 export const SmartCallbackPage = React.lazy(() => import('../pages/SmartCallbackPage'));
@@ -302,6 +304,8 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   ConsentPhotoPage,
   ConsentPrivacyPage,
   ConsentManagementPage,
+  NoticeOfPrivacyPractices,
+  MyAmendmentRequests,
   SelfReportingPage,
   DoctorsViewPage,
   SmartCallbackPage,

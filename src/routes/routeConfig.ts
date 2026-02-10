@@ -97,6 +97,8 @@ export const protectedRoutes: RouteConfig[] = [
   { path: '/consent-privacy', component: 'ConsentPrivacyPage', auth: 'user', category: 'protected' },
   { path: '/consent-management', component: 'ConsentManagementPage', auth: 'user', category: 'protected' },
   { path: '/self-reporting', component: 'SelfReportingPage', auth: 'user', category: 'protected' },
+  { path: '/notice-of-privacy-practices', component: 'NoticeOfPrivacyPractices', auth: 'user', category: 'protected' },
+  { path: '/my-amendments', component: 'MyAmendmentRequests', auth: 'user', category: 'protected' },
   { path: '/doctors-view', component: 'DoctorsViewPage', auth: 'user', category: 'protected' },
 
   // Dynamic routes
