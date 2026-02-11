@@ -1,0 +1,452 @@
+/**
+ * Marker Types - Devices & Access
+ *
+ * Vascular access devices, vein access/phlebotomy, drainage & tubes,
+ * and monitoring devices.
+ */
+
+import type { MarkerTypeDefinition } from '../../../types/patientAvatar';
+
+// ============================================================================
+// VASCULAR ACCESS DEVICES
+// ============================================================================
+
+export const VASCULAR_ACCESS_TYPES: MarkerTypeDefinition[] = [
+  {
+    type: 'picc_line',
+    display_name: 'PICC Line',
+    category: 'moderate',
+    default_body_region: 'arm_upper_right',
+    default_body_view: 'front',
+    default_position: { x: 22, y: 35 },
+    keywords: ['picc', 'picc line', 'peripherally inserted', 'peripherally-inserted'],
+    laterality_adjustments: {
+      left: { x: 78, y: 35 },
+      right: { x: 22, y: 35 },
+    },
+  },
+  {
+    type: 'picc_line_double',
+    display_name: 'PICC Line (Double Lumen)',
+    category: 'moderate',
+    default_body_region: 'arm_upper_right',
+    default_body_view: 'front',
+    default_position: { x: 22, y: 35 },
+    keywords: ['double lumen picc', 'dual lumen picc', '2 lumen picc'],
+    laterality_adjustments: {
+      left: { x: 78, y: 35 },
+      right: { x: 22, y: 35 },
+    },
+  },
+  {
+    type: 'picc_line_triple',
+    display_name: 'PICC Line (Triple Lumen)',
+    category: 'moderate',
+    default_body_region: 'arm_upper_right',
+    default_body_view: 'front',
+    default_position: { x: 22, y: 35 },
+    keywords: ['triple lumen picc', '3 lumen picc'],
+    laterality_adjustments: {
+      left: { x: 78, y: 35 },
+      right: { x: 22, y: 35 },
+    },
+  },
+  {
+    type: 'central_line_subclavian',
+    display_name: 'Central Line (Subclavian)',
+    category: 'critical',
+    default_body_region: 'chest_right',
+    default_body_view: 'front',
+    default_position: { x: 38, y: 26 },
+    keywords: ['subclavian line', 'subclavian cvc', 'subclavian central'],
+    laterality_adjustments: {
+      left: { x: 62, y: 26 },
+      right: { x: 38, y: 26 },
+    },
+  },
+  {
+    type: 'central_line_jugular',
+    display_name: 'Central Line (Jugular)',
+    category: 'critical',
+    default_body_region: 'neck',
+    default_body_view: 'front',
+    default_position: { x: 45, y: 20 },
+    keywords: ['jugular line', 'ij line', 'internal jugular', 'jugular cvc'],
+    laterality_adjustments: {
+      left: { x: 55, y: 20 },
+      right: { x: 45, y: 20 },
+    },
+  },
+  {
+    type: 'central_line_femoral',
+    display_name: 'Central Line (Femoral)',
+    category: 'critical',
+    default_body_region: 'groin_right',
+    default_body_view: 'front',
+    default_position: { x: 42, y: 60 },
+    keywords: ['femoral line', 'femoral cvc', 'groin line'],
+    laterality_adjustments: {
+      left: { x: 58, y: 60 },
+      right: { x: 42, y: 60 },
+    },
+  },
+  {
+    type: 'peripheral_iv',
+    display_name: 'Peripheral IV',
+    category: 'informational',
+    default_body_region: 'hand_right',
+    default_body_view: 'front',
+    default_position: { x: 10, y: 66 },
+    keywords: ['peripheral iv', 'piv', 'iv access', 'iv site'],
+    laterality_adjustments: {
+      left: { x: 90, y: 66 },
+      right: { x: 10, y: 66 },
+    },
+  },
+  {
+    type: 'midline_catheter',
+    display_name: 'Midline Catheter',
+    category: 'moderate',
+    default_body_region: 'arm_upper_right',
+    default_body_view: 'front',
+    default_position: { x: 22, y: 38 },
+    keywords: ['midline', 'midline catheter'],
+    laterality_adjustments: {
+      left: { x: 78, y: 38 },
+      right: { x: 22, y: 38 },
+    },
+  },
+  {
+    type: 'port_a_cath',
+    display_name: 'Port-a-Cath',
+    category: 'informational',
+    default_body_region: 'chest_right',
+    default_body_view: 'front',
+    default_position: { x: 40, y: 28 },
+    keywords: ['port', 'port-a-cath', 'portacath', 'implanted port', 'chemo port'],
+    laterality_adjustments: {
+      left: { x: 60, y: 28 },
+      right: { x: 40, y: 28 },
+    },
+  },
+  {
+    type: 'dialysis_catheter',
+    display_name: 'Dialysis Catheter',
+    category: 'critical',
+    default_body_region: 'neck',
+    default_body_view: 'front',
+    default_position: { x: 45, y: 20 },
+    keywords: ['dialysis catheter', 'hemodialysis catheter', 'hd catheter', 'permacath', 'tunneled dialysis'],
+  },
+  {
+    type: 'arterial_line',
+    display_name: 'Arterial Line',
+    category: 'critical',
+    default_body_region: 'wrist_right',
+    default_body_view: 'front',
+    default_position: { x: 12, y: 60 },
+    keywords: ['arterial line', 'a-line', 'art line', 'radial artery'],
+    laterality_adjustments: {
+      left: { x: 88, y: 60 },
+      right: { x: 12, y: 60 },
+    },
+  },
+  {
+    type: 'av_fistula',
+    display_name: 'AV Fistula',
+    category: 'moderate',
+    default_body_region: 'arm_lower_right',
+    default_body_view: 'front',
+    default_position: { x: 15, y: 52 },
+    keywords: ['av fistula', 'arteriovenous fistula', 'dialysis fistula', 'avf'],
+    laterality_adjustments: {
+      left: { x: 85, y: 52 },
+      right: { x: 15, y: 52 },
+    },
+  },
+];
+
+// ============================================================================
+// DRAINAGE & TUBES
+// ============================================================================
+
+export const DRAINAGE_TUBE_TYPES: MarkerTypeDefinition[] = [
+  {
+    type: 'foley_catheter',
+    display_name: 'Foley Catheter',
+    category: 'moderate',
+    default_body_region: 'abdomen_lower',
+    default_body_view: 'front',
+    default_position: { x: 50, y: 58 },
+    keywords: ['foley', 'foley catheter', 'urinary catheter', 'indwelling catheter'],
+  },
+  {
+    type: 'suprapubic_catheter',
+    display_name: 'Suprapubic Catheter',
+    category: 'moderate',
+    default_body_region: 'abdomen_lower',
+    default_body_view: 'front',
+    default_position: { x: 50, y: 55 },
+    keywords: ['suprapubic', 'sp catheter', 'suprapubic tube'],
+  },
+  {
+    type: 'chest_tube',
+    display_name: 'Chest Tube',
+    category: 'critical',
+    default_body_region: 'chest_right',
+    default_body_view: 'front',
+    default_position: { x: 38, y: 35 },
+    keywords: ['chest tube', 'thoracostomy', 'pleural drain', 'thoracic drain'],
+    laterality_adjustments: {
+      left: { x: 62, y: 35 },
+      right: { x: 38, y: 35 },
+    },
+  },
+  {
+    type: 'jp_drain',
+    display_name: 'JP Drain',
+    category: 'moderate',
+    default_body_region: 'abdomen_right',
+    default_body_view: 'front',
+    default_position: { x: 40, y: 47 },
+    keywords: ['jp drain', 'jackson-pratt', 'jackson pratt', 'bulb drain'],
+  },
+  {
+    type: 'hemovac',
+    display_name: 'Hemovac',
+    category: 'moderate',
+    default_body_region: 'abdomen_right',
+    default_body_view: 'front',
+    default_position: { x: 40, y: 50 },
+    keywords: ['hemovac', 'hemovac drain'],
+  },
+  {
+    type: 'penrose_drain',
+    display_name: 'Penrose Drain',
+    category: 'informational',
+    default_body_region: 'abdomen_right',
+    default_body_view: 'front',
+    default_position: { x: 40, y: 48 },
+    keywords: ['penrose', 'penrose drain', 'passive drain'],
+  },
+  {
+    type: 'ng_tube',
+    display_name: 'NG Tube',
+    category: 'moderate',
+    default_body_region: 'face',
+    default_body_view: 'front',
+    default_position: { x: 52, y: 14 },
+    keywords: ['ng tube', 'nasogastric', 'nasogastric tube', 'ngt'],
+  },
+  {
+    type: 'g_tube',
+    display_name: 'G-Tube/PEG',
+    category: 'moderate',
+    default_body_region: 'abdomen_left',
+    default_body_view: 'front',
+    default_position: { x: 60, y: 45 },
+    keywords: ['g-tube', 'gtube', 'peg', 'peg tube', 'gastrostomy', 'feeding tube'],
+  },
+  {
+    type: 'j_tube',
+    display_name: 'J-Tube',
+    category: 'moderate',
+    default_body_region: 'abdomen_left',
+    default_body_view: 'front',
+    default_position: { x: 60, y: 48 },
+    keywords: ['j-tube', 'jtube', 'jej tube', 'jejunostomy'],
+  },
+  {
+    type: 'tracheostomy',
+    display_name: 'Tracheostomy',
+    category: 'critical',
+    default_body_region: 'neck',
+    default_body_view: 'front',
+    default_position: { x: 50, y: 21 },
+    keywords: ['trach', 'tracheostomy', 'tracheotomy', 'trach tube'],
+  },
+  {
+    type: 'nephrostomy',
+    display_name: 'Nephrostomy Tube',
+    category: 'moderate',
+    default_body_region: 'lower_back_right',
+    default_body_view: 'back',
+    default_position: { x: 40, y: 50 },
+    keywords: ['nephrostomy', 'nephrostomy tube', 'percutaneous nephrostomy'],
+    laterality_adjustments: {
+      left: { x: 60, y: 50 },
+      right: { x: 40, y: 50 },
+    },
+  },
+];
+
+// ============================================================================
+// MONITORING DEVICES
+// ============================================================================
+
+export const MONITORING_DEVICE_TYPES: MarkerTypeDefinition[] = [
+  {
+    type: 'cgm',
+    display_name: 'Continuous Glucose Monitor',
+    category: 'monitoring',
+    default_body_region: 'arm_upper_right',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 33 },
+    keywords: ['cgm', 'continuous glucose', 'dexcom', 'libre', 'glucose monitor'],
+    laterality_adjustments: {
+      left: { x: 80, y: 33 },
+      right: { x: 20, y: 33 },
+    },
+  },
+  {
+    type: 'cardiac_monitor',
+    display_name: 'Cardiac Monitor Leads',
+    category: 'monitoring',
+    default_body_region: 'chest_left',
+    default_body_view: 'front',
+    default_position: { x: 55, y: 30 },
+    keywords: ['cardiac monitor', 'ecg leads', 'ekg leads', 'telemetry'],
+  },
+  {
+    type: 'pulse_ox_continuous',
+    display_name: 'Continuous Pulse Oximeter',
+    category: 'monitoring',
+    default_body_region: 'hand_right',
+    default_body_view: 'front',
+    default_position: { x: 8, y: 66 },
+    keywords: ['pulse ox', 'pulse oximeter', 'spo2 monitor'],
+  },
+  {
+    type: 'holter_monitor',
+    display_name: 'Holter Monitor',
+    category: 'monitoring',
+    default_body_region: 'chest_left',
+    default_body_view: 'front',
+    default_position: { x: 58, y: 32 },
+    keywords: ['holter', 'holter monitor', '24 hour monitor'],
+  },
+];
+
+// ============================================================================
+// VEIN ACCESS & PHLEBOTOMY
+// ============================================================================
+
+export const VEIN_ACCESS_TYPES: MarkerTypeDefinition[] = [
+  {
+    type: 'blown_vein',
+    display_name: 'Blown Vein',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 45 },
+    keywords: ['blown vein', 'infiltrated', 'extravasation', 'failed iv'],
+  },
+  {
+    type: 'scarred_vein',
+    display_name: 'Scarred Vein',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 48 },
+    keywords: ['scarred vein', 'sclerosed', 'fibrotic vein', 'chemo vein', 'iv drug use'],
+  },
+  {
+    type: 'preferred_vein',
+    display_name: 'Preferred Access Site',
+    category: 'informational',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 42 },
+    keywords: ['preferred vein', 'good vein', 'best access', 'use this vein', 'preferred site'],
+  },
+  {
+    type: 'avoid_access',
+    display_name: 'Avoid This Arm',
+    category: 'critical',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 15, y: 40 },
+    keywords: ['avoid arm', 'no access', 'mastectomy side', 'lymph node dissection', 'lymphedema arm', 'fistula arm', 'shunt arm'],
+  },
+  {
+    type: 'rolling_veins',
+    display_name: 'Rolling Veins',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 46 },
+    keywords: ['rolling veins', 'mobile veins', 'veins roll', 'slippery veins'],
+  },
+  {
+    type: 'fragile_veins',
+    display_name: 'Fragile Veins',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 44 },
+    keywords: ['fragile veins', 'elderly veins', 'thin veins', 'bruise easily', 'steroid skin'],
+  },
+  {
+    type: 'ultrasound_guided',
+    display_name: 'Ultrasound Guided Access Required',
+    category: 'critical',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 18, y: 43 },
+    keywords: ['ultrasound guided', 'us guided', 'ultrasound iv', 'blind stick failed', 'deep veins'],
+  },
+  {
+    type: 'vein_finder',
+    display_name: 'Vein Finder Recommended',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 18, y: 45 },
+    keywords: ['vein finder', 'accuvein', 'vein light', 'nir', 'near infrared'],
+  },
+  {
+    type: 'small_gauge_needle',
+    display_name: 'Small Gauge Needle Required',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 18, y: 47 },
+    keywords: ['small gauge', 'butterfly', 'pediatric needle', '23 gauge', '25 gauge', 'small veins'],
+  },
+  {
+    type: 'warm_compress_first',
+    display_name: 'Warm Compress First',
+    category: 'informational',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 18, y: 49 },
+    keywords: ['warm compress', 'heat pack', 'warm arm first', 'vasodilate'],
+  },
+  {
+    type: 'hand_veins_only',
+    display_name: 'Hand Veins Only',
+    category: 'moderate',
+    default_body_region: 'left_hand',
+    default_body_view: 'front',
+    default_position: { x: 15, y: 60 },
+    keywords: ['hand veins', 'dorsal hand', 'hand only', 'no ac veins'],
+  },
+  {
+    type: 'foot_veins_backup',
+    display_name: 'Foot Veins (Backup)',
+    category: 'moderate',
+    default_body_region: 'left_foot',
+    default_body_view: 'front',
+    default_position: { x: 40, y: 95 },
+    keywords: ['foot veins', 'pedal veins', 'saphenous', 'foot access'],
+  },
+  {
+    type: 'external_jugular_backup',
+    display_name: 'External Jugular (Last Resort)',
+    category: 'critical',
+    default_body_region: 'neck',
+    default_body_view: 'front',
+    default_position: { x: 45, y: 15 },
+    keywords: ['ej', 'external jugular', 'neck access', 'ej access'],
+  },
+];

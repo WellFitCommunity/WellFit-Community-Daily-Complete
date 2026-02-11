@@ -2,17 +2,20 @@
  * TelehealthPatientSidebar
  *
  * Displays patient information during telehealth video calls.
- * Shows: Patient Avatar, Vitals, Conditions, Medications, SDOH Complexity
+ * Shows: Patient Avatar (with pregnancy variant), Vitals, Conditions,
+ * Medications, SDOH Complexity, and pregnancy quick-info when applicable.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { PatientAvatar } from '../patient-avatar/PatientAvatar';
+import { PregnancyAvatarPanel } from '../labor-delivery/PregnancyAvatarPanel';
 import { ObservationService } from '../../services/fhir/ObservationService';
 import { ConditionService } from '../../services/fhir/ConditionService';
 import { MedicationRequestService } from '../../services/fhir/MedicationRequestService';
 import { SDOHBillingService } from '../../services/sdohBillingService';
 import { auditLogger } from '../../services/auditLogger';
+import type { LDPregnancy } from '../../types/laborDelivery';
 
 interface TelehealthPatientSidebarProps {
   patientId: string;
@@ -27,6 +30,7 @@ interface VitalsData {
   oxygenSaturation?: number;
   temperature?: number;
   weight?: number;
+  fetalHeartRate?: number;
   lastUpdated?: string;
 }
 
@@ -50,6 +54,7 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
     sdohComplexity: 0,
     ccmEligible: false,
   });
+  const [activePregnancy, setActivePregnancy] = useState<LDPregnancy | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,13 +66,32 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
     setError(null);
 
     try {
-      // Parallel fetch for performance
-      const [vitalsData, conditionsData, medicationsData, sdohAssessment] = await Promise.all([
+      // Parallel fetch for performance (including pregnancy check)
+      const [vitalsData, conditionsData, medicationsData, sdohAssessment, pregnancyResult] = await Promise.all([
         ObservationService.getVitalSigns(patientId, 7).catch(() => null),
         ConditionService.getActive(patientId).catch(() => null),
         MedicationRequestService.getActive(patientId).catch(() => null),
         SDOHBillingService.assessSDOHComplexity(patientId).catch(() => null),
+        supabase
+          .from('ld_pregnancies')
+          .select('*')
+          .eq('patient_id', patientId)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+          .then(
+            (res) => res,
+            () => ({ data: null })
+          ),
       ]);
+
+      // Set active pregnancy
+      if (pregnancyResult && 'data' in pregnancyResult && pregnancyResult.data) {
+        setActivePregnancy(pregnancyResult.data as unknown as LDPregnancy);
+      } else {
+        setActivePregnancy(null);
+      }
 
       // Process vitals
       const processedVitals: VitalsData = {};
@@ -77,7 +101,6 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
           const value = obs.value;
 
           if (code?.includes('8480-6') || code?.includes('8462-4')) {
-            // Blood pressure
             if (!processedVitals.bloodPressure && typeof value === 'string') {
               processedVitals.bloodPressure = value;
             }
@@ -125,7 +148,7 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
 
       setVitals(processedVitals);
 
-      // Set clinical summary (FHIR services return FHIRApiResponse with .data array)
+      // Set clinical summary
       setClinicalSummary({
         activeConditions: conditionsData?.data?.length || 0,
         activeMedications: medicationsData?.data?.length || 0,
@@ -147,7 +170,6 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
     fetchPatientData();
   }, [fetchPatientData]);
 
-  // Format vitals display
   const formatLastUpdated = (dateStr?: string) => {
     if (!dateStr) return 'No recent data';
     const date = new Date(dateStr);
@@ -160,7 +182,6 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
     return `Updated ${diffDays}d ago`;
   };
 
-  // Get SDOH risk color
   const getSDOHColor = (score: number) => {
     if (score >= 7) return 'text-red-400';
     if (score >= 4) return 'text-orange-400';
@@ -189,26 +210,36 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Patient Avatar */}
+        {/* Patient Avatar — show pregnancy variant when active pregnancy exists */}
         <div className="flex justify-center">
-          <PatientAvatar
-            patientId={patientId}
-            patientName={patientName}
-            initialMode="compact"
-            editable={false}
-            className="cursor-pointer"
-          />
-        </div>
-
-        {/* Patient Name */}
-        <div className="text-center">
-          <h4 className="text-lg font-semibold text-white">{patientName}</h4>
-          {clinicalSummary.ccmEligible && (
-            <span className="inline-block mt-1 px-2 py-0.5 bg-purple-600 text-white text-xs rounded-full">
-              CCM Eligible
-            </span>
+          {activePregnancy ? (
+            <PregnancyAvatarPanel
+              pregnancy={activePregnancy}
+              patientName={patientName}
+              compact
+            />
+          ) : (
+            <PatientAvatar
+              patientId={patientId}
+              patientName={patientName}
+              initialMode="compact"
+              editable={false}
+              className="cursor-pointer"
+            />
           )}
         </div>
+
+        {/* Patient Name (only when no pregnancy panel, which already shows name) */}
+        {!activePregnancy && (
+          <div className="text-center">
+            <h4 className="text-lg font-semibold text-white">{patientName}</h4>
+            {clinicalSummary.ccmEligible && (
+              <span className="inline-block mt-1 px-2 py-0.5 bg-purple-600 text-white text-xs rounded-full">
+                CCM Eligible
+              </span>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="space-y-3">
@@ -245,7 +276,7 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
                   </div>
                 </div>
                 <div className="bg-gray-800/50 rounded p-2">
-                  <div className="text-xs text-gray-400">O₂ Sat</div>
+                  <div className="text-xs text-gray-400">O&#x2082; Sat</div>
                   <div className="text-sm font-semibold text-white">
                     {vitals.oxygenSaturation ? `${vitals.oxygenSaturation}%` : '--'}
                   </div>
@@ -253,9 +284,18 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
                 <div className="bg-gray-800/50 rounded p-2">
                   <div className="text-xs text-gray-400">Temp</div>
                   <div className="text-sm font-semibold text-white">
-                    {vitals.temperature ? `${vitals.temperature}°F` : '--'}
+                    {vitals.temperature ? `${vitals.temperature}\u00B0F` : '--'}
                   </div>
                 </div>
+                {/* Fetal Heart Rate — shown when pregnant */}
+                {activePregnancy && (
+                  <div className="bg-pink-900/30 rounded p-2 col-span-2">
+                    <div className="text-xs text-pink-300">Fetal HR</div>
+                    <div className="text-sm font-semibold text-pink-200">
+                      {vitals.fetalHeartRate ? `${vitals.fetalHeartRate} bpm` : 'See L&D'}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="mt-2 text-xs text-gray-500 text-center">
                 {formatLastUpdated(vitals.lastUpdated)}

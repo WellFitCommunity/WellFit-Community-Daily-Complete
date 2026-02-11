@@ -1,11 +1,14 @@
 /**
  * LDOverview - Pregnancy overview panel
- * Shows pregnancy info, gestational age, risk level, recent vitals
+ * Shows pregnancy avatar + pregnancy info, gestational age, risk level, recent vitals
+ *
+ * Layout: 2-column — PregnancyAvatarPanel left (~1/3), data cards right (~2/3)
  */
 
 import React from 'react';
 import type { LDDashboardSummary } from '../../types/laborDelivery';
 import { calculateGestationalAge } from '../../types/laborDelivery';
+import { PregnancyAvatarPanel } from './PregnancyAvatarPanel';
 
 interface LDOverviewProps {
   summary: LDDashboardSummary;
@@ -35,67 +38,78 @@ const LDOverview: React.FC<LDOverviewProps> = ({ summary }) => {
 
   return (
     <div className="space-y-6">
-      {/* Pregnancy Info */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Pregnancy Summary</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm text-gray-500">Gestational Age</p>
-            <p className="text-2xl font-bold text-gray-900">{ga.weeks}w {ga.days}d</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">EDD</p>
-            <p className="text-base font-medium text-gray-900">
-              {new Date(pregnancy.edd).toLocaleDateString()}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">G/P</p>
-            <p className="text-xl font-bold text-gray-900">
-              G{pregnancy.gravida}P{pregnancy.para}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Risk Level</p>
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${RISK_COLORS[pregnancy.risk_level]}`}>
-              {pregnancy.risk_level.toUpperCase()}
-            </span>
-          </div>
+      {/* Top section: Avatar + Pregnancy Summary in 2 columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left column: Pregnancy Avatar */}
+        <div className="lg:col-span-1">
+          <PregnancyAvatarPanel pregnancy={pregnancy} />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div>
-            <p className="text-sm text-gray-500">Blood Type</p>
-            <p className="text-base font-medium">{pregnancy.blood_type}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Rh Factor</p>
-            <p className="text-base font-medium">{pregnancy.rh_factor}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">GBS Status</p>
-            <p className={`text-base font-medium ${
-              pregnancy.gbs_status === 'positive' ? 'text-red-600' : 'text-gray-900'
-            }`}>
-              {pregnancy.gbs_status}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Status</p>
-            <p className="text-base font-medium">{pregnancy.status}</p>
-          </div>
-        </div>
-        {pregnancy.risk_factors.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm text-gray-500 mb-1">Risk Factors</p>
-            <div className="flex flex-wrap gap-1">
-              {pregnancy.risk_factors.map((rf) => (
-                <span key={rf} className="inline-block px-2 py-1 bg-red-50 text-red-700 rounded text-xs">
-                  {rf}
+
+        {/* Right column: Pregnancy data cards */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Pregnancy Info */}
+          <div className="bg-white rounded-lg border p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pregnancy Summary</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Gestational Age</p>
+                <p className="text-2xl font-bold text-gray-900">{ga.weeks}w {ga.days}d</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">EDD</p>
+                <p className="text-base font-medium text-gray-900">
+                  {new Date(pregnancy.edd).toLocaleDateString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">G/P</p>
+                <p className="text-xl font-bold text-gray-900">
+                  G{pregnancy.gravida}P{pregnancy.para}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Risk Level</p>
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${RISK_COLORS[pregnancy.risk_level]}`}>
+                  {pregnancy.risk_level.toUpperCase()}
                 </span>
-              ))}
+              </div>
             </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              <div>
+                <p className="text-sm text-gray-500">Blood Type</p>
+                <p className="text-base font-medium">{pregnancy.blood_type}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Rh Factor</p>
+                <p className="text-base font-medium">{pregnancy.rh_factor}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">GBS Status</p>
+                <p className={`text-base font-medium ${
+                  pregnancy.gbs_status === 'positive' ? 'text-red-600' : 'text-gray-900'
+                }`}>
+                  {pregnancy.gbs_status}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Status</p>
+                <p className="text-base font-medium">{pregnancy.status}</p>
+              </div>
+            </div>
+            {pregnancy.risk_factors.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 mb-1">Risk Factors</p>
+                <div className="flex flex-wrap gap-1">
+                  {pregnancy.risk_factors.map((rf) => (
+                    <span key={rf} className="inline-block px-2 py-1 bg-red-50 text-red-700 rounded text-xs">
+                      {rf}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Latest Prenatal Visit */}

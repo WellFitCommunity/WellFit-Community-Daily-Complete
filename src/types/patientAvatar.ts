@@ -32,7 +32,8 @@ export type MarkerCategory =
   | 'informational'
   | 'monitoring'
   | 'chronic'
-  | 'neurological';
+  | 'neurological'
+  | 'obstetric';
 
 /**
  * How the marker was created
@@ -78,6 +79,11 @@ export interface MarkerDetails {
 
   // SmartScribe data
   raw_smartscribe_text?: string;
+
+  // Obstetric data
+  trimester?: 1 | 2 | 3;
+  gestational_age_weeks?: number;
+  fetal_position?: string;
 }
 
 // ============================================================================
@@ -297,6 +303,30 @@ export interface BodyRegion {
 }
 
 // ============================================================================
+// PREGNANCY AVATAR CONTEXT
+// ============================================================================
+
+/**
+ * Context data for pregnancy-specific avatar rendering
+ */
+export interface PregnancyAvatarContext {
+  pregnancyId: string;
+  trimester: 1 | 2 | 3;
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+  edd: string;
+  riskLevel: 'low' | 'moderate' | 'high' | 'critical';
+  gbsStatus: 'positive' | 'negative' | 'unknown' | 'pending';
+  membraneStatus?: 'intact' | 'srom' | 'arom' | 'unknown';
+  fhrCategory?: 'I' | 'II' | 'III';
+  fetalHeartRate?: number;
+  gravida: number;
+  para: number;
+  bloodType: string;
+  rhFactor: string;
+}
+
+// ============================================================================
 // COMPONENT PROPS
 // ============================================================================
 
@@ -326,6 +356,8 @@ export interface AvatarBodyProps {
   genderPresentation: GenderPresentation;
   view: BodyView;
   size?: 'thumbnail' | 'full';
+  /** When set, renders pregnancy-specific body shape */
+  pregnancyTrimester?: 1 | 2 | 3;
   className?: string;
 }
 
@@ -411,6 +443,12 @@ export const CATEGORY_COLORS: Record<MarkerCategory, { bg: string; border: strin
     text: 'text-orange-400',
     pulse: '',
   },
+  obstetric: {
+    bg: 'bg-pink-500',
+    border: 'border-pink-400',
+    text: 'text-pink-400',
+    pulse: '',
+  },
 };
 
 /**
@@ -423,4 +461,5 @@ export const CATEGORY_LABELS: Record<MarkerCategory, string> = {
   monitoring: 'Monitoring',
   chronic: 'Chronic Condition',
   neurological: 'Neurological',
+  obstetric: 'Obstetric',
 };

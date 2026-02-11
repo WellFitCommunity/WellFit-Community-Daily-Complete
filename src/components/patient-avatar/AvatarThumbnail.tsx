@@ -42,6 +42,7 @@ function getMarkerCounts(markers: PatientMarker[]): Record<MarkerCategory, numbe
     monitoring: 0,
     chronic: 0,
     neurological: 0,
+    obstetric: 0,
   };
 
   for (const marker of markers) {
@@ -70,6 +71,7 @@ const CategoryBadge: React.FC<{ category: MarkerCategory; count: number }> = ({
     monitoring: 'Monitoring',
     chronic: 'Chronic',
     neurological: 'Neuro',
+    obstetric: 'OB',
   };
 
   return (

@@ -163,10 +163,12 @@ describe('LDOverview', () => {
       },
     };
     render(<LDOverview summary={summary} />);
-    expect(screen.getByText('G2P1')).toBeInTheDocument();
-    expect(screen.getByText('O+')).toBeInTheDocument();
-    expect(screen.getByText('MODERATE')).toBeInTheDocument();
-    expect(screen.getByText('Gestational diabetes')).toBeInTheDocument();
+    // G2P1 appears in both PregnancyAvatarPanel quick-info and pregnancy summary
+    expect(screen.getAllByText('G2P1').length).toBeGreaterThanOrEqual(1);
+    // O+ appears in both panel and summary
+    expect(screen.getAllByText('O+').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('MODERATE').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Gestational diabetes').length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays newborn APGAR scores', () => {

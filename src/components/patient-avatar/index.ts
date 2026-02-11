@@ -31,9 +31,13 @@ export { MarkerForm } from './MarkerForm';
 export { MarkerDetailPopover } from './MarkerDetailPopover';
 export { AvatarSettingsForm } from './AvatarSettingsForm';
 
+// Pregnancy-specific components
+export { PregnancyAvatarBody } from './PregnancyAvatarBody';
+
 // Hooks
 export { usePatientAvatar } from './hooks/usePatientAvatar';
 export { usePatientMarkers } from './hooks/usePatientMarkers';
+export { usePregnancyAvatar } from './hooks/usePregnancyAvatar';
 export { useTouchGestures } from './hooks/useTouchGestures';
 
 // Styles (import for side effects)
@@ -56,6 +60,8 @@ export {
   calculateMarkerPriority,
   getTopPriorityMarkers,
 } from './constants/markerTypeLibrary';
+export { OBSTETRIC_ANATOMICAL_TYPES, OBSTETRIC_BADGE_TYPES, ALL_PREGNANCY_MARKER_TYPES } from './constants/pregnancyMarkerTypes';
+export { ALL_PREGNANCY_BODY_REGIONS } from './constants/pregnancyBodyRegions';
 
 // Re-export types
 export type {
@@ -77,4 +83,5 @@ export type {
   AvatarBodyProps,
   AvatarMarkerProps,
   MarkerDetailPopoverProps,
+  PregnancyAvatarContext,
 } from '../../types/patientAvatar';

@@ -9,6 +9,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { AvatarBodyProps, GenderPresentation, BodyView } from '../../types/patientAvatar';
 import { SKIN_TONE_COLORS } from './constants/skinTones';
+import { PregnancyAvatarBody } from './PregnancyAvatarBody';
 
 interface AvatarBodyComponentProps extends AvatarBodyProps {
   children?: React.ReactNode;
@@ -359,10 +360,27 @@ export const AvatarBody: React.FC<AvatarBodyComponentProps> = React.memo(({
   genderPresentation,
   view,
   size = 'full',
+  pregnancyTrimester,
   className,
   children,
   onClick,
 }) => {
+  // Delegate to pregnancy body when trimester is set and patient is female
+  if (pregnancyTrimester && genderPresentation === 'female') {
+    return (
+      <PregnancyAvatarBody
+        skinTone={skinTone}
+        trimester={pregnancyTrimester}
+        view={view}
+        size={size}
+        className={className}
+        onClick={onClick}
+      >
+        {children}
+      </PregnancyAvatarBody>
+    );
+  }
+
   const skinColor = SKIN_TONE_COLORS[skinTone];
   const outlineColor = '#475569'; // slate-600
 

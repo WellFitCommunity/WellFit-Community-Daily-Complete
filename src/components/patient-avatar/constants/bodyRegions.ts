@@ -6,6 +6,7 @@
  */
 
 import { BodyRegion, BodyView } from '../../../types/patientAvatar';
+import { ALL_PREGNANCY_BODY_REGIONS } from './pregnancyBodyRegions';
 
 /**
  * Body regions for front view
@@ -446,6 +447,7 @@ export const BODY_REGIONS_BACK: BodyRegion[] = [
 export const ALL_BODY_REGIONS: BodyRegion[] = [
   ...BODY_REGIONS_FRONT,
   ...BODY_REGIONS_BACK,
+  ...ALL_PREGNANCY_BODY_REGIONS,
 ];
 
 /**
