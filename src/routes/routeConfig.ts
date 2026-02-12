@@ -251,6 +251,30 @@ export const adminRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'case_manager', 'billing_specialist'],
     category: 'admin',
   },
+  // Care Gap Detection (Claude for Healthcare Task 12)
+  {
+    path: '/admin/care-gaps',
+    component: 'CareGapDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'],
+    category: 'admin',
+  },
+  // Clinical Note Summarization (Claude for Healthcare Task 13)
+  {
+    path: '/admin/clinical-notes',
+    component: 'ClinicalNoteSummaryDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse'],
+    category: 'admin',
+  },
+  // DSI Transparency / AI Model Cards (Claude for Healthcare Task 14 — HTI-1)
+  {
+    path: '/admin/model-cards',
+    component: 'AIModelCardsDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin'],
+    category: 'admin',
+  },
   // SMART on FHIR App Management
   {
     path: '/admin/smart-apps',

@@ -1,8 +1,9 @@
-# Claude for Healthcare — Gap Tracker
+# Claude for Healthcare — Gap 
+
 
 **Created:** February 8, 2026
 **Audited against:** Anthropic Claude for Healthcare (JPM26 launch)
-**Current state:** 11 MCP servers, 98 tools, 7,064 tests, 0 errors
+**Current state:** 11 MCP servers, 98 tools, 7,376 tests, 0 errors
 
 ---
 
@@ -23,15 +24,31 @@
 
 ---
 
-## Tasks 11-15: REMAINING
+## Task 11: COMPLETE
+
+| # | Task | Status | Commit |
+|---|------|--------|--------|
+| 11 | Decompose MedicineCabinet.tsx (897→299 lines) | ✅ Done | c7640f4c (Feb 9) |
+
+---
+
+## Tasks 12-14: COMPLETE
+
+| # | Task | Status | Commit |
+|---|------|--------|--------|
+| 12 | Care Gap Detection Dashboard (CareGapDashboard.tsx, 416 lines) | ✅ Done | (Feb 12) |
+| 13 | Clinical Note Summarization Dashboard (ClinicalNoteSummaryDashboard.tsx, 431 lines) | ✅ Done | (Feb 12) |
+| 14 | DSI Transparency / AI Model Cards Dashboard (AIModelCardsDashboard.tsx, 553 lines) | ✅ Done | (Feb 12) |
+
+**Wiring:** Routes (`/admin/care-gaps`, `/admin/clinical-notes`, `/admin/model-cards`), lazy imports, and admin panel section definitions all connected.
+
+---
+
+## Task 15: IN PROGRESS
 
 | # | Task | What's Missing | Effort | Status |
 |---|------|---------------|--------|--------|
-| 11 | **Decompose MedicineCabinet.tsx** (896 lines) | Exceeds 600-line god file limit. Extract sub-components. File: `src/components/patient/MedicineCabinet.tsx` | 2-4 hrs | ⏳ Pending |
-| 12 | **Care Gap Detection UI** | Services exist (`ImmunizationService`, `CareCoordinationService`, `VaccineGapsWidget`). No dedicated Care Gap dashboard component. | 1-2 days | ⏳ Pending |
-| 13 | **Clinical Note Summarization UI** | Edge functions exist (`ai-soap-note-generator`, `ai-progress-note-synthesizer`, `ai-discharge-summary`). No admin component to view/generate summaries. | 1 day | ⏳ Pending |
-| 14 | **DSI Transparency / AI Model Cards UI** | DB table `ai_model_cards` exists (migration `20260122150001_dsi_transparency.sql`). No UI to view or manage model cards. HTI-1 requires documenting all AI/ML models. | 1-2 days | ⏳ Pending |
-| 15 | **God files (7 files over 600 lines)** | `fhir.ts` (2,050), `enterpriseMigrationEngine.ts` (2,025), `HL7ToFHIRTranslator.ts` (1,678), `markerTypeLibrary.ts` (1,624), `FhirIntegrationService.ts` (1,460), `FhirAiService.ts` (1,425), `EnhancedFhirService.ts` (1,321) | 2-3 days | ⏳ Pending |
+| 15 | **God files (6 remaining over 600 lines)** | `fhir.ts` (2,050), `enterpriseMigrationEngine.ts` (2,025), `HL7ToFHIRTranslator.ts` (1,678), `FhirIntegrationService.ts` (1,460), `FhirAiService.ts` (1,425), `EnhancedFhirService.ts` (1,321). ~~`markerTypeLibrary.ts`~~ decomposed (1,637→57, commit f30f1c20). | 2-3 days | 🔄 1/7 done |
 
 ---
 
@@ -41,3 +58,7 @@
 |------|--------|-----|
 | 2026-02-08 | Tracker created — 9 complete, 6 remaining | Claude Opus 4.6 |
 | 2026-02-09 | Task #10 PubMed MCP server — 6 tools + ping, Tier 1 external_api | Claude Opus 4.6 |
+| 2026-02-09 | Task #11 MedicineCabinet decomposed (897→299 lines, 5 sub-components) | Claude Opus 4.6 |
+| 2026-02-12 | Task #15 partial — markerTypeLibrary.ts decomposed (1,637→57 lines, 5 sub-modules) | Claude Opus 4.6 |
+| 2026-02-12 | Tracker audit — updated test count (7,376), Task 11 marked complete, Task 15 updated (1/7 done) | Claude Opus 4.6 |
+| 2026-02-12 | Tasks #12-14 complete — CareGapDashboard, ClinicalNoteSummaryDashboard, AIModelCardsDashboard built + wired | Claude Opus 4.6 |

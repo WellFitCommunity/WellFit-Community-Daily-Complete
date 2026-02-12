@@ -38,6 +38,11 @@ const CardiologyDashboard = lazy(() => import('../../cardiology/CardiologyDashbo
 const LaborDeliveryDashboard = lazy(() => import('../../labor-delivery/LaborDeliveryDashboard'));
 const OncologyDashboard = lazy(() => import('../../oncology/OncologyDashboard'));
 
+// Claude for Healthcare Gap Tracker (Tasks 12-14)
+const CareGapDashboard = lazy(() => import('../CareGapDashboard'));
+const ClinicalNoteSummaryDashboard = lazy(() => import('../ClinicalNoteSummaryDashboard'));
+const AIModelCardsDashboard = lazy(() => import('../AIModelCardsDashboard'));
+
 // Regulatory Compliance (Gap Remediation)
 const BreachNotificationDashboard = lazy(() => import('../BreachNotificationDashboard'));
 const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
@@ -248,6 +253,32 @@ export const getAllSections = (): DashboardSection[] => [
     roles: ['admin', 'super_admin', 'physician', 'case_manager'],
   },
 
+  // ==================== CARE GAP DETECTION ====================
+  {
+    id: 'care-gap-detection',
+    title: 'Care Gap Detection',
+    subtitle: 'Identify and close preventive care gaps across your patient panel',
+    icon: '🔍',
+    headerColor: 'text-orange-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><CareGapDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'],
+  },
+
+  // ==================== CLINICAL NOTE SUMMARIZATION ====================
+  {
+    id: 'clinical-note-summary',
+    title: 'Clinical Note Summarization',
+    subtitle: 'Review and approve AI-generated SOAP notes, progress notes, and discharge summaries',
+    icon: '📝',
+    headerColor: 'text-cyan-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ClinicalNoteSummaryDashboard /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse'],
+  },
+
   // ==================== CLINICAL DATA ====================
   {
     id: 'quality-measures',
@@ -306,6 +337,19 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><ReportsSection /></Suspense>,
     category: 'clinical',
     priority: 'low',
+  },
+
+  // ==================== DSI TRANSPARENCY ====================
+  {
+    id: 'ai-model-cards',
+    title: 'DSI Transparency — AI Model Cards',
+    subtitle: 'HTI-1 compliant AI/ML model documentation, risk classification, and transparency',
+    icon: '🤖',
+    headerColor: 'text-indigo-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><AIModelCardsDashboard /></Suspense>,
+    category: 'security',
+    priority: 'high',
+    roles: ['admin', 'super_admin'],
   },
 
   // ==================== SECURITY & COMPLIANCE ====================
