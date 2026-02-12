@@ -9,7 +9,6 @@ import type {
   PopulationPrediction,
   RiskDistribution,
   AiConfiguration,
-  CheckInEntry,
 } from './types';
 
 import { assessPatientRisk, calculateAdherenceScore } from './riskAssessment';

@@ -396,7 +396,7 @@ function calculateVitalsHealthScore(vitalsTrends: VitalsTrend[]): number {
 }
 
 /** Assess full patient risk from patient data and config */
-export function assessPatientRisk(patientData: PatientData, config: AiConfiguration): HealthRiskAssessment {
+export function assessPatientRisk(patientData: PatientData, _config: AiConfiguration): HealthRiskAssessment {
   const vitals = patientData.vitals || [];
   const checkIns = patientData.checkIns || [];
   const _profile = patientData.profile; // Reserved for future use
