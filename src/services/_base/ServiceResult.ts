@@ -148,7 +148,17 @@ export type ServiceErrorCode =
   // Care Team Chat Summarizer AI errors
   | 'SUMMARIZATION_FAILED'
   // Enhanced Voice Commands AI errors
-  | 'PROCESSING_FAILED';
+  | 'PROCESSING_FAILED'
+  // Encounter State Machine errors
+  | 'INVALID_STATUS'
+  | 'INVALID_TRANSITION'
+  | 'IMMUTABILITY_VIOLATION'
+  | 'INVALID_STATE'
+  | 'TRANSITION_FAILED'
+  // Billing Gate errors
+  | 'UNSIGNED_NOTES'
+  | 'NO_CLINICAL_NOTES'
+  | 'PROVIDER_REQUIRED';
 
 /**
  * Structured error information
