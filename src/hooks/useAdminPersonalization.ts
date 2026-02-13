@@ -103,7 +103,8 @@ export function useAdminPersonalization({
   onOpenCategory,
 }: UseAdminPersonalizationParams): UseAdminPersonalizationReturn {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  // Dashboard renders immediately — AI personalization loads in the background
+  const [isLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [learningEvents, setLearningEvents] = useState<LearningEvent[]>([]);
   const [behaviorProfile, setBehaviorProfile] = useState<UserBehaviorProfile | null>(null);
@@ -196,11 +197,11 @@ export function useAdminPersonalization({
 
   const loadPersonalizedDashboard = useCallback(async () => {
     if (!userId) {
-      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    // Do NOT set isLoading=true — dashboard renders immediately,
+    // AI personalization loads in the background without blocking UI
 
     try {
       const profile = await getUserBehaviorProfile(supabase, userId);
@@ -256,8 +257,6 @@ export function useAdminPersonalization({
         userId,
         adminRole: adminRole || 'admin'
       });
-    } finally {
-      setIsLoading(false);
     }
   }, [userId, adminRole, supabase, addLearningEvent, checkMilestones]);
 
