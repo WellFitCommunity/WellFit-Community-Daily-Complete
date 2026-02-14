@@ -157,12 +157,12 @@
 
 | Feature | Status | What Exists | What's Missing |
 |---------|--------|-------------|----------------|
-| Undercoding detection | MISSING | `coding_recommendations` table stores AI suggestions | No comparison of suggested vs billed codes |
+| Undercoding detection | BUILT | `undercodingDetectionService.ts` (456 lines) — compares `encounter_billing_suggestions.suggested_codes` vs `claim_lines.procedure_code`, classifies gaps (lower E/M level, missed charge, lower value code), revenue gap calculation, dismiss workflow. `UndercodingDetectionDashboard.tsx` (439 lines) in admin panel — 4 metric cards, confidence filters, gap type badges, dismiss modal | — |
 | Documentation gap indicator | MISSING | — | No algorithm flagging missing elements for E/M level |
 | HCC opportunity flag | MISSING | — | No HCC reference set, no risk adjustment detection |
-| Claim aging dashboard | MISSING | `claims` table has timestamps | No aging bucket visualization (0-30, 31-60, 61-90, 90+) |
+| Claim aging dashboard | BUILT | `claimAgingService.ts` (275 lines) — queries `claims` LEFT JOIN `billing_payers`, aging buckets (0-30, 31-60, 61-90, 90+), status history. `ClaimAgingDashboard.tsx` (453 lines) in admin panel — 4 bucket metric cards, alert banner for 90+ days, status/payer filters, history modal | — |
 
-**Verdict: 0% built.** Database foundation exists. No intelligence layer on top.
+**Verdict: 50% built.** Claim aging dashboard and undercoding detection are production-ready. Remaining: documentation gap indicator and HCC opportunity flags.
 
 ---
 
@@ -180,8 +180,8 @@
 | 7. Superbill Engine | 95% | Coding + provider sign-off gate complete |
 | 8. Eligibility Integration | 25% | API exists, not wired in |
 | 9. Claim Pipeline | 60% | Generation works, payment posting missing |
-| 10. Revenue Intelligence | 0% | Not started |
-| **Phase 2 Average** | **~41%** | |
+| 10. Revenue Intelligence | 50% | Claim aging + undercoding detection built, documentation gap + HCC remaining |
+| **Phase 2 Average** | **~54%** | |
 
 ---
 
@@ -206,8 +206,8 @@
 |----------|------|-----------|-----------------|
 | ~~P1~~ | ~~Superbill provider sign-off gate~~ | **DONE** — `SuperbillReviewPanel.tsx`, `approve_superbill()`/`reject_superbill()` RPC, DB trigger enforcement | ~~Small~~ |
 | P2 | Eligibility verification in encounter workflow | Prevents denied claims | Medium |
-| P3 | Claim aging dashboard | Quick win — data already exists | Small |
-| P4 | Undercoding detection | Quick win — compare suggested vs billed | Small |
+| ~~P3~~ | ~~Claim aging dashboard~~ | **DONE** — `claimAgingService.ts`, `ClaimAgingDashboard.tsx`, aging buckets 0-30/31-60/61-90/90+, status/payer filters, history modal | ~~Small~~ |
+| ~~P4~~ | ~~Undercoding detection~~ | **DONE** — `undercodingDetectionService.ts`, `UndercodingDetectionDashboard.tsx`, AI-suggested vs billed code comparison, gap classification, revenue opportunity metrics, dismiss workflow | ~~Small~~ |
 | P5 | ERA-to-claim matching + payment posting | Closes the revenue loop | Large |
 | P6 | Claim resubmission workflow | Fix and resubmit denials | Medium |
 | P7 | Documentation gap indicator | Revenue optimization | Medium |
