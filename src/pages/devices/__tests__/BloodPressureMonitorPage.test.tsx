@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import BloodPressureMonitorPage from '../BloodPressureMonitorPage';
@@ -368,8 +367,11 @@ describe('BloodPressureMonitorPage', () => {
 
       renderPage();
 
+      // Wait for loading to complete so button is enabled
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /connect monitor/i })).toBeInTheDocument();
+        const btn = screen.getByRole('button', { name: /connect monitor/i });
+        expect(btn).toBeInTheDocument();
+        expect(btn).not.toBeDisabled();
       });
 
       fireEvent.click(screen.getByRole('button', { name: /connect monitor/i }));
