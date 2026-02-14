@@ -468,7 +468,7 @@ export function isInDndWindow(
       timeZone: timezone,
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false,
+      hourCycle: 'h23',
     });
     const currentTime = formatter.format(now);
     const [currentHour, currentMinute] = currentTime.split(':').map(Number);
@@ -483,10 +483,10 @@ export function isInDndWindow(
     // Handle overnight DND (e.g., 22:00 to 08:00)
     if (startMinutes > endMinutes) {
       // DND spans midnight
-      return currentMinutes >= startMinutes || currentMinutes < endMinutes;
+      return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
     } else {
       // DND within same day
-      return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+      return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
     }
   } catch {
     return false;
