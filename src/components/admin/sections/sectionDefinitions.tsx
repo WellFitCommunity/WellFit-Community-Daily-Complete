@@ -64,6 +64,12 @@ const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
 const PatientAmendmentReviewQueue = lazy(() => import('../PatientAmendmentReviewQueue'));
 const TrainingComplianceDashboard = lazy(() => import('../TrainingComplianceDashboard'));
 
+// Referral Follow-Up Scheduler (Phase 1 P5)
+const ReferralAgingDashboard = lazy(() => import('../ReferralAgingDashboard'));
+
+// Encounter Audit Timeline (Phase 1 P6)
+const EncounterAuditTimeline = lazy(() => import('../EncounterAuditTimeline'));
+
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center p-8">
@@ -409,6 +415,19 @@ export const getAllSections = (): DashboardSection[] => [
     priority: 'low',
   },
 
+  // ==================== REFERRAL FOLLOW-UP (Phase 1 P5) ====================
+  {
+    id: 'referral-aging',
+    title: 'Referral Aging Analysis',
+    subtitle: 'Track pending referrals by aging bucket with automated follow-up reminders and escalation',
+    icon: '📅',
+    headerColor: 'text-amber-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ReferralAgingDashboard /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'case_manager', 'nurse'],
+  },
+
   // ==================== DSI TRANSPARENCY ====================
   {
     id: 'ai-model-cards',
@@ -510,6 +529,19 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'security',
     priority: 'medium',
     roles: ['admin', 'super_admin', 'compliance_officer'],
+  },
+
+  // ==================== ENCOUNTER AUDIT (Phase 1 P6) ====================
+  {
+    id: 'encounter-audit-timeline',
+    title: 'Encounter Audit Timeline',
+    subtitle: 'Chronological audit trail of encounter status changes, field edits, amendments, and access events',
+    icon: '🕐',
+    headerColor: 'text-indigo-900',
+    component: <Suspense fallback={<SectionLoadingFallback />}><EncounterAuditTimeline /></Suspense>,
+    category: 'security',
+    priority: 'high',
+    roles: ['admin', 'super_admin'],
   },
 
   // ==================== SYSTEM ADMINISTRATION ====================
