@@ -46,6 +46,9 @@ const AIModelCardsDashboard = lazy(() => import('../AIModelCardsDashboard'));
 // Provider Assignment Dashboard (P1 Clinical Safety)
 const ProviderAssignmentDashboard = lazy(() => import('../ProviderAssignmentDashboard'));
 
+// Unacknowledged Results Dashboard (P2 Clinical Safety)
+const UnacknowledgedResultsDashboard = lazy(() => import('../UnacknowledgedResultsDashboard'));
+
 // Regulatory Compliance (Gap Remediation)
 const BreachNotificationDashboard = lazy(() => import('../BreachNotificationDashboard'));
 const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
@@ -188,6 +191,17 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'patient-care',
     priority: 'high',
     roles: ['admin', 'super_admin', 'physician', 'nurse'],
+  },
+  {
+    id: 'unacknowledged-results',
+    title: 'Unacknowledged Results',
+    subtitle: 'Track and acknowledge critical lab and imaging results requiring clinician review',
+    icon: '🔬',
+    headerColor: 'text-red-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><UnacknowledgedResultsDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'lab_tech'],
   },
   {
     id: 'patient-handoff',

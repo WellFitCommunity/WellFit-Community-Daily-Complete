@@ -39,11 +39,11 @@
 | Order state machine | BUILT | `lab_orders` (8 states), `imaging_orders` (8 states), `refill_requests` (6 states) in DB | No edge functions to create/manage orders |
 | SLA tracking | BUILT | `order_sla_config`, `order_sla_breach_log`, `orderSLAService.ts` (558 lines), default targets seeded | — |
 | Abnormal result flagging | PARTIAL | `lab_results.abnormal` boolean, `has_critical_values`, critical thresholds in `labResultVaultService.ts` (creatinine >2.0, potassium 3.0-5.5, etc.) | No escalation rules engine (abnormal troponin doesn't auto-route to cardiology) |
-| Unacknowledged result aging dashboard | MISSING | DB has `critical_values_acknowledged` + timestamp fields | No UI component to display unacknowledged results or aging buckets |
+| Unacknowledged result aging dashboard | BUILT | `result_acknowledgments` table, `v_unacknowledged_results` view, `unacknowledgedResultsService.ts`, `UnacknowledgedResultsDashboard.tsx` in admin panel | — |
 | Result escalation rules | PARTIAL | SLA breach escalation (levels 0-3) exists for orders | No result-value-based escalation (abnormal lab -> specialist notification) |
 | Order transmission status tracking | MISSING | `received_by_lab_at`, `resulted_at` fields exist | No external lab transmission tracking, no X12 997 acknowledgment handling |
 
-**Verdict: 50% built.** Database tables and SLA service are solid. Missing the UI layer and external lab integration. Healthcare integrations migration exists but is `_SKIP_` (not applied).
+**Verdict: 60% built.** Database tables, SLA service, and unacknowledged results dashboard are solid. Missing: escalation rules engine and external lab integration. Healthcare integrations migration exists but is `_SKIP_` (not applied).
 
 ---
 
