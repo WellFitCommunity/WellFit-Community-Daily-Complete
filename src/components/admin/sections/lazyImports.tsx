@@ -26,6 +26,7 @@ export const ClaimsAppealsPanel = lazy(() => import('../../atlas/ClaimsAppealsPa
 export const PriorAuthDashboard = lazy(() => import('../PriorAuthDashboard'));
 export const StaffFinancialSavingsTracker = lazy(() => import('../StaffFinancialSavingsTracker'));
 export const SuperbillReviewPanel = lazy(() => import('../SuperbillReviewPanel'));
+export const ClaimAgingDashboard = lazy(() => import('../ClaimAgingDashboard'));
 
 // Patient Care
 export const AdminTransferLogs = lazy(() => import('../../handoff/AdminTransferLogs'));
@@ -65,3 +66,6 @@ export const ReferralAgingDashboard = lazy(() => import('../ReferralAgingDashboa
 export const EncounterAuditTimeline = lazy(() => import('../EncounterAuditTimeline'));
 export const ResultEscalationDashboard = lazy(() => import('../ResultEscalationDashboard'));
 export const ProviderCoverageDashboard = lazy(() => import('../ProviderCoverageDashboard'));
+
+// Phase 2 Revenue (P4)
+export const UndercodingDetectionDashboard = lazy(() => import('../UndercodingDetectionDashboard'));

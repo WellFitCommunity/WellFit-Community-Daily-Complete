@@ -45,6 +45,7 @@ import {
   UnacknowledgedResultsDashboard,
   ProviderTaskQueueDashboard,
   SuperbillReviewPanel,
+  ClaimAgingDashboard,
   PublicHealthReportingDashboard,
   BreachNotificationDashboard,
   BAATrackingDashboard,
@@ -54,6 +55,7 @@ import {
   EncounterAuditTimeline,
   ResultEscalationDashboard,
   ProviderCoverageDashboard,
+  UndercodingDetectionDashboard,
 } from './lazyImports';
 
 // Loading fallback for lazy-loaded sections
@@ -137,15 +139,7 @@ export const getAllSections = (): DashboardSection[] => [
     subtitle: 'Social determinants of health-aware medical coding',
     icon: '🏥',
     headerColor: 'text-indigo-800',
-    component: (
-      <Suspense fallback={<SectionLoadingFallback />}>
-        <SDOHCoderAssist
-          encounterId="demo-encounter-id"
-          patientId="demo-patient-id"
-          onSaved={(data) => auditLogger.debug('SDOH coding saved', data)}
-        />
-      </Suspense>
-    ),
+    component: <Suspense fallback={<SectionLoadingFallback />}><SDOHCoderAssist encounterId="demo-encounter-id" patientId="demo-patient-id" onSaved={(data) => auditLogger.debug('SDOH coding saved', data)} /></Suspense>,
     category: 'revenue',
     priority: 'low',
   },
@@ -180,6 +174,28 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'revenue',
     priority: 'high',
     roles: ['admin', 'super_admin', 'physician', 'billing_specialist'],
+  },
+  {
+    id: 'claim-aging',
+    title: 'Claim Aging Dashboard',
+    subtitle: 'Track claims by aging bucket to identify revenue bottlenecks and stalled submissions',
+    icon: '\u23F3',
+    headerColor: 'text-amber-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ClaimAgingDashboard /></Suspense>,
+    category: 'revenue',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'billing_specialist', 'finance'],
+  },
+  {
+    id: 'undercoding-detection',
+    title: 'Undercoding Detection',
+    subtitle: 'Compare AI-suggested codes vs billed codes to identify revenue gaps and missed charges',
+    icon: '\uD83D\uDD0E',
+    headerColor: 'text-orange-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><UndercodingDetectionDashboard /></Suspense>,
+    category: 'revenue',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'billing_specialist', 'physician', 'finance'],
   },
 
   // ==================== PATIENT CARE ====================
@@ -226,7 +242,6 @@ export const getAllSections = (): DashboardSection[] => [
     priority: 'high',
     roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'],
   },
-  // ==================== RESULT ESCALATION (Phase 1 P7) ====================
   {
     id: 'result-escalation',
     title: 'Result Escalation Rules Engine',
@@ -238,8 +253,6 @@ export const getAllSections = (): DashboardSection[] => [
     priority: 'high',
     roles: ['admin', 'super_admin', 'physician', 'nurse', 'lab_tech'],
   },
-
-  // ==================== PROVIDER COVERAGE (Phase 1 P8) ====================
   {
     id: 'provider-coverage',
     title: 'Provider Coverage & On-Call',
@@ -328,8 +341,6 @@ export const getAllSections = (): DashboardSection[] => [
     priority: 'high',
     roles: ['admin', 'super_admin', 'physician', 'case_manager'],
   },
-
-  // ==================== CARE GAP DETECTION ====================
   {
     id: 'care-gap-detection',
     title: 'Care Gap Detection',
@@ -341,8 +352,6 @@ export const getAllSections = (): DashboardSection[] => [
     priority: 'high',
     roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'],
   },
-
-  // ==================== CLINICAL NOTE SUMMARIZATION ====================
   {
     id: 'clinical-note-summary',
     title: 'Clinical Note Summarization',
@@ -384,14 +393,7 @@ export const getAllSections = (): DashboardSection[] => [
     subtitle: 'Real-time patient insights and clinical decision support',
     icon: '🧠',
     headerColor: 'text-purple-800',
-    component: (
-      <Suspense fallback={<SectionLoadingFallback />}>
-        <FhirAiDashboard
-          supabaseUrl={import.meta.env.VITE_SUPABASE_URL || ''}
-          supabaseKey={import.meta.env.VITE_SUPABASE_ANON_KEY || ''}
-        />
-      </Suspense>
-    ),
+    component: <Suspense fallback={<SectionLoadingFallback />}><FhirAiDashboard supabaseUrl={import.meta.env.VITE_SUPABASE_URL || ''} supabaseKey={import.meta.env.VITE_SUPABASE_ANON_KEY || ''} /></Suspense>,
     category: 'clinical',
     priority: 'medium',
   },
