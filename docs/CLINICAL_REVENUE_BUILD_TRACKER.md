@@ -1,6 +1,6 @@
 # Clinical Safety & Revenue Build Tracker
 
-> **Last Updated:** 2026-02-14
+> **Last Updated:** 2026-02-15
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 
@@ -52,11 +52,11 @@
 | Feature | Status | What Exists | What's Missing |
 |---------|--------|-------------|----------------|
 | Encounter-level ownership | BUILT | `encounter_providers` with roles (attending, supervising, referring, consulting), audit table | — |
-| Inbox routing rules | MISSING | — | No `provider_inbox` or `task_assignments` table, no message routing system |
-| Escalation if untouched | MISSING | — | No escalation timers, no auto-promote urgent->critical |
+| Inbox routing rules | BUILT | `provider_tasks` table, `v_provider_task_queue` view, `providerTaskService.ts`, `ProviderTaskQueueDashboard.tsx` in admin panel | — |
+| Escalation config + manual escalation | BUILT | `provider_task_escalation_config` table (15 default SLA configs), `escalateTask()` service method, escalation_level tracking | Auto-escalation cron (timer-based auto-promote) |
 | Coverage logic for absent provider | MISSING | — | No `provider_schedules`, no `on_call_rotations`, no coverage auto-routing |
 
-**Verdict: 25% built.** Provider assignment to encounters works. Everything about routing work TO providers (inbox, escalation, coverage) is missing.
+**Verdict: 60% built.** Provider assignment and task inbox routing are complete. SLA deadlines auto-calculated, manual escalation supported. Missing: auto-escalation cron and coverage/on-call system.
 
 ---
 
@@ -172,7 +172,7 @@
 |----------|-------|--------|
 | 1. Core Visit Governance | 95% | DB-enforced, provider assignment dashboard complete, NP co-sign attestation remaining |
 | 2. Order Lifecycle Control | 50% | Tables + SLA service done, needs UI + external integration |
-| 3. Provider Responsibility Routing | 25% | Assignment works, routing/escalation missing |
+| 3. Provider Responsibility Routing | 60% | Assignment + task inbox + SLA config built, auto-escalation cron + coverage missing |
 | 4. Referral Closed-Loop Tracking | 40% | Status tracking exists, automation missing |
 | 5. Medication Safety | 70% | Interaction engine production-ready, override audit missing |
 | 6. Clinical Audit UI | 75% | Strong infrastructure, needs encounter-level views |
@@ -192,10 +192,10 @@
 | Priority | Item | Why First | Estimated Effort |
 |----------|------|-----------|-----------------|
 | ~~P1~~ | ~~Provider assignment UI component~~ | **DONE** — `ProviderAssignmentDashboard.tsx` | ~~Small~~ |
-| P2 | Unacknowledged results dashboard | Patient safety — critical values need eyes | Small |
-| P3 | Override logging + reason codes for medication alerts | Compliance gap | Medium |
-| P4 | Referral follow-up reminder scheduler | Closes the referral loop | Medium |
-| P5 | Provider inbox / task routing | Enables all provider workflows | Large |
+| ~~P2~~ | ~~Unacknowledged results dashboard~~ | **DONE** — `UnacknowledgedResultsDashboard.tsx` | ~~Small~~ |
+| ~~P3~~ | ~~Provider inbox / task routing~~ | **DONE** — `ProviderTaskQueueDashboard.tsx`, `providerTaskService.ts`, SLA config | ~~Large~~ |
+| P4 | Override logging + reason codes for medication alerts | Compliance gap | Medium |
+| P5 | Referral follow-up reminder scheduler | Closes the referral loop | Medium |
 | P6 | Encounter-level audit view | Clinical compliance | Small |
 | P7 | Result escalation rules engine | Routes abnormal values to specialists | Medium |
 | P8 | Provider coverage/on-call system | Enterprise readiness | Large |

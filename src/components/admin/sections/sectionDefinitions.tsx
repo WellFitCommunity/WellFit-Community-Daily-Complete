@@ -49,6 +49,9 @@ const ProviderAssignmentDashboard = lazy(() => import('../ProviderAssignmentDash
 // Unacknowledged Results Dashboard (P2 Clinical Safety)
 const UnacknowledgedResultsDashboard = lazy(() => import('../UnacknowledgedResultsDashboard'));
 
+// Provider Task Queue Dashboard (P3 Clinical Safety)
+const ProviderTaskQueueDashboard = lazy(() => import('../ProviderTaskQueueDashboard'));
+
 // Regulatory Compliance (Gap Remediation)
 const BreachNotificationDashboard = lazy(() => import('../BreachNotificationDashboard'));
 const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
@@ -202,6 +205,17 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'patient-care',
     priority: 'high',
     roles: ['admin', 'super_admin', 'physician', 'nurse', 'lab_tech'],
+  },
+  {
+    id: 'provider-task-queue',
+    title: 'Provider Task Queue',
+    subtitle: 'Inbox routing with SLA deadlines, escalation tracking, and task lifecycle management',
+    icon: '📋',
+    headerColor: 'text-orange-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ProviderTaskQueueDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'],
   },
   {
     id: 'patient-handoff',
