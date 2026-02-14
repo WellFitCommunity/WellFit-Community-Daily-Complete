@@ -29,6 +29,12 @@ vi.mock('../../../services/encounterProviderService', () => ({
 
 const mockGetUser = vi.fn();
 
+const mockBillingProviders = [
+  { id: 'prov-1', npi: '1234567890', organization_name: 'Dr. Smith', taxonomy_code: '207R00000X' },
+  { id: 'prov-2', npi: '0987654321', organization_name: 'Dr. Jones', taxonomy_code: '208D00000X' },
+  { id: 'prov-3', npi: '1112223334', organization_name: 'Dr. Lee', taxonomy_code: '207Q00000X' },
+];
+
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
     auth: {
@@ -36,15 +42,9 @@ vi.mock('../../../lib/supabaseClient', () => ({
     },
     from: () => ({
       select: () => ({
-        eq: () => ({
-          order: () => Promise.resolve({
-            data: [
-              { id: 'prov-1', npi: '1234567890', organization_name: 'Dr. Smith', taxonomy_code: '207R00000X' },
-              { id: 'prov-2', npi: '0987654321', organization_name: 'Dr. Jones', taxonomy_code: '208D00000X' },
-              { id: 'prov-3', npi: '1112223334', organization_name: 'Dr. Lee', taxonomy_code: '207Q00000X' },
-            ],
-            error: null,
-          }),
+        order: () => Promise.resolve({
+          data: mockBillingProviders,
+          error: null,
         }),
       }),
     }),

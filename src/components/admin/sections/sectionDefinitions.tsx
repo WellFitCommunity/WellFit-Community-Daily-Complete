@@ -43,6 +43,9 @@ const CareGapDashboard = lazy(() => import('../CareGapDashboard'));
 const ClinicalNoteSummaryDashboard = lazy(() => import('../ClinicalNoteSummaryDashboard'));
 const AIModelCardsDashboard = lazy(() => import('../AIModelCardsDashboard'));
 
+// Provider Assignment Dashboard (P1 Clinical Safety)
+const ProviderAssignmentDashboard = lazy(() => import('../ProviderAssignmentDashboard'));
+
 // Regulatory Compliance (Gap Remediation)
 const BreachNotificationDashboard = lazy(() => import('../BreachNotificationDashboard'));
 const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
@@ -174,6 +177,17 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><PatientEngagementDashboard /></Suspense>,
     category: 'patient-care',
     priority: 'high',
+  },
+  {
+    id: 'provider-assignment',
+    title: 'Encounter Provider Assignments',
+    subtitle: 'Assign attending, supervising, and consulting providers to clinical encounters',
+    icon: '👨‍⚕️',
+    headerColor: 'text-blue-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ProviderAssignmentDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse'],
   },
   {
     id: 'patient-handoff',

@@ -1,6 +1,6 @@
 # Clinical Safety & Revenue Build Tracker
 
-> **Last Updated:** 2026-02-13
+> **Last Updated:** 2026-02-14
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 
@@ -23,12 +23,12 @@
 | Feature | Status | What Exists | What's Missing |
 |---------|--------|-------------|----------------|
 | Visit state machine (12 states) | BUILT | `encounterStateMachine.ts`, DB migration with 22 valid transitions, immutability trigger on finalized encounters | — |
-| Mandatory provider assignment | BUILT | `encounter_providers` table, `assign_encounter_provider()` RPC, validation gate blocks advancement without attending | Provider assignment UI component (only RPC, no admin panel) |
+| Mandatory provider assignment | BUILT | `encounter_providers` table, `assign_encounter_provider()` RPC, validation gate blocks advancement without attending, `ProviderAssignmentDashboard.tsx` admin panel | — |
 | Signature enforcement before billable | BUILT | `validate_encounter_notes_signed()` RPC, SHA-256 hash generation, `NoteLockingControls.tsx` | Signature verification UI (service exists, no button to use it) |
 | Amendment tracking with audit | BUILT | `clinical_note_amendments` table, `clinical_field_provenance` table, `noteAmendmentService.ts`, `AmendmentWorkflow.tsx` | Amendment approval queue UI (approve/reject works in service, no dashboard) |
 | Time-stamped attestation | BUILT | `signed_at`/`signed_by` auto-set on encounter signing, full audit trail in `encounter_status_history` | No provider-role-specific attestation (NP + supervising MD co-sign) |
 
-**Verdict: 85% built.** Core governance is enforced at database level. Gaps are UI components for provider assignment and amendment approval queue.
+**Verdict: 95% built.** Core governance is enforced at database level. Provider assignment dashboard complete. Remaining gap: NP + supervising MD co-sign attestation.
 
 ---
 
@@ -170,13 +170,13 @@
 
 | Category | Built | Status |
 |----------|-------|--------|
-| 1. Core Visit Governance | 85% | DB-enforced, needs UI polish |
+| 1. Core Visit Governance | 95% | DB-enforced, provider assignment dashboard complete, NP co-sign attestation remaining |
 | 2. Order Lifecycle Control | 50% | Tables + SLA service done, needs UI + external integration |
 | 3. Provider Responsibility Routing | 25% | Assignment works, routing/escalation missing |
 | 4. Referral Closed-Loop Tracking | 40% | Status tracking exists, automation missing |
 | 5. Medication Safety | 70% | Interaction engine production-ready, override audit missing |
 | 6. Clinical Audit UI | 75% | Strong infrastructure, needs encounter-level views |
-| **Phase 1 Average** | **~58%** | |
+| **Phase 1 Average** | **~60%** | |
 | 7. Superbill Engine | 80% | Coding complete, provider sign-off missing |
 | 8. Eligibility Integration | 25% | API exists, not wired in |
 | 9. Claim Pipeline | 60% | Generation works, payment posting missing |
@@ -191,7 +191,7 @@
 
 | Priority | Item | Why First | Estimated Effort |
 |----------|------|-----------|-----------------|
-| P1 | Provider assignment UI component | Can't assign providers without it | Small |
+| ~~P1~~ | ~~Provider assignment UI component~~ | **DONE** — `ProviderAssignmentDashboard.tsx` | ~~Small~~ |
 | P2 | Unacknowledged results dashboard | Patient safety — critical values need eyes | Small |
 | P3 | Override logging + reason codes for medication alerts | Compliance gap | Medium |
 | P4 | Referral follow-up reminder scheduler | Closes the referral loop | Medium |

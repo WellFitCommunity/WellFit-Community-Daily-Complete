@@ -13,7 +13,7 @@
  * - 4.4: Keyboard navigation (j/k/Enter/r)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { LawEnforcementService } from '../../services/lawEnforcementService';
 import type { MissedCheckInAlert, WelfareCheckInfo, EmergencyContact } from '../../types/lawEnforcement';
 import { WelfareCheckReportModal } from './WelfareCheckReportModal';
@@ -221,38 +221,51 @@ export const ConstableDispatchDashboard: React.FC = () => {
   }, []);
 
   // ---- Keyboard navigation (Phase 4.4) ----
+  // Use refs so the keydown handler always reads current values
+  // without needing to re-register on every state change.
+  // This eliminates the race between React rendering new state
+  // and useEffect re-registering the handler.
+  const alertsRef = useRef(alerts);
+  const selectedPatientRef = useRef(selectedPatient);
+  const reportModalOpenRef = useRef(reportModalOpen);
+  alertsRef.current = alerts;
+  selectedPatientRef.current = selectedPatient;
+  reportModalOpenRef.current = reportModalOpen;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle keys when modal is open
-      if (reportModalOpen) return;
+      if (reportModalOpenRef.current) return;
 
       // Don't handle keys when input/textarea/select is focused
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
-      const selectedIndex = alerts.findIndex((a) => a.patientId === selectedPatient);
+      const currentAlerts = alertsRef.current;
+      const currentSelected = selectedPatientRef.current;
+      const selectedIndex = currentAlerts.findIndex((a) => a.patientId === currentSelected);
 
       switch (e.key) {
         case 'ArrowDown':
         case 'j': {
           e.preventDefault();
-          const nextIndex = selectedIndex < alerts.length - 1 ? selectedIndex + 1 : 0;
-          if (alerts[nextIndex]) {
-            setSelectedPatient(alerts[nextIndex].patientId);
+          const nextIndex = selectedIndex < currentAlerts.length - 1 ? selectedIndex + 1 : 0;
+          if (currentAlerts[nextIndex]) {
+            setSelectedPatient(currentAlerts[nextIndex].patientId);
           }
           break;
         }
         case 'ArrowUp':
         case 'k': {
           e.preventDefault();
-          const prevIndex = selectedIndex > 0 ? selectedIndex - 1 : alerts.length - 1;
-          if (alerts[prevIndex]) {
-            setSelectedPatient(alerts[prevIndex].patientId);
+          const prevIndex = selectedIndex > 0 ? selectedIndex - 1 : currentAlerts.length - 1;
+          if (currentAlerts[prevIndex]) {
+            setSelectedPatient(currentAlerts[prevIndex].patientId);
           }
           break;
         }
         case 'Enter': {
-          if (selectedPatient) {
+          if (currentSelected) {
             e.preventDefault();
             setReportModalOpen(true);
           }
@@ -268,7 +281,7 @@ export const ConstableDispatchDashboard: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [alerts, selectedPatient, reportModalOpen]);
+  }, []);
 
   const getRiskLevel = (urgency: number): 'critical' | 'high' | 'elevated' | 'normal' => {
     if (urgency >= 100) return 'critical';

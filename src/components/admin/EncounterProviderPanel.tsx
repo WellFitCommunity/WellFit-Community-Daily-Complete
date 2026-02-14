@@ -165,7 +165,6 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
     const { data, error: fetchErr } = await supabase
       .from('billing_providers')
       .select('id, npi, organization_name, taxonomy_code')
-      .eq('is_active', true)
       .order('organization_name');
 
     if (!fetchErr && data) {
