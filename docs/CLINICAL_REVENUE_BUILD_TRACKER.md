@@ -1,6 +1,6 @@
 # Clinical Safety & Revenue Build Tracker
 
-> **Last Updated:** 2026-02-16
+> **Last Updated:** 2026-02-15
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 
@@ -38,12 +38,12 @@
 |---------|--------|-------------|----------------|
 | Order state machine | BUILT | `lab_orders` (8 states), `imaging_orders` (8 states), `refill_requests` (6 states) in DB | No edge functions to create/manage orders |
 | SLA tracking | BUILT | `order_sla_config`, `order_sla_breach_log`, `orderSLAService.ts` (558 lines), default targets seeded | — |
-| Abnormal result flagging | PARTIAL | `lab_results.abnormal` boolean, `has_critical_values`, critical thresholds in `labResultVaultService.ts` (creatinine >2.0, potassium 3.0-5.5, etc.) | No escalation rules engine (abnormal troponin doesn't auto-route to cardiology) |
+| Abnormal result flagging | BUILT | `lab_results.abnormal` boolean, `has_critical_values`, critical thresholds in `labResultVaultService.ts` (creatinine >2.0, potassium 3.0-5.5, etc.) | — |
 | Unacknowledged result aging dashboard | BUILT | `result_acknowledgments` table, `v_unacknowledged_results` view, `unacknowledgedResultsService.ts`, `UnacknowledgedResultsDashboard.tsx` in admin panel | — |
-| Result escalation rules | PARTIAL | SLA breach escalation (levels 0-3) exists for orders | No result-value-based escalation (abnormal lab -> specialist notification) |
+| Result escalation rules | BUILT | `result_escalation_rules` table (configurable per test/severity/specialty), `result_escalation_log` immutable audit, `resultEscalationService.ts` (587 lines) — auto-creates provider tasks via `providerTaskService`, severity→priority mapping (critical=stat, high=urgent), 7 seed rules (troponin, creatinine, potassium, glucose, hemoglobin, INR), `ResultEscalationDashboard.tsx` in admin panel, `v_active_escalation_rules` view | — |
 | Order transmission status tracking | MISSING | `received_by_lab_at`, `resulted_at` fields exist | No external lab transmission tracking, no X12 997 acknowledgment handling |
 
-**Verdict: 60% built.** Database tables, SLA service, and unacknowledged results dashboard are solid. Missing: escalation rules engine and external lab integration. Healthcare integrations migration exists but is `_SKIP_` (not applied).
+**Verdict: 75% built.** Database tables, SLA service, unacknowledged results dashboard, and result escalation rules engine are solid. Missing: external lab integration. Healthcare integrations migration exists but is `_SKIP_` (not applied).
 
 ---
 
@@ -54,9 +54,9 @@
 | Encounter-level ownership | BUILT | `encounter_providers` with roles (attending, supervising, referring, consulting), audit table | — |
 | Inbox routing rules | BUILT | `provider_tasks` table, `v_provider_task_queue` view, `providerTaskService.ts`, `ProviderTaskQueueDashboard.tsx` in admin panel | — |
 | Escalation config + manual escalation | BUILT | `provider_task_escalation_config` table (15 default SLA configs), `escalateTask()` service method, escalation_level tracking | Auto-escalation cron (timer-based auto-promote) |
-| Coverage logic for absent provider | MISSING | — | No `provider_schedules`, no `on_call_rotations`, no coverage auto-routing |
+| Coverage logic for absent provider | BUILT | `provider_on_call_schedules` table (rotation by provider/date/shift), `provider_coverage_assignments` table (coverage routing with priority chain), `provider_coverage_audit` immutable audit table, `get_coverage_provider()` RPC, `providerCoverageService.ts` (446 lines) — CRUD for schedules + assignments, coverage lookup, metrics, `ProviderCoverageDashboard.tsx` in admin panel, `v_provider_coverage_summary` view with computed status | — |
 
-**Verdict: 60% built.** Provider assignment and task inbox routing are complete. SLA deadlines auto-calculated, manual escalation supported. Missing: auto-escalation cron and coverage/on-call system.
+**Verdict: 85% built.** Provider assignment, task inbox routing, and coverage/on-call system are complete. SLA deadlines auto-calculated, manual escalation supported, coverage auto-routing built. Missing: auto-escalation cron.
 
 ---
 
@@ -65,11 +65,11 @@
 | Feature | Status | What Exists | What's Missing |
 |---------|--------|-------------|----------------|
 | Referral status states | BUILT | Community referrals (8 states), dental referrals (5 states), AI referral letters (4 states) | States exist but no unified referral lifecycle across systems |
-| Aging queue | PARTIAL | `check_referral_alerts()` DB function detects missed check-ins and mood decline | No "referrals pending >7 days" dashboard, no aging bucket UI |
-| Follow-up reminders | MISSING | Alert generation exists | No automated reminder scheduler (CRON + SMS/email at N days post-referral) |
+| Aging queue | BUILT | `ReferralAgingDashboard.tsx` (449 lines) — color-coded aging buckets (0-3d green, 4-7d yellow, 8-14d orange, 14+d red), manual send, history modal, per-tenant config | — |
+| Follow-up reminders | BUILT | `referralFollowUpService.ts` (301 lines), `send-referral-followup-reminders` edge function (445 lines) — graduated SMS/email/escalation at day 3/7/14 with cooldown, `referral_followup_config` + `referral_followup_log` tables | — |
 | Closed-loop confirmation logging | PARTIAL | `referral_alerts.delivered_at`, `acknowledged_at`, `resolved_at` tracked | No specialist completion confirmation workflow, no "work completed" trigger |
 
-**Verdict: 40% built.** Referral tables and status tracking exist. Missing the closed-loop automation (reminders, specialist confirmation, aging dashboard).
+**Verdict: 75% built.** Aging dashboard and automated follow-up reminders are production-ready. Remaining gap: specialist completion confirmation workflow.
 
 ---
 
@@ -97,7 +97,7 @@
 
 | Feature | Status | What Exists | What's Missing |
 |---------|--------|-------------|----------------|
-| Human-readable encounter audit view | PARTIAL | `TenantAuditLogs.tsx` (355 lines) — category/severity/date filtering, search, CSV export. `AuditAnalyticsDashboard.tsx` (539 lines) — stats cards, category breakdown, search | No encounter-specific audit view ("show all events for this encounter") |
+| Human-readable encounter audit view | BUILT | `EncounterAuditTimeline.tsx` (440 lines) — 5-source timeline merge (status changes, field edits, amendments, lock actions, audit logs), source/severity filters, expand/collapse details, CSV/JSON export. `encounterAuditService.ts` (383 lines) | — |
 | Role-filtered logs | PARTIAL | Filter by category, severity, date, actor_user_id | No "filter by role" dropdown (nurse, provider, admin) |
 | Tamper-evident tracking | BUILT | SHA-256 signature hashing, `clinical_field_provenance` table (field-level change tracking), `clinical_note_lock_audit` table, `verifySignature()` service | No visualization of field change history (timeline/diff view) |
 
@@ -107,7 +107,7 @@
 - `SOC2AuditDashboard.tsx` (481 lines) — compliance scoring, control status, PHI access trail with risk levels
 - `soc2MonitoringService.ts` — security metrics, compliance status
 
-**Verdict: 75% built.** Strong audit infrastructure. Missing encounter-level audit views and role-based filtering.
+**Verdict: 85% built.** Encounter-level audit timeline complete with 5-source merge. Remaining gap: role-based log filtering.
 
 ---
 
@@ -171,12 +171,12 @@
 | Category | Built | Status |
 |----------|-------|--------|
 | 1. Core Visit Governance | 95% | DB-enforced, provider assignment dashboard complete, NP co-sign attestation remaining |
-| 2. Order Lifecycle Control | 50% | Tables + SLA service done, needs UI + external integration |
-| 3. Provider Responsibility Routing | 60% | Assignment + task inbox + SLA config built, auto-escalation cron + coverage missing |
-| 4. Referral Closed-Loop Tracking | 40% | Status tracking exists, automation missing |
+| 2. Order Lifecycle Control | 75% | Tables + SLA service + escalation rules engine done, needs external lab integration |
+| 3. Provider Responsibility Routing | 85% | Assignment + task inbox + SLA config + coverage/on-call built, auto-escalation cron missing |
+| 4. Referral Closed-Loop Tracking | 75% | Aging dashboard + automated follow-up reminders built, specialist confirmation remaining |
 | 5. Medication Safety | 95% | Interaction engine + override audit trail + escalation tracking complete |
-| 6. Clinical Audit UI | 75% | Strong infrastructure, needs encounter-level views |
-| **Phase 1 Average** | **~60%** | |
+| 6. Clinical Audit UI | 85% | Encounter-level audit timeline complete, role-based filtering remaining |
+| **Phase 1 Average** | **~86%** | |
 | 7. Superbill Engine | 95% | Coding + provider sign-off gate complete |
 | 8. Eligibility Integration | 25% | API exists, not wired in |
 | 9. Claim Pipeline | 60% | Generation works, payment posting missing |
@@ -195,10 +195,10 @@
 | ~~P2~~ | ~~Unacknowledged results dashboard~~ | **DONE** — `UnacknowledgedResultsDashboard.tsx` | ~~Small~~ |
 | ~~P3~~ | ~~Provider inbox / task routing~~ | **DONE** — `ProviderTaskQueueDashboard.tsx`, `providerTaskService.ts`, SLA config | ~~Large~~ |
 | ~~P4~~ | ~~Override logging + reason codes for medication alerts~~ | **DONE** — `medication_alert_overrides` table, `medicationOverrideService.ts`, `MedicationAlertOverrideModal.tsx`, escalation tracking | ~~Medium~~ |
-| P5 | Referral follow-up reminder scheduler | Closes the referral loop | Medium |
-| P6 | Encounter-level audit view | Clinical compliance | Small |
-| P7 | Result escalation rules engine | Routes abnormal values to specialists | Medium |
-| P8 | Provider coverage/on-call system | Enterprise readiness | Large |
+| ~~P5~~ | ~~Referral follow-up reminder scheduler~~ | **DONE** — `referralFollowUpService.ts`, `send-referral-followup-reminders` edge function, `ReferralAgingDashboard.tsx`, graduated day 3/7/14 reminders | ~~Medium~~ |
+| ~~P6~~ | ~~Encounter-level audit view~~ | **DONE** — `EncounterAuditTimeline.tsx`, `encounterAuditService.ts`, 5-source timeline merge with filters + export | ~~Small~~ |
+| ~~P7~~ | ~~Result escalation rules engine~~ | **DONE** — `result_escalation_rules` + `result_escalation_log` tables, `resultEscalationService.ts`, `ResultEscalationDashboard.tsx`, 7 seed rules, auto-creates provider tasks, severity→priority mapping | ~~Medium~~ |
+| ~~P8~~ | ~~Provider coverage/on-call system~~ | **DONE** — `provider_on_call_schedules` + `provider_coverage_assignments` + `provider_coverage_audit` tables, `get_coverage_provider()` RPC, `providerCoverageService.ts`, `ProviderCoverageDashboard.tsx` | ~~Large~~ |
 
 ## Phase 2 — Highest Impact First
 

@@ -1,74 +1,60 @@
 /**
  * Admin Panel Section Definitions
  * Extracted from IntelligentAdminPanel for code splitting
+ *
+ * Lazy imports extracted to lazyImports.tsx for 600-line compliance.
  */
 
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { DashboardSection } from './types';
 import { auditLogger } from '../../../services/auditLogger';
-
-// Lazy-load all dashboard components for code splitting
-const UsersList = lazy(() => import('../UsersList'));
-const ReportsSection = lazy(() => import('../ReportsSection'));
-const ExportCheckIns = lazy(() => import('../ExportCheckIns'));
-const FhirAiDashboard = lazy(() => import('../FhirAiDashboard'));
-const FHIRFormBuilderEnhanced = lazy(() => import('../FHIRFormBuilderEnhanced'));
-const FHIRDataMapper = lazy(() => import('../FHIRDataMapper'));
-const BillingDashboard = lazy(() => import('../BillingDashboard'));
-const SmartScribe = lazy(() => import('../../smart/RealTimeSmartScribe'));
-const SDOHCoderAssist = lazy(() => import('../../billing/SDOHCoderAssist'));
-const CCMTimeline = lazy(() => import('../../atlas/CCMTimeline'));
-const RevenueDashboard = lazy(() => import('../../atlas/RevenueDashboard'));
-const ClaimsSubmissionPanel = lazy(() => import('../../atlas/ClaimsSubmissionPanel'));
-const ClaimsAppealsPanel = lazy(() => import('../../atlas/ClaimsAppealsPanel'));
-const PriorAuthDashboard = lazy(() => import('../PriorAuthDashboard'));
-const AdminTransferLogs = lazy(() => import('../../handoff/AdminTransferLogs'));
-const PatientEngagementDashboard = lazy(() => import('../PatientEngagementDashboard'));
-const HospitalPatientEnrollment = lazy(() => import('../HospitalPatientEnrollment'));
-const PaperFormScanner = lazy(() => import('../PaperFormScanner'));
-const TenantSecurityDashboard = lazy(() => import('../TenantSecurityDashboard'));
-const TenantAuditLogs = lazy(() => import('../TenantAuditLogs'));
-const TenantComplianceReport = lazy(() => import('../TenantComplianceReport'));
-const TenantModuleConfigPanel = lazy(() => import('../TenantModuleConfigPanel').then(m => ({ default: m.TenantModuleConfigPanel })));
-const FacilityManagementPanel = lazy(() => import('../FacilityManagementPanel'));
-const StaffFinancialSavingsTracker = lazy(() => import('../StaffFinancialSavingsTracker'));
-const MfaComplianceDashboard = lazy(() => import('../MfaComplianceDashboard'));
-const QualityMeasuresDashboard = lazy(() => import('../quality-measures'));
-const CardiologyDashboard = lazy(() => import('../../cardiology/CardiologyDashboard'));
-const LaborDeliveryDashboard = lazy(() => import('../../labor-delivery/LaborDeliveryDashboard'));
-const OncologyDashboard = lazy(() => import('../../oncology/OncologyDashboard'));
-
-// Claude for Healthcare Gap Tracker (Tasks 12-14)
-const CareGapDashboard = lazy(() => import('../CareGapDashboard'));
-const ClinicalNoteSummaryDashboard = lazy(() => import('../ClinicalNoteSummaryDashboard'));
-const AIModelCardsDashboard = lazy(() => import('../AIModelCardsDashboard'));
-
-// Provider Assignment Dashboard (P1 Clinical Safety)
-const ProviderAssignmentDashboard = lazy(() => import('../ProviderAssignmentDashboard'));
-
-// Unacknowledged Results Dashboard (P2 Clinical Safety)
-const UnacknowledgedResultsDashboard = lazy(() => import('../UnacknowledgedResultsDashboard'));
-
-// Provider Task Queue Dashboard (P3 Clinical Safety)
-const ProviderTaskQueueDashboard = lazy(() => import('../ProviderTaskQueueDashboard'));
-
-// Superbill Provider Sign-Off (P1 Revenue Gate)
-const SuperbillReviewPanel = lazy(() => import('../SuperbillReviewPanel'));
-
-// Public Health Reporting (ONC f-criteria)
-const PublicHealthReportingDashboard = lazy(() => import('../PublicHealthReportingDashboard'));
-
-// Regulatory Compliance (Gap Remediation)
-const BreachNotificationDashboard = lazy(() => import('../BreachNotificationDashboard'));
-const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
-const PatientAmendmentReviewQueue = lazy(() => import('../PatientAmendmentReviewQueue'));
-const TrainingComplianceDashboard = lazy(() => import('../TrainingComplianceDashboard'));
-
-// Referral Follow-Up Scheduler (Phase 1 P5)
-const ReferralAgingDashboard = lazy(() => import('../ReferralAgingDashboard'));
-
-// Encounter Audit Timeline (Phase 1 P6)
-const EncounterAuditTimeline = lazy(() => import('../EncounterAuditTimeline'));
+import {
+  UsersList,
+  ReportsSection,
+  ExportCheckIns,
+  FhirAiDashboard,
+  FHIRFormBuilderEnhanced,
+  FHIRDataMapper,
+  BillingDashboard,
+  SmartScribe,
+  SDOHCoderAssist,
+  CCMTimeline,
+  RevenueDashboard,
+  ClaimsSubmissionPanel,
+  ClaimsAppealsPanel,
+  PriorAuthDashboard,
+  AdminTransferLogs,
+  PatientEngagementDashboard,
+  HospitalPatientEnrollment,
+  PaperFormScanner,
+  TenantSecurityDashboard,
+  TenantAuditLogs,
+  TenantComplianceReport,
+  TenantModuleConfigPanel,
+  FacilityManagementPanel,
+  StaffFinancialSavingsTracker,
+  MfaComplianceDashboard,
+  QualityMeasuresDashboard,
+  CardiologyDashboard,
+  LaborDeliveryDashboard,
+  OncologyDashboard,
+  CareGapDashboard,
+  ClinicalNoteSummaryDashboard,
+  AIModelCardsDashboard,
+  ProviderAssignmentDashboard,
+  UnacknowledgedResultsDashboard,
+  ProviderTaskQueueDashboard,
+  SuperbillReviewPanel,
+  PublicHealthReportingDashboard,
+  BreachNotificationDashboard,
+  BAATrackingDashboard,
+  PatientAmendmentReviewQueue,
+  TrainingComplianceDashboard,
+  ReferralAgingDashboard,
+  EncounterAuditTimeline,
+  ResultEscalationDashboard,
+  ProviderCoverageDashboard,
+} from './lazyImports';
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -239,6 +225,31 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'patient-care',
     priority: 'high',
     roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'],
+  },
+  // ==================== RESULT ESCALATION (Phase 1 P7) ====================
+  {
+    id: 'result-escalation',
+    title: 'Result Escalation Rules Engine',
+    subtitle: 'Auto-route abnormal lab values to specialist providers with SLA tracking and audit trail',
+    icon: '⚕️',
+    headerColor: 'text-red-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ResultEscalationDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'lab_tech'],
+  },
+
+  // ==================== PROVIDER COVERAGE (Phase 1 P8) ====================
+  {
+    id: 'provider-coverage',
+    title: 'Provider Coverage & On-Call',
+    subtitle: 'Manage provider absence coverage, on-call rotations, and automatic task routing',
+    icon: '🔄',
+    headerColor: 'text-teal-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ProviderCoverageDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse'],
   },
   {
     id: 'patient-handoff',
