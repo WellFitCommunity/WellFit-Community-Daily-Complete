@@ -16,92 +16,32 @@ import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
 import { ServiceResult, success, failure } from './_base';
 
-// =====================================================
-// TYPES & INTERFACES
-// =====================================================
+// Types re-exported from extracted file
+export type {
+  AssessmentStatus,
+  ResponseValue,
+  GuideCategory,
+  SaferGuideDefinition,
+  SaferGuideQuestion,
+  SaferGuideResponse,
+  SaferGuideAssessment,
+  GuideProgress,
+  AssessmentSummary,
+  QuestionWithResponse,
+} from './saferGuidesService.types';
 
-export type AssessmentStatus = 'in_progress' | 'complete' | 'attested';
-export type ResponseValue = 'yes' | 'no' | 'na' | 'partial';
-export type GuideCategory = 'Foundation' | 'Governance' | 'Operations' | 'Technical' | 'Clinical';
-
-export interface SaferGuideDefinition {
-  id: string;
-  guide_number: number;
-  guide_name: string;
-  description: string | null;
-  category: GuideCategory;
-  source_url: string | null;
-  is_active: boolean;
-}
-
-export interface SaferGuideQuestion {
-  id: string;
-  guide_id: string;
-  question_number: number;
-  question_text: string;
-  help_text: string | null;
-  recommended_practice: string | null;
-  response_type: string;
-  is_required: boolean;
-  display_order: number;
-}
-
-export interface SaferGuideResponse {
-  id: string;
-  assessment_id: string;
-  question_id: string;
-  response: ResponseValue | null;
-  notes: string | null;
-  action_plan: string | null;
-  responded_at: string;
-  responded_by: string | null;
-}
-
-export interface SaferGuideAssessment {
-  id: string;
-  tenant_id: string;
-  assessment_year: number;
-  status: AssessmentStatus;
-  started_at: string;
-  completed_at: string | null;
-  attested_at: string | null;
-  attested_by: string | null;
-  guide_scores: Record<string, number>;
-  overall_score: number | null;
-  attestation_pdf_path: string | null;
-}
-
-export interface GuideProgress {
-  guideNumber: number;
-  guideName: string;
-  category: GuideCategory;
-  totalQuestions: number;
-  answeredQuestions: number;
-  yesCount: number;
-  noCount: number;
-  naCount: number;
-  partialCount: number;
-  score: number | null;
-  status: 'not_started' | 'in_progress' | 'complete';
-}
-
-export interface AssessmentSummary {
-  assessmentId: string;
-  year: number;
-  status: AssessmentStatus;
-  startedAt: string;
-  completedAt: string | null;
-  attestedAt: string | null;
-  overallScore: number | null;
-  guides: GuideProgress[];
-  totalQuestions: number;
-  totalAnswered: number;
-}
-
-export interface QuestionWithResponse {
-  question: SaferGuideQuestion;
-  response: SaferGuideResponse | null;
-}
+import type {
+  AssessmentStatus,
+  ResponseValue,
+  GuideCategory,
+  SaferGuideDefinition,
+  SaferGuideQuestion,
+  SaferGuideResponse,
+  SaferGuideAssessment,
+  GuideProgress,
+  AssessmentSummary,
+  QuestionWithResponse,
+} from './saferGuidesService.types';
 
 // =====================================================
 // SERVICE FUNCTIONS
@@ -537,9 +477,11 @@ export async function attestAssessment(
       attestedBy: userId
     });
 
-    // TODO: Generate attestation PDF
-    // For now, return null for pdfPath
-    return success({ pdfPath: null });
+    // Generate attestation PDF via edge function
+    const pdfResult = await generateAttestationPdf(assessmentId, tenantId);
+    const pdfPath = pdfResult.success ? 'generated' : null;
+
+    return success({ pdfPath });
   } catch (err: unknown) {
     await auditLogger.error(
       'SAFER_ATTESTATION_ERROR',
@@ -580,6 +522,39 @@ export async function getAssessmentHistory(
 }
 
 /**
+ * Generate attestation PDF HTML via edge function
+ */
+export async function generateAttestationPdf(
+  assessmentId: string,
+  tenantId: string
+): Promise<ServiceResult<{ html: string }>> {
+  try {
+    const { data, error } = await supabase.functions.invoke('safer-guides-pdf', {
+      body: { assessmentId, tenantId },
+    });
+
+    if (error) {
+      await auditLogger.error('SAFER_PDF_GENERATE_FAILED', error, { assessmentId });
+      return failure('OPERATION_FAILED', 'Failed to generate attestation PDF');
+    }
+
+    const response = data as { html?: string } | null;
+    if (!response?.html) {
+      return failure('OPERATION_FAILED', 'No PDF content returned');
+    }
+
+    return success({ html: response.html });
+  } catch (err: unknown) {
+    await auditLogger.error(
+      'SAFER_PDF_GENERATE_ERROR',
+      err instanceof Error ? err : new Error(String(err)),
+      { assessmentId }
+    );
+    return failure('UNKNOWN_ERROR', 'Failed to generate attestation PDF');
+  }
+}
+
+/**
  * Export default service object
  */
 export const SaferGuidesService = {
@@ -590,7 +565,8 @@ export const SaferGuidesService = {
   saveResponse,
   updateAssessmentStatus,
   attestAssessment,
-  getAssessmentHistory
+  getAssessmentHistory,
+  generateAttestationPdf
 };
 
 export default SaferGuidesService;

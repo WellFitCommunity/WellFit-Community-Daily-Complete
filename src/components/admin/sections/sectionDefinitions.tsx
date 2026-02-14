@@ -52,6 +52,9 @@ const UnacknowledgedResultsDashboard = lazy(() => import('../UnacknowledgedResul
 // Provider Task Queue Dashboard (P3 Clinical Safety)
 const ProviderTaskQueueDashboard = lazy(() => import('../ProviderTaskQueueDashboard'));
 
+// Public Health Reporting (ONC f-criteria)
+const PublicHealthReportingDashboard = lazy(() => import('../PublicHealthReportingDashboard'));
+
 // Regulatory Compliance (Gap Remediation)
 const BreachNotificationDashboard = lazy(() => import('../BreachNotificationDashboard'));
 const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
@@ -332,6 +335,17 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'clinical',
     priority: 'high',
     roles: ['admin', 'super_admin', 'case_manager', 'physician'],
+  },
+  {
+    id: 'public-health-reporting',
+    title: 'Public Health Reporting',
+    subtitle: 'Monitor syndromic surveillance, immunization registry, and eCR transmissions',
+    icon: '📡',
+    headerColor: 'text-teal-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><PublicHealthReportingDashboard /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'compliance_officer', 'physician'],
   },
   {
     id: 'fhir-analytics',

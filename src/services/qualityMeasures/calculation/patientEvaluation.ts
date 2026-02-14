@@ -9,9 +9,17 @@ import { ServiceResult, success, failure } from '../../_base';
 import { auditLogger } from '../../auditLogger';
 import type { PatientMeasureResult, PatientMeasureData } from './types';
 import { evaluateMeasureCriteria } from './measureEvaluators';
+import { isCqlAvailable, executeCql, loadElmLibrary, cqlResultToMeasureResult } from './cqlEngine';
+import type { CqlPatientBundle } from './cqlEngine.types';
 
 /**
- * Evaluate a single patient against a measure
+ * Evaluate a single patient against a measure.
+ *
+ * Strategy: CQL-first with hand-coded fallback.
+ * 1. Check if CQL packages are available
+ * 2. Try to load ELM library for the measure
+ * 3. If both available, execute CQL
+ * 4. Otherwise, fall back to hand-coded evaluators
  */
 export async function evaluatePatientForMeasure(
   tenantId: string,
@@ -33,6 +41,29 @@ export async function evaluatePatientForMeasure(
       return failure('VALIDATION_ERROR', patientData.error?.message || 'Failed to get patient data');
     }
 
+    // Attempt CQL-based evaluation
+    const cqlReady = await isCqlAvailable();
+    if (cqlReady) {
+      const elmLibrary = await loadElmLibrary(measureId);
+      if (elmLibrary) {
+        const bundle = patientDataToFhirBundle(patientId, patientData.data);
+        const cqlResult = await executeCql({ elmLibrary, patientBundle: bundle });
+
+        if (cqlResult.success && cqlResult.data && cqlResult.data.patientResults.length > 0) {
+          const mapped = cqlResultToMeasureResult(measureId, patientId, cqlResult.data.patientResults[0]);
+          return success(mapped);
+        }
+
+        // CQL execution failed — log and fall back
+        await auditLogger.warn('CQL_EVALUATION_FALLBACK', {
+          measureId,
+          patientId,
+          reason: 'CQL execution returned no results; using hand-coded evaluator',
+        });
+      }
+    }
+
+    // Fallback: hand-coded evaluators
     const result = evaluateMeasureCriteria(
       measureId,
       patientData.data,
@@ -49,6 +80,93 @@ export async function evaluatePatientForMeasure(
     );
     return failure('OPERATION_FAILED', 'Failed to evaluate patient');
   }
+}
+
+/**
+ * Convert PatientMeasureData to a minimal FHIR Bundle for CQL execution
+ */
+function patientDataToFhirBundle(patientId: string, data: PatientMeasureData): CqlPatientBundle {
+  const entries: CqlPatientBundle['entry'] = [];
+
+  // Patient resource
+  entries.push({
+    resource: {
+      resourceType: 'Patient',
+      id: patientId,
+      birthDate: data.patient.date_of_birth,
+      gender: data.patient.gender === 'M' ? 'male' : data.patient.gender === 'F' ? 'female' : 'unknown',
+    },
+  });
+
+  // Conditions
+  data.conditions.forEach(c => {
+    entries.push({
+      resource: {
+        resourceType: 'Condition',
+        id: c.id,
+        code: { coding: [{ system: c.code_system, code: c.code }] },
+        onsetDateTime: c.onset_date,
+        clinicalStatus: { coding: [{ code: c.status }] },
+        subject: { reference: `Patient/${patientId}` },
+      },
+    });
+  });
+
+  // Observations
+  data.observations.forEach(o => {
+    entries.push({
+      resource: {
+        resourceType: 'Observation',
+        id: o.id,
+        code: { coding: [{ code: o.code }] },
+        valueQuantity: { value: o.value, unit: o.unit },
+        effectiveDateTime: o.effective_date,
+        subject: { reference: `Patient/${patientId}` },
+      },
+    });
+  });
+
+  // Encounters
+  data.encounters.forEach(e => {
+    entries.push({
+      resource: {
+        resourceType: 'Encounter',
+        id: e.id,
+        type: [{ coding: [{ code: e.encounter_type }] }],
+        period: { start: e.encounter_date },
+        subject: { reference: `Patient/${patientId}` },
+      },
+    });
+  });
+
+  // Procedures
+  data.procedures.forEach(p => {
+    entries.push({
+      resource: {
+        resourceType: 'Procedure',
+        id: p.id,
+        code: { coding: [{ code: p.code }] },
+        performedDateTime: p.performed_date,
+        subject: { reference: `Patient/${patientId}` },
+      },
+    });
+  });
+
+  // MedicationRequests
+  data.medications.forEach(m => {
+    entries.push({
+      resource: {
+        resourceType: 'MedicationRequest',
+        id: m.id,
+        medicationCodeableConcept: { coding: [{ code: m.medication_code }] },
+        status: m.status,
+        authoredOn: m.authored_on,
+        subject: { reference: `Patient/${patientId}` },
+      },
+    });
+  });
+
+  return { resourceType: 'Bundle', type: 'collection', entry: entries };
 }
 
 /**

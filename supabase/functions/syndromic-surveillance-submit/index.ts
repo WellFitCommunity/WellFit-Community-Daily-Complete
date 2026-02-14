@@ -10,15 +10,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { getStateConfig, type StateConfig } from '../_shared/stateConfigLookup.ts';
 
-// State health department configurations
-const STATE_CONFIGS: Record<string, {
-  name: string;
-  endpoint: string;
-  testEndpoint: string;
-  format: 'HL7v2' | 'FHIR';
-  authType: 'certificate' | 'oauth2' | 'basic';
-}> = {
+// Hardcoded fallback — used when no database row exists for the tenant+state
+const FALLBACK_CONFIGS: Record<string, StateConfig> = {
   TX: {
     name: 'Texas DSHS',
     endpoint: 'https://syndromic.dshs.texas.gov/api/submit',
@@ -26,7 +21,6 @@ const STATE_CONFIGS: Record<string, {
     format: 'HL7v2',
     authType: 'certificate',
   },
-  // Add more states as needed
 };
 
 interface SubmitRequest {
@@ -65,19 +59,20 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get state configuration
-    const stateConfig = STATE_CONFIGS[state.toUpperCase()];
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get state configuration — DB first, hardcoded fallback
+    const dbConfig = await getStateConfig(supabase, tenantId, state, 'syndromic');
+    const stateConfig = dbConfig || FALLBACK_CONFIGS[state.toUpperCase()] || null;
     if (!stateConfig) {
       return new Response(
         JSON.stringify({ success: false, error: `State ${state} not configured for syndromic surveillance` }),
         { status: 400, headers: corsHeaders }
       );
     }
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Fetch the encounter and generate HL7 message
     const { data: encounter, error: encounterError } = await supabase

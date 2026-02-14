@@ -158,7 +158,10 @@ export type ServiceErrorCode =
   // Billing Gate errors
   | 'UNSIGNED_NOTES'
   | 'NO_CLINICAL_NOTES'
-  | 'PROVIDER_REQUIRED';
+  | 'PROVIDER_REQUIRED'
+  // CQL Execution Engine errors
+  | 'CQL_NOT_AVAILABLE'
+  | 'CQL_EXECUTION_ERROR';
 
 /**
  * Structured error information

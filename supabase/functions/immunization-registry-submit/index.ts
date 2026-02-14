@@ -10,25 +10,17 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { getStateConfig, type StateConfig } from '../_shared/stateConfigLookup.ts';
 
-// State immunization registry configurations
-const STATE_CONFIGS: Record<string, {
-  name: string;
-  endpoint: string;
-  testEndpoint: string;
-  format: 'HL7v2' | 'FHIR';
-  authType: 'certificate' | 'oauth2' | 'basic';
-  supportsQuery: boolean;
-}> = {
+// Hardcoded fallback — used when no database row exists for the tenant+state
+const FALLBACK_CONFIGS: Record<string, StateConfig> = {
   TX: {
     name: 'Texas ImmTrac2',
     endpoint: 'https://immtrac.dshs.texas.gov/api/vxu',
     testEndpoint: 'https://immtrac-test.dshs.texas.gov/api/vxu',
     format: 'HL7v2',
     authType: 'certificate',
-    supportsQuery: true,
   },
-  // Add more states as needed
 };
 
 interface SubmitRequest {
@@ -68,19 +60,20 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get state configuration
-    const stateConfig = STATE_CONFIGS[state.toUpperCase()];
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get state configuration — DB first, hardcoded fallback
+    const dbConfig = await getStateConfig(supabase, tenantId, state, 'immunization');
+    const stateConfig = dbConfig || FALLBACK_CONFIGS[state.toUpperCase()] || null;
     if (!stateConfig) {
       return new Response(
         JSON.stringify({ success: false, error: `State ${state} not configured for immunization registry` }),
         { status: 400, headers: corsHeaders }
       );
     }
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Fetch the immunization record
     const { data: immunization, error: immError } = await supabase

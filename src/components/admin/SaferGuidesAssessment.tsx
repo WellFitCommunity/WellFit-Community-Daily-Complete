@@ -4,6 +4,10 @@
  * ONC Requirement: CMS Promoting Interoperability Program
  * Purpose: Annual self-assessment using the 9 SAFER Guides for EHR safety
  *
+ * Decomposed:
+ *   - SaferGuidesQuestionPanel: question view (extracted)
+ *   - saferGuidesHelpers: shared helper functions (extracted)
+ *
  * @see https://www.healthit.gov/topic/safety/safer-guides
  */
 
@@ -20,9 +24,11 @@ import {
   type QuestionWithResponse,
   type ResponseValue
 } from '../../services/saferGuidesService';
+import { generateAttestationPdf } from '../../services/saferGuidesService';
 import { auditLogger } from '../../services/auditLogger';
+import SaferGuidesQuestionPanel from './SaferGuidesQuestionPanel';
+import { getScoreColor, getCategoryColor } from './saferGuidesHelpers';
 
-// Optimized lucide imports
 import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import Circle from 'lucide-react/dist/esm/icons/circle';
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
@@ -30,7 +36,6 @@ import FileText from 'lucide-react/dist/esm/icons/file-text';
 import Download from 'lucide-react/dist/esm/icons/download';
 import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
-import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import ExternalLink from 'lucide-react/dist/esm/icons/external-link';
 import Shield from 'lucide-react/dist/esm/icons/shield';
 
@@ -50,7 +55,6 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
   const supabase = useSupabaseClient();
   const user = useUser();
 
-  // State
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [assessment, setAssessment] = useState<AssessmentSummary | null>(null);
   const [selectedGuide, setSelectedGuide] = useState<GuideProgress | null>(null);
@@ -61,6 +65,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isAttesting, setIsAttesting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // =====================================================
@@ -70,15 +75,11 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
   const loadAssessment = useCallback(async (tid: string) => {
     setIsLoading(true);
     setError(null);
-
     try {
-      // Load guide definitions first
       const defsResult = await SaferGuidesService.getGuideDefinitions();
       if (defsResult.success && defsResult.data) {
         setGuideDefinitions(defsResult.data.map(d => ({ id: d.id, guide_number: d.guide_number })));
       }
-
-      // Load assessment
       const result = await SaferGuidesService.getOrCreateAssessment(tid);
       if (result.success && result.data) {
         setAssessment(result.data);
@@ -93,12 +94,9 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
     }
   }, []);
 
-  // Load tenant ID and assessment data
   const initializeData = useCallback(async () => {
     if (!user?.id) return;
-
     try {
-      // Get current user's tenant_id from profiles
       const { data: profile } = await supabase
         .from('profiles')
         .select('tenant_id')
@@ -110,7 +108,6 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
         setIsLoading(false);
         return;
       }
-
       setTenantId(profile.tenant_id);
       await loadAssessment(profile.tenant_id);
     } catch (err: unknown) {
@@ -122,77 +119,45 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
 
   const loadGuideQuestions = useCallback(async (guide: GuideProgress) => {
     if (!assessment) return;
-
     setSelectedGuide(guide);
     setIsLoadingQuestions(true);
-
     try {
-      // Find the guide definition ID
       const guideDef = guideDefinitions.find(d => d.guide_number === guide.guideNumber);
-      if (!guideDef) {
-        setError('Guide definition not found');
-        return;
-      }
-
-      const result = await SaferGuidesService.getGuideQuestionsWithResponses(
-        assessment.assessmentId,
-        guideDef.id
-      );
-
-      if (result.success && result.data) {
-        setQuestions(result.data);
-      } else {
-        setError(result.error?.message || 'Failed to load questions');
-      }
-    } catch (err) {
+      if (!guideDef) { setError('Guide definition not found'); return; }
+      const result = await SaferGuidesService.getGuideQuestionsWithResponses(assessment.assessmentId, guideDef.id);
+      if (result.success && result.data) { setQuestions(result.data); }
+      else { setError(result.error?.message || 'Failed to load questions'); }
+    } catch (_err: unknown) {
       setError('Failed to load guide questions');
     } finally {
       setIsLoadingQuestions(false);
     }
   }, [assessment, guideDefinitions]);
 
-  useEffect(() => {
-    initializeData();
-  }, [initializeData]);
+  useEffect(() => { initializeData(); }, [initializeData]);
 
   // =====================================================
   // HANDLERS
   // =====================================================
 
-  const handleResponseChange = async (
-    questionId: string,
-    response: ResponseValue
-  ) => {
+  const handleResponseChange = async (questionId: string, response: ResponseValue) => {
     if (!assessment || !user?.id || !tenantId) return;
-
     setIsSaving(true);
-
     try {
       const result = await SaferGuidesService.saveResponse(
-        assessment.assessmentId,
-        questionId,
-        response,
-        null, // notes
-        null, // actionPlan
-        user.id
+        assessment.assessmentId, questionId, response, null, null, user.id
       );
-
       if (result.success) {
-        // Update local state
-        setQuestions(prev =>
-          prev.map(q =>
-            q.question.id === questionId
-              ? { ...q, response: { ...q.response, response } as QuestionWithResponse['response'] }
-              : q
-          )
-        );
-
-        // Reload assessment to update progress
+        setQuestions(prev => prev.map(q =>
+          q.question.id === questionId
+            ? { ...q, response: { ...q.response, response } as QuestionWithResponse['response'] }
+            : q
+        ));
         await loadAssessment(tenantId);
       } else {
         setError(result.error?.message || 'Failed to save response');
       }
-    } catch (err) {
+    } catch (_err: unknown) {
       setError('Failed to save response');
     } finally {
       setIsSaving(false);
@@ -201,34 +166,48 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
 
   const handleAttest = async () => {
     if (!assessment || !user?.id || !tenantId) return;
-
     setIsAttesting(true);
     setError(null);
-
     try {
-      const result = await SaferGuidesService.attestAssessment(
-        assessment.assessmentId,
-        user.id,
-        tenantId
-      );
-
+      const result = await SaferGuidesService.attestAssessment(assessment.assessmentId, user.id, tenantId);
       if (result.success) {
         await loadAssessment(tenantId);
         setSelectedGuide(null);
       } else {
         setError(result.error?.message || 'Failed to attest assessment');
       }
-    } catch (err) {
+    } catch (_err: unknown) {
       setError('Failed to attest assessment');
     } finally {
       setIsAttesting(false);
     }
   };
 
-  const handleBackToGuides = () => {
-    setSelectedGuide(null);
-    setQuestions([]);
+  const handleDownloadAttestation = async () => {
+    if (!assessment || !tenantId) return;
+    setIsDownloading(true);
+    setError(null);
+    try {
+      const result = await generateAttestationPdf(assessment.assessmentId, tenantId);
+      if (result.success && result.data?.html) {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(result.data.html);
+          printWindow.document.close();
+          printWindow.focus();
+          printWindow.print();
+        }
+      } else {
+        setError(result.error?.message || 'Failed to generate attestation PDF');
+      }
+    } catch (_err: unknown) {
+      setError('Failed to download attestation');
+    } finally {
+      setIsDownloading(false);
+    }
   };
+
+  const handleBackToGuides = () => { setSelectedGuide(null); setQuestions([]); };
 
   // =====================================================
   // HELPERS
@@ -236,43 +215,16 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'complete':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'in_progress':
-        return <Circle className="w-5 h-5 text-yellow-500 fill-yellow-100" />;
-      default:
-        return <Circle className="w-5 h-5 text-slate-300" />;
+      case 'complete': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'in_progress': return <Circle className="w-5 h-5 text-yellow-500 fill-yellow-100" />;
+      default: return <Circle className="w-5 h-5 text-slate-300" />;
     }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Foundation':
-        return 'bg-purple-100 text-purple-800';
-      case 'Governance':
-        return 'bg-blue-100 text-blue-800';
-      case 'Operations':
-        return 'bg-orange-100 text-orange-800';
-      case 'Technical':
-        return 'bg-cyan-100 text-cyan-800';
-      case 'Clinical':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-slate-100 text-slate-800';
-    }
-  };
-
-  const getScoreColor = (score: number | null) => {
-    if (score === null) return 'text-slate-400';
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
   };
 
   const allGuidesComplete = assessment?.guides.every(g => g.status === 'complete') ?? false;
 
   // =====================================================
-  // RENDER: LOADING STATE
+  // RENDER: LOADING
   // =====================================================
 
   if (isLoading) {
@@ -292,142 +244,21 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
   }
 
   // =====================================================
-  // RENDER: QUESTION VIEW
+  // RENDER: QUESTION VIEW (delegated to extracted panel)
   // =====================================================
 
   if (selectedGuide) {
     return (
       <div className={`p-6 ${className}`}>
-        {/* Header */}
-        <div className="mb-6">
-          <button
-            onClick={handleBackToGuides}
-            className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Back to All Guides
-          </button>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                Guide {selectedGuide.guideNumber}: {selectedGuide.guideName}
-              </h1>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge className={getCategoryColor(selectedGuide.category)}>
-                  {selectedGuide.category}
-                </Badge>
-                <span className="text-sm text-slate-500">
-                  {selectedGuide.answeredQuestions} of {selectedGuide.totalQuestions} questions answered
-                </span>
-              </div>
-            </div>
-
-            {selectedGuide.score !== null && (
-              <div className={`text-3xl font-bold ${getScoreColor(selectedGuide.score)}`}>
-                {selectedGuide.score}%
-              </div>
-            )}
-          </div>
-
-          {/* Progress bar */}
-          <div className="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 transition-all duration-300"
-              style={{ width: `${(selectedGuide.answeredQuestions / selectedGuide.totalQuestions) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertCircle className="w-4 h-4 text-red-600" />
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Questions */}
-        {isLoadingQuestions ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse h-40 bg-slate-200 rounded" />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {questions.map((item, index) => (
-              <Card key={item.question.id} className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="mb-4">
-                    <span className="text-sm font-medium text-slate-500">
-                      Question {index + 1} of {questions.length}
-                    </span>
-                    <p className="text-lg font-medium text-slate-900 mt-1">
-                      {item.question.question_text}
-                    </p>
-                    {item.question.help_text && (
-                      <p className="text-sm text-slate-500 mt-2">
-                        {item.question.help_text}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Response options */}
-                  <div
-                    className="flex flex-wrap gap-3"
-                    role="radiogroup"
-                    aria-label={`Response for question ${index + 1}`}
-                  >
-                    {(['yes', 'partial', 'no', 'na'] as ResponseValue[]).map(value => {
-                      const isSelected = item.response?.response === value;
-                      const labels: Record<ResponseValue, string> = {
-                        yes: 'Yes',
-                        partial: 'Partial',
-                        no: 'No',
-                        na: 'N/A'
-                      };
-                      const colors: Record<ResponseValue, string> = {
-                        yes: isSelected ? 'bg-green-600 text-white border-green-600' : 'border-green-300 text-green-700 hover:bg-green-50',
-                        partial: isSelected ? 'bg-yellow-500 text-white border-yellow-500' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50',
-                        no: isSelected ? 'bg-red-600 text-white border-red-600' : 'border-red-300 text-red-700 hover:bg-red-50',
-                        na: isSelected ? 'bg-slate-600 text-white border-slate-600' : 'border-slate-300 text-slate-700 hover:bg-slate-50'
-                      };
-
-                      return (
-                        <button
-                          key={value}
-                          role="radio"
-                          aria-checked={isSelected}
-                          onClick={() => handleResponseChange(item.question.id, value)}
-                          disabled={isSaving}
-                          className={`
-                            px-4 py-2 rounded-lg border-2 font-medium transition-all
-                            min-w-[80px] text-center
-                            ${colors[value]}
-                            ${isSaving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                          `}
-                        >
-                          {labels[value]}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Recommended practice for "No" responses */}
-                  {item.response?.response === 'no' && item.question.recommended_practice && (
-                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-sm font-medium text-amber-800">Recommended Practice:</p>
-                      <p className="text-sm text-amber-700 mt-1">
-                        {item.question.recommended_practice}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        <SaferGuidesQuestionPanel
+          guide={selectedGuide}
+          questions={questions}
+          isLoadingQuestions={isLoadingQuestions}
+          isSaving={isSaving}
+          error={error}
+          onBack={handleBackToGuides}
+          onResponseChange={handleResponseChange}
+        />
       </div>
     );
   }
@@ -452,8 +283,13 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
 
         <div className="flex items-center gap-3">
           {assessment?.status === 'attested' ? (
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={handleDownloadAttestation}
+              disabled={isDownloading}
+            >
+              {isDownloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               Download Attestation
             </Button>
           ) : (
@@ -462,11 +298,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
               disabled={!allGuidesComplete || isAttesting}
               className="flex items-center gap-2"
             >
-              {isAttesting ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <FileText className="w-4 h-4" />
-              )}
+              {isAttesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
               Complete & Attest
             </Button>
           )}
@@ -488,7 +320,6 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6">
-            {/* Progress bar */}
             <div className="flex-1">
               <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
                 <div
@@ -499,16 +330,10 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
                 />
               </div>
               <div className="flex justify-between mt-2 text-sm text-slate-500">
-                <span>
-                  {assessment?.guides.filter(g => g.status === 'complete').length || 0} of 9 guides complete
-                </span>
-                <span>
-                  {assessment?.totalAnswered || 0} of {assessment?.totalQuestions || 0} questions answered
-                </span>
+                <span>{assessment?.guides.filter(g => g.status === 'complete').length || 0} of 9 guides complete</span>
+                <span>{assessment?.totalAnswered || 0} of {assessment?.totalQuestions || 0} questions answered</span>
               </div>
             </div>
-
-            {/* Overall score */}
             {assessment?.overallScore !== null && (
               <div className="text-center px-6 border-l border-slate-200">
                 <div className={`text-4xl font-bold ${getScoreColor(assessment?.overallScore ?? null)}`}>
@@ -517,22 +342,15 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
                 <div className="text-sm text-slate-500 mt-1">Overall Score</div>
               </div>
             )}
-
-            {/* Status badge */}
             <div className="px-6 border-l border-slate-200">
               {assessment?.status === 'attested' ? (
                 <Badge className="bg-green-100 text-green-800 px-3 py-1">
-                  <CheckCircle className="w-4 h-4 mr-1" />
-                  Attested
+                  <CheckCircle className="w-4 h-4 mr-1" />Attested
                 </Badge>
               ) : allGuidesComplete ? (
-                <Badge className="bg-blue-100 text-blue-800 px-3 py-1">
-                  Ready to Attest
-                </Badge>
+                <Badge className="bg-blue-100 text-blue-800 px-3 py-1">Ready to Attest</Badge>
               ) : (
-                <Badge className="bg-yellow-100 text-yellow-800 px-3 py-1">
-                  In Progress
-                </Badge>
+                <Badge className="bg-yellow-100 text-yellow-800 px-3 py-1">In Progress</Badge>
               )}
             </div>
           </div>
@@ -544,68 +362,42 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
         {assessment?.guides.map(guide => (
           <Card
             key={guide.guideNumber}
-            className={`
-              cursor-pointer transition-all hover:shadow-md hover:border-blue-300
-              ${guide.status === 'complete' ? 'border-green-200 bg-green-50/30' : 'border-slate-200'}
-            `}
+            className={`cursor-pointer transition-all hover:shadow-md hover:border-blue-300 ${
+              guide.status === 'complete' ? 'border-green-200 bg-green-50/30' : 'border-slate-200'
+            }`}
             onClick={() => loadGuideQuestions(guide)}
           >
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   {getStatusIcon(guide.status)}
-                  <span className="text-lg font-semibold text-slate-900">
-                    Guide {guide.guideNumber}
-                  </span>
+                  <span className="text-lg font-semibold text-slate-900">Guide {guide.guideNumber}</span>
                 </div>
-                <Badge className={`text-xs ${getCategoryColor(guide.category)}`}>
-                  {guide.category}
-                </Badge>
+                <Badge className={`text-xs ${getCategoryColor(guide.category)}`}>{guide.category}</Badge>
               </div>
-
-              <h3 className="font-medium text-slate-800 mb-3 line-clamp-2">
-                {guide.guideName}
-              </h3>
-
-              {/* Progress */}
+              <h3 className="font-medium text-slate-800 mb-3 line-clamp-2">{guide.guideName}</h3>
               <div className="mb-3">
                 <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-300 ${
-                      guide.status === 'complete' ? 'bg-green-500' : 'bg-blue-500'
-                    }`}
+                    className={`h-full transition-all duration-300 ${guide.status === 'complete' ? 'bg-green-500' : 'bg-blue-500'}`}
                     style={{ width: `${(guide.answeredQuestions / guide.totalQuestions) * 100}%` }}
                   />
                 </div>
                 <div className="flex justify-between mt-1 text-xs text-slate-500">
                   <span>{guide.answeredQuestions}/{guide.totalQuestions} questions</span>
                   {guide.score !== null && (
-                    <span className={`font-medium ${getScoreColor(guide.score)}`}>
-                      {guide.score}%
-                    </span>
+                    <span className={`font-medium ${getScoreColor(guide.score)}`}>{guide.score}%</span>
                   )}
                 </div>
               </div>
-
-              {/* Response breakdown */}
               {guide.answeredQuestions > 0 && (
                 <div className="flex gap-2 text-xs">
-                  {guide.yesCount > 0 && (
-                    <span className="text-green-600">{guide.yesCount} Yes</span>
-                  )}
-                  {guide.partialCount > 0 && (
-                    <span className="text-yellow-600">{guide.partialCount} Partial</span>
-                  )}
-                  {guide.noCount > 0 && (
-                    <span className="text-red-600">{guide.noCount} No</span>
-                  )}
-                  {guide.naCount > 0 && (
-                    <span className="text-slate-500">{guide.naCount} N/A</span>
-                  )}
+                  {guide.yesCount > 0 && <span className="text-green-600">{guide.yesCount} Yes</span>}
+                  {guide.partialCount > 0 && <span className="text-yellow-600">{guide.partialCount} Partial</span>}
+                  {guide.noCount > 0 && <span className="text-red-600">{guide.noCount} No</span>}
+                  {guide.naCount > 0 && <span className="text-slate-500">{guide.naCount} N/A</span>}
                 </div>
               )}
-
-              {/* Start/Continue button */}
               <div className="flex items-center justify-end mt-3 text-blue-600">
                 <span className="text-sm font-medium">
                   {guide.status === 'not_started' ? 'Start' : guide.status === 'complete' ? 'Review' : 'Continue'}

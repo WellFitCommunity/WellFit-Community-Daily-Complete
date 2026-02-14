@@ -10,18 +10,19 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { getStateConfig, type StateConfig } from '../_shared/stateConfigLookup.ts';
 
-// eCR submission configurations
-const ECR_CONFIG = {
-  // AIMS (Association of Public Health Laboratories)
-  aims: {
-    name: 'AIMS Platform',
-    endpoint: 'https://aims.aimsplatform.org/api/eicr',
-    testEndpoint: 'https://aims-staging.aimsplatform.org/api/eicr',
-    format: 'CDA',
-    authType: 'oauth2',
-  },
-  // Direct submission to state (TX)
+// AIMS platform config — centralized, stays hardcoded
+const AIMS_CONFIG: StateConfig = {
+  name: 'AIMS Platform',
+  endpoint: 'https://aims.aimsplatform.org/api/eicr',
+  testEndpoint: 'https://aims-staging.aimsplatform.org/api/eicr',
+  format: 'CDA',
+  authType: 'oauth2',
+};
+
+// Direct-to-state fallback — used when no database row exists
+const FALLBACK_DIRECT_CONFIGS: Record<string, StateConfig> = {
   TX: {
     name: 'Texas DSHS Direct',
     endpoint: 'https://ecr.dshs.texas.gov/api/eicr',
@@ -74,15 +75,19 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get submission configuration
-    const config = submissionRoute === 'aims'
-      ? ECR_CONFIG.aims
-      : ECR_CONFIG[state.toUpperCase() as keyof typeof ECR_CONFIG] || ECR_CONFIG.aims;
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get submission configuration — AIMS stays hardcoded, direct uses DB-first
+    let config: StateConfig;
+    if (submissionRoute === 'aims') {
+      config = AIMS_CONFIG;
+    } else {
+      const dbConfig = await getStateConfig(supabase, tenantId, state, 'ecr');
+      config = dbConfig || FALLBACK_DIRECT_CONFIGS[state.toUpperCase()] || AIMS_CONFIG;
+    }
 
     // Fetch the case report
     const { data: caseReport, error: reportError } = await supabase

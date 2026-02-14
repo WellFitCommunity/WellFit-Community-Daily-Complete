@@ -21,6 +21,8 @@ export { evaluatePatientForMeasure } from './calculation/patientEvaluation';
 export { evaluateMeasureCriteria } from './calculation/measureEvaluators';
 export { calculateMeasures, getCalculationJobStatus } from './calculation/batchCalculation';
 export { calculateAggregateResults, getAggregateResults } from './calculation/aggregateResults';
+export { isCqlAvailable, executeCql, cqlResultToMeasureResult, loadElmLibrary } from './calculation/cqlEngine';
+export type { ElmLibrary, CqlExecutionParams, CqlExecutionResult, CqlPatientResult } from './calculation/cqlEngine.types';
 
 import { getMeasureDefinitions, getMeasureDefinition } from './calculation/measureDefinitions';
 import { evaluatePatientForMeasure } from './calculation/patientEvaluation';
