@@ -484,6 +484,18 @@ export class ContraindicationDetectorService {
   }
 
   /**
+   * Delegate: record an override for a completed contraindication check.
+   * Pre-fills the checkId so callers don't need to look it up.
+   */
+  static async recordOverride(
+    checkId: string,
+    request: Omit<import('../medicationOverrideService').RecordOverrideRequest, 'check_id'>
+  ): Promise<ServiceResult<import('../medicationOverrideService').MedicationAlertOverride>> {
+    const { medicationOverrideService } = await import('../medicationOverrideService');
+    return medicationOverrideService.recordOverride({ ...request, check_id: checkId });
+  }
+
+  /**
    * Map database row to typed object
    */
   private static mapDbToSavedCheck(row: Record<string, unknown>): SavedContraindicationCheck {

@@ -225,6 +225,57 @@ export const billingGateService = {
       return failure('UNKNOWN_ERROR', 'Failed to check billing gate');
     }
   },
+
+  /**
+   * Validate that a superbill (claim) has been approved by a provider
+   * before it can be submitted to the clearinghouse.
+   */
+  async validateSuperbillApproved(
+    claimId: string
+  ): Promise<ServiceResult<{ approved: boolean; approvedBy?: string; approvedAt?: string }>> {
+    try {
+      if (!claimId) {
+        return failure('INVALID_INPUT', 'Claim ID is required');
+      }
+
+      const { data, error } = await supabase
+        .from('claims')
+        .select('approval_status, provider_approved_by, provider_approved_at')
+        .eq('id', claimId)
+        .single();
+
+      if (error) {
+        return failure('DATABASE_ERROR', error.message);
+      }
+
+      if (!data) {
+        return failure('NOT_FOUND', 'Claim not found');
+      }
+
+      const approved = data.approval_status === 'approved' && data.provider_approved_by !== null;
+
+      if (!approved) {
+        await auditLogger.clinical('SUPERBILL_GATE_BLOCKED', false, {
+          claim_id: claimId,
+          approval_status: data.approval_status,
+          reason: 'provider_approval_required',
+        });
+      }
+
+      return success({
+        approved,
+        approvedBy: data.provider_approved_by || undefined,
+        approvedAt: data.provider_approved_at || undefined,
+      });
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'SUPERBILL_GATE_CHECK_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { claim_id: claimId }
+      );
+      return failure('UNKNOWN_ERROR', 'Failed to validate superbill approval');
+    }
+  },
 };
 
 export default billingGateService;

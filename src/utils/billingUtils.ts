@@ -135,6 +135,7 @@ export class BillingUtils {
   static getClaimStatusDisplayName(status: ClaimStatus): string {
     const statusMap: Record<ClaimStatus, string> = {
       generated: 'Generated',
+      pending_approval: 'Pending Approval',
       submitted: 'Submitted',
       accepted: 'Accepted',
       rejected: 'Rejected',
@@ -147,6 +148,7 @@ export class BillingUtils {
   static getClaimStatusColor(status: ClaimStatus): string {
     const colorMap: Record<ClaimStatus, string> = {
       generated: 'text-blue-600',
+      pending_approval: 'text-orange-600',
       submitted: 'text-yellow-600',
       accepted: 'text-green-600',
       rejected: 'text-red-600',

@@ -1,6 +1,6 @@
 # Clinical Safety & Revenue Build Tracker
 
-> **Last Updated:** 2026-02-15
+> **Last Updated:** 2026-02-16
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 
@@ -79,8 +79,8 @@
 |---------|--------|-------------|----------------|
 | Drug-drug interaction engine | BUILT | `drugInteractionService.ts` (397 lines), `check-drug-interactions` edge function (439 lines), RxNorm API, Claude Vision enhancement | — |
 | Severity tiers | BUILT | 4 tiers: contraindicated, high, moderate, low. Color-coded in `MedicationManager.tsx` | — |
-| Override logging with required reason | MISSING | `ai_contraindication_checks` has `review_notes` (free text) | No mandatory `override_reason_code`, no structured reason codes, no secondary verification |
-| Alert suppression audit trail | MISSING | — | No `medication_alert_suppressions` table, no dismissal tracking, no "why was this alert ignored" audit |
+| Override logging with required reason | BUILT | `medication_alert_overrides` immutable audit table (7 reason codes), `medicationOverrideService.ts`, `MedicationAlertOverrideModal.tsx` with 20-char min explanation + provider signature, weekly count escalation (3+ triggers manager notification), manager review workflow | — |
+| Alert suppression audit trail | BUILT | `medication_alert_overrides` tracks every override with reason code, explanation, provider signature, severity, check_id FK, `get_flagged_override_providers()` RPC | — |
 
 **Additional medication infrastructure that exists:**
 - Contraindication detector (Skill #25) — Claude Sonnet 4.5, checks disease-drug, allergy cross-reactivity, lab values, age, pregnancy
@@ -89,7 +89,7 @@
 - AI medication instructions — 6th-grade reading level, personalized
 - Medication label reader — Claude Vision OCR
 
-**Verdict: 70% built.** Core interaction engine and severity classification are production-ready. Missing override/suppression audit trail (compliance risk).
+**Verdict: 95% built.** Core interaction engine, severity classification, and override/suppression audit trail are production-ready. 7 structured reason codes, immutable audit, escalation tracking, manager review workflow.
 
 ---
 
@@ -121,9 +121,9 @@
 | ICD-10 linking | BUILT | `code_icd10` table, `encounter_diagnoses` with sequence ordering | — |
 | Modifier suggestions | BUILT | `code_modifiers` table, Modifier 25 logic in `billingOptimizationEngineService.ts` | — |
 | E/M level suggestion (2021 rules) | BUILT | `emEvaluationNode.ts`, time-based + MDM-based coding, `CodingSuggestionPanel.tsx` | — |
-| Provider confirmation required | MISSING | `billingGateService.ts` enforces signed clinical notes | No superbill approval workflow, no `provider_approved_by` field on claims |
+| Provider confirmation required | BUILT | `SuperbillReviewPanel.tsx` (admin panel), `approve_superbill()`/`reject_superbill()` RPC, `trg_enforce_superbill_approval` trigger blocks submission without approval, `validateSuperbillApproved()` gate, electronic signature + certification checkbox | — |
 
-**Verdict: 80% built.** Coding engine is complete. Missing the provider sign-off gate on superbills.
+**Verdict: 95% built.** Coding engine and provider sign-off gate are complete. Defense-in-depth: DB trigger + service gate + UI enforcement.
 
 ---
 
@@ -174,10 +174,10 @@
 | 2. Order Lifecycle Control | 50% | Tables + SLA service done, needs UI + external integration |
 | 3. Provider Responsibility Routing | 60% | Assignment + task inbox + SLA config built, auto-escalation cron + coverage missing |
 | 4. Referral Closed-Loop Tracking | 40% | Status tracking exists, automation missing |
-| 5. Medication Safety | 70% | Interaction engine production-ready, override audit missing |
+| 5. Medication Safety | 95% | Interaction engine + override audit trail + escalation tracking complete |
 | 6. Clinical Audit UI | 75% | Strong infrastructure, needs encounter-level views |
 | **Phase 1 Average** | **~60%** | |
-| 7. Superbill Engine | 80% | Coding complete, provider sign-off missing |
+| 7. Superbill Engine | 95% | Coding + provider sign-off gate complete |
 | 8. Eligibility Integration | 25% | API exists, not wired in |
 | 9. Claim Pipeline | 60% | Generation works, payment posting missing |
 | 10. Revenue Intelligence | 0% | Not started |
@@ -194,7 +194,7 @@
 | ~~P1~~ | ~~Provider assignment UI component~~ | **DONE** — `ProviderAssignmentDashboard.tsx` | ~~Small~~ |
 | ~~P2~~ | ~~Unacknowledged results dashboard~~ | **DONE** — `UnacknowledgedResultsDashboard.tsx` | ~~Small~~ |
 | ~~P3~~ | ~~Provider inbox / task routing~~ | **DONE** — `ProviderTaskQueueDashboard.tsx`, `providerTaskService.ts`, SLA config | ~~Large~~ |
-| P4 | Override logging + reason codes for medication alerts | Compliance gap | Medium |
+| ~~P4~~ | ~~Override logging + reason codes for medication alerts~~ | **DONE** — `medication_alert_overrides` table, `medicationOverrideService.ts`, `MedicationAlertOverrideModal.tsx`, escalation tracking | ~~Medium~~ |
 | P5 | Referral follow-up reminder scheduler | Closes the referral loop | Medium |
 | P6 | Encounter-level audit view | Clinical compliance | Small |
 | P7 | Result escalation rules engine | Routes abnormal values to specialists | Medium |
@@ -204,7 +204,7 @@
 
 | Priority | Item | Why First | Estimated Effort |
 |----------|------|-----------|-----------------|
-| P1 | Superbill provider sign-off gate | Compliance — can't bill unsigned superbills | Small |
+| ~~P1~~ | ~~Superbill provider sign-off gate~~ | **DONE** — `SuperbillReviewPanel.tsx`, `approve_superbill()`/`reject_superbill()` RPC, DB trigger enforcement | ~~Small~~ |
 | P2 | Eligibility verification in encounter workflow | Prevents denied claims | Medium |
 | P3 | Claim aging dashboard | Quick win — data already exists | Small |
 | P4 | Undercoding detection | Quick win — compare suggested vs billed | Small |

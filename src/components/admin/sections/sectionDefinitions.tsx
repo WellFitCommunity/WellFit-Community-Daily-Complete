@@ -52,6 +52,9 @@ const UnacknowledgedResultsDashboard = lazy(() => import('../UnacknowledgedResul
 // Provider Task Queue Dashboard (P3 Clinical Safety)
 const ProviderTaskQueueDashboard = lazy(() => import('../ProviderTaskQueueDashboard'));
 
+// Superbill Provider Sign-Off (P1 Revenue Gate)
+const SuperbillReviewPanel = lazy(() => import('../SuperbillReviewPanel'));
+
 // Public Health Reporting (ONC f-criteria)
 const PublicHealthReportingDashboard = lazy(() => import('../PublicHealthReportingDashboard'));
 
@@ -174,6 +177,17 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'revenue',
     priority: 'high',
     roles: ['admin', 'super_admin', 'finance', 'billing_specialist'],
+  },
+  {
+    id: 'superbill-review',
+    title: 'Superbill Provider Sign-Off',
+    subtitle: 'Review and approve superbills before clearinghouse submission',
+    icon: '✅',
+    headerColor: 'text-green-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><SuperbillReviewPanel /></Suspense>,
+    category: 'revenue',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'billing_specialist'],
   },
 
   // ==================== PATIENT CARE ====================

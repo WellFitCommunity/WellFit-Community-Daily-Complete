@@ -161,7 +161,14 @@ export type ServiceErrorCode =
   | 'PROVIDER_REQUIRED'
   // CQL Execution Engine errors
   | 'CQL_NOT_AVAILABLE'
-  | 'CQL_EXECUTION_ERROR';
+  | 'CQL_EXECUTION_ERROR'
+  // Medication Alert Override errors
+  | 'MEDICATION_OVERRIDE_FAILED'
+  | 'OVERRIDE_VALIDATION_FAILED'
+  // Superbill Approval errors
+  | 'SUPERBILL_NOT_APPROVED'
+  | 'SUPERBILL_APPROVAL_FAILED'
+  | 'SUPERBILL_REJECTION_FAILED';
 
 /**
  * Structured error information

@@ -106,13 +106,21 @@ export interface Claim {
   total_charge?: number | null;
   x12_content?: string | null;
   response_payload?: string | null;
+  // Provider approval gate
+  approval_status?: ClaimApprovalStatus;
+  provider_approved_by?: string | null;
+  provider_approved_at?: string | null;
+  approval_notes?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
 }
 
+export type ClaimApprovalStatus = 'pending' | 'approved' | 'returned' | 'not_required';
+
 export type ClaimStatus =
   | 'generated'
+  | 'pending_approval'
   | 'submitted'
   | 'accepted'
   | 'rejected'

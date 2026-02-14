@@ -5,6 +5,8 @@
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
+import type { ServiceResult } from './_base';
+import { success, failure } from './_base';
 import type {
   BillingProvider,
   BillingPayer,
@@ -435,6 +437,109 @@ export class BillingService {
     const { data, error } = await query;
 
     if (error) throw new Error(`Failed to search claims: ${error.message}`);
+    return data || [];
+  }
+
+  // ==================== Superbill Approval Gate ====================
+
+  /**
+   * Approve a superbill (claim) for submission to clearinghouse.
+   * Calls the atomic approve_superbill RPC function.
+   */
+  static async approveSuperbill(
+    claimId: string,
+    providerId: string,
+    notes?: string
+  ): Promise<ServiceResult<{ claim_id: string; approved_by: string; approved_at: string }>> {
+    try {
+      const { data, error } = await supabase.rpc('approve_superbill', {
+        p_claim_id: claimId,
+        p_provider_id: providerId,
+        p_notes: notes || null,
+      });
+
+      if (error) {
+        return failure('SUPERBILL_APPROVAL_FAILED', error.message, error);
+      }
+
+      await auditLogger.clinical('SUPERBILL_APPROVED', false, {
+        claim_id: claimId,
+        approved_by: providerId,
+      });
+
+      return success(data as { claim_id: string; approved_by: string; approved_at: string });
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'SUPERBILL_APPROVAL_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { claim_id: claimId, provider_id: providerId }
+      );
+      return failure('SUPERBILL_APPROVAL_FAILED', 'Failed to approve superbill');
+    }
+  }
+
+  /**
+   * Return a superbill for revision with a required reason.
+   */
+  static async rejectSuperbill(
+    claimId: string,
+    providerId: string,
+    reason: string
+  ): Promise<ServiceResult<{ claim_id: string }>> {
+    try {
+      if (!reason || reason.trim().length < 10) {
+        return failure('SUPERBILL_REJECTION_FAILED', 'Rejection reason must be at least 10 characters');
+      }
+
+      const { data, error } = await supabase.rpc('reject_superbill', {
+        p_claim_id: claimId,
+        p_provider_id: providerId,
+        p_reason: reason.trim(),
+      });
+
+      if (error) {
+        return failure('SUPERBILL_REJECTION_FAILED', error.message, error);
+      }
+
+      await auditLogger.clinical('SUPERBILL_RETURNED', false, {
+        claim_id: claimId,
+        returned_by: providerId,
+        reason: reason.trim(),
+      });
+
+      return success(data as { claim_id: string });
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'SUPERBILL_REJECTION_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { claim_id: claimId, provider_id: providerId }
+      );
+      return failure('SUPERBILL_REJECTION_FAILED', 'Failed to return superbill for revision');
+    }
+  }
+
+  /**
+   * Get claims awaiting provider approval.
+   */
+  static async getClaimsAwaitingApproval(
+    providerId?: string,
+    limit: number = 50
+  ): Promise<Claim[]> {
+    let query = supabase
+      .from('claims')
+      .select('*')
+      .eq('approval_status', 'pending')
+      .eq('status', 'generated')
+      .order('created_at', { ascending: true })
+      .limit(limit);
+
+    if (providerId) {
+      query = query.eq('billing_provider_id', providerId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw new Error(`Failed to get claims awaiting approval: ${error.message}`);
     return data || [];
   }
 }
