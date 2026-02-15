@@ -1,6 +1,6 @@
 # Clinical Safety & Revenue Build Tracker
 
-> **Last Updated:** 2026-02-15
+> **Last Updated:** 2026-02-16
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 
@@ -131,12 +131,18 @@
 
 | Feature | Status | What Exists | What's Missing |
 |---------|--------|-------------|----------------|
-| 270/271 pre-check | BUILT | `mcp-clearinghouse-server` has `verify_eligibility` tool with full request/response types | Never called in encounter workflow |
-| Coverage status flag | MISSING | — | No `coverage_verified_at` field on encounters, no pre-visit check |
-| Copay estimate logic | MISSING | Eligibility response includes copay data | No calculation or display of patient cost at time of service |
-| Insurance verification indicator | MISSING | — | No UI indicator, no verification expiry logic |
+| 270/271 pre-check | BUILT | `mcp-clearinghouse-server` has `verify_eligibility` tool with full request/response types, `eligibilityVerificationService.ts` (360 lines) calls clearinghouse and stores results on encounter | — |
+| Coverage status flag | BUILT | `coverage_status`, `coverage_verified_at`, `coverage_details` (JSONB) columns on `encounters` table (migration `20260217100000`), 5 statuses: unverified/active/inactive/expired/error | — |
+| Copay estimate logic | BUILT | `CoverageDetails` interface includes copay, coinsurance_percent, deductible_remaining, out_of_pocket_remaining. Displayed in expandable `CoverageDetailsPanel` per encounter row | No automated cost-at-time-of-service calculation |
+| Insurance verification indicator | BUILT | `EligibilityVerificationPanel.tsx` (404 lines) in admin panel — 4 stat cards, coverage status badges with icons, status/patient filters, one-click verify/re-verify, expandable coverage details | No verification expiry logic (auto re-check after N days) |
 
-**Verdict: 25% built.** The API interface exists but isn't wired into the workflow.
+**Additional infrastructure built:**
+- `BillingQueueDashboard.tsx` (351 lines) — encounter→superbill bridge with one-click superbill generation, 5 stat cards, status/patient filters
+- `encounterBillingBridgeService.ts` (506 lines) — full encounter→superbill pipeline: billing queue retrieval, superbill draft generation from diagnoses+procedures, submit for review, link to claim
+- `encounter_superbills` table (migration `20260217000000`) with FK to encounters + claims, status lifecycle (draft→pending_review→approved→claimed), immutability trigger on approved superbills
+- `revenueSections.tsx` (189 lines) — revenue section definitions extracted from sectionDefinitions.tsx for 600-line compliance
+
+**Verdict: 80% built.** Eligibility verification wired into encounter workflow with full UI. Billing queue bridge complete. Remaining: verification expiry auto-check, automated patient cost estimate at time of service.
 
 ---
 
@@ -147,9 +153,10 @@
 | 837P generation | BUILT | `generate-837p` edge function (529 lines), full X12 EDI compliance | No 837I (institutional claims) |
 | Claim status tracker | BUILT | `claims` + `claim_status_history` tables, `updateClaimStatus()` in `billingService.ts` | — |
 | Rejection queue | BUILT | `claim_denials` table, `get_rejection_reasons()` with remediation guidance | No resubmission workflow (fix denied claim and resubmit) |
-| ERA ingestion scaffold | PARTIAL | `remittances` table, `process_remittance()` parses 835 content | No ERA-to-claim matching, no payment posting, no reconciliation |
+| ERA ingestion scaffold | BUILT | `remittances` table, `process_remittance()` parses 835 content, `eraPaymentPostingService.ts` (451 lines) — unposted remittance retrieval, ERA-to-claim matching, payment posting with status transition, reconciliation stats. `claim_payments` table (migration `20260217200000`) with match confidence, adjustment reason codes, check number, payer claim number | No automated matching algorithm (manual match only), no bulk posting |
+| ERA payment posting UI | BUILT | `ERAPaymentPostingDashboard.tsx` (367 lines) in admin panel — 4 stat cards (total posted, paid amount, adjustments, patient responsibility), unposted remittance table, claim matching modal with Post button, posted-today summary, refresh | — |
 
-**Verdict: 60% built.** Generation and tracking work. Missing payment posting and resubmission workflows.
+**Verdict: 80% built.** Generation, tracking, ERA-to-claim matching, and payment posting all work. Remaining: automated matching algorithm, bulk posting, resubmission workflow.
 
 ---
 
@@ -177,11 +184,11 @@
 | 5. Medication Safety | 95% | Interaction engine + override audit trail + escalation tracking complete |
 | 6. Clinical Audit UI | 85% | Encounter-level audit timeline complete, role-based filtering remaining |
 | **Phase 1 Average** | **~86%** | |
-| 7. Superbill Engine | 95% | Coding + provider sign-off gate complete |
-| 8. Eligibility Integration | 25% | API exists, not wired in |
-| 9. Claim Pipeline | 60% | Generation works, payment posting missing |
+| 7. Superbill Engine | 95% | Coding + provider sign-off gate + encounter→superbill bridge complete |
+| 8. Eligibility Integration | 80% | X12 270/271 wired into encounter workflow, coverage details UI, billing queue bridge |
+| 9. Claim Pipeline | 80% | Generation + tracking + ERA payment posting + claim matching complete |
 | 10. Revenue Intelligence | 50% | Claim aging + undercoding detection built, documentation gap + HCC remaining |
-| **Phase 2 Average** | **~54%** | |
+| **Phase 2 Average** | **~76%** | |
 
 ---
 
@@ -205,10 +212,10 @@
 | Priority | Item | Why First | Estimated Effort |
 |----------|------|-----------|-----------------|
 | ~~P1~~ | ~~Superbill provider sign-off gate~~ | **DONE** — `SuperbillReviewPanel.tsx`, `approve_superbill()`/`reject_superbill()` RPC, DB trigger enforcement | ~~Small~~ |
-| P2 | Eligibility verification in encounter workflow | Prevents denied claims | Medium |
+| ~~P2~~ | ~~Eligibility verification in encounter workflow~~ | **DONE** — `eligibilityVerificationService.ts`, `EligibilityVerificationPanel.tsx`, `BillingQueueDashboard.tsx`, `encounterBillingBridgeService.ts`, `encounter_superbills` table, coverage fields on encounters, 3 DB migrations, 83 tests | ~~Medium~~ |
 | ~~P3~~ | ~~Claim aging dashboard~~ | **DONE** — `claimAgingService.ts`, `ClaimAgingDashboard.tsx`, aging buckets 0-30/31-60/61-90/90+, status/payer filters, history modal | ~~Small~~ |
 | ~~P4~~ | ~~Undercoding detection~~ | **DONE** — `undercodingDetectionService.ts`, `UndercodingDetectionDashboard.tsx`, AI-suggested vs billed code comparison, gap classification, revenue opportunity metrics, dismiss workflow | ~~Small~~ |
-| P5 | ERA-to-claim matching + payment posting | Closes the revenue loop | Large |
+| ~~P5~~ | ~~ERA-to-claim matching + payment posting~~ | **DONE** — `eraPaymentPostingService.ts`, `ERAPaymentPostingDashboard.tsx`, `claim_payments` table, remittance-to-claim matching modal, payment posting with status transition, reconciliation stats | ~~Large~~ |
 | P6 | Claim resubmission workflow | Fix and resubmit denials | Medium |
 | P7 | Documentation gap indicator | Revenue optimization | Medium |
 | P8 | HCC opportunity flags | Future — needs reference data | Large |
