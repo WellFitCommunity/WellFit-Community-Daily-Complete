@@ -69,3 +69,8 @@ export const ProviderCoverageDashboard = lazy(() => import('../ProviderCoverageD
 
 // Phase 2 Revenue (P4)
 export const UndercodingDetectionDashboard = lazy(() => import('../UndercodingDetectionDashboard'));
+
+// Phase 2 Encounter-to-Payment Chain
+export const BillingQueueDashboard = lazy(() => import('../BillingQueueDashboard'));
+export const EligibilityVerificationPanel = lazy(() => import('../EligibilityVerificationPanel'));
+export const ERAPaymentPostingDashboard = lazy(() => import('../ERAPaymentPostingDashboard'));
