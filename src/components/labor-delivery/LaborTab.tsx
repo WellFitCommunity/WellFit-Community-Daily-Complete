@@ -1,7 +1,8 @@
 /**
- * LaborTab - Labor progress display + forms for recording labor events and delivery
+ * LaborTab - Labor progress display + forms for recording labor events, delivery,
+ *   fetal monitoring, and medication administration
  *
- * Purpose: Shows fetal monitoring, labor events, + buttons to record new events/delivery
+ * Purpose: Shows fetal monitoring, labor events, + buttons to record new events/delivery/meds
  * Used by: LaborDeliveryDashboard
  */
 
@@ -9,68 +10,90 @@ import React, { useState } from 'react';
 import type { LDDashboardSummary } from '../../types/laborDelivery';
 import LaborEventForm from './LaborEventForm';
 import DeliveryRecordForm from './DeliveryRecordForm';
+import FetalMonitoringForm from './FetalMonitoringForm';
+import MedicationAdminForm from './MedicationAdminForm';
 
 interface LaborTabProps {
   summary: LDDashboardSummary;
   onDataChange: () => void;
 }
 
+type ActiveForm = 'none' | 'labor' | 'delivery' | 'fetal' | 'medication';
+
 const LaborTab: React.FC<LaborTabProps> = ({ summary, onDataChange }) => {
-  const [showLaborForm, setShowLaborForm] = useState(false);
-  const [showDeliveryForm, setShowDeliveryForm] = useState(false);
+  const [activeForm, setActiveForm] = useState<ActiveForm>('none');
   const { labor_events, latest_fetal_monitoring, delivery_record, pregnancy } = summary;
 
-  const handleLaborSuccess = () => {
-    setShowLaborForm(false);
+  const handleFormSuccess = () => {
+    setActiveForm('none');
     onDataChange();
   };
 
-  const handleDeliverySuccess = () => {
-    setShowDeliveryForm(false);
-    onDataChange();
+  const toggleForm = (form: ActiveForm) => {
+    setActiveForm((prev) => (prev === form ? 'none' : form));
   };
 
   return (
     <div className="space-y-6">
       {/* Action Buttons */}
       {pregnancy && (
-        <div className="flex gap-3 justify-end">
+        <div className="flex flex-wrap gap-3 justify-end">
           <button
-            onClick={() => { setShowLaborForm(!showLaborForm); setShowDeliveryForm(false); }}
+            onClick={() => toggleForm('labor')}
             className="bg-pink-600 text-white px-4 py-2 rounded font-medium min-h-[44px] hover:bg-pink-700"
           >
-            {showLaborForm ? 'Close' : 'Record Labor Event'}
+            {activeForm === 'labor' ? 'Close' : 'Record Labor Event'}
+          </button>
+          <button
+            onClick={() => toggleForm('fetal')}
+            className="bg-blue-600 text-white px-4 py-2 rounded font-medium min-h-[44px] hover:bg-blue-700"
+          >
+            {activeForm === 'fetal' ? 'Close' : 'Fetal Monitoring'}
+          </button>
+          <button
+            onClick={() => toggleForm('medication')}
+            className="bg-teal-600 text-white px-4 py-2 rounded font-medium min-h-[44px] hover:bg-teal-700"
+          >
+            {activeForm === 'medication' ? 'Close' : 'Administer Medication'}
           </button>
           {!delivery_record && (
             <button
-              onClick={() => { setShowDeliveryForm(!showDeliveryForm); setShowLaborForm(false); }}
+              onClick={() => toggleForm('delivery')}
               className="bg-purple-600 text-white px-4 py-2 rounded font-medium min-h-[44px] hover:bg-purple-700"
             >
-              {showDeliveryForm ? 'Close' : 'Record Delivery'}
+              {activeForm === 'delivery' ? 'Close' : 'Record Delivery'}
             </button>
           )}
         </div>
       )}
 
-      {/* Labor Event Form */}
-      {showLaborForm && pregnancy && (
+      {/* Active Form */}
+      {activeForm === 'labor' && pregnancy && (
         <LaborEventForm
-          patientId={pregnancy.patient_id}
-          tenantId={pregnancy.tenant_id}
-          pregnancyId={pregnancy.id}
-          onSuccess={handleLaborSuccess}
-          onCancel={() => setShowLaborForm(false)}
+          patientId={pregnancy.patient_id} tenantId={pregnancy.tenant_id}
+          pregnancyId={pregnancy.id} onSuccess={handleFormSuccess}
+          onCancel={() => setActiveForm('none')}
         />
       )}
-
-      {/* Delivery Record Form */}
-      {showDeliveryForm && pregnancy && (
+      {activeForm === 'delivery' && pregnancy && (
         <DeliveryRecordForm
-          patientId={pregnancy.patient_id}
-          tenantId={pregnancy.tenant_id}
-          pregnancyId={pregnancy.id}
-          onSuccess={handleDeliverySuccess}
-          onCancel={() => setShowDeliveryForm(false)}
+          patientId={pregnancy.patient_id} tenantId={pregnancy.tenant_id}
+          pregnancyId={pregnancy.id} onSuccess={handleFormSuccess}
+          onCancel={() => setActiveForm('none')}
+        />
+      )}
+      {activeForm === 'fetal' && pregnancy && (
+        <FetalMonitoringForm
+          patientId={pregnancy.patient_id} tenantId={pregnancy.tenant_id}
+          pregnancyId={pregnancy.id} onSuccess={handleFormSuccess}
+          onCancel={() => setActiveForm('none')}
+        />
+      )}
+      {activeForm === 'medication' && pregnancy && (
+        <MedicationAdminForm
+          patientId={pregnancy.patient_id} tenantId={pregnancy.tenant_id}
+          pregnancyId={pregnancy.id} onSuccess={handleFormSuccess}
+          onCancel={() => setActiveForm('none')}
         />
       )}
 

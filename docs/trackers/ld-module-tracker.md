@@ -22,18 +22,18 @@
 
 ---
 
-## Session 1 — Data Entry Forms (Core)
+## Session 1 — Data Entry Forms (Core) — COMPLETE
 
 | # | Item | Status | File | Notes |
 |---|------|--------|------|-------|
-| 1.1 | Request types (labor event, fetal, newborn, postpartum) | Pending | `types/laborDelivery.ts` | |
-| 1.2 | Service methods (labor event, fetal, newborn, postpartum) | Pending | `services/laborDelivery/laborDeliveryService.ts` | |
-| 1.3 | PrenatalVisitForm | Pending | `components/labor-delivery/PrenatalVisitForm.tsx` | GA, BP, weight, FHR, fundal ht, cervical |
-| 1.4 | LaborEventForm | Pending | `components/labor-delivery/LaborEventForm.tsx` | Dilation, effacement, station, contractions |
-| 1.5 | DeliveryRecordForm | Pending | `components/labor-delivery/DeliveryRecordForm.tsx` | Method, anesthesia, EBL, complications |
-| 1.6 | Wire forms into dashboard tabs | Pending | `LaborDeliveryDashboard.tsx` | Add buttons + form toggle |
-| 1.7 | Tests for form components | Pending | `__tests__/` | Tier 1-2 behavioral |
-| 1.8 | Verification + ship | Pending | — | typecheck + lint + test |
+| 1.1 | Request types (labor event, fetal, newborn, postpartum) | Done | `types/laborDelivery.ts` (568 lines) | 5 new request interfaces |
+| 1.2 | Service methods (labor event, fetal, newborn, postpartum) | Done | `services/laborDelivery/laborDeliveryService.ts` (597 lines) | 4 new create methods |
+| 1.3 | PrenatalVisitForm | Done | `components/labor-delivery/PrenatalVisitForm.tsx` (248 lines) | GA, BP, weight, FHR, fundal ht, cervical |
+| 1.4 | LaborEventForm | Done | `components/labor-delivery/LaborEventForm.tsx` (278 lines) | Dilation, effacement, station, contractions |
+| 1.5 | DeliveryRecordForm | Done | `components/labor-delivery/DeliveryRecordForm.tsx` (275 lines) | Method, anesthesia, EBL, complications |
+| 1.6 | Wire forms into dashboard tabs | Done | Dashboard refactored (119 lines) | Extracted PrenatalTab, LaborTab, NewbornTab, PostpartumTab |
+| 1.7 | Tests for form components | Done | 4 new test files, 22 new tests | Tier 1-2 behavioral (validation, service calls, error handling) |
+| 1.8 | Verification + ship | Done | `273ceb31` | 0 errors, 0 warnings, 8,219 tests passed |
 
 ---
 

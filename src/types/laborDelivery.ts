@@ -474,6 +474,19 @@ export interface CreatePostpartumAssessmentRequest {
   notes?: string;
 }
 
+export interface CreateMedicationAdminRequest {
+  patient_id: string;
+  tenant_id: string;
+  pregnancy_id: string;
+  administered_datetime: string;
+  administered_by?: string;
+  medication_name: string;
+  dose: string;
+  route: 'iv' | 'im' | 'po' | 'epidural' | 'spinal' | 'topical';
+  indication: LDMedicationIndication;
+  notes?: string;
+}
+
 // =====================================================
 // DASHBOARD SUMMARY TYPES
 // =====================================================

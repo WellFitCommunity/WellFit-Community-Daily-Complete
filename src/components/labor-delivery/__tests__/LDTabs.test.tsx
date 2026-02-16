@@ -169,14 +169,14 @@ describe('LaborTab', () => {
 
 describe('NewbornTab', () => {
   it('shows empty state when no assessment recorded', () => {
-    render(<NewbornTab summary={emptySummary} />);
-    expect(screen.getByText('No newborn assessment recorded')).toBeInTheDocument();
+    render(<NewbornTab summary={emptySummary} onDataChange={vi.fn()} />);
+    expect(screen.getByText('Delivery must be recorded first')).toBeInTheDocument();
   });
 });
 
 describe('PostpartumTab', () => {
   it('shows empty state when no assessment recorded', () => {
-    render(<PostpartumTab summary={emptySummary} />);
-    expect(screen.getByText('No postpartum assessments recorded')).toBeInTheDocument();
+    render(<PostpartumTab summary={emptySummary} onDataChange={vi.fn()} />);
+    expect(screen.getByText('Delivery must be recorded first')).toBeInTheDocument();
   });
 });

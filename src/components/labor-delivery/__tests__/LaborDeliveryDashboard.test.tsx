@@ -73,10 +73,10 @@ describe('LaborDeliveryDashboard', () => {
     await screen.findByText('Pregnancy Care');
 
     await user.click(screen.getByText('Newborn'));
-    expect(await screen.findByText('No newborn assessment recorded')).toBeInTheDocument();
+    expect(await screen.findByText('Delivery must be recorded first')).toBeInTheDocument();
 
     await user.click(screen.getByText('Postpartum'));
-    expect(await screen.findByText('No postpartum assessments recorded')).toBeInTheDocument();
+    expect(await screen.findByText('Delivery must be recorded first')).toBeInTheDocument();
   });
 });
 
@@ -133,7 +133,7 @@ describe('LDOverview', () => {
   };
 
   it('shows empty state when no pregnancy', () => {
-    render(<LDOverview summary={emptySummary} />);
+    render(<LDOverview onDataChange={vi.fn()} summary={emptySummary} />);
     expect(screen.getByText('No pregnancy data available')).toBeInTheDocument();
   });
 
@@ -162,7 +162,7 @@ describe('LDOverview', () => {
         updated_at: new Date().toISOString(),
       },
     };
-    render(<LDOverview summary={summary} />);
+    render(<LDOverview onDataChange={vi.fn()} summary={summary} />);
     // G2P1 appears in both PregnancyAvatarPanel quick-info and pregnancy summary
     expect(screen.getAllByText('G2P1').length).toBeGreaterThanOrEqual(1);
     // O+ appears in both panel and summary
@@ -225,7 +225,7 @@ describe('LDOverview', () => {
         created_at: new Date().toISOString(),
       },
     };
-    render(<LDOverview summary={summary} />);
+    render(<LDOverview onDataChange={vi.fn()} summary={summary} />);
     expect(screen.getByText('8/9')).toBeInTheDocument();
     expect(screen.getByText('3400g')).toBeInTheDocument();
   });

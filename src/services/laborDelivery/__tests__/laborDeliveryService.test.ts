@@ -18,8 +18,9 @@ import type {
   LDFetalMonitoring,
   LDDeliveryRecord,
   LDNewbornAssessment,
+  LDAlert,
 } from '../../../types/laborDelivery';
-import { LaborDeliveryService } from '../laborDeliveryService';
+import { generateLDAlerts } from '../laborDeliveryAlerts';
 
 // =====================================================
 // Gestational Age Calculation
@@ -120,7 +121,7 @@ describe('classifyFetalHR', () => {
 // Alert Generation
 // =====================================================
 
-describe('LaborDeliveryService.generateAlerts', () => {
+describe('generateLDAlerts', () => {
   const makePregnancy = (overrides: Partial<LDPregnancy> = {}): LDPregnancy => ({
     id: 'preg-1',
     patient_id: 'p1',
@@ -164,10 +165,10 @@ describe('LaborDeliveryService.generateAlerts', () => {
       created_at: new Date().toISOString(),
     };
 
-    const alerts = LaborDeliveryService.generateAlerts(
+    const alerts = generateLDAlerts(
       null, [], monitoring, null, null, null
     );
-    expect(alerts.some(a => a.type === 'fetal_bradycardia' && a.severity === 'critical')).toBe(true);
+    expect(alerts.some((a: LDAlert) => a.type === 'fetal_bradycardia' && a.severity === 'critical')).toBe(true);
   });
 
   it('generates CRITICAL alert for Category III tracing', () => {
@@ -190,10 +191,10 @@ describe('LaborDeliveryService.generateAlerts', () => {
       created_at: new Date().toISOString(),
     };
 
-    const alerts = LaborDeliveryService.generateAlerts(
+    const alerts = generateLDAlerts(
       null, [], monitoring, null, null, null
     );
-    expect(alerts.some(a => a.type === 'category_iii_tracing')).toBe(true);
+    expect(alerts.some((a: LDAlert) => a.type === 'category_iii_tracing')).toBe(true);
   });
 
   it('generates CRITICAL alert for severe preeclampsia', () => {
@@ -223,10 +224,10 @@ describe('LaborDeliveryService.generateAlerts', () => {
       created_at: new Date().toISOString(),
     };
 
-    const alerts = LaborDeliveryService.generateAlerts(
+    const alerts = generateLDAlerts(
       null, [visit], null, null, null, null
     );
-    expect(alerts.some(a => a.type === 'severe_preeclampsia' && a.severity === 'critical')).toBe(true);
+    expect(alerts.some((a: LDAlert) => a.type === 'severe_preeclampsia' && a.severity === 'critical')).toBe(true);
   });
 
   it('generates CRITICAL alert for postpartum hemorrhage', () => {
@@ -254,10 +255,10 @@ describe('LaborDeliveryService.generateAlerts', () => {
       created_at: new Date().toISOString(),
     };
 
-    const alerts = LaborDeliveryService.generateAlerts(
+    const alerts = generateLDAlerts(
       null, [], null, delivery, null, null
     );
-    expect(alerts.some(a => a.type === 'postpartum_hemorrhage' && a.severity === 'critical')).toBe(true);
+    expect(alerts.some((a: LDAlert) => a.type === 'postpartum_hemorrhage' && a.severity === 'critical')).toBe(true);
   });
 
   it('generates CRITICAL alert for neonatal distress (APGAR < 4)', () => {
@@ -291,21 +292,21 @@ describe('LaborDeliveryService.generateAlerts', () => {
       created_at: new Date().toISOString(),
     };
 
-    const alerts = LaborDeliveryService.generateAlerts(
+    const alerts = generateLDAlerts(
       null, [], null, null, newborn, null
     );
-    expect(alerts.some(a => a.type === 'neonatal_distress' && a.severity === 'critical')).toBe(true);
+    expect(alerts.some((a: LDAlert) => a.type === 'neonatal_distress' && a.severity === 'critical')).toBe(true);
   });
 
   it('generates HIGH alert for GBS positive', () => {
-    const alerts = LaborDeliveryService.generateAlerts(
+    const alerts = generateLDAlerts(
       makePregnancy({ gbs_status: 'positive' }), [], null, null, null, null
     );
-    expect(alerts.some(a => a.type === 'gbs_no_antibiotics' && a.severity === 'high')).toBe(true);
+    expect(alerts.some((a: LDAlert) => a.type === 'gbs_no_antibiotics' && a.severity === 'high')).toBe(true);
   });
 
   it('returns empty alerts for normal data', () => {
-    const alerts = LaborDeliveryService.generateAlerts(
+    const alerts = generateLDAlerts(
       makePregnancy(), [], null, null, null, null
     );
     expect(alerts.length).toBe(0);

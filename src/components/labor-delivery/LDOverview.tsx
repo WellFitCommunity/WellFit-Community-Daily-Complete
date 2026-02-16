@@ -5,13 +5,15 @@
  * Layout: 2-column — PregnancyAvatarPanel left (~1/3), data cards right (~2/3)
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { LDDashboardSummary } from '../../types/laborDelivery';
 import { calculateGestationalAge } from '../../types/laborDelivery';
 import { PregnancyAvatarPanel } from './PregnancyAvatarPanel';
+import PregnancyRegistrationForm from './PregnancyRegistrationForm';
 
 interface LDOverviewProps {
   summary: LDDashboardSummary;
+  onDataChange: () => void;
 }
 
 const RISK_COLORS: Record<string, string> = {
@@ -21,14 +23,34 @@ const RISK_COLORS: Record<string, string> = {
   critical: 'text-red-600 bg-red-50',
 };
 
-const LDOverview: React.FC<LDOverviewProps> = ({ summary }) => {
+const DEMO_PATIENT_ID = '00000000-0000-0000-0000-000000000000';
+const DEMO_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
+
+const LDOverview: React.FC<LDOverviewProps> = ({ summary, onDataChange }) => {
+  const [showRegForm, setShowRegForm] = useState(false);
   const { pregnancy, recent_prenatal_visits, delivery_record, newborn_assessment } = summary;
 
   if (!pregnancy) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        <p className="text-lg">No pregnancy data available</p>
-        <p className="text-sm mt-2">Register a pregnancy to begin tracking</p>
+      <div className="text-center py-12 space-y-4">
+        <p className="text-lg text-gray-500">No pregnancy data available</p>
+        <p className="text-sm text-gray-400">Register a pregnancy to begin tracking</p>
+        <button
+          onClick={() => setShowRegForm(!showRegForm)}
+          className="bg-pink-600 text-white px-6 py-2 rounded font-medium min-h-[44px] hover:bg-pink-700"
+        >
+          {showRegForm ? 'Close' : 'Register Pregnancy'}
+        </button>
+        {showRegForm && (
+          <div className="max-w-3xl mx-auto mt-4 text-left">
+            <PregnancyRegistrationForm
+              patientId={DEMO_PATIENT_ID}
+              tenantId={DEMO_TENANT_ID}
+              onSuccess={() => { setShowRegForm(false); onDataChange(); }}
+              onCancel={() => setShowRegForm(false)}
+            />
+          </div>
+        )}
       </div>
     );
   }

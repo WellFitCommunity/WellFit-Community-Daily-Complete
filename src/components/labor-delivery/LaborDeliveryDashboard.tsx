@@ -105,11 +105,11 @@ const LaborDeliveryDashboard: React.FC = () => {
 
       {summary && (
         <div role="tabpanel">
-          {activeTab === 'overview' && <LDOverview summary={summary} />}
+          {activeTab === 'overview' && <LDOverview summary={summary} onDataChange={loadDashboard} />}
           {activeTab === 'prenatal' && <PrenatalTab summary={summary} onDataChange={loadDashboard} />}
           {activeTab === 'labor' && <LaborTab summary={summary} onDataChange={loadDashboard} />}
-          {activeTab === 'newborn' && <NewbornTab summary={summary} />}
-          {activeTab === 'postpartum' && <PostpartumTab summary={summary} />}
+          {activeTab === 'newborn' && <NewbornTab summary={summary} onDataChange={loadDashboard} />}
+          {activeTab === 'postpartum' && <PostpartumTab summary={summary} onDataChange={loadDashboard} />}
         </div>
       )}
     </div>
