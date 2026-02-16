@@ -7,6 +7,8 @@ export { generateLDAlerts } from './laborDeliveryAlerts';
 export { LDAlertService } from './laborDeliveryAlertService';
 export type { LDPersistedAlert, CreateAlertRequest } from './laborDeliveryAlertService';
 export { LDMetricsService } from './laborDeliveryMetrics';
+export { suggestBillingCodes } from './laborDeliveryBilling';
+export type { BillingSuggestion } from './laborDeliveryBilling';
 
 // Re-export types commonly needed by consumers
 export type {

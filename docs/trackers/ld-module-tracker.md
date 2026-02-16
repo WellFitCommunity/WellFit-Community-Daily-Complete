@@ -2,7 +2,7 @@
 
 **Estimate:** ~24-32 hours / 3-4 sessions
 **Started:** 2026-02-16
-**Status:** In Progress — Session 3 COMPLETE
+**Status:** In Progress — Session 4 COMPLETE
 
 ---
 
@@ -65,35 +65,39 @@
 
 ---
 
-## Session 4 (If Needed) — Integration + Edge Functions
+## Session 4 — FHIR + Billing + Delivery Summary — COMPLETE
 
 | # | Item | Status | File | Notes |
 |---|------|--------|------|-------|
-| 4.1 | FHIR mapping (Observation, Procedure) | Pending | edge function | Map L&D data to FHIR resources |
-| 4.2 | Edge functions for L&D | Pending | `supabase/functions/` | Alert notifications, automated risk scoring |
-| 4.3 | Billing code suggestions | Pending | service | Auto-suggest CPT from delivery method |
-| 4.4 | Print-friendly delivery summary | Pending | component | PDF-ready birth record |
-| 4.5 | Final integration testing | Pending | — | End-to-end flow |
+| 4.1 | FHIR Procedure mapper | Done | `services/fhir/laborDelivery/LDProcedureService.ts` (122 lines) | Delivery → FHIR Procedure (SNOMED CT codes) |
+| 4.2 | FHIR Vitals Observation mapper | Done | `services/fhir/laborDelivery/LDVitalsObservationService.ts` (278 lines) | Prenatal + labor vitals → FHIR Observations (LOINC) |
+| 4.3 | Billing code suggestion service | Done | `services/laborDelivery/laborDeliveryBilling.ts` (117 lines) | Auto-suggest CPT from delivery/newborn/monitoring |
+| 4.4 | BillingSuggestions component | Done | `components/labor-delivery/BillingSuggestions.tsx` (63 lines) | Confidence-badged code display |
+| 4.5 | Print-friendly delivery summary | Done | `components/labor-delivery/DeliverySummary.tsx` (333 lines) | Full birth record with @media print, all sections |
+| 4.6 | Wired into LaborTab | Done | `components/labor-delivery/LaborTab.tsx` (227 lines) | Billing + summary toggle after delivery |
+| 4.7 | Tests (4 new test files) | Done | 63 new tests across 4 files | FHIR mapping, billing logic, summary display, print |
+| 4.8 | Verification | Done | — | 0 type errors, 0 lint errors, 8,327 tests passed |
 
 ---
 
-## Quality Gates (Session 3)
+## Quality Gates (Session 4)
 
-- [x] All files under 600 lines (max: 600 — types file)
+- [x] All files under 600 lines (max: 333 — DeliverySummary)
 - [x] No `any` types
 - [x] No `console.log`
 - [x] `npm run typecheck` passes — 0 errors
 - [x] `npm run lint` passes — 0 errors, 0 warnings
-- [x] `npm test` passes — 8,273 passed, 0 failed (415 suites)
+- [x] `npm test` passes — 8,327 passed, 0 failed (419 suites)
 - [x] All new tests are Tier 1-4 (Deletion Test)
 - [x] Route accessible at `/pregnancy-care`
 
-## Architecture Summary (After Session 3)
+## Architecture Summary (After Session 4)
 
 | Category | Count |
 |----------|-------|
-| Components | 20 files |
-| Service modules | 4 (service, alerts, alert service, metrics) |
-| Test files | 14 (108 tests) |
-| DB tables | 10 (`ld_*` including new `ld_alerts`) |
+| Components | 22 files (+BillingSuggestions, DeliverySummary) |
+| Service modules | 7 (service, alerts, alert service, metrics, billing, FHIR procedure, FHIR vitals) |
+| Test files | 18 (171 tests) |
+| DB tables | 10 (`ld_*` including `ld_alerts`) |
 | Type definitions | 600 lines (enums, interfaces, request types, helpers) |
+| FHIR code constants | LOINC + SNOMED CT mappings for all L&D observations |

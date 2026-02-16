@@ -13,6 +13,8 @@ import DeliveryRecordForm from './DeliveryRecordForm';
 import FetalMonitoringForm from './FetalMonitoringForm';
 import MedicationAdminForm from './MedicationAdminForm';
 import Partogram from './Partogram';
+import BillingSuggestions from './BillingSuggestions';
+import DeliverySummary from './DeliverySummary';
 
 interface LaborTabProps {
   summary: LDDashboardSummary;
@@ -23,6 +25,7 @@ type ActiveForm = 'none' | 'labor' | 'delivery' | 'fetal' | 'medication';
 
 const LaborTab: React.FC<LaborTabProps> = ({ summary, onDataChange }) => {
   const [activeForm, setActiveForm] = useState<ActiveForm>('none');
+  const [showSummary, setShowSummary] = useState(false);
   const { labor_events, latest_fetal_monitoring, delivery_record, pregnancy } = summary;
 
   const handleFormSuccess = () => {
@@ -101,7 +104,15 @@ const LaborTab: React.FC<LaborTabProps> = ({ summary, onDataChange }) => {
       {/* Delivery Record Display */}
       {delivery_record && (
         <div className="bg-white rounded-lg border p-6">
-          <h3 className="text-lg font-semibold mb-4">Delivery Record</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Delivery Record</h3>
+            <button
+              onClick={() => setShowSummary(!showSummary)}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium min-h-[44px] px-3"
+            >
+              {showSummary ? 'Hide Summary' : 'View Full Summary'}
+            </button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-500">Method</p>
@@ -125,6 +136,26 @@ const LaborTab: React.FC<LaborTabProps> = ({ summary, onDataChange }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Print-Friendly Delivery Summary */}
+      {showSummary && delivery_record && pregnancy && (
+        <DeliverySummary
+          pregnancy={pregnancy}
+          delivery={delivery_record}
+          newborn={summary.newborn_assessment}
+          laborEvents={labor_events}
+          fetalMonitoring={latest_fetal_monitoring}
+        />
+      )}
+
+      {/* Billing Suggestions (when delivery exists) */}
+      {delivery_record && (
+        <BillingSuggestions
+          delivery={delivery_record}
+          newborn={summary.newborn_assessment}
+          fetalMonitoring={latest_fetal_monitoring}
+        />
       )}
 
       {/* Fetal Monitoring */}

@@ -20,6 +20,10 @@ vi.mock('../../../services/laborDelivery', () => ({
   },
 }));
 
+vi.mock('../../../services/laborDelivery/laborDeliveryBilling', () => ({
+  suggestBillingCodes: vi.fn().mockReturnValue([]),
+}));
+
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: { from: vi.fn() },
 }));
