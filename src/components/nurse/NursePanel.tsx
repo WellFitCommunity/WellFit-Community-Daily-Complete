@@ -16,6 +16,7 @@ import PasswordGenerator from '../shared/PasswordGenerator';
 import { PersonalizedGreeting } from '../ai-transparency';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import NurseQuestionManager from '../admin/NurseQuestionManager';
+import NursePatientPriorityBoard from './NursePatientPriorityBoard';
 
 // Tab type for navigation
 type NurseTab = 'clinical' | 'telehealth' | 'documentation' | 'wellness';
@@ -315,6 +316,9 @@ const NursePanel: React.FC = () => {
 
           {/* Personalized Greeting */}
           <PersonalizedGreeting />
+
+          {/* AI Patient Priority Board — ranked by clinical criticality */}
+          <NursePatientPriorityBoard />
 
           {/* Quick Actions Bar */}
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">

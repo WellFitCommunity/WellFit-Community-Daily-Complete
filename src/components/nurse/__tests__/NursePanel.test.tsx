@@ -134,6 +134,11 @@ vi.mock('../../admin/NurseQuestionManager', () => ({
   default: () => <div data-testid="nurse-question-manager">Question Manager</div>,
 }));
 
+vi.mock('../NursePatientPriorityBoard', () => ({
+  __esModule: true,
+  default: () => <div data-testid="nurse-priority-board">Priority Board</div>,
+}));
+
 // Mock audit logger
 vi.mock('../../../services/auditLogger', () => ({
   auditLogger: {
