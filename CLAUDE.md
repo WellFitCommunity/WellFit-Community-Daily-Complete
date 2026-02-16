@@ -22,6 +22,24 @@
 | 11 | **Report verification counts** - typecheck/lint/test pass counts before commit | "I checked" without numbers |
 | 12 | **No god files** - 600 line max per file, decompose don't degrade | Any file exceeding 600 lines |
 
+### Session Start Protocol — EVERY NEW SESSION
+
+**Before any work, read these two files in order:**
+
+1. `docs/PROJECT_STATE.md` — Where we left off, current priorities, blocked items
+2. `CLAUDE.md` — Governance rules (this file)
+
+**Then report a 5-line status summary:**
+```
+1. Last session: [date] — [what was completed]
+2. Current priority: [tracker name] — [next item]
+3. Codebase health: [tests/lint/typecheck from last known]
+4. Blocked: [items or "None"]
+5. Estimated remaining: [sessions for current priority]
+```
+
+**Confirm with Maria before starting work.**
+
 ### Before Every Task
 ```bash
 git log --oneline -3     # Review recent commits
@@ -53,7 +71,7 @@ npm run typecheck && npm run lint && npm test
 ```
 ✅ typecheck: 0 errors
 ✅ lint: 0 errors, 0 warnings
-✅ tests: 7,376 passed, 0 failed
+✅ tests: 8,415 passed, 0 failed
 ```
 
 Or if failing:
@@ -348,8 +366,8 @@ const result = processData(input as unknown as ExpectedType); // NO
 ### Test Baseline
 | Metric | Current |
 |--------|---------|
-| Total Tests | 7,376 (quality audit in progress — 638 junk tests removed, 117 meaningful replacements added, 93 regulatory gap tests added) |
-| Test Suites | 349 |
+| Total Tests | 8,415 (quality audit in progress — 638 junk tests removed, 117 meaningful replacements added, 93 regulatory gap tests added) |
+| Test Suites | 429 |
 | Pass Rate Required | 100% |
 
 ### Test Quality Standard - THE DELETION TEST
@@ -527,6 +545,24 @@ Tenant codes follow the format: `{ORG}-{LICENSE}{SEQUENCE}`
 3. Review the affected schema/database tables
 4. Identify existing patterns in similar code
 5. If unclear, **STOP and ASK**
+
+### Finding Prior Work — SEARCH, DON'T GUESS
+
+When asked about a tracker, audit, plan, or document from a previous session:
+
+1. **Search git log FIRST:** `git log --oneline --all --grep="tracker"` or `git log --oneline -20`
+2. **Search committed files:** Check `docs/PROJECT_STATE.md`, then `docs/`, then `docs/trackers/`
+3. **If not found in 2 attempts, ASK Maria** — do not burn tokens on speculative filesystem searches
+4. **Never recreate from scratch** without confirming the original is truly lost
+
+### Debugging CI/CD Failures — CHECK THE OUTPUT FIRST
+
+When asked about a CI/CD failure, GitHub Actions error, or security scan issue:
+
+1. **Check the CI system or GitHub output FIRST** — `gh run list`, `gh run view`, actual error logs
+2. **Do NOT start by analyzing local code changes** as the assumed cause
+3. **Common CI-specific causes:** flaky tests, environment differences, dependency caching, timeout limits
+4. Only investigate code after confirming the CI output points to a code issue
 
 ### No God Files - 600 Line Maximum Per File - ENFORCED
 
@@ -800,7 +836,7 @@ npm test           # Run tests
 
 1. `npm run lint` - Must pass with 0 errors
 2. `npm run typecheck` - Verify TypeScript types
-3. `npm test` - All 7,376 tests must pass
+3. `npm test` - All 8,415 tests must pass
 4. Visual inspection - Ensure UI/UX functions correctly
 5. Route verification - New pages are accessible
 
@@ -1149,6 +1185,8 @@ Custom skills available via `/skill-name` commands:
 | `/security-scan` | HIPAA compliance check | Before commits, demos, audits |
 | `/demo-ready` | Hospital pilot demo validation | Before customer demos |
 | `/cost-check` | AI cost analysis | Monthly review, budget planning |
+| `/test-runner` | Smart test execution (changed files, full suite, coverage) | During development, before commits |
+| `/pre-commit` | Pre-commit validation (lint + types + tests + PHI scan) | Before every commit |
 
 ### Running Skills
 ```bash
@@ -1158,6 +1196,8 @@ Custom skills available via `/skill-name` commands:
 /security-scan
 /demo-ready
 /cost-check
+/test-runner
+/pre-commit
 ```
 
 ---
@@ -1290,4 +1330,4 @@ VITE_FEATURE_NEURO_SUITE=true
 - **UI**: Envision Atlus design system migration in progress
 - **Build**: Vite + React 19 (migrated December 2025)
 - **CSS**: Tailwind CSS 4.1.18 (migrated December 2025)
-- **Tests**: 7,376 tests across 349 suites (100% pass rate, 0 skipped)
+- **Tests**: 8,415 tests across 429 suites (100% pass rate, 0 skipped)
