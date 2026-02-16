@@ -327,6 +327,13 @@ export const clinicalRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor'],
     category: 'clinical',
   },
+  {
+    path: '/nurse-office',
+    component: 'NurseOfficeDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor'],
+    category: 'clinical',
+  },
   // Physician
   {
     path: '/physician-dashboard',

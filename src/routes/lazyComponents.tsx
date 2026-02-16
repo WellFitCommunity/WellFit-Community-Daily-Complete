@@ -151,6 +151,7 @@ export const GuardianApprovalForm = React.lazy(() =>
 // CLINICAL DASHBOARDS
 // ═══════════════════════════════════════════════════════════════════════════════
 export const NursePanel = React.lazy(() => import('../components/nurse/NursePanel'));
+export const NurseOfficeDashboard = React.lazy(() => import('../components/nurse/NurseOfficeDashboard'));
 export const PhysicianPanel = React.lazy(() => import('../components/physician/PhysicianPanel'));
 export const PhysicianOfficeDashboard = React.lazy(() => import('../components/physician/PhysicianOfficeDashboard'));
 export const CaseManagerPanel = React.lazy(() => import('../components/case-manager/CaseManagerPanel'));
@@ -370,6 +371,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
 
   // Clinical
   NursePanel,
+  NurseOfficeDashboard,
   PhysicianPanel,
   PhysicianOfficeDashboard,
   CaseManagerPanel,
