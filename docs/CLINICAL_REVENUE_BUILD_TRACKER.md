@@ -152,11 +152,12 @@
 |---------|--------|-------------|----------------|
 | 837P generation | BUILT | `generate-837p` edge function (529 lines), full X12 EDI compliance | No 837I (institutional claims) |
 | Claim status tracker | BUILT | `claims` + `claim_status_history` tables, `updateClaimStatus()` in `billingService.ts` | — |
-| Rejection queue | BUILT | `claim_denials` table, `get_rejection_reasons()` with remediation guidance | No resubmission workflow (fix denied claim and resubmit) |
+| Rejection queue | BUILT | `claim_denials` table, `get_rejection_reasons()` with remediation guidance | — |
+| Claim resubmission workflow | BUILT | `claimResubmissionService.ts` (585 lines) — rejected claim retrieval with denial details + aging, correction workflow (create child claim, copy lines, void parent), void workflow (10-char min reason), resubmission chain walking (up/down parent_claim_id). `ClaimResubmissionDashboard.tsx` (289 lines) + `ClaimResubmissionModals.tsx` (215 lines) — 4 stat cards, critical alert for past-deadline claims, status/search filters, correction modal, void modal, chain history modal. `parent_claim_id` + `resubmission_count` columns on `claims` table (migration `20260218000000`) | No clearinghouse auto-resubmit (manual correction only) |
 | ERA ingestion scaffold | BUILT | `remittances` table, `process_remittance()` parses 835 content, `eraPaymentPostingService.ts` (451 lines) — unposted remittance retrieval, ERA-to-claim matching, payment posting with status transition, reconciliation stats. `claim_payments` table (migration `20260217200000`) with match confidence, adjustment reason codes, check number, payer claim number | No automated matching algorithm (manual match only), no bulk posting |
 | ERA payment posting UI | BUILT | `ERAPaymentPostingDashboard.tsx` (367 lines) in admin panel — 4 stat cards (total posted, paid amount, adjustments, patient responsibility), unposted remittance table, claim matching modal with Post button, posted-today summary, refresh | — |
 
-**Verdict: 80% built.** Generation, tracking, ERA-to-claim matching, and payment posting all work. Remaining: automated matching algorithm, bulk posting, resubmission workflow.
+**Verdict: 85% built.** Generation, tracking, ERA-to-claim matching, payment posting, and claim resubmission workflow all work. Remaining: automated matching algorithm, bulk posting, clearinghouse auto-resubmit.
 
 ---
 
@@ -186,9 +187,9 @@
 | **Phase 1 Average** | **~86%** | |
 | 7. Superbill Engine | 95% | Coding + provider sign-off gate + encounter→superbill bridge complete |
 | 8. Eligibility Integration | 80% | X12 270/271 wired into encounter workflow, coverage details UI, billing queue bridge |
-| 9. Claim Pipeline | 80% | Generation + tracking + ERA payment posting + claim matching complete |
+| 9. Claim Pipeline | 85% | Generation + tracking + ERA payment posting + claim matching + resubmission workflow complete |
 | 10. Revenue Intelligence | 50% | Claim aging + undercoding detection built, documentation gap + HCC remaining |
-| **Phase 2 Average** | **~76%** | |
+| **Phase 2 Average** | **~78%** | |
 
 ---
 
@@ -216,6 +217,6 @@
 | ~~P3~~ | ~~Claim aging dashboard~~ | **DONE** — `claimAgingService.ts`, `ClaimAgingDashboard.tsx`, aging buckets 0-30/31-60/61-90/90+, status/payer filters, history modal | ~~Small~~ |
 | ~~P4~~ | ~~Undercoding detection~~ | **DONE** — `undercodingDetectionService.ts`, `UndercodingDetectionDashboard.tsx`, AI-suggested vs billed code comparison, gap classification, revenue opportunity metrics, dismiss workflow | ~~Small~~ |
 | ~~P5~~ | ~~ERA-to-claim matching + payment posting~~ | **DONE** — `eraPaymentPostingService.ts`, `ERAPaymentPostingDashboard.tsx`, `claim_payments` table, remittance-to-claim matching modal, payment posting with status transition, reconciliation stats | ~~Large~~ |
-| P6 | Claim resubmission workflow | Fix and resubmit denials | Medium |
+| ~~P6~~ | ~~Claim resubmission workflow~~ | **DONE** — `claimResubmissionService.ts`, `ClaimResubmissionDashboard.tsx` + `ClaimResubmissionModals.tsx`, `parent_claim_id` + `resubmission_count` on claims, correction/void/chain workflows, 29 tests | ~~Medium~~ |
 | P7 | Documentation gap indicator | Revenue optimization | Medium |
 | P8 | HCC opportunity flags | Future — needs reference data | Large |
