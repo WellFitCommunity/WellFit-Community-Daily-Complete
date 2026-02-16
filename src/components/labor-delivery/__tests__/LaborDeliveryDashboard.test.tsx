@@ -26,6 +26,27 @@ vi.mock('../../../services/laborDelivery', () => ({
       },
     }),
   },
+  LDMetricsService: {
+    getUnitMetrics: vi.fn().mockResolvedValue({
+      success: true,
+      data: {
+        active_pregnancies: 0,
+        deliveries_today: 0,
+        active_labors_today: 0,
+        active_alerts: 0,
+      },
+    }),
+  },
+  LDAlertService: {
+    acknowledgeAlert: vi.fn().mockResolvedValue({ success: true }),
+    resolveAlert: vi.fn().mockResolvedValue({ success: true }),
+  },
+}));
+
+vi.mock('../../../services/auditLogger', () => ({
+  auditLogger: {
+    error: vi.fn(),
+  },
 }));
 
 vi.mock('../../../lib/supabaseClient', () => ({

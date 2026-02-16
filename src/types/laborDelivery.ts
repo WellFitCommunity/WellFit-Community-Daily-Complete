@@ -474,6 +474,18 @@ export interface CreatePostpartumAssessmentRequest {
   notes?: string;
 }
 
+export interface CreateRiskAssessmentRequest {
+  patient_id: string;
+  tenant_id: string;
+  pregnancy_id: string;
+  assessed_by?: string;
+  risk_level: PregnancyRiskLevel;
+  risk_factors: string[];
+  score?: number;
+  scoring_system?: string;
+  notes?: string;
+}
+
 export interface CreateMedicationAdminRequest {
   patient_id: string;
   tenant_id: string;
@@ -500,6 +512,13 @@ export interface LDDashboardSummary {
   newborn_assessment: LDNewbornAssessment | null;
   latest_postpartum: LDPostpartumAssessment | null;
   alerts: LDAlert[];
+}
+
+export interface LDUnitMetrics {
+  active_pregnancies: number;
+  deliveries_today: number;
+  active_labors_today: number;
+  active_alerts: number;
 }
 
 export interface LDAlert {

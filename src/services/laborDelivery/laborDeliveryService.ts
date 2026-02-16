@@ -20,6 +20,7 @@ import type {
   LDNewbornAssessment,
   LDPostpartumAssessment,
   LDMedicationAdministration,
+  LDRiskAssessment,
   CreatePregnancyRequest,
   CreatePrenatalVisitRequest,
   CreateDeliveryRecordRequest,
@@ -28,6 +29,7 @@ import type {
   CreateNewbornAssessmentRequest,
   CreatePostpartumAssessmentRequest,
   CreateMedicationAdminRequest,
+  CreateRiskAssessmentRequest,
   LDDashboardSummary,
 } from '../../types/laborDelivery';
 import { generateLDAlerts } from './laborDeliveryAlerts';
@@ -520,4 +522,45 @@ export class LaborDeliveryService {
       return { success: false, error: error.message };
     }
   }
+
+  // =====================================================
+  // RISK ASSESSMENT
+  // =====================================================
+
+  /** Record a maternal risk assessment */
+  static async createRiskAssessment(
+    request: CreateRiskAssessmentRequest
+  ): Promise<LDApiResponse<LDRiskAssessment>> {
+    try {
+      const { data, error } = await supabase
+        .from('ld_risk_assessments')
+        .insert({
+          patient_id: request.patient_id,
+          tenant_id: request.tenant_id,
+          pregnancy_id: request.pregnancy_id,
+          assessed_by: request.assessed_by ?? null,
+          risk_level: request.risk_level,
+          risk_factors: request.risk_factors,
+          score: request.score ?? null,
+          scoring_system: request.scoring_system ?? null,
+          notes: request.notes ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        await auditLogger.error('LD_RISK_CREATE_FAILED',
+          new Error(error.message), { patientId: request.patient_id });
+        return { success: false, error: error.message };
+      }
+      return { success: true, data: data as unknown as LDRiskAssessment };
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      await auditLogger.error('LD_RISK_CREATE_ERROR', error, {
+        patientId: request.patient_id,
+      });
+      return { success: false, error: error.message };
+    }
+  }
+
 }

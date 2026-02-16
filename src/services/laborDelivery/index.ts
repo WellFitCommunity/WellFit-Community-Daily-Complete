@@ -4,6 +4,9 @@
 export { LaborDeliveryService } from './laborDeliveryService';
 export type { LDApiResponse } from './laborDeliveryService';
 export { generateLDAlerts } from './laborDeliveryAlerts';
+export { LDAlertService } from './laborDeliveryAlertService';
+export type { LDPersistedAlert, CreateAlertRequest } from './laborDeliveryAlertService';
+export { LDMetricsService } from './laborDeliveryMetrics';
 
 // Re-export types commonly needed by consumers
 export type {
@@ -15,4 +18,5 @@ export type {
   CreateNewbornAssessmentRequest,
   CreatePostpartumAssessmentRequest,
   CreateMedicationAdminRequest,
+  CreateRiskAssessmentRequest,
 } from '../../types/laborDelivery';

@@ -12,6 +12,7 @@ import LaborEventForm from './LaborEventForm';
 import DeliveryRecordForm from './DeliveryRecordForm';
 import FetalMonitoringForm from './FetalMonitoringForm';
 import MedicationAdminForm from './MedicationAdminForm';
+import Partogram from './Partogram';
 
 interface LaborTabProps {
   summary: LDDashboardSummary;
@@ -154,6 +155,11 @@ const LaborTab: React.FC<LaborTabProps> = ({ summary, onDataChange }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Partogram */}
+      {labor_events.length > 0 && (
+        <Partogram laborEvents={labor_events} />
       )}
 
       {/* Labor Progress */}

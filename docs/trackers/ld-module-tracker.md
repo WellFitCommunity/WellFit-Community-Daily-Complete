@@ -2,7 +2,7 @@
 
 **Estimate:** ~24-32 hours / 3-4 sessions
 **Started:** 2026-02-16
-**Status:** In Progress — Session 1
+**Status:** In Progress — Session 3 COMPLETE
 
 ---
 
@@ -37,29 +37,31 @@
 
 ---
 
-## Session 2 — Monitoring + Newborn + Postpartum Forms
+## Session 2 — Monitoring + Newborn + Postpartum Forms — COMPLETE
 
 | # | Item | Status | File | Notes |
 |---|------|--------|------|-------|
-| 2.1 | FetalMonitoringForm | Pending | `components/labor-delivery/FetalMonitoringForm.tsx` | FHR, variability, decels, category |
-| 2.2 | NewbornAssessmentForm | Pending | `components/labor-delivery/NewbornAssessmentForm.tsx` | APGAR, weight, length, meds given |
-| 2.3 | PostpartumAssessmentForm | Pending | `components/labor-delivery/PostpartumAssessmentForm.tsx` | Fundus, lochia, BP, EPDS, breastfeeding |
-| 2.4 | MedicationAdminForm | Pending | `components/labor-delivery/MedicationAdminForm.tsx` | L&D-specific meds (pitocin, mag, etc.) |
-| 2.5 | Pregnancy registration form | Pending | `components/labor-delivery/PregnancyRegistrationForm.tsx` | GTPAL, EDD, blood type, risk factors |
-| 2.6 | Tests for all Session 2 forms | Pending | `__tests__/` | |
-| 2.7 | Verification + ship | Pending | — | |
+| 2.1 | FetalMonitoringForm | Done | `components/labor-delivery/FetalMonitoringForm.tsx` | FHR, variability, decels, category |
+| 2.2 | NewbornAssessmentForm | Done | `components/labor-delivery/NewbornAssessmentForm.tsx` | APGAR, weight, length, meds given |
+| 2.3 | PostpartumAssessmentForm | Done | `components/labor-delivery/PostpartumAssessmentForm.tsx` | Fundus, lochia, BP, EPDS, breastfeeding |
+| 2.4 | MedicationAdminForm | Done | `components/labor-delivery/MedicationAdminForm.tsx` | L&D-specific meds (pitocin, mag, etc.) |
+| 2.5 | Pregnancy registration form | Done | `components/labor-delivery/PregnancyRegistrationForm.tsx` | GTPAL, EDD, blood type, risk factors |
+| 2.6 | Tests for all Session 2 forms | Done | `__tests__/` | 6 test files, 38 tests |
+| 2.7 | Verification + ship | Done | `5999f42b` | 0 errors, 0 warnings, 8,241 tests passed |
 
 ---
 
-## Session 3 — Clinical Workflows + Partogram
+## Session 3 — Clinical Workflows + Partogram — COMPLETE
 
 | # | Item | Status | File | Notes |
 |---|------|--------|------|-------|
-| 3.1 | Partogram visualization | Pending | `components/labor-delivery/Partogram.tsx` | SVG chart: dilation/station over time |
-| 3.2 | Alert persistence (DB) | Pending | migration + service | Save/acknowledge alerts in DB |
-| 3.3 | Risk assessment form | Pending | `components/labor-delivery/RiskAssessmentForm.tsx` | Scoring system + risk factors |
-| 3.4 | L&D-specific dashboard KPIs | Pending | `components/labor-delivery/LDMetricsPanel.tsx` | Active labors, deliveries today, etc. |
-| 3.5 | Tests + verification | Pending | — | |
+| 3.1 | Partogram visualization | Done | `components/labor-delivery/Partogram.tsx` (261 lines) | SVG chart: dilation/station over time, alert line at 1cm/hr |
+| 3.2 | Alert persistence (DB) | Done | `20260216000001_ld_alerts_table.sql` + `laborDeliveryAlertService.ts` (211 lines) | ld_alerts table, create/acknowledge/resolve/sync |
+| 3.3 | Risk assessment form | Done | `components/labor-delivery/RiskAssessmentForm.tsx` (199 lines) | 14 weighted risk factors, auto-scoring, 4 risk levels |
+| 3.4 | L&D-specific dashboard KPIs | Done | `components/labor-delivery/LDMetricsPanel.tsx` (94 lines) | Active pregnancies/labors/deliveries/alerts |
+| 3.5 | LDAlerts upgraded | Done | `components/labor-delivery/LDAlerts.tsx` (127 lines) | Added acknowledge/resolve action buttons |
+| 3.6 | Metrics service extracted | Done | `services/laborDelivery/laborDeliveryMetrics.ts` (49 lines) | Unit metrics aggregation (600-line compliance) |
+| 3.7 | Tests + verification | Done | 3 new test files (Partogram, RiskAssessment, Metrics) | 108 L&D tests total, 8,273 total suite |
 
 ---
 
@@ -75,13 +77,23 @@
 
 ---
 
-## Quality Gates
+## Quality Gates (Session 3)
 
-- [ ] All files under 600 lines
-- [ ] No `any` types
-- [ ] No `console.log`
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm test` passes
-- [ ] All new tests are Tier 1-4 (Deletion Test)
-- [ ] Route accessible at `/pregnancy-care`
+- [x] All files under 600 lines (max: 600 — types file)
+- [x] No `any` types
+- [x] No `console.log`
+- [x] `npm run typecheck` passes — 0 errors
+- [x] `npm run lint` passes — 0 errors, 0 warnings
+- [x] `npm test` passes — 8,273 passed, 0 failed (415 suites)
+- [x] All new tests are Tier 1-4 (Deletion Test)
+- [x] Route accessible at `/pregnancy-care`
+
+## Architecture Summary (After Session 3)
+
+| Category | Count |
+|----------|-------|
+| Components | 20 files |
+| Service modules | 4 (service, alerts, alert service, metrics) |
+| Test files | 14 (108 tests) |
+| DB tables | 10 (`ld_*` including new `ld_alerts`) |
+| Type definitions | 600 lines (enums, interfaces, request types, helpers) |

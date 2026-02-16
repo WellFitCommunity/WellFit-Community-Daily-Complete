@@ -15,6 +15,7 @@ import PrenatalTab from './PrenatalTab';
 import LaborTab from './LaborTab';
 import NewbornTab from './NewbornTab';
 import PostpartumTab from './PostpartumTab';
+import LDMetricsPanel from './LDMetricsPanel';
 
 type TabId = 'overview' | 'prenatal' | 'labor' | 'newborn' | 'postpartum';
 
@@ -74,12 +75,14 @@ const LaborDeliveryDashboard: React.FC = () => {
         <p className="text-gray-600 mt-1">Maternal-fetal care management</p>
       </div>
 
+      <LDMetricsPanel tenantId={DEMO_TENANT_ID} />
+
       {summary && summary.alerts.length > 0 && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">
             Active Alerts ({summary.alerts.length})
           </h2>
-          <LDAlerts alerts={summary.alerts} />
+          <LDAlerts alerts={summary.alerts} onAlertAction={loadDashboard} />
         </div>
       )}
 

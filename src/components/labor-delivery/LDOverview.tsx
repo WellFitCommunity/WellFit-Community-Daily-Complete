@@ -10,6 +10,7 @@ import type { LDDashboardSummary } from '../../types/laborDelivery';
 import { calculateGestationalAge } from '../../types/laborDelivery';
 import { PregnancyAvatarPanel } from './PregnancyAvatarPanel';
 import PregnancyRegistrationForm from './PregnancyRegistrationForm';
+import RiskAssessmentForm from './RiskAssessmentForm';
 
 interface LDOverviewProps {
   summary: LDDashboardSummary;
@@ -28,6 +29,7 @@ const DEMO_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
 
 const LDOverview: React.FC<LDOverviewProps> = ({ summary, onDataChange }) => {
   const [showRegForm, setShowRegForm] = useState(false);
+  const [showRiskForm, setShowRiskForm] = useState(false);
   const { pregnancy, recent_prenatal_visits, delivery_record, newborn_assessment } = summary;
 
   if (!pregnancy) {
@@ -193,6 +195,25 @@ const LDOverview: React.FC<LDOverviewProps> = ({ summary, onDataChange }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Risk Assessment */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowRiskForm(!showRiskForm)}
+          className="bg-orange-600 text-white px-4 py-2 rounded font-medium min-h-[44px] hover:bg-orange-700"
+        >
+          {showRiskForm ? 'Close' : 'Risk Assessment'}
+        </button>
+      </div>
+      {showRiskForm && (
+        <RiskAssessmentForm
+          patientId={pregnancy.patient_id}
+          tenantId={pregnancy.tenant_id}
+          pregnancyId={pregnancy.id}
+          onSuccess={() => { setShowRiskForm(false); onDataChange(); }}
+          onCancel={() => setShowRiskForm(false)}
+        />
       )}
 
       {/* Newborn Summary */}
