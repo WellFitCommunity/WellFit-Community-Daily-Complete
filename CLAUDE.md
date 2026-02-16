@@ -1144,6 +1144,8 @@ Custom skills available via `/skill-name` commands:
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
+| `/ship` | Verify (typecheck + lint + test), commit, and push | After completing any implementation work |
+| `/plan` | Create structured implementation plan from tracker | Before starting a new feature |
 | `/security-scan` | HIPAA compliance check | Before commits, demos, audits |
 | `/demo-ready` | Hospital pilot demo validation | Before customer demos |
 | `/cost-check` | AI cost analysis | Monthly review, budget planning |
@@ -1151,6 +1153,8 @@ Custom skills available via `/skill-name` commands:
 ### Running Skills
 ```bash
 # In Claude Code CLI
+/ship
+/plan
 /security-scan
 /demo-ready
 /cost-check
