@@ -36,6 +36,7 @@ vi.mock('../../../contexts/AuthContext', () => ({
   useSupabaseClient: () => ({
     from: mockFrom,
   }),
+  useUser: () => ({ id: 'test-physician-id', email: 'doc@test.com' }),
 }));
 
 // Mock PatientContext
@@ -166,6 +167,11 @@ vi.mock('../../claude-care/ClaudeCareAssistantPanel', () => ({
 vi.mock('../../chw/CHWAlertsWidget', () => ({
   __esModule: true,
   default: () => <div data-testid="chw-alerts-widget">CHW Alerts</div>,
+}));
+
+vi.mock('../PatientPriorityBoard', () => ({
+  __esModule: true,
+  default: () => <div data-testid="patient-priority-board">Priority Board</div>,
 }));
 
 // Mock lucide-react icons

@@ -31,6 +31,7 @@ import TelehealthScheduler from '../telehealth/TelehealthScheduler';
 import PhysicianClinicalResources from './PhysicianClinicalResources';
 import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
 import CHWAlertsWidget from '../chw/CHWAlertsWidget';
+import PatientPriorityBoard from './PatientPriorityBoard';
 
 // Import extracted components
 import { CollapsibleSection } from './components/CollapsibleSection';
@@ -426,6 +427,9 @@ const PhysicianPanel: React.FC = () => {
 
           {/* Dashboard Personalization Indicator */}
           <DashboardPersonalizationIndicator variant="compact" showAdaptationDetails={true} />
+
+          {/* AI Patient Priority Board — ranked by clinical criticality */}
+          <PatientPriorityBoard />
 
           {/* Patient Selection & Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
