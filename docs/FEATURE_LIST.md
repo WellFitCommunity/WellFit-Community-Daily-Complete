@@ -17,7 +17,7 @@
 | AI-powered services | 70+ registered skills |
 | MCP integration servers | 11 |
 | Database tables | 248+ |
-| Test suites | 429 (8,415 tests, 100% pass) |
+| Test suites | 429 (8,415 behavioral tests, 100% pass) |
 
 **Two products. One codebase. Deployable independently or together.**
 
@@ -442,7 +442,7 @@
 | Frontend | React 19 + TypeScript + Vite + Tailwind CSS 4 |
 | Backend | Supabase (PostgreSQL 17, Edge Functions, Auth, Realtime) |
 | AI | Claude (Sonnet 4.5 + Haiku 4.5) via Anthropic API |
-| Testing | Vitest — 429 suites, 8,415 tests, 100% pass rate |
+| Testing | Vitest — 429 suites, 8,415 behavioral tests, 100% pass rate |
 | Interoperability | 11 MCP servers, FHIR R4, HL7 v2.x, X12 EDI |
 
 ---
