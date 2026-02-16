@@ -11,6 +11,7 @@ import type {
   LDMedicationIndication,
 } from '../../types/laborDelivery';
 import { LaborDeliveryService } from '../../services/laborDelivery';
+import LDDrugInteractionAlert from './LDDrugInteractionAlert';
 
 interface MedicationAdminFormProps {
   patientId: string;
@@ -188,6 +189,14 @@ const MedicationAdminForm: React.FC<MedicationAdminFormProps> = ({
           </select>
         </div>
       </div>
+
+      {/* Drug Interaction Check (auto-triggers when medication selected) */}
+      {form.medication_name.trim().length > 2 && (
+        <LDDrugInteractionAlert
+          medicationName={form.medication_name}
+          patientId={patientId}
+        />
+      )}
 
       {/* Row 3: Indication + Notes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

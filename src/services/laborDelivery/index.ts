@@ -9,6 +9,18 @@ export type { LDPersistedAlert, CreateAlertRequest } from './laborDeliveryAlertS
 export { LDMetricsService } from './laborDeliveryMetrics';
 export { suggestBillingCodes } from './laborDeliveryBilling';
 export type { BillingSuggestion } from './laborDeliveryBilling';
+export {
+  requestEscalationScore,
+  generateLaborProgressNote,
+  checkLDDrugInteraction,
+  generateDischargeSummary,
+} from './laborDeliveryAI';
+export type {
+  LDEscalationResult,
+  LDProgressNote,
+  LDDrugInteractionResult,
+  LDDischargeSummary,
+} from './laborDeliveryAI';
 
 // Re-export types commonly needed by consumers
 export type {

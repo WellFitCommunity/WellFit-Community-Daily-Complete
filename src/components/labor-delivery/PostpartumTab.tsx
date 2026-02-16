@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import type { LDDashboardSummary } from '../../types/laborDelivery';
 import PostpartumAssessmentForm from './PostpartumAssessmentForm';
+import LDDischargeSummaryPanel from './LDDischargeSummaryPanel';
 
 interface PostpartumTabProps {
   summary: LDDashboardSummary;
@@ -46,6 +47,14 @@ const PostpartumTab: React.FC<PostpartumTabProps> = ({ summary, onDataChange }) 
           pregnancyId={pregnancy.id}
           onSuccess={handleSuccess}
           onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {/* AI Discharge Summary */}
+      {pregnancy && delivery_record && (
+        <LDDischargeSummaryPanel
+          patientId={pregnancy.patient_id}
+          tenantId={pregnancy.tenant_id}
         />
       )}
 

@@ -1,8 +1,8 @@
 # Labor & Delivery Module — Build Tracker
 
-**Estimate:** ~24-32 hours / 3-4 sessions
+**Estimate:** ~40-48 hours / 6-8 sessions
 **Started:** 2026-02-16
-**Status:** In Progress — Session 5 COMPLETE
+**Status:** In Progress — Session 6 COMPLETE, Tier 1 AI Integrations done
 
 ---
 
@@ -94,25 +94,161 @@
 
 ---
 
-## Quality Gates (Session 5)
+## Session 6 — Tier 1 AI Integrations — COMPLETE
+
+| # | Item | Status | File | Notes |
+|---|------|--------|------|-------|
+| 6.1 | AI service layer | Done | `services/laborDelivery/laborDeliveryAI.ts` (~336 lines) | 4 functions: escalation, progress note, drug interaction, discharge summary |
+| 6.2 | LDEscalationPanel | Done | `components/labor-delivery/LDEscalationPanel.tsx` (150 lines) | Score/100, category badge, recommendations, physician review flag |
+| 6.3 | LDProgressNotePanel | Done | `components/labor-delivery/LDProgressNotePanel.tsx` (~100 lines) | SOAP format, print, clinician review, regenerate |
+| 6.4 | LDDrugInteractionAlert | Done | `components/labor-delivery/LDDrugInteractionAlert.tsx` (~127 lines) | Auto-trigger on med selection, severity badges, AI alternatives |
+| 6.5 | LDDischargeSummaryPanel | Done | `components/labor-delivery/LDDischargeSummaryPanel.tsx` (~175 lines) | Hospital course, ICD codes, meds, warning signs (mother+newborn) |
+| 6.6 | Wired into LaborTab | Done | `LaborTab.tsx` (245 lines) | Escalation + Progress Note panels |
+| 6.7 | Wired into PostpartumTab | Done | `PostpartumTab.tsx` (140 lines) | Discharge Summary panel |
+| 6.8 | Wired into MedicationAdminForm | Done | `MedicationAdminForm.tsx` (235 lines) | Drug interaction alert on med selection |
+| 6.9 | Barrel exports updated | Done | `index.ts` (both components + services) | 4 new component exports, 4 new AI service exports |
+| 6.10 | Tests (5 new test files) | Done | `__tests__/` | 44 new tests: escalation, progress note, drug interaction, discharge, AI service |
+| 6.11 | Verification | Done | — | 0 type errors, 0 lint errors, 8,377 tests passed (425 suites) |
+
+---
+
+## Quality Gates (Session 6)
 
 - [x] All files under 600 lines (max: 597 — laborDeliveryService.ts)
 - [x] No `any` types
 - [x] No `console.log`
 - [x] `npm run typecheck` passes — 0 errors
 - [x] `npm run lint` passes — 0 errors, 0 warnings
-- [x] `npm test` passes — 8,333 passed, 0 failed (420 suites)
+- [x] `npm test` passes — 8,377 passed, 0 failed (425 suites)
 - [x] All new tests are Tier 1-4 (Deletion Test)
 - [x] Route accessible at `/pregnancy-care`
 
-## Architecture Summary (After Session 5)
+## Architecture Summary (After Session 6)
 
 | Category | Count |
 |----------|-------|
-| Components | 22 files |
-| Service modules | 7 (service, alerts, alert service, metrics, billing, FHIR procedure, FHIR vitals) |
+| Components | 26 files (+4 AI panels) |
+| Service modules | 8 (service, alerts, alert service, metrics, billing, AI, FHIR procedure, FHIR vitals) |
 | Edge functions | 1 (ld-alert-notifier) |
-| Test files | 21 (195 L&D tests) |
+| AI integrations | 4 (escalation, progress note, drug interaction, discharge summary) |
+| Test files | 26 (239 L&D tests) |
 | DB tables | 10 (`ld_*` including `ld_alerts`) |
 | Type definitions | 602 lines (enums, interfaces, request types, helpers) |
 | FHIR code constants | LOINC + SNOMED CT mappings for all L&D observations |
+
+---
+
+# AI INTEGRATION ROADMAP
+
+> All Tier 1 items wire existing, battle-tested AI edge functions into the L&D module.
+> No new AI models or prompts needed — pure integration.
+> Estimated AI cost: ~$0.60 per delivery for all features combined.
+
+---
+
+## Tier 1 — Wire Existing AI (< 4 hours each) — HIGH PRIORITY
+
+### T1.1 AI Labor Escalation Scoring
+| Field | Detail |
+|-------|--------|
+| Existing function | `ai-care-escalation-scorer` (Sonnet 4.5) |
+| What it does | Analyze fetal monitoring + vitals + labor progress → confidence-scored escalation recommendation |
+| L&D integration | Call from LaborTab/FetalMonitoring when new data is recorded; display escalation badge + recommendations |
+| Output | Score 0-100, category (none/monitor/notify/escalate/emergency), specific recommendations with timeframes |
+| Status | **DONE** — Session 6 |
+
+### T1.2 AI Labor Progress Notes
+| Field | Detail |
+|-------|--------|
+| Existing function | `ai-progress-note-synthesizer` (Haiku 4.5) |
+| What it does | Aggregate vitals/trends/events into structured progress notes |
+| L&D integration | "Generate Progress Note" button on LaborTab — pulls last 2h of labor events, fetal monitoring, vitals |
+| Output | Structured SOAP-style note ready for provider review/signature |
+| Status | **DONE** — Session 6 |
+
+### T1.3 L&D Drug Interaction Check
+| Field | Detail |
+|-------|--------|
+| Existing function | `check-drug-interactions` (RxNorm API + Haiku 4.5) |
+| What it does | Cross-check medications against patient's active meds, suggest alternatives |
+| L&D integration | Auto-check when recording medication administration (MedicationAdminForm); warn before confirm |
+| Key interactions | Pitocin + terbutaline, magnesium + calcium channel blockers, epidural meds + anticoagulants |
+| Status | **DONE** — Session 6 |
+
+### T1.4 AI Postpartum Discharge Summary
+| Field | Detail |
+|-------|--------|
+| Existing function | `ai-discharge-summary` (Sonnet 4.5) |
+| What it does | Auto-generate discharge summaries from encounter data |
+| L&D integration | "Generate Discharge Summary" button on PostpartumTab — pulls delivery record, newborn assessment, postpartum assessments, medications |
+| Output | Mother + newborn discharge summary with follow-up instructions, warning signs, medication list |
+| Status | **DONE** — Session 6 |
+
+---
+
+## Tier 2 — High Value Integrations (~8 hours each) — MEDIUM PRIORITY
+
+### T2.1 AI ACOG Guideline Compliance
+| Field | Detail |
+|-------|--------|
+| Existing function | `ai-clinical-guideline-matcher` (Sonnet 4) |
+| What it does | Smart guideline recommendations with gap detection |
+| L&D integration | Prenatal care compliance checker — flag missed GBS screening, overdue glucose tolerance test, inadequate visit frequency |
+| Output | Compliance gaps, recommended actions, evidence level, guideline references |
+| Status | Pending |
+
+### T2.2 L&D Shift Handoff
+| Field | Detail |
+|-------|--------|
+| Existing infrastructure | `handoff_packets` table, `process-shift-handoff` edge function |
+| What it does | Structured nurse-to-nurse/provider-to-provider handoff with secure token access |
+| L&D integration | Auto-generate L&D handoff from active labor status, alerts, recent events, fetal monitoring, medications |
+| Output | Structured handoff packet with urgency level, 72-hour secure link |
+| Status | Pending |
+
+### T2.3 SDOH Detection from Prenatal Notes
+| Field | Detail |
+|-------|--------|
+| Existing service | `sdohPassiveDetection.ts` (NLP pattern matching) |
+| What it does | Scan free text for housing instability, food insecurity, IPV, substance use — auto-flag with Z-codes |
+| L&D integration | Scan prenatal visit notes on save; surface SDOH flags in pregnancy overview; auto-suggest Z-codes for billing |
+| Output | Detected indicators with confidence, risk level, ICD-10 Z-codes |
+| Status | Pending |
+
+---
+
+## Tier 3 — Moonshot Differentiators — FUTURE
+
+### T3.1 AI Birth Plan Assistant
+| Field | Detail |
+|-------|--------|
+| New service | Patient-facing AI that generates personalized birth plans |
+| Input | Risk factors, preferences, clinical history, provider recommendations |
+| Output | Printable birth plan document — pain management preferences, labor positions, delivery wishes, contingency plans |
+| Why it matters | No competitor has this. Combines clinical intelligence with patient empowerment. |
+| Status | Pending |
+
+### T3.2 Postpartum Depression Early Warning
+| Field | Detail |
+|-------|--------|
+| Existing services | `holisticRiskAssessment.ts` (7-dimension scoring) + EPDS in PostpartumAssessmentForm |
+| What it does | Combine EPDS scores + social isolation risk + engagement drop + mood patterns → proactive PPD risk alert |
+| L&D integration | Auto-score after each postpartum assessment; escalate to provider if risk threshold exceeded |
+| Why it matters | Proactive, not reactive. Catches PPD before crisis. Saves lives. |
+| Status | Pending |
+
+### T3.3 AI Contraindication Detector for L&D
+| Field | Detail |
+|-------|--------|
+| Existing function | `ai-contraindication-detector` (Sonnet 4.5) |
+| What it does | Multi-factor patient safety analysis |
+| L&D integration | Before epidural, before magnesium, before induction — check allergies, comorbidities, current meds |
+| Status | Pending |
+
+### T3.4 AI Patient Education for L&D
+| Field | Detail |
+|-------|--------|
+| Existing function | `ai-patient-education` (Haiku 4.5) |
+| What it does | Generate 6th-grade reading level health content |
+| L&D integration | Auto-generate: labor prep instructions, breastfeeding guide, postpartum warning signs, newborn care basics |
+| Status | Pending |

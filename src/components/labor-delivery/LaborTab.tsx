@@ -15,6 +15,8 @@ import MedicationAdminForm from './MedicationAdminForm';
 import Partogram from './Partogram';
 import BillingSuggestions from './BillingSuggestions';
 import DeliverySummary from './DeliverySummary';
+import LDEscalationPanel from './LDEscalationPanel';
+import LDProgressNotePanel from './LDProgressNotePanel';
 
 interface LaborTabProps {
   summary: LDDashboardSummary;
@@ -186,6 +188,21 @@ const LaborTab: React.FC<LaborTabProps> = ({ summary, onDataChange }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* AI Panels */}
+      {pregnancy && (
+        <>
+          <LDEscalationPanel
+            patientId={pregnancy.patient_id}
+            assessorId={pregnancy.primary_provider_id ?? pregnancy.patient_id}
+            triggerReason={latest_fetal_monitoring ? `FHR Category ${latest_fetal_monitoring.fhr_category}` : undefined}
+          />
+          <LDProgressNotePanel
+            patientId={pregnancy.patient_id}
+            providerId={pregnancy.primary_provider_id ?? pregnancy.patient_id}
+          />
+        </>
       )}
 
       {/* Partogram */}
