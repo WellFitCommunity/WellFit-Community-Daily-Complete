@@ -6,10 +6,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Pin } from 'lucide-react';
 import { DashboardPersonalizationAI } from '../../services/dashboardPersonalizationAI';
 import { useUser, useSupabaseClient } from '../../contexts/AuthContext';
 import { trackBehaviorEvent, getUserBehaviorProfile } from '../../services/behaviorTracking';
 import { LearningBadge } from './LearningIndicator';
+import { usePinnedSections } from '../../contexts/PinnedSectionsContext';
 
 interface AdaptiveCollapsibleSectionProps {
   sectionId: string;
@@ -36,10 +38,12 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
 }) => {
   const user = useUser();
   const supabase = useSupabaseClient();
+  const { isPinned, togglePin } = usePinnedSections();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [openStartTime, setOpenStartTime] = useState<Date | null>(null);
   const [frequencyScore, setFrequencyScore] = useState(0);
   const [isTopSection, setIsTopSection] = useState(false);
+  const pinned = isPinned(sectionId);
 
   // Load behavior data for this section
   useEffect(() => {
@@ -151,14 +155,31 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
             {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
           </div>
         </div>
-        <span
-          className={`text-gray-500 transform transition-transform duration-200 text-xl ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-          aria-hidden="true"
-        >
-          ⌄
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePin(sectionId);
+            }}
+            className={`p-1.5 rounded-lg transition-colors ${
+              pinned
+                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                : 'text-gray-300 hover:bg-gray-100 hover:text-amber-500'
+            }`}
+            title={pinned ? 'Unpin from top' : 'Pin to top'}
+            aria-label={pinned ? `Unpin ${title}` : `Pin ${title} to top`}
+          >
+            <Pin className={`w-4 h-4 ${pinned ? 'fill-current' : ''}`} />
+          </button>
+          <span
+            className={`text-gray-500 transform transition-transform duration-200 text-xl ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+            aria-hidden="true"
+          >
+            &#8964;
+          </span>
+        </div>
       </button>
 
       {isOpen && (

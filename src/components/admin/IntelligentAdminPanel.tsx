@@ -28,6 +28,9 @@ import {
   MilestoneCelebration
 } from './LearningIndicator';
 import { Clock, TrendingUp, Zap } from 'lucide-react';
+import { PinnedSectionsProvider } from '../../contexts/PinnedSectionsContext';
+import PinnedDashboardsBar from './PinnedDashboardsBar';
+import ClinicalWorkflowWizard from './ClinicalWorkflowWizard';
 import { SectionLoadingFallback as _SectionLoadingFallback } from './sections/sectionDefinitions';
 // VoiceCommandBar removed - now handled by ClinicalModeComponents
 import { useWorkflowPreferences } from '../../hooks/useWorkflowPreferences';
@@ -230,6 +233,7 @@ const IntelligentAdminPanel: React.FC = () => {
 
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
+      <PinnedSectionsProvider>
       <div className="min-h-screen bg-gray-50">
         <AdminHeader title="🎯 Mission Control" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -356,6 +360,12 @@ const IntelligentAdminPanel: React.FC = () => {
             </div>
           )}
 
+          {/* Pinned Dashboards - Zero clicks to reach favorites */}
+          <PinnedDashboardsBar />
+
+          {/* Clinical Workflow Wizards - Step-by-step multi-step guides */}
+          <ClinicalWorkflowWizard userRole={adminRole || 'admin'} />
+
           {/* Lazy-Loaded Category Sections - Ordered by Role Preferences */}
           <div className="space-y-6">
             {getOrderedCategories().map(categoryId => categoryComponents[categoryId])}
@@ -380,6 +390,7 @@ const IntelligentAdminPanel: React.FC = () => {
           onClose={() => setShowMilestone(false)}
         />
       </div>
+      </PinnedSectionsProvider>
     </RequireAdminAuth>
   );
 };
