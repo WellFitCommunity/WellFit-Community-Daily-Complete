@@ -67,8 +67,9 @@ export const EncounterAuditTimeline = lazy(() => import('../EncounterAuditTimeli
 export const ResultEscalationDashboard = lazy(() => import('../ResultEscalationDashboard'));
 export const ProviderCoverageDashboard = lazy(() => import('../ProviderCoverageDashboard'));
 
-// Phase 2 Revenue (P4)
+// Phase 2 Revenue (P4, P7)
 export const UndercodingDetectionDashboard = lazy(() => import('../UndercodingDetectionDashboard'));
+export const DocumentationGapDashboard = lazy(() => import('../DocumentationGapDashboard'));
 
 // Phase 2 Encounter-to-Payment Chain
 export const BillingQueueDashboard = lazy(() => import('../BillingQueueDashboard'));
