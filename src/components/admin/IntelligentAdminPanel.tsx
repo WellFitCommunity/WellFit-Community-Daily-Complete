@@ -224,22 +224,9 @@ const IntelligentAdminPanel: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, adminRole]);
 
-  // Auto-show What's New modal
-  useEffect(() => {
-    const lastSeenVersion = localStorage.getItem('whatsNew_lastSeen');
-    const permanentlyDismissed = localStorage.getItem('whatsNew_permanentlyDismissed');
-    const currentVersion = '2025-10-19';
-
-    if (permanentlyDismissed === 'true') {
-      auditLogger.debug('[WhatsNew] Modal permanently dismissed by user');
-      return;
-    }
-
-    if (lastSeenVersion !== currentVersion) {
-      auditLogger.debug('[WhatsNew] Showing modal for version', { version: currentVersion });
-      setTimeout(() => setShowWhatsNew(true), 1000);
-    }
-  }, []);
+  // What's New modal is opened manually via the "What's New" button in Quick Actions.
+  // Auto-show removed: it created a full-screen grey overlay that blocked the admin panel
+  // due to a version mismatch between the panel (2025-10-19) and the modal features (2025-10-18).
 
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>

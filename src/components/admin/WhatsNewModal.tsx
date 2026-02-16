@@ -255,7 +255,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
         <div
-          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          className="fixed inset-0 transition-opacity bg-gray-500/75"
           onClick={() => handleClose(false)}
           aria-hidden="true"
         ></div>
@@ -267,7 +267,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
 
         <div
           ref={modalRef}
-          className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
+          className="relative z-10 inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
         >
           {/* Header */}
           <div className="bg-linear-to-r from-blue-600 to-purple-600 px-6 py-5">
