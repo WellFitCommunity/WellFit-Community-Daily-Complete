@@ -166,11 +166,11 @@
 | Feature | Status | What Exists | What's Missing |
 |---------|--------|-------------|----------------|
 | Undercoding detection | BUILT | `undercodingDetectionService.ts` (456 lines) — compares `encounter_billing_suggestions.suggested_codes` vs `claim_lines.procedure_code`, classifies gaps (lower E/M level, missed charge, lower value code), revenue gap calculation, dismiss workflow. `UndercodingDetectionDashboard.tsx` (439 lines) in admin panel — 4 metric cards, confidence filters, gap type badges, dismiss modal | — |
-| Documentation gap indicator | MISSING | — | No algorithm flagging missing elements for E/M level |
+| Documentation gap indicator | BUILT | `documentationGapService.ts` (600 lines) — pre-billing gap analysis: time-based (CMS 2023 thresholds) + MDM-based (2-of-3 rule) gap computation, actionable steps, priority assignment ($80+ high, $35+ medium, <$35 low), fee schedule lookup. `DocumentationGapDashboard.tsx` (572 lines) in admin panel — 4 metric cards, category/priority/confidence filters, detail modal with actionable steps, dismiss modal, acknowledge workflow | — |
 | HCC opportunity flag | MISSING | — | No HCC reference set, no risk adjustment detection |
 | Claim aging dashboard | BUILT | `claimAgingService.ts` (275 lines) — queries `claims` LEFT JOIN `billing_payers`, aging buckets (0-30, 31-60, 61-90, 90+), status history. `ClaimAgingDashboard.tsx` (453 lines) in admin panel — 4 bucket metric cards, alert banner for 90+ days, status/payer filters, history modal | — |
 
-**Verdict: 50% built.** Claim aging dashboard and undercoding detection are production-ready. Remaining: documentation gap indicator and HCC opportunity flags.
+**Verdict: 75% built.** Claim aging dashboard, undercoding detection, and documentation gap indicator are production-ready. Remaining: HCC opportunity flags.
 
 ---
 
@@ -188,8 +188,8 @@
 | 7. Superbill Engine | 95% | Coding + provider sign-off gate + encounter→superbill bridge complete |
 | 8. Eligibility Integration | 80% | X12 270/271 wired into encounter workflow, coverage details UI, billing queue bridge |
 | 9. Claim Pipeline | 85% | Generation + tracking + ERA payment posting + claim matching + resubmission workflow complete |
-| 10. Revenue Intelligence | 50% | Claim aging + undercoding detection built, documentation gap + HCC remaining |
-| **Phase 2 Average** | **~78%** | |
+| 10. Revenue Intelligence | 75% | Claim aging + undercoding detection + documentation gap indicator built, HCC remaining |
+| **Phase 2 Average** | **~84%** | |
 
 ---
 
@@ -218,5 +218,5 @@
 | ~~P4~~ | ~~Undercoding detection~~ | **DONE** — `undercodingDetectionService.ts`, `UndercodingDetectionDashboard.tsx`, AI-suggested vs billed code comparison, gap classification, revenue opportunity metrics, dismiss workflow | ~~Small~~ |
 | ~~P5~~ | ~~ERA-to-claim matching + payment posting~~ | **DONE** — `eraPaymentPostingService.ts`, `ERAPaymentPostingDashboard.tsx`, `claim_payments` table, remittance-to-claim matching modal, payment posting with status transition, reconciliation stats | ~~Large~~ |
 | ~~P6~~ | ~~Claim resubmission workflow~~ | **DONE** — `claimResubmissionService.ts`, `ClaimResubmissionDashboard.tsx` + `ClaimResubmissionModals.tsx`, `parent_claim_id` + `resubmission_count` on claims, correction/void/chain workflows, 29 tests | ~~Medium~~ |
-| P7 | Documentation gap indicator | Revenue optimization | Medium |
+| ~~P7~~ | ~~Documentation gap indicator~~ | **DONE** — `documentationGapService.ts`, `DocumentationGapDashboard.tsx`, pre-billing E/M gap analysis (time-based + MDM-based), actionable steps, priority assignment, 42 tests | ~~Medium~~ |
 | P8 | HCC opportunity flags | Future — needs reference data | Large |
