@@ -22,6 +22,10 @@ import type {
   CreatePregnancyRequest,
   CreatePrenatalVisitRequest,
   CreateDeliveryRecordRequest,
+  CreateLaborEventRequest,
+  CreateFetalMonitoringRequest,
+  CreateNewbornAssessmentRequest,
+  CreatePostpartumAssessmentRequest,
   LDDashboardSummary,
   LDAlert,
 } from '../../types/laborDelivery';
@@ -192,6 +196,209 @@ export class LaborDeliveryService {
     } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('LD_DELIVERY_CREATE_ERROR', error, {
+        patientId: request.patient_id,
+      });
+      return { success: false, error: error.message };
+    }
+  }
+
+  // =====================================================
+  // LABOR EVENTS
+  // =====================================================
+
+  /** Record a labor progression event */
+  static async createLaborEvent(
+    request: CreateLaborEventRequest
+  ): Promise<LDApiResponse<LDLaborEvent>> {
+    try {
+      const { data, error } = await supabase
+        .from('ld_labor_events')
+        .insert({
+          patient_id: request.patient_id,
+          tenant_id: request.tenant_id,
+          pregnancy_id: request.pregnancy_id,
+          event_time: request.event_time,
+          stage: request.stage,
+          dilation_cm: request.dilation_cm,
+          effacement_percent: request.effacement_percent,
+          station: request.station,
+          contraction_frequency_per_10min: request.contraction_frequency_per_10min ?? null,
+          contraction_duration_seconds: request.contraction_duration_seconds ?? null,
+          contraction_intensity: request.contraction_intensity ?? null,
+          membrane_status: request.membrane_status,
+          membrane_rupture_time: request.membrane_rupture_time ?? null,
+          fluid_color: request.fluid_color ?? null,
+          maternal_bp_systolic: request.maternal_bp_systolic ?? null,
+          maternal_bp_diastolic: request.maternal_bp_diastolic ?? null,
+          maternal_hr: request.maternal_hr ?? null,
+          maternal_temp_c: request.maternal_temp_c ?? null,
+          notes: request.notes ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        await auditLogger.error('LD_LABOR_EVENT_CREATE_FAILED',
+          new Error(error.message), { patientId: request.patient_id });
+        return { success: false, error: error.message };
+      }
+      return { success: true, data: data as unknown as LDLaborEvent };
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      await auditLogger.error('LD_LABOR_EVENT_CREATE_ERROR', error, {
+        patientId: request.patient_id,
+      });
+      return { success: false, error: error.message };
+    }
+  }
+
+  // =====================================================
+  // FETAL MONITORING
+  // =====================================================
+
+  /** Record a fetal monitoring assessment */
+  static async createFetalMonitoring(
+    request: CreateFetalMonitoringRequest
+  ): Promise<LDApiResponse<LDFetalMonitoring>> {
+    try {
+      const { data, error } = await supabase
+        .from('ld_fetal_monitoring')
+        .insert({
+          patient_id: request.patient_id,
+          tenant_id: request.tenant_id,
+          pregnancy_id: request.pregnancy_id,
+          assessment_time: request.assessment_time,
+          assessed_by: request.assessed_by ?? null,
+          fhr_baseline: request.fhr_baseline,
+          variability: request.variability,
+          accelerations_present: request.accelerations_present,
+          deceleration_type: request.deceleration_type,
+          deceleration_depth_bpm: request.deceleration_depth_bpm ?? null,
+          fhr_category: request.fhr_category,
+          uterine_activity: request.uterine_activity ?? null,
+          interpretation: request.interpretation ?? null,
+          action_taken: request.action_taken ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        await auditLogger.error('LD_FETAL_MONITORING_CREATE_FAILED',
+          new Error(error.message), { patientId: request.patient_id });
+        return { success: false, error: error.message };
+      }
+      return { success: true, data: data as unknown as LDFetalMonitoring };
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      await auditLogger.error('LD_FETAL_MONITORING_CREATE_ERROR', error, {
+        patientId: request.patient_id,
+      });
+      return { success: false, error: error.message };
+    }
+  }
+
+  // =====================================================
+  // NEWBORN ASSESSMENT
+  // =====================================================
+
+  /** Record newborn assessment */
+  static async createNewbornAssessment(
+    request: CreateNewbornAssessmentRequest
+  ): Promise<LDApiResponse<LDNewbornAssessment>> {
+    try {
+      const { data, error } = await supabase
+        .from('ld_newborn_assessments')
+        .insert({
+          patient_id: request.patient_id,
+          tenant_id: request.tenant_id,
+          pregnancy_id: request.pregnancy_id,
+          delivery_id: request.delivery_id,
+          birth_datetime: request.birth_datetime,
+          sex: request.sex,
+          weight_g: request.weight_g,
+          length_cm: request.length_cm,
+          head_circumference_cm: request.head_circumference_cm,
+          apgar_1_min: request.apgar_1_min,
+          apgar_5_min: request.apgar_5_min,
+          apgar_10_min: request.apgar_10_min ?? null,
+          ballard_gestational_age_weeks: request.ballard_gestational_age_weeks ?? null,
+          temperature_c: request.temperature_c ?? null,
+          heart_rate: request.heart_rate ?? null,
+          respiratory_rate: request.respiratory_rate ?? null,
+          disposition: request.disposition,
+          anomalies: request.anomalies ?? [],
+          vitamin_k_given: request.vitamin_k_given ?? false,
+          erythromycin_given: request.erythromycin_given ?? false,
+          hepatitis_b_vaccine: request.hepatitis_b_vaccine ?? false,
+          notes: request.notes ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        await auditLogger.error('LD_NEWBORN_CREATE_FAILED',
+          new Error(error.message), { patientId: request.patient_id });
+        return { success: false, error: error.message };
+      }
+      return { success: true, data: data as unknown as LDNewbornAssessment };
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      await auditLogger.error('LD_NEWBORN_CREATE_ERROR', error, {
+        patientId: request.patient_id,
+      });
+      return { success: false, error: error.message };
+    }
+  }
+
+  // =====================================================
+  // POSTPARTUM ASSESSMENT
+  // =====================================================
+
+  /** Record postpartum assessment */
+  static async createPostpartumAssessment(
+    request: CreatePostpartumAssessmentRequest
+  ): Promise<LDApiResponse<LDPostpartumAssessment>> {
+    try {
+      const { data, error } = await supabase
+        .from('ld_postpartum_assessments')
+        .insert({
+          patient_id: request.patient_id,
+          tenant_id: request.tenant_id,
+          pregnancy_id: request.pregnancy_id,
+          assessment_datetime: new Date().toISOString(),
+          assessed_by: request.assessed_by ?? null,
+          hours_postpartum: request.hours_postpartum,
+          fundal_height: request.fundal_height,
+          fundal_firmness: request.fundal_firmness,
+          lochia: request.lochia,
+          lochia_amount: request.lochia_amount,
+          bp_systolic: request.bp_systolic,
+          bp_diastolic: request.bp_diastolic,
+          heart_rate: request.heart_rate,
+          temperature_c: request.temperature_c,
+          breastfeeding_status: request.breastfeeding_status,
+          lactation_notes: request.lactation_notes ?? null,
+          pain_score: request.pain_score,
+          pain_location: request.pain_location ?? null,
+          emotional_status: request.emotional_status,
+          epds_score: request.epds_score ?? null,
+          voiding: request.voiding ?? false,
+          bowel_movement: request.bowel_movement ?? false,
+          incision_intact: request.incision_intact ?? null,
+          notes: request.notes ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        await auditLogger.error('LD_POSTPARTUM_CREATE_FAILED',
+          new Error(error.message), { patientId: request.patient_id });
+        return { success: false, error: error.message };
+      }
+      return { success: true, data: data as unknown as LDPostpartumAssessment };
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      await auditLogger.error('LD_POSTPARTUM_CREATE_ERROR', error, {
         patientId: request.patient_id,
       });
       return { success: false, error: error.message };

@@ -373,9 +373,104 @@ export interface CreateDeliveryRecordRequest {
   method: DeliveryMethod;
   anesthesia: AnesthesiaType;
   labor_duration_hours?: number;
+  second_stage_duration_min?: number;
   estimated_blood_loss_ml: number;
   complications?: string[];
+  episiotomy?: boolean;
+  laceration_degree?: 0 | 1 | 2 | 3 | 4;
   cord_clamping?: CordClampingTime;
+  cord_gases_ph?: number;
+  placenta_intact?: boolean;
+  notes?: string;
+}
+
+export interface CreateLaborEventRequest {
+  patient_id: string;
+  tenant_id: string;
+  pregnancy_id: string;
+  event_time: string;
+  stage: LaborStage;
+  dilation_cm: number;
+  effacement_percent: number;
+  station: number;
+  contraction_frequency_per_10min?: number;
+  contraction_duration_seconds?: number;
+  contraction_intensity?: 'mild' | 'moderate' | 'strong';
+  membrane_status: MembraneStatus;
+  membrane_rupture_time?: string;
+  fluid_color?: 'clear' | 'meconium_light' | 'meconium_thick' | 'bloody';
+  maternal_bp_systolic?: number;
+  maternal_bp_diastolic?: number;
+  maternal_hr?: number;
+  maternal_temp_c?: number;
+  notes?: string;
+}
+
+export interface CreateFetalMonitoringRequest {
+  patient_id: string;
+  tenant_id: string;
+  pregnancy_id: string;
+  assessment_time: string;
+  assessed_by?: string;
+  fhr_baseline: number;
+  variability: FHRVariability;
+  accelerations_present: boolean;
+  deceleration_type: DecelerationType;
+  deceleration_depth_bpm?: number;
+  fhr_category: FetalHRCategory;
+  uterine_activity?: string;
+  interpretation?: string;
+  action_taken?: string;
+}
+
+export interface CreateNewbornAssessmentRequest {
+  patient_id: string;
+  tenant_id: string;
+  pregnancy_id: string;
+  delivery_id: string;
+  birth_datetime: string;
+  sex: 'male' | 'female' | 'ambiguous';
+  weight_g: number;
+  length_cm: number;
+  head_circumference_cm: number;
+  apgar_1_min: number;
+  apgar_5_min: number;
+  apgar_10_min?: number;
+  ballard_gestational_age_weeks?: number;
+  temperature_c?: number;
+  heart_rate?: number;
+  respiratory_rate?: number;
+  disposition: NewbornDisposition;
+  anomalies?: string[];
+  vitamin_k_given?: boolean;
+  erythromycin_given?: boolean;
+  hepatitis_b_vaccine?: boolean;
+  notes?: string;
+}
+
+export interface CreatePostpartumAssessmentRequest {
+  patient_id: string;
+  tenant_id: string;
+  pregnancy_id: string;
+  hours_postpartum: number;
+  assessed_by?: string;
+  fundal_height: string;
+  fundal_firmness: 'firm' | 'boggy';
+  lochia: LochiaType;
+  lochia_amount: 'scant' | 'light' | 'moderate' | 'heavy';
+  bp_systolic: number;
+  bp_diastolic: number;
+  heart_rate: number;
+  temperature_c: number;
+  breastfeeding_status: BreastfeedingStatus;
+  lactation_notes?: string;
+  pain_score: number;
+  pain_location?: string;
+  emotional_status: PostpartumEmotionalStatus;
+  epds_score?: number;
+  voiding?: boolean;
+  bowel_movement?: boolean;
+  incision_intact?: boolean;
   notes?: string;
 }
 
