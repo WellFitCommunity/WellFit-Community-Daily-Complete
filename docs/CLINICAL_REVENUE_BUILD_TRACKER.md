@@ -67,9 +67,9 @@
 | Referral status states | BUILT | Community referrals (8 states), dental referrals (5 states), AI referral letters (4 states) | States exist but no unified referral lifecycle across systems |
 | Aging queue | BUILT | `ReferralAgingDashboard.tsx` (449 lines) — color-coded aging buckets (0-3d green, 4-7d yellow, 8-14d orange, 14+d red), manual send, history modal, per-tenant config | — |
 | Follow-up reminders | BUILT | `referralFollowUpService.ts` (301 lines), `send-referral-followup-reminders` edge function (445 lines) — graduated SMS/email/escalation at day 3/7/14 with cooldown, `referral_followup_config` + `referral_followup_log` tables | — |
-| Closed-loop confirmation logging | PARTIAL | `referral_alerts.delivered_at`, `acknowledged_at`, `resolved_at` tracked | No specialist completion confirmation workflow, no "work completed" trigger |
+| Closed-loop confirmation logging | BUILT | `referral_alerts.delivered_at`, `acknowledged_at`, `resolved_at` tracked. `specialist_completion_status`/`specialist_name`/`specialist_completion_date`/`specialist_report`/`specialist_recommendations`/`specialist_confirmed_at`/`specialist_confirmed_by` columns on `patient_referrals`. `record_specialist_completion()` RPC with role verification + audit trail. `get_referrals_awaiting_confirmation()` + `get_referral_completion_stats()` RPCs. `referralCompletionService.ts` (190 lines). `ReferralCompletionDashboard.tsx` (300 lines) + `ReferralCompletionModals.tsx` (230 lines) in admin panel — 4 metric cards, overdue alert banner, status/search filters, Record Completion modal, Completion History modal. 26 tests (13 service + 13 dashboard) | Unified referral lifecycle across systems (Community + Clinical) |
 
-**Verdict: 75% built.** Aging dashboard and automated follow-up reminders are production-ready. Remaining gap: specialist completion confirmation workflow.
+**Verdict: 95% built.** Aging dashboard, automated follow-up reminders, and specialist completion confirmation workflow are production-ready. Remaining gap: unified referral lifecycle across systems.
 
 ---
 
@@ -181,10 +181,10 @@
 | 1. Core Visit Governance | 95% | DB-enforced, provider assignment dashboard complete, NP co-sign attestation remaining |
 | 2. Order Lifecycle Control | 75% | Tables + SLA service + escalation rules engine done, needs external lab integration |
 | 3. Provider Responsibility Routing | 85% | Assignment + task inbox + SLA config + coverage/on-call built, auto-escalation cron missing |
-| 4. Referral Closed-Loop Tracking | 75% | Aging dashboard + automated follow-up reminders built, specialist confirmation remaining |
+| 4. Referral Closed-Loop Tracking | 95% | Aging dashboard + automated follow-up + specialist completion confirmation built, unified lifecycle remaining |
 | 5. Medication Safety | 95% | Interaction engine + override audit trail + escalation tracking complete |
 | 6. Clinical Audit UI | 85% | Encounter-level audit timeline complete, role-based filtering remaining |
-| **Phase 1 Average** | **~86%** | |
+| **Phase 1 Average** | **~88%** | |
 | 7. Superbill Engine | 95% | Coding + provider sign-off gate + encounter→superbill bridge complete |
 | 8. Eligibility Integration | 80% | X12 270/271 wired into encounter workflow, coverage details UI, billing queue bridge |
 | 9. Claim Pipeline | 85% | Generation + tracking + ERA payment posting + claim matching + resubmission workflow complete |

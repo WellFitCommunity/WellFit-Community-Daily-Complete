@@ -63,6 +63,7 @@ export const ProviderAssignmentDashboard = lazy(() => import('../ProviderAssignm
 export const UnacknowledgedResultsDashboard = lazy(() => import('../UnacknowledgedResultsDashboard'));
 export const ProviderTaskQueueDashboard = lazy(() => import('../ProviderTaskQueueDashboard'));
 export const ReferralAgingDashboard = lazy(() => import('../ReferralAgingDashboard'));
+export const ReferralCompletionDashboard = lazy(() => import('../ReferralCompletionDashboard'));
 export const EncounterAuditTimeline = lazy(() => import('../EncounterAuditTimeline'));
 export const ResultEscalationDashboard = lazy(() => import('../ResultEscalationDashboard'));
 export const ProviderCoverageDashboard = lazy(() => import('../ProviderCoverageDashboard'));

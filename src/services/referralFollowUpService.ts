@@ -49,7 +49,8 @@ export type FollowUpReason =
   | 'pending_no_response'
   | 'enrolled_no_activity'
   | 'active_gone_dormant'
-  | 'specialist_no_confirmation';
+  | 'specialist_no_confirmation'
+  | 'specialist_completion_recorded';
 export type DeliveryStatus = 'sent' | 'delivered' | 'failed' | 'bounced';
 
 export interface FollowUpLogEntry {
