@@ -1,6 +1,6 @@
 # Clinical Safety & Revenue Build Tracker
 
-> **Last Updated:** 2026-02-16
+> **Last Updated:** 2026-02-19
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 
@@ -167,10 +167,10 @@
 |---------|--------|-------------|----------------|
 | Undercoding detection | BUILT | `undercodingDetectionService.ts` (456 lines) — compares `encounter_billing_suggestions.suggested_codes` vs `claim_lines.procedure_code`, classifies gaps (lower E/M level, missed charge, lower value code), revenue gap calculation, dismiss workflow. `UndercodingDetectionDashboard.tsx` (439 lines) in admin panel — 4 metric cards, confidence filters, gap type badges, dismiss modal | — |
 | Documentation gap indicator | BUILT | `documentationGapService.ts` (600 lines) — pre-billing gap analysis: time-based (CMS 2023 thresholds) + MDM-based (2-of-3 rule) gap computation, actionable steps, priority assignment ($80+ high, $35+ medium, <$35 low), fee schedule lookup. `DocumentationGapDashboard.tsx` (572 lines) in admin panel — 4 metric cards, category/priority/confidence filters, detail modal with actionable steps, dismiss modal, acknowledge workflow | — |
-| HCC opportunity flag | MISSING | — | No HCC reference set, no risk adjustment detection |
+| HCC opportunity flag | BUILT | `hccOpportunityService.ts` + `hcc/hccDetectionEngine.ts` + `hcc/hccOpportunityTypes.ts` — 3-type detection (expiring recapture, documented awareness, medication-based suspects), CMS-HCC V28 reference tables, hierarchy suppression, RAF/payment impact calculation, dismiss workflow. `HCCOpportunityDashboard.tsx` — 4 metric cards, alert banner, type/confidence/search filters, detail + dismiss modals, 36 tests | — |
 | Claim aging dashboard | BUILT | `claimAgingService.ts` (275 lines) — queries `claims` LEFT JOIN `billing_payers`, aging buckets (0-30, 31-60, 61-90, 90+), status history. `ClaimAgingDashboard.tsx` (453 lines) in admin panel — 4 bucket metric cards, alert banner for 90+ days, status/payer filters, history modal | — |
 
-**Verdict: 75% built.** Claim aging dashboard, undercoding detection, and documentation gap indicator are production-ready. Remaining: HCC opportunity flags.
+**Verdict: 95% built.** Claim aging dashboard, undercoding detection, documentation gap indicator, and HCC opportunity flags are all production-ready.
 
 ---
 
@@ -188,8 +188,8 @@
 | 7. Superbill Engine | 95% | Coding + provider sign-off gate + encounter→superbill bridge complete |
 | 8. Eligibility Integration | 80% | X12 270/271 wired into encounter workflow, coverage details UI, billing queue bridge |
 | 9. Claim Pipeline | 85% | Generation + tracking + ERA payment posting + claim matching + resubmission workflow complete |
-| 10. Revenue Intelligence | 75% | Claim aging + undercoding detection + documentation gap indicator built, HCC remaining |
-| **Phase 2 Average** | **~84%** | |
+| 10. Revenue Intelligence | 95% | Claim aging + undercoding detection + documentation gap indicator + HCC opportunity flags built |
+| **Phase 2 Average** | **~89%** | |
 
 ---
 
@@ -219,4 +219,4 @@
 | ~~P5~~ | ~~ERA-to-claim matching + payment posting~~ | **DONE** — `eraPaymentPostingService.ts`, `ERAPaymentPostingDashboard.tsx`, `claim_payments` table, remittance-to-claim matching modal, payment posting with status transition, reconciliation stats | ~~Large~~ |
 | ~~P6~~ | ~~Claim resubmission workflow~~ | **DONE** — `claimResubmissionService.ts`, `ClaimResubmissionDashboard.tsx` + `ClaimResubmissionModals.tsx`, `parent_claim_id` + `resubmission_count` on claims, correction/void/chain workflows, 29 tests | ~~Medium~~ |
 | ~~P7~~ | ~~Documentation gap indicator~~ | **DONE** — `documentationGapService.ts`, `DocumentationGapDashboard.tsx`, pre-billing E/M gap analysis (time-based + MDM-based), actionable steps, priority assignment, 42 tests | ~~Medium~~ |
-| P8 | HCC opportunity flags | Future — needs reference data | Large |
+| ~~P8~~ | ~~HCC opportunity flags~~ | **DONE** — `hccOpportunityService.ts` + `hcc/hccDetectionEngine.ts` + `hcc/hccOpportunityTypes.ts`, `HCCOpportunityDashboard.tsx`, `hcc_categories` + `icd10_hcc_mappings` + `hcc_hierarchies` tables, CMS-HCC V28 reference data, 3-type detection (expiring/documented/suspected), hierarchy suppression, RAF/payment impact, 36 tests | ~~Large~~ |
