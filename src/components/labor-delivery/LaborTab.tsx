@@ -17,6 +17,7 @@ import BillingSuggestions from './BillingSuggestions';
 import DeliverySummary from './DeliverySummary';
 import LDEscalationPanel from './LDEscalationPanel';
 import LDProgressNotePanel from './LDProgressNotePanel';
+import LDShiftHandoffPanel from './LDShiftHandoffPanel';
 
 interface LaborTabProps {
   summary: LDDashboardSummary;
@@ -201,6 +202,11 @@ const LaborTab: React.FC<LaborTabProps> = ({ summary, onDataChange }) => {
           <LDProgressNotePanel
             patientId={pregnancy.patient_id}
             providerId={pregnancy.primary_provider_id ?? pregnancy.patient_id}
+          />
+          <LDShiftHandoffPanel
+            patientId={pregnancy.patient_id}
+            tenantId={pregnancy.tenant_id}
+            pregnancyId={pregnancy.id}
           />
         </>
       )}

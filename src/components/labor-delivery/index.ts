@@ -13,3 +13,6 @@ export { default as LDEscalationPanel } from './LDEscalationPanel';
 export { default as LDProgressNotePanel } from './LDProgressNotePanel';
 export { default as LDDrugInteractionAlert } from './LDDrugInteractionAlert';
 export { default as LDDischargeSummaryPanel } from './LDDischargeSummaryPanel';
+export { default as LDGuidelineCompliancePanel } from './LDGuidelineCompliancePanel';
+export { default as LDShiftHandoffPanel } from './LDShiftHandoffPanel';
+export { default as LDSDOHPanel } from './LDSDOHPanel';

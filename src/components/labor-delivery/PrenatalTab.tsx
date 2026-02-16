@@ -8,6 +8,8 @@
 import React, { useState } from 'react';
 import type { LDDashboardSummary } from '../../types/laborDelivery';
 import PrenatalVisitForm from './PrenatalVisitForm';
+import LDGuidelineCompliancePanel from './LDGuidelineCompliancePanel';
+import LDSDOHPanel from './LDSDOHPanel';
 
 interface PrenatalTabProps {
   summary: LDDashboardSummary;
@@ -46,6 +48,22 @@ const PrenatalTab: React.FC<PrenatalTabProps> = ({ summary, onDataChange }) => {
           pregnancyId={pregnancy.id}
           onSuccess={handleSuccess}
           onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {/* AI Panels — Guideline Compliance + SDOH Detection */}
+      {pregnancy && (
+        <LDGuidelineCompliancePanel
+          patientId={pregnancy.patient_id}
+          tenantId={pregnancy.tenant_id}
+        />
+      )}
+      {pregnancy && visits.length > 0 && visits[0].notes && (
+        <LDSDOHPanel
+          patientId={pregnancy.patient_id}
+          tenantId={pregnancy.tenant_id}
+          noteText={[visits[0].notes, ...visits[0].complaints].filter(Boolean).join('. ')}
+          sourceId={visits[0].id}
         />
       )}
 

@@ -22,6 +22,22 @@ export type {
   LDDischargeSummary,
 } from './laborDeliveryAI';
 
+export {
+  checkGuidelineCompliance,
+  generateLDShiftHandoff,
+  scanPrenatalNotesForSDOH,
+} from './laborDeliveryAI_tier2';
+export type {
+  LDGuidelineComplianceResult,
+  LDGuidelineRecommendation,
+  LDAdherenceGap,
+  LDPreventiveScreening,
+  LDShiftHandoffResult,
+  LDHandoffSection,
+  LDSDOHResult,
+  LDSDOHDetection,
+} from './laborDeliveryAI_tier2';
+
 // Re-export types commonly needed by consumers
 export type {
   CreatePregnancyRequest,
