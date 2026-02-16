@@ -74,3 +74,4 @@ export const UndercodingDetectionDashboard = lazy(() => import('../UndercodingDe
 export const BillingQueueDashboard = lazy(() => import('../BillingQueueDashboard'));
 export const EligibilityVerificationPanel = lazy(() => import('../EligibilityVerificationPanel'));
 export const ERAPaymentPostingDashboard = lazy(() => import('../ERAPaymentPostingDashboard'));
+export const ClaimResubmissionDashboard = lazy(() => import('../ClaimResubmissionDashboard'));

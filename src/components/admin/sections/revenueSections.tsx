@@ -25,6 +25,7 @@ import {
   BillingQueueDashboard,
   EligibilityVerificationPanel,
   ERAPaymentPostingDashboard,
+  ClaimResubmissionDashboard,
 } from './lazyImports';
 
 export const getRevenueSections = (): DashboardSection[] => [
@@ -182,6 +183,17 @@ export const getRevenueSections = (): DashboardSection[] => [
     icon: '\uD83D\uDCB3',
     headerColor: 'text-green-800',
     component: <Suspense fallback={<SectionLoadingFallback />}><ERAPaymentPostingDashboard /></Suspense>,
+    category: 'revenue',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'billing_specialist', 'finance'],
+  },
+  {
+    id: 'claim-resubmission',
+    title: 'Claim Resubmission Workflow',
+    subtitle: 'Correct denied claims, track resubmission chains, and void unrecoverable claims',
+    icon: '\uD83D\uDD04',
+    headerColor: 'text-red-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ClaimResubmissionDashboard /></Suspense>,
     category: 'revenue',
     priority: 'high',
     roles: ['admin', 'super_admin', 'billing_specialist', 'finance'],

@@ -111,6 +111,8 @@ export interface Claim {
   provider_approved_by?: string | null;
   provider_approved_at?: string | null;
   approval_notes?: string | null;
+  parent_claim_id?: string | null;
+  resubmission_count?: number;
   created_by: string;
   created_at: string;
   updated_at: string;
