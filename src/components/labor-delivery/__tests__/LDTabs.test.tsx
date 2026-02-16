@@ -36,6 +36,8 @@ const emptySummary: LDDashboardSummary = {
   delivery_record: null,
   newborn_assessment: null,
   latest_postpartum: null,
+  medications: [],
+  latest_risk_assessment: null,
   alerts: [],
 };
 

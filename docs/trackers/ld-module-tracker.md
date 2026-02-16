@@ -2,7 +2,7 @@
 
 **Estimate:** ~24-32 hours / 3-4 sessions
 **Started:** 2026-02-16
-**Status:** In Progress — Session 4 COMPLETE
+**Status:** In Progress — Session 5 COMPLETE
 
 ---
 
@@ -80,24 +80,39 @@
 
 ---
 
-## Quality Gates (Session 4)
+## Session 5 — Integration + Edge Function — COMPLETE
 
-- [x] All files under 600 lines (max: 333 — DeliverySummary)
+| # | Item | Status | File | Notes |
+|---|------|--------|------|-------|
+| 5.1 | Route verification | Done | — | `/pregnancy-care` already wired in routeConfig + lazyComponents |
+| 5.2 | Alert persistence in dashboard | Done | `laborDeliveryService.ts` | `getDashboardSummary()` syncs computed→DB, fetches persisted with ack/resolve state |
+| 5.3 | Medications in dashboard | Done | `laborDeliveryService.ts` + types | Queries `ld_medication_administrations`, returns in summary |
+| 5.4 | Risk assessments in dashboard | Done | `laborDeliveryService.ts` + types | Queries `ld_risk_assessments`, returns latest in summary |
+| 5.5 | Edge function: ld-alert-notifier | Done | `supabase/functions/ld-alert-notifier/index.ts` | SMS/email/push for critical/high alerts, care team + caregiver |
+| 5.6 | Alert service tests | Done | `__tests__/laborDeliveryAlertService.test.ts` (6 tests) | Persistence interface, mapping, severity/type coverage |
+| 5.7 | Verification | Done | — | 0 type errors, 0 lint errors, 8,333 tests passed (420 suites) |
+
+---
+
+## Quality Gates (Session 5)
+
+- [x] All files under 600 lines (max: 597 — laborDeliveryService.ts)
 - [x] No `any` types
 - [x] No `console.log`
 - [x] `npm run typecheck` passes — 0 errors
 - [x] `npm run lint` passes — 0 errors, 0 warnings
-- [x] `npm test` passes — 8,327 passed, 0 failed (419 suites)
+- [x] `npm test` passes — 8,333 passed, 0 failed (420 suites)
 - [x] All new tests are Tier 1-4 (Deletion Test)
 - [x] Route accessible at `/pregnancy-care`
 
-## Architecture Summary (After Session 4)
+## Architecture Summary (After Session 5)
 
 | Category | Count |
 |----------|-------|
-| Components | 22 files (+BillingSuggestions, DeliverySummary) |
+| Components | 22 files |
 | Service modules | 7 (service, alerts, alert service, metrics, billing, FHIR procedure, FHIR vitals) |
-| Test files | 18 (171 tests) |
+| Edge functions | 1 (ld-alert-notifier) |
+| Test files | 21 (195 L&D tests) |
 | DB tables | 10 (`ld_*` including `ld_alerts`) |
-| Type definitions | 600 lines (enums, interfaces, request types, helpers) |
+| Type definitions | 602 lines (enums, interfaces, request types, helpers) |
 | FHIR code constants | LOINC + SNOMED CT mappings for all L&D observations |

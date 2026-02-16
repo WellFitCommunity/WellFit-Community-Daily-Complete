@@ -1,12 +1,8 @@
 /**
- * =====================================================
- * LABOR & DELIVERY SERVICE
- * =====================================================
- * Purpose: CRUD operations for maternal-fetal care
- * Tables: ld_pregnancies, ld_prenatal_visits, ld_labor_events,
- *   ld_fetal_monitoring, ld_delivery_records, ld_newborn_assessments,
- *   ld_postpartum_assessments, ld_medication_administrations, ld_risk_assessments
- * =====================================================
+ * LABOR & DELIVERY SERVICE — CRUD operations for maternal-fetal care
+ * Tables: ld_pregnancies, ld_prenatal_visits, ld_labor_events, ld_fetal_monitoring,
+ *   ld_delivery_records, ld_newborn_assessments, ld_postpartum_assessments,
+ *   ld_medication_administrations, ld_risk_assessments
  */
 
 import { supabase } from '../../lib/supabaseClient';
@@ -31,13 +27,31 @@ import type {
   CreateMedicationAdminRequest,
   CreateRiskAssessmentRequest,
   LDDashboardSummary,
+  LDAlert,
+  LDAlertType,
+  LDAlertSeverity,
 } from '../../types/laborDelivery';
 import { generateLDAlerts } from './laborDeliveryAlerts';
+import { LDAlertService } from './laborDeliveryAlertService';
+import type { LDPersistedAlert } from './laborDeliveryAlertService';
 
 export interface LDApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+/** Map persisted alerts (DB rows) back to the LDAlert display interface */
+function mapPersistedToAlerts(persisted: LDPersistedAlert[]): LDAlert[] {
+  return persisted.map((p) => ({
+    id: p.id,
+    type: p.alert_type as LDAlertType,
+    severity: p.severity as LDAlertSeverity,
+    message: p.message,
+    timestamp: p.created_at,
+    source_record_id: p.source_record_id,
+    acknowledged: p.acknowledged,
+  }));
 }
 
 export class LaborDeliveryService {
@@ -419,13 +433,9 @@ export class LaborDeliveryService {
   ): Promise<LDApiResponse<LDDashboardSummary>> {
     try {
       const [
-        pregRes,
-        prenatalRes,
-        laborRes,
-        fetalRes,
-        deliveryRes,
-        newbornRes,
-        postpartumRes,
+        pregRes, prenatalRes, laborRes, fetalRes,
+        deliveryRes, newbornRes, postpartumRes,
+        medsRes, riskRes,
       ] = await Promise.all([
         supabase.from('ld_pregnancies').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
@@ -448,6 +458,12 @@ export class LaborDeliveryService {
         supabase.from('ld_postpartum_assessments').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('assessment_datetime', { ascending: false }).limit(1).single(),
+        supabase.from('ld_medication_administrations').select('*')
+          .eq('patient_id', patientId).eq('tenant_id', tenantId)
+          .order('administered_datetime', { ascending: false }).limit(20),
+        supabase.from('ld_risk_assessments').select('*')
+          .eq('patient_id', patientId).eq('tenant_id', tenantId)
+          .order('assessment_date', { ascending: false }).limit(1).single(),
       ]);
 
       const pregnancy = pregRes.data as unknown as LDPregnancy | null;
@@ -457,10 +473,23 @@ export class LaborDeliveryService {
       const delivery = deliveryRes.data as unknown as LDDeliveryRecord | null;
       const newborn = newbornRes.data as unknown as LDNewbornAssessment | null;
       const postpartum = postpartumRes.data as unknown as LDPostpartumAssessment | null;
+      const medications = (medsRes.data || []) as unknown as LDMedicationAdministration[];
+      const riskAssessment = riskRes.data as unknown as LDRiskAssessment | null;
 
-      const alerts = generateLDAlerts(
+      // Compute alerts from clinical data
+      const computedAlerts = generateLDAlerts(
         pregnancy, prenatalVisits, fetalMonitoring, delivery, newborn, postpartum
       );
+
+      // Sync computed alerts to DB and fetch persisted (includes acknowledge/resolve state)
+      let alerts = computedAlerts;
+      if (pregnancy) {
+        await LDAlertService.syncAlerts(computedAlerts, patientId, tenantId, pregnancy.id);
+        const persistedResult = await LDAlertService.getActiveAlerts(patientId, tenantId);
+        if (persistedResult.success && persistedResult.data) {
+          alerts = mapPersistedToAlerts(persistedResult.data);
+        }
+      }
 
       return {
         success: true,
@@ -472,6 +501,8 @@ export class LaborDeliveryService {
           delivery_record: delivery,
           newborn_assessment: newborn,
           latest_postpartum: postpartum,
+          medications,
+          latest_risk_assessment: riskAssessment,
           alerts,
         },
       };

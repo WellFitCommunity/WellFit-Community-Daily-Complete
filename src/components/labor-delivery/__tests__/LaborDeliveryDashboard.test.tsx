@@ -22,6 +22,8 @@ vi.mock('../../../services/laborDelivery', () => ({
         delivery_record: null,
         newborn_assessment: null,
         latest_postpartum: null,
+        medications: [],
+        latest_risk_assessment: null,
         alerts: [],
       },
     }),
@@ -150,6 +152,8 @@ describe('LDOverview', () => {
     delivery_record: null,
     newborn_assessment: null,
     latest_postpartum: null,
+    medications: [],
+    latest_risk_assessment: null,
     alerts: [],
   };
 

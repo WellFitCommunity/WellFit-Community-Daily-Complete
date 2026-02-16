@@ -511,6 +511,8 @@ export interface LDDashboardSummary {
   delivery_record: LDDeliveryRecord | null;
   newborn_assessment: LDNewbornAssessment | null;
   latest_postpartum: LDPostpartumAssessment | null;
+  medications: LDMedicationAdministration[];
+  latest_risk_assessment: LDRiskAssessment | null;
   alerts: LDAlert[];
 }
 
