@@ -146,12 +146,12 @@ describe('MfaComplianceDashboard', () => {
   it('renders per-role compliance table', async () => {
     render(<MfaComplianceDashboard />);
 
+    // Wait for table data to fully render (heading + role rows)
     await waitFor(() => {
       expect(screen.getByText('Compliance by Role')).toBeInTheDocument();
+      expect(screen.getByText('admin')).toBeInTheDocument();
     });
 
-    // Role names (formatted with replace)
-    expect(screen.getByText('admin')).toBeInTheDocument();
     expect(screen.getByText('nurse')).toBeInTheDocument();
 
     // Compliance badges
