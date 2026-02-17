@@ -23,6 +23,8 @@ import {
   SpecialistDashboardWrapper,
   FieldVisitWorkflowWrapper,
   MemoryClinicDashboardWrapper,
+  PatientAvatarPageWrapper,
+  PatientChartNavigatorWrapper,
   CoordinatedResponseDashboardWrapper,
   ReceivingDashboardWrapper,
 } from './RouteRenderer';
@@ -95,6 +97,8 @@ const wrapperComponentMap: Record<string, React.FC> = {
   SpecialistDashboardWrapper,
   FieldVisitWorkflowWrapper,
   MemoryClinicDashboardWrapper,
+  PatientAvatarPageWrapper,
+  PatientChartNavigatorWrapper,
   CoordinatedResponseDashboardWrapper,
   ReceivingDashboardWrapper,
 };

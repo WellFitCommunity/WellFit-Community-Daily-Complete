@@ -142,6 +142,18 @@ vi.mock('../../../services/patientAvatarService', () => ({
   },
 }));
 
+// Mock the 3D AnatomyViewer (Three.js requires WebGL, not available in JSDOM)
+// React.lazy uses dynamic import with .then(m => ({ default: m.AnatomyViewer }))
+// so we need both named and default exports
+vi.mock('../anatomy-3d/AnatomyViewer', () => {
+  const MockViewer = ({ patientId }: { patientId: string }) => (
+    <div data-testid="anatomy-viewer-3d" data-patient-id={patientId}>
+      3D Anatomy Viewer
+    </div>
+  );
+  return { AnatomyViewer: MockViewer, default: MockViewer };
+});
+
 describe('PatientAvatarPage', () => {
   it('renders the page with patient body map heading', () => {
     render(<PatientAvatarPage patientId="test-patient-id" />);
@@ -158,10 +170,12 @@ describe('PatientAvatarPage', () => {
     expect(screen.getByText(/1 marker from SmartScribe need confirmation/)).toBeInTheDocument();
   });
 
-  it('renders front/back toggle buttons', () => {
+  it('renders the 3D anatomy viewer in the center panel', async () => {
     render(<PatientAvatarPage patientId="test-patient-id" />);
-    expect(screen.getByRole('button', { name: 'Front' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+    // AnatomyViewer is lazy-loaded, so wait for Suspense to resolve
+    const viewer = await screen.findByTestId('anatomy-viewer-3d');
+    expect(viewer).toBeInTheDocument();
+    expect(viewer).toHaveAttribute('data-patient-id', 'test-patient-id');
   });
 
   it('renders marker list grouped by category', () => {
@@ -209,9 +223,14 @@ describe('PatientAvatarPage', () => {
     expect(neuroElements.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders the SVG avatar body', () => {
+  it('displays marker details when a marker is clicked in the list', async () => {
     render(<PatientAvatarPage patientId="test-patient-id" />);
-    const svg = document.querySelector('svg[viewBox="0 0 100 160"]');
-    expect(svg).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Central Line (Jugular)'));
+    await waitFor(() => {
+      // Details tab shows category and source fields for the selected marker
+      expect(screen.getByText('Category')).toBeInTheDocument();
+      expect(screen.getByText('Region')).toBeInTheDocument();
+      expect(screen.getByText('Source')).toBeInTheDocument();
+    });
   });
 });

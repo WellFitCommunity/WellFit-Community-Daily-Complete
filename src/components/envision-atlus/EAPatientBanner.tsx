@@ -16,7 +16,7 @@
  * Copyright 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { cn } from '../../lib/utils';
 import { usePatientContextSafe, SelectedPatient } from '../../contexts/PatientContext';
 import { PatientAvatar } from '../patient-avatar/PatientAvatar';
@@ -30,6 +30,11 @@ import {
   Hash,
   Minimize2
 } from 'lucide-react';
+
+/** Lazy-load the 3D viewer (heavy Three.js bundle) */
+const AnatomyViewer = lazy(() =>
+  import('../patient-avatar/anatomy-3d/AnatomyViewer').then(m => ({ default: m.AnatomyViewer }))
+);
 
 interface EAPatientBannerProps {
   /** Show recent patients dropdown */
@@ -246,7 +251,7 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
         <X className="w-4 h-4" />
       </button>
 
-      {/* Full Avatar Panel (Expandable) */}
+      {/* 3D Clinical Anatomy Viewer (Expandable) */}
       {showFullAvatar && selectedPatient && (
         <>
           {/* Backdrop */}
@@ -255,13 +260,13 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
             onClick={() => setShowFullAvatar(false)}
           />
 
-          {/* Avatar Panel */}
-          <div className="fixed right-4 top-20 z-50 w-[400px] max-h-[80vh] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+          {/* 3D Anatomy Panel */}
+          <div className="fixed right-4 top-20 z-50 w-[720px] max-h-[85vh] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700 bg-slate-800">
               <div>
                 <h3 className="text-lg font-semibold text-slate-100">
-                  Clinical Avatar
+                  3D Clinical Anatomy
                 </h3>
                 <p className="text-sm text-slate-400">
                   {selectedPatient.lastName}, {selectedPatient.firstName}
@@ -271,21 +276,29 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
               <button
                 onClick={() => setShowFullAvatar(false)}
                 className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
-                title="Close avatar view"
+                title="Close anatomy viewer"
               >
                 <Minimize2 className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Avatar Content */}
-            <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)]">
-              <PatientAvatar
+            {/* 3D Viewer Content */}
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-[600px] bg-slate-950">
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                    <p className="text-sm text-slate-400">Loading 3D anatomy viewer...</p>
+                  </div>
+                </div>
+              }
+            >
+              <AnatomyViewer
                 patientId={selectedPatient.id}
                 patientName={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
-                initialMode="expanded"
-                editable={false}
+                editable
               />
-            </div>
+            </Suspense>
           </div>
         </>
       )}

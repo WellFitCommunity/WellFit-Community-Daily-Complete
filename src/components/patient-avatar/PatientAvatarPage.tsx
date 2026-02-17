@@ -10,29 +10,31 @@
  * - Right: Details, History, Settings tabs
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, Suspense, lazy } from 'react';
 import { cn } from '../../lib/utils';
 import { EACard, EACardHeader, EACardContent } from '../envision-atlus/EACard';
 import { EAButton } from '../envision-atlus/EAButton';
 import { EABadge } from '../envision-atlus/EABadge';
 import { usePatientAvatar } from './hooks/usePatientAvatar';
 import { usePatientMarkers } from './hooks/usePatientMarkers';
-import { AvatarBody } from './AvatarBody';
-import { AvatarMarker } from './AvatarMarker';
-import { StatusBadgeRing } from './StatusBadgeRing';
 import { MarkerForm } from './MarkerForm';
 import { MarkerDetailPopover } from './MarkerDetailPopover';
 import { AvatarSettingsForm } from './AvatarSettingsForm';
-import { PatientAvatarService } from '../../services/patientAvatarService';
+import { MarkerHistoryPanel } from './MarkerHistoryPanel';
+import { SDOHBodyMapPanel } from './SDOHBodyMapPanel';
 import { auditLogger } from '../../services/auditLogger';
 import {
   PatientMarker,
-  PatientMarkerHistory,
-  BodyView,
   MarkerCategory,
   CATEGORY_COLORS,
   CATEGORY_LABELS,
 } from '../../types/patientAvatar';
+import type { AnatomyMarkerOverlay } from './anatomy-3d/types';
+
+/** Lazy-load the 3D anatomy viewer (heavy Three.js bundle) */
+const AnatomyViewer = lazy(() =>
+  import('./anatomy-3d/AnatomyViewer').then(m => ({ default: m.AnatomyViewer }))
+);
 
 // ============================================================================
 // TYPES
@@ -42,7 +44,7 @@ interface PatientAvatarPageProps {
   patientId: string;
 }
 
-type RightPanelTab = 'details' | 'history' | 'settings';
+type RightPanelTab = 'details' | 'history' | 'sdoh' | 'settings';
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -103,90 +105,6 @@ const MarkerLegend: React.FC = () => {
   );
 };
 
-/**
- * Marker history panel
- */
-const MarkerHistoryPanel: React.FC<{
-  markerId: string | null;
-  markerName: string | null;
-}> = ({ markerId, markerName }) => {
-  const [history, setHistory] = useState<PatientMarkerHistory[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-
-  React.useEffect(() => {
-    if (!markerId) {
-      setHistory([]);
-      return;
-    }
-
-    let cancelled = false;
-    setHistoryLoading(true);
-
-    PatientAvatarService.getMarkerHistory(markerId).then((result) => {
-      if (cancelled) return;
-      if (result.success) {
-        setHistory(result.data);
-      }
-      setHistoryLoading(false);
-    }).catch(() => {
-      if (!cancelled) setHistoryLoading(false);
-    });
-
-    return () => { cancelled = true; };
-  }, [markerId]);
-
-  if (!markerId) {
-    return (
-      <div className="flex items-center justify-center h-48 text-sm text-slate-500">
-        Select a marker to view history
-      </div>
-    );
-  }
-
-  if (historyLoading) {
-    return (
-      <div className="flex items-center justify-center h-48 text-sm text-slate-400">
-        Loading history...
-      </div>
-    );
-  }
-
-  if (history.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-48 text-sm text-slate-500">
-        No history for {markerName}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <h4 className="text-xs font-medium text-slate-400 uppercase">
-        History: {markerName}
-      </h4>
-      <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-        {history.map((entry) => (
-          <div key={entry.id} className="p-2 bg-slate-800/50 rounded-lg border border-slate-700 text-xs">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-medium text-slate-300 capitalize">
-                {entry.action.replace(/_/g, ' ')}
-              </span>
-              <span className="text-slate-500">
-                {new Date(entry.created_at).toLocaleDateString()}
-              </span>
-            </div>
-            {entry.previous_values && (
-              <p className="text-slate-500 truncate">
-                Changed from: {JSON.stringify(entry.previous_values).slice(0, 60)}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -195,8 +113,8 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
   // Hooks
   const {
     avatar,
-    loading: avatarLoading,
-    error: avatarError,
+    loading: _avatarLoading,
+    error: _avatarError,
     updateSkinTone,
     updateGenderPresentation,
   } = usePatientAvatar(patientId);
@@ -206,7 +124,7 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
     pendingCount,
     attentionCount,
     loading: markersLoading,
-    error: markersError,
+    error: _markersError,
     createMarker,
     updateMarker,
     confirmMarker,
@@ -216,7 +134,6 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
   } = usePatientMarkers(patientId);
 
   // State
-  const [view, setView] = useState<BodyView>('front');
   const [selectedMarker, setSelectedMarker] = useState<PatientMarker | null>(null);
   const [showMarkerForm, setShowMarkerForm] = useState(false);
   const [editingMarker, setEditingMarker] = useState<PatientMarker | undefined>(undefined);
@@ -228,10 +145,23 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
   const skinTone = avatar?.skin_tone ?? 'medium';
   const genderPresentation = avatar?.gender_presentation ?? 'neutral';
 
-  const visibleMarkers = useMemo(() =>
-    markers.filter((m) => m.is_active && m.status !== 'rejected' && m.body_view === view),
-    [markers, view]
-  );
+  /** Map PatientMarker[] → AnatomyMarkerOverlay[] for the 3D viewer overlay */
+  const anatomyMarkers: AnatomyMarkerOverlay[] = useMemo(() => {
+    return markers
+      .filter((m) => m.is_active && m.status !== 'rejected')
+      .map((m) => ({
+        id: m.id,
+        display_name: m.display_name,
+        category: m.category,
+        body_region: m.body_region,
+        position_x: m.position_x,
+        position_y: m.position_y,
+        body_view: m.body_view,
+        is_active: m.is_active,
+        status: m.status,
+        requires_attention: m.requires_attention,
+      }));
+  }, [markers]);
 
   const markersByCategory = useMemo(() => {
     const grouped: Partial<Record<MarkerCategory, PatientMarker[]>> = {};
@@ -253,6 +183,16 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
     setRightTab('details');
     setShowPopover(true);
   }, []);
+
+  /** When a marker dot on the 3D overlay is clicked, find the full marker and select it */
+  const handleOverlayMarkerClick = useCallback((markerId: string) => {
+    const found = markers.find((m) => m.id === markerId);
+    if (found) {
+      setSelectedMarker(found);
+      setRightTab('details');
+      setShowPopover(true);
+    }
+  }, [markers]);
 
   const handleConfirmAll = useCallback(async () => {
     setConfirmingAll(true);
@@ -320,25 +260,14 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
     }
   }, [patientId]);
 
-  // Loading state
-  if (avatarLoading || markersLoading) {
+  // Loading state — only block for markers, not avatar DB record
+  // The 3D viewer works without the avatar DB record
+  if (markersLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-[#00857a] border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-slate-400">Loading patient avatar...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (avatarError || markersError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900">
-        <div className="text-center">
-          <p className="text-red-400 mb-2">Failed to load avatar</p>
-          <p className="text-sm text-slate-500">{avatarError || markersError}</p>
+          <p className="text-slate-400">Loading patient data...</p>
         </div>
       </div>
     );
@@ -444,55 +373,32 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
           </EACard>
         </div>
 
-        {/* CENTER PANEL: Avatar */}
+        {/* CENTER PANEL: 3D Clinical Anatomy */}
         <div className="col-span-5 print:col-span-4">
           <EACard className="h-full">
-            <EACardContent className="flex flex-col items-center py-4">
-              {/* View toggle */}
-              <div className="flex gap-2 mb-4 print:hidden">
-                <EAButton
-                  variant={view === 'front' ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => setView('front')}
-                >
-                  Front
-                </EAButton>
-                <EAButton
-                  variant={view === 'back' ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => setView('back')}
-                >
-                  Back
-                </EAButton>
-              </div>
-
-              {/* Avatar with markers and status badges */}
-              <div className="relative flex items-center justify-center w-full max-h-[500px]">
-                <div className="relative">
-                  <AvatarBody
-                    skinTone={skinTone}
-                    genderPresentation={genderPresentation}
-                    view={view}
-                    size="full"
-                    className="max-h-full"
-                  >
-                    {visibleMarkers.map((marker) => (
-                      <AvatarMarker
-                        key={marker.id}
-                        marker={marker}
-                        size="md"
-                        isPending={marker.status === 'pending_confirmation'}
-                        isHighlighted={selectedMarker?.id === marker.id}
-                        onClick={handleMarkerClick}
-                      />
-                    ))}
-                  </AvatarBody>
-                  <StatusBadgeRing markers={markers} size="lg" showLegend={false} />
-                </div>
-              </div>
+            <EACardContent className="p-0">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-[600px] bg-slate-950 rounded-lg">
+                    <div className="text-center">
+                      <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-sm text-slate-400">Loading 3D anatomy viewer...</p>
+                    </div>
+                  </div>
+                }
+              >
+                <AnatomyViewer
+                  patientId={patientId}
+                  patientName=""
+                  skinTone={skinTone}
+                  editable
+                  markers={anatomyMarkers}
+                  onMarkerClick={handleOverlayMarkerClick}
+                />
+              </Suspense>
 
               {/* Legend */}
-              <div className="mt-4">
+              <div className="p-3">
                 <MarkerLegend />
               </div>
             </EACardContent>
@@ -504,7 +410,7 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
           <EACard className="h-full">
             {/* Tab bar */}
             <div className="flex border-b border-slate-700 print:hidden">
-              {(['details', 'history', 'settings'] as RightPanelTab[]).map((tab) => (
+              {(['details', 'history', 'sdoh', 'settings'] as RightPanelTab[]).map((tab) => (
                 <button
                   key={tab}
                   className={cn(
@@ -515,7 +421,7 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
                   )}
                   onClick={() => setRightTab(tab)}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab === 'sdoh' ? 'SDOH' : tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </div>
@@ -612,6 +518,11 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
                   markerId={selectedMarker?.id ?? null}
                   markerName={selectedMarker?.display_name ?? null}
                 />
+              )}
+
+              {/* SDOH Tab */}
+              {rightTab === 'sdoh' && (
+                <SDOHBodyMapPanel patientId={patientId} />
               )}
 
               {/* Settings Tab */}

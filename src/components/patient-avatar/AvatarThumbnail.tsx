@@ -9,8 +9,6 @@
 import React, { useState, useMemo } from 'react';
 import { cn } from '../../lib/utils';
 import { PatientMarker, SkinTone, GenderPresentation, MarkerCategory, CATEGORY_COLORS } from '../../types/patientAvatar';
-import { AvatarBody } from './AvatarBody';
-import { AvatarMarker } from './AvatarMarker';
 import { StatusBadgeRing } from './StatusBadgeRing';
 import { getMarkerTypeDefinition } from './constants/markerTypeLibrary';
 
@@ -98,8 +96,8 @@ function isMarkerNew(marker: PatientMarker, since: Date): boolean {
 export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
   patientId: _patientId,
   patientName,
-  skinTone,
-  genderPresentation,
+  skinTone: _skinTone,
+  genderPresentation: _genderPresentation,
   markers,
   pendingCount = 0,
   allergyCount,
@@ -110,6 +108,16 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // Compute patient initials from name
+  const initials = useMemo(() => {
+    if (!patientName) return '?';
+    const parts = patientName.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0].substring(0, 2).toUpperCase();
+  }, [patientName]);
+
   // Parse showChangesSince into a Date
   const changeSinceDate = useMemo(() => {
     if (!showChangesSince) return null;
@@ -118,40 +126,29 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
       : showChangesSince;
   }, [showChangesSince]);
 
-  // Separate anatomical markers (on body) from status badges (around body)
-  const { anatomicalMarkers, statusBadgeMarkers, newMarkersCount, newMarkerIds } = useMemo(() => {
-    const anatomical: PatientMarker[] = [];
+  // Separate status badges for ring display, count new markers
+  const { statusBadgeMarkers, newMarkersCount } = useMemo(() => {
     const badges: PatientMarker[] = [];
-    const newIds = new Set<string>();
     let newCount = 0;
 
     for (const marker of markers) {
       if (!marker.is_active || marker.status === 'rejected') continue;
 
-      // Track new markers
       if (changeSinceDate && isMarkerNew(marker, changeSinceDate)) {
         newCount++;
-        newIds.add(marker.id);
       }
 
       const typeDef = getMarkerTypeDefinition(marker.marker_type);
       if (typeDef?.is_status_badge) {
         badges.push(marker);
-      } else {
-        anatomical.push(marker);
       }
     }
 
     return {
-      anatomicalMarkers: anatomical,
       statusBadgeMarkers: badges,
       newMarkersCount: newCount,
-      newMarkerIds: newIds,
     };
   }, [markers, changeSinceDate]);
-
-  // Filter to front view anatomical markers
-  const frontMarkers = anatomicalMarkers.filter((m) => m.body_view === 'front');
 
   const counts = getMarkerCounts(markers);
   const totalMarkers = markers.filter((m) => m.is_active && m.status !== 'rejected').length;
@@ -178,27 +175,22 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
       }}
       aria-label={`View ${patientName || 'patient'} avatar - ${totalMarkers} markers`}
     >
-      {/* Avatar Body with Markers */}
-      <div className="relative w-[100px] h-[160px]">
-        <AvatarBody
-          skinTone={skinTone}
-          genderPresentation={genderPresentation}
-          view="front"
-          size="thumbnail"
+      {/* Clinical Initials Avatar */}
+      <div className="relative w-[64px] h-[64px]">
+        <div
+          className={cn(
+            'w-[64px] h-[64px] rounded-full flex items-center justify-center',
+            'bg-gradient-to-br from-teal-600 to-teal-800 border-2 border-teal-500/40',
+            'shadow-lg shadow-teal-900/30',
+            totalMarkers > 0 && counts.critical > 0 && 'ring-2 ring-red-500/60 ring-offset-2 ring-offset-slate-800',
+          )}
         >
-          {/* Render anatomical markers on the body */}
-          {frontMarkers.slice(0, 10).map((marker) => (
-            <AvatarMarker
-              key={marker.id}
-              marker={marker}
-              size="sm"
-              isPending={marker.status === 'pending_confirmation'}
-              isHighlighted={newMarkerIds.has(marker.id)}
-            />
-          ))}
-        </AvatarBody>
+          <span className="text-lg font-bold text-white leading-none select-none">
+            {initials}
+          </span>
+        </div>
 
-        {/* Status badges around the body */}
+        {/* Status badges around the circle */}
         {statusBadgeMarkers.length > 0 && (
           <StatusBadgeRing
             markers={statusBadgeMarkers}
@@ -208,10 +200,19 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
           />
         )}
 
-        {/* More markers indicator */}
-        {frontMarkers.length > 10 && (
-          <div className="absolute bottom-2 right-2 text-xs bg-slate-900/80 text-slate-300 px-1.5 py-0.5 rounded-sm">
-            +{frontMarkers.length - 10}
+        {/* Marker count indicator (bottom-right corner) */}
+        {totalMarkers > 0 && (
+          <div className={cn(
+            'absolute -bottom-1 -right-1 min-w-[20px] h-[20px]',
+            'flex items-center justify-center rounded-full text-xs font-bold',
+            'border-2 border-slate-800',
+            counts.critical > 0
+              ? 'bg-red-500 text-white'
+              : counts.moderate > 0
+                ? 'bg-amber-500 text-white'
+                : 'bg-slate-600 text-slate-200',
+          )}>
+            {totalMarkers}
           </div>
         )}
       </div>

@@ -33,17 +33,19 @@ export default defineConfig({
     entries: ['index.html'],
     // Exclude packages that have Node.js conditional imports
     // bcryptjs checks for crypto at runtime and works fine in browser
-    exclude: ['bcryptjs'],
+    // cql-exec-fhir requires 'fs' at import time — excluded so esbuild skips it
+    exclude: ['bcryptjs', 'cql-exec-fhir', 'cql-execution'],
   },
 
   server: {
-    port: 3000,
-    open: true,
-    // Codespaces support
+    port: 3100,
+    open: !process.env.CODESPACES,
     host: true,
-    hmr: {
-      clientPort: process.env.CODESPACES ? 443 : undefined,
-    },
+    hmr: process.env.CODESPACES ? {
+      clientPort: 443,
+      protocol: 'wss',
+    } : undefined,
+    allowedHosts: 'all',
   },
 
   build: {

@@ -139,68 +139,70 @@ export const PatientAvatar: React.FC<PatientAvatarContainerProps> = ({
     [editingMarker, createMarker, updateMarker]
   );
 
-  // Loading state
-  if (loading && markers.length === 0) {
-    return (
-      <div
-        className={cn(
-          'inline-flex items-center justify-center',
-          'w-[116px] h-[192px]',
-          'bg-slate-800/50 border border-slate-700 rounded-lg',
-          'animate-pulse',
-          className
-        )}
-      >
-        <svg
-          className="w-8 h-8 text-slate-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+  // Loading/error states — only block expanded mode
+  // Compact mode (initials thumbnail) works without database avatar data
+  if (mode !== 'compact') {
+    if (loading && markers.length === 0) {
+      return (
+        <div
+          className={cn(
+            'inline-flex items-center justify-center',
+            'w-[116px] h-[192px]',
+            'bg-slate-800/50 border border-slate-700 rounded-lg',
+            'animate-pulse',
+            className
+          )}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
-      </div>
-    );
-  }
+          <svg
+            className="w-8 h-8 text-slate-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        </div>
+      );
+    }
 
-  // Error state
-  if (error && markers.length === 0) {
-    return (
-      <div
-        className={cn(
-          'inline-flex flex-col items-center justify-center gap-2 p-4',
-          'w-[116px] h-[192px]',
-          'bg-slate-800/50 border border-red-500/30 rounded-lg',
-          className
-        )}
-      >
-        <svg
-          className="w-6 h-6 text-red-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+    if (error && markers.length === 0) {
+      return (
+        <div
+          className={cn(
+            'inline-flex flex-col items-center justify-center gap-2 p-4',
+            'w-[116px] h-[192px]',
+            'bg-slate-800/50 border border-red-500/30 rounded-lg',
+            className
+          )}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <span className="text-xs text-red-400 text-center">Load failed</span>
-        <button
-          className="text-xs text-[#00857a] hover:underline"
-          onClick={refreshMarkers}
-        >
-          Retry
-        </button>
-      </div>
-    );
+          <svg
+            className="w-6 h-6 text-red-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span className="text-xs text-red-400 text-center">Load failed</span>
+          <button
+            className="text-xs text-[#00857a] hover:underline"
+            onClick={refreshMarkers}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
   }
 
   return (
