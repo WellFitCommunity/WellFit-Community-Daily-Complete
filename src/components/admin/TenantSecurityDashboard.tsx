@@ -22,7 +22,7 @@ import { auditLogger } from '../../services/auditLogger';
 interface SecurityMetric {
   label: string;
   value: number | string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   bgColor: string;
 }
@@ -153,7 +153,7 @@ export const TenantSecurityDashboard: React.FC = () => {
     }
   };
 
-  const updateMetric = (label: string, value: number | string, icon: React.ElementType, color: string, bgColor: string) => {
+  const updateMetric = (label: string, value: number | string, icon: React.ComponentType<{ className?: string }>, color: string, bgColor: string) => {
     setMetrics(prev => {
       const existing = prev.findIndex(m => m.label === label);
       const newMetric = { label, value, icon, color, bgColor };

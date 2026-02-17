@@ -24,6 +24,7 @@ import {
   Hospital,
   Stethoscope,
   Activity,
+  type LucideIcon,
 } from 'lucide-react';
 import { FacilityService } from '../../services/facilityService';
 import { supabase } from '../../lib/supabaseClient';
@@ -37,7 +38,7 @@ import type {
 import { getFacilityTypeLabel } from '../../types/facility';
 
 // Facility type icons
-const facilityTypeIcons: Record<FacilityType, React.ElementType> = {
+const facilityTypeIcons: Record<FacilityType, LucideIcon> = {
   hospital: Hospital,
   clinic: Stethoscope,
   urgent_care: Activity,

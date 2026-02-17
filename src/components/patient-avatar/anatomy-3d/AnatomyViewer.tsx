@@ -21,7 +21,7 @@ import * as THREE from 'three';
 import type { AnatomySystem, AnatomyViewerProps } from './types';
 import { AnatomyLayer } from './AnatomyLayer';
 import { LayerPanel } from './LayerPanel';
-import { MarkerOverlay } from './MarkerOverlay';
+import { Marker3DGroup } from './Marker3D';
 import { useAnatomyLayers } from './useAnatomyLayers';
 import { SKIN_TONE_COLORS } from '../constants/skinTones';
 import type { SkinTone } from '../../../types/patientAvatar';
@@ -54,12 +54,18 @@ function AnatomyScene({
   layers,
   selectedSystem,
   skinToneColor,
+  markers = [],
+  selectedMarkerId,
   onMeshClick,
+  onMarkerClick,
 }: {
   layers: ReturnType<typeof useAnatomyLayers>;
   selectedSystem: AnatomySystem | null;
   skinToneColor?: string;
+  markers?: AnatomyViewerProps['markers'];
+  selectedMarkerId?: string | null;
   onMeshClick: (meshName: string, system: AnatomySystem) => void;
+  onMarkerClick?: (markerId: string) => void;
 }) {
   return (
     <>
@@ -101,6 +107,15 @@ function AnatomyScene({
               </Suspense>
             )
           )}
+
+          {/* 3D clinical markers — rotate with the body */}
+          {markers && markers.length > 0 && (
+            <Marker3DGroup
+              markers={markers}
+              onMarkerClick={onMarkerClick}
+              selectedMarkerId={selectedMarkerId}
+            />
+          )}
       </Center>
     </>
   );
@@ -126,6 +141,7 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
   const layers = useAnatomyLayers();
   const [selectedSystem, setSelectedSystem] = useState<AnatomySystem | null>(null);
   const [selectedMesh, setSelectedMesh] = useState<string | null>(null);
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
 
   // Resolve skin tone name to hex color for the 3D skin layer
   const skinToneColor = skinTone && skinTone in SKIN_TONE_COLORS
@@ -141,14 +157,22 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
     [onStructureSelect]
   );
 
+  const handleMarkerClick = useCallback(
+    (markerId: string) => {
+      setSelectedMarkerId(markerId);
+      onMarkerClick?.(markerId);
+    },
+    [onMarkerClick]
+  );
+
   return (
     <div
       className={`relative flex ${compact ? 'h-64' : 'h-[calc(100vh-10rem)] min-h-[500px]'} bg-slate-950 rounded-lg overflow-hidden ${className ?? ''}`}
     >
-      {/* 3D Canvas */}
+      {/* 3D Canvas — camera closer (fov 35, distance 3.5) for larger body */}
       <div className="flex-1 relative">
         <Canvas
-          camera={{ position: [0, 1, 5], fov: 45 }}
+          camera={{ position: [0, 0.85, 3.5], fov: 35 }}
           gl={{ antialias: true, alpha: false }}
           dpr={[1, 2]}
           scene={{ background: SCENE_BG }}
@@ -158,15 +182,13 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
               layers={layers}
               selectedSystem={selectedSystem}
               skinToneColor={skinToneColor}
+              markers={markers}
+              selectedMarkerId={selectedMarkerId}
               onMeshClick={handleMeshClick}
+              onMarkerClick={handleMarkerClick}
             />
           </Suspense>
         </Canvas>
-
-        {/* Clinical marker overlay (PICC lines, wounds, devices) */}
-        {markers.length > 0 && (
-          <MarkerOverlay markers={markers} onMarkerClick={onMarkerClick} />
-        )}
 
         {/* Patient info overlay */}
         {patientName && (

@@ -15,6 +15,7 @@ export { AnatomyViewer, default as AnatomyViewerDefault } from './AnatomyViewer'
 export { AnatomyLayer, preloadAnatomyModels } from './AnatomyLayer';
 export { LayerPanel } from './LayerPanel';
 export { MarkerOverlay } from './MarkerOverlay';
+export { Marker3DGroup } from './Marker3D';
 export { useAnatomyLayers } from './useAnatomyLayers';
 export { ANATOMY_LAYERS, SYSTEM_PATTERNS, classifyMesh, getLayerConfig, getSortedLayers } from './anatomyLayers';
 export type {

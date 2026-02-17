@@ -99,7 +99,7 @@ export const SMART_SCOPES = [
   { value: 'offline_access', label: 'Offline Access', description: 'Refresh tokens for long-term access' },
 ] as const;
 
-export const appTypeIcons: Record<string, React.ElementType> = {
+export const appTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   patient: Smartphone,
   provider: Stethoscope,
   system: Server,
