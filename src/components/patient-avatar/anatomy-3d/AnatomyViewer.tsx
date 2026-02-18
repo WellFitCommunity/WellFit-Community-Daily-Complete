@@ -202,10 +202,10 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
     <div
       className={`relative flex ${compact ? 'h-64' : 'h-[calc(100vh-10rem)] min-h-[500px]'} bg-slate-950 rounded-lg overflow-hidden ${className ?? ''}`}
     >
-      {/* 3D Canvas — camera closer (fov 35, distance 3.5) for larger body */}
+      {/* 3D Canvas — senior-friendly: larger default view (fov 28, distance 3.0) */}
       <div className="flex-1 relative">
         <Canvas
-          camera={{ position: [0, 0.85, 3.5], fov: 35 }}
+          camera={{ position: [0, 0.85, 3.0], fov: 28 }}
           gl={{ antialias: true, alpha: false }}
           dpr={[1, 2]}
           scene={{ background: SCENE_BG }}

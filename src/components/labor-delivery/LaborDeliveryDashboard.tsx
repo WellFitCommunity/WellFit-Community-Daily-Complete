@@ -4,11 +4,16 @@
  * Purpose: Comprehensive maternal-fetal management interface
  * Tabs: Pregnancy Overview, Prenatal Visits, Labor & Delivery, Newborn, Postpartum
  * Used by: /pregnancy-care route (clinical, protected)
+ *
+ * Patient context: Uses PatientContext for patient selection.
+ * Tenant resolution: Fetches tenant_id from user profile (established pattern).
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LaborDeliveryService } from '../../services/laborDelivery';
 import type { LDDashboardSummary } from '../../types/laborDelivery';
+import { usePatientContext } from '../../contexts/PatientContext';
+import { useUser, useSupabaseClient } from '../../contexts/AuthContext';
 import LDOverview from './LDOverview';
 import LDAlerts from './LDAlerts';
 import PrenatalTab from './PrenatalTab';
@@ -27,17 +32,36 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'postpartum', label: 'Postpartum' },
 ];
 
-const DEMO_PATIENT_ID = '00000000-0000-0000-0000-000000000000';
-const DEMO_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
-
 const LaborDeliveryDashboard: React.FC = () => {
+  const { selectedPatient, hasPatient, getPatientDisplayName } = usePatientContext();
+  const user = useUser();
+  const supabase = useSupabaseClient();
+
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [summary, setSummary] = useState<LDDashboardSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [tenantId, setTenantId] = useState<string | null>(null);
+
+  // Resolve tenant_id from user's profile (established pattern)
+  useEffect(() => {
+    const fetchTenantId = async () => {
+      if (!user?.id) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .single();
+      setTenantId((profile as { tenant_id: string } | null)?.tenant_id ?? null);
+    };
+    fetchTenantId();
+  }, [user?.id, supabase]);
+
+  const patientId = selectedPatient?.id ?? null;
 
   const loadDashboard = useCallback(async () => {
+    if (!patientId || !tenantId) return;
     setLoading(true);
-    const result = await LaborDeliveryService.getDashboardSummary(DEMO_PATIENT_ID, DEMO_TENANT_ID);
+    const result = await LaborDeliveryService.getDashboardSummary(patientId, tenantId);
     if (result.success && result.data) {
       setSummary(result.data);
     } else {
@@ -55,11 +79,34 @@ const LaborDeliveryDashboard: React.FC = () => {
       });
     }
     setLoading(false);
-  }, []);
+  }, [patientId, tenantId]);
 
+  // Load dashboard when patient or tenant changes
   useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+    if (patientId && tenantId) {
+      loadDashboard();
+    } else {
+      setSummary(null);
+    }
+  }, [patientId, tenantId, loadDashboard]);
+
+  // No patient selected — prompt user to select one
+  if (!hasPatient) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Pregnancy Care</h1>
+          <p className="text-gray-600 mt-1">Maternal-fetal care management</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <p className="text-lg text-gray-600 mb-2">No patient selected</p>
+          <p className="text-sm text-gray-500">
+            Select a patient from the Patient Priority Board or Patient Chart to view their pregnancy care data.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -70,14 +117,18 @@ const LaborDeliveryDashboard: React.FC = () => {
     );
   }
 
+  const displayName = getPatientDisplayName();
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Pregnancy Care</h1>
-        <p className="text-gray-600 mt-1">Maternal-fetal care management</p>
+        <p className="text-gray-600 mt-1">
+          {displayName ? `${displayName} — Maternal-fetal care management` : 'Maternal-fetal care management'}
+        </p>
       </div>
 
-      <LDMetricsPanel tenantId={DEMO_TENANT_ID} />
+      {tenantId && <LDMetricsPanel tenantId={tenantId} />}
 
       {summary && summary.alerts.length > 0 && (
         <div className="mb-6">

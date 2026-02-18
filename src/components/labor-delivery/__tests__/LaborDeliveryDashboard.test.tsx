@@ -10,6 +10,39 @@ import LDAlerts from '../LDAlerts';
 import LDOverview from '../LDOverview';
 import type { LDDashboardSummary, LDAlert } from '../../../types/laborDelivery';
 
+// Mock PatientContext — provides selected patient
+const mockPatientContext = {
+  selectedPatient: { id: 'patient-123', firstName: 'Jane', lastName: 'Doe' },
+  hasPatient: true,
+  getPatientDisplayName: () => 'Doe, Jane',
+  selectPatient: vi.fn(),
+  clearPatient: vi.fn(),
+  recentPatients: [],
+  selectFromHistory: vi.fn(),
+  clearHistory: vi.fn(),
+  pendingPatientId: null,
+  pendingHistoryIds: [],
+  markPendingLoaded: vi.fn(),
+};
+
+vi.mock('../../../contexts/PatientContext', () => ({
+  usePatientContext: () => mockPatientContext,
+}));
+
+// Mock AuthContext — provides user and supabase client
+vi.mock('../../../contexts/AuthContext', () => ({
+  useUser: () => ({ id: 'user-abc' }),
+  useSupabaseClient: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: () => Promise.resolve({ data: { tenant_id: 'tenant-xyz' }, error: null }),
+        }),
+      }),
+    }),
+  }),
+}));
+
 vi.mock('../../../services/laborDelivery', () => ({
   LaborDeliveryService: {
     getDashboardSummary: vi.fn().mockResolvedValue({
@@ -100,6 +133,25 @@ describe('LaborDeliveryDashboard', () => {
 
     await user.click(screen.getByText('Postpartum'));
     expect(await screen.findByText('Delivery must be recorded first')).toBeInTheDocument();
+  });
+
+  it('shows no-patient-selected state when patient context is empty', async () => {
+    // Temporarily override patient context
+    mockPatientContext.hasPatient = false;
+    mockPatientContext.selectedPatient = null as ReturnType<typeof mockPatientContext.getPatientDisplayName> extends string ? never : null;
+
+    render(<LaborDeliveryDashboard />);
+    expect(await screen.findByText('No patient selected')).toBeInTheDocument();
+    expect(screen.getByText(/Select a patient/)).toBeInTheDocument();
+
+    // Restore for other tests
+    mockPatientContext.hasPatient = true;
+    mockPatientContext.selectedPatient = { id: 'patient-123', firstName: 'Jane', lastName: 'Doe' };
+  });
+
+  it('displays patient name in subtitle when patient is selected', async () => {
+    render(<LaborDeliveryDashboard />);
+    expect(await screen.findByText(/Doe, Jane/)).toBeInTheDocument();
   });
 });
 

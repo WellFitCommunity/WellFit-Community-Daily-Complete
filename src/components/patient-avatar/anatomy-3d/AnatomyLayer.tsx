@@ -59,7 +59,7 @@ export const AnatomyLayer: React.FC<AnatomyLayerProps> = ({
   onMeshClick,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF(`${MODEL_BASE}/${modelPath}`);
+  const { scene } = useGLTF(`${MODEL_BASE}/${modelPath}`, true);
   const layerConfig = getLayerConfig(system);
 
   // Clone the scene so each layer instance is independent
@@ -146,6 +146,6 @@ export function preloadAnatomyModels(): void {
     'anatomy_skin.glb',
   ];
   for (const model of models) {
-    useGLTF.preload(`${MODEL_BASE}/${model}`);
+    useGLTF.preload(`${MODEL_BASE}/${model}`, true);
   }
 }
