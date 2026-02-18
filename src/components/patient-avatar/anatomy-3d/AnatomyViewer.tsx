@@ -18,7 +18,7 @@ import React, { Suspense, useState, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Center } from '@react-three/drei';
 import * as THREE from 'three';
-import type { AnatomySystem, AnatomyViewerProps } from './types';
+import type { AnatomySystem, AnatomyGender, AnatomyViewerProps } from './types';
 import { AnatomyLayer } from './AnatomyLayer';
 import { LayerPanel } from './LayerPanel';
 import { Marker3DGroup } from './Marker3D';
@@ -29,15 +29,42 @@ import type { SkinTone } from '../../../types/patientAvatar';
 /** Dark background color for the 3D scene */
 const SCENE_BG = new THREE.Color('#0f172a'); // slate-900
 
-/** GLB file paths mapped to body systems */
-const SYSTEM_MODELS: Record<AnatomySystem, string> = {
-  skeletal: 'anatomy_skeletal.glb',
-  muscular: 'anatomy_muscular.glb',
-  organs: 'anatomy_organs.glb',
-  vascular: 'anatomy_vascular.glb',
-  nervous: 'anatomy_nervous.glb',
-  skin: 'anatomy_skin.glb',
+/**
+ * GLB file paths per gender variant.
+ * When gender-specific models are available, add entries for 'male' and 'female'.
+ * All variants fall back to the neutral models until gendered assets exist.
+ */
+const GENDER_MODELS: Record<AnatomyGender, Record<AnatomySystem, string>> = {
+  neutral: {
+    skeletal: 'anatomy_skeletal.glb',
+    muscular: 'anatomy_muscular.glb',
+    organs: 'anatomy_organs.glb',
+    vascular: 'anatomy_vascular.glb',
+    nervous: 'anatomy_nervous.glb',
+    skin: 'anatomy_skin.glb',
+  },
+  male: {
+    skeletal: 'anatomy_skeletal.glb',
+    muscular: 'anatomy_muscular.glb',
+    organs: 'anatomy_organs.glb',
+    vascular: 'anatomy_vascular.glb',
+    nervous: 'anatomy_nervous.glb',
+    skin: 'anatomy_skin.glb',
+  },
+  female: {
+    skeletal: 'anatomy_skeletal.glb',
+    muscular: 'anatomy_muscular.glb',
+    organs: 'anatomy_organs.glb',
+    vascular: 'anatomy_vascular.glb',
+    nervous: 'anatomy_nervous.glb',
+    skin: 'anatomy_skin.glb',
+  },
 };
+
+/** Resolve model set for the given gender, falling back to neutral */
+function getSystemModels(gender: AnatomyGender = 'neutral'): Record<AnatomySystem, string> {
+  return GENDER_MODELS[gender] ?? GENDER_MODELS.neutral;
+}
 
 /** Loading fallback shown while GLB files download */
 function LoadingFallback() {
@@ -54,6 +81,7 @@ function AnatomyScene({
   layers,
   selectedSystem,
   skinToneColor,
+  systemModels,
   markers = [],
   selectedMarkerId,
   onMeshClick,
@@ -62,6 +90,7 @@ function AnatomyScene({
   layers: ReturnType<typeof useAnatomyLayers>;
   selectedSystem: AnatomySystem | null;
   skinToneColor?: string;
+  systemModels: Record<AnatomySystem, string>;
   markers?: AnatomyViewerProps['markers'];
   selectedMarkerId?: string | null;
   onMeshClick: (meshName: string, system: AnatomySystem) => void;
@@ -90,9 +119,9 @@ function AnatomyScene({
         target={[0, 0.8, 0]}
       />
 
-      {/* Body system layers — scale up for visibility */}
+      {/* Body system layers — gender-aware model selection */}
       <Center disableY>
-          {(Object.entries(SYSTEM_MODELS) as [AnatomySystem, string][]).map(
+          {(Object.entries(systemModels) as [AnatomySystem, string][]).map(
             ([system, modelPath]) => (
               <Suspense key={system} fallback={null}>
                 <AnatomyLayer
@@ -131,6 +160,7 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
   patientId: _patientId,
   patientName,
   skinTone,
+  gender = 'neutral',
   editable = true,
   compact = false,
   markers = [],
@@ -142,6 +172,9 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
   const [selectedSystem, setSelectedSystem] = useState<AnatomySystem | null>(null);
   const [selectedMesh, setSelectedMesh] = useState<string | null>(null);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+
+  // Resolve gender-specific model file set
+  const systemModels = getSystemModels(gender);
 
   // Resolve skin tone name to hex color for the 3D skin layer
   const skinToneColor = skinTone && skinTone in SKIN_TONE_COLORS
@@ -182,6 +215,7 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
               layers={layers}
               selectedSystem={selectedSystem}
               skinToneColor={skinToneColor}
+              systemModels={systemModels}
               markers={markers}
               selectedMarkerId={selectedMarkerId}
               onMeshClick={handleMeshClick}
@@ -192,8 +226,13 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
 
         {/* Patient info overlay */}
         {patientName && (
-          <div className="absolute top-2 left-2 bg-slate-900/80 text-white text-sm px-3 py-1 rounded backdrop-blur-sm">
-            {patientName}
+          <div className="absolute top-2 left-2 bg-slate-900/80 text-white text-sm px-3 py-1 rounded backdrop-blur-sm flex items-center gap-2">
+            <span>{patientName}</span>
+            {gender !== 'neutral' && (
+              <span className="text-[10px] uppercase tracking-wider text-slate-400 border border-slate-600 px-1.5 py-0.5 rounded">
+                {gender}
+              </span>
+            )}
           </div>
         )}
 

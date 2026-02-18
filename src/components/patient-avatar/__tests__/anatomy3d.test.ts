@@ -128,15 +128,15 @@ describe('ANATOMY_LAYERS', () => {
     }
   });
 
-  it('defaults skin and skeletal as visible', () => {
+  it('defaults only skeletal as visible (skin hidden to avoid flash on load)', () => {
     const skin = ANATOMY_LAYERS.find(l => l.system === 'skin');
     const skeletal = ANATOMY_LAYERS.find(l => l.system === 'skeletal');
-    expect(skin?.defaultVisible).toBe(true);
+    expect(skin?.defaultVisible).toBe(false);
     expect(skeletal?.defaultVisible).toBe(true);
   });
 
-  it('defaults muscular, organs, vascular, nervous as hidden', () => {
-    const hidden = ['muscular', 'organs', 'vascular', 'nervous'] as AnatomySystem[];
+  it('defaults muscular, organs, vascular, nervous, skin as hidden', () => {
+    const hidden = ['muscular', 'organs', 'vascular', 'nervous', 'skin'] as AnatomySystem[];
     for (const sys of hidden) {
       const layer = ANATOMY_LAYERS.find(l => l.system === sys);
       expect(layer?.defaultVisible).toBe(false);
@@ -189,7 +189,7 @@ describe('useAnatomyLayers', () => {
     const { result } = renderHook(() => useAnatomyLayers());
 
     expect(result.current.layers).toHaveLength(6);
-    expect(result.current.isVisible('skin')).toBe(true);
+    expect(result.current.isVisible('skin')).toBe(false);
     expect(result.current.isVisible('skeletal')).toBe(true);
     expect(result.current.isVisible('muscular')).toBe(false);
   });
@@ -254,14 +254,14 @@ describe('useAnatomyLayers', () => {
   it('resets layers to defaults', () => {
     const { result } = renderHook(() => useAnatomyLayers());
 
-    // Modify state
+    // Modify state (skin defaults to hidden, toggle makes it visible)
     act(() => {
       result.current.toggleLayer('skin');
       result.current.toggleLayer('muscular');
       result.current.setOpacity('skeletal', 0.3);
     });
 
-    expect(result.current.isVisible('skin')).toBe(false);
+    expect(result.current.isVisible('skin')).toBe(true);
     expect(result.current.isVisible('muscular')).toBe(true);
 
     // Reset
@@ -269,7 +269,7 @@ describe('useAnatomyLayers', () => {
       result.current.resetLayers();
     });
 
-    expect(result.current.isVisible('skin')).toBe(true);
+    expect(result.current.isVisible('skin')).toBe(false);
     expect(result.current.isVisible('muscular')).toBe(false);
     expect(result.current.getOpacity('skeletal')).toBe(1.0);
   });
@@ -291,8 +291,8 @@ describe('useAnatomyLayers', () => {
   it('getOpacity returns default for unmodified layers', () => {
     const { result } = renderHook(() => useAnatomyLayers());
 
-    // Skin default is 0.85 (clearly visible; user can lower via slider)
-    expect(result.current.getOpacity('skin')).toBe(0.85);
+    // Skin default is 0.25 (semi-transparent so inner layers are visible when toggled on)
+    expect(result.current.getOpacity('skin')).toBe(0.25);
     // Skeletal default is 1.0
     expect(result.current.getOpacity('skeletal')).toBe(1.0);
   });

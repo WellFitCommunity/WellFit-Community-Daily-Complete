@@ -16,8 +16,10 @@ export const ANATOMY_LAYERS: readonly AnatomyLayerConfig[] = [
     system: 'skin',
     label: 'Skin & Surface',
     color: '#D4A574',    // Visible warm skin tone
-    defaultVisible: true,
-    defaultOpacity: 0.85, // High enough to be clearly visible; user can lower via slider
+    defaultVisible: false, // Hidden by default — skeleton is the primary clinical visual.
+                           // Skin loads fastest (126KB) and briefly shows as a ghostly
+                           // silhouette before skeleton (1.3MB) loads. Toggle on via panel.
+    defaultOpacity: 0.25,
     order: 1,
   },
   {

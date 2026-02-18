@@ -13,20 +13,20 @@ import {
   PatientMarker,
   MarkerCategory,
   MarkerDetails,
-  SkinTone,
-  GenderPresentation,
   BodyView,
   CATEGORY_LABELS,
   CATEGORY_COLORS,
 } from '../../types/patientAvatar';
 import { MARKER_TYPE_GROUPS, getMarkerTypeDefinition } from './constants/markerTypeLibrary';
-import { AvatarBody } from './AvatarBody';
+import { BODY_REGION_COORDINATES } from './anatomy-3d/anatomyCoordinates';
 
 interface MarkerFormProps {
   patientId: string;
   existingMarker?: PatientMarker;
-  skinTone: SkinTone;
-  genderPresentation: GenderPresentation;
+  /** @deprecated No longer used — body region dropdown replaced the 2D avatar position picker */
+  skinTone?: string;
+  /** @deprecated No longer used — body region dropdown replaced the 2D avatar position picker */
+  genderPresentation?: string;
   onSave: (marker: Omit<PatientMarker, 'id' | 'patient_id' | 'created_at' | 'updated_at'>) => Promise<void>;
   onClose: () => void;
 }
@@ -47,11 +47,29 @@ const FormSection: React.FC<{
 /**
  * MarkerForm Component
  */
+/** Body region groups for the dropdown, derived from BODY_REGION_COORDINATES */
+const BODY_REGION_GROUPS = [
+  { label: 'Head & Neck', regions: ['head_top', 'brain', 'face', 'head_back', 'neck'] },
+  { label: 'Chest', regions: ['chest_left', 'chest_right', 'heart'] },
+  { label: 'Abdomen', regions: ['abdomen_upper', 'abdomen', 'abdomen_lower', 'abdomen_right', 'abdomen_left', 'suprapubic'] },
+  { label: 'Back', regions: ['upper_back', 'back', 'lower_back_right', 'lower_back_left', 'lumbar_spine', 'spine_lower', 'sacrum'] },
+  { label: 'Shoulders', regions: ['shoulder_left', 'shoulder_right'] },
+  { label: 'Right Arm', regions: ['arm_upper_right', 'arm_lower_right', 'wrist_right', 'hand_right'] },
+  { label: 'Left Arm', regions: ['arm_upper_left', 'arm_lower_left', 'left_arm', 'wrist_left', 'hand_left', 'left_hand'] },
+  { label: 'Right Leg', regions: ['thigh_right', 'knee_right', 'shin_right', 'ankle_right', 'foot_right'] },
+  { label: 'Left Leg', regions: ['thigh_left', 'knee_left', 'shin_left', 'ankle_left', 'foot_left', 'left_foot'] },
+  { label: 'Pelvis', regions: ['groin_right', 'groin_left'] },
+  { label: 'Obstetric', regions: ['uterus_fundus', 'uterus_body', 'uterus_lower'] },
+] as const;
+
+/** Human-readable label from region key */
+function regionLabel(region: string): string {
+  return region.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export const MarkerForm: React.FC<MarkerFormProps> = ({
   patientId: _patientId,
   existingMarker,
-  skinTone,
-  genderPresentation,
   onSave,
   onClose,
 }) => {
@@ -106,18 +124,20 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
     }
   }, []);
 
-  // Handle position click on avatar
-  const handleAvatarClick = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
-      const svg = e.currentTarget;
-      const rect = svg.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100 / 1.6; // Adjust for viewBox height
-      setPositionX(Math.round(x * 10) / 10);
-      setPositionY(Math.round(y * 10) / 10);
-    },
-    []
-  );
+  // Handle body region selection — auto-set coordinates from the coordinate map
+  const handleBodyRegionSelect = useCallback((region: string) => {
+    setBodyRegion(region);
+    const coords = BODY_REGION_COORDINATES[region];
+    if (coords) {
+      // Convert 3D coords back to percentage approximation for storage
+      const x = Math.round((coords[0] / 0.6 * 100 + 50) * 10) / 10;
+      const y = Math.round(((1.7 - coords[1]) / 1.7 * 100) * 10) / 10;
+      setPositionX(x);
+      setPositionY(y);
+      // Determine front/back from Z coordinate
+      setBodyView(coords[2] >= 0 ? 'front' : 'back');
+    }
+  }, []);
 
   // Handle save
   const handleSave = useCallback(async () => {
@@ -210,85 +230,49 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
             {isEditing ? 'Edit Marker' : 'Add New Marker'}
           </h3>
           <p className="text-sm text-slate-400">
-            {isEditing ? 'Update marker details' : 'Click on the body to set position'}
+            {isEditing ? 'Update marker details' : 'Select a body region and marker type'}
           </p>
         </EACardHeader>
 
         {/* Content */}
         <EACardContent className="flex-1 overflow-y-auto">
-          <div className="flex gap-6">
-            {/* Left side - Avatar with position picker */}
-            <div className="shrink-0 w-48">
-              <FormSection title="Position">
-                {/* View toggle */}
-                <div className="flex gap-1 mb-2">
-                  <button
-                    className={cn(
-                      'flex-1 px-2 py-1 text-xs rounded-sm',
-                      bodyView === 'front'
-                        ? 'bg-[#00857a] text-white'
-                        : 'bg-slate-700 text-slate-300'
-                    )}
-                    onClick={() => setBodyView('front')}
-                  >
-                    Front
-                  </button>
-                  <button
-                    className={cn(
-                      'flex-1 px-2 py-1 text-xs rounded-sm',
-                      bodyView === 'back'
-                        ? 'bg-[#00857a] text-white'
-                        : 'bg-slate-700 text-slate-300'
-                    )}
-                    onClick={() => setBodyView('back')}
-                  >
-                    Back
-                  </button>
+          <div className="space-y-4">
+            {/* Body Region & Position */}
+            <FormSection title="Body Region">
+              <select
+                value={bodyRegion}
+                onChange={(e) => handleBodyRegionSelect(e.target.value)}
+                className={cn(
+                  'w-full px-3 py-2 rounded-lg',
+                  'bg-slate-800 border border-slate-700',
+                  'text-white text-sm',
+                  'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50'
+                )}
+              >
+                <option value="">Select body region...</option>
+                {BODY_REGION_GROUPS.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.regions
+                      .filter((r) => r in BODY_REGION_COORDINATES)
+                      .map((region) => (
+                        <option key={region} value={region}>
+                          {regionLabel(region)}
+                        </option>
+                      ))}
+                  </optgroup>
+                ))}
+              </select>
+              {bodyRegion && (
+                <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                  <span>View: <span className="text-slate-300 capitalize">{bodyView}</span></span>
+                  <span>X: {positionX.toFixed(1)}%</span>
+                  <span>Y: {positionY.toFixed(1)}%</span>
                 </div>
+              )}
+            </FormSection>
 
-                {/* Avatar with click-to-position */}
-                <div className="bg-slate-900 rounded-lg p-2 border border-slate-700">
-                  <AvatarBody
-                    skinTone={skinTone}
-                    genderPresentation={genderPresentation}
-                    view={bodyView}
-                    size="thumbnail"
-                    onClick={handleAvatarClick}
-                    className="cursor-crosshair"
-                  >
-                    {/* Current position marker */}
-                    <circle
-                      cx={positionX}
-                      cy={positionY * 1.6}
-                      r="4"
-                      fill={
-                        category === 'critical'
-                          ? '#ef4444'
-                          : category === 'moderate'
-                          ? '#eab308'
-                          : category === 'neurological'
-                          ? '#f97316'
-                          : category === 'chronic'
-                          ? '#22c55e'
-                          : category === 'monitoring'
-                          ? '#a855f7'
-                          : '#3b82f6'
-                      }
-                      stroke="white"
-                      strokeWidth="1"
-                    />
-                  </AvatarBody>
-                </div>
-
-                {/* Position display */}
-                <div className="text-xs text-slate-400 text-center mt-1">
-                  X: {positionX.toFixed(1)}%, Y: {positionY.toFixed(1)}%
-                </div>
-              </FormSection>
-            </div>
-
-            {/* Right side - Form fields */}
-            <div className="flex-1 space-y-4">
+            {/* Form fields */}
+            <div className="space-y-4">
               {/* Category */}
               <FormSection title="Category">
                 <div className="grid grid-cols-3 gap-2">

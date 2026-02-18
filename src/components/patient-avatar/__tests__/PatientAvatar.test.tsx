@@ -5,12 +5,18 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { PatientAvatar } from '../PatientAvatar';
 import { AvatarBody } from '../AvatarBody';
 import { AvatarMarker } from '../AvatarMarker';
 import { AvatarThumbnail } from '../AvatarThumbnail';
 import { PatientMarker } from '../../../types/patientAvatar';
+
+// Mock react-router-dom
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}));
 
 // Mock realtime subscription
 vi.mock('../../../hooks/useRealtimeSubscription', () => ({
@@ -327,7 +333,11 @@ describe('AvatarThumbnail', () => {
 });
 
 describe('PatientAvatar (Integration)', () => {
-  it('renders in compact mode by default', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+  });
+
+  it('renders in compact mode with marker count', () => {
     render(
       <PatientAvatar
         patientId="test-patient"
@@ -339,7 +349,7 @@ describe('PatientAvatar (Integration)', () => {
     expect(screen.getByText('2 markers')).toBeInTheDocument();
   });
 
-  it('expands to full view when thumbnail clicked', async () => {
+  it('navigates to 3D anatomy viewer when thumbnail clicked', () => {
     render(
       <PatientAvatar
         patientId="test-patient"
@@ -351,13 +361,11 @@ describe('PatientAvatar (Integration)', () => {
     const thumbnail = screen.getByRole('button', { name: /view.*avatar/i });
     fireEvent.click(thumbnail);
 
-    // Should show expanded view
-    await waitFor(() => {
-      expect(screen.getByText('John Doe - Body Map')).toBeInTheDocument();
-    });
+    // Should navigate to the 3D anatomy viewer page
+    expect(mockNavigate).toHaveBeenCalledWith('/patient-avatar/test-patient');
   });
 
-  it('starts in expanded mode when specified', () => {
+  it('always renders as compact thumbnail regardless of initialMode prop', () => {
     render(
       <PatientAvatar
         patientId="test-patient"
@@ -366,6 +374,7 @@ describe('PatientAvatar (Integration)', () => {
       />
     );
 
-    expect(screen.getByText('Jane Doe - Body Map')).toBeInTheDocument();
+    // Should still show the compact thumbnail (expanded mode removed in favor of 3D viewer page)
+    expect(screen.getByText('2 markers')).toBeInTheDocument();
   });
 });

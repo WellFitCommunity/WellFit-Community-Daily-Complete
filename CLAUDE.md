@@ -21,6 +21,7 @@
 | 10 | **No CORS/CSP wildcards** - use explicit `ALLOWED_ORIGINS` only | `frame-ancestors *`, `connect-src *`, `WHITE_LABEL_MODE=true` |
 | 11 | **Report verification counts** - typecheck/lint/test pass counts before commit | "I checked" without numbers |
 | 12 | **No god files** - 600 line max per file, decompose don't degrade | Any file exceeding 600 lines |
+| 13 | **Visual acceptance required** - new UI/3D features need Maria's eyes before "done" | Declaring visual work complete without screenshot/verification |
 
 ### Session Start Protocol — EVERY NEW SESSION
 
@@ -120,6 +121,7 @@ This codebase eliminated 1,400+ `any` violations and 1,671 total lint warnings i
 | Creating god files (600+ lines) | Decompose into focused modules | Bolting features onto one file is easiest path |
 | Claiming refactor was done without verifying | Check `wc -l` on the actual file | AI sees intent ("I planned to") as completion ("I did it") |
 | Sub-agents ignoring CLAUDE.md rules | Sub-Agent Governance: same rules, no exceptions | Lead agent delegates but forgets to enforce rules on workers |
+| Declaring visual work "done" without showing it | Visual Acceptance Checkpoint: Maria must see it rendered | AI cannot judge visual quality from code — SVG paths that compile can still look like a gingerbread man |
 
 **The STOP AND ASK protocol is the highest-value rule.** Most AI mistakes stem from continuing when uncertain rather than asking.
 
@@ -667,6 +669,18 @@ npx supabase db push
 - Maintain responsive design principles
 - Preserve accessibility features
 - Test visual changes in the browser before considering complete
+
+### Visual Acceptance Checkpoint - NO EXCEPTIONS
+
+**No new UI component, 3D feature, or visual change is "done" until Maria has seen it rendered.**
+
+AI cannot judge visual quality from code alone. SVG paths, 3D models, animations, and layout changes MUST be visually verified before being declared complete.
+
+**Rules:**
+1. **New visual features require a screenshot or screen recording** before the feature is considered accepted
+2. **3D/WebGL assets must be verified as separated, named meshes** — if a downloaded model is one single mesh, it is not layerable and must be rejected
+3. **Do NOT assume visual quality from code review** — a component that compiles and passes tests can still look terrible
+4. **If you cannot show it, it is not done** — tell Maria what needs visual verification and let her check it in the browser
 
 ---
 

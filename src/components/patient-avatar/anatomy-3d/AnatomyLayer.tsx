@@ -33,6 +33,22 @@ interface AnatomyLayerProps {
 /** Model base path */
 const MODEL_BASE = '/models/anatomy';
 
+/**
+ * Mesh name patterns to exclude from rendering.
+ * Hair is excluded because clinical anatomy models are standardly
+ * shown hairless — avoids cultural bias and matches medical convention.
+ */
+const EXCLUDED_MESH_PATTERNS = [
+  'hair', 'scalp_hair', 'eyebrow', 'eyelash', 'beard', 'mustache',
+  'body_hair', 'pubic', 'axillary_hair', 'chest_hair',
+];
+
+/** Check if a mesh should be excluded from rendering */
+function isMeshExcluded(meshName: string): boolean {
+  const lower = meshName.toLowerCase();
+  return EXCLUDED_MESH_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
 export const AnatomyLayer: React.FC<AnatomyLayerProps> = ({
   system,
   modelPath,
@@ -55,6 +71,12 @@ export const AnatomyLayer: React.FC<AnatomyLayerProps> = ({
 
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
+        // Hide excluded meshes (hair, eyebrows, etc.) for clinical presentation
+        if (isMeshExcluded(child.name)) {
+          child.visible = false;
+          return;
+        }
+
         const materials = Array.isArray(child.material)
           ? child.material
           : [child.material];
@@ -63,16 +85,19 @@ export const AnatomyLayer: React.FC<AnatomyLayerProps> = ({
           if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhongMaterial) {
             mat.transparent = opacity < 1.0;
             mat.opacity = opacity;
-            // Skin layer always writes to depth buffer so it stays visible
-            // over inner layers; other layers only when fully opaque
-            mat.depthWrite = system === 'skin' || opacity >= 0.99;
+            // Depth write: fully opaque layers always write. Skin only writes
+            // to depth when opacity is high enough to be the primary visual;
+            // at low opacity it should NOT block inner layers (skeleton, organs).
+            mat.depthWrite = opacity >= 0.5;
             mat.side = THREE.DoubleSide;
 
             // Apply color: use colorOverride if provided (e.g., skin tone),
-            // otherwise use system color for skin or default white/grey meshes
+            // otherwise use system color for skin, skeletal, or default white/grey meshes.
+            // Skeletal meshes need the color forced because GLB models often ship
+            // with dark/neutral colors that vanish against the dark scene background.
             const effectiveColor = colorOverride ?? layerConfig.color;
             const hex = mat.color.getHexString();
-            if (system === 'skin' || hex === 'ffffff' || hex === 'cccccc') {
+            if (system === 'skin' || system === 'skeletal' || hex === 'ffffff' || hex === 'cccccc') {
               mat.color.set(effectiveColor);
             }
 

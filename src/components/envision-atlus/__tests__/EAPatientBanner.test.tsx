@@ -76,6 +76,51 @@ vi.mock('../../../contexts/PatientContext', () => ({
   // Re-export types
 }));
 
+// PatientAvatar now uses useNavigate — mock react-router-dom
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
+// PatientAvatar uses these hooks — mock them to prevent DB calls
+vi.mock('../../patient-avatar/hooks/usePatientAvatar', () => ({
+  usePatientAvatar: () => ({
+    avatar: null,
+    loading: false,
+    error: null,
+    updateSkinTone: vi.fn(),
+    updateGenderPresentation: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
+
+vi.mock('../../patient-avatar/hooks/usePatientMarkers', () => ({
+  usePatientMarkers: () => ({
+    markers: [],
+    pendingCount: 0,
+    attentionCount: 0,
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    createMarker: vi.fn(),
+    updateMarker: vi.fn(),
+    confirmMarker: vi.fn(),
+    rejectMarker: vi.fn(),
+    deactivateMarker: vi.fn(),
+    confirmAllPending: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../hooks/useRealtimeSubscription', () => ({
+  useRealtimeSubscription: () => ({
+    data: null,
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    isSubscribed: true,
+    subscriptionId: 'test',
+  }),
+}));
+
 import { usePatientContextSafe } from '../../../contexts/PatientContext';
 const mockedUsePatientContextSafe = vi.mocked(usePatientContextSafe);
 

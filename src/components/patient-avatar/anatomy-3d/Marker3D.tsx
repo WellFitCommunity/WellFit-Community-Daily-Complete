@@ -18,6 +18,7 @@ import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { AnatomyMarkerOverlay } from './types';
+import { resolveMarkerPosition } from './anatomyCoordinates';
 
 /** Category color mapping (hex values) */
 const MARKER_HEX: Record<string, string> = {
@@ -31,21 +32,6 @@ const MARKER_HEX: Record<string, string> = {
 };
 
 const DEFAULT_HEX = '#64748b';
-
-/**
- * Convert 2D percentage coordinates (0-100) to 3D world position.
- *
- * The anatomy model is roughly centered at origin with:
- * - X: left (-0.3) to right (0.3)
- * - Y: feet (0) to head (~1.7)
- * - Z: front (0.15) — markers float slightly in front of the body
- */
-function positionToWorld(posX: number, posY: number): [number, number, number] {
-  const x = ((posX - 50) / 100) * 0.6;
-  const y = 1.7 - (posY / 100) * 1.7;
-  const z = 0.15;
-  return [x, y, z];
-}
 
 /** Geometry for each marker category */
 function MarkerGeometry({ category }: { category: string }) {
@@ -85,8 +71,8 @@ const SingleMarker3D: React.FC<SingleMarker3DProps> = ({ marker, onClick, isSele
   const [hovered, setHovered] = useState(false);
   const color = MARKER_HEX[marker.category] ?? DEFAULT_HEX;
   const position = useMemo(
-    () => positionToWorld(marker.position_x, marker.position_y),
-    [marker.position_x, marker.position_y]
+    () => resolveMarkerPosition(marker.body_region, marker.position_x, marker.position_y),
+    [marker.body_region, marker.position_x, marker.position_y]
   );
 
   // Gentle float animation for attention markers

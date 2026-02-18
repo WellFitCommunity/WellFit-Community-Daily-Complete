@@ -391,6 +391,7 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
                   patientId={patientId}
                   patientName=""
                   skinTone={skinTone}
+                  gender={genderPresentation}
                   editable
                   markers={anatomyMarkers}
                   onMarkerClick={handleOverlayMarkerClick}
@@ -536,7 +537,7 @@ export const PatientAvatarPage: React.FC<PatientAvatarPageProps> = ({ patientId 
                     currentGender={genderPresentation}
                     onSkinToneChange={updateSkinTone}
                     onGenderChange={updateGenderPresentation}
-                    showPreview
+                    showPreview={false}
                   />
                 </div>
               )}

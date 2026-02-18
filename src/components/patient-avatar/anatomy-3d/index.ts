@@ -18,6 +18,7 @@ export { MarkerOverlay } from './MarkerOverlay';
 export { Marker3DGroup } from './Marker3D';
 export { useAnatomyLayers } from './useAnatomyLayers';
 export { ANATOMY_LAYERS, SYSTEM_PATTERNS, classifyMesh, getLayerConfig, getSortedLayers } from './anatomyLayers';
+export { BODY_REGION_COORDINATES, resolveMarkerPosition } from './anatomyCoordinates';
 export type {
   AnatomySystem,
   AnatomyLayerConfig,

@@ -93,6 +93,8 @@ export interface AnatomyViewerProps {
   patientName?: string;
   /** Skin tone for the skin layer color (from avatar settings) */
   skinTone?: string;
+  /** Anatomical gender for model variant selection */
+  gender?: AnatomyGender;
   /** Initial viewer mode */
   initialMode?: ViewerMode;
   /** Whether the viewer is editable (place markers, toggle layers) */
