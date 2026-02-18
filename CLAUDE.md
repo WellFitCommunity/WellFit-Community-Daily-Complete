@@ -670,17 +670,9 @@ npx supabase db push
 - Preserve accessibility features
 - Test visual changes in the browser before considering complete
 
-### Visual Acceptance Checkpoint - NO EXCEPTIONS
+### Visual Acceptance Checkpoint
 
-**No new UI component, 3D feature, or visual change is "done" until Maria has seen it rendered.**
-
-AI cannot judge visual quality from code alone. SVG paths, 3D models, animations, and layout changes MUST be visually verified before being declared complete.
-
-**Rules:**
-1. **New visual features require a screenshot or screen recording** before the feature is considered accepted
-2. **3D/WebGL assets must be verified as separated, named meshes** — if a downloaded model is one single mesh, it is not layerable and must be rejected
-3. **Do NOT assume visual quality from code review** — a component that compiles and passes tests can still look terrible
-4. **If you cannot show it, it is not done** — tell Maria what needs visual verification and let her check it in the browser
+See `.claude/rules/visual-acceptance.md` for full rules. Summary: **no visual work is "done" until Maria sees it rendered.**
 
 ---
 
