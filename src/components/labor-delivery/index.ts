@@ -20,3 +20,6 @@ export { default as LDBirthPlanPanel } from './LDBirthPlanPanel';
 export { default as LDPPDEarlyWarningPanel } from './LDPPDEarlyWarningPanel';
 export { default as LDContraindicationPanel } from './LDContraindicationPanel';
 export { default as LDPatientEducationPanel } from './LDPatientEducationPanel';
+export { default as LaborProgressOverlay } from './LaborProgressOverlay';
+export { default as LaborProgressLegend } from './LaborProgressLegend';
+export { default as LaborAvatarPanel } from './LaborAvatarPanel';

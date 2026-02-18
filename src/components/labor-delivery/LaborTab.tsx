@@ -18,6 +18,7 @@ import DeliverySummary from './DeliverySummary';
 import LDEscalationPanel from './LDEscalationPanel';
 import LDProgressNotePanel from './LDProgressNotePanel';
 import LDShiftHandoffPanel from './LDShiftHandoffPanel';
+import LaborAvatarPanel from './LaborAvatarPanel';
 
 interface LaborTabProps {
   summary: LDDashboardSummary;
@@ -42,6 +43,11 @@ const LaborTab: React.FC<LaborTabProps> = ({ summary, onDataChange }) => {
 
   return (
     <div className="space-y-6">
+      {/* Labor Progress Avatar */}
+      {pregnancy && (
+        <LaborAvatarPanel summary={summary} compact />
+      )}
+
       {/* Action Buttons */}
       {pregnancy && (
         <div className="flex flex-wrap gap-3 justify-end">
