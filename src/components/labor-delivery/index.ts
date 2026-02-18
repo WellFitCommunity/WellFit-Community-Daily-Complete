@@ -16,3 +16,7 @@ export { default as LDDischargeSummaryPanel } from './LDDischargeSummaryPanel';
 export { default as LDGuidelineCompliancePanel } from './LDGuidelineCompliancePanel';
 export { default as LDShiftHandoffPanel } from './LDShiftHandoffPanel';
 export { default as LDSDOHPanel } from './LDSDOHPanel';
+export { default as LDBirthPlanPanel } from './LDBirthPlanPanel';
+export { default as LDPPDEarlyWarningPanel } from './LDPPDEarlyWarningPanel';
+export { default as LDContraindicationPanel } from './LDContraindicationPanel';
+export { default as LDPatientEducationPanel } from './LDPatientEducationPanel';

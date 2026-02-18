@@ -10,6 +10,8 @@ import type { LDDashboardSummary } from '../../types/laborDelivery';
 import PrenatalVisitForm from './PrenatalVisitForm';
 import LDGuidelineCompliancePanel from './LDGuidelineCompliancePanel';
 import LDSDOHPanel from './LDSDOHPanel';
+import LDBirthPlanPanel from './LDBirthPlanPanel';
+import LDPatientEducationPanel from './LDPatientEducationPanel';
 
 interface PrenatalTabProps {
   summary: LDDashboardSummary;
@@ -64,6 +66,20 @@ const PrenatalTab: React.FC<PrenatalTabProps> = ({ summary, onDataChange }) => {
           tenantId={pregnancy.tenant_id}
           noteText={[visits[0].notes, ...visits[0].complaints].filter(Boolean).join('. ')}
           sourceId={visits[0].id}
+        />
+      )}
+
+      {/* AI Birth Plan + Education */}
+      {pregnancy && (
+        <LDBirthPlanPanel
+          patientId={pregnancy.patient_id}
+          providerId={pregnancy.primary_provider_id ?? ''}
+        />
+      )}
+      {pregnancy && (
+        <LDPatientEducationPanel
+          patientId={pregnancy.patient_id}
+          availableTopics={['labor_preparation']}
         />
       )}
 

@@ -12,11 +12,13 @@ import type {
 } from '../../types/laborDelivery';
 import { LaborDeliveryService } from '../../services/laborDelivery';
 import LDDrugInteractionAlert from './LDDrugInteractionAlert';
+import LDContraindicationPanel from './LDContraindicationPanel';
 
 interface MedicationAdminFormProps {
   patientId: string;
   tenantId: string;
   pregnancyId: string;
+  providerId?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -84,6 +86,7 @@ const MedicationAdminForm: React.FC<MedicationAdminFormProps> = ({
   patientId,
   tenantId,
   pregnancyId,
+  providerId,
   onSuccess,
   onCancel,
 }) => {
@@ -195,6 +198,16 @@ const MedicationAdminForm: React.FC<MedicationAdminFormProps> = ({
         <LDDrugInteractionAlert
           medicationName={form.medication_name}
           patientId={patientId}
+        />
+      )}
+
+      {/* Contraindication Check (manual trigger when medication selected) */}
+      {form.medication_name.trim().length > 2 && (
+        <LDContraindicationPanel
+          patientId={patientId}
+          providerId={providerId ?? ''}
+          medicationName={form.medication_name}
+          indication={form.indication}
         />
       )}
 

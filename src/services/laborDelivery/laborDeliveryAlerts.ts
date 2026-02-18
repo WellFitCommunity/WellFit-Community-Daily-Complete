@@ -115,7 +115,7 @@ export function generateLDAlerts(
   if (postpartum?.epds_score !== null && postpartum?.epds_score !== undefined && postpartum.epds_score >= 13) {
     alerts.push({
       id: `alert-ppd-${postpartum.id}`,
-      type: 'maternal_fever',
+      type: 'ppd_positive_screen',
       severity: 'high',
       message: `EPDS score ${postpartum.epds_score} — positive screen for postpartum depression`,
       timestamp: now,

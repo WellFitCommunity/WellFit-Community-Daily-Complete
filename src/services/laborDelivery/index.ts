@@ -38,6 +38,17 @@ export type {
   LDSDOHDetection,
 } from './laborDeliveryAI_tier2';
 
+export {
+  generateBirthPlan,
+  calculatePPDRisk,
+  checkLDContraindication,
+  generateLDPatientEducation,
+  LD_EDUCATION_TOPICS,
+} from './laborDeliveryAI_tier3';
+export type {
+  LDEducationTopicKey,
+} from './laborDeliveryAI_tier3';
+
 // Re-export types commonly needed by consumers
 export type {
   CreatePregnancyRequest,

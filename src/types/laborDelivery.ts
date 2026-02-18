@@ -92,19 +92,17 @@ export type LDMedicationIndication =
 
 export type NewbornDisposition = 'well_newborn_nursery' | 'rooming_in' | 'nicu' | 'transferred';
 
-export type LDAlertSeverity = 'critical' | 'high' | 'medium' | 'low';
-
-export type LDAlertType =
-  | 'fetal_bradycardia'
-  | 'severe_preeclampsia'
-  | 'category_iii_tracing'
-  | 'postpartum_hemorrhage'
-  | 'neonatal_distress'
-  | 'prolonged_labor'
-  | 'meconium'
-  | 'gbs_no_antibiotics'
-  | 'maternal_fever'
-  | 'cord_prolapse';
+// Alert/metric types live in laborDeliveryAI.ts for 600-line compliance
+// Import for local use + re-export for consumers
+import type {
+  LDAlertSeverity as LDAlertSeverityType,
+  LDAlertType as LDAlertTypeAlias,
+  LDAlert,
+  LDUnitMetrics,
+} from './laborDeliveryAI';
+export type LDAlertSeverity = LDAlertSeverityType;
+export type LDAlertType = LDAlertTypeAlias;
+export type { LDAlert, LDUnitMetrics };
 
 // =====================================================
 // CORE INTERFACES
@@ -514,23 +512,6 @@ export interface LDDashboardSummary {
   medications: LDMedicationAdministration[];
   latest_risk_assessment: LDRiskAssessment | null;
   alerts: LDAlert[];
-}
-
-export interface LDUnitMetrics {
-  active_pregnancies: number;
-  deliveries_today: number;
-  active_labors_today: number;
-  active_alerts: number;
-}
-
-export interface LDAlert {
-  id: string;
-  type: LDAlertType;
-  severity: LDAlertSeverity;
-  message: string;
-  timestamp: string;
-  source_record_id: string | null;
-  acknowledged: boolean;
 }
 
 // =====================================================

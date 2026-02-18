@@ -9,6 +9,8 @@ import React, { useState } from 'react';
 import type { LDDashboardSummary } from '../../types/laborDelivery';
 import PostpartumAssessmentForm from './PostpartumAssessmentForm';
 import LDDischargeSummaryPanel from './LDDischargeSummaryPanel';
+import LDPPDEarlyWarningPanel from './LDPPDEarlyWarningPanel';
+import LDPatientEducationPanel from './LDPatientEducationPanel';
 
 interface PostpartumTabProps {
   summary: LDDashboardSummary;
@@ -55,6 +57,22 @@ const PostpartumTab: React.FC<PostpartumTabProps> = ({ summary, onDataChange }) 
         <LDDischargeSummaryPanel
           patientId={pregnancy.patient_id}
           tenantId={pregnancy.tenant_id}
+        />
+      )}
+
+      {/* AI PPD Early Warning */}
+      {pregnancy && (
+        <LDPPDEarlyWarningPanel
+          patientId={pregnancy.patient_id}
+          hasPostpartumAssessment={pp !== null}
+        />
+      )}
+
+      {/* AI Patient Education (all 4 topics for postpartum) */}
+      {pregnancy && delivery_record && (
+        <LDPatientEducationPanel
+          patientId={pregnancy.patient_id}
+          availableTopics={['labor_preparation', 'breastfeeding', 'postpartum_warning_signs', 'newborn_care']}
         />
       )}
 
