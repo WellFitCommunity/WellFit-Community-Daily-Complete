@@ -14,7 +14,8 @@
  * Renderer: @react-three/fiber (Three.js WebGL)
  */
 
-import React, { Suspense, useState, useCallback } from 'react';
+import React, { Suspense, useState, useCallback, Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Center } from '@react-three/drei';
 import * as THREE from 'three';
@@ -25,6 +26,70 @@ import { Marker3DGroup } from './Marker3D';
 import { useAnatomyLayers } from './useAnatomyLayers';
 import { SKIN_TONE_COLORS } from '../constants/skinTones';
 import type { SkinTone } from '../../../types/patientAvatar';
+import { auditLogger } from '../../../services/auditLogger';
+
+// ---------------------------------------------------------------------------
+// Error Boundary — visible error instead of blank canvas
+// ---------------------------------------------------------------------------
+interface CanvasErrorBoundaryState {
+  error: Error | null;
+}
+
+class CanvasErrorBoundary extends Component<
+  { children: ReactNode },
+  CanvasErrorBoundaryState
+> {
+  state: CanvasErrorBoundaryState = { error: null };
+
+  static getDerivedStateFromError(error: Error): CanvasErrorBoundaryState {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo): void {
+    auditLogger.error(
+      'ANATOMY_VIEWER_RENDER_FAILED',
+      error,
+      { componentStack: info.componentStack ?? 'unknown' }
+    );
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex items-center justify-center h-full bg-slate-950 rounded-lg p-8">
+          <div className="text-center max-w-md">
+            <svg className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h3 className="text-lg font-medium text-white mb-2">
+              3D Viewer Error
+            </h3>
+            <p className="text-sm text-slate-400 mb-4">
+              The anatomy viewer could not load. This may be caused by WebGL
+              not being available in your browser.
+            </p>
+            <details className="text-left bg-slate-900 rounded-lg p-3">
+              <summary className="text-xs text-slate-500 cursor-pointer">
+                Technical details
+              </summary>
+              <pre className="text-xs text-red-300 mt-2 whitespace-pre-wrap break-words">
+                {this.state.error.message}
+              </pre>
+            </details>
+            <button
+              className="mt-4 px-4 py-2 bg-[#00857a] text-white rounded-lg text-sm hover:bg-[#006b63] transition-colors"
+              onClick={() => this.setState({ error: null })}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /** Dark background color for the 3D scene */
 const SCENE_BG = new THREE.Color('#0f172a'); // slate-900
@@ -204,25 +269,27 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
     >
       {/* 3D Canvas — senior-friendly: larger default view (fov 28, distance 3.0) */}
       <div className="flex-1 relative">
-        <Canvas
-          camera={{ position: [0, 0.85, 3.0], fov: 28 }}
-          gl={{ antialias: true, alpha: false }}
-          dpr={[1, 2]}
-          scene={{ background: SCENE_BG }}
-        >
-          <Suspense fallback={<LoadingFallback />}>
-            <AnatomyScene
-              layers={layers}
-              selectedSystem={selectedSystem}
-              skinToneColor={skinToneColor}
-              systemModels={systemModels}
-              markers={markers}
-              selectedMarkerId={selectedMarkerId}
-              onMeshClick={handleMeshClick}
-              onMarkerClick={handleMarkerClick}
-            />
-          </Suspense>
-        </Canvas>
+        <CanvasErrorBoundary>
+          <Canvas
+            camera={{ position: [0, 0.85, 3.0], fov: 28 }}
+            gl={{ antialias: true, alpha: false }}
+            dpr={[1, 2]}
+            scene={{ background: SCENE_BG }}
+          >
+            <Suspense fallback={<LoadingFallback />}>
+              <AnatomyScene
+                layers={layers}
+                selectedSystem={selectedSystem}
+                skinToneColor={skinToneColor}
+                systemModels={systemModels}
+                markers={markers}
+                selectedMarkerId={selectedMarkerId}
+                onMeshClick={handleMeshClick}
+                onMarkerClick={handleMarkerClick}
+              />
+            </Suspense>
+          </Canvas>
+        </CanvasErrorBoundary>
 
         {/* Patient info overlay */}
         {patientName && (
