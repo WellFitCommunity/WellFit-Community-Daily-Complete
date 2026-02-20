@@ -14,7 +14,7 @@
  * Renderer: @react-three/fiber (Three.js WebGL)
  */
 
-import React, { Suspense, useState, useCallback, Component } from 'react';
+import React, { Suspense, useState, useCallback, useEffect, Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Center } from '@react-three/drei';
@@ -89,6 +89,89 @@ class CanvasErrorBoundary extends Component<
     }
     return this.props.children;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Per-layer error boundary — shows which system failed in the layer panel
+// ---------------------------------------------------------------------------
+interface LayerErrorState { error: Error | null }
+
+class LayerErrorBoundary extends Component<
+  { system: string; children: ReactNode },
+  LayerErrorState
+> {
+  state: LayerErrorState = { error: null };
+
+  static getDerivedStateFromError(error: Error): LayerErrorState {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo): void {
+    auditLogger.error(
+      'ANATOMY_LAYER_LOAD_FAILED',
+      error,
+      { system: this.props.system, componentStack: info.componentStack ?? 'unknown' }
+    );
+  }
+
+  render() {
+    if (this.state.error) {
+      // Return null inside the 3D scene — error is shown in the diagnostic overlay
+      return null;
+    }
+    return this.props.children;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Draco/model diagnostic — preflight check shown as overlay
+// ---------------------------------------------------------------------------
+function useDracoHealthCheck(): { status: 'checking' | 'ok' | 'failed'; detail: string } {
+  const [status, setStatus] = useState<'checking' | 'ok' | 'failed'>('checking');
+  const [detail, setDetail] = useState('Checking model files...');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function check() {
+      try {
+        // 1. Check Draco decoder
+        const dracoRes = await fetch('/draco/gltf/draco_wasm_wrapper.js', { method: 'HEAD' });
+        if (!dracoRes.ok) {
+          if (!cancelled) {
+            setStatus('failed');
+            setDetail(`Draco decoder not found (${dracoRes.status})`);
+          }
+          return;
+        }
+
+        // 2. Check skeletal model (the default-visible one)
+        const modelRes = await fetch('/models/anatomy/anatomy_skeletal.glb', { method: 'HEAD' });
+        if (!modelRes.ok) {
+          if (!cancelled) {
+            setStatus('failed');
+            setDetail(`Skeletal model not found (${modelRes.status})`);
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          setStatus('ok');
+          setDetail('');
+        }
+      } catch (err: unknown) {
+        if (!cancelled) {
+          setStatus('failed');
+          setDetail(err instanceof Error ? err.message : String(err));
+        }
+      }
+    }
+
+    check();
+    return () => { cancelled = true; };
+  }, []);
+
+  return { status, detail };
 }
 
 /** Dark background color for the 3D scene */
@@ -188,17 +271,19 @@ function AnatomyScene({
       <Center disableY>
           {(Object.entries(systemModels) as [AnatomySystem, string][]).map(
             ([system, modelPath]) => (
-              <Suspense key={system} fallback={null}>
-                <AnatomyLayer
-                  system={system}
-                  modelPath={modelPath}
-                  visible={layers.isVisible(system)}
-                  opacity={layers.getOpacity(system)}
-                  highlighted={selectedSystem === system}
-                  colorOverride={system === 'skin' ? skinToneColor : undefined}
-                  onMeshClick={onMeshClick}
-                />
-              </Suspense>
+              <LayerErrorBoundary key={system} system={system}>
+                <Suspense fallback={null}>
+                  <AnatomyLayer
+                    system={system}
+                    modelPath={modelPath}
+                    visible={layers.isVisible(system)}
+                    opacity={layers.getOpacity(system)}
+                    highlighted={selectedSystem === system}
+                    colorOverride={system === 'skin' ? skinToneColor : undefined}
+                    onMeshClick={onMeshClick}
+                  />
+                </Suspense>
+              </LayerErrorBoundary>
             )
           )}
 
@@ -234,6 +319,7 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
   className,
 }) => {
   const layers = useAnatomyLayers();
+  const dracoHealth = useDracoHealthCheck();
   const [selectedSystem, setSelectedSystem] = useState<AnatomySystem | null>(null);
   const [selectedMesh, setSelectedMesh] = useState<string | null>(null);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
@@ -308,6 +394,14 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
           <div className="absolute bottom-2 left-2 bg-slate-900/80 text-white text-xs px-3 py-2 rounded backdrop-blur-sm max-w-xs">
             <p className="font-medium">{selectedMesh}</p>
             <p className="text-slate-400">{selectedSystem}</p>
+          </div>
+        )}
+
+        {/* Diagnostic overlay — shows if model files fail to load */}
+        {dracoHealth.status === 'failed' && (
+          <div className="absolute bottom-2 right-2 bg-red-900/90 text-white text-xs px-3 py-2 rounded backdrop-blur-sm max-w-xs">
+            <p className="font-medium text-red-300">Model load error</p>
+            <p className="text-red-200">{dracoHealth.detail}</p>
           </div>
         )}
       </div>
