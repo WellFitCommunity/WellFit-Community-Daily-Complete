@@ -1,11 +1,21 @@
 /**
  * HIPAA-Compliant Audit Logger for Supabase Edge Functions
  *
- * Replaces console.log with proper audit trail logging
- * Implements HIPAA §164.312(b) - Audit Controls
+ * Provides structured logging via stdout/stderr for Supabase log aggregation.
+ * Implements HIPAA §164.312(b) - Audit Controls (Tier 1: Operational Tracing).
+ *
+ * ARCHITECTURE NOTE — Three-Tier Audit Model:
+ *   Tier 1 (this file): Structured JSON to stdout/stderr — captured by Supabase log drain.
+ *   Tier 2: Critical events MUST also be inserted to `audit_logs` table by each edge function
+ *           (see verify-admin-pin/index.ts and login/index.ts for the correct pattern).
+ *   Tier 3: Security incidents should use `supabase.rpc('log_security_event', {...})`.
+ *
+ * Tier 1 alone is NOT sufficient for HIPAA compliance on critical auth/PHI events.
+ * Edge functions handling auth, PHI access, or clinical data mutations MUST add Tier 2 inserts.
  *
  * Usage:
- *   import { logger } from '../_shared/auditLogger.ts';
+ *   import { createLogger } from '../_shared/auditLogger.ts';
+ *   const logger = createLogger('my-function', req);
  *   logger.info('User logged in', { userId: '123' });
  *   logger.error('Login failed', { reason: 'invalid password' });
  *   logger.phi('Accessed patient record', { patientId: 'P123' });

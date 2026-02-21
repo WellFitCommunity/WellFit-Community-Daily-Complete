@@ -49,12 +49,14 @@ GRANT EXECUTE ON FUNCTION is_super_admin_bypass(UUID) TO authenticated;
 
 -- Users can read their OWN record (for login check)
 -- This is safe because it only uses auth.uid() = user_id comparison
+DROP POLICY IF EXISTS super_admin_users_read_own ON super_admin_users;
 CREATE POLICY super_admin_users_read_own
   ON super_admin_users
   FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Super admins can manage all records - uses bypass function
+DROP POLICY IF EXISTS super_admin_users_manage_all ON super_admin_users;
 CREATE POLICY super_admin_users_manage_all
   ON super_admin_users
   FOR ALL
@@ -94,8 +96,8 @@ CREATE POLICY system_metrics_super_admin
   USING (is_super_admin_bypass(auth.uid()));
 
 -- ai_skill_config
-DROP POLICY IF EXISTS ai_skill_config_super_admin ON ai_skill_config;
 DROP POLICY IF EXISTS "Super admins full access ai_skill_config" ON ai_skill_config;
+DROP POLICY IF EXISTS ai_skill_config_super_admin ON ai_skill_config;
 CREATE POLICY ai_skill_config_super_admin
   ON ai_skill_config
   FOR ALL
@@ -105,6 +107,9 @@ CREATE POLICY ai_skill_config_super_admin
 DROP POLICY IF EXISTS "Super admins can view all guardian alerts" ON guardian_alerts;
 DROP POLICY IF EXISTS "Super admins can update guardian alerts" ON guardian_alerts;
 DROP POLICY IF EXISTS "Super admins can insert guardian alerts" ON guardian_alerts;
+DROP POLICY IF EXISTS super_admin_view_guardian_alerts ON guardian_alerts;
+DROP POLICY IF EXISTS super_admin_update_guardian_alerts ON guardian_alerts;
+DROP POLICY IF EXISTS super_admin_insert_guardian_alerts ON guardian_alerts;
 
 CREATE POLICY super_admin_view_guardian_alerts
   ON guardian_alerts
@@ -127,6 +132,7 @@ CREATE POLICY super_admin_insert_guardian_alerts
 -- guardian_cron_log
 DROP POLICY IF EXISTS "Super admins can view guardian cron logs" ON guardian_cron_log;
 DROP POLICY IF EXISTS "Super admins can manage guardian cron logs" ON guardian_cron_log;
+DROP POLICY IF EXISTS super_admin_guardian_cron_log ON guardian_cron_log;
 
 CREATE POLICY super_admin_guardian_cron_log
   ON guardian_cron_log
@@ -137,6 +143,8 @@ CREATE POLICY super_admin_guardian_cron_log
 -- tenant_module_config
 DROP POLICY IF EXISTS "Super admins can view all tenant module configs" ON tenant_module_config;
 DROP POLICY IF EXISTS "Super admins can update all tenant module configs" ON tenant_module_config;
+DROP POLICY IF EXISTS super_admin_view_tenant_module_config ON tenant_module_config;
+DROP POLICY IF EXISTS super_admin_update_tenant_module_config ON tenant_module_config;
 
 CREATE POLICY super_admin_view_tenant_module_config
   ON tenant_module_config
@@ -156,6 +164,7 @@ DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'admin_audit_logs') THEN
     DROP POLICY IF EXISTS "Super admins can view all audit logs" ON admin_audit_logs;
+    DROP POLICY IF EXISTS super_admin_view_admin_audit_logs ON admin_audit_logs;
 
     CREATE POLICY super_admin_view_admin_audit_logs
       ON admin_audit_logs

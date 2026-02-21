@@ -8,6 +8,7 @@
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { createLogger } from '../_shared/auditLogger.ts';
 
 // US Core Profile URLs
 const US_CORE_PROFILES: Record<string, string> = {
@@ -249,6 +250,8 @@ function generateCapabilityStatement(baseUrl: string): Record<string, unknown> {
 }
 
 serve(async (req: Request) => {
+  const logger = createLogger('fhir-metadata', req);
+
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
@@ -321,7 +324,7 @@ serve(async (req: Request) => {
       },
     });
   } catch (error) {
-    console.error('FHIR metadata error:', error);
+    logger.error('FHIR metadata error', { error: error instanceof Error ? error.message : String(error) });
 
     return new Response(
       JSON.stringify({

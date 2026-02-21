@@ -10,8 +10,11 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { createLogger } from '../_shared/auditLogger.ts';
 
 serve(async (req: Request) => {
+  const logger = createLogger('prometheus-metrics', req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
@@ -60,7 +63,7 @@ serve(async (req: Request) => {
     const { data: metricsText, error } = await supabase.rpc('get_prometheus_metrics');
 
     if (error) {
-      console.error('Failed to get metrics:', error);
+      logger.error('Failed to get metrics', { error: error.message });
       return new Response(
         JSON.stringify({ error: 'Failed to get metrics', details: error.message }),
         {
@@ -92,7 +95,7 @@ serve(async (req: Request) => {
     });
   } catch (err) {
     const { headers: corsHeaders } = corsFromRequest(req);
-    console.error('Prometheus metrics error:', err);
+    logger.error('Prometheus metrics error', { error: err instanceof Error ? err.message : String(err) });
     return new Response(
       JSON.stringify({
         error: 'Internal server error',

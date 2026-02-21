@@ -141,7 +141,7 @@ export class ConsentManagementService {
     try {
       const { data, error } = await supabase
         .from('privacy_consent')
-        .select('*')
+        .select('id, user_id, consent_type, consented, first_name, last_name, file_path, signed_at, consented_at, consent_method, effective_date, expiration_date, withdrawn_at, withdrawal_reason, sharing_permissions, witness_id, audit_trail, ip_address, user_agent, notes, created_at, updated_at')
         .eq('user_id', userId)
         .order('consented_at', { ascending: false });
 
@@ -175,7 +175,7 @@ export class ConsentManagementService {
     try {
       const { data, error } = await supabase
         .from('privacy_consent')
-        .select('*')
+        .select('id, user_id, consent_type, consented, first_name, last_name, file_path, signed_at, consented_at, consent_method, effective_date, expiration_date, withdrawn_at, withdrawal_reason, sharing_permissions, witness_id, audit_trail, ip_address, user_agent, notes, created_at, updated_at')
         .eq('user_id', userId)
         .eq('consented', true)
         .is('withdrawn_at', null)

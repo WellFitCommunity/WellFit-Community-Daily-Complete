@@ -102,6 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_security_events_tenant ON security_events(tenant_
 ALTER TABLE security_events ENABLE ROW LEVEL SECURITY;
 
 -- Super admins can see all events
+DROP POLICY IF EXISTS security_events_super_admin_all ON security_events;
 CREATE POLICY security_events_super_admin_all ON security_events
   FOR ALL
   TO authenticated
@@ -109,6 +110,7 @@ CREATE POLICY security_events_super_admin_all ON security_events
   WITH CHECK (is_super_admin_bypass(auth.uid()));
 
 -- Tenant admins can see events for their tenant
+DROP POLICY IF EXISTS security_events_tenant_admin_select ON security_events;
 CREATE POLICY security_events_tenant_admin_select ON security_events
   FOR SELECT
   TO authenticated
@@ -119,6 +121,7 @@ CREATE POLICY security_events_tenant_admin_select ON security_events
   );
 
 -- Service role can insert events (for automated systems)
+DROP POLICY IF EXISTS security_events_service_insert ON security_events;
 CREATE POLICY security_events_service_insert ON security_events
   FOR INSERT
   TO service_role

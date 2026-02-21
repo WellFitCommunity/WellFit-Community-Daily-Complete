@@ -362,6 +362,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   MultiTenantSelector,
   MultiTenantMonitor,
   SOCDashboard,
+  EnterpriseMigrationDashboard,
   GuardianApprovalsList,
   GuardianApprovalForm,
 

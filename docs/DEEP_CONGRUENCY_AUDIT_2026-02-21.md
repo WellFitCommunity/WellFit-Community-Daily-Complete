@@ -11,8 +11,8 @@
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 8,562 passed, 0 failed | 2026-02-21 |
-| Test Suites | 440 | 2026-02-21 |
+| Tests | 8,652 passed, 0 failed | 2026-02-21 (post-remediation) |
+| Test Suites | 449 | 2026-02-21 (post-remediation) |
 | Typecheck | 0 errors | 2026-02-21 |
 | Lint | 0 errors, 0 warnings | 2026-02-21 |
 | Service Files | 500+ | Audited |
@@ -366,6 +366,49 @@ A manual grants migration exists but may not have been applied via `supabase db 
 | 9 | L-1 through L-6: Low-priority cleanup | 2 hours | 1 session |
 
 **Total estimated remediation: ~14 hours across 3-4 sessions.**
+
+---
+
+## Remediation Status
+
+### Session 1 (2026-02-21) — Commit `c89b7bb4`
+
+| Finding | Status | Notes |
+|---------|--------|-------|
+| C-1: Services that throw | **DONE** | 8 throw→failure() conversions across 4 files |
+| C-2: Duplicate types | **DONE** | 14 types consolidated into canonical definitions in `src/types/` |
+| C-3: PinnedSectionsContext | **DONE** | Verified mounted inside IntelligentAdminPanel; added defensive guard |
+| C-4: `as Error` assertions | **DONE** | 63+ locations fixed with `err instanceof Error ? err : new Error(String(err))` |
+| M-7: componentMap `any` | **DONE** | Changed to `React.ComponentType<Record<string, unknown>>` |
+| M-8: Null-unsafe `.single()` | **DONE** | Added `if (error \|\| !data)` guards |
+| M-9: Duplicate error code | **DONE** | Removed duplicate `CONTRAINDICATION_CHECK_FAILED` |
+
+**Verification:** 0 typecheck errors, 0 lint warnings, 8,652 tests passed (449 suites)
+
+### Session 2 (2026-02-21) — In Progress
+
+| Finding | Status | Notes |
+|---------|--------|-------|
+| M-5: Edge function audit logger docs | **DONE** | Added three-tier audit architecture JSDoc to `_shared/auditLogger.ts` |
+| M-6: Edge function console.log violations | **DONE** | Fixed `prometheus-metrics`, `fhir-metadata`, `test_users`; left `verify-admin-pin` (audit-of-audit fallback) and `shared/types.ts` (IS the logger) |
+| M-3: SELECT * patterns | **PARTIAL** | Fixed 6 calls in `billingService.ts` and `consentManagementService.ts`; ~59 remaining across 11 services |
+| L-1: EnvisionAuthContext dead code | **DONE** | NOT dead — `RequireSuperAdmin.tsx` uses same localStorage keys; added JSDoc |
+| L-2: EnterpriseMigrationDashboard componentMap | **DONE** | Added to componentMap in Super Admin section |
+| L-4: `_SKIP_` migrations | **DONE** | Renamed all 3, made idempotent, pushed successfully. Migration #1 created 14 new tables + merged schema for existing `lab_orders`/`lab_results`. Migrations #2 and #3 re-applied cleanly. |
+| L-6: `_MANUAL_grants.sql` | **DONE** | Renamed to migration, pushed. 5 function grants applied. |
+
+**Verification:** 0 typecheck errors, 0 lint warnings, 8,652 tests passed (449 suites)
+
+### Remaining (Future Sessions)
+
+| Finding | Status | Estimated Effort |
+|---------|--------|-----------------|
+| M-1: 8 edge function god files | TODO | 2-3 hours |
+| M-2: 6 type definition god files | TODO | 2 hours |
+| M-3: ~59 remaining SELECT * calls | TODO | 2 hours |
+| M-4: Auto-generate database types | TODO | 1 hour |
+| L-3: VoiceActionContext (1,122 lines) | TODO | 1 hour |
+| L-5: 435 catch blocks without `: unknown` | TODO | 1 hour (low priority) |
 
 ---
 

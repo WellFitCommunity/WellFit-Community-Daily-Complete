@@ -4,6 +4,11 @@
  * Manages authentication state for Envision portal (super admin access).
  * Uses envision_sessions table via Edge Functions, independent of Supabase JWT auth.
  *
+ * NOTE: Currently, RequireSuperAdmin.tsx reads the same localStorage keys directly
+ * instead of using useEnvisionAuth(). When the Envision standalone portal is built,
+ * mount EnvisionAuthProvider in AppProviders and migrate RequireSuperAdmin to use
+ * useEnvisionAuth() instead of direct localStorage access.
+ *
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 

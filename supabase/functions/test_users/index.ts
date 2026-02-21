@@ -5,6 +5,7 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type PostgrestError } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 // Environment (set in Supabase dashboard -> Functions)
 const SERVICE_URL = Deno.env.get("SERVICE_URL");
@@ -113,6 +114,8 @@ async function createTestUser(body: CreateBody) {
   );
 }
 
+const purgeLogger = createLogger('test_users');
+
 async function purgeTestUsers(body: PurgeBody) {
   const svc = getSupabaseForService();
 
@@ -154,14 +157,14 @@ async function purgeTestUsers(body: PurgeBody) {
     const { error: delErr } = await svc.from(t).delete().in("user_id", uids);
     if (delErr) {
       // continue but report (optional-chaining to satisfy TS)
-      console.warn(`Delete from ${t} failed:`, delErr?.message);
+      purgeLogger.warn(`Delete from ${t} failed`, { error: delErr?.message });
     }
   }
 
   // Delete profiles (soft safety already enforced by RLS + trigger; we use service key anyway)
   const { error: profDelErr } = await svc.from("profiles").delete().in("user_id", uids);
   if (profDelErr) {
-    console.warn("Profile delete errors:", profDelErr?.message);
+    purgeLogger.warn('Profile delete errors', { error: profDelErr?.message });
   }
 
   // Finally, delete Auth users
@@ -169,7 +172,7 @@ async function purgeTestUsers(body: PurgeBody) {
   for (const uid of uids) {
     const { error: authErr } = await svc.auth.admin.deleteUser(uid);
     if (authErr) {
-      console.warn("Auth delete error for", uid, authErr?.message);
+      purgeLogger.warn('Auth delete error', { userId: uid, error: authErr?.message });
       continue;
     }
     count++;

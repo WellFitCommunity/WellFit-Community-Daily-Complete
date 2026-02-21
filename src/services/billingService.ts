@@ -41,7 +41,7 @@ export class BillingService {
   static async getProvider(id: string): Promise<BillingProvider> {
     const { data, error } = await supabase
       .from('billing_providers')
-      .select('*')
+      .select('id, user_id, npi, taxonomy_code, organization_name, ein, submitter_id, contact_phone, address_line1, city, state, zip, created_by, created_at, updated_at')
       .eq('id', id)
       .single();
 
@@ -52,7 +52,7 @@ export class BillingService {
   static async getProviders(): Promise<BillingProvider[]> {
     const query = supabase
       .from('billing_providers')
-      .select('*')
+      .select('id, user_id, npi, taxonomy_code, organization_name, ein, submitter_id, contact_phone, address_line1, city, state, zip, created_by, created_at, updated_at')
       .order('organization_name');
 
     return applyLimit<BillingProvider>(query, PAGINATION_LIMITS.PROVIDERS);
@@ -94,7 +94,7 @@ export class BillingService {
   static async getPayers(): Promise<BillingPayer[]> {
     const query = supabase
       .from('billing_payers')
-      .select('*')
+      .select('id, name, payer_id, receiver_id, clearinghouse_id, notes, created_by, created_at, updated_at')
       .order('name');
 
     return applyLimit<BillingPayer>(query, PAGINATION_LIMITS.PROVIDERS);
@@ -103,7 +103,7 @@ export class BillingService {
   static async getPayer(id: string): Promise<BillingPayer> {
     const { data, error } = await supabase
       .from('billing_payers')
-      .select('*')
+      .select('id, name, payer_id, receiver_id, clearinghouse_id, notes, created_by, created_at, updated_at')
       .eq('id', id)
       .single();
 

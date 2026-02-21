@@ -222,15 +222,55 @@ CREATE TABLE IF NOT EXISTS lab_results (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Add missing columns to existing tables (idempotent schema merge)
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS connection_id UUID;
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS fasting_required BOOLEAN DEFAULT false;
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS fasting_hours INTEGER;
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS specimen_collected_at TIMESTAMPTZ;
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS specimen_type TEXT;
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS specimen_source TEXT;
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS fhir_service_request_id TEXT;
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS fhir_diagnostic_report_id TEXT;
+ALTER TABLE lab_orders ADD COLUMN IF NOT EXISTS hl7_message_id UUID;
+
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS order_id UUID;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS connection_id UUID;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS accession_number TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS report_id TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS report_status TEXT DEFAULT 'preliminary';
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS report_type TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS specimen_collected_at TIMESTAMPTZ;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS specimen_received_at TIMESTAMPTZ;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS reported_at TIMESTAMPTZ;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS ordering_provider_name TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS performing_lab_name TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS pathologist_name TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS results_summary JSONB;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS pdf_report_url TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS pdf_report_encrypted BYTEA;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS fhir_diagnostic_report_id TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS fhir_bundle_id TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS patient_notified BOOLEAN DEFAULT false;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS patient_notified_at TIMESTAMPTZ;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS provider_notified BOOLEAN DEFAULT false;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS provider_notified_at TIMESTAMPTZ;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS reviewed_by UUID;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS review_notes TEXT;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS has_critical_values BOOLEAN DEFAULT false;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS critical_values_acknowledged BOOLEAN DEFAULT false;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS critical_values_acknowledged_at TIMESTAMPTZ;
+ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS critical_values_acknowledged_by UUID;
+
 -- Indexes for lab tables
-CREATE INDEX idx_lab_orders_patient ON lab_orders(patient_id);
-CREATE INDEX idx_lab_orders_status ON lab_orders(order_status);
-CREATE INDEX idx_lab_orders_ordered ON lab_orders(ordered_at DESC);
-CREATE INDEX idx_lab_orders_external ON lab_orders(external_order_id);
-CREATE INDEX idx_lab_results_patient ON lab_results(patient_id);
-CREATE INDEX idx_lab_results_accession ON lab_results(accession_number);
-CREATE INDEX idx_lab_results_reported ON lab_results(reported_at DESC);
-CREATE INDEX idx_lab_results_critical ON lab_results(has_critical_values) WHERE has_critical_values = true;
+CREATE INDEX IF NOT EXISTS idx_lab_orders_patient ON lab_orders(patient_id);
+CREATE INDEX IF NOT EXISTS idx_lab_orders_status ON lab_orders(order_status);
+CREATE INDEX IF NOT EXISTS idx_lab_orders_ordered ON lab_orders(ordered_at DESC);
+CREATE INDEX IF NOT EXISTS idx_lab_orders_external ON lab_orders(external_order_id);
+CREATE INDEX IF NOT EXISTS idx_lab_results_patient ON lab_results(patient_id);
+CREATE INDEX IF NOT EXISTS idx_lab_results_accession ON lab_results(accession_number);
+CREATE INDEX IF NOT EXISTS idx_lab_results_reported ON lab_results(reported_at DESC);
+CREATE INDEX IF NOT EXISTS idx_lab_results_critical ON lab_results(has_critical_values) WHERE has_critical_values = true;
 
 -- ============================================================================
 -- SECTION 2: PHARMACY INTEGRATION
@@ -441,12 +481,12 @@ CREATE TABLE IF NOT EXISTS refill_requests (
 );
 
 -- Indexes for pharmacy tables
-CREATE INDEX idx_pharmacy_erx_patient ON e_prescriptions(patient_id);
-CREATE INDEX idx_pharmacy_erx_status ON e_prescriptions(rx_status);
-CREATE INDEX idx_pharmacy_erx_transmitted ON e_prescriptions(transmitted_at DESC);
-CREATE INDEX idx_med_history_patient ON medication_history(patient_id);
-CREATE INDEX idx_med_history_active ON medication_history(patient_id, is_active) WHERE is_active = true;
-CREATE INDEX idx_refill_requests_pending ON refill_requests(request_status, requested_at) WHERE request_status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_pharmacy_erx_patient ON e_prescriptions(patient_id);
+CREATE INDEX IF NOT EXISTS idx_pharmacy_erx_status ON e_prescriptions(rx_status);
+CREATE INDEX IF NOT EXISTS idx_pharmacy_erx_transmitted ON e_prescriptions(transmitted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_med_history_patient ON medication_history(patient_id);
+CREATE INDEX IF NOT EXISTS idx_med_history_active ON medication_history(patient_id, is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_refill_requests_pending ON refill_requests(request_status, requested_at) WHERE request_status = 'pending';
 
 -- ============================================================================
 -- SECTION 3: IMAGING/PACS INTEGRATION
@@ -672,13 +712,13 @@ CREATE TABLE IF NOT EXISTS imaging_reports (
 );
 
 -- Indexes for imaging tables
-CREATE INDEX idx_imaging_orders_patient ON imaging_orders(patient_id);
-CREATE INDEX idx_imaging_orders_status ON imaging_orders(order_status);
-CREATE INDEX idx_imaging_studies_patient ON imaging_studies(patient_id);
-CREATE INDEX idx_imaging_studies_uid ON imaging_studies(study_instance_uid);
-CREATE INDEX idx_imaging_studies_date ON imaging_studies(study_date DESC);
-CREATE INDEX idx_imaging_reports_patient ON imaging_reports(patient_id);
-CREATE INDEX idx_imaging_reports_critical ON imaging_reports(has_critical_finding) WHERE has_critical_finding = true;
+CREATE INDEX IF NOT EXISTS idx_imaging_orders_patient ON imaging_orders(patient_id);
+CREATE INDEX IF NOT EXISTS idx_imaging_orders_status ON imaging_orders(order_status);
+CREATE INDEX IF NOT EXISTS idx_imaging_studies_patient ON imaging_studies(patient_id);
+CREATE INDEX IF NOT EXISTS idx_imaging_studies_uid ON imaging_studies(study_instance_uid);
+CREATE INDEX IF NOT EXISTS idx_imaging_studies_date ON imaging_studies(study_date DESC);
+CREATE INDEX IF NOT EXISTS idx_imaging_reports_patient ON imaging_reports(patient_id);
+CREATE INDEX IF NOT EXISTS idx_imaging_reports_critical ON imaging_reports(has_critical_finding) WHERE has_critical_finding = true;
 
 -- ============================================================================
 -- SECTION 4: INSURANCE VERIFICATION (X12 270/271)
@@ -912,11 +952,11 @@ CREATE TABLE IF NOT EXISTS patient_insurance (
 );
 
 -- Indexes for insurance tables
-CREATE INDEX idx_eligibility_requests_patient ON eligibility_requests(patient_id);
-CREATE INDEX idx_eligibility_requests_status ON eligibility_requests(request_status);
-CREATE INDEX idx_eligibility_requests_date ON eligibility_requests(requested_at DESC);
-CREATE INDEX idx_patient_insurance_patient ON patient_insurance(patient_id);
-CREATE INDEX idx_patient_insurance_active ON patient_insurance(patient_id, is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_eligibility_requests_patient ON eligibility_requests(patient_id);
+CREATE INDEX IF NOT EXISTS idx_eligibility_requests_status ON eligibility_requests(request_status);
+CREATE INDEX IF NOT EXISTS idx_eligibility_requests_date ON eligibility_requests(requested_at DESC);
+CREATE INDEX IF NOT EXISTS idx_patient_insurance_patient ON patient_insurance(patient_id);
+CREATE INDEX IF NOT EXISTS idx_patient_insurance_active ON patient_insurance(patient_id, is_active) WHERE is_active = true;
 
 -- ============================================================================
 -- RLS POLICIES
@@ -941,58 +981,74 @@ ALTER TABLE eligibility_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE patient_insurance ENABLE ROW LEVEL SECURITY;
 
 -- Lab policies
+DROP POLICY IF EXISTS lab_connections_tenant ON lab_provider_connections;
 CREATE POLICY lab_connections_tenant ON lab_provider_connections
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS lab_orders_tenant ON lab_orders;
 CREATE POLICY lab_orders_tenant ON lab_orders
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS lab_tests_access ON lab_order_tests;
 CREATE POLICY lab_tests_access ON lab_order_tests
     FOR ALL USING (
         order_id IN (SELECT id FROM lab_orders WHERE tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()))
     );
 
+DROP POLICY IF EXISTS lab_results_tenant ON lab_results;
 CREATE POLICY lab_results_tenant ON lab_results
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
 -- Pharmacy policies
+DROP POLICY IF EXISTS pharmacy_connections_tenant ON pharmacy_connections;
 CREATE POLICY pharmacy_connections_tenant ON pharmacy_connections
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS prescriptions_tenant ON e_prescriptions;
 CREATE POLICY prescriptions_tenant ON e_prescriptions
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS med_history_tenant ON medication_history;
 CREATE POLICY med_history_tenant ON medication_history
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS refill_requests_tenant ON refill_requests;
 CREATE POLICY refill_requests_tenant ON refill_requests
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
 -- Imaging policies
+DROP POLICY IF EXISTS pacs_connections_tenant ON pacs_connections;
 CREATE POLICY pacs_connections_tenant ON pacs_connections
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS imaging_orders_tenant ON imaging_orders;
 CREATE POLICY imaging_orders_tenant ON imaging_orders
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS imaging_studies_tenant ON imaging_studies;
 CREATE POLICY imaging_studies_tenant ON imaging_studies
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS imaging_reports_tenant ON imaging_reports;
 CREATE POLICY imaging_reports_tenant ON imaging_reports
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
 -- Insurance policies
+DROP POLICY IF EXISTS insurance_payers_tenant ON insurance_payer_connections;
 CREATE POLICY insurance_payers_tenant ON insurance_payer_connections
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS eligibility_requests_tenant ON eligibility_requests;
 CREATE POLICY eligibility_requests_tenant ON eligibility_requests
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS eligibility_responses_access ON eligibility_responses;
 CREATE POLICY eligibility_responses_access ON eligibility_responses
     FOR ALL USING (
         request_id IN (SELECT id FROM eligibility_requests WHERE tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()))
     );
 
+DROP POLICY IF EXISTS patient_insurance_tenant ON patient_insurance;
 CREATE POLICY patient_insurance_tenant ON patient_insurance
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
@@ -1161,17 +1217,29 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS lab_orders_updated_at ON lab_orders;
 CREATE TRIGGER lab_orders_updated_at BEFORE UPDATE ON lab_orders FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS lab_results_updated_at ON lab_results;
 CREATE TRIGGER lab_results_updated_at BEFORE UPDATE ON lab_results FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS lab_connections_updated_at ON lab_provider_connections;
 CREATE TRIGGER lab_connections_updated_at BEFORE UPDATE ON lab_provider_connections FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS pharmacy_connections_updated_at ON pharmacy_connections;
 CREATE TRIGGER pharmacy_connections_updated_at BEFORE UPDATE ON pharmacy_connections FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS prescriptions_updated_at ON e_prescriptions;
 CREATE TRIGGER prescriptions_updated_at BEFORE UPDATE ON e_prescriptions FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS refill_requests_updated_at ON refill_requests;
 CREATE TRIGGER refill_requests_updated_at BEFORE UPDATE ON refill_requests FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS pacs_connections_updated_at ON pacs_connections;
 CREATE TRIGGER pacs_connections_updated_at BEFORE UPDATE ON pacs_connections FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS imaging_orders_updated_at ON imaging_orders;
 CREATE TRIGGER imaging_orders_updated_at BEFORE UPDATE ON imaging_orders FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS imaging_studies_updated_at ON imaging_studies;
 CREATE TRIGGER imaging_studies_updated_at BEFORE UPDATE ON imaging_studies FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS imaging_reports_updated_at ON imaging_reports;
 CREATE TRIGGER imaging_reports_updated_at BEFORE UPDATE ON imaging_reports FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS insurance_payers_updated_at ON insurance_payer_connections;
 CREATE TRIGGER insurance_payers_updated_at BEFORE UPDATE ON insurance_payer_connections FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
+DROP TRIGGER IF EXISTS patient_insurance_updated_at ON patient_insurance;
 CREATE TRIGGER patient_insurance_updated_at BEFORE UPDATE ON patient_insurance FOR EACH ROW EXECUTE FUNCTION update_healthcare_updated_at();
 
 -- ============================================================================
