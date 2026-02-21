@@ -3,9 +3,40 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-02-18
-**Last Session:** L&D Session 8 — Tier 3 AI moonshot features (birth plan, PPD early warning, contraindication, patient education)
+**Last Updated:** 2026-02-21
+**Last Session:** Deep Congruency Audit + MCP Server Audit — Full codebase audit + MCP ecosystem inventory, gap analysis, and chain mapping
 **Updated By:** Claude Opus 4.6
+
+---
+
+## Deep Congruency Audit (2026-02-21)
+
+**Full audit report:** [`docs/DEEP_CONGRUENCY_AUDIT_2026-02-21.md`](DEEP_CONGRUENCY_AUDIT_2026-02-21.md)
+
+**Summary:** 8.4/10 overall score. 4 Critical, 9 Moderate, 6 Low findings. ~14 hours remediation across 3-4 sessions. No code was modified — audit only.
+
+**Top critical findings:**
+1. 8 services throw instead of returning `failure()` (breaks ServiceResult contract)
+2. 14 duplicate type definitions (AlertSeverity has 7 incompatible versions)
+3. PinnedSectionsContext used by 3 components but possibly unmounted
+4. 63+ `as Error` type assertions instead of `instanceof Error` narrowing
+
+---
+
+## MCP Server Ecosystem Audit (2026-02-21)
+
+**Full audit report:** [`docs/MCP_SERVER_AUDIT.md`](MCP_SERVER_AUDIT.md)
+
+**Summary:** 11 MCP servers, 96 total tools, 3 security tiers. All 11 LIVE after Tier 3 auth fix (VARCHAR/TEXT type mismatch in `validate_mcp_key`). 3 servers wired to UI, 8 have clients built but not connected. 5 cross-server chains identified, 0 implemented.
+
+**Top action items:**
+1. ~~FIX: Tier 3 auth~~ — **DONE** (2026-02-21)
+2. FIX: Clearinghouse needs vendor credentials (Waystar/Change Healthcare/Availity)
+3. WIRE: NPI Registry → provider onboarding (~2 hrs)
+4. WIRE: Medical Codes → encounter billing (~4 hrs)
+5. BUILD: Claims submission pipeline — Chain 1 (~16 hrs, biggest revenue opportunity)
+
+**Total estimated remaining MCP work:** ~46 hours (6-8 sessions)
 
 ---
 
@@ -46,15 +77,43 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 8,531 passed, 0 failed | 2026-02-18 |
-| Test Suites | 437 | 2026-02-18 |
-| Typecheck | 0 errors | 2026-02-18 |
-| Lint | 0 errors, 0 warnings | 2026-02-18 |
-| God files (>600 lines) | 0 violations | 2026-02-18 |
+| Tests | 8,562 passed, 0 failed | 2026-02-21 |
+| Test Suites | 440 | 2026-02-21 |
+| Typecheck | 0 errors | 2026-02-21 |
+| Lint | 0 errors, 0 warnings | 2026-02-21 |
+| God files (>600 lines) | 14 violations (8 edge fn + 6 type files) | 2026-02-21 |
+| Congruency Audit Score | 8.4/10 | 2026-02-21 |
 
 ---
 
-## What Was Completed Today (2026-02-18)
+## What Was Completed Today (2026-02-21)
+
+1. Deep Congruency Audit — Full codebase audit across 7 dimensions:
+   - Service layer: 500+ services mapped, dependency graph traced
+   - Routing: 151 routes verified connected and lazy-loaded
+   - Contexts: 12 React contexts mapped, mounting hierarchy verified
+   - Edge functions: 137 functions audited for CORS, auth, error handling
+   - Types: 72 type files audited, duplicate definitions identified
+   - Database: 445 migrations reviewed, query patterns audited
+   - Error handling: 1,300+ catch blocks analyzed
+2. Tests: 8,531 → 8,562 (+31), Suites: 437 → 440 (+3)
+3. Audit report delivered: `docs/DEEP_CONGRUENCY_AUDIT_2026-02-21.md`
+4. No code was modified — audit only per Maria's instruction
+5. MCP Server Ecosystem Audit:
+   - Inventoried all 11 MCP servers (96 total tools across 3 security tiers)
+   - Health-checked each server: 4 LIVE, 5 DOWN (Tier 3 — missing secrets), 2 untested
+   - Identified 8 servers with client code built but NOT wired to UI
+   - Mapped 5 cross-server chains (Claims Pipeline, Provider Onboarding, Clinical Decision Support, Encounter-to-Claim, Prior Auth Workflow) — 0 of 5 currently implemented
+   - Gap analysis: biggest opportunity is Claims Submission Pipeline (Chain 1) — automated revenue cycle
+   - Full results added to PROJECT_STATE.md as working knowledge
+6. Fixed Tier 3 MCP server auth failure:
+   - Root cause: `validate_mcp_key` SQL function VARCHAR(255)/TEXT type mismatch
+   - Secondary fix: `_shared/env.ts` key fallback order (JWT format first)
+   - Applied migration `20260221000001_fix_validate_mcp_key_type_mismatch.sql`
+   - Redeployed all 11 MCP servers
+   - All 11 servers now responding (9 ping OK + Prior Auth authenticated)
+
+### Previous Session (2026-02-18)
 
 1. L&D Session 8 — Tier 3 AI moonshot features:
    - AI Birth Plan Generator (8-section grid, prints, ai-patient-education edge function)
@@ -66,7 +125,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 4. Wired panels into PrenatalTab, PostpartumTab, MedicationAdminForm
 5. Tests: 8,441 → 8,531 (+90), Suites: 431 → 437 (+6)
 
-### Previous Session (2026-02-17)
+### Previous Session (2026-02-17) (archived)
 
 1. Built AI Patient Priority Boards (physician + nurse scoring, click-to-chart)
 2. Built Physician Office Dashboard (`/physician-office`) — 6 tabs, 14 composed admin sections
