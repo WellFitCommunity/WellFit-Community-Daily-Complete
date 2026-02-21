@@ -137,7 +137,7 @@ export const CareEscalationScorerService = {
       });
 
       if (error) {
-        await auditLogger.error('CARE_ESCALATION_SCORING_FAILED', error as Error, {
+        await auditLogger.error('CARE_ESCALATION_SCORING_FAILED', error instanceof Error ? error : new Error(String(error)), {
           patientId: patientId.substring(0, 8) + '...',
           category: 'CLINICAL',
         });

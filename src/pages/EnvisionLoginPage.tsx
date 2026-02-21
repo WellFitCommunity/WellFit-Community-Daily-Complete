@@ -130,7 +130,7 @@ export const EnvisionLoginPage: React.FC = () => {
 
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : 'Login failed';
-      await auditLogger.error('ENVISION_LOGIN_ERROR', err as Error, { email: email.trim() });
+      await auditLogger.error('ENVISION_LOGIN_ERROR', err instanceof Error ? err : new Error(String(err)), { email: email.trim() });
       setError(errMsg);
     } finally {
       setLoading(false);

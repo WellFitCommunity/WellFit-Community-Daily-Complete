@@ -59,12 +59,13 @@ export interface ShiftHandoffRiskScore {
 }
 
 /**
- * Risk level enum
+ * Handoff risk level — UPPER case, 4-tier (distinct from clinical/security/theme RiskLevel)
  */
 export type RiskLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 /**
- * Shift type enum
+ * Handoff shift type — 3 base shifts for handoff packets
+ * NOTE: Distinct from EmployeeShiftType (6 values) and CoverageShiftType (4 values)
  */
 export type ShiftType = 'day' | 'evening' | 'night';
 

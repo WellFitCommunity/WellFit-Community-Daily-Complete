@@ -250,7 +250,7 @@ export const GuardianFlowEngine = {
 
       return success(prediction);
     } catch (err) {
-      await auditLogger.error('GUARDIAN_FLOW_PREDICTION_FAILED', err as Error, {
+      await auditLogger.error('GUARDIAN_FLOW_PREDICTION_FAILED', err instanceof Error ? err : new Error(String(err)), {
         facilityId,
         horizonHours,
         category: 'CLINICAL',
@@ -416,7 +416,7 @@ export const GuardianFlowEngine = {
 
       return success(recommendations);
     } catch (err) {
-      await auditLogger.error('GUARDIAN_FLOW_RECOMMENDATIONS_FAILED', err as Error, {
+      await auditLogger.error('GUARDIAN_FLOW_RECOMMENDATIONS_FAILED', err instanceof Error ? err : new Error(String(err)), {
         facilityId,
         category: 'CLINICAL',
       });
@@ -513,7 +513,7 @@ export const GuardianFlowEngine = {
 
       return success(score);
     } catch (err) {
-      await auditLogger.error('GUARDIAN_FLOW_EMS_SCORING_FAILED', err as Error, {
+      await auditLogger.error('GUARDIAN_FLOW_EMS_SCORING_FAILED', err instanceof Error ? err : new Error(String(err)), {
         facilityId,
         unitId: emsUnit.unitId,
         category: 'CLINICAL',

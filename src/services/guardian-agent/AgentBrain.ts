@@ -542,7 +542,7 @@ export class AgentBrain {
   // Helper methods
   private extractErrorInfo(error: unknown): Record<string, unknown> {
     if (error instanceof Error) {
-      const errWithExtras = error as Error & Record<string, unknown>;
+      const errWithExtras = (error instanceof Error ? error : new Error(String(error))) as Error & Record<string, unknown>;
       return {
         name: errWithExtras.name || 'UnknownError',
         message: errWithExtras.message || String(error),

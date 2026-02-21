@@ -1,6 +1,10 @@
 // SDOH (Social Determinants of Health) billing types for WellFit Community
 // Enhanced billing support for Z-codes and CCM complexity assessment
 
+/**
+ * SDOH billing factor — simple Z-code mapping for claims.
+ * NOTE: Distinct from sdohIndicators.SDOHFactor which is the full clinical assessment.
+ */
 export interface SDOHFactor {
   zCode: string;
   description: string;

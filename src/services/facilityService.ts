@@ -40,7 +40,7 @@ export const FacilityService = {
 
       return success(data || []);
     } catch (err) {
-      await auditLogger.error('FACILITY_LIST_ERROR', err as Error, {
+      await auditLogger.error('FACILITY_LIST_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       return failure('UNKNOWN_ERROR', 'Failed to fetch facilities', err);
@@ -170,7 +170,7 @@ export const FacilityService = {
 
       return success(data);
     } catch (err) {
-      await auditLogger.error('FACILITY_CREATE_ERROR', err as Error, {
+      await auditLogger.error('FACILITY_CREATE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       return failure('UNKNOWN_ERROR', 'Failed to create facility', err);
@@ -223,7 +223,7 @@ export const FacilityService = {
 
       return success(data);
     } catch (err) {
-      await auditLogger.error('FACILITY_UPDATE_ERROR', err as Error, {
+      await auditLogger.error('FACILITY_UPDATE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       return failure('UNKNOWN_ERROR', 'Failed to update facility', err);

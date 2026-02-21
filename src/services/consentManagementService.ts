@@ -160,7 +160,7 @@ export class ConsentManagementService {
 
       return data as Consent[];
     } catch (error) {
-      await auditLogger.error('USER_CONSENT_FETCH_ERROR', error as Error, {
+      await auditLogger.error('USER_CONSENT_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'getUserConsents',
         user_id: userId
       });
@@ -197,7 +197,7 @@ export class ConsentManagementService {
 
       return data as Consent[];
     } catch (error) {
-      await auditLogger.error('ACTIVE_CONSENT_FETCH_ERROR', error as Error, {
+      await auditLogger.error('ACTIVE_CONSENT_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'getActiveUserConsents',
         user_id: userId
       });
@@ -304,7 +304,7 @@ export class ConsentManagementService {
 
       return data as Consent;
     } catch (error) {
-      await auditLogger.error('CONSENT_GRANT_ERROR', error as Error, {
+      await auditLogger.error('CONSENT_GRANT_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'grantConsent',
         user_id: userId,
         consent_type: consentType
@@ -371,7 +371,7 @@ export class ConsentManagementService {
 
       return verificationResult;
     } catch (error) {
-      await auditLogger.error('CONSENT_CHECK_ERROR', error as Error, {
+      await auditLogger.error('CONSENT_CHECK_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'checkUserConsent',
         user_id: userId,
         consent_type: consentType,
@@ -410,7 +410,7 @@ export class ConsentManagementService {
 
       return data as boolean;
     } catch (error) {
-      await auditLogger.error('CONSENT_WITHDRAWAL_ERROR', error as Error, {
+      await auditLogger.error('CONSENT_WITHDRAWAL_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'withdrawConsent',
         consent_id: consentId
       });
@@ -483,7 +483,7 @@ export class ConsentManagementService {
 
       return data as Consent;
     } catch (error) {
-      await auditLogger.error('SHARING_PERMISSIONS_UPDATE_ERROR', error as Error, {
+      await auditLogger.error('SHARING_PERMISSIONS_UPDATE_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'updateSharingPermissions',
         consent_id: consentId
       });
@@ -516,7 +516,7 @@ export class ConsentManagementService {
 
       return data as ExpiringConsent[];
     } catch (error) {
-      await auditLogger.error('EXPIRING_CONSENTS_FETCH_ERROR', error as Error, {
+      await auditLogger.error('EXPIRING_CONSENTS_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'getExpiringConsents',
         days_until_expiration: daysUntilExpiration
       });
@@ -557,7 +557,7 @@ export class ConsentManagementService {
         operation: 'createExpirationAlert'
       });
     } catch (error) {
-      await auditLogger.error('EXPIRATION_ALERT_CREATE_ERROR', error as Error, {
+      await auditLogger.error('EXPIRATION_ALERT_CREATE_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'createExpirationAlert',
         user_id: userId,
         consent_id: consentId
@@ -598,7 +598,7 @@ export class ConsentManagementService {
         operation: 'markAlertAsSent'
       });
     } catch (error) {
-      await auditLogger.error('ALERT_MARK_SENT_ERROR', error as Error, {
+      await auditLogger.error('ALERT_MARK_SENT_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'markAlertAsSent',
         alert_id: alertId
       });
@@ -638,7 +638,7 @@ export class ConsentManagementService {
         operation: 'recordAlertResponse'
       });
     } catch (error) {
-      await auditLogger.error('ALERT_RESPONSE_RECORD_ERROR', error as Error, {
+      await auditLogger.error('ALERT_RESPONSE_RECORD_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'recordAlertResponse',
         alert_id: alertId
       });
@@ -678,7 +678,7 @@ export class ConsentManagementService {
 
       return data as ConsentVerificationLog[];
     } catch (error) {
-      await auditLogger.error('VERIFICATION_HISTORY_FETCH_ERROR', error as Error, {
+      await auditLogger.error('VERIFICATION_HISTORY_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'getConsentVerificationHistory',
         user_id: userId
       });
@@ -733,7 +733,7 @@ export class ConsentManagementService {
         });
       }
     } catch (error) {
-      await auditLogger.error('CONSENT_VERIFICATION_LOG_ERROR', error as Error, {
+      await auditLogger.error('CONSENT_VERIFICATION_LOG_ERROR', error instanceof Error ? error : new Error(String(error)), {
         operation: 'logConsentVerification',
         user_id: params.userId
       });

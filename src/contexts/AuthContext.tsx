@@ -149,15 +149,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const hasAdmin = checkAdminFromUserRoles(userRoles);
       setDbAdmin(hasAdmin);
     } catch (e: unknown) {
-      const err = e as { message?: string } | null;
+      const errMsg = e instanceof Error ? e.message : String(e);
       // Check if this is a session expiry error
-      if (err?.message?.includes('Invalid Refresh Token') ||
-          err?.message?.includes('Session Expired')) {
+      if (errMsg.includes('Invalid Refresh Token') ||
+          errMsg.includes('Session Expired')) {
         await handleSessionExpiry();
         return;
       }
 
-      auditLogger.warn('REFRESH_DB_ROLES_EXCEPTION', { error: err?.message });
+      auditLogger.warn('REFRESH_DB_ROLES_EXCEPTION', { error: errMsg });
       setDbAdmin(null);
     }
   }
@@ -194,15 +194,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setMetaAdmin(m);
         refreshDbRoles(u); // async, non-blocking
       } catch (e: unknown) {
-        const err = e as { message?: string } | null;
+        const errMsg = e instanceof Error ? e.message : String(e);
         // Handle session expiry errors in catch block too
-        if (err?.message?.includes('Invalid Refresh Token') ||
-            err?.message?.includes('Session Expired')) {
+        if (errMsg.includes('Invalid Refresh Token') ||
+            errMsg.includes('Session Expired')) {
           if (!cancelled) await handleSessionExpiry();
           return;
         }
 
-        if (!cancelled) setError(e as Error);
+        if (!cancelled) setError(e instanceof Error ? e : new Error(String(e)));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -263,7 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (error) throw error;
     } catch (e: unknown) {
-      setError(e as Error); throw e;
+      setError(e instanceof Error ? e : new Error(String(e))); throw e;
     } finally { setLoading(false); }
   };
 
@@ -276,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (error) throw error;
     } catch (e: unknown) {
-      setError(e as Error); throw e;
+      setError(e instanceof Error ? e : new Error(String(e))); throw e;
     } finally { setLoading(false); }
   };
 
@@ -286,7 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
       if (error) throw error;
     } catch (e: unknown) {
-      setError(e as Error); throw e;
+      setError(e instanceof Error ? e : new Error(String(e))); throw e;
     } finally { setLoading(false); }
   };
 
@@ -319,7 +319,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Provide (email+password) or (phone).');
       }
     } catch (e: unknown) {
-      setError(e as Error); throw e;
+      setError(e instanceof Error ? e : new Error(String(e))); throw e;
     } finally { setLoading(false); }
   };
 
@@ -329,7 +329,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (e: unknown) {
-      setError(e as Error); throw e;
+      setError(e instanceof Error ? e : new Error(String(e))); throw e;
     } finally { setLoading(false); }
   };
 

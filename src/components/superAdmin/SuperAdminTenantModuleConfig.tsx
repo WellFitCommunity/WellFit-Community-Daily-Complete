@@ -154,7 +154,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
         setConfig(data);
       }
     } catch (err) {
-      await auditLogger.error('SUPER_ADMIN_TENANT_ENTITLEMENT_LOAD_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_TENANT_ENTITLEMENT_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         tenantId: tenant.tenantId,
         tenantName: tenant.tenantName
       });
@@ -346,11 +346,11 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
 
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      await auditLogger.error('SUPER_ADMIN_TENANT_ENTITLEMENT_SAVE_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_TENANT_ENTITLEMENT_SAVE_FAILED', err instanceof Error ? err : new Error(String(err)), {
         tenantId: tenant.tenantId,
         changes: pendingChanges
       });
-      setError((err as Error).message || 'Failed to save entitlement configuration');
+      setError(err instanceof Error ? err.message : 'Failed to save entitlement configuration');
     } finally {
       setSaving(false);
     }

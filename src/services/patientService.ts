@@ -120,8 +120,8 @@ class PatientService {
       });
 
       return success(result);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('PATIENT_LIST_ERROR', error);
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -154,8 +154,8 @@ class PatientService {
       });
 
       return success(data);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('PATIENT_FETCH_ERROR', error, { userId });
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -198,8 +198,8 @@ class PatientService {
       });
 
       return success(result);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('PATIENT_SEARCH_ERROR', error);
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -232,8 +232,8 @@ class PatientService {
       });
 
       return success(result);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('UNIT_PATIENT_LIST_ERROR', error, { unitId });
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -294,8 +294,8 @@ class PatientService {
       });
 
       return success(patients);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('RISK_PATIENT_LIST_ERROR', error, { riskLevel });
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -339,8 +339,8 @@ class PatientService {
       });
 
       return success(result);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('HOSPITAL_PATIENT_LIST_ERROR', error);
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -371,8 +371,8 @@ class PatientService {
       });
 
       return success(result);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('APP_PATIENT_LIST_ERROR', error);
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -405,8 +405,8 @@ class PatientService {
       });
 
       return success(result);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('TENANT_PATIENT_LIST_ERROR', error, { tenantId });
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -466,8 +466,8 @@ class PatientService {
       });
 
       return success(result);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('FILTERED_PATIENT_LIST_ERROR', error);
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -500,8 +500,8 @@ class PatientService {
       });
 
       return success(data);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('RECENT_PATIENT_LIST_ERROR', error);
       return failure('DATABASE_ERROR', error.message, err);
     }
@@ -528,8 +528,8 @@ class PatientService {
       }
 
       return success(count || 0);
-    } catch (err) {
-      const error = err as Error;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await auditLogger.error('PATIENT_COUNT_ERROR', error);
       return failure('DATABASE_ERROR', error.message, err);
     }

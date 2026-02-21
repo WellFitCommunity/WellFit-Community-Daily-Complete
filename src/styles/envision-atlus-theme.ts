@@ -213,6 +213,7 @@ export const envisionAtlusLayout = {
 // RISK LEVEL UTILITIES
 // =====================================================
 
+/** Theme risk level styling — 5-tier with 'elevated'/'normal' (distinct from clinical RiskLevel types) */
 export type RiskLevel = 'critical' | 'high' | 'elevated' | 'normal' | 'low';
 
 export function getRiskStyles(level: RiskLevel | string) {

@@ -8,6 +8,8 @@ import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { getErrorMessage } from '../lib/getErrorMessage';
 import { claudeService } from './claudeService';
 import { auditLogger } from './auditLogger';
+import type { ServiceResult } from './_base/ServiceResult';
+import { success, failure } from './_base/ServiceResult';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 import { ReadmissionTrackingService } from './readmissionTrackingService';
 import type {
@@ -35,10 +37,10 @@ export class DischargePlanningService {
   /**
    * Create a new discharge plan with AI-powered risk assessment
    */
-  static async createDischargePlan(request: CreateDischargePlanRequest): Promise<DischargePlan> {
+  static async createDischargePlan(request: CreateDischargePlanRequest): Promise<ServiceResult<DischargePlan>> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) return failure('UNAUTHORIZED', 'User not authenticated');
 
       // Calculate readmission risk score
       const { data: riskScore, error: riskError } = await supabase.rpc(
@@ -84,7 +86,7 @@ export class DischargePlanningService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error || !plan) return failure('DATABASE_ERROR', `Discharge plan creation failed: ${error?.message ?? 'no data'}`, error);
 
       // Generate AI-powered recommendations
       await this.generateDischargePlanRecommendations(plan.id, request.patient_id, request.encounter_id);
@@ -99,38 +101,46 @@ export class DischargePlanningService {
         disposition: request.discharge_disposition
       });
 
-      return plan;
+      return success(plan);
     } catch (err: unknown) {
-      throw new Error(`Discharge plan creation failed: ${getErrorMessage(err)}`);
+      return failure('OPERATION_FAILED', `Discharge plan creation failed: ${getErrorMessage(err)}`, err);
     }
   }
 
   /**
    * Get discharge plan by ID
    */
-  static async getDischargePlan(planId: string): Promise<DischargePlan> {
-    const { data, error } = await supabase
-      .from('discharge_plans')
-      .select('*')
-      .eq('id', planId)
-      .single();
+  static async getDischargePlan(planId: string): Promise<ServiceResult<DischargePlan>> {
+    try {
+      const { data, error } = await supabase
+        .from('discharge_plans')
+        .select('*')
+        .eq('id', planId)
+        .single();
 
-    if (error) throw new Error(`Failed to get discharge plan: ${error.message}`);
-    return data;
+      if (error || !data) return failure('NOT_FOUND', `Failed to get discharge plan: ${error?.message ?? 'not found'}`, error);
+      return success(data);
+    } catch (err: unknown) {
+      return failure('DATABASE_ERROR', `Failed to get discharge plan: ${getErrorMessage(err)}`, err);
+    }
   }
 
   /**
    * Get discharge plan by encounter ID
    */
-  static async getDischargePlanByEncounter(encounterId: string): Promise<DischargePlan | null> {
-    const { data, error } = await supabase
-      .from('discharge_plans')
-      .select('*')
-      .eq('encounter_id', encounterId)
-      .maybeSingle();
+  static async getDischargePlanByEncounter(encounterId: string): Promise<ServiceResult<DischargePlan | null>> {
+    try {
+      const { data, error } = await supabase
+        .from('discharge_plans')
+        .select('*')
+        .eq('encounter_id', encounterId)
+        .maybeSingle();
 
-    if (error) throw new Error(`Failed to get discharge plan: ${error.message}`);
-    return data;
+      if (error) return failure('DATABASE_ERROR', `Failed to get discharge plan: ${error.message}`, error);
+      return success(data);
+    } catch (err: unknown) {
+      return failure('DATABASE_ERROR', `Failed to get discharge plan: ${getErrorMessage(err)}`, err);
+    }
   }
 
   /**
@@ -139,7 +149,7 @@ export class DischargePlanningService {
   static async updateDischargePlan(
     planId: string,
     updates: Partial<DischargePlan>
-  ): Promise<DischargePlan> {
+  ): Promise<ServiceResult<DischargePlan>> {
     try {
       const { data, error } = await supabase
         .from('discharge_plans')
@@ -148,7 +158,7 @@ export class DischargePlanningService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error || !data) return failure('DATABASE_ERROR', `Failed to update discharge plan: ${error?.message ?? 'not found'}`, error);
 
       // Auto-generate billing codes if checklist is complete and not already generated
       if (
@@ -158,16 +168,16 @@ export class DischargePlanningService {
         await this.generateBillingCodes(planId);
       }
 
-      return data;
+      return success(data);
     } catch (err: unknown) {
-      throw new Error(`Failed to update discharge plan: ${getErrorMessage(err)}`);
+      return failure('OPERATION_FAILED', `Failed to update discharge plan: ${getErrorMessage(err)}`, err);
     }
   }
 
   /**
    * Mark discharge plan as ready (all checklist items complete)
    */
-  static async markPlanReady(planId: string): Promise<DischargePlan> {
+  static async markPlanReady(planId: string): Promise<ServiceResult<DischargePlan>> {
     return await this.updateDischargePlan(planId, { status: 'ready' });
   }
 
@@ -177,16 +187,14 @@ export class DischargePlanningService {
   static async markPatientDischarged(
     planId: string,
     actualDischargeTime?: string
-  ): Promise<DischargePlan> {
+  ): Promise<ServiceResult<DischargePlan>> {
     const dischargeTime = actualDischargeTime || new Date().toISOString();
 
-    const plan = await this.updateDischargePlan(planId, {
+    // Follow-ups are auto-scheduled via database trigger
+    return await this.updateDischargePlan(planId, {
       status: 'discharged',
       actual_discharge_datetime: dischargeTime
     });
-
-    // Follow-ups are auto-scheduled via database trigger
-    return plan;
   }
 
   /**
@@ -325,7 +333,9 @@ Format as JSON:
    */
   static async generateBillingCodes(planId: string): Promise<void> {
     try {
-      const plan = await this.getDischargePlan(planId);
+      const planResult = await this.getDischargePlan(planId);
+      if (!planResult.success) return; // Silently skip if plan not found
+      const plan = planResult.data;
 
       const billingCodes: Array<{ code: string; description: string }> = [];
 
@@ -380,7 +390,10 @@ Format as JSON:
         .eq('id', planId);
 
     } catch (err: unknown) {
-      throw err;
+      auditLogger.warn('Billing code generation failed', {
+        planId,
+        error: getErrorMessage(err)
+      });
     }
   }
 
@@ -421,10 +434,10 @@ Format as JSON:
   static async completeFollowUp(
     followUpId: string,
     callData: Partial<PostDischargeFollowUp>
-  ): Promise<PostDischargeFollowUp> {
+  ): Promise<ServiceResult<PostDischargeFollowUp>> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) return failure('UNAUTHORIZED', 'User not authenticated');
 
       const { data, error } = await supabase
         .from('post_discharge_follow_ups')
@@ -438,16 +451,16 @@ Format as JSON:
         .select()
         .single();
 
-      if (error) throw error;
+      if (error || !data) return failure('DATABASE_ERROR', `Failed to complete follow-up: ${error?.message ?? 'not found'}`, error);
 
       // If readmitted or serious concerns, create alert
       if (data.outcome === 'readmitted' || data.needs_escalation) {
         await this.createFollowUpAlert(data);
       }
 
-      return data;
+      return success(data);
     } catch (err: unknown) {
-      throw new Error(`Failed to complete follow-up: ${getErrorMessage(err)}`);
+      return failure('OPERATION_FAILED', `Failed to complete follow-up: ${getErrorMessage(err)}`, err);
     }
   }
 

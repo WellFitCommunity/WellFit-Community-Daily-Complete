@@ -69,7 +69,7 @@ async function callBedManagementFunction<T>(
 
     return success(data as T);
   } catch (err) {
-    await auditLogger.error('BED_MANAGEMENT_ERROR', err as Error, {
+    await auditLogger.error('BED_MANAGEMENT_ERROR', err instanceof Error ? err : new Error(String(err)), {
       category: 'CLINICAL',
       action,
     });

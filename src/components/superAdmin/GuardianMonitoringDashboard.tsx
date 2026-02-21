@@ -127,7 +127,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
       setCronExecutions(cronLogs || []);
 
     } catch (err) {
-      await auditLogger.error('GUARDIAN_METRICS_LOAD_FAILED', err as Error, {
+      await auditLogger.error('GUARDIAN_METRICS_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       setError('Failed to load Guardian metrics');

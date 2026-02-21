@@ -634,7 +634,7 @@ export function useCameraScan(): UseCameraScanResult {
         auditLogger.info('CAMERA_SCAN_STARTED', { vitalType });
       }
     } catch (err: unknown) {
-      const error = err as Error;
+      const error = err instanceof Error ? err : new Error(String(err));
       let errorMessage = 'Failed to access camera';
 
       if (error.name === 'NotAllowedError') {

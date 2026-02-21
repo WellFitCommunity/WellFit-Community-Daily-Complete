@@ -116,9 +116,10 @@ export class LaborDeliveryService {
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) return { success: false, error: error.message };
+      if (!data) return { success: false, error: 'No active pregnancy found' };
       return { success: true, data: data as unknown as LDPregnancy };
     } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -439,7 +440,7 @@ export class LaborDeliveryService {
       ] = await Promise.all([
         supabase.from('ld_pregnancies').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
-          .order('created_at', { ascending: false }).limit(1).single(),
+          .order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('ld_prenatal_visits').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('visit_date', { ascending: false }).limit(10),
@@ -448,22 +449,22 @@ export class LaborDeliveryService {
           .order('event_time', { ascending: true }).limit(50),
         supabase.from('ld_fetal_monitoring').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
-          .order('assessment_time', { ascending: false }).limit(1).single(),
+          .order('assessment_time', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('ld_delivery_records').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
-          .order('delivery_datetime', { ascending: false }).limit(1).single(),
+          .order('delivery_datetime', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('ld_newborn_assessments').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
-          .order('birth_datetime', { ascending: false }).limit(1).single(),
+          .order('birth_datetime', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('ld_postpartum_assessments').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
-          .order('assessment_datetime', { ascending: false }).limit(1).single(),
+          .order('assessment_datetime', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('ld_medication_administrations').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('administered_datetime', { ascending: false }).limit(20),
         supabase.from('ld_risk_assessments').select('*')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
-          .order('assessment_date', { ascending: false }).limit(1).single(),
+          .order('assessment_date', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       const pregnancy = pregRes.data as unknown as LDPregnancy | null;

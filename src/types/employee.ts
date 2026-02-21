@@ -35,7 +35,8 @@ export type EmploymentStatus =
   | 'pending_start';
 
 /**
- * Default shift assignments
+ * Employee shift assignment — includes rotating/flexible/on_call
+ * NOTE: Superset of handoff ShiftType (3 values). Distinct from CoverageShiftType.
  */
 export type ShiftType =
   | 'day'

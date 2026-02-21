@@ -18,7 +18,10 @@ import { getNotificationService } from '../notificationService';
 // Types
 // ============================================================================
 
-export type EscalationLevel = 'none' | 'low' | 'medium' | 'high' | 'emergency';
+/** Missed check-in escalation — distinct from EDEscalationLevel and MentalHealthEscalationLevel */
+export type CheckInEscalationLevel = 'none' | 'low' | 'medium' | 'high' | 'emergency';
+/** @deprecated Use CheckInEscalationLevel */
+export type EscalationLevel = CheckInEscalationLevel;
 export type TriggerType = 'single_missed' | 'consecutive_missed' | 'scheduled_check';
 
 export interface EscalationRequest {
@@ -100,7 +103,10 @@ export const MissedCheckInEscalationService = {
       });
 
       if (error) {
-        await auditLogger.error('MISSED_CHECKIN_ESCALATION_FAILED', error as Error, {
+        const escalationError = error instanceof Error ? error : new Error(
+          (error && typeof error === 'object' && 'message' in error) ? String(error.message) : String(error)
+        );
+        await auditLogger.error('MISSED_CHECKIN_ESCALATION_FAILED', escalationError, {
           patientId,
           triggerType,
           category: 'CLINICAL',

@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-21
-**Last Session:** Deep Congruency Audit + MCP Server Audit — Full codebase audit + MCP ecosystem inventory, gap analysis, and chain mapping
+**Last Session:** MCP Server Wiring COMPLETE — All non-blocked servers wired to UI (10 of 11; Clearinghouse blocked on vendor credentials)
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -86,8 +86,37 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ---
 
-## What Was Completed Today (2026-02-21)
+## MCP Server Wiring Progress
 
+| # | Server | Wired? | Target UI | Session |
+|---|--------|--------|-----------|---------|
+| 1 | NPI Registry | DONE | BillingProviderForm (provider onboarding) | 2026-02-21 |
+| 2 | CMS Coverage | DONE | SuperbillReviewPanel + EligibilityVerificationPanel | 2026-02-21 |
+| 3 | PubMed | DONE | DrugInteractionsTab (evidence citations) | 2026-02-21 |
+| 4 | Clearinghouse | BLOCKED | Needs vendor credentials (Waystar/Change/Availity) | — |
+| 5 | Postgres Analytics | DONE | SystemAdminDashboard (PlatformKPIPanel) + 14 query hooks | 2026-02-21 |
+| 6 | Medical Codes | DONE | BillingQueueDashboard (CPT/ICD validation) | 2026-02-21 |
+| 7 | Claude AI | DONE | Already wired (claudeService) | Pre-audit |
+| 8 | FHIR | DONE | Already wired (FHIRInteroperabilityDashboard) | Pre-audit |
+| 9 | HL7-X12 | DONE | HL7MessageTestPanel (parse/validate/convert) | 2026-02-21 |
+| 10 | Prior Auth | DONE | Already wired (PriorAuthorizationManager) | Pre-audit |
+| 11 | Edge Functions | DONE | Already wired (mcpEdgeFunctionsClient) | Pre-audit |
+
+**Progress: 10 of 11 wired. Only Clearinghouse (#4) remains — blocked on vendor credentials.**
+
+---
+
+## What Was Completed Last Session (2026-02-21)
+
+### Session 2 — MCP UI Wiring (4 servers)
+1. Wired NPI Registry → BillingProviderForm (provider onboarding with registry lookup)
+2. Wired Medical Codes → BillingQueueDashboard (auto-validate CPT/ICD-10 on superbill gen)
+3. Wired CMS Coverage → SuperbillReviewPanel + EligibilityVerificationPanel (prior auth checks)
+4. Wired PubMed → DrugInteractionsTab (evidence citations with DOI links per interaction)
+5. New files: 4 hooks, 1 MCP client, 1 component, 5 test files (34 new tests)
+6. Tests: 8,562 → 8,596 (est.), Suites: 440 → 445 (est.)
+
+### Session 1 — Audits + Tier 3 Fix
 1. Deep Congruency Audit — Full codebase audit across 7 dimensions:
    - Service layer: 500+ services mapped, dependency graph traced
    - Routing: 151 routes verified connected and lazy-loaded

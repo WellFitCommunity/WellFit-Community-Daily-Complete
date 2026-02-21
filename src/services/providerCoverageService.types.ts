@@ -6,6 +6,7 @@
  * Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.
  */
 
+/** Coverage shift type — includes swing/24hr for provider coverage scheduling */
 export type ShiftType = 'day' | 'night' | 'swing' | '24hr';
 export type CoverageRole = 'primary' | 'secondary' | 'backup';
 export type CoverageReason = 'vacation' | 'pto' | 'sick' | 'training' | 'personal' | 'on_call_swap' | 'other';

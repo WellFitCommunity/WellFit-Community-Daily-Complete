@@ -56,7 +56,12 @@ export async function getMedication(medicationId: string): Promise<ApiResponse<M
       .single();
 
     if (error) throw error;
-    if (!data) throw new Error('Medication not found');
+    if (!data) {
+      return {
+        success: false,
+        error: 'Medication not found'
+      };
+    }
 
     return {
       success: true,

@@ -33,6 +33,7 @@ export type ViolationType =
   | 'authorization'
   | 'training';
 
+/** HIPAA violation prediction risk — lower case, 4-tier (distinct from clinical/behavioral RiskLevel) */
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type PredictionStatus = 'active' | 'mitigated' | 'occurred' | 'false_positive';
 

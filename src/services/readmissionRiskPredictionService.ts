@@ -11,7 +11,7 @@
  * HIPAA Compliance:
  * - All data uses patient IDs/tokens, never PHI in browser
  * - All operations logged via audit system
- * - No console.log statements
+ * - Uses auditLogger exclusively (no browser console)
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -492,7 +492,7 @@ export async function calculatePatientReadmissionRisk(
 
     return result;
   } catch (error) {
-    await auditLogger.error('READMISSION_RISK_CALCULATION_FAILED', error as Error, {
+    await auditLogger.error('READMISSION_RISK_CALCULATION_FAILED', error instanceof Error ? error : new Error(String(error)), {
       patientId,
       tenantId,
     });

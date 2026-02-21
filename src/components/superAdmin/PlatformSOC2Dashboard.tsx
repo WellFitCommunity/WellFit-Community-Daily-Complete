@@ -147,7 +147,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
       });
 
     } catch (err) {
-      await auditLogger.error('PLATFORM_SOC2_DASHBOARD_LOAD_FAILED', err as Error, {
+      await auditLogger.error('PLATFORM_SOC2_DASHBOARD_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       setError('Failed to load platform compliance data');

@@ -112,7 +112,7 @@ export const TimeClockAdmin: React.FC = () => {
       }
     } catch (err) {
       setError('Failed to load time clock data');
-      await auditLogger.error('TIME_CLOCK_ADMIN_LOAD_FAILED', err as Error, {
+      await auditLogger.error('TIME_CLOCK_ADMIN_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
     } finally {
@@ -135,7 +135,7 @@ export const TimeClockAdmin: React.FC = () => {
           setTenantId(profile.tenant_id);
         }
       } catch (error) {
-        await auditLogger.error('TIME_CLOCK_ADMIN_PROFILE_LOAD_FAILED', error as Error, {
+        await auditLogger.error('TIME_CLOCK_ADMIN_PROFILE_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), {
           category: 'ADMINISTRATIVE',
         });
       } finally {

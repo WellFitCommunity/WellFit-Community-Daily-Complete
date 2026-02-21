@@ -111,7 +111,7 @@ export async function logPhiAccess({
   } catch (err) {
     // CRITICAL: PHI access logging failed - HIPAA compliance issue
     // Don't break user experience, but DO report the error
-    errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', err as Error, {
+    errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', err instanceof Error ? err : new Error(String(err)), {
       phiType,
       patientId,
       accessType,
@@ -168,7 +168,7 @@ export async function logBulkPhiAccess(
       });
     } catch (err) {
       // CRITICAL: Bulk PHI access logging failed - HIPAA compliance issue
-      errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', err as Error, {
+      errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', err instanceof Error ? err : new Error(String(err)), {
         phiType,
         patientCount: patientIds.length,
         accessMethod,

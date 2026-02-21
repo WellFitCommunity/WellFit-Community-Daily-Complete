@@ -145,7 +145,7 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
       const readmission = calculateReadmissionRisk(patientFactors, silence);
       setReadmissionResult(readmission);
     } catch (err) {
-      auditLogger.error('HEALTHCARE_ALGORITHMS_CALCULATION_ERROR', err as Error);
+      auditLogger.error('HEALTHCARE_ALGORITHMS_CALCULATION_ERROR', err instanceof Error ? err : new Error(String(err)));
     }
   }, [silenceDemo, patientDemo, patientId]);
 

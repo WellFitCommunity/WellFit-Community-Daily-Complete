@@ -100,11 +100,11 @@ describe('DischargePlanningChecklist', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Setup default mocks
-    mockGetDischargePlan.mockResolvedValue(mockDischargePlan);
-    mockUpdateDischargePlan.mockImplementation(async (id, updates) => ({
-      ...mockDischargePlan,
-      ...updates,
+    // Setup default mocks — ServiceResult format
+    mockGetDischargePlan.mockResolvedValue({ success: true, data: mockDischargePlan });
+    mockUpdateDischargePlan.mockImplementation(async (_id: string, updates: Partial<DischargePlan>) => ({
+      success: true,
+      data: { ...mockDischargePlan, ...updates },
     }));
     mockMarkPlanReady.mockResolvedValue(undefined);
     mockMarkPatientDischarged.mockResolvedValue(undefined);
@@ -153,7 +153,7 @@ describe('DischargePlanningChecklist', () => {
 
   describe('No Plan State', () => {
     it('should show no plan message when plan is null', async () => {
-      mockGetDischargePlan.mockResolvedValue(null);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: null });
 
       render(
         <DischargePlanningChecklist
@@ -168,7 +168,7 @@ describe('DischargePlanningChecklist', () => {
     });
 
     it('should show helpful message about creating a plan', async () => {
-      mockGetDischargePlan.mockResolvedValue(null);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: null });
 
       render(
         <DischargePlanningChecklist
@@ -401,7 +401,7 @@ describe('DischargePlanningChecklist', () => {
         dme_needed: true,
         dme_ordered: false,
       };
-      mockGetDischargePlan.mockResolvedValue(planWithDme);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: planWithDme });
 
       render(
         <DischargePlanningChecklist
@@ -421,7 +421,7 @@ describe('DischargePlanningChecklist', () => {
         home_health_needed: true,
         home_health_ordered: false,
       };
-      mockGetDischargePlan.mockResolvedValue(planWithHomeHealth);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: planWithHomeHealth });
 
       render(
         <DischargePlanningChecklist
@@ -464,7 +464,7 @@ describe('DischargePlanningChecklist', () => {
         requires_48hr_call: true,
         requires_72hr_call: true,
       };
-      mockGetDischargePlan.mockResolvedValue(highRiskPlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: highRiskPlan });
 
       render(
         <DischargePlanningChecklist
@@ -494,7 +494,7 @@ describe('DischargePlanningChecklist', () => {
         post_acute_facility_phone: '555-123-4567',
         post_acute_bed_confirmed: true,
       };
-      mockGetDischargePlan.mockResolvedValue(planWithFacility);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: planWithFacility });
 
       render(
         <DischargePlanningChecklist
@@ -523,7 +523,7 @@ describe('DischargePlanningChecklist', () => {
         status: 'draft' as const,
         checklist_completion_percentage: 100,
       };
-      mockGetDischargePlan.mockResolvedValue(draftPlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: draftPlan });
 
       render(
         <DischargePlanningChecklist
@@ -543,7 +543,7 @@ describe('DischargePlanningChecklist', () => {
         status: 'draft' as const,
         checklist_completion_percentage: 70,
       };
-      mockGetDischargePlan.mockResolvedValue(incompletePlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: incompletePlan });
 
       render(
         <DischargePlanningChecklist
@@ -564,7 +564,7 @@ describe('DischargePlanningChecklist', () => {
         status: 'ready' as const,
         checklist_completion_percentage: 100,
       };
-      mockGetDischargePlan.mockResolvedValue(readyPlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: readyPlan });
 
       render(
         <DischargePlanningChecklist
@@ -584,7 +584,7 @@ describe('DischargePlanningChecklist', () => {
         status: 'draft' as const,
         checklist_completion_percentage: 100,
       };
-      mockGetDischargePlan.mockResolvedValue(completePlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: completePlan });
 
       render(
         <DischargePlanningChecklist
@@ -610,7 +610,7 @@ describe('DischargePlanningChecklist', () => {
         status: 'ready' as const,
         checklist_completion_percentage: 100,
       };
-      mockGetDischargePlan.mockResolvedValue(readyPlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: readyPlan });
 
       render(
         <DischargePlanningChecklist
@@ -635,7 +635,7 @@ describe('DischargePlanningChecklist', () => {
         ...mockDischargePlan,
         status: 'discharged' as const,
       };
-      mockGetDischargePlan.mockResolvedValue(dischargedPlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: dischargedPlan });
 
       render(
         <DischargePlanningChecklist
@@ -676,7 +676,7 @@ describe('DischargePlanningChecklist', () => {
         status: 'draft' as const,
         checklist_completion_percentage: 100,
       };
-      mockGetDischargePlan.mockResolvedValue(completePlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: completePlan });
       mockMarkPlanReady.mockRejectedValue(new Error('Authorization failed'));
 
       render(
@@ -704,7 +704,7 @@ describe('DischargePlanningChecklist', () => {
         status: 'pending_items' as const,
         checklist_completion_percentage: 90,
       };
-      mockGetDischargePlan.mockResolvedValue(incompletePlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: incompletePlan });
 
       render(
         <DischargePlanningChecklist
@@ -787,7 +787,7 @@ describe('DischargePlanningChecklist', () => {
         ...mockDischargePlan,
         status: 'discharged' as const,
       };
-      mockGetDischargePlan.mockResolvedValue(dischargedPlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: dischargedPlan });
 
       render(
         <DischargePlanningChecklist
@@ -805,7 +805,7 @@ describe('DischargePlanningChecklist', () => {
   describe('Status Badge Styling', () => {
     it('should show green badge for ready status', async () => {
       const readyPlan = { ...mockDischargePlan, status: 'ready' as const };
-      mockGetDischargePlan.mockResolvedValue(readyPlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: readyPlan });
 
       render(
         <DischargePlanningChecklist
@@ -822,7 +822,7 @@ describe('DischargePlanningChecklist', () => {
 
     it('should show blue badge for discharged status', async () => {
       const dischargedPlan = { ...mockDischargePlan, status: 'discharged' as const };
-      mockGetDischargePlan.mockResolvedValue(dischargedPlan);
+      mockGetDischargePlan.mockResolvedValue({ success: true, data: dischargedPlan });
 
       render(
         <DischargePlanningChecklist

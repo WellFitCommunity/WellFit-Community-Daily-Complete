@@ -33,7 +33,9 @@ import { auditLogger } from '../services/auditLogger';
 // TYPES
 // ============================================================================
 
-export type AlertSeverity = 'info' | 'warning' | 'critical' | 'emergency';
+import type { ClinicalAlertSeverity } from '../types/alertSeverity';
+/** Canonical clinical alert severity — defined in types/alertSeverity.ts */
+export type AlertSeverity = ClinicalAlertSeverity;
 
 export interface RealtimeAlert {
   id: string;
@@ -229,7 +231,7 @@ export function useRealtimeAlerts(
 
       return (data || []) as RealtimeAlert[];
     } catch (err) {
-      auditLogger.error('REALTIME_ALERTS_FETCH_FAILED', err as Error, {
+      auditLogger.error('REALTIME_ALERTS_FETCH_FAILED', err instanceof Error ? err : new Error(String(err)), {
         component: componentName,
       });
       throw err;
@@ -365,7 +367,7 @@ export function useRealtimeAlerts(
 
       auditLogger.clinical('ALERT_MARKED_READ', true, { alertId });
     } catch (err) {
-      auditLogger.error('ALERT_MARK_READ_FAILED', err as Error, { alertId });
+      auditLogger.error('ALERT_MARK_READ_FAILED', err instanceof Error ? err : new Error(String(err)), { alertId });
       throw err;
     }
   }, [supabase]);
@@ -395,7 +397,7 @@ export function useRealtimeAlerts(
 
       auditLogger.clinical('ALERTS_MARKED_ALL_READ', true, { count: pendingIds.length });
     } catch (err) {
-      auditLogger.error('ALERTS_MARK_ALL_READ_FAILED', err as Error);
+      auditLogger.error('ALERTS_MARK_ALL_READ_FAILED', err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   }, [supabase, recentAlerts]);

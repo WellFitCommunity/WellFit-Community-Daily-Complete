@@ -21,7 +21,10 @@ import { success, failure } from './_base';
 
 export type AlertType = 'contraindication' | 'drug_interaction' | 'allergy';
 
-export type AlertSeverity = 'contraindicated' | 'high' | 'moderate' | 'low';
+/** Medication-specific severity — distinct from ClinicalAlertSeverity (uses 'contraindicated' level) */
+export type MedicationAlertSeverity = 'contraindicated' | 'high' | 'moderate' | 'low';
+/** @deprecated Use MedicationAlertSeverity — kept for backward compatibility */
+export type AlertSeverity = MedicationAlertSeverity;
 
 export type OverrideReason =
   | 'clinical_judgment'
@@ -37,7 +40,7 @@ export type ReviewDecision = 'acknowledged' | 'flagged' | 'resolved';
 export interface MedicationAlertOverride {
   id: string;
   alert_type: AlertType;
-  alert_severity: AlertSeverity;
+  alert_severity: MedicationAlertSeverity;
   alert_description: string;
   alert_recommendations: string[];
   check_id: string | null;
@@ -58,7 +61,7 @@ export interface MedicationAlertOverride {
 
 export interface RecordOverrideRequest {
   alert_type: AlertType;
-  alert_severity: AlertSeverity;
+  alert_severity: MedicationAlertSeverity;
   alert_description: string;
   alert_recommendations: string[];
   check_id?: string;

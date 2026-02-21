@@ -162,6 +162,10 @@ export interface LabOrderTest {
 
 export type LabReportStatus = 'registered' | 'preliminary' | 'final' | 'amended' | 'corrected' | 'cancelled';
 
+/**
+ * Full lab result entity — FHIR-mapped with accession, specimen, and panel data.
+ * NOTE: Distinct from handoff.HandoffLabResult which is a lightweight display type.
+ */
 export interface LabResult {
   id: string;
   tenantId: string;
@@ -461,6 +465,7 @@ export type ImagingPriority = 'stat' | 'urgent' | 'routine' | 'scheduled';
 
 export type Laterality = 'LEFT' | 'RIGHT' | 'BILATERAL' | 'N/A';
 
+/** DICOM standard imaging modality codes — UPPER case (distinct from oncology.ImagingModality which uses readable names) */
 export type ImagingModality =
   | 'CR' // Computed Radiography
   | 'CT' // Computed Tomography

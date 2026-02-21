@@ -34,7 +34,7 @@ export class BillingService {
       .select()
       .single();
 
-    if (error) throw new Error(`Failed to create provider: ${error.message}`);
+    if (error || !data) throw new Error(`Failed to create provider: ${error?.message ?? 'no data returned'}`);
     return data;
   }
 
@@ -45,7 +45,7 @@ export class BillingService {
       .eq('id', id)
       .single();
 
-    if (error) throw new Error(`Failed to get provider: ${error.message}`);
+    if (error || !data) throw new Error(`Failed to get provider: ${error?.message ?? 'not found'}`);
     return data;
   }
 

@@ -9,7 +9,9 @@
 // Alert Types
 // ============================================================================
 
-export type AlertSeverity = 'critical' | 'high' | 'medium' | 'low';
+import type { RiskAlertSeverity } from './alertSeverity';
+/** Canonical risk alert severity — defined in types/alertSeverity.ts */
+export type AlertSeverity = RiskAlertSeverity;
 export type AlertStatus = 'new' | 'investigating' | 'resolved' | 'false_positive' | 'escalated';
 
 export interface SecurityAlert {

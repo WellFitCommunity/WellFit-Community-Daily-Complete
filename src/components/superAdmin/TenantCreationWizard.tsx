@@ -215,11 +215,11 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
       onCreated();
       onClose();
     } catch (err) {
-      await auditLogger.error('TENANT_CREATION_FAILED', err as Error, {
+      await auditLogger.error('TENANT_CREATION_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
         tenantName: formData.name,
       });
-      setError((err as Error).message || 'Failed to create tenant');
+      setError(err instanceof Error ? err.message : 'Failed to create tenant');
     } finally {
       setLoading(false);
     }

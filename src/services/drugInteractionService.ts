@@ -68,7 +68,7 @@ export async function checkDrugInteractions(
 
     return data as DrugInteractionResult;
   } catch (error) {
-    await auditLogger.error('DRUG_INTERACTION_ERROR', error as Error, {
+    await auditLogger.error('DRUG_INTERACTION_ERROR', error instanceof Error ? error : new Error(String(error)), {
       category: 'CLINICAL',
       medicationRxcui,
       patientId
@@ -124,7 +124,7 @@ export async function enhanceInteractionWithClaude(
     return enhanced;
 
   } catch (error) {
-    await auditLogger.error('CLAUDE_ENHANCEMENT_ERROR', error as Error, {
+    await auditLogger.error('CLAUDE_ENHANCEMENT_ERROR', error instanceof Error ? error : new Error(String(error)), {
       category: 'CLINICAL',
       medicationName,
       interactionSeverity: interaction.severity
@@ -220,7 +220,7 @@ async function parseClaudeResponse(
       confidence: 0.95 // High confidence when Claude validates
     };
   } catch (error) {
-    await auditLogger.error('CLAUDE_RESPONSE_PARSE_ERROR', error as Error, {
+    await auditLogger.error('CLAUDE_RESPONSE_PARSE_ERROR', error instanceof Error ? error : new Error(String(error)), {
       category: 'CLINICAL',
       responsePreview: claudeResponse.substring(0, 200)
     });
@@ -239,7 +239,7 @@ export async function findRxCUI(medicationName: string): Promise<string | null> 
     const data = await response.json();
     return data?.idGroup?.rxnormId?.[0] || null;
   } catch (error) {
-    await auditLogger.error('RXNORM_RXCUI_LOOKUP_FAILED', error as Error, {
+    await auditLogger.error('RXNORM_RXCUI_LOOKUP_FAILED', error instanceof Error ? error : new Error(String(error)), {
       category: 'CLINICAL',
       medicationName
     });
@@ -269,7 +269,7 @@ export async function getMedicationDetails(rxcui: string): Promise<{
       brandNames: data.properties.brandNames || []
     };
   } catch (error) {
-    await auditLogger.error('RXNORM_MEDICATION_DETAILS_FAILED', error as Error, {
+    await auditLogger.error('RXNORM_MEDICATION_DETAILS_FAILED', error instanceof Error ? error : new Error(String(error)), {
       category: 'CLINICAL',
       rxcui
     });
@@ -375,7 +375,7 @@ export async function searchMedications(query: string, limit: number = 10): Prom
 
     return suggestions.slice(0, limit);
   } catch (error) {
-    await auditLogger.error('MEDICATION_SEARCH_FAILED', error as Error, {
+    await auditLogger.error('MEDICATION_SEARCH_FAILED', error instanceof Error ? error : new Error(String(error)), {
       category: 'CLINICAL',
       query,
       limit

@@ -77,7 +77,8 @@ export type SDOHCategory =
   | 'veteran-status';
 
 /**
- * Complete SDOH factor data
+ * Full SDOH clinical indicator — includes risk level, intervention status, and coding.
+ * NOTE: Distinct from sdohBilling.SDOHFactor which is the lightweight billing Z-code mapping.
  */
 export interface SDOHFactor {
   category: SDOHCategory;

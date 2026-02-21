@@ -38,6 +38,11 @@ vi.mock('../../../services/auditLogger', () => ({
   },
 }));
 
+// Mock PlatformKPIPanel (child component using MCP Postgres Analytics)
+vi.mock('../PlatformKPIPanel', () => ({
+  PlatformKPIPanel: () => <div data-testid="platform-kpi-panel">Platform KPIs</div>,
+}));
+
 describe('SystemAdminDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();

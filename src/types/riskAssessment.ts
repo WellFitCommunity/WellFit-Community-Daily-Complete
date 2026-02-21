@@ -44,6 +44,8 @@ export interface PatientProfile {
   email?: string;
 }
 
+/** Clinical risk assessment level — UPPER case, uses MODERATE (distinct from security/theme RiskLevel) */
 export type RiskLevel = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+/** Risk assessment priority — UPPER case (distinct from mentalHealth.Priority which uses HL7 values) */
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 export type ReviewFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly';

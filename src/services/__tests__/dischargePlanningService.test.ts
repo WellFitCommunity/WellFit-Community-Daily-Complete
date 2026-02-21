@@ -174,25 +174,31 @@ describe('DischargePlanningService', () => {
         discharge_planner_notes: 'Patient ready for discharge'
       });
 
-      expect(result.id).toBe('plan-123');
-      expect(result.readmission_risk_score).toBe(65);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.id).toBe('plan-123');
+        expect(result.data.readmission_risk_score).toBe(65);
+      }
     });
 
-    it('should return error when user not authenticated', async () => {
+    it('should return failure when user not authenticated', async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },
         error: null
       } as unknown as MockAuthResponse);
 
-      await expect(
-        DischargePlanningService.createDischargePlan({
-          patient_id: 'patient-456',
-          encounter_id: 'encounter-789',
-          discharge_disposition: 'home',
-          planned_discharge_date: '2026-01-17',
-          planned_discharge_time: '10:00:00'
-        })
-      ).rejects.toThrow('not authenticated');
+      const result = await DischargePlanningService.createDischargePlan({
+        patient_id: 'patient-456',
+        encounter_id: 'encounter-789',
+        discharge_disposition: 'home',
+        planned_discharge_date: '2026-01-17',
+        planned_discharge_time: '10:00:00'
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toContain('not authenticated');
+      }
     });
 
     it('should use fallback risk score when calculation fails', async () => {
@@ -255,7 +261,10 @@ describe('DischargePlanningService', () => {
       });
 
       // Should use fallback risk score of 50
-      expect(result.readmission_risk_score).toBe(50);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.readmission_risk_score).toBe(50);
+      }
     });
   });
 
@@ -274,10 +283,13 @@ describe('DischargePlanningService', () => {
 
       const result = await DischargePlanningService.getDischargePlan('plan-123');
 
-      expect(result).toEqual(mockDischargePlan);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockDischargePlan);
+      }
     });
 
-    it('should throw error when plan not found', async () => {
+    it('should return failure when plan not found', async () => {
       mockSupabase.from.mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -289,9 +301,12 @@ describe('DischargePlanningService', () => {
         })
       } as unknown as MockQueryBuilder));
 
-      await expect(
-        DischargePlanningService.getDischargePlan('non-existent')
-      ).rejects.toThrow('Failed to get discharge plan');
+      const result = await DischargePlanningService.getDischargePlan('non-existent');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toContain('Failed to get discharge plan');
+      }
     });
   });
 
@@ -310,10 +325,13 @@ describe('DischargePlanningService', () => {
 
       const result = await DischargePlanningService.getDischargePlanByEncounter('encounter-789');
 
-      expect(result).toEqual(mockDischargePlan);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockDischargePlan);
+      }
     });
 
-    it('should return null when no plan exists for encounter', async () => {
+    it('should return null data when no plan exists for encounter', async () => {
       mockSupabase.from.mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -327,7 +345,10 @@ describe('DischargePlanningService', () => {
 
       const result = await DischargePlanningService.getDischargePlanByEncounter('encounter-no-plan');
 
-      expect(result).toBeNull();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeNull();
+      }
     });
   });
 
@@ -352,7 +373,10 @@ describe('DischargePlanningService', () => {
         status: 'ready'
       });
 
-      expect(result.status).toBe('ready');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.status).toBe('ready');
+      }
     });
 
     it('should auto-generate billing codes when checklist is 100% complete', async () => {
@@ -392,7 +416,10 @@ describe('DischargePlanningService', () => {
         checklist_completion_percentage: 100
       });
 
-      expect(result.checklist_completion_percentage).toBe(100);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.checklist_completion_percentage).toBe(100);
+      }
     });
   });
 
@@ -415,7 +442,10 @@ describe('DischargePlanningService', () => {
 
       const result = await DischargePlanningService.markPlanReady('plan-123');
 
-      expect(result.status).toBe('ready');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.status).toBe('ready');
+      }
     });
   });
 
@@ -445,8 +475,11 @@ describe('DischargePlanningService', () => {
         '2026-01-17T10:30:00Z'
       );
 
-      expect(result.status).toBe('discharged');
-      expect(result.actual_discharge_datetime).toBe('2026-01-17T10:30:00Z');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.status).toBe('discharged');
+        expect(result.data.actual_discharge_datetime).toBe('2026-01-17T10:30:00Z');
+      }
     });
   });
 
@@ -671,8 +704,11 @@ describe('DischargePlanningService', () => {
         call_notes: 'Patient doing well'
       });
 
-      expect(result.status).toBe('completed');
-      expect(result.outcome).toBe('stable');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.status).toBe('completed');
+        expect(result.data.outcome).toBe('stable');
+      }
     });
 
     it('should create alert when patient readmitted', async () => {
@@ -718,18 +754,24 @@ describe('DischargePlanningService', () => {
         needs_escalation: true
       });
 
-      expect(result.outcome).toBe('readmitted');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.outcome).toBe('readmitted');
+      }
     });
 
-    it('should throw error when not authenticated', async () => {
+    it('should return failure when not authenticated', async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },
         error: null
       } as unknown as Record<string, unknown>);
 
-      await expect(
-        DischargePlanningService.completeFollowUp('followup-1', {})
-      ).rejects.toThrow('not authenticated');
+      const result = await DischargePlanningService.completeFollowUp('followup-1', {});
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toContain('not authenticated');
+      }
     });
   });
 
@@ -904,7 +946,10 @@ describe('DischargePlanningService', () => {
         planned_discharge_time: '10:00:00'
       });
 
-      expect(result.requires_48hr_call).toBe(true);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.requires_48hr_call).toBe(true);
+      }
     });
 
     it('should require 72hr call for risk score >= 80', async () => {
@@ -970,8 +1015,11 @@ describe('DischargePlanningService', () => {
         planned_discharge_time: '10:00:00'
       });
 
-      expect(result.requires_72hr_call).toBe(true);
-      expect(result.requires_48hr_call).toBe(true);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.requires_72hr_call).toBe(true);
+        expect(result.data.requires_48hr_call).toBe(true);
+      }
     });
   });
 });

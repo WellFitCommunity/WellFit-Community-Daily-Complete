@@ -84,7 +84,7 @@ class HealthCheckService {
       result.error = `Audit logging exception: ${err instanceof Error ? err.message : String(err)}`;
       result.details = { exception: String(err) };
 
-      errorReporter.reportCritical('AUDIT_LOG_FAILURE', err as Error, {
+      errorReporter.reportCritical('AUDIT_LOG_FAILURE', err instanceof Error ? err : new Error(String(err)), {
         context: 'Health check exception',
       });
     }
@@ -150,7 +150,7 @@ class HealthCheckService {
       result.error = `Realtime registry exception: ${err instanceof Error ? err.message : String(err)}`;
       result.details = { exception: String(err) };
 
-      errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', err as Error, {
+      errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', err instanceof Error ? err : new Error(String(err)), {
         context: 'Health check exception',
       });
     }
@@ -210,7 +210,7 @@ class HealthCheckService {
       result.error = `PHI logging exception: ${err instanceof Error ? err.message : String(err)}`;
       result.details = { exception: String(err) };
 
-      errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', err as Error, {
+      errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', err instanceof Error ? err : new Error(String(err)), {
         context: 'Health check exception',
       });
     }

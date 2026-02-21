@@ -179,7 +179,7 @@ export const FHIRSemanticMapperService = {
       });
 
       if (error) {
-        await auditLogger.error('FHIR_MAPPING_FAILED', error as Error, {
+        await auditLogger.error('FHIR_MAPPING_FAILED', error instanceof Error ? error : new Error(String(error)), {
           requesterId: request.requesterId.substring(0, 8) + '...',
           category: 'ADMIN',
         });

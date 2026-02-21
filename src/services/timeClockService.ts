@@ -100,7 +100,7 @@ export const TimeClockService = {
         current_streak: result.current_streak,
       });
     } catch (err) {
-      await auditLogger.error('TIME_CLOCK_IN_ERROR', err as Error, {
+      await auditLogger.error('TIME_CLOCK_IN_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
       return failure('UNKNOWN_ERROR', 'Failed to clock in', err);
@@ -149,7 +149,7 @@ export const TimeClockService = {
         message: result.message,
       });
     } catch (err) {
-      await auditLogger.error('TIME_CLOCK_OUT_ERROR', err as Error, {
+      await auditLogger.error('TIME_CLOCK_OUT_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
       return failure('UNKNOWN_ERROR', 'Failed to clock out', err);

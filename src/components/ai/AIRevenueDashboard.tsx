@@ -190,7 +190,7 @@ export const AIRevenueDashboard: React.FC<AIRevenueDashboardProps> = ({
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load revenue data';
       setError(errorMessage);
-      auditLogger.error('AI_REVENUE_DASHBOARD_LOAD_ERROR', err as Error);
+      auditLogger.error('AI_REVENUE_DASHBOARD_LOAD_ERROR', err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
@@ -239,7 +239,7 @@ export const AIRevenueDashboard: React.FC<AIRevenueDashboardProps> = ({
       // Reload data
       await loadRevenueSummary();
     } catch (err) {
-      auditLogger.error('AI_REVENUE_BATCH_ERROR', err as Error);
+      auditLogger.error('AI_REVENUE_BATCH_ERROR', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Batch assessment failed');
     } finally {
       setLoading(false);

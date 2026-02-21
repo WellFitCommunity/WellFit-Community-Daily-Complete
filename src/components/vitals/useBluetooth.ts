@@ -404,7 +404,7 @@ export function useBluetooth(): UseBluetoothResult {
       return reading;
 
     } catch (err: unknown) {
-      const error = err as Error;
+      const error = err instanceof Error ? err : new Error(String(err));
       let errorMessage = error.message || 'Failed to connect to device';
 
       // User-friendly error messages

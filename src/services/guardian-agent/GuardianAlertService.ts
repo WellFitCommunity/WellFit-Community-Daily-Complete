@@ -16,7 +16,9 @@ import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../auditLogger';
 import { getEmailService } from '../emailService';
 
-export type AlertSeverity = 'info' | 'warning' | 'critical' | 'emergency';
+import type { ClinicalAlertSeverity } from '../../types/alertSeverity';
+/** Canonical clinical alert severity — defined in types/alertSeverity.ts */
+export type AlertSeverity = ClinicalAlertSeverity;
 export type AlertCategory =
   | 'security_vulnerability'
   | 'phi_exposure'

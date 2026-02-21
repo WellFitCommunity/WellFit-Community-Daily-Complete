@@ -67,17 +67,17 @@ export async function admitPatient(admission: PatientAdmission): Promise<string>
         roomNumber: admission.room_number,
         admissionId: data
       });
-    } catch (scoreError) {
+    } catch (scoreError: unknown) {
       // Log but don't fail admission if score generation fails
       await auditLogger.warn('AUTO_SCORE_GENERATION_FAILED_ON_ADMISSION', {
         patientId: admission.patient_id,
-        error: (scoreError as Error).message
+        error: (scoreError instanceof Error ? scoreError.message : String(scoreError))
       });
     }
 
     return data as string;
-  } catch (err) {
-    await auditLogger.error('PATIENT_ADMISSION_ERROR', err as Error, {
+  } catch (err: unknown) {
+    await auditLogger.error('PATIENT_ADMISSION_ERROR', err instanceof Error ? err : new Error(String(err)), {
       patientId: admission.patient_id
     });
     throw err;
@@ -111,8 +111,8 @@ export async function dischargePatient(
     });
 
     return data as boolean;
-  } catch (err) {
-    await auditLogger.error('PATIENT_DISCHARGE_ERROR', err as Error, { patientId });
+  } catch (err: unknown) {
+    await auditLogger.error('PATIENT_DISCHARGE_ERROR', err instanceof Error ? err : new Error(String(err)), { patientId });
     throw err;
   }
 }
@@ -132,8 +132,8 @@ export async function getAdmittedPatients(): Promise<AdmittedPatient[]> {
     }
 
     return (data || []) as AdmittedPatient[];
-  } catch (err) {
-    await auditLogger.error('GET_ADMITTED_PATIENTS_ERROR', err as Error, {});
+  } catch (err: unknown) {
+    await auditLogger.error('GET_ADMITTED_PATIENTS_ERROR', err instanceof Error ? err : new Error(String(err)), {});
     throw err;
   }
 }
@@ -160,10 +160,10 @@ export async function isPatientAdmitted(patientId: string): Promise<boolean> {
     }
 
     return !!data;
-  } catch (err) {
+  } catch (err: unknown) {
     await auditLogger.warn('CHECK_ADMISSION_STATUS_ERROR', {
       patientId,
-      error: (err as Error).message
+      error: (err instanceof Error ? err.message : String(err))
     });
     return false;
   }
@@ -204,11 +204,11 @@ export async function updatePatientRoom(
     });
 
     return true;
-  } catch (err) {
-    await auditLogger.error('UPDATE_PATIENT_ROOM_FAILED', err as Error, {
+  } catch (err: unknown) {
+    await auditLogger.error('UPDATE_PATIENT_ROOM_FAILED', err instanceof Error ? err : new Error(String(err)), {
       patientId,
       newRoomNumber
     });
-    throw new Error(`Failed to update room number: ${(err as Error).message}`);
+    throw new Error(`Failed to update room number: ${(err instanceof Error ? err.message : String(err))}`);
   }
 }

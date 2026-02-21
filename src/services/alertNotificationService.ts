@@ -17,7 +17,9 @@ import { ServiceResult, success, failure } from './_base';
 // =============================================================================
 
 export type NotificationChannel = 'slack' | 'pagerduty' | 'email' | 'webhook' | 'sms';
-export type AlertSeverity = 'info' | 'warning' | 'critical' | 'emergency';
+import type { ClinicalAlertSeverity } from '../types/alertSeverity';
+/** Canonical clinical alert severity — defined in types/alertSeverity.ts */
+export type AlertSeverity = ClinicalAlertSeverity;
 export type AlertCategory = 'security' | 'sla' | 'system' | 'clinical' | 'billing';
 
 export interface NotificationChannelConfig {

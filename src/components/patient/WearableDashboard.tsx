@@ -210,7 +210,7 @@ export const WearableDashboard: React.FC = () => {
           // Note: You may need a dedicated SMS-send function for emergencies
           // For now, we log the attempt - the email dispatch is the primary channel
         } catch (smsError) {
-          await auditLogger.error('EMERGENCY_SMS_FAILED', smsError as Error);
+          await auditLogger.error('EMERGENCY_SMS_FAILED', smsError instanceof Error ? smsError : new Error(String(smsError)));
         }
       }
 
@@ -227,7 +227,7 @@ export const WearableDashboard: React.FC = () => {
 
     } catch (error) {
       setEmergencyStatus('error');
-      await auditLogger.error('EMERGENCY_SOS_FAILED', error as Error);
+      await auditLogger.error('EMERGENCY_SOS_FAILED', error instanceof Error ? error : new Error(String(error)));
 
       showToast('warning', 'Alert may have partially failed. Please call 911 directly if this is a medical emergency.');
     } finally {

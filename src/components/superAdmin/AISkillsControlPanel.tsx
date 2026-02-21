@@ -163,7 +163,7 @@ const AISkillsControlPanel: React.FC = () => {
 
       setTenants(tenantsWithSkills);
     } catch (err: unknown) {
-      await auditLogger.error('AI_SKILLS_LOAD_FAILED', err as Error, {
+      await auditLogger.error('AI_SKILLS_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       setError('Failed to load AI skills configuration');
@@ -194,12 +194,12 @@ const AISkillsControlPanel: React.FC = () => {
 
       await loadData();
     } catch (err: unknown) {
-      await auditLogger.error('AI_SKILL_TOGGLE_FAILED', err as Error, {
+      await auditLogger.error('AI_SKILL_TOGGLE_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'SECURITY_EVENT',
         tenantId,
         skillKey
       });
-      setError(`Failed to toggle skill: ${(err as Error).message}`);
+      setError(`Failed to toggle skill: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setActionLoading(null);
     }
@@ -228,7 +228,7 @@ const AISkillsControlPanel: React.FC = () => {
 
       await loadData();
     } catch (err: unknown) {
-      await auditLogger.error('AI_SKILLS_BULK_ENABLE_FAILED', err as Error, {
+      await auditLogger.error('AI_SKILLS_BULK_ENABLE_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'SECURITY_EVENT'
       });
       setError('Failed to bulk enable skills');

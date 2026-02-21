@@ -483,14 +483,14 @@ export const PatientFriendlyAVSService = {
         processingTimeMs: Date.now() - startTime,
       };
     } catch (err) {
-      await auditLogger.error('AVS_GENERATION_FAILED', err as Error, {
+      await auditLogger.error('AVS_GENERATION_FAILED', err instanceof Error ? err : new Error(String(err)), {
         patientId: input.patientId,
         category: 'CLINICAL',
       });
 
       return {
         success: false,
-        errors: [(err as Error).message],
+        errors: [(err instanceof Error ? err.message : String(err))],
         processingTimeMs: Date.now() - startTime,
       };
     }

@@ -20,7 +20,7 @@ const AuditLogViewer: React.FC = () => {
         : await SuperAdminService.getRecentAuditLogs();
       setAuditLogs(logs);
     } catch (err) {
-      await auditLogger.error('SUPER_ADMIN_AUDIT_LOG_LOAD_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_AUDIT_LOG_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
         showCriticalOnly
       });

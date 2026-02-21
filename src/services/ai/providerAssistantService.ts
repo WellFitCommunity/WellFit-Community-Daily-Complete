@@ -119,7 +119,7 @@ export const ProviderAssistantService = {
       });
 
       if (error) {
-        await auditLogger.error('PROVIDER_ASSISTANT_QUERY_FAILED', error as Error, {
+        await auditLogger.error('PROVIDER_ASSISTANT_QUERY_FAILED', error instanceof Error ? error : new Error(String(error)), {
           providerId: providerId.substring(0, 8) + '...',
           category: 'CLINICAL',
         });

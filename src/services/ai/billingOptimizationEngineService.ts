@@ -33,6 +33,7 @@ export type OptimizationType =
   | 'downcoding'
   | 'missed_charge'
   | 'denial_prevention';
+/** Billing optimization risk — lower case, 4-tier (distinct from clinical/behavioral RiskLevel) */
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type PayerType = 'medicare' | 'medicaid' | 'commercial' | 'self_pay' | 'workers_comp';
 

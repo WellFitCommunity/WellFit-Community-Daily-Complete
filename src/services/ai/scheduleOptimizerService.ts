@@ -23,6 +23,7 @@ import { auditLogger } from '../auditLogger';
 // Types
 // ============================================================================
 
+/** Optimizer shift type — includes 'custom' for AI-generated schedules */
 export type ShiftType = 'day' | 'evening' | 'night' | 'custom';
 export type StaffRole = 'nurse' | 'cna' | 'physician' | 'therapist' | 'technician' | 'admin' | 'other';
 export type OptimizationGoal = 'coverage' | 'cost' | 'fairness' | 'balanced';
@@ -176,7 +177,7 @@ export const ScheduleOptimizerService = {
       });
 
       if (error) {
-        await auditLogger.error('SCHEDULE_OPTIMIZATION_FAILED', error as Error, {
+        await auditLogger.error('SCHEDULE_OPTIMIZATION_FAILED', error instanceof Error ? error : new Error(String(error)), {
           requesterId: request.requesterId.substring(0, 8) + '...',
           category: 'ADMIN',
         });

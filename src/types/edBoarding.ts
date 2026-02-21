@@ -24,14 +24,17 @@ export type EDBoaderStatus =
   | 'cancelled';        // Admission cancelled
 
 /**
- * Boarding escalation level based on wait time
+ * ED boarding escalation level based on wait time
+ * NOTE: Distinct from MentalHealthEscalationLevel and CheckInEscalationLevel
  */
-export type EscalationLevel =
+export type EDEscalationLevel =
   | 'green'     // <2 hours - normal
   | 'yellow'    // 2-4 hours - monitor
   | 'orange'    // 4-8 hours - escalate to charge nurse
   | 'red'       // 8-12 hours - escalate to supervisor
   | 'critical'; // >12 hours - escalate to administration
+/** @deprecated Use EDEscalationLevel */
+export type EscalationLevel = EDEscalationLevel;
 
 // ============================================================================
 // INTERFACES

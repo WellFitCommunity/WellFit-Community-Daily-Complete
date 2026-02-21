@@ -133,7 +133,7 @@ const SuperAdminDashboard: React.FC = () => {
 
       await loadSystemData();
     } catch (err: unknown) {
-      await auditLogger.error('SUPER_ADMIN_ACCESS_CHECK_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_ACCESS_CHECK_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'SECURITY_EVENT'
       });
       setError('Failed to verify super admin access');
@@ -155,7 +155,7 @@ const SuperAdminDashboard: React.FC = () => {
       setOverview(systemOverview);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      await auditLogger.error('SUPER_ADMIN_OVERVIEW_LOAD_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_OVERVIEW_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
         errorMessage
       });

@@ -53,6 +53,7 @@ export type RECISTResponse =
   | 'progressive_disease'
   | 'not_evaluable';
 
+/** Oncology imaging modalities — readable names (distinct from healthcareIntegrations.ImagingModality which uses DICOM codes) */
 export type ImagingModality = 'ct' | 'mri' | 'pet_ct' | 'ultrasound' | 'xray' | 'bone_scan';
 
 export type SurvivorshipStatus = 'active_surveillance' | 'in_remission' | 'no_evidence_of_disease' | 'recurrence';
@@ -310,6 +311,7 @@ export interface CreateStagingRequest {
   notes?: string;
 }
 
+/** Oncology treatment plan creation — chemo regimens and cycles (distinct from dental/PT CreateTreatmentPlanRequest) */
 export interface CreateTreatmentPlanRequest {
   patient_id: string;
   tenant_id: string;

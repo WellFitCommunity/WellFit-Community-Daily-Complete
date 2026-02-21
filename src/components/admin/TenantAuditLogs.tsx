@@ -123,7 +123,7 @@ export const TenantAuditLogs: React.FC = () => {
       }
 
     } catch (error) {
-      await auditLogger.error('TENANT_AUDIT_LOGS_LOAD_FAILED', error as Error, { tenantId });
+      await auditLogger.error('TENANT_AUDIT_LOGS_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), { tenantId });
     } finally {
       setLoading(false);
     }

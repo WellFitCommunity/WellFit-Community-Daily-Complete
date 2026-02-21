@@ -911,6 +911,7 @@ export interface UpdatePTAssessmentRequest {
   assessment_id: string;
 }
 
+/** PT treatment plan creation — SMART goals, interventions, authorized visits (distinct from oncology/dental CreateTreatmentPlanRequest) */
 export interface CreateTreatmentPlanRequest {
   patient_id: string;
   assessment_id: string;

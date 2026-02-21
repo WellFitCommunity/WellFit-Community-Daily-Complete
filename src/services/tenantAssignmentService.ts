@@ -100,7 +100,7 @@ export const TenantAssignmentService = {
         assignedTenants
       };
     } catch (error) {
-      await auditLogger.error('TENANT_ASSIGNMENT_PROFILE_LOAD_FAILED', error as Error, {
+      await auditLogger.error('TENANT_ASSIGNMENT_PROFILE_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), {
         category: 'ADMINISTRATIVE'
       });
       return null;
@@ -162,7 +162,7 @@ export const TenantAssignmentService = {
         assignedAt: new Date().toISOString()
       }));
     } catch (error) {
-      await auditLogger.error('TENANT_ASSIGNMENT_GET_ALL_FAILED', error as Error, {
+      await auditLogger.error('TENANT_ASSIGNMENT_GET_ALL_FAILED', error instanceof Error ? error : new Error(String(error)), {
         category: 'ADMINISTRATIVE'
       });
       return [];

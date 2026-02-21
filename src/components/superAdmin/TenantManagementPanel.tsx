@@ -81,7 +81,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
       setTenants(tenantsData);
       setSuperAdmin(adminData);
     } catch (err) {
-      await auditLogger.error('SUPER_ADMIN_TENANTS_LOAD_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_TENANTS_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       setError('Failed to load tenant data');
@@ -214,7 +214,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
 
       await loadData();
     } catch (err) {
-      await auditLogger.error(`SUPER_ADMIN_TENANT_${confirmAction?.toUpperCase()}_FAILED`, err as Error, {
+      await auditLogger.error(`SUPER_ADMIN_TENANT_${confirmAction?.toUpperCase()}_FAILED`, err instanceof Error ? err : new Error(String(err)), {
         category: 'SECURITY_EVENT',
         tenantId: selectedTenant.tenantId,
         action: confirmAction
@@ -254,11 +254,11 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
 
       await loadData();
     } catch (err) {
-      await auditLogger.error('SUPER_ADMIN_TENANT_CODE_UPDATE_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_TENANT_CODE_UPDATE_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
         tenantId: selectedTenant.tenantId
       });
-      setError((err as Error).message || 'Failed to update tenant code');
+      setError(err instanceof Error ? err.message : 'Failed to update tenant code');
     } finally {
       setActionLoading(null);
       setSelectedTenant(null);

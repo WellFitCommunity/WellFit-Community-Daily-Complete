@@ -14,6 +14,7 @@ export const ExportCheckIns = lazy(() => import('../ExportCheckIns'));
 export const FhirAiDashboard = lazy(() => import('../FhirAiDashboard'));
 export const FHIRFormBuilderEnhanced = lazy(() => import('../FHIRFormBuilderEnhanced'));
 export const FHIRDataMapper = lazy(() => import('../FHIRDataMapper'));
+export const HL7MessageTestPanel = lazy(() => import('../HL7MessageTestPanel'));
 
 // Revenue & Billing
 export const BillingDashboard = lazy(() => import('../BillingDashboard'));

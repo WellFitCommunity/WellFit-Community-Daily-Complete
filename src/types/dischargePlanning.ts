@@ -31,6 +31,7 @@ export type FollowUpStatus =
   | 'unable_to_reach'
   | 'cancelled';
 
+/** Post-acute care facility destinations — distinct from healthSystem.FacilityType (hospital types) and facility.FacilityType (general locations) */
 export type FacilityType =
   | 'skilled_nursing'
   | 'inpatient_rehab'

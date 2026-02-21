@@ -135,7 +135,11 @@ export interface Allergy {
   severity?: 'mild' | 'moderate' | 'severe' | 'life-threatening';
 }
 
-export interface LabResult {
+/**
+ * Handoff lab result summary — lightweight display type for shift handoff packets.
+ * NOTE: Distinct from healthcareIntegrations.LabResult which is the full FHIR-mapped entity.
+ */
+export interface HandoffLabResult {
   test_name: string;
   value: string;
   unit?: string;
@@ -143,6 +147,8 @@ export interface LabResult {
   abnormal?: boolean;
   performed_at?: string;
 }
+/** @deprecated Use HandoffLabResult */
+export type LabResult = HandoffLabResult;
 
 // ============================================================================
 // Handoff Sections

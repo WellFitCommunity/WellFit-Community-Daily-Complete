@@ -170,17 +170,17 @@ export function useRealtimeSubscription<T = unknown>(
       }
     } catch (err) {
       if (mountedRef.current) {
-        setError(err as Error);
+        setError(err instanceof Error ? err : new Error(String(err)));
         // FAIL QUIET: Wrap all error logging in try/catch to prevent cascades
         try {
-          auditLogger.error('REALTIME_FETCH_ERROR', err as Error, {
+          auditLogger.error('REALTIME_FETCH_ERROR', err instanceof Error ? err : new Error(String(err)), {
             component: componentName,
             table,
           });
         } catch {
           // Silently ignore - don't let logging break the app
           try {
-            errorReporter.report('AUDIT_LOG_FAILURE', err as Error, {
+            errorReporter.report('AUDIT_LOG_FAILURE', err instanceof Error ? err : new Error(String(err)), {
               context: 'realtime fetch error logging',
               component: componentName,
             });
@@ -233,7 +233,7 @@ export function useRealtimeSubscription<T = unknown>(
             });
           } catch (auditError) {
             // Registry logging failed - report but don't break
-            errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', auditError as Error, {
+            errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', auditError instanceof Error ? auditError : new Error(String(auditError)), {
               context: 'registry failure logging',
               component: componentName,
             });
@@ -244,7 +244,7 @@ export function useRealtimeSubscription<T = unknown>(
         return registryData?.id || null;
       } catch (err) {
         // Registry registration failed - non-blocking error
-        errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', err as Error, {
+        errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', err instanceof Error ? err : new Error(String(err)), {
           context: 'registry registration',
           component: componentName,
         });
@@ -280,7 +280,7 @@ export function useRealtimeSubscription<T = unknown>(
       consecutiveHeartbeatFailures.current++;
 
       // Report heartbeat failure
-      errorReporter.report('REALTIME_HEARTBEAT_FAILURE', err as Error, {
+      errorReporter.report('REALTIME_HEARTBEAT_FAILURE', err instanceof Error ? err : new Error(String(err)), {
         component: componentName,
         consecutiveFailures: consecutiveHeartbeatFailures.current,
       });
@@ -356,12 +356,12 @@ export function useRealtimeSubscription<T = unknown>(
           } catch (err) {
             consecutiveFetchFailures.current++;
             if (mountedRef.current) {
-              setError(err as Error);
+              setError(err instanceof Error ? err : new Error(String(err)));
               // Only log first failure to prevent log spam
               // FAIL QUIET: Wrap in try/catch to prevent cascades
               if (consecutiveFetchFailures.current === 1) {
                 try {
-                  auditLogger.error('REALTIME_INITIAL_FETCH_ERROR', err as Error, {
+                  auditLogger.error('REALTIME_INITIAL_FETCH_ERROR', err instanceof Error ? err : new Error(String(err)), {
                     component: componentName,
                     table,
                   });
@@ -437,10 +437,10 @@ export function useRealtimeSubscription<T = unknown>(
               }
             }).catch((err) => {
               if (mountedRef.current) {
-                setError(err as Error);
+                setError(err instanceof Error ? err : new Error(String(err)));
                 // FAIL QUIET: Wrap in try/catch to prevent cascades
                 try {
-                  auditLogger.error('REALTIME_REFRESH_ERROR', err as Error, {
+                  auditLogger.error('REALTIME_REFRESH_ERROR', err instanceof Error ? err : new Error(String(err)), {
                     component: componentName,
                     table,
                   });
@@ -496,7 +496,7 @@ export function useRealtimeSubscription<T = unknown>(
         }
       } catch (err) {
         if (!isCleanedUp && mountedRef.current) {
-          const error = err as Error;
+          const error = err instanceof Error ? err : new Error(String(err));
           setError(error);
           setLoading(false);
           // FAIL QUIET: Wrap in try/catch to prevent cascades

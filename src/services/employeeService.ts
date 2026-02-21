@@ -61,7 +61,7 @@ export const EmployeeService = {
 
       return success(data || null);
     } catch (err) {
-      await auditLogger.error('EMPLOYEE_PROFILE_FETCH_ERROR', err as Error, {
+      await auditLogger.error('EMPLOYEE_PROFILE_FETCH_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
       return failure('UNKNOWN_ERROR', 'Failed to fetch employee profile', err);
@@ -127,7 +127,7 @@ export const EmployeeService = {
 
       return success(data);
     } catch (err) {
-      await auditLogger.error('EMPLOYEE_PROFILE_CREATE_ERROR', err as Error, {
+      await auditLogger.error('EMPLOYEE_PROFILE_CREATE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
       return failure('UNKNOWN_ERROR', 'Failed to create employee profile', err);
@@ -164,7 +164,7 @@ export const EmployeeService = {
 
       return success(data);
     } catch (err) {
-      await auditLogger.error('EMPLOYEE_PROFILE_UPDATE_ERROR', err as Error, {
+      await auditLogger.error('EMPLOYEE_PROFILE_UPDATE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
       return failure('UNKNOWN_ERROR', 'Failed to update employee profile', err);
@@ -191,7 +191,7 @@ export const EmployeeService = {
 
       return success(undefined);
     } catch (err) {
-      await auditLogger.error('EMPLOYEE_PROFILE_DELETE_ERROR', err as Error, {
+      await auditLogger.error('EMPLOYEE_PROFILE_DELETE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
       return failure('UNKNOWN_ERROR', 'Failed to delete employee profile', err);
@@ -241,7 +241,7 @@ export const EmployeeService = {
 
       return success(data || []);
     } catch (err) {
-      await auditLogger.error('EMPLOYEE_DIRECTORY_FETCH_ERROR', err as Error, {
+      await auditLogger.error('EMPLOYEE_DIRECTORY_FETCH_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
       return failure('UNKNOWN_ERROR', 'Failed to fetch employee directory', err);

@@ -59,7 +59,9 @@ export class DischargeToWellnessBridgeService {
       if (profileError) throw new Error(`Patient not found: ${profileError.message}`);
 
       // Get discharge plan
-      const dischargePlan = await DischargePlanningService.getDischargePlan(discharge_plan_id);
+      const dischargePlanResult = await DischargePlanningService.getDischargePlan(discharge_plan_id);
+      if (!dischargePlanResult.success) throw new Error(dischargePlanResult.error.message);
+      const dischargePlan = dischargePlanResult.data;
 
       // Generate unique access code
       const accessCode = this.generateAccessCode();

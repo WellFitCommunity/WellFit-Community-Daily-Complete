@@ -255,7 +255,7 @@ export default function AdminLoginPage() {
       const intendedPath = state.from?.pathname || defaultDashboard;
       navigate(intendedPath, { replace: true });
     } catch (err: unknown) {
-      setLocalErr((err as Error)?.message || 'Verification failed.');
+      setLocalErr(err instanceof Error ? err.message : 'Verification failed.');
     }
   }
 
@@ -302,7 +302,7 @@ export default function AdminLoginPage() {
       setPin('');
       setPin2('');
     } catch (err: unknown) {
-      setLocalErr((err as Error)?.message || 'Could not change PIN.');
+      setLocalErr(err instanceof Error ? err.message : 'Could not change PIN.');
     } finally {
       setBusy(false);
     }
@@ -364,7 +364,7 @@ export default function AdminLoginPage() {
       setSmsCode('');
       setMode('reset');
     } catch (err: unknown) {
-      setLocalErr((err as Error)?.message || 'Verification failed.');
+      setLocalErr(err instanceof Error ? err.message : 'Verification failed.');
     } finally {
       setBusy(false);
     }
@@ -409,7 +409,7 @@ export default function AdminLoginPage() {
       setSuccessMsg('PIN reset successfully!');
       setMode('unlock');
     } catch (err: unknown) {
-      setLocalErr((err as Error)?.message || 'Could not reset PIN.');
+      setLocalErr(err instanceof Error ? err.message : 'Could not reset PIN.');
     } finally {
       setBusy(false);
     }

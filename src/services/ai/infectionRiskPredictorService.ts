@@ -152,7 +152,7 @@ export const InfectionRiskPredictorService = {
       });
 
       if (error) {
-        await auditLogger.error('INFECTION_RISK_PREDICTION_FAILED', error as Error, {
+        await auditLogger.error('INFECTION_RISK_PREDICTION_FAILED', error instanceof Error ? error : new Error(String(error)), {
           patientId: patientId.substring(0, 8) + '...',
           category: 'CLINICAL',
         });

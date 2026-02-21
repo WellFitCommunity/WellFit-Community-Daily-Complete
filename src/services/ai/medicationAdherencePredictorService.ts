@@ -195,7 +195,7 @@ export const MedicationAdherencePredictorService = {
       });
 
       if (error) {
-        await auditLogger.error('MEDICATION_ADHERENCE_PREDICTION_FAILED', error as Error, {
+        await auditLogger.error('MEDICATION_ADHERENCE_PREDICTION_FAILED', error instanceof Error ? error : new Error(String(error)), {
           patientId: patientId.substring(0, 8) + '...',
           category: 'CLINICAL',
         });

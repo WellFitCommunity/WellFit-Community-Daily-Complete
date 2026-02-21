@@ -276,7 +276,7 @@ export const VitalCapture: React.FC<VitalCaptureProps> = ({
         throw new Error(processResult?.error || 'Could not read values from image');
       }
     } catch (err: unknown) {
-      const error = err as Error;
+      const error = err instanceof Error ? err : new Error(String(err));
       setError(error.message || 'Failed to process photo. Please try again or enter manually.');
     } finally {
       setIsProcessingPhoto(false);
@@ -342,7 +342,7 @@ export const VitalCapture: React.FC<VitalCaptureProps> = ({
         setSuccess(false);
       }, 2000);
     } catch (err: unknown) {
-      const error = err as Error;
+      const error = err instanceof Error ? err : new Error(String(err));
       setError(error.message || 'Failed to save reading');
     } finally {
       setIsSubmitting(false);

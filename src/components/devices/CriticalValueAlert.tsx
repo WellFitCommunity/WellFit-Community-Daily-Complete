@@ -7,11 +7,14 @@
 
 import React from 'react';
 
-export type AlertSeverity = 'warning' | 'critical';
+/** Device-specific critical value severity — subset of ClinicalAlertSeverity */
+export type CriticalValueSeverity = 'warning' | 'critical';
+/** @deprecated Use CriticalValueSeverity — kept for backward compatibility */
+export type AlertSeverity = CriticalValueSeverity;
 
 export interface CriticalAlert {
   id: string;
-  severity: AlertSeverity;
+  severity: CriticalValueSeverity;
   title: string;
   message: string;
   value: string;

@@ -10,7 +10,7 @@
  * HIPAA Compliance:
  * - All data uses patient IDs/tokens, never PHI in browser
  * - All operations logged via audit system
- * - No console.log statements
+ * - Uses auditLogger exclusively (no browser console)
  *
  * Clinical Evidence:
  * - Sudden communication silence often precedes health decline by 2-7 days
@@ -365,7 +365,7 @@ export async function fetchPatientCommunicationMetrics(
       assessmentDate: now.toISOString(),
     };
   } catch (error) {
-    await auditLogger.error('SILENCE_WINDOW_FETCH_FAILED', error as Error, {
+    await auditLogger.error('SILENCE_WINDOW_FETCH_FAILED', error instanceof Error ? error : new Error(String(error)), {
       patientId,
       operation: 'fetchPatientCommunicationMetrics',
     });
@@ -450,7 +450,7 @@ export async function calculateAndStoreSilenceWindow(
 
     return result;
   } catch (error) {
-    await auditLogger.error('SILENCE_WINDOW_CALCULATION_FAILED', error as Error, {
+    await auditLogger.error('SILENCE_WINDOW_CALCULATION_FAILED', error instanceof Error ? error : new Error(String(error)), {
       patientId,
       tenantId,
     });

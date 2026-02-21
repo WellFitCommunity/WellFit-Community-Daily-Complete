@@ -42,7 +42,9 @@ export type VitalType =
 
 export type ThresholdOperator = '>=' | '>' | '<=' | '<';
 export type AlertType = 'vital_watch' | 'vital_warning' | 'vital_critical';
-export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
+import type { RiskAlertSeverity } from './alertSeverity';
+/** Canonical risk alert severity — defined in types/alertSeverity.ts */
+export type AlertSeverity = RiskAlertSeverity;
 
 export interface VitalThresholdRule {
   id: string;

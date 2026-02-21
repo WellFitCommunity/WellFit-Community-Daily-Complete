@@ -148,7 +148,7 @@ export const SDOHIndicatorService = {
 
       return profile;
     } catch (error) {
-      auditLogger.error('SDOH_PROFILE_FETCH_ERROR', error as Error, { patientId });
+      auditLogger.error('SDOH_PROFILE_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       throw error;
     }
   },
@@ -219,7 +219,7 @@ export const SDOHIndicatorService = {
         priorityLevel: data.priority_level
       };
     } catch (error) {
-      auditLogger.error('SDOH_FACTOR_UPDATE_ERROR', error as Error, { patientId, category });
+      auditLogger.error('SDOH_FACTOR_UPDATE_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId, category });
       throw error;
     }
   },
@@ -266,7 +266,7 @@ export const SDOHIndicatorService = {
         notes: data.notes
       };
     } catch (error) {
-      auditLogger.error('SDOH_REFERRAL_ADD_ERROR', error as Error, { patientId, category });
+      auditLogger.error('SDOH_REFERRAL_ADD_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId, category });
       throw error;
     }
   },
@@ -309,7 +309,7 @@ export const SDOHIndicatorService = {
         providedBy: data.provided_by
       };
     } catch (error) {
-      auditLogger.error('SDOH_RESOURCE_ADD_ERROR', error as Error, { patientId, category });
+      auditLogger.error('SDOH_RESOURCE_ADD_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId, category });
       throw error;
     }
   },
@@ -353,7 +353,7 @@ export const SDOHIndicatorService = {
         notes: data.notes
       };
     } catch (error) {
-      auditLogger.error('SDOH_SCREENING_RECORD_ERROR', error as Error, { patientId });
+      auditLogger.error('SDOH_SCREENING_RECORD_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       throw error;
     }
   },
@@ -385,7 +385,7 @@ export const SDOHIndicatorService = {
         notes: ref.notes
       }));
     } catch (error) {
-      auditLogger.error('SDOH_REFERRALS_FETCH_ERROR', error as Error, { patientId });
+      auditLogger.error('SDOH_REFERRALS_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       return [];
     }
   },
@@ -415,7 +415,7 @@ export const SDOHIndicatorService = {
         providedBy: res.provided_by
       }));
     } catch (error) {
-      auditLogger.error('SDOH_RESOURCES_FETCH_ERROR', error as Error, { patientId });
+      auditLogger.error('SDOH_RESOURCES_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       return [];
     }
   },
@@ -454,7 +454,7 @@ export const SDOHIndicatorService = {
         priorityLevel: obs.priority_level
       };
     } catch (error) {
-      auditLogger.error('SDOH_FACTOR_FETCH_ERROR', error as Error, { patientId, category });
+      auditLogger.error('SDOH_FACTOR_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId, category });
       return null;
     }
   },
@@ -524,7 +524,7 @@ export const SDOHIndicatorService = {
         (factor.interventionStatus === 'identified' || factor.interventionStatus === 'not-assessed')
       );
     } catch (error) {
-      auditLogger.error('SDOH_ALERTS_FETCH_ERROR', error as Error, { patientId });
+      auditLogger.error('SDOH_ALERTS_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       return [];
     }
   }

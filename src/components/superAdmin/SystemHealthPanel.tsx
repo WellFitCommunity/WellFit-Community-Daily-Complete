@@ -23,7 +23,7 @@ const SystemHealthPanel: React.FC = () => {
       const checks = await SuperAdminService.getRecentHealthChecks();
       setHealthChecks(checks);
     } catch (err) {
-      await auditLogger.error('SUPER_ADMIN_HEALTH_CHECK_LOAD_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_HEALTH_CHECK_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'SYSTEM_EVENT'
       });
       setError('Failed to load system health data');

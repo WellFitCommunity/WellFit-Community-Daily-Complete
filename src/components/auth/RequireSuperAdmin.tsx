@@ -56,7 +56,7 @@ export default function RequireSuperAdmin({ children }: RequireSuperAdminProps) 
           });
         }
       } catch (error) {
-        await auditLogger.error('SUPER_ADMIN_CHECK_FAILED', error as Error, {
+        await auditLogger.error('SUPER_ADMIN_CHECK_FAILED', error instanceof Error ? error : new Error(String(error)), {
           userId: user.id,
           category: 'SECURITY_EVENT'
         });

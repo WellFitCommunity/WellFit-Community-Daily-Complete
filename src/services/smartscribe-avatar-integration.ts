@@ -267,7 +267,7 @@ export async function processSmartScribeForAvatar(
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       result.errors.push(errorMessage);
-      auditLogger.error('SMARTSCRIBE_AVATAR_PROCESSING_ERROR', err as Error, {
+      auditLogger.error('SMARTSCRIBE_AVATAR_PROCESSING_ERROR', err instanceof Error ? err : new Error(String(err)), {
         patient_id,
         entity,
       });

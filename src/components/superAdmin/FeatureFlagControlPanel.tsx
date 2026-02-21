@@ -29,7 +29,7 @@ const FeatureFlagControlPanel: React.FC = () => {
       setFeatures(featuresData);
       setSuperAdmin(adminData);
     } catch (err: unknown) {
-      await auditLogger.error('SUPER_ADMIN_FEATURE_FLAGS_LOAD_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_FEATURE_FLAGS_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       setError('Failed to load feature flags');
@@ -50,7 +50,7 @@ const FeatureFlagControlPanel: React.FC = () => {
       });
       await loadData();
     } catch (err: unknown) {
-      await auditLogger.error('SUPER_ADMIN_FEATURE_TOGGLE_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_FEATURE_TOGGLE_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'SECURITY_EVENT',
         featureKey: feature.featureKey,
         newState: !feature.isEnabled
@@ -79,7 +79,7 @@ const FeatureFlagControlPanel: React.FC = () => {
       });
       await loadData();
     } catch (err: unknown) {
-      await auditLogger.error('SUPER_ADMIN_KILL_SWITCH_FAILED', err as Error, {
+      await auditLogger.error('SUPER_ADMIN_KILL_SWITCH_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'SECURITY_EVENT',
         featureKey: selectedFeature.featureKey,
         severity: 'critical'

@@ -48,7 +48,7 @@ const MultiTenantSelector: React.FC = () => {
       }
 
     } catch (err) {
-      await auditLogger.error('MULTI_TENANT_SELECTOR_LOAD_FAILED', err as Error, {
+      await auditLogger.error('MULTI_TENANT_SELECTOR_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       setError('Failed to load tenant assignments');

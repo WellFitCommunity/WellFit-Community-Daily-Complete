@@ -60,7 +60,7 @@ export class TenantDetectionService {
 
       return null;
     } catch (err) {
-      await auditLogger.error('TENANT_DETECTION_EXCEPTION', err as Error, { userIdentifier });
+      await auditLogger.error('TENANT_DETECTION_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { userIdentifier });
       return null;
     }
   }
@@ -89,7 +89,7 @@ export class TenantDetectionService {
         subdomain: data.subdomain || 'www',
       };
     } catch (err) {
-      await auditLogger.error('DEFAULT_TENANT_EXCEPTION', err as Error, {});
+      await auditLogger.error('DEFAULT_TENANT_EXCEPTION', err instanceof Error ? err : new Error(String(err)), {});
       return null;
     }
   }
@@ -112,7 +112,7 @@ export class TenantDetectionService {
 
       return data.tenant_id === tenantId;
     } catch (err) {
-      await auditLogger.error('TENANT_ACCESS_VERIFICATION_FAILED', err as Error, { userId, tenantId });
+      await auditLogger.error('TENANT_ACCESS_VERIFICATION_FAILED', err instanceof Error ? err : new Error(String(err)), { userId, tenantId });
       return false;
     }
   }

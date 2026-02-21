@@ -21,6 +21,7 @@ import { auditLogger } from './auditLogger';
 // TYPES & INTERFACES
 // =====================================================
 
+/** Behavioral analytics security risk — UPPER case, 4-tier (distinct from clinical/theme RiskLevel) */
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export type AnomalyType =
@@ -190,7 +191,7 @@ export class BehavioralAnalyticsService {
         required_speed_kmh: 0
       };
     } catch (error) {
-      await auditLogger.error('IMPOSSIBLE_TRAVEL_DETECTION_ERROR', error as Error, {
+      await auditLogger.error('IMPOSSIBLE_TRAVEL_DETECTION_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: userId
       });
       throw error;
@@ -236,7 +237,7 @@ export class BehavioralAnalyticsService {
 
       return data as GeolocationRecord;
     } catch (error) {
-      await auditLogger.error('GEOLOCATION_RECORD_ERROR', error as Error, {
+      await auditLogger.error('GEOLOCATION_RECORD_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: params.userId
       });
       throw error;
@@ -268,7 +269,7 @@ export class BehavioralAnalyticsService {
 
       return result;
     } catch (error) {
-      await auditLogger.error('BEHAVIOR_BASELINE_FETCH_ERROR', error as Error, {
+      await auditLogger.error('BEHAVIOR_BASELINE_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: userId
       });
       throw error;
@@ -318,7 +319,7 @@ export class BehavioralAnalyticsService {
 
       return data as AnomalyDetection;
     } catch (error) {
-      await auditLogger.error('ANOMALY_DETECTION_CREATE_ERROR', error as Error, {
+      await auditLogger.error('ANOMALY_DETECTION_CREATE_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: params.userId
       });
       throw error;
@@ -353,7 +354,7 @@ export class BehavioralAnalyticsService {
 
       return data as AnomalyDetection[];
     } catch (error) {
-      await auditLogger.error('UNINVESTIGATED_ANOMALIES_FETCH_ERROR', error as Error, {
+      await auditLogger.error('UNINVESTIGATED_ANOMALIES_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         min_score: minScore
       });
       throw error;
@@ -393,7 +394,7 @@ export class BehavioralAnalyticsService {
 
       return data as boolean;
     } catch (error) {
-      await auditLogger.error('ANOMALY_INVESTIGATION_MARK_ERROR', error as Error, {
+      await auditLogger.error('ANOMALY_INVESTIGATION_MARK_ERROR', error instanceof Error ? error : new Error(String(error)), {
         anomaly_id: anomalyId
       });
       throw error;
@@ -432,7 +433,7 @@ export class BehavioralAnalyticsService {
 
       return data as PeerGroupStats[];
     } catch (error) {
-      await auditLogger.error('PEER_GROUP_STATS_FETCH_ERROR', error as Error, {
+      await auditLogger.error('PEER_GROUP_STATS_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         role
       });
       throw error;
@@ -480,7 +481,7 @@ export class BehavioralAnalyticsService {
 
       return data as DailyBehaviorSummary;
     } catch (error) {
-      await auditLogger.error('DAILY_BEHAVIOR_SUMMARY_ERROR', error as Error, {
+      await auditLogger.error('DAILY_BEHAVIOR_SUMMARY_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: params.userId
       });
       throw error;
@@ -515,7 +516,7 @@ export class BehavioralAnalyticsService {
 
       return data as AnomalyDetection[];
     } catch (error) {
-      await auditLogger.error('USER_ANOMALIES_FETCH_ERROR', error as Error, {
+      await auditLogger.error('USER_ANOMALIES_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: userId
       });
       throw error;

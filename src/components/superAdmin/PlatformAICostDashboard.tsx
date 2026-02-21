@@ -125,7 +125,7 @@ const PlatformAICostDashboard: React.FC = () => {
       });
 
     } catch (err) {
-      await auditLogger.error('PLATFORM_AI_COST_DASHBOARD_LOAD_FAILED', err as Error, {
+      await auditLogger.error('PLATFORM_AI_COST_DASHBOARD_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
       setError('Failed to load AI cost data');

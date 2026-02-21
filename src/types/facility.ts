@@ -7,6 +7,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
+/** General facility location types — distinct from healthSystem.FacilityType (hospital subtypes) and dischargePlanning.FacilityType (post-acute destinations) */
 export type FacilityType =
   | 'hospital'
   | 'clinic'

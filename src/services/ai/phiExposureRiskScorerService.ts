@@ -22,6 +22,7 @@ import { ServiceResult, success, failure } from '../_base';
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** PHI exposure risk scoring — lower case, 4-tier (distinct from clinical/behavioral RiskLevel) */
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type ScopeType = 'user' | 'role' | 'department' | 'system';
 export type DataSensitivity = 'public' | 'internal' | 'confidential' | 'restricted' | 'phi' | 'pii';

@@ -10,11 +10,13 @@
 // BASE TYPES
 // ============================================================================
 
+/** Mental health risk level — 3-tier, no 'critical' (distinct from clinical/security RiskLevel) */
 export type RiskLevel = 'low' | 'moderate' | 'high';
 export type SessionType = 'inpatient' | 'outpatient' | 'telehealth';
 export type SessionStatus = 'planned' | 'arrived' | 'triaged' | 'in-progress' | 'onleave' | 'finished' | 'cancelled' | 'entered-in-error' | 'unknown';
 export type ServiceRequestStatus = 'draft' | 'active' | 'on-hold' | 'revoked' | 'completed' | 'entered-in-error' | 'unknown';
 export type ServiceRequestIntent = 'proposal' | 'plan' | 'directive' | 'order' | 'original-order' | 'reflex-order' | 'filler-order' | 'instance-order' | 'option';
+/** Mental health clinical priority — HL7 request priority values (distinct from riskAssessment.Priority) */
 export type Priority = 'routine' | 'urgent' | 'asap' | 'stat';
 
 export type SuicidalIdeation = 'none' | 'passive' | 'active';
@@ -27,7 +29,10 @@ export type GAD7Severity = 'none' | 'mild' | 'moderate' | 'severe';
 export type AdjustmentResponse = 'adaptive' | 'maladaptive' | 'mixed';
 export type PatientEngagement = 'engaged' | 'ambivalent' | 'resistant';
 
-export type EscalationLevel = 'moderate' | 'high' | 'stat';
+/** Mental health crisis escalation — distinct from EDEscalationLevel */
+export type MentalHealthEscalationLevel = 'moderate' | 'high' | 'stat';
+/** @deprecated Use MentalHealthEscalationLevel */
+export type EscalationLevel = MentalHealthEscalationLevel;
 export type EscalationStatus = 'active' | 'in-progress' | 'resolved' | 'cancelled';
 
 export type FlagType = 'suicide_risk' | 'active_monitoring' | 'psychiatric_consult_pending' | 'discharge_hold' | 'safety_plan_required' | 'high_risk_alert';

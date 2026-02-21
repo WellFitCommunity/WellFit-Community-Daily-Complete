@@ -599,7 +599,7 @@ export interface CreateDentalProcedureRequest {
 }
 
 /**
- * Create Treatment Plan Request
+ * Dental treatment plan creation — phases and cost estimates (distinct from oncology/PT CreateTreatmentPlanRequest)
  */
 export interface CreateTreatmentPlanRequest {
   patient_id: string;

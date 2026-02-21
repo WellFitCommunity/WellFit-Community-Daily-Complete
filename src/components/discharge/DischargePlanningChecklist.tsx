@@ -33,9 +33,13 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
   const loadDischargePlan = useCallback(async () => {
     try {
       setLoading(true);
-      const plan = await DischargePlanningService.getDischargePlanByEncounter(encounterId);
-      setDischargePlan(plan);
-      setError(null);
+      const result = await DischargePlanningService.getDischargePlanByEncounter(encounterId);
+      if (result.success) {
+        setDischargePlan(result.data);
+        setError(null);
+      } else {
+        setError(result.error.message);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -53,15 +57,19 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
 
     try {
       setSaving(true);
-      const updatedPlan = await DischargePlanningService.updateDischargePlan(
+      const result = await DischargePlanningService.updateDischargePlan(
         dischargePlan.id,
         updates
       );
-      setDischargePlan(updatedPlan);
-      if (onPlanUpdated) {
-        onPlanUpdated(updatedPlan);
+      if (result.success) {
+        setDischargePlan(result.data);
+        if (onPlanUpdated) {
+          onPlanUpdated(result.data);
+        }
+        setError(null);
+      } else {
+        setError(result.error.message);
       }
-      setError(null);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

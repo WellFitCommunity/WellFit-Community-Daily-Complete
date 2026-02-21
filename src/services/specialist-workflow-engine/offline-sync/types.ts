@@ -18,10 +18,11 @@ import type { EncryptedField } from '../../guardian-agent/PHIEncryption';
 // Core Offline Record Types
 // ============================================================================
 
+import type { RiskAlertSeverity } from '../../../types/alertSeverity';
 /**
- * Severity levels for clinical alerts
+ * Severity levels for clinical alerts — canonical definition in types/alertSeverity.ts
  */
-export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type AlertSeverity = RiskAlertSeverity;
 
 /**
  * Sync states for records

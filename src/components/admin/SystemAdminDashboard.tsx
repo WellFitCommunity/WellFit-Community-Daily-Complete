@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+import { PlatformKPIPanel } from './PlatformKPIPanel';
 
 // Polling configuration with exponential backoff
 const INITIAL_POLL_INTERVAL = 60000; // 60 seconds
@@ -461,6 +462,9 @@ export const SystemAdminDashboard: React.FC = () => {
           </EACard>
         </div>
       )}
+
+      {/* Platform KPIs via MCP Postgres Analytics */}
+      <PlatformKPIPanel />
 
       {/* Active User Sessions */}
       <EACard>
