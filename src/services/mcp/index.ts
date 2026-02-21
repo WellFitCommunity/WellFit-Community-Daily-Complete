@@ -280,3 +280,92 @@ export {
   type RejectionGuidance,
   type ClearinghouseResult
 } from './mcpClearinghouseClient';
+
+// =====================================================
+// NPI REGISTRY MCP (Provider Validation)
+// =====================================================
+
+export {
+  // Validation functions
+  validateNPI,
+  bulkValidateNPIs,
+  checkNPIDeactivation,
+  isValidNPIFormat,
+  // Lookup functions
+  lookupProviderByNPI,
+  getProviderIdentifiers,
+  // Search functions
+  searchProvidersByName,
+  searchOrganizationsByName,
+  searchProvidersBySpecialty,
+  getTaxonomyCodesForSpecialty,
+  // Reference data
+  COMMON_TAXONOMY_CODES,
+  // Client class
+  NPIRegistryMCPClient,
+  // Types
+  type NPIValidation,
+  type ProviderDetails,
+  type ProviderTaxonomy,
+  type ProviderAddress,
+  type ProviderIdentifier,
+  type ProviderSearchResult,
+  type TaxonomyCode,
+  type BulkValidationResult,
+  type EnumerationType,
+  type NPIRegistryResult
+} from './mcpNPIRegistryClient';
+
+// =====================================================
+// CMS COVERAGE MCP (Medicare Coverage Lookups)
+// =====================================================
+
+export {
+  // Search functions
+  searchLCDs,
+  searchNCDs,
+  getCoverageRequirements,
+  checkPriorAuthRequired as checkCMSPriorAuthRequired,
+  // Detail functions
+  getLCDDetails,
+  getNCDDetails,
+  getCoverageArticles,
+  getMACContractorInfo,
+  // Reference data
+  COMMON_PRIOR_AUTH_CODES,
+  // Client class
+  CMSCoverageMCPClient,
+  // Types
+  type LCD,
+  type NCD,
+  type CoverageRequirements,
+  type PriorAuthCheck,
+  type MACContractorInfo,
+  type CoverageArticle,
+  type CMSCoverageResult
+} from './mcpCMSCoverageClient';
+
+// =====================================================
+// PUBMED MCP (Biomedical Literature Search)
+// =====================================================
+
+export {
+  // Search functions
+  searchPubMed,
+  searchClinicalTrials,
+  // Article detail functions
+  getArticleSummaries,
+  getArticleAbstract,
+  getArticleCitations,
+  // Vocabulary
+  getMeSHTerms,
+  // Client class
+  PubMedMCPClient,
+  // Types
+  type PubMedArticle,
+  type PubMedSearchResult,
+  type ArticleSummary,
+  type ArticleAbstract,
+  type MeSHTerm,
+  type PubMedResult
+} from './mcpPubMedClient';

@@ -21,8 +21,9 @@ import { BillingService } from '../../services/billingService';
 import type { Claim, ClaimLine } from '../../types/billing';
 import {
   FileCheck, Clock, CheckCircle, XCircle, RefreshCw,
-  DollarSign, FileText, AlertTriangle, Loader2,
+  DollarSign, FileText, AlertTriangle, Loader2, ShieldAlert,
 } from 'lucide-react';
+import { useCMSCoverageCheck, type CoverageCheckState } from '../../hooks/useCMSCoverageCheck';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -30,6 +31,81 @@ import {
 
 interface SuperbillReviewPanelProps {
   tenantId?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CMS Coverage Sub-Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CoverageCheckPanel({ coverageState }: { coverageState: CoverageCheckState }) {
+  if (coverageState.status === 'checking') {
+    return (
+      <div className="border rounded-lg p-4 bg-blue-50">
+        <div className="flex items-center gap-2 text-blue-700">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm font-medium">Checking CMS coverage requirements...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (coverageState.status === 'error') {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription className="text-sm">{coverageState.error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (coverageState.status === 'pass') {
+    return (
+      <div className="border rounded-lg p-4 bg-green-50">
+        <div className="flex items-center gap-2 text-green-700">
+          <CheckCircle className="h-4 w-4" />
+          <span className="text-sm font-medium">CMS coverage check passed — no prior auth required</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (coverageState.status === 'warnings' && coverageState.result) {
+    const { codesRequiringAuth, missingDocumentation } = coverageState.result;
+    return (
+      <div className="border rounded-lg p-4 bg-amber-50 space-y-3">
+        <div className="flex items-center gap-2 text-amber-800">
+          <ShieldAlert className="h-4 w-4" />
+          <span className="text-sm font-bold">
+            CMS Coverage: {coverageState.warningCount} item{coverageState.warningCount !== 1 ? 's' : ''} need attention
+          </span>
+        </div>
+
+        {codesRequiringAuth.length > 0 && (
+          <div className="text-sm">
+            <span className="font-medium text-amber-900">Prior Authorization Required:</span>
+            <ul className="list-disc list-inside mt-1 text-amber-800">
+              {codesRequiringAuth.map(code => (
+                <li key={code} className="font-mono">{code}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {missingDocumentation.length > 0 && (
+          <div className="text-sm">
+            <span className="font-medium text-amber-900">Documentation Needed:</span>
+            <ul className="list-disc list-inside mt-1 text-amber-800">
+              {missingDocumentation.map((doc, i) => (
+                <li key={i}>{doc}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,6 +130,9 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [actionResult, setActionResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // CMS Coverage check
+  const coverageCheck = useCMSCoverageCheck();
 
   // Load pending claims
   const loadPendingClaims = useCallback(async () => {
@@ -87,11 +166,18 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
     setAgreementChecked(false);
     setApprovalNotes('');
     setRejectionReason('');
+    coverageCheck.reset();
 
     setLoadingLines(true);
     try {
       const lines = await BillingService.getClaimLines(claim.id);
       setClaimLines(lines);
+
+      // Auto-run CMS coverage check on loaded CPT codes
+      const cptCodes = lines.map(l => l.procedure_code).filter(Boolean);
+      if (cptCodes.length > 0) {
+        coverageCheck.checkCoverage(cptCodes);
+      }
     } catch (err: unknown) {
       auditLogger.error('SUPERBILL_LINES_LOAD_FAILED',
         err instanceof Error ? err : new Error(String(err)),
@@ -101,7 +187,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
     } finally {
       setLoadingLines(false);
     }
-  }, []);
+  }, [coverageCheck]);
 
   // Approve superbill
   const handleApprove = useCallback(async () => {
@@ -350,6 +436,11 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
                     </div>
                   )}
                 </div>
+
+                {/* CMS Coverage Check Results */}
+                {coverageCheck.status !== 'idle' && (
+                  <CoverageCheckPanel coverageState={coverageCheck} />
+                )}
 
                 {/* Approval Section */}
                 {!showRejectForm ? (

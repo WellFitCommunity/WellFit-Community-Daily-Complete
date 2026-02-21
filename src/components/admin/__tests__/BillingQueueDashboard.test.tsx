@@ -27,6 +27,30 @@ vi.mock('../../../services/encounterBillingBridgeService', () => ({
   },
 }));
 
+const mockValidateCodes = vi.fn().mockResolvedValue({
+  status: 'valid',
+  result: null,
+  bundlingIssues: [],
+  warningCount: 0,
+  error: null,
+});
+
+vi.mock('../../../hooks/useBillingCodeValidation', () => ({
+  useBillingCodeValidation: () => ({
+    status: 'idle',
+    result: null,
+    bundlingIssues: [],
+    warningCount: 0,
+    error: null,
+    suggestions: null,
+    suggestingCodes: false,
+    validateCodes: mockValidateCodes,
+    suggestCodes: vi.fn(),
+    lookupCode: vi.fn(),
+    reset: vi.fn(),
+  }),
+}));
+
 vi.mock('../../../services/auditLogger', () => ({
   auditLogger: {
     info: vi.fn(),
@@ -267,7 +291,11 @@ describe('BillingQueueDashboard', () => {
     mockGetBillingQueueStats.mockResolvedValue(MOCK_STATS_SUCCESS);
     mockGenerateSuperbillDraft.mockResolvedValue({
       success: true,
-      data: { id: 'sb-new' },
+      data: {
+        id: 'sb-new',
+        procedure_codes: [{ code: '99213', modifiers: [] }],
+        diagnosis_codes: [{ code: 'J06.9' }],
+      },
       error: null,
     });
 

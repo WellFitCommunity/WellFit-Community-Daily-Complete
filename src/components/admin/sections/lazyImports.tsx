@@ -17,6 +17,7 @@ export const FHIRDataMapper = lazy(() => import('../FHIRDataMapper'));
 
 // Revenue & Billing
 export const BillingDashboard = lazy(() => import('../BillingDashboard'));
+export const BillingProviderForm = lazy(() => import('../BillingProviderForm'));
 export const SmartScribe = lazy(() => import('../../smart/RealTimeSmartScribe'));
 export const SDOHCoderAssist = lazy(() => import('../../billing/SDOHCoderAssist'));
 export const CCMTimeline = lazy(() => import('../../atlas/CCMTimeline'));

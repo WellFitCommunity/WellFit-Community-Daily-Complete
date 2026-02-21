@@ -47,6 +47,7 @@ export interface EncounterEligibility {
   coverage_status: CoverageStatus;
   coverage_verified_at: string | null;
   coverage_details: CoverageDetails | null;
+  procedure_codes?: string[];
 }
 
 export interface EligibilityStats {
@@ -72,6 +73,7 @@ interface EncounterEligibilityRow {
   payer_id: string | null;
   profiles: { first_name: string | null; last_name: string | null } | null;
   billing_payers: { name: string | null; payer_id: string | null } | null;
+  encounter_procedures: Array<{ procedure_code: string | null }> | null;
 }
 
 interface PatientProfileRow {
@@ -118,7 +120,8 @@ export const eligibilityVerificationService = {
           coverage_status, coverage_verified_at, coverage_details,
           payer_id,
           profiles!encounters_patient_id_fkey(first_name, last_name),
-          billing_payers(name, payer_id)
+          billing_payers(name, payer_id),
+          encounter_procedures(procedure_code)
         `)
         .in('status', BILLABLE_STATUSES)
         .order('date_of_service', { ascending: false })
@@ -141,6 +144,9 @@ export const eligibilityVerificationService = {
         coverage_status: (row.coverage_status || 'unverified') as CoverageStatus,
         coverage_verified_at: row.coverage_verified_at,
         coverage_details: parseCoverageDetails(row.coverage_details),
+        procedure_codes: (row.encounter_procedures || [])
+          .map(p => p.procedure_code)
+          .filter((c): c is string => c !== null),
       }));
 
       return success(encounters);

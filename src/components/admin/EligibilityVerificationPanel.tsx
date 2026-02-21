@@ -36,6 +36,10 @@ import type {
   EligibilityStats,
   CoverageStatus,
 } from '../../services/eligibilityVerificationService';
+import {
+  checkPriorAuthRequired,
+} from '../../services/mcp/mcpCMSCoverageClient';
+import { auditLogger } from '../../services/auditLogger';
 
 // =============================================================================
 // TYPES
@@ -154,6 +158,41 @@ function CoverageDetailsPanel({ encounter }: { encounter: EncounterEligibility }
 }
 
 // =============================================================================
+// CMS COVERAGE ALERT SUB-COMPONENT
+// =============================================================================
+
+function CMSCoverageAlertPanel({ alert }: { alert: { priorAuthCodes: string[]; documentationNeeded: string[] } }) {
+  if (alert.priorAuthCodes.length === 0 && alert.documentationNeeded.length === 0) return null;
+
+  return (
+    <div className="bg-amber-50 rounded-md p-3 mt-2 text-sm border border-amber-200">
+      <div className="flex items-center gap-2 text-amber-800 font-medium mb-2">
+        <AlertTriangle className="w-3.5 h-3.5" />
+        CMS Coverage Alert
+      </div>
+      {alert.priorAuthCodes.length > 0 && (
+        <div className="mb-1">
+          <span className="text-amber-900 font-medium">Prior Auth Required: </span>
+          <span className="font-mono text-amber-800">
+            {alert.priorAuthCodes.join(', ')}
+          </span>
+        </div>
+      )}
+      {alert.documentationNeeded.length > 0 && (
+        <div>
+          <span className="text-amber-900 font-medium">Documentation Needed:</span>
+          <ul className="list-disc list-inside text-amber-800 mt-1">
+            {alert.documentationNeeded.map((doc, i) => (
+              <li key={i}>{doc}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
@@ -166,6 +205,10 @@ const EligibilityVerificationPanel: React.FC = () => {
   const [patientSearch, setPatientSearch] = useState('');
   const [verifying, setVerifying] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [coverageAlerts, setCoverageAlerts] = useState<Record<string, {
+    priorAuthCodes: string[];
+    documentationNeeded: string[];
+  }>>({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -202,6 +245,50 @@ const EligibilityVerificationPanel: React.FC = () => {
       setError(result.error.message);
     } else {
       await fetchData();
+
+      // Run CMS coverage check for encounter procedure codes
+      try {
+        const procedureCodes = enc.procedure_codes ?? [];
+        if (procedureCodes.length > 0) {
+          const authPromises = procedureCodes.map(code =>
+            checkPriorAuthRequired(code)
+          );
+          const authResults = await Promise.all(authPromises);
+          const priorAuthCodes: string[] = [];
+          const docNeeded: string[] = [];
+
+          for (const res of authResults) {
+            if (res.success && res.data?.requires_prior_auth) {
+              priorAuthCodes.push(res.data.cpt_code);
+              if (res.data.documentation_required) {
+                docNeeded.push(...res.data.documentation_required);
+              }
+            }
+          }
+
+          if (priorAuthCodes.length > 0 || docNeeded.length > 0) {
+            setCoverageAlerts(prev => ({
+              ...prev,
+              [enc.encounter_id]: {
+                priorAuthCodes,
+                documentationNeeded: [...new Set(docNeeded)],
+              },
+            }));
+          }
+
+          await auditLogger.info('ELIGIBILITY_CMS_COVERAGE_CHECKED', {
+            encounterId: enc.encounter_id,
+            procedureCount: procedureCodes.length,
+            priorAuthRequired: priorAuthCodes.length,
+          });
+        }
+      } catch (err: unknown) {
+        await auditLogger.error(
+          'ELIGIBILITY_CMS_COVERAGE_CHECK_FAILED',
+          err instanceof Error ? err : new Error(String(err)),
+          { encounterId: enc.encounter_id }
+        );
+      }
     }
     setVerifying(null);
   };
@@ -389,6 +476,13 @@ const EligibilityVerificationPanel: React.FC = () => {
                   {isExpanded && enc.coverage_details && (
                     <div className="px-4 pb-3">
                       <CoverageDetailsPanel encounter={enc} />
+                    </div>
+                  )}
+
+                  {/* CMS Coverage Alerts (prior auth requirements) */}
+                  {isExpanded && coverageAlerts[enc.encounter_id] && (
+                    <div className="px-4 pb-3">
+                      <CMSCoverageAlertPanel alert={coverageAlerts[enc.encounter_id]} />
                     </div>
                   )}
                 </div>

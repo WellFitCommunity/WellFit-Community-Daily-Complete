@@ -36,6 +36,7 @@ import type {
   BillingQueueStats,
   SuperbillStatus,
 } from '../../services/encounterBillingBridgeService';
+import { useBillingCodeValidation, type CodeValidationState } from '../../hooks/useBillingCodeValidation';
 
 // =============================================================================
 // TYPES
@@ -111,6 +112,8 @@ const BillingQueueDashboard: React.FC = () => {
   const [filter, setFilter] = useState<QueueFilter>('all');
   const [patientSearch, setPatientSearch] = useState('');
   const [generating, setGenerating] = useState<string | null>(null);
+  const [validationResults, setValidationResults] = useState<Record<string, CodeValidationState>>({});
+  const codeValidation = useBillingCodeValidation();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -149,6 +152,19 @@ const BillingQueueDashboard: React.FC = () => {
     if (!result.success) {
       setError(result.error.message);
     } else {
+      // Auto-validate codes after superbill generation
+      const superbill = result.data;
+      const cptCodes = superbill.procedure_codes.map(p => p.code);
+      const icd10Codes = superbill.diagnosis_codes.map(d => d.code);
+      const modifiers = superbill.procedure_codes
+        .flatMap(p => p.modifiers || [])
+        .filter(Boolean);
+
+      if (cptCodes.length > 0 || icd10Codes.length > 0) {
+        const validation = await codeValidation.validateCodes(cptCodes, icd10Codes, modifiers);
+        setValidationResults(prev => ({ ...prev, [enc.encounter_id]: validation }));
+      }
+
       await fetchData();
     }
     setGenerating(null);
@@ -282,6 +298,7 @@ const BillingQueueDashboard: React.FC = () => {
             filteredQueue.map(enc => {
               const badge = getSuperbillBadge(enc.superbill_status);
               const isGenerating = generating === enc.encounter_id;
+              const validation = validationResults[enc.encounter_id];
 
               return (
                 <div
@@ -312,6 +329,18 @@ const BillingQueueDashboard: React.FC = () => {
                     <EABadge variant={badge.variant} size="sm">
                       {badge.label}
                     </EABadge>
+                    {validation && validation.status === 'warnings' && (
+                      <span className="ml-1" title={`${validation.warningCount} code issue${validation.warningCount !== 1 ? 's' : ''} found`}>
+                        <EABadge variant="elevated" size="sm">
+                          {validation.warningCount} issue{validation.warningCount !== 1 ? 's' : ''}
+                        </EABadge>
+                      </span>
+                    )}
+                    {validation && validation.status === 'valid' && (
+                      <span className="ml-1" title="All codes validated">
+                        <EABadge variant="normal" size="sm">Codes OK</EABadge>
+                      </span>
+                    )}
                   </span>
 
                   <span className="flex-1 flex gap-2 justify-end">
