@@ -89,3 +89,6 @@ MCP_KEYS_SECURE.md
 
 # Private documents (IP-protected, business strategy - never commit)
 private/
+
+# Auto-generated database types (regenerate with: npm run db:types)
+src/types/database.generated.ts

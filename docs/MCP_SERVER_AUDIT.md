@@ -52,7 +52,7 @@ Tier 3 servers validate access via the `validate_mcp_key` PostgreSQL function:
 
 ### Auth Gate Implementation
 
-- **File:** `supabase/functions/_shared/mcpAuthGate.ts` (587 lines)
+- **File:** `supabase/functions/_shared/mcpAuthGate.ts`
 - **Key function:** `verifyAdminAccess()` — dual auth path:
   1. Check `X-MCP-KEY` header → validate against `mcp_keys` table
   2. Fallback to `Authorization: Bearer` token → verify JWT claims + role check
@@ -419,6 +419,24 @@ The Claude MCP client includes a cost optimization layer at `src/services/mcp/mc
 | Supported FHIR R4 resource types | 18 |
 | Supported HL7 message types | ADT, ORU, ORM |
 | Supported X12 transaction types | 837P, 837I, 835, 270/271, 276/277, 278 |
+
+---
+
+---
+
+## God File Decomposition (2026-02-22)
+
+As part of the deep congruency audit (M-1), all 8 edge function god files (including 3 MCP servers) were decomposed into focused modules under 600 lines each:
+
+| Function | Before | After | Modules |
+|----------|--------|-------|---------|
+| `mcp-hl7-x12-server` | 1,269 lines | 11 modules | types, hl7Parser, hl7ToFhir, x12Generator, x12Parser, x12Validator, x12ToFhir, hl7Ack, tools, audit, index (347) |
+| `mcp-fhir-server` | 1,179 lines | 9 modules | types, tools, bundleBuilder, validation, audit, resourceQueries, patientSummary, toolHandlers, index (202) |
+| `mcp-clearinghouse-server` | 1,021 lines | 6 modules | types, tools, client, handlers, staticData, index (215) |
+
+**Also decomposed (non-MCP edge functions):** `fhir-r4` (1,144→8), `ai-discharge-summary` (1,071→6), `ai-clinical-guideline-matcher` (1,044→8), `ai-medication-adherence-predictor` (991→7), `ai-care-plan-generator` (960→6).
+
+Zero breaking changes. All `index.ts` files remain thin Supabase entry points.
 
 ---
 

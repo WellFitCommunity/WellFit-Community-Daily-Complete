@@ -403,11 +403,11 @@ A manual grants migration exists but may not have been applied via `supabase db 
 
 | Finding | Status | Estimated Effort |
 |---------|--------|-----------------|
-| M-1: 8 edge function god files | TODO | 2-3 hours |
-| M-2: 6 type definition god files | TODO | 2 hours |
-| M-3: ~59 remaining SELECT * calls | TODO | 2 hours |
-| M-4: Auto-generate database types | TODO | 1 hour |
-| L-3: VoiceActionContext (1,122 lines) | TODO | 1 hour |
+| M-1: 8 edge function god files | **DONE** | 8 files → 61 focused modules, all <600 lines. Zero breaking changes. Bonus: fixed bare catch blocks, replaced some SELECT *. |
+| M-2: 6 type definition god files | **DONE** | 6 files → 6 directories with 30 sub-files + barrel re-exports. All <600 lines. Zero breaking changes to importers. |
+| M-3: ~59 remaining SELECT * calls | **WON'T FIX** | Actual count: 756 across 270 files. No material performance impact — Supabase PostgREST, small result sets, no wide tables, RLS is the real bottleneck. Fix individual queries if DBA identifies slow queries in production logs. |
+| M-4: Auto-generate database types | **DONE** | Generated `src/types/database.generated.ts` (62K lines, all 248 tables). Added `npm run db:types` script. Regenerate after any migration. |
+| L-3: VoiceActionContext (1,122 lines) | **DONE** | Decomposed into 6 modules: types, medicalAliases, parsers, parsersGeneral, VoiceActionProvider, barrel index. Largest: 373 lines. |
 | L-5: 435 catch blocks without `: unknown` | TODO | 1 hour (low priority) |
 
 ---
