@@ -79,7 +79,7 @@ export function useModuleAccess(moduleName: ModuleName): ModuleAccessResult {
       const configData = await getTenantModuleConfig();
       // null config is OK - means tenant doesn't have config yet, use defaults
       setConfig(configData);
-    } catch (err) {
+    } catch (err: unknown) {
       // Don't treat as fatal error - log but allow graceful degradation
       const error = err instanceof Error ? err : new Error('Failed to load module config');
       setError(error);
@@ -165,7 +165,7 @@ export function useModuleAccessMultiple(moduleNames: ModuleName[]): MultipleModu
       setError(null);
       const configData = await getTenantModuleConfig();
       setConfig(configData);
-    } catch (err) {
+    } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error('Failed to load module config');
       setError(error);
     } finally {

@@ -71,7 +71,7 @@ export function useWorkflowPreferences(): UseWorkflowPreferencesReturn {
     try {
       const prefs = await getWorkflowPreferences(supabase, user.id, adminRole || 'admin');
       setPreferences(prefs);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load workflow preferences');
       // Fall back to defaults
       setPreferences(getDefaultPreferences(user.id, adminRole || 'admin'));

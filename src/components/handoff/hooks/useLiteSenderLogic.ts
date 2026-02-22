@@ -181,7 +181,7 @@ export function useLiteSenderLogic({
       } else {
         toast.info('No previous transfer found for this MRN. Please enter patient information.');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.info('No previous transfer found. Please enter patient information.');
     } finally {
       setIsLookingUpPatient(false);

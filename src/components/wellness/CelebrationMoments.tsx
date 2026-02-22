@@ -242,7 +242,7 @@ export const CelebrationMoments: React.FC<CelebrationMomentsProps> = ({
           value: highestNew.value,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('MILESTONE_CHECK_FAILED', error instanceof Error ? error : new Error('Check failed'));
     }
   }, [userId]);

@@ -111,7 +111,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
       } else {
         setError(result.error.message);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load amendments');
     } finally {
       setLoading(false);
@@ -167,7 +167,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
       // Refresh list
       await fetchAmendments();
       onAmendmentCreated?.();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to create amendment');
     } finally {
       setSubmitting(false);
@@ -190,7 +190,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
       }
 
       await fetchAmendments();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to approve amendment');
     }
   };
@@ -214,7 +214,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
       }
 
       await fetchAmendments();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to reject amendment');
     }
   };

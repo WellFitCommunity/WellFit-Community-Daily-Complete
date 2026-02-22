@@ -114,7 +114,7 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
           metadata: { title, duration }
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Fail silently - tracking should never break functionality
     }
   };

@@ -340,7 +340,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
     try {
       await chwService.captureVitals(visitId, vitals as VitalsData);
       onComplete();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to save vitals. Please try again.');
       setLoading(false);
     }

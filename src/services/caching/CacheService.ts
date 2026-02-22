@@ -244,7 +244,7 @@ export class CacheService {
 
           return data.data as T;
         }
-      } catch (error) {
+      } catch (error: unknown) {
         auditLogger.error('CACHE_L2_ERROR', error instanceof Error ? error : new Error(String(error)), { key: fullKey });
         // Non-critical error - continue to return null (cache miss)
       }
@@ -279,7 +279,7 @@ export class CacheService {
         });
 
         auditLogger.debug('CACHE_SET', { key: fullKey, ttl });
-      } catch (error) {
+      } catch (error: unknown) {
         auditLogger.error('CACHE_SET_ERROR', error instanceof Error ? error : new Error(String(error)), { key: fullKey });
         // Non-critical error
       }
@@ -326,7 +326,7 @@ export class CacheService {
         .eq('cache_key', fullKey);
 
       auditLogger.info('CACHE_INVALIDATED', { key: fullKey });
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('CACHE_INVALIDATE_ERROR', error instanceof Error ? error : new Error(String(error)), { key: fullKey });
     }
   }
@@ -346,7 +346,7 @@ export class CacheService {
         .eq('cache_namespace', namespace);
 
       auditLogger.info('CACHE_NAMESPACE_INVALIDATED', { namespace, l1Count });
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('CACHE_NAMESPACE_INVALIDATE_ERROR', error instanceof Error ? error : new Error(String(error)), { namespace });
     }
   }
@@ -375,7 +375,7 @@ export class CacheService {
         expiringSoon: row.expiring_soon,
         recentlyUsed: row.recently_used,
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('CACHE_STATS_ERROR', error instanceof Error ? error : new Error(String(error)));
       return [];
     }
@@ -402,7 +402,7 @@ export class CacheService {
         peakUtilizationPercent: data.peak_utilization_percent,
         highUtilizationCount: data.high_utilization_count,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('CONNECTION_METRICS_ERROR', error instanceof Error ? error : new Error(String(error)));
       return null;
     }
@@ -426,7 +426,7 @@ export class CacheService {
     try {
       await supabase.from('query_result_cache').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       auditLogger.warn('CACHE_CLEARED_ALL', {});
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('CACHE_CLEAR_ERROR', error instanceof Error ? error : new Error(String(error)));
     }
   }

@@ -52,7 +52,7 @@ export class SOCDashboardService {
       }
 
       return data?.[0] || null;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_DASHBOARD_SUMMARY_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', {});
       return null;
     }
@@ -118,7 +118,7 @@ export class SOCDashboardService {
       }
 
       return data || [];
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_GET_ALERTS_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', {});
       return [];
     }
@@ -142,7 +142,7 @@ export class SOCDashboardService {
       }
 
       return data;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_GET_ALERT_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', { alertId });
       return null;
     }
@@ -160,7 +160,7 @@ export class SOCDashboardService {
       }
 
       return data === true;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_ACKNOWLEDGE_ALERT_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', { alertId });
       return false;
     }
@@ -179,7 +179,7 @@ export class SOCDashboardService {
       }
 
       return data === true;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_RESOLVE_ALERT_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', { alertId });
       return false;
     }
@@ -198,7 +198,7 @@ export class SOCDashboardService {
       }
 
       return data === true;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_ASSIGN_ALERT_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', { alertId });
       return false;
     }
@@ -225,7 +225,7 @@ export class SOCDashboardService {
       await this.addMessage(alertId, `Marked as false positive: ${reason}`, 'action');
 
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_FALSE_POSITIVE_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', { alertId });
       return false;
     }
@@ -249,7 +249,7 @@ export class SOCDashboardService {
       }
 
       return data || [];
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_GET_MESSAGES_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', { alertId });
       return [];
     }
@@ -269,7 +269,7 @@ export class SOCDashboardService {
       }
 
       return data;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_ADD_MESSAGE_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', { alertId });
       return null;
     }
@@ -294,7 +294,7 @@ export class SOCDashboardService {
       }
 
       return data || [];
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_GET_PRESENCE_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', {});
       return [];
     }
@@ -310,7 +310,7 @@ export class SOCDashboardService {
       if (error) {
         auditLogger.error('SOC_HEARTBEAT_ERROR', error.message, {});
       }
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_HEARTBEAT_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', {});
     }
   }
@@ -322,7 +322,7 @@ export class SOCDashboardService {
       if (error) {
         auditLogger.error('SOC_GO_OFFLINE_ERROR', error.message, {});
       }
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_GO_OFFLINE_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', {});
     }
   }
@@ -389,7 +389,7 @@ export class SOCDashboardService {
       }
 
       return data;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_GET_PREFS_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', {});
       return null;
     }
@@ -416,7 +416,7 @@ export class SOCDashboardService {
       }
 
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('SOC_UPDATE_PREFS_EXCEPTION', err instanceof Error ? err.message : 'Unknown error', {});
       return false;
     }

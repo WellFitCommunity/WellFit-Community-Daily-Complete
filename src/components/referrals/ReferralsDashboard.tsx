@@ -222,7 +222,7 @@ export const ReferralsDashboard: React.FC = () => {
         alertsToday: (alertsData || []).length,
         engagementRate: 78, // Would be calculated from engagement data
       });
-    } catch (_err) {
+    } catch (_err: unknown) {
       setError(_err instanceof Error ? _err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);

@@ -515,7 +515,7 @@ export class ExecutionSandbox {
         resourcesAccessed,
         egressCalls,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       // Update stats (failure)
       this.updateStats(tool.id, Date.now() - startTime, false);
 

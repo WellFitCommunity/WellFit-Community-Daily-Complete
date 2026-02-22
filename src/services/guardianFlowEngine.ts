@@ -249,7 +249,7 @@ export const GuardianFlowEngine = {
       });
 
       return success(prediction);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('GUARDIAN_FLOW_PREDICTION_FAILED', err instanceof Error ? err : new Error(String(err)), {
         facilityId,
         horizonHours,
@@ -415,7 +415,7 @@ export const GuardianFlowEngine = {
       });
 
       return success(recommendations);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('GUARDIAN_FLOW_RECOMMENDATIONS_FAILED', err instanceof Error ? err : new Error(String(err)), {
         facilityId,
         category: 'CLINICAL',
@@ -512,7 +512,7 @@ export const GuardianFlowEngine = {
       });
 
       return success(score);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('GUARDIAN_FLOW_EMS_SCORING_FAILED', err instanceof Error ? err : new Error(String(err)), {
         facilityId,
         unitId: emsUnit.unitId,
@@ -549,7 +549,7 @@ export const GuardianFlowEngine = {
       });
 
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to record actuals', err);
     }
   },
@@ -641,7 +641,7 @@ export const GuardianFlowEngine = {
         crowdingLevelAccuracy: Math.round(crowdingLevelAccuracy * 10) / 10,
         improvingTrend,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to calculate accuracy metrics', err);
     }
   },

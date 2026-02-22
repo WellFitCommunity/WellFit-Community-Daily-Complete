@@ -62,7 +62,7 @@ export async function checkAndAlertMultiplePsychMeds(userId: string): Promise<vo
         .eq('alert_type', 'multiple_psych_meds')
         .eq('resolved', false);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     // Silent fail - don't block medication creation
   }
 }
@@ -88,7 +88,7 @@ export async function getPsychiatricMedications(
       success: true,
       data: data || []
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch psychiatric medications'
@@ -127,7 +127,7 @@ export async function checkMultiplePsychMeds(
       success: true,
       data: analysis
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to check psychiatric medications'
@@ -155,7 +155,7 @@ export async function getPsychMedAlerts(
       success: true,
       data: (data || []) as PsychMedAlertRecord[]
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch psych med alerts'
@@ -186,7 +186,7 @@ export async function acknowledgePsychMedAlert(
       success: true,
       message: 'Alert acknowledged'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to acknowledge alert'

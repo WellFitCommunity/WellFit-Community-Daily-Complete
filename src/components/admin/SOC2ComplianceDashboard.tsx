@@ -177,7 +177,7 @@ const SOC2ComplianceDashboard: React.FC = () => {
       setPhiAccess(phiData);
       setAuditStats(statsData);
       setComplianceStatus(complianceData);
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SOC2_AUDIT_LOAD_ERROR', error instanceof Error ? error : new Error('Unknown error'));
     }
   }, [supabase]);
@@ -191,7 +191,7 @@ const SOC2ComplianceDashboard: React.FC = () => {
       ]);
       setSecurityMetrics(metricsData);
       setRecentEvents(eventsData);
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SOC2_SECURITY_LOAD_ERROR', error instanceof Error ? error : new Error('Unknown error'));
     }
   }, [supabase]);
@@ -201,7 +201,7 @@ const SOC2ComplianceDashboard: React.FC = () => {
       const service = createSOC2MonitoringService(supabase);
       const data = await service.getIncidentResponseQueue();
       setIncidents(data);
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SOC2_INCIDENT_LOAD_ERROR', error instanceof Error ? error : new Error('Unknown error'));
     }
   }, [supabase]);
@@ -292,7 +292,7 @@ const SOC2ComplianceDashboard: React.FC = () => {
       } else {
         showToast('error', 'Failed to resolve incident');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showToast('error', error instanceof Error ? error.message : 'Error resolving incident');
     } finally {
       setSubmittingResolution(false);

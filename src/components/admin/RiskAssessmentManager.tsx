@@ -70,7 +70,7 @@ const RiskAssessmentManager: React.FC = () => {
       setPatients(patientsData || []);
       setAssessments(enrichedAssessments);
 
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {

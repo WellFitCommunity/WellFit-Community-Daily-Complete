@@ -69,7 +69,7 @@ const CaregiverDashboardPage: React.FC = () => {
         }
 
         setCaregiverProfile(data);
-      } catch (err) {
+      } catch (err: unknown) {
         auditLogger.error('CAREGIVER_PROFILE_EXCEPTION', err instanceof Error ? err : new Error(String(err)));
         navigate('/login');
       } finally {
@@ -220,7 +220,7 @@ const CaregiverDashboardPage: React.FC = () => {
       // Navigate to senior view
       navigate(`/senior-view/${seniorData.user_id}`);
 
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('CAREGIVER_ACCESS_ERROR', err instanceof Error ? err : new Error(String(err)));
       setError('An unexpected error occurred. Please try again.');
     } finally {

@@ -317,7 +317,7 @@ export class AuditLogger {
         severity: entry.severity,
         validation_result: entry.validationResult,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       // Telemetry failures should not block the main flow
       systemAuditLogger.warn('GUARDIAN_TELEMETRY_FAILED', {
         audit_id: entry.id,
@@ -343,7 +343,7 @@ export class AuditLogger {
         issue_category: ticket.issue.signature.category,
         healing_strategy: ticket.action.strategy,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       systemAuditLogger.error('GUARDIAN_NOTIFICATION_ERROR', new Error(error instanceof Error ? error.message : 'Failed to notify admins'), {
         ticket_id: ticket.id,
       });
@@ -499,7 +499,7 @@ class AuditLogStorage {
         },
         timestamp: entry.timestamp.toISOString(),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       systemAuditLogger.error('AUDIT_LOG_PERSIST_ERROR', new Error(error instanceof Error ? error.message : 'Failed to persist audit log entry'), {
         entry_id: entry.id,
       });
@@ -579,7 +579,7 @@ class AuditLogStorage {
           healing_strategy: ticket.action.strategy,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       systemAuditLogger.error('GUARDIAN_TICKET_PERSIST_EXCEPTION', new Error(error instanceof Error ? error.message : 'Exception persisting review ticket'), {
         ticket_id: ticket.id,
       });
@@ -613,7 +613,7 @@ class AuditLogStorage {
           ticket_id: ticket.id,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       systemAuditLogger.error('GUARDIAN_TICKET_UPDATE_EXCEPTION', new Error(error instanceof Error ? error.message : 'Exception updating review ticket'), {
         ticket_id: ticket.id,
       });

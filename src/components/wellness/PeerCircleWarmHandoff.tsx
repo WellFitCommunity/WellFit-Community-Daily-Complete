@@ -116,7 +116,7 @@ export const PeerCircleWarmHandoff: React.FC<PeerCircleWarmHandoffProps> = ({
       enhanced.sort((a, b) => (a.memberCount || 0) - (b.memberCount || 0));
 
       setRecommendedCircles(enhanced.slice(0, 3));
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('PEER_CIRCLE_LOAD_FAILED', error instanceof Error ? error : new Error('Load failed'));
     } finally {
       setLoading(false);
@@ -164,7 +164,7 @@ export const PeerCircleWarmHandoff: React.FC<PeerCircleWarmHandoffProps> = ({
 
       onJoinCircle?.(circleId);
       setDismissed(true);
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('PEER_CIRCLE_JOIN_FAILED', error instanceof Error ? error : new Error('Join failed'));
     } finally {
       setJoining(null);

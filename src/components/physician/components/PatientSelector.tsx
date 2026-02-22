@@ -32,7 +32,7 @@ export const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelectPatien
       // Map to PatientListItem with id field
       const mapped = (data || []).map(p => ({ ...p, id: p.user_id }));
       setPatients(mapped);
-    } catch (error) {
+    } catch (error: unknown) {
       // Silent fail - error handling done upstream
     } finally {
       setLoading(false);

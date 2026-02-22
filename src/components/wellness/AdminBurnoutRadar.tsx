@@ -214,7 +214,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
         missedBreaksThisWeek: missedBreaks,
         alerts,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('ADMIN_BURNOUT_RADAR_LOAD_FAILED', error instanceof Error ? error : new Error('Load failed'));
     } finally {
       setLoading(false);

@@ -160,7 +160,7 @@ export class ErrorSanitizer {
           ...context,
         },
       });
-    } catch (_logError) {
+    } catch (_logError: unknown) {
       // Never let logging break the app
     }
   }
@@ -372,7 +372,7 @@ export class AuditLogger {
 
       if (error) {
       }
-    } catch (_error) {
+    } catch (_error: unknown) {
     }
   }
 
@@ -445,7 +445,7 @@ export class RateLimiter {
       }
 
       return data === true;
-    } catch (_error) {
+    } catch (_error: unknown) {
       return true; // Fail open
     }
   }

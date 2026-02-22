@@ -82,7 +82,7 @@ const WelcomePage: React.FC = () => {
 
       // Seniors: redirect to dashboard, AuthGate will handle onboarding flow
       navigate('/dashboard', { replace: true });
-      } catch (err) {
+      } catch (err: unknown) {
         // On any error, just stay on welcome page
       }
     };

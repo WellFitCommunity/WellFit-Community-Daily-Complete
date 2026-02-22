@@ -29,7 +29,7 @@ export async function seniorPatientExample() {
     // Cost tracking: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms
 
     return response;
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }
@@ -100,7 +100,7 @@ export async function adminAnalyticsExample() {
     // Cost tracking: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms
 
     return response;
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }
@@ -151,7 +151,7 @@ export async function healthDataInterpretationExample() {
     // Cost tracking: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms
 
     return response;
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }
@@ -191,7 +191,7 @@ export async function riskAssessmentExample() {
 
 
     return riskAnalysis;
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }
@@ -226,7 +226,7 @@ export async function serviceMonitoringExample() {
     // Spending Summary: totalDaily, totalMonthly, activeUsers
 
     return { connectionTest, status, costInfo, rateLimitInfo, spendingSummary };
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }
@@ -276,7 +276,7 @@ export async function runCompleteIntegrationTest() {
     // Integration Test End
 
     return results;
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }

@@ -534,7 +534,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
         lastUpdated: new Date()
       }));
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       setState(prev => ({
         ...prev,

@@ -59,7 +59,7 @@ export function withServiceWrapper<TArgs extends unknown[], TResult>(
       }
 
       return success(result);
-    } catch (err) {
+    } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error(String(err));
 
       // Determine error code

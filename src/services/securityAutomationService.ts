@@ -194,7 +194,7 @@ export class SecurityAutomationService {
             alertId: result.alertCreated,
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         auditLogger.error('Threshold check failed', errorMsg, {
           threshold: threshold.name,
@@ -427,7 +427,7 @@ export class SecurityAutomationService {
       }
 
       return data.id;
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       auditLogger.error('Exception creating security alert', errorMsg);
       return undefined;
@@ -483,7 +483,7 @@ export class SecurityAutomationService {
         alertId,
         userId,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       auditLogger.error('Automated response failed', errorMsg, {
         responseType: response.type,

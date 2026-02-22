@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         auditLogger.auth('LOGOUT', true, { reason: 'session_expiry', action: 'redirect_to_login', from_path: currentPath });
         window.location.href = '/login';
       }
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SESSION_EXPIRY_HANDLING_FAILED', error instanceof Error ? error : new Error(String(error)));
       // Force redirect even if cleanup fails
       window.location.href = '/login';
@@ -409,7 +409,7 @@ export function withAuthErrorHandling<T extends (...args: unknown[]) => Promise<
             const handled = await authContext._authContext.handleAuthError(error);
             if (handled) return;
           }
-        } catch (e) {
+        } catch (e: unknown) {
           auditLogger.warn('AUTH_ERROR_HANDLER_UNAVAILABLE', { error: e instanceof Error ? e.message : String(e) });
         }
 

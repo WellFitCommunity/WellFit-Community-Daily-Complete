@@ -348,12 +348,12 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl: 
       try {
         const profile = await SDOHIndicatorService.getPatientProfile(user.id);
         setSDOHProfile(profile);
-      } catch (sdohError) {
+      } catch (sdohError: unknown) {
         // SDOH data is optional - don't fail the whole dashboard if unavailable
         auditLogger.debug('[PatientDashboard] SDOH data unavailable', { userId: user.id, error: sdohError });
       }
 
-    } catch (error) {
+    } catch (error: unknown) {
       // HIPAA Audit: Log patient dashboard load failure
       await auditLogger.error('PATIENT_DASHBOARD_LOAD_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
         userId: user?.id,

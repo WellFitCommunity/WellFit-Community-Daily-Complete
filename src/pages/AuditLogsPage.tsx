@@ -153,7 +153,7 @@ const AuditLogsPage: React.FC = () => {
 
       setLogs(combinedLogs);
       setFilteredLogs(combinedLogs);
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);

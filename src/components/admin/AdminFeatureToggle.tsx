@@ -85,7 +85,7 @@ const AdminFeatureToggle: React.FC<Props> = ({
 
       onChanged?.(updatedValue);
       
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
       setLocalError(errorMessage);
       onError?.(errorMessage);

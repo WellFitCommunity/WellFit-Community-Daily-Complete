@@ -35,7 +35,7 @@ export const TimeHistory: React.FC<TimeHistoryProps> = ({ userId, tenantId }) =>
       } else {
         setError(result.error.message);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load time history');
     } finally {
       setLoading(false);

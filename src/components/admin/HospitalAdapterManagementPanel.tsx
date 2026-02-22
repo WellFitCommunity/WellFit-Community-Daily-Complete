@@ -98,7 +98,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
       } else {
         alert('Could not auto-detect adapter type. Please select manually or check the endpoint URL.');
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Auto-detection failed. Please check the endpoint URL and try again.');
     } finally {

@@ -80,7 +80,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
       ]);
       setTenants(tenantsData);
       setSuperAdmin(adminData);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_TENANTS_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
@@ -213,7 +213,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
       }
 
       await loadData();
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error(`SUPER_ADMIN_TENANT_${confirmAction?.toUpperCase()}_FAILED`, err instanceof Error ? err : new Error(String(err)), {
         category: 'SECURITY_EVENT',
         tenantId: selectedTenant.tenantId,
@@ -253,7 +253,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
       });
 
       await loadData();
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_TENANT_CODE_UPDATE_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
         tenantId: selectedTenant.tenantId

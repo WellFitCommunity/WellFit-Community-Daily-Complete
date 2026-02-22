@@ -163,7 +163,7 @@ const AdminTaskModule: React.FC<Props> = ({
 
       // Reload task history
       await loadTaskHistory();
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to generate task. Please try again.');
     } finally {

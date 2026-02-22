@@ -190,7 +190,7 @@ export class BehavioralAnalyticsService {
         time_diff_hours: 0,
         required_speed_kmh: 0
       };
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('IMPOSSIBLE_TRAVEL_DETECTION_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: userId
       });
@@ -236,7 +236,7 @@ export class BehavioralAnalyticsService {
       }
 
       return data as GeolocationRecord;
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('GEOLOCATION_RECORD_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: params.userId
       });
@@ -268,7 +268,7 @@ export class BehavioralAnalyticsService {
       });
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('BEHAVIOR_BASELINE_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: userId
       });
@@ -318,7 +318,7 @@ export class BehavioralAnalyticsService {
       });
 
       return data as AnomalyDetection;
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('ANOMALY_DETECTION_CREATE_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: params.userId
       });
@@ -353,7 +353,7 @@ export class BehavioralAnalyticsService {
       });
 
       return data as AnomalyDetection[];
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('UNINVESTIGATED_ANOMALIES_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         min_score: minScore
       });
@@ -393,7 +393,7 @@ export class BehavioralAnalyticsService {
       });
 
       return data as boolean;
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('ANOMALY_INVESTIGATION_MARK_ERROR', error instanceof Error ? error : new Error(String(error)), {
         anomaly_id: anomalyId
       });
@@ -432,7 +432,7 @@ export class BehavioralAnalyticsService {
       });
 
       return data as PeerGroupStats[];
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('PEER_GROUP_STATS_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         role
       });
@@ -480,7 +480,7 @@ export class BehavioralAnalyticsService {
       });
 
       return data as DailyBehaviorSummary;
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('DAILY_BEHAVIOR_SUMMARY_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: params.userId
       });
@@ -515,7 +515,7 @@ export class BehavioralAnalyticsService {
       });
 
       return data as AnomalyDetection[];
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('USER_ANOMALIES_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         user_id: userId
       });

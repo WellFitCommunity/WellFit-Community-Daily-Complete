@@ -168,7 +168,7 @@ export function useRealtimeSubscription<T = unknown>(
         setData(result);
         setError(null);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       if (mountedRef.current) {
         setError(err instanceof Error ? err : new Error(String(err)));
         // FAIL QUIET: Wrap all error logging in try/catch to prevent cascades
@@ -231,7 +231,7 @@ export function useRealtimeSubscription<T = unknown>(
               error: registryError.message,
               component: componentName,
             });
-          } catch (auditError) {
+          } catch (auditError: unknown) {
             // Registry logging failed - report but don't break
             errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', auditError instanceof Error ? auditError : new Error(String(auditError)), {
               context: 'registry failure logging',
@@ -242,7 +242,7 @@ export function useRealtimeSubscription<T = unknown>(
         }
 
         return registryData?.id || null;
-      } catch (err) {
+      } catch (err: unknown) {
         // Registry registration failed - non-blocking error
         errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', err instanceof Error ? err : new Error(String(err)), {
           context: 'registry registration',
@@ -251,7 +251,7 @@ export function useRealtimeSubscription<T = unknown>(
 
         try {
           auditLogger.warn('REALTIME_REGISTRY_ERROR', { error: String(err), component: componentName });
-        } catch (auditError) {
+        } catch (auditError: unknown) {
           // Audit logging failed - already reported above via errorReporter
         }
         return null;
@@ -275,7 +275,7 @@ export function useRealtimeSubscription<T = unknown>(
 
       // Reset failure counter on success
       consecutiveHeartbeatFailures.current = 0;
-    } catch (err) {
+    } catch (err: unknown) {
       // Track consecutive failures
       consecutiveHeartbeatFailures.current++;
 
@@ -316,7 +316,7 @@ export function useRealtimeSubscription<T = unknown>(
         .eq('id', registryIdRef.current);
 
       auditLogger.debug('REALTIME_UNREGISTERED', { component: componentName });
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.warn('REALTIME_UNREGISTER_FAILED', { error: String(err), component: componentName });
     }
   }, [componentName]);
@@ -353,7 +353,7 @@ export function useRealtimeSubscription<T = unknown>(
               setError(null);
               consecutiveFetchFailures.current = 0; // Reset on success
             }
-          } catch (err) {
+          } catch (err: unknown) {
             consecutiveFetchFailures.current++;
             if (mountedRef.current) {
               setError(err instanceof Error ? err : new Error(String(err)));
@@ -494,7 +494,7 @@ export function useRealtimeSubscription<T = unknown>(
             updateHeartbeat();
           }, heartbeatInterval);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (!isCleanedUp && mountedRef.current) {
           const error = err instanceof Error ? err : new Error(String(err));
           setError(error);

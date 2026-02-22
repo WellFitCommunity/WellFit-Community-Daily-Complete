@@ -131,7 +131,7 @@ export const WorkflowModeSwitcher: React.FC<WorkflowModeSwitcherProps> = ({
           user_id: user.id,
           [field]: new Date().toISOString(),
         });
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handled silently
     }
   };
@@ -265,7 +265,7 @@ export const saveWorkflowPreference = async (
       section_order: sectionOrder,
       updated_at: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     // Error handled silently
   }
 };
@@ -288,7 +288,7 @@ export const loadWorkflowPreference = async (
           sectionOrder: data.section_order || [],
         }
       : null;
-  } catch (error) {
+  } catch (error: unknown) {
     // Error handled silently
     return null;
   }

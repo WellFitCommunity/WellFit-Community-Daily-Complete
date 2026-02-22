@@ -146,7 +146,7 @@ export async function getSeniorDemographics(
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in getSeniorDemographics', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to get senior demographics', err);
   }
@@ -173,7 +173,7 @@ export async function saveSeniorDemographics(
 
     auditLogger.info('Senior demographics saved', { userId: data.user_id });
     return success(saved);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in saveSeniorDemographics', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to save senior demographics', err);
   }
@@ -199,7 +199,7 @@ export async function getSeniorHealth(
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in getSeniorHealth', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to get senior health', err);
   }
@@ -226,7 +226,7 @@ export async function saveSeniorHealth(
 
     auditLogger.info('Senior health saved', { userId: data.user_id });
     return success(saved);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in saveSeniorHealth', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to save senior health', err);
   }
@@ -252,7 +252,7 @@ export async function getSeniorSDOH(
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in getSeniorSDOH', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to get senior SDOH', err);
   }
@@ -279,7 +279,7 @@ export async function saveSeniorSDOH(
 
     auditLogger.info('Senior SDOH saved', { userId: data.user_id });
     return success(saved);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in saveSeniorSDOH', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to save senior SDOH', err);
   }
@@ -305,7 +305,7 @@ export async function getSeniorEmergencyContacts(
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in getSeniorEmergencyContacts', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to get senior emergency contacts', err);
   }
@@ -332,7 +332,7 @@ export async function saveSeniorEmergencyContact(
 
     auditLogger.info('Senior emergency contact saved', { userId: contact.user_id });
     return success(saved);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in saveSeniorEmergencyContact', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to save senior emergency contact', err);
   }
@@ -358,7 +358,7 @@ export async function deleteSeniorEmergencyContact(
 
     auditLogger.info('Senior emergency contact deleted', { contactId });
     return success(undefined);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in deleteSeniorEmergencyContact', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to delete senior emergency contact', err);
   }
@@ -392,7 +392,7 @@ export async function getCompleteSeniorProfile(
       sdoh: sdohResult.data || { user_id: userId },
       emergency_contacts: contactsResult.data,
     });
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in getCompleteSeniorProfile', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to get complete senior profile', err);
   }
@@ -435,7 +435,7 @@ export async function saveCompleteSeniorProfile(
       sdoh: sdohResult.data,
       emergency_contacts: savedContacts,
     });
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Unexpected error in saveCompleteSeniorProfile', String(err));
     return failure('UNKNOWN_ERROR', 'Failed to save complete senior profile', err);
   }

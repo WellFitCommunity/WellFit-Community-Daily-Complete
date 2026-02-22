@@ -106,7 +106,7 @@ const ConsentPhotoPage: React.FC = () => {
       setFeedback('Privacy consent submitted. Thank you!');
       // Move to the next step in your consent flow
       setTimeout(() => navigate('/consent-privacy'), 1200);
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('An unexpected error occurred while saving your consent. Please try again.');
     } finally {

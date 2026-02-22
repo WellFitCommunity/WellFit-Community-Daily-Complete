@@ -93,7 +93,7 @@ const Dashboard: React.FC = () => {
         }
 
 
-      } catch (e) {
+      } catch (e: unknown) {
         // Removed console statement.message);
       } finally {
         setLoading(false);

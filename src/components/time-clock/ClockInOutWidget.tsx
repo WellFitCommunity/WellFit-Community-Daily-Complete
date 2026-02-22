@@ -65,7 +65,7 @@ export const ClockInOutWidget: React.FC<ClockInOutWidgetProps> = ({
       if (streakResult.success) {
         setStreak(streakResult.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load time clock data');
     } finally {
       setLoading(false);
@@ -122,7 +122,7 @@ export const ClockInOutWidget: React.FC<ClockInOutWidgetProps> = ({
       // Reload data
       await loadData();
       onStatusChange?.('clocked_in');
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to clock in');
     } finally {
       setProcessing(false);
@@ -156,7 +156,7 @@ export const ClockInOutWidget: React.FC<ClockInOutWidgetProps> = ({
 
       // Hide message after 5 seconds
       setTimeout(() => setShowClockOutMessage(false), 5000);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to clock out');
     } finally {
       setProcessing(false);

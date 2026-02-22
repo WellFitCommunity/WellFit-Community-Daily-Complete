@@ -57,7 +57,7 @@ const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) 
         );
       }
       // Add more sections as needed (patients, activity, etc.)
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_TENANT_DATA_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
         tenantId: tenant.tenantId,

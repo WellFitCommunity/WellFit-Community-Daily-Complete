@@ -137,7 +137,7 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     }

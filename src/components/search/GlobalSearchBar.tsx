@@ -286,7 +286,7 @@ export const GlobalSearchBar: React.FC = () => {
           entityType: entity?.type || 'patient',
           resultCount: results.length,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         auditLogger.error('GLOBAL_SEARCH_ERROR', error instanceof Error ? error : new Error('Search failed'));
         setResults([]);
       } finally {

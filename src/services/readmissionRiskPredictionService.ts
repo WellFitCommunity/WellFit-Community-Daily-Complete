@@ -491,7 +491,7 @@ export async function calculatePatientReadmissionRisk(
     });
 
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     await auditLogger.error('READMISSION_RISK_CALCULATION_FAILED', error instanceof Error ? error : new Error(String(error)), {
       patientId,
       tenantId,

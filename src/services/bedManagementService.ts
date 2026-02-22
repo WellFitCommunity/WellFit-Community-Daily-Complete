@@ -68,7 +68,7 @@ async function callBedManagementFunction<T>(
     }
 
     return success(data as T);
-  } catch (err) {
+  } catch (err: unknown) {
     await auditLogger.error('BED_MANAGEMENT_ERROR', err instanceof Error ? err : new Error(String(err)), {
       category: 'CLINICAL',
       action,
@@ -286,7 +286,7 @@ export const BedManagementService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch hospital units', err);
     }
   },
@@ -309,7 +309,7 @@ export const BedManagementService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch beds', err);
     }
   },
@@ -336,7 +336,7 @@ export const BedManagementService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch census snapshots', err);
     }
   },
@@ -361,7 +361,7 @@ export const BedManagementService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch bed status history', err);
     }
   },
@@ -388,7 +388,7 @@ export const BedManagementService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch forecasts', err);
     }
   },
@@ -455,7 +455,7 @@ export const BedManagementService = {
       });
 
       return success({ ...feedback, id: 'feedback-recorded' });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to submit learning feedback', err);
     }
   },
@@ -543,7 +543,7 @@ export const BedManagementService = {
         last_30_days_accuracy: Math.round(accuracyPct * 10) / 10,
         samples_for_improvement: validForecasts.length,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to calculate prediction accuracy', err);
     }
   },
@@ -580,7 +580,7 @@ export const BedManagementService = {
       });
 
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to record actual census', err);
     }
   },
@@ -663,7 +663,7 @@ export const BedManagementService = {
         byDayOfWeek: avgByDow,
         byHour: avgByHour,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get turnaround analytics', err);
     }
   },

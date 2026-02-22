@@ -106,7 +106,7 @@ const PaperFormUploader: React.FC = () => {
 
       // Update with extracted data
       updateFormStatus(form.id, 'success', data.extractedData);
-    } catch (err) {
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       updateFormStatus(form.id, 'error', undefined, errorMessage);
     }

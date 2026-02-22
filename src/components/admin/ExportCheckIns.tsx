@@ -204,7 +204,7 @@ const ExportCheckIns: React.FC = () => {
         second: '2-digit',
         timeZoneName: 'short'
       });
-    } catch (error) {
+    } catch (error: unknown) {
 
       return dateString;
     }
@@ -323,7 +323,7 @@ const ExportCheckIns: React.FC = () => {
         await exportToJSON(data);
         addToast('success', `Successfully exported ${data.length} check-ins to JSON`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Export failed with unknown error';
       addToast('error', `Export failed: ${message}`);

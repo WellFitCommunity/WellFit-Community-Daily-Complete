@@ -47,7 +47,7 @@ const MultiTenantSelector: React.FC = () => {
         setAllTenants(userProfile.assignedTenants);
       }
 
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('MULTI_TENANT_SELECTOR_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });

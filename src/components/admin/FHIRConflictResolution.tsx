@@ -110,7 +110,7 @@ export const FHIRConflictResolution: React.FC = () => {
       })) as FHIRConflict[];
 
       setConflicts(mappedConflicts);
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);
@@ -159,7 +159,7 @@ export const FHIRConflictResolution: React.FC = () => {
       // Refresh list
       await fetchConflicts();
       setSelectedConflict(null);
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Failed to resolve conflict. Please try again.');
     } finally {

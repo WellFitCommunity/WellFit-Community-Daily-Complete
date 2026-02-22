@@ -67,7 +67,7 @@ export class ClaudeEdgeService {
       }
 
       return data as ClaudeChatResponse;
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw error;
     }
@@ -109,7 +109,7 @@ export class ClaudeEdgeService {
         success: true,
         message: `Claude Edge Function is working. Response: ${response}`,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         message: `Claude Edge Function failed: ${error instanceof Error ? error.message : 'Unknown error'}`,

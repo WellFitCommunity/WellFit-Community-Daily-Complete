@@ -278,22 +278,15 @@ Contains extensive natural language parsing logic inline. Exceeds the 600-line l
 
 ---
 
-### L-5. 435 Catch Blocks Use Implicit `err` Type (No `:unknown` Annotation)
+### L-5. 435 Catch Blocks Use Implicit `err` Type (No `:unknown` Annotation) — RESOLVED
 
-**Impact:** Functional (TypeScript defaults catch variables to `unknown` in strict mode) but less explicit than the CLAUDE.md pattern.
+**Status:** **DONE** (2026-02-22)
 
-**Example:**
-```typescript
-// Current (works, less explicit)
-catch (err) {
-  const msg = err instanceof Error ? err.message : 'Unknown error';
-}
+**Original finding:** 435 catch blocks (actual count: 919 across 306 files) lacked explicit `: unknown` annotation.
 
-// Preferred (explicit)
-catch (err: unknown) { ... }
-```
+**Resolution:** Mass-corrected all 919 catch blocks via regex replacement. All now use the CLAUDE.md-required `catch (err: unknown)` pattern. While `tsconfig.json` `strict: true` already enforced `unknown` typing at compile time, the explicit annotation satisfies governance requirements and makes intent self-documenting.
 
-**Fix:** Low priority. Add `: unknown` annotation during future refactors.
+**Verification:** 0 typecheck errors, 0 lint warnings, 8,652 tests passed (449 suites).
 
 ---
 
@@ -408,7 +401,7 @@ A manual grants migration exists but may not have been applied via `supabase db 
 | M-3: ~59 remaining SELECT * calls | **WON'T FIX** | Actual count: 756 across 270 files. No material performance impact — Supabase PostgREST, small result sets, no wide tables, RLS is the real bottleneck. Fix individual queries if DBA identifies slow queries in production logs. |
 | M-4: Auto-generate database types | **DONE** | Generated `src/types/database.generated.ts` (62K lines, all 248 tables). Added `npm run db:types` script. Regenerate after any migration. |
 | L-3: VoiceActionContext (1,122 lines) | **DONE** | Decomposed into 6 modules: types, medicalAliases, parsers, parsersGeneral, VoiceActionProvider, barrel index. Largest: 373 lines. |
-| L-5: 435 catch blocks without `: unknown` | TODO | 1 hour (low priority) |
+| L-5: 435 catch blocks without `: unknown` | **DONE** | Actual count: 919 across 306 files. Mass-corrected all to `catch (err: unknown)` per CLAUDE.md governance. |
 
 ---
 

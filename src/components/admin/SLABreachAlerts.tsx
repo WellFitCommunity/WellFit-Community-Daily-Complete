@@ -114,7 +114,7 @@ export const SLABreachAlerts: React.FC = () => {
       if (metricsResult.success) {
         setMetrics(metricsResult.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load SLA data');
     } finally {
       setLoading(false);
@@ -152,7 +152,7 @@ export const SLABreachAlerts: React.FC = () => {
 
       // Refresh data
       await fetchData();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to acknowledge breach');
     } finally {
       setAcknowledging(null);

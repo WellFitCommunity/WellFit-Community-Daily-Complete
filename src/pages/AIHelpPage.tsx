@@ -112,7 +112,7 @@ const AIHelpPage: React.FC = () => {
 
         setUserActivity(activity);
         generateContextualSuggestions(activity);
-      } catch (error) {
+      } catch (error: unknown) {
 
       }
     };
@@ -248,7 +248,7 @@ const AIHelpPage: React.FC = () => {
       };
 
       setChatMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: unknown) {
 
       // Fallback to local response
       const response = generateAIResponse(userMessage);

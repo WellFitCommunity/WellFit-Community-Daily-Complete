@@ -565,7 +565,7 @@ export class HL7X12MCPClient {
         data: result.result as T,
         metadata: result.result?.metadata
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error'

@@ -364,7 +364,7 @@ export async function fetchPatientCommunicationMetrics(
       portalLogins30Day: portalLoginsResult.count || 0,
       assessmentDate: now.toISOString(),
     };
-  } catch (error) {
+  } catch (error: unknown) {
     await auditLogger.error('SILENCE_WINDOW_FETCH_FAILED', error instanceof Error ? error : new Error(String(error)), {
       patientId,
       operation: 'fetchPatientCommunicationMetrics',
@@ -449,7 +449,7 @@ export async function calculateAndStoreSilenceWindow(
     });
 
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     await auditLogger.error('SILENCE_WINDOW_CALCULATION_FAILED', error instanceof Error ? error : new Error(String(error)), {
       patientId,
       tenantId,

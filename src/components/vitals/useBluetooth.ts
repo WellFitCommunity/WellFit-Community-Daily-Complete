@@ -79,7 +79,7 @@ function parseBloodPressureMeasurement(dataView: DataView): BloodPressureReading
       source: 'ble_web',
       confidence: 0.95,
     };
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('BLE_BP_PARSE_FAILED', err instanceof Error ? err : 'Unknown parse error', {
       vitalType: 'blood_pressure',
       source: 'ble_web'
@@ -107,7 +107,7 @@ function parseHeartRateMeasurement(dataView: DataView): HeartRateReading | null 
       source: 'ble_web',
       confidence: 0.95,
     };
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('BLE_HR_PARSE_FAILED', err instanceof Error ? err : 'Unknown parse error', {
       vitalType: 'heart_rate',
       source: 'ble_web'
@@ -147,7 +147,7 @@ function parseGlucoseMeasurement(dataView: DataView): GlucoseReading | null {
       source: 'ble_web',
       confidence: 0.95,
     };
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('BLE_GLUCOSE_PARSE_FAILED', err instanceof Error ? err : 'Unknown parse error', {
       vitalType: 'glucose',
       source: 'ble_web'
@@ -177,7 +177,7 @@ function parseWeightMeasurement(dataView: DataView): WeightReading | null {
       source: 'ble_web',
       confidence: 0.95,
     };
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('BLE_WEIGHT_PARSE_FAILED', err instanceof Error ? err : 'Unknown parse error', {
       vitalType: 'weight',
       source: 'ble_web'

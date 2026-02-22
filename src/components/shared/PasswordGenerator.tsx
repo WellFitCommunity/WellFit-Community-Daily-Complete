@@ -106,7 +106,7 @@ const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
         component: 'PasswordGenerator',
         timestamp: new Date().toISOString()
       });
-    } catch (error) {
+    } catch (error: unknown) {
       // Failed to copy - clipboard API not available or permission denied
       setCopied(false);
 

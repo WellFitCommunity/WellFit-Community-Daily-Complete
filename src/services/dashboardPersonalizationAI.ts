@@ -43,7 +43,7 @@ export class DashboardPersonalizationAI {
 
       // Build layout based on patterns and AI insights
       return this.buildLayout(preferences, aiInsights);
-    } catch (error) {
+    } catch (error: unknown) {
 
       return this.getDefaultLayout(role);
     }
@@ -94,7 +94,7 @@ export class DashboardPersonalizationAI {
       });
 
       return this.parseAIResponse(data.content);
-    } catch (error) {
+    } catch (error: unknown) {
       const responseTime = Date.now() - startTime;
 
       // HIPAA AUDIT LOGGING: Log failed AI call
@@ -420,7 +420,7 @@ Be concise and actionable. This powers real-time UI reorganization.`;
       if (insertError) {
         // Removed console statement:', insertError);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Removed console statement:', error);
       // Don't throw - audit logging failure should not break functionality
     }

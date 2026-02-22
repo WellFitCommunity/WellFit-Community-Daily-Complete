@@ -100,7 +100,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
       } else {
         setError(result.error.message);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load audit statistics');
     } finally {
       setLoading(false);
@@ -131,7 +131,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
       } else {
         setError(result.error.message);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Search failed');
     } finally {
       setSearching(false);
@@ -170,7 +170,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
       } else {
         setError('Export failed');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Export failed');
     }
   };

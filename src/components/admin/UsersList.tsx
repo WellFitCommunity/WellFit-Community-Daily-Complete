@@ -278,7 +278,7 @@ const UsersList: React.FC = () => {
         p_purpose: 'administrative_review',
         p_ip_address: 'client_side' // Client-side IP not available; Edge Functions log server IP
       });
-    } catch (logError) {
+    } catch (logError: unknown) {
 
       // Don't block UI for logging failures
     }
@@ -397,11 +397,11 @@ const UsersList: React.FC = () => {
               filter_status: filterStatus
             }
           });
-        } catch (logError) {
+        } catch (logError: unknown) {
 
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Failed to load users';
       addToast('error', message);

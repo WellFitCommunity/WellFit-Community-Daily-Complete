@@ -270,7 +270,7 @@ export class MonitoringSystem {
       });
 
       this.performanceObserver.observe({ entryTypes: ['measure', 'navigation'] });
-    } catch (error) {
+    } catch (error: unknown) {
     }
   }
 
@@ -348,7 +348,7 @@ export class MonitoringSystem {
         }
 
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         await this.handleAPIError(url, error);
         throw error;
       }

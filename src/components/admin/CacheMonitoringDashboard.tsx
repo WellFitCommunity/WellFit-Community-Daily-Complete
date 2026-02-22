@@ -69,7 +69,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
       // Load memory cache stats
       const memStats = cacheService.getMemoryCacheStats();
       setMemoryCacheStats(memStats);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handled silently - non-critical monitoring failure
     } finally {
       setLoading(false);

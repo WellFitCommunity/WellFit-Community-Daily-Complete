@@ -153,7 +153,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess 
           publicUrl: result.signedUrl || await getViewUrl(bucketName, filePath)
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       const text =
         err instanceof Error ? err.message : typeof err === "string" ? err : "Unknown upload error.";
       setMessage({ type: "error", text: `Error uploading: ${text}` });

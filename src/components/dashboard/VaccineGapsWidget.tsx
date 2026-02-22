@@ -26,7 +26,7 @@ const VaccineGapsWidget: React.FC = () => {
       if (result.success && Array.isArray(result.data)) {
         setGaps((result.data as unknown as VaccineGap[]).slice(0, 3)); // Show top 3 gaps
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
     setLoading(false);

@@ -49,7 +49,7 @@ const SetCaregiverPinPage: React.FC = () => {
         if (!error && data) {
           setExistingPin(true);
         }
-      } catch (e) {
+      } catch (e: unknown) {
 
       }
     })();

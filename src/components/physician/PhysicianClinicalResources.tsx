@@ -141,7 +141,7 @@ const PhysicianClinicalResources: React.FC = () => {
       );
 
       setResources(physicianResources);
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);
@@ -151,7 +151,7 @@ const PhysicianClinicalResources: React.FC = () => {
   const handleViewResource = async (resourceId: string) => {
     try {
       await ResilienceHubService.trackResourceView(resourceId);
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   };

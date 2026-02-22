@@ -482,7 +482,7 @@ export const PatientFriendlyAVSService = {
         avs,
         processingTimeMs: Date.now() - startTime,
       };
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('AVS_GENERATION_FAILED', err instanceof Error ? err : new Error(String(err)), {
         patientId: input.patientId,
         category: 'CLINICAL',
@@ -515,7 +515,7 @@ export const PatientFriendlyAVSService = {
       }
 
       return success(mapDbToRecord(data));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get AVS', err);
     }
   },
@@ -541,7 +541,7 @@ export const PatientFriendlyAVSService = {
       }
 
       return success(mapDbToRecord(data));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get AVS by session', err);
     }
   },
@@ -566,7 +566,7 @@ export const PatientFriendlyAVSService = {
       }
 
       return success((data || []).map(mapDbToRecord));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get patient AVS history', err);
     }
   },
@@ -596,7 +596,7 @@ export const PatientFriendlyAVSService = {
       });
 
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to approve AVS', err);
     }
   },
@@ -629,7 +629,7 @@ export const PatientFriendlyAVSService = {
       });
 
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to mark AVS delivered', err);
     }
   },
@@ -663,7 +663,7 @@ export const PatientFriendlyAVSService = {
       });
 
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to record feedback', err);
     }
   },
@@ -684,7 +684,7 @@ export const PatientFriendlyAVSService = {
       }
 
       return success(data?.plain_text_content || '');
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get plain text', err);
     }
   },

@@ -174,7 +174,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
       auditLogger.info('MEDICATION_MANAGER_DATA_LOADED', {
         userId: user?.id, totalPatients: stats.totalPatients, totalMedications: stats.totalMedications, tenantId,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('MEDICATION_MANAGER_LOAD_FAILED',
         err instanceof Error ? err : new Error(String(err)), { userId: user?.id, tenantId });
       setError(err instanceof Error ? err.message : 'Failed to load medication data');

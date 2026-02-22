@@ -60,7 +60,7 @@ export const EmployeeService = {
       }
 
       return success(data || null);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('EMPLOYEE_PROFILE_FETCH_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
@@ -84,7 +84,7 @@ export const EmployeeService = {
       }
 
       return success(data || null);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch employee profile', err);
     }
   },
@@ -126,7 +126,7 @@ export const EmployeeService = {
       });
 
       return success(data);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('EMPLOYEE_PROFILE_CREATE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
@@ -163,7 +163,7 @@ export const EmployeeService = {
       });
 
       return success(data);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('EMPLOYEE_PROFILE_UPDATE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
@@ -190,7 +190,7 @@ export const EmployeeService = {
       });
 
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('EMPLOYEE_PROFILE_DELETE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
@@ -240,7 +240,7 @@ export const EmployeeService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('EMPLOYEE_DIRECTORY_FETCH_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
@@ -282,7 +282,7 @@ export const EmployeeService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch direct reports', err);
     }
   },
@@ -311,7 +311,7 @@ export const EmployeeService = {
       }
 
       return this.updateEmployeeProfile(employeeUserId, { manager_id: managerId ?? undefined });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to set manager', err);
     }
   },
@@ -342,7 +342,7 @@ export const EmployeeService = {
         credentials_verified_at: new Date().toISOString(),
         credentials_verified_by: verifierId,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to verify credentials', err);
     }
   },
@@ -431,7 +431,7 @@ export const EmployeeService = {
       }
 
       return success(data === true);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to check employee profile', err);
     }
   },
@@ -454,7 +454,7 @@ export const EmployeeService = {
       }
 
       return success(data?.[0] || null);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch employee by number', err);
     }
   },
@@ -479,7 +479,7 @@ export const EmployeeService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch staff without employee profiles', err);
     }
   },

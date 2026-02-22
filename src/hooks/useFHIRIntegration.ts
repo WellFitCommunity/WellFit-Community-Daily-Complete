@@ -120,7 +120,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
       } else {
         setError(response.error || 'Failed to load connections');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
@@ -141,7 +141,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to create connection');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     } finally {
@@ -162,7 +162,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         message: response.message || '',
         metadata: response.data as Record<string, unknown> | undefined
       };
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
       return { success: false, message };
@@ -183,7 +183,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to delete connection');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     } finally {
@@ -204,7 +204,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to update status');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -269,7 +269,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Sync failed');
         return null;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setSyncProgress({
         connectionId,
@@ -331,7 +331,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Push failed');
         return null;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setSyncProgress({
         connectionId,
@@ -383,7 +383,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Bi-directional sync failed');
         return null;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setSyncProgress({
         connectionId,
@@ -411,7 +411,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to fetch sync history');
         return [];
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return [];
     }
@@ -429,7 +429,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to fetch sync statistics');
         return null;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return null;
     }
@@ -451,7 +451,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         connectionId
       );
       return response.success;
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -468,7 +468,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
       } else {
         return null;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return null;
     }
@@ -483,7 +483,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to fetch patient mappings');
         return [];
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return [];
     }
@@ -496,7 +496,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
     try {
       const response = await fhirSyncAPI.deletePatientMapping(communityUserId, connectionId);
       return response.success;
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -519,7 +519,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to start auto-sync');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -535,7 +535,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to stop auto-sync');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -554,7 +554,7 @@ export function useFHIRIntegration(): UseFHIRIntegrationReturn {
         setError(response.error || 'Failed to fetch compliance metrics');
         return null;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return null;
     }

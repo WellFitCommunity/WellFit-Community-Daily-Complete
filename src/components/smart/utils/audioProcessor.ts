@@ -183,7 +183,7 @@ export function stopAudioRecording(
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
     }
-  } catch (error) {
+  } catch (error: unknown) {
     auditLogger.error(
       'SCRIBE_STOP_RECORDING_ERROR',
       error instanceof Error ? error : new Error('Failed to stop recording'),

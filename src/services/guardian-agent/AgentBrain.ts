@@ -472,7 +472,7 @@ export class AgentBrain {
           healing_operation_id: action.id,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Don't fail healing if alert sending fails
 
     }

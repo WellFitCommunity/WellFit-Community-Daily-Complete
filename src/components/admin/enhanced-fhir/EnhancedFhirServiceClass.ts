@@ -87,7 +87,7 @@ export class EnhancedFhirService {
         healthStatistics
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw new Error(`Failed to export enhanced patient data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -122,7 +122,7 @@ export class EnhancedFhirService {
         predictiveAlerts
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw new Error(`Failed to generate population dashboard: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -145,7 +145,7 @@ export class EnhancedFhirService {
         clinicalGuidelines: getApplicableClinicalGuidelines(primaryCondition, patientData)
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw new Error(`Failed to generate clinical decision support: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -162,7 +162,7 @@ export class EnhancedFhirService {
         clinicalQuality: await assessClinicalQuality(populationData)
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw new Error(`Failed to assess quality metrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -222,7 +222,7 @@ export class EnhancedFhirService {
 
       return { cleaned: cleanedCount, issues };
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw new Error(`Failed to validate and clean data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -247,7 +247,7 @@ export class EnhancedFhirService {
         qualityReport: qualityMetrics
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw new Error(`Failed to generate automated reports: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

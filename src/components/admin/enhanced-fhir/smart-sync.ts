@@ -93,7 +93,7 @@ export async function syncWithSmartSession(
       synchronized: true
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
     throw new Error(`Failed to sync SMART data: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

@@ -48,7 +48,7 @@ export const ClaimsAppealsPanel: React.FC = () => {
     try {
       const claims = await AtlusRevenueService.getRejectedClaims(20);
       setRejectedClaims(claims as RejectedClaim[]);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load rejected claims');
     } finally {
       setLoading(false);
@@ -107,7 +107,7 @@ Generated: ${new Date().toISOString()}
       `.trim();
 
       setAppealLetter(letter);
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setGeneratingLetter(false);

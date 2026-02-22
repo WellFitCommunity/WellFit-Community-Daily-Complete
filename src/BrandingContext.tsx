@@ -37,7 +37,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       // Try database first
       const dbBranding = await getCurrentTenantBranding();
       setBranding(dbBranding);
-    } catch (error) {
+    } catch (error: unknown) {
 
       // Fallback to hardcoded config if database fails
       setBranding(getCurrentBranding());

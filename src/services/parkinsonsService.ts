@@ -96,7 +96,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -122,7 +122,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -147,7 +147,7 @@ export class ParkinsonsService {
 
       const data = await applyLimit<ParkinsonsPatient>(query, PAGINATION_LIMITS.PATIENTS);
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -170,7 +170,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -204,7 +204,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -226,7 +226,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -252,7 +252,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -283,7 +283,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -315,7 +315,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -349,7 +349,7 @@ export class ParkinsonsService {
         expectedDoses > 0 ? Math.min(100, (actualDoses / expectedDoses) * 100) : 0;
 
       return { success: true, data: Math.round(adherenceRate) };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -387,7 +387,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -414,7 +414,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -460,7 +460,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -485,7 +485,7 @@ export class ParkinsonsService {
 
       const data = await applyLimit<ParkinsonsUPDRSAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -508,7 +508,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -541,7 +541,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -561,7 +561,7 @@ export class ParkinsonsService {
 
       const data = await applyLimit<ParkinsonsDBSSession>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -591,7 +591,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: result };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -618,7 +618,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -646,7 +646,7 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: result };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -666,7 +666,7 @@ export class ParkinsonsService {
 
       const data = await applyLimit<ParkinsonsFORBESTracking>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -741,7 +741,7 @@ export class ParkinsonsService {
       };
 
       return { success: true, data: metrics };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -845,7 +845,7 @@ export class ParkinsonsService {
       });
 
       return { success: true, data: summaries };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -864,7 +864,7 @@ export class ParkinsonsService {
 
       const needingAssessment = result.data.filter((p) => p.days_since_assessment >= 90);
       return { success: true, data: needingAssessment };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }
@@ -881,7 +881,7 @@ export class ParkinsonsService {
 
       const highRisk = result.data.filter((p) => p.risk_level === 'high');
       return { success: true, data: highRisk };
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: normalizeErrorMessage(error) };
     }
   }

@@ -49,7 +49,7 @@ const CaregiverAccessHistory: React.FC<CaregiverAccessHistoryProps> = ({ userId 
         }
 
         setAccessLog(data || []);
-      } catch (err) {
+      } catch (err: unknown) {
         auditLogger.error('LOAD_ACCESS_HISTORY_EXCEPTION', err instanceof Error ? err : new Error(String(err)));
       } finally {
         setLoading(false);

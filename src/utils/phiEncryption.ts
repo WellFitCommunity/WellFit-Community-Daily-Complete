@@ -44,7 +44,7 @@ export async function encryptPHI(
 
     // Return as base64
     return arrayBufferToBase64(combined);
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw new Error('Failed to encrypt PHI data. Cannot proceed without encryption.');
   }
@@ -86,7 +86,7 @@ export async function decryptPHI(
     // Convert back to string
     const decoder = new TextDecoder();
     return decoder.decode(decryptedData);
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw new Error('Failed to decrypt PHI data. Data may be corrupted.');
   }
@@ -203,7 +203,7 @@ export async function validateEncryption(): Promise<boolean> {
     }
 
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
 
     return false;
   }

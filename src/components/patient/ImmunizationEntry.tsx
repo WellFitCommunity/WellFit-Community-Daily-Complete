@@ -201,7 +201,7 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
 
       await FHIRService.Immunization.create(immunization);
       onSave();
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to save immunization. Please try again.');
     } finally {

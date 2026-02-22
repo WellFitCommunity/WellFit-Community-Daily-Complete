@@ -104,7 +104,7 @@ export function validatePhone(
       country: phoneNumber.country,
       nationalNumber: phoneNumber.nationalNumber
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       isValid: false,
       e164: '',
@@ -127,7 +127,7 @@ export function validatePhone(
  * try {
  *   const e164 = validatePhoneStrict('555-123-4567');
  *   // '+15551234567'
- * } catch (error) {
+ * } catch (error: unknown) {
  *   // handle error: error.message
  * }
  * ```

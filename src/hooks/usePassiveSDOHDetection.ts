@@ -78,7 +78,7 @@ export function usePassiveSDOHDetection(options: UsePassiveSDOHDetectionOptions 
       }
 
       return detections.length;
-    } catch (error) {
+    } catch (error: unknown) {
       // Error logged server-side, fail silently on client
       if (onError && error instanceof Error) {
         onError(error);
@@ -101,7 +101,7 @@ export function usePassiveSDOHDetection(options: UsePassiveSDOHDetectionOptions 
       }
 
       return detections.length;
-    } catch (error) {
+    } catch (error: unknown) {
       // Error logged server-side, fail silently on client
       if (onError && error instanceof Error) {
         onError(error);

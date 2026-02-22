@@ -152,7 +152,7 @@ export const AdminWorkflowModeSwitcher: React.FC<AdminWorkflowModeSwitcherProps>
           user_id: user.id,
           [field]: new Date().toISOString(),
         });
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handled silently
     }
   };

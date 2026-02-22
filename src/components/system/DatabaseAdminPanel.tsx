@@ -67,7 +67,7 @@ const DatabaseAdminPanel: React.FC = () => {
         database_size_mb: 0, // Would require admin access to pg_catalog
         largest_tables: tableCounts.sort((a, b) => b.row_count - a.row_count).slice(0, 5)
       });
-    } catch (error) {
+    } catch (error: unknown) {
 
       setMessage({ type: 'error', text: 'Failed to load database statistics' });
     } finally {

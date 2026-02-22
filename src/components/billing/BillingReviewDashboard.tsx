@@ -341,7 +341,7 @@ export function BillingReviewDashboard() {
       }
 
       setClaims(filteredClaims);
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);
@@ -366,7 +366,7 @@ export function BillingReviewDashboard() {
       } else {
         alert(data?.error || 'Failed to approve claim');
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Error approving claim');
     }
@@ -398,7 +398,7 @@ export function BillingReviewDashboard() {
       } else {
         alert(data?.error || 'Failed to mark claim ready');
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Error marking claim ready');
     }
@@ -422,7 +422,7 @@ export function BillingReviewDashboard() {
       alert('Claim rejected');
       setSelectedClaim(null);
       loadClaims();
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Error rejecting claim');
     }

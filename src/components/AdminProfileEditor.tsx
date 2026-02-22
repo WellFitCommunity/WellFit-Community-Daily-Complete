@@ -69,7 +69,7 @@ const AdminProfileEditor: React.FC = () => {
       if (error) {
 
       }
-    } catch (err) {
+    } catch (err: unknown) {
 
     }
   };

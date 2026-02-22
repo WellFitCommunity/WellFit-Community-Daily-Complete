@@ -118,7 +118,7 @@ export class FitbitAdapter implements WearableAdapter {
             token: this.accessToken,
           }),
         });
-      } catch (error) {
+      } catch (error: unknown) {
         // Token revocation failed - connection will still be terminated
       }
     }

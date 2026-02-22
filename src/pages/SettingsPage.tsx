@@ -81,7 +81,7 @@ const SettingsPage: React.FC = () => {
             community_notifications: communityNotif ?? true,
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
 
       } finally {
         setLoading(false);

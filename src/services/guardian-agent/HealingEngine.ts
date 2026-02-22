@@ -131,7 +131,7 @@ export class HealingEngine {
       if (success) {
         outcomeDescription = `Successfully healed ${issue.signature.category} using ${action.strategy}`;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       outcomeDescription = `Healing failed with error: ${error instanceof Error ? error.message : String(error)}`;
       success = false;
     }
@@ -177,7 +177,7 @@ export class HealingEngine {
 
       // Validate step result
       return this.validateStep(step, result);
-    } catch (error) {
+    } catch (error: unknown) {
       return false;
     }
   }

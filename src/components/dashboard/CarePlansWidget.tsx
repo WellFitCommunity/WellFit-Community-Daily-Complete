@@ -26,7 +26,7 @@ const CarePlansWidget: React.FC = () => {
       if (activeResult.success && activeResult.data) {
         setActivePlans(activeResult.data as FHIRCarePlan[]);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);

@@ -146,7 +146,7 @@ const ApiKeyManager: React.FC = () => {
       if (!showLoading && data) {
         addToast('success', `Refreshed ${data.length} API keys`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Unexpected error fetching API keys';
       addToast('error', message);
@@ -247,7 +247,7 @@ const ApiKeyManager: React.FC = () => {
       }, 5000);
 
       await fetchApiKeys(false);
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Unexpected error generating key';
       addToast('error', message);
@@ -277,7 +277,7 @@ const ApiKeyManager: React.FC = () => {
       const newStatus = !currentStatus ? 'enabled' : 'disabled';
       addToast('success', `API key for "${orgName}" ${newStatus} successfully`);
       await fetchApiKeys(false);
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Unexpected error updating key status';
       addToast('error', message);
@@ -316,7 +316,7 @@ const ApiKeyManager: React.FC = () => {
 
       addToast('warning', `API key for "${orgName}" has been permanently revoked`);
       await fetchApiKeys(false);
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Unexpected error revoking key';
       addToast('error', message);
@@ -360,7 +360,7 @@ const ApiKeyManager: React.FC = () => {
           setKeyMasked(true);
         }, 500);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
 
       // Fallback: Provide manual copy instructions
@@ -382,7 +382,7 @@ const ApiKeyManager: React.FC = () => {
           addToast('success', `${label} copied to clipboard (legacy method)`);
           return;
         }
-      } catch (fallbackError) {
+      } catch (fallbackError: unknown) {
 
       }
 
@@ -532,7 +532,7 @@ const ApiKeyManager: React.FC = () => {
       saveAs(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }), filename);
 
       addToast('success', `Exported ${exportData.length} API keys to ${filename}`);
-    } catch (error) {
+    } catch (error: unknown) {
 
       addToast('error', 'Failed to export data to CSV');
     }

@@ -99,7 +99,7 @@ export function useTenantModules(): UseTenantModulesReturn {
 
       setConfig(configData);
       setEnabledModules(modulesMap);
-    } catch (err) {
+    } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error('Failed to load tenant modules');
       setError(error);
       // Error logged server-side, set state only
@@ -171,7 +171,7 @@ export function useTenantModule(moduleName: ModuleName) {
         if (isMounted) {
           setIsEnabled(enabled);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error('Failed to check module');
         if (isMounted) {
           setError(error);
@@ -237,7 +237,7 @@ export function useTenantModuleCheck(moduleNames: ModuleName[]) {
         if (isMounted) {
           setModules(results);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error('Failed to check modules');
         if (isMounted) {
           setError(error);

@@ -179,7 +179,7 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
 
       if (positionError) throw positionError;
       setPositionSavings(positionData || []);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load savings data. Please try again.');
     } finally {
       setLoading(false);

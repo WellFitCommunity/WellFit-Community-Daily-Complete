@@ -118,7 +118,7 @@ const SeniorReportsPage: React.FC = () => {
 
       setSession(sessionData);
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('CAREGIVER_REPORTS_SESSION_ERROR', err instanceof Error ? err : new Error(String(err)));
       setError('Unable to validate session.');
       setLoading(false);
@@ -164,7 +164,7 @@ const SeniorReportsPage: React.FC = () => {
       }
 
       setLoading(false);
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('CAREGIVER_REPORTS_LOAD_ERROR', err instanceof Error ? err : new Error(String(err)));
       setLoading(false);
     }

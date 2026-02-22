@@ -66,7 +66,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
         // Mark current version as seen
         localStorage.setItem('seniorWhatsNew_lastSeen', currentVersion);
       }
-    } catch (err) {
+    } catch (err: unknown) {
 
     }
     onClose();

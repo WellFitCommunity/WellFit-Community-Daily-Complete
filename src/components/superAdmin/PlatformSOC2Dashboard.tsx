@@ -146,7 +146,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
         warningsTotal: totalWarnings
       });
 
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('PLATFORM_SOC2_DASHBOARD_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });

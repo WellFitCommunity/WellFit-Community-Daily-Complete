@@ -100,7 +100,7 @@ export class GuardianErrorBoundary extends Component<Props, State> {
 
       // Attempt automatic recovery (limited by healingAttempts)
       await this.attemptRecovery();
-    } catch (healingError) {
+    } catch (healingError: unknown) {
       // Fail quiet - don't let healing errors cascade
       this.setState({ isHealing: false });
     }

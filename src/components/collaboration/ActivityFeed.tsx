@@ -365,7 +365,7 @@ export function useActivityBroadcast(roomId: string) {
           event: 'activity',
           payload: event,
         });
-      } catch (err) {
+      } catch (err: unknown) {
         auditLogger.warn('ACTIVITY_BROADCAST_FAILED', { error: String(err), roomId });
       }
     },

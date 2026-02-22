@@ -121,14 +121,14 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
           }
           
           setGeneratedQuestionnaire(questionnaire);
-        } catch (parseError) {
+        } catch (parseError: unknown) {
 
           setError('Failed to generate valid FHIR questionnaire. Please try rephrasing your request.');
         }
       } else {
         setError('No response from AI service');
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       setError('Failed to generate form. Please check your connection and try again.');
     } finally {

@@ -71,7 +71,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
         showToast('success', 'Allergy added successfully');
       }
       resetForm();
-    } catch (err) {
+    } catch (err: unknown) {
       showToast('error', err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
@@ -96,7 +96,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
       try {
         await deleteMutation.mutateAsync(id);
         showToast('success', 'Allergy removed');
-      } catch (err) {
+      } catch (err: unknown) {
         showToast('error', err instanceof Error ? err.message : 'Failed to delete allergy');
       }
     }

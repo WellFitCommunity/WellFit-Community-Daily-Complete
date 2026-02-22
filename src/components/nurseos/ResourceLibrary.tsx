@@ -40,7 +40,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose, userR
 
       const data = await getResources(filters);
       setResources(data);
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError(err instanceof Error ? err.message : 'Failed to load resources');
     } finally {
@@ -57,7 +57,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose, userR
     // Track view
     try {
       await trackResourceView(resource.id);
-    } catch (err) {
+    } catch (err: unknown) {
 
     }
 

@@ -307,7 +307,7 @@ export function testSSRFProtection(url: string): {
     }
 
     return { safe: true };
-  } catch (error) {
+  } catch (error: unknown) {
     return { safe: false, reason: 'Invalid URL format' };
   }
 }

@@ -273,7 +273,7 @@ export class AmazfitAdapter implements WearableAdapter {
             });
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         
       }
     }
@@ -302,7 +302,7 @@ export class AmazfitAdapter implements WearableAdapter {
             });
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         
       }
     }

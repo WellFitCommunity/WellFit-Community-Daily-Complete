@@ -266,7 +266,7 @@ export class PillIdentifierService {
               enhancedIdentification = this.mergeIdentifications(identification, pillboxData);
               apiSources.push('nih_pillbox');
             }
-          } catch (error) {
+          } catch (error: unknown) {
             // Pillbox API query failed, using AI-only results
           }
         }
@@ -282,7 +282,7 @@ export class PillIdentifierService {
         throw new Error('Unexpected response format from Claude API');
       }
 
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -393,7 +393,7 @@ Now analyze the pill image and return the JSON:`;
 
       return identification;
 
-    } catch (error) {
+    } catch (error: unknown) {
       // Return minimal identification on parse error
       return {
         characteristics: {
@@ -468,7 +468,7 @@ Now analyze the pill image and return the JSON:`;
 
       return null;
 
-    } catch (error) {
+    } catch (error: unknown) {
       return null;
     }
   }

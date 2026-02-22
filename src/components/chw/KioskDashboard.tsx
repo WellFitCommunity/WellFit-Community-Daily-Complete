@@ -58,7 +58,7 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
     try {
       const status = await chwService.getSyncStatus();
       setSyncStatus(status);
-    } catch (err) {
+    } catch (err: unknown) {
 
     }
   };
@@ -74,7 +74,7 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
       const result = await chwService.syncOfflineData();
       setLastSyncResult(result);
       await loadSyncStatus();
-    } catch (err) {
+    } catch (err: unknown) {
 
     } finally {
       setSyncing(false);

@@ -33,7 +33,7 @@ function parseEnvironment() {
       VITE_APP_NAME: import.meta.env.VITE_APP_NAME,
       VITE_DEMO_ENABLED: import.meta.env.VITE_DEMO_ENABLED,
     });
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw new Error(`Environment configuration error: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
@@ -59,7 +59,7 @@ export function validateEnvironment(): { success: boolean; message: string; deta
         appName: validatedEnv.VITE_APP_NAME
       }
     };
-  } catch (error) {
+  } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown validation error';
 
 

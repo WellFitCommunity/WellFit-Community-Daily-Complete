@@ -147,7 +147,7 @@ export const SDOHIndicatorService = {
       };
 
       return profile;
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_PROFILE_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       throw error;
     }
@@ -218,7 +218,7 @@ export const SDOHIndicatorService = {
         impactOnHealth: data.health_impact,
         priorityLevel: data.priority_level
       };
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_FACTOR_UPDATE_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId, category });
       throw error;
     }
@@ -265,7 +265,7 @@ export const SDOHIndicatorService = {
         followUpDate: data.follow_up_date,
         notes: data.notes
       };
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_REFERRAL_ADD_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId, category });
       throw error;
     }
@@ -308,7 +308,7 @@ export const SDOHIndicatorService = {
         dateProvided: data.date_provided,
         providedBy: data.provided_by
       };
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_RESOURCE_ADD_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId, category });
       throw error;
     }
@@ -352,7 +352,7 @@ export const SDOHIndicatorService = {
         factorsAddressed: data.factors_addressed,
         notes: data.notes
       };
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_SCREENING_RECORD_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       throw error;
     }
@@ -384,7 +384,7 @@ export const SDOHIndicatorService = {
         followUpDate: ref.follow_up_date,
         notes: ref.notes
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_REFERRALS_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       return [];
     }
@@ -414,7 +414,7 @@ export const SDOHIndicatorService = {
         dateProvided: res.date_provided,
         providedBy: res.provided_by
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_RESOURCES_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       return [];
     }
@@ -453,7 +453,7 @@ export const SDOHIndicatorService = {
         impactOnHealth: obs.health_impact,
         priorityLevel: obs.priority_level
       };
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_FACTOR_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId, category });
       return null;
     }
@@ -523,7 +523,7 @@ export const SDOHIndicatorService = {
         (factor.riskLevel === 'critical' || factor.riskLevel === 'high') &&
         (factor.interventionStatus === 'identified' || factor.interventionStatus === 'not-assessed')
       );
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SDOH_ALERTS_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), { patientId });
       return [];
     }

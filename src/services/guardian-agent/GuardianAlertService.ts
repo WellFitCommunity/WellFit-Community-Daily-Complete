@@ -146,7 +146,7 @@ export class GuardianAlertService {
       }
 
       return fullAlert;
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('GUARDIAN_ALERT_FAILED', error instanceof Error ? error : new Error(String(error)), {
         alert: fullAlert.title,
       });
@@ -191,7 +191,7 @@ export class GuardianAlertService {
         read: false,
         created_at: new Date().toISOString(),
       });
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }
@@ -661,7 +661,7 @@ export class GuardianAlertService {
         prNumber: result.prNumber,
         message: `Pull request created successfully: ${result.prUrl}`,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('GUARDIAN_APPROVE_FIX_FAILED', error instanceof Error ? error : new Error(String(error)), {
         alertId,
         userId,

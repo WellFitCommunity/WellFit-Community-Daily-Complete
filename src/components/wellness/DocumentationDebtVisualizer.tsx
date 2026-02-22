@@ -97,7 +97,7 @@ export const DocumentationDebtVisualizer: React.FC<DocumentationDebtVisualizerPr
           weeklyAvgBeforeMinutes: weeklyAvgBefore,
           weeklyAvgWithRileyMinutes: weeklyAvgWithRiley,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         auditLogger.error('DOCUMENTATION_DEBT_LOAD_FAILED', error instanceof Error ? error : new Error('Load failed'));
       } finally {
         setLoading(false);

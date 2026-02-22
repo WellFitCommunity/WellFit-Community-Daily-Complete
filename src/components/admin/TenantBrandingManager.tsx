@@ -155,7 +155,7 @@ const TenantBrandingManager: React.FC = () => {
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to update branding' });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setMessage({ type: 'error', text: 'An unexpected error occurred' });
     } finally {
       setSaving(false);

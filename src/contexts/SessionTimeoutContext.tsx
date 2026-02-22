@@ -72,7 +72,7 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
       if (bcRef.current && !isChannelClosedRef.current) {
         bcRef.current.postMessage(message);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.name === 'InvalidStateError') {
         // Channel is closed - mark it as such
         isChannelClosedRef.current = true;
@@ -88,7 +88,7 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
       if (error) {
         // Signout error - handled silently
       }
-    } catch (err) {
+    } catch (err: unknown) {
       // Signout error - handled silently
     }
     safePostMessage({ type: 'LOGOUT' });
@@ -125,7 +125,7 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
       try {
         bcRef.current = new BroadcastChannel('session-timeout');
         isChannelClosedRef.current = false;
-      } catch (error) {
+      } catch (error: unknown) {
 
       }
     }
@@ -170,7 +170,7 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
         bc.onmessage = null;
         try {
           bc.close();
-        } catch (error) {
+        } catch (error: unknown) {
 
         }
         isChannelClosedRef.current = true;

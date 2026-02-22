@@ -122,7 +122,7 @@ class PostgresMCPClient {
         data: result.content?.[0]?.data || [],
         metadata: result.metadata
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -195,7 +195,7 @@ class PostgresMCPClient {
         data: result.content?.[0]?.data || [],
         metadata: result.metadata
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -240,7 +240,7 @@ class PostgresMCPClient {
         data: [result.content?.[0]?.data || { table: tableName, count: 0 }],
         metadata: result.metadata
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'

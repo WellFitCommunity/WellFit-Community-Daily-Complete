@@ -159,7 +159,7 @@ const TenantAIUsageDashboard: React.FC = () => {
 
       setTopUsers(userUsageArray);
 
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('TENANT_AI_USAGE_DASHBOARD_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
         tenantId: tenantId || undefined

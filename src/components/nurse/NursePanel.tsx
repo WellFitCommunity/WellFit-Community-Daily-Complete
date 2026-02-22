@@ -288,7 +288,7 @@ const NursePanel: React.FC = () => {
           }
           setMyPatients(patients);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         auditLogger.error('NURSE_LOAD_PATIENTS_FAILED', error instanceof Error ? error : new Error('Failed to load patients'));
       } finally {
         setLoadingPatients(false);

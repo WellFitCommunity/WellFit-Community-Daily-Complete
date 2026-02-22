@@ -32,7 +32,7 @@ const SmartSessionStatus: React.FC = () => {
         if (isExpired) {
           clearSession();
         }
-      } catch (error) {
+      } catch (error: unknown) {
 
         clearSession();
       }

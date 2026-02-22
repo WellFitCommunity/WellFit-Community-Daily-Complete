@@ -69,7 +69,7 @@ export function useSOCNotifications(
         // This is expected on first page load before user interaction
         // Silently ignore - audio is a nice-to-have enhancement
       });
-    } catch (err) {
+    } catch (err: unknown) {
       // Silently fail - audio is a nice-to-have
     }
   }, [isAudioEnabled, preferences?.sound_enabled]);
@@ -84,7 +84,7 @@ export function useSOCNotifications(
       const permission = await Notification.requestPermission();
       setPermissionStatus(permission);
       return permission;
-    } catch (err) {
+    } catch (err: unknown) {
       return 'denied';
     }
   }, []);
@@ -123,7 +123,7 @@ export function useSOCNotifications(
         window.focus();
         notification.close();
       };
-    } catch (err) {
+    } catch (err: unknown) {
       // Silently fail - notification is a nice-to-have
     }
   }, [preferences?.browser_notifications_enabled]);

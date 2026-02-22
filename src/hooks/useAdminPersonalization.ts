@@ -252,7 +252,7 @@ export function useAdminPersonalization({
           timestamp: new Date()
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('ADMIN_DASHBOARD_PERSONALIZATION_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
         userId,
         adminRole: adminRole || 'admin'

@@ -146,7 +146,7 @@ export const NurseWorkflowModeSwitcher: React.FC<NurseWorkflowModeSwitcherProps>
           user_id: user.id,
           [field]: new Date().toISOString(),
         });
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handled silently
     }
   };

@@ -124,7 +124,7 @@ const PlatformAICostDashboard: React.FC = () => {
         highestCostTenant
       });
 
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('PLATFORM_AI_COST_DASHBOARD_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });

@@ -84,7 +84,7 @@ export const TenantSecurityDashboard: React.FC = () => {
         loadSecurityAlerts(profile.tenant_id),
       ]);
 
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('TENANT_SECURITY_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), { userId: user?.id });
     } finally {
       setLoading(false);

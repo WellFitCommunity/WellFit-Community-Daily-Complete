@@ -122,7 +122,7 @@ const ConsentPrivacyPage: React.FC = () => {
       setFeedback('Privacy consent submitted. Thank you!');
       // Move to PIN setup for caregiver access
       setTimeout(() => navigate('/set-caregiver-pin'), 1200);
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('An unexpected error occurred while saving your consent. Please try again.');
     } finally {

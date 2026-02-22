@@ -241,7 +241,7 @@ export const BurnoutAssessmentForm: React.FC<BurnoutAssessmentFormProps> = ({
       });
 
       onSuccess();
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError(err instanceof Error ? err.message : 'Failed to submit assessment');
       setLoading(false);

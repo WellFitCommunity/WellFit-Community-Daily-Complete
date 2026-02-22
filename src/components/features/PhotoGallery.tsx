@@ -207,7 +207,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
       setUrls(files);
       
-    } catch (err) {
+    } catch (err: unknown) {
       const text = err instanceof Error ? err.message : 'Failed to load photos.';
       setError(text);
       setUrls([]);

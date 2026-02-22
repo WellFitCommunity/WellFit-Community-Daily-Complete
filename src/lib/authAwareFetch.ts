@@ -98,7 +98,7 @@ export function createAuthAwareFetch(): typeof fetch {
     let response: Response;
     try {
       response = await originalFetch(input, init);
-    } catch (networkError) {
+    } catch (networkError: unknown) {
       // Network errors (ERR_ADDRESS_UNREACHABLE, etc.) - just rethrow
       // These are connectivity issues, not auth issues
       throw networkError;

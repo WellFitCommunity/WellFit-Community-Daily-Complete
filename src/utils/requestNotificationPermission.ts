@@ -72,7 +72,7 @@ export const requestNotificationPermission = async (): Promise<void> => {
     onMessage(messaging, (_payload) => {
       // You can show a toast here with react-toastify if you want
     });
-  } catch (err) {
+  } catch (err: unknown) {
     alert('Push notification setup failed.');
   }
 };

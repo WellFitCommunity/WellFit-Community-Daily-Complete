@@ -72,7 +72,7 @@ export const TimeClockProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (profile?.tenant_id) {
           setTenantId(profile.tenant_id);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         await auditLogger.error('TIME_CLOCK_CONTEXT_TENANT_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)));
       }
     };
@@ -90,7 +90,7 @@ export const TimeClockProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (result.success) {
         setTodayEntry(result.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('TIME_CLOCK_STATUS_REFRESH_FAILED', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
@@ -114,7 +114,7 @@ export const TimeClockProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
       }
       return { success: false };
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('TIME_CLOCK_AUTO_CLOCK_IN_FAILED', error instanceof Error ? error : new Error(String(error)));
       return { success: false };
     }
@@ -136,7 +136,7 @@ export const TimeClockProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
       }
       return { success: false };
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('TIME_CLOCK_CLOCK_OUT_FAILED', error instanceof Error ? error : new Error(String(error)));
       return { success: false };
     }

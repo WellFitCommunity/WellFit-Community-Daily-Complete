@@ -106,7 +106,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
       } else {
         setError(response.error || 'Failed to load medications');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
@@ -129,7 +129,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
         setError(response.error || 'Failed to add medication');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -150,7 +150,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
         setError(response.error || 'Failed to update medication');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -168,7 +168,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
         setError(response.error || 'Failed to delete medication');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -189,7 +189,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
         setError(response.error || 'Failed to discontinue medication');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -224,7 +224,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
         setError(response.error || 'Failed to scan medication label');
         return null;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return null;
     } finally {
@@ -247,7 +247,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
         setError(response.error || 'Failed to confirm medication');
         return false;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     }
@@ -322,7 +322,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
       if (alertsResponse.success && alertsResponse.data) {
         setPsychAlerts(alertsResponse.data.map(mapRecordToAlert));
       }
-    } catch (err) {
+    } catch (err: unknown) {
 
     }
   }, [userId]);

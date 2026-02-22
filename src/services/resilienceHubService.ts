@@ -603,7 +603,7 @@ export async function getCheckinStreak(): Promise<number> {
     }
 
     return (data as number) || 0;
-  } catch (err) {
+  } catch (err: unknown) {
     await auditLogger.error('RESILIENCE_CHECKIN_STREAK_ERROR', err instanceof Error ? err : String(err), {
       userId: user.id,
     });

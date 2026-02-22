@@ -105,7 +105,7 @@ export function useFeatureRollout(featureKey: string): UseFeatureRolloutResult {
         setError(new Error(result.error.message));
         setIsEnabled(false);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err : new Error(String(err)));
       setIsEnabled(false);
     } finally {
@@ -186,7 +186,7 @@ export function useFeatureRollouts(featureKeys: string[]): UseFeatureRolloutsRes
       } else {
         setError(new Error(result.error.message));
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setIsLoading(false);

@@ -139,7 +139,7 @@ export class FHIRIntegrationService {
       };
 
       return bundle;
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw error;
     }
@@ -271,7 +271,7 @@ export class FHIRIntegrationService {
       }
 
       return bundle;
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw error;
     }
@@ -370,7 +370,7 @@ export class FHIRIntegrationService {
       });
 
       return bundle;
-    } catch (error) {
+    } catch (error: unknown) {
       // SOC 2: Secure error logging (no PHI, no stack traces in production)
       await this.logSecurityEvent('FHIR_EXPORT_FAILED', {
         actor_user_id: currentUser?.id,
@@ -392,7 +392,7 @@ export class FHIRIntegrationService {
         metadata: metadata,
         created_at: new Date().toISOString()
       });
-    } catch (_err) {
+    } catch (_err: unknown) {
       // Fallback: If audit logging fails, this is a critical security issue
       // In production, this should trigger alerts
     }
@@ -407,7 +407,7 @@ export class FHIRIntegrationService {
         metadata: metadata,
         created_at: new Date().toISOString()
       });
-    } catch (_err) {
+    } catch (_err: unknown) {
       // Fallback: If security logging fails, this is critical
     }
   }

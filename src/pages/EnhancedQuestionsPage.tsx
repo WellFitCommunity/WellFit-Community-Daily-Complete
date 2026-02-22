@@ -171,7 +171,7 @@ const EnhancedQuestionsPage: React.FC = () => {
       }));
 
       setQuestions(transformedQuestions);
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to load your questions. Please try again.');
     } finally {
@@ -237,7 +237,7 @@ const EnhancedQuestionsPage: React.FC = () => {
         setSuccess(null);
       }, 3000);
 
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to send your question. Please try again.');
     } finally {
@@ -266,7 +266,7 @@ const EnhancedQuestionsPage: React.FC = () => {
 
       try {
         recognitionRef.current.start();
-      } catch (error) {
+      } catch (error: unknown) {
 
         setError('Failed to start voice recognition. Please try again.');
         setIsListening(false);
@@ -282,7 +282,7 @@ const EnhancedQuestionsPage: React.FC = () => {
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
-      } catch (error) {
+      } catch (error: unknown) {
 
       }
       setIsListening(false);

@@ -271,7 +271,7 @@ export class PHIEncryption {
       this.logEncryptionOperation('encrypt', fieldName, key.id, tenantId, userId, true);
 
       return encrypted;
-    } catch (error) {
+    } catch (error: unknown) {
       // Audit log (failure)
       this.logEncryptionOperation(
         'encrypt',
@@ -339,7 +339,7 @@ export class PHIEncryption {
       );
 
       return value;
-    } catch (error) {
+    } catch (error: unknown) {
       // Audit log (failure)
       this.logEncryptionOperation(
         'decrypt',
@@ -482,7 +482,7 @@ export class PHIEncryption {
       this.keys.set(wfKey.id, wfKey);
 
       this.initialized = true;
-    } catch (error) {
+    } catch (error: unknown) {
       // If we can't initialize keys, mark as initialized but log the error
       this.initialized = true;
       throw error;

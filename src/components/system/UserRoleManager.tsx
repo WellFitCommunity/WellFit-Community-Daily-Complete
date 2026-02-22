@@ -74,7 +74,7 @@ const UserRoleManager: React.FC = () => {
 
       setUsers(usersWithRoles);
       setFilteredUsers(usersWithRoles);
-    } catch (error) {
+    } catch (error: unknown) {
 
       setMessage({ type: 'error', text: 'Failed to load users' });
     } finally {

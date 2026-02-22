@@ -121,7 +121,7 @@ export class HL7ToFHIRTranslator {
         sourceMessageId,
         sourceMessageType,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown translation error';
 
       auditLogger.security('HL7_TRANSLATION_ERROR', 'medium', {

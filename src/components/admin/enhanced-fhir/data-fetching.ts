@@ -77,7 +77,7 @@ export async function fetchComprehensivePatientData(
     dataCache.setCache(cacheKey, data, 300000); // 5 minutes TTL
     return data;
 
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }
@@ -111,7 +111,7 @@ export async function fetchPopulationData(
     dataCache.setCache(cacheKey, populationData, 600000); // 10 minutes TTL
     return populationData;
 
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }

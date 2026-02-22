@@ -97,7 +97,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
           });
           setFlashlightStatus('unsupported');
           setFlashlightError('Flashlight unavailable. Continuing without flashlight - ensure good lighting.');
-        } catch (fallbackError) {
+        } catch (fallbackError: unknown) {
           // Second fallback: Try any camera
 
           stream = await navigator.mediaDevices.getUserMedia({
@@ -129,7 +129,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
             });
             setFlashlightStatus('on');
             setFlashlightError(null);
-          } catch (e) {
+          } catch (e: unknown) {
 
             setFlashlightStatus('unsupported');
             setFlashlightError('Flashlight not available on this device. Measurement will continue without it.');
@@ -156,7 +156,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
 
       setIsActive(true);
       setInstruction('Keep your finger still and steady');
-    } catch (error) {
+    } catch (error: unknown) {
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 

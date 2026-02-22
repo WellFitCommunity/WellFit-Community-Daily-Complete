@@ -339,7 +339,7 @@ export class VoiceLearningService {
         profile.updatedAt = new Date().toISOString();
         await this.saveVoiceProfile(profile);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Silent fail - reinforcement is enhancement, not critical
     }
   }

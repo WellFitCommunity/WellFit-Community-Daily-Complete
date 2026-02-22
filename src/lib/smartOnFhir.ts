@@ -59,7 +59,7 @@ export class SMARTClient {
       };
 
       return this.endpoints;
-    } catch (error) {
+    } catch (error: unknown) {
 
       throw new Error('Unable to discover SMART endpoints');
     }

@@ -132,7 +132,7 @@ const playBeep = (frequency: number, duration: number, volume: number = 0.5) => 
       oscillator.stop();
       audioContext.close();
     }, duration);
-  } catch (err) {
+  } catch (err: unknown) {
     // Audio not supported - silent fail
     auditLogger.debug('ALERT_SOUND_FAILED', { error: String(err) });
   }
@@ -230,7 +230,7 @@ export function useRealtimeAlerts(
       }
 
       return (data || []) as RealtimeAlert[];
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('REALTIME_ALERTS_FETCH_FAILED', err instanceof Error ? err : new Error(String(err)), {
         component: componentName,
       });
@@ -366,7 +366,7 @@ export function useRealtimeAlerts(
       );
 
       auditLogger.clinical('ALERT_MARKED_READ', true, { alertId });
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('ALERT_MARK_READ_FAILED', err instanceof Error ? err : new Error(String(err)), { alertId });
       throw err;
     }
@@ -396,7 +396,7 @@ export function useRealtimeAlerts(
       );
 
       auditLogger.clinical('ALERTS_MARKED_ALL_READ', true, { count: pendingIds.length });
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('ALERTS_MARK_ALL_READ_FAILED', err instanceof Error ? err : new Error(String(err)));
       throw err;
     }

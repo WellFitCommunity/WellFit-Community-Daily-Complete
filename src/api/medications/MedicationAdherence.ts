@@ -26,7 +26,7 @@ export async function recordDoseTaken(
       data,
       message: 'Dose recorded successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to record dose'
@@ -62,7 +62,7 @@ export async function getMedicationAdherence(
       success: true,
       data: result
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to calculate adherence'
@@ -90,7 +90,7 @@ export async function getMedicationsNeedingRefill(
       success: true,
       data: data || []
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch medications needing refill'
@@ -118,7 +118,7 @@ export async function getUpcomingReminders(
       success: true,
       data: (data || []) as UpcomingReminder[]
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch upcoming reminders'

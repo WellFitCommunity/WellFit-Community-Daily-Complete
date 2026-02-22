@@ -38,7 +38,7 @@ import { initializeWearables } from './services/initializeWearables';
 // ============================================================================
 try {
   validateOrFail();
-} catch (error) {
+} catch (error: unknown) {
   // In production, this will prevent the app from starting
   // Display error to user instead of broken app
   const rootElement = document.getElementById('root');

@@ -76,7 +76,7 @@ const ComplianceDashboard: React.FC = () => {
       if (vulnError) throw vulnError;
       setVulnerabilities(vulnData);
 
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError(err instanceof Error ? err.message : 'Failed to load compliance data');
     } finally {

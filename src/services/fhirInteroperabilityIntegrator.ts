@@ -236,7 +236,7 @@ export class FHIRInteroperabilityIntegrator {
       }
 
       return this.mapConnectionFromDB(data as UnknownRecord);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new Error(`Failed to create connection: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -254,7 +254,7 @@ export class FHIRInteroperabilityIntegrator {
       if (error) throw error;
 
       return (data || []).map((row) => this.mapConnectionFromDB(row as UnknownRecord));
-    } catch (error) {
+    } catch (error: unknown) {
       return [];
     }
   }
@@ -318,7 +318,7 @@ export class FHIRInteroperabilityIntegrator {
           endpoints
         }
       };
-    } catch (error) {
+    } catch (error: unknown) {
       await this.updateConnectionStatus(connectionId, 'error');
       return {
         success: false,
@@ -412,7 +412,7 @@ export class FHIRInteroperabilityIntegrator {
 
           result.recordsSucceeded++;
           result.summary.patientsSync++;
-        } catch (error) {
+        } catch (error: unknown) {
           result.recordsFailed++;
           result.errors.push({
             resourceType: 'Patient',
@@ -430,7 +430,7 @@ export class FHIRInteroperabilityIntegrator {
 
       result.status = result.recordsFailed === 0 ? 'success' :
                      result.recordsSucceeded > 0 ? 'partial' : 'failed';
-    } catch (error) {
+    } catch (error: unknown) {
       result.status = 'failed';
       result.errors.push({
         resourceType: 'System',
@@ -513,7 +513,7 @@ await this.pushBundleToFHIR(
 
           result.recordsSucceeded++;
           result.summary.patientsSync++;
-        } catch (error) {
+        } catch (error: unknown) {
           result.recordsFailed++;
           result.errors.push({
             resourceType: 'Patient',
@@ -525,7 +525,7 @@ await this.pushBundleToFHIR(
 
       result.status = result.recordsFailed === 0 ? 'success' :
                      result.recordsSucceeded > 0 ? 'partial' : 'failed';
-    } catch (error) {
+    } catch (error: unknown) {
       result.status = 'failed';
       result.errors.push({
         resourceType: 'System',
@@ -630,7 +630,7 @@ await this.pushBundleToFHIR(
     const interval = setInterval(async () => {
       try {
         await this.syncFromFHIR(connectionId);
-      } catch (error) {
+      } catch (error: unknown) {
 
       }
     }, intervalMs);
@@ -944,7 +944,7 @@ await this.pushBundleToFHIR(
         timestamp: new Date().toISOString()
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       // SOC 2: Log import failure (no PHI in logs)
       await this.logSecurityEvent('FHIR_IMPORT_FAILED', {
         actor_user_id: currentUser?.id,
@@ -966,7 +966,7 @@ await this.pushBundleToFHIR(
         metadata: metadata,
         created_at: new Date().toISOString()
       });
-    } catch (err) {
+    } catch (err: unknown) {
 
     }
   }
@@ -980,7 +980,7 @@ await this.pushBundleToFHIR(
         metadata: metadata,
         created_at: new Date().toISOString()
       });
-    } catch (err) {
+    } catch (err: unknown) {
 
     }
   }

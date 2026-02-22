@@ -103,7 +103,7 @@ const PhysicianPanel: React.FC = () => {
         ccmEligible: 0, // Will be calculated from SDOH assessments
         pendingReviews: 0
       });
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }, [supabase]);
@@ -238,7 +238,7 @@ const PhysicianPanel: React.FC = () => {
       };
 
       setPatientSummary(summary);
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);

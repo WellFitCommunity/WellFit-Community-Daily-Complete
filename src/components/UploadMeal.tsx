@@ -87,7 +87,7 @@ const UploadMeal: React.FC = () => {
       const fileInput = document.getElementById('meal-imageFile') as HTMLInputElement | null;
       if (fileInput) fileInput.value = '';
 
-    } catch (err) {
+    } catch (err: unknown) {
 
       const errMsg = err instanceof Error ? err.message : 'An unknown error occurred.';
       setMessage({ type: 'error', text: `Error: ${errMsg}` });

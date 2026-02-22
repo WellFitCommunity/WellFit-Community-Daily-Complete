@@ -50,7 +50,7 @@ export async function getCoordinatedResponseStatus(
     if (error) throw error;
 
     return { data: data as CoordinatedResponseStatus[], error: null };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
   }
@@ -80,7 +80,7 @@ export async function acknowledgeDepartmentDispatch(
     if (error) throw error;
 
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
   }
@@ -103,7 +103,7 @@ export async function markDepartmentReady(
     if (error) throw error;
 
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
   }
@@ -177,7 +177,7 @@ export async function createProviderSignoff(signoff: {
     if (error) throw error;
 
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
   }
@@ -199,7 +199,7 @@ export async function getProviderSignoffs(
     if (error) throw error;
 
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
   }
@@ -236,7 +236,7 @@ export async function sendDepartmentNotification(
     }
 
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
   }

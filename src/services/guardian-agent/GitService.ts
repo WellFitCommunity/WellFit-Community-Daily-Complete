@@ -60,7 +60,7 @@ export class GitService {
       });
 
       return !error && data?.success;
-    } catch (error) {
+    } catch (error: unknown) {
       return false;
     }
   }
@@ -123,7 +123,7 @@ export class GitService {
         prNumber: data.prNumber,
         prUrl: data.prUrl
       };
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('GUARDIAN_PR_EXCEPTION', error instanceof Error ? error : new Error(String(error)), {
         issue_id: params.issue.id,
         action_id: params.action.id
@@ -160,7 +160,7 @@ export class GitService {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('GUARDIAN_PR_STATUS_FAILED', error instanceof Error ? error : new Error(String(error)), {
         pr_number: prNumber
       });
@@ -192,7 +192,7 @@ export class GitService {
         success: true,
         message: `PR #${prNumber} merged successfully`
       };
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('GUARDIAN_PR_MERGE_FAILED', error instanceof Error ? error : new Error(String(error)), {
         pr_number: prNumber
       });

@@ -46,7 +46,7 @@ const SimpleFhirAiWidget: React.FC = () => {
         };
 
         setHealthStatus(simpleStatus);
-      } catch (error) {
+      } catch (error: unknown) {
 
         // Set safe default
         setHealthStatus({

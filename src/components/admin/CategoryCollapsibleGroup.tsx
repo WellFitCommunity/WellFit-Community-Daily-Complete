@@ -53,7 +53,7 @@ export const CategoryCollapsibleGroup: React.FC<CategoryCollapsibleGroupProps> =
         // Closing category - track close
         setOpenStartTime(null);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   };

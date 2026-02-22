@@ -32,7 +32,7 @@ export default function DataManagementPanel() {
 
       if (error) throw error;
       setDataStatus(data);
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Failed to load data status. Please try again.');
     }
@@ -60,7 +60,7 @@ export default function DataManagementPanel() {
       URL.revokeObjectURL(url);
 
       alert('Your data has been downloaded successfully!');
-    } catch (error) {
+    } catch (error: unknown) {
       alert('Failed to export data. Please try again.');
     }
     setExportingType(null);
@@ -95,7 +95,7 @@ export default function DataManagementPanel() {
         URL.revokeObjectURL(url);
         alert('Health summary downloaded. Open the file and use your browser\'s print function to save as PDF.');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       alert('Failed to generate PDF. Please try again.');
     }
     setExportingType(null);
@@ -120,7 +120,7 @@ export default function DataManagementPanel() {
       URL.revokeObjectURL(url);
 
       alert('Your C-CDA health record has been downloaded. This format can be imported into most healthcare systems.');
-    } catch (error) {
+    } catch (error: unknown) {
       alert('Failed to export C-CDA. Please try again.');
     }
     setExportingType(null);
@@ -148,7 +148,7 @@ export default function DataManagementPanel() {
       // Sign out and redirect
       await supabase.auth.signOut();
       window.location.href = '/';
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Failed to delete account. Please contact support.');
     }

@@ -45,7 +45,7 @@ export async function identifyPill(
       message: 'Pill identified successfully'
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to identify pill'
@@ -116,7 +116,7 @@ export async function comparePillWithLabel(
         : 'Pill may not match label - review required'
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to compare pill with label'
@@ -145,7 +145,7 @@ export async function getPillIdentificationHistory(
       success: true,
       data: (data || []) as PillIdentificationRecord[]
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch identification history'
@@ -174,7 +174,7 @@ export async function getPillComparisonHistory(
       success: true,
       data: (data || []) as PillComparisonRecord[]
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch comparison history'

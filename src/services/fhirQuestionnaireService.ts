@@ -161,7 +161,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
       }
 
       return q as unknown as FHIRQuestionnaire;
-    } catch (parseError) {
+    } catch (parseError: unknown) {
       throw new Error('Failed to generate valid FHIR questionnaire. Please try rephrasing your request.');
     }
   }

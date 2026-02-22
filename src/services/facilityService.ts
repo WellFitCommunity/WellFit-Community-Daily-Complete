@@ -39,7 +39,7 @@ export const FacilityService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('FACILITY_LIST_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
@@ -63,7 +63,7 @@ export const FacilityService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch facilities', err);
     }
   },
@@ -85,7 +85,7 @@ export const FacilityService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch facility summaries', err);
     }
   },
@@ -106,7 +106,7 @@ export const FacilityService = {
       }
 
       return success(data);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch facility', err);
     }
   },
@@ -128,7 +128,7 @@ export const FacilityService = {
       }
 
       return success(data);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch primary facility', err);
     }
   },
@@ -169,7 +169,7 @@ export const FacilityService = {
       });
 
       return success(data);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('FACILITY_CREATE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
@@ -222,7 +222,7 @@ export const FacilityService = {
       });
 
       return success(data);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('FACILITY_UPDATE_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
@@ -254,7 +254,7 @@ export const FacilityService = {
       });
 
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to deactivate facility', err);
     }
   },
@@ -279,7 +279,7 @@ export const FacilityService = {
       });
 
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to reactivate facility', err);
     }
   },
@@ -319,7 +319,7 @@ export const FacilityService = {
       };
 
       return success(facilityWithStats);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch facility stats', err);
     }
   },
@@ -342,7 +342,7 @@ export const FacilityService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to search facilities', err);
     }
   },
@@ -364,7 +364,7 @@ export const FacilityService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to fetch facilities by type', err);
     }
   },

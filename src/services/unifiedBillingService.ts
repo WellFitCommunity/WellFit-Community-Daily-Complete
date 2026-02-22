@@ -516,7 +516,7 @@ export class UnifiedBillingService {
         recommendedActions
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
       // HIPAA Audit: Log billing workflow failure
@@ -580,7 +580,7 @@ export class UnifiedBillingService {
       auditLogger.debug(`Billing step completed: ${stepName} (${step.duration}ms)`);
 
       return { success: true, result };
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
       step.endTime = new Date().toISOString();

@@ -53,7 +53,7 @@ export async function submitMealInteraction(
     }
 
     return { data, error };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err };
   }
@@ -107,7 +107,7 @@ export async function uploadMealPhoto(
     }
 
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err };
   }
@@ -136,7 +136,7 @@ export async function getUserMealInteraction(
     }
 
     return { data, error };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: null, error: err };
   }
@@ -162,7 +162,7 @@ export async function getUserPlannedMeals(
     }
 
     return { data: data || [], error };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: [], error: err };
   }
@@ -192,7 +192,7 @@ export async function getAllMealPhotos(
     }
 
     return { data: data || [], error };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { data: [], error: err };
   }

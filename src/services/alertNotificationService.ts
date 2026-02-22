@@ -393,7 +393,7 @@ async function sendToChannel(
           error: `Unsupported channel type: ${channelType}`,
         };
     }
-  } catch (err) {
+  } catch (err: unknown) {
     return {
       channelId: channel.id as string,
       channelType,

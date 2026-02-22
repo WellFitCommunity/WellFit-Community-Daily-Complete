@@ -12,7 +12,7 @@
  *   try {
  *     const user = await fetchUser(id);
  *     return success(user);
- *   } catch (err) {
+ *   } catch (err: unknown) {
  *     return failure('USER_NOT_FOUND', 'User not found', err);
  *   }
  * }

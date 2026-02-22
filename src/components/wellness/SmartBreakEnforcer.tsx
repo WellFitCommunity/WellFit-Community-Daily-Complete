@@ -102,7 +102,7 @@ export const SmartBreakEnforcer: React.FC<SmartBreakEnforcerProps> = ({
         shouldRemind,
         reminderLevel,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('BREAK_ENFORCER_CALC_FAILED', error instanceof Error ? error : new Error('Calc failed'));
     }
   }, [userId, enabled, breakIntervalMinutes]);
@@ -150,7 +150,7 @@ export const SmartBreakEnforcer: React.FC<SmartBreakEnforcerProps> = ({
         patientsSeenSinceBreak: 0,
         shouldRemind: false,
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('BREAK_LOG_FAILED', error instanceof Error ? error : new Error('Log failed'));
     }
   };

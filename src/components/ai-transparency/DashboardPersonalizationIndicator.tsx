@@ -89,7 +89,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
         workflow_patterns_detected: patternsCount || 0,
         last_personalization_update: lastEvent?.created_at || new Date().toISOString(),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handled silently - indicator will show as learning state
     } finally {
       setLoading(false);

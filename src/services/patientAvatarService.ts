@@ -43,7 +43,7 @@ export async function getPatientAvatar(
     }
 
     return success(data as PatientAvatar);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_AVATAR_GET_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { patientId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -108,7 +108,7 @@ export async function updatePatientAvatar(
 
     auditLogger.info('PATIENT_AVATAR_UPDATED', { patientId, updates });
     return success(updated as PatientAvatar);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_AVATAR_UPDATE_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { patientId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -142,7 +142,7 @@ export async function getPatientMarkers(
       pending_count: result.pending_count || 0,
       attention_count: result.attention_count || 0,
     });
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKERS_GET_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { patientId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -168,7 +168,7 @@ export async function getMarker(markerId: string): Promise<ServiceResult<Patient
     }
 
     return success(data as PatientMarker);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKER_GET_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { markerId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -218,7 +218,7 @@ export async function createMarker(
     });
 
     return success(data as PatientMarker);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKER_CREATE_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { request });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -281,7 +281,7 @@ export async function updateMarker(
 
     auditLogger.info('PATIENT_MARKER_UPDATED', { markerId, updates });
     return success(data as PatientMarker);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKER_UPDATE_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { markerId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -307,7 +307,7 @@ export async function confirmMarker(
 
     auditLogger.info('PATIENT_MARKER_CONFIRMED', { markerId, userId });
     return success(data as boolean);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKER_CONFIRM_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { markerId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -333,7 +333,7 @@ export async function rejectMarker(
 
     auditLogger.info('PATIENT_MARKER_REJECTED', { markerId, userId });
     return success(data as boolean);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKER_REJECT_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { markerId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -359,7 +359,7 @@ export async function deactivateMarker(
 
     auditLogger.info('PATIENT_MARKER_DEACTIVATED', { markerId, userId });
     return success(data as boolean);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKER_DEACTIVATE_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { markerId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -393,7 +393,7 @@ export async function reactivateMarker(
 
     auditLogger.info('PATIENT_MARKER_REACTIVATED', { markerId, userId });
     return success(data as PatientMarker);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKER_REACTIVATE_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { markerId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -424,7 +424,7 @@ export async function getMarkerHistory(
     }
 
     return success((data || []) as PatientMarkerHistory[]);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKER_HISTORY_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { markerId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -462,7 +462,7 @@ export async function confirmAllPendingMarkers(
     const count = data?.length || 0;
     auditLogger.info('PATIENT_MARKERS_CONFIRMED_ALL', { patientId, count, userId });
     return success(count);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKERS_CONFIRM_ALL_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { patientId });
     return failure('UNKNOWN_ERROR', 'An unexpected error occurred', err);
   }
@@ -513,7 +513,7 @@ export async function deactivateMarkersByType(
       userId,
     });
     return success(count);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('PATIENT_MARKERS_DEACTIVATE_BY_TYPE_EXCEPTION', err instanceof Error ? err : new Error(String(err)), {
       patientId,
       markerType,

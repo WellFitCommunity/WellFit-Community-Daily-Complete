@@ -139,7 +139,7 @@ export async function calculateEngagementRisk(
     }
 
     return { score: riskScore, dataPoints: totalActivities };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { score: 5.0, dataPoints: 0 };
   }
@@ -288,7 +288,7 @@ export async function calculateVitalsRisk(
     // Normalize to 0-10 scale
     const normalizedScore = riskFactors > 0 ? (riskScore / riskFactors) * 3.33 : 5.0;
     return { score: Math.min(10, normalizedScore), dataPoints: data.length };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { score: 5.0, dataPoints: 0 };
   }
@@ -375,7 +375,7 @@ export async function calculateMentalHealthRisk(
     // Normalize to 0-10
     const averageRisk = moodCount > 0 ? riskScore / moodCount : 5.0;
     return { score: Math.min(10, averageRisk), dataPoints: data.length };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { score: 5.0, dataPoints: 0 };
   }
@@ -445,7 +445,7 @@ export async function calculateSocialIsolationRisk(
     // Normalize to 0-10
     const averageRisk = interactionCount > 0 ? isolationScore / interactionCount : 7.0;
     return { score: Math.min(10, averageRisk), dataPoints: data.length };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { score: 7.0, dataPoints: 0 };
   }
@@ -511,7 +511,7 @@ export async function calculatePhysicalActivityRisk(
     // Normalize to 0-10
     const averageRisk = activityCount > 0 ? activityScore / activityCount : 6.0;
     return { score: Math.min(10, averageRisk), dataPoints: data.length };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { score: 6.0, dataPoints: 0 };
   }
@@ -560,7 +560,7 @@ export async function calculateMedicationAdherenceRisk(
     }
 
     return { score: 3.0, dataPoints: data.length }; // Default low risk if no concerns mentioned
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { score: 5.0, dataPoints: 0 };
   }
@@ -588,7 +588,7 @@ export async function getClinicalRiskScore(
 
     // overall_score from risk assessment is already 0-10
     return { score: data.overall_score || 5.0, dataPoints: 1 };
-  } catch (err) {
+  } catch (err: unknown) {
 
     return { score: 5.0, dataPoints: 0 };
   }
@@ -711,7 +711,7 @@ export async function calculateHolisticRiskAssessment(
         evidenceBasis: 'Multi-dimensional risk scoring based on engagement, vitals, mental health, social, physical activity, medication adherence, and clinical assessment data.'
       }
     };
-  } catch (err) {
+  } catch (err: unknown) {
 
     throw err;
   }

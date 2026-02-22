@@ -79,7 +79,7 @@ export async function getStaffCategories(): Promise<ServiceResult<RefStaffCatego
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff categories', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to get staff categories', err);
   }
@@ -98,7 +98,7 @@ export async function getRoleTypes(categoryId?: string): Promise<ServiceResult<R
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get role types', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to get role types', err);
   }
@@ -116,7 +116,7 @@ export async function getCredentialTypes(): Promise<ServiceResult<RefCredentialT
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get credential types', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to get credential types', err);
   }
@@ -134,7 +134,7 @@ export async function getLicenseTypes(): Promise<ServiceResult<RefLicenseType[]>
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get license types', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to get license types', err);
   }
@@ -157,7 +157,7 @@ export async function getOrganizations(): Promise<ServiceResult<HCOrganization[]
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get organizations', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to get organizations', err);
   }
@@ -179,7 +179,7 @@ export async function getOrganization(organizationId: string): Promise<ServiceRe
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get organization', getErrorMessage(err), { organizationId });
     return failure('UNKNOWN_ERROR', 'Failed to get organization', err);
   }
@@ -199,7 +199,7 @@ export async function createOrganization(org: HCOrganizationInsert): Promise<Ser
     });
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to create organization', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to create organization', err);
   }
@@ -223,7 +223,7 @@ export async function updateOrganization(
 
     auditLogger.info('Organization updated', { organizationId, updates: Object.keys(updates) });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to update organization', getErrorMessage(err), { organizationId });
     return failure('UNKNOWN_ERROR', 'Failed to update organization', err);
   }
@@ -247,7 +247,7 @@ export async function getDepartments(organizationId: string): Promise<ServiceRes
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get departments', getErrorMessage(err), { organizationId });
     return failure('UNKNOWN_ERROR', 'Failed to get departments', err);
   }
@@ -267,7 +267,7 @@ export async function createDepartment(dept: HCDepartmentInsert): Promise<Servic
     });
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to create department', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to create department', err);
   }
@@ -291,7 +291,7 @@ export async function updateDepartment(
 
     auditLogger.info('Department updated', { departmentId, updates: Object.keys(updates) });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to update department', getErrorMessage(err), { departmentId });
     return failure('UNKNOWN_ERROR', 'Failed to update department', err);
   }
@@ -315,7 +315,7 @@ export async function getFacilities(organizationId: string): Promise<ServiceResu
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get facilities', getErrorMessage(err), { organizationId });
     return failure('UNKNOWN_ERROR', 'Failed to get facilities', err);
   }
@@ -335,7 +335,7 @@ export async function createFacility(facility: HCFacilityInsert): Promise<Servic
     });
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to create facility', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to create facility', err);
   }
@@ -359,7 +359,7 @@ export async function updateFacility(
 
     auditLogger.info('Facility updated', { facilityId, updates: Object.keys(updates) });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to update facility', getErrorMessage(err), { facilityId });
     return failure('UNKNOWN_ERROR', 'Failed to update facility', err);
   }
@@ -412,7 +412,7 @@ export async function searchStaff(options: StaffSearchOptions = {}): Promise<Ser
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to search staff', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to search staff', err);
   }
@@ -430,7 +430,7 @@ export async function getStaff(staffId: string): Promise<ServiceResult<HCStaff>>
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get staff', err);
   }
@@ -448,7 +448,7 @@ export async function getStaffByNPI(npi: string): Promise<ServiceResult<HCStaff>
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff by NPI', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to get staff by NPI', err);
   }
@@ -474,7 +474,7 @@ export async function createStaff(staff: HCStaffInsert): Promise<ServiceResult<H
 
     auditLogger.info('Staff created', { staffId: data.staff_id, organizationId: data.organization_id });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to create staff', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to create staff', err);
   }
@@ -502,7 +502,7 @@ export async function updateStaff(staffId: string, updates: HCStaffUpdate): Prom
 
     auditLogger.info('Staff updated', { staffId, updates: Object.keys(updates) });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to update staff', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to update staff', err);
   }
@@ -521,7 +521,7 @@ export async function deactivateStaff(staffId: string): Promise<ServiceResult<vo
 
     auditLogger.info('Staff deactivated', { staffId });
     return success(undefined);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to deactivate staff', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to deactivate staff', err);
   }
@@ -540,7 +540,7 @@ export async function getActiveStaff(organizationId?: string): Promise<ServiceRe
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get active staff', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to get active staff', err);
   }
@@ -564,7 +564,7 @@ export async function getStaffRoles(staffId: string): Promise<ServiceResult<HCSt
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff roles', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get staff roles', err);
   }
@@ -580,7 +580,7 @@ export async function assignStaffRole(role: HCStaffRoleInsert): Promise<ServiceR
 
     auditLogger.info('Staff role assigned', { staffId: role.staff_id, roleTypeId: role.role_type_id });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to assign staff role', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to assign staff role', err);
   }
@@ -601,7 +601,7 @@ export async function endStaffRole(staffRoleId: string, endDate: string): Promis
 
     auditLogger.info('Staff role ended', { staffRoleId, endDate });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to end staff role', getErrorMessage(err), { staffRoleId });
     return failure('UNKNOWN_ERROR', 'Failed to end staff role', err);
   }
@@ -624,7 +624,7 @@ export async function getStaffCredentials(staffId: string): Promise<ServiceResul
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff credentials', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get staff credentials', err);
   }
@@ -645,7 +645,7 @@ export async function addStaffCredential(
       credentialTypeId: credential.credential_type_id,
     });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to add staff credential', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to add staff credential', err);
   }
@@ -669,7 +669,7 @@ export async function updateStaffCredential(
 
     auditLogger.info('Staff credential updated', { credentialId, updates: Object.keys(updates) });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to update staff credential', getErrorMessage(err), { credentialId });
     return failure('UNKNOWN_ERROR', 'Failed to update staff credential', err);
   }
@@ -684,7 +684,7 @@ export async function getStaffCredentialsDisplay(staffId: string): Promise<Servi
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff credentials display', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get staff credentials display', err);
   }
@@ -707,7 +707,7 @@ export async function getStaffLicenses(staffId: string): Promise<ServiceResult<H
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff licenses', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get staff licenses', err);
   }
@@ -727,7 +727,7 @@ export async function addStaffLicense(license: HCStaffLicenseInsert): Promise<Se
       state: license.state,
     });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to add staff license', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to add staff license', err);
   }
@@ -751,7 +751,7 @@ export async function updateStaffLicense(
 
     auditLogger.info('Staff license updated', { licenseId, updates: Object.keys(updates) });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to update staff license', getErrorMessage(err), { licenseId });
     return failure('UNKNOWN_ERROR', 'Failed to update staff license', err);
   }
@@ -766,7 +766,7 @@ export async function hasActiveLicense(staffId: string, state: string): Promise<
     }
 
     return success(data ?? false);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to check active license', getErrorMessage(err), { staffId, state });
     return failure('UNKNOWN_ERROR', 'Failed to check active license', err);
   }
@@ -791,7 +791,7 @@ export async function getStaffBoardCertifications(
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff board certifications', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get staff board certifications', err);
   }
@@ -813,7 +813,7 @@ export async function addStaffBoardCertification(
       specialty: cert.specialty,
     });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to add staff board certification', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to add staff board certification', err);
   }
@@ -836,7 +836,7 @@ export async function getStaffPrivileges(staffId: string): Promise<ServiceResult
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff privileges', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get staff privileges', err);
   }
@@ -856,7 +856,7 @@ export async function addStaffPrivilege(privilege: HCStaffPrivilegeInsert): Prom
       privilegeName: privilege.privilege_name,
     });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to add staff privilege', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to add staff privilege', err);
   }
@@ -879,7 +879,7 @@ export async function getDirectReports(supervisorId: string): Promise<ServiceRes
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get direct reports', getErrorMessage(err), { supervisorId });
     return failure('UNKNOWN_ERROR', 'Failed to get direct reports', err);
   }
@@ -898,7 +898,7 @@ export async function getSupervisorChain(staffId: string): Promise<ServiceResult
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get supervisor chain', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get supervisor chain', err);
   }
@@ -918,7 +918,7 @@ export async function assignSupervisor(reporting: HCStaffReportingInsert): Promi
       relationshipType: reporting.relationship_type,
     });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to assign supervisor', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to assign supervisor', err);
   }
@@ -937,7 +937,7 @@ export async function getStaffEHRMappings(staffId: string): Promise<ServiceResul
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get staff EHR mappings', getErrorMessage(err), { staffId });
     return failure('UNKNOWN_ERROR', 'Failed to get staff EHR mappings', err);
   }
@@ -953,7 +953,7 @@ export async function addStaffEHRMapping(mapping: HCStaffEHRMappingInsert): Prom
 
     auditLogger.info('Staff EHR mapping added', { staffId: mapping.staff_id, ehrSystem: mapping.ehr_system });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to add staff EHR mapping', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to add staff EHR mapping', err);
   }
@@ -985,7 +985,7 @@ export async function getExpiringCredentials(
     }
 
     return success(filtered);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get expiring credentials', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to get expiring credentials', err);
   }
@@ -1009,7 +1009,7 @@ export async function createMigrationBatch(batch: HCMigrationBatchInsert): Promi
       recordCount: batch.record_count,
     });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to create migration batch', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to create migration batch', err);
   }
@@ -1031,7 +1031,7 @@ export async function getMigrationBatch(batchId: string): Promise<ServiceResult<
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get migration batch', getErrorMessage(err), { batchId });
     return failure('UNKNOWN_ERROR', 'Failed to get migration batch', err);
   }
@@ -1055,7 +1055,7 @@ export async function updateMigrationBatch(
 
     auditLogger.info('Migration batch updated', { batchId, updates: Object.keys(updates) });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to update migration batch', getErrorMessage(err), { batchId });
     return failure('UNKNOWN_ERROR', 'Failed to update migration batch', err);
   }
@@ -1070,7 +1070,7 @@ export async function addMigrationLog(log: HCMigrationLogInsert): Promise<Servic
     }
 
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to add migration log', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to add migration log', err);
   }
@@ -1092,7 +1092,7 @@ export async function getMigrationLogs(
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get migration logs', getErrorMessage(err), { batchId });
     return failure('UNKNOWN_ERROR', 'Failed to get migration logs', err);
   }
@@ -1116,7 +1116,7 @@ export async function getProviderGroups(organizationId: string): Promise<Service
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to get provider groups', getErrorMessage(err), { organizationId });
     return failure('UNKNOWN_ERROR', 'Failed to get provider groups', err);
   }
@@ -1132,7 +1132,7 @@ export async function createProviderGroup(group: HCProviderGroupInsert): Promise
 
     auditLogger.info('Provider group created', { groupId: data.group_id, groupName: data.group_name });
     return success(data);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to create provider group', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to create provider group', err);
   }
@@ -1151,7 +1151,7 @@ export async function validateNPI(npi: string): Promise<ServiceResult<boolean>> 
     }
 
     return success(data ?? false);
-  } catch (err) {
+  } catch (err: unknown) {
     auditLogger.error('Failed to validate NPI', getErrorMessage(err));
     return failure('UNKNOWN_ERROR', 'Failed to validate NPI', err);
   }

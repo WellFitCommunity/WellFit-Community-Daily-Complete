@@ -99,7 +99,7 @@ export const TenantAssignmentService = {
         isSuperAdmin,
         assignedTenants
       };
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('TENANT_ASSIGNMENT_PROFILE_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), {
         category: 'ADMINISTRATIVE'
       });
@@ -161,7 +161,7 @@ export const TenantAssignmentService = {
         isActive: true,
         assignedAt: new Date().toISOString()
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('TENANT_ASSIGNMENT_GET_ALL_FAILED', error instanceof Error ? error : new Error(String(error)), {
         category: 'ADMINISTRATIVE'
       });
@@ -202,7 +202,7 @@ export const TenantAssignmentService = {
         isActive: true,
         assignedAt: new Date().toISOString()
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return null;
     }
   },
@@ -234,7 +234,7 @@ export const TenantAssignmentService = {
         .single();
 
       return !!profileData;
-    } catch (error) {
+    } catch (error: unknown) {
       return false;
     }
   },

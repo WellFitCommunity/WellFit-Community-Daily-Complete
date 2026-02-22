@@ -111,7 +111,7 @@ const TelehealthScheduler: React.FC = () => {
 
         setSearchResults(data || []);
         setShowSearchResults(true);
-      } catch (error) {
+      } catch (error: unknown) {
 
       }
     };
@@ -181,7 +181,7 @@ const TelehealthScheduler: React.FC = () => {
         });
 
         setAppointments(formattedAppointments);
-      } catch (error) {
+      } catch (error: unknown) {
 
       } finally {
         setLoadingAppointments(false);

@@ -128,7 +128,7 @@ export class ClaudeCareAssistant {
         ...translationResponse,
         cached: false,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       // Translation failed - error logged via audit system
       throw new ClaudeCareError(
         'Translation failed',
@@ -175,7 +175,7 @@ export class ClaudeCareAssistant {
         confidence: data.translation_confidence || 0.9,
         cached: true,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       // Cache lookup is non-critical, silently return null
       if (import.meta.env.MODE === 'development') {
 
@@ -206,7 +206,7 @@ export class ClaudeCareAssistant {
       });
 
       // Translation cached successfully
-    } catch (error) {
+    } catch (error: unknown) {
       // Don't fail the request if caching fails
       if (import.meta.env.MODE === 'development') {
 
@@ -297,7 +297,7 @@ CONFIDENCE: [0.0-1.0]
         confidence,
         cached: false,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       // Return raw content as fallback
       if (import.meta.env.MODE === 'development') {
 
@@ -403,7 +403,7 @@ CONFIDENCE: [0.0-1.0]
         executionTimeMs: executionTime,
         suggestedEdits: [],
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }
@@ -448,7 +448,7 @@ CONFIDENCE: [0.0-1.0]
         preferredModel: data.preferred_model,
         isActive: data.is_active,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }
@@ -499,7 +499,7 @@ CONFIDENCE: [0.0-1.0]
       }
 
       return data.id;
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }
@@ -542,7 +542,7 @@ CONFIDENCE: [0.0-1.0]
         preferredModel: row.preferred_model,
         isActive: row.is_active,
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }
@@ -584,7 +584,7 @@ CONFIDENCE: [0.0-1.0]
         userFeedback: row.user_feedback,
         createdAt: row.created_at,
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }
@@ -687,7 +687,7 @@ CONFIDENCE: [0.0-1.0]
         suggestedTemplate,
         confidence,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }
@@ -741,7 +741,7 @@ CONFIDENCE: [0.0-1.0]
       }
 
       return undefined;
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }
@@ -777,7 +777,7 @@ CONFIDENCE: [0.0-1.0]
       }
 
       // Care context shared successfully
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }
@@ -818,7 +818,7 @@ CONFIDENCE: [0.0-1.0]
         isActive: row.is_active,
         createdAt: row.created_at,
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.MODE === 'development') {
 
       }

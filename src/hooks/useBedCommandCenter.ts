@@ -113,7 +113,7 @@ export function useBedCommandCenter(
       }
 
       setLastUpdated(new Date());
-    } catch (err) {
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage);
     } finally {

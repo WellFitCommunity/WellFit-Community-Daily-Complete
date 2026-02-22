@@ -341,7 +341,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         } else {
           setAssistanceLevelLoaded(true);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         setAssistanceLevelLoaded(true);
       }
     };
@@ -366,7 +366,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         if (profile && profile.corrections.length > 0) {
           setStatus(`Voice learning active (${profile.corrections.length} corrections learned)`);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         // Silent fail
       }
     };
@@ -754,7 +754,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       // Show feedback prompt after recording stops
       setShowFeedbackPrompt(true);
       setFeedbackSubmitted(false);
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error(
         'SCRIBE_STOP_RECORDING_ERROR',
         error instanceof Error ? error : new Error('Stop recording error'),
@@ -833,7 +833,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           newLevel,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('SCRIBE_ASSISTANCE_LEVEL_ERROR', error instanceof Error ? error : new Error('Unknown error'), {
         newLevel,
       });

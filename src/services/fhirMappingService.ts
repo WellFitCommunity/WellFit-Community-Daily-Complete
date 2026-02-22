@@ -94,7 +94,7 @@ export class FHIRMappingService {
       case 'JSON':
         try {
           JSON.parse(content);
-        } catch (e) {
+        } catch (e: unknown) {
           errors.push('Invalid JSON format');
         }
         break;
@@ -207,7 +207,7 @@ Please analyze this data and generate comprehensive FHIR mapping rules.`
       const mapping = JSON.parse(jsonText);
       this.validateMappingResult(mapping);
       return mapping;
-    } catch (parseError) {
+    } catch (parseError: unknown) {
       throw new Error(`Failed to parse mapping analysis: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
     }
   }

@@ -81,7 +81,7 @@ const SmartCallbackPage: React.FC = () => {
           navigate('/dashboard');
         }, 3000);
 
-      } catch (error) {
+      } catch (error: unknown) {
 
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Unknown error occurred');

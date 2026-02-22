@@ -47,7 +47,7 @@ export async function getFHIRConnections(): Promise<ApiResponse<FHIRConnection[]
       success: true,
       data: connections
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch connections'
@@ -68,7 +68,7 @@ export async function createFHIRConnection(
       data: connection,
       message: 'FHIR connection created successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create connection'
@@ -87,7 +87,7 @@ export async function testFHIRConnection(connectionId: string): Promise<ApiRespo
       data: result.metadata,
       message: result.message
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Connection test failed'
@@ -108,7 +108,7 @@ export async function updateFHIRConnectionStatus(
       success: true,
       message: 'Connection status updated'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to update status'
@@ -142,7 +142,7 @@ export async function deleteFHIRConnection(connectionId: string): Promise<ApiRes
       success: true,
       message: 'Connection deleted successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete connection'
@@ -168,7 +168,7 @@ export async function syncFromFHIR(
       data: result,
       message: `Sync completed: ${result.recordsSucceeded}/${result.recordsProcessed} records synced`
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Sync from FHIR failed'
@@ -190,7 +190,7 @@ export async function syncToFHIR(
       data: result,
       message: `Push completed: ${result.recordsSucceeded}/${result.recordsProcessed} records pushed`
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Sync to FHIR failed'
@@ -212,7 +212,7 @@ export async function syncBidirectional(
       data: results,
       message: 'Bi-directional sync completed'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Bi-directional sync failed'
@@ -241,7 +241,7 @@ export async function getSyncHistory(
       success: true,
       data: data || []
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch sync history'
@@ -272,7 +272,7 @@ export async function createPatientMapping(
       data: mapping,
       message: 'Patient mapping created successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create patient mapping'
@@ -299,7 +299,7 @@ export async function getPatientMapping(
       success: true,
       data: mapping
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch patient mapping'
@@ -330,7 +330,7 @@ export async function getAllPatientMappings(connectionId: string): Promise<ApiRe
       success: true,
       data: data || []
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch patient mappings'
@@ -358,7 +358,7 @@ export async function deletePatientMapping(
       success: true,
       message: 'Patient mapping deleted successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete patient mapping'
@@ -390,7 +390,7 @@ export async function startAutoSync(
       success: true,
       message: `Auto-sync started with ${frequency} frequency`
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to start auto-sync'
@@ -415,7 +415,7 @@ export async function stopAutoSync(connectionId: string): Promise<ApiResponse> {
       success: true,
       message: 'Auto-sync stopped'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to stop auto-sync'
@@ -468,7 +468,7 @@ export async function getSyncStatistics(
         lastSync: logs[0]?.started_at || null
       }
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch sync statistics'
@@ -512,7 +512,7 @@ export async function getFHIRComplianceMetrics(): Promise<ApiResponse> {
         complianceScore: totalPatients ? Math.round(((syncedPatients || 0) / totalPatients) * 100) : 0
       }
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch compliance metrics'

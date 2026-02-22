@@ -317,7 +317,7 @@ export class VoiceCommandService {
         name: `${p.name_given?.[0] || ''} ${p.name_family || ''}`.trim(),
         mrn: p.identifier?.[0]?.value,
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('VOICE_PATIENT_SEARCH_FAILED', error instanceof Error ? error : new Error('Search failed'));
       return [];
     }
@@ -335,7 +335,7 @@ export class VoiceCommandService {
       this.onStateChangeCallback?.('listening');
       auditLogger.info('VOICE_COMMAND_STARTED', {});
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('VOICE_COMMAND_START_FAILED', error instanceof Error ? error : new Error('Start failed'));
       return false;
     }

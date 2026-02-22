@@ -195,7 +195,7 @@ export class OfflineAudioService {
       if (this.config.autoSyncEnabled) {
         this.startAutoSync();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error(
         'OFFLINE_AUDIO_DB_INIT_FAILED',
         error instanceof Error ? error : new Error('DB init failed')
@@ -427,7 +427,7 @@ export class OfflineAudioService {
             duration: session.totalDuration,
             chunkCount: session.chunkCount,
           });
-        } catch (error) {
+        } catch (error: unknown) {
           session.status = 'completed'; // Reset to completed for retry
           session.error = error instanceof Error ? error.message : String(error);
           await this.getDb().put('offline-sessions', session);
@@ -617,7 +617,7 @@ export class OfflineAudioService {
     this.listeners.get(event)?.forEach((callback) => {
       try {
         callback(data);
-      } catch (error) {
+      } catch (error: unknown) {
         auditLogger.error(
           'OFFLINE_EVENT_HANDLER_ERROR',
           error instanceof Error ? error : new Error('Event handler error'),

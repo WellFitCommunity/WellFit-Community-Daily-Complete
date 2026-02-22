@@ -177,7 +177,7 @@ export function TenantModuleConfigPanel() {
       } else {
         setSaveError('Failed to save configuration. Please try again.');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : 'An error occurred while saving');
     } finally {
       setSaving(false);

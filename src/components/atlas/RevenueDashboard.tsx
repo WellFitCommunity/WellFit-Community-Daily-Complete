@@ -47,7 +47,7 @@ export const RevenueDashboard: React.FC = () => {
 
         setMetrics(metricsData);
         setOpportunities(opportunitiesData);
-      } catch (err) {
+      } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Failed to load revenue data');
       } finally {
         setLoading(false);
@@ -68,7 +68,7 @@ export const RevenueDashboard: React.FC = () => {
 
       setMetrics(metricsData);
       setOpportunities(opportunitiesData);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load revenue data');
     } finally {
       setLoading(false);

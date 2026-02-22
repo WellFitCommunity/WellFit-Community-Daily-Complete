@@ -114,7 +114,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
       await actions.loadFromFile(file);
       setValue('sourceData', state.sourceData);
       setValue('sourceType', state.sourceType);
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   };

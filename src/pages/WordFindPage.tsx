@@ -314,7 +314,7 @@ const WordFind: React.FC = () => {
                   // Silently fail - engagement tracking is not critical
                 }
               })();
-            } catch (error) {
+            } catch (error: unknown) {
 
             }
           }

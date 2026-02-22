@@ -127,7 +127,7 @@ export async function getDepartmentMetrics(
     });
 
     return success(metrics as DepartmentWellnessMetrics);
-  } catch (err) {
+  } catch (err: unknown) {
     const errorMessage = getErrorMessage(err);
     await auditLogger.error('STAFF_WELLNESS_METRICS_FAILED', errorMessage, { filters });
     return failure('UNKNOWN_ERROR', errorMessage, err);
@@ -169,7 +169,7 @@ export async function getStaffWellnessList(
     });
 
     return success(staffList);
-  } catch (err) {
+  } catch (err: unknown) {
     const errorMessage = getErrorMessage(err);
     await auditLogger.error('STAFF_WELLNESS_LIST_FAILED', errorMessage, { filters });
     return failure('UNKNOWN_ERROR', errorMessage, err);
@@ -215,7 +215,7 @@ export async function logIntervention(
     // 3. Update staff wellness status
 
     return success(undefined);
-  } catch (err) {
+  } catch (err: unknown) {
     const errorMessage = getErrorMessage(err);
     await auditLogger.error('WELLNESS_INTERVENTION_FAILED', errorMessage, {
       staff_id: request.staff_id,
@@ -279,7 +279,7 @@ export async function getWellnessTrends(
     });
 
     return success(trends);
-  } catch (err) {
+  } catch (err: unknown) {
     const errorMessage = getErrorMessage(err);
     await auditLogger.error('WELLNESS_TRENDS_FAILED', errorMessage);
     return failure('UNKNOWN_ERROR', errorMessage, err);
@@ -314,7 +314,7 @@ export async function getDepartments(
     }
 
     return success(data || []);
-  } catch (err) {
+  } catch (err: unknown) {
     const errorMessage = getErrorMessage(err);
     return failure('UNKNOWN_ERROR', errorMessage, err);
   }

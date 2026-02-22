@@ -168,7 +168,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
       await FHIRService.CarePlan.create(carePlan);
       onSave();
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to save care plan. Please try again.');
     } finally {

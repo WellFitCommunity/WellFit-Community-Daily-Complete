@@ -127,7 +127,7 @@ export const TelehealthLobby: React.FC<TelehealthLobbyProps> = ({
         clearInterval(intervalId);
       }, 5000);
 
-    } catch (err) {
+    } catch (err: unknown) {
 
       setDeviceCheck({ camera: false, microphone: false, speakers: false });
     } finally {

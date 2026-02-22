@@ -232,7 +232,7 @@ const ReportsSection: React.FC = () => {
 
         addToast('warning', 'Some statistics may be incomplete');
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Failed to load report statistics';
       addToast('error', message);
@@ -319,7 +319,7 @@ const ReportsSection: React.FC = () => {
       const filename = `engagement_summary_${new Date().toISOString().slice(0, 10)}.csv`;
       await lazySaveAs(blob, filename);
       addToast('success', `Engagement summary exported to ${filename}`);
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Export failed';
       addToast('error', `Failed to export CSV: ${message}`);
@@ -394,7 +394,7 @@ const ReportsSection: React.FC = () => {
       const filename = `self_reports_${new Date().toISOString().slice(0, 10)}.csv`;
       await lazySaveAs(blob, filename);
       addToast('success', `${rows.length} self-reports exported to ${filename}`);
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Export failed';
       addToast('error', `Failed to export self-reports: ${message}`);
@@ -488,7 +488,7 @@ const ReportsSection: React.FC = () => {
       const filename = `detailed_analytics_${new Date().toISOString().slice(0, 10)}.csv`;
       await lazySaveAs(blob, filename);
       addToast('success', `Detailed analytics exported to ${filename}`);
-    } catch (error) {
+    } catch (error: unknown) {
 
       const message = error instanceof Error ? error.message : 'Export failed';
       addToast('error', `Failed to export detailed analytics: ${message}`);

@@ -126,7 +126,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
       setRecentAlerts(alerts || []);
       setCronExecutions(cronLogs || []);
 
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('GUARDIAN_METRICS_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });
@@ -154,7 +154,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
       } else {
         setError('Health check failed: ' + (response.error || 'Unknown error'));
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to run health check');
     } finally {
       setHealthCheckRunning(false);

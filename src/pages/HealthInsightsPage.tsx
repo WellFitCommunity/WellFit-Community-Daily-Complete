@@ -23,7 +23,7 @@ const HealthInsightsPage: React.FC = () => {
       try {
         // Verify profile exists
         await fetchMyProfile();
-      } catch (e) {
+      } catch (e: unknown) {
         // Removed console statement.message);
       } finally {
         setLoading(false);

@@ -149,7 +149,7 @@ export const SecurityWorkflowModeSwitcher: React.FC<SecurityWorkflowModeSwitcher
           user_id: user.id,
           [field]: new Date().toISOString(),
         });
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handled silently
     }
   };

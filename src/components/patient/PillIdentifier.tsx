@@ -92,7 +92,7 @@ export function PillIdentifier({
       } else {
         toast.error(result.error || 'Failed to identify pill');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Error identifying pill');
     } finally {
       setProcessing(false);
@@ -140,7 +140,7 @@ export function PillIdentifier({
       } else {
         toast.error(result.error || 'Failed to verify pill');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Error verifying pill');
     } finally {
       setProcessing(false);

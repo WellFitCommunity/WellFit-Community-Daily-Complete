@@ -71,7 +71,7 @@ export class RealHealingImplementations {
         fixedCode: hasChanges ? fixedCode : undefined,
         success: hasChanges,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         type: 'xss_fix',
         description: 'Failed to fix XSS vulnerability',
@@ -116,7 +116,7 @@ export class RealHealingImplementations {
         fixedCode: hasChanges ? fixedCode : undefined,
         success: hasChanges,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         type: 'sql_injection_fix',
         description: 'Failed to fix SQL injection',
@@ -176,7 +176,7 @@ const maskPHI = (data: unknown) => {
         fixedCode: hasChanges ? fixedCode : undefined,
         success: hasChanges,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         type: 'phi_exposure_fix',
         description: 'Failed to fix PHI exposure',
@@ -233,7 +233,7 @@ import { secureStorage } from '../../utils/secureStorage';
         fixedCode: hasChanges ? fixedCode : undefined,
         success: hasChanges,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         type: 'insecure_storage_fix',
         description: 'Failed to fix insecure storage',
@@ -307,7 +307,7 @@ useEffect(() => {
         fixedCode: fixCode,
         success: true,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         type: 'memory_leak_fix',
         description: 'Failed to fix memory leak',
@@ -347,7 +347,7 @@ useEffect(() => {
         success: true,
         fixedCode: recommendations.join('\n'),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         type: 'database_connection_fix',
         description: 'Failed to fix database connection pool',
@@ -388,7 +388,7 @@ class CircuitBreaker {
       const result = await fn();
       this.onSuccess();
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       this.onFailure();
       throw error;
     }
@@ -435,7 +435,7 @@ export async function call${apiEndpoint.replace(/[^a-zA-Z0-9]/g, '_')}() {
         fixedCode: circuitBreakerCode,
         success: true,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         type: 'circuit_breaker_implementation',
         description: 'Failed to implement circuit breaker',

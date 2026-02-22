@@ -65,7 +65,7 @@ const ClaudeTestWidget: React.FC = () => {
           message: `❌ No response from Edge Function`
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setTestResult({
         success: false,
         message: `❌ Connection failed: ${error instanceof Error ? error.message : 'Network error'}`
@@ -107,7 +107,7 @@ const ClaudeTestWidget: React.FC = () => {
       } else {
         setHealthTest(`Health test failed: No response from Edge Function`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setHealthTest(`Health test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);

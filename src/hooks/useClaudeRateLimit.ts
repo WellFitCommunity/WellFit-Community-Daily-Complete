@@ -131,7 +131,7 @@ export function useClaudeRateLimit({
           canMakeRequest: serverLimits.remaining > 0
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }, [userId, rateLimitState.remaining]);

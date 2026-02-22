@@ -198,7 +198,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
         avgCompletionTime: Math.round(avgCompletionTime),
         riskFlagsToday: riskFlags,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);

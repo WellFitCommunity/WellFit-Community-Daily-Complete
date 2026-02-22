@@ -124,7 +124,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
             },
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
 
       } finally {
         setLoading(false);
@@ -197,7 +197,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
 
       setLastSaved(new Date());
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Failed to save settings. Please try again.');
     } finally {

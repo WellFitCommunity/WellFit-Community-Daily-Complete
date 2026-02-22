@@ -38,7 +38,7 @@ export const TimeClockPage: React.FC = () => {
         if (profile?.tenant_id) {
           setTenantId(profile.tenant_id);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         await auditLogger.error('TIME_CLOCK_PAGE_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), {
           category: 'ADMINISTRATIVE',
         });

@@ -25,7 +25,7 @@ export async function getMedicationReminders(
       success: true,
       data: data || []
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch reminders'
@@ -53,7 +53,7 @@ export async function createMedicationReminder(
       data,
       message: 'Reminder created successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create reminder'
@@ -83,7 +83,7 @@ export async function updateMedicationReminder(
       data,
       message: 'Reminder updated successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to update reminder'
@@ -107,7 +107,7 @@ export async function deleteMedicationReminder(reminderId: string): Promise<ApiR
       success: true,
       message: 'Reminder deleted successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete reminder'

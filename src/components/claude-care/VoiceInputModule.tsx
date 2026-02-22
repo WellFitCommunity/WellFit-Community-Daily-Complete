@@ -41,7 +41,7 @@ const VoiceInputModule: React.FC<Props> = ({ userRole, userId, onPopulateTaskFor
       mediaRecorder.start();
       setIsRecording(true);
       setError(null);
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Microphone access denied. Please enable microphone permissions.');
     }
@@ -70,7 +70,7 @@ const VoiceInputModule: React.FC<Props> = ({ userRole, userId, onPopulateTaskFor
       setTranscription(result.transcription);
       setSuggestedTemplate(result.suggestedTemplate);
       setConfidence(result.confidence || 0);
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to process voice input. Please try again.');
     } finally {

@@ -41,7 +41,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
       setSummary(summaryData);
       setComplianceDetails(complianceData);
       setLastRefresh(new Date());
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to load executive summary');
     } finally {

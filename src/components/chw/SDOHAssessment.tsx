@@ -180,7 +180,7 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
 
       await chwService.recordSDOHAssessment(visitId, sdohData);
       onComplete();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to save assessment. Please try again.');
       setLoading(false);
     }

@@ -230,7 +230,7 @@ export async function saveSOAPNote(
     await logSOAPNoteAccess(encounter_id, author_id, 'CREATE');
 
     return { success: true, note_ids };
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }
@@ -309,7 +309,7 @@ export async function updateSOAPNote(
     await logSOAPNoteAccess(encounterId, user.id, 'UPDATE');
 
     return { success: true };
-  } catch (error) {
+  } catch (error: unknown) {
 
     throw error;
   }

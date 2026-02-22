@@ -237,7 +237,7 @@ export default function MealDetailPage() {
         setInteractionMessage('Thanks for letting us know!');
         setTimeout(() => setInteractionMessage(''), 3000);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   };
@@ -259,7 +259,7 @@ export default function MealDetailPage() {
       setInteractionMessage('🎉 Photo uploaded! You may be featured on the website or in Community Moments!');
       setPhotoFile(null);
       setTimeout(() => setInteractionMessage(''), 5000);
-    } catch (error) {
+    } catch (error: unknown) {
 
       setInteractionMessage('Failed to upload photo. Please try again.');
     } finally {

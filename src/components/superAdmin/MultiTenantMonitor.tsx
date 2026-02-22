@@ -63,7 +63,7 @@ const MultiTenantMonitor: React.FC = () => {
 
       setTenants(selectedTenants);
 
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('MULTI_TENANT_MONITOR_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE'
       });

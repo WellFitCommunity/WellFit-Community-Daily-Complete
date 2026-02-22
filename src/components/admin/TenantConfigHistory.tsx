@@ -113,7 +113,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
       if (statsResult.success) {
         setStats(statsResult.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load configuration history');
     } finally {
       setLoading(false);

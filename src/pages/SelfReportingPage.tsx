@@ -113,7 +113,7 @@ const SelfReportingPage: React.FC = () => {
         } else {
           setCurrentUser(data.user ?? null);
         }
-      } catch (e) {
+      } catch (e: unknown) {
         if (!mounted) return;
         const err = e instanceof Error ? e : new Error('An unexpected error occurred.');
         setErrorMessage(err.message);
@@ -250,7 +250,7 @@ const SelfReportingPage: React.FC = () => {
         }));
 
         setSelfReports(reports);
-      } catch (e) {
+      } catch (e: unknown) {
         const err = e instanceof Error ? e : new Error('An unexpected error occurred while fetching reports.');
         setErrorMessage(err.message);
         setSelfReports([]);
@@ -322,7 +322,7 @@ const SelfReportingPage: React.FC = () => {
           if (error) throw error;
 
           setFeedbackMessage('✅ Report saved successfully!');
-        } catch (error) {
+        } catch (error: unknown) {
           // If online but save failed, save offline
 
           await offlineStorage.savePendingReport(currentUser.id, payload);
@@ -350,11 +350,11 @@ const SelfReportingPage: React.FC = () => {
       if (online) {
         try {
           await fetchReports(currentUser.id);
-        } catch (error) {
+        } catch (error: unknown) {
 
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred.';
       setErrorMessage(`Error saving report: ${message}`);
     } finally {

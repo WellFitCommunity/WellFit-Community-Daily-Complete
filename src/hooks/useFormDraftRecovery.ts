@@ -26,7 +26,7 @@ export function useFormDraftRecovery<T extends Record<string, unknown>>(
         // Merge with initial data to handle schema changes
         return { ...initialData, ...parsed };
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
     return initialData;
@@ -42,7 +42,7 @@ export function useFormDraftRecovery<T extends Record<string, unknown>>(
     try {
       const saved = localStorage.getItem(storageKey);
       setHasDraft(!!saved);
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }, [storageKey, enabled]);
@@ -66,7 +66,7 @@ export function useFormDraftRecovery<T extends Record<string, unknown>>(
           setLastSaved(new Date());
           setHasDraft(true);
         }
-      } catch (error) {
+      } catch (error: unknown) {
 
       }
     }, debounceMs);
@@ -84,7 +84,7 @@ export function useFormDraftRecovery<T extends Record<string, unknown>>(
       setHasDraft(false);
       setLastSaved(null);
       setFormData(initialData);
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }, [storageKey, initialData]);
@@ -98,7 +98,7 @@ export function useFormDraftRecovery<T extends Record<string, unknown>>(
         return true;
       }
       return false;
-    } catch (error) {
+    } catch (error: unknown) {
 
       return false;
     }

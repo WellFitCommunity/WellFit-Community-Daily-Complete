@@ -339,7 +339,7 @@ export class OfflineDataSync {
       result.alerts = await this.syncStore('alerts', 'specialist_alerts');
 
 
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(errorMsg);
 
@@ -376,7 +376,7 @@ export class OfflineDataSync {
         // Mark as synced in IndexedDB
         await this.markAsSynced(storeName, item.id);
         syncedCount++;
-      } catch (error) {
+      } catch (error: unknown) {
 
       }
     }

@@ -153,7 +153,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
       } else {
         setConfig(data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_TENANT_ENTITLEMENT_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         tenantId: tenant.tenantId,
         tenantName: tenant.tenantName
@@ -345,7 +345,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
       onSaved?.();
 
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_TENANT_ENTITLEMENT_SAVE_FAILED', err instanceof Error ? err : new Error(String(err)), {
         tenantId: tenant.tenantId,
         changes: pendingChanges

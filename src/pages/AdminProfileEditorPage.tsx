@@ -60,7 +60,7 @@ const AdminProfileEditor: React.FC = () => {
           .eq('role', 'senior');
         if (error) throw error;
         setProfiles((data as Profile[]) || []);
-      } catch (err) {
+      } catch (err: unknown) {
 
       } finally {
         setIsLoadingProfiles(false);
@@ -97,7 +97,7 @@ const AdminProfileEditor: React.FC = () => {
           .order('created_at', { ascending: false });
         if (error) throw error;
         setNotes((data as AdminNote[]) || []);
-      } catch (err) {
+      } catch (err: unknown) {
 
       } finally {
         setIsLoadingNotes(false);
@@ -129,7 +129,7 @@ const AdminProfileEditor: React.FC = () => {
       if (err2) throw err2;
       setNotes((data as AdminNote[]) || []);
       setAddNoteMessage({ type: 'success', text: 'Note added successfully!' });
-    } catch (e) {
+    } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Unknown error';
       setAddNoteMessage({ type: 'error', text: `Error adding note: ${message}` });
     } finally {
@@ -160,7 +160,7 @@ const AdminProfileEditor: React.FC = () => {
       setEditingNoteId(null);
       setEditingNoteText('');
       setEditNoteMessage({ type: 'success', text: 'Note updated successfully!' });
-    } catch (e) {
+    } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Unknown error';
       setEditNoteMessage({ type: 'error', text: `Error updating note: ${message}` });
     } finally {

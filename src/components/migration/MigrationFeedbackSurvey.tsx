@@ -660,7 +660,7 @@ export const MigrationSurvey: React.FC<MigrationSurveyProps> = ({
       }
 
       onComplete(feedback);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handling - feedback submission is non-critical
       onComplete(feedback);
     } finally {

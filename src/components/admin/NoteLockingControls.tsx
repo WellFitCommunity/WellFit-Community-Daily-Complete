@@ -86,7 +86,7 @@ export const NoteLockingControls: React.FC<NoteLockingControlsProps> = ({
           setAmendmentCount(amendmentsResult.data.length);
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load lock status');
     } finally {
       setLoading(false);
@@ -121,7 +121,7 @@ export const NoteLockingControls: React.FC<NoteLockingControlsProps> = ({
       await fetchLockDetails();
       onLockChange?.(true);
       setShowConfirm(false);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to lock note');
     } finally {
       setLocking(false);

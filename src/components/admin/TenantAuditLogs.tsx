@@ -122,7 +122,7 @@ export const TenantAuditLogs: React.FC = () => {
         })));
       }
 
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('TENANT_AUDIT_LOGS_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), { tenantId });
     } finally {
       setLoading(false);

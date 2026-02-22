@@ -55,7 +55,7 @@ async function getEncryptionKey(): Promise<CryptoKey> {
     }));
 
     return await deriveKey(masterKey, saltB64);
-  } catch (error) {
+  } catch (error: unknown) {
     await auditLogger.error('ENCRYPTION_KEY_INIT_FAILED', error instanceof Error ? error : new Error(String(error)), { module: 'secureStorage' });
     throw new Error('Encryption key initialization failed');
   }
@@ -120,7 +120,7 @@ async function encrypt(plaintext: string): Promise<EncryptedData> {
       salt: keyData.salt,
       version: 1
     };
-  } catch (error) {
+  } catch (error: unknown) {
     await auditLogger.error('ENCRYPTION_FAILED', error instanceof Error ? error : new Error(String(error)), { module: 'secureStorage' });
     throw new Error('Encryption failed');
   }
@@ -146,7 +146,7 @@ async function decrypt(encryptedData: EncryptedData): Promise<string> {
 
     const dec = new TextDecoder();
     return dec.decode(decrypted);
-  } catch (error) {
+  } catch (error: unknown) {
     await auditLogger.error('DECRYPTION_FAILED', error instanceof Error ? error : new Error(String(error)), { module: 'secureStorage' });
     throw new Error('Decryption failed - data may be corrupted');
   }
@@ -193,7 +193,7 @@ export const secureStorage = {
       const plaintext = typeof value === 'string' ? value : JSON.stringify(value);
       const encrypted = await encrypt(plaintext);
       sessionStorage.setItem(key, JSON.stringify(encrypted));
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('SECURE_STORAGE_SET_FAILED', error instanceof Error ? error : new Error(String(error)), { key, module: 'secureStorage' });
       throw error;
     }
@@ -218,7 +218,7 @@ export const secureStorage = {
       }
 
       return await decrypt(encrypted);
-    } catch (error) {
+    } catch (error: unknown) {
       await auditLogger.error('SECURE_STORAGE_GET_FAILED', error instanceof Error ? error : new Error(String(error)), { key, module: 'secureStorage' });
       return null; // Fail gracefully
     }
@@ -274,7 +274,7 @@ class SyncSecureStorage {
           if (value !== null) {
             this.cache.set(key, value);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           auditLogger.error('SYNC_STORAGE_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), { key, module: 'syncSecureStorage' }).catch(() => {});
         }
       }
@@ -327,7 +327,7 @@ export async function initializeSecureStorage(): Promise<void> {
     await syncSecureStorage.initialize();
 
     await auditLogger.info('SECURE_STORAGE_INITIALIZED', { module: 'secureStorage' });
-  } catch (error) {
+  } catch (error: unknown) {
     await auditLogger.error('SECURE_STORAGE_INIT_FAILED', error instanceof Error ? error : new Error(String(error)), { module: 'secureStorage' });
     throw error;
   }

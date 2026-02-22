@@ -35,7 +35,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
       if (result.success && result.data) {
         setImmunizations(result.data as unknown as FHIRImmunization[]);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
     setLoading(false);

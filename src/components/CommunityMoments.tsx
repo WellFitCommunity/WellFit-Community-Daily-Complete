@@ -127,7 +127,7 @@ const CommunityMoments: React.FC = () => {
         if (!cancelled && data?.first_name) {
           setUserFirstName(data.first_name);
         }
-      } catch (err) {
+      } catch (err: unknown) {
 
       }
     })();
@@ -165,7 +165,7 @@ const CommunityMoments: React.FC = () => {
         if (!cancelled && !error) {
           setPendingCount(data || 0);
         }
-      } catch (err) {
+      } catch (err: unknown) {
 
       }
     };
@@ -236,7 +236,7 @@ const CommunityMoments: React.FC = () => {
         splitFeatured(normalized);
         setPage(1);
         setHasMore(((count ?? 0) as number) > normalized.length);
-      } catch (e) {
+      } catch (e: unknown) {
 
         setError(e instanceof Error ? e.message : 'Failed to load moments. Please refresh the page.');
       } finally {

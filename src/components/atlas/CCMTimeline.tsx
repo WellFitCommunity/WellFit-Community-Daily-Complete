@@ -39,7 +39,7 @@ export const CCMTimeline: React.FC = () => {
 
         const revenueData = CCMAutopilotService.calculateCCMRevenue(eligiblePatients);
         setRevenue(revenueData);
-      } catch (err) {
+      } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Failed to load CCM data');
       } finally {
         setLoading(false);
@@ -58,7 +58,7 @@ export const CCMTimeline: React.FC = () => {
 
       const revenueData = CCMAutopilotService.calculateCCMRevenue(eligiblePatients);
       setRevenue(revenueData);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load CCM data');
     } finally {
       setLoading(false);

@@ -30,7 +30,7 @@ const CrossRoleContextModule: React.FC<Props> = ({ userRole, patientId, userId }
     try {
       const entries = await ClaudeCareAssistant.getCareContext(patientId);
       setContextEntries(entries);
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to load care context');
     } finally {
@@ -60,7 +60,7 @@ const CrossRoleContextModule: React.FC<Props> = ({ userRole, patientId, userId }
 
       setNewContext('');
       await loadContextEntries();
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to share context');
     } finally {

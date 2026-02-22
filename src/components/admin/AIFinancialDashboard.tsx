@@ -364,7 +364,7 @@ const AIFinancialDashboard: React.FC = () => {
         });
       }
       setRecommendations(recs);
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('AI_FINANCIAL_COST_LOAD_ERROR', error instanceof Error ? error : new Error('Unknown error'));
     }
   }, [loadHistoricalTrends]);
@@ -450,7 +450,7 @@ const AIFinancialDashboard: React.FC = () => {
         highRiskPatients: highRiskCount || 0,
         projectedAnnualRevenue: totalMonthly * 12,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('AI_FINANCIAL_REVENUE_LOAD_ERROR', error instanceof Error ? error : new Error('Unknown error'));
     }
   }, [tenantId, supabase]);
@@ -486,7 +486,7 @@ const AIFinancialDashboard: React.FC = () => {
       setRefreshing(true);
       await ccmEligibilityScorer.batchAssessEligibility(tenantId);
       await loadRevenueData();
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('AI_FINANCIAL_BATCH_ERROR', error instanceof Error ? error : new Error('Unknown error'));
     } finally {
       setRefreshing(false);

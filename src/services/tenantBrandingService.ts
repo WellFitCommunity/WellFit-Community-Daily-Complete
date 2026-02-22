@@ -60,7 +60,7 @@ export async function fetchTenantBrandingBySubdomain(
       customCss: tenant.custom_css || {},
       themeSettings: tenant.theme_settings || {},
     };
-  } catch (error) {
+  } catch (error: unknown) {
 
     return null;
   }
@@ -105,7 +105,7 @@ export async function fetchTenantBrandingById(
       customCss: data.custom_css || {},
       themeSettings: data.theme_settings || {},
     };
-  } catch (error) {
+  } catch (error: unknown) {
 
     return null;
   }
@@ -154,7 +154,7 @@ export async function fetchAllActiveTenants(): Promise<
       secondaryColor: tenant.secondary_color || defaultBranding.secondaryColor,
       isActive: tenant.is_active,
     }));
-  } catch (error) {
+  } catch (error: unknown) {
 
     return [];
   }
@@ -196,7 +196,7 @@ export async function updateTenantBranding(
 
 
     return { success: true };
-  } catch (error) {
+  } catch (error: unknown) {
 
     return {
       success: false,
@@ -261,7 +261,7 @@ export async function uploadTenantLogo(
     }
 
     return { success: true, url: publicUrl };
-  } catch (error) {
+  } catch (error: unknown) {
 
     return {
       success: false,

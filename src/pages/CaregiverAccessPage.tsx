@@ -90,7 +90,7 @@ const CaregiverAccessPage: React.FC = () => {
         // Session is valid
         setExistingSession(session);
         setCheckingSession(false);
-      } catch (err) {
+      } catch (err: unknown) {
         auditLogger.error('CAREGIVER_SESSION_CHECK_ERROR', err instanceof Error ? err : new Error(String(err)));
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
         setCheckingSession(false);
@@ -276,7 +276,7 @@ const CaregiverAccessPage: React.FC = () => {
       // Navigate to senior view
       navigate(`/senior-view/${seniorData.user_id}`);
 
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('CAREGIVER_ACCESS_ERROR', err instanceof Error ? err : new Error(String(err)));
       setError('An unexpected error occurred. Please try again.');
     } finally {
@@ -303,7 +303,7 @@ const CaregiverAccessPage: React.FC = () => {
       auditLogger.info('CAREGIVER_SESSION_ENDED', {
         caregiverName: existingSession.caregiverName
       });
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('CAREGIVER_SESSION_END_ERROR', err instanceof Error ? err : new Error(String(err)));
     }
 

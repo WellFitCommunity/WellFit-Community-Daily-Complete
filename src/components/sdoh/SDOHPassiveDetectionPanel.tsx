@@ -28,7 +28,7 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
     try {
       const unreviewed = await SDOHPassiveDetectionService.getUnreviewedDetections(patientId);
       setDetections(unreviewed);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error logged server-side, fail silently on client
     } finally {
       setLoading(false);
@@ -53,7 +53,7 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
       if (onDetectionReviewed) {
         onDetectionReviewed();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Error logged server-side, fail silently on client
     } finally {
       setReviewingId(null);
@@ -67,7 +67,7 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
       if (newDetections.length > 0) {
         await loadDetections(); // Reload to get all unreviewed
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Error logged server-side, fail silently on client
     } finally {
       setLoading(false);

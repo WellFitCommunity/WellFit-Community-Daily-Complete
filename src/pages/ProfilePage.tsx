@@ -45,7 +45,7 @@ const ProfilePage: React.FC = () => {
 
       if (error) throw error;
       setProfile(data);
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);
@@ -71,7 +71,7 @@ const ProfilePage: React.FC = () => {
         .eq('user_id', user.id);
 
       setCheckInCount(checkIns || 0);
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }, [user?.id, supabase]);

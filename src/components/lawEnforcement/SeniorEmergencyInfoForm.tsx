@@ -130,7 +130,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
     try {
       await LawEnforcementService.upsertEmergencyResponseInfo(patientId, formData);
       if (onSave) onSave();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to save emergency information. Please try again.');
     } finally {
       setSaving(false);

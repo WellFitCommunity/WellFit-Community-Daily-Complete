@@ -46,7 +46,7 @@ export function ClearinghouseConfigPanel() {
           submitterId: creds.submitter_id || ''
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   };
@@ -71,7 +71,7 @@ export function ClearinghouseConfigPanel() {
 
       setMessage('✅ Configuration saved securely in Vault!');
       setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
+    } catch (error: unknown) {
 
       setMessage('❌ Error saving configuration');
     } finally {

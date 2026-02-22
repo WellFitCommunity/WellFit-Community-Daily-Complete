@@ -80,7 +80,7 @@ export const WellnessCommandCenter: React.FC<WellnessCommandCenterProps> = ({
       if (checkins) {
         setTodayCheckin(checkins);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('WELLNESS_COMMAND_CENTER_LOAD_FAILED', error instanceof Error ? error : new Error('Load failed'));
     } finally {
       setLoading(false);

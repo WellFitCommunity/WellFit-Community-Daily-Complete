@@ -299,7 +299,7 @@ const LoginPage: React.FC = () => {
     try {
       const t = await captchaRef.current?.execute();
       return t || '';
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('HCAPTCHA_EXECUTION_FAILED', error instanceof Error ? error : new Error(String(error)));
       return '';
     }

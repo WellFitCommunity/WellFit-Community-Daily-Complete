@@ -48,7 +48,7 @@ export const CodingSuggestionPanel: React.FC<CodingSuggestionPanelProps> = ({
           const parsed = await parseCodingSuggestion(data.payload, data.confidence);
           setSuggestions(parsed);
         }
-      } catch (err) {
+      } catch (err: unknown) {
 
       } finally {
         setLoading(false);

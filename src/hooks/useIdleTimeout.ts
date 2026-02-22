@@ -95,7 +95,7 @@ export function useIdleTimeout(options: UseIdleTimeoutOptions = {}): UseIdleTime
     // Sign out from Supabase
     try {
       await supabase.auth.signOut();
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('IDLE_LOGOUT_ERROR', error instanceof Error ? error : new Error(String(error)));
     }
 

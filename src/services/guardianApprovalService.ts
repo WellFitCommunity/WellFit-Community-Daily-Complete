@@ -78,7 +78,7 @@ export class GuardianApprovalService {
       });
 
       return success(data as string);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_CREATE_TICKET_EXCEPTION', message, {});
       return failure('UNKNOWN_ERROR', message, err);
@@ -99,7 +99,7 @@ export class GuardianApprovalService {
       }
 
       return success((data || []) as TicketListItem[]);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_GET_PENDING_EXCEPTION', message, {});
       return failure('UNKNOWN_ERROR', message, err);
@@ -120,7 +120,7 @@ export class GuardianApprovalService {
       }
 
       return success(data as GuardianReviewTicket);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_GET_TICKET_EXCEPTION', message, { ticketId });
       return failure('UNKNOWN_ERROR', message, err);
@@ -167,7 +167,7 @@ export class GuardianApprovalService {
       }
 
       return success((data || []) as GuardianReviewTicket[]);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_GET_TICKETS_EXCEPTION', message, {});
       return failure('UNKNOWN_ERROR', message, err);
@@ -215,7 +215,7 @@ export class GuardianApprovalService {
       }
 
       return success(stats);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_GET_STATS_EXCEPTION', message, {});
       return failure('UNKNOWN_ERROR', message, err);
@@ -240,7 +240,7 @@ export class GuardianApprovalService {
       }
 
       return success(true);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_MARK_IN_REVIEW_EXCEPTION', message, { ticketId });
       return failure('UNKNOWN_ERROR', message, err);
@@ -278,7 +278,7 @@ export class GuardianApprovalService {
       });
 
       return success(result);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_APPROVE_EXCEPTION', message, { ticketId });
       return failure('UNKNOWN_ERROR', message, err);
@@ -313,7 +313,7 @@ export class GuardianApprovalService {
       });
 
       return success(result);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_REJECT_EXCEPTION', message, { ticketId });
       return failure('UNKNOWN_ERROR', message, err);
@@ -351,7 +351,7 @@ export class GuardianApprovalService {
       });
 
       return success(true);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_MARK_APPLIED_EXCEPTION', message, { ticketId });
       return failure('UNKNOWN_ERROR', message, err);
@@ -376,7 +376,7 @@ export class GuardianApprovalService {
       }
 
       return success((data || []) as GuardianReviewTicket[]);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_GET_APPROVED_EXCEPTION', message, {});
       return failure('UNKNOWN_ERROR', message, err);
@@ -401,7 +401,7 @@ export class GuardianApprovalService {
       }
 
       return success(data as GuardianReviewTicket | null);
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_GET_BY_ALERT_EXCEPTION', message, { alertId });
       return failure('UNKNOWN_ERROR', message, err);

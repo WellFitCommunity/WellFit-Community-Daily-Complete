@@ -257,7 +257,7 @@ export class SpecialistWorkflowEngine {
       }
 
       return { condition, result, value };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         condition,
         result: false,

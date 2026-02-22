@@ -56,7 +56,7 @@ export default function PhotoApprovalPage() {
       })) as CommunityMoment[];
 
       setPendingMoments(transformedData);
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ export default function PhotoApprovalPage() {
 
       if (error) throw error;
       fetchMoments();
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Failed to approve photo');
     }
@@ -101,7 +101,7 @@ export default function PhotoApprovalPage() {
 
       if (error) throw error;
       fetchMoments();
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Failed to reject photo');
     }

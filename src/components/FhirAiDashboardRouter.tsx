@@ -96,7 +96,7 @@ const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
         setDashboardMode('patient'); // Default to patient view
       }
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       setError('Unable to determine user permissions');
     } finally {

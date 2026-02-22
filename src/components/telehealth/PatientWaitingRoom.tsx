@@ -213,7 +213,7 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
       });
 
       if (onCallEnded) onCallEnded();
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }, [daily, onCallEnded]);

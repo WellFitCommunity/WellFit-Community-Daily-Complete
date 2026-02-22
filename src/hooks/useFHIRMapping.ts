@@ -86,7 +86,7 @@ export const useFHIRMapping = (): [FHIRMappingState, FHIRMappingActions] => {
         warnings: detectedType === 'Custom' ? ['File type could not be auto-detected. Please verify the source type is correct.'] : []
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       addError(error instanceof Error ? error.message : 'Failed to load file');
     }
   }, [validateFile, updateState, addError]);
@@ -121,7 +121,7 @@ export const useFHIRMapping = (): [FHIRMappingState, FHIRMappingActions] => {
         warnings: newWarnings
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       updateState({ isAnalyzing: false });
       addError(error instanceof Error ? error.message : 'Failed to generate mapping');
     }
@@ -135,7 +135,7 @@ export const useFHIRMapping = (): [FHIRMappingState, FHIRMappingActions] => {
 
     try {
       fhirMappingService.downloadMapping(state.generatedMapping);
-    } catch (error) {
+    } catch (error: unknown) {
       addError(error instanceof Error ? error.message : 'Failed to download mapping');
     }
   }, [state.generatedMapping, addError]);

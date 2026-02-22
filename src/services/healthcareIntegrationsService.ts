@@ -63,7 +63,7 @@ export class LabIntegrationService {
       }
 
       return success(data.map(mapLabConnectionFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('LAB_GET_CONNECTIONS_ERROR', err instanceof Error ? err.message : 'Unknown error');
       return failure('UNKNOWN_ERROR', 'Failed to get lab connections', err);
     }
@@ -120,7 +120,7 @@ export class LabIntegrationService {
 
       await auditLogger.info('LAB_ORDER_CREATED', { orderId: order.id, patientId: request.patientId });
       return success(mapLabOrderFromDB(order));
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('LAB_CREATE_ORDER_ERROR', err instanceof Error ? err.message : 'Unknown error');
       return failure('UNKNOWN_ERROR', 'Failed to create lab order', err);
     }
@@ -146,7 +146,7 @@ export class LabIntegrationService {
       }
 
       return success(data.map(mapLabOrderFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get patient lab orders', err);
     }
   }
@@ -168,7 +168,7 @@ export class LabIntegrationService {
       }
 
       return success(data.map(mapLabResultFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get patient lab results', err);
     }
   }
@@ -190,7 +190,7 @@ export class LabIntegrationService {
       }
 
       return success(data.map(mapLabResultFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get critical results', err);
     }
   }
@@ -215,7 +215,7 @@ export class LabIntegrationService {
 
       await auditLogger.info('LAB_CRITICAL_VALUES_ACKNOWLEDGED', { resultId, userId });
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to acknowledge critical values', err);
     }
   }
@@ -241,7 +241,7 @@ export class PharmacyIntegrationService {
       }
 
       return success(data.map(mapPharmacyConnectionFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get pharmacy connections', err);
     }
   }
@@ -287,7 +287,7 @@ export class PharmacyIntegrationService {
 
       await auditLogger.info('PRESCRIPTION_CREATED', { rxId: data.id, patientId: request.patientId });
       return success(mapPrescriptionFromDB(data));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to create prescription', err);
     }
   }
@@ -309,7 +309,7 @@ export class PharmacyIntegrationService {
       }
 
       return success(data.map(mapPrescriptionFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get patient prescriptions', err);
     }
   }
@@ -330,7 +330,7 @@ export class PharmacyIntegrationService {
       }
 
       return success(data.map(mapMedicationHistoryFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get medication history', err);
     }
   }
@@ -351,7 +351,7 @@ export class PharmacyIntegrationService {
       }
 
       return success(data.map(mapRefillRequestFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get refill requests', err);
     }
   }
@@ -385,7 +385,7 @@ export class PharmacyIntegrationService {
 
       await auditLogger.info('REFILL_REQUEST_RESPONDED', { requestId, status });
       return success(undefined);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to respond to refill request', err);
     }
   }
@@ -411,7 +411,7 @@ export class ImagingIntegrationService {
       }
 
       return success(data.map(mapPACSConnectionFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get PACS connections', err);
     }
   }
@@ -453,7 +453,7 @@ export class ImagingIntegrationService {
 
       await auditLogger.info('IMAGING_ORDER_CREATED', { orderId: data.id, patientId: request.patientId });
       return success(mapImagingOrderFromDB(data));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to create imaging order', err);
     }
   }
@@ -475,7 +475,7 @@ export class ImagingIntegrationService {
       }
 
       return success(data.map(mapImagingOrderFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get patient imaging orders', err);
     }
   }
@@ -497,7 +497,7 @@ export class ImagingIntegrationService {
       }
 
       return success(data.map(mapImagingStudyFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get patient imaging studies', err);
     }
   }
@@ -519,7 +519,7 @@ export class ImagingIntegrationService {
       }
 
       return success(data.map(mapImagingReportFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get patient imaging reports', err);
     }
   }
@@ -541,7 +541,7 @@ export class ImagingIntegrationService {
       }
 
       return success(data.map(mapImagingReportFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get critical findings', err);
     }
   }
@@ -567,7 +567,7 @@ export class InsuranceVerificationService {
       }
 
       return success(data.map(mapInsurancePayerFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get payer connections', err);
     }
   }
@@ -609,7 +609,7 @@ export class InsuranceVerificationService {
 
       await auditLogger.info('ELIGIBILITY_CHECK_INITIATED', { requestId: data.id, patientId: request.patientId });
       return success(mapEligibilityRequestFromDB(data));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to check eligibility', err);
     }
   }
@@ -631,7 +631,7 @@ export class InsuranceVerificationService {
       }
 
       return success(data.map(mapEligibilityRequestFromDB));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get eligibility history', err);
     }
   }
@@ -670,7 +670,7 @@ export class InsuranceVerificationService {
         createdAt: '',
         updatedAt: '',
       })));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get patient insurance', err);
     }
   }
@@ -713,7 +713,7 @@ export class InsuranceVerificationService {
 
       await auditLogger.info('PATIENT_INSURANCE_SAVED', { insuranceId: data.id, patientId: insurance.patientId });
       return success(mapPatientInsuranceFromDB(data));
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to save patient insurance', err);
     }
   }
@@ -768,7 +768,7 @@ export class HealthcareIntegrationsService {
         eligibilityChecks: Number(stats.eligibility_checks) || 0,
         eligibilityVerified: Number(stats.eligibility_verified) || 0,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get integration stats', err);
     }
   }

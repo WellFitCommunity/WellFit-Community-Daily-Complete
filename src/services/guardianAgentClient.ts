@@ -33,7 +33,7 @@ export async function performSecurityScan(): Promise<GuardianResponse> {
     });
 
     return await response.json();
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -72,7 +72,7 @@ export async function logGuardianAuditEvent(event: {
     });
 
     return await response.json();
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -105,7 +105,7 @@ export async function monitorSystemHealth(): Promise<GuardianResponse> {
     });
 
     return await response.json();
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

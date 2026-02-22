@@ -98,7 +98,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
 
         setMetrics(dashboardMetrics);
 
-      } catch (err) {
+      } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       } finally {
         setLoading(false);
@@ -161,7 +161,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
 
       setMetrics(dashboardMetrics);
 
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
     } finally {
       setLoading(false);
@@ -567,7 +567,7 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
         // Load patient's recent check-ins/visits
         const visits = await ReadmissionTrackingService.getPatientVisitHistory(patient.patient_id, 90);
         setCheckIns(visits || []);
-      } catch (_error) {
+      } catch (_error: unknown) {
         // Error handled silently - UI will show empty state
       } finally {
         setLoadingDetails(false);

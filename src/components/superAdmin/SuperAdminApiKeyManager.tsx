@@ -125,7 +125,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
             reason: 'Non-super-admin attempted to access platform API key manager'
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
         setIsSuperAdmin(false);
       } finally {
         setAuthChecking(false);
@@ -184,7 +184,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
         category: 'ADMINISTRATIVE',
         keyCount: transformedData.length
       });
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unexpected error fetching API keys';
       addToast('error', message);
       setApiKeys([]);
@@ -237,7 +237,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
 
       setTimeout(() => setKeyMasked(true), 5000);
       await fetchApiKeys(false);
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unexpected error';
       addToast('error', message);
     } finally {
@@ -269,7 +269,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
 
       addToast('warning', `API key for "${orgName}" has been revoked`);
       await fetchApiKeys(false);
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unexpected error';
       addToast('error', message);
     } finally {

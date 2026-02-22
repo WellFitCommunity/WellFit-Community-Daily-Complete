@@ -59,7 +59,7 @@ export class TenantDetectionService {
       }
 
       return null;
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('TENANT_DETECTION_EXCEPTION', err instanceof Error ? err : new Error(String(err)), { userIdentifier });
       return null;
     }
@@ -88,7 +88,7 @@ export class TenantDetectionService {
         display_name: data.display_name || 'WellFit Community',
         subdomain: data.subdomain || 'www',
       };
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('DEFAULT_TENANT_EXCEPTION', err instanceof Error ? err : new Error(String(err)), {});
       return null;
     }
@@ -111,7 +111,7 @@ export class TenantDetectionService {
       }
 
       return data.tenant_id === tenantId;
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('TENANT_ACCESS_VERIFICATION_FAILED', err instanceof Error ? err : new Error(String(err)), { userId, tenantId });
       return false;
     }

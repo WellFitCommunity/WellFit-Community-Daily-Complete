@@ -101,7 +101,7 @@ export const HealthcareIntegrationsDashboard: React.FC = () => {
       if (criticalImaging.success) setCriticalImagingFindings(criticalImaging.data);
       if (refills.success) setPendingRefillRequests(refills.data);
 
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('HEALTHCARE_DASHBOARD_LOAD_ERROR', err instanceof Error ? err.message : 'Unknown error');
       setError('Failed to load healthcare integrations data');
     } finally {

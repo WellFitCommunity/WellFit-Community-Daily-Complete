@@ -35,7 +35,7 @@ export const SOC2SecurityDashboard: React.FC = () => {
       setMetrics(metricsData);
       setRecentEvents(eventsData);
       setLastRefresh(new Date());
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to load security monitoring data');
     } finally {

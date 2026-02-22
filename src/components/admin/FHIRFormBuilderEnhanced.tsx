@@ -27,7 +27,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
     try {
       const templateData = await fhirService.getTemplates();
       setTemplates(templateData);
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   };
@@ -36,7 +36,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
     try {
       const questionnaires = await fhirService.getQuestionnaires();
       setMyQuestionnaires(questionnaires);
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   };
@@ -67,7 +67,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
           await fhirService.incrementTemplateUsage(template.id);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       setError(error instanceof Error ? error.message : 'Failed to generate form');
     } finally {
@@ -90,7 +90,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
       setSavedQuestionnaire(saved);
       setSuccess('Questionnaire saved successfully!');
       await loadMyQuestionnaires(); // Refresh the list
-    } catch (error) {
+    } catch (error: unknown) {
 
       setError(error instanceof Error ? error.message : 'Failed to save questionnaire');
     } finally {
@@ -108,7 +108,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
       await fhirService.deployToWellFit(savedQuestionnaire.id);
       setSuccess('Questionnaire deployed to WellFit successfully!');
       await loadMyQuestionnaires(); // Refresh to show deployment status
-    } catch (error) {
+    } catch (error: unknown) {
 
       setError(error instanceof Error ? error.message : 'Failed to deploy questionnaire');
     } finally {

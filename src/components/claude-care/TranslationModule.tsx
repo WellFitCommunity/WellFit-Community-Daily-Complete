@@ -41,7 +41,7 @@ const TranslationModule: React.FC<Props> = ({ userRole: _userRole }) => {
       setTranslatedText(response.translatedText);
       setCulturalNotes(response.culturalNotes || []);
       setCached(response.cached);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Translation failed. Please try again.');
 
     } finally {
@@ -60,7 +60,7 @@ const TranslationModule: React.FC<Props> = ({ userRole: _userRole }) => {
     try {
       await navigator.clipboard.writeText(translatedText);
       alert('Translation copied to clipboard!');
-    } catch (err) {
+    } catch (err: unknown) {
 
     }
   };

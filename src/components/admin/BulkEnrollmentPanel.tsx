@@ -264,7 +264,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
             )
           } : null);
 
-        } catch (error) {
+        } catch (error: unknown) {
           // Update record as failed
           setEnrollmentJob(prev => prev ? {
             ...prev,

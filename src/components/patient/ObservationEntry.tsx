@@ -137,7 +137,7 @@ const ObservationEntry: React.FC<ObservationEntryProps> = ({ userId, onSuccess, 
       } else {
         setError(response.error || 'Failed to create observation');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);

@@ -145,7 +145,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
           averageVisitsUsed: 0,
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);
@@ -173,7 +173,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
       if (outcomesResult.success && outcomesResult.data) {
         setPatientOutcomes(outcomesResult.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       // Handle silently - patient details are supplementary
     }
   };

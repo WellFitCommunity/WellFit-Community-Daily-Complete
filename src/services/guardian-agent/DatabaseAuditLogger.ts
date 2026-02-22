@@ -88,7 +88,7 @@ export class DatabaseAuditLogger {
         success: securityEventResult.success && auditLogResult.success,
         error: securityEventResult.error || auditLogResult.error,
       };
-    } catch (error) {
+    } catch (error: unknown) {
 
       return {
         success: false,
@@ -134,7 +134,7 @@ export class DatabaseAuditLogger {
       await this.createBlockedActionAlert(issue, action, blockReason);
 
       return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
 
       return {
         success: false,
@@ -186,7 +186,7 @@ export class DatabaseAuditLogger {
       }
 
       return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
 
       return {
         success: false,
@@ -235,7 +235,7 @@ export class DatabaseAuditLogger {
       }
 
       return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
 
       return {
         success: false,
@@ -280,7 +280,7 @@ export class DatabaseAuditLogger {
       if (error) {
 
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }
@@ -317,7 +317,7 @@ export class DatabaseAuditLogger {
       };
 
       await supabase.from('security_alerts').insert(alert);
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }
@@ -350,7 +350,7 @@ export class DatabaseAuditLogger {
       if (error) {
 
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     }
   }
@@ -399,7 +399,7 @@ export class DatabaseAuditLogger {
       }
 
       return data || [];
-    } catch (error) {
+    } catch (error: unknown) {
 
       return [];
     }
@@ -423,7 +423,7 @@ export class DatabaseAuditLogger {
       }
 
       return data || [];
-    } catch (error) {
+    } catch (error: unknown) {
 
       return [];
     }

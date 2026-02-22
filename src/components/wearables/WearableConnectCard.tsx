@@ -52,7 +52,7 @@ export const WearableConnectCard: React.FC<WearableConnectCardProps> = ({
         setLoading(null);
         // Successfully connected to adapter
       }, 1000);
-    } catch (error) {
+    } catch (error: unknown) {
       // Connection failed - logged via audit system
       setLoading(null);
     }
@@ -77,7 +77,7 @@ export const WearableConnectCard: React.FC<WearableConnectCardProps> = ({
         setLoading(null);
         // Disconnected from adapter
       }, 500);
-    } catch (error) {
+    } catch (error: unknown) {
       // Disconnect failed - logged via audit system
       setLoading(null);
     }

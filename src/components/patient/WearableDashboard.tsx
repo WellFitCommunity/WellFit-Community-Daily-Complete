@@ -209,7 +209,7 @@ export const WearableDashboard: React.FC = () => {
 
           // Note: You may need a dedicated SMS-send function for emergencies
           // For now, we log the attempt - the email dispatch is the primary channel
-        } catch (smsError) {
+        } catch (smsError: unknown) {
           await auditLogger.error('EMERGENCY_SMS_FAILED', smsError instanceof Error ? smsError : new Error(String(smsError)));
         }
       }
@@ -225,7 +225,7 @@ export const WearableDashboard: React.FC = () => {
         location: location || 'unavailable',
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       setEmergencyStatus('error');
       await auditLogger.error('EMERGENCY_SOS_FAILED', error instanceof Error ? error : new Error(String(error)));
 
@@ -256,7 +256,7 @@ export const WearableDashboard: React.FC = () => {
       });
 
       showToast('success', 'Device connected successfully!');
-    } catch (error) {
+    } catch (error: unknown) {
       showToast('error', error instanceof Error ? error.message : 'Failed to connect device');
     }
   };
@@ -267,7 +267,7 @@ export const WearableDashboard: React.FC = () => {
     try {
       await disconnectMutation.mutateAsync(connectionId);
       showToast('success', 'Device disconnected successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       showToast('error', error instanceof Error ? error.message : 'Failed to disconnect device');
     }
   };
@@ -280,7 +280,7 @@ export const WearableDashboard: React.FC = () => {
         responseTimeSeconds: 10,
       });
       showToast('success', 'Response recorded. Stay safe!');
-    } catch (error) {
+    } catch (error: unknown) {
       showToast('error', error instanceof Error ? error.message : 'Failed to record response');
     }
   };

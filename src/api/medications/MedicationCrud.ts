@@ -36,7 +36,7 @@ export async function getMedications(
       success: true,
       data: data || []
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch medications'
@@ -67,7 +67,7 @@ export async function getMedication(medicationId: string): Promise<ApiResponse<M
       success: true,
       data
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch medication'
@@ -115,7 +115,7 @@ export async function createMedication(
       data,
       message: 'Medication added to cabinet successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create medication'
@@ -145,7 +145,7 @@ export async function updateMedication(
       data,
       message: 'Medication updated successfully'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to update medication'
@@ -169,7 +169,7 @@ export async function deleteMedication(medicationId: string): Promise<ApiRespons
       success: true,
       message: 'Medication removed from cabinet'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete medication'
@@ -205,7 +205,7 @@ export async function discontinueMedication(
       data,
       message: 'Medication discontinued'
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to discontinue medication'

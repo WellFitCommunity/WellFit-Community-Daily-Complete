@@ -86,7 +86,7 @@ export const SecurityPanel: React.FC = () => {
 
       await refresh();
       setSelectedAlert(null);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handled silently - no PHI in console
       alert('Failed to update alert status');
     }

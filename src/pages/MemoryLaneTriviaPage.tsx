@@ -120,7 +120,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
         const attemptedCount = (existingProgress.questions_attempted || []).length;
         setCurrentQuestionIndex(attemptedCount);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);

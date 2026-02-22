@@ -99,7 +99,7 @@ export const TimeClockService = {
         minutes_early: result.minutes_early,
         current_streak: result.current_streak,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('TIME_CLOCK_IN_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
@@ -148,7 +148,7 @@ export const TimeClockService = {
         total_hours: Number(result.total_hours),
         message: result.message,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('TIME_CLOCK_OUT_ERROR', err instanceof Error ? err : new Error(String(err)), {
         category: 'ADMINISTRATIVE',
       });
@@ -179,7 +179,7 @@ export const TimeClockService = {
 
       const entry = data?.[0];
       return success(entry || null);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get today\'s entry', err);
     }
   },
@@ -224,7 +224,7 @@ export const TimeClockService = {
         on_time_count: summary.on_time_count,
         on_time_percentage: Number(summary.on_time_percentage),
       });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get weekly summary', err);
     }
   },
@@ -255,7 +255,7 @@ export const TimeClockService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get time entries', err);
     }
   },
@@ -280,7 +280,7 @@ export const TimeClockService = {
       }
 
       return success(data || null);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get streak', err);
     }
   },
@@ -301,7 +301,7 @@ export const TimeClockService = {
       }
 
       return success(data || null);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get settings', err);
     }
   },
@@ -339,7 +339,7 @@ export const TimeClockService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get tenant entries', err);
     }
   },
@@ -377,7 +377,7 @@ export const TimeClockService = {
       }
 
       return success(data || []);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get team entries', err);
     }
   },
@@ -409,7 +409,7 @@ export const TimeClockService = {
       });
 
       return success(data);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to update settings', err);
     }
   },

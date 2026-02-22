@@ -140,7 +140,7 @@ class EdgeFunctionsMCPClient {
         error: data?.error,
         executionTimeMs: data?.executionTimeMs ?? 0
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',

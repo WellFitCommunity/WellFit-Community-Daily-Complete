@@ -136,7 +136,7 @@ const NurseQuestionManager: React.FC = () => {
       };
       localStorage.setItem(draftKey, JSON.stringify(draft));
       setLastSaved(new Date());
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('NURSE_DRAFT_SAVE_FAILED', err instanceof Error ? err : new Error(String(err)), {
         questionId: selectedQuestion?.id,
         context: 'saveDraft'
@@ -190,7 +190,7 @@ const NurseQuestionManager: React.FC = () => {
           phone: ''
         }
       })));
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('NURSE_QUEUE_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
         context: 'loadQuestions',
         fallback: 'mockQuestions'
@@ -357,7 +357,7 @@ Format your response as a clear, professional message that can be sent to the pa
       setAiSuggestion(null);
       setShowAiHelp(false);
 
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setSubmitting(false);
@@ -417,7 +417,7 @@ Format your response as a clear, professional message that can be sent to the pa
                     phone: ''
                   }
                 })));
-              } catch (error) {
+              } catch (error: unknown) {
 
               }
             }}
@@ -444,7 +444,7 @@ Format your response as a clear, professional message that can be sent to the pa
                     phone: ''
                   }
                 })));
-              } catch (error) {
+              } catch (error: unknown) {
 
               }
             }}
@@ -515,7 +515,7 @@ Format your response as a clear, professional message that can be sent to the pa
                   if (question.status === 'pending') {
                     try {
                       await claimQuestion(question.id);
-                    } catch (error) {
+                    } catch (error: unknown) {
 
                     }
                   }

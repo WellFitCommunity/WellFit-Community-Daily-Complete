@@ -79,7 +79,7 @@ const EmergencyContact: React.FC = () => {
           setMessage({ type: 'info', text: 'Please log in to manage emergency contact.' });
           setEditing(false);
         }
-      } catch (error) {
+      } catch (error: unknown) {
 
         const text = error instanceof Error ? error.message : 'An unknown error occurred.';
         setMessage({ type: 'error', text: `Error fetching data: ${text}` });
@@ -120,7 +120,7 @@ const EmergencyContact: React.FC = () => {
 
       setMessage({ type: 'success', text: 'Contact information saved successfully!' });
       setEditing(false);
-    } catch (error) {
+    } catch (error: unknown) {
 
       const text = error instanceof Error ? error.message : 'An unknown error occurred.';
       setMessage({ type: 'error', text: `Error saving data: ${text}` });

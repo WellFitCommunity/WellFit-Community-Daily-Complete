@@ -214,7 +214,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
             errors.push(...batchResult.errors);
             results.push(...batchResult.results);
             lineageRecordsCreated += batchResult.lineageCount;
-          } catch (batchError) {
+          } catch (batchError: unknown) {
             // Queue for retry if enabled
             if (opts.enableRetryLogic && !opts.dryRun) {
               const rowNumbers = batchData.map((_, idx) => i + idx);
@@ -298,7 +298,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
         processingTimeMs,
         throughputRowsPerSecond: Math.round(throughput * 100) / 100
       };
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('EnterpriseMigration', 'Migration failed', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -450,7 +450,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
           } else {
             transformed[mapping.targetColumn] = transformedValue;
           }
-        } catch (err) {
+        } catch (err: unknown) {
           errors.push({
             row: rowNumber,
             field: mapping.sourceColumn,

@@ -86,7 +86,7 @@ export const MedicationPhotoCapture: React.FC<MedicationPhotoCaptureProps> = ({
         setCameraActive(true);
         setError('');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(t.cameraError);
 
     }
@@ -164,7 +164,7 @@ export const MedicationPhotoCapture: React.FC<MedicationPhotoCaptureProps> = ({
     try {
       await chwService.photoMedicationReconciliation(visitId, photos);
       onComplete();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to save photos. Data saved offline and will sync when connection is restored.');
       // Still proceed since we save offline
       setTimeout(() => onComplete(), 2000);

@@ -132,7 +132,7 @@ export class AccuracyTrackingService {
       }
 
       return success(data as string);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to record prediction', err);
     }
   }
@@ -156,7 +156,7 @@ export class AccuracyTrackingService {
       }
 
       return success(true);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to record outcome', err);
     }
   }
@@ -195,7 +195,7 @@ export class AccuracyTrackingService {
       }));
 
       return success(metrics);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get accuracy dashboard', err);
     }
   }
@@ -248,7 +248,7 @@ export class AccuracyTrackingService {
       };
 
       return success(metrics);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get skill accuracy', err);
     }
   }
@@ -294,7 +294,7 @@ export class AccuracyTrackingService {
       };
 
       return success(version);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get active prompt', err);
     }
   }
@@ -356,7 +356,7 @@ export class AccuracyTrackingService {
       };
 
       return success(version);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to create prompt version', err);
     }
   }
@@ -396,7 +396,7 @@ export class AccuracyTrackingService {
       }
 
       return success(true);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to activate prompt', err);
     }
   }
@@ -433,7 +433,7 @@ export class AccuracyTrackingService {
       }));
 
       return success(versions);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get prompt history', err);
     }
   }
@@ -467,7 +467,7 @@ export class AccuracyTrackingService {
       }
 
       return success(data.id);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to create experiment', err);
     }
   }
@@ -491,7 +491,7 @@ export class AccuracyTrackingService {
       }
 
       return success(true);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to start experiment', err);
     }
   }
@@ -522,7 +522,7 @@ export class AccuracyTrackingService {
         promptId: usesTreatment ? data.treatment_prompt_id : data.control_prompt_id,
         variant: usesTreatment ? 'treatment' : 'control'
       });
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get experiment variant', err);
     }
   }
@@ -580,7 +580,7 @@ export class AccuracyTrackingService {
       };
 
       return success(results);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to get experiment results', err);
     }
   }
@@ -662,7 +662,7 @@ export class AccuracyTrackingService {
       });
 
       return success(true);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to record billing code accuracy', err);
     }
   }
@@ -707,7 +707,7 @@ export class AccuracyTrackingService {
       });
 
       return success(true);
-    } catch (err) {
+    } catch (err: unknown) {
       return failure('UNKNOWN_ERROR', 'Failed to record SDOH accuracy', err);
     }
   }

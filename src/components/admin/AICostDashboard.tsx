@@ -270,7 +270,7 @@ const AICostDashboard: React.FC = () => {
       generateRecommendations(mcpMetrics, cacheHitRate, batchCumulativeStats);
 
       setLoading(false);
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.error('AI_COST_DASHBOARD_LOAD_ERROR', error instanceof Error ? error : new Error('Unknown error'));
       setLoading(false);
     }

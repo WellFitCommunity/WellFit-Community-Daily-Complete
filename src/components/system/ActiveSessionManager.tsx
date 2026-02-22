@@ -83,7 +83,7 @@ const ActiveSessionManager: React.FC = () => {
 
       setSessions(formattedSessions);
       setLastRefresh(new Date());
-    } catch (error) {
+    } catch (error: unknown) {
 
       if (!silent) {
         setMessage({ type: 'error', text: 'Failed to load active sessions' });

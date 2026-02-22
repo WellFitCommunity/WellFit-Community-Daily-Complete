@@ -123,7 +123,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
       } else {
         alert(`Error saving assessment: ${response.error}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Failed to save assessment');
     } finally {

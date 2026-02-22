@@ -33,7 +33,7 @@ const SmartLauncher: React.FC<SmartLauncherProps> = ({ onLaunch }) => {
       // Redirect to EHR authorization
       window.location.href = authUrl;
 
-    } catch (error) {
+    } catch (error: unknown) {
 
       setError(error instanceof Error ? error.message : 'Failed to launch SMART app');
       setLaunching(null);

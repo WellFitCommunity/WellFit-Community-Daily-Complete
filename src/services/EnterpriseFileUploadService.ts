@@ -179,7 +179,7 @@ export class EnterpriseFileUploadService {
       }
 
       return { ...result, auditId: this.uploadAuditId};
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
 
       if (this.uploadAuditId) {
@@ -313,7 +313,7 @@ export class EnterpriseFileUploadService {
         signedUrl: signedData?.signedUrl,
         hash: fileHash,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Direct upload failed',
@@ -372,7 +372,7 @@ export class EnterpriseFileUploadService {
           if (this.uploadAuditId) {
             await this.updateChunkProgress(this.uploadAuditId, i + 1, totalChunks);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           retries++;
 
           if (retries >= maxRetries) {
@@ -410,7 +410,7 @@ export class EnterpriseFileUploadService {
         signedUrl: signedData?.signedUrl,
         hash: fileHash,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Chunked upload failed',

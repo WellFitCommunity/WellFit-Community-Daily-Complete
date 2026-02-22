@@ -80,7 +80,7 @@ class HealthCheckService {
       } else {
         result.healthy = true;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       result.error = `Audit logging exception: ${err instanceof Error ? err.message : String(err)}`;
       result.details = { exception: String(err) };
 
@@ -146,7 +146,7 @@ class HealthCheckService {
             .eq('id', data.id);
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       result.error = `Realtime registry exception: ${err instanceof Error ? err.message : String(err)}`;
       result.details = { exception: String(err) };
 
@@ -206,7 +206,7 @@ class HealthCheckService {
       } else {
         result.healthy = true;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       result.error = `PHI logging exception: ${err instanceof Error ? err.message : String(err)}`;
       result.details = { exception: String(err) };
 
@@ -244,7 +244,7 @@ class HealthCheckService {
         result.healthy = true;
         result.details = { connected: true };
       }
-    } catch (err) {
+    } catch (err: unknown) {
       result.error = `Database connection exception: ${err instanceof Error ? err.message : String(err)}`;
       result.details = { exception: String(err) };
     }
@@ -275,7 +275,7 @@ class HealthCheckService {
           userId: data?.user?.id || null,
         };
       }
-    } catch (err) {
+    } catch (err: unknown) {
       result.error = `Auth check exception: ${err instanceof Error ? err.message : String(err)}`;
       result.details = { exception: String(err) };
     }

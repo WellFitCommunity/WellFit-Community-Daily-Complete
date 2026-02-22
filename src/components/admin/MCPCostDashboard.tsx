@@ -62,7 +62,7 @@ export const MCPCostDashboard: React.FC = () => {
 
       if (savingsError) throw savingsError;
       setDailySavings(savingsData || []);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handled silently
     } finally {
       setLoading(false);

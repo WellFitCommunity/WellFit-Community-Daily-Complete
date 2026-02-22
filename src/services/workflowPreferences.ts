@@ -570,7 +570,7 @@ export async function getWorkflowPreferences(
 
     // Return role-based defaults
     return getDefaultPreferences(userId, userRole);
-  } catch (error) {
+  } catch (error: unknown) {
     // Return role-based defaults on error
     return getDefaultPreferences(userId, userRole);
   }
@@ -620,7 +620,7 @@ export async function saveWorkflowPreferences(
       }, {
         onConflict: 'user_id',
       });
-  } catch (error) {
+  } catch (error: unknown) {
     auditLogger.error('SAVE_WORKFLOW_PREFERENCES_FAILED', error instanceof Error ? error : new Error('Unknown error'));
   }
 }
@@ -644,7 +644,7 @@ export async function trackSectionAccess(
       ...prefs,
       recentSections: recent,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     // Fail silently
   }
 }
@@ -673,7 +673,7 @@ export async function togglePinnedSection(
     });
 
     return !isPinned; // Return new pinned state
-  } catch (error) {
+  } catch (error: unknown) {
     return false;
   }
 }
@@ -694,7 +694,7 @@ export async function reorderCategories(
       ...prefs,
       categoryOrder: newOrder,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     auditLogger.error('REORDER_CATEGORIES_FAILED', error instanceof Error ? error : new Error('Unknown error'));
   }
 }
@@ -757,7 +757,7 @@ export async function moveCategoryToTop(
       ...prefs,
       categoryOrder: newOrder,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     auditLogger.error('MOVE_CATEGORY_FAILED', error instanceof Error ? error : new Error('Unknown error'));
   }
 }

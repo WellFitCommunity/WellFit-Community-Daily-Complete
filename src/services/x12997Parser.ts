@@ -351,7 +351,7 @@ export class X12997Parser {
         data: parsed,
         parseErrors: this.parseErrors.length > 0 ? this.parseErrors : undefined,
       };
-    } catch (err) {
+    } catch (err: unknown) {
       return {
         success: false,
         error: `Parse error: ${err instanceof Error ? err.message : String(err)}`,

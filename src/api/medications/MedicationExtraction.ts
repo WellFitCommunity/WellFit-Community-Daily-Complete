@@ -102,7 +102,7 @@ export async function extractMedicationFromImage(
       message: 'Please review and confirm medication details'
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to process medication image'
@@ -163,7 +163,7 @@ export async function confirmMedication(
     }
 
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to confirm medication'

@@ -345,7 +345,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
 
       setPatientId(matchedPatient.id);
       setStep('privacy');
-    } catch (err) {
+    } catch (err: unknown) {
       // Log error without PHI
       rateLimiterRef.current.recordAttempt(rateLimitKey);
       await chwService.logSecurityEvent({
@@ -389,7 +389,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
       );
 
       onCheckInComplete(visit.id, patientId);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to start visit. Please try again.');
     } finally {
       setLoading(false);

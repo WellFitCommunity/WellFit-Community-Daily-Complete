@@ -70,7 +70,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
         if (onSuccess) onSuccess();
         if (onClose) onClose();
       }, 1500);
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError(err instanceof Error ? err.message : 'Failed to save check-in. Please try again.');
     } finally {

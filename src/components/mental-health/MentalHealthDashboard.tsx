@@ -48,7 +48,7 @@ export const MentalHealthDashboard: React.FC = () => {
       } else {
         setError(response.error || 'Failed to load dashboard');
       }
-    } catch (err) {
+    } catch (err: unknown) {
 
       setError('Failed to load dashboard data');
     } finally {

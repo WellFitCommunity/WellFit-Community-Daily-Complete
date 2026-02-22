@@ -63,7 +63,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
       ]);
       setProviders(providersData);
       setPayers(payersData);
-    } catch (error) {
+    } catch (error: unknown) {
       setLoadError(error instanceof Error ? error.message : 'Failed to load billing data');
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
     try {
       await navigator.clipboard.writeText(x12Content);
       alert('X12 content copied to clipboard!');
-    } catch (error) {
+    } catch (error: unknown) {
 
       alert('Failed to copy to clipboard');
     }

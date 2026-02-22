@@ -71,7 +71,7 @@ const SeniorCommunityDashboard: React.FC = () => {
         if (data?.file_url) {
           setRecentCommunityPhoto(data.file_url);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         // Silent fail - no photos is normal for new installations
         auditLogger.debug('No recent community photos found');
       }
@@ -89,7 +89,7 @@ const SeniorCommunityDashboard: React.FC = () => {
           if (data?.caregiver_phone) {
             setCaregiverPhone(data.caregiver_phone);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           // Silent fail - no caregiver is normal
           auditLogger.debug('No caregiver contact found');
         }
@@ -118,7 +118,7 @@ const SeniorCommunityDashboard: React.FC = () => {
         auditLogger.debug('[WhatsNew Senior] Showing modal for version', { version: currentVersion });
         setTimeout(() => setShowWhatsNew(true), 1000);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('WHATS_NEW_CHECK_FAILED', err instanceof Error ? err : new Error('Unknown error'), {
         component: 'SeniorCommunityDashboard'
       });
@@ -291,7 +291,7 @@ const SeniorCommunityDashboard: React.FC = () => {
         alertType: type,
         description
       });
-    } catch (error) {
+    } catch (error: unknown) {
       // HIPAA Audit: Log emergency alert failure (CRITICAL)
       await auditLogger.error('EMERGENCY_ALERT_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
         userId: user?.id,
@@ -381,7 +381,7 @@ const SeniorCommunityDashboard: React.FC = () => {
         userId: sessionUserId,
         fileName
       });
-    } catch (error) {
+    } catch (error: unknown) {
       // HIPAA Audit: Log upload failure
       await auditLogger.error('PHOTO_UPLOAD_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
         userId: user?.id

@@ -19,7 +19,7 @@ const HealthObservationsWidget: React.FC = () => {
         // Get the 3 most recent observations
         setLatestObservations(response.data.slice(0, 3));
       }
-    } catch (error) {
+    } catch (error: unknown) {
 
     } finally {
       setLoading(false);

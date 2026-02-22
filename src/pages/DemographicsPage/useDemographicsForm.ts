@@ -145,7 +145,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
             setCurrentStep(data.demographics_step);
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         auditLogger.error('Failed to load profile', String(err));
         setError('Unable to load your information. Please try again.');
       } finally {
@@ -214,7 +214,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
 
       auditLogger.info('Senior demographics progress saved', { userId, step: currentStep });
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('Failed to save demographics progress', String(err));
       setError('Unable to save your progress. Please try again.');
     } finally {
@@ -244,7 +244,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
 
       if (profileError) throw profileError;
       navigate('/consent-photo');
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Unable to proceed. Please try again.');
     } finally {
       setSaving(false);
@@ -285,7 +285,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
 
       auditLogger.info('Senior demographics completed', { userId });
       navigate('/consent-photo');
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('Failed to save demographics', String(err));
       setError('Unable to save your information. Please try again.');
     } finally {

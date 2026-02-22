@@ -112,7 +112,7 @@ export class RealtimeSecurityMonitor {
         });
 
       this.isMonitoring = true;
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   }
@@ -162,7 +162,7 @@ export class RealtimeSecurityMonitor {
     this.alertCallbacks.forEach((callback) => {
       try {
         callback(alert);
-      } catch (error) {
+      } catch (error: unknown) {
       }
     });
   }
@@ -186,7 +186,7 @@ export class RealtimeSecurityMonitor {
     this.eventCallbacks.forEach((callback) => {
       try {
         callback(event);
-      } catch (error) {
+      } catch (error: unknown) {
       }
     });
   }
@@ -224,7 +224,7 @@ export class RealtimeSecurityMonitor {
       }
 
       return data || [];
-    } catch (error) {
+    } catch (error: unknown) {
       return [];
     }
   }
@@ -261,7 +261,7 @@ export class RealtimeSecurityMonitor {
       });
 
       return stats;
-    } catch (error) {
+    } catch (error: unknown) {
       return { total: 0, byType: {}, bySeverity: {} };
     }
   }

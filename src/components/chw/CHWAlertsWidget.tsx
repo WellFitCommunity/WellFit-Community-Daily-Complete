@@ -120,7 +120,7 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
       if (error) throw error;
 
       await refresh();
-    } catch (error) {
+    } catch (error: unknown) {
       // Silent fail - user can retry
     }
   };
@@ -138,7 +138,7 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
       if (error) throw error;
 
       await refresh();
-    } catch (error) {
+    } catch (error: unknown) {
       // Silent fail - user can retry
     }
   };

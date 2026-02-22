@@ -36,7 +36,7 @@ const SmartScalePage: React.FC = () => {
       if (readingsResult.success && readingsResult.data) {
         setReadings(readingsResult.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to load data');
     } finally {
       setIsLoading(false);
