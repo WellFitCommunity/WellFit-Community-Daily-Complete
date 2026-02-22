@@ -108,7 +108,7 @@ function setupDefaultMocks(profileData: unknown = mockProfile) {
       };
     }
 
-    if (table === 'daily_check_ins') {
+    if (table === 'check_ins') {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -174,6 +174,18 @@ function setupDefaultMocks(profileData: unknown = mockProfile) {
                   }),
                 }),
               }),
+            }),
+          }),
+        }),
+      };
+    }
+
+    if (table === 'self_reports') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: [], error: null }),
             }),
           }),
         }),
@@ -285,6 +297,7 @@ describe('PatientContextService', () => {
         includeRisk: false,
         includeCarePlan: false,
         includeHospitalDetails: false,
+        includeSelfReports: false,
       });
 
       expect(result.success).toBe(true);
@@ -295,6 +308,7 @@ describe('PatientContextService', () => {
       expect(result.data.risk).toBeNull();
       expect(result.data.care_plan).toBeNull();
       expect(result.data.hospital_details).toBeNull();
+      expect(result.data.self_reports).toBeNull();
     });
 
     it('includes all sections with default options', async () => {
@@ -329,6 +343,7 @@ describe('PatientContextService', () => {
       expect(result.data.risk).toBeNull();
       expect(result.data.care_plan).toBeNull();
       expect(result.data.hospital_details).toBeNull();
+      expect(result.data.self_reports).toBeNull();
     });
   });
 
@@ -346,6 +361,114 @@ describe('PatientContextService', () => {
       expect(result.data.risk).not.toBeNull();
       expect(result.data.care_plan).not.toBeNull();
       expect(result.data.hospital_details).not.toBeNull();
+    });
+  });
+
+  describe('getBatchDemographics', () => {
+    it('returns demographics map for multiple patients', async () => {
+      const profile2 = { ...mockProfile, user_id: 'patient-test-002', first_name: 'Jane' };
+
+      mockFrom.mockImplementation(() => ({
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({
+            data: [mockProfile, profile2],
+            error: null,
+          }),
+        }),
+      }));
+
+      const result = await service.getBatchDemographics([PATIENT_ID, 'patient-test-002']);
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.data.size).toBe(2);
+      expect(result.data.get(PATIENT_ID)?.first_name).toBe('John');
+      expect(result.data.get('patient-test-002')?.first_name).toBe('Jane');
+    });
+
+    it('returns empty map for empty input', async () => {
+      const result = await service.getBatchDemographics([]);
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.size).toBe(0);
+    });
+
+    it('rejects batch size over 500', async () => {
+      const bigBatch = Array.from({ length: 501 }, (_, i) => `patient-${i}`);
+
+      const result = await service.getBatchDemographics(bigBatch);
+
+      expect(result.success).toBe(false);
+      if (result.success) return;
+      expect(result.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('handles database errors gracefully', async () => {
+      mockFrom.mockImplementation(() => ({
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Connection refused' },
+          }),
+        }),
+      }));
+
+      const result = await service.getBatchDemographics([PATIENT_ID]);
+
+      expect(result.success).toBe(false);
+      if (result.success) return;
+      expect(result.error.code).toBe('DATABASE_ERROR');
+    });
+
+    it('logs PHI access for batch operations', async () => {
+      mockFrom.mockImplementation(() => ({
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({
+            data: [mockProfile],
+            error: null,
+          }),
+        }),
+      }));
+
+      await service.getBatchDemographics([PATIENT_ID]);
+
+      expect(auditLogger.phi).toHaveBeenCalledWith(
+        'READ',
+        'batch',
+        expect.objectContaining({
+          resourceType: 'patient_demographics_batch',
+          requestedCount: 1,
+          returnedCount: 1,
+        })
+      );
+    });
+
+    it('maps profile rows to PatientDemographics correctly', async () => {
+      mockFrom.mockImplementation(() => ({
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({
+            data: [mockProfile],
+            error: null,
+          }),
+        }),
+      }));
+
+      const result = await service.getBatchDemographics([PATIENT_ID]);
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      const demo = result.data.get(PATIENT_ID);
+      expect(demo).toBeDefined();
+      expect(demo?.patient_id).toBe(PATIENT_ID);
+      expect(demo?.first_name).toBe('John');
+      expect(demo?.last_name).toBe('Doe');
+      expect(demo?.dob).toBe('1952-03-15');
+      expect(demo?.mrn).toBe('MRN-12345');
+      expect(demo?.enrollment_type).toBe('hospital');
+      expect(demo?.tenant_id).toBe('tenant-001');
     });
   });
 

@@ -465,8 +465,8 @@ class EmergencyAccessIntelligenceService {
 
     // Get recent check-ins for mobility/cognitive assessment
     const { data: checkins } = await this.supabase
-      .from('daily_check_ins')
-      .select('responses')
+      .from('check_ins')
+      .select('created_at, emotional_state, heart_rate, bp_systolic, bp_diastolic, glucose_mg_dl, pulse_oximeter, notes, is_emergency')
       .eq('user_id', seniorId)
       .order('created_at', { ascending: false })
       .limit(10);

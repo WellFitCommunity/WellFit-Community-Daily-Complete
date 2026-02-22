@@ -50,15 +50,25 @@ export interface AdmissionRow {
 }
 
 /**
- * Internal check-in row shape
+ * Internal check-in row shape (from `check_ins` table)
+ *
+ * Note: Community daily check-ins use the `check_ins` table.
+ * The separate `patient_daily_check_ins` table is for care-plan-linked
+ * readmission tracking check-ins (different schema, JSONB responses).
  */
 export interface CheckInRow {
   id: string;
   user_id: string;
-  check_in_date: string;
-  wellness_score: number | null;
-  mood: string | null;
-  concerns: string[] | null;
+  created_at: string;
+  label: string | null;
+  emotional_state: string | null;
+  heart_rate: number | null;
+  bp_systolic: number | null;
+  bp_diastolic: number | null;
+  glucose_mg_dl: number | null;
+  pulse_oximeter: number | null;
+  notes: string | null;
+  is_emergency: boolean;
 }
 
 /**

@@ -370,6 +370,45 @@ export interface PatientCarePlanSummary {
 }
 
 // =============================================================================
+// SELF-REPORT SUMMARY
+// =============================================================================
+
+/**
+ * A single self-report entry (from `self_reports` table)
+ *
+ * Self-reports are the in-depth daily health assessments submitted
+ * by community members — separate from the quick daily check-in.
+ */
+export interface SelfReportEntry {
+  id: string;
+  user_id: string;
+  mood: string | null;
+  symptoms: string | null;
+  activity_description: string | null;
+  bp_systolic: number | null;
+  bp_diastolic: number | null;
+  heart_rate: number | null;
+  blood_sugar: number | null;
+  blood_oxygen: number | null;
+  weight: number | null;
+  physical_activity: string | null;
+  social_engagement: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by_name: string | null;
+}
+
+/**
+ * Self-report summary for patient context
+ */
+export interface SelfReportSummary {
+  /** Recent self-report entries (newest first) */
+  recent_reports: SelfReportEntry[];
+  /** Total count of self-reports for this patient */
+  total_count: number;
+}
+
+// =============================================================================
 // CONTEXT METADATA (TRACEABILITY)
 // =============================================================================
 
@@ -453,6 +492,9 @@ export interface PatientContextOptions {
   /** Include hospital-specific details (admission, room, etc.) */
   includeHospitalDetails?: boolean;
 
+  /** Include self-report history (in-depth daily assessments) */
+  includeSelfReports?: boolean;
+
   /** Include sensitive data (requires elevated permissions) */
   includeSensitive?: boolean;
 
@@ -461,6 +503,9 @@ export interface PatientContextOptions {
 
   /** Maximum timeline events (default: 10) */
   maxTimelineEvents?: number;
+
+  /** Maximum self-reports to include (default: 10) */
+  maxSelfReports?: number;
 }
 
 /**
@@ -472,9 +517,11 @@ export const DEFAULT_PATIENT_CONTEXT_OPTIONS: Required<PatientContextOptions> = 
   includeRisk: true,
   includeCarePlan: true,
   includeHospitalDetails: false,  // Opt-in for hospital context
+  includeSelfReports: false,       // Opt-in for self-report history
   includeSensitive: false,         // Never include by default
   timelineDays: 7,
   maxTimelineEvents: 10,
+  maxSelfReports: 10,
 };
 
 // =============================================================================
@@ -533,6 +580,9 @@ export interface PatientContext {
 
   /** Care plan summary (if includeCarePlan) */
   care_plan: PatientCarePlanSummary | null;
+
+  /** Self-report history (if includeSelfReports) */
+  self_reports: SelfReportSummary | null;
 
   // -------------------------------------------------------------------------
   // METADATA (always included - required for ATLUS Accountability)

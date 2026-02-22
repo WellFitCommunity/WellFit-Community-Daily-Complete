@@ -9,6 +9,7 @@
  */
 
 export { PatientContextService } from './PatientContextService';
+export { fetchSelfReports } from './fetchSelfReports';
 import { PatientContextService } from './PatientContextService';
 
 /** Singleton instance — use this for all service calls */

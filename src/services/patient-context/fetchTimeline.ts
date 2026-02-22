@@ -2,7 +2,7 @@
  * Fetch patient timeline summary (check-ins, vitals, encounters, alerts)
  *
  * Integrates with:
- * - daily_check_ins table (community check-ins)
+ * - check_ins table (community daily wellness check-ins)
  * - ObservationService (FHIR vital signs → last_vitals)
  * - EncounterService (FHIR encounters → last_encounter)
  * - care_team_alerts table (active alert count)
@@ -124,12 +124,12 @@ export async function fetchTimeline(
   const warnings: string[] = [];
 
   try {
-    // Fetch last check-in
+    // Fetch last check-in from community check_ins table
     const { data: checkInData } = await supabase
-      .from('daily_check_ins')
-      .select('id, check_in_date, wellness_score, mood, concerns')
+      .from('check_ins')
+      .select('id, user_id, created_at, label, emotional_state, heart_rate, bp_systolic, bp_diastolic, glucose_mg_dl, pulse_oximeter, notes, is_emergency')
       .eq('user_id', patientId)
-      .order('check_in_date', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(1)
       .single();
 
@@ -139,20 +139,20 @@ export async function fetchTimeline(
     const events: TimelineEvent[] = [];
     if (lastCheckIn) {
       events.push({
-        event_id: lastCheckIn.id,
+        event_id: String(lastCheckIn.id),
         event_type: 'check_in',
-        timestamp: lastCheckIn.check_in_date,
-        description: 'Daily check-in completed',
-        severity: 'info',
-        related_entity_id: lastCheckIn.id,
-        related_entity_type: 'daily_check_ins',
+        timestamp: lastCheckIn.created_at,
+        description: lastCheckIn.label ?? 'Daily check-in completed',
+        severity: lastCheckIn.is_emergency ? 'critical' : 'info',
+        related_entity_id: String(lastCheckIn.id),
+        related_entity_type: 'check_ins',
       });
     }
 
     // Calculate days since last contact
     let daysSinceLastContact: number | null = null;
     if (lastCheckIn) {
-      const lastDate = new Date(lastCheckIn.check_in_date);
+      const lastDate = new Date(lastCheckIn.created_at);
       const now = new Date();
       daysSinceLastContact = Math.floor(
         (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -217,10 +217,10 @@ export async function fetchTimeline(
     const timeline: PatientTimelineSummary = {
       last_check_in: lastCheckIn
         ? {
-            timestamp: lastCheckIn.check_in_date,
-            wellness_score: lastCheckIn.wellness_score,
-            mood: lastCheckIn.mood,
-            concerns: lastCheckIn.concerns || [],
+            timestamp: lastCheckIn.created_at,
+            wellness_score: null,
+            mood: lastCheckIn.emotional_state,
+            concerns: lastCheckIn.notes ? [lastCheckIn.notes] : [],
           }
         : null,
       last_vitals: lastVitals,
@@ -230,7 +230,7 @@ export async function fetchTimeline(
       days_since_last_contact: daysSinceLastContact,
     };
 
-    const dataSources = ['daily_check_ins', 'fhir_observations', 'encounters', 'care_team_alerts'];
+    const dataSources = ['check_ins', 'fhir_observations', 'encounters', 'care_team_alerts'];
 
     return {
       success: true,
@@ -248,7 +248,7 @@ export async function fetchTimeline(
       success: false,
       data: null,
       source: {
-        source: 'daily_check_ins',
+        source: 'check_ins',
         fetched_at: fetchedAt,
         success: false,
         record_count: 0,

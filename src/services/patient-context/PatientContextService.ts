@@ -22,16 +22,19 @@ import type {
   PatientContext,
   PatientContextMeta,
   PatientContextOptions,
+  PatientDemographics,
   DataSourceRecord,
 } from '../../types/patientContext';
 import { DEFAULT_PATIENT_CONTEXT_OPTIONS } from '../../types/patientContext';
 import { assessFreshness } from './helpers';
 import { fetchDemographics } from './fetchDemographics';
+import type { ProfileRow } from './types';
 import { fetchHospitalDetails } from './fetchHospitalDetails';
 import { fetchContacts } from './fetchContacts';
 import { fetchTimeline } from './fetchTimeline';
 import { fetchRiskSummary } from './fetchRiskSummary';
 import { fetchCarePlanSummary } from './fetchCarePlanSummary';
+import { fetchSelfReports } from './fetchSelfReports';
 
 export class PatientContextService {
   /**
@@ -77,6 +80,7 @@ export class PatientContextService {
         timelineResult,
         riskResult,
         carePlanResult,
+        selfReportsResult,
       ] = await Promise.all([
         opts.includeHospitalDetails
           ? fetchHospitalDetails(patientId)
@@ -92,6 +96,9 @@ export class PatientContextService {
           : Promise.resolve(null),
         opts.includeCarePlan
           ? fetchCarePlanSummary(patientId)
+          : Promise.resolve(null),
+        opts.includeSelfReports
+          ? fetchSelfReports(patientId, opts.maxSelfReports)
           : Promise.resolve(null),
       ]);
 
@@ -115,6 +122,10 @@ export class PatientContextService {
       if (carePlanResult) {
         dataSources.push(carePlanResult.source);
         if (!carePlanResult.success) warnings.push('Care plan fetch failed');
+      }
+      if (selfReportsResult) {
+        dataSources.push(selfReportsResult.source);
+        if (!selfReportsResult.success) warnings.push('Self-reports fetch failed');
       }
 
       // Propagate source-level warnings (e.g., partial FHIR failures)
@@ -146,6 +157,7 @@ export class PatientContextService {
         timeline: timelineResult?.data ?? null,
         risk: riskResult?.data ?? null,
         care_plan: carePlanResult?.data ?? null,
+        self_reports: selfReportsResult?.data ?? null,
         context_meta: contextMeta,
       };
 
@@ -212,6 +224,93 @@ export class PatientContextService {
       includeRisk: true,
       includeCarePlan: true,
       includeHospitalDetails: true,
+      includeSelfReports: true,
     });
+  }
+
+  /**
+   * Batch fetch demographics for multiple patients
+   *
+   * Uses a single `WHERE user_id IN (...)` query instead of N+1 calls.
+   * Intended for population-level dashboards that need basic demographics
+   * for a list of patients.
+   *
+   * @param patientIds - Array of patient UUIDs (max 500)
+   * @returns Map of patient_id -> PatientDemographics
+   */
+  async getBatchDemographics(
+    patientIds: PatientId[]
+  ): Promise<ServiceResult<Map<string, PatientDemographics>>> {
+    const MAX_BATCH_SIZE = 500;
+
+    if (patientIds.length === 0) {
+      return success(new Map());
+    }
+
+    if (patientIds.length > MAX_BATCH_SIZE) {
+      return failure(
+        'VALIDATION_ERROR',
+        `Batch size ${patientIds.length} exceeds maximum of ${MAX_BATCH_SIZE}`
+      );
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          user_id,
+          first_name,
+          last_name,
+          dob,
+          gender,
+          phone,
+          preferred_language,
+          enrollment_type,
+          tenant_id,
+          mrn
+        `)
+        .in('user_id', patientIds);
+
+      if (error) {
+        await auditLogger.error(
+          'BATCH_DEMOGRAPHICS_FETCH_ERROR',
+          new Error(error.message),
+          { batchSize: patientIds.length }
+        );
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      const rows = (data ?? []) as ProfileRow[];
+      const result = new Map<string, PatientDemographics>();
+
+      for (const row of rows) {
+        result.set(row.user_id, {
+          patient_id: row.user_id,
+          first_name: row.first_name,
+          last_name: row.last_name,
+          dob: row.dob,
+          gender: row.gender,
+          phone: row.phone,
+          preferred_language: row.preferred_language,
+          enrollment_type: row.enrollment_type,
+          tenant_id: row.tenant_id,
+          mrn: row.mrn,
+        });
+      }
+
+      await auditLogger.phi('READ', 'batch', {
+        resourceType: 'patient_demographics_batch',
+        requestedCount: patientIds.length,
+        returnedCount: result.size,
+      });
+
+      return success(result);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      await auditLogger.error('BATCH_DEMOGRAPHICS_ERROR', error, {
+        batchSize: patientIds.length,
+      });
+      return failure('DATABASE_ERROR', error.message, error);
+    }
   }
 }

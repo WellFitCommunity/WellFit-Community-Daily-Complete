@@ -448,10 +448,10 @@ class WelfareCheckDispatcherService {
     const thirtyDaysAgo = new Date(assessmentDate);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Get check-in history
+    // Get check-in history from community check_ins table
     const { data: checkins } = await this.supabase
-      .from('daily_check_ins')
-      .select('created_at, responses')
+      .from('check_ins')
+      .select('created_at, emotional_state, heart_rate, bp_systolic, bp_diastolic, glucose_mg_dl, pulse_oximeter, notes, is_emergency')
       .eq('user_id', seniorId)
       .gte('created_at', thirtyDaysAgo.toISOString())
       .order('created_at', { ascending: false });
@@ -481,7 +481,16 @@ class WelfareCheckDispatcherService {
     return {
       daysSinceLastCheckin,
       checkinCount: checkins?.length || 0,
-      recentCheckinResponses: checkins?.slice(0, 5).map(c => c.responses) || [],
+      recentCheckinResponses: checkins?.slice(0, 5).map(c => ({
+        emotional_state: c.emotional_state,
+        heart_rate: c.heart_rate,
+        bp_systolic: c.bp_systolic,
+        bp_diastolic: c.bp_diastolic,
+        glucose_mg_dl: c.glucose_mg_dl,
+        pulse_oximeter: c.pulse_oximeter,
+        notes: c.notes,
+        is_emergency: c.is_emergency,
+      })) || [],
       sdohBarriers: sdoh || [],
       emergencyContactsCount: emergencyContactsCount || 0
     };

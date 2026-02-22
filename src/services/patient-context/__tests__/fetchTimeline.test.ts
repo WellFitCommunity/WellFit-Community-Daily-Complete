@@ -63,7 +63,7 @@ function assertData(data: PatientTimelineSummary | null): PatientTimelineSummary
 }
 
 /**
- * Build a Supabase chain mock for daily_check_ins
+ * Build a Supabase chain mock for check_ins
  */
 function mockCheckInChain(data: unknown, error: unknown = null) {
   return {
@@ -97,18 +97,24 @@ describe('fetchTimeline', () => {
     vi.clearAllMocks();
   });
 
-  it('returns last check-in data from daily_check_ins (regression)', async () => {
+  it('returns last check-in data from check_ins (regression)', async () => {
     const checkIn = {
       id: 'ci-1',
       user_id: PATIENT_ID,
-      check_in_date: '2026-02-08',
-      wellness_score: 8,
-      mood: 'good',
-      concerns: ['back pain'],
+      created_at: '2026-02-08T10:00:00Z',
+      label: 'Feeling Great Today',
+      emotional_state: 'good',
+      heart_rate: 72,
+      bp_systolic: 120,
+      bp_diastolic: 80,
+      glucose_mg_dl: null,
+      pulse_oximeter: 97,
+      notes: 'back pain',
+      is_emergency: false,
     };
 
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(checkIn);
+      if (table === 'check_ins') return mockCheckInChain(checkIn);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
@@ -121,14 +127,13 @@ describe('fetchTimeline', () => {
 
     expect(result.success).toBe(true);
     expect(data.last_check_in).not.toBeNull();
-    expect(data.last_check_in?.wellness_score).toBe(8);
     expect(data.last_check_in?.mood).toBe('good');
     expect(data.last_check_in?.concerns).toEqual(['back pain']);
   });
 
   it('maps LOINC vital signs to last_vitals (TODO #3)', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
@@ -161,7 +166,7 @@ describe('fetchTimeline', () => {
 
   it('returns null last_vitals when no observations exist', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
@@ -177,7 +182,7 @@ describe('fetchTimeline', () => {
 
   it('handles partial BP (only systolic, no diastolic)', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
@@ -204,7 +209,7 @@ describe('fetchTimeline', () => {
 
   it('populates last_encounter from EncounterService (TODO #4)', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
@@ -239,7 +244,7 @@ describe('fetchTimeline', () => {
 
   it('returns null last_encounter when no encounters exist', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
@@ -255,7 +260,7 @@ describe('fetchTimeline', () => {
 
   it('populates active_alerts_count from care_team_alerts (TODO #5)', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(5);
       return mockCheckInChain(null);
     });
@@ -271,7 +276,7 @@ describe('fetchTimeline', () => {
 
   it('defaults active_alerts_count to 0 when query fails', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(null, { message: 'RLS denied' });
       return mockCheckInChain(null);
     });
@@ -288,7 +293,7 @@ describe('fetchTimeline', () => {
 
   it('degrades gracefully when ObservationService fails', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(2);
       return mockCheckInChain(null);
     });
@@ -308,7 +313,7 @@ describe('fetchTimeline', () => {
 
   it('degrades gracefully when EncounterService throws', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
@@ -326,7 +331,7 @@ describe('fetchTimeline', () => {
 
   it('includes all data sources in source field', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(null);
+      if (table === 'check_ins') return mockCheckInChain(null);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
@@ -336,7 +341,8 @@ describe('fetchTimeline', () => {
 
     const result = await fetchTimeline(PATIENT_ID, 7, 10);
 
-    expect(result.source.source).toContain('daily_check_ins');
+    // Source string is joined: "check_ins + fhir_observations + encounters + care_team_alerts"
+    expect(result.source.source).toContain('check_ins');
     expect(result.source.source).toContain('fhir_observations');
     expect(result.source.source).toContain('encounters');
     expect(result.source.source).toContain('care_team_alerts');
@@ -348,14 +354,20 @@ describe('fetchTimeline', () => {
     const checkIn = {
       id: 'ci-1',
       user_id: PATIENT_ID,
-      check_in_date: yesterday.toISOString().split('T')[0],
-      wellness_score: 7,
-      mood: 'ok',
-      concerns: null,
+      created_at: yesterday.toISOString(),
+      label: 'Morning Check-In',
+      emotional_state: 'ok',
+      heart_rate: null,
+      bp_systolic: null,
+      bp_diastolic: null,
+      glucose_mg_dl: null,
+      pulse_oximeter: null,
+      notes: null,
+      is_emergency: false,
     };
 
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'daily_check_ins') return mockCheckInChain(checkIn);
+      if (table === 'check_ins') return mockCheckInChain(checkIn);
       if (table === 'care_team_alerts') return mockAlertsChain(0);
       return mockCheckInChain(null);
     });
