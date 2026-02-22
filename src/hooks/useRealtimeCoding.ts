@@ -36,7 +36,7 @@ export const useRealtimeCoding = (encounterId?: string) => {
       try {
         const { data, error: fetchError } = await supabase
           .from('coding_recommendations')
-          .select('*')
+          .select('id, encounter_id, patient_id, payload, confidence, created_at')
           .eq('encounter_id', encounterId)
           .order('created_at', { ascending: false });
 

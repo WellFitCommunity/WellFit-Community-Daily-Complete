@@ -16,7 +16,7 @@ export const DocumentReferenceService = {
   async getAll(patientId: string, options: { type_code?: string; status?: string } = {}) {
     let query = supabase
       .from('document_references')
-      .select('*')
+      .select('id, patient_id, status, type_code, type_display, category, date, author, description, content, context, related_to, created_at, updated_at')
       .eq('patient_id', patientId)
       .order('date', { ascending: false });
 
@@ -37,7 +37,7 @@ export const DocumentReferenceService = {
   async getByType(patientId: string, typeCode: string) {
     const { data, error } = await supabase
       .from('document_references')
-      .select('*')
+      .select('id, patient_id, status, type_code, type_display, category, date, author, description, content, context, related_to, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('type_code', typeCode)
       .eq('status', 'current')
@@ -59,7 +59,7 @@ export const DocumentReferenceService = {
 
     const { data, error } = await supabase
       .from('document_references')
-      .select('*')
+      .select('id, patient_id, status, type_code, type_display, category, date, author, description, content, context, related_to, created_at, updated_at')
       .eq('patient_id', patientId)
       .in('type_code', clinicalNoteCodes)
       .eq('status', 'current')
@@ -73,7 +73,7 @@ export const DocumentReferenceService = {
   async getDischargeSummaries(patientId: string) {
     const { data, error } = await supabase
       .from('document_references')
-      .select('*')
+      .select('id, patient_id, status, type_code, type_display, category, date, author, description, content, context, related_to, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('type_code', '18842-5') // LOINC code for discharge summary
       .eq('status', 'current')
@@ -87,7 +87,7 @@ export const DocumentReferenceService = {
   async getByEncounter(encounterId: string) {
     const { data, error } = await supabase
       .from('document_references')
-      .select('*')
+      .select('id, patient_id, status, type_code, type_display, category, date, author, description, content, context, related_to, created_at, updated_at')
       .contains('context', { encounter_id: encounterId })
       .eq('status', 'current')
       .order('date', { ascending: false });
@@ -101,7 +101,7 @@ export const DocumentReferenceService = {
     const { data, error } = await supabase
       .from('document_references')
       .insert([document])
-      .select()
+      .select('id, patient_id, status, type_code, type_display, category, date, author, description, content, context, related_to, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -114,7 +114,7 @@ export const DocumentReferenceService = {
       .from('document_references')
       .update(updates)
       .eq('id', id)
-      .select()
+      .select('id, patient_id, status, type_code, type_display, category, date, author, description, content, context, related_to, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -135,7 +135,7 @@ export const DocumentReferenceService = {
           related_to: [{ reference: id, display: 'Supersedes previous version' }]
         }
       ])
-      .select()
+      .select('id, patient_id, status, type_code, type_display, category, date, author, description, content, context, related_to, created_at, updated_at')
       .single();
 
     if (error) throw error;

@@ -494,7 +494,7 @@ export class ReadmissionRiskPredictor {
       // 1. Readmission history (last 90 days)
       const { data: readmissions } = await supabase
         .from('patient_readmissions')
-        .select('*')
+        .select('id, patient_id, admission_date, discharge_date, readmission_type, facility_id, created_at')
         .eq('patient_id', patientId)
         .gte('admission_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
         .order('admission_date', { ascending: false })
@@ -516,7 +516,7 @@ export class ReadmissionRiskPredictor {
       // 2. SDOH indicators
       const { data: sdohIndicators } = await supabase
         .from('sdoh_indicators')
-        .select('*')
+        .select('id, patient_id, domain, risk_level, status, indicator_text, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .limit(20);
@@ -531,7 +531,7 @@ export class ReadmissionRiskPredictor {
       // 3. Check-in patterns (last 30 days)
       const { data: checkIns } = await supabase
         .from('patient_daily_check_ins')
-        .select('*')
+        .select('id, patient_id, check_in_date, status, alert_triggered, created_at')
         .eq('patient_id', patientId)
         .gte('check_in_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .order('check_in_date', { ascending: false })
@@ -549,7 +549,7 @@ export class ReadmissionRiskPredictor {
       // 4. Medication data
       const { data: medications } = await supabase
         .from('fhir_medication_requests')
-        .select('*')
+        .select('id, patient_id, medication_id, status, intent, medication_display, dosage_text, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .limit(20);
@@ -563,7 +563,7 @@ export class ReadmissionRiskPredictor {
       // 5. Active care plan
       const { data: carePlans } = await supabase
         .from('care_coordination_plans')
-        .select('*')
+        .select('id, patient_id, tenant_id, status, plan_type, start_date, end_date, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .limit(1);

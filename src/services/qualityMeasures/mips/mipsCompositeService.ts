@@ -82,7 +82,7 @@ export async function calculateMipsComposite(
     // 1. Get MIPS-eligible measures
     const { data: measures, error: measErr } = await supabase
       .from('ecqm_measure_definitions')
-      .select('*')
+      .select('id, measure_id, cms_id, version, title, description, measure_type, measure_scoring, initial_population_description, denominator_description, numerator_description, reporting_year, applicable_settings, clinical_focus, is_active, program_types, mips_quality_id, mips_high_priority, is_inverse_measure')
       .eq('is_active', true)
       .contains('program_types', ['mips']);
 
@@ -94,7 +94,7 @@ export async function calculateMipsComposite(
 
     const { data: aggData, error: aggErr } = await supabase
       .from('ecqm_aggregate_results')
-      .select('*')
+      .select('measure_id, initial_population_count, denominator_count, denominator_exclusion_count, denominator_exception_count, numerator_count, numerator_exclusion_count, performance_rate, patient_count')
       .eq('tenant_id', tenantId)
       .gte('reporting_period_start', periodStart)
       .in('measure_id', measureIds);
@@ -141,7 +141,7 @@ export async function calculateMipsComposite(
     // 4. Calculate IA score from attested activities
     const { data: iaData } = await supabase
       .from('mips_improvement_activities')
-      .select('*')
+      .select('id, tenant_id, reporting_year, activity_id, title, description, category, subcategory, weight, points, is_attested, attestation_date, attested_by, evidence_notes')
       .eq('tenant_id', tenantId)
       .eq('reporting_year', reportingYear)
       .eq('is_attested', true);
@@ -228,7 +228,7 @@ export async function getMipsComposite(
   try {
     const { data, error } = await supabase
       .from('mips_composite_scores')
-      .select('*')
+      .select('id, tenant_id, reporting_year, quality_score, quality_weight, cost_score, cost_weight, improvement_activities_score, improvement_activities_weight, promoting_interoperability_score, promoting_interoperability_weight, final_composite_score, payment_adjustment_percent, benchmark_decile, quality_measure_scores, quality_measures_reported, quality_bonus_points, calculated_at, calculated_by, notes')
       .eq('tenant_id', tenantId)
       .eq('reporting_year', reportingYear)
       .single();
@@ -260,7 +260,7 @@ export async function getImprovementActivities(
   try {
     const { data, error } = await supabase
       .from('mips_improvement_activities')
-      .select('*')
+      .select('id, tenant_id, reporting_year, activity_id, title, description, category, subcategory, weight, points, is_attested, attestation_date, attested_by, evidence_notes')
       .eq('tenant_id', tenantId)
       .eq('reporting_year', reportingYear)
       .order('activity_id');

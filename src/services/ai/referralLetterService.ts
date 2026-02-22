@@ -367,7 +367,7 @@ export class ReferralLetterService {
     try {
       const { data, error } = await supabase
         .from('ai_referral_letters')
-        .select('*')
+        .select('id, patient_id, from_provider_id, to_specialty, clinical_reason, generated_letter, formatted_letter, status, approved_by, approved_at, sent_at, model_used, confidence_score, requires_review, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(limit);

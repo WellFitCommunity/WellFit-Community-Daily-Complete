@@ -135,9 +135,10 @@ export const CommunityReadmissionDashboard: React.FC = () => {
     setLoading(true);
     try {
       const [metricsResult, membersResult, alertsResult] = await Promise.all([
-        supabase.from('v_readmission_dashboard_metrics').select('*').single(),
-        supabase.from('v_readmission_high_risk_members').select('*'),
-        supabase.from('v_readmission_active_alerts').select('*'),
+        // Views — select('*') is intentional for database views where column set is defined by the view definition
+        supabase.from('v_readmission_dashboard_metrics').select('total_high_risk_members, total_readmissions_30d, cms_penalty_risk_count, prevented_readmissions, active_care_plans, avg_engagement_score, check_in_completion_rate, medication_adherence_rate, cost_savings_estimate, critical_alerts').single(),
+        supabase.from('v_readmission_high_risk_members').select('id, first_name, last_name, phone, discharge_facility, primary_diagnosis, risk_score, risk_category, total_visits_30d, er_visits_30d, readmissions_30d, last_check_in, check_in_streak, missed_check_ins_7d, has_active_care_plan, sdoh_risk_factors, engagement_score, medication_adherence, cms_penalty_risk, predicted_readmission_date, days_since_discharge, wellfit_member_since, estimated_savings'),
+        supabase.from('v_readmission_active_alerts').select('alert_id, member_id, member_name, alert_type, severity, title, description, created_at, status, recommended_action'),
       ]);
 
       if (metricsResult.data) {

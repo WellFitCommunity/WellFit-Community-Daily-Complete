@@ -93,7 +93,7 @@ export const EDBooardingService = {
     try {
       let query = supabase
         .from('ed_boarders_with_metrics')
-        .select('*')
+        .select('id, tenant_id, patient_id, patient_name, patient_mrn, ed_bed_id, ed_bed_label, ed_zone, admit_decision_at, admitting_physician, admitting_service, admission_diagnosis, target_unit_type, target_unit_id, required_bed_type, requires_telemetry, requires_isolation, requires_negative_pressure, special_requirements, acuity_level, is_critical, status, assigned_bed_id, assigned_bed_label, assigned_at, placed_at, cancelled_at, cancellation_reason, boarding_start_at, boarding_minutes, escalation_level, last_escalation_at, escalation_acknowledged, escalation_acknowledged_by, notes, barriers_to_placement, created_at, updated_at')
         .in('status', ['awaiting_bed', 'bed_assigned', 'in_transport'])
         .order('escalation_level', { ascending: false })
         .order('boarding_start_at', { ascending: true });
@@ -138,7 +138,7 @@ export const EDBooardingService = {
     try {
       const { data, error } = await supabase
         .from('ed_boarders_with_metrics')
-        .select('*')
+        .select('id, tenant_id, patient_id, patient_name, patient_mrn, ed_bed_id, ed_bed_label, ed_zone, admit_decision_at, admitting_physician, admitting_service, admission_diagnosis, target_unit_type, target_unit_id, required_bed_type, requires_telemetry, requires_isolation, requires_negative_pressure, special_requirements, acuity_level, is_critical, status, assigned_bed_id, assigned_bed_label, assigned_at, placed_at, cancelled_at, cancellation_reason, boarding_start_at, boarding_minutes, escalation_level, last_escalation_at, escalation_acknowledged, escalation_acknowledged_by, notes, barriers_to_placement, created_at, updated_at')
         .eq('id', boarderId)
         .single();
 
@@ -502,7 +502,7 @@ export const EDBooardingService = {
     try {
       const { data, error } = await supabase
         .from('ed_boarders_with_metrics')
-        .select('*')
+        .select('id, tenant_id, patient_id, patient_name, patient_mrn, ed_bed_id, ed_bed_label, ed_zone, admit_decision_at, admitting_physician, admitting_service, admission_diagnosis, target_unit_type, target_unit_id, required_bed_type, requires_telemetry, requires_isolation, requires_negative_pressure, special_requirements, acuity_level, is_critical, status, assigned_bed_id, assigned_bed_label, assigned_at, placed_at, cancelled_at, cancellation_reason, boarding_start_at, boarding_minutes, escalation_level, last_escalation_at, escalation_acknowledged, escalation_acknowledged_by, notes, barriers_to_placement, created_at, updated_at')
         .eq('status', 'awaiting_bed')
         .eq('escalation_acknowledged', false)
         .in('escalation_level', ['yellow', 'orange', 'red', 'critical'])

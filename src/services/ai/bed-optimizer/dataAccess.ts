@@ -30,7 +30,7 @@ export async function getHistoricalCensusData(tenantId: string, days: number): P
 
   const { data } = await supabase
     .from('daily_census_snapshots')
-    .select('*')
+    .select('snapshot_date, discharges_count, admissions_count, midnight_census, eod_census')
     .eq('tenant_id', tenantId)
     .gte('snapshot_date', startDate.toISOString().split('T')[0])
     .order('snapshot_date', { ascending: false });
@@ -47,7 +47,7 @@ export async function getScheduledArrivals(tenantId: string, days: number): Prom
 
   const { data } = await supabase
     .from('scheduled_arrivals')
-    .select('*')
+    .select('scheduled_date, status')
     .eq('tenant_id', tenantId)
     .gte('scheduled_date', new Date().toISOString())
     .lte('scheduled_date', endDate.toISOString())
@@ -62,7 +62,7 @@ export async function getScheduledArrivals(tenantId: string, days: number): Prom
 export async function getLOSBenchmarks(tenantId: string): Promise<LOSBenchmark[]> {
   const { data } = await supabase
     .from('los_benchmarks')
-    .select('*')
+    .select('tenant_id, is_default, drg_code, expected_los')
     .or(`tenant_id.eq.${tenantId},is_default.eq.true`)
     .limit(100);
 

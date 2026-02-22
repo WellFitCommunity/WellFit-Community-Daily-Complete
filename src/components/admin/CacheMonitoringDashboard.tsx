@@ -38,7 +38,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
     initialFetch: async () => {
       const { data, error } = await supabase
         .from('v_subscription_health_dashboard')
-        .select('*');
+        .select('component_name, total_subscriptions, active_subscriptions, stale_subscriptions, avg_age_seconds');
 
       if (error) throw error;
       return data || [];

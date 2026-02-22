@@ -71,7 +71,7 @@ export async function getStaffCategories(): Promise<ServiceResult<RefStaffCatego
   try {
     const { data, error } = await supabase
       .from('ref_staff_category')
-      .select('*')
+      .select('category_id, category_code, category_name, display_order, is_clinical, created_at, updated_at')
       .order('display_order');
 
     if (error) {
@@ -87,7 +87,7 @@ export async function getStaffCategories(): Promise<ServiceResult<RefStaffCatego
 
 export async function getRoleTypes(categoryId?: string): Promise<ServiceResult<RefRoleType[]>> {
   try {
-    let query = supabase.from('ref_role_type').select('*');
+    let query = supabase.from('ref_role_type').select('role_type_id, category_id, role_code, role_name, role_abbreviation, requires_npi, requires_license, requires_dea, is_prescriber, can_admit_patients, can_order, typical_taxonomy_code, created_at, updated_at');
     if (categoryId) {
       query = query.eq('category_id', categoryId);
     }
@@ -108,7 +108,7 @@ export async function getCredentialTypes(): Promise<ServiceResult<RefCredentialT
   try {
     const { data, error } = await supabase
       .from('ref_credential_type')
-      .select('*')
+      .select('credential_type_id, credential_code, credential_name, credential_category, issuing_body, requires_renewal, typical_renewal_years, created_at')
       .order('credential_name');
 
     if (error) {
@@ -126,7 +126,7 @@ export async function getLicenseTypes(): Promise<ServiceResult<RefLicenseType[]>
   try {
     const { data, error } = await supabase
       .from('ref_license_type')
-      .select('*')
+      .select('license_type_id, license_code, license_name, applicable_roles, state_specific, created_at')
       .order('license_name');
 
     if (error) {
@@ -148,7 +148,7 @@ export async function getOrganizations(): Promise<ServiceResult<HCOrganization[]
   try {
     const { data, error } = await supabase
       .from('hc_organization')
-      .select('*')
+      .select('organization_id, tenant_id, organization_name, organization_type, parent_organization_id, npi, tax_id, address_line1, address_line2, city, state, zip, phone, fax, website, cms_certification_number, is_active, source_system, source_id, created_at, updated_at')
       .eq('is_active', true)
       .order('organization_name');
 
@@ -167,7 +167,7 @@ export async function getOrganization(organizationId: string): Promise<ServiceRe
   try {
     const { data, error } = await supabase
       .from('hc_organization')
-      .select('*')
+      .select('organization_id, tenant_id, organization_name, organization_type, parent_organization_id, npi, tax_id, address_line1, address_line2, city, state, zip, phone, fax, website, cms_certification_number, is_active, source_system, source_id, created_at, updated_at')
       .eq('organization_id', organizationId)
       .single();
 
@@ -237,7 +237,7 @@ export async function getDepartments(organizationId: string): Promise<ServiceRes
   try {
     const { data, error } = await supabase
       .from('hc_department')
-      .select('*')
+      .select('department_id, organization_id, department_code, department_name, department_type, parent_department_id, cost_center, location, phone, fax, is_active, source_system, source_id, created_at, updated_at')
       .eq('organization_id', organizationId)
       .eq('is_active', true)
       .order('department_name');
@@ -305,7 +305,7 @@ export async function getFacilities(organizationId: string): Promise<ServiceResu
   try {
     const { data, error } = await supabase
       .from('hc_facility')
-      .select('*')
+      .select('facility_id, organization_id, facility_code, facility_name, facility_type, address_line1, address_line2, city, state, zip, phone, fax, is_active, source_system, source_id, created_at, updated_at')
       .eq('organization_id', organizationId)
       .eq('is_active', true)
       .order('facility_name');
@@ -383,7 +383,7 @@ export interface StaffSearchOptions {
 
 export async function searchStaff(options: StaffSearchOptions = {}): Promise<ServiceResult<HCStaff[]>> {
   try {
-    let query = supabase.from('hc_staff').select('*');
+    let query = supabase.from('hc_staff').select('staff_id, organization_id, employee_id, first_name, middle_name, last_name, suffix, preferred_name, former_names, date_of_birth, gender, email, phone_work, phone_mobile, phone_home, address_line1, address_line2, city, state, zip, hire_date, termination_date, employment_status, employment_type, npi, dea_number, upin, medicare_ptan, medicaid_id, primary_role_type_id, primary_department_id, primary_facility_id, user_account_id, source_system, source_id, source_data, migration_batch_id, migration_status, migration_notes, is_active, created_at, updated_at, created_by, updated_by');
 
     if (options.organizationId) query = query.eq('organization_id', options.organizationId);
     if (options.departmentId) query = query.eq('primary_department_id', options.departmentId);
@@ -420,7 +420,7 @@ export async function searchStaff(options: StaffSearchOptions = {}): Promise<Ser
 
 export async function getStaff(staffId: string): Promise<ServiceResult<HCStaff>> {
   try {
-    const { data, error } = await supabase.from('hc_staff').select('*').eq('staff_id', staffId).single();
+    const { data, error } = await supabase.from('hc_staff').select('staff_id, organization_id, employee_id, first_name, middle_name, last_name, suffix, preferred_name, former_names, date_of_birth, gender, email, phone_work, phone_mobile, phone_home, address_line1, address_line2, city, state, zip, hire_date, termination_date, employment_status, employment_type, npi, dea_number, upin, medicare_ptan, medicaid_id, primary_role_type_id, primary_department_id, primary_facility_id, user_account_id, source_system, source_id, source_data, migration_batch_id, migration_status, migration_notes, is_active, created_at, updated_at, created_by, updated_by').eq('staff_id', staffId).single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -438,7 +438,7 @@ export async function getStaff(staffId: string): Promise<ServiceResult<HCStaff>>
 
 export async function getStaffByNPI(npi: string): Promise<ServiceResult<HCStaff>> {
   try {
-    const { data, error } = await supabase.from('hc_staff').select('*').eq('npi', npi).single();
+    const { data, error } = await supabase.from('hc_staff').select('staff_id, organization_id, employee_id, first_name, middle_name, last_name, suffix, preferred_name, former_names, date_of_birth, gender, email, phone_work, phone_mobile, phone_home, address_line1, address_line2, city, state, zip, hire_date, termination_date, employment_status, employment_type, npi, dea_number, upin, medicare_ptan, medicaid_id, primary_role_type_id, primary_department_id, primary_facility_id, user_account_id, source_system, source_id, source_data, migration_batch_id, migration_status, migration_notes, is_active, created_at, updated_at, created_by, updated_by').eq('npi', npi).single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -529,7 +529,7 @@ export async function deactivateStaff(staffId: string): Promise<ServiceResult<vo
 
 export async function getActiveStaff(organizationId?: string): Promise<ServiceResult<HCActiveStaffView[]>> {
   try {
-    let query = supabase.from('vw_hc_active_staff').select('*');
+    let query = supabase.from('vw_hc_active_staff').select('staff_id, organization_id, employee_id, first_name, middle_name, last_name, suffix, preferred_name, full_name_formal, full_name_display, email, phone_work, phone_mobile, npi, dea_number, hire_date, employment_status, employment_type, primary_role_code, primary_role_name, primary_role_abbrev, primary_category, is_clinical, is_prescriber, can_admit_patients, can_order, primary_department, primary_facility');
     if (organizationId) {
       query = query.eq('organization_id', organizationId);
     }
@@ -554,7 +554,7 @@ export async function getStaffRoles(staffId: string): Promise<ServiceResult<HCSt
   try {
     const { data, error } = await supabase
       .from('hc_staff_role')
-      .select('*')
+      .select('staff_role_id, staff_id, role_type_id, department_id, facility_id, is_primary, effective_date, end_date, fte, source_system, source_id, created_at, updated_at')
       .eq('staff_id', staffId)
       .is('end_date', null)
       .order('is_primary', { ascending: false });
@@ -615,7 +615,7 @@ export async function getStaffCredentials(staffId: string): Promise<ServiceResul
   try {
     const { data, error } = await supabase
       .from('hc_staff_credential')
-      .select('*')
+      .select('staff_credential_id, staff_id, credential_type_id, credential_number, issued_date, expiration_date, issuing_institution, verification_status, verification_date, verified_by, document_url, notes, source_system, source_id, created_at, updated_at')
       .eq('staff_id', staffId)
       .order('expiration_date', { nullsFirst: true });
 
@@ -698,7 +698,7 @@ export async function getStaffLicenses(staffId: string): Promise<ServiceResult<H
   try {
     const { data, error } = await supabase
       .from('hc_staff_license')
-      .select('*')
+      .select('staff_license_id, staff_id, license_type_id, license_number, state, issued_date, expiration_date, status, compact_license, verification_status, verification_date, verified_by, primary_source_verified, document_url, notes, source_system, source_id, created_at, updated_at')
       .eq('staff_id', staffId)
       .order('expiration_date', { nullsFirst: true });
 
@@ -782,7 +782,7 @@ export async function getStaffBoardCertifications(
   try {
     const { data, error } = await supabase
       .from('hc_staff_board_certification')
-      .select('*')
+      .select('board_cert_id, staff_id, board_name, specialty, subspecialty, certificate_number, initial_certification_date, expiration_date, moc_status, status, verification_status, verification_date, document_url, source_system, source_id, created_at, updated_at')
       .eq('staff_id', staffId)
       .order('expiration_date', { nullsFirst: true });
 
@@ -827,7 +827,7 @@ export async function getStaffPrivileges(staffId: string): Promise<ServiceResult
   try {
     const { data, error } = await supabase
       .from('hc_staff_privilege')
-      .select('*')
+      .select('privilege_id, staff_id, facility_id, privilege_category, privilege_name, privilege_code, privilege_level, status, effective_date, expiration_date, approved_by, approval_date, conditions, proctoring_required, proctor_staff_id, cases_required, cases_completed, source_system, source_id, created_at, updated_at')
       .eq('staff_id', staffId)
       .order('privilege_name');
 
@@ -870,7 +870,7 @@ export async function getDirectReports(supervisorId: string): Promise<ServiceRes
   try {
     const { data, error } = await supabase
       .from('hc_staff_reporting')
-      .select('*')
+      .select('reporting_id, staff_id, supervisor_id, relationship_type, effective_date, end_date, source_system, source_id, created_at, updated_at')
       .eq('supervisor_id', supervisorId)
       .is('end_date', null);
 
@@ -889,7 +889,7 @@ export async function getSupervisorChain(staffId: string): Promise<ServiceResult
   try {
     const { data, error } = await supabase
       .from('hc_staff_reporting')
-      .select('*')
+      .select('reporting_id, staff_id, supervisor_id, relationship_type, effective_date, end_date, source_system, source_id, created_at, updated_at')
       .eq('staff_id', staffId)
       .is('end_date', null);
 
@@ -930,7 +930,7 @@ export async function assignSupervisor(reporting: HCStaffReportingInsert): Promi
 
 export async function getStaffEHRMappings(staffId: string): Promise<ServiceResult<HCStaffEHRMapping[]>> {
   try {
-    const { data, error } = await supabase.from('hc_staff_ehr_mapping').select('*').eq('staff_id', staffId);
+    const { data, error } = await supabase.from('hc_staff_ehr_mapping').select('mapping_id, staff_id, ehr_system, ehr_user_id, ehr_provider_id, ehr_login, ehr_department_id, is_active, last_login, created_at, updated_at').eq('staff_id', staffId);
 
     if (error) {
       return failure('DATABASE_ERROR', error.message, error);
@@ -970,7 +970,7 @@ export async function getExpiringCredentials(
   try {
     const { data, error } = await supabase
       .from('vw_hc_expiring_credentials')
-      .select('*')
+      .select('staff_id, employee_id, staff_name, email, credential_type, credential_name, credential_number, state, expiration_date, days_until_expiration')
       .order('days_until_expiration');
 
     if (error) {
@@ -1019,7 +1019,7 @@ export async function getMigrationBatch(batchId: string): Promise<ServiceResult<
   try {
     const { data, error } = await supabase
       .from('hc_migration_batch')
-      .select('*')
+      .select('batch_id, organization_id, source_system, source_file_name, source_file_hash, record_count, success_count, error_count, warning_count, status, started_at, completed_at, started_by, notes, created_at')
       .eq('batch_id', batchId)
       .single();
 
@@ -1081,7 +1081,7 @@ export async function getMigrationLogs(
   severity?: 'ERROR' | 'WARNING' | 'INFO'
 ): Promise<ServiceResult<HCMigrationLog[]>> {
   try {
-    let query = supabase.from('hc_migration_log').select('*').eq('batch_id', batchId);
+    let query = supabase.from('hc_migration_log').select('log_id, batch_id, source_row_number, source_record_id, table_name, field_name, severity, error_code, message, source_value, suggested_fix, is_resolved, resolved_by, resolved_at, created_at').eq('batch_id', batchId);
     if (severity) {
       query = query.eq('severity', severity);
     }
@@ -1106,7 +1106,7 @@ export async function getProviderGroups(organizationId: string): Promise<Service
   try {
     const { data, error } = await supabase
       .from('hc_provider_group')
-      .select('*')
+      .select('group_id, organization_id, group_name, group_npi, tax_id, is_active, source_system, source_id, created_at, updated_at')
       .eq('organization_id', organizationId)
       .eq('is_active', true)
       .order('group_name');

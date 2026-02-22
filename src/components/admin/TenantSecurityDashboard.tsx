@@ -108,7 +108,7 @@ export const TenantSecurityDashboard: React.FC = () => {
     // Get recent PHI access logs for this tenant's patients
     const { data: logs, error } = await supabase
       .from('audit_logs')
-      .select('*')
+      .select('id, user_email, action_type, metadata, created_at')
       .eq('tenant_id', tenantId)
       .eq('action_category', 'PHI_ACCESS')
       .order('created_at', { ascending: false })
@@ -131,7 +131,7 @@ export const TenantSecurityDashboard: React.FC = () => {
     // Get security alerts for this tenant
     const { data: alertData, error } = await supabase
       .from('audit_logs')
-      .select('*')
+      .select('id, severity, message, created_at')
       .eq('tenant_id', tenantId)
       .in('severity', ['high', 'critical'])
       .order('created_at', { ascending: false })

@@ -408,7 +408,7 @@ export class BehavioralAnalyticsService {
     try {
       let query = supabase
         .from('peer_group_statistics')
-        .select('*')
+        .select('role, metric_name, mean_value, std_dev, sample_size, last_calculated')
         .eq('role', role);
 
       if (metricName) {
@@ -498,7 +498,7 @@ export class BehavioralAnalyticsService {
     try {
       const { data, error } = await supabase
         .from('anomaly_detections')
-        .select('*')
+        .select('id, user_id, anomaly_type, aggregate_anomaly_score, risk_level, anomaly_breakdown, context_snapshot, investigated, investigation_notes, investigator_id, investigated_at, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit);

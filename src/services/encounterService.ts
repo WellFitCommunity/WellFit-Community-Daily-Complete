@@ -47,11 +47,11 @@ export class EncounterService {
     const { data, error } = await supabase
       .from('encounters')
       .select(`
-        *,
-        patient:patients(*),
-        provider:billing_providers(*),
-        procedures:encounter_procedures(*),
-        diagnoses:encounter_diagnoses(*)
+        id, patient_id, date_of_service, status, encounter_type, chief_complaint, claim_frequency_code, subscriber_relation_code, payer_id, facility_id, appointment_id, arrived_at, triaged_at, visit_started_at, visit_ended_at, signed_at, signed_by, status_changed_at, status_changed_by, tenant_id,
+        patient:patients(id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone),
+        provider:billing_providers(id, user_id, npi, taxonomy_code, organization_name, ein, submitter_id, contact_phone, address_line1, city, state, zip, created_by, created_at, updated_at),
+        procedures:encounter_procedures(code, charge_amount, units, modifiers, service_date, diagnosis_pointers),
+        diagnoses:encounter_diagnoses(code, sequence)
       `)
       .eq('id', id)
       .single();
@@ -78,11 +78,11 @@ export class EncounterService {
     const { data, error } = await supabase
       .from('encounters')
       .select(`
-        *,
-        patient:patients(*),
-        provider:billing_providers(*),
-        procedures:encounter_procedures(*),
-        diagnoses:encounter_diagnoses(*)
+        id, patient_id, date_of_service, status, encounter_type, chief_complaint, claim_frequency_code, subscriber_relation_code, payer_id, facility_id, appointment_id, arrived_at, triaged_at, visit_started_at, visit_ended_at, signed_at, signed_by, status_changed_at, status_changed_by, tenant_id,
+        patient:patients(id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone),
+        provider:billing_providers(id, user_id, npi, taxonomy_code, organization_name, ein, submitter_id, contact_phone, address_line1, city, state, zip, created_by, created_at, updated_at),
+        procedures:encounter_procedures(code, charge_amount, units, modifiers, service_date, diagnosis_pointers),
+        diagnoses:encounter_diagnoses(code, sequence)
       `)
       .eq('patient_id', patientId)
       .order('date_of_service', { ascending: false });
@@ -175,7 +175,7 @@ export class EncounterService {
   static async getProcedures(encounterId: string): Promise<EncounterProcedure[]> {
     const { data, error } = await supabase
       .from('encounter_procedures')
-      .select('*')
+      .select('code, charge_amount, units, modifiers, service_date, diagnosis_pointers')
       .eq('encounter_id', encounterId)
       .order('service_date');
 
@@ -228,7 +228,7 @@ export class EncounterService {
   static async getDiagnoses(encounterId: string): Promise<EncounterDiagnosis[]> {
     const { data, error } = await supabase
       .from('encounter_diagnoses')
-      .select('*')
+      .select('code, sequence')
       .eq('encounter_id', encounterId)
       .order('sequence');
 
@@ -253,7 +253,7 @@ export class EncounterService {
   static async getPatient(id: string): Promise<Patient> {
     const { data, error } = await supabase
       .from('patients')
-      .select('*')
+      .select('id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone')
       .eq('id', id)
       .single();
 
@@ -299,7 +299,7 @@ export class EncounterService {
 
     const { data, error } = await supabase
       .from('patients')
-      .select('*')
+      .select('id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone')
       .or(`first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,member_id.ilike.%${sanitized}%`)
       .limit(20);
 
@@ -332,7 +332,7 @@ export class EncounterService {
   static async getClinicalNotes(encounterId: string): Promise<ClinicalNotesQueryResult> {
     const { data, error } = await supabase
       .from('clinical_notes')
-      .select('*')
+      .select('*') // TODO: specify columns when usage is traced — returns Record<string, unknown>[]
       .eq('encounter_id', encounterId)
       .order('created_at');
 
@@ -463,11 +463,11 @@ private static transformEncounterData(rawData: EncounterRow): Encounter {
     let query = supabase
       .from('encounters')
       .select(`
-        *,
-        patient:patients(*),
-        provider:billing_providers(*),
-        procedures:encounter_procedures(*),
-        diagnoses:encounter_diagnoses(*)
+        id, patient_id, date_of_service, status, encounter_type, chief_complaint, claim_frequency_code, subscriber_relation_code, payer_id, facility_id, appointment_id, arrived_at, triaged_at, visit_started_at, visit_ended_at, signed_at, signed_by, status_changed_at, status_changed_by, tenant_id,
+        patient:patients(id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone),
+        provider:billing_providers(id, user_id, npi, taxonomy_code, organization_name, ein, submitter_id, contact_phone, address_line1, city, state, zip, created_by, created_at, updated_at),
+        procedures:encounter_procedures(code, charge_amount, units, modifiers, service_date, diagnosis_pointers),
+        diagnoses:encounter_diagnoses(code, sequence)
       `);
 
     if (filters.patientId) query = query.eq('patient_id', filters.patientId);

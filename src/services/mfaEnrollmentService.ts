@@ -91,7 +91,7 @@ export async function getMfaComplianceReport(): Promise<
   try {
     const { data, error } = await supabase
       .from('mfa_compliance_report')
-      .select('*');
+      .select('role, total_users, mfa_enabled_count, non_compliant_count, exempt_count, compliance_pct');
 
     if (error) {
       await auditLogger.error('MFA_COMPLIANCE_FETCH_FAILED', error);

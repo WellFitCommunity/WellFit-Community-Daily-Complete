@@ -141,7 +141,7 @@ export class LabResultVaultService {
 
       let query = supabase
         .from('lab_results')
-        .select('*')
+        .select('patient_mrn, handoff_packet_id, test_name, value, unit, reference_range, abnormal, confidence_score, source_file, extracted_at, created_at')
         .eq('patient_mrn', patientMRN)
         .gte('created_at', cutoffDate.toISOString())
         .order('created_at', { ascending: false });
@@ -337,7 +337,7 @@ export class LabResultVaultService {
     try {
       const query = supabase
         .from('lab_results')
-        .select('*')
+        .select('patient_mrn, handoff_packet_id, test_name, value, unit, reference_range, abnormal, confidence_score, source_file, extracted_at, created_at')
         .eq('handoff_packet_id', packetId)
         .order('created_at', { ascending: false });
 

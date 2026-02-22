@@ -227,7 +227,7 @@ export class DentalObservationService {
         .from('dental_procedures')
         .update({ fhir_procedure_id: fhirProcedure.id })
         .eq('id', procedure.id)
-        .select()
+        .select('id, patient_id, assessment_id, tooth_number, procedure_name, cdt_code, snomed_code, procedure_status, procedure_date, provider_id, tooth_numbers, complications, notes, fhir_procedure_id, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -389,7 +389,7 @@ export class DentalObservationService {
     try {
       let query = supabase
         .from('dental_observations')
-        .select('*')
+        .select('id, patient_id, assessment_id, observation_code, observation_name, observation_category, value_quantity, value_unit, value_text, value_codeable_concept, observation_date, observed_by, fhir_resource, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('observation_date', { ascending: false });
 

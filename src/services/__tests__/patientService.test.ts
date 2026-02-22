@@ -1157,7 +1157,7 @@ describe('PatientService', () => {
 
       await patientService.getPatientCount();
 
-      expect(mockQuery.select).toHaveBeenCalledWith('*', { count: 'exact', head: true });
+      expect(mockQuery.select).toHaveBeenCalledWith('user_id', { count: 'exact', head: true });
     });
 
     it('should handle database errors', async () => {

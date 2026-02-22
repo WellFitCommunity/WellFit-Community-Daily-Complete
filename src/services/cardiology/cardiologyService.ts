@@ -91,7 +91,7 @@ export class CardiologyService {
     try {
       const { data, error } = await supabase
         .from('card_patient_registry')
-        .select('*')
+        .select('id, patient_id, tenant_id, conditions, risk_factors, nyha_class, lvef_percent, cha2ds2_vasc_score, has_score, enrolled_date, status, primary_cardiologist_id, notes, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('tenant_id', tenantId)
         .eq('status', 'active')
@@ -168,7 +168,7 @@ export class CardiologyService {
     try {
       const { data, error } = await supabase
         .from('card_ecg_results')
-        .select('*')
+        .select('id, patient_id, tenant_id, registry_id, performed_date, performed_by, rhythm, heart_rate, pr_interval_ms, qrs_duration_ms, qtc_ms, axis_degrees, st_changes, is_stemi, interpretation, is_normal, findings, created_at')
         .eq('patient_id', patientId)
         .eq('tenant_id', tenantId)
         .order('performed_date', { ascending: false })
@@ -355,28 +355,28 @@ export class CardiologyService {
         rehabRes,
         arrhythmiaRes,
       ] = await Promise.all([
-        supabase.from('card_patient_registry').select('*')
+        supabase.from('card_patient_registry').select('id, patient_id, tenant_id, conditions, risk_factors, nyha_class, lvef_percent, cha2ds2_vasc_score, has_score, enrolled_date, status, primary_cardiologist_id, notes, created_at, updated_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .eq('status', 'active').limit(1).single(),
-        supabase.from('card_ecg_results').select('*')
+        supabase.from('card_ecg_results').select('id, patient_id, tenant_id, registry_id, performed_date, performed_by, rhythm, heart_rate, pr_interval_ms, qrs_duration_ms, qtc_ms, axis_degrees, st_changes, is_stemi, interpretation, is_normal, findings, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('performed_date', { ascending: false }).limit(1).single(),
-        supabase.from('card_echo_results').select('*')
+        supabase.from('card_echo_results').select('id, patient_id, tenant_id, registry_id, performed_date, performed_by, lvef_percent, rv_function, lv_end_diastolic_diameter_mm, lv_end_systolic_diameter_mm, lv_mass_index, wall_motion_abnormalities, valve_results, pericardial_effusion, diastolic_function, interpretation, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('performed_date', { ascending: false }).limit(1).single(),
-        supabase.from('card_stress_tests').select('*')
+        supabase.from('card_stress_tests').select('id, patient_id, tenant_id, registry_id, performed_date, performed_by, protocol, duration_min, max_heart_rate, target_heart_rate, percent_target_achieved, mets_achieved, duke_score, is_positive, ischemic_changes, arrhythmias_during, symptoms_during, bp_peak_systolic, bp_peak_diastolic, findings, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('performed_date', { ascending: false }).limit(1).single(),
-        supabase.from('card_heart_failure').select('*')
+        supabase.from('card_heart_failure').select('id, patient_id, tenant_id, registry_id, assessment_date, assessed_by, nyha_class, bnp_pg_ml, nt_pro_bnp_pg_ml, daily_weight_kg, previous_weight_kg, weight_change_kg, fluid_status, edema_grade, dyspnea_at_rest, orthopnea, pnd, jugular_venous_distension, crackles, s3_gallop, fluid_restriction_ml, sodium_restriction_mg, diuretic_adjustment, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('assessment_date', { ascending: false }).limit(1).single(),
-        supabase.from('card_device_monitoring').select('*')
+        supabase.from('card_device_monitoring').select('id, patient_id, tenant_id, registry_id, device_type, device_manufacturer, device_model, implant_date, check_date, checked_by, battery_status, battery_voltage, battery_longevity_months, atrial_pacing_percent, ventricular_pacing_percent, lead_impedance_atrial_ohms, lead_impedance_ventricular_ohms, sensing_atrial_mv, sensing_ventricular_mv, threshold_atrial_v, threshold_ventricular_v, shocks_delivered, anti_tachycardia_pacing_events, atrial_arrhythmia_burden_percent, alerts, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('check_date', { ascending: false }).limit(1).single(),
-        supabase.from('card_cardiac_rehab').select('*')
+        supabase.from('card_cardiac_rehab').select('id, patient_id, tenant_id, registry_id, phase, session_date, session_number, total_sessions_prescribed, exercise_type, duration_min, peak_heart_rate, target_heart_rate, resting_bp_systolic, resting_bp_diastolic, mets_achieved, rpe_score, symptoms_during, functional_improvement_notes, completed, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('session_date', { ascending: false }).limit(10),
-        supabase.from('card_arrhythmia_events').select('*')
+        supabase.from('card_arrhythmia_events').select('id, patient_id, tenant_id, registry_id, event_date, detected_by, type, duration_seconds, heart_rate_during, hemodynamically_stable, symptoms, treatment_given, cardioversion_performed, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('event_date', { ascending: false }).limit(5),
       ]);

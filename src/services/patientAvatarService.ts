@@ -60,7 +60,7 @@ export async function updatePatientAvatar(
     // First ensure the avatar exists
     const { data: existing, error: getError } = await supabase
       .from('patient_avatars')
-      .select('*')
+      .select('id, patient_id, skin_tone, gender_presentation, created_at, updated_at')
       .eq('patient_id', patientId)
       .single();
 
@@ -155,7 +155,7 @@ export async function getMarker(markerId: string): Promise<ServiceResult<Patient
   try {
     const { data, error } = await supabase
       .from('patient_markers')
-      .select('*')
+      .select('id, patient_id, category, marker_type, display_name, body_region, position_x, position_y, body_view, source, source_transcription_id, status, confidence_score, details, is_active, requires_attention, created_by, created_at, updated_at')
       .eq('id', markerId)
       .single();
 
@@ -413,7 +413,7 @@ export async function getMarkerHistory(
   try {
     const { data, error } = await supabase
       .from('patient_marker_history')
-      .select('*')
+      .select('id, marker_id, action, changed_by, previous_values, new_values, notes, created_at')
       .eq('marker_id', markerId)
       .order('created_at', { ascending: false })
       .limit(limit);

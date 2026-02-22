@@ -80,7 +80,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
       const today = new Date().toISOString().split('T')[0];
       const { data: existingProgress } = await supabase
         .from('user_trivia_progress')
-        .select('*')
+        .select('id, correct_answers, total_questions, perfect_score, questions_attempted, completed_at')
         .eq('user_id', user.id)
         .eq('play_date', today)
         .maybeSingle();

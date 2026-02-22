@@ -718,7 +718,7 @@ export async function getReportableConditions(
   try {
     let query = supabase
       .from('reportable_conditions')
-      .select('*')
+      .select('id, condition_code, condition_code_system, condition_name, rckms_oid, reporting_jurisdiction, reporting_timeframe, is_nationally_notifiable, condition_category, trigger_codes, is_active')
       .eq('is_active', true);
 
     if (jurisdiction) {
@@ -764,7 +764,7 @@ export async function detectReportableCondition(
   try {
     const { data, error } = await supabase
       .from('reportable_conditions')
-      .select('*')
+      .select('id, condition_code, condition_code_system, condition_name, rckms_oid, reporting_jurisdiction, reporting_timeframe, is_nationally_notifiable, condition_category, trigger_codes')
       .eq('is_active', true)
       .contains('trigger_codes', [diagnosisCode])
       .contains('reporting_jurisdiction', [jurisdiction]);
@@ -984,7 +984,7 @@ export async function getPendingReports(
   try {
     const { data, error } = await supabase
       .from('electronic_case_reports')
-      .select('*')
+      .select('id, tenant_id, patient_id, trigger_encounter_id, trigger_condition_id, trigger_type, trigger_code, trigger_description, trigger_date, report_type, eicr_document_id, eicr_version, eicr_document, destination, aims_transaction_id, status, submitted_at, error_message')
       .eq('tenant_id', tenantId)
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
@@ -1042,7 +1042,7 @@ export async function getCaseReportHistory(
   try {
     let query = supabase
       .from('electronic_case_reports')
-      .select('*')
+      .select('id, tenant_id, patient_id, trigger_encounter_id, trigger_condition_id, trigger_type, trigger_code, trigger_description, trigger_date, report_type, eicr_document_id, eicr_version, eicr_document, destination, aims_transaction_id, status, submitted_at, rr_received_at, rr_document, rr_determination, rr_routing_entities, error_message')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 

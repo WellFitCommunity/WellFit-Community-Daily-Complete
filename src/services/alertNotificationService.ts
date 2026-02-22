@@ -152,7 +152,7 @@ async function getChannels(
   try {
     const { data, error } = await supabase
       .from('notification_channels')
-      .select('*')
+      .select('id, tenant_id, channel_type, name, is_enabled, config, filters, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 
@@ -245,7 +245,7 @@ async function testChannel(
   try {
     const { data: channel, error } = await supabase
       .from('notification_channels')
-      .select('*')
+      .select('id, tenant_id, channel_type, config, filters')
       .eq('id', channelId)
       .single();
 
@@ -291,7 +291,7 @@ async function sendAlert(
     // Get enabled channels for this tenant that match the alert
     const { data: channels, error } = await supabase
       .from('notification_channels')
-      .select('*')
+      .select('id, channel_type, config, filters')
       .eq('tenant_id', alert.tenantId)
       .eq('is_enabled', true);
 
@@ -711,7 +711,7 @@ async function getAlertNotificationHistory(
   try {
     const { data, error } = await supabase
       .from('notification_log')
-      .select('*')
+      .select('channel_id, channel_type, success, error_message, created_at')
       .eq('alert_id', alertId)
       .order('created_at', { ascending: false });
 

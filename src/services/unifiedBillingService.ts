@@ -178,7 +178,7 @@ export class UnifiedBillingService {
         async () => {
           const { data: scribeSession } = await supabase
             .from('scribe_sessions')
-            .select('*')
+            .select('suggested_cpt_codes, suggested_icd10_codes, is_ccm_eligible, clinical_time_minutes')
             .eq('encounter_id', input.encounterId)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -785,7 +785,7 @@ export class UnifiedBillingService {
     // Query workflow history from database
     const { data: workflows, error } = await supabase
       .from('billing_workflows')
-      .select('*')
+      .select('success, requires_manual_review, total_charges, estimated_reimbursement, processing_time_ms, errors, created_at')
       .gte('created_at', dateFrom)
       .lte('created_at', dateTo);
 

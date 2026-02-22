@@ -55,7 +55,7 @@ export class ParallelProcessingService {
 
     const { data: workItem } = await this.supabase
       .from('migration_work_queue')
-      .select('*')
+      .select('work_id, migration_batch_id, work_type, target_table, row_range_start, row_range_end, depends_on, assigned_worker_id, priority, status')
       .eq('work_id', data)
       .single();
 

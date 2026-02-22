@@ -29,7 +29,7 @@ export const EncounterService = {
 
     let query = supabase
       .from('encounters')
-      .select('*')
+      .select('id, patient_id, status, class_code, class_display, type_code, type_display, priority, period_start, period_end, reason_code, reason_display, diagnosis, location, service_provider, participant, hospitalization, created_at, updated_at')
       .eq('patient_id', patientId)
       .order('period_start', { ascending: false });
 
@@ -56,7 +56,7 @@ export const EncounterService = {
 
     const { data, error } = await supabase
       .from('encounters')
-      .select('*')
+      .select('id, patient_id, status, class_code, class_display, type_code, type_display, priority, period_start, period_end, reason_code, reason_display, diagnosis, location, service_provider, participant, hospitalization, created_at, updated_at')
       .eq('patient_id', patientId)
       .in('status', ['arrived', 'triaged', 'in-progress', 'onleave'])
       .order('period_start', { ascending: false });
@@ -76,7 +76,7 @@ export const EncounterService = {
 
     const { data, error } = await supabase
       .from('encounters')
-      .select('*')
+      .select('id, patient_id, status, class_code, class_display, type_code, type_display, priority, period_start, period_end, reason_code, reason_display, diagnosis, location, service_provider, participant, hospitalization, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('class_code', classCode)
       .order('period_start', { ascending: false });
@@ -99,7 +99,7 @@ export const EncounterService = {
 
     const { data, error } = await supabase
       .from('encounters')
-      .select('*')
+      .select('id, patient_id, status, class_code, class_display, type_code, type_display, priority, period_start, period_end, reason_code, reason_display, diagnosis, location, service_provider, participant, hospitalization, created_at, updated_at')
       .eq('patient_id', patientId)
       .gte('period_start', since.toISOString())
       .order('period_start', { ascending: false });
@@ -123,7 +123,7 @@ export const EncounterService = {
     const { data, error } = await supabase
       .from('encounters')
       .insert([encounter])
-      .select()
+      .select('id, patient_id, status, class_code, class_display, type_code, type_display, priority, period_start, period_end, reason_code, reason_display, diagnosis, location, service_provider, participant, hospitalization, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -136,7 +136,7 @@ export const EncounterService = {
       .from('encounters')
       .update(updates)
       .eq('id', id)
-      .select()
+      .select('id, patient_id, status, class_code, class_display, type_code, type_display, priority, period_start, period_end, reason_code, reason_display, diagnosis, location, service_provider, participant, hospitalization, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -152,7 +152,7 @@ export const EncounterService = {
         period_end: new Date().toISOString()
       })
       .eq('id', id)
-      .select()
+      .select('id, patient_id, status, class_code, class_display, type_code, type_display, priority, period_start, period_end, reason_code, reason_display, diagnosis, location, service_provider, participant, hospitalization, created_at, updated_at')
       .single();
 
     if (error) throw error;

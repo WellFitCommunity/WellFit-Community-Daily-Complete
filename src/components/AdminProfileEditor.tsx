@@ -75,14 +75,14 @@ const AdminProfileEditor: React.FC = () => {
   };
 
   const fetchProfiles = async () => {
-    const { data, error } = await supabase.from('profiles').select('*').eq('role', 'senior');
+    const { data, error } = await supabase.from('profiles').select('id, full_name, role, dob, phone, address').eq('role', 'senior');
     if (!error && data) setProfiles(data);
   };
 
   const fetchNotes = async (seniorId: string) => {
     const { data, error } = await supabase
       .from('admin_notes')
-      .select('*')
+      .select('id, senior_id, created_by, note, created_at, updated_at, updated_by')
       .eq('senior_id', seniorId)
       .order('created_at', { ascending: false });
     if (!error && data) setNotes(data);

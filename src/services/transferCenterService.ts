@@ -102,7 +102,7 @@ export const TransferCenterService = {
     try {
       let query = supabase
         .from('transfer_requests')
-        .select('*')
+        .select('id, tenant_id, request_number, patient_id, patient_mrn, patient_age, patient_gender, sending_facility_id, sending_facility_name, sending_unit, sending_contact_name, sending_contact_phone, receiving_facility_id, receiving_facility_name, receiving_unit, receiving_contact_name, receiving_contact_phone, receiving_physician, transfer_type, urgency, status, reason_for_transfer, clinical_summary, diagnosis_codes, primary_diagnosis, required_service, required_specialty, acuity_level, requires_icu, requires_isolation, requires_ventilator, requires_cardiac_monitoring, special_equipment, special_requirements, transport_mode, transport_company, transport_eta, transport_notes, assigned_bed_id, assigned_bed_label, requested_at, reviewed_at, approved_at, denied_at, denial_reason, scheduled_departure, actual_departure, actual_arrival, completed_at, cancelled_at, cancellation_reason, created_by, notes, created_at, updated_at')
         .not('status', 'in', '("completed","cancelled")')
         .order('urgency', { ascending: false })
         .order('requested_at', { ascending: true });
@@ -146,7 +146,7 @@ export const TransferCenterService = {
     try {
       const { data, error } = await supabase
         .from('transfer_requests')
-        .select('*')
+        .select('id, tenant_id, request_number, patient_id, patient_mrn, patient_age, patient_gender, sending_facility_id, sending_facility_name, sending_unit, sending_contact_name, sending_contact_phone, receiving_facility_id, receiving_facility_name, receiving_unit, receiving_contact_name, receiving_contact_phone, receiving_physician, transfer_type, urgency, status, reason_for_transfer, clinical_summary, diagnosis_codes, primary_diagnosis, required_service, required_specialty, acuity_level, requires_icu, requires_isolation, requires_ventilator, requires_cardiac_monitoring, special_equipment, special_requirements, transport_mode, transport_company, transport_eta, transport_notes, assigned_bed_id, assigned_bed_label, requested_at, reviewed_at, approved_at, denied_at, denial_reason, scheduled_departure, actual_departure, actual_arrival, completed_at, cancelled_at, cancellation_reason, created_by, notes, created_at, updated_at')
         .eq('id', transferId)
         .single();
 
@@ -542,7 +542,7 @@ export const TransferCenterService = {
     try {
       let query = supabase
         .from('facility_capacity')
-        .select('*')
+        .select('id, tenant_id, facility_id, facility_name, total_beds, occupied_beds, available_beds, reserved_beds, blocked_beds, occupancy_percent, is_accepting_transfers, divert_status, icu_available, step_down_available, telemetry_available, med_surg_available, ed_available, snapshot_at, next_discharge_expected, created_at')
         .order('snapshot_at', { ascending: false });
 
       if (options?.facilityId) {
@@ -642,7 +642,7 @@ export const TransferCenterService = {
     try {
       const { data, error } = await supabase
         .from('transfer_requests')
-        .select('*')
+        .select('id, tenant_id, request_number, patient_id, patient_mrn, patient_age, patient_gender, sending_facility_id, sending_facility_name, sending_unit, sending_contact_name, sending_contact_phone, receiving_facility_id, receiving_facility_name, receiving_unit, receiving_contact_name, receiving_contact_phone, receiving_physician, transfer_type, urgency, status, reason_for_transfer, clinical_summary, diagnosis_codes, primary_diagnosis, required_service, required_specialty, acuity_level, requires_icu, requires_isolation, requires_ventilator, requires_cardiac_monitoring, special_equipment, special_requirements, transport_mode, transport_company, transport_eta, transport_notes, assigned_bed_id, assigned_bed_label, requested_at, reviewed_at, approved_at, denied_at, denial_reason, scheduled_departure, actual_departure, actual_arrival, completed_at, cancelled_at, cancellation_reason, created_by, notes, created_at, updated_at')
         .in('status', ['pending', 'reviewing'])
         .order('urgency', { ascending: false })
         .order('requested_at', { ascending: true });

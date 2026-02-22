@@ -57,7 +57,7 @@ export const CommandCenterService = {
     try {
       const { data, error } = await supabase
         .from('health_systems')
-        .select('*')
+        .select('id, tenant_id, name, short_name, region, contact_name, contact_phone, contact_email, central_transfer_number, bed_control_email, total_facilities, total_licensed_beds, enable_cross_facility_transfers, created_at, updated_at')
         .order('name');
 
       if (error) {
@@ -82,7 +82,7 @@ export const CommandCenterService = {
     try {
       let query = supabase
         .from('health_system_facilities')
-        .select('*')
+        .select('id, tenant_id, health_system_id, facility_code, name, short_name, facility_type, address_line1, address_line2, city, state, zip_code, latitude, longitude, main_phone, bed_control_phone, transfer_center_phone, licensed_beds, staffed_beds, icu_beds, step_down_beds, telemetry_beds, med_surg_beds, is_active, is_accepting_transfers, divert_status, services_offered, specialties, created_at, updated_at')
         .eq('is_active', true)
         .order('name');
 
@@ -121,7 +121,7 @@ export const CommandCenterService = {
       // Query with distinct on facility_id to get latest per facility
       let query = supabase
         .from('facility_capacity_snapshots')
-        .select('*')
+        .select('id, tenant_id, facility_id, facility_name, facility_code, total_beds, occupied_beds, available_beds, reserved_beds, blocked_beds, pending_discharge, pending_admission, occupancy_percent, alert_level, icu_occupied, icu_available, step_down_occupied, step_down_available, telemetry_occupied, telemetry_available, med_surg_occupied, med_surg_available, ed_census, ed_boarding, trend_1h, trend_4h, trend_24h, predicted_available_4h, predicted_available_8h, predicted_available_12h, predicted_available_24h, is_accepting_transfers, divert_status, divert_reason, snapshot_at, next_predicted_discharge, created_at')
         .order('facility_id')
         .order('snapshot_at', { ascending: false });
 
@@ -246,7 +246,7 @@ export const CommandCenterService = {
     try {
       const { data, error } = await supabase
         .from('capacity_alerts')
-        .select('*')
+        .select('id, tenant_id, facility_id, facility_name, alert_level, previous_level, current_occupancy_percent, threshold_crossed, message, is_acknowledged, acknowledged_by, acknowledged_at, triggered_at, resolved_at, created_at')
         .is('resolved_at', null)
         .order('triggered_at', { ascending: false });
 
@@ -362,7 +362,7 @@ export const CommandCenterService = {
 
       const { data, error } = await supabase
         .from('facility_capacity_snapshots')
-        .select('*')
+        .select('id, tenant_id, facility_id, facility_name, facility_code, total_beds, occupied_beds, available_beds, reserved_beds, blocked_beds, pending_discharge, pending_admission, occupancy_percent, alert_level, icu_occupied, icu_available, step_down_occupied, step_down_available, telemetry_occupied, telemetry_available, med_surg_occupied, med_surg_available, ed_census, ed_boarding, trend_1h, trend_4h, trend_24h, predicted_available_4h, predicted_available_8h, predicted_available_12h, predicted_available_24h, is_accepting_transfers, divert_status, divert_reason, snapshot_at, next_predicted_discharge, created_at')
         .eq('facility_id', facilityId)
         .gte('snapshot_at', cutoff.toISOString())
         .order('snapshot_at', { ascending: true });

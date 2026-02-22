@@ -503,7 +503,7 @@ export const PatientFriendlyAVSService = {
     try {
       const { data, error } = await supabase
         .from('patient_friendly_avs')
-        .select('*')
+        .select('id, tenant_id, patient_id, session_id, encounter_id, visit_date, generated_at, generated_by, approved_by, approved_at, content_json, plain_text_content, reading_grade_level, language, status, delivery_method, delivered_at, patient_feedback, feedback_notes, created_at, updated_at')
         .eq('id', avsId)
         .single();
 
@@ -527,7 +527,7 @@ export const PatientFriendlyAVSService = {
     try {
       const { data, error } = await supabase
         .from('patient_friendly_avs')
-        .select('*')
+        .select('id, tenant_id, patient_id, session_id, encounter_id, visit_date, generated_at, generated_by, approved_by, approved_at, content_json, plain_text_content, reading_grade_level, language, status, delivery_method, delivered_at, patient_feedback, feedback_notes, created_at, updated_at')
         .eq('session_id', sessionId)
         .order('generated_at', { ascending: false })
         .limit(1)
@@ -556,7 +556,7 @@ export const PatientFriendlyAVSService = {
     try {
       const { data, error } = await supabase
         .from('patient_friendly_avs')
-        .select('*')
+        .select('id, tenant_id, patient_id, session_id, encounter_id, visit_date, generated_at, generated_by, approved_by, approved_at, content_json, plain_text_content, reading_grade_level, language, status, delivery_method, delivered_at, patient_feedback, feedback_notes, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('visit_date', { ascending: false })
         .limit(limit);

@@ -160,7 +160,7 @@ export class DeduplicationService {
   async getPendingDuplicates(batchId: string): Promise<DedupCandidate[]> {
     const { data, error } = await this.supabase
       .from('migration_dedup_candidates')
-      .select('*')
+      .select('candidate_id, record_a_id, record_a_data, record_b_id, record_b_data, overall_similarity, name_similarity, dob_match, phone_similarity, email_similarity, match_method, resolution, requires_human_review')
       .eq('migration_batch_id', batchId)
       .eq('resolution', 'pending')
       .order('overall_similarity', { ascending: false });

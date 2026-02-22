@@ -16,7 +16,7 @@ export const MedicationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_medications')
-        .select('*')
+        .select('id, code_system, code, code_display, code_text, status, manufacturer_id, manufacturer_display, form, amount_numerator, amount_denominator, ingredient, batch, created_by, updated_by, created_at, updated_at')
         .eq('id', id)
         .single();
 
@@ -37,7 +37,7 @@ export const MedicationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_medications')
-        .select('*')
+        .select('id, code_system, code, code_display, code_text, status, manufacturer_id, manufacturer_display, form, amount_numerator, amount_denominator, ingredient, batch, created_by, updated_by, created_at, updated_at')
         .eq('code', rxnormCode)
         .eq('code_system', 'http://www.nlm.nih.gov/research/umls/rxnorm')
         .single();
@@ -59,7 +59,7 @@ export const MedicationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_medications')
-        .select('*')
+        .select('id, code_system, code, code_display, code_text, status, manufacturer_id, manufacturer_display, form, amount_numerator, amount_denominator, ingredient, batch, created_by, updated_by, created_at, updated_at')
         .ilike('code_display', `%${searchTerm}%`)
         .order('code_display');
 
@@ -83,7 +83,7 @@ export const MedicationService = {
       const { data, error } = await supabase
         .from('fhir_medications')
         .insert([medication])
-        .select()
+        .select('id, code_system, code, code_display, code_text, status, manufacturer_id, manufacturer_display, form, amount_numerator, amount_denominator, ingredient, batch, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -108,7 +108,7 @@ export const MedicationService = {
         .from('fhir_medications')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, code_system, code, code_display, code_text, status, manufacturer_id, manufacturer_display, form, amount_numerator, amount_denominator, ingredient, batch, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;

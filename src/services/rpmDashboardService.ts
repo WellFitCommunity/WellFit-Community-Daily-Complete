@@ -38,7 +38,7 @@ async function getActiveEnrollments(): Promise<ServiceResult<RpmEnrollment[]>> {
   try {
     const { data, error } = await supabase
       .from('rpm_enrollments')
-      .select('*')
+      .select('id, tenant_id, patient_id, status, enrolled_at, enrolled_by, primary_diagnosis_code, monitoring_reason, ordering_provider_id, device_types, setup_completed_at, total_monitoring_minutes, monitoring_start_date, monitoring_end_date')
       .in('status', ['active', 'pending'])
       .order('enrolled_at', { ascending: false });
 
@@ -59,7 +59,7 @@ async function getEnrollmentById(enrollmentId: string): Promise<ServiceResult<Rp
   try {
     const { data, error } = await supabase
       .from('rpm_enrollments')
-      .select('*')
+      .select('id, tenant_id, patient_id, status, enrolled_at, enrolled_by, primary_diagnosis_code, monitoring_reason, ordering_provider_id, device_types, setup_completed_at, total_monitoring_minutes, monitoring_start_date, monitoring_end_date')
       .eq('id', enrollmentId)
       .single();
 
@@ -262,7 +262,7 @@ async function getEffectiveRules(
   try {
     let query = supabase
       .from('vital_threshold_rules')
-      .select('*')
+      .select('id, tenant_id, patient_id, condition_code, rule_name, vital_type, loinc_code, threshold_operator, threshold_value, alert_type, severity, escalation_level, escalation_targets, cooldown_minutes, auto_resolve, is_active')
       .eq('is_active', true)
       .order('vital_type')
       .order('threshold_value');

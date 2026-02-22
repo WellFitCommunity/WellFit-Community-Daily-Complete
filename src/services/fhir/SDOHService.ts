@@ -23,7 +23,7 @@ export const SDOHService = {
             patient_id: patientId,
             ...response,
           }])
-          .select()
+          .select('id, fhir_id, patient_id, tenant_id, status, category, risk_level, priority_level, effective_datetime, next_assessment_date, performer_id, performer_name, loinc_code, z_codes, snomed_code, value_text, value_code, interpretation, notes, intervention_provided, referral_made, referral_to, follow_up_needed, follow_up_date, health_impact, created_at, updated_at, created_by, updated_by')
           .single()
       )
     );
@@ -35,7 +35,7 @@ export const SDOHService = {
   async getAll(patientId: string) {
     const { data, error } = await supabase
       .from('sdoh_observations')
-      .select('*')
+      .select('id, patient_id, category, risk_level, effective_datetime, performer_id, next_assessment_date, z_codes, loinc_code, snomed_code, value_text, interpretation, notes, health_impact, priority_level, status, intervention_provided, referral_made')
       .eq('patient_id', patientId)
       .order('effective_datetime', { ascending: false });
 
@@ -47,7 +47,7 @@ export const SDOHService = {
   async getByCategory(patientId: string, category: string) {
     const { data, error } = await supabase
       .from('sdoh_observations')
-      .select('*')
+      .select('id, patient_id, category, risk_level, effective_datetime, performer_id, next_assessment_date, z_codes, loinc_code, snomed_code, value_text, interpretation, notes, health_impact, priority_level, status, intervention_provided, referral_made')
       .eq('patient_id', patientId)
       .eq('category', category)
       .order('effective_datetime', { ascending: false });
@@ -60,7 +60,7 @@ export const SDOHService = {
   async getHighRisk(patientId: string) {
     const { data, error } = await supabase
       .from('sdoh_observations')
-      .select('*')
+      .select('id, patient_id, category, risk_level, effective_datetime, performer_id, next_assessment_date, z_codes, loinc_code, snomed_code, value_text, interpretation, notes, health_impact, priority_level, status, intervention_provided, referral_made')
       .eq('patient_id', patientId)
       .in('risk_level', ['high', 'critical'])
       .eq('status', 'final')
@@ -74,7 +74,7 @@ export const SDOHService = {
   async getNeedingIntervention(patientId: string) {
     const { data, error } = await supabase
       .from('sdoh_observations')
-      .select('*')
+      .select('id, patient_id, category, risk_level, effective_datetime, performer_id, next_assessment_date, z_codes, loinc_code, snomed_code, value_text, interpretation, notes, health_impact, priority_level, status, intervention_provided, referral_made')
       .eq('patient_id', patientId)
       .eq('intervention_provided', false)
       .in('risk_level', ['moderate', 'high', 'critical'])
@@ -97,7 +97,7 @@ export const SDOHService = {
       .from('sdoh_observations')
       .update(intervention)
       .eq('id', id)
-      .select()
+      .select('id, fhir_id, patient_id, tenant_id, status, category, risk_level, priority_level, effective_datetime, next_assessment_date, performer_id, performer_name, loinc_code, z_codes, snomed_code, value_text, value_code, interpretation, notes, intervention_provided, referral_made, referral_to, follow_up_needed, follow_up_date, health_impact, created_at, updated_at, created_by, updated_by')
       .single();
 
     if (error) throw error;

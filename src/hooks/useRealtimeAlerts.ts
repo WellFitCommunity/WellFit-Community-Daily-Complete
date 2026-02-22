@@ -211,7 +211,7 @@ export function useRealtimeAlerts(
     try {
       let query = supabase
         .from('guardian_alerts')
-        .select('*')
+        .select('id, created_at, severity, category, title, description, status, patient_id, patient_name, room_number, affected_component, acknowledged_by, acknowledged_at')
         .order('created_at', { ascending: false })
         .limit(maxAlerts);
 

@@ -67,7 +67,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
       try {
         const { data, error } = await supabase
           .from('admin_settings')
-          .select('*')
+          .select('user_id, theme, email_notifications, browser_notifications, emergency_alerts, session_timeout, require_pin_for_sensitive, enable_audit_logging, compact_mode, show_advanced_metrics, default_dashboard_view, auto_backup, backup_frequency, enable_beta_features')
           .eq('user_id', user.id)
           .maybeSingle();
 

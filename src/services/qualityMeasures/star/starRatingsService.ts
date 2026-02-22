@@ -74,7 +74,7 @@ export async function calculateStarRatings(
     // 1. Get star-eligible measures with cut points
     const { data: measures, error: measErr } = await supabase
       .from('ecqm_measure_definitions')
-      .select('*')
+      .select('id, measure_id, cms_id, version, title, description, measure_type, measure_scoring, initial_population_description, denominator_description, numerator_description, reporting_year, applicable_settings, clinical_focus, is_active, program_types, star_domain, star_weight, star_cut_points, is_inverse_measure')
       .eq('is_active', true)
       .contains('program_types', ['stars'])
       .not('star_cut_points', 'is', null);
@@ -91,7 +91,7 @@ export async function calculateStarRatings(
 
     const { data: aggData, error: aggErr } = await supabase
       .from('ecqm_aggregate_results')
-      .select('*')
+      .select('measure_id, initial_population_count, denominator_count, denominator_exclusion_count, denominator_exception_count, numerator_count, numerator_exclusion_count, performance_rate, patient_count')
       .eq('tenant_id', tenantId)
       .gte('reporting_period_start', periodStart)
       .in('measure_id', measureIds);
@@ -254,7 +254,7 @@ export async function getStarRatings(
   try {
     const { data, error } = await supabase
       .from('star_rating_scores')
-      .select('*')
+      .select('id, tenant_id, reporting_year, rating_type, domain_scores, domain_weights, overall_star_rating, measure_star_details, previous_year_rating, trend_direction, total_measures_rated, measures_at_4_plus, measures_below_3, calculated_at, calculated_by, notes')
       .eq('tenant_id', tenantId)
       .eq('reporting_year', reportingYear)
       .eq('rating_type', ratingType)

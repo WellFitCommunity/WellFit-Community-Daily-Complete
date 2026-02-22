@@ -239,7 +239,7 @@ export class SOCDashboardService {
     try {
       const { data, error } = await this.supabase
         .from('soc_alert_messages')
-        .select('*')
+        .select('id, alert_id, message_type, content, author_id, author_name, metadata, created_at, updated_at, edited')
         .eq('alert_id', alertId)
         .order('created_at', { ascending: true });
 
@@ -283,7 +283,7 @@ export class SOCDashboardService {
     try {
       const { data, error } = await this.supabase
         .from('soc_presence')
-        .select('*')
+        .select('id, user_id, user_name, user_email, status, last_seen_at, session_started_at, current_alert_id, user_agent')
         .neq('status', 'offline')
         .gte('last_seen_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
         .order('last_seen_at', { ascending: false });
@@ -356,7 +356,7 @@ export class SOCDashboardService {
 
       const { data, error } = await this.supabase
         .from('soc_notification_preferences')
-        .select('*')
+        .select('id, user_id, sound_enabled, sound_critical, sound_high, sound_medium, sound_low, browser_notifications_enabled, notify_on_critical, notify_on_high, notify_on_medium, notify_on_low, notify_on_escalation, notify_on_new_message, desktop_notifications_enabled, created_at, updated_at')
         .eq('user_id', user.id)
         .single();
 

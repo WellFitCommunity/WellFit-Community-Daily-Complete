@@ -26,7 +26,7 @@ export async function fetchRiskSummary(
     // Try patient_risk_registry first
     const { data: riskData, error: riskError } = await supabase
       .from('patient_risk_registry')
-      .select('*')
+      .select('risk_level, risk_score, risk_factors, last_assessment_date, readmission_risk_30day, fall_risk_score')
       .eq('patient_id', patientId)
       .order('last_assessment_date', { ascending: false })
       .limit(1)

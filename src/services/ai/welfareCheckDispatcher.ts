@@ -401,7 +401,7 @@ class WelfareCheckDispatcherService {
 
     const { data, error } = await this.supabase
       .from('welfare_check_analytics')
-      .select('*')
+      .select('tenant_id, calculation_date, total_seniors, critical_count, high_count, dispatched_count, completed_count, avg_priority_score, avg_response_hours')
       .eq('tenant_id', tenantId)
       .gte('analytics_date', startDate)
       .lte('analytics_date', endDate)

@@ -47,7 +47,7 @@ export async function recordDecision(input: RecordDecisionInput): Promise<FHIRAp
         tenant_id: input.tenant_id,
         created_by: input.created_by
       })
-      .select()
+      .select('id, prior_auth_id, decision_type, decision_date, decision_reason, decision_code, auth_number, approved_units, approved_start_date, approved_end_date, denial_reason_code, denial_reason_description, appeal_deadline, response_payload, x12_278_response, reviewer_name, reviewer_npi, created_at, tenant_id')
       .single();
 
     if (decisionError) throw decisionError;
@@ -98,7 +98,7 @@ export async function getDecisions(priorAuthId: string): Promise<FHIRApiResponse
   try {
     const { data, error } = await supabase
       .from('prior_auth_decisions')
-      .select('*')
+      .select('id, prior_auth_id, decision_type, decision_date, decision_reason, decision_code, auth_number, approved_units, approved_start_date, approved_end_date, denial_reason_code, denial_reason_description, appeal_deadline, response_payload, x12_278_response, reviewer_name, reviewer_npi, created_at, tenant_id')
       .eq('prior_auth_id', priorAuthId)
       .order('decision_date', { ascending: false });
 
@@ -143,7 +143,7 @@ export async function createAppeal(input: CreateAppealInput): Promise<FHIRApiRes
         tenant_id: input.tenant_id,
         created_by: input.created_by
       })
-      .select()
+      .select('id, prior_auth_id, decision_id, appeal_level, status, appeal_reason, appeal_type, submitted_at, deadline_at, resolved_at, peer_to_peer_scheduled_at, peer_to_peer_completed_at, peer_to_peer_outcome, additional_documentation, clinical_rationale, outcome, outcome_notes, created_at, updated_at, tenant_id')
       .single();
 
     if (error) throw error;
@@ -188,7 +188,7 @@ export async function submitAppeal(appealId: string): Promise<FHIRApiResponse<Pr
         deadline_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
       })
       .eq('id', appealId)
-      .select()
+      .select('id, prior_auth_id, decision_id, appeal_level, status, appeal_reason, appeal_type, submitted_at, deadline_at, resolved_at, peer_to_peer_scheduled_at, peer_to_peer_completed_at, peer_to_peer_outcome, additional_documentation, clinical_rationale, outcome, outcome_notes, created_at, updated_at, tenant_id')
       .single();
 
     if (error) throw error;
@@ -211,7 +211,7 @@ export async function getAppeals(priorAuthId: string): Promise<FHIRApiResponse<P
   try {
     const { data, error } = await supabase
       .from('prior_auth_appeals')
-      .select('*')
+      .select('id, prior_auth_id, decision_id, appeal_level, status, appeal_reason, appeal_type, submitted_at, deadline_at, resolved_at, peer_to_peer_scheduled_at, peer_to_peer_completed_at, peer_to_peer_outcome, additional_documentation, clinical_rationale, outcome, outcome_notes, created_at, updated_at, tenant_id')
       .eq('prior_auth_id', priorAuthId)
       .order('appeal_level', { ascending: true });
 

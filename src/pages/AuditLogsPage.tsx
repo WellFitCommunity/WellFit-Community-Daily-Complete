@@ -70,7 +70,7 @@ const AuditLogsPage: React.FC = () => {
       // Load PHI access logs
       const { data: phiLogs, error: phiError } = await supabase
         .from('phi_access_logs')
-        .select('*')
+        .select('id, access_timestamp, user_id, action, patient_id, ip_address')
         .gte('access_timestamp', `${dateRange.start}T00:00:00`)
         .lte('access_timestamp', `${dateRange.end}T23:59:59`)
         .order('access_timestamp', { ascending: false })
@@ -83,7 +83,7 @@ const AuditLogsPage: React.FC = () => {
       // Load staff auth attempts
       const { data: authLogs, error: authError } = await supabase
         .from('staff_auth_attempts')
-        .select('*')
+        .select('id, created_at, user_id, email, attempt_type, ip_address, user_agent')
         .gte('created_at', `${dateRange.start}T00:00:00`)
         .lte('created_at', `${dateRange.end}T23:59:59`)
         .order('created_at', { ascending: false })
@@ -96,7 +96,7 @@ const AuditLogsPage: React.FC = () => {
       // Load staff audit logs
       const { data: staffLogs, error: staffError } = await supabase
         .from('staff_audit_log')
-        .select('*')
+        .select('id, created_at, user_id, action')
         .gte('created_at', `${dateRange.start}T00:00:00`)
         .lte('created_at', `${dateRange.end}T23:59:59`)
         .order('created_at', { ascending: false })

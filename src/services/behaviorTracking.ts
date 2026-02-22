@@ -292,7 +292,7 @@ export async function getUserBehaviorProfile(
     // Use maybeSingle() to avoid 406 when no profile exists yet
     const { data, error } = await supabase
       .from('user_behavior_profiles')
-      .select('*')
+      .select('user_id, section_stats, most_used_sections, preferred_working_hours, total_sessions, avg_session_duration, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
 

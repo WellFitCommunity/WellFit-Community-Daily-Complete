@@ -117,7 +117,7 @@ export async function extractFunctionalStatus(
   // Get most recent risk assessment with functional data
   const { data: riskAssessment } = await supabase
     .from('risk_assessments')
-    .select('*')
+    .select('id, patient_id, created_at, bathing_ability, dressing_ability, toilet_transfer, eating_ability, sitting_ability, walking_ability, cognitive_risk_score, risk_factors')
     .eq('patient_id', patientId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -126,7 +126,7 @@ export async function extractFunctionalStatus(
   // Get fall history
   const { data: falls } = await supabase
     .from('patient_daily_check_ins')
-    .select('*')
+    .select('check_in_date, concern_flags')
     .eq('patient_id', patientId)
     .contains('concern_flags', ['fall'])
     .gte('check_in_date', getDaysAgoISO(90, now))

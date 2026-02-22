@@ -440,7 +440,7 @@ export class FallRiskPredictorService {
     try {
       let query = supabase
         .from('ai_fall_risk_assessments')
-        .select('*')
+        .select('id, assessment_id, patient_id, assessor_id, assessment_date, assessment_context, overall_risk_score, risk_category, morse_scale_estimate, risk_factors, protective_factors, patient_age, age_risk_category, category_scores, interventions, precautions, monitoring_frequency, confidence, requires_review, review_reasons, plain_language_explanation, created_at, updated_at, status, reviewed_by, reviewed_at, review_notes, prediction_tracking_id')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false });
 
@@ -482,7 +482,7 @@ export class FallRiskPredictorService {
     try {
       const { data, error } = await supabase
         .from('ai_fall_risk_assessments')
-        .select('*')
+        .select('id, assessment_id, patient_id, assessor_id, assessment_date, assessment_context, overall_risk_score, risk_category, morse_scale_estimate, risk_factors, protective_factors, patient_age, age_risk_category, category_scores, interventions, precautions, monitoring_frequency, confidence, requires_review, review_reasons, plain_language_explanation, created_at, updated_at, status, reviewed_by, reviewed_at, review_notes, prediction_tracking_id')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -521,7 +521,7 @@ export class FallRiskPredictorService {
 
       const { data, error } = await supabase
         .from('ai_fall_risk_assessments')
-        .select('*')
+        .select('id, assessment_id, patient_id, assessor_id, assessment_date, assessment_context, overall_risk_score, risk_category, morse_scale_estimate, risk_factors, protective_factors, patient_age, age_risk_category, category_scores, interventions, precautions, monitoring_frequency, confidence, requires_review, review_reasons, plain_language_explanation, created_at, updated_at, status, reviewed_by, reviewed_at, review_notes, prediction_tracking_id')
         .gte('overall_risk_score', minScore)
         .eq('status', 'approved')
         .order('overall_risk_score', { ascending: false })
@@ -730,7 +730,7 @@ export class FallRiskPredictorService {
       // Find the most recent assessment for this patient with a tracking ID
       const { data: assessmentData, error: fetchError } = await supabase
         .from('ai_fall_risk_assessments')
-        .select('*')
+        .select('id, assessment_id, patient_id, assessor_id, assessment_date, assessment_context, overall_risk_score, risk_category, morse_scale_estimate, risk_factors, protective_factors, patient_age, age_risk_category, category_scores, interventions, precautions, monitoring_frequency, confidence, requires_review, review_reasons, plain_language_explanation, created_at, updated_at, status, reviewed_by, reviewed_at, review_notes, prediction_tracking_id')
         .eq('patient_id', patientId)
         .eq('status', 'approved')
         .order('created_at', { ascending: false })

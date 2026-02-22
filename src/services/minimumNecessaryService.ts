@@ -96,7 +96,7 @@ async function getPolicy(
 
     const { data, error } = await supabase
       .from('minimum_necessary_policies')
-      .select('*')
+      .select('id, tenant_id, table_name, role_name, allowed_fields, denied_fields, purpose, is_active, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .eq('table_name', tableName)
       .eq('role_name', roleName)
@@ -349,7 +349,7 @@ async function listPolicies(): Promise<ServiceResult<MinimumNecessaryPolicy[]>> 
   try {
     const { data, error } = await supabase
       .from('minimum_necessary_policies')
-      .select('*')
+      .select('id, tenant_id, table_name, role_name, allowed_fields, denied_fields, purpose, is_active, created_at, updated_at')
       .eq('is_active', true)
       .order('table_name', { ascending: true });
 

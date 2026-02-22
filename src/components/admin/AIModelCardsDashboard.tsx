@@ -109,7 +109,7 @@ const AIModelCardsDashboard: React.FC = () => {
       // Fetch model registry
       const { data: regData, error: regError } = await supabase
         .from('ai_model_registry')
-        .select('*')
+        .select('id, model_key, model_name, model_version, model_type, intervention_type, provider_name, provider_model_id, purpose, intended_use, clinical_domain, risk_level, is_fda_cleared, is_active, deployment_date, explainability_method, accuracy_metrics, known_limitations, created_at')
         .order('model_name', { ascending: true });
 
       if (regError) throw regError;
@@ -119,7 +119,7 @@ const AIModelCardsDashboard: React.FC = () => {
       // Fetch AI skills
       const { data: skillData, error: skillError } = await supabase
         .from('ai_skills')
-        .select('*')
+        .select('id, skill_key, skill_number, description, model, is_active, created_at')
         .order('skill_number', { ascending: true });
 
       if (skillError) throw skillError;
@@ -129,7 +129,7 @@ const AIModelCardsDashboard: React.FC = () => {
       // Fetch model cards
       const { data: cardData, error: cardError } = await supabase
         .from('ai_model_cards')
-        .select('*');
+        .select('id, model_id, model_details, intended_use, metrics, ethical_considerations, caveats_recommendations');
 
       if (cardError) throw cardError;
       const allCards = (cardData || []) as ModelCard[];

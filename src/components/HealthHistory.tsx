@@ -59,7 +59,7 @@ const HealthHistory: React.FC = () => {
         // Fetch check-ins
         const { data: checkInsData, error: checkInsError } = await supabase
           .from('check_ins')
-          .select('*')
+          .select('id, timestamp, label, is_emergency, emotional_state, heart_rate, pulse_oximeter, bp_systolic, bp_diastolic, glucose_mg_dl, created_at')
           .eq('user_id', user.id)
           .order('timestamp', { ascending: false })
           .limit(10);
@@ -67,7 +67,7 @@ const HealthHistory: React.FC = () => {
         // Fetch self-reports
         const { data: selfReportsData, error: selfReportsError } = await supabase
           .from('self_reports')
-          .select('*')
+          .select('id, created_at, mood, bp_systolic, bp_diastolic, blood_sugar, blood_oxygen, spo2, weight, physical_activity, social_engagement')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(10);

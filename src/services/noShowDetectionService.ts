@@ -476,7 +476,7 @@ async function getAppointmentAttendance(
   try {
     const { data, error } = await supabase
       .from('appointment_attendance')
-      .select('*')
+      .select('appointment_id, patient_id, patient_joined_at, provider_joined_at, actual_start_time, actual_end_time, actual_duration_minutes, patient_attended, provider_attended, connection_quality, no_show_detected_at, auto_detected')
       .eq('appointment_id', appointmentId)
       .single();
 
@@ -535,7 +535,7 @@ async function getPatientNoShowHistory(
   try {
     const { data, error } = await supabase
       .from('no_show_log')
-      .select('*')
+      .select('appointment_id, patient_id, scheduled_time, detected_at, detection_method, grace_period_minutes, notes')
       .eq('patient_id', patientId)
       .order('detected_at', { ascending: false })
       .limit(limit);

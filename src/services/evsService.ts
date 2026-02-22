@@ -55,7 +55,7 @@ export async function getEVSRequests(
     let query = supabase
       .from('evs_requests')
       .select(`
-        *,
+        id, tenant_id, bed_id, unit_id, room_number, bed_label, request_type, priority, status, requested_at, requested_by, assigned_to, assigned_at, started_at, completed_at, completed_by, estimated_duration_minutes, actual_duration_minutes, turnaround_minutes, isolation_type, special_instructions, cancelled_at, cancelled_by, cancellation_reason, patient_waiting, admission_scheduled_at, adt_event_id, created_at, updated_at,
         hospital_units:unit_id (unit_name, unit_type),
         evs_staff:assigned_to (full_name)
       `)
@@ -367,7 +367,7 @@ export async function getEVSStaff(
   try {
     let query = supabase
       .from('evs_staff')
-      .select('*')
+      .select('id, tenant_id, user_id, employee_id, first_name, last_name, full_name, phone, email, status, assigned_units, current_request_id, shift_start, shift_end, break_start, break_end, requests_completed_today, avg_turnaround_minutes, is_active, created_at, updated_at')
       .order('status', { ascending: true })
       .order('full_name', { ascending: true });
 

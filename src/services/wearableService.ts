@@ -55,7 +55,7 @@ export class WearableService {
       // Check if device already connected
       const { data: existing, error: existingError } = await supabase
         .from('wearable_connections')
-        .select('*')
+        .select('id, user_id, device_type, device_model, device_id, connected, last_sync, sync_frequency_minutes, permissions_granted, api_token, refresh_token, created_at, updated_at')
         .eq('user_id', request.user_id)
         .eq('device_type', request.device_type)
         .maybeSingle();
@@ -172,7 +172,7 @@ export class WearableService {
     try {
       const { data, error } = await supabase
         .from('wearable_connections')
-        .select('*')
+        .select('id, user_id, device_type, device_model, device_id, connected, last_sync, sync_frequency_minutes, permissions_granted, api_token, refresh_token, created_at, updated_at')
         .eq('user_id', userId)
         .eq('connected', true);
 
@@ -332,7 +332,7 @@ export class WearableService {
 
       const query = supabase
         .from('wearable_vital_signs')
-        .select('*')
+        .select('id, user_id, device_id, vital_type, value, unit, measured_at, activity_state, quality_indicator, alert_triggered, alert_type, created_at')
         .eq('user_id', userId)
         .eq('vital_type', vitalType)
         .gte('measured_at', startDate.toISOString())
@@ -405,7 +405,7 @@ export class WearableService {
     try {
       const query = supabase
         .from('wearable_activity_data')
-        .select('*')
+        .select('id, user_id, device_id, date, steps, distance_meters, active_minutes, calories_burned, floors_climbed, sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, sleep_quality_score, sedentary_minutes, created_at')
         .eq('user_id', userId)
         .gte('date', startDate)
         .lte('date', endDate)
@@ -524,7 +524,7 @@ export class WearableService {
 
       const query = supabase
         .from('wearable_fall_detections')
-        .select('*')
+        .select('id, user_id, device_id, detected_at, fall_severity, latitude, longitude, location_accuracy_meters, user_responded, user_response_time_seconds, emergency_contact_notified, ems_dispatched, injury_reported, hospital_transport, clinical_assessment_id, follow_up_completed, created_at')
         .eq('user_id', userId)
         .gte('detected_at', startDate.toISOString())
         .order('detected_at', { ascending: false });
@@ -578,7 +578,7 @@ export class WearableService {
 
       const { data, error } = await supabase
         .from('wearable_fall_detections')
-        .select('*')
+        .select('id, user_id, device_id, detected_at, fall_severity, latitude, longitude, location_accuracy_meters, user_responded, user_response_time_seconds, emergency_contact_notified, ems_dispatched, injury_reported, hospital_transport, clinical_assessment_id, follow_up_completed, created_at')
         .eq('user_id', userId)
         .gte('detected_at', startDate.toISOString())
         .order('detected_at', { ascending: false });
@@ -662,7 +662,7 @@ export class WearableService {
 
       const { data: connection, error: connError } = await supabase
         .from('wearable_connections')
-        .select('*')
+        .select('id, user_id, device_type, device_model, device_id, connected, last_sync, sync_frequency_minutes, permissions_granted, api_token, refresh_token, connection_id, created_at, updated_at')
         .eq('user_id', user.id)
         .eq('device_type', request.deviceType)
         .eq('is_active', true)

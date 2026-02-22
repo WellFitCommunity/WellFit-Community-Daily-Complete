@@ -428,7 +428,7 @@ Return response as strict JSON with this structure:
 
     const { data, error } = await supabase
       .from('billing_code_cache')
-      .select('*')
+      .select('id, model_used, suggested_cpt_codes, suggested_hcpcs_codes, suggested_icd10_codes')
       .eq('tenant_id', tenantId)
       .eq('diagnosis_codes', sortedCodes)
       .eq('encounter_type', encounterType)

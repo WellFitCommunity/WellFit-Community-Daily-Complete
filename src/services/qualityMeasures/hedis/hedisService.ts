@@ -36,7 +36,7 @@ export async function getHedisMeasures(): Promise<ServiceResult<HedisMeasure[]>>
   try {
     const { data, error } = await supabase
       .from('ecqm_measure_definitions')
-      .select('*')
+      .select('id, measure_id, cms_id, version, title, description, measure_type, measure_scoring, initial_population_description, denominator_description, numerator_description, reporting_year, applicable_settings, clinical_focus, is_active, program_types, hedis_measure_id, hedis_subdomain, is_inverse_measure')
       .eq('is_active', true)
       .contains('program_types', ['hedis'])
       .order('hedis_subdomain', { ascending: true });
@@ -75,7 +75,7 @@ export async function getHedisSummary(
     const measureIds = measures.map(m => m.measure_id);
     const { data: aggData, error: aggError } = await supabase
       .from('ecqm_aggregate_results')
-      .select('*')
+      .select('measure_id, initial_population_count, denominator_count, denominator_exclusion_count, denominator_exception_count, numerator_count, numerator_exclusion_count, performance_rate, patient_count')
       .eq('tenant_id', tenantId)
       .gte('reporting_period_start', reportingPeriodStart.toISOString().split('T')[0])
       .in('measure_id', measureIds);

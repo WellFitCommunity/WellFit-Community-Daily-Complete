@@ -832,7 +832,7 @@ export async function createNHSNSubmission(
       // Get usage records for period
       const { data: usageData, error: usageError } = await supabase
         .from('antimicrobial_usage')
-        .select('*')
+        .select('id, tenant_id, patient_id, encounter_id, medication_code, medication_code_system, medication_name, antimicrobial_class, antimicrobial_subclass, dose_quantity, dose_unit, route, frequency, duration_days, indication_code, indication_description, prescriber_npi, prescribed_date, start_date, end_date, therapy_type, included_in_nhsn_report, nhsn_submission_id')
         .eq('tenant_id', tenantId)
         .eq('included_in_nhsn_report', false)
         .gte('prescribed_date', reportingPeriodStart.toISOString().split('T')[0])
@@ -878,7 +878,7 @@ export async function createNHSNSubmission(
       // Get resistance records for period
       const { data: resistanceData, error: resistanceError } = await supabase
         .from('antimicrobial_resistance')
-        .select('*')
+        .select('id, tenant_id, patient_id, encounter_id, specimen_id, specimen_type, specimen_collection_date, specimen_source, organism_code, organism_code_system, organism_name, antimicrobial_tested, antimicrobial_code, interpretation, mic_value, mic_unit, is_mdro, mdro_type, lab_name, lab_npi, result_date, included_in_nhsn_report, nhsn_submission_id')
         .eq('tenant_id', tenantId)
         .eq('included_in_nhsn_report', false)
         .gte('specimen_collection_date', reportingPeriodStart.toISOString())
@@ -1063,7 +1063,7 @@ export async function getSubmissionHistory(
   try {
     let query = supabase
       .from('nhsn_submissions')
-      .select('*')
+      .select('id, tenant_id, submission_type, reporting_period_start, reporting_period_end, facility_id, nhsn_org_id, nhsn_facility_id, document_type, cda_document, usage_record_count, resistance_record_count, status, submitted_at, submission_method, nhsn_submission_id, response_status, response_message, error_message')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 

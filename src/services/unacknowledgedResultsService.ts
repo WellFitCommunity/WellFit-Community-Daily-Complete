@@ -75,7 +75,7 @@ async function getUnacknowledgedResults(
   try {
     const { data, error } = await supabase
       .from('v_unacknowledged_results')
-      .select('*')
+      .select('id, patient_id, first_name, last_name, code_display, category, status, report_priority, issued, conclusion, tenant_id, hours_since_issued, aging_status')
       .order('issued', { ascending: true });
 
     if (error) {
@@ -111,7 +111,7 @@ async function getResultMetrics(): Promise<ServiceResult<ResultMetrics>> {
   try {
     const { data, error } = await supabase
       .from('v_unacknowledged_results')
-      .select('*');
+      .select('id, patient_id, first_name, last_name, code_display, category, status, report_priority, issued, conclusion, tenant_id, hours_since_issued, aging_status');
 
     if (error) {
       await auditLogger.error('UNACK_METRICS_FETCH_FAILED', error);

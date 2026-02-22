@@ -186,7 +186,7 @@ export class MedicationTrackingService {
     try {
       const { data, error } = await supabase
         .from('medications')
-        .select('*')
+        .select('id, user_id, medication_name, generic_name, brand_name, dosage, dosage_form, strength, instructions, frequency, route, prescribed_by, prescribed_date, prescription_number, pharmacy_name, pharmacy_phone, quantity, refills_remaining, last_refill_date, next_refill_date, ndc_code, purpose, side_effects, warnings, interactions, status, discontinued_date, discontinued_reason, ai_confidence, extraction_notes, needs_review, reviewed_by, reviewed_at, created_at, updated_at')
         .eq('id', medicationId)
         .eq('user_id', userId)
         .single();
@@ -344,7 +344,7 @@ export class MedicationTrackingService {
     try {
       const { data, error } = await supabase
         .from('medication_reminders')
-        .select('*')
+        .select('id, medication_id, user_id, time_of_day, days_of_week, enabled, notification_method, last_reminded_at, next_reminder_at, created_at, updated_at')
         .eq('medication_id', medicationId)
         .eq('user_id', userId)
         .order('time_of_day', { ascending: true });
@@ -637,7 +637,7 @@ export class MedicationTrackingService {
     try {
       const { data, error } = await supabase
         .from('medication_doses_taken')
-        .select('*')
+        .select('id, medication_id, user_id, reminder_id, taken_at, scheduled_time, dose_amount, status, skip_reason, notes, side_effects_noted, created_at')
         .eq('medication_id', medicationId)
         .eq('user_id', userId)
         .order('taken_at', { ascending: false })

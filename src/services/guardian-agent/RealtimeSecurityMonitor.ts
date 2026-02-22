@@ -213,7 +213,7 @@ export class RealtimeSecurityMonitor {
     try {
       const { data, error } = await supabase
         .from('security_alerts')
-        .select('*')
+        .select('id, alert_type, severity, status, title, description, affected_user_id, created_at, metadata')
         .in('severity', ['critical', 'high'])
         .in('status', ['new', 'investigating', 'escalated'])
         .order('created_at', { ascending: false })

@@ -96,7 +96,7 @@ export async function listCourses(): Promise<ServiceResult<TrainingCourse[]>> {
   try {
     const { data, error } = await supabase
       .from('training_courses')
-      .select('*')
+      .select('id, tenant_id, course_name, course_code, description, category, required_for_roles, recurrence_months, passing_score, duration_minutes, is_active, created_at, updated_at')
       .eq('is_active', true)
       .order('course_name', { ascending: true });
 

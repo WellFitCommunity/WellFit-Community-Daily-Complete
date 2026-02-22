@@ -186,7 +186,7 @@ async function getCompletionHistory(
   try {
     const { data, error } = await supabase
       .from('referral_follow_up_log')
-      .select('*')
+      .select('id, referral_id, referral_source_id, follow_up_type, follow_up_reason, aging_days, recipient_phone, recipient_email, delivery_status, error_message, tenant_id, created_at')
       .eq('referral_id', referralId)
       .in('follow_up_reason', ['specialist_no_confirmation', 'specialist_completion_recorded'])
       .order('created_at', { ascending: false });

@@ -306,7 +306,7 @@ class EmergencyAccessIntelligenceService {
     // Retrieve pre-generated briefing
     const { data: briefing, error: _error } = await this.supabase
       .from('emergency_response_briefings')
-      .select('*')
+      .select('id, senior_id, generated_at, valid_until, executive_summary, medical_intelligence, access_information, emergency_contacts, officer_safety_notes, special_needs')
       .eq('tenant_id', request.tenantId)
       .eq('senior_id', request.seniorId)
       .gte('valid_until', new Date().toISOString())
@@ -361,7 +361,7 @@ class EmergencyAccessIntelligenceService {
 
     const { data, error } = await this.supabase
       .from('emergency_briefing_analytics')
-      .select('*')
+      .select('tenant_id, access_date, total_accesses, unique_briefings_accessed, emergency_calls, welfare_checks, responses_dispatched, avg_response_minutes')
       .eq('tenant_id', tenantId)
       .gte('analytics_date', startDate)
       .lte('analytics_date', endDate)
@@ -387,7 +387,7 @@ class EmergencyAccessIntelligenceService {
 
     let query = this.supabase
       .from('emergency_briefing_access_log')
-      .select('*')
+      .select('id, tenant_id, briefing_id, accessed_at, accessed_by_agency, accessed_by_badge, access_reason, call_id, caller_relationship, reported_emergency_type, response_dispatched, response_arrival_time, response_outcome, created_at')
       .eq('tenant_id', tenantId)
       .gte('accessed_at', startDate)
       .lte('accessed_at', endDate)
@@ -451,7 +451,7 @@ class EmergencyAccessIntelligenceService {
     // Get emergency contacts
     const { data: contacts } = await this.supabase
       .from('emergency_contacts')
-      .select('*')
+      .select('name, relationship, phone_number, priority, has_key, estimated_response_time')
       .eq('senior_id', seniorId)
       .order('priority', { ascending: true });
 

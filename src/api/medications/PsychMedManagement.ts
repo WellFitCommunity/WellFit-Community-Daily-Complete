@@ -76,7 +76,7 @@ export async function getPsychiatricMedications(
   try {
     const { data, error } = await supabase
       .from('medications')
-      .select('*')
+      .select('id, user_id, medication_name, generic_name, brand_name, dosage, dosage_form, strength, instructions, frequency, route, prescribed_by, prescribed_date, prescription_number, pharmacy_name, pharmacy_phone, quantity, refills_remaining, last_refill_date, next_refill_date, ndc_code, purpose, side_effects, warnings, interactions, status, discontinued_date, discontinued_reason, ai_confidence, extraction_notes, needs_review, reviewed_by, reviewed_at, is_psychiatric, psych_category, psych_subcategory, psych_classification_confidence, created_at, updated_at')
       .eq('user_id', userId)
       .eq('status', 'active')
       .eq('is_psychiatric', true)
@@ -144,7 +144,7 @@ export async function getPsychMedAlerts(
   try {
     const { data, error } = await supabase
       .from('psych_med_alerts')
-      .select('*')
+      .select('id, user_id, alert_type, severity, psych_med_count, medication_ids, medication_names, categories, warnings, requires_review, acknowledged, acknowledged_by, acknowledged_at, resolved, resolved_at, resolution_notes, created_at')
       .eq('user_id', userId)
       .eq('resolved', false)
       .order('created_at', { ascending: false });

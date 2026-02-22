@@ -218,7 +218,7 @@ export class ParkinsonsService {
     try {
       const { data, error } = await supabase
         .from('parkinsons_medications')
-        .select('*')
+        .select('id, patient_id, medication_name, generic_name, brand_name, medication_class, dosage, frequency, timing_instructions, scheduled_times, is_active, start_date, end_date, prescribed_by, side_effects, created_at, tenant_id')
         .eq('patient_id', patientId)
         .eq('is_active', true)
         .order('medication_name');
@@ -405,7 +405,7 @@ export class ParkinsonsService {
 
       const { data, error } = await supabase
         .from('parkinsons_symptom_diary')
-        .select('*')
+        .select('id, patient_id, recorded_at, tremor_severity, rigidity_severity, bradykinesia_severity, balance_problems, dyskinesia_present, on_time_hours, off_time_hours, freezing_episodes, falls_count, mood_rating, sleep_quality, notes, created_at, tenant_id')
         .eq('patient_id', patientId)
         .gte('recorded_at', startDate.toISOString())
         .order('recorded_at', { ascending: false })
@@ -499,7 +499,7 @@ export class ParkinsonsService {
     try {
       const { data, error } = await supabase
         .from('parkinsons_updrs')
-        .select('*')
+        .select('id, patient_id, assessment_date, assessor_id, part_i_score, part_ii_score, part_iii_score, part_iv_score, total_score, medication_state, notes, created_at, tenant_id')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false })
         .limit(1)
@@ -555,7 +555,7 @@ export class ParkinsonsService {
     try {
       const query = supabase
         .from('parkinsons_dbs_sessions')
-        .select('*')
+        .select('id, patient_id, session_date, programmer_name, programmer_id, device_manufacturer, device_model, lead_location, settings_changed, battery_status, patient_response, updrs_pre, updrs_post, side_effects, notes, created_at, tenant_id')
         .eq('patient_id', patientId)
         .order('session_date', { ascending: false });
 
@@ -609,7 +609,7 @@ export class ParkinsonsService {
 
       const { data, error } = await supabase
         .from('parkinsons_robert_tracking')
-        .select('*')
+        .select('id, patient_id, tracking_date, gait_speed, step_length, tremor_episodes, balance_score, medication_adherence_pct, on_time_hours, off_time_hours, finger_tap_count_left, finger_tap_count_right, rigidity_score_left, rigidity_score_right, lsvt_big_completed, lsvt_loud_completed, minutes_pt_exercises, exercise_compliance_pct, fall_detected_count, dyskinesia_detected, fog_detected, medication_adjustments, cognitive_score, created_at, tenant_id')
         .eq('patient_id', patientId)
         .gte('tracking_date', startDate.toISOString().split('T')[0])
         .order('tracking_date', { ascending: false })
@@ -660,7 +660,7 @@ export class ParkinsonsService {
     try {
       const query = supabase
         .from('parkinsons_forbes_tracking')
-        .select('*')
+        .select('id, patient_id, updrs_assessment_id, tracking_date, freezing_episodes, fall_count, balance_score, gait_score, clinic_visit, telehealth_visit, wearable_data_reviewed, lsvt_big_status, lsvt_loud_status, home_exercise_adherence_pct, cognitive_screening_completed, cognitive_score, depression_screening_completed, depression_score, patient_education_completed, caregiver_burden_score, support_group_attended, speech_eval_completed, swallow_study_result, created_at, tenant_id')
         .eq('patient_id', patientId)
         .order('tracking_date', { ascending: false });
 

@@ -25,7 +25,7 @@ export class DiagnosticReportService {
     try {
       const { data, error } = await supabase
         .from('fhir_diagnostic_reports')
-        .select('*')
+        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, category_code, category_display, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, result_observation_ids, conclusion, conclusion_code, conclusion_code_display, presented_form_url, presented_form_title, report_priority, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('issued', { ascending: false });
 
@@ -145,7 +145,7 @@ export class DiagnosticReportService {
       const { data, error } = await supabase
         .from('fhir_diagnostic_reports')
         .insert([report])
-        .select()
+        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, category_code, category_display, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, result_observation_ids, conclusion, conclusion_code, conclusion_code_display, presented_form_url, presented_form_title, report_priority, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -179,7 +179,7 @@ export class DiagnosticReportService {
         .from('fhir_diagnostic_reports')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, category_code, category_display, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, result_observation_ids, conclusion, conclusion_code, conclusion_code_display, presented_form_url, presented_form_title, report_priority, created_at, updated_at')
         .single();
 
       if (error) throw error;

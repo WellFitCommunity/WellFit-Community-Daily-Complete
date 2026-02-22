@@ -389,7 +389,7 @@ export const eraPaymentPostingService = {
     try {
       const { data, error } = await supabase
         .from('claim_payments')
-        .select('*')
+        .select('id, claim_id, remittance_id, paid_amount, adjustment_amount, patient_responsibility, allowed_amount, adjustment_reason_codes, check_number, payment_date, payer_claim_number, match_confidence, match_method, posted_at, posted_by, tenant_id, created_at, updated_at')
         .eq('claim_id', claimId)
         .order('posted_at', { ascending: false });
 

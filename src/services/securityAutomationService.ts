@@ -596,7 +596,7 @@ export class SecurityAutomationService {
     // Find alerts that need escalation
     const { data: alertsToEscalate } = await this.supabase
       .from('security_alerts')
-      .select('*')
+      .select('id, severity, alert_type, title, description, metadata, status, created_at, updated_at, assigned_to, assigned_at, assigned_by, escalated, escalated_at, escalation_level, notification_sent, notification_channels, notification_sent_at, affected_user_id, source_ip, detection_method, confidence_score, threshold_value, actual_value, resolution_time, resolution_notes')
       .eq('status', 'pending')
       .lt('created_at', new Date(Date.now() - 15 * 60 * 1000).toISOString());
 

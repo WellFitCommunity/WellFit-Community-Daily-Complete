@@ -83,7 +83,7 @@ export class PTTreatmentPlanService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_plans')
-        .select('*')
+        .select('id, patient_id, assessment_id, care_plan_id, therapist_id, status, start_date, projected_end_date, actual_end_date, total_visits_authorized, visits_used, visits_remaining, frequency, goals, interventions, treatment_approach, clinical_practice_guidelines_followed, hep_prescribed, hep_delivery_method, hep_compliance_tracking, modification_history, discharge_criteria, discharge_destination, interdisciplinary_referrals, physician_communication_log, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .order('start_date', { ascending: false })
@@ -107,7 +107,7 @@ export class PTTreatmentPlanService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_plans')
-        .select('*')
+        .select('id, patient_id, assessment_id, care_plan_id, therapist_id, status, start_date, projected_end_date, actual_end_date, total_visits_authorized, visits_used, visits_remaining, frequency, goals, interventions, treatment_approach, clinical_practice_guidelines_followed, hep_prescribed, hep_delivery_method, hep_compliance_tracking, modification_history, discharge_criteria, discharge_destination, interdisciplinary_referrals, physician_communication_log, created_at, updated_at')
         .eq('id', planId)
         .single();
 
@@ -128,7 +128,7 @@ export class PTTreatmentPlanService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_plans')
-        .select('*')
+        .select('id, patient_id, assessment_id, care_plan_id, therapist_id, status, start_date, projected_end_date, actual_end_date, total_visits_authorized, visits_used, visits_remaining, frequency, goals, interventions, treatment_approach, clinical_practice_guidelines_followed, hep_prescribed, hep_delivery_method, hep_compliance_tracking, modification_history, discharge_criteria, discharge_destination, interdisciplinary_referrals, physician_communication_log, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('start_date', { ascending: false });
 
@@ -215,7 +215,7 @@ export class PTTreatmentPlanService {
     try {
       const { data: plan, error: planError } = await supabase
         .from('pt_treatment_plans')
-        .select('*')
+        .select('id, patient_id, assessment_id, care_plan_id, therapist_id, status, start_date, projected_end_date, actual_end_date, total_visits_authorized, visits_used, visits_remaining, frequency, goals, interventions, treatment_approach, clinical_practice_guidelines_followed, hep_prescribed, hep_delivery_method, hep_compliance_tracking, modification_history, discharge_criteria, discharge_destination, interdisciplinary_referrals, physician_communication_log, created_at, updated_at')
         .eq('id', planId)
         .single();
 
@@ -223,7 +223,7 @@ export class PTTreatmentPlanService {
 
       const { data: sessions, error: sessionsError } = await supabase
         .from('pt_treatment_sessions')
-        .select('*')
+        .select('id, patient_id, treatment_plan_id, encounter_id, therapist_id, session_date, session_number, session_duration_minutes, attendance_status, patient_reported_status, pain_level_today, hep_compliance, barriers_today, vitals_if_needed, reassessments_today, interventions_delivered, progress_toward_goals, functional_changes, clinical_decision_making, plan_for_next_visit, plan_modifications, goals_updated, total_timed_minutes, total_billable_units, cpt_codes_billed, exercise_videos_shared, educational_materials_provided, adverse_events, incident_report_filed, created_at, updated_at, co_signed_by, co_signed_at')
         .eq('treatment_plan_id', planId)
         .order('session_date', { ascending: false });
 

@@ -123,7 +123,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_assessments')
-        .select('*')
+        .select('id, patient_id, provider_id, provider_role, visit_type, visit_date, status, chief_complaint, pain_level, pain_location, overall_oral_health_rating, periodontal_status, plaque_index, bleeding_index, gingival_index, dry_mouth, smoking_tobacco, diabetes_present, heart_disease_present, immunocompromised, medications_affecting_oral_health, brushing_frequency_per_day, flossing_frequency_per_week, last_dental_cleaning_date, last_dental_exam_date, clinical_notes, treatment_recommendations, referral_needed, referral_specialty, referral_reason, next_appointment_recommended_in_months, patient_education_provided, fhir_encounter_id, fhir_diagnostic_report_id, created_at, updated_at, created_by, updated_by')
         .eq('id', id)
         .single();
 
@@ -151,7 +151,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_assessments')
-        .select('*')
+        .select('id, patient_id, provider_id, provider_role, visit_type, visit_date, status, chief_complaint, pain_level, pain_location, overall_oral_health_rating, periodontal_status, plaque_index, bleeding_index, gingival_index, dry_mouth, smoking_tobacco, diabetes_present, heart_disease_present, immunocompromised, medications_affecting_oral_health, brushing_frequency_per_day, flossing_frequency_per_week, last_dental_cleaning_date, last_dental_exam_date, clinical_notes, treatment_recommendations, referral_needed, referral_specialty, referral_reason, next_appointment_recommended_in_months, patient_education_provided, fhir_encounter_id, fhir_diagnostic_report_id, created_at, updated_at, created_by, updated_by')
         .eq('patient_id', patientId)
         .order('visit_date', { ascending: false })
         .limit(limit);
@@ -175,7 +175,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_assessments')
-        .select('*')
+        .select('id, patient_id, provider_id, provider_role, visit_type, visit_date, status, chief_complaint, pain_level, pain_location, overall_oral_health_rating, periodontal_status, plaque_index, bleeding_index, gingival_index, dry_mouth, smoking_tobacco, diabetes_present, heart_disease_present, immunocompromised, medications_affecting_oral_health, brushing_frequency_per_day, flossing_frequency_per_week, last_dental_cleaning_date, last_dental_exam_date, clinical_notes, treatment_recommendations, referral_needed, referral_specialty, referral_reason, next_appointment_recommended_in_months, patient_education_provided, fhir_encounter_id, fhir_diagnostic_report_id, created_at, updated_at, created_by, updated_by')
         .eq('patient_id', patientId)
         .order('visit_date', { ascending: false })
         .limit(1)
@@ -251,7 +251,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_tooth_chart')
-        .select('*')
+        .select('id, assessment_id, patient_id, tooth_number, tooth_name, is_primary_tooth, condition, mobility_score, probing_depth_mb, probing_depth_b, probing_depth_db, probing_depth_ml, probing_depth_l, probing_depth_dl, recession_mb, recession_b, recession_db, recession_ml, recession_l, recession_dl, bleeding_on_probing, surface_conditions, notes, recorded_date, created_at, updated_at')
         .eq('assessment_id', assessmentId)
         .order('tooth_number', { ascending: true });
 
@@ -403,7 +403,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_procedures')
-        .select('*')
+        .select('id, patient_id, assessment_id, provider_id, procedure_date, procedure_name, cdt_code, snomed_code, icd10_code, tooth_numbers, quadrant, arch, procedure_description, anesthesia_used, anesthesia_type, materials_used, treatment_plan_id, priority, procedure_status, complications, follow_up_required, follow_up_date, estimated_cost, insurance_coverage_percentage, patient_responsibility, billing_notes, fhir_procedure_id, created_at, updated_at, created_by, notes')
         .eq('patient_id', patientId)
         .order('procedure_date', { ascending: false })
         .limit(limit);
@@ -532,7 +532,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_treatment_plans')
-        .select('*')
+        .select('id, patient_id, assessment_id, provider_id, plan_name, plan_date, status, treatment_goals, expected_duration_months, phases, total_estimated_cost, insurance_coverage, patient_out_of_pocket, payment_plan_offered, payment_plan_details, patient_consent_obtained, patient_consent_date, patient_signature_url, alternative_treatments_discussed, risks_discussed, benefits_discussed, prognosis, fhir_care_plan_id, created_at, updated_at, created_by, notes')
         .eq('patient_id', patientId)
         .order('plan_date', { ascending: false });
 
@@ -598,7 +598,7 @@ export class DentalHealthService {
 
       const { data, error } = await supabase
         .from('patient_dental_health_tracking')
-        .select('*')
+        .select('id, patient_id, report_date, tooth_pain, tooth_pain_severity, gum_bleeding, dry_mouth, bad_breath, sensitive_teeth, jaw_pain, brushed_today, flossed_today, used_mouthwash, difficulty_chewing, avoided_foods_due_to_teeth, foods_avoided, self_consciousness_about_smile, dental_health_affects_nutrition, dental_health_affects_social_life, last_dentist_visit_date, months_since_last_cleaning, additional_concerns, created_at')
         .eq('patient_id', patientId)
         .gte('report_date', startDate.toISOString().split('T')[0])
         .order('report_date', { ascending: false });
@@ -661,7 +661,7 @@ export class DentalHealthService {
       // Get referrals
       const { data: referrals } = await supabase
         .from('dental_referrals')
-        .select('*')
+        .select('id, patient_id, status, appointment_scheduled_date')
         .eq('patient_id', targetPatientId);
 
       const pendingReferrals = referrals?.filter(r => r.status === 'pending').length || 0;
@@ -861,7 +861,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_cdt_codes')
-        .select('*')
+        .select('code, category, description, typical_fee_range_low, typical_fee_range_high, medicare_covered, medicaid_covered, preventive, active, effective_date, termination_date, notes')
         .or(`code.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
         .eq('active', true)
         .order('code')
@@ -888,7 +888,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_cdt_codes')
-        .select('*')
+        .select('code, category, description, typical_fee_range_low, typical_fee_range_high, medicare_covered, medicaid_covered, preventive, active, effective_date, termination_date, notes')
         .eq('code', code)
         .single();
 
@@ -909,7 +909,7 @@ export class DentalHealthService {
     try {
       const { data, error } = await supabase
         .from('dental_cdt_codes')
-        .select('*')
+        .select('code, category, description, typical_fee_range_low, typical_fee_range_high, medicare_covered, medicaid_covered, preventive, active, effective_date, termination_date, notes')
         .eq('preventive', true)
         .eq('active', true)
         .order('code');

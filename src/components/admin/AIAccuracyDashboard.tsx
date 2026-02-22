@@ -155,7 +155,7 @@ export default function AIAccuracyDashboard() {
       // Load experiments
       const { data: expData, error: expError } = await supabase
         .from('ai_prompt_experiments')
-        .select('*')
+        .select('id, experiment_name, skill_name, status, control_predictions, treatment_predictions, winner, is_significant, created_at')
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -175,7 +175,7 @@ export default function AIAccuracyDashboard() {
       // Load prompt versions
       const { data: promptData, error: promptError } = await supabase
         .from('ai_prompt_versions')
-        .select('*')
+        .select('id, skill_name, version_number, is_active, total_uses, accuracy_rate, created_at')
         .order('created_at', { ascending: false })
         .limit(20);
 

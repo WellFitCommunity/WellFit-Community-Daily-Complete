@@ -89,6 +89,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
       setLoading(true);
       setError(null);
 
+      // select('*') intentional — TenantModuleConfig has 100+ entitlement/enabled columns, all used by this panel
       const { data, error: fetchError } = await supabase
         .from('tenant_module_config')
         .select('*')

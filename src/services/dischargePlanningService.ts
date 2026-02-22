@@ -114,7 +114,7 @@ export class DischargePlanningService {
     try {
       const { data, error } = await supabase
         .from('discharge_plans')
-        .select('*')
+        .select('id, patient_id, encounter_id, discharge_disposition, planned_discharge_date, planned_discharge_time, actual_discharge_datetime, medication_reconciliation_complete, discharge_prescriptions_sent, discharge_prescriptions_pharmacy, follow_up_appointment_scheduled, follow_up_appointment_date, follow_up_appointment_provider, follow_up_appointment_location, discharge_summary_completed, discharge_summary_sent_to_pcp, discharge_summary_sent_at, patient_education_completed, patient_education_topics, patient_understands_diagnosis, patient_understands_medications, patient_understands_followup, dme_needed, dme_ordered, dme_items, home_health_needed, home_health_ordered, home_health_agency, home_health_start_date, caregiver_identified, caregiver_name, caregiver_phone, caregiver_training_completed, transportation_arranged, transportation_method, readmission_risk_score, readmission_risk_category, requires_48hr_call, requires_72hr_call, requires_7day_pcp_visit, risk_factors, post_acute_facility_id, post_acute_facility_name, post_acute_facility_phone, post_acute_facility_address, post_acute_bed_confirmed, post_acute_bed_confirmed_at, post_acute_handoff_packet_id, discharge_planning_time_minutes, care_coordination_time_minutes, billing_codes_generated, billing_codes, status, checklist_completion_percentage, created_by, created_at, updated_at, discharge_planner_id, discharge_planner_notes, clinical_notes, barriers_to_discharge')
         .eq('id', planId)
         .single();
 
@@ -132,7 +132,7 @@ export class DischargePlanningService {
     try {
       const { data, error } = await supabase
         .from('discharge_plans')
-        .select('*')
+        .select('id, patient_id, encounter_id, discharge_disposition, planned_discharge_date, planned_discharge_time, actual_discharge_datetime, medication_reconciliation_complete, discharge_prescriptions_sent, discharge_prescriptions_pharmacy, follow_up_appointment_scheduled, follow_up_appointment_date, follow_up_appointment_provider, follow_up_appointment_location, discharge_summary_completed, discharge_summary_sent_to_pcp, discharge_summary_sent_at, patient_education_completed, patient_education_topics, patient_understands_diagnosis, patient_understands_medications, patient_understands_followup, dme_needed, dme_ordered, dme_items, home_health_needed, home_health_ordered, home_health_agency, home_health_start_date, caregiver_identified, caregiver_name, caregiver_phone, caregiver_training_completed, transportation_arranged, transportation_method, readmission_risk_score, readmission_risk_category, requires_48hr_call, requires_72hr_call, requires_7day_pcp_visit, risk_factors, post_acute_facility_id, post_acute_facility_name, post_acute_facility_phone, post_acute_facility_address, post_acute_bed_confirmed, post_acute_bed_confirmed_at, post_acute_handoff_packet_id, discharge_planning_time_minutes, care_coordination_time_minutes, billing_codes_generated, billing_codes, status, checklist_completion_percentage, created_by, created_at, updated_at, discharge_planner_id, discharge_planner_notes, clinical_notes, barriers_to_discharge')
         .eq('encounter_id', encounterId)
         .maybeSingle();
 
@@ -203,7 +203,7 @@ export class DischargePlanningService {
   static async getActiveDischargePlans(): Promise<DischargePlan[]> {
     const query = supabase
       .from('discharge_plans')
-      .select('*')
+      .select('id, patient_id, encounter_id, discharge_disposition, planned_discharge_date, planned_discharge_time, actual_discharge_datetime, medication_reconciliation_complete, discharge_prescriptions_sent, discharge_prescriptions_pharmacy, follow_up_appointment_scheduled, follow_up_appointment_date, follow_up_appointment_provider, follow_up_appointment_location, discharge_summary_completed, discharge_summary_sent_to_pcp, discharge_summary_sent_at, patient_education_completed, patient_education_topics, patient_understands_diagnosis, patient_understands_medications, patient_understands_followup, dme_needed, dme_ordered, dme_items, home_health_needed, home_health_ordered, home_health_agency, home_health_start_date, caregiver_identified, caregiver_name, caregiver_phone, caregiver_training_completed, transportation_arranged, transportation_method, readmission_risk_score, readmission_risk_category, requires_48hr_call, requires_72hr_call, requires_7day_pcp_visit, risk_factors, post_acute_facility_id, post_acute_facility_name, post_acute_facility_phone, post_acute_facility_address, post_acute_bed_confirmed, post_acute_bed_confirmed_at, post_acute_handoff_packet_id, discharge_planning_time_minutes, care_coordination_time_minutes, billing_codes_generated, billing_codes, status, checklist_completion_percentage, created_by, created_at, updated_at, discharge_planner_id, discharge_planner_notes, clinical_notes, barriers_to_discharge')
       .in('status', ['draft', 'pending_items', 'ready'])
       .order('planned_discharge_date', { ascending: true });
 
@@ -218,7 +218,7 @@ export class DischargePlanningService {
   static async getHighRiskDischargePlans(): Promise<DischargePlan[]> {
     const query = supabase
       .from('discharge_plans')
-      .select('*')
+      .select('id, patient_id, encounter_id, discharge_disposition, planned_discharge_date, planned_discharge_time, actual_discharge_datetime, medication_reconciliation_complete, discharge_prescriptions_sent, discharge_prescriptions_pharmacy, follow_up_appointment_scheduled, follow_up_appointment_date, follow_up_appointment_provider, follow_up_appointment_location, discharge_summary_completed, discharge_summary_sent_to_pcp, discharge_summary_sent_at, patient_education_completed, patient_education_topics, patient_understands_diagnosis, patient_understands_medications, patient_understands_followup, dme_needed, dme_ordered, dme_items, home_health_needed, home_health_ordered, home_health_agency, home_health_start_date, caregiver_identified, caregiver_name, caregiver_phone, caregiver_training_completed, transportation_arranged, transportation_method, readmission_risk_score, readmission_risk_category, requires_48hr_call, requires_72hr_call, requires_7day_pcp_visit, risk_factors, post_acute_facility_id, post_acute_facility_name, post_acute_facility_phone, post_acute_facility_address, post_acute_bed_confirmed, post_acute_bed_confirmed_at, post_acute_handoff_packet_id, discharge_planning_time_minutes, care_coordination_time_minutes, billing_codes_generated, billing_codes, status, checklist_completion_percentage, created_by, created_at, updated_at, discharge_planner_id, discharge_planner_notes, clinical_notes, barriers_to_discharge')
       .gte('readmission_risk_score', 60)
       .in('status', ['draft', 'pending_items', 'ready'])
       .order('readmission_risk_score', { ascending: false });
@@ -237,17 +237,17 @@ export class DischargePlanningService {
     encounterId: string
   ): Promise<void> {
     try {
-      // Get patient profile
+      // Get patient profile (used for AI discharge recommendations)
       const { data: profile } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, date_of_birth')
         .eq('id', patientId)
         .single();
 
-      // Get encounter details
+      // Get encounter details (used for AI discharge recommendations)
       const { data: encounter } = await supabase
         .from('encounters')
-        .select('*')
+        .select('id, chief_complaint')
         .eq('id', encounterId)
         .single();
 
@@ -403,7 +403,7 @@ Format as JSON:
   static async getPendingFollowUps(): Promise<PostDischargeFollowUp[]> {
     const query = supabase
       .from('post_discharge_follow_ups')
-      .select('*')
+      .select('id, discharge_plan_id, patient_id, follow_up_type, scheduled_datetime, completed_datetime, status, attempted_by, attempt_count, last_attempt_datetime, patient_doing_well, patient_has_concerns, concerns_description, medication_adherence_confirmed, medication_issues, follow_up_appointment_confirmed, follow_up_appointment_attended, warning_signs_present, warning_signs_description, actions_taken, needs_escalation, escalated_to, escalated_at, outcome, call_notes, created_at, updated_at')
       .in('status', ['pending', 'attempted'])
       .lte('scheduled_datetime', new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()) // Due within 24 hours
       .order('scheduled_datetime', { ascending: true });
@@ -419,7 +419,7 @@ Format as JSON:
   static async getFollowUpsForPlan(planId: string): Promise<PostDischargeFollowUp[]> {
     const query = supabase
       .from('post_discharge_follow_ups')
-      .select('*')
+      .select('id, discharge_plan_id, patient_id, follow_up_type, scheduled_datetime, completed_datetime, status, attempted_by, attempt_count, last_attempt_datetime, patient_doing_well, patient_has_concerns, concerns_description, medication_adherence_confirmed, medication_issues, follow_up_appointment_confirmed, follow_up_appointment_attended, warning_signs_present, warning_signs_description, actions_taken, needs_escalation, escalated_to, escalated_at, outcome, call_notes, created_at, updated_at')
       .eq('discharge_plan_id', planId)
       .order('scheduled_datetime', { ascending: true });
 
@@ -506,7 +506,7 @@ Format as JSON:
   ): Promise<PostAcuteFacility[]> {
     let query = supabase
       .from('post_acute_facilities')
-      .select('*')
+      .select('id, facility_type, facility_name, facility_address, facility_city, facility_state, facility_zip, facility_phone, facility_fax, facility_email, total_beds, available_beds, last_bed_count_update, cms_star_rating, accepts_medicare, accepts_medicaid, specialties, is_preferred_provider, contract_status, primary_contact_name, primary_contact_phone, primary_contact_email, active, notes, created_at, updated_at')
       .eq('facility_type', facilityType)
       .eq('active', true)
       .order('cms_star_rating', { ascending: false });
@@ -532,7 +532,7 @@ Format as JSON:
   ): Promise<PostAcuteFacility[]> {
     const query = supabase
       .from('post_acute_facilities')
-      .select('*')
+      .select('id, facility_type, facility_name, facility_address, facility_city, facility_state, facility_zip, facility_phone, facility_fax, facility_email, total_beds, available_beds, last_bed_count_update, cms_star_rating, accepts_medicare, accepts_medicaid, specialties, is_preferred_provider, contract_status, primary_contact_name, primary_contact_phone, primary_contact_email, active, notes, created_at, updated_at')
       .eq('facility_type', facilityType)
       .eq('active', true)
       .gt('available_beds', 0)

@@ -572,7 +572,7 @@ Return response as strict JSON:
   private async checkExistingEnrollment(patientId: string): Promise<EnrollmentRecord | null> {
     const { data } = await supabase
       .from('ccm_eligibility_assessments')
-      .select('*')
+      .select('id, patient_id, chronic_conditions_count, chronic_conditions, check_in_completion_rate, appointment_adherence_rate, medication_adherence_rate, engagement_score, sdoh_risk_count, sdoh_barriers, predicted_monthly_reimbursement, reimbursement_tier, recommended_cpt_codes')
       .eq('patient_id', patientId)
       .eq('enrollment_status', 'enrolled')
       .order('assessment_date', { ascending: false })

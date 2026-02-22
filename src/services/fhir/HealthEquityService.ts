@@ -25,7 +25,7 @@ export const HealthEquityService = {
   } = {}) {
     let query = supabase
       .from('health_equity_metrics')
-      .select('*');
+      .select('id, patient_id, has_access_disparity, has_outcome_disparity, has_utilization_disparity, insurance_type, equity_interventions, created_at, updated_at');
 
     if (options.disparity_type === 'access') {
       query = query.eq('has_access_disparity', true);
@@ -76,7 +76,7 @@ export const HealthEquityService = {
       .from('health_equity_metrics')
       .update({ equity_interventions: interventions })
       .eq('patient_id', patientId)
-      .select()
+      .select('id, patient_id, has_access_disparity, has_outcome_disparity, has_utilization_disparity, insurance_type, equity_interventions, created_at, updated_at')
       .single();
 
     if (error) throw error;

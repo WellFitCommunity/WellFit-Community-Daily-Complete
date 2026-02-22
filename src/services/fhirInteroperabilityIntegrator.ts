@@ -248,7 +248,7 @@ export class FHIRInteroperabilityIntegrator {
     try {
       const { data, error } = await supabase
         .from('fhir_connections')
-        .select('*')
+        .select('id, name, fhir_server_url, ehr_system, client_id, status, last_sync, sync_frequency, sync_direction, access_token, refresh_token, token_expiry, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -276,7 +276,7 @@ export class FHIRInteroperabilityIntegrator {
     try {
       const { data: conn, error } = await supabase
         .from('fhir_connections')
-        .select('*')
+        .select('id, name, fhir_server_url, ehr_system, client_id, status, last_sync, sync_frequency, sync_direction, access_token, refresh_token, token_expiry, created_at, updated_at')
         .eq('id', connectionId)
         .single();
 
@@ -359,7 +359,7 @@ export class FHIRInteroperabilityIntegrator {
       // Get connection details
       const { data: conn, error: connError } = await supabase
         .from('fhir_connections')
-        .select('*')
+        .select('id, fhir_server_url, access_token')
         .eq('id', connectionId)
         .single();
 
@@ -370,7 +370,7 @@ export class FHIRInteroperabilityIntegrator {
       // Get patient mappings
       let query = supabase
         .from('fhir_patient_mappings')
-        .select('*')
+        .select('id, community_user_id, fhir_patient_id, connection_id, last_synced_at, sync_status')
         .eq('connection_id', connectionId);
 
       if (userIds && userIds.length > 0) {
@@ -474,7 +474,7 @@ export class FHIRInteroperabilityIntegrator {
     try {
       const { data: conn, error: connError } = await supabase
         .from('fhir_connections')
-        .select('*')
+        .select('id, fhir_server_url, access_token')
         .eq('id', connectionId)
         .single();
 
@@ -597,7 +597,7 @@ await this.pushBundleToFHIR(
   async getPatientMapping(communityUserId: string, connectionId: string): Promise<PatientMapping | null> {
     const { data, error } = await supabase
       .from('fhir_patient_mappings')
-      .select('*')
+      .select('community_user_id, fhir_patient_id, connection_id, last_synced_at, sync_status')
       .eq('community_user_id', communityUserId)
       .eq('connection_id', connectionId)
       .single();

@@ -198,7 +198,7 @@ export async function extractSelfReportedHealth(
   // Get check-ins with health responses
   const { data: checkIns } = await supabase
     .from('patient_daily_check_ins')
-    .select('*')
+    .select('responses, concern_flags, check_in_date')
     .eq('patient_id', patientId)
     .gte('check_in_date', thirtyDaysAgo.toISOString())
     .order('check_in_date', { ascending: false });

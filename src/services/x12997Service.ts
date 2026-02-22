@@ -276,7 +276,7 @@ async function getAcknowledgment(
   try {
     const { data, error } = await supabase
       .from('x12_997_acknowledgments')
-      .select('*')
+      .select('id, tenant_id, interchange_control_number, group_control_number, acknowledgment_status, acknowledgment_status_description, original_transaction_type, original_control_number, transaction_sets_received, transaction_sets_accepted, transaction_sets_rejected, received_at, processed_at, clearinghouse_provider')
       .eq('id', acknowledgmentId)
       .single();
 
@@ -321,7 +321,7 @@ async function getRecentAcknowledgments(
   try {
     const { data, error } = await supabase
       .from('v_997_acknowledgment_summary')
-      .select('*')
+      .select('id, interchange_control_number, acknowledgment_status, original_transaction_type, transaction_sets_received, transaction_sets_accepted, rejected_count, received_at, total_errors, tenant_id')
       .eq('tenant_id', tenantId)
       .order('received_at', { ascending: false })
       .limit(limit);
@@ -360,7 +360,7 @@ async function getRejectedTransactions(
   try {
     const { data, error } = await supabase
       .from('v_997_rejected_transactions')
-      .select('*')
+      .select('acknowledgment_id, transaction_set_id, transaction_set_identifier, transaction_set_control_number, acknowledgment_code, error_description, remediation, linked_claim_id, received_at, tenant_id')
       .eq('tenant_id', tenantId)
       .order('received_at', { ascending: false })
       .limit(limit);
@@ -398,7 +398,7 @@ async function getTransactionSets(
   try {
     const { data, error } = await supabase
       .from('x12_997_transaction_sets')
-      .select('*')
+      .select('id, acknowledgment_id, transaction_set_identifier, transaction_set_control_number, acknowledgment_code, acknowledgment_code_description, syntax_error_code_1, linked_claim_id')
       .eq('acknowledgment_id', acknowledgmentId)
       .order('created_at');
 
@@ -434,7 +434,7 @@ async function getSegmentErrors(
   try {
     const { data, error } = await supabase
       .from('x12_997_segment_errors')
-      .select('*')
+      .select('id, transaction_set_id, segment_id_code, segment_position, loop_identifier_code, segment_syntax_error_code, element_position, element_syntax_error_code, copy_of_bad_data_element, segment_error_description, element_error_description')
       .eq('transaction_set_id', transactionSetId)
       .order('segment_position');
 
@@ -546,7 +546,7 @@ async function getAcknowledgmentsForClaim(
     // Search for acknowledgments that have this claim ID in their array
     const { data, error } = await supabase
       .from('x12_997_acknowledgments')
-      .select('*')
+      .select('id, interchange_control_number, acknowledgment_status, original_transaction_type, transaction_sets_received, transaction_sets_accepted, transaction_sets_rejected, received_at')
       .contains('original_claim_ids', [claimId])
       .order('received_at', { ascending: false });
 
@@ -584,7 +584,7 @@ async function getErrorCodeInfo(
   try {
     let query = supabase
       .from('x12_997_error_codes')
-      .select('*')
+      .select('code, error_type, description, remediation')
       .eq('code', code);
 
     if (errorType) {

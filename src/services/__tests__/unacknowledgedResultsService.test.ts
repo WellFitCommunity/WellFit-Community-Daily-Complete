@@ -21,8 +21,8 @@ vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     from: (table: string) => {
       if (table === 'v_unacknowledged_results') {
-        // getUnacknowledgedResults: .select('*').order(...)
-        // getResultMetrics:         .select('*')  (no .order)
+        // getUnacknowledgedResults: .select('id, patient_id, ...').order(...)
+        // getResultMetrics:         .select('id, patient_id, ...')  (no .order)
         // Both paths resolve via mockViewResult
         return {
           select: () => {

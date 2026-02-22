@@ -143,7 +143,7 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
     try {
       const { data: claudeLogs, error } = await supabase
         .from('claude_usage_logs')
-        .select('*')
+        .select('created_at, cost, success, input_tokens, output_tokens, model, response_time_ms, error_code, user_id')
         .gte('created_at', dateFrom)
         .lte('created_at', dateTo)
         .order('created_at', { ascending: false });
@@ -224,7 +224,7 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
       const metrics = await UnifiedBillingService.getWorkflowMetrics(dateFrom, dateTo);
       const { data: workflows, error } = await supabase
         .from('billing_workflows')
-        .select('*')
+        .select('encounter_type, ai_suggestions_used, ai_suggestions_accepted, sdoh_enhanced, created_at')
         .gte('created_at', dateFrom)
         .lte('created_at', dateTo);
 

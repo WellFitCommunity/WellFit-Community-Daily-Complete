@@ -75,7 +75,7 @@ export async function fetchTenantBrandingById(
   try {
     const { data, error } = await supabase
       .from('tenants')
-      .select('*')
+      .select('id, name, subdomain, app_name, logo_url, primary_color, secondary_color, accent_color, text_color, gradient, contact_info, custom_footer, favicon_url, is_active, custom_css, theme_settings')
       .eq('id', tenantId)
       .eq('is_active', true)
       .single();

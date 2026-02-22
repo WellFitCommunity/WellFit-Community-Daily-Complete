@@ -26,7 +26,7 @@ export const MedicationAffordabilityService = {
         checked_date: new Date().toISOString(),
         is_affordable: true, // Would be calculated based on patient income + price
       }])
-      .select()
+      .select('id, patient_id, medication_name, rxnorm_code, quantity, days_supply, checked_date, is_affordable, patient_assistance_available, alternatives, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -37,7 +37,7 @@ export const MedicationAffordabilityService = {
   async getChecks(patientId: string) {
     const { data, error } = await supabase
       .from('medication_affordability_checks')
-      .select('*')
+      .select('id, patient_id, medication_name, rxnorm_code, quantity, days_supply, checked_date, is_affordable, patient_assistance_available, alternatives, created_at, updated_at')
       .eq('patient_id', patientId)
       .order('checked_date', { ascending: false });
 
@@ -49,7 +49,7 @@ export const MedicationAffordabilityService = {
   async getUnaffordable(patientId: string) {
     const { data, error } = await supabase
       .from('medication_affordability_checks')
-      .select('*')
+      .select('id, patient_id, medication_name, rxnorm_code, quantity, days_supply, checked_date, is_affordable, patient_assistance_available, alternatives, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('is_affordable', false)
       .order('checked_date', { ascending: false });
@@ -62,7 +62,7 @@ export const MedicationAffordabilityService = {
   async getWithAssistance(patientId: string) {
     const { data, error } = await supabase
       .from('medication_affordability_checks')
-      .select('*')
+      .select('id, patient_id, medication_name, rxnorm_code, quantity, days_supply, checked_date, is_affordable, patient_assistance_available, alternatives, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('patient_assistance_available', true)
       .order('checked_date', { ascending: false });
@@ -80,7 +80,7 @@ export const MedicationAffordabilityService = {
       .from('medication_affordability_checks')
       .update({ alternatives })
       .eq('id', checkId)
-      .select()
+      .select('id, patient_id, medication_name, rxnorm_code, quantity, days_supply, checked_date, is_affordable, patient_assistance_available, alternatives, created_at, updated_at')
       .single();
 
     if (error) throw error;

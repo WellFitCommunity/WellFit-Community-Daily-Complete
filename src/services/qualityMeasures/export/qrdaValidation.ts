@@ -18,7 +18,7 @@ export async function validateQRDADocument(
   try {
     const { data: exportRecord, error } = await supabase
       .from('ecqm_qrda_exports')
-      .select('*')
+      .select('measure_ids, reporting_period_start, reporting_period_end, export_type, patient_id')
       .eq('id', exportId)
       .single();
 

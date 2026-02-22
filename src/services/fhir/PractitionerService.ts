@@ -24,7 +24,7 @@ export const PractitionerService = {
   async getById(id: string): Promise<FHIRPractitioner | null> {
     const { data, error } = await supabase
       .from('fhir_practitioners')
-      .select('*')
+      .select('id, fhir_id, user_id, external_id, external_system, active, npi, state_license_number, dea_number, taxonomy_code, family_name, given_names, prefix, suffix, full_name, gender, birth_date, email, phone, telecom, addresses, photo_url, qualifications, specialties, specialty_codes, communication_languages, bio, availability_hours, created_by, updated_by, created_at, updated_at')
       .eq('id', id)
       .single();
 
@@ -38,7 +38,7 @@ export const PractitionerService = {
   async getByUserId(userId: string): Promise<FHIRPractitioner | null> {
     const { data, error } = await supabase
       .from('fhir_practitioners')
-      .select('*')
+      .select('id, fhir_id, user_id, external_id, external_system, active, npi, state_license_number, dea_number, taxonomy_code, family_name, given_names, prefix, suffix, full_name, gender, birth_date, email, phone, telecom, addresses, photo_url, qualifications, specialties, specialty_codes, communication_languages, bio, availability_hours, created_by, updated_by, created_at, updated_at')
       .eq('user_id', userId)
       .single();
 
@@ -88,7 +88,7 @@ export const PractitionerService = {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .select()
+      .select('id, fhir_id, user_id, external_id, external_system, active, npi, state_license_number, dea_number, taxonomy_code, family_name, given_names, prefix, suffix, full_name, gender, birth_date, email, phone, telecom, addresses, photo_url, qualifications, specialties, specialty_codes, communication_languages, bio, availability_hours, created_by, updated_by, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -106,7 +106,7 @@ export const PractitionerService = {
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
-      .select()
+      .select('id, fhir_id, user_id, external_id, external_system, active, npi, state_license_number, dea_number, taxonomy_code, family_name, given_names, prefix, suffix, full_name, gender, birth_date, email, phone, telecom, addresses, photo_url, qualifications, specialties, specialty_codes, communication_languages, bio, availability_hours, created_by, updated_by, created_at, updated_at')
       .single();
 
     if (error) throw error;

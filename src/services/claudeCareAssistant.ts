@@ -149,7 +149,7 @@ export class ClaudeCareAssistant {
     try {
       const { data, error } = await supabase
         .from('claude_translation_cache')
-        .select('*')
+        .select('id, usage_count, last_used_at, translated_text, cultural_notes, translation_confidence')
         .eq('source_language', source)
         .eq('target_language', target)
         .eq('source_text', text)
@@ -424,7 +424,7 @@ CONFIDENCE: [0.0-1.0]
     try {
       const { data, error } = await supabase
         .from('claude_admin_task_templates')
-        .select('*')
+        .select('id, role, task_type, template_name, description, prompt_template, required_fields, optional_fields, output_format, estimated_tokens, preferred_model, is_active')
         .eq('id', templateId)
         .eq('is_active', true)
         .is('deleted_at', null)
@@ -518,7 +518,7 @@ CONFIDENCE: [0.0-1.0]
     try {
       const { data, error } = await supabase
         .from('claude_admin_task_templates')
-        .select('*')
+        .select('id, role, task_type, template_name, description, prompt_template, required_fields, optional_fields, output_format, estimated_tokens, preferred_model, is_active')
         .eq('role', role)
         .eq('is_active', true)
         .is('deleted_at', null)
@@ -560,7 +560,7 @@ CONFIDENCE: [0.0-1.0]
     try {
       const { data, error } = await supabase
         .from('claude_admin_task_history')
-        .select('*')
+        .select('id, user_id, role, task_type, template_id, input_data, output_data, tokens_used, execution_time_ms, ai_corrections_count, user_satisfaction, user_feedback, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -796,7 +796,7 @@ CONFIDENCE: [0.0-1.0]
     try {
       const { data, error } = await supabase
         .from('claude_care_context')
-        .select('*')
+        .select('id, patient_id, context_type, contributed_by_role, contributed_by_user, context_data, context_summary, valid_until, is_active, created_at')
         .eq('patient_id', patientId)
         .eq('is_active', true)
         .is('deleted_at', null)

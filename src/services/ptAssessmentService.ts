@@ -118,7 +118,7 @@ export class PTAssessmentService {
     try {
       const { data, error } = await supabase
         .from('pt_functional_assessments')
-        .select('*')
+        .select('id, patient_id, encounter_id, therapist_id, assessment_type, assessment_date, visit_number, chief_complaint, history_present_illness, mechanism_of_injury, onset_date, onset_type, prior_level_of_function, comorbidities, medications_affecting_rehab, surgical_history, imaging_results, precautions, contraindications, living_situation, home_accessibility, support_system, transportation_access, occupation, work_demands, hobbies_recreational_activities, patient_stated_goals, participation_goals, cardiovascular_respiratory_findings, integumentary_findings, musculoskeletal_findings, neuromuscular_findings, pain_assessment, range_of_motion_data, muscle_strength_data, sensory_assessment, reflex_testing, special_tests, posture_analysis, gait_analysis, balance_assessment, coordination_assessment, bed_mobility_score, transfer_ability_score, ambulation_score, stair_negotiation_score, outcome_measures, primary_diagnosis, secondary_diagnoses, clinical_impression, rehab_potential, prognosis_narrative, expected_duration_weeks, expected_visit_frequency, barriers_to_recovery, clinical_reasoning, evidence_based_rationale, video_assessment_url, imaging_links, created_at, updated_at, signed_by, signed_at')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
@@ -139,7 +139,7 @@ export class PTAssessmentService {
     try {
       const { data, error } = await supabase
         .from('pt_functional_assessments')
-        .select('*')
+        .select('id, patient_id, encounter_id, therapist_id, assessment_type, assessment_date, visit_number, chief_complaint, history_present_illness, mechanism_of_injury, onset_date, onset_type, prior_level_of_function, comorbidities, medications_affecting_rehab, surgical_history, imaging_results, precautions, contraindications, living_situation, home_accessibility, support_system, transportation_access, occupation, work_demands, hobbies_recreational_activities, patient_stated_goals, participation_goals, cardiovascular_respiratory_findings, integumentary_findings, musculoskeletal_findings, neuromuscular_findings, pain_assessment, range_of_motion_data, muscle_strength_data, sensory_assessment, reflex_testing, special_tests, posture_analysis, gait_analysis, balance_assessment, coordination_assessment, bed_mobility_score, transfer_ability_score, ambulation_score, stair_negotiation_score, outcome_measures, primary_diagnosis, secondary_diagnoses, clinical_impression, rehab_potential, prognosis_narrative, expected_duration_weeks, expected_visit_frequency, barriers_to_recovery, clinical_reasoning, evidence_based_rationale, video_assessment_url, imaging_links, created_at, updated_at, signed_by, signed_at')
         .eq('id', assessmentId)
         .single();
 
@@ -202,7 +202,7 @@ export class PTAssessmentService {
     try {
       const { data, error } = await supabase
         .from('pt_functional_assessments')
-        .select('*')
+        .select('id, patient_id, encounter_id, therapist_id, assessment_type, assessment_date, visit_number, chief_complaint, history_present_illness, mechanism_of_injury, onset_date, onset_type, prior_level_of_function, comorbidities, medications_affecting_rehab, surgical_history, imaging_results, precautions, contraindications, living_situation, home_accessibility, support_system, transportation_access, occupation, work_demands, hobbies_recreational_activities, patient_stated_goals, participation_goals, cardiovascular_respiratory_findings, integumentary_findings, musculoskeletal_findings, neuromuscular_findings, pain_assessment, range_of_motion_data, muscle_strength_data, sensory_assessment, reflex_testing, special_tests, posture_analysis, gait_analysis, balance_assessment, coordination_assessment, bed_mobility_score, transfer_ability_score, ambulation_score, stair_negotiation_score, outcome_measures, primary_diagnosis, secondary_diagnoses, clinical_impression, rehab_potential, prognosis_narrative, expected_duration_weeks, expected_visit_frequency, barriers_to_recovery, clinical_reasoning, evidence_based_rationale, video_assessment_url, imaging_links, created_at, updated_at, signed_by, signed_at')
         .eq('patient_id', patientId)
         .eq('assessment_type', 'initial_evaluation')
         .order('assessment_date', { ascending: false })
@@ -226,7 +226,7 @@ export class PTAssessmentService {
     try {
       const { data, error } = await supabase
         .from('pt_functional_assessments')
-        .select('*')
+        .select('id, patient_id, encounter_id, therapist_id, assessment_type, assessment_date, visit_number, chief_complaint, history_present_illness, mechanism_of_injury, onset_date, onset_type, prior_level_of_function, comorbidities, medications_affecting_rehab, surgical_history, imaging_results, precautions, contraindications, living_situation, home_accessibility, support_system, transportation_access, occupation, work_demands, hobbies_recreational_activities, patient_stated_goals, participation_goals, cardiovascular_respiratory_findings, integumentary_findings, musculoskeletal_findings, neuromuscular_findings, pain_assessment, range_of_motion_data, muscle_strength_data, sensory_assessment, reflex_testing, special_tests, posture_analysis, gait_analysis, balance_assessment, coordination_assessment, bed_mobility_score, transfer_ability_score, ambulation_score, stair_negotiation_score, outcome_measures, primary_diagnosis, secondary_diagnoses, clinical_impression, rehab_potential, prognosis_narrative, expected_duration_weeks, expected_visit_frequency, barriers_to_recovery, clinical_reasoning, evidence_based_rationale, video_assessment_url, imaging_links, created_at, updated_at, signed_by, signed_at')
         .eq('patient_id', patientId)
         .eq('assessment_type', 'discharge_evaluation')
         .order('assessment_date', { ascending: false })

@@ -695,7 +695,7 @@ export class NotificationService {
   async getUnreadNotifications(userId: string): Promise<InAppNotification[]> {
     const { data, error } = await supabase
       .from('user_notifications')
-      .select('*')
+      .select('id, user_id, title, body, category, priority, data, action_url, read_at, dismissed_at, expires_at, created_at')
       .eq('user_id', userId)
       .is('read_at', null)
       .is('dismissed_at', null)

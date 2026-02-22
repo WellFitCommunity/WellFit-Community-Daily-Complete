@@ -28,7 +28,7 @@ export const LawEnforcementService = {
     try {
       const { data, error } = await supabase
         .from('law_enforcement_response_info')
-        .select('*')
+        .select('id, tenant_id, patient_id, bed_bound, wheelchair_bound, walker_required, cane_required, mobility_notes, oxygen_dependent, oxygen_tank_location, dialysis_required, dialysis_schedule, medical_equipment, hearing_impaired, hearing_impaired_notes, vision_impaired, vision_impaired_notes, cognitive_impairment, cognitive_impairment_type, cognitive_impairment_notes, non_verbal, language_barrier, floor_number, building_quadrant, elevator_required, elevator_access_code, building_type, stairs_to_unit, door_code, key_location, access_instructions, door_opens_inward, security_system, security_system_code, pets_in_home, parking_instructions, gated_community_code, lobby_access_instructions, best_entrance, intercom_instructions, fall_risk_high, fall_history, home_hazards, neighbor_name, neighbor_address, neighbor_phone, building_manager_name, building_manager_phone, response_priority, escalation_delay_hours, special_instructions, critical_medications, medication_location, medical_conditions_summary, consent_obtained, consent_date, consent_given_by, hipaa_authorization, created_at, updated_at, created_by, updated_by, last_verified_date')
         .eq('patient_id', patientId)
         .single();
 
@@ -477,7 +477,7 @@ export const LawEnforcementService = {
     try {
       const { data, error } = await supabase
         .from('welfare_check_reports')
-        .select('*')
+        .select('id, tenant_id, patient_id, officer_id, officer_name, check_initiated_at, check_completed_at, response_time_minutes, outcome, outcome_notes, ems_called, family_notified, actions_taken, transported_to, transport_reason, followup_required, followup_date, followup_notes, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('check_completed_at', { ascending: false })
         .limit(limit);

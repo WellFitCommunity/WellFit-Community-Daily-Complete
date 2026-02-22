@@ -113,7 +113,7 @@ async function getAmendmentById(amendmentId: string): Promise<ServiceResult<Amen
   try {
     const { data, error } = await supabase
       .from('clinical_note_amendments')
-      .select('*')
+      .select('id, amendment_type, original_content, amendment_content, amendment_reason, field_amended, amended_by, amended_at, status, approved_by, approved_at, note_type, clinical_note_id, ai_progress_note_id')
       .eq('id', amendmentId)
       .single();
 
@@ -161,7 +161,7 @@ async function getAmendmentsForNote(
 
     let query = supabase
       .from('clinical_note_amendments')
-      .select('*')
+      .select('id, amendment_type, original_content, amendment_content, amendment_reason, field_amended, amended_by, amended_at, status, approved_by, approved_at, note_type, clinical_note_id, ai_progress_note_id')
       .eq(column, noteId)
       .order('amended_at', { ascending: false });
 
@@ -219,7 +219,7 @@ async function approveAmendment(
     // Get the amendment first
     const { data: amendment, error: getError } = await supabase
       .from('clinical_note_amendments')
-      .select('*')
+      .select('id, amendment_type, original_content, amendment_content, amendment_reason, field_amended, amended_by, amended_at, status, approved_by, approved_at, note_type, clinical_note_id, ai_progress_note_id')
       .eq('id', amendmentId)
       .single();
 
@@ -275,7 +275,7 @@ async function rejectAmendment(
     // Get the amendment first
     const { data: amendment, error: getError } = await supabase
       .from('clinical_note_amendments')
-      .select('*')
+      .select('id, amendment_type, original_content, amendment_content, amendment_reason, field_amended, amended_by, amended_at, status, approved_by, approved_at, note_type, clinical_note_id, ai_progress_note_id')
       .eq('id', amendmentId)
       .single();
 
@@ -325,7 +325,7 @@ async function getPendingAmendments(
   try {
     let query = supabase
       .from('clinical_note_amendments')
-      .select('*')
+      .select('id, amendment_type, original_content, amendment_content, amendment_reason, field_amended, amended_by, amended_at, status, approved_by, approved_at, note_type, clinical_note_id, ai_progress_note_id')
       .eq('status', 'pending')
       .order('amended_at', { ascending: true });
 
@@ -384,7 +384,7 @@ async function getFieldProvenance(
 
     let query = supabase
       .from('clinical_field_provenance')
-      .select('*')
+      .select('id, note_type, clinical_note_id, ai_progress_note_id, field_name, field_version, previous_value, new_value, change_type, changed_by, changed_at, change_reason, change_source')
       .eq(column, noteId)
       .order('changed_at', { ascending: false });
 

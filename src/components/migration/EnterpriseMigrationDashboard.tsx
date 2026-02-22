@@ -90,7 +90,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
     try {
       const { data, error: fetchError } = await supabase
         .from('hc_migration_batch')
-        .select('*')
+        .select('batch_id, source_system, record_count, success_count, error_count, status, started_at, completed_at')
         .order('started_at', { ascending: false })
         .limit(20);
 
@@ -118,7 +118,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
     try {
       const { data } = await supabase
         .from('migration_quality_scores')
-        .select('*')
+        .select('overall_score, completeness_score, accuracy_score, consistency_score, uniqueness_score, recommendations')
         .eq('migration_batch_id', batchId)
         .single();
 
@@ -144,7 +144,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
     try {
       const { data } = await supabase
         .from('migration_dedup_candidates')
-        .select('*')
+        .select('candidate_id, record_a_id, record_a_data, record_b_id, record_b_data, overall_similarity, name_similarity, dob_match, phone_similarity, email_similarity, match_method, resolution, requires_human_review')
         .eq('migration_batch_id', batchId)
         .eq('resolution', 'pending')
         .order('overall_similarity', { ascending: false });
@@ -174,7 +174,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
     try {
       const { data } = await supabase
         .from('migration_snapshots')
-        .select('*')
+        .select('snapshot_id, migration_batch_id, snapshot_name, snapshot_type, description, tables_included, snapshot_data, total_rows, size_bytes, status, created_at')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(10);
@@ -202,7 +202,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
     try {
       const { data } = await supabase
         .from('migration_retry_queue')
-        .select('*')
+        .select('retry_id, migration_batch_id, failed_operation, target_table, source_row_numbers, error_code, error_message, attempt_number, max_attempts, next_retry_at, status')
         .in('status', ['pending', 'retrying'])
         .order('next_retry_at', { ascending: true })
         .limit(20);
@@ -230,7 +230,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
     try {
       const { data } = await supabase
         .from('migration_data_lineage')
-        .select('*')
+        .select('source_file_name, source_row_number, source_column_name, target_table, target_column, transformations, validation_passed')
         .eq('migration_batch_id', batchId)
         .order('source_row_number')
         .limit(100);

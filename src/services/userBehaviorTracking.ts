@@ -81,7 +81,7 @@ export class UserBehaviorTracker {
 
       const query = supabase
         .from('admin_usage_tracking')
-        .select('*')
+        .select('user_id, section_id, section_name, action, time_spent, role, created_at')
         .eq('user_id', userId)
         .gte('created_at', thirtyDaysAgo.toISOString());
 

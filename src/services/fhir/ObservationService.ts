@@ -34,7 +34,7 @@ export class ObservationService {
 
       const { data, error } = await supabase
         .from('fhir_observations')
-        .select('*')
+        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, primary_performer_practitioner_id, value_quantity_value, value_quantity_unit, value_quantity_code, value_quantity_system, value_codeable_concept_code, value_codeable_concept_display, value_string, value_boolean, value_integer, data_absent_reason_code, interpretation_code, interpretation_display, note, body_site_code, body_site_display, reference_range_low, reference_range_high, reference_range_text, components, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('effective_datetime', { ascending: false });
 
@@ -221,7 +221,7 @@ export class ObservationService {
 
       let query = supabase
         .from('fhir_observations')
-        .select('*')
+        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, primary_performer_practitioner_id, value_quantity_value, value_quantity_unit, value_quantity_code, value_quantity_system, value_codeable_concept_code, value_codeable_concept_display, value_string, value_boolean, value_integer, data_absent_reason_code, interpretation_code, interpretation_display, note, body_site_code, body_site_display, reference_range_low, reference_range_high, reference_range_text, components, created_at, updated_at')
         .eq('patient_id', patientId)
         .contains('category', [category])
         .in('status', ['final', 'amended', 'corrected'])
@@ -268,7 +268,7 @@ export class ObservationService {
       const { data, error } = await supabase
         .from('fhir_observations')
         .insert([observation])
-        .select()
+        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, primary_performer_practitioner_id, value_quantity_value, value_quantity_unit, value_quantity_code, value_quantity_system, value_codeable_concept_code, value_codeable_concept_display, value_string, value_boolean, value_integer, data_absent_reason_code, interpretation_code, interpretation_display, note, body_site_code, body_site_display, reference_range_low, reference_range_high, reference_range_text, components, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -302,7 +302,7 @@ export class ObservationService {
         .from('fhir_observations')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, primary_performer_practitioner_id, value_quantity_value, value_quantity_unit, value_quantity_code, value_quantity_system, value_codeable_concept_code, value_codeable_concept_display, value_string, value_boolean, value_integer, data_absent_reason_code, interpretation_code, interpretation_display, note, body_site_code, body_site_display, reference_range_low, reference_range_high, reference_range_text, components, created_at, updated_at')
         .single();
 
       if (error) throw error;

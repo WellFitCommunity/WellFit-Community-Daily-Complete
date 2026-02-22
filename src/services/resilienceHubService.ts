@@ -89,7 +89,7 @@ export async function getMyCheckins(
 
   const { data, error } = await supabase
     .from('provider_daily_checkins')
-    .select('*')
+    .select('id, practitioner_id, user_id, checkin_date, work_setting, product_line, stress_level, energy_level, mood_rating, patients_contacted_today, difficult_patient_calls, prior_auth_denials, compassion_fatigue_level, shift_type, patient_census, patient_acuity_score, codes_responded_to, lateral_violence_incident, unsafe_staffing, overtime_hours, felt_overwhelmed, felt_supported_by_team, missed_break, after_hours_work, notes, created_at')
     .eq('user_id', user.id)
     .gte('checkin_date', startDate)
     .lte('checkin_date', endDate)
@@ -206,7 +206,7 @@ export async function getMyAssessments(): Promise<ProviderBurnoutAssessment[]> {
 
   const { data, error } = await supabase
     .from('provider_burnout_assessments')
-    .select('*')
+    .select('id, practitioner_id, user_id, assessment_date, assessment_type, emotional_exhaustion_score, depersonalization_score, personal_accomplishment_score, composite_burnout_score, risk_level, questionnaire_responses, provider_notes, intervention_triggered, intervention_type, follow_up_scheduled, created_at, updated_at')
     .eq('user_id', user.id)
     .order('assessment_date', { ascending: false });
 
@@ -272,7 +272,7 @@ export async function getActiveModules(
 ): Promise<ResilienceTrainingModule[]> {
   let query = supabase
     .from('resilience_training_modules')
-    .select('*')
+    .select('id, title, description, category, content_type, content_url, estimated_duration_minutes, difficulty_level, evidence_based, citation, is_active, display_order, created_at, updated_at, created_by')
     .eq('is_active', true)
     .order('display_order', { ascending: true });
 
@@ -368,7 +368,7 @@ export async function getMyCompletions(): Promise<ProviderTrainingCompletion[]> 
 
   const { data, error } = await supabase
     .from('provider_training_completions')
-    .select('*')
+    .select('id, practitioner_id, user_id, module_id, started_at, completed_at, completion_percentage, time_spent_minutes, found_helpful, notes, will_practice')
     .eq('user_id', user.id)
     .order('started_at', { ascending: false });
 
@@ -396,7 +396,7 @@ export async function getResources(filters?: {
 }): Promise<ResilienceResource[]> {
   let query = supabase
     .from('resilience_resources')
-    .select('*')
+    .select('id, title, description, resource_type, url, thumbnail_url, categories, tags, target_audience, is_evidence_based, citation, reviewed_by, is_active, featured, view_count, average_rating, created_at, updated_at')
     .eq('is_active', true)
     .order('featured', { ascending: false })
     .order('created_at', { ascending: false });
@@ -476,7 +476,7 @@ export async function getMyCircles(): Promise<ProviderSupportCircle[]> {
   const { data, error } = await supabase
     .from('provider_support_circles')
     .select(`
-      *,
+      id, name, description, meeting_frequency, max_members, is_active, facilitator_id, created_at, updated_at,
       provider_support_circle_members!inner(user_id, is_active)
     `)
     .eq('provider_support_circle_members.user_id', user.id)
@@ -503,7 +503,7 @@ export async function getCircleReflections(
 ): Promise<ProviderSupportReflection[]> {
   const { data, error } = await supabase
     .from('provider_support_reflections')
-    .select('*')
+    .select('id, circle_id, author_id, reflection_text, is_anonymous, tags, helpful_count, created_at, updated_at')
     .eq('circle_id', circleId)
     .order('created_at', { ascending: false })
     .limit(limit);

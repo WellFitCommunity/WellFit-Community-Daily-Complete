@@ -396,7 +396,7 @@ export async function getReminderLogs(
   try {
     const { data, error } = await supabase
       .from('appointment_reminder_log')
-      .select('*')
+      .select('id, appointment_id, patient_id, reminder_type, sms_sent, sms_sid, sms_status, push_sent, push_status, email_sent, email_status, status, skip_reason, scheduled_for, sent_at, created_at')
       .eq('appointment_id', appointmentId)
       .order('created_at', { ascending: false });
 

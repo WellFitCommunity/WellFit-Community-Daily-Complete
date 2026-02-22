@@ -83,7 +83,7 @@ const CareGapDashboard: React.FC = () => {
       // Fetch open care gaps
       const { data: gapData, error: gapError } = await supabase
         .from('care_coordination_events')
-        .select('*')
+        .select('id, patient_id, event_type, event_description, event_status, event_timestamp, care_gap_identified, care_gap_type, care_gap_priority')
         .eq('care_gap_identified', true)
         .order('event_timestamp', { ascending: false })
         .limit(200);

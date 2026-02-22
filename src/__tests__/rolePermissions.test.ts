@@ -218,12 +218,12 @@ describe('Role Permission Tests', () => {
 
         const { data: _data, error } = await supabase
           .from('user_roles')
-          .select('*')
+          .select('role, user_id')
           .limit(1);
 
         expect(error).toBeNull();
         expect(supabase.from).toHaveBeenCalledWith('user_roles');
-        expect(mockSelect).toHaveBeenCalledWith('*');
+        expect(mockSelect).toHaveBeenCalledWith('role, user_id');
       });
     });
 

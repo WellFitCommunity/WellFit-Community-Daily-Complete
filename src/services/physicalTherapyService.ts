@@ -134,7 +134,7 @@ export class PhysicalTherapyService {
       // Limit to 50 PT assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
       const query = supabase
         .from('pt_functional_assessments')
-        .select('*')
+        .select('id, patient_id, encounter_id, therapist_id, assessment_type, assessment_date, visit_number, chief_complaint, history_present_illness, mechanism_of_injury, onset_date, onset_type, prior_level_of_function, comorbidities, medications_affecting_rehab, surgical_history, imaging_results, precautions, contraindications, living_situation, home_accessibility, support_system, transportation_access, occupation, work_demands, hobbies_recreational_activities, patient_stated_goals, participation_goals, cardiovascular_respiratory_findings, integumentary_findings, musculoskeletal_findings, neuromuscular_findings, pain_assessment, range_of_motion_data, muscle_strength_data, sensory_assessment, reflex_testing, special_tests, posture_analysis, gait_analysis, balance_assessment, coordination_assessment, bed_mobility_score, transfer_ability_score, ambulation_score, stair_negotiation_score, outcome_measures, primary_diagnosis, secondary_diagnoses, clinical_impression, rehab_potential, prognosis_narrative, expected_duration_weeks, expected_visit_frequency, barriers_to_recovery, clinical_reasoning, evidence_based_rationale, video_assessment_url, imaging_links, created_at, updated_at, signed_by, signed_at')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
@@ -154,7 +154,7 @@ export class PhysicalTherapyService {
     try {
       const { data, error } = await supabase
         .from('pt_functional_assessments')
-        .select('*')
+        .select('id, patient_id, encounter_id, therapist_id, assessment_type, assessment_date, visit_number, chief_complaint, history_present_illness, mechanism_of_injury, onset_date, onset_type, prior_level_of_function, comorbidities, medications_affecting_rehab, surgical_history, imaging_results, precautions, contraindications, living_situation, home_accessibility, support_system, transportation_access, occupation, work_demands, hobbies_recreational_activities, patient_stated_goals, participation_goals, cardiovascular_respiratory_findings, integumentary_findings, musculoskeletal_findings, neuromuscular_findings, pain_assessment, range_of_motion_data, muscle_strength_data, sensory_assessment, reflex_testing, special_tests, posture_analysis, gait_analysis, balance_assessment, coordination_assessment, bed_mobility_score, transfer_ability_score, ambulation_score, stair_negotiation_score, outcome_measures, primary_diagnosis, secondary_diagnoses, clinical_impression, rehab_potential, prognosis_narrative, expected_duration_weeks, expected_visit_frequency, barriers_to_recovery, clinical_reasoning, evidence_based_rationale, video_assessment_url, imaging_links, created_at, updated_at, signed_by, signed_at')
         .eq('id', assessmentId)
         .single();
 
@@ -253,7 +253,7 @@ export class PhysicalTherapyService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_plans')
-        .select('*')
+        .select('id, patient_id, assessment_id, care_plan_id, therapist_id, status, start_date, projected_end_date, actual_end_date, total_visits_authorized, visits_used, visits_remaining, frequency, goals, interventions, treatment_approach, clinical_practice_guidelines_followed, hep_prescribed, hep_delivery_method, hep_compliance_tracking, modification_history, discharge_criteria, discharge_destination, interdisciplinary_referrals, physician_communication_log, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .order('start_date', { ascending: false })
@@ -277,7 +277,7 @@ export class PhysicalTherapyService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_plans')
-        .select('*')
+        .select('id, patient_id, assessment_id, care_plan_id, therapist_id, status, start_date, projected_end_date, actual_end_date, total_visits_authorized, visits_used, visits_remaining, frequency, goals, interventions, treatment_approach, clinical_practice_guidelines_followed, hep_prescribed, hep_delivery_method, hep_compliance_tracking, modification_history, discharge_criteria, discharge_destination, interdisciplinary_referrals, physician_communication_log, created_at, updated_at')
         .eq('id', planId)
         .single();
 
@@ -301,7 +301,7 @@ export class PhysicalTherapyService {
       // Fetch current plan
       const { data: plan, error: fetchError } = await supabase
         .from('pt_treatment_plans')
-        .select('*')
+        .select('id, patient_id, assessment_id, care_plan_id, therapist_id, status, start_date, projected_end_date, actual_end_date, total_visits_authorized, visits_used, visits_remaining, frequency, goals, interventions, treatment_approach, clinical_practice_guidelines_followed, hep_prescribed, hep_delivery_method, hep_compliance_tracking, modification_history, discharge_criteria, discharge_destination, interdisciplinary_referrals, physician_communication_log, created_at, updated_at')
         .eq('id', planId)
         .single();
 
@@ -435,7 +435,7 @@ export class PhysicalTherapyService {
       // Limit to 50 sessions per treatment plan (scoped to single plan - reasonable for typical PT episode)
       const query = supabase
         .from('pt_treatment_sessions')
-        .select('*')
+        .select('id, patient_id, treatment_plan_id, encounter_id, therapist_id, session_date, session_number, session_duration_minutes, attendance_status, patient_reported_status, pain_level_today, hep_compliance, barriers_today, vitals_if_needed, reassessments_today, interventions_delivered, progress_toward_goals, functional_changes, clinical_decision_making, plan_for_next_visit, plan_modifications, goals_updated, total_timed_minutes, total_billable_units, cpt_codes_billed, exercise_videos_shared, educational_materials_provided, adverse_events, incident_report_filed, created_at, updated_at, co_signed_by, co_signed_at')
         .eq('treatment_plan_id', planId)
         .order('session_date', { ascending: false });
 
@@ -563,7 +563,7 @@ export class PhysicalTherapyService {
     try {
       const { data, error } = await supabase
         .from('pt_home_exercise_programs')
-        .select('*')
+        .select('id, patient_id, treatment_plan_id, therapist_id, program_name, prescribed_date, last_modified_date, active, exercises, overall_instructions, frequency_guidance, time_of_day_recommendation, expected_duration_minutes, patient_tracking_enabled, compliance_logs, delivery_method, sent_to_patient_at, patient_acknowledged, patient_acknowledged_at, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('active', true)
         .order('prescribed_date', { ascending: false })
@@ -655,7 +655,7 @@ export class PhysicalTherapyService {
       // Limit to 50 outcome measures per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
       let query = supabase
         .from('pt_outcome_measures')
-        .select('*')
+        .select('id, patient_id, therapist_id, assessment_id, session_id, measure_name, measure_acronym, body_region, mcid, mdm, administration_date, administration_context, raw_score, percentage_score, interpretation, previous_score, change_from_previous, mcid_achieved, tool_validation_reference, normative_data_reference, digital_form_used, auto_calculated, created_at')
         .eq('patient_id', patientId);
 
       if (measureAcronym) {

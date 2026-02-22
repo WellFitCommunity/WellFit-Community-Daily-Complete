@@ -417,7 +417,7 @@ export async function getStateConfig(stateCode: string): Promise<ServiceResult<S
   try {
     const { data, error } = await supabase
       .from('pdmp_state_config')
-      .select('*')
+      .select('state_code, state_name, pdmp_system_name, pdmp_api_endpoint, pdmp_web_portal_url, mandatory_query, query_timeframe_hours, schedules_covered, pmp_interconnect_enabled, nabp_pmphub_enabled, is_active, notes')
       .eq('state_code', stateCode.toUpperCase())
       .single();
 
@@ -443,7 +443,7 @@ export async function getActiveStateConfigs(): Promise<ServiceResult<StateConfig
   try {
     const { data, error } = await supabase
       .from('pdmp_state_config')
-      .select('*')
+      .select('state_code, state_name, pdmp_system_name, pdmp_api_endpoint, pdmp_web_portal_url, mandatory_query, query_timeframe_hours, schedules_covered, pmp_interconnect_enabled, nabp_pmphub_enabled, is_active, notes')
       .eq('is_active', true)
       .order('state_code');
 
@@ -682,7 +682,7 @@ export async function getPDMPQuery(
   try {
     const { data, error } = await supabase
       .from('pdmp_queries')
-      .select('*')
+      .select('id, tenant_id, query_timestamp, query_type, provider_id, provider_npi, provider_dea, patient_id, patient_first_name, patient_last_name, patient_dob, pdmp_state, pdmp_system_name, response_status, response_received_at, prescriptions_found, date_range_start, date_range_end, flags, morphine_milligram_equivalent, overlapping_prescriptions, unique_prescribers, unique_pharmacies, prescription_id, created_at')
       .eq('tenant_id', tenantId)
       .eq('id', queryId)
       .single();
@@ -711,7 +711,7 @@ export async function getPDMPPrescriptionHistory(
   try {
     const { data, error } = await supabase
       .from('pdmp_prescription_history')
-      .select('*')
+      .select('id, pdmp_query_id, medication_name, medication_ndc, dea_schedule, quantity, days_supply, refills_authorized, written_date, filled_date, prescriber_name, prescriber_npi, prescriber_dea, pharmacy_name, pharmacy_npi, pharmacy_ncpdp, pharmacy_address, morphine_milligram_equivalent, overlaps_with_other, early_refill')
       .eq('pdmp_query_id', queryId)
       .order('filled_date', { ascending: false });
 
@@ -741,7 +741,7 @@ export async function getPatientPDMPQueries(
   try {
     let query = supabase
       .from('pdmp_queries')
-      .select('*')
+      .select('id, tenant_id, query_timestamp, query_type, provider_id, provider_npi, provider_dea, patient_id, patient_first_name, patient_last_name, patient_dob, pdmp_state, pdmp_system_name, response_status, response_received_at, prescriptions_found, date_range_start, date_range_end, flags, morphine_milligram_equivalent, overlapping_prescriptions, unique_prescribers, unique_pharmacies, prescription_id, created_at')
       .eq('tenant_id', tenantId)
       .eq('patient_id', patientId)
       .order('query_timestamp', { ascending: false });
@@ -788,7 +788,7 @@ export async function hasRecentPDMPQuery(
 
     const { data, error } = await supabase
       .from('pdmp_queries')
-      .select('*')
+      .select('id, tenant_id, query_timestamp, query_type, provider_id, provider_npi, provider_dea, patient_id, patient_first_name, patient_last_name, patient_dob, pdmp_state, pdmp_system_name, response_status, response_received_at, prescriptions_found, date_range_start, date_range_end, flags, morphine_milligram_equivalent, overlapping_prescriptions, unique_prescribers, unique_pharmacies, prescription_id, created_at')
       .eq('tenant_id', tenantId)
       .eq('patient_id', patientId)
       .eq('pdmp_state', stateCode.toUpperCase())

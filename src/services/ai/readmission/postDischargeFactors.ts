@@ -53,7 +53,7 @@ interface DischargeInstructionsResult {
 async function getFollowUpAppointment(patientId: string, dischargeDate: string): Promise<FollowUpResult> {
   const { data } = await supabase
     .from('fhir_appointments')
-    .select('*')
+    .select('start')
     .eq('patient_id', patientId)
     .gte('start', dischargeDate)
     .order('start', { ascending: true })
@@ -93,7 +93,7 @@ async function getPcpAssignment(patientId: string): Promise<PcpResult> {
 async function getPendingTestResults(patientId: string, dischargeDate: string): Promise<PendingTestsResult> {
   const { data } = await supabase
     .from('fhir_diagnostic_reports')
-    .select('*')
+    .select('code_display, status')
     .eq('patient_id', patientId)
     .eq('status', 'pending')
     .lte('effective_date_time', dischargeDate);
@@ -129,7 +129,7 @@ async function getDischargeInstructions(_patientId: string, _dischargeDate: stri
 async function hasHomeSupport(patientId: string): Promise<boolean> {
   const { data } = await supabase
     .from('sdoh_indicators')
-    .select('*')
+    .select('details')
     .eq('patient_id', patientId)
     .eq('category', 'social_support')
     .eq('status', 'active')

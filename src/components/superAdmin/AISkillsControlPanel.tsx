@@ -106,7 +106,7 @@ const AISkillsControlPanel: React.FC = () => {
       // Load all skills from master table
       const { data: skills, error: skillsError } = await supabase
         .from('ai_skills')
-        .select('*')
+        .select('id, skill_key, skill_number, name, description, category, model, monthly_cost_estimate, icon_name, color_class, requires_license_tier, is_active')
         .eq('is_active', true)
         .order('skill_number');
 

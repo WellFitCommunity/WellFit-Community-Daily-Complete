@@ -20,7 +20,7 @@ export async function getMedications(
   try {
     let query = supabase
       .from('medications')
-      .select('*')
+      .select('id, user_id, medication_name, generic_name, brand_name, dosage, dosage_form, strength, instructions, frequency, route, prescribed_by, prescribed_date, prescription_number, pharmacy_name, pharmacy_phone, quantity, refills_remaining, last_refill_date, next_refill_date, ndc_code, purpose, side_effects, warnings, interactions, status, discontinued_date, discontinued_reason, ai_confidence, extraction_notes, needs_review, reviewed_by, reviewed_at, is_psychiatric, psych_category, psych_subcategory, psych_classification_confidence, created_at, updated_at')
       .eq('user_id', userId)
       .order('medication_name');
 
@@ -51,7 +51,7 @@ export async function getMedication(medicationId: string): Promise<ApiResponse<M
   try {
     const { data, error } = await supabase
       .from('medications')
-      .select('*')
+      .select('id, user_id, medication_name, generic_name, brand_name, dosage, dosage_form, strength, instructions, frequency, route, prescribed_by, prescribed_date, prescription_number, pharmacy_name, pharmacy_phone, quantity, refills_remaining, last_refill_date, next_refill_date, ndc_code, purpose, side_effects, warnings, interactions, status, discontinued_date, discontinued_reason, ai_confidence, extraction_notes, needs_review, reviewed_by, reviewed_at, is_psychiatric, psych_category, psych_subcategory, psych_classification_confidence, created_at, updated_at')
       .eq('id', medicationId)
       .single();
 
@@ -100,7 +100,7 @@ export async function createMedication(
     const { data, error } = await supabase
       .from('medications')
       .insert([enrichedData])
-      .select()
+      .select('id, user_id, medication_name, generic_name, brand_name, dosage, dosage_form, strength, instructions, frequency, route, prescribed_by, prescribed_date, prescription_number, pharmacy_name, pharmacy_phone, quantity, refills_remaining, last_refill_date, next_refill_date, ndc_code, purpose, side_effects, warnings, interactions, status, discontinued_date, discontinued_reason, ai_confidence, extraction_notes, needs_review, reviewed_by, reviewed_at, is_psychiatric, psych_category, psych_subcategory, psych_classification_confidence, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -135,7 +135,7 @@ export async function updateMedication(
       .from('medications')
       .update(updates)
       .eq('id', medicationId)
-      .select()
+      .select('id, user_id, medication_name, generic_name, brand_name, dosage, dosage_form, strength, instructions, frequency, route, prescribed_by, prescribed_date, prescription_number, pharmacy_name, pharmacy_phone, quantity, refills_remaining, last_refill_date, next_refill_date, ndc_code, purpose, side_effects, warnings, interactions, status, discontinued_date, discontinued_reason, ai_confidence, extraction_notes, needs_review, reviewed_by, reviewed_at, is_psychiatric, psych_category, psych_subcategory, psych_classification_confidence, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -195,7 +195,7 @@ export async function discontinueMedication(
       .from('medications')
       .update(updates)
       .eq('id', medicationId)
-      .select()
+      .select('id, user_id, medication_name, generic_name, brand_name, dosage, dosage_form, strength, instructions, frequency, route, prescribed_by, prescribed_date, prescription_number, pharmacy_name, pharmacy_phone, quantity, refills_remaining, last_refill_date, next_refill_date, ndc_code, purpose, side_effects, warnings, interactions, status, discontinued_date, discontinued_reason, ai_confidence, extraction_notes, needs_review, reviewed_by, reviewed_at, is_psychiatric, psych_category, psych_subcategory, psych_classification_confidence, created_at, updated_at')
       .single();
 
     if (error) throw error;

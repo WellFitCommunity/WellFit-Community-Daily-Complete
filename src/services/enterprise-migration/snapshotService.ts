@@ -97,7 +97,7 @@ export class SnapshotService {
   async listSnapshots(batchId?: string): Promise<MigrationSnapshot[]> {
     let query = this.supabase
       .from('migration_snapshots')
-      .select('*')
+      .select('snapshot_id, migration_batch_id, snapshot_name, snapshot_type, description, tables_included, snapshot_data, total_rows, size_bytes, status, created_by, created_at, restored_at')
       .eq('status', 'active')
       .order('created_at', { ascending: false });
 

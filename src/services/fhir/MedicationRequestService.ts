@@ -34,7 +34,7 @@ export class MedicationRequestService {
 
       const { data, error } = await supabase
         .from('fhir_medication_requests')
-        .select('*')
+        .select('id, fhir_id, patient_id, status, intent, medication_code_system, medication_code, medication_display, medication_text, dosage_text, dosage_timing_frequency, dosage_timing_period, dosage_timing_period_unit, dosage_route_code, dosage_route_display, dosage_route, dosage_dose_quantity, dosage_dose_unit, dispense_quantity, dispense_unit, number_of_repeats_allowed, authored_on, requester_type, requester_id, requester_display, requester_practitioner_id, reason_code, priority, category, note, substitution_allowed, encounter_id, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('authored_on', { ascending: false });
 
@@ -111,7 +111,7 @@ export class MedicationRequestService {
       const { data, error } = await supabase
         .from('fhir_medication_requests')
         .insert([request])
-        .select()
+        .select('id, fhir_id, patient_id, status, intent, medication_code_system, medication_code, medication_display, medication_text, dosage_text, dosage_timing_frequency, dosage_timing_period, dosage_timing_period_unit, dosage_route_code, dosage_route_display, dosage_route, dosage_dose_quantity, dosage_dose_unit, dispense_quantity, dispense_unit, number_of_repeats_allowed, authored_on, requester_type, requester_id, requester_display, requester_practitioner_id, reason_code, priority, category, note, substitution_allowed, encounter_id, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -145,7 +145,7 @@ export class MedicationRequestService {
         .from('fhir_medication_requests')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, fhir_id, patient_id, status, intent, medication_code_system, medication_code, medication_display, medication_text, dosage_text, dosage_timing_frequency, dosage_timing_period, dosage_timing_period_unit, dosage_route_code, dosage_route_display, dosage_route, dosage_dose_quantity, dosage_dose_unit, dispense_quantity, dispense_unit, number_of_repeats_allowed, authored_on, requester_type, requester_id, requester_display, requester_practitioner_id, reason_code, priority, category, note, substitution_allowed, encounter_id, created_at, updated_at')
         .single();
 
       if (error) throw error;

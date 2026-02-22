@@ -103,7 +103,7 @@ export class PatientOutreachService {
       // Get active care plan to customize questions
       const carePlans = await supabase
         .from('care_coordination_plans')
-        .select('*')
+        .select('id, plan_type')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .limit(1);
@@ -166,7 +166,7 @@ export class PatientOutreachService {
       // Get existing check-in
       const { data: checkIn, error: fetchError } = await supabase
         .from('patient_daily_check_ins')
-        .select('*')
+        .select('id, patient_id, care_plan_id, check_in_date, check_in_method, status, questions_asked, responses, alert_triggered, alert_type, alert_severity, requires_follow_up, follow_up_notes, concern_flags, ai_analysis_summary')
         .eq('id', checkInId)
         .single();
 
@@ -338,7 +338,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
 
     const { data, error } = await supabase
       .from('patient_daily_check_ins')
-      .select('*')
+      .select('id, patient_id, care_plan_id, check_in_date, check_in_method, status, questions_asked, responses, alert_triggered, alert_type, alert_severity, requires_follow_up, follow_up_notes, concern_flags, ai_analysis_summary')
       .eq('patient_id', patientId)
       .gte('check_in_date', startDate)
       .order('check_in_date', { ascending: false });

@@ -510,7 +510,7 @@ export class ProgressNoteSynthesizerService {
     try {
       let query = supabase
         .from('ai_progress_notes')
-        .select('*')
+        .select('id, note_id, patient_id, provider_id, period_start, period_end, note_type, vitals_trends, mood_summary, activity_summary, concern_flags, summary, key_findings, recommendations, confidence, requires_review, review_reasons, data_quality, created_at, updated_at, status, reviewed_by, reviewed_at, review_notes, finalized_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false });
 
@@ -554,7 +554,7 @@ export class ProgressNoteSynthesizerService {
     try {
       const { data, error } = await supabase
         .from('ai_progress_notes')
-        .select('*')
+        .select('id, note_id, patient_id, provider_id, period_start, period_end, note_type, vitals_trends, mood_summary, activity_summary, concern_flags, summary, key_findings, recommendations, confidence, requires_review, review_reasons, data_quality, created_at, updated_at, status, reviewed_by, reviewed_at, review_notes, finalized_at')
         .eq('note_id', noteId)
         .single();
 

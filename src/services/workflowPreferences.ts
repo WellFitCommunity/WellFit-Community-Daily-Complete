@@ -549,7 +549,7 @@ export async function getWorkflowPreferences(
     // Try database
     const { data, error } = await supabase
       .from('user_workflow_preferences')
-      .select('*')
+      .select('user_id, category_order, pinned_sections, recent_sections, voice_enabled, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
 

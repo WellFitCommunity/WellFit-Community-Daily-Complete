@@ -20,7 +20,7 @@ export async function validateMedicalNecessity(
   // Query coding rules from database
   const { data: rules, error } = await supabase
     .from('coding_rules')
-    .select('*')
+    .select('source, reference_url, required_icd10_patterns, primary_diagnosis_only, excluded_icd10_patterns')
     .eq('cpt_code', cptCode)
     .eq('active', true);
 

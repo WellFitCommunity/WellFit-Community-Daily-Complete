@@ -236,8 +236,8 @@ const MPIReviewQueue: React.FC<MPIReviewQueueProps> = ({ tenantId }) => {
 
       for (const candidate of result.data) {
         const [patientAResult, patientBResult] = await Promise.all([
-          supabase.from('profiles').select('*').eq('user_id', candidate.patient_id_a).single(),
-          supabase.from('profiles').select('*').eq('user_id', candidate.patient_id_b).single(),
+          supabase.from('profiles').select('user_id, first_name, last_name, dob, phone, mrn, address, city, state, zip, gender, email').eq('user_id', candidate.patient_id_a).single(),
+          supabase.from('profiles').select('user_id, first_name, last_name, dob, phone, mrn, address, city, state, zip, gender, email').eq('user_id', candidate.patient_id_b).single(),
         ]);
 
         candidatesWithPatients.push({

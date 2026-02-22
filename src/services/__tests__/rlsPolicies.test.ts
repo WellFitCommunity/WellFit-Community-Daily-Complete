@@ -51,7 +51,7 @@ describe('RLS Policy Tests - HIPAA Compliance', () => {
       });
 
       // Act: Query would go through RLS
-      const _result = await supabase.from('profiles').select('*');
+      const _result = await supabase.from('profiles').select('tenant_id, role');
 
       // Assert: RLS should filter to only tenant A data
       expect(supabase.from).toHaveBeenCalledWith('profiles');
@@ -84,7 +84,7 @@ describe('RLS Policy Tests - HIPAA Compliance', () => {
       });
 
       // Assert: Cross-tenant query returns no data
-      const { data } = await supabase.from('check_ins').select('*').eq('tenant_id', tenantBId).single();
+      const { data } = await supabase.from('check_ins').select('id, tenant_id').eq('tenant_id', tenantBId).single();
       expect(data).toBeNull();
     });
 
@@ -211,7 +211,7 @@ describe('RLS Policy Tests - HIPAA Compliance', () => {
         }),
       });
 
-      const result = await supabase.from('audit_logs').select('*');
+      const result = await supabase.from('audit_logs').select('id, event_type');
       expect(result.data).toEqual([]);
     });
 

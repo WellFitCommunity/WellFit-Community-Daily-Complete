@@ -57,7 +57,7 @@ export class WorkflowOrchestrationService {
   async getNextStep(executionId: string): Promise<WorkflowStep | null> {
     const { data: execution } = await this.supabase
       .from('migration_workflow_executions')
-      .select('*')
+      .select('execution_id, template_id, step_statuses, status')
       .eq('execution_id', executionId)
       .single();
 

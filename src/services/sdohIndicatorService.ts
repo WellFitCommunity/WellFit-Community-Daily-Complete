@@ -367,7 +367,7 @@ export const SDOHIndicatorService = {
     try {
       const { data, error } = await supabase
         .from('sdoh_referrals')
-        .select('*')
+        .select('id, service, organization, contact_info, date_referred, status, follow_up_date, notes')
         .eq('patient_id', patientId)
         .eq('category', category)
         .order('date_referred', { ascending: false });
@@ -399,7 +399,7 @@ export const SDOHIndicatorService = {
     try {
       const { data, error } = await supabase
         .from('sdoh_resources')
-        .select('*')
+        .select('id, type, name, description, date_provided, provided_by')
         .eq('patient_id', patientId)
         .eq('category', category)
         .order('date_provided', { ascending: false });

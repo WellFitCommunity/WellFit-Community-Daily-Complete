@@ -143,7 +143,7 @@ async function getComorbidities(patientId: string): Promise<Comorbidity[]> {
 async function getDischargeVitals(patientId: string, dischargeDate: string): Promise<VitalsResult> {
   const { data } = await supabase
     .from('fhir_observations')
-    .select('*')
+    .select('code, value_quantity, effective_date_time')
     .eq('patient_id', patientId)
     .gte('effective_date_time', new Date(new Date(dischargeDate).getTime() - 24 * 60 * 60 * 1000).toISOString())
     .lte('effective_date_time', dischargeDate)
@@ -178,7 +178,7 @@ async function getDischargeVitals(patientId: string, dischargeDate: string): Pro
 async function getRecentLabs(patientId: string, dischargeDate: string): Promise<LabsResult> {
   const { data } = await supabase
     .from('fhir_observations')
-    .select('*')
+    .select('code, value_quantity, effective_date_time')
     .eq('patient_id', patientId)
     .gte('effective_date_time', new Date(new Date(dischargeDate).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString())
     .lte('effective_date_time', dischargeDate)

@@ -150,7 +150,7 @@ export const getConfidenceScoreHistory = async (limit: number = 50) => {
   try {
     const { data, error } = await supabase
       .from('ai_confidence_scores')
-      .select('*')
+      .select('id, patient_id, encounter_id, suggestion_type, suggested_value, confidence_score, model_used, processing_time_ms, reasoning_explanation, supporting_evidence, provider_validated, provider_accepted, provider_modified_value, validated_at, created_at')
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -202,7 +202,7 @@ export const getVoiceProfile = async (): Promise<{
 
     const { data, error } = await supabase
       .from('voice_profiles')
-      .select('*')
+      .select('id, user_id, maturity_score, accent_adaptation_score, terminology_adaptation_score, workflow_adaptation_score, status, total_sessions, total_corrections, total_transcription_time_seconds, fully_adapted_at, created_at, updated_at')
       .eq('user_id', user.id)
       .maybeSingle();
 

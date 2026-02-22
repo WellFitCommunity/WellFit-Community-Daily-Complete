@@ -14,7 +14,7 @@ export const CareCoordinationService = {
     const { data, error } = await supabase
       .from('care_coordination_events')
       .insert([event])
-      .select()
+      .select('id, patient_id, event_type, event_status, event_timestamp, care_gap_identified, handoff_occurred, handoff_quality, notes, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -28,7 +28,7 @@ export const CareCoordinationService = {
 
     const { data, error } = await supabase
       .from('care_coordination_events')
-      .select('*')
+      .select('id, patient_id, event_type, event_status, event_timestamp, care_gap_identified, handoff_occurred, handoff_quality, notes, created_at, updated_at')
       .eq('patient_id', patientId)
       .gte('event_timestamp', since.toISOString())
       .order('event_timestamp', { ascending: false });
@@ -41,7 +41,7 @@ export const CareCoordinationService = {
   async getActiveIssues(patientId: string) {
     const { data, error } = await supabase
       .from('care_coordination_events')
-      .select('*')
+      .select('id, patient_id, event_type, event_status, event_timestamp, care_gap_identified, handoff_occurred, handoff_quality, notes, created_at, updated_at')
       .eq('patient_id', patientId)
       .in('event_status', ['scheduled', 'in-progress'])
       .order('event_timestamp', { ascending: true });
@@ -54,7 +54,7 @@ export const CareCoordinationService = {
   async getCareGaps(patientId: string) {
     const { data, error } = await supabase
       .from('care_coordination_events')
-      .select('*')
+      .select('id, patient_id, event_type, event_status, event_timestamp, care_gap_identified, handoff_occurred, handoff_quality, notes, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('care_gap_identified', true)
       .order('event_timestamp', { ascending: false });
@@ -67,7 +67,7 @@ export const CareCoordinationService = {
   async getIncompleteHandoffs(patientId: string) {
     const { data, error } = await supabase
       .from('care_coordination_events')
-      .select('*')
+      .select('id, patient_id, event_type, event_status, event_timestamp, care_gap_identified, handoff_occurred, handoff_quality, notes, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('handoff_occurred', true)
       .in('handoff_quality', ['incomplete', 'missing-info'])
@@ -84,7 +84,7 @@ export const CareCoordinationService = {
 
     const { data, error } = await supabase
       .from('care_coordination_events')
-      .select('*')
+      .select('id, patient_id, event_type, event_status, event_timestamp, care_gap_identified, handoff_occurred, handoff_quality, notes, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('event_type', 'appointment')
       .eq('event_status', 'no-show')
@@ -104,7 +104,7 @@ export const CareCoordinationService = {
         notes: notes || undefined,
       })
       .eq('id', eventId)
-      .select()
+      .select('id, patient_id, event_type, event_status, event_timestamp, care_gap_identified, handoff_occurred, handoff_quality, notes, created_at, updated_at')
       .single();
 
     if (error) throw error;

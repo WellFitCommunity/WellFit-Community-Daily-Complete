@@ -35,7 +35,7 @@ export class ConditionService {
 
       const { data, error } = await supabase
         .from('fhir_conditions')
-        .select('*')
+        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, category_code, category_display, category_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, code_code, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('recorded_date', { ascending: false });
 
@@ -163,7 +163,7 @@ export class ConditionService {
       const { data, error } = await supabase
         .from('fhir_conditions')
         .insert([fhirCondition])
-        .select()
+        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, category_code, category_display, category_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, code_code, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -195,7 +195,7 @@ export class ConditionService {
         .from('fhir_conditions')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, category_code, category_display, category_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, code_code, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
         .single();
 
       if (error) throw error;

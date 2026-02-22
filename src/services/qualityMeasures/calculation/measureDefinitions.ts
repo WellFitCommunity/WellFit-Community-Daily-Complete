@@ -16,7 +16,7 @@ export async function getMeasureDefinitions(): Promise<ServiceResult<MeasureDefi
   try {
     const { data, error } = await supabase
       .from('ecqm_measure_definitions')
-      .select('*')
+      .select('id, measure_id, cms_id, version, title, description, measure_type, measure_scoring, initial_population_description, denominator_description, numerator_description, reporting_year, applicable_settings, clinical_focus, is_active')
       .eq('is_active', true)
       .order('cms_id');
 
@@ -41,7 +41,7 @@ export async function getMeasureDefinition(measureId: string): Promise<ServiceRe
   try {
     const { data, error } = await supabase
       .from('ecqm_measure_definitions')
-      .select('*')
+      .select('id, measure_id, cms_id, version, title, description, measure_type, measure_scoring, initial_population_description, denominator_description, numerator_description, reporting_year, applicable_settings, clinical_focus, is_active')
       .eq('measure_id', measureId)
       .single();
 

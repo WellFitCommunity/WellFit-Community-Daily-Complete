@@ -613,7 +613,7 @@ export async function getPendingEncounters(
   try {
     const { data, error } = await supabase
       .from('syndromic_surveillance_encounters')
-      .select('*')
+      .select('id, tenant_id, encounter_id, patient_id, encounter_date, encounter_type, facility_id, chief_complaint, chief_complaint_code, chief_complaint_code_system, diagnosis_codes, diagnosis_descriptions, disposition_code, disposition_description, surveillance_category, status')
       .eq('tenant_id', tenantId)
       .eq('status', 'pending')
       .eq('is_reportable', true)
@@ -810,7 +810,7 @@ export async function getTransmissionHistory(
   try {
     let query = supabase
       .from('syndromic_surveillance_transmissions')
-      .select('*')
+      .select('id, tenant_id, destination_agency, message_type, message_control_id, hl7_message, encounter_count, encounter_ids, status, sent_at, acknowledgment_code, acknowledgment_message, error_message')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 

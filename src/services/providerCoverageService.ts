@@ -82,7 +82,7 @@ export const providerCoverageService = {
       const targetDate = date ?? new Date().toISOString().split('T')[0];
       let query = supabase
         .from('provider_on_call_schedules')
-        .select('*')
+        .select('id, provider_id, facility_id, unit_id, schedule_date, shift_start, shift_end, shift_type, coverage_role, is_active, notes, tenant_id, created_by, created_at, updated_at')
         .eq('schedule_date', targetDate)
         .eq('is_active', true)
         .order('coverage_role', { ascending: true });
@@ -189,7 +189,7 @@ export const providerCoverageService = {
     try {
       let query = supabase
         .from('v_provider_coverage_summary')
-        .select('*')
+        .select('id, absent_provider_id, coverage_provider_id, facility_id, unit_id, effective_start, effective_end, coverage_reason, coverage_priority, status, auto_route_tasks, notes, tenant_id, approved_by, approved_at, created_by, created_at, updated_at, absent_first_name, absent_last_name, coverage_first_name, coverage_last_name, computed_status')
         .order('effective_start', { ascending: false });
 
       if (filters?.status && filters.status !== 'all') {

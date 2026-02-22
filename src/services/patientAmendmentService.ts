@@ -138,7 +138,7 @@ export async function getMyAmendmentRequests(): Promise<ServiceResult<PatientAme
 
     const { data, error } = await supabase
       .from('patient_amendment_requests')
-      .select('*')
+      .select('id, tenant_id, patient_id, request_number, record_type, record_description, current_value, requested_value, reason, status, response_deadline, reviewed_by, reviewed_at, review_decision, denial_reason, disagreement_statement, disagreement_filed_at, rebuttal_statement, rebuttal_filed_at, created_at, updated_at')
       .eq('patient_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -158,7 +158,7 @@ export async function getPendingAmendments(): Promise<ServiceResult<PatientAmend
   try {
     const { data, error } = await supabase
       .from('patient_amendment_requests')
-      .select('*')
+      .select('id, tenant_id, patient_id, request_number, record_type, record_description, current_value, requested_value, reason, status, response_deadline, reviewed_by, reviewed_at, review_decision, denial_reason, disagreement_statement, disagreement_filed_at, rebuttal_statement, rebuttal_filed_at, created_at, updated_at')
       .in('status', ['submitted', 'under_review'])
       .order('response_deadline', { ascending: true });
 

@@ -107,7 +107,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
       if (patientsError) throw patientsError;
 
       const { data: medicationsData, error: medicationsError } = await supabase
-        .from('medication_requests').select('*').order('created_at', { ascending: false });
+        .from('medication_requests').select('id, patient_id, medication_display, status, dosage_text, dosage_dose_quantity, dosage_dose_unit, dosage_timing_frequency, authored_on, created_at, dispense_valid_from, dispense_number_of_repeats, drug_class').order('created_at', { ascending: false });
       if (medicationsError) throw medicationsError;
 
       const patients: PatientMedication[] = (patientsData || []).map(patient => {

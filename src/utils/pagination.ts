@@ -224,6 +224,7 @@ export async function applyPagination<T>(
   const typedQuery = query as QueryBuilderMethods;
 
   // Get total count (expensive, consider caching)
+  // select('*') with head:true is a count-only query — no data returned, only row count
   const countResult = await typedQuery.select('*', { count: 'exact', head: true });
 
   if (countResult.error) {

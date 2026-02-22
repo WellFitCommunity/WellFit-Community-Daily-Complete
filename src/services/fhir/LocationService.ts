@@ -16,7 +16,7 @@ export const LocationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_locations')
-        .select('*')
+        .select('id, status, name, alias, description, mode, type, telecom, address, physical_type, position, managing_organization_id, managing_organization_display, part_of_location_id, part_of_location_display, hours_of_operation, availability_exceptions, created_by, updated_by, created_at, updated_at')
         .eq('status', 'active')
         .order('name');
 
@@ -37,7 +37,7 @@ export const LocationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_locations')
-        .select('*')
+        .select('id, status, name, alias, description, mode, type, telecom, address, physical_type, position, managing_organization_id, managing_organization_display, part_of_location_id, part_of_location_display, hours_of_operation, availability_exceptions, created_by, updated_by, created_at, updated_at')
         .eq('id', id)
         .single();
 
@@ -58,7 +58,7 @@ export const LocationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_locations')
-        .select('*')
+        .select('id, status, name, alias, description, mode, type, telecom, address, physical_type, position, managing_organization_id, managing_organization_display, part_of_location_id, part_of_location_display, hours_of_operation, availability_exceptions, created_by, updated_by, created_at, updated_at')
         .contains('type', [typeCode])
         .eq('status', 'active')
         .order('name');
@@ -81,7 +81,7 @@ export const LocationService = {
       const { data, error } = await supabase
         .from('fhir_locations')
         .insert([location])
-        .select()
+        .select('id, status, name, alias, description, mode, type, telecom, address, physical_type, position, managing_organization_id, managing_organization_display, part_of_location_id, part_of_location_display, hours_of_operation, availability_exceptions, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -106,7 +106,7 @@ export const LocationService = {
         .from('fhir_locations')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, status, name, alias, description, mode, type, telecom, address, physical_type, position, managing_organization_id, managing_organization_display, part_of_location_id, part_of_location_display, hours_of_operation, availability_exceptions, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;

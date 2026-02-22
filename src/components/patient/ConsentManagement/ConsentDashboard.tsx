@@ -42,17 +42,14 @@ interface PatientConsent {
   revoked_at?: string;
 }
 
-/** Care team member with practitioner data */
+/** Care team member from fhir_care_team_members table */
 interface CareTeamMember {
   id: string;
   patient_id: string;
   member_name?: string;
   role?: string;
-  practitioner?: {
-    id: string;
-    name?: string;
-    specialty?: string;
-  } | null;
+  member_display?: string;
+  role_display?: string;
 }
 
 const ConsentDashboard: React.FC = () => {
@@ -248,7 +245,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userId, onStatsUpdate }) => {
 
       const { data, error } = await supabase
         .from('patient_consents')
-        .select('*')
+        .select('id, patient_id, consent_category, purpose, external_system_name, scopes_granted, data_categories, status, granted_at, expires_at, revoked_at')
         .eq('patient_id', userId)
         .eq('status', 'active')
         .order('granted_at', { ascending: false });
@@ -435,10 +432,7 @@ const ProvidersTab: React.FC<ProvidersTabProps> = ({ userId }) => {
       // Get providers from care team
       const { data, error } = await supabase
         .from('fhir_care_team_members')
-        .select(`
-          *,
-          practitioner:fhir_practitioners(*)
-        `)
+        .select('id, patient_id, member_display, role_display')
         .eq('patient_id', userId);
 
       if (!error && data) {
@@ -486,10 +480,10 @@ const ProvidersTab: React.FC<ProvidersTabProps> = ({ userId }) => {
             </div>
             <div>
               <h4 className="font-medium text-gray-900">
-                {member.practitioner?.name || member.member_name || 'Care Team Member'}
+                {member.member_display || member.member_name || 'Care Team Member'}
               </h4>
               <p className="text-sm text-gray-600">
-                {member.role || 'Provider'} · {member.practitioner?.specialty || 'Healthcare'}
+                {member.role_display || member.role || 'Provider'}
               </p>
             </div>
           </div>

@@ -48,7 +48,7 @@ export class RetryService {
   async getPendingRetries(): Promise<RetryQueueItem[]> {
     const { data, error } = await this.supabase
       .from('migration_retry_queue')
-      .select('*')
+      .select('retry_id, migration_batch_id, failed_operation, target_table, source_row_numbers, error_code, error_message, attempt_number, max_attempts, next_retry_at, status')
       .in('status', ['pending', 'retrying'])
       .lte('next_retry_at', new Date().toISOString())
       .lt('attempt_number', this.maxAttempts)

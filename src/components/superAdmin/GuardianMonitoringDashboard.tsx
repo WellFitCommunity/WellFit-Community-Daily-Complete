@@ -73,7 +73,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
       // Get Guardian alerts
       const { data: alerts, error: alertsError } = await supabase
         .from('guardian_alerts')
-        .select('*')
+        .select('id, created_at, severity, category, title, description, tenant_id, resolved')
         .gte('created_at', cutoffDate.toISOString())
         .order('created_at', { ascending: false })
         .limit(50);
@@ -85,7 +85,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
       // Get cron execution logs
       const { data: cronLogs, error: cronError } = await supabase
         .from('guardian_cron_log')
-        .select('*')
+        .select('id, job_name, executed_at, status, details')
         .gte('executed_at', cutoffDate.toISOString())
         .order('executed_at', { ascending: false })
         .limit(20);

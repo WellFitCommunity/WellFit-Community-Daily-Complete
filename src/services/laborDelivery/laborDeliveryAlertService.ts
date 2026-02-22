@@ -147,7 +147,7 @@ export class LDAlertService {
     try {
       const { data, error } = await supabase
         .from('ld_alerts')
-        .select('*')
+        .select('id, patient_id, tenant_id, pregnancy_id, alert_type, severity, message, source_record_id, acknowledged, acknowledged_by, acknowledged_at, resolved, resolved_by, resolved_at, resolution_notes, created_at')
         .eq('patient_id', patientId)
         .eq('tenant_id', tenantId)
         .eq('resolved', false)

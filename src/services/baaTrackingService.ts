@@ -90,7 +90,7 @@ export async function listBAAs(): Promise<ServiceResult<BAA[]>> {
   try {
     const { data, error } = await supabase
       .from('business_associate_agreements')
-      .select('*')
+      .select('id, tenant_id, associate_name, associate_type, service_description, contact_name, contact_email, contact_phone, status, effective_date, expiration_date, renewal_date, auto_renew, phi_types_shared, permitted_uses, notes, created_by, created_at, updated_at')
       .order('associate_name', { ascending: true });
 
     if (error) return failure('DATABASE_ERROR', error.message, error);
@@ -231,7 +231,7 @@ export async function getExpiringBAAs(
 
     const { data, error } = await supabase
       .from('business_associate_agreements')
-      .select('*')
+      .select('id, tenant_id, associate_name, associate_type, service_description, contact_name, contact_email, contact_phone, status, effective_date, expiration_date, renewal_date, auto_renew, phi_types_shared, permitted_uses, notes, created_by, created_at, updated_at')
       .eq('status', 'active')
       .not('expiration_date', 'is', null)
       .lte('expiration_date', futureDate.toISOString().split('T')[0])
@@ -255,7 +255,7 @@ export async function getBAAReviewHistory(
   try {
     const { data, error } = await supabase
       .from('baa_review_history')
-      .select('*')
+      .select('id, baa_id, tenant_id, reviewed_by, review_type, previous_status, new_status, review_notes, created_at')
       .eq('baa_id', baaId)
       .order('created_at', { ascending: false });
 

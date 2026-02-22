@@ -160,7 +160,7 @@ async function getActiveBreaches(
   try {
     let query = supabase
       .from('order_sla_breach_log')
-      .select('*')
+      .select('id, order_type, order_id, patient_id, sla_target_minutes, actual_minutes, breach_severity, order_created_at, sla_breach_at, breached_at, resolved_at, resolved_by, resolution_notes, escalation_level')
       .is('resolved_at', null)
       .order('sla_breach_at', { ascending: true })
       .limit(limit);
@@ -400,7 +400,7 @@ async function getSLAConfigs(
   try {
     let query = supabase
       .from('order_sla_config')
-      .select('*')
+      .select('id, tenant_id, order_type, priority, target_minutes, warning_minutes, escalation_1_minutes, escalation_2_minutes, escalation_3_minutes, notify_on_breach, notify_on_warning, notification_channels, is_active')
       .eq('is_active', true)
       .order('order_type')
       .order('priority');

@@ -527,7 +527,7 @@ export const BillingOptimizationEngineService = {
     try {
       let query = supabase
         .from('billing_optimization_history')
-        .select('*')
+        .select('encounter_id, analyzed_at, opportunities_found, revenue_opportunity, actions_implemented')
         .eq('tenant_id', tenantId)
         .order('analyzed_at', { ascending: false });
 

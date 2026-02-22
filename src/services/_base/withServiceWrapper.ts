@@ -103,7 +103,7 @@ export function withServiceWrapper<TArgs extends unknown[], TResult>(
  * @example
  * const getProfile = createSupabaseQuery(
  *   async (userId: string) => {
- *     return supabase.from('profiles').select('*').eq('id', userId).single();
+ *     return supabase.from('profiles').select('id, first_name, last_name, tenant_id').eq('id', userId).single();
  *   },
  *   { operationName: 'getProfile' }
  * );

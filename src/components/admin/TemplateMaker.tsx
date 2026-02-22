@@ -153,7 +153,7 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
     try {
       let query = supabase
         .from('documentation_templates')
-        .select('*')
+        .select('id, role, category, template_name, description, template_type, content_template, required_fields, optional_fields, output_format, ai_model, ai_assisted, is_active, is_shared, version, created_by, tenant_id, created_at, updated_at')
         .is('deleted_at', null)
         .order('updated_at', { ascending: false });
 

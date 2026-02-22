@@ -95,7 +95,7 @@ async function searchAuditLogs(
   try {
     let query = supabase
       .from('audit_logs')
-      .select('*', { count: 'exact' });
+      .select('id, event_type, category, severity, actor_user_id, actor_name, patient_id, resource_type, resource_id, action, details, ip_address, user_agent, created_at', { count: 'exact' });
 
     // Apply filters
     if (filters.category) {
@@ -300,7 +300,7 @@ async function getPHIAccessReport(
     // Get all PHI access events for this patient
     const { data, error } = await supabase
       .from('audit_logs')
-      .select('*')
+      .select('id, event_type, category, severity, actor_user_id, actor_name, patient_id, resource_type, resource_id, action, details, ip_address, user_agent, created_at')
       .eq('patient_id', patientId)
       .eq('category', 'PHI_ACCESS')
       .gte('created_at', startDate)
@@ -371,7 +371,7 @@ async function getSecurityEventSummary(
     // Get security events
     const { data, error, count } = await supabase
       .from('security_events')
-      .select('*', { count: 'exact' })
+      .select('id, event_type, severity, created_at', { count: 'exact' })
       .gte('created_at', startDate)
       .lte('created_at', endDate)
       .order('created_at', { ascending: false })

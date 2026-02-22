@@ -33,7 +33,7 @@ export async function create(input: CreatePriorAuthInput): Promise<FHIRApiRespon
         status: 'draft',
         urgency: input.urgency || 'routine'
       })
-      .select()
+      .select('id, patient_id, encounter_id, claim_id, ordering_provider_npi, rendering_provider_npi, facility_npi, payer_id, payer_name, member_id, group_number, auth_number, reference_number, trace_number, service_type_code, service_type_description, service_codes, diagnosis_codes, date_of_service, service_start_date, service_end_date, submitted_at, decision_due_at, approved_at, expires_at, status, urgency, clinical_notes, clinical_summary, requested_units, approved_units, unit_type, tenant_id, created_by, updated_by, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -62,7 +62,7 @@ export async function getById(id: string): Promise<FHIRApiResponse<PriorAuthoriz
   try {
     const { data, error } = await supabase
       .from('prior_authorizations')
-      .select('*')
+      .select('id, patient_id, encounter_id, claim_id, ordering_provider_npi, rendering_provider_npi, facility_npi, payer_id, payer_name, member_id, group_number, auth_number, reference_number, trace_number, service_type_code, service_type_description, service_codes, diagnosis_codes, date_of_service, service_start_date, service_end_date, submitted_at, decision_due_at, approved_at, expires_at, status, urgency, clinical_notes, clinical_summary, requested_units, approved_units, unit_type, tenant_id, created_by, updated_by, created_at, updated_at')
       .eq('id', id)
       .single();
 
@@ -89,7 +89,7 @@ export async function getByAuthNumber(authNumber: string): Promise<FHIRApiRespon
   try {
     const { data, error } = await supabase
       .from('prior_authorizations')
-      .select('*')
+      .select('id, patient_id, encounter_id, claim_id, ordering_provider_npi, rendering_provider_npi, facility_npi, payer_id, payer_name, member_id, group_number, auth_number, reference_number, trace_number, service_type_code, service_type_description, service_codes, diagnosis_codes, date_of_service, service_start_date, service_end_date, submitted_at, decision_due_at, approved_at, expires_at, status, urgency, clinical_notes, clinical_summary, requested_units, approved_units, unit_type, tenant_id, created_by, updated_by, created_at, updated_at')
       .eq('auth_number', authNumber)
       .single();
 
@@ -116,7 +116,7 @@ export async function getByPatient(patientId: string): Promise<FHIRApiResponse<P
   try {
     const { data, error } = await supabase
       .from('prior_authorizations')
-      .select('*')
+      .select('id, patient_id, encounter_id, claim_id, ordering_provider_npi, rendering_provider_npi, facility_npi, payer_id, payer_name, member_id, group_number, auth_number, reference_number, trace_number, service_type_code, service_type_description, service_codes, diagnosis_codes, date_of_service, service_start_date, service_end_date, submitted_at, decision_due_at, approved_at, expires_at, status, urgency, clinical_notes, clinical_summary, requested_units, approved_units, unit_type, tenant_id, created_by, updated_by, created_at, updated_at')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false });
 
@@ -137,7 +137,7 @@ export async function getPending(tenantId: string): Promise<FHIRApiResponse<Prio
   try {
     const { data, error } = await supabase
       .from('prior_authorizations')
-      .select('*')
+      .select('id, patient_id, encounter_id, claim_id, ordering_provider_npi, rendering_provider_npi, facility_npi, payer_id, payer_name, member_id, group_number, auth_number, reference_number, trace_number, service_type_code, service_type_description, service_codes, diagnosis_codes, date_of_service, service_start_date, service_end_date, submitted_at, decision_due_at, approved_at, expires_at, status, urgency, clinical_notes, clinical_summary, requested_units, approved_units, unit_type, tenant_id, created_by, updated_by, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .in('status', ['submitted', 'pending_review', 'pending_additional_info'])
       .order('decision_due_at', { ascending: true });
@@ -167,7 +167,7 @@ export async function update(
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .select()
+      .select('id, patient_id, encounter_id, claim_id, ordering_provider_npi, rendering_provider_npi, facility_npi, payer_id, payer_name, member_id, group_number, auth_number, reference_number, trace_number, service_type_code, service_type_description, service_codes, diagnosis_codes, date_of_service, service_start_date, service_end_date, submitted_at, decision_due_at, approved_at, expires_at, status, urgency, clinical_notes, clinical_summary, requested_units, approved_units, unit_type, tenant_id, created_by, updated_by, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -204,7 +204,7 @@ export async function addServiceLines(
     const { data, error } = await supabase
       .from('prior_auth_service_lines')
       .insert(linesToInsert)
-      .select();
+      .select('id, prior_auth_id, line_number, cpt_code, cpt_description, modifier_codes, diagnosis_pointers, requested_units, approved_units, unit_type, service_date, service_start_date, service_end_date, line_status, denial_reason, tenant_id, created_at, updated_at');
 
     if (error) throw error;
     return { success: true, data: (data as PriorAuthServiceLine[]) || [] };
@@ -223,7 +223,7 @@ export async function getServiceLines(priorAuthId: string): Promise<FHIRApiRespo
   try {
     const { data, error } = await supabase
       .from('prior_auth_service_lines')
-      .select('*')
+      .select('id, prior_auth_id, line_number, cpt_code, cpt_description, modifier_codes, diagnosis_pointers, requested_units, approved_units, unit_type, service_date, service_start_date, service_end_date, line_status, denial_reason, tenant_id, created_at, updated_at')
       .eq('prior_auth_id', priorAuthId)
       .order('line_number', { ascending: true });
 
@@ -254,7 +254,7 @@ export async function addDocument(
         tenant_id: tenantId,
         submitted_to_payer: false
       })
-      .select()
+      .select('id, prior_auth_id, document_type, document_name, document_description, file_path, file_size_bytes, mime_type, uploaded_at, submitted_to_payer, submitted_at, tenant_id')
       .single();
 
     if (error) throw error;
@@ -274,7 +274,7 @@ export async function getDocuments(priorAuthId: string): Promise<FHIRApiResponse
   try {
     const { data, error } = await supabase
       .from('prior_auth_documents')
-      .select('*')
+      .select('id, prior_auth_id, document_type, document_name, document_description, file_path, file_size_bytes, mime_type, uploaded_at, submitted_to_payer, submitted_at, tenant_id')
       .eq('prior_auth_id', priorAuthId)
       .order('uploaded_at', { ascending: false });
 
@@ -295,7 +295,7 @@ export async function getStatusHistory(priorAuthId: string): Promise<FHIRApiResp
   try {
     const { data, error } = await supabase
       .from('prior_auth_status_history')
-      .select('*')
+      .select('id, prior_auth_id, old_status, new_status, status_reason, changed_by, changed_at, tenant_id')
       .eq('prior_auth_id', priorAuthId)
       .order('changed_at', { ascending: true });
 

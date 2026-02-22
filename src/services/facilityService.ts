@@ -18,6 +18,9 @@ import type {
   FacilityWithStats,
 } from '../types/facility';
 
+/** Facility table columns matching the Facility interface */
+const FACILITY_COLUMNS = 'id, tenant_id, name, facility_code, facility_type, address_line1, address_line2, city, state, zip_code, county, country, phone, fax, email, npi, tax_id, taxonomy_code, clia_number, medicare_provider_number, medicaid_provider_number, place_of_service_code, is_active, is_primary, timezone, bed_count, created_at, updated_at, created_by';
+
 export const FacilityService = {
   /**
    * Get all facilities for the current tenant
@@ -26,7 +29,7 @@ export const FacilityService = {
     try {
       const { data, error } = await supabase
         .from('facilities')
-        .select('*')
+        .select(FACILITY_COLUMNS)
         .eq('is_active', true)
         .order('is_primary', { ascending: false })
         .order('name');
@@ -54,7 +57,7 @@ export const FacilityService = {
     try {
       const { data, error } = await supabase
         .from('facilities')
-        .select('*')
+        .select(FACILITY_COLUMNS)
         .order('is_primary', { ascending: false })
         .order('name');
 
@@ -97,7 +100,7 @@ export const FacilityService = {
     try {
       const { data, error } = await supabase
         .from('facilities')
-        .select('*')
+        .select(FACILITY_COLUMNS)
         .eq('id', id)
         .single();
 
@@ -118,7 +121,7 @@ export const FacilityService = {
     try {
       const { data, error } = await supabase
         .from('facilities')
-        .select('*')
+        .select(FACILITY_COLUMNS)
         .eq('is_primary', true)
         .eq('is_active', true)
         .maybeSingle();
@@ -292,7 +295,7 @@ export const FacilityService = {
       // Get facility
       const { data: facility, error: facilityError } = await supabase
         .from('facilities')
-        .select('*')
+        .select(FACILITY_COLUMNS)
         .eq('id', id)
         .single();
 
@@ -303,13 +306,13 @@ export const FacilityService = {
       // Get encounter count
       const { count: encounterCount } = await supabase
         .from('encounters')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('facility_id', id);
 
       // Get staff count
       const { count: staffCount } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('primary_facility_id', id);
 
       const facilityWithStats: FacilityWithStats = {
@@ -354,7 +357,7 @@ export const FacilityService = {
     try {
       const { data, error } = await supabase
         .from('facilities')
-        .select('*')
+        .select(FACILITY_COLUMNS)
         .eq('facility_type', facilityType)
         .eq('is_active', true)
         .order('name');

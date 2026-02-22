@@ -48,7 +48,7 @@ export async function lookupProcedureCPT(
   if (providedCode) {
     const { data: cptCode, error } = await supabase
       .from('codes_cpt')
-      .select('*')
+      .select('code, long_desc, short_desc')
       .eq('code', providedCode)
       .eq('status', 'active')
       .single();
@@ -67,7 +67,7 @@ export async function lookupProcedureCPT(
   if (description) {
     const { data: cptCodes, error } = await supabase
       .from('codes_cpt')
-      .select('*')
+      .select('code, long_desc, short_desc')
       .ilike('long_desc', `%${description}%`)
       .eq('status', 'active')
       .limit(1);

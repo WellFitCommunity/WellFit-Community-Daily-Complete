@@ -310,8 +310,8 @@ const PatientMergeWizard: React.FC = () => {
 
     try {
       const [patientAResult, patientBResult] = await Promise.all([
-        supabase.from('profiles').select('*').eq('user_id', patientAId).single(),
-        supabase.from('profiles').select('*').eq('user_id', patientBId).single(),
+        supabase.from('profiles').select('user_id, first_name, last_name, middle_name, dob, phone, email, mrn, address, city, state, zip, gender, ethnicity, health_conditions, medications, emergency_contact_name, emergency_contact_phone, tenant_id, created_at').eq('user_id', patientAId).single(),
+        supabase.from('profiles').select('user_id, first_name, last_name, middle_name, dob, phone, email, mrn, address, city, state, zip, gender, ethnicity, health_conditions, medications, emergency_contact_name, emergency_contact_phone, tenant_id, created_at').eq('user_id', patientBId).single(),
       ]);
 
       if (patientAResult.error || !patientAResult.data) {

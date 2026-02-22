@@ -65,6 +65,7 @@ class FHIRSearchBuilder<T extends FHIRResource = FHIRResource> {
   constructor(table: string, params: FHIRSearchParams) {
     this.table = table;
     this.params = params;
+    // TODO: specify columns when usage is traced — polymorphic FHIR resource search
     this.query = supabase.from(table).select('*');
   }
 

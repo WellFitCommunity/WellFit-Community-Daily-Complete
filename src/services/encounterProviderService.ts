@@ -178,7 +178,7 @@ export const encounterProviderService = {
       const { data, error } = await supabase
         .from('encounter_providers')
         .select(`
-          *,
+          id, encounter_id, provider_id, role, is_primary, assigned_at, assigned_by, removed_at, removed_by, notes, tenant_id, created_at, updated_at,
           provider:billing_providers(id, npi, organization_name, taxonomy_code, user_id)
         `)
         .eq('encounter_id', encounterId)
@@ -214,7 +214,7 @@ export const encounterProviderService = {
       const { data, error } = await supabase
         .from('encounter_providers')
         .select(`
-          *,
+          id, encounter_id, provider_id, role, is_primary, assigned_at, assigned_by, removed_at, removed_by, notes, tenant_id, created_at, updated_at,
           provider:billing_providers(id, npi, organization_name, taxonomy_code, user_id)
         `)
         .eq('encounter_id', encounterId)
@@ -295,7 +295,7 @@ export const encounterProviderService = {
 
       const { data, error } = await supabase
         .from('encounter_provider_audit')
-        .select('*')
+        .select('id, encounter_id, provider_id, role, action, previous_role, changed_by, changed_at, reason, tenant_id')
         .eq('encounter_id', encounterId)
         .order('changed_at', { ascending: true });
 
@@ -334,7 +334,7 @@ export const encounterProviderService = {
       // Get current assignment
       const { data: current, error: fetchError } = await supabase
         .from('encounter_providers')
-        .select('*')
+        .select('id, encounter_id, provider_id, role, is_primary, assigned_at, assigned_by, removed_at, removed_by, notes, tenant_id, created_at, updated_at')
         .eq('id', assignmentId)
         .is('removed_at', null)
         .single();

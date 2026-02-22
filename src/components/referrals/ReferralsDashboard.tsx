@@ -82,10 +82,11 @@ interface DashboardMetrics {
 }
 
 // Database row type for patient referrals with joined source data
+// external_referral_sources join returns an array when Supabase cannot infer FK cardinality
 interface PatientReferralRow extends PatientReferral {
   external_referral_sources?: {
     organization_name: string;
-  } | null;
+  } | { organization_name: string }[] | null;
 }
 
 export const ReferralsDashboard: React.FC = () => {
@@ -156,7 +157,7 @@ export const ReferralsDashboard: React.FC = () => {
       // Load referral sources
       const { data: sources, error: sourcesError } = await supabase
         .from('external_referral_sources')
-        .select('*')
+        .select('id, organization_name, organization_type, contact_name, contact_email, contact_phone, subscription_tier, active, created_at')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -167,7 +168,7 @@ export const ReferralsDashboard: React.FC = () => {
       const { data: pending, error: pendingError } = await supabase
         .from('patient_referrals')
         .select(`
-          *,
+          id, source_id, patient_phone, patient_first_name, patient_last_name, referral_reason, priority, status, linked_user_id, notes, created_at, updated_at,
           external_referral_sources(organization_name)
         `)
         .in('status', ['pending', 'accepted'])
@@ -175,17 +176,19 @@ export const ReferralsDashboard: React.FC = () => {
         .limit(50);
 
       if (pendingError) throw pendingError;
-      const formattedPending = (pending || []).map((r: PatientReferralRow) => ({
-        ...r,
-        source_name: r.external_referral_sources?.organization_name,
-      }));
+      const formattedPending = (pending || []).map((r: PatientReferralRow) => {
+        const src = Array.isArray(r.external_referral_sources)
+          ? r.external_referral_sources[0]
+          : r.external_referral_sources;
+        return { ...r, source_name: src?.organization_name };
+      });
       setPendingReferrals(formattedPending);
 
       // Load active referrals
       const { data: active, error: activeError } = await supabase
         .from('patient_referrals')
         .select(`
-          *,
+          id, source_id, patient_phone, patient_first_name, patient_last_name, referral_reason, priority, status, linked_user_id, notes, created_at, updated_at,
           external_referral_sources(organization_name)
         `)
         .in('status', ['linked', 'active'])
@@ -193,16 +196,18 @@ export const ReferralsDashboard: React.FC = () => {
         .limit(50);
 
       if (activeError) throw activeError;
-      const formattedActive = (active || []).map((r: PatientReferralRow) => ({
-        ...r,
-        source_name: r.external_referral_sources?.organization_name,
-      }));
+      const formattedActive = (active || []).map((r: PatientReferralRow) => {
+        const src = Array.isArray(r.external_referral_sources)
+          ? r.external_referral_sources[0]
+          : r.external_referral_sources;
+        return { ...r, source_name: src?.organization_name };
+      });
       setActiveReferrals(formattedActive);
 
       // Load referral alerts
       const { data: alertsData, error: alertsError } = await supabase
         .from('referral_alerts')
-        .select('*')
+        .select('id, referral_id, patient_name, alert_type, severity, message, created_at, acknowledged')
         .eq('acknowledged', false)
         .order('created_at', { ascending: false })
         .limit(20);

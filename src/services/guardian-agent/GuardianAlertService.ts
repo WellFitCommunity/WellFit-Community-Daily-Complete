@@ -499,7 +499,7 @@ export class GuardianAlertService {
   static async getPendingAlerts(): Promise<GuardianAlert[]> {
     const { data, error } = await supabase
       .from('guardian_alerts')
-      .select('*')
+      .select('id, timestamp, severity, category, title, description, session_recording_id, session_recording_url, video_timestamp, healing_operation_id, generated_fix, affected_component, affected_users, error_stack, status, acknowledged_by, acknowledged_at, resolution_notes, actions, metadata')
       .in('status', ['pending', 'acknowledged'])
       .order('created_at', { ascending: false });
 
@@ -564,7 +564,7 @@ export class GuardianAlertService {
       // Get alert details
       const { data: alert, error: fetchError } = await supabase
         .from('guardian_alerts')
-        .select('*')
+        .select('id, generated_fix, category, severity, description, status')
         .eq('id', alertId)
         .single();
 

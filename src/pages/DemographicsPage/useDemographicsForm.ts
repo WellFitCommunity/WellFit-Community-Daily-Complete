@@ -70,7 +70,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
       try {
         const { data, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('role, role_slug, role_code, demographics_complete, demographics_step, first_name, last_name, phone, dob, address, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, gender, ethnicity, marital_status, living_situation, education_level, income_range, insurance_type, preferred_language, requires_interpreter, veteran_status, health_conditions, medications, mobility_level, hearing_status, vision_status, has_smartphone, has_internet, tech_comfort_level, transportation_access, food_security, social_support')
           .eq('user_id', user.id)
           .maybeSingle();
 

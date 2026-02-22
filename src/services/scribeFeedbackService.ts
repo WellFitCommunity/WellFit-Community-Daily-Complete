@@ -192,7 +192,7 @@ export async function getRecentFeedback(
   try {
     const { data, error } = await supabase
       .from('scribe_session_feedback')
-      .select('*')
+      .select('id, provider_id, session_id, rating, issues, comment, scribe_mode, session_duration_seconds, created_at')
       .order('created_at', { ascending: false })
       .limit(limit);
 

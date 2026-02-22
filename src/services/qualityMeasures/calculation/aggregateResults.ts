@@ -21,7 +21,7 @@ export async function calculateAggregateResults(
   try {
     const { data: results, error } = await supabase
       .from('ecqm_patient_results')
-      .select('*')
+      .select('initial_population, denominator, denominator_exclusion, denominator_exception, numerator, numerator_exclusion')
       .eq('tenant_id', tenantId)
       .eq('measure_id', measureId)
       .eq('reporting_period_start', reportingPeriodStart.toISOString().split('T')[0]);
@@ -93,7 +93,7 @@ export async function getAggregateResults(
   try {
     const { data, error } = await supabase
       .from('ecqm_aggregate_results')
-      .select('*')
+      .select('measure_id, initial_population_count, denominator_count, denominator_exclusion_count, denominator_exception_count, numerator_count, numerator_exclusion_count, performance_rate, patient_count')
       .eq('tenant_id', tenantId)
       .eq('reporting_period_start', reportingPeriodStart.toISOString().split('T')[0])
       .order('measure_id');

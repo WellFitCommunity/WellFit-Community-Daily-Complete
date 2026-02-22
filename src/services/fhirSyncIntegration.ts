@@ -615,36 +615,37 @@ export class FHIRSyncIntegration {
   }> {
     try {
       // Fetch all resources for the patient in parallel
+      // TODO: specify columns per FHIR resource type — full export needed for FHIR Bundle generation
       const [observations, conditions, medications, procedures, carePlans, immunizations] =
         await Promise.all([
           supabase
             .from('fhir_observations')
-            .select('*')
+            .select('id, fhir_id, patient_id, status, category, code_system, code, code_display, effective_datetime, value_quantity_value, value_quantity_unit, value_quantity_code, value_quantity_system, components')
             .eq('patient_id', patientId)
             .order('effective_datetime', { ascending: false }),
           supabase
             .from('fhir_conditions')
-            .select('*')
+            .select('id, fhir_id, patient_id, clinical_status, verification_status, category, code_system, code, code_display, onset_datetime, recorded_date')
             .eq('patient_id', patientId)
             .order('recorded_date', { ascending: false }),
           supabase
             .from('fhir_medication_requests')
-            .select('*')
+            .select('id, fhir_id, patient_id, status, intent, medication_code_system, medication_code, medication_display, authored_on, dosage_text')
             .eq('patient_id', patientId)
             .order('authored_on', { ascending: false }),
           supabase
             .from('fhir_procedures')
-            .select('*')
+            .select('id, fhir_id, patient_id, status, code_system, code, code_display, performed_datetime, performed_period_start, performed_period_end')
             .eq('patient_id', patientId)
             .order('performed_datetime', { ascending: false }),
           supabase
             .from('fhir_care_plans')
-            .select('*')
+            .select('id, patient_id, status, intent, title, description, period_start, period_end, created_at')
             .eq('patient_id', patientId)
             .order('created_at', { ascending: false }),
           supabase
             .from('fhir_immunizations')
-            .select('*')
+            .select('id, fhir_id, patient_id, status, vaccine_code, vaccine_display, occurrence_datetime, lot_number')
             .eq('patient_id', patientId)
             .order('occurrence_datetime', { ascending: false }),
         ]);

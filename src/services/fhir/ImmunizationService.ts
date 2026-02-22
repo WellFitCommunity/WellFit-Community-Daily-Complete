@@ -24,7 +24,7 @@ export class ImmunizationService {
     try {
       const { data, error } = await supabase
         .from('fhir_immunizations')
-        .select('*')
+        .select('id, fhir_id, patient_id, status, status_reason_code, status_reason_display, vaccine_code, vaccine_display, occurrence_datetime, primary_source, lot_number, expiration_date, manufacturer, site_code, site_display, route_code, route_display, dose_quantity_value, dose_quantity_unit, performer_actor_reference, performer_actor_display, performer_practitioner_id, location_reference, location_display, reason_code, reason_display, reaction_date, reaction_reported, protocol_dose_number_positive_int, protocol_series_doses_positive_int, note, created_by, updated_by, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('occurrence_datetime', { ascending: false });
 
@@ -48,7 +48,7 @@ export class ImmunizationService {
     try {
       const { data, error } = await supabase
         .from('fhir_immunizations')
-        .select('*')
+        .select('id, fhir_id, patient_id, status, status_reason_code, status_reason_display, vaccine_code, vaccine_display, occurrence_datetime, primary_source, lot_number, expiration_date, manufacturer, site_code, site_display, route_code, route_display, dose_quantity_value, dose_quantity_unit, performer_actor_reference, performer_actor_display, performer_practitioner_id, location_reference, location_display, reason_code, reason_display, reaction_date, reaction_reported, protocol_dose_number_positive_int, protocol_series_doses_positive_int, note, created_by, updated_by, created_at, updated_at')
         .eq('id', id)
         .single();
 
@@ -79,7 +79,7 @@ export class ImmunizationService {
     try {
       const { data, error } = await supabase
         .from('fhir_immunizations')
-        .select('*')
+        .select('id, fhir_id, patient_id, status, status_reason_code, status_reason_display, vaccine_code, vaccine_display, occurrence_datetime, primary_source, lot_number, expiration_date, manufacturer, site_code, site_display, route_code, route_display, dose_quantity_value, dose_quantity_unit, performer_actor_reference, performer_actor_display, performer_practitioner_id, location_reference, location_display, reason_code, reason_display, reaction_date, reaction_reported, protocol_dose_number_positive_int, protocol_series_doses_positive_int, note, created_by, updated_by, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'completed')
         .order('occurrence_datetime', { ascending: false });
@@ -228,7 +228,7 @@ export class ImmunizationService {
       const { data, error } = await supabase
         .from('fhir_immunizations')
         .insert(immunization)
-        .select()
+        .select('id, fhir_id, patient_id, status, status_reason_code, status_reason_display, vaccine_code, vaccine_display, occurrence_datetime, primary_source, lot_number, expiration_date, manufacturer, site_code, site_display, route_code, route_display, dose_quantity_value, dose_quantity_unit, performer_actor_reference, performer_actor_display, performer_practitioner_id, location_reference, location_display, reason_code, reason_display, reaction_date, reaction_reported, protocol_dose_number_positive_int, protocol_series_doses_positive_int, note, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -262,7 +262,7 @@ export class ImmunizationService {
         .from('fhir_immunizations')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, fhir_id, patient_id, status, status_reason_code, status_reason_display, vaccine_code, vaccine_display, occurrence_datetime, primary_source, lot_number, expiration_date, manufacturer, site_code, site_display, route_code, route_display, dose_quantity_value, dose_quantity_unit, performer_actor_reference, performer_actor_display, performer_practitioner_id, location_reference, location_display, reason_code, reason_display, reaction_date, reaction_reported, protocol_dose_number_positive_int, protocol_series_doses_positive_int, note, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -315,7 +315,7 @@ export class ImmunizationService {
     toDate?: string;
   }): Promise<FHIRApiResponse<FHIRImmunization[]>> {
     try {
-      let query = supabase.from('fhir_immunizations').select('*');
+      let query = supabase.from('fhir_immunizations').select('id, fhir_id, patient_id, status, status_reason_code, status_reason_display, vaccine_code, vaccine_display, occurrence_datetime, primary_source, lot_number, expiration_date, manufacturer, site_code, site_display, route_code, route_display, dose_quantity_value, dose_quantity_unit, performer_actor_reference, performer_actor_display, performer_practitioner_id, location_reference, location_display, reason_code, reason_display, reaction_date, reaction_reported, protocol_dose_number_positive_int, protocol_series_doses_positive_int, note, created_by, updated_by, created_at, updated_at');
 
       if (params.patientId) {
         query = query.eq('patient_id', params.patientId);

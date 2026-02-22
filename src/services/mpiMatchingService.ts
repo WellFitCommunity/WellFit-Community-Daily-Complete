@@ -390,7 +390,7 @@ async function getIdentityRecord(
   try {
     const { data, error } = await supabase
       .from('mpi_identity_records')
-      .select('*')
+      .select('id, patient_id, tenant_id, enterprise_mpi_id, first_name_normalized, last_name_normalized, middle_name_normalized, first_name_soundex, last_name_soundex, first_name_metaphone, last_name_metaphone, date_of_birth, gender, ssn_last_four, phone_normalized, email_normalized, address_normalized, city_normalized, state, zip_code, mrn, mrn_assigning_authority, identity_confidence_score, identity_verified_at, identity_verified_by, verification_method, match_hash, last_matched_at, match_count, is_golden_record, is_active, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('tenant_id', tenantId)
       .single();
@@ -420,7 +420,7 @@ async function findPotentialMatches(
     // Build blocking query (performance optimization - narrows search space)
     let query = supabase
       .from('mpi_identity_records')
-      .select('*')
+      .select('id, patient_id, tenant_id, enterprise_mpi_id, first_name_normalized, last_name_normalized, middle_name_normalized, first_name_soundex, last_name_soundex, first_name_metaphone, last_name_metaphone, date_of_birth, gender, ssn_last_four, phone_normalized, email_normalized, address_normalized, city_normalized, state, zip_code, mrn, mrn_assigning_authority, identity_confidence_score, identity_verified_at, identity_verified_by, verification_method, match_hash, last_matched_at, match_count, is_golden_record, is_active, created_at, updated_at')
       .eq('tenant_id', options.tenantId)
       .eq('is_active', true);
 
@@ -650,7 +650,7 @@ async function getPendingCandidates(
   try {
     let query = supabase
       .from('mpi_match_candidates')
-      .select('*')
+      .select('id, patient_id_a, patient_id_b, identity_record_a, identity_record_b, tenant_id, overall_match_score, match_algorithm_version, field_scores, matching_fields_used, blocking_key, status, priority, reviewed_by, reviewed_at, review_decision, review_notes, auto_match_eligible, auto_match_blocked_reason, detected_at, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .eq('status', 'pending')
       .order('priority', { ascending: false })
@@ -732,7 +732,7 @@ async function getMatchingConfig(tenantId: string): Promise<ServiceResult<MPIMat
   try {
     const { data, error } = await supabase
       .from('mpi_matching_config')
-      .select('*')
+      .select('id, tenant_id, auto_merge_threshold, review_threshold, definite_no_match_threshold, field_weights, blocking_keys, use_jaro_winkler, use_soundex, use_metaphone, jaro_winkler_threshold, require_dob_match, allow_partial_ssn_match, phone_match_weight_boost, auto_merge_enabled, auto_merge_requires_mrn_match, auto_merge_max_per_day, default_review_priority, escalate_high_volume, high_volume_threshold, audit_all_matches, retain_match_history_days, is_active, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .single();
@@ -957,7 +957,7 @@ async function getEnterpriseMPILinks(
   try {
     const { data, error } = await supabase
       .from('mpi_identity_records')
-      .select('*')
+      .select('id, patient_id, tenant_id, enterprise_mpi_id, first_name_normalized, last_name_normalized, middle_name_normalized, first_name_soundex, last_name_soundex, first_name_metaphone, last_name_metaphone, date_of_birth, gender, ssn_last_four, phone_normalized, email_normalized, address_normalized, city_normalized, state, zip_code, mrn, mrn_assigning_authority, identity_confidence_score, identity_verified_at, identity_verified_by, verification_method, match_hash, last_matched_at, match_count, is_golden_record, is_active, created_at, updated_at')
       .eq('enterprise_mpi_id', enterpriseMpiId)
       .eq('is_active', true);
 

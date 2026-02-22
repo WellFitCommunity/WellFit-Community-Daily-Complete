@@ -172,7 +172,7 @@ export async function listBreachIncidents(): Promise<ServiceResult<BreachInciden
   try {
     const { data, error } = await supabase
       .from('breach_incidents')
-      .select('*')
+      .select('id, tenant_id, incident_number, title, description, discovered_date, occurred_date, reported_by, status, severity, phi_types_involved, individuals_affected, breach_type, risk_assessment_result, risk_assessed_at, notification_plan_created, hhs_notification_required, hhs_notified_at, media_notification_required, media_notified_at, individual_notification_deadline, resolution_notes, resolved_at, created_at, updated_at')
       .order('discovered_date', { ascending: false });
 
     if (error) return failure('DATABASE_ERROR', error.message, error);
@@ -193,7 +193,7 @@ export async function getBreachIncident(
   try {
     const { data, error } = await supabase
       .from('breach_incidents')
-      .select('*')
+      .select('id, tenant_id, incident_number, title, description, discovered_date, occurred_date, reported_by, status, severity, phi_types_involved, individuals_affected, breach_type, risk_assessment_result, risk_assessed_at, notification_plan_created, hhs_notification_required, hhs_notified_at, media_notification_required, media_notified_at, individual_notification_deadline, resolution_notes, resolved_at, created_at, updated_at')
       .eq('id', incidentId)
       .single();
 
@@ -326,7 +326,7 @@ export async function getBreachNotifications(
   try {
     const { data, error } = await supabase
       .from('breach_notifications')
-      .select('*')
+      .select('id, breach_incident_id, notification_type, recipient_description, channel, sent_at, delivery_status, content_summary, created_at')
       .eq('breach_incident_id', incidentId)
       .order('created_at', { ascending: false });
 

@@ -211,7 +211,7 @@ export class AccuracyTrackingService {
     try {
       let query = this.supabase
         .from('ai_predictions')
-        .select('*')
+        .select('id, skill_name, tenant_id, is_accurate, confidence_score, cost_usd, latency_ms, predicted_at')
         .eq('skill_name', skillName)
         .gte('predicted_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
 
@@ -267,7 +267,7 @@ export class AccuracyTrackingService {
     try {
       const { data, error } = await this.supabase
         .from('ai_prompt_versions')
-        .select('*')
+        .select('id, skill_name, prompt_type, version_number, prompt_content, description, is_active, total_uses, accuracy_rate')
         .eq('skill_name', skillName)
         .eq('prompt_type', promptType)
         .eq('is_active', true)
@@ -411,7 +411,7 @@ export class AccuracyTrackingService {
     try {
       const { data, error } = await this.supabase
         .from('ai_prompt_versions')
-        .select('*')
+        .select('id, skill_name, prompt_type, version_number, prompt_content, description, is_active, total_uses, accuracy_rate')
         .eq('skill_name', skillName)
         .eq('prompt_type', promptType)
         .order('version_number', { ascending: false });
@@ -506,7 +506,7 @@ export class AccuracyTrackingService {
     try {
       const { data, error } = await this.supabase
         .from('ai_prompt_experiments')
-        .select('*')
+        .select('id, experiment_name, status, traffic_split, treatment_prompt_id, control_prompt_id')
         .eq('experiment_name', experimentName)
         .eq('status', 'running')
         .single();
@@ -534,7 +534,7 @@ export class AccuracyTrackingService {
     try {
       const { data, error } = await this.supabase
         .from('ai_prompt_experiments')
-        .select('*')
+        .select('id, experiment_name, status, traffic_split, treatment_prompt_id, control_prompt_id, control_predictions, control_accurate, treatment_predictions, treatment_accurate')
         .eq('id', experimentId)
         .single();
 

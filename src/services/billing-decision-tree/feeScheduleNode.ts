@@ -47,7 +47,7 @@ export async function lookupFee(
     // First, try to find contracted rate in fee schedule
     const { data: feeSchedule } = await supabase
       .from('fee_schedule_items')
-      .select('*')
+      .select('amount')
       .eq('payer_id', payerId)
       .eq('code', cptCode)
       .eq('code_type', 'CPT')
@@ -72,7 +72,7 @@ export async function lookupFee(
     // Fall back to chargemaster or default rates
     const { data: cptData } = await supabase
       .from('codes_cpt')
-      .select('*')
+      .select('code')
       .eq('code', cptCode)
       .single();
 

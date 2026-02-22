@@ -142,7 +142,7 @@ async function getRules(tenantId?: string): Promise<ServiceResult<EscalationRule
   try {
     let query = supabase
       .from('result_escalation_rules')
-      .select('*')
+      .select('id, test_name, display_name, condition, threshold_high, threshold_low, severity, route_to_specialty, target_minutes, escalation_1_minutes, escalation_2_minutes, auto_create_task, notification_channels, clinical_guidance, is_active, tenant_id, created_at, updated_at')
       .eq('is_active', true)
       .order('test_name', { ascending: true });
 
@@ -315,7 +315,7 @@ async function getActiveEscalations(
   try {
     let query = supabase
       .from('result_escalation_log')
-      .select('*')
+      .select('id, rule_id, result_id, result_source, patient_id, test_name, test_value, test_unit, severity, route_to_specialty, routed_to_provider_id, task_id, escalation_status, resolved_at, resolved_by, resolution_notes, tenant_id, created_at')
       .order('created_at', { ascending: false });
 
     if (filters?.severity) {

@@ -192,7 +192,7 @@ export async function getProviderSignoffs(
   try {
     const { data, error } = await supabase
       .from('ems_provider_signoffs')
-      .select('*')
+      .select('id, handoff_id, provider_id, provider_name, provider_role, provider_credentials, signoff_type, patient_condition_on_arrival, initial_interventions, treatment_plan_notes, disposition, admitted_to_service, electronic_signature, signoff_timestamp')
       .eq('handoff_id', handoffId)
       .order('signoff_timestamp', { ascending: false });
 

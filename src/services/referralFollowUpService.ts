@@ -173,7 +173,7 @@ async function getFollowUpHistory(
   try {
     const { data, error } = await supabase
       .from('referral_follow_up_log')
-      .select('*')
+      .select('id, referral_id, referral_source_id, follow_up_type, follow_up_reason, aging_days, recipient_phone, recipient_email, delivery_status, error_message, tenant_id, created_at')
       .eq('referral_id', referralId)
       .order('created_at', { ascending: false });
 
@@ -238,7 +238,7 @@ async function getAgingConfig(
   try {
     const { data, error } = await supabase
       .from('referral_aging_config')
-      .select('*')
+      .select('id, tenant_id, day_3_action, day_7_action, day_14_action, cooldown_hours, max_follow_ups, is_active, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .single();
 

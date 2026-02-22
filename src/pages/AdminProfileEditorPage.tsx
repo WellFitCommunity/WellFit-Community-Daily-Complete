@@ -92,7 +92,7 @@ const AdminProfileEditor: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('admin_notes')
-          .select('*')
+          .select('id, senior_id, created_by, note, created_at, updated_at, updated_by')
           .eq('senior_id', selectedId)
           .order('created_at', { ascending: false });
         if (error) throw error;
@@ -123,7 +123,7 @@ const AdminProfileEditor: React.FC = () => {
       // refresh notes
       const { data, error: err2 } = await supabase
         .from('admin_notes')
-        .select('*')
+        .select('id, senior_id, created_by, note, created_at, updated_at, updated_by')
         .eq('senior_id', selectedId)
         .order('created_at', { ascending: false });
       if (err2) throw err2;
@@ -151,7 +151,7 @@ const AdminProfileEditor: React.FC = () => {
       // refresh notes
       const { data, error: err2 } = await supabase
         .from('admin_notes')
-        .select('*')
+        .select('id, senior_id, created_by, note, created_at, updated_at, updated_by')
         .eq('senior_id', selectedId)
         .order('created_at', { ascending: false });
       if (err2) throw err2;

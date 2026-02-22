@@ -150,7 +150,7 @@ async function lockNote(
     if (noteType === 'clinical_note') {
       const { data, error } = await supabase
         .from('clinical_notes')
-        .select('*')
+        .select('id, encounter_id, type, content, author_id, is_locked, locked_at, locked_by, signature_hash, version, patient_id, created_at, updated_at')
         .eq('id', noteId)
         .single();
 
@@ -161,7 +161,7 @@ async function lockNote(
     } else {
       const { data, error } = await supabase
         .from('ai_progress_notes')
-        .select('*')
+        .select('id, note_id, patient_id, provider_id, period_start, period_end, note_type, summary, key_findings, recommendations, status, is_locked, locked_at, locked_by, signature_hash, version, created_at, updated_at')
         .eq('id', noteId)
         .single();
 
@@ -485,7 +485,7 @@ async function getLockAuditHistory(
 
     let query = supabase
       .from('clinical_note_lock_audit')
-      .select('*')
+      .select('id, action, performed_by, performed_at, reason, success, failure_reason')
       .eq(column, noteId)
       .order('performed_at', { ascending: false });
 

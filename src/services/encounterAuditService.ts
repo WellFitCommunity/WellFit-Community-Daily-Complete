@@ -103,7 +103,7 @@ async function fetchStatusHistory(encounterId: string): Promise<EncounterTimelin
 async function fetchFieldChanges(encounterId: string): Promise<EncounterTimelineEntry[]> {
   const { data, error } = await supabase
     .from('clinical_field_provenance')
-    .select('*')
+    .select('id, encounter_id, field_name, old_value, new_value, changed_by, changed_at, change_reason')
     .eq('encounter_id', encounterId)
     .order('changed_at', { ascending: true });
 
@@ -139,7 +139,7 @@ async function fetchAmendments(encounterId: string): Promise<EncounterTimelineEn
 
   const { data, error } = await supabase
     .from('clinical_note_amendments')
-    .select('*')
+    .select('id, note_id, amendment_text, amendment_reason, amended_by, created_at, status')
     .in('note_id', noteIds)
     .order('created_at', { ascending: true });
 
@@ -175,7 +175,7 @@ async function fetchLockEvents(encounterId: string): Promise<EncounterTimelineEn
 
   const { data, error } = await supabase
     .from('clinical_note_lock_audit')
-    .select('*')
+    .select('id, note_id, action, performed_by, created_at, reason')
     .in('note_id', noteIds)
     .order('created_at', { ascending: true });
 
@@ -209,7 +209,7 @@ async function fetchLockEvents(encounterId: string): Promise<EncounterTimelineEn
 async function fetchAuditLogs(encounterId: string): Promise<EncounterTimelineEntry[]> {
   const { data, error } = await supabase
     .from('audit_logs')
-    .select('*')
+    .select('id, event_type, category, severity, actor_user_id, details, created_at')
     .eq('resource_id', encounterId)
     .order('created_at', { ascending: true })
     .limit(200);

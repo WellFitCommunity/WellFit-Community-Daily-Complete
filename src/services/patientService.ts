@@ -102,7 +102,7 @@ class PatientService {
     try {
       const query = supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .in('role_code', [1, 4, 19]) // patient, senior, regular patient
         .order('created_at', { ascending: false });
 
@@ -136,7 +136,7 @@ class PatientService {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .eq('user_id', userId)
         .single();
 
@@ -178,7 +178,7 @@ class PatientService {
       // Build search query
       const query = supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .in('role_code', [1, 4, 19])
         .or(
           `first_name.ilike.%${term}%,last_name.ilike.%${term}%,phone.ilike.%${term}%`
@@ -215,7 +215,7 @@ class PatientService {
     try {
       const query = supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .eq('hospital_unit', unitId)
         .eq('enrollment_type', 'hospital')
         .order('room_number', { ascending: true });
@@ -324,7 +324,7 @@ class PatientService {
     try {
       const query = supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .eq('enrollment_type', 'hospital')
         .order('admission_date', { ascending: false });
 
@@ -355,7 +355,7 @@ class PatientService {
     try {
       const query = supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .eq('enrollment_type', 'app')
         .in('role_code', [4, 19]) // senior, regular patient
         .order('created_at', { ascending: false });
@@ -388,7 +388,7 @@ class PatientService {
     try {
       const query = supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .eq('tenant_id', tenantId)
         .in('role_code', [1, 4, 19])
         .order('last_name', { ascending: true });
@@ -422,7 +422,7 @@ class PatientService {
     try {
       let query = supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .in('role_code', [1, 4, 19]);
 
       // Apply filters
@@ -485,7 +485,7 @@ class PatientService {
 
       const query = supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, first_name, last_name, phone, dob, address, city, state, zip, gender, role_code, is_admin, tenant_id, created_at, enrollment_type, mrn, hospital_unit, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id')
         .in('role_code', [1, 4, 19])
         .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: false });
@@ -514,7 +514,7 @@ class PatientService {
     try {
       let query = supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true })
+        .select('user_id', { count: 'exact', head: true })
         .in('role_code', [1, 4, 19]);
 
       if (tenantId) {

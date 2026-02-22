@@ -54,7 +54,7 @@ export async function getGuideDefinitions(): Promise<ServiceResult<SaferGuideDef
   try {
     const { data, error } = await supabase
       .from('safer_guide_definitions')
-      .select('*')
+      .select('id, guide_number, guide_name, description, category, source_url, is_active')
       .eq('is_active', true)
       .order('guide_number');
 
@@ -83,7 +83,7 @@ export async function getGuideQuestions(
   try {
     const { data, error } = await supabase
       .from('safer_guide_questions')
-      .select('*')
+      .select('id, guide_id, question_number, question_text, help_text, recommended_practice, response_type, is_required, display_order')
       .eq('guide_id', guideId)
       .order('display_order');
 
@@ -115,7 +115,7 @@ export async function getOrCreateAssessment(
     // eslint-disable-next-line prefer-const -- assessment is reassigned if not found
     let { data: assessment, error: fetchError } = await supabase
       .from('safer_guide_assessments')
-      .select('*')
+      .select('id, tenant_id, assessment_year, status, started_at, completed_at, attested_at, attested_by, guide_scores, overall_score, attestation_pdf_path')
       .eq('tenant_id', tenantId)
       .eq('assessment_year', year)
       .maybeSingle();
@@ -145,11 +145,19 @@ export async function getOrCreateAssessment(
 
       assessment = newAssessment;
 
+      if (!assessment) {
+        return failure('DATABASE_ERROR', 'Failed to create assessment record');
+      }
+
       await auditLogger.info('SAFER_ASSESSMENT_CREATED', {
         tenantId,
         year,
         assessmentId: assessment.id
       });
+    }
+
+    if (!assessment) {
+      return failure('NOT_FOUND', 'Assessment not found');
     }
 
     // Get guide definitions with question counts
@@ -266,7 +274,7 @@ export async function getGuideQuestionsWithResponses(
     // Get all questions for this guide
     const { data: questions, error: questionsError } = await supabase
       .from('safer_guide_questions')
-      .select('*')
+      .select('id, guide_id, question_number, question_text, help_text, recommended_practice, response_type, is_required, display_order')
       .eq('guide_id', guideId)
       .order('display_order');
 
@@ -278,7 +286,7 @@ export async function getGuideQuestionsWithResponses(
     const questionIds = (questions || []).map(q => q.id);
     const { data: responses, error: responsesError } = await supabase
       .from('safer_guide_responses')
-      .select('*')
+      .select('id, assessment_id, question_id, response, notes, action_plan, responded_at, responded_by')
       .eq('assessment_id', assessmentId)
       .in('question_id', questionIds);
 
@@ -501,7 +509,7 @@ export async function getAssessmentHistory(
   try {
     const { data, error } = await supabase
       .from('safer_guide_assessments')
-      .select('*')
+      .select('id, tenant_id, assessment_year, status, started_at, completed_at, attested_at, attested_by, guide_scores, overall_score, attestation_pdf_path')
       .eq('tenant_id', tenantId)
       .order('assessment_year', { ascending: false });
 

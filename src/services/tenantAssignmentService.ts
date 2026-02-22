@@ -39,7 +39,7 @@ export const TenantAssignmentService = {
       // Check if user is a super admin
       const { data: superAdminData } = await supabase
         .from('super_admin_users')
-        .select('*')
+        .select('id, user_id, is_active, role, created_at, updated_at')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .single();

@@ -94,7 +94,7 @@ const ClinicalNoteSummaryDashboard: React.FC = () => {
       // Fetch AI-generated clinical notes
       const { data: notes, error: notesError } = await supabase
         .from('clinical_notes')
-        .select('*')
+        .select('id, patient_id, encounter_id, note_type, note_content, status, created_by, created_at, is_locked, locked_at, locked_by, ai_generated, reviewed_by, reviewed_at')
         .eq('ai_generated', true)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -106,7 +106,7 @@ const ClinicalNoteSummaryDashboard: React.FC = () => {
       // Fetch AI progress notes
       const { data: aiNotes, error: aiError } = await supabase
         .from('ai_progress_notes')
-        .select('*')
+        .select('id, patient_id, encounter_id, synthesis_type, content, confidence_score, model_used, created_at, reviewed, reviewer_id')
         .order('created_at', { ascending: false })
         .limit(100);
 

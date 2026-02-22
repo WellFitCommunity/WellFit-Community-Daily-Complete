@@ -304,7 +304,7 @@ describe('SOC2MonitoringService', () => {
 
       expect(result).toEqual(mockMetrics);
       expect(mockSupabase.from).toHaveBeenCalledWith('security_monitoring_dashboard');
-      expect(mockSupabase._mocks.mockSelect).toHaveBeenCalledWith('*');
+      expect(mockSupabase._mocks.mockSelect).toHaveBeenCalledWith('security_events_24h, critical_events_24h, high_events_24h, medium_events_24h, low_events_24h, failed_logins_24h, failed_logins_1h, unauthorized_access_24h, auto_blocked_24h, open_investigations, audit_events_24h, failed_operations_24h, phi_access_24h, last_updated');
       expect(mockSupabase._mocks.mockLimit).toHaveBeenCalledWith(1);
     });
 

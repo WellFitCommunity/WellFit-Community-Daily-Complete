@@ -265,7 +265,7 @@ export class DeviceService {
       // Check if device already exists
       const { data: existing } = await supabase
         .from('wearable_connections')
-        .select('*')
+        .select('id, user_id, device_type, device_model, connected, last_sync, created_at')
         .eq('user_id', user.id)
         .eq('device_type', deviceType)
         .maybeSingle();
@@ -363,7 +363,7 @@ export class DeviceService {
 
       const { data, error } = await supabase
         .from('wearable_connections')
-        .select('*')
+        .select('id, user_id, device_type, device_model, connected, last_sync, created_at')
         .eq('user_id', user.id)
         .eq('device_type', deviceType)
         .maybeSingle();
@@ -386,7 +386,7 @@ export class DeviceService {
 
       const { data, error } = await supabase
         .from('wearable_connections')
-        .select('*')
+        .select('id, user_id, device_type, device_model, connected, last_sync, created_at')
         .eq('user_id', user.id)
         .eq('connected', true);
 
@@ -449,7 +449,7 @@ export class DeviceService {
 
       const { data, error } = await supabase
         .from('wearable_vital_signs')
-        .select('*')
+        .select('id, user_id, device_id, value, unit, measured_at, metadata')
         .eq('user_id', user.id)
         .eq('vital_type', 'weight')
         .order('measured_at', { ascending: false })
@@ -514,7 +514,7 @@ export class DeviceService {
 
       const { data, error } = await supabase
         .from('wearable_vital_signs')
-        .select('*')
+        .select('id, user_id, device_id, value, unit, measured_at, metadata')
         .eq('user_id', user.id)
         .eq('vital_type', 'blood_pressure')
         .order('measured_at', { ascending: false })
@@ -577,7 +577,7 @@ export class DeviceService {
 
       const { data, error } = await supabase
         .from('wearable_vital_signs')
-        .select('*')
+        .select('id, user_id, device_id, value, unit, measured_at, metadata')
         .eq('user_id', user.id)
         .eq('vital_type', 'glucose')
         .order('measured_at', { ascending: false })
@@ -640,7 +640,7 @@ export class DeviceService {
 
       const { data, error } = await supabase
         .from('wearable_vital_signs')
-        .select('*')
+        .select('id, user_id, device_id, value, unit, measured_at, metadata')
         .eq('user_id', user.id)
         .eq('vital_type', 'oxygen_saturation')
         .order('measured_at', { ascending: false })

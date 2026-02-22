@@ -280,7 +280,7 @@ async function getPatientSegments(
   try {
     let query = supabase
       .from('sensitive_data_segments')
-      .select('*')
+      .select('id, patient_id, segment_type, source_table, source_record_id, source_field, classification_method, icd10_codes, consent_id, consent_required, consent_obtained, consent_obtained_at, disclosure_prohibited, disclosure_exceptions, classified_by, classified_at, is_active, created_at, updated_at')
       .eq('patient_id', patientId);
 
     if (!options.includeInactive) {
@@ -407,7 +407,7 @@ async function getDisclosureHistory(
   try {
     let query = supabase
       .from('sensitive_disclosure_log')
-      .select('*')
+      .select('id, patient_id, segment_id, recipient_name, recipient_organization, recipient_type, disclosure_basis, authorization_id, disclosed_at, disclosed_by, disclosure_method, data_types_disclosed, record_count, redisclosure_notice_included')
       .eq('patient_id', patientId)
       .order('disclosed_at', { ascending: false });
 
@@ -587,12 +587,12 @@ async function getSensitiveDataStats(
     // Get disclosure count
     const { count: disclosureCount } = await supabase
       .from('sensitive_disclosure_log')
-      .select('*', { count: 'exact', head: true });
+      .select('id', { count: 'exact', head: true });
 
     // Get active authorizations
     const { count: authCount } = await supabase
       .from('cfr42_authorization_log')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .is('revoked_at', null);
 
     return success({

@@ -53,7 +53,7 @@ export class FHIRIntegrationService {
       // Fetch patient profile
       const { data: profile, error: profileError } = await this.supabase
         .from('profiles')
-        .select('*')
+        .select('id, user_id, phone, first_name, last_name, email, dob, address, caregiver_email, emergency_contact_name, created_at')
         .eq('user_id', userId)
         .single();
 
@@ -67,7 +67,7 @@ export class FHIRIntegrationService {
 
       const { data: checkIns, error: checkInsError } = await this.supabase
         .from('check_ins')
-        .select('*')
+        .select('id, user_id, is_emergency, label, notes, mood, activity_level, heart_rate, pulse_oximeter, bp_systolic, bp_diastolic, glucose_mg_dl, created_at')
         .eq('user_id', userId)
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false });
@@ -75,7 +75,7 @@ export class FHIRIntegrationService {
       // Fetch self reports (last 30 days)
       const { data: healthEntries, error: healthError } = await this.supabase
         .from('self_reports')
-        .select('*')
+        .select('id, user_id, entry_type, data, created_at')
         .eq('user_id', userId)
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false });
@@ -239,7 +239,7 @@ export class FHIRIntegrationService {
       // Fetch medications
       const { data: medications, error: medError } = await this.supabase
         .from('medications')
-        .select('*')
+        .select('id, user_id, medication_name, generic_name, brand_name, dosage, dosage_form, strength, instructions, frequency, route, prescribed_by, prescribed_date, prescription_number, pharmacy_name, pharmacy_phone, quantity, refills_remaining, last_refill_date, next_refill_date, ndc_code, purpose, side_effects, warnings, interactions, status, discontinued_date, discontinued_reason, ai_confidence, extraction_notes, needs_review, created_at, updated_at')
         .eq('user_id', userId)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
@@ -253,7 +253,7 @@ export class FHIRIntegrationService {
         // Get profile for patient reference
         const { data: profile } = await this.supabase
           .from('profiles')
-          .select('*')
+          .select('id, user_id, phone, first_name, last_name, email, dob, address, caregiver_email, emergency_contact_name, created_at')
           .eq('user_id', userId)
           .single();
 
@@ -306,7 +306,7 @@ export class FHIRIntegrationService {
       // Fetch immunizations
       const { data: immunizations, error: immError } = await this.supabase
         .from('fhir_immunizations')
-        .select('*')
+        .select('id, patient_id, status, vaccine_code, vaccine_display, vaccine_name, occurrence_datetime, created_at, primary_source, lot_number, expiration_date, site_display, route_display, dose_quantity_value, dose_quantity_unit, performer_actor_display, note, protocol_dose_number_positive_int, protocol_series_doses_positive_int, reaction_date, reaction_reported')
         .eq('patient_id', userId)
         .eq('status', 'completed')
         .order('occurrence_datetime', { ascending: false });
@@ -334,7 +334,7 @@ export class FHIRIntegrationService {
       // Fetch care plans
       const { data: carePlans, error: cpError } = await this.supabase
         .from('fhir_care_plans')
-        .select('*')
+        .select('id, patient_id, status, intent, category, title, description, period_start, period_end, created, created_at, author_display, care_team_reference, care_team_display, addresses_condition_references, addresses_condition_displays, goal_displays, activities, note')
         .eq('patient_id', userId)
         .in('status', ['active', 'on-hold'])
         .order('created', { ascending: false });

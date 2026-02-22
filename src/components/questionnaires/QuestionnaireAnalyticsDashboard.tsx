@@ -85,12 +85,23 @@ interface DashboardMetrics {
   riskFlagsToday: number;
 }
 
-// Database row types for questionnaire data with joined tables
-interface QuestionnaireResponseRow extends QuestionnaireResponse {
+// Raw database row type for questionnaire_responses — does NOT extend QuestionnaireResponse.
+// Supabase returns profiles as an array when it cannot determine FK cardinality.
+interface QuestionnaireResponseRow {
+  id: string;
+  questionnaire_id: string;
+  questionnaire_name: string;
+  respondent_id: string;
+  status: 'in_progress' | 'completed' | 'abandoned';
+  completion_time_minutes?: number;
+  score?: number;
+  risk_flags?: string[];
+  created_at: string;
+  completed_at?: string;
   profiles?: {
     first_name: string | null;
     last_name: string | null;
-  } | null;
+  }[] | null;
 }
 
 interface QuestionTemplateRow {
@@ -119,7 +130,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
       // Load questionnaire deployments
       const { data: deploymentsData, error: deploymentsError } = await supabase
         .from('questionnaire_deployments')
-        .select('*')
+        .select('id, questionnaire_id, questionnaire_name, target_population, deployment_type, status, start_date, end_date, target_count, completed_count, response_rate, created_at')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -131,26 +142,29 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
       const { data: responsesData, error: responsesError } = await supabase
         .from('questionnaire_responses')
         .select(`
-          *,
+          id, questionnaire_id, questionnaire_name, respondent_id, status, completion_time_minutes, score, risk_flags, created_at, completed_at,
           profiles(first_name, last_name)
         `)
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (!responsesError && responsesData) {
-        const formatted = responsesData.map((r: QuestionnaireResponseRow) => ({
-          ...r,
-          respondent_name: r.profiles
-            ? `${r.profiles.first_name || ''} ${r.profiles.last_name || ''}`.trim()
-            : 'Unknown',
-        }));
+        const formatted = responsesData.map((r: QuestionnaireResponseRow) => {
+          const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+          return {
+            ...r,
+            respondent_name: profile
+              ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+              : 'Unknown',
+          };
+        });
         setRecentResponses(formatted);
       }
 
       // Load question templates
       const { data: templatesData, error: templatesError } = await supabase
         .from('question_templates')
-        .select('*')
+        .select('id, question_text, category, times_used, updated_at')
         .order('times_used', { ascending: false })
         .limit(20);
 
@@ -173,16 +187,16 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
       );
       const totalResponses = (responsesData || []).length;
       const completedResponses = (responsesData || []).filter(
-        (r: QuestionnaireResponse) => r.status === 'completed'
+        (r: QuestionnaireResponseRow) => r.status === 'completed'
       );
       const avgCompletionTime = completedResponses.length > 0
         ? completedResponses.reduce(
-            (sum: number, r: QuestionnaireResponse) => sum + (r.completion_time_minutes || 0),
+            (sum: number, r: QuestionnaireResponseRow) => sum + (r.completion_time_minutes || 0),
             0
           ) / completedResponses.length
         : 0;
       const riskFlags = (responsesData || []).filter(
-        (r: QuestionnaireResponse) => r.risk_flags && r.risk_flags.length > 0
+        (r: QuestionnaireResponseRow) => r.risk_flags && r.risk_flags.length > 0
       ).length;
 
       setMetrics({

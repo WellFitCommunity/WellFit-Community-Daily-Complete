@@ -145,7 +145,7 @@ export async function getPatientDisclosures(
   try {
     let query = supabase
       .from('disclosure_accounting')
-      .select('*')
+      .select('id, tenant_id, patient_id, disclosed_by, disclosure_date, recipient_name, recipient_type, purpose, phi_types_disclosed, disclosure_method, data_classes_disclosed, legal_authority, patient_authorization_id, notes, created_at')
       .eq('patient_id', patientId)
       .order('disclosure_date', { ascending: false });
 
@@ -185,7 +185,7 @@ export async function getDisclosureReport(
   try {
     const { data, error } = await supabase
       .from('disclosure_accounting')
-      .select('*')
+      .select('id, tenant_id, patient_id, disclosed_by, disclosure_date, recipient_name, recipient_type, purpose, phi_types_disclosed, disclosure_method, data_classes_disclosed, legal_authority, patient_authorization_id, notes, created_at')
       .gte('disclosure_date', dateFrom)
       .lte('disclosure_date', dateTo)
       .order('disclosure_date', { ascending: false });

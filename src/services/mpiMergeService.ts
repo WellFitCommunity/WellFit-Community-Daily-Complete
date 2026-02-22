@@ -125,7 +125,7 @@ async function createPatientSnapshot(patientId: string): Promise<ServiceResult<P
     // Get profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('user_id, first_name, last_name, phone, email, address, city, state, zip, gender, ethnicity, marital_status, living_situation, health_conditions, medications, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, caregiver_email, tenant_id, created_at, updated_at')
       .eq('user_id', patientId)
       .single();
 
@@ -171,7 +171,7 @@ async function mergeProfileFields(
     // Get current surviving profile
     const { data: survivingProfile, error: getError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('user_id, first_name, last_name, phone, email, address, city, state, zip, gender, ethnicity, marital_status, living_situation, middle_name, health_conditions, medications, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, caregiver_email, tenant_id, created_at, updated_at')
       .eq('user_id', survivingPatientId)
       .single();
 
@@ -200,9 +200,10 @@ async function mergeProfileFields(
 
     const updates: Record<string, unknown> = {};
 
+    const survivingProfileRecord = survivingProfile as Record<string, unknown>;
     for (const field of mergeableFields) {
       if (
-        survivingProfile[field] === null &&
+        survivingProfileRecord[field] === null &&
         deprecatedProfile[field] !== null &&
         deprecatedProfile[field] !== undefined
       ) {
@@ -543,7 +544,7 @@ async function unmergePatients(request: UnmergeRequest): Promise<ServiceResult<M
     // 1. Get the merge history record
     const { data: mergeHistory, error: historyError } = await supabase
       .from('mpi_merge_history')
-      .select('*')
+      .select('id, merge_batch_id, operation_type, surviving_patient_id, surviving_identity_record_id, deprecated_patient_id, deprecated_identity_record_id, tenant_id, surviving_record_snapshot, deprecated_record_snapshot, related_data_snapshot, merged_record_snapshot, data_migrations, match_candidate_id, merge_decision_score, merge_decision_reason, merge_rules_applied, performed_by, performed_at, is_reversible, rolled_back, rolled_back_at, rolled_back_by, rollback_reason, rollback_batch_id, verified_by, verified_at, verification_notes, created_at, updated_at')
       .eq('id', request.mergeHistoryId)
       .single();
 
@@ -703,7 +704,7 @@ async function getMergeHistory(
   try {
     let query = supabase
       .from('mpi_merge_history')
-      .select('*')
+      .select('id, merge_batch_id, operation_type, surviving_patient_id, surviving_identity_record_id, deprecated_patient_id, deprecated_identity_record_id, tenant_id, surviving_record_snapshot, deprecated_record_snapshot, related_data_snapshot, merged_record_snapshot, data_migrations, match_candidate_id, merge_decision_score, merge_decision_reason, merge_rules_applied, performed_by, performed_at, is_reversible, rolled_back, rolled_back_at, rolled_back_by, rollback_reason, rollback_batch_id, verified_by, verified_at, verification_notes, created_at, updated_at')
       .or(`surviving_patient_id.eq.${patientId},deprecated_patient_id.eq.${patientId}`)
       .order('performed_at', { ascending: false });
 
@@ -736,7 +737,7 @@ async function getMergeHistoryById(mergeHistoryId: string): Promise<ServiceResul
   try {
     const { data, error } = await supabase
       .from('mpi_merge_history')
-      .select('*')
+      .select('id, merge_batch_id, operation_type, surviving_patient_id, surviving_identity_record_id, deprecated_patient_id, deprecated_identity_record_id, tenant_id, surviving_record_snapshot, deprecated_record_snapshot, related_data_snapshot, merged_record_snapshot, data_migrations, match_candidate_id, merge_decision_score, merge_decision_reason, merge_rules_applied, performed_by, performed_at, is_reversible, rolled_back, rolled_back_at, rolled_back_by, rollback_reason, rollback_batch_id, verified_by, verified_at, verification_notes, created_at, updated_at')
       .eq('id', mergeHistoryId)
       .single();
 
@@ -805,7 +806,7 @@ async function getMergeStats(
   }>
 > {
   try {
-    let query = supabase.from('mpi_merge_history').select('*').eq('tenant_id', tenantId);
+    let query = supabase.from('mpi_merge_history').select('id, merge_batch_id, operation_type, surviving_patient_id, surviving_identity_record_id, deprecated_patient_id, deprecated_identity_record_id, tenant_id, surviving_record_snapshot, deprecated_record_snapshot, related_data_snapshot, merged_record_snapshot, data_migrations, match_candidate_id, merge_decision_score, merge_decision_reason, merge_rules_applied, performed_by, performed_at, is_reversible, rolled_back, rolled_back_at, rolled_back_by, rollback_reason, rollback_batch_id, verified_by, verified_at, verification_notes, created_at, updated_at').eq('tenant_id', tenantId);
 
     if (options.fromDate) {
       query = query.gte('performed_at', options.fromDate);
@@ -858,7 +859,7 @@ async function getReversibleMerges(
   try {
     let query = supabase
       .from('mpi_merge_history')
-      .select('*')
+      .select('id, merge_batch_id, operation_type, surviving_patient_id, surviving_identity_record_id, deprecated_patient_id, deprecated_identity_record_id, tenant_id, surviving_record_snapshot, deprecated_record_snapshot, related_data_snapshot, merged_record_snapshot, data_migrations, match_candidate_id, merge_decision_score, merge_decision_reason, merge_rules_applied, performed_by, performed_at, is_reversible, rolled_back, rolled_back_at, rolled_back_by, rollback_reason, rollback_batch_id, verified_by, verified_at, verification_notes, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .eq('operation_type', 'merge')
       .eq('is_reversible', true)

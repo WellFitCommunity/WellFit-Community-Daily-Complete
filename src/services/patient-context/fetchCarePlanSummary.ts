@@ -24,7 +24,7 @@ export async function fetchCarePlanSummary(
   try {
     const { data: planData, error: planError } = await supabase
       .from('care_coordination_plans')
-      .select('*')
+      .select('id, plan_type, status, goals, next_review_date')
       .eq('patient_id', patientId)
       .eq('status', 'active')
       .order('created_at', { ascending: false })

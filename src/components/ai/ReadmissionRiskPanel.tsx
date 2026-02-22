@@ -54,7 +54,7 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
       // Fetch prediction from database
       const { data, error: fetchError } = await supabase
         .from('readmission_risk_predictions')
-        .select('*')
+        .select('patient_id, discharge_date, readmission_risk_30_day, readmission_risk_7_day, readmission_risk_90_day, risk_category, risk_factors, protective_factors, recommended_interventions, predicted_readmission_date, prediction_confidence, plain_language_explanation, data_sources_analyzed, ai_model_used, ai_cost')
         .eq('id', predictionId)
         .single();
 

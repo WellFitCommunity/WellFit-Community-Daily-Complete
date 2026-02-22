@@ -89,7 +89,7 @@ export class OncologyService {
     try {
       const { data, error } = await supabase
         .from('onc_cancer_registry')
-        .select('*')
+        .select('id, patient_id, tenant_id, primary_site, histology, icd10_code, diagnosis_date, biomarkers, ecog_status, status, treating_oncologist_id, notes, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('tenant_id', tenantId)
         .eq('status', 'active_treatment')
@@ -216,32 +216,32 @@ export class OncologyService {
         sideEffectsRes,
         survivorshipRes,
       ] = await Promise.all([
-        supabase.from('onc_cancer_registry').select('*')
+        supabase.from('onc_cancer_registry').select('id, patient_id, tenant_id, primary_site, histology, icd10_code, diagnosis_date, biomarkers, ecog_status, status, treating_oncologist_id, notes, created_at, updated_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('diagnosis_date', { ascending: false }).limit(1).single(),
-        supabase.from('onc_staging').select('*')
+        supabase.from('onc_staging').select('id, patient_id, tenant_id, registry_id, staging_date, staging_type, t_stage, n_stage, m_stage, overall_stage, ajcc_edition, staging_basis, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('staging_date', { ascending: false }).limit(1).single(),
-        supabase.from('onc_treatment_plans').select('*')
+        supabase.from('onc_treatment_plans').select('id, patient_id, tenant_id, registry_id, plan_date, modalities, intent, regimen_name, drugs, cycle_count, cycle_length_days, planned_start_date, actual_start_date, status, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('plan_date', { ascending: false }).limit(1).single(),
-        supabase.from('onc_chemotherapy_sessions').select('*')
+        supabase.from('onc_chemotherapy_sessions').select('id, patient_id, tenant_id, registry_id, treatment_plan_id, session_date, cycle_number, day_of_cycle, drugs_administered, dose_modifications, bsa_m2, pre_medications, adverse_events_during, vitals_pre, vitals_post, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('session_date', { ascending: false }).limit(5),
-        supabase.from('onc_radiation_sessions').select('*')
+        supabase.from('onc_radiation_sessions').select('id, patient_id, tenant_id, registry_id, treatment_plan_id, session_date, fraction_number, total_fractions, dose_per_fraction_gy, cumulative_dose_gy, technique, treatment_site, skin_reaction_grade, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('session_date', { ascending: false }).limit(5),
-        supabase.from('onc_lab_monitoring').select('*')
+        supabase.from('onc_lab_monitoring').select('id, patient_id, tenant_id, registry_id, lab_date, wbc, anc, hemoglobin, platelets, creatinine, alt, ast, tumor_marker_name, tumor_marker_value, tumor_marker_unit, baseline_marker_value, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('lab_date', { ascending: false }).limit(1).single(),
-        supabase.from('onc_imaging_results').select('*')
+        supabase.from('onc_imaging_results').select('id, patient_id, tenant_id, registry_id, imaging_date, modality, body_region, recist_response, target_lesions, sum_of_diameters_mm, baseline_sum_mm, new_lesions, findings, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('imaging_date', { ascending: false }).limit(1).single(),
-        supabase.from('onc_side_effects').select('*')
+        supabase.from('onc_side_effects').select('id, patient_id, tenant_id, registry_id, reported_date, ctcae_term, ctcae_grade, ctcae_category, attribution, intervention, outcome, resolved_date, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .in('outcome', ['ongoing', 'resolving'])
           .order('reported_date', { ascending: false }).limit(10),
-        supabase.from('onc_survivorship').select('*')
+        supabase.from('onc_survivorship').select('id, patient_id, tenant_id, registry_id, assessment_date, status, remission_date, surveillance_schedule, late_effects, psychosocial_concerns, recurrence_date, recurrence_site, quality_of_life_score, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('assessment_date', { ascending: false }).limit(1).single(),
       ]);

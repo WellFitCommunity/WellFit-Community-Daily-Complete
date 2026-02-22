@@ -227,7 +227,7 @@ export class NeuroSuiteService {
       // Limit to 50 stroke assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
       const query = supabase
         .from('neuro_stroke_assessments')
-        .select('*')
+        .select('id, patient_id, encounter_id, assessor_id, assessment_date, assessment_type, stroke_type, stroke_territory, last_known_well, symptom_onset, arrival_time, ct_time, time_to_assessment_minutes, loc_score, loc_questions_score, loc_commands_score, best_gaze_score, visual_fields_score, facial_palsy_score, left_arm_motor_score, right_arm_motor_score, left_leg_motor_score, right_leg_motor_score, limb_ataxia_score, sensory_score, best_language_score, dysarthria_score, extinction_inattention_score, nihss_total_score, nihss_severity, tpa_eligible, tpa_administered, tpa_bolus_time, thrombectomy_eligible, thrombectomy_performed, groin_puncture_time, recanalization_time, clinical_notes, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
@@ -290,7 +290,7 @@ export class NeuroSuiteService {
       // Already has .limit(1) - this is properly bounded
       const { data, error } = await supabase
         .from('neuro_modified_rankin_scale')
-        .select('*')
+        .select('id, patient_id, stroke_assessment_id, assessor_id, assessment_date, assessment_timepoint, mrs_score, ambulation, self_care, usual_activities, pain_discomfort, anxiety_depression, functional_description, created_at')
         .eq('patient_id', patientId)
         .eq('assessment_timepoint', '90_day')
         .order('assessment_date', { ascending: false })
@@ -436,7 +436,7 @@ export class NeuroSuiteService {
       // Limit to 50 cognitive assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
       const query = supabase
         .from('neuro_cognitive_assessments')
-        .select('*')
+        .select('id, patient_id, assessor_id, encounter_id, assessment_date, assessment_tool, years_education, education_adjustment_applied, moca_visuospatial, moca_naming, moca_attention, moca_language, moca_abstraction, moca_delayed_recall, moca_orientation, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
@@ -589,7 +589,7 @@ export class NeuroSuiteService {
       // Limit to 50 dementia staging assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
       const query = supabase
         .from('neuro_dementia_staging')
-        .select('*')
+        .select('id, patient_id, assessor_id, assessment_date, cdr_memory, cdr_orientation, cdr_judgment_problem_solving, cdr_community_affairs, cdr_home_hobbies, cdr_personal_care, cdr_global_score, cdr_sum_boxes, dementia_stage, informant_name, informant_relationship, informant_contact_frequency, functional_decline_examples, created_at')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
@@ -697,7 +697,7 @@ export class NeuroSuiteService {
       // Limit to 50 caregiver assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
       const query = supabase
         .from('neuro_caregiver_assessments')
-        .select('*')
+        .select('id, patient_id, caregiver_id, assessor_id, assessment_date, caregiver_name, caregiver_relationship, caregiver_lives_with_patient, hours_caregiving_per_week, other_caregivers_available, zbi_feel_strain, zbi_time_affected, zbi_stressed, zbi_embarrassed, zbi_angry, zbi_relationships_affected, zbi_health_suffered, zbi_privacy_affected, zbi_social_life_affected, zbi_lost_control, zbi_uncertain_what_to_do, zbi_should_do_more, zbi_total_score, burden_level, respite_care_needed, support_group_interest, counseling_needed, financial_assistance_needed, caregiver_concerns, interventions_recommended, created_at')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
@@ -785,7 +785,7 @@ export class NeuroSuiteService {
       // Already has .limit(1) - this is properly bounded
       const { data, error } = await supabase
         .from('neuro_care_plans')
-        .select('*')
+        .select('id, patient_id, fhir_care_plan_id, care_plan_type, status, start_date, projected_end_date, actual_end_date, stroke_prevention_medications, blood_pressure_target, cholesterol_target, diabetes_management_plan, smoking_cessation_plan, cognitive_stimulation_activities, behavioral_management_strategies, medication_management_plan, safety_interventions, advance_directive_status, legal_planning_status, patient_goals, family_goals, neurologist_id, primary_care_id, case_manager_id, social_worker_id, follow_up_schedule, imaging_schedule, lab_monitoring_schedule, patient_education_completed, caregiver_education_completed, created_by, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .order('start_date', { ascending: false })

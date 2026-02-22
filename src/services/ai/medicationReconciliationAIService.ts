@@ -372,7 +372,7 @@ export class MedicationReconciliationAIService {
     try {
       const { data, error } = await supabase
         .from('ai_medication_reconciliations')
-        .select('*')
+        .select('id, reconciliation_id, patient_id, provider_id, encounter_type, medication_sources, result, status, reviewed_by, reviewed_at, review_notes, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(limit);

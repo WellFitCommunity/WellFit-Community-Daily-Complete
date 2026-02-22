@@ -19,7 +19,7 @@ export const ProvenanceService = {
     try {
       let query = supabase
         .from('fhir_provenance')
-        .select('*')
+        .select('id, target_references, target_types, target_patient_id, recorded, occurred_datetime, occurred_period_start, occurred_period_end, activity, agent, reason, policy, location, entity, signature, created_at, updated_at')
         .contains('target_references', [resourceId])
         .order('recorded', { ascending: false });
 
@@ -46,7 +46,7 @@ export const ProvenanceService = {
     try {
       const { data, error } = await supabase
         .from('fhir_provenance')
-        .select('*')
+        .select('id, target_references, target_types, target_patient_id, recorded, occurred_datetime, occurred_period_start, occurred_period_end, activity, agent, reason, policy, location, entity, signature, created_at, updated_at')
         .contains('agent', [{ who_id: agentId }])
         .order('recorded', { ascending: false });
 
@@ -73,7 +73,7 @@ export const ProvenanceService = {
 
       const { data, error } = await supabase
         .from('fhir_provenance')
-        .select('*')
+        .select('id, target_references, target_types, target_patient_id, recorded, occurred_datetime, occurred_period_start, occurred_period_end, activity, agent, reason, policy, location, entity, signature, created_at, updated_at')
         .contains('target_references', [patientId])
         .gte('recorded', since.toISOString())
         .order('recorded', { ascending: false });
@@ -99,7 +99,7 @@ export const ProvenanceService = {
           ...provenance,
           recorded: (provenance.recorded as string | undefined) || new Date().toISOString(),
         }])
-        .select()
+        .select('id, target_references, target_types, target_patient_id, recorded, occurred_datetime, occurred_period_start, occurred_period_end, activity, agent, reason, policy, location, entity, signature, created_at, updated_at')
         .single();
 
       if (error) throw error;

@@ -127,7 +127,7 @@ export async function fetchTimeline(
     // Fetch last check-in
     const { data: checkInData } = await supabase
       .from('daily_check_ins')
-      .select('*')
+      .select('id, check_in_date, wellness_score, mood, concerns')
       .eq('user_id', patientId)
       .order('check_in_date', { ascending: false })
       .limit(1)

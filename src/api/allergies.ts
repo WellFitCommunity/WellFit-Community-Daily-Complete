@@ -8,7 +8,9 @@ import { auditLogger } from '../services/auditLogger';
 
 export interface AllergyIntolerance {
   id: string;
-  user_id: string;
+  /** Legacy field name — new records use patient_id */
+  user_id?: string;
+  patient_id?: string;
   allergen_type: 'medication' | 'food' | 'environment' | 'biologic';
   allergen_name: string;
   allergen_code?: string;
@@ -38,7 +40,7 @@ export async function getAllergies(userId: string): Promise<ApiResponse<AllergyI
   try {
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .select('*')
+      .select('id, user_id, allergen_type, allergen_name, allergen_code, clinical_status, verification_status, criticality, severity, reaction_manifestation, reaction_description, onset_date, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .eq('user_id', userId)
       .order('criticality', { ascending: false, nullsFirst: false })
       .order('allergen_name');

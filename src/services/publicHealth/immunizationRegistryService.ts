@@ -885,7 +885,7 @@ export async function getPatientSubmissionHistory(
   try {
     const { data, error } = await supabase
       .from('immunization_registry_submissions')
-      .select('*')
+      .select('id, tenant_id, patient_id, immunization_id, vaccine_cvx_code, vaccine_name, administration_date, registry_name, message_control_id, hl7_message, status, sent_at, response_code, response_message, error_message')
       .eq('tenant_id', tenantId)
       .eq('patient_id', patientId)
       .order('administration_date', { ascending: false })
@@ -934,7 +934,7 @@ export async function getPendingSubmissions(
   try {
     const { data, error } = await supabase
       .from('immunization_registry_submissions')
-      .select('*')
+      .select('id, tenant_id, patient_id, immunization_id, vaccine_cvx_code, vaccine_name, administration_date, registry_name, message_control_id, hl7_message, status, sent_at, response_code, response_message, error_message')
       .eq('tenant_id', tenantId)
       .eq('status', 'pending')
       .order('created_at', { ascending: true })

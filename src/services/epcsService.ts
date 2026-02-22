@@ -376,7 +376,7 @@ export async function getProviderRegistration(
   try {
     const { data, error } = await supabase
       .from('epcs_provider_registrations')
-      .select('*')
+      .select('id, tenant_id, provider_id, dea_number, dea_suffix, dea_expiration_date, dea_schedules, state_license_number, state_license_state, state_license_expiration, identity_proofing_method, identity_proofed_date, tfa_method, tfa_device_serial, tfa_enrollment_date, tfa_last_verified, status, status_reason')
       .eq('tenant_id', tenantId)
       .eq('provider_id', providerId)
       .eq('status', 'active')
@@ -589,7 +589,7 @@ export async function getPrescription(
   try {
     const { data, error } = await supabase
       .from('epcs_prescriptions')
-      .select('*')
+      .select('id, tenant_id, prescription_number, dea_unique_id, patient_id, prescriber_id, prescriber_registration_id, medication_name, medication_ndc, medication_rxnorm, dea_schedule, quantity, quantity_unit, days_supply, refills_authorized, refills_remaining, sig, route, frequency, diagnosis_code, diagnosis_description, pharmacy_ncpdp_id, pharmacy_npi, pharmacy_name, pharmacy_address, digital_signature_timestamp, digital_signature_method, digital_signature_verified, pdmp_checked, pdmp_check_timestamp, pdmp_query_id, pdmp_override_reason, transmission_status, transmitted_at, acknowledgment_received_at, transmission_error, dispensed_at, dispensed_quantity, partial_fill_allowed, status, cancelled_at, cancelled_reason, voided_at, void_reason, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .eq('id', prescriptionId)
       .single();
@@ -620,7 +620,7 @@ export async function getPatientPrescriptions(
   try {
     let query = supabase
       .from('epcs_prescriptions')
-      .select('*')
+      .select('id, tenant_id, prescription_number, dea_unique_id, patient_id, prescriber_id, prescriber_registration_id, medication_name, medication_ndc, medication_rxnorm, dea_schedule, quantity, quantity_unit, days_supply, refills_authorized, refills_remaining, sig, route, frequency, diagnosis_code, diagnosis_description, pharmacy_ncpdp_id, pharmacy_npi, pharmacy_name, pharmacy_address, digital_signature_timestamp, digital_signature_method, digital_signature_verified, pdmp_checked, pdmp_check_timestamp, pdmp_query_id, pdmp_override_reason, transmission_status, transmitted_at, acknowledgment_received_at, transmission_error, dispensed_at, dispensed_quantity, partial_fill_allowed, status, cancelled_at, cancelled_reason, voided_at, void_reason, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false });
@@ -1007,7 +1007,7 @@ export async function getPrescriptionAuditLog(
   try {
     const { data, error } = await supabase
       .from('epcs_audit_log')
-      .select('*')
+      .select('id, tenant_id, event_type, event_timestamp, user_id, user_role, prescription_id, patient_id, event_details, success, failure_reason')
       .eq('tenant_id', tenantId)
       .eq('prescription_id', prescriptionId)
       .order('event_timestamp', { ascending: true });

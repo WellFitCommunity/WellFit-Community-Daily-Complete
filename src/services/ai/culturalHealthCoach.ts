@@ -389,7 +389,7 @@ class CulturalHealthCoachService {
 
     const { data, error } = await this.supabase
       .from('cultural_content_analytics')
-      .select('*')
+      .select('tenant_id, language_code, cultural_context, content_type, deliveries, opened_count, clicked_count, completed_count, avg_relevance, avg_cultural_appropriateness, cache_hit_count')
       .eq('tenant_id', tenantId)
       .gte('analytics_date', startDate)
       .lte('analytics_date', endDate)
@@ -422,7 +422,7 @@ class CulturalHealthCoachService {
   ): Promise<CachedContentRow | null> {
     const { data } = await this.supabase
       .from('cultural_content_cache')
-      .select('*')
+      .select('id, translated_text, cultural_adaptations, translation_quality_score, original_tokens_used')
       .eq('tenant_id', tenantId)
       .eq('cache_key', cacheKey)
       .gte('translation_quality_score', 0.85) // Only use high-quality cached content

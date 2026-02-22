@@ -181,7 +181,7 @@ export class SOC2MonitoringService {
     try {
       const { data, error } = await this.supabase
         .from('security_monitoring_dashboard')
-        .select('*')
+        .select('security_events_24h, critical_events_24h, high_events_24h, medium_events_24h, low_events_24h, failed_logins_24h, failed_logins_1h, unauthorized_access_24h, auto_blocked_24h, open_investigations, audit_events_24h, failed_operations_24h, phi_access_24h, last_updated')
         .limit(1)
         .single();
 
@@ -209,7 +209,7 @@ export class SOC2MonitoringService {
     try {
       let query = this.supabase
         .from('security_events')
-        .select('*')
+        .select('id, event_type, severity, actor_user_id, actor_ip_address, actor_user_agent, timestamp, description, metadata, auto_blocked, requires_investigation, investigated, investigated_by, investigated_at, resolution, related_audit_log_id, correlation_id, alert_sent, alert_sent_at, alert_recipients')
         .order('timestamp', { ascending: false });
 
       if (options?.limit) {
@@ -255,7 +255,7 @@ export class SOC2MonitoringService {
     try {
       let query = this.supabase
         .from('audit_logs')
-        .select('*')
+        .select('id, actor_user_id, actor_role, actor_ip_address, actor_user_agent, event_type, event_category, resource_type, resource_id, table_name, timestamp, target_user_id, operation, metadata, success, error_code, error_message, retention_date, checksum')
         .order('timestamp', { ascending: false });
 
       if (options?.limit) {
@@ -299,7 +299,7 @@ export class SOC2MonitoringService {
     try {
       const { data, error } = await this.supabase
         .from('phi_access_audit')
-        .select('*')
+        .select('id, timestamp, actor_user_id, actor_role, actor_ip_address, event_type, resource_type, resource_id, target_user_id, operation, metadata, success, error_message, actor_email, patient_name, access_type, risk_level')
         .limit(limit);
 
       if (error) {
@@ -321,7 +321,7 @@ export class SOC2MonitoringService {
     try {
       const { data, error } = await this.supabase
         .from('security_events_analysis')
-        .select('*')
+        .select('hour, event_type, severity, event_count, unique_actors, unique_ips, auto_blocked_count, investigation_required_count, latest_occurrence')
         .limit(limit);
 
       if (error) {
@@ -343,7 +343,7 @@ export class SOC2MonitoringService {
     try {
       const query = this.supabase
         .from('audit_summary_stats')
-        .select('*');
+        .select('event_category, event_type, total_events, successful_events, failed_events, unique_users, unique_roles, earliest_event, latest_event, success_rate_percent');
 
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 audit summary stats for performance
@@ -361,7 +361,7 @@ export class SOC2MonitoringService {
     try {
       const query = this.supabase
         .from('encryption_status_view')
-        .select('*');
+        .select('id, key_name, key_purpose, key_algorithm, is_active, created_at, rotated_at, expires_at, days_since_rotation, expiration_status, days_until_expiration');
 
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 encryption keys for performance
@@ -379,7 +379,7 @@ export class SOC2MonitoringService {
     try {
       const query = this.supabase
         .from('incident_response_queue')
-        .select('*');
+        .select('id, event_type, severity, timestamp, actor_user_id, actor_ip_address, description, metadata, requires_investigation, investigated, investigated_by, investigated_at, resolution, auto_blocked, alert_sent, correlation_id, hours_since_event, priority_score, sla_status');
 
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 incident response items for performance
@@ -397,7 +397,7 @@ export class SOC2MonitoringService {
     try {
       const query = this.supabase
         .from('compliance_status')
-        .select('*');
+        .select('control_area, soc2_criterion, control_description, status, details, test_result, last_checked');
 
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 compliance controls for performance

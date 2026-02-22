@@ -564,7 +564,7 @@ export const FieldVisitOptimizerService = {
     try {
       let query = supabase
         .from('field_visit_metrics')
-        .select('*')
+        .select('efficiency, visit_count, travel_time, primary_zip, visit_date')
         .eq('tenant_id', tenantId);
 
       if (options?.workerId) {

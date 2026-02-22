@@ -358,7 +358,7 @@ async function getClaim(
   try {
     const { data, error } = await supabase
       .from('ncpdp_claims')
-      .select('*')
+      .select('id, claim_number, patient_id, patient_first_name, patient_last_name, patient_dob, prescriber_npi, prescriber_name, service_provider_ncpdp, ndc_code, drug_name, quantity_dispensed, days_supply, date_of_service, claim_status, transaction_code, response_status, authorization_number, rejection_codes, rejection_messages, paid_amount, copay_amount, submitted_at, response_received_at, created_at')
       .eq('id', claimId)
       .single();
 
@@ -384,7 +384,7 @@ async function getPatientClaims(
   try {
     let query = supabase
       .from('ncpdp_claims')
-      .select('*')
+      .select('id, claim_number, patient_id, patient_first_name, patient_last_name, patient_dob, prescriber_npi, prescriber_name, service_provider_ncpdp, ndc_code, drug_name, quantity_dispensed, days_supply, date_of_service, claim_status, transaction_code, response_status, authorization_number, rejection_codes, rejection_messages, paid_amount, copay_amount, submitted_at, response_received_at, created_at')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false });
 
@@ -423,7 +423,7 @@ async function getPendingClaims(
   try {
     const { data, error } = await supabase
       .from('ncpdp_claims')
-      .select('*')
+      .select('id, claim_number, patient_id, patient_first_name, patient_last_name, patient_dob, prescriber_npi, prescriber_name, service_provider_ncpdp, ndc_code, drug_name, quantity_dispensed, days_supply, date_of_service, claim_status, transaction_code, response_status, authorization_number, rejection_codes, rejection_messages, paid_amount, copay_amount, submitted_at, response_received_at, created_at')
       .in('claim_status', ['pending', 'rejected'])
       .order('created_at', { ascending: true })
       .limit(limit);

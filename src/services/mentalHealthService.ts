@@ -88,7 +88,7 @@ export class MentalHealthService {
     try {
       const { data, error } = await supabase
         .from('mental_health_service_requests')
-        .select('*')
+        .select('id, fhir_id, created_at, updated_at, status, intent, priority, patient_id, encounter_id, code_system, code, code_display, category, requester_type, requester_id, requester_display, performer_type, performer_id, performer_display, reason_code, reason_display, reason_reference_type, reason_reference_id, occurrence_datetime, occurrence_period_start, occurrence_period_end, authored_on, session_type, session_number, total_sessions_required, min_duration_minutes, is_discharge_blocker, discharge_blocker_active, discharge_blocker_override_by, discharge_blocker_override_reason, discharge_blocker_override_at, note, supporting_info, completed_at, completed_by, outcome, created_by, updated_by')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false });
 
@@ -269,7 +269,7 @@ export class MentalHealthService {
     try {
       const { data, error } = await supabase
         .from('v_pending_mental_health_sessions')
-        .select('*')
+        .select('session_id, patient_id, first_name, last_name, room_number, status, session_type, session_number, is_discharge_required_session, scheduled_start, scheduled_end, therapist, priority, risk_level')
         .order('scheduled_start', { ascending: true });
 
       if (error) throw error;
@@ -378,7 +378,7 @@ export class MentalHealthService {
     try {
       const { data, error } = await supabase
         .from('mental_health_risk_assessments')
-        .select('*')
+        .select('id, fhir_id, created_at, updated_at, status, patient_id, therapy_session_id, code_system, code, code_display, category, effective_datetime, issued, performer_type, performer_id, performer_display, risk_level, suicidal_ideation, suicidal_plan, suicidal_intent, means_access, phq9_score, phq9_severity, gad7_score, gad7_severity, clinical_impression, adjustment_response, coping_mechanisms, support_system_adequate, patient_engagement, protective_factors, risk_factors, interpretation_code, interpretation_display, note, created_by, updated_by')
         .eq('patient_id', patientId)
         .order('effective_datetime', { ascending: false })
         .limit(1)
@@ -461,7 +461,7 @@ export class MentalHealthService {
     try {
       const { data, error } = await supabase
         .from('mental_health_safety_plans')
-        .select('*')
+        .select('id, fhir_id, created_at, updated_at, status, patient_id, risk_assessment_id, therapy_session_id, type_code, type_display, category, security_label, date, author_type, author_id, author_display, warning_signs, internal_coping_strategies, social_distraction_people, social_distraction_places, people_to_contact, professional_contacts, crisis_hotlines, means_restriction_steps, lethal_means_addressed, scheduled_follow_ups, patient_signature_obtained, patient_signature_date, patient_verbalized_understanding, copy_given_to_patient, copy_given_to_family, copy_in_chart, note, document_url, content_type, created_by, updated_by')
         .eq('patient_id', patientId)
         .eq('status', 'current')
         .order('date', { ascending: false })
@@ -490,7 +490,7 @@ export class MentalHealthService {
     try {
       const { data, error } = await supabase
         .from('mental_health_escalations')
-        .select('*')
+        .select('id, created_at, updated_at, patient_id, risk_assessment_id, therapy_session_id, escalation_level, escalation_reason, trigger_criteria, actions_required, psych_consult_ordered, psych_consult_id, one_to_one_observation_recommended, safety_plan_created, attending_notified, attending_notified_at, attending_notified_by, notifications_sent, status, resolved_at, resolved_by, resolution_note, created_by, updated_by')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
@@ -583,7 +583,7 @@ export class MentalHealthService {
     try {
       const { data, error } = await supabase
         .from('mental_health_flags')
-        .select('*')
+        .select('id, fhir_id, created_at, updated_at, status, patient_id, category, code_system, code, code_display, period_start, period_end, author_type, author_id, author_display, flag_type, severity, show_on_banner, alert_frequency, note, created_by, updated_by')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
@@ -696,7 +696,7 @@ export class MentalHealthService {
     try {
       const { data, error } = await supabase
         .from('mental_health_discharge_checklist')
-        .select('*')
+        .select('id, created_at, updated_at, patient_id, encounter_id, initial_therapy_session_completed, initial_therapy_session_id, risk_assessment_completed, risk_assessment_id, safety_plan_created, safety_plan_id, outpatient_therapy_scheduled, outpatient_first_appt_date, resources_provided, patient_education_completed, psychiatric_clearance_obtained, psychiatric_clearance_by, psychiatric_clearance_date, family_support_engaged, crisis_plan_provided, all_requirements_met, discharge_cleared, discharge_cleared_by, discharge_cleared_at, override_required, override_granted, override_by, override_reason, override_at, note, created_by, updated_by')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -720,7 +720,7 @@ export class MentalHealthService {
     try {
       const { data, error } = await supabase
         .from('v_mental_health_discharge_blockers')
-        .select('*');
+        .select('patient_id, first_name, last_name, mrn, room_number, service_request_id, session_type, initial_therapy_session_completed, risk_assessment_completed, safety_plan_created, outpatient_therapy_scheduled, all_requirements_met, override_granted, override_reason, active_flags');
 
       if (error) throw error;
 
@@ -745,21 +745,21 @@ export class MentalHealthService {
       // Get active patients
       const { data: patients, error: patientsError } = await supabase
         .from('v_active_mental_health_patients')
-        .select('*');
+        .select('patient_id, first_name, last_name, mrn, room_number, service_request_id, service_request_status, session_type, priority, is_discharge_blocker, discharge_blocker_active, risk_level, last_risk_assessment_date, session_status, next_session_scheduled, discharge_ready, active_flag');
 
       if (patientsError) throw patientsError;
 
       // Get pending sessions
       const { data: sessions, error: sessionsError } = await supabase
         .from('v_pending_mental_health_sessions')
-        .select('*');
+        .select('session_id, patient_id, first_name, last_name, room_number, status, session_type, session_number, is_discharge_required_session, scheduled_start, scheduled_end, therapist, priority, risk_level');
 
       if (sessionsError) throw sessionsError;
 
       // Get discharge blockers
       const { data: blockers, error: blockersError } = await supabase
         .from('v_mental_health_discharge_blockers')
-        .select('*');
+        .select('patient_id, first_name, last_name, mrn, room_number, service_request_id, session_type, initial_therapy_session_completed, risk_assessment_completed, safety_plan_created, outpatient_therapy_scheduled, all_requirements_met, override_granted, override_reason, active_flags');
 
       if (blockersError) throw blockersError;
 

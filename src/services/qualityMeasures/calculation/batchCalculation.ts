@@ -196,7 +196,7 @@ export async function getCalculationJobStatus(jobId: string): Promise<ServiceRes
   try {
     const { data, error } = await supabase
       .from('ecqm_calculation_jobs')
-      .select('*')
+      .select('id, tenant_id, measure_ids, status, progress_percentage, patients_processed, patients_total, result_summary, error_message')
       .eq('id', jobId)
       .single();
 

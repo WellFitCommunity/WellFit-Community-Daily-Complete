@@ -54,7 +54,7 @@ const SettingsPage: React.FC = () => {
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('font_size, notifications_enabled, emergency_contact_name, emergency_contact_phone, first_name, timezone, daily_reminder_time, care_team_notifications, community_notifications')
           .eq('user_id', user.id)
           .single();
 

@@ -47,7 +47,7 @@ export const EmployeeService = {
     try {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('*')
+        .select('id, user_id, tenant_id, employee_number, job_title, employment_type, hire_date, termination_date, employment_status, department_id, manager_id, cost_center, office_location, desk_phone, phone_extension, work_email, default_shift, fte_percentage, max_weekly_hours, credentials_verified, credentials_verified_at, credentials_verified_by, background_check_date, background_check_status, last_compliance_training, hipaa_training_date, notes, created_at, updated_at, created_by')
         .eq('user_id', userId)
         .single();
 
@@ -75,7 +75,7 @@ export const EmployeeService = {
     try {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('*')
+        .select('id, user_id, tenant_id, employee_number, job_title, employment_type, hire_date, termination_date, employment_status, department_id, manager_id, cost_center, office_location, desk_phone, phone_extension, work_email, default_shift, fte_percentage, max_weekly_hours, credentials_verified, credentials_verified_at, credentials_verified_by, background_check_date, background_check_status, last_compliance_training, hipaa_training_date, notes, created_at, updated_at, created_by')
         .eq('id', id)
         .single();
 
@@ -209,7 +209,7 @@ export const EmployeeService = {
     filters?: EmployeeFilters
   ): Promise<ServiceResult<EmployeeDirectoryEntry[]>> {
     try {
-      let query = supabase.from('employee_directory').select('*');
+      let query = supabase.from('employee_directory').select('user_id, first_name, last_name, full_name, personal_email, personal_phone, role, role_code, employee_profile_id, employee_number, job_title, employment_type, employment_status, hire_date, termination_date, fte_percentage, default_shift, work_email, desk_phone, phone_extension, office_location, cost_center, department_id, department_code, department_name, department_floor, manager_id, manager_name, manager_title, credentials_verified, credentials_verified_at, background_check_date, background_check_status, last_compliance_training, hipaa_training_date, npi, state_license_number, dea_number, specialties, qualifications, tenant_id, employee_profile_created_at, employee_profile_updated_at');
 
       // Apply filters
       if (filters?.departmentId) {

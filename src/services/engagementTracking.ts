@@ -207,7 +207,7 @@ export async function loadUserQuestions(
           last_name,
           phone
         )
-      `)
+      `) // TODO: replace * with specific user_questions columns when usage is traced — returns Record<string, unknown>[]
       .order('created_at', { ascending: false });
 
     // If not admin, filter by user_id
@@ -268,7 +268,7 @@ export async function getPatientEngagementScore(
   try {
     const { data, error } = await supabase
       .from('patient_engagement_scores')
-      .select('*')
+      .select('*') // TODO: specify columns when usage is traced — returns Record<string, unknown>
       .eq('user_id', userId)
       .single();
 
@@ -291,7 +291,7 @@ export async function getAllPatientEngagementScores(
   try {
     const { data, error } = await supabase
       .from('patient_engagement_scores')
-      .select('*')
+      .select('*') // TODO: specify columns when usage is traced — returns Record<string, unknown>[]
       .order('engagement_score', { ascending: false });
 
     if (error) {

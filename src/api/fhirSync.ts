@@ -230,7 +230,7 @@ export async function getSyncHistory(
   try {
     const { data, error } = await supabase
       .from('fhir_sync_logs')
-      .select('*')
+      .select('id, connection_id, direction, status, started_at, completed_at, records_processed, records_succeeded, records_failed, error_message, created_at')
       .eq('connection_id', connectionId)
       .order('started_at', { ascending: false })
       .limit(limit);
@@ -440,7 +440,7 @@ export async function getSyncStatistics(
 
     const { data, error } = await supabase
       .from('fhir_sync_logs')
-      .select('*')
+      .select('status, records_processed, records_succeeded, started_at')
       .eq('connection_id', connectionId)
       .gte('started_at', cutoffDate.toISOString());
 

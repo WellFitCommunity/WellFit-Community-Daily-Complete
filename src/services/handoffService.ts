@@ -103,7 +103,7 @@ export class HandoffService {
     try {
       const { data, error } = await supabase
         .from('handoff_packets')
-        .select('*')
+        .select('id, packet_number, patient_mrn, patient_name_encrypted, patient_dob_encrypted, patient_gender, sending_facility, receiving_facility, urgency_level, reason_for_transfer, clinical_data, sender_provider_name, sender_callback_number, sender_notes, sender_user_id, receiver_contact_name, receiver_contact_email, receiver_contact_phone, notification_preferences, status, access_token, access_expires_at, acknowledged_by, acknowledged_at, acknowledgement_notes, created_at, updated_at, sent_at, created_by, ip_address, user_agent')
         .eq('id', packetId)
         .single();
 
@@ -181,7 +181,7 @@ export class HandoffService {
   ): Promise<HandoffPacket> {
     const { data, error } = await supabase
       .from('handoff_packets')
-      .select('*')
+      .select('id, packet_number, patient_mrn, patient_name_encrypted, patient_dob_encrypted, patient_gender, sending_facility, receiving_facility, urgency_level, reason_for_transfer, clinical_data, sender_provider_name, sender_callback_number, sender_notes, sender_user_id, receiver_contact_name, receiver_contact_email, receiver_contact_phone, notification_preferences, status, access_token, access_expires_at, acknowledged_by, acknowledged_at, acknowledgement_notes, created_at, updated_at, sent_at, created_by, ip_address, user_agent')
       .eq('id', packetId)
       .eq('access_token', token)
       .single();
@@ -201,7 +201,7 @@ export class HandoffService {
     try {
       let query = supabase
         .from('handoff_packets')
-        .select('*')
+        .select('id, packet_number, patient_mrn, patient_name_encrypted, patient_dob_encrypted, patient_gender, sending_facility, receiving_facility, urgency_level, reason_for_transfer, clinical_data, sender_provider_name, sender_callback_number, sender_notes, sender_user_id, receiver_contact_name, receiver_contact_email, receiver_contact_phone, notification_preferences, status, access_token, access_expires_at, acknowledged_by, acknowledged_at, acknowledgement_notes, created_at, updated_at, sent_at, created_by, ip_address, user_agent')
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
@@ -490,7 +490,7 @@ export class HandoffService {
       // Limit to 100 attachments per handoff (scoped to single packet - reasonable limit)
       const query = supabase
         .from('handoff_attachments')
-        .select('*')
+        .select('id, handoff_packet_id, file_name, file_type, file_size_bytes, storage_bucket, storage_path, mime_type, uploaded_by, is_encrypted, created_at')
         .eq('handoff_packet_id', packetId)
         .order('created_at', { ascending: true });
 
@@ -532,7 +532,7 @@ export class HandoffService {
       // Get attachment first
       const { data: attachment, error: fetchError } = await supabase
         .from('handoff_attachments')
-        .select('*')
+        .select('id, handoff_packet_id, file_name, file_type, file_size_bytes, storage_bucket, storage_path, mime_type, uploaded_by, is_encrypted, created_at')
         .eq('id', attachmentId)
         .single();
 
@@ -570,7 +570,7 @@ export class HandoffService {
       // Limit to 100 audit logs per handoff (scoped to single packet - reasonable for compliance tracking)
       const query = supabase
         .from('handoff_logs')
-        .select('*')
+        .select('id, handoff_packet_id, event_type, event_description, user_id, user_email, user_role, ip_address, user_agent, metadata, timestamp')
         .eq('handoff_packet_id', packetId)
         .order('timestamp', { ascending: false });
 

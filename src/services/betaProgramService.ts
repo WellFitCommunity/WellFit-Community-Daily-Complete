@@ -145,7 +145,7 @@ async function getProgram(
   try {
     const { data, error } = await supabase
       .from('beta_programs')
-      .select('*')
+      .select('id, tenant_id, program_name, program_key, description, status, max_participants, current_participants, start_date, end_date, feature_keys, min_account_age_days, required_roles, required_modules, terms_and_conditions, requires_agreement, created_by, created_at, updated_at')
       .eq('id', programId)
       .single();
 
@@ -174,7 +174,7 @@ async function getProgramByKey(
   try {
     let query = supabase
       .from('beta_programs')
-      .select('*')
+      .select('id, tenant_id, program_name, program_key, description, status, max_participants, current_participants, start_date, end_date, feature_keys, min_account_age_days, required_roles, required_modules, terms_and_conditions, requires_agreement, created_by, created_at, updated_at')
       .eq('program_key', programKey);
 
     if (tenantId) {
@@ -206,7 +206,7 @@ async function listPrograms(
   try {
     let query = supabase
       .from('beta_programs')
-      .select('*')
+      .select('id, tenant_id, program_name, program_key, description, status, max_participants, current_participants, start_date, end_date, feature_keys, min_account_age_days, required_roles, required_modules, terms_and_conditions, requires_agreement, created_by, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (status) {
@@ -239,7 +239,7 @@ async function listAvailablePrograms(
   try {
     let query = supabase
       .from('beta_programs')
-      .select('*')
+      .select('id, tenant_id, program_name, program_key, description, status, max_participants, current_participants, start_date, end_date, feature_keys, min_account_age_days, required_roles, required_modules, terms_and_conditions, requires_agreement, created_by, created_at, updated_at')
       .eq('status', 'active')
       .order('created_at', { ascending: false });
 
@@ -396,7 +396,7 @@ async function getMyEnrollment(
 
     const { data, error } = await supabase
       .from('beta_program_enrollments')
-      .select('*')
+      .select('id, beta_program_id, user_id, status, agreed_to_terms, agreed_at, feedback_rating, feedback_text, feedback_submitted_at, enrolled_at, approved_at, approved_by, completed_at, created_at')
       .eq('beta_program_id', programId)
       .eq('user_id', user.id)
       .single();
@@ -421,7 +421,7 @@ async function getProgramEnrollments(
   try {
     const { data, error } = await supabase
       .from('beta_program_enrollments')
-      .select('*')
+      .select('id, beta_program_id, user_id, status, agreed_to_terms, agreed_at, feedback_rating, feedback_text, feedback_submitted_at, enrolled_at, approved_at, approved_by, completed_at, created_at')
       .eq('beta_program_id', programId)
       .order('enrolled_at', { ascending: false });
 

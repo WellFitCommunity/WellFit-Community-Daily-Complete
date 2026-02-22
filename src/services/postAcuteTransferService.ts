@@ -46,7 +46,7 @@ export class PostAcuteTransferService {
       // Get discharge plan
       const { data: dischargePlan, error: planError } = await supabase
         .from('discharge_plans')
-        .select('*')
+        .select('id, patient_id, encounter_id, discharge_disposition, planned_discharge_date, planned_discharge_time, actual_discharge_datetime, medication_reconciliation_complete, discharge_prescriptions_sent, follow_up_appointment_scheduled, follow_up_appointment_date, follow_up_appointment_provider, follow_up_appointment_location, discharge_summary_completed, discharge_summary_sent_to_pcp, patient_education_completed, patient_education_topics, patient_understands_diagnosis, patient_understands_medications, patient_understands_followup, dme_needed, dme_ordered, dme_items, home_health_needed, home_health_ordered, home_health_agency, home_health_start_date, caregiver_identified, caregiver_name, caregiver_phone, caregiver_training_completed, transportation_arranged, transportation_method, readmission_risk_score, readmission_risk_category, requires_48hr_call, requires_72hr_call, requires_7day_pcp_visit, risk_factors, post_acute_facility_id, post_acute_facility_name, post_acute_facility_phone, post_acute_bed_confirmed, post_acute_handoff_packet_id, discharge_planning_time_minutes, care_coordination_time_minutes, billing_codes_generated, status, checklist_completion_percentage, created_by, created_at, updated_at, barriers_to_discharge')
         .eq('id', request.discharge_plan_id)
         .single();
 
@@ -60,7 +60,7 @@ export class PostAcuteTransferService {
       // Get patient profile
       const { data: patient, error: patientError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, date_of_birth, mrn, gender, facility_name, phone')
         .eq('id', request.patient_id)
         .single();
 
@@ -74,7 +74,7 @@ export class PostAcuteTransferService {
       // Get encounter details
       const { data: encounter, error: encounterError } = await supabase
         .from('encounters')
-        .select('*')
+        .select('id, patient_id, encounter_type, status, chief_complaint, admission_date, discharge_date')
         .eq('id', request.encounter_id)
         .single();
 
@@ -222,7 +222,7 @@ export class PostAcuteTransferService {
       // Get medications
       const { data: medications } = await supabase
         .from('patient_medications')
-        .select('*')
+        .select('id, medication_name, dose, frequency, route, instructions')
         .eq('patient_id', patientId)
         .eq('status', 'active');
 
@@ -236,7 +236,7 @@ export class PostAcuteTransferService {
         })) || [];
 
       // Get allergies
-      const { data: allergies } = await supabase.from('patient_allergies').select('*').eq('patient_id', patientId).eq('is_active', true);
+      const { data: allergies } = await supabase.from('patient_allergies').select('id, allergen, reaction, severity').eq('patient_id', patientId).eq('is_active', true);
 
       clinicalData.allergies =
         allergies?.map((allergy) => ({
@@ -248,7 +248,7 @@ export class PostAcuteTransferService {
       // Get latest vitals
       const { data: vitals } = await supabase
         .from('ehr_observations')
-        .select('*')
+        .select('id, loinc_code, display_name, value_quantity, unit, effective_datetime')
         .eq('patient_id', patientId)
         .eq('encounter_id', encounterId)
         .eq('observation_type', 'vital_sign')
@@ -273,7 +273,7 @@ export class PostAcuteTransferService {
       }
 
       // Get diagnoses
-      const { data: diagnoses } = await supabase.from('encounter_diagnoses').select('*').eq('encounter_id', encounterId);
+      const { data: diagnoses } = await supabase.from('encounter_diagnoses').select('id, diagnosis_code, diagnosis_description, diagnosis_type').eq('encounter_id', encounterId);
 
       clinicalData.diagnoses =
         diagnoses?.map((dx) => ({
@@ -315,7 +315,7 @@ export class PostAcuteTransferService {
       // Add functional status if available
       const { data: functionalStatus } = await supabase
         .from('functional_assessments')
-        .select('*')
+        .select('id, adl_score, mobility_level, cognitive_status, assessment_date')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false })
         .limit(1)
@@ -365,7 +365,7 @@ export class PostAcuteTransferService {
   static async getPatientPostAcuteTransfers(patientId: string): Promise<Record<string, unknown>[]> {
     const { data, error } = await supabase
       .from('handoff_packets')
-      .select('*')
+      .select('id, packet_number, patient_mrn, patient_gender, sending_facility, receiving_facility, urgency_level, reason_for_transfer, clinical_data, sender_provider_name, sender_callback_number, sender_notes, status, access_token, access_expires_at, acknowledged_by, acknowledged_at, created_at, updated_at, sent_at, created_by, patient_id, encounter_id, is_post_acute_transfer, post_acute_facility_type, discharge_encounter_id')
       .eq('patient_id', patientId)
       .eq('is_post_acute_transfer', true)
       .order('created_at', { ascending: false });
@@ -398,7 +398,7 @@ export class PostAcuteTransferService {
     }
 
     // Get handoff packet
-    const { data: packet, error } = await supabase.from('handoff_packets').select('*').eq('id', dischargePlan.post_acute_handoff_packet_id).single();
+    const { data: packet, error } = await supabase.from('handoff_packets').select('id, packet_number, patient_mrn, patient_gender, sending_facility, receiving_facility, urgency_level, reason_for_transfer, clinical_data, sender_provider_name, sender_callback_number, sender_notes, status, access_token, access_expires_at, acknowledged_by, acknowledged_at, created_at, updated_at, sent_at, created_by, patient_id, encounter_id, is_post_acute_transfer, post_acute_facility_type').eq('id', dischargePlan.post_acute_handoff_packet_id).single();
 
     if (error) {
       return null;
@@ -412,7 +412,7 @@ export class PostAcuteTransferService {
    */
   static async generateTransferSummary(handoffPacketId: string): Promise<string> {
     try {
-      const { data: packet } = await supabase.from('handoff_packets').select('*').eq('id', handoffPacketId).single();
+      const { data: packet } = await supabase.from('handoff_packets').select('id, packet_number, patient_mrn, sending_facility, receiving_facility, urgency_level, reason_for_transfer, clinical_data, sender_provider_name, sender_callback_number, sender_notes, status, sent_at, acknowledged_at, created_at, post_acute_facility_type').eq('id', handoffPacketId).single();
 
       if (!packet) {
         return 'Transfer packet not found';

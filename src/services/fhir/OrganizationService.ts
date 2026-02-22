@@ -19,7 +19,7 @@ export const OrganizationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
-        .select('*')
+        .select('id, npi, tax_id, ccn, active, type, name, alias, telecom, address, part_of_id, part_of_display, contact, endpoint_references, created_by, updated_by, created_at, updated_at')
         .eq('active', true)
         .order('name');
 
@@ -40,7 +40,7 @@ export const OrganizationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
-        .select('*')
+        .select('id, npi, tax_id, ccn, active, type, name, alias, telecom, address, part_of_id, part_of_display, contact, endpoint_references, created_by, updated_by, created_at, updated_at')
         .eq('id', id)
         .single();
 
@@ -61,7 +61,7 @@ export const OrganizationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
-        .select('*')
+        .select('id, npi, tax_id, ccn, active, type, name, alias, telecom, address, part_of_id, part_of_display, contact, endpoint_references, created_by, updated_by, created_at, updated_at')
         .eq('npi', npi)
         .single();
 
@@ -82,7 +82,7 @@ export const OrganizationService = {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
-        .select('*')
+        .select('id, npi, tax_id, ccn, active, type, name, alias, telecom, address, part_of_id, part_of_display, contact, endpoint_references, created_by, updated_by, created_at, updated_at')
         .ilike('name', `%${searchTerm}%`)
         .eq('active', true)
         .order('name');
@@ -105,7 +105,7 @@ export const OrganizationService = {
       const { data, error } = await supabase
         .from('fhir_organizations')
         .insert([organization])
-        .select()
+        .select('id, npi, tax_id, ccn, active, type, name, alias, telecom, address, part_of_id, part_of_display, contact, endpoint_references, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -127,7 +127,7 @@ export const OrganizationService = {
         .from('fhir_organizations')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, npi, tax_id, ccn, active, type, name, alias, telecom, address, part_of_id, part_of_display, contact, endpoint_references, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;

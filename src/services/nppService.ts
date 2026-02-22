@@ -68,7 +68,7 @@ export async function getCurrentNPP(): Promise<ServiceResult<NppVersion | null>>
   try {
     const { data, error } = await supabase
       .from('npp_versions')
-      .select('*')
+      .select('id, tenant_id, version_number, effective_date, content_hash, summary, is_current, published_by, created_at, updated_at')
       .eq('is_current', true)
       .single();
 
@@ -157,7 +157,7 @@ export async function checkAcknowledgmentStatus(
     // Check for acknowledgment
     const { data: ack, error } = await supabase
       .from('npp_acknowledgments')
-      .select('*')
+      .select('id, tenant_id, patient_id, npp_version_id, acknowledgment_type, acknowledged_at, refusal_reason, created_at')
       .eq('patient_id', userId)
       .eq('npp_version_id', currentVersion.id)
       .single();
@@ -185,7 +185,7 @@ export async function listNppVersions(): Promise<ServiceResult<NppVersion[]>> {
   try {
     const { data, error } = await supabase
       .from('npp_versions')
-      .select('*')
+      .select('id, tenant_id, version_number, effective_date, content_hash, summary, is_current, published_by, created_at, updated_at')
       .order('effective_date', { ascending: false });
 
     if (error) return failure('DATABASE_ERROR', error.message, error);

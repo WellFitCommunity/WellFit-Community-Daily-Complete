@@ -68,7 +68,7 @@ const HospitalPatientEnrollment: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('hospital_patients')
-        .select('*')
+        .select('user_id, first_name, last_name, age, room_number, mrn, enrollment_notes, enrollment_date')
         .order('room_number', { ascending: true, nullsFirst: false });
 
       if (error) throw error;

@@ -52,7 +52,7 @@ const SmartAppManagementPanel: React.FC = () => {
     try {
       const { data, error: fetchError } = await supabase
         .from('smart_registered_apps')
-        .select('*')
+        .select('id, tenant_id, client_id, client_name, client_description, client_uri, logo_uri, client_secret_hash, is_confidential, redirect_uris, launch_uri, scopes_allowed, pkce_required, token_endpoint_auth_method, jwks_uri, app_type, status, approved_at, approved_by, rejection_reason, developer_name, developer_email, tos_uri, policy_uri, total_authorizations, active_authorizations, last_authorization_at, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;

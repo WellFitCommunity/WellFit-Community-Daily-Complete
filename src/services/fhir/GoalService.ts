@@ -21,7 +21,7 @@ export const GoalService = {
     try {
       const { data, error } = await supabase
         .from('fhir_goals')
-        .select('*')
+        .select('id, patient_id, lifecycle_status, achievement_status, category, priority, priority_code, description_code, description_display, description_text, start_date, target, status_date, status_reason, expressed_by_id, expressed_by_display, addresses, note, created_by, updated_by, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('start_date', { ascending: false });
 
@@ -42,7 +42,7 @@ export const GoalService = {
     try {
       const { data, error } = await supabase
         .from('fhir_goals')
-        .select('*')
+        .select('id, patient_id, lifecycle_status, achievement_status, category, priority, priority_code, description_code, description_display, description_text, start_date, target, status_date, status_reason, expressed_by_id, expressed_by_display, addresses, note, created_by, updated_by, created_at, updated_at')
         .eq('patient_id', patientId)
         .in('lifecycle_status', ['proposed', 'planned', 'accepted', 'active'])
         .order('priority_code', { ascending: true, nullsFirst: false })
@@ -65,7 +65,7 @@ export const GoalService = {
     try {
       const { data, error } = await supabase
         .from('fhir_goals')
-        .select('*')
+        .select('id, patient_id, lifecycle_status, achievement_status, category, priority, priority_code, description_code, description_display, description_text, start_date, target, status_date, status_reason, expressed_by_id, expressed_by_display, addresses, note, created_by, updated_by, created_at, updated_at')
         .eq('patient_id', patientId)
         .contains('category', [category])
         .order('start_date', { ascending: false });
@@ -85,7 +85,7 @@ export const GoalService = {
    */
   async create(goal: FHIRGoalCreateInput): Promise<FHIRApiResponse<FHIRGoalRow>> {
     try {
-      const { data, error } = await supabase.from('fhir_goals').insert([goal]).select().single();
+      const { data, error } = await supabase.from('fhir_goals').insert([goal]).select('id, patient_id, lifecycle_status, achievement_status, category, priority, priority_code, description_code, description_display, description_text, start_date, target, status_date, status_reason, expressed_by_id, expressed_by_display, addresses, note, created_by, updated_by, created_at, updated_at').single();
 
       if (error) throw error;
       return { success: true, data: data as FHIRGoalRow };
@@ -106,7 +106,7 @@ export const GoalService = {
         .from('fhir_goals')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, patient_id, lifecycle_status, achievement_status, category, priority, priority_code, description_code, description_display, description_text, start_date, target, status_date, status_reason, expressed_by_id, expressed_by_display, addresses, note, created_by, updated_by, created_at, updated_at')
         .single();
 
       if (error) throw error;

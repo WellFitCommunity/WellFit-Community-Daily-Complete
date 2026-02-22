@@ -24,7 +24,7 @@ export class ConditionalMappingService {
 
     const { data } = await this.supabase
       .from('migration_conditional_mappings')
-      .select('*')
+      .select('mapping_id, source_column, condition, action_type, action_config, priority')
       .eq('source_column', sourceColumn)
       .eq('is_active', true)
       .order('priority', { ascending: true });

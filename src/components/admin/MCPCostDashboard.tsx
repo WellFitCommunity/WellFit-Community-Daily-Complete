@@ -45,7 +45,7 @@ export const MCPCostDashboard: React.FC = () => {
       // Fetch summary metrics
       const { data: metricsData, error: metricsError } = await supabase
         .from('mcp_cost_savings_summary')
-        .select('*')
+        .select('total_spent, total_saved, avg_cache_hit_rate, total_calls, total_cached_calls, total_haiku_calls, total_sonnet_calls')
         .eq('user_id', user.id)
         .single();
 

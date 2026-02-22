@@ -48,7 +48,7 @@ export async function getTransportRequests(
     let query = supabase
       .from('transport_requests')
       .select(`
-        *,
+        id, tenant_id, patient_id, patient_name, patient_mrn, origin_type, origin_bed_id, origin_unit_id, origin_department, origin_location, destination_type, destination_bed_id, destination_unit_id, destination_department, destination_location, transport_type, transport_reason, priority, status, requires_oxygen, requires_iv, requires_monitor, requires_isolation, special_equipment, special_instructions, requested_at, requested_by, scheduled_time, assigned_to, assigned_at, pickup_started_at, pickup_arrived_at, transit_started_at, delivered_at, completed_at, cancelled_at, cancelled_by, cancellation_reason, wait_time_minutes, transit_time_minutes, total_time_minutes, created_at, updated_at,
         origin_unit:origin_unit_id (unit_name),
         destination_unit:destination_unit_id (unit_name),
         transport_staff:assigned_to (full_name)
@@ -389,7 +389,7 @@ export async function getTransportStaff(
   try {
     let query = supabase
       .from('transport_staff')
-      .select('*')
+      .select('id, tenant_id, user_id, employee_id, first_name, last_name, full_name, phone, status, current_request_id, current_location, assigned_units, certifications, shift_start, shift_end, transports_completed_today, avg_transport_minutes, is_active, created_at, updated_at')
       .order('status', { ascending: true })
       .order('full_name', { ascending: true });
 

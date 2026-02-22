@@ -425,7 +425,7 @@ export class MedicationInstructionsService {
     try {
       const { data, error } = await supabase
         .from('ai_medication_instructions')
-        .select('*')
+        .select('id, instruction_id, patient_id, medication_name, dosage, result, delivered_via, delivered_at, created_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(limit);

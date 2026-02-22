@@ -154,7 +154,7 @@ const SeniorReportsPage: React.FC = () => {
 
       const { data: checkInData } = await anonSupabase
         .from('check_ins')
-        .select('*')
+        .select('id, timestamp, label, notes, emotional_state, heart_rate, bp_systolic, bp_diastolic, pulse_oximeter, glucose_mg_dl')
         .eq('user_id', seniorId)
         .gte('timestamp', startDate.toISOString())
         .order('timestamp', { ascending: false });

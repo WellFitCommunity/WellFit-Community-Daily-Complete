@@ -33,7 +33,7 @@ export class CarePlanService {
 
       const { data, error } = await supabase
         .from('fhir_care_plans')
-        .select('*')
+        .select('id, patient_id, status, intent, category, category_display, title, description, period_start, period_end, created, author_reference, author_display, author_practitioner_id, care_team_reference, care_team_display, addresses_condition_references, addresses_condition_displays, goal_references, goal_displays, activities, note, created_by, updated_by, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('created', { ascending: false });
 
@@ -55,7 +55,7 @@ export class CarePlanService {
    */
   static async getById(id: string): Promise<FHIRApiResponse<FHIRCarePlan | null>> {
     try {
-      const { data, error } = await supabase.from('fhir_care_plans').select('*').eq('id', id).single();
+      const { data, error } = await supabase.from('fhir_care_plans').select('id, patient_id, status, intent, category, category_display, title, description, period_start, period_end, created, author_reference, author_display, author_practitioner_id, care_team_reference, care_team_display, addresses_condition_references, addresses_condition_displays, goal_references, goal_displays, activities, note, created_by, updated_by, created_at, updated_at').eq('id', id).single();
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -253,7 +253,7 @@ export class CarePlanService {
         });
       }
 
-      const { data, error } = await supabase.from('fhir_care_plans').insert([carePlan]).select().single();
+      const { data, error } = await supabase.from('fhir_care_plans').insert([carePlan]).select('id, patient_id, status, intent, category, category_display, title, description, period_start, period_end, created, author_reference, author_display, author_practitioner_id, care_team_reference, care_team_display, addresses_condition_references, addresses_condition_displays, goal_references, goal_displays, activities, note, created_by, updated_by, created_at, updated_at').single();
 
       if (error) throw error;
       return { success: true, data: data as FHIRCarePlan };
@@ -279,7 +279,7 @@ export class CarePlanService {
    */
   static async update(id: string, updates: Partial<FHIRCarePlan>): Promise<FHIRApiResponse<FHIRCarePlan>> {
     try {
-      const { data, error } = await supabase.from('fhir_care_plans').update(updates).eq('id', id).select().single();
+      const { data, error } = await supabase.from('fhir_care_plans').update(updates).eq('id', id).select('id, patient_id, status, intent, category, category_display, title, description, period_start, period_end, created, author_reference, author_display, author_practitioner_id, care_team_reference, care_team_display, addresses_condition_references, addresses_condition_displays, goal_references, goal_displays, activities, note, created_by, updated_by, created_at, updated_at').single();
 
       if (error) throw error;
       return { success: true, data: data as FHIRCarePlan };
@@ -344,7 +344,7 @@ export class CarePlanService {
         });
       }
 
-      let query = supabase.from('fhir_care_plans').select('*');
+      let query = supabase.from('fhir_care_plans').select('id, patient_id, status, intent, category, category_display, title, description, period_start, period_end, created, author_reference, author_display, author_practitioner_id, care_team_reference, care_team_display, addresses_condition_references, addresses_condition_displays, goal_references, goal_displays, activities, note, created_by, updated_by, created_at, updated_at');
 
       if (params.patientId) {
         query = query.eq('patient_id', params.patientId);

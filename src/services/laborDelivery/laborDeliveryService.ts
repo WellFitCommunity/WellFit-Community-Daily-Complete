@@ -110,7 +110,7 @@ export class LaborDeliveryService {
     try {
       const { data, error } = await supabase
         .from('ld_pregnancies')
-        .select('*')
+        .select('id, patient_id, tenant_id, gravida, para, ab, living, edd, lmp, blood_type, rh_factor, gbs_status, risk_level, risk_factors, status, primary_provider_id, notes, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('tenant_id', tenantId)
         .eq('status', 'active')
@@ -438,31 +438,31 @@ export class LaborDeliveryService {
         deliveryRes, newbornRes, postpartumRes,
         medsRes, riskRes,
       ] = await Promise.all([
-        supabase.from('ld_pregnancies').select('*')
+        supabase.from('ld_pregnancies').select('id, patient_id, tenant_id, gravida, para, ab, living, edd, lmp, blood_type, rh_factor, gbs_status, risk_level, risk_factors, status, primary_provider_id, notes, created_at, updated_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('created_at', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('ld_prenatal_visits').select('*')
+        supabase.from('ld_prenatal_visits').select('id, patient_id, tenant_id, pregnancy_id, visit_date, provider_id, gestational_age_weeks, gestational_age_days, fundal_height_cm, fetal_heart_rate, fetal_presentation, weight_kg, bp_systolic, bp_diastolic, urine_protein, urine_glucose, cervical_dilation_cm, cervical_effacement_percent, cervical_station, edema, complaints, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('visit_date', { ascending: false }).limit(10),
-        supabase.from('ld_labor_events').select('*')
+        supabase.from('ld_labor_events').select('id, patient_id, tenant_id, pregnancy_id, event_time, stage, dilation_cm, effacement_percent, station, contraction_frequency_per_10min, contraction_duration_seconds, contraction_intensity, membrane_status, membrane_rupture_time, fluid_color, maternal_bp_systolic, maternal_bp_diastolic, maternal_hr, maternal_temp_c, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('event_time', { ascending: true }).limit(50),
-        supabase.from('ld_fetal_monitoring').select('*')
+        supabase.from('ld_fetal_monitoring').select('id, patient_id, tenant_id, pregnancy_id, assessment_time, assessed_by, fhr_baseline, variability, accelerations_present, deceleration_type, deceleration_depth_bpm, fhr_category, uterine_activity, interpretation, action_taken, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('assessment_time', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('ld_delivery_records').select('*')
+        supabase.from('ld_delivery_records').select('id, patient_id, tenant_id, pregnancy_id, delivery_datetime, delivery_provider_id, method, anesthesia, labor_duration_hours, second_stage_duration_min, estimated_blood_loss_ml, complications, episiotomy, laceration_degree, cord_clamping, cord_gases_ph, cord_gases_base_excess, placenta_delivery_time, placenta_intact, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('delivery_datetime', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('ld_newborn_assessments').select('*')
+        supabase.from('ld_newborn_assessments').select('id, patient_id, tenant_id, pregnancy_id, delivery_id, newborn_patient_id, birth_datetime, sex, weight_g, length_cm, head_circumference_cm, apgar_1_min, apgar_5_min, apgar_10_min, ballard_gestational_age_weeks, temperature_c, heart_rate, respiratory_rate, disposition, skin_color, reflexes, anomalies, vitamin_k_given, erythromycin_given, hepatitis_b_vaccine, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('birth_datetime', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('ld_postpartum_assessments').select('*')
+        supabase.from('ld_postpartum_assessments').select('id, patient_id, tenant_id, pregnancy_id, assessment_datetime, assessed_by, hours_postpartum, fundal_height, fundal_firmness, lochia, lochia_amount, bp_systolic, bp_diastolic, heart_rate, temperature_c, breastfeeding_status, lactation_notes, pain_score, pain_location, emotional_status, epds_score, voiding, bowel_movement, incision_intact, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('assessment_datetime', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('ld_medication_administrations').select('*')
+        supabase.from('ld_medication_administrations').select('id, patient_id, tenant_id, pregnancy_id, administered_datetime, administered_by, medication_name, dose, route, indication, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('administered_datetime', { ascending: false }).limit(20),
-        supabase.from('ld_risk_assessments').select('*')
+        supabase.from('ld_risk_assessments').select('id, patient_id, tenant_id, pregnancy_id, assessment_date, assessed_by, risk_level, risk_factors, score, scoring_system, notes, created_at')
           .eq('patient_id', patientId).eq('tenant_id', tenantId)
           .order('assessment_date', { ascending: false }).limit(1).maybeSingle(),
       ]);

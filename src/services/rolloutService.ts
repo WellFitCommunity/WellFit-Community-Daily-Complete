@@ -190,7 +190,7 @@ async function getRollout(
   try {
     const { data, error } = await supabase
       .from('feature_rollouts')
-      .select('*')
+      .select('id, tenant_id, feature_key, feature_name, description, rollout_percentage, is_enabled, target_roles, target_user_ids, excluded_user_ids, environments, start_date, end_date, rollout_schedule, impression_count, enabled_count, disabled_count, created_by, created_at, updated_at')
       .eq('id', rolloutId)
       .single();
 
@@ -219,7 +219,7 @@ async function getRolloutByKey(
   try {
     let query = supabase
       .from('feature_rollouts')
-      .select('*')
+      .select('id, tenant_id, feature_key, feature_name, description, rollout_percentage, is_enabled, target_roles, target_user_ids, excluded_user_ids, environments, start_date, end_date, rollout_schedule, impression_count, enabled_count, disabled_count, created_by, created_at, updated_at')
       .eq('feature_key', featureKey);
 
     if (tenantId) {
@@ -251,7 +251,7 @@ async function listRollouts(
   try {
     let query = supabase
       .from('feature_rollouts')
-      .select('*')
+      .select('id, tenant_id, feature_key, feature_name, description, rollout_percentage, is_enabled, target_roles, target_user_ids, excluded_user_ids, environments, start_date, end_date, rollout_schedule, impression_count, enabled_count, disabled_count, created_by, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (tenantId) {
@@ -439,7 +439,7 @@ async function getRolloutHistory(
   try {
     const { data, error } = await supabase
       .from('feature_rollout_history')
-      .select('*')
+      .select('id, feature_rollout_id, change_type, old_value, new_value, changed_by, changed_at, reason')
       .eq('feature_rollout_id', rolloutId)
       .order('changed_at', { ascending: false });
 

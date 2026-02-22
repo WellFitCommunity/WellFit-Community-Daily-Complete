@@ -143,7 +143,7 @@ export class CareCoordinationService {
   static async getCarePlan(planId: string): Promise<CarePlan> {
     const { data, error } = await supabase
       .from('care_coordination_plans')
-      .select('*')
+      .select('id, patient_id, plan_type, status, priority, title, goals, interventions, barriers, sdoh_factors, sdoh_assessment_id, care_team_members, primary_coordinator_id, start_date, end_date, last_reviewed_date, next_review_date, outcome_measures, success_metrics, clinical_notes, created_at')
       .eq('id', planId)
       .single();
 
@@ -160,7 +160,7 @@ export class CareCoordinationService {
   ): Promise<CarePlan[]> {
     let query = supabase
       .from('care_coordination_plans')
-      .select('*')
+      .select('id, patient_id, plan_type, status, priority, title, goals, interventions, barriers, sdoh_factors, sdoh_assessment_id, care_team_members, primary_coordinator_id, start_date, end_date, last_reviewed_date, next_review_date, outcome_measures, success_metrics, clinical_notes, created_at')
       .eq('patient_id', patientId);
 
     if (activeOnly) {
@@ -181,7 +181,7 @@ export class CareCoordinationService {
 
     const query = supabase
       .from('care_coordination_plans')
-      .select('*, profiles(*)')
+      .select('id, patient_id, plan_type, status, priority, title, goals, interventions, barriers, sdoh_factors, sdoh_assessment_id, care_team_members, primary_coordinator_id, start_date, end_date, last_reviewed_date, next_review_date, outcome_measures, success_metrics, clinical_notes, created_at, profiles(id, first_name, last_name)')
       .eq('status', 'active')
       .lte('next_review_date', today)
       .order('next_review_date', { ascending: true });
@@ -293,7 +293,7 @@ export class CareCoordinationService {
   static async getActiveAlerts(assignedToUserId?: string): Promise<CareTeamAlert[]> {
     let query = supabase
       .from('care_team_alerts')
-      .select('*, profiles(*)')
+      .select('id, patient_id, care_plan_id, alert_type, severity, priority, title, description, alert_data, assigned_to, status, actions_taken, created_at, profiles(id, first_name, last_name)')
       .eq('status', 'active')
       .order('severity', { ascending: false })
       .order('created_at', { ascending: false });
@@ -334,20 +334,20 @@ export class CareCoordinationService {
     try {
       const { data: _profile } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, first_name, last_name, date_of_birth, gender, conditions, medications, allergies')
         .eq('id', patientId)
         .single();
 
       const { data: _readmissions } = await supabase
         .from('patient_readmissions')
-        .select('*')
+        .select('id, patient_id, admission_date, discharge_date, discharge_disposition, primary_diagnosis, readmission_reason, readmission_risk_score')
         .eq('patient_id', patientId)
         .order('admission_date', { ascending: false })
         .limit(5);
 
       const { data: _sdohAssessment } = await supabase
         .from('sdoh_assessments')
-        .select('*')
+        .select('id, patient_id, food_insecurity, housing_instability, transportation_barriers, financial_strain, social_isolation, overall_risk_level, created_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(1)

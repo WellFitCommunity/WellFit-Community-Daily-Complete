@@ -197,7 +197,7 @@ export async function extractEngagementFactors(
   // Get all check-ins for last 30 days
   const { data: checkIns } = await supabase
     .from('patient_daily_check_ins')
-    .select('*')
+    .select('status, check_in_date, responses, alert_triggered, alert_severity')
     .eq('patient_id', patientId)
     .gte('check_in_date', thirtyDaysAgo.toISOString())
     .order('check_in_date', { ascending: false });
@@ -213,7 +213,7 @@ export async function extractEngagementFactors(
   // Game participation - get from engagement tracking
   const { data: gameStats } = await supabase
     .from('patient_engagement_metrics')
-    .select('*')
+    .select('trivia_played, word_find_played, engagement_score, overall_engagement_score, meal_photo_shared, community_interactions, date')
     .eq('patient_id', patientId)
     .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
     .order('date', { ascending: false });

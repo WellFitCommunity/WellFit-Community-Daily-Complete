@@ -15,7 +15,7 @@ export async function getMedicationReminders(
   try {
     const { data, error } = await supabase
       .from('medication_reminders')
-      .select('*')
+      .select('id, medication_id, user_id, time_of_day, days_of_week, enabled, notification_method, last_reminded_at, next_reminder_at, created_at, updated_at')
       .eq('medication_id', medicationId)
       .order('time_of_day');
 
@@ -43,7 +43,7 @@ export async function createMedicationReminder(
     const { data, error} = await supabase
       .from('medication_reminders')
       .insert([reminderData])
-      .select()
+      .select('id, medication_id, user_id, time_of_day, days_of_week, enabled, notification_method, last_reminded_at, next_reminder_at, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -73,7 +73,7 @@ export async function updateMedicationReminder(
       .from('medication_reminders')
       .update(updates)
       .eq('id', reminderId)
-      .select()
+      .select('id, medication_id, user_id, time_of_day, days_of_week, enabled, notification_method, last_reminded_at, next_reminder_at, created_at, updated_at')
       .single();
 
     if (error) throw error;

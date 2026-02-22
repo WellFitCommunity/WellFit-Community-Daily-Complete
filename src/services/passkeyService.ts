@@ -361,7 +361,7 @@ export async function completePasskeyAuthentication(options: AuthenticationOptio
 export async function getUserPasskeys(): Promise<PasskeyCredential[]> {
   const { data, error } = await supabase
     .from('passkey_credentials')
-    .select('*')
+    .select('id, user_id, credential_id, device_name, authenticator_type, transports, last_used_at, created_at')
     .order('created_at', { ascending: false });
 
   if (error) throw error;

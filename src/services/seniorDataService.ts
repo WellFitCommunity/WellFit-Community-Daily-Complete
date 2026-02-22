@@ -136,7 +136,7 @@ export async function getSeniorDemographics(
   try {
     const { data, error } = await supabase
       .from('senior_demographics')
-      .select('*')
+      .select('user_id, date_of_birth, age_at_enrollment, preferred_language, requires_interpreter, veteran_status, marital_status, living_situation, education_level, primary_caregiver_name, primary_caregiver_phone, primary_caregiver_relationship, tenant_id')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -189,7 +189,7 @@ export async function getSeniorHealth(
   try {
     const { data, error } = await supabase
       .from('senior_health')
-      .select('*')
+      .select('user_id, primary_diagnosis, chronic_conditions, allergies, current_medications, mobility_level, fall_risk_level, fall_history, cognitive_status, hearing_status, vision_status, dental_status, nutrition_status, weight_trend, pain_level, sleep_quality, adl_score, iadl_score, last_hospitalization, hospitalization_reason, primary_care_physician, specialist_providers, tenant_id')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -242,7 +242,7 @@ export async function getSeniorSDOH(
   try {
     const { data, error } = await supabase
       .from('senior_sdoh')
-      .select('*')
+      .select('user_id, food_security, meals_per_day, needs_meal_assistance, meal_delivery_enrolled, transportation_access, can_drive, needs_transport_assistance, housing_type, housing_safe, home_modifications_needed, social_isolation_risk, has_regular_social_contact, attends_senior_center, attends_religious_services, has_pets, income_source, has_medicare, has_medicaid, has_supplemental_insurance, financial_stress_level, needs_financial_assistance, has_smartphone, has_internet, tech_comfort_level, uses_medical_alert_device, caregiver_burnout_risk, caregiver_needs_respite, tenant_id')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -295,7 +295,7 @@ export async function getSeniorEmergencyContacts(
   try {
     const { data, error } = await supabase
       .from('senior_emergency_contacts')
-      .select('*')
+      .select('id, user_id, contact_name, contact_phone, contact_relationship, contact_priority, is_healthcare_proxy, is_power_of_attorney, has_key_to_home, notes, tenant_id')
       .eq('user_id', userId)
       .order('contact_priority', { ascending: true });
 

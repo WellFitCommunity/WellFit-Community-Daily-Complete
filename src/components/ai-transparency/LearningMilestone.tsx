@@ -32,7 +32,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
       try {
         const { data, error } = await supabase
           .from('ai_learning_milestones')
-          .select('*')
+          .select('id, milestone_type, milestone_title, milestone_description, badge_icon, celebration_type, created_at')
           .eq('user_id', user.id)
           .eq('acknowledged', false)
           .order('created_at', { ascending: true });

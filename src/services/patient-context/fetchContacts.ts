@@ -132,14 +132,14 @@ export async function fetchContacts(
     // Query caregiver_access table for registered caregivers
     const { data: caregiverData, error: caregiverError } = await supabase
       .from('caregiver_access')
-      .select('*')
+      .select('id, caregiver_id, caregiver_name, name, phone, email, is_primary, created_at, updated_at')
       .eq('senior_id', patientId)
       .eq('is_active', true);
 
     // Query emergency_contacts table if it exists
     const { data: emergencyData } = await supabase
       .from('emergency_contacts')
-      .select('*')
+      .select('id, name, phone, email, is_primary, relationship_to_patient, created_at, updated_at')
       .eq('patient_id', patientId);
 
     // Transform caregivers

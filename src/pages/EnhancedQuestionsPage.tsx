@@ -146,7 +146,7 @@ const EnhancedQuestionsPage: React.FC = () => {
       // Use existing user_questions table for medical questions
       const { data, error } = await supabase
         .from('user_questions')
-        .select('*')
+        .select('id, question_text, category, status, urgency, response_text, nurse_notes, ai_suggestions, responded_at, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 

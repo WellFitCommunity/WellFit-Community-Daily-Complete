@@ -270,7 +270,7 @@ export const TimeClockService = {
     try {
       const { data, error } = await supabase
         .from('time_clock_streaks')
-        .select('*')
+        .select('id, user_id, tenant_id, current_streak, streak_start_date, last_on_time_date, best_streak, best_streak_start_date, best_streak_end_date, total_on_time_days, total_work_days, created_at, updated_at')
         .eq('user_id', userId)
         .eq('tenant_id', tenantId)
         .single();
@@ -292,7 +292,7 @@ export const TimeClockService = {
     try {
       const { data, error } = await supabase
         .from('time_clock_settings')
-        .select('*')
+        .select('id, tenant_id, grace_period_minutes, auto_close_after_hours, default_shift_start, default_shift_end, celebration_messages, created_at, updated_at')
         .eq('tenant_id', tenantId)
         .single();
 

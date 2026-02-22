@@ -49,7 +49,7 @@ const RiskAssessmentManager: React.FC = () => {
       // Load recent assessments
       const { data: assessmentsData, error: assessmentsError } = await supabase
         .from('risk_assessments')
-        .select('*')
+        .select('id, patient_id, assessor_id, risk_level, priority, medical_risk_score, mobility_risk_score, cognitive_risk_score, social_risk_score, overall_score, assessment_notes, risk_factors, recommended_actions, next_assessment_due, review_frequency, walking_ability, stair_climbing, sitting_ability, standing_ability, toilet_transfer, bathing_ability, meal_preparation, medication_management, fall_risk_factors, created_at, updated_at, valid_until')
         .order('created_at', { ascending: false })
         .limit(100);
 

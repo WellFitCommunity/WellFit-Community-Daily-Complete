@@ -26,7 +26,7 @@ export const PractitionerRoleService = {
   async getActiveByPractitioner(practitionerId: string): Promise<FHIRPractitionerRole[]> {
     const { data, error } = await supabase
       .from('fhir_practitioner_roles')
-      .select('*')
+      .select('id, fhir_id, practitioner_id, organization_id, location_id, active, code, code_display, specialty, specialty_display, period_start, period_end, telecom, available_time, not_available, endpoint_references, created_at, updated_at')
       .eq('practitioner_id', practitionerId)
       .eq('active', true)
       .is('period_end', null)
@@ -48,7 +48,7 @@ export const PractitionerRoleService = {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .select()
+      .select('id, fhir_id, practitioner_id, organization_id, location_id, active, code, code_display, specialty, specialty_display, period_start, period_end, telecom, available_time, not_available, endpoint_references, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -66,7 +66,7 @@ export const PractitionerRoleService = {
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
-      .select()
+      .select('id, fhir_id, practitioner_id, organization_id, location_id, active, code, code_display, specialty, specialty_display, period_start, period_end, telecom, available_time, not_available, endpoint_references, created_at, updated_at')
       .single();
 
     if (error) throw error;

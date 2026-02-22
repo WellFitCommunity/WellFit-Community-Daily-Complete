@@ -54,7 +54,7 @@ export class LabIntegrationService {
     try {
       const { data, error } = await supabase
         .from('lab_provider_connections')
-        .select('*')
+        .select('id, tenant_id, provider_code, provider_name, description, fhir_base_url, fhir_version, auth_type, client_id, smart_authorize_url, smart_token_url, smart_scopes, facility_id, account_number, enabled, auto_fetch_results, fetch_interval_minutes, result_notification_enabled, last_connected_at, last_error, connection_status, orders_sent, results_received, errors_count, created_at, updated_at, created_by')
         .order('provider_name');
 
       if (error) {
@@ -158,7 +158,7 @@ export class LabIntegrationService {
     try {
       const { data, error } = await supabase
         .from('lab_results')
-        .select('*')
+        .select('id, tenant_id, order_id, patient_id, connection_id, accession_number, report_id, report_status, report_type, specimen_collected_at, specimen_received_at, reported_at, ordering_provider_name, performing_lab_name, pathologist_name, results_summary, pdf_report_url, fhir_diagnostic_report_id, fhir_bundle_id, patient_notified, patient_notified_at, provider_notified, provider_notified_at, reviewed_by, reviewed_at, review_notes, has_critical_values, critical_values_acknowledged, critical_values_acknowledged_at, critical_values_acknowledged_by, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('reported_at', { ascending: false })
         .limit(limit);
@@ -180,7 +180,7 @@ export class LabIntegrationService {
     try {
       const { data, error } = await supabase
         .from('lab_results')
-        .select('*')
+        .select('id, tenant_id, order_id, patient_id, connection_id, accession_number, report_id, report_status, report_type, specimen_collected_at, specimen_received_at, reported_at, ordering_provider_name, performing_lab_name, pathologist_name, results_summary, pdf_report_url, fhir_diagnostic_report_id, fhir_bundle_id, patient_notified, patient_notified_at, provider_notified, provider_notified_at, reviewed_by, reviewed_at, review_notes, has_critical_values, critical_values_acknowledged, critical_values_acknowledged_at, critical_values_acknowledged_by, created_at, updated_at')
         .eq('has_critical_values', true)
         .eq('critical_values_acknowledged', false)
         .order('reported_at', { ascending: false });
@@ -233,7 +233,7 @@ export class PharmacyIntegrationService {
     try {
       const { data, error } = await supabase
         .from('pharmacy_connections')
-        .select('*')
+        .select('id, tenant_id, pharmacy_type, pharmacy_name, ncpdp_id, npi, dea_number, address_line1, address_line2, city, state, zip_code, phone, fax, protocol, api_endpoint, supports_erx, supports_refill_requests, supports_medication_history, supports_eligibility, supports_controlled_substances, enabled, is_preferred, last_connected_at, last_error, connection_status, created_at, updated_at, created_by')
         .order('pharmacy_name');
 
       if (error) {
@@ -299,7 +299,7 @@ export class PharmacyIntegrationService {
     try {
       const { data, error } = await supabase
         .from('e_prescriptions')
-        .select('*')
+        .select('id, tenant_id, pharmacy_connection_id, patient_id, prescriber_id, prescriber_npi, prescriber_dea, internal_rx_id, external_rx_id, surescripts_message_id, medication_name, medication_ndc, rxnorm_code, strength, dosage_form, quantity, quantity_unit, days_supply, refills_authorized, refills_remaining, sig, sig_code, dispense_as_written, substitution_allowed, diagnosis_codes, indication, prior_auth_number, is_controlled_substance, schedule, rx_status, written_at, signed_at, transmitted_at, dispensed_at, expires_at, transmission_error, pharmacy_response, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('written_at', { ascending: false })
         .limit(limit);
@@ -321,7 +321,7 @@ export class PharmacyIntegrationService {
     try {
       const { data, error } = await supabase
         .from('medication_history')
-        .select('*')
+        .select('id, tenant_id, patient_id, source, source_pharmacy_name, source_pharmacy_ncpdp, medication_name, ndc, rxnorm_code, strength, dosage_form, fill_date, quantity_dispensed, days_supply, refills_remaining, prescriber_name, prescriber_npi, is_active, discontinued_date, discontinued_reason, fetched_at, created_at')
         .eq('patient_id', patientId)
         .order('fill_date', { ascending: false });
 
@@ -342,7 +342,7 @@ export class PharmacyIntegrationService {
     try {
       const { data, error } = await supabase
         .from('refill_requests')
-        .select('*')
+        .select('id, tenant_id, patient_id, original_prescription_id, pharmacy_connection_id, medication_name, request_source, request_status, response_prescription_id, response_notes, responded_by, responded_at, requested_at, due_by, created_at, updated_at')
         .eq('request_status', 'pending')
         .order('requested_at', { ascending: true });
 
@@ -403,7 +403,7 @@ export class ImagingIntegrationService {
     try {
       const { data, error } = await supabase
         .from('pacs_connections')
-        .select('*')
+        .select('id, tenant_id, pacs_vendor, pacs_name, description, ae_title, hostname, port, query_ae_title, query_port, wado_url, wado_auth_type, dicomweb_url, dicomweb_qido_path, dicomweb_wado_path, dicomweb_stow_path, enabled, auto_fetch_studies, store_images_locally, last_connected_at, last_error, connection_status, created_at, updated_at, created_by')
         .order('pacs_name');
 
       if (error) {
@@ -465,7 +465,7 @@ export class ImagingIntegrationService {
     try {
       const { data, error } = await supabase
         .from('imaging_orders')
-        .select('*')
+        .select('id, tenant_id, pacs_connection_id, patient_id, internal_order_id, accession_number, ordering_provider_id, ordering_provider_npi, modality, procedure_code, procedure_name, body_part, laterality, reason_for_exam, diagnosis_codes, clinical_history, priority, order_status, scheduled_at, performed_at, performing_facility, performing_location, interpreting_radiologist, dictated_at, finalized_at, study_instance_uid, fhir_imaging_study_id, fhir_diagnostic_report_id, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -487,7 +487,7 @@ export class ImagingIntegrationService {
     try {
       const { data, error } = await supabase
         .from('imaging_studies')
-        .select('*')
+        .select('id, tenant_id, order_id, patient_id, pacs_connection_id, study_instance_uid, series_count, instance_count, study_date, study_time, accession_number, modalities, study_description, body_part_examined, dicom_patient_name, dicom_patient_id, institution_name, referring_physician, performing_physician, storage_location, total_size_bytes, availability, has_report, report_id, received_at, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('study_date', { ascending: false })
         .limit(limit);
@@ -509,7 +509,7 @@ export class ImagingIntegrationService {
     try {
       const { data, error } = await supabase
         .from('imaging_reports')
-        .select('*')
+        .select('id, tenant_id, study_id, order_id, patient_id, report_id, accession_number, report_status, clinical_info, comparison, technique, findings, impression, coded_findings, has_critical_finding, critical_finding_description, critical_finding_communicated, critical_finding_communicated_to, critical_finding_communicated_at, dictating_radiologist, dictating_radiologist_npi, signing_radiologist, signing_radiologist_npi, dictated_at, transcribed_at, signed_at, amended_at, is_amended, amendment_reason, original_report_id, fhir_diagnostic_report_id, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('signed_at', { ascending: false })
         .limit(limit);
@@ -531,7 +531,7 @@ export class ImagingIntegrationService {
     try {
       const { data, error } = await supabase
         .from('imaging_reports')
-        .select('*')
+        .select('id, tenant_id, study_id, order_id, patient_id, report_id, accession_number, report_status, clinical_info, comparison, technique, findings, impression, coded_findings, has_critical_finding, critical_finding_description, critical_finding_communicated, critical_finding_communicated_to, critical_finding_communicated_at, dictating_radiologist, dictating_radiologist_npi, signing_radiologist, signing_radiologist_npi, dictated_at, transcribed_at, signed_at, amended_at, is_amended, amendment_reason, original_report_id, fhir_diagnostic_report_id, created_at, updated_at')
         .eq('has_critical_finding', true)
         .eq('critical_finding_communicated', false)
         .order('signed_at', { ascending: false });
@@ -559,7 +559,7 @@ export class InsuranceVerificationService {
     try {
       const { data, error } = await supabase
         .from('insurance_payer_connections')
-        .select('*')
+        .select('id, tenant_id, payer_id, payer_name, payer_type, edi_receiver_id, edi_interchange_qualifier, connection_type, clearinghouse_name, clearinghouse_id, api_endpoint, portal_url, supports_270_271, supports_276_277, supports_278, supports_835, supports_837, supports_real_time, batch_schedule, enabled, last_connected_at, last_error, connection_status, created_at, updated_at, created_by')
         .order('payer_name');
 
       if (error) {
@@ -621,7 +621,7 @@ export class InsuranceVerificationService {
     try {
       const { data, error } = await supabase
         .from('eligibility_requests')
-        .select('*')
+        .select('id, tenant_id, payer_connection_id, patient_id, subscriber_id, subscriber_name, subscriber_dob, is_dependent, dependent_name, dependent_dob, relationship_code, service_type_codes, date_of_service, provider_npi, provider_taxonomy, request_status, trace_number, submitter_trace, requested_at, submitted_at, response_received_at, response_id, error_code, error_message, created_at, created_by')
         .eq('patient_id', patientId)
         .order('requested_at', { ascending: false })
         .limit(limit);

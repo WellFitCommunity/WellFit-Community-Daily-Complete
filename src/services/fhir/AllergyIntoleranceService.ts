@@ -21,7 +21,7 @@ export const AllergyIntoleranceService = {
 
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .select('*')
+      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .eq('patient_id', patientId)
       .order('criticality', { ascending: false, nullsFirst: false })
       .order('allergen_name');
@@ -59,7 +59,7 @@ export const AllergyIntoleranceService = {
 
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .select('*')
+      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('allergen_type', allergenType)
       .eq('clinical_status', 'active')
@@ -79,7 +79,7 @@ export const AllergyIntoleranceService = {
 
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .select('*')
+      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .eq('patient_id', patientId)
       .eq('clinical_status', 'active')
       .eq('criticality', 'high')
@@ -123,7 +123,7 @@ export const AllergyIntoleranceService = {
     const { data, error } = await supabase
       .from('allergy_intolerances')
       .insert([allergy])
-      .select()
+      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -136,7 +136,7 @@ export const AllergyIntoleranceService = {
       .from('allergy_intolerances')
       .update(updates)
       .eq('id', id)
-      .select()
+      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -152,7 +152,7 @@ export const AllergyIntoleranceService = {
         clinical_status: 'inactive'
       })
       .eq('id', id)
-      .select()
+      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .single();
 
     if (error) throw error;

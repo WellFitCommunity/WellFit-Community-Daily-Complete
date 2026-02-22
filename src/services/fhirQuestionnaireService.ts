@@ -209,7 +209,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
   async getQuestionnaires(): Promise<FHIRQuestionnaireRecord[]> {
     const { data, error } = await this.supabase
       .from('fhir_questionnaires')
-      .select('*')
+      .select('id, questionnaire_id, title, description, status, version, fhir_version, questionnaire_json, created_by, created_from_template, natural_language_prompt, has_scoring, scoring_algorithm, scoring_rules, total_responses, is_template, tags, deployed_to_wellfit, deployed_to_ehr, deployment_config, created_at, updated_at, published_at, retired_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -222,7 +222,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
   async getTemplates(): Promise<QuestionnaireTemplate[]> {
     const { data, error } = await this.supabase
       .from('questionnaire_templates')
-      .select('*')
+      .select('id, name, description, category, ai_prompt, estimated_questions, estimated_time_minutes, has_conditional_logic, has_scoring, clinical_codes, target_population, evidence_base, usage_count, is_active, created_at, updated_at')
       .eq('is_active', true)
       .order('usage_count', { ascending: false });
 

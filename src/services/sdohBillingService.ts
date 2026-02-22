@@ -64,7 +64,7 @@ export class SDOHBillingService {
     // Get patient's recent check-ins and assessment data
     const { data: checkIns, error: checkInError } = await supabase
       .from('check_ins')
-      .select('*')
+      .select('id, user_id, timestamp, label, notes, is_emergency, emotional_state, heart_rate, pulse_oximeter, bp_systolic, bp_diastolic, glucose_mg_dl, metadata, physical_activity, social_engagement, symptoms, tenant_id, created_at, reviewed_at, reviewed_by_name')
       .eq('user_id', patientId)
       .order('created_at', { ascending: false })
       .limit(5);
@@ -75,7 +75,7 @@ export class SDOHBillingService {
      
     const { data: _existingAssessment } = await supabase
       .from('sdoh_assessments')
-      .select('*')
+      .select('id, patient_id, encounter_id, assessment_date, housing_instability, food_insecurity, transportation_barriers, social_isolation, financial_insecurity, education_barriers, employment_concerns, overall_complexity_score, ccm_eligible, ccm_tier, ccm_justification, created_by, created_at, updated_at')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false })
       .limit(1);
@@ -135,11 +135,11 @@ export class SDOHBillingService {
     const { data: encounter, error: encounterError } = await supabase
       .from('encounters')
       .select(`
-        *,
-        patient:patients(*),
-        procedures:encounter_procedures(*),
-        diagnoses:encounter_diagnoses(*),
-        clinical_notes(*)
+        id, patient_id, provider_id, payer_id, date_of_service, place_of_service, claim_frequency_code, subscriber_relation_code, status, notes, created_by, created_at, updated_at,
+        patient:patients(id),
+        procedures:encounter_procedures(id, encounter_id, code, charge_amount, units, modifiers, service_date, diagnosis_pointers, description, created_at, updated_at),
+        diagnoses:encounter_diagnoses(id, encounter_id, code, sequence, description, created_at, updated_at),
+        clinical_notes(id, encounter_id, type, content, author_id, created_at, updated_at)
       `)
       .eq('id', encounterId)
       .single();
@@ -230,9 +230,9 @@ export class SDOHBillingService {
     const { data: encounter, error } = await supabase
       .from('encounters')
       .select(`
-        *,
-        patient:patients(*),
-        clinical_notes(*)
+        id, patient_id, provider_id, payer_id, date_of_service, place_of_service, claim_frequency_code, subscriber_relation_code, status, notes, created_by, created_at, updated_at,
+        patient:patients(id),
+        clinical_notes(id, encounter_id, type, content, author_id, created_at, updated_at)
       `)
       .eq('id', encounterId)
       .single();
@@ -243,7 +243,7 @@ export class SDOHBillingService {
     // Check existing CMS documentation
     const { data: existingDoc } = await supabase
       .from('cms_documentation')
-      .select('*')
+      .select('id, encounter_id, patient_id, consent_obtained, consent_date, consent_method, care_plan_created, care_plan_created_date, care_plan_last_updated, care_plan_url, patient_access_provided, patient_portal_enabled, patient_portal_last_access, communication_log, quality_measures, is_compliant, compliance_checklist, compliance_notes, created_by, created_at, updated_at')
       .eq('encounter_id', encounterId)
       .single();
 
@@ -253,8 +253,8 @@ export class SDOHBillingService {
       patientId: encounter.patient_id,
       consentObtained: existingDoc?.consent_obtained || false,
       consentDate: existingDoc?.consent_date,
-      carePlanUpdated: existingDoc?.care_plan_updated || false,
-      carePlanDate: existingDoc?.care_plan_date,
+      carePlanUpdated: existingDoc?.care_plan_last_updated || false,
+      carePlanDate: existingDoc?.care_plan_created_date,
       patientAccessProvided: existingDoc?.patient_access_provided || false,
       communicationLog: existingDoc?.communication_log || [],
       qualityMeasures: existingDoc?.quality_measures || []

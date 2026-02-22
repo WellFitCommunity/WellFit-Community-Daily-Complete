@@ -129,7 +129,7 @@ export class SpecialistWorkflowEngine {
     // Get current visit
     const { data: visit, error: fetchError } = await supabase
       .from('field_visits')
-      .select('*')
+      .select('data, completed_steps, patient_id')
       .eq('id', visitId)
       .single();
 

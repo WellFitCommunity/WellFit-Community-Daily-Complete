@@ -83,7 +83,7 @@ export class VoiceLearningService {
       // Fallback to database (slower, but cross-device)
       const { data, error } = await supabase
         .from('provider_voice_profiles')
-        .select('*')
+        .select('provider_id, voice_fingerprint, total_sessions, accuracy_baseline, accuracy_current, created_at, updated_at')
         .eq('provider_id', providerId)
         .maybeSingle();
 

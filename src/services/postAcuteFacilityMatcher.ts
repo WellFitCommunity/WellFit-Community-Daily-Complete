@@ -204,7 +204,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
       // Search for facilities
       let query = supabase
         .from('post_acute_facilities')
-        .select('*')
+        .select('id, facility_type, facility_name, facility_address, facility_city, facility_state, facility_zip, facility_phone, facility_fax, facility_email, total_beds, available_beds, last_bed_count_update, cms_star_rating, accepts_medicare, accepts_medicaid, specialties, is_preferred_provider, contract_status, primary_contact_name, primary_contact_phone, primary_contact_email, active, notes, created_at, updated_at')
         .eq('facility_type', facilityType)
         .eq('active', true);
 
@@ -428,7 +428,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
    * Get detailed facility information
    */
   static async getFacilityDetails(facilityId: string): Promise<PostAcuteFacility> {
-    const { data, error } = await supabase.from('post_acute_facilities').select('*').eq('id', facilityId).single();
+    const { data, error } = await supabase.from('post_acute_facilities').select('id, facility_type, facility_name, facility_address, facility_city, facility_state, facility_zip, facility_phone, facility_fax, facility_email, total_beds, available_beds, last_bed_count_update, cms_star_rating, accepts_medicare, accepts_medicaid, specialties, is_preferred_provider, contract_status, primary_contact_name, primary_contact_phone, primary_contact_email, active, notes, created_at, updated_at').eq('id', facilityId).single();
 
     if (error) throw new Error(`Failed to get facility: ${error.message}`);
     return data;

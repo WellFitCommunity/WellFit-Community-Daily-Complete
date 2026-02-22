@@ -59,7 +59,7 @@ export class FeeScheduleService {
   ): Promise<FeeSchedule | null> {
     const { data, error } = await supabase
       .from('fee_schedules')
-      .select('*')
+      .select('id, name, payer_type, effective_date, end_date, is_active, locality, notes')
       .eq('payer_type', payerType)
       .eq('is_active', true)
       .lte('effective_date', asOfDate.toISOString().split('T')[0])
@@ -91,7 +91,7 @@ export class FeeScheduleService {
     // Get rate for code
     const { data, error } = await supabase
       .from('fee_schedule_rates')
-      .select('*')
+      .select('code, rate, description, time_required_minutes')
       .eq('fee_schedule_id', feeSchedule.id)
       .eq('code_type', codeType)
       .eq('code', code)
@@ -136,7 +136,7 @@ export class FeeScheduleService {
     // Bulk fetch rates
     const { data, error } = await supabase
       .from('fee_schedule_rates')
-      .select('*')
+      .select('code, rate, description, time_required_minutes')
       .eq('fee_schedule_id', feeSchedule.id)
       .eq('code_type', codeType)
       .in('code', codes);

@@ -22,6 +22,7 @@ import type {
   MentalHealthScreeningTrigger,
   MentalHealthScreeningResult,
   CareTeamDashboardMetrics,
+  DischargedPatientSummary,
   DischargeToWellnessServiceResponse,
   WellnessBridgeConfig,
 } from '../types/dischargeToWellness';
@@ -52,7 +53,7 @@ export class DischargeToWellnessBridgeService {
       // Get patient profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*, phone, email, first_name, last_name')
+        .select('id, first_name, last_name, phone, email')
         .eq('id', patient_id)
         .single();
 
@@ -237,7 +238,7 @@ Questions? Call your care coordinator anytime.`;
       // Note: checkIn has care_plan_id which may reference discharge_plans
       const { data: dischargePlan } = await supabase
         .from('discharge_plans')
-        .select('*')
+        .select('id, patient_id, encounter_id, discharge_disposition, planned_discharge_date, planned_discharge_time, actual_discharge_datetime, medication_reconciliation_complete, discharge_prescriptions_sent, follow_up_appointment_scheduled, follow_up_appointment_date, follow_up_appointment_provider, follow_up_appointment_location, discharge_summary_completed, discharge_summary_sent_to_pcp, patient_education_completed, patient_education_topics, patient_understands_diagnosis, patient_understands_medications, patient_understands_followup, dme_needed, dme_ordered, dme_items, home_health_needed, home_health_ordered, home_health_agency, home_health_start_date, caregiver_identified, caregiver_name, caregiver_phone, caregiver_training_completed, transportation_arranged, transportation_method, readmission_risk_score, readmission_risk_category, requires_48hr_call, requires_72hr_call, requires_7day_pcp_visit, risk_factors, post_acute_bed_confirmed, discharge_planning_time_minutes, care_coordination_time_minutes, billing_codes_generated, status, checklist_completion_percentage, created_by, created_at, updated_at, barriers_to_discharge')
         .eq('id', checkIn.care_plan_id)
         .single();
 
@@ -545,7 +546,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
 
       const { data: recentCheckIns } = await supabase
         .from('patient_daily_check_ins')
-        .select('*, responses')
+        .select('id, patient_id, check_in_date, status, responses')
         .eq('patient_id', patientId)
         .gte('check_in_date', sevenDaysAgo.toISOString().split('T')[0])
         .eq('status', 'completed')
@@ -597,7 +598,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
       // Check if screening already triggered recently
       const { data: existingTrigger } = await supabase
         .from('mental_health_screening_triggers')
-        .select('*')
+        .select('id')
         .eq('patient_id', patientId)
         .gte('created_at', sevenDaysAgo.toISOString())
         .single();
@@ -737,7 +738,7 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
       // Query materialized view
       let query = supabase
         .from('mv_discharged_patient_dashboard')
-        .select('*');
+        .select('patient_id, patient_name, discharge_date, discharge_diagnosis, readmission_risk_score, readmission_risk_category, wellness_enrolled, wellness_enrollment_date, total_check_ins_expected, total_check_ins_completed, check_in_adherence_percentage, last_check_in_date, days_since_last_check_in, consecutive_missed_check_ins, active_alerts_count, highest_alert_severity, warning_signs_detected, phq9_score_latest, gad7_score_latest, mental_health_risk_level, has_recent_mental_health_screening, mood_trend, stress_trend, needs_attention, attention_reason, recommended_action');
 
       if (filters?.needs_attention_only) {
         query = query.eq('needs_attention', true);
@@ -812,7 +813,7 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
             needsFollowUpScreening
           );
         }).length || 0,
-        patients_list: patients || [],
+        patients_list: (patients || []) as DischargedPatientSummary[],
       };
 
       return { success: true, data: metrics };

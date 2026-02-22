@@ -25,7 +25,7 @@ export async function fetchMyProfile(): Promise<Profile | null> {
   if (!uid) return null; // ✅ no session yet
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('user_id, email, role_code, role, first_name, last_name, phone, phone_verified')
     .eq('user_id', uid)
     .maybeSingle(); // ✅ no exception when missing
   if (error) {

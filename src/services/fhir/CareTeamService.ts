@@ -25,7 +25,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_teams')
-        .select('*')
+        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .eq('patient_id', patientId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -50,7 +50,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_teams')
-        .select('*')
+        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .eq('id', id)
         .is('deleted_at', null)
         .single();
@@ -82,7 +82,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_teams')
-        .select('*')
+        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .is('deleted_at', null)
@@ -116,7 +116,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_teams')
-        .select('*')
+        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', status)
         .is('deleted_at', null)
@@ -148,7 +148,7 @@ export class CareTeamService {
       const { data, error } = await supabase
         .from('fhir_care_teams')
         .insert([careTeam])
-        .select()
+        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -183,7 +183,7 @@ export class CareTeamService {
         .update(updates)
         .eq('id', id)
         .is('deleted_at', null)
-        .select()
+        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -286,7 +286,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_team_members')
-        .select('*')
+        .select('id, care_team_id, role_code, role_display, role_system, member_reference, member_display, member_type, member_user_id, on_behalf_of_reference, on_behalf_of_display, period_start, period_end, is_primary_contact, telecom, sequence, created_at, updated_at')
         .eq('care_team_id', careTeamId)
         .order('sequence', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
@@ -315,7 +315,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_team_members')
-        .select('*')
+        .select('id, care_team_id, role_code, role_display, role_system, member_reference, member_display, member_type, member_user_id, on_behalf_of_reference, on_behalf_of_display, period_start, period_end, is_primary_contact, telecom, sequence, created_at, updated_at')
         .eq('care_team_id', careTeamId)
         .or('period_end.is.null,period_end.gte.' + new Date().toISOString())
         .order('sequence', { ascending: true, nullsFirst: false })
@@ -346,7 +346,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_team_members')
-        .select('*')
+        .select('id, care_team_id, role_code, role_display, role_system, member_reference, member_display, member_type, member_user_id, on_behalf_of_reference, on_behalf_of_display, period_start, period_end, is_primary_contact, telecom, sequence, created_at, updated_at')
         .eq('care_team_id', careTeamId)
         .eq('is_primary_contact', true)
         .or('period_end.is.null,period_end.gte.' + new Date().toISOString())
@@ -382,7 +382,7 @@ export class CareTeamService {
       const { data, error } = await supabase
         .from('fhir_care_team_members')
         .insert([member])
-        .select()
+        .select('id, care_team_id, role_code, role_display, role_system, member_reference, member_display, member_type, member_user_id, on_behalf_of_reference, on_behalf_of_display, period_start, period_end, is_primary_contact, telecom, sequence, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -416,7 +416,7 @@ export class CareTeamService {
         .from('fhir_care_team_members')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, care_team_id, role_code, role_display, role_system, member_reference, member_display, member_type, member_user_id, on_behalf_of_reference, on_behalf_of_display, period_start, period_end, is_primary_contact, telecom, sequence, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -483,7 +483,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_team_members')
-        .select('*')
+        .select('id, care_team_id, role_code, role_display, role_system, member_reference, member_display, member_type, member_user_id, on_behalf_of_reference, on_behalf_of_display, period_start, period_end, is_primary_contact, telecom, sequence, created_at, updated_at')
         .eq('care_team_id', careTeamId)
         .eq('role_code', roleCode)
         .or('period_end.is.null,period_end.gte.' + new Date().toISOString())

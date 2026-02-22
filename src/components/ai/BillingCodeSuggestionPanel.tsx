@@ -47,7 +47,7 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
         // Fetch specific suggestion by ID
         const { data, error: fetchError } = await supabase
           .from('encounter_billing_suggestions')
-          .select('*')
+          .select('encounter_id, suggested_codes, overall_confidence, requires_review, review_reason, ai_model, ai_cost, from_cache')
           .eq('id', suggestionId)
           .single();
 
@@ -57,7 +57,7 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
         // Fetch latest suggestion for this encounter
         const { data, error: fetchError } = await supabase
           .from('encounter_billing_suggestions')
-          .select('*')
+          .select('encounter_id, suggested_codes, overall_confidence, requires_review, review_reason, ai_model, ai_cost, from_cache')
           .eq('encounter_id', encounterId)
           .order('created_at', { ascending: false })
           .limit(1)

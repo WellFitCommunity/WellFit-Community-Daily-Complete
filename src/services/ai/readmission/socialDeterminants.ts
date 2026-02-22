@@ -221,7 +221,7 @@ export async function extractSocialDeterminants(
   // Get SDOH assessment data
   const { data: sdohData } = await supabase
     .from('sdoh_indicators')
-    .select('*')
+    .select('category, risk_level, details, score')
     .eq('patient_id', patientId)
     .eq('status', 'active')
     .order('created_at', { ascending: false })

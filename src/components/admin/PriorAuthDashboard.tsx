@@ -168,7 +168,7 @@ const PriorAuthDashboard: React.FC = () => {
       // Also load all auths for the full list view
       const { data: allData, error: allErr } = await supabase
         .from('prior_authorizations')
-        .select('*')
+        .select('id, patient_id, encounter_id, claim_id, ordering_provider_npi, rendering_provider_npi, facility_npi, payer_id, payer_name, member_id, group_number, auth_number, reference_number, trace_number, service_type_code, service_type_description, service_codes, diagnosis_codes, date_of_service, service_start_date, service_end_date, submitted_at, decision_due_at, approved_at, expires_at, status, urgency, clinical_notes, clinical_summary, documentation_submitted, requested_units, approved_units, unit_type, fhir_resource_id, fhir_resource_version, lcd_references, ncd_references, response_time_hours, sla_met, created_by, updated_by, created_at, updated_at, tenant_id')
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
         .limit(100);

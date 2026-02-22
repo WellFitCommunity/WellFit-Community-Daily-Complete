@@ -126,7 +126,7 @@ export class BillingService {
   static async getClaim(id: string): Promise<Claim> {
     const { data, error } = await supabase
       .from('claims')
-      .select('*')
+      .select('id, encounter_id, payer_id, billing_provider_id, claim_type, status, control_number, segment_count, total_charge, x12_content, response_payload, approval_status, provider_approved_by, provider_approved_at, approval_notes, parent_claim_id, resubmission_count, created_by, created_at, updated_at')
       .eq('id', id)
       .single();
 
@@ -137,7 +137,7 @@ export class BillingService {
   static async getClaimsByEncounter(encounterId: string): Promise<Claim[]> {
     const query = supabase
       .from('claims')
-      .select('*')
+      .select('id, encounter_id, payer_id, billing_provider_id, claim_type, status, control_number, segment_count, total_charge, x12_content, response_payload, approval_status, provider_approved_by, provider_approved_at, approval_notes, parent_claim_id, resubmission_count, created_by, created_at, updated_at')
       .eq('encounter_id', encounterId)
       .order('created_at', { ascending: false });
 
@@ -203,7 +203,7 @@ export class BillingService {
   static async getClaimLines(claimId: string): Promise<ClaimLine[]> {
     const query = supabase
       .from('claim_lines')
-      .select('*')
+      .select('id, claim_id, code_system, procedure_code, modifiers, units, charge_amount, diagnosis_pointers, service_date, position, created_at, updated_at')
       .eq('claim_id', claimId)
       .order('position');
 
@@ -215,7 +215,7 @@ export class BillingService {
   static async getFeeSchedules(): Promise<FeeSchedule[]> {
     const query = supabase
       .from('fee_schedules')
-      .select('*')
+      .select('id, name, payer_id, provider_id, effective_from, effective_to, notes, created_by, created_at, updated_at')
       .order('name');
 
     return applyLimit<FeeSchedule>(query, PAGINATION_LIMITS.FEE_SCHEDULES);
@@ -224,7 +224,7 @@ export class BillingService {
   static async getFeeScheduleItems(scheduleId: string): Promise<FeeScheduleItem[]> {
     const query = supabase
       .from('fee_schedule_items')
-      .select('*')
+      .select('id, fee_schedule_id, code_system, code, modifier1, modifier2, modifier3, modifier4, price, unit, created_at, updated_at')
       .eq('fee_schedule_id', scheduleId)
       .order('code');
 
@@ -305,7 +305,7 @@ export class BillingService {
   static async getCodingRecommendations(encounterId: string): Promise<CodingRecommendation[]> {
     const query = supabase
       .from('coding_recommendations')
-      .select('*')
+      .select('id, encounter_id, patient_id, payload, confidence, created_at, created_by')
       .eq('encounter_id', encounterId)
       .order('created_at', { ascending: false });
 
@@ -422,7 +422,7 @@ export class BillingService {
     dateTo?: string;
     limit?: number;
   }): Promise<Claim[]> {
-    let query = supabase.from('claims').select('*');
+    let query = supabase.from('claims').select('id, encounter_id, payer_id, billing_provider_id, claim_type, status, control_number, segment_count, total_charge, x12_content, response_payload, approval_status, provider_approved_by, provider_approved_at, approval_notes, parent_claim_id, resubmission_count, created_by, created_at, updated_at');
 
     if (filters.status) query = query.eq('status', filters.status);
     if (filters.providerId) query = query.eq('billing_provider_id', filters.providerId);
@@ -527,7 +527,7 @@ export class BillingService {
   ): Promise<Claim[]> {
     let query = supabase
       .from('claims')
-      .select('*')
+      .select('id, encounter_id, payer_id, billing_provider_id, claim_type, status, control_number, segment_count, total_charge, x12_content, response_payload, approval_status, provider_approved_by, provider_approved_at, approval_notes, parent_claim_id, resubmission_count, created_by, created_at, updated_at')
       .eq('approval_status', 'pending')
       .eq('status', 'generated')
       .order('created_at', { ascending: true })

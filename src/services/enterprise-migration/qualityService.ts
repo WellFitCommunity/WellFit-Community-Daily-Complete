@@ -53,7 +53,7 @@ export class QualityScoringService {
   async getHistoricalScores(organizationId: string, limit: number = 10): Promise<QualityScore[]> {
     const { data } = await this.supabase
       .from('migration_quality_scores')
-      .select('*')
+      .select('overall_score, completeness_score, accuracy_score, consistency_score, uniqueness_score, recommendations, created_at')
       .order('created_at', { ascending: false })
       .limit(limit);
 

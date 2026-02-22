@@ -356,7 +356,7 @@ export class CacheService {
    */
   async getStatistics(namespace?: string): Promise<CacheStatistics[]> {
     try {
-      let query = supabase.from('v_cache_health_dashboard').select('*');
+      let query = supabase.from('v_cache_health_dashboard').select('cache_namespace, total_entries, total_hits, avg_hits_per_entry, total_size_mb, expiring_soon, recently_used');
 
       if (namespace) {
         query = query.eq('cache_namespace', namespace);
@@ -388,7 +388,7 @@ export class CacheService {
     try {
       const { data, error } = await supabase
         .from('v_connection_health_dashboard')
-        .select('*')
+        .select('avg_total_connections, peak_total_connections, avg_active_connections, peak_active_connections, avg_utilization_percent, peak_utilization_percent, high_utilization_count')
         .single();
 
       if (error) throw error;

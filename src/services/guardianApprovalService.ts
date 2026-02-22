@@ -110,7 +110,7 @@ export class GuardianApprovalService {
     try {
       const { data, error } = await this.supabase
         .from('guardian_review_tickets')
-        .select('*')
+        .select('id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at')
         .eq('id', ticketId)
         .single();
 
@@ -131,7 +131,7 @@ export class GuardianApprovalService {
     try {
       let query = this.supabase
         .from('guardian_review_tickets')
-        .select('*')
+        .select('id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       // Apply filters
@@ -366,7 +366,7 @@ export class GuardianApprovalService {
     try {
       const { data, error } = await this.supabase
         .from('guardian_review_tickets')
-        .select('*')
+        .select('id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at')
         .eq('status', 'approved')
         .order('reviewed_at', { ascending: true });
 
@@ -391,7 +391,7 @@ export class GuardianApprovalService {
     try {
       const { data, error } = await this.supabase
         .from('guardian_review_tickets')
-        .select('*')
+        .select('id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at')
         .eq('security_alert_id', alertId)
         .maybeSingle();
 

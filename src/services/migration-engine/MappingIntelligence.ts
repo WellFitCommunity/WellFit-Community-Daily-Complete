@@ -492,7 +492,7 @@ Provide your mapping suggestion as JSON.`;
     try {
       let query = this.supabase
         .from('migration_learned_mappings')
-        .select('*')
+        .select('mapping_id, source_column_normalized, source_patterns, target_table, target_column, transform_function, success_count, failure_count, last_used, confidence, organization_id')
         .eq('source_column_normalized', column.normalizedName)
         .order('confidence', { ascending: false })
         .limit(1);
@@ -694,7 +694,7 @@ Provide your mapping suggestion as JSON.`;
   > {
     const { data: pastDNAs } = await this.supabase
       .from('migration_source_dna')
-      .select('*')
+      .select('dna_id, source_type, source_system, column_count, row_count, columns, structure_hash, signature_vector, detected_at, success_rate')
       .neq('dna_id', dna.dnaId)
       .limit(100);
 

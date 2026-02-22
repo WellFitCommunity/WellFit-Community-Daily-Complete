@@ -179,7 +179,7 @@ export const SuperAdminService = {
 
       const { data, error } = await supabase
         .from('super_admin_users')
-        .select('*')
+        .select('id, user_id, email, full_name, role, permissions, is_active, last_login_at, created_at, created_by, updated_at, updated_by')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .single();
@@ -478,7 +478,7 @@ export const SuperAdminService = {
     try {
       const { data, error } = await supabase
         .from('system_feature_flags')
-        .select('*')
+        .select('id, feature_key, feature_name, description, is_enabled, force_disabled, enabled_for_new_tenants, requires_license, category, metadata, created_at, updated_at, updated_by')
         .order('category', { ascending: true })
         .order('feature_name', { ascending: true });
 
@@ -559,7 +559,7 @@ export const SuperAdminService = {
 
       const { data, error } = await supabase
         .from('system_health_checks')
-        .select('*')
+        .select('id, check_type, check_name, component_name, status, response_time_ms, error_message, message, metrics, metadata, checked_at')
         .gte('checked_at', cutoff)
         .order('checked_at', { ascending: false });
 
@@ -604,7 +604,7 @@ export const SuperAdminService = {
     try {
       const { data, error } = await supabase
         .from('super_admin_audit_log')
-        .select('*')
+        .select('id, super_admin_id, super_admin_email, action, target_type, target_id, target_name, old_value, new_value, reason, ip_address, user_agent, severity, created_at')
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -625,7 +625,7 @@ export const SuperAdminService = {
 
       const { data, error } = await supabase
         .from('super_admin_audit_log')
-        .select('*')
+        .select('id, super_admin_id, super_admin_email, action, target_type, target_id, target_name, old_value, new_value, reason, ip_address, user_agent, severity, created_at')
         .eq('severity', 'critical')
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false });
@@ -679,7 +679,7 @@ export const SuperAdminService = {
 
       let query = supabase
         .from('system_metrics')
-        .select('*')
+        .select('id, metric_type, metric_value, metadata, recorded_at')
         .gte('recorded_at', cutoff)
         .order('recorded_at', { ascending: false });
 

@@ -129,7 +129,7 @@ export class PTSessionService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_sessions')
-        .select('*')
+        .select('id, patient_id, treatment_plan_id, encounter_id, therapist_id, session_date, session_number, session_duration_minutes, attendance_status, patient_reported_status, pain_level_today, hep_compliance, barriers_today, vitals_if_needed, reassessments_today, interventions_delivered, progress_toward_goals, functional_changes, clinical_decision_making, plan_for_next_visit, plan_modifications, goals_updated, total_timed_minutes, total_billable_units, cpt_codes_billed, exercise_videos_shared, educational_materials_provided, adverse_events, incident_report_filed, created_at, updated_at, co_signed_by, co_signed_at')
         .eq('treatment_plan_id', planId)
         .order('session_date', { ascending: false });
 
@@ -150,7 +150,7 @@ export class PTSessionService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_sessions')
-        .select('*')
+        .select('id, patient_id, treatment_plan_id, encounter_id, therapist_id, session_date, session_number, session_duration_minutes, attendance_status, patient_reported_status, pain_level_today, hep_compliance, barriers_today, vitals_if_needed, reassessments_today, interventions_delivered, progress_toward_goals, functional_changes, clinical_decision_making, plan_for_next_visit, plan_modifications, goals_updated, total_timed_minutes, total_billable_units, cpt_codes_billed, exercise_videos_shared, educational_materials_provided, adverse_events, incident_report_filed, created_at, updated_at, co_signed_by, co_signed_at')
         .eq('id', sessionId)
         .single();
 
@@ -171,7 +171,7 @@ export class PTSessionService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_sessions')
-        .select('*')
+        .select('id, patient_id, treatment_plan_id, encounter_id, therapist_id, session_date, session_number, session_duration_minutes, attendance_status, patient_reported_status, pain_level_today, hep_compliance, barriers_today, vitals_if_needed, reassessments_today, interventions_delivered, progress_toward_goals, functional_changes, clinical_decision_making, plan_for_next_visit, plan_modifications, goals_updated, total_timed_minutes, total_billable_units, cpt_codes_billed, exercise_videos_shared, educational_materials_provided, adverse_events, incident_report_filed, created_at, updated_at, co_signed_by, co_signed_at')
         .eq('patient_id', patientId)
         .order('session_date', { ascending: false });
 
@@ -296,7 +296,7 @@ export class PTSessionService {
     try {
       const { data, error } = await supabase
         .from('pt_treatment_sessions')
-        .select('*')
+        .select('id, patient_id, treatment_plan_id, encounter_id, therapist_id, session_date, session_number, session_duration_minutes, attendance_status, patient_reported_status, pain_level_today, hep_compliance, barriers_today, vitals_if_needed, reassessments_today, interventions_delivered, progress_toward_goals, functional_changes, clinical_decision_making, plan_for_next_visit, plan_modifications, goals_updated, total_timed_minutes, total_billable_units, cpt_codes_billed, exercise_videos_shared, educational_materials_provided, adverse_events, incident_report_filed, created_at, updated_at, co_signed_by, co_signed_at')
         .is('co_signed_by', null)
         .not('plan_modifications', 'is', null)
         .order('session_date', { ascending: false });

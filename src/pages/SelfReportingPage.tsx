@@ -199,7 +199,7 @@ const SelfReportingPage: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('self_reports')
-          .select('*')
+          .select('id, created_at, user_id, mood, symptoms, activity_description, bp_systolic, bp_diastolic, heart_rate, blood_sugar, blood_oxygen, weight, physical_activity, social_engagement, spo2')
           .eq('user_id', uid)
           .order('created_at', { ascending: false });
 

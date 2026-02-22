@@ -367,7 +367,7 @@ export const SDOHPassiveDetectionService = {
     try {
       const { data, error } = await supabase
         .from('sdoh_passive_detections')
-        .select('*')
+        .select('id, patient_id, category, confidence, matched_keywords, context_snippet, risk_level, suggested_z_code, source_type, source_id, detected_at, reviewed, reviewed_at, review_notes, created_at')
         .eq('patient_id', patientId)
         .eq('reviewed', false)
         .order('detected_at', { ascending: false });

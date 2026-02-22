@@ -74,7 +74,7 @@ export const TelehealthPatientSidebar: React.FC<TelehealthPatientSidebarProps> =
         SDOHBillingService.assessSDOHComplexity(patientId).catch(() => null),
         supabase
           .from('ld_pregnancies')
-          .select('*')
+          .select('id, patient_id, tenant_id, gravida, para, ab, living, edd, lmp, blood_type, rh_factor, gbs_status, risk_level, risk_factors, status, primary_provider_id, notes, created_at, updated_at')
           .eq('patient_id', patientId)
           .eq('status', 'active')
           .order('created_at', { ascending: false })

@@ -429,7 +429,7 @@ export class ConsentManagementService {
       // Get existing consent
       const { data: existingConsent, error: fetchError } = await supabase
         .from('privacy_consent')
-        .select('*')
+        .select('id, user_id, consent_type, sharing_permissions, audit_trail')
         .eq('id', consentId)
         .single();
 
@@ -656,7 +656,7 @@ export class ConsentManagementService {
     try {
       const { data, error } = await supabase
         .from('consent_verification_log')
-        .select('*')
+        .select('id, consent_id, user_id, consent_type, requesting_user_id, requesting_service, verification_result, verification_reason, consent_found, consent_expired, consent_withdrawn, additional_metadata, verified_at')
         .eq('user_id', userId)
         .order('verified_at', { ascending: false })
         .limit(limit);

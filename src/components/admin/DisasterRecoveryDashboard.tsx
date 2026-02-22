@@ -182,7 +182,7 @@ export const DisasterRecoveryDashboard: React.FC = () => {
       // Fetch recent drills
       const { data: drills, error: drillsError } = await supabase
         .from('disaster_recovery_drills')
-        .select('*')
+        .select('id, drill_name, drill_type, drill_scenario, scheduled_start, actual_start, actual_end, status, drill_passed, overall_score, rto_met, rpo_met')
         .order('scheduled_start', { ascending: false })
         .limit(10);
 
@@ -193,7 +193,7 @@ export const DisasterRecoveryDashboard: React.FC = () => {
       // Fetch recent backup logs
       const { data: backups, error: backupsError } = await supabase
         .from('backup_verification_logs')
-        .select('*')
+        .select('id, backup_type, backup_timestamp, verification_status, restore_tested, restore_status, data_integrity_check_passed')
         .order('verification_timestamp', { ascending: false })
         .limit(10);
 

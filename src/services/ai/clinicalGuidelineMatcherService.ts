@@ -458,7 +458,7 @@ export class ClinicalGuidelineMatcherService {
     try {
       const { data, error } = await supabase
         .from('ai_guideline_matches')
-        .select('*')
+        .select('id, patient_id, created_at, status, reviewed_by, reviewed_at, review_notes, matched_guidelines, recommendations, adherence_gaps, preventive_screenings, summary, confidence, review_reasons, disclaimer')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(limit);

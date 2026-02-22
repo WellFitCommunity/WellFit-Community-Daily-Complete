@@ -114,7 +114,7 @@ export const TenantComplianceReport: React.FC = () => {
     // Get recent compliance-related events
     const { data: logs, error } = await supabase
       .from('audit_logs')
-      .select('*')
+      .select('id, action_type, message, created_at, severity')
       .eq('tenant_id', tid)
       .in('action_category', ['ADMINISTRATIVE', 'SECURITY_EVENT'])
       .order('created_at', { ascending: false })

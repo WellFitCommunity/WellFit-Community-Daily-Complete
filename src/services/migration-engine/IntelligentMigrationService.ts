@@ -576,7 +576,7 @@ export class IntelligentMigrationService {
     // Find the result and update it
     const { data: existing } = await this.supabase
       .from('migration_results')
-      .select('*')
+      .select('result_id, user_accepted')
       .eq('batch_id', batchId)
       .eq('source_column', sourceColumn)
       .single();

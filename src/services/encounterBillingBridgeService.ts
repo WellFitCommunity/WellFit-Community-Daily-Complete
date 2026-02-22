@@ -417,7 +417,7 @@ export const encounterBillingBridgeService = {
     try {
       const { data, error } = await supabase
         .from('encounter_superbills')
-        .select('*')
+        .select('id, encounter_id, claim_id, superbill_status, diagnosis_codes, procedure_codes, total_charge, generated_at, reviewed_at, approved_by, approved_at, rejected_by, rejection_reason, notes, tenant_id, created_at, updated_at')
         .eq('encounter_id', encounterId)
         .maybeSingle();
 

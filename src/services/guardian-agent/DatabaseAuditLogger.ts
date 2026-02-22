@@ -368,7 +368,7 @@ export class DatabaseAuditLogger {
     try {
       let query = supabase
         .from('security_events')
-        .select('*')
+        .select('id, event_type, severity, actor_user_id, actor_ip_address, actor_user_agent, description, metadata, auto_blocked, requires_investigation, timestamp')
         .order('timestamp', { ascending: false });
 
       if (filters?.startDate) {
@@ -412,7 +412,7 @@ export class DatabaseAuditLogger {
     try {
       const { data, error } = await supabase
         .from('security_alerts')
-        .select('*')
+        .select('id, alert_type, severity, status, title, description, affected_user_id, affected_resource, source_ip, user_agent, detection_method, confidence_score, metadata, notification_sent, notification_channels')
         .in('status', ['new', 'investigating', 'escalated'])
         .order('created_at', { ascending: false })
         .limit(100);

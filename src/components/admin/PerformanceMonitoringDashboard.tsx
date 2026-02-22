@@ -54,7 +54,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
       // Load recent errors
       const { data: errorData, error: errorLogsError } = await supabase
         .from('error_logs')
-        .select('*')
+        .select('id, error_message, error_type, severity, component_name, page_url, created_at')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -73,7 +73,8 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
 
         // Calculate error stats
         const stats = errorData.reduce((acc, err) => {
-          acc[err.severity] = (acc[err.severity] || 0) + 1;
+          const key = err.severity as keyof typeof acc;
+          acc[key] = (acc[key] || 0) + 1;
           return acc;
         }, { critical: 0, error: 0, warning: 0, info: 0 });
 
@@ -83,7 +84,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
       // Load recent performance metrics
       const { data: metricsData, error: metricsError } = await supabase
         .from('performance_metrics')
-        .select('*')
+        .select('id, metric_type, metric_name, duration_ms, created_at')
         .order('created_at', { ascending: false })
         .limit(20);
 

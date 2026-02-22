@@ -334,7 +334,7 @@ describe('Unified Billing Service Tests', () => {
 
       const { data, error } = await supabase
         .from('patients')
-        .select('*')
+        .select('id, first_name, last_name, dob')
         .eq('id', 'non-existent')
         .single();
 

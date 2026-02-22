@@ -324,7 +324,7 @@ export async function fetchClinicalDataForEncounter(
   // Get encounter details
   const { data: encounter, error: encounterError } = await supabase
     .from('encounters')
-    .select('*')
+    .select('id, patient_id, chief_complaint')
     .eq('id', encounterId)
     .single();
 

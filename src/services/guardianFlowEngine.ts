@@ -64,7 +64,7 @@ async function getConfig(facilityId?: string): Promise<GuardianFlowConfig> {
   try {
     const { data, error } = await supabase
       .from('guardian_flow_config')
-      .select('*')
+      .select('yellow_threshold, orange_threshold, red_threshold, boarding_hours_threshold, auto_surge_enabled, default_diversion_policy, historical_window_hours, facility_id')
       .eq('is_active', true)
       .or(`facility_id.eq.${facilityId},facility_id.is.null`)
       .order('facility_id', { ascending: false, nullsFirst: false })

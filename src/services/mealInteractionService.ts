@@ -124,7 +124,7 @@ export async function getUserMealInteraction(
   try {
     const { data, error } = await supabase
       .from('meal_interactions')
-      .select('*')
+      .select('id, user_id, meal_id, meal_name, will_make_it, notes, rating, created_at, photo_url, photo_uploaded, photo_uploaded_at')
       .eq('user_id', userId)
       .eq('meal_id', mealId)
       .order('created_at', { ascending: false })
@@ -152,7 +152,7 @@ export async function getUserPlannedMeals(
   try {
     const { data, error } = await supabase
       .from('meal_interactions')
-      .select('*')
+      .select('id, user_id, meal_id, meal_name, will_make_it, notes, rating, created_at, photo_url, photo_uploaded, photo_uploaded_at')
       .eq('user_id', userId)
       .eq('will_make_it', true)
       .order('created_at', { ascending: false });
@@ -178,7 +178,7 @@ export async function getAllMealPhotos(
     const { data, error } = await supabase
       .from('meal_interactions')
       .select(`
-        *,
+        id, user_id, meal_id, meal_name, will_make_it, notes, rating, created_at, photo_url, photo_uploaded, photo_uploaded_at,
         profiles:user_id (
           first_name,
           last_name

@@ -120,7 +120,7 @@ async function getHealthcareMetrics(): Promise<ServiceResult<HealthcareMetrics>>
   try {
     const { data, error } = await supabase
       .from('healthcare_metrics')
-      .select('*')
+      .select('total_patients, total_clinical_staff, active_users_7d, check_ins_24h, check_ins_7d, lab_orders_24h, lab_orders_sla_breach, imaging_orders_24h, imaging_orders_sla_breach, audit_events_24h, security_events_24h, critical_security_events_24h, pending_alerts, critical_pending_alerts, successful_backups_24h, drills_completed_30d, collected_at')
       .single();
 
     if (error) {
@@ -161,7 +161,7 @@ async function getLatestMetrics(): Promise<ServiceResult<Metric[]>> {
   try {
     const { data, error } = await supabase
       .from('metrics_latest')
-      .select('*')
+      .select('metric_name, metric_type, metric_help, labels, value')
       .order('metric_name');
 
     if (error) {

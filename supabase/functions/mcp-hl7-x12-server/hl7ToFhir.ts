@@ -77,7 +77,7 @@ export function hl7ToFHIR(hl7Message: HL7Message): {
       status: mapOBXStatus(obx.fields[11]),
       code: {
         coding: [{
-          system: codeParts[2] === 'LN' ? 'http://loinc.org' : 'http://local.code',
+          system: codeParts[2] === 'LN' ? 'http://loinc.org' : 'urn:system:local-code',
           code: codeParts[0],
           display: codeParts[1]
         }]
@@ -103,7 +103,7 @@ export function hl7ToFHIR(hl7Message: HL7Message): {
         coding: [{
           system: codeParts[2] === 'I10'
             ? 'http://hl7.org/fhir/sid/icd-10-cm'
-            : 'http://local.code',
+            : 'urn:system:local-code',
           code: codeParts[0],
           display: codeParts[1]
         }]

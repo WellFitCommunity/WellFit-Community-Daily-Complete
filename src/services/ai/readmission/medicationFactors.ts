@@ -104,7 +104,7 @@ export async function extractMedicationFactors(
   // Get active medications at discharge
   const { data: medications } = await supabase
     .from('fhir_medication_requests')
-    .select('*')
+    .select('id, patient_id, status, authored_on, medication_code, medication_display, medication_text')
     .eq('patient_id', patientId)
     .eq('status', 'active')
     .gte('authored_on', getDaysAgoISO(90, now));

@@ -305,7 +305,7 @@ export class AppointmentPrepInstructionsService {
     try {
       const { data, error } = await supabase
         .from('ai_appointment_prep_instructions')
-        .select('*')
+        .select('id, prep_id, patient_id, appointment_type, appointment_date_time, result, sent_via, sent_at, created_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -334,7 +334,7 @@ export class AppointmentPrepInstructionsService {
 
       const { data, error } = await supabase
         .from('ai_appointment_prep_instructions')
-        .select('*')
+        .select('id, prep_id, patient_id, appointment_type, appointment_date_time, result, sent_via, sent_at, created_at')
         .is('sent_at', null)
         .gte('appointment_date_time', new Date().toISOString())
         .lte('appointment_date_time', futureDate.toISOString())

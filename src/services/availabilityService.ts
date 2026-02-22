@@ -278,7 +278,7 @@ export async function getBlockedTimes(
   try {
     let query = supabase
       .from('provider_blocked_times')
-      .select('*')
+      .select('id, provider_id, start_time, end_time, reason, description, created_at')
       .eq('provider_id', providerId)
       .order('start_time', { ascending: true });
 

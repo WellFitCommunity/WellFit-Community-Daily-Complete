@@ -43,7 +43,7 @@ export const SecurityPanel: React.FC = () => {
     initialFetch: async () => {
       const { data, error } = await supabase
         .from('security_alerts')
-        .select('*')
+        .select('id, severity, category, title, message, created_at, status, metadata, resolved_at, resolved_by, acknowledged_at, acknowledged_by')
         .order('created_at', { ascending: false });
 
       if (error) throw error;

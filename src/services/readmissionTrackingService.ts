@@ -80,7 +80,7 @@ export class ReadmissionTrackingService {
       // Find previous admissions for this patient
       const { data: previousAdmissions, error: queryError } = await supabase
         .from('patient_readmissions')
-        .select('*')
+        .select('id, patient_id, admission_date, discharge_date, facility_name, facility_type, is_readmission, days_since_last_discharge, previous_admission_id, readmission_category, primary_diagnosis_code, primary_diagnosis_description, secondary_diagnoses, risk_score, follow_up_scheduled, follow_up_completed, follow_up_date, care_plan_created, care_team_notified, high_utilizer_flag')
         .eq('patient_id', event.patient_id)
         .order('admission_date', { ascending: false })
         .limit(5);
@@ -239,7 +239,7 @@ export class ReadmissionTrackingService {
       // Get patient profile for context
       await supabase
         .from('profiles')
-        .select('*')
+        .select('id')
         .eq('id', readmission.patient_id)
         .single();
 
@@ -338,7 +338,7 @@ Format as JSON with this structure:
 
       const query = supabase
         .from('patient_readmissions')
-        .select('*')
+        .select('id, patient_id, admission_date, discharge_date, facility_name, facility_type, is_readmission, days_since_last_discharge, previous_admission_id, readmission_category, primary_diagnosis_code, primary_diagnosis_description, secondary_diagnoses, risk_score, follow_up_scheduled, follow_up_completed, follow_up_date, care_plan_created, care_team_notified, high_utilizer_flag')
         .gte('admission_date', startDate)
         .lte('admission_date', endDate);
 
@@ -407,7 +407,7 @@ Format as JSON with this structure:
   static async getPatientReadmissions(patientId: string): Promise<ReadmissionEvent[]> {
     const query = supabase
       .from('patient_readmissions')
-      .select('*')
+      .select('id, patient_id, admission_date, discharge_date, facility_name, facility_type, is_readmission, days_since_last_discharge, previous_admission_id, readmission_category, primary_diagnosis_code, primary_diagnosis_description, secondary_diagnoses, risk_score, follow_up_scheduled, follow_up_completed, follow_up_date, care_plan_created, care_team_notified, high_utilizer_flag')
       .eq('patient_id', patientId)
       .order('admission_date', { ascending: false });
 

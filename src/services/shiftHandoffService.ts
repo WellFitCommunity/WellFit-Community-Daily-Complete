@@ -479,7 +479,7 @@ export async function getMyTimeSavings(): Promise<{
 async function getLatestVitals(patientId: string): Promise<VitalsData | null> {
   const { data, error } = await supabase
     .from('fhir_observations')
-    .select('*')
+    .select('code, value_quantity_value')
     .eq('subject_id', patientId)
     // Keep your original intent: vitals set may be constrained in DB / view
     .order('effective_datetime', { ascending: false })
@@ -508,7 +508,7 @@ async function getLatestVitals(patientId: string): Promise<VitalsData | null> {
 async function getRecentEvents(patientId: string): Promise<ShiftHandoffEvent[]> {
   const query = supabase
     .from('shift_handoff_events')
-    .select('*')
+    .select('id, risk_score_id, patient_id, event_time, event_type, event_severity, event_description, increases_risk, risk_weight, action_taken, action_by, created_at, created_by')
     .eq('patient_id', patientId)
     .order('event_time', { ascending: false });
 

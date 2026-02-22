@@ -172,7 +172,7 @@ export const medicationOverrideService = {
     try {
       const { data, error } = await supabase
         .from('medication_alert_overrides')
-        .select('*')
+        .select('id, alert_type, alert_severity, alert_description, alert_recommendations, check_id, medication_name, medication_rxcui, provider_id, provider_signature, patient_id, override_reason, override_explanation, reviewed_by, reviewed_at, review_decision, review_notes, tenant_id, created_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(50);

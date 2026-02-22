@@ -21,7 +21,7 @@ export async function fetchHospitalDetails(
     // First get active admission
     const { data: admissionData, error: admissionError } = await supabase
       .from('patient_admissions')
-      .select('*')
+      .select('facility_unit, room_number, admission_date, attending_physician_id, admission_diagnosis, is_active')
       .eq('patient_id', patientId)
       .eq('is_active', true)
       .single();

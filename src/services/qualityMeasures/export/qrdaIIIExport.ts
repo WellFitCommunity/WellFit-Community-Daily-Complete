@@ -21,7 +21,7 @@ export async function exportQRDAIII(
   try {
     const { data: aggregates, error: aggError } = await supabase
       .from('ecqm_aggregate_results')
-      .select('*')
+      .select('measure_id, initial_population_count, denominator_count, denominator_exclusion_count, denominator_exception_count, numerator_count, performance_rate, patient_count')
       .eq('tenant_id', tenantId)
       .in('measure_id', measureIds)
       .eq('reporting_period_start', reportingPeriodStart.toISOString().split('T')[0]);

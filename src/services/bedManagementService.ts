@@ -271,7 +271,7 @@ export const BedManagementService = {
     try {
       let query = supabase
         .from('hospital_units')
-        .select('*')
+        .select('id, tenant_id, facility_id, department_id, unit_code, unit_name, unit_type, floor_number, building, total_beds, operational_beds, target_census, max_census, nurse_patient_ratio, charge_nurse_required, min_acuity_level, max_acuity_level, is_active, is_accepting_patients, created_at, updated_at')
         .eq('is_active', true)
         .order('unit_name');
 
@@ -298,7 +298,7 @@ export const BedManagementService = {
     try {
       const { data, error } = await supabase
         .from('beds')
-        .select('*')
+        .select('id, tenant_id, unit_id, room_number, bed_position, bed_label, bed_type, has_telemetry, has_isolation_capability, has_negative_pressure, is_bariatric_capable, has_special_equipment, status, status_changed_at, status_changed_by, status_notes, reserved_for_patient_id, reserved_until, is_active, created_at, updated_at')
         .eq('unit_id', unitId)
         .eq('is_active', true)
         .order('room_number')
@@ -325,7 +325,7 @@ export const BedManagementService = {
     try {
       const { data, error } = await supabase
         .from('daily_census_snapshots')
-        .select('*')
+        .select('id, tenant_id, unit_id, census_date, midnight_census, midnight_available, admissions_count, discharges_count, transfers_in, transfers_out, peak_census, peak_time, eod_census, eod_available, occupied_bed_hours, average_acuity, critical_patients, high_acuity_patients, predicted_census, census_variance, prediction_accuracy, created_at, updated_at')
         .eq('unit_id', unitId)
         .gte('census_date', startDate)
         .lte('census_date', endDate)
@@ -351,7 +351,7 @@ export const BedManagementService = {
     try {
       const { data, error } = await supabase
         .from('bed_status_history')
-        .select('*')
+        .select('id, tenant_id, bed_id, previous_status, new_status, changed_at, changed_by, reason, related_assignment_id, duration_minutes, created_at')
         .eq('bed_id', bedId)
         .order('changed_at', { ascending: false })
         .limit(limit);
@@ -377,7 +377,7 @@ export const BedManagementService = {
     try {
       const { data, error } = await supabase
         .from('bed_availability_forecasts')
-        .select('*')
+        .select('id, tenant_id, unit_id, forecast_date, predicted_census, predicted_available, predicted_discharges, predicted_admissions, confidence_level, lower_bound, upper_bound, factors_json, model_version, generated_at, actual_census, actual_available, forecast_error, error_percentage, created_at')
         .eq('unit_id', unitId)
         .gte('forecast_date', startDate)
         .lte('forecast_date', endDate)

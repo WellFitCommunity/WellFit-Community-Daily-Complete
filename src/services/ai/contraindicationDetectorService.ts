@@ -392,7 +392,7 @@ export class ContraindicationDetectorService {
     try {
       const { data, error } = await supabase
         .from('ai_contraindication_checks')
-        .select('*')
+        .select('id, patient_id, provider_id, medication_rxcui, medication_name, overall_assessment, requires_clinical_review, findings, patient_context, confidence, clinical_summary, reviewed_by, reviewed_at, review_decision, review_notes, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(limit);

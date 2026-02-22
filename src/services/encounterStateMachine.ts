@@ -198,7 +198,7 @@ export const encounterStateMachine = {
     try {
       const { data, error } = await supabase
         .from('encounter_status_history')
-        .select('*')
+        .select('id, encounter_id, from_status, to_status, changed_by, changed_at, reason, metadata, tenant_id')
         .eq('encounter_id', encounterId)
         .order('changed_at', { ascending: true });
 

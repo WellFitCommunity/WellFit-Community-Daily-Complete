@@ -134,7 +134,7 @@ export async function getPillIdentificationHistory(
   try {
     const { data, error } = await supabase
       .from('pill_identifications')
-      .select('*')
+      .select('id, user_id, image_size, image_type, identification_data, confidence_score, identification_success, processing_time_ms, model_used, api_sources, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -163,7 +163,7 @@ export async function getPillComparisonHistory(
   try {
     const { data, error } = await supabase
       .from('pill_label_comparisons')
-      .select('*')
+      .select('id, user_id, medication_id, pill_medication_name, label_medication_name, match, match_confidence, discrepancies, safety_recommendation, requires_pharmacist_review, created_at')
       .eq('medication_id', medicationId)
       .order('created_at', { ascending: false })
       .limit(limit);

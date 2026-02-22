@@ -747,7 +747,7 @@ describe('passkeyService', () => {
 
       expect(result).toEqual(mockPasskeys);
       expect(mockFrom).toHaveBeenCalledWith('passkey_credentials');
-      expect(mockSelect).toHaveBeenCalledWith('*');
+      expect(mockSelect).toHaveBeenCalledWith('id, user_id, credential_id, device_name, authenticator_type, transports, last_used_at, created_at');
     });
 
     it('should return empty array when no passkeys', async () => {

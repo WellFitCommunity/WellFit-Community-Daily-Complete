@@ -157,7 +157,7 @@ async function requestExport(
         group_id: request.groupId ?? null,
         output_format: request.outputFormat ?? 'application/fhir+ndjson',
       })
-      .select()
+      .select('id, tenant_id, requested_by, status, export_type, resource_types, since_date, patient_id, group_id, output_format, progress_percent, total_resources, exported_resources, output_files, error_message, requested_at, started_at, completed_at, expires_at')
       .single();
 
     if (error) return failure('DATABASE_ERROR', error.message, error);
@@ -194,7 +194,7 @@ async function getExportStatus(
   try {
     const { data, error } = await supabase
       .from('fhir_bulk_export_jobs')
-      .select('*')
+      .select('id, tenant_id, requested_by, status, export_type, resource_types, since_date, patient_id, group_id, output_format, progress_percent, total_resources, exported_resources, output_files, error_message, requested_at, started_at, completed_at, expires_at')
       .eq('id', jobId)
       .single();
 
@@ -268,7 +268,7 @@ async function listExportJobs(
   try {
     let query = supabase
       .from('fhir_bulk_export_jobs')
-      .select('*');
+      .select('id, tenant_id, requested_by, status, export_type, resource_types, since_date, patient_id, group_id, output_format, progress_percent, total_resources, exported_resources, output_files, error_message, requested_at, started_at, completed_at, expires_at');
 
     if (status) {
       query = query.eq('status', status);
@@ -311,7 +311,7 @@ async function generateExportOutput(
     // Mark job as in_progress
     const { data: jobData, error: fetchError } = await supabase
       .from('fhir_bulk_export_jobs')
-      .select('*')
+      .select('id, tenant_id, requested_by, status, export_type, resource_types, since_date, patient_id, group_id, output_format, progress_percent, total_resources, exported_resources, output_files, error_message, requested_at, started_at, completed_at, expires_at')
       .eq('id', jobId)
       .single();
 
@@ -343,7 +343,7 @@ async function generateExportOutput(
       const tableName = FHIR_TABLE_MAP[resourceType];
       if (!tableName) continue;
 
-      let query = supabase.from(tableName).select('*');
+      let query = supabase.from(tableName).select('*'); // TODO: specify columns per resource type — dynamic table requires full export for NDJSON
 
       // Apply since_date filter if provided
       if (job.since_date) {
@@ -420,7 +420,7 @@ async function generateExportOutput(
         expires_at: expiresAt.toISOString(),
       })
       .eq('id', jobId)
-      .select()
+      .select('id, tenant_id, requested_by, status, export_type, resource_types, since_date, patient_id, group_id, output_format, progress_percent, total_resources, exported_resources, output_files, error_message, requested_at, started_at, completed_at, expires_at')
       .single();
 
     if (completeError) return failure('DATABASE_ERROR', completeError.message, completeError);
