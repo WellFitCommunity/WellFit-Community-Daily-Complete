@@ -131,6 +131,41 @@ export interface GroundingFlags {
   gaps?: string[];
 }
 
+/** MDM complexity summary from progressive reasoning */
+export interface MDMComplexitySummary {
+  overallLevel: string;
+  suggestedEMCode: string;
+  nextLevelGap?: string;
+}
+
+/** Clinical completeness summary from progressive reasoning */
+export interface CompletenessSummary {
+  overallPercent: number;
+  hpiLevel: string;
+  rosLevel: string;
+  expectedButMissing: string[];
+}
+
+/** Diagnosis summary from progressive reasoning */
+export interface DiagnosisSummary {
+  condition: string;
+  icd10?: string;
+  confidence: number;
+}
+
+/** Encounter state summary sent from edge function (progressive clinical reasoning) */
+export interface EncounterStateSummary {
+  currentPhase: string;
+  analysisCount: number;
+  chiefComplaint: string | null;
+  diagnosisCount: number;
+  activeDiagnoses: DiagnosisSummary[];
+  mdmComplexity: MDMComplexitySummary;
+  completeness: CompletenessSummary;
+  medicationCount: number;
+  planItemCount: number;
+}
+
 export interface ConversationalMessage {
   type: 'scribe' | 'system';
   message: string;
@@ -156,6 +191,8 @@ export interface CodeSuggestionResponse {
   conversational_note?: string;
   suggestions?: string[];
   groundingFlags?: GroundingFlags;
+  /** Progressive reasoning: encounter state summary */
+  encounterState?: EncounterStateSummary;
 }
 
 export interface AssistanceSettings {
@@ -204,6 +241,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
 
   // Grounding flags from anti-hallucination system
   const [groundingFlags, setGroundingFlags] = useState<GroundingFlags | null>(null);
+
+  // Progressive clinical reasoning: encounter state summary
+  const [encounterState, setEncounterState] = useState<EncounterStateSummary | null>(null);
 
   // Assistance level state
   const [assistanceLevel, setAssistanceLevel] = useState<number>(5);
@@ -502,6 +542,8 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     setConversationalMessages([]);
     setScribeSuggestions([]);
     setCorrectionsAppliedCount(0);
+    setGroundingFlags(null);
+    setEncounterState(null);
 
     // Start recording state
     setIsRecording(true);
@@ -620,6 +662,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           // Capture grounding flags from anti-hallucination system
           if (data.groundingFlags) {
             setGroundingFlags(data.groundingFlags);
+          }
+
+          // Capture encounter state from progressive reasoning
+          if (data.encounterState) {
+            setEncounterState(data.encounterState as EncounterStateSummary);
           }
         },
         onReady: () => {
@@ -934,6 +981,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     feedbackSubmitted,
     scribeMode,
     groundingFlags,
+    encounterState,
 
     // Setters
     setTranscript,

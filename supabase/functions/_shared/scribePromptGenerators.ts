@@ -1,10 +1,13 @@
 // Scribe Prompt Generators — Real-time coding & documentation prompts
 // Extracted from conversationalScribePrompts.ts for 600-line compliance
 // These functions generate the task-specific prompts sent to Claude
+// Session 2: Progressive Clinical Reasoning — encounter state wired into prompts
 
 import type { ProviderPreferences, ConversationContext } from './conversationalScribePrompts.ts';
 import { getConversationalPersonality, getVerbosityInstruction } from './conversationalScribePrompts.ts';
 import { CONDENSED_GROUNDING_RULES } from './clinicalGroundingRules.ts';
+import type { EncounterState } from './encounterStateManager.ts';
+import { serializeEncounterStateForPrompt, getEncounterStatePromptInstructions } from './encounterStateManager.ts';
 
 /**
  * Generate CONDENSED personality for real-time use (token-optimized)
@@ -36,13 +39,14 @@ ${CONDENSED_GROUNDING_RULES}`;
 export function getRealtimeCodingPrompt(
   transcript: string,
   prefs: ProviderPreferences,
-  context?: ConversationContext
+  context?: ConversationContext,
+  encounterState?: EncounterState
 ): string {
   // HOSPITAL CHOICE: Use full or condensed personality based on preference
   // NOTE: AI output quality is IDENTICAL - only instruction verbosity differs
   if (prefs.premium_mode) {
     // PREMIUM MODE: Full verbose prompts (higher token cost)
-    return getFullRealtimeCodingPrompt(transcript, prefs, context);
+    return getFullRealtimeCodingPrompt(transcript, prefs, context, encounterState);
   }
 
   // STANDARD MODE: Optimized prompts (saves ~60% tokens, same quality)
@@ -52,24 +56,30 @@ export function getRealtimeCodingPrompt(
                          prefs.billing_preferences?.aggressive ? 'optimal' :
                          'balanced';
 
-  return `${personality}
+  // Progressive reasoning: include encounter state if available
+  const stateContext = encounterState ? serializeEncounterStateForPrompt(encounterState) : '';
+  const stateInstructions = encounterState ? getEncounterStatePromptInstructions() : '';
 
+  return `${personality}
+${stateContext ? `\n${stateContext}\n` : ''}
 TRANSCRIPT: ${transcript}
 
 Return ONLY JSON:
-{"conversational_note":"brief comment","suggestedCodes":[{"code":"99214","type":"CPT","description":"desc","reimbursement":150,"confidence":0.85,"reasoning":"why","transcriptEvidence":"quote from transcript supporting this code","missingDocumentation":"what to add"}],"totalRevenueIncrease":0,"complianceRisk":"low","conversational_suggestions":["1-2 tips"],"groundingFlags":{"statedCount":0,"inferredCount":0,"gapCount":0}}
+{"conversational_note":"brief comment","suggestedCodes":[{"code":"99214","type":"CPT","description":"desc","reimbursement":150,"confidence":0.85,"reasoning":"why","transcriptEvidence":"quote from transcript supporting this code","missingDocumentation":"what to add"}],"totalRevenueIncrease":0,"complianceRisk":"low","conversational_suggestions":["1-2 tips"],"groundingFlags":{"statedCount":0,"inferredCount":0,"gapCount":0},"encounterStateUpdate":{}}
 
 RULES (${billingApproach} billing):
 - Only codes >70% confidence, each must cite transcript evidence
 - ${getVerbosityInstruction(prefs.verbosity)}
 - Catch preventive care, CCM, complexity opportunities
 - NEVER suggest a code without transcript evidence to support it
+- Build on the encounter state above — don't repeat what's already captured
+- Include encounterStateUpdate with NEW clinical elements from this chunk
 
 UPCODING COACH - tell them what's missing:
 99211→12: add exam finding | 99212→13: 2+ chronic conditions or Rx mgmt
 99213→14: moderate MDM, 2+ stable chronic w/adjustment | 99214→15: high complexity, 3+ options, risk/complications
 Time-based (>50% counseling): 99213=20-29min, 99214=30-39min, 99215=40-54min
-
+${stateInstructions}
 Example: "You're at 99213. Mention other chronic conditions and med adjustments for 99214 (+$40-50)."`;
 }
 
@@ -80,7 +90,8 @@ Example: "You're at 99213. Mention other chronic conditions and med adjustments 
 function getFullRealtimeCodingPrompt(
   transcript: string,
   prefs: ProviderPreferences,
-  context?: ConversationContext
+  context?: ConversationContext,
+  encounterState?: EncounterState
 ): string {
   const personality = getConversationalPersonality(prefs, context);
 
@@ -88,14 +99,20 @@ function getFullRealtimeCodingPrompt(
                          prefs.billing_preferences?.aggressive ? 'maximizing reimbursement (while staying compliant)' :
                          'balanced between conservative and optimal';
 
+  // Progressive reasoning: include encounter state if available
+  const stateContext = encounterState ? serializeEncounterStateForPrompt(encounterState) : '';
+  const stateInstructions = encounterState ? getEncounterStatePromptInstructions() : '';
+
   return `${personality}
 
 ---
-
+${stateContext ? `\n${stateContext}\n\n---\n` : ''}
 ## YOUR TASK: Real-Time Coding Assistant
 
 You're listening in on this patient visit and providing real-time billing optimization suggestions. Think of it like you're sitting next to them with the coding book open, catching revenue opportunities they might miss when focused on patient care.
-
+${encounterState && encounterState.analysisCount > 0 ? `
+**PROGRESSIVE REASONING:** This is analysis #${encounterState.analysisCount + 1}. You have the encounter state above showing what's been captured so far. Focus on NEW information in this transcript chunk. Don't repeat suggestions already made.
+` : ''}
 **TRANSCRIPT (De-identified PHI):**
 ${transcript}
 
@@ -130,7 +147,8 @@ Return ONLY valid JSON (no markdown, no explanation):
     "inferredCount": 1,
     "gapCount": 2,
     "gaps": ["ROS not documented", "Medication reconciliation not discussed"]
-  }
+  },
+  "encounterStateUpdate": {}
 }
 \`\`\`
 
@@ -173,7 +191,7 @@ Time-Based Alternative (if counseling >50%):
 
 Example coaching:
 "Hey, you're at a 99213 right now. If you mention the patient's other chronic conditions and any medication adjustments you're considering, we could justify 99214 - that's an extra $40-50."
-
+${stateInstructions}
 **Remember:**
 - You're a coworker, not a robot
 - You understand the clinical context, not just the codes
@@ -181,6 +199,7 @@ Example coaching:
 - When in doubt, ask or suggest rather than dictate
 - NEVER fabricate clinical details — if it wasn't in the transcript, it doesn't exist
 - Include groundingFlags in every response — the provider needs to see what's documented vs. what's missing
+- Include encounterStateUpdate with NEW clinical elements from this transcript chunk
 
 Now analyze that transcript and help them optimize billing while staying squeaky clean on compliance.`;
 }

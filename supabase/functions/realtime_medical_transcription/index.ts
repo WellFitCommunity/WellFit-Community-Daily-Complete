@@ -19,6 +19,8 @@ import { createAdminClient } from '../_shared/supabaseClient.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
 import { strictDeidentify, validateDeidentification } from '../_shared/phiDeidentifier.ts';
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import type { EncounterState } from '../_shared/encounterStateManager.ts';
+import { createEmptyEncounterState, mergeEncounterState } from '../_shared/encounterStateManager.ts';
 
 // Audit logger interface
 interface AuditLogger {
@@ -59,6 +61,8 @@ interface TranscriptionAnalysis {
     gapCount?: number;
     gaps?: string[];
   };
+  /** Progressive reasoning: encounter state update from this analysis chunk */
+  encounterStateUpdate?: Partial<EncounterState>;
 }
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
@@ -148,6 +152,9 @@ serve(async (req: Request) => {
   let fullTranscript = "";
   let lastAnalysisTime = Date.now();
 
+  // Progressive Clinical Reasoning: encounter state persists across analysis chunks
+  let encounterState: EncounterState = createEmptyEncounterState();
+
   socket.onopen = () => {
     const qs = new URLSearchParams({
       model: "nova-2-medical",
@@ -194,7 +201,9 @@ serve(async (req: Request) => {
             const now = Date.now();
             if (now - lastAnalysisTime >= ANALYSIS_INTERVAL_MS && fullTranscript.length > 50) {
               lastAnalysisTime = now;
-              analyzeCoding(fullTranscript, socket, userId, admin, logger).catch((e) =>
+              analyzeCoding(fullTranscript, socket, userId, admin, logger, encounterState).then((updatedState) => {
+                if (updatedState) encounterState = updatedState;
+              }).catch((e) =>
                 logger.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
               );
             }
@@ -243,8 +252,8 @@ serve(async (req: Request) => {
   return response;
 });
 
-// 4) Periodic coding analysis (de-identified) - NOW WITH CONVERSATIONAL AI
-async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger) {
+// 4) Periodic coding analysis (de-identified) - NOW WITH CONVERSATIONAL AI + PROGRESSIVE REASONING
+async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger, currentEncounterState: EncounterState): Promise<EncounterState | null> {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
 
@@ -265,6 +274,9 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
     // Build conversational prompt (import will be added at top of file)
     const { getRealtimeCodingPrompt } = await import("../_shared/conversationalScribePrompts.ts");
 
+    // Update encounter state with current word count
+    currentEncounterState.transcriptWordCount = transcript.split(/\s+/).length;
+
     const conversationalPrompt = prefs
       ? getRealtimeCodingPrompt(transcript, {
           formality_level: prefs.formality_level || 'relaxed',
@@ -280,7 +292,7 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
         }, {
           time_of_day: timeOfDay,
           current_mood: prefs.last_interaction_at && (Date.now() - new Date(prefs.last_interaction_at).getTime() < 600000) ? 'focused' : 'neutral'
-        })
+        }, currentEncounterState)
       : `You are an experienced, intelligent medical scribe with deep clinical knowledge. Analyze this encounter transcript and generate:
 
 1. **Complete SOAP Note** - Professional clinical documentation ready for EHR
@@ -304,32 +316,11 @@ Return ONLY strict JSON:
   },
 
   "suggestedCodes": [
-    {
-      "code": "99214",
-      "type": "CPT",
-      "description": "Office/outpatient visit, established patient, 30-39 minutes",
-      "reimbursement": 164.00,
-      "confidence": 0.92,
-      "reasoning": "Why this code fits based on transcript content",
-      "transcriptEvidence": "Quote or paraphrase from transcript supporting this code",
-      "missingDocumentation": "Document time spent counseling if >50% of visit"
-    },
-    {
-      "code": "E11.65",
-      "type": "ICD10",
-      "description": "Type 2 diabetes mellitus with hyperglycemia",
-      "confidence": 0.95,
-      "reasoning": "Patient has documented T2DM with elevated blood sugar",
-      "transcriptEvidence": "Provider stated 'A1C is 7.8, up from 7.2'"
-    }
+    {"code": "99214", "type": "CPT", "description": "Office visit, moderate complexity", "reimbursement": 164.00, "confidence": 0.92, "reasoning": "Why this code fits", "transcriptEvidence": "Quote from transcript", "missingDocumentation": "What to add"}
   ],
-
   "totalRevenueIncrease": 164.00,
   "complianceRisk": "low",
-  "conversational_suggestions": [
-    "Great job documenting the patient's diabetes management",
-    "Consider adding PHQ-9 for depression screening to capture Z-code"
-  ],
+  "conversational_suggestions": ["1-2 tips"],
   "groundingFlags": {
     "statedCount": 0,
     "inferredCount": 0,
@@ -396,7 +387,7 @@ Return ONLY strict JSON:
         logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
-      return;
+      return null;
     }
 
     const data = await res.json();
@@ -438,7 +429,7 @@ Return ONLY strict JSON:
         logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
-      return;
+      return null;
     }
 
     // HIPAA AUDIT LOGGING: Log successful analysis
@@ -501,6 +492,25 @@ Return ONLY strict JSON:
       ]);
     }
 
+    // Progressive reasoning: merge encounter state update from Claude
+    let updatedEncounterState = currentEncounterState;
+    if (parsed.encounterStateUpdate) {
+      try {
+        updatedEncounterState = mergeEncounterState(currentEncounterState, parsed.encounterStateUpdate);
+        logger.info('Encounter state updated', {
+          analysisCount: updatedEncounterState.analysisCount,
+          phase: updatedEncounterState.currentPhase,
+          diagnosisCount: updatedEncounterState.diagnoses.length,
+          mdmLevel: updatedEncounterState.mdmComplexity.overallLevel,
+          completenessPercent: updatedEncounterState.completeness.overallPercent,
+        });
+      } catch (mergeErr) {
+        logger.warn('Encounter state merge failed, continuing with previous state', {
+          error: mergeErr instanceof Error ? mergeErr.message : String(mergeErr),
+        });
+      }
+    }
+
     safeSend(socket, {
       type: "code_suggestion",
       conversational_note: parsed.conversational_note ?? null,
@@ -516,8 +526,32 @@ Return ONLY strict JSON:
         hpi: parsed.soapNote?.hpi ?? null,
         ros: parsed.soapNote?.ros ?? null
       },
-      groundingFlags: parsed.groundingFlags ?? null
+      groundingFlags: parsed.groundingFlags ?? null,
+      encounterState: {
+        currentPhase: updatedEncounterState.currentPhase,
+        analysisCount: updatedEncounterState.analysisCount,
+        chiefComplaint: updatedEncounterState.chiefComplaint,
+        diagnosisCount: updatedEncounterState.diagnoses.length,
+        activeDiagnoses: updatedEncounterState.diagnoses
+          .filter(d => d.status !== 'ruled_out')
+          .map(d => ({ condition: d.condition, icd10: d.icd10, confidence: d.confidence })),
+        mdmComplexity: {
+          overallLevel: updatedEncounterState.mdmComplexity.overallLevel,
+          suggestedEMCode: updatedEncounterState.mdmComplexity.suggestedEMCode,
+          nextLevelGap: updatedEncounterState.mdmComplexity.nextLevelGap,
+        },
+        completeness: {
+          overallPercent: updatedEncounterState.completeness.overallPercent,
+          hpiLevel: updatedEncounterState.completeness.hpiLevel,
+          rosLevel: updatedEncounterState.completeness.rosLevel,
+          expectedButMissing: updatedEncounterState.completeness.expectedButMissing,
+        },
+        medicationCount: updatedEncounterState.medications.length,
+        planItemCount: updatedEncounterState.planItems.length,
+      }
     });
+
+    return updatedEncounterState;
   } catch (e) {
     logger.error("Claude analysis exception", { error: e instanceof Error ? e.message : String(e), userId });
 
@@ -541,5 +575,7 @@ Return ONLY strict JSON:
     } catch (logError) {
       logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
+
+    return null;
   }
 }
