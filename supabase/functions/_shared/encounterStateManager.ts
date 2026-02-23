@@ -1,9 +1,13 @@
 // Encounter State Manager — Progressive Clinical Reasoning for Compass Riley
 // Session 2 of Compass Riley Clinical Reasoning Hardening (2026-02-23)
+// Session 3 additions: drift state and patient safety fields (2026-02-23)
 //
 // Maintains a running clinical picture across the encounter instead of
 // processing 15-second transcript chunks independently. Tracks HPI elements,
-// ROS, exam, diagnoses, MDM complexity, and clinical completeness in real-time.
+// ROS, exam, diagnoses, MDM complexity, clinical completeness, drift, and safety.
+
+import type { DriftState, PatientSafetyFlags } from './conversationDriftGuard.ts';
+import { createEmptyDriftState, createEmptyPatientSafetyFlags, mergeDriftState } from './conversationDriftGuard.ts';
 
 /**
  * HPI Elements (OLDCARTS mnemonic)
@@ -158,6 +162,12 @@ export interface EncounterState {
   /** Current encounter phase */
   currentPhase: EncounterPhase;
 
+  /** Conversation drift tracking (Session 3) */
+  driftState: DriftState;
+
+  /** Patient safety flags (Session 3) */
+  patientSafety: PatientSafetyFlags;
+
   /** How many analysis chunks have been processed */
   analysisCount: number;
 
@@ -220,6 +230,8 @@ export function createEmptyEncounterState(): EncounterState {
       overallPercent: 0,
     },
     currentPhase: 'greeting',
+    driftState: createEmptyDriftState(),
+    patientSafety: createEmptyPatientSafetyFlags(),
     analysisCount: 0,
     lastUpdated: new Date().toISOString(),
     transcriptWordCount: 0,
@@ -370,6 +382,22 @@ export function mergeEncounterState(
     merged.currentPhase = update.currentPhase;
   }
 
+  // Drift state — merge via dedicated function (Session 3)
+  if (update.driftState) {
+    merged.driftState = mergeDriftState(existing.driftState, update.driftState);
+  }
+
+  // Patient safety — overwrite per-chunk (Session 3)
+  if (update.patientSafety) {
+    merged.patientSafety = {
+      patientDirectAddress: update.patientSafety.patientDirectAddress ?? false,
+      emergencyDetected: update.patientSafety.emergencyDetected ?? false,
+      emergencyReason: update.patientSafety.emergencyReason,
+      requiresProviderConsult: update.patientSafety.requiresProviderConsult ?? false,
+      consultReason: update.patientSafety.consultReason,
+    };
+  }
+
   // Metadata
   merged.analysisCount = existing.analysisCount + 1;
   merged.lastUpdated = new Date().toISOString();
@@ -446,6 +474,15 @@ export function serializeEncounterStateForPrompt(state: EncounterState): string 
     parts.push(`\nPlan: ${state.planItems.join('; ')}`);
   }
 
+  // Clinical domain (drift tracking)
+  if (state.driftState.primaryDomain) {
+    const domains = [state.driftState.primaryDomain, ...state.driftState.relatedDomains];
+    parts.push(`\nDomain: ${domains.join(', ')}`);
+    if (state.driftState.driftEventCount > 0) {
+      parts.push(`  Drift events: ${state.driftState.driftEventCount}`);
+    }
+  }
+
   // MDM
   parts.push(`\nMDM: ${state.mdmComplexity.overallLevel} → ${state.mdmComplexity.suggestedEMCode}`);
   if (state.mdmComplexity.nextLevelGap) {
@@ -518,6 +555,19 @@ ENCOUNTER STATE UPDATE FORMAT:
   }
 }
 
+ALSO include drift and safety tracking:
+"driftState": {
+  "primaryDomain": "endocrinology",
+  "relatedDomains": ["cardiology"],
+  "driftDetected": false,
+  "driftDescription": null
+},
+"patientSafety": {
+  "patientDirectAddress": false,
+  "emergencyDetected": false,
+  "requiresProviderConsult": false
+}
+
 RULES FOR ENCOUNTER STATE:
 - Only include fields that have NEW information from THIS transcript chunk
 - Do NOT repeat information already in the encounter state above
@@ -525,5 +575,7 @@ RULES FOR ENCOUNTER STATE:
 - MDM: recalculate from the FULL picture (existing state + new information)
 - Completeness: recalculate percentages from the FULL picture
 - Phase: update to reflect where we are NOW in the encounter flow
-- If a diagnosis should be ruled out based on new evidence, set status to "ruled_out"`;
+- If a diagnosis should be ruled out based on new evidence, set status to "ruled_out"
+- driftState: set primaryDomain from chief complaint, flag driftDetected if reasoning strays
+- patientSafety: flag if patient speaks directly to AI or uses emergency language`;
 }

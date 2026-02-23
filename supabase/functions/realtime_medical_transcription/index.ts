@@ -252,7 +252,29 @@ serve(async (req: Request) => {
   return response;
 });
 
-// 4) Periodic coding analysis (de-identified) - NOW WITH CONVERSATIONAL AI + PROGRESSIVE REASONING
+/** Helper: insert a claude_api_audit row (fire-and-forget) */
+async function logClaudeAudit(
+  client: SupabaseClient, logger: AuditLogger,
+  params: { requestId: string; userId: string; inputTokens: number; outputTokens: number;
+    cost: number; responseTimeMs: number; success: boolean; errorCode?: string;
+    errorMessage?: string; transcriptLength: number; metadata?: Record<string, unknown> }
+) {
+  try {
+    await client.from('claude_api_audit').insert({
+      request_id: params.requestId, user_id: params.userId,
+      request_type: 'transcription', model: 'claude-sonnet-4-5-20250929',
+      input_tokens: params.inputTokens, output_tokens: params.outputTokens,
+      cost: params.cost, response_time_ms: params.responseTimeMs,
+      success: params.success, error_code: params.errorCode ?? null,
+      error_message: params.errorMessage ?? null, phi_scrubbed: true,
+      metadata: { transcript_length: params.transcriptLength, ...(params.metadata || {}) }
+    });
+  } catch (logError) {
+    logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
+  }
+}
+
+// 4) Periodic coding analysis (de-identified) - WITH CONVERSATIONAL AI + PROGRESSIVE REASONING + DRIFT GUARD
 async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger, currentEncounterState: EncounterState): Promise<EncounterState | null> {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
@@ -366,27 +388,12 @@ Return ONLY strict JSON:
       const errorText = await res.text();
       logger.error("Claude HTTP error", { status: res.status, error: errorText, userId });
 
-      // HIPAA AUDIT LOGGING: Log API error
-      try {
-        await supabaseClient.from('claude_api_audit').insert({
-          request_id: requestId,
-          user_id: userId,
-          request_type: 'transcription',
-          model: 'claude-sonnet-4-5-20250929',
-          input_tokens: 0,
-          output_tokens: 0,
-          cost: 0,
-          response_time_ms: Date.now() - startTime,
-          success: false,
-          error_code: `HTTP_${res.status}`,
-          error_message: `Claude API HTTP error: ${res.status}`,
-          phi_scrubbed: true,
-          metadata: { transcript_length: rawTranscript.length }
-        });
-      } catch (logError) {
-        logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
-      }
-
+      await logClaudeAudit(supabaseClient, logger, {
+        requestId, userId, inputTokens: 0, outputTokens: 0, cost: 0,
+        responseTimeMs: Date.now() - startTime, success: false,
+        errorCode: `HTTP_${res.status}`, errorMessage: `Claude API HTTP error: ${res.status}`,
+        transcriptLength: rawTranscript.length
+      });
       return null;
     }
 
@@ -408,57 +415,29 @@ Return ONLY strict JSON:
     catch (e) {
       logger.error("Claude JSON parse failed", { error: e instanceof Error ? e.message : String(e), responsePreview: cleaned.slice(0, 400) });
 
-      // HIPAA AUDIT LOGGING: Log parse error
-      try {
-        await supabaseClient.from('claude_api_audit').insert({
-          request_id: requestId,
-          user_id: userId,
-          request_type: 'transcription',
-          model: 'claude-sonnet-4-5-20250929',
-          input_tokens: inputTokens,
-          output_tokens: outputTokens,
-          cost: totalCost,
-          response_time_ms: responseTime,
-          success: false,
-          error_code: 'JSON_PARSE_ERROR',
-          error_message: e.message,
-          phi_scrubbed: true,
-          metadata: { transcript_length: rawTranscript.length }
-        });
-      } catch (logError) {
-        logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
-      }
-
+      await logClaudeAudit(supabaseClient, logger, {
+        requestId, userId, inputTokens, outputTokens, cost: totalCost,
+        responseTimeMs: responseTime, success: false,
+        errorCode: 'JSON_PARSE_ERROR', errorMessage: e.message,
+        transcriptLength: rawTranscript.length
+      });
       return null;
     }
 
-    // HIPAA AUDIT LOGGING: Log successful analysis
-    try {
-      await supabaseClient.from('claude_api_audit').insert({
-        request_id: requestId,
-        user_id: userId,
-        request_type: 'transcription',
-        model: 'claude-sonnet-4-5-20250929',
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-        cost: totalCost,
-        response_time_ms: responseTime,
-        success: true,
-        phi_scrubbed: true,
-        metadata: {
-          transcript_length: rawTranscript.length,
-          suggested_codes_count: parsed.suggestedCodes?.length || 0,
-          revenue_increase: parsed.totalRevenueIncrease || 0,
-          compliance_risk: parsed.complianceRisk || 'low',
-          grounding_stated: parsed.groundingFlags?.statedCount || 0,
-          grounding_inferred: parsed.groundingFlags?.inferredCount || 0,
-          grounding_gaps: parsed.groundingFlags?.gapCount || 0,
-          codes_without_evidence: (parsed.suggestedCodes || []).filter(c => !c.transcriptEvidence).length
-        }
-      });
-    } catch (logError) {
-      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
-    }
+    await logClaudeAudit(supabaseClient, logger, {
+      requestId, userId, inputTokens, outputTokens, cost: totalCost,
+      responseTimeMs: responseTime, success: true,
+      transcriptLength: rawTranscript.length,
+      metadata: {
+        suggested_codes_count: parsed.suggestedCodes?.length || 0,
+        revenue_increase: parsed.totalRevenueIncrease || 0,
+        compliance_risk: parsed.complianceRisk || 'low',
+        grounding_stated: parsed.groundingFlags?.statedCount || 0,
+        grounding_inferred: parsed.groundingFlags?.inferredCount || 0,
+        grounding_gaps: parsed.groundingFlags?.gapCount || 0,
+        codes_without_evidence: (parsed.suggestedCodes || []).filter(c => !c.transcriptEvidence).length
+      }
+    });
 
     logger.phi('Medical transcription analysis completed', {
       requestId,
@@ -503,7 +482,24 @@ Return ONLY strict JSON:
           diagnosisCount: updatedEncounterState.diagnoses.length,
           mdmLevel: updatedEncounterState.mdmComplexity.overallLevel,
           completenessPercent: updatedEncounterState.completeness.overallPercent,
+          primaryDomain: updatedEncounterState.driftState.primaryDomain,
+          driftDetected: updatedEncounterState.driftState.driftDetected,
         });
+
+        // Log safety events
+        if (updatedEncounterState.patientSafety.emergencyDetected) {
+          logger.security('PATIENT_EMERGENCY_DETECTED', {
+            userId,
+            reason: updatedEncounterState.patientSafety.emergencyReason,
+          });
+        }
+        if (updatedEncounterState.driftState.driftDetected) {
+          logger.warn('Clinical reasoning drift detected', {
+            userId,
+            description: updatedEncounterState.driftState.driftDescription,
+            driftEventCount: updatedEncounterState.driftState.driftEventCount,
+          });
+        }
       } catch (mergeErr) {
         logger.warn('Encounter state merge failed, continuing with previous state', {
           error: mergeErr instanceof Error ? mergeErr.message : String(mergeErr),
@@ -548,6 +544,19 @@ Return ONLY strict JSON:
         },
         medicationCount: updatedEncounterState.medications.length,
         planItemCount: updatedEncounterState.planItems.length,
+        driftState: {
+          primaryDomain: updatedEncounterState.driftState.primaryDomain,
+          relatedDomains: updatedEncounterState.driftState.relatedDomains,
+          driftDetected: updatedEncounterState.driftState.driftDetected,
+          driftDescription: updatedEncounterState.driftState.driftDescription ?? null,
+        },
+        patientSafety: {
+          patientDirectAddress: updatedEncounterState.patientSafety.patientDirectAddress,
+          emergencyDetected: updatedEncounterState.patientSafety.emergencyDetected,
+          emergencyReason: updatedEncounterState.patientSafety.emergencyReason ?? null,
+          requiresProviderConsult: updatedEncounterState.patientSafety.requiresProviderConsult,
+          consultReason: updatedEncounterState.patientSafety.consultReason ?? null,
+        },
       }
     });
 
@@ -555,27 +564,12 @@ Return ONLY strict JSON:
   } catch (e) {
     logger.error("Claude analysis exception", { error: e instanceof Error ? e.message : String(e), userId });
 
-    // HIPAA AUDIT LOGGING: Log exception
-    try {
-      await supabaseClient.from('claude_api_audit').insert({
-        request_id: requestId,
-        user_id: userId,
-        request_type: 'transcription',
-        model: 'claude-sonnet-4-5-20250929',
-        input_tokens: 0,
-        output_tokens: 0,
-        cost: 0,
-        response_time_ms: Date.now() - startTime,
-        success: false,
-        error_code: e?.name || 'EXCEPTION',
-        error_message: e?.message || e?.toString(),
-        phi_scrubbed: true,
-        metadata: { transcript_length: rawTranscript.length }
-      });
-    } catch (logError) {
-      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
-    }
-
+    await logClaudeAudit(supabaseClient, logger, {
+      requestId, userId, inputTokens: 0, outputTokens: 0, cost: 0,
+      responseTimeMs: Date.now() - startTime, success: false,
+      errorCode: e?.name || 'EXCEPTION', errorMessage: e?.message || e?.toString(),
+      transcriptLength: rawTranscript.length
+    });
     return null;
   }
 }

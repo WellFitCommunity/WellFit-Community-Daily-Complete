@@ -13,8 +13,8 @@
 | Session | Focus | Status | Date |
 |---------|-------|--------|------|
 | 1 | Anti-Hallucination Grounding System | COMPLETE | 2026-02-23 |
-| 2 | Progressive Clinical Reasoning Chain | IN PROGRESS | 2026-02-23 |
-| 3 | Conversation Drift Protection | Pending | — |
+| 2 | Progressive Clinical Reasoning Chain | COMPLETE | 2026-02-23 |
+| 3 | Conversation Drift Protection | IN PROGRESS | 2026-02-23 |
 | 4 | Evidence-Based Reasoning Engine — PubMed Integration | Pending | — |
 | 5 | Evidence-Based Reasoning Engine — Guideline Matcher Integration | Pending | — |
 | 6 | Evidence-Based Reasoning Engine — Treatment Pathway Integration | Pending | — |
@@ -109,14 +109,14 @@ ANTI-HALLUCINATION GROUNDING RULES — MANDATORY:
 
 ### Deliverables
 
-| # | Task | Status |
-|---|------|--------|
-| 3.1 | Topic classification — detect clinical domain (cardiac, neuro, GI, MSK, etc.) from transcript | |
-| 3.2 | Drift detection — flag when suggestions don't match current topic | |
-| 3.3 | Scope boundaries — Riley never reasons outside the encounter's established context | |
-| 3.4 | Conversation thread tracking — know when chief complaint discussion ends and exam begins | |
-| 3.5 | Patient-facing safety — if patient speaks directly to Riley, enforce `ai-patient-qa-bot` guardrails | |
-| 3.6 | Tests for drift detection and topic tracking | |
+| # | Task | File(s) | Status |
+|---|------|---------|--------|
+| 3.1 | Topic classification — detect clinical domain from transcript | `conversationDriftGuard.ts` | DONE |
+| 3.2 | Drift detection — flag when suggestions don't match current topic | `conversationDriftGuard.ts` (FULL_DRIFT_GUARD) | DONE |
+| 3.3 | Scope boundaries — Riley never reasons outside the encounter's established context | `conversationDriftGuard.ts` (hard limits) | DONE |
+| 3.4 | Conversation thread tracking — encounter phase + domain tracking | `encounterStateManager.ts` (driftState) | DONE |
+| 3.5 | Patient-facing safety — emergency detection + provider-only topic redirection | `conversationDriftGuard.ts` (PatientSafetyFlags) | DONE |
+| 3.6 | Client-side drift/safety types and hook integration | `useSmartScribe.ts` | DONE |
 
 ---
 

@@ -153,6 +153,23 @@ export interface DiagnosisSummary {
   confidence: number;
 }
 
+/** Drift state summary from conversation drift guard */
+export interface DriftStateSummary {
+  primaryDomain: string | null;
+  relatedDomains: string[];
+  driftDetected: boolean;
+  driftDescription: string | null;
+}
+
+/** Patient safety flags from drift guard */
+export interface PatientSafetySummary {
+  patientDirectAddress: boolean;
+  emergencyDetected: boolean;
+  emergencyReason: string | null;
+  requiresProviderConsult: boolean;
+  consultReason: string | null;
+}
+
 /** Encounter state summary sent from edge function (progressive clinical reasoning) */
 export interface EncounterStateSummary {
   currentPhase: string;
@@ -164,6 +181,8 @@ export interface EncounterStateSummary {
   completeness: CompletenessSummary;
   medicationCount: number;
   planItemCount: number;
+  driftState: DriftStateSummary;
+  patientSafety: PatientSafetySummary;
 }
 
 export interface ConversationalMessage {

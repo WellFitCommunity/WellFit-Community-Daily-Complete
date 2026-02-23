@@ -8,6 +8,7 @@ import { getConversationalPersonality, getVerbosityInstruction } from './convers
 import { CONDENSED_GROUNDING_RULES } from './clinicalGroundingRules.ts';
 import type { EncounterState } from './encounterStateManager.ts';
 import { serializeEncounterStateForPrompt, getEncounterStatePromptInstructions } from './encounterStateManager.ts';
+import { CONDENSED_DRIFT_GUARD, FULL_DRIFT_GUARD } from './conversationDriftGuard.ts';
 
 /**
  * Generate CONDENSED personality for real-time use (token-optimized)
@@ -26,7 +27,8 @@ function getCondensedPersonality(prefs: ProviderPreferences): string {
 ${prefs.interaction_count < 10 ? 'Learning provider preferences.' : `Known provider (${prefs.interaction_count}+ interactions).`}
 Be precise - suggest only codes with >70% confidence. Catch revenue opportunities and compliance risks.
 
-${CONDENSED_GROUNDING_RULES}`;
+${CONDENSED_GROUNDING_RULES}
+${CONDENSED_DRIFT_GUARD}`;
 }
 
 /**
@@ -200,7 +202,7 @@ ${stateInstructions}
 - NEVER fabricate clinical details — if it wasn't in the transcript, it doesn't exist
 - Include groundingFlags in every response — the provider needs to see what's documented vs. what's missing
 - Include encounterStateUpdate with NEW clinical elements from this transcript chunk
-
+${FULL_DRIFT_GUARD}
 Now analyze that transcript and help them optimize billing while staying squeaky clean on compliance.`;
 }
 
