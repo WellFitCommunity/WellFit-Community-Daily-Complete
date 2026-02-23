@@ -210,6 +210,7 @@ serve(async (req: Request) => {
                   logger.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
                 );
               }
+            }
           }
         }
       } catch (e) {
