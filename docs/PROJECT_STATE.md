@@ -89,6 +89,8 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 | Typecheck | 0 errors | 2026-02-23 |
 | Lint | 0 errors, 0 warnings | 2026-02-23 |
 | God files (>600 lines) | 0 violations (all decomposed) | 2026-02-23 |
+| AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
+| Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
 
 ---
@@ -141,6 +143,12 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 - Added `patient_description` TEXT column to `ai_skills` table
 - Populated plain-language descriptions for all 60 AI skills
 - Migration pushed to remote database
+
+### Edge Function Redeployment — COMPLETE
+
+- All 137 edge functions redeployed with standardized model imports
+- Commit `1baf0998` pushed, then full deploy via `npx supabase functions deploy --no-verify-jwt`
+- All functions live on project `xkybsjnvuohpqpbkikyn`
 
 ---
 
