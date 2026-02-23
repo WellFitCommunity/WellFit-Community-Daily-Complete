@@ -63,7 +63,7 @@ export const ConsentManagementPage = React.lazy(() => import('../pages/ConsentMa
 export const NoticeOfPrivacyPractices = React.lazy(() => import('../pages/NoticeOfPrivacyPractices'));
 export const MyAmendmentRequests = React.lazy(() => import('../pages/MyAmendmentRequests'));
 export const SelfReportingPage = React.lazy(() => import('../pages/SelfReportingPage'));
-export const DoctorsViewPage = React.lazy(() => import('../pages/DoctorsViewPage'));
+export const DoctorsViewPage = React.lazy(() => import('../pages/DoctorsView'));
 export const SmartCallbackPage = React.lazy(() => import('../pages/SmartCallbackPage'));
 
 // ═══════════════════════════════════════════════════════════════════════════════

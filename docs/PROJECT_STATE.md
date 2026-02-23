@@ -3,23 +3,29 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-02-21
-**Last Session:** MCP Server Wiring COMPLETE — All non-blocked servers wired to UI (10 of 11; Clearinghouse blocked on vendor credentials)
+**Last Updated:** 2026-02-23
+**Last Session:** patientContextService adoption COMPLETE — all 6 phases done (3 sessions)
 **Updated By:** Claude Opus 4.6
 
 ---
 
-## Deep Congruency Audit (2026-02-21)
+## Deep Congruency Audit (2026-02-21) — COMPLETE
 
 **Full audit report:** [`docs/DEEP_CONGRUENCY_AUDIT_2026-02-21.md`](DEEP_CONGRUENCY_AUDIT_2026-02-21.md)
 
-**Summary:** 8.4/10 overall score. 4 Critical, 9 Moderate, 6 Low findings. ~14 hours remediation across 3-4 sessions. No code was modified — audit only.
+**Status: ALL FINDINGS REMEDIATED.** Original score 8.4/10. All 4 Critical, 9 Moderate, and 6 Low findings resolved across 4 remediation sessions + 1 patientContextService session.
 
-**Top critical findings:**
-1. 8 services throw instead of returning `failure()` (breaks ServiceResult contract)
-2. 14 duplicate type definitions (AlertSeverity has 7 incompatible versions)
-3. PinnedSectionsContext used by 3 components but possibly unmounted
-4. 63+ `as Error` type assertions instead of `instanceof Error` narrowing
+**Remediation summary:**
+- C-1: 8 throw→failure() conversions (DONE)
+- C-2: 14 duplicate types consolidated (DONE)
+- C-3: PinnedSectionsContext verified + defensive guard (DONE)
+- C-4: 63+ `as Error` → `instanceof Error` narrowing (DONE)
+- M-1/M-2: 14 god files decomposed (8 edge fn → 61 modules, 6 type files → 30 sub-files) (DONE)
+- M-3: SELECT * — 270 files fixed (DONE, commit `50c29cb5`)
+- M-4: Auto-generated database types + `npm run db:types` script (DONE)
+- M-5/M-6: Edge function logging fixes (DONE)
+- L-5: 919 catch blocks → explicit `catch (err: unknown)` (DONE, commit `0895fb94`)
+- All remaining low-priority items (DONE)
 
 ---
 
@@ -65,6 +71,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Tracker | Path | Status |
 |---------|------|--------|
+| **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
@@ -77,12 +84,12 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 8,562 passed, 0 failed | 2026-02-21 |
-| Test Suites | 440 | 2026-02-21 |
-| Typecheck | 0 errors | 2026-02-21 |
-| Lint | 0 errors, 0 warnings | 2026-02-21 |
-| God files (>600 lines) | 14 violations (8 edge fn + 6 type files) | 2026-02-21 |
-| Congruency Audit Score | 8.4/10 | 2026-02-21 |
+| Tests | 8,706 passed, 0 failed | 2026-02-23 |
+| Test Suites | 452 | 2026-02-23 |
+| Typecheck | 0 errors | 2026-02-23 |
+| Lint | 0 errors, 0 warnings | 2026-02-23 |
+| God files (>600 lines) | 0 violations (all decomposed) | 2026-02-23 |
+| Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
 
 ---
 
@@ -106,7 +113,32 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ---
 
-## What Was Completed Last Session (2026-02-21)
+## What Was Completed Last Session (2026-02-22/23)
+
+### patientContextService Adoption — COMPLETE (3 sessions)
+
+**Tracker:** `docs/trackers/patient-context-adoption-tracker.md`
+
+| Session | Date | Phases | Tests |
+|---------|------|--------|-------|
+| 1 | 2026-02-22 | 0 + 1 + 2 | 8,415 → 8,665 |
+| 2 | 2026-02-22 | 3 + 4 | 8,665 → 8,706 |
+| 3 | 2026-02-23 | 5 + 6 | 8,706 → 8,706 |
+
+**What was migrated:**
+- Phase 0: Fixed `daily_check_ins` → `check_ins` table/column bug (5 fixes)
+- Phase 1: Added `self_reports` section to patientContextService (8 tasks, 13 new tests)
+- Phase 2: Added `getBatchDemographics()` method (6 new tests)
+- Phase 3: Migrated `data-fetching.ts` — adapter pattern preserves API shape (18 new tests)
+- Phase 4: Decomposed 800-line `DoctorsViewPage.tsx` into 8 modules, migrated `self_reports` query (23 new tests)
+- Phase 5: Migrated `MPIReviewQueue` — N+1 queries → single batch fetch, lazy-load address on expand, decomposed into 4 modules
+- Phase 6: Final verification — 93 patient-context tests pass, full suite green
+
+**Next action:** Move to next priority per Maria's direction.
+
+---
+
+## What Was Completed Previously (2026-02-21)
 
 ### Session 2 — MCP UI Wiring (4 servers)
 1. Wired NPI Registry → BillingProviderForm (provider onboarding with registry lookup)

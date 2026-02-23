@@ -54,9 +54,13 @@
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 3.1 | Replace `fetchComprehensivePatientData()` with `getPatientContext()` call + adapter | `src/components/admin/enhanced-fhir/data-fetching.ts` | TODO |
-| 3.2 | Replace `fetchPopulationData()` profiles query with `getBatchDemographics()` | `src/components/admin/enhanced-fhir/data-fetching.ts` | TODO |
-| 3.3 | Verify downstream consumers unchanged (adapter preserves shape) | `EnhancedFhirServiceClass`, `clinical-decision-support`, `population-analytics` | TODO |
+| 3.1 | Replace `fetchComprehensivePatientData()` with `getPatientContext()` call + adapter | `src/components/admin/enhanced-fhir/data-fetching.ts` | DONE |
+| 3.2 | Replace `fetchPopulationData()` to use parallel `getPatientContext()` calls | `src/components/admin/enhanced-fhir/data-fetching.ts` | DONE |
+| 3.3 | Verify downstream consumers unchanged (adapter preserves shape) | `EnhancedFhirServiceClass`, `clinical-decision-support`, `population-analytics` | DONE |
+| 3.4 | Write 18 tests (cache, adapter, delegation, edge cases) | `__tests__/data-fetching.test.ts` (NEW) | DONE |
+| 3.5 | Fix `fetchRecentCheckIns` SELECT * → explicit columns | `data-fetching.ts` | DONE |
+
+**Session 2 result:** 5/5 complete. Adapter pattern ensures zero breaking changes. `supabaseClient` param retained for API compat but unused by `fetchComprehensivePatientData` (delegates to patientContextService). `fetchRecentCheckIns` intentionally NOT migrated (time-window query across all patients, per CLAUDE.md exception).
 
 ---
 
@@ -64,10 +68,13 @@
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 4.1 | Extract data-fetching hook using `patientContextService` | `src/pages/DoctorsView/useDoctorsViewData.ts` (NEW) | TODO |
-| 4.2 | Replace direct `check_ins` + `self_reports` queries | `src/pages/DoctorsViewPage.tsx` | TODO |
-| 4.3 | Keep community engagement aggregate queries as direct (per CLAUDE.md) | `src/pages/DoctorsViewPage.tsx` | TODO |
-| 4.4 | Decompose if over 600 lines | `src/pages/DoctorsView/` subdirectory | TODO |
+| 4.1 | Extract data-fetching hook using `patientContextService` | `src/pages/DoctorsView/useDoctorsViewData.ts` (NEW) | DONE |
+| 4.2 | Replace direct `self_reports` query with patientContextService | `src/pages/DoctorsView/useDoctorsViewData.ts` | DONE |
+| 4.3 | Keep check-in + community engagement queries direct (per CLAUDE.md) | `src/pages/DoctorsView/useDoctorsViewData.ts` | DONE |
+| 4.4 | Decompose 800-line file into 8 focused modules | `src/pages/DoctorsView/` (8 files, largest 368 lines) | DONE |
+| 4.5 | Write 23 tests (hook + vitalUtils) | `src/pages/DoctorsView/__tests__/useDoctorsViewData.test.ts` | DONE |
+
+**Session 2 result:** 5/5 complete. Old 800-line `DoctorsViewPage.tsx` decomposed into 8 files under `src/pages/DoctorsView/` (largest: 368 lines). `self_reports` query migrated to patientContextService. Check-in query kept direct (needs raw vital fields). Community engagement queries kept direct (aggregate queries). Lazy import updated in `lazyComponents.tsx`.
 
 ---
 
@@ -75,8 +82,11 @@
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 5.1 | Replace 12-field profile fetch with `getMinimalContext()` | `src/components/admin/MPIReviewQueue.tsx` | TODO |
-| 5.2 | Lazy-load address/email on expand for detailed comparison | `src/components/admin/MPIReviewQueue.tsx` | TODO |
+| 5.1 | Replace 12-field profile fetch with `getBatchDemographics()` | `src/components/admin/mpi-review/MPIReviewQueue.tsx` | DONE |
+| 5.2 | Lazy-load address/email on expand for detailed comparison | `src/components/admin/mpi-review/MPIReviewQueue.tsx` | DONE |
+| 5.3 | Decompose 697-line file into 4 focused modules (under 600 limit) | `src/components/admin/mpi-review/` (4 files, largest 493 lines) | DONE |
+
+**Session 3 result:** 3/3 complete. N+1 profile queries replaced with single `getBatchDemographics()` call. Address/city/state/zip/email lazy-loaded on expand via direct narrow query (5 fields, 2 patients). File decomposed from 697 → 4 modules (largest: 493 lines). Old `MPIReviewQueue.tsx` is now a barrel re-export.
 
 ---
 
@@ -84,9 +94,9 @@
 
 | # | Task | Status |
 |---|------|--------|
-| 6.1 | Verify all patient-context tests pass | TODO |
-| 6.2 | Full suite: typecheck + lint + tests | TODO |
-| 6.3 | Update PROJECT_STATE.md | TODO |
+| 6.1 | Verify all patient-context tests pass (93 tests) | DONE |
+| 6.2 | Full suite: typecheck + lint + tests | DONE |
+| 6.3 | Update PROJECT_STATE.md | DONE |
 
 ---
 
@@ -105,5 +115,5 @@
 | Session | Date | Phases | Tests Before | Tests After | Result |
 |---------|------|--------|-------------|-------------|--------|
 | 1 | 2026-02-22 | 0 + 1 + 2 | 8,415 | 8,665 | typecheck 0, lint 0, 8,665 pass |
-| 2 | TBD | 3 + 4 + 5 | 8,665 | — | — |
-| 3 | TBD | 6 + verify | — | — | — |
+| 2 | 2026-02-22 | 3 + 4 | 8,665 | 8,706 | typecheck 0, lint 0, 8,706 pass |
+| 3 | 2026-02-23 | 5 + 6 | 8,706 | 8,706 | typecheck 0, lint 0, 8,706 pass |
