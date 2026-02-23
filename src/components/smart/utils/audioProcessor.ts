@@ -32,11 +32,82 @@ export interface CodeSuggestionResponse {
   suggestions?: string[];
 }
 
+/** Evidence citation from PubMed (Session 4: Evidence-Based Reasoning) */
+export interface EvidenceCitationDisplay {
+  pmid: string;
+  title: string;
+  authors: string[];
+  journal: string;
+  year: string;
+  doi: string;
+  relevanceNote: string;
+}
+
+/** Evidence search result sent from edge function */
+export interface EvidenceCitationsResponse {
+  type: 'evidence_citations';
+  results: Array<{
+    query: string;
+    trigger: string;
+    triggerDetail: string;
+    citations: EvidenceCitationDisplay[];
+    searchTimeMs: number;
+  }>;
+  display: string[];
+}
+
+/** Guideline reference match sent from edge function (Session 5) */
+export interface GuidelineReferenceResponse {
+  type: 'guideline_references';
+  matches: Array<{
+    condition: string;
+    icd10: string;
+    guidelines: Array<{
+      organization: string;
+      guidelineName: string;
+      year: number;
+      keyRecommendations: string[];
+      monitoringTargets: Array<{ metric: string; target: string; frequency: string }>;
+      adherenceChecklist: string[];
+    }>;
+    adherenceFlags: string[];
+    preventiveCareReminders: string[];
+  }>;
+}
+
+/** Treatment pathway reference sent from edge function (Session 6) */
+export interface TreatmentPathwayResponse {
+  type: 'treatment_pathways';
+  pathways: Array<{
+    condition: string;
+    icd10: string;
+    pathway: {
+      condition: string;
+      treatmentGoal: string;
+      steps: Array<{
+        phase: string;
+        intervention: string;
+        medicationClass?: string;
+        examples?: string[];
+        evidenceLevel: string;
+        guidelineSource: string;
+        contraindications: string[];
+        sdohNote?: string;
+      }>;
+      redFlags: string[];
+      lifestyleRecommendations: string[];
+    };
+  }>;
+}
+
 export interface AudioProcessorConfig {
   wsUrl: string;
   voiceProfile: ProviderVoiceProfile | null;
   onTranscript: (text: string, appliedCorrections: number) => void;
   onCodeSuggestion: (data: CodeSuggestionResponse) => void;
+  onEvidenceCitations?: (data: EvidenceCitationsResponse) => void;
+  onGuidelineReferences?: (data: GuidelineReferenceResponse) => void;
+  onTreatmentPathways?: (data: TreatmentPathwayResponse) => void;
   onReady: () => void;
   onStatusChange: (status: string) => void;
   onRecordingStateChange: (isRecording: boolean) => void;
@@ -98,6 +169,12 @@ export async function initializeAudioRecording(
           config.onTranscript(text, appliedCount);
         } else if (data.type === 'code_suggestion') {
           config.onCodeSuggestion(data);
+        } else if (data.type === 'evidence_citations') {
+          config.onEvidenceCitations?.(data);
+        } else if (data.type === 'guideline_references') {
+          config.onGuidelineReferences?.(data);
+        } else if (data.type === 'treatment_pathways') {
+          config.onTreatmentPathways?.(data);
         } else if (data.type === 'ready') {
           config.onReady();
         }

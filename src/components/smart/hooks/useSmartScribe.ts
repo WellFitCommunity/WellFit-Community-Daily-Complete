@@ -170,6 +170,67 @@ export interface PatientSafetySummary {
   consultReason: string | null;
 }
 
+/** Evidence citation from PubMed search (Session 4: Evidence-Based Reasoning) */
+export interface EvidenceCitationSummary {
+  pmid: string;
+  title: string;
+  authors: string[];
+  journal: string;
+  year: string;
+  doi: string;
+  relevanceNote: string;
+}
+
+/** Evidence search result (Session 4) */
+export interface EvidenceSearchResultSummary {
+  query: string;
+  trigger: string;
+  triggerDetail: string;
+  citations: EvidenceCitationSummary[];
+  searchTimeMs: number;
+}
+
+/** Guideline reference match (Session 5: Guideline Matcher Integration) */
+export interface GuidelineMatchSummary {
+  condition: string;
+  icd10: string;
+  guidelines: Array<{
+    organization: string;
+    guidelineName: string;
+    year: number;
+    keyRecommendations: string[];
+    monitoringTargets: Array<{ metric: string; target: string; frequency: string }>;
+    adherenceChecklist: string[];
+  }>;
+  adherenceFlags: string[];
+  preventiveCareReminders: string[];
+}
+
+/** Treatment pathway step (Session 6: Treatment Pathway Integration) */
+export interface TreatmentStepSummary {
+  phase: string;
+  intervention: string;
+  medicationClass?: string;
+  examples?: string[];
+  evidenceLevel: string;
+  guidelineSource: string;
+  contraindications: string[];
+  sdohNote?: string;
+}
+
+/** Treatment pathway result (Session 6) */
+export interface TreatmentPathwaySummary {
+  condition: string;
+  icd10: string;
+  pathway: {
+    condition: string;
+    treatmentGoal: string;
+    steps: TreatmentStepSummary[];
+    redFlags: string[];
+    lifestyleRecommendations: string[];
+  };
+}
+
 /** Encounter state summary sent from edge function (progressive clinical reasoning) */
 export interface EncounterStateSummary {
   currentPhase: string;
@@ -263,6 +324,13 @@ export function useSmartScribe(props: UseSmartScribeProps) {
 
   // Progressive clinical reasoning: encounter state summary
   const [encounterState, setEncounterState] = useState<EncounterStateSummary | null>(null);
+
+  // Session 4: Evidence citations from PubMed
+  const [evidenceCitations, setEvidenceCitations] = useState<EvidenceSearchResultSummary[]>([]);
+  // Session 5: Guideline references for active diagnoses
+  const [guidelineReferences, setGuidelineReferences] = useState<GuidelineMatchSummary[]>([]);
+  // Session 6: Treatment pathway references for active diagnoses
+  const [treatmentPathways, setTreatmentPathways] = useState<TreatmentPathwaySummary[]>([]);
 
   // Assistance level state
   const [assistanceLevel, setAssistanceLevel] = useState<number>(5);
@@ -688,6 +756,24 @@ export function useSmartScribe(props: UseSmartScribeProps) {
             setEncounterState(data.encounterState as EncounterStateSummary);
           }
         },
+        onEvidenceCitations: (data) => {
+          // Session 4: Evidence citations from PubMed
+          if (data.results && Array.isArray(data.results)) {
+            setEvidenceCitations(prev => [...prev, ...data.results]);
+          }
+        },
+        onGuidelineReferences: (data) => {
+          // Session 5: Guideline references for active diagnoses
+          if (data.matches && Array.isArray(data.matches)) {
+            setGuidelineReferences(prev => [...prev, ...data.matches]);
+          }
+        },
+        onTreatmentPathways: (data) => {
+          // Session 6: Treatment pathway references for active diagnoses
+          if (data.pathways && Array.isArray(data.pathways)) {
+            setTreatmentPathways(prev => [...prev, ...data.pathways]);
+          }
+        },
         onReady: () => {
           setConversationalMessages([
             {
@@ -1001,6 +1087,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     scribeMode,
     groundingFlags,
     encounterState,
+    evidenceCitations,
+    guidelineReferences,
+    treatmentPathways,
 
     // Setters
     setTranscript,

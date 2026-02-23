@@ -21,6 +21,9 @@ import { strictDeidentify, validateDeidentification } from '../_shared/phiDeiden
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import type { EncounterState } from '../_shared/encounterStateManager.ts';
 import { createEmptyEncounterState, mergeEncounterState } from '../_shared/encounterStateManager.ts';
+import { detectEvidenceTriggers, searchPubMedEvidence, formatCitationsForDisplay, createEvidenceRateLimiter, updateRateLimiter } from '../_shared/evidenceRetrievalService.ts';
+import { matchGuidelinesForEncounter } from '../_shared/guidelineReferenceEngine.ts';
+import { matchTreatmentPathways } from '../_shared/treatmentPathwayReference.ts';
 
 // Audit logger interface
 interface AuditLogger {
@@ -154,6 +157,9 @@ serve(async (req: Request) => {
 
   // Progressive Clinical Reasoning: encounter state persists across analysis chunks
   let encounterState: EncounterState = createEmptyEncounterState();
+  let evidenceRateLimiter = createEvidenceRateLimiter();
+  const matchedConditions = new Set<string>();
+  const matchedPathways = new Set<string>();
 
   socket.onopen = () => {
     const qs = new URLSearchParams({
@@ -202,7 +208,24 @@ serve(async (req: Request) => {
             if (now - lastAnalysisTime >= ANALYSIS_INTERVAL_MS && fullTranscript.length > 50) {
               lastAnalysisTime = now;
               analyzeCoding(fullTranscript, socket, userId, admin, logger, encounterState).then((updatedState) => {
-                if (updatedState) encounterState = updatedState;
+                if (updatedState) {
+                  encounterState = updatedState;
+                  // Session 4: Evidence retrieval — fire-and-forget PubMed search
+                  const triggers = detectEvidenceTriggers(deidentify(fullTranscript, logger), updatedState, evidenceRateLimiter);
+                  if (triggers.shouldSearch) {
+                    const svcKey = Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SECRET_KEY') || '';
+                    searchPubMedEvidence(triggers.queries, SB_URL!, svcKey).then(results => {
+                      evidenceRateLimiter = updateRateLimiter(evidenceRateLimiter, results.length);
+                      if (results.some(r => r.citations.length > 0)) {
+                        safeSend(socket, { type: 'evidence_citations', results, display: formatCitationsForDisplay(results) });
+                      }
+                    }).catch(e => logger.warn('Evidence search non-fatal failure', { error: e instanceof Error ? e.message : String(e) }));
+                  }
+                  const gMatches = matchGuidelinesForEncounter(updatedState).filter(m => !matchedConditions.has(m.icd10));
+                  if (gMatches.length > 0) { gMatches.forEach(m => matchedConditions.add(m.icd10)); safeSend(socket, { type: 'guideline_references', matches: gMatches }); }
+                  const tMatches = matchTreatmentPathways(updatedState).filter(m => !matchedPathways.has(m.icd10));
+                  if (tMatches.length > 0) { tMatches.forEach(m => matchedPathways.add(m.icd10)); safeSend(socket, { type: 'treatment_pathways', pathways: tMatches }); }
+                }
               }).catch((e) =>
                 logger.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
               );

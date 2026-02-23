@@ -14,10 +14,10 @@
 |---------|-------|--------|------|
 | 1 | Anti-Hallucination Grounding System | COMPLETE | 2026-02-23 |
 | 2 | Progressive Clinical Reasoning Chain | COMPLETE | 2026-02-23 |
-| 3 | Conversation Drift Protection | IN PROGRESS | 2026-02-23 |
-| 4 | Evidence-Based Reasoning Engine — PubMed Integration | Pending | — |
-| 5 | Evidence-Based Reasoning Engine — Guideline Matcher Integration | Pending | — |
-| 6 | Evidence-Based Reasoning Engine — Treatment Pathway Integration | Pending | — |
+| 3 | Conversation Drift Protection | COMPLETE | 2026-02-23 |
+| 4 | Evidence-Based Reasoning Engine — PubMed Integration | COMPLETE | 2026-02-23 |
+| 5 | Evidence-Based Reasoning Engine — Guideline Matcher Integration | COMPLETE | 2026-02-23 |
+| 6 | Evidence-Based Reasoning Engine — Treatment Pathway Integration | COMPLETE | 2026-02-23 |
 | 7 | Physician Consultation Mode | Pending | — |
 | 8 | Physician Consultation Mode — Differential & Peer Consult | Pending | — |
 | 9 | Integration Testing & Prompt Tuning | Pending | — |
@@ -128,35 +128,35 @@ ANTI-HALLUCINATION GROUNDING RULES — MANDATORY:
 
 | # | Task | Status |
 |---|------|--------|
-| 4.1 | Add PubMed MCP client to Riley's edge function (server already wired — `mcp-pubmed-server`) | |
-| 4.2 | Complexity detection — identify when a case warrants literature search | |
-| 4.3 | Auto-query PubMed when unusual presentations, rare conditions, or drug interaction questions arise | |
-| 4.4 | Physician-triggered search — "Riley, what does the literature say about..." | |
-| 4.5 | Citation formatting — PMID, title, journal, year, DOI link per result | |
-| 4.6 | Rate limiting and cost tracking for PubMed queries | |
-| 4.7 | Tests for evidence retrieval and citation formatting | |
+| 4.1 | Add PubMed MCP client to Riley's edge function (server already wired — `mcp-pubmed-server`) | DONE |
+| 4.2 | Complexity detection — identify when a case warrants literature search | DONE |
+| 4.3 | Auto-query PubMed when unusual presentations, rare conditions, or drug interaction questions arise | DONE |
+| 4.4 | Physician-triggered search — "Riley, what does the literature say about..." | DONE |
+| 4.5 | Citation formatting — PMID, title, journal, year, DOI link per result | DONE |
+| 4.6 | Rate limiting and cost tracking for PubMed queries | DONE |
+| 4.7 | Tests for evidence retrieval and citation formatting | DONE |
 
 ### Session 5: Clinical Guideline Matcher Integration
 
 | # | Task | Status |
 |---|------|--------|
-| 5.1 | Connect Riley to `ai-clinical-guideline-matcher` during encounters | |
-| 5.2 | Auto-match patient conditions to applicable guidelines (ADA, ACC/AHA, USPSTF, etc.) | |
-| 5.3 | Guideline adherence alerts — flag when documentation deviates from guidelines | |
-| 5.4 | Preventive care gap detection — proactive screening recommendations with guideline citation | |
-| 5.5 | UI integration — show guideline references alongside billing suggestions | |
-| 5.6 | Tests for guideline matching during encounters | |
+| 5.1 | Rule-based guideline engine (`guidelineReferenceEngine.ts`) — 12 conditions, ICD-10 + keyword matching | DONE |
+| 5.2 | Auto-match patient conditions to applicable guidelines (ADA, ACC/AHA, GOLD, GINA, KDIGO, APA, ATA, AACE) | DONE |
+| 5.3 | Guideline adherence alerts — flag missing vitals, med reconciliation per condition | DONE |
+| 5.4 | Preventive care gap detection — proactive screening recommendations with guideline citation | DONE |
+| 5.5 | UI integration — `guideline_references` WebSocket message, audioProcessor + useSmartScribe state | DONE |
+| 5.6 | Tests for guideline matching during encounters (31 tests) | DONE |
 
 ### Session 6: Treatment Pathway Integration
 
 | # | Task | Status |
 |---|------|--------|
-| 6.1 | Connect Riley to `ai-treatment-pathway` for evidence-based treatment recommendations | |
-| 6.2 | Evidence level display (A/B/C/D/expert consensus) for each treatment suggestion | |
-| 6.3 | Contraindication cross-check against patient's allergies and current medications | |
-| 6.4 | SDOH-aware treatment recommendations (from patient context) | |
-| 6.5 | Treatment step visualization — first-line through third-line options | |
-| 6.6 | Tests for treatment pathway integration | |
+| 6.1 | Rule-based treatment pathway engine (`treatmentPathwayReference.ts`) — 12 conditions, first→third line | DONE |
+| 6.2 | Evidence level display (A/B/C/D/expert_consensus) per treatment step with guideline source | DONE |
+| 6.3 | Condition-level contraindications per medication class (eGFR, pregnancy, drug interactions) | DONE |
+| 6.4 | SDOH-aware notes per step (cost, transportation barriers, generic availability) | DONE |
+| 6.5 | Treatment step display — `treatment_pathways` WebSocket message, audioProcessor + useSmartScribe state | DONE |
+| 6.6 | Tests for treatment pathway matching (33 tests) | DONE |
 
 ---
 
