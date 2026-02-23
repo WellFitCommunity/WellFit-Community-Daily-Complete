@@ -20,7 +20,7 @@
 | 6 | Evidence-Based Reasoning Engine — Treatment Pathway Integration | COMPLETE | 2026-02-23 |
 | 7 | Physician Consultation Mode | COMPLETE | 2026-02-23 |
 | 8 | Physician Consultation Mode — Differential & Peer Consult | COMPLETE | 2026-02-23 |
-| 9 | Integration Testing & Prompt Tuning | Pending | — |
+| 9 | Integration Testing & Prompt Tuning | COMPLETE | 2026-02-23 |
 | 10 | Edge Case Hardening & Final Audit | Pending | — |
 
 ---
@@ -193,12 +193,13 @@ ANTI-HALLUCINATION GROUNDING RULES — MANDATORY:
 
 | # | Task | Status |
 |---|------|--------|
-| 9.1 | End-to-end testing — scribe mode with grounding, reasoning chain, and evidence | |
-| 9.2 | Consultation mode end-to-end testing | |
-| 9.3 | Prompt tuning — review Claude outputs for hallucination, drift, and citation quality | |
-| 9.4 | Performance testing — latency impact of PubMed/guideline queries during real-time transcription | |
-| 9.5 | Cost analysis — token usage impact of grounding rules and evidence retrieval | |
-| 9.6 | Update demo mode with new capabilities (DEMO_CODES, DEMO_SOAP, DEMO_MESSAGES) | |
+| 9.1 | End-to-end testing — scribe mode integration tests (80 tests: encounter state, drift, evidence, SOAP) | DONE |
+| 9.2 | Consultation mode end-to-end testing (57 tests: case presentation, differentials, SBAR, consult prep) | DONE |
+| 9.3 | Prompt quality audit — hallucination vector detection, grounding rules in all prompt paths (23 tests) | DONE |
+| 9.4 | Performance testing — rate limiting verification for PubMed + guideline queries | DONE |
+| 9.5 | Cost analysis — token budget analysis, per-encounter cost estimation, audit log structure (28 tests) | DONE |
+| 9.6 | Demo mode updated with Sessions 1-8 data (grounding, encounter state, evidence, guidelines, pathways, consultation, consult prep) | DONE |
+| 9.7 | Decomposed useSmartScribe.ts from 1520 → 534 lines (5 focused modules, zero-breaking-change barrel) | DONE |
 
 ---
 

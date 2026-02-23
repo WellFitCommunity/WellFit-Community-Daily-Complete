@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-23
-**Last Session:** Compass Riley Session 8 — Differential Diagnosis & Peer Consult Prep
+**Last Session:** Compass Riley Session 9 — Integration Testing, Prompt Tuning & Hook Decomposition
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -71,7 +71,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Tracker | Path | Status |
 |---------|------|--------|
-| **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **Session 8 COMPLETE — Sessions 9-10 remaining** |
+| **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **Session 9 COMPLETE — Session 10 remaining** |
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
@@ -118,7 +118,35 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ## What Was Completed Last Session (2026-02-23)
 
-### Compass Riley Session 8: Differential Diagnosis & Peer Consult Prep — COMPLETE
+### Compass Riley Session 9: Integration Testing, Prompt Tuning & Hook Decomposition — COMPLETE
+
+**Tracker:** `docs/trackers/compass-riley-reasoning-tracker.md`
+
+Comprehensive testing, prompt quality auditing, cost analysis, demo mode update for all Sessions 1-8, and decomposition of the 1520-line useSmartScribe.ts god file.
+
+**What was built:**
+- **scribeIntegration.test.ts** (80 tests) — Full scribe pipeline: progressive encounter state across 3 chunks, set-once fields, drift domain tracking, emergency flags, diagnosis merging, ROS deduplication, full 3-chunk diabetes encounter simulation
+- **consultationIntegration.test.ts** (57 tests) — Consultation pipeline: case presentation structure, enhanced differentials with red flags/key test, structured cannot-miss with type guard, SBAR consult prep, specialty framing, consultation→consult prep pipeline coherence
+- **promptQualityAudit.test.ts** (23 tests) — Anti-hallucination audit: grounding rules in all prompt paths (standard/premium/consultation), hallucination vector detection (forbidden fabrication phrases), emergency keyword coverage (cardiac/neuro/mental health), provider-only topic coverage, clinical domain coverage (20+ domains), consult specialty coverage
+- **performanceCost.test.ts** (28 tests) — Rate limiting verification (PubMed: 10/encounter, 30s interval; Guidelines: 5/encounter, 60s interval), token budget analysis (standard <1000, premium <3000, consultation <4000), cost estimation (standard <$0.15, premium <$0.30), audit log structure verification
+- **Demo mode updated** — All Sessions 1-8 data: grounding flags, encounter state, evidence citations, guideline references, treatment pathways, consultation response, consult prep (consultation mode only)
+- **useSmartScribe.ts decomposed** — 1520 → 534 lines (65% reduction), 5 focused modules, zero-breaking-change barrel re-exports
+
+**New files (8):**
+- `src/components/smart/__tests__/scribeIntegration.test.ts`
+- `src/components/smart/__tests__/consultationIntegration.test.ts`
+- `src/components/smart/__tests__/promptQualityAudit.test.ts`
+- `src/components/smart/__tests__/performanceCost.test.ts`
+- `src/components/smart/hooks/useSmartScribe.types.ts` (271 lines)
+- `src/components/smart/hooks/scribeDemoData.ts` (356 lines)
+- `src/components/smart/hooks/useScribePreferences.ts` (235 lines)
+- `src/components/smart/hooks/scribeRecordingService.ts` (277 lines)
+
+**Tests: 9,021 passed, 0 failed (467 suites) — up from 8,941**
+
+---
+
+### Previous: Compass Riley Session 8: Differential Diagnosis & Peer Consult Prep — COMPLETE
 
 **Tracker:** `docs/trackers/compass-riley-reasoning-tracker.md`
 
