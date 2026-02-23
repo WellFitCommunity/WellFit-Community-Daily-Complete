@@ -11,6 +11,9 @@ import { CardiologyService } from '../../services/cardiology';
 import type { CardiologyDashboardSummary } from '../../types/cardiology';
 import CardiologyOverview from './CardiologyOverview';
 import CardiologyAlerts from './CardiologyAlerts';
+import CardiacRegistryForm from './CardiacRegistryForm';
+import ECGResultForm from './ECGResultForm';
+import EchoResultForm from './EchoResultForm';
 
 type TabId = 'overview' | 'ecg-tests' | 'heart-failure' | 'devices' | 'rehab';
 
@@ -31,11 +34,14 @@ const TABS: TabConfig[] = [
 const DEMO_PATIENT_ID = '00000000-0000-0000-0000-000000000000';
 const DEMO_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
 
+type ActiveForm = 'registry' | 'ecg' | 'echo' | null;
+
 const CardiologyDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [summary, setSummary] = useState<CardiologyDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeForm, setActiveForm] = useState<ActiveForm>(null);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -44,7 +50,6 @@ const CardiologyDashboard: React.FC = () => {
     if (result.success && result.data) {
       setSummary(result.data);
     } else {
-      // Show empty dashboard if no data (not an error — patient may not be enrolled yet)
       setSummary({
         registry: null,
         latest_ecg: null,
@@ -63,6 +68,15 @@ const CardiologyDashboard: React.FC = () => {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  const handleFormSuccess = useCallback(() => {
+    setActiveForm(null);
+    loadDashboard();
+  }, [loadDashboard]);
+
+  const handleFormCancel = useCallback(() => {
+    setActiveForm(null);
+  }, []);
 
   if (loading) {
     return (
@@ -88,12 +102,80 @@ const CardiologyDashboard: React.FC = () => {
     );
   }
 
+  // Active form rendering (full-width, replaces tab content)
+  if (activeForm) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Heart Health</h1>
+          <p className="text-gray-600 mt-1">Comprehensive cardiac care management</p>
+        </div>
+        {activeForm === 'registry' && (
+          <CardiacRegistryForm
+            patientId={DEMO_PATIENT_ID}
+            tenantId={DEMO_TENANT_ID}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
+        )}
+        {activeForm === 'ecg' && summary?.registry && (
+          <ECGResultForm
+            patientId={DEMO_PATIENT_ID}
+            tenantId={DEMO_TENANT_ID}
+            registryId={summary.registry.id}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
+        )}
+        {activeForm === 'echo' && summary?.registry && (
+          <EchoResultForm
+            patientId={DEMO_PATIENT_ID}
+            tenantId={DEMO_TENANT_ID}
+            registryId={summary.registry.id}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
+        )}
+      </div>
+    );
+  }
+
+  const registryId = summary?.registry?.id;
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Heart Health</h1>
-        <p className="text-gray-600 mt-1">Comprehensive cardiac care management</p>
+      {/* Header with actions */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Heart Health</h1>
+          <p className="text-gray-600 mt-1">Comprehensive cardiac care management</p>
+        </div>
+        <div className="flex gap-2">
+          {!summary?.registry && (
+            <button
+              onClick={() => setActiveForm('registry')}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium min-h-[44px]"
+            >
+              Enroll Patient
+            </button>
+          )}
+          {registryId && (
+            <>
+              <button
+                onClick={() => setActiveForm('ecg')}
+                className="px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-medium min-h-[44px] hover:bg-red-50"
+              >
+                Record ECG
+              </button>
+              <button
+                onClick={() => setActiveForm('echo')}
+                className="px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-medium min-h-[44px] hover:bg-red-50"
+              >
+                Record Echo
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Alerts Banner */}
