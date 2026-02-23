@@ -4,6 +4,7 @@ import { createAdminClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { CONDENSED_GROUNDING_RULES } from '../_shared/clinicalGroundingRules.ts';
 
 const logger = createLogger("process-medical-transcript");
 
@@ -102,6 +103,8 @@ serve(async (req) => {
       promptContent = `You are an experienced medical scribe - like a trusted coworker who's been doing this for years.
 Analyze this medical transcript and provide structured, helpful output.
 
+${CONDENSED_GROUNDING_RULES}
+
 Session Type: ${sessionType}
 Duration: ${duration} seconds
 Patient ID: ${patientId || 'Not specified'}
@@ -120,7 +123,8 @@ Return JSON with this structure:
       "type": "ICD10|CPT|HCPCS",
       "description": "Code description",
       "confidence": 0.85,
-      "reasoning": "Why this code fits"
+      "reasoning": "Why this code fits",
+      "transcriptEvidence": "Quote from transcript supporting this code"
     }
   ],
   "actionItems": ["Specific, actionable items"],
@@ -129,7 +133,7 @@ Return JSON with this structure:
   "questions_for_provider": ["Things you're unsure about"]
 }
 
-Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality over quantity.`;
+Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality over quantity. Every code must cite transcript evidence.`;
     }
 
     // Process transcript with Claude AI

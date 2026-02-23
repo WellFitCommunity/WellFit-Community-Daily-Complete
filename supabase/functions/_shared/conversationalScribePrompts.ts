@@ -2,12 +2,12 @@
 // Adaptive, personalized prompts that make the AI scribe feel like a trusted coworker
 // Anti-hallucination grounding system embedded in all prompt paths (Session 1, 2026-02-23)
 
-import { CLINICAL_GROUNDING_RULES } from './clinicalGroundingRules.ts';
+import { CLINICAL_GROUNDING_RULES, NURSE_SCOPE_GUARD } from './clinicalGroundingRules.ts';
 
 // Re-export prompt generators from decomposed module (barrel pattern)
 export { getRealtimeCodingPrompt, getDocumentationPrompt } from './scribePromptGenerators.ts';
 // Re-export grounding rules for consumers that need them directly
-export { CLINICAL_GROUNDING_RULES, CONDENSED_GROUNDING_RULES } from './clinicalGroundingRules.ts';
+export { CLINICAL_GROUNDING_RULES, CONDENSED_GROUNDING_RULES, NURSE_SCOPE_GUARD } from './clinicalGroundingRules.ts';
 
 export interface ProviderPreferences {
   formality_level: 'formal' | 'professional' | 'relaxed' | 'casual';
@@ -272,6 +272,12 @@ Use that history to be even more helpful. You're their partner now.`;
   // Anti-hallucination grounding — applies to ALL provider types
   // Even nurses must not fabricate documentation content
   personality += `\n\n${CLINICAL_GROUNDING_RULES}`;
+
+  // Nurse scope guard — additional boundaries for nursing documentation
+  // Prevents billing codes, medication dosing, and MDM reasoning in nurse mode
+  if (isNurse) {
+    personality += `\n\n${NURSE_SCOPE_GUARD}`;
+  }
 
   return personality;
 }

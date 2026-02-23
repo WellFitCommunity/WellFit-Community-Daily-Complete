@@ -27,7 +27,7 @@ import { matchTreatmentPathways } from '../_shared/treatmentPathwayReference.ts'
 import { runConsultationAnalysis } from '../_shared/consultationAnalyzer.ts';
 import { runConsultPrepAnalysis } from '../_shared/peerConsultAnalyzer.ts';
 import type { ConsultationResponse } from '../_shared/consultationPromptGenerators.ts';
-import { logClaudeAudit, serializeEncounterStateForClient } from '../_shared/scribeHelpers.ts';
+import { logClaudeAudit, serializeEncounterStateForClient, buildNurseFallbackPrompt, buildPhysicianFallbackPrompt } from '../_shared/scribeHelpers.ts';
 import type { AuditLogger, TranscriptionAnalysis } from '../_shared/scribeHelpers.ts';
 
 
@@ -108,9 +108,18 @@ serve(async (req: Request) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // Parse scribe mode from query parameters
-  const scribeMode = url.searchParams.get("mode") || "compass-riley";
+  // Parse and validate scribe mode from query parameters
+  const VALID_SCRIBE_MODES = ['smartscribe', 'compass-riley', 'consultation'] as const;
+  type ScribeMode = typeof VALID_SCRIBE_MODES[number];
+  const rawMode = url.searchParams.get("mode") || "compass-riley";
+  const scribeMode: ScribeMode = VALID_SCRIBE_MODES.includes(rawMode as ScribeMode)
+    ? rawMode as ScribeMode
+    : "compass-riley";
+  if (rawMode !== scribeMode) {
+    logger.warn('Invalid scribe mode rejected, defaulting to compass-riley', { rawMode });
+  }
   const isConsultationMode = scribeMode === "consultation";
+  const isNurseMode = scribeMode === "smartscribe";
 
   const { socket, response } = Deno.upgradeWebSocket(req);
 
@@ -186,25 +195,29 @@ serve(async (req: Request) => {
                   logger.error("Consultation analysis error", { error: e instanceof Error ? e.message : String(e) })
                 );
               } else {
-                const analysisPromise = analyzeCoding(fullTranscript, socket, userId, admin, logger, encounterState);
+                const analysisPromise = analyzeCoding(fullTranscript, socket, userId, admin, logger, encounterState, isNurseMode);
                 analysisPromise.then((updatedState) => {
                   if (updatedState) {
                     encounterState = updatedState;
-                    // Session 4: Evidence retrieval — fire-and-forget PubMed search
-                    const triggers = detectEvidenceTriggers(deidentify(fullTranscript, logger), updatedState, evidenceRateLimiter);
-                    if (triggers.shouldSearch) {
-                      const svcKey = Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SECRET_KEY') || '';
-                      searchPubMedEvidence(triggers.queries, SB_URL!, svcKey).then(results => {
-                        evidenceRateLimiter = updateRateLimiter(evidenceRateLimiter, results.length);
-                        if (results.some(r => r.citations.length > 0)) {
-                          safeSend(socket, { type: 'evidence_citations', results, display: formatCitationsForDisplay(results) });
-                        }
-                      }).catch(e => logger.warn('Evidence search non-fatal failure', { error: e instanceof Error ? e.message : String(e) }));
+                    // Physician-only features: evidence citations, guidelines, treatment pathways
+                    // Skip for nurse mode — nurses don't need billing/clinical reasoning intelligence
+                    if (!isNurseMode) {
+                      // Session 4: Evidence retrieval — fire-and-forget PubMed search
+                      const triggers = detectEvidenceTriggers(deidentify(fullTranscript, logger), updatedState, evidenceRateLimiter);
+                      if (triggers.shouldSearch) {
+                        const svcKey = Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SECRET_KEY') || '';
+                        searchPubMedEvidence(triggers.queries, SB_URL!, svcKey).then(results => {
+                          evidenceRateLimiter = updateRateLimiter(evidenceRateLimiter, results.length);
+                          if (results.some(r => r.citations.length > 0)) {
+                            safeSend(socket, { type: 'evidence_citations', results, display: formatCitationsForDisplay(results) });
+                          }
+                        }).catch(e => logger.warn('Evidence search non-fatal failure', { error: e instanceof Error ? e.message : String(e) }));
+                      }
+                      const gMatches = matchGuidelinesForEncounter(updatedState).filter(m => !matchedConditions.has(m.icd10));
+                      if (gMatches.length > 0) { gMatches.forEach(m => matchedConditions.add(m.icd10)); safeSend(socket, { type: 'guideline_references', matches: gMatches }); }
+                      const tMatches = matchTreatmentPathways(updatedState).filter(m => !matchedPathways.has(m.icd10));
+                      if (tMatches.length > 0) { tMatches.forEach(m => matchedPathways.add(m.icd10)); safeSend(socket, { type: 'treatment_pathways', pathways: tMatches }); }
                     }
-                    const gMatches = matchGuidelinesForEncounter(updatedState).filter(m => !matchedConditions.has(m.icd10));
-                    if (gMatches.length > 0) { gMatches.forEach(m => matchedConditions.add(m.icd10)); safeSend(socket, { type: 'guideline_references', matches: gMatches }); }
-                    const tMatches = matchTreatmentPathways(updatedState).filter(m => !matchedPathways.has(m.icd10));
-                    if (tMatches.length > 0) { tMatches.forEach(m => matchedPathways.add(m.icd10)); safeSend(socket, { type: 'treatment_pathways', pathways: tMatches }); }
                   }
                 }).catch((e) =>
                   logger.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
@@ -261,7 +274,7 @@ serve(async (req: Request) => {
 });
 
 // 4) Periodic coding analysis (de-identified) - WITH CONVERSATIONAL AI + PROGRESSIVE REASONING + DRIFT GUARD
-async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger, currentEncounterState: EncounterState): Promise<EncounterState | null> {
+async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger, currentEncounterState: EncounterState, nurseMode = false): Promise<EncounterState | null> {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
 
@@ -301,57 +314,9 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
           time_of_day: timeOfDay,
           current_mood: prefs.last_interaction_at && (Date.now() - new Date(prefs.last_interaction_at).getTime() < 600000) ? 'focused' : 'neutral'
         }, currentEncounterState)
-      : `You are an experienced, intelligent medical scribe with deep clinical knowledge. Analyze this encounter transcript and generate:
-
-1. **Complete SOAP Note** - Professional clinical documentation ready for EHR
-2. **Billing Codes** - Accurate CPT, ICD-10, HCPCS codes
-3. **Conversational Coaching** - Helpful suggestions for the provider
-
-TRANSCRIPT (PHI-SCRUBBED):
-${transcript}
-
-Return ONLY strict JSON:
-{
-  "conversational_note": "Brief friendly comment about the encounter (1-2 sentences, conversational tone)",
-
-  "soapNote": {
-    "subjective": "ONLY what the patient reported — quote key phrases from transcript. If OLDCARTS elements were not mentioned, write '[NOT DOCUMENTED]' for those elements. 2-4 sentences.",
-    "objective": "ONLY vitals, exam findings, and labs explicitly stated in transcript. Do NOT add findings not described. Mark missing expected elements as '[GAP]'. 2-3 sentences.",
-    "assessment": "Clinical reasoning connecting ONLY documented findings to diagnoses. Every diagnosis must trace to transcript evidence. Include ICD-10 codes. 2-3 sentences.",
-    "plan": "ONLY actions the provider stated they will take. Do NOT invent follow-up plans, referrals, or medication changes not discussed. 3-5 bullet points.",
-    "hpi": "Narrative HPI using ONLY information from the transcript. For OLDCARTS elements not mentioned, write '[NOT DOCUMENTED]'. 3-5 sentences.",
-    "ros": "ONLY review-of-systems elements actually discussed. Systems not reviewed should be listed as '[NOT REVIEWED]' — never fabricate negative findings. 2-4 sentences."
-  },
-
-  "suggestedCodes": [
-    {"code": "99214", "type": "CPT", "description": "Office visit, moderate complexity", "reimbursement": 164.00, "confidence": 0.92, "reasoning": "Why this code fits", "transcriptEvidence": "Quote from transcript", "missingDocumentation": "What to add"}
-  ],
-  "totalRevenueIncrease": 164.00,
-  "complianceRisk": "low",
-  "conversational_suggestions": ["1-2 tips"],
-  "groundingFlags": {
-    "statedCount": 0,
-    "inferredCount": 0,
-    "gapCount": 0,
-    "gaps": ["List expected elements not found in transcript"]
-  }
-}
-
-**ANTI-HALLUCINATION RULES — MANDATORY:**
-- TRANSCRIPT IS TRUTH: If it was not said, it does not exist in this encounter
-- NEVER add ROS elements, exam findings, lab values, or doses not in the transcript
-- Every billing code MUST include transcriptEvidence — a quote or paraphrase from the transcript
-- Tag SOAP elements: [STATED] (from transcript), [INFERRED] (explain why), [GAP] (expected but missing)
-- Include groundingFlags — count stated/inferred/gap assertions and list all gaps
-
-**DOCUMENTATION REQUIREMENTS:**
-- SOAP note must be professional and EHR-ready — grounded in transcript content only
-- Use proper medical terminology and standard abbreviations
-- Assessment must include ICD-10 diagnoses where applicable
-- Plan must be specific (include doses, frequencies, quantities ONLY if stated)
-- HPI must address OLDCARTS when mentioned — mark unmentioned elements as [NOT DOCUMENTED]
-- If the transcript is too brief (<50 words), generate a minimal SOAP note and flag all gaps
-- NEVER make up clinical details — use "[NOT DOCUMENTED]" or "[GAP]" instead`;
+      : nurseMode
+        ? buildNurseFallbackPrompt(transcript)
+        : buildPhysicianFallbackPrompt(transcript);
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
