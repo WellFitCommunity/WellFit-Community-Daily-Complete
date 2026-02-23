@@ -3,6 +3,7 @@
 
 import { getErrorMessage } from '../lib/getErrorMessage';
 import { loadAnthropicSDK } from './anthropicLoader';
+import { HAIKU_MODEL } from '../constants/aiModels';
 
 // Vite uses VITE_ prefix for environment variables
 // Access via import.meta.env
@@ -83,7 +84,7 @@ Your task:
         throw new Error('AI client not initialized');
       }
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4.5-20250514',
+        model: HAIKU_MODEL,
         max_tokens: 1024,
         messages: [
           ...this.conversationHistory,
@@ -134,7 +135,7 @@ Question: ${question}`;
         throw new Error('AI client not initialized');
       }
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4.5-20250514',
+        model: HAIKU_MODEL,
         max_tokens: 512,
         messages: [
           ...this.conversationHistory,
@@ -174,7 +175,7 @@ Question: ${question}`;
         throw new Error('AI client not initialized');
       }
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4.5-20250514',
+        model: HAIKU_MODEL,
         max_tokens: 512,
         messages: [{ role: 'user', content: prompt }]
       });
@@ -214,7 +215,7 @@ Question: ${question}`;
         throw new Error('AI client not initialized');
       }
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4.5-20250514',
+        model: HAIKU_MODEL,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }]
       });
@@ -261,7 +262,7 @@ Question: ${question}`;
         throw new Error('AI client not initialized');
       }
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4.5-20250514',
+        model: HAIKU_MODEL,
         max_tokens: 2048,
         messages: [{ role: 'user', content: prompt }]
       });

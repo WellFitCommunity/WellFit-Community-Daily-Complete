@@ -1,6 +1,8 @@
 // MCP Cost Optimizer - Model Selector
 // Intelligent routing to optimal Claude model
 
+import { HAIKU_MODEL, SONNET_MODEL, OPUS_MODEL } from '../../../constants/aiModels';
+
 /**
  * Task patterns that can use Haiku (60% cheaper)
  */
@@ -29,20 +31,20 @@ export function selectOptimalModel(
   preferHaiku: boolean
 ): string {
   if (!preferHaiku) {
-    return 'claude-sonnet-4-5-20250929';
+    return SONNET_MODEL;
   }
 
   const isSimpleTask =
     complexity === 'simple' || SIMPLE_TASK_PATTERNS.some((pattern) => pattern.test(task));
 
-  return isSimpleTask ? 'claude-haiku-4-5-20250929' : 'claude-sonnet-4-5-20250929';
+  return isSimpleTask ? HAIKU_MODEL : SONNET_MODEL;
 }
 
 /**
  * Model identifiers for reference
  */
 export const MODELS = {
-  HAIKU: 'claude-haiku-4-5-20250929',
-  SONNET: 'claude-sonnet-4-5-20250929',
-  OPUS: 'claude-opus-4-5-20250929',
+  HAIKU: HAIKU_MODEL,
+  SONNET: SONNET_MODEL,
+  OPUS: OPUS_MODEL,
 } as const;

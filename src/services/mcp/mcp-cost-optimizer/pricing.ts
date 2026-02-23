@@ -1,19 +1,21 @@
 // MCP Cost Optimizer - Pricing Calculator
 // Based on Claude pricing (as of 2025-01-15)
 
+import { HAIKU_MODEL, SONNET_MODEL, OPUS_MODEL } from '../../../constants/aiModels';
+
 /**
  * Pricing per million tokens (MTok) for each Claude model
  */
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  'claude-haiku-4-5-20250929': {
+  [HAIKU_MODEL]: {
     input: 1.00,   // $1.00 per MTok
     output: 5.00,  // $5.00 per MTok
   },
-  'claude-sonnet-4-5-20250929': {
+  [SONNET_MODEL]: {
     input: 3.00,   // $3.00 per MTok
     output: 15.00, // $15.00 per MTok
   },
-  'claude-opus-4-5-20250929': {
+  [OPUS_MODEL]: {
     input: 15.00,  // $15.00 per MTok
     output: 75.00, // $75.00 per MTok
   },
@@ -22,7 +24,7 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
 /**
  * Default pricing (falls back to Sonnet pricing)
  */
-const DEFAULT_PRICING = MODEL_PRICING['claude-sonnet-4-5-20250929'];
+const DEFAULT_PRICING = MODEL_PRICING[SONNET_MODEL];
 
 /**
  * Calculate the cost for an API call

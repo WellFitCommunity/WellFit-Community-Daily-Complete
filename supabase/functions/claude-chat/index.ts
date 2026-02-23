@@ -5,6 +5,7 @@ import { createUserClient } from '../_shared/supabaseClient.ts';
 import Anthropic from "npm:@anthropic-ai/sdk@0.20.9";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from '../_shared/auditLogger.ts';
+import { SONNET_MODEL } from '../_shared/models.ts';
 
 serve(async (req) => {
   const logger = createLogger('claude-chat', req);
@@ -59,7 +60,7 @@ serve(async (req) => {
     // Generate request ID for tracking
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
-    const modelUsed = model || "claude-3-5-sonnet-20241022";
+    const modelUsed = model || SONNET_MODEL;
 
     // Call Claude API
     const response = await anthropic.messages.create({

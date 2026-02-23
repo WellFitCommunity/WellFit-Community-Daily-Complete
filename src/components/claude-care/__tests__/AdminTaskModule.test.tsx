@@ -74,7 +74,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
       expect(screen.getByText('Select Task Template')).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -99,7 +99,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -112,7 +112,7 @@ describe('AdminTaskModule', () => {
       render(
         <AdminTaskModule
           userRole="physician"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -134,7 +134,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -151,7 +151,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="admin"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -171,7 +171,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -184,7 +184,7 @@ describe('AdminTaskModule', () => {
       render(
         <AdminTaskModule
           userRole="physician"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -200,7 +200,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -226,7 +226,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -244,7 +244,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -263,7 +263,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -281,7 +281,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -299,7 +299,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -323,7 +323,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -349,7 +349,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -377,7 +377,7 @@ describe('AdminTaskModule', () => {
             patient_info: 'John Doe, 65yo male',
             clinical_details: 'Patient presents with chest pain',
           },
-          preferredModel: 'claude-3-haiku-20240307',
+          preferredModel: 'claude-haiku-4-5-20250929',
           userId: 'user-123',
         });
       });
@@ -393,7 +393,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -428,7 +428,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -462,7 +462,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -543,7 +543,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 
@@ -576,7 +576,7 @@ describe('AdminTaskModule', () => {
         <AdminTaskModule
           userRole="physician"
           userId="user-123"
-          preferredModel={ClaudeModel.HAIKU_3}
+          preferredModel={ClaudeModel.HAIKU_3_5}
         />
       );
 

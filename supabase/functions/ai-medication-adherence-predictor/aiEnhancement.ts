@@ -9,6 +9,7 @@
  */
 
 import type { AdherencePrediction, MedicationInfo } from './types.ts';
+import { SONNET_MODEL } from '../_shared/models.ts';
 
 /**
  * Shape of the parsed AI enhancement response.
@@ -130,7 +131,7 @@ export async function enhanceWithAI(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: SONNET_MODEL,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       }),

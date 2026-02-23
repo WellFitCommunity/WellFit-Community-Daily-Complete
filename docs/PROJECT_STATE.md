@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-23
-**Last Session:** patientContextService adoption COMPLETE — all 6 phases done (3 sessions)
+**Last Session:** AI model version standardization + CLAUDE.md governance rules + HTI-2 migration
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -113,7 +113,38 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ---
 
-## What Was Completed Last Session (2026-02-22/23)
+## What Was Completed Last Session (2026-02-23)
+
+### AI Model Version Standardization — COMPLETE
+
+**Problem:** 350+ hardcoded model strings across 100+ files, 9 different versions, format inconsistencies, and legacy references.
+
+**What was done:**
+- Created centralized model constants: `src/constants/aiModels.ts` (service layer) + `supabase/functions/_shared/models.ts` (edge functions)
+- Fixed 6 service files with malformed model IDs (dots vs dashes, missing dates, legacy versions)
+- Standardized 32 edge function source files to import from `_shared/models.ts`
+- Updated 8 MCP service files to import from `src/constants/aiModels.ts`
+- Updated `ClaudeModel` enum to current model IDs
+- Updated `environment.ts` default from `20250919` → `20250929`
+- Canonical versions: Haiku `claude-haiku-4-5-20250929`, Sonnet `claude-sonnet-4-5-20250929`, Opus `claude-opus-4-5-20251101`
+
+### CLAUDE.md Governance Updates
+
+- Added Rule 14: Pin AI model versions (explicit model ID in `ai_skills.model`, never `latest`)
+- Added Rule 15: Synthetic test data only (obviously fake names/DOBs in test fixtures)
+- Added Rule 16: Structured AI output (new AI edge functions must define JSON response schema)
+- Added sections: AI Model Version Pinning, Structured AI Output, AI Transparency (HTI-2), Synthetic Test Data
+
+### HTI-2 Algorithm Transparency Migration
+
+- Created `20260223000001_ai_skills_patient_description.sql`
+- Added `patient_description` TEXT column to `ai_skills` table
+- Populated plain-language descriptions for all 60 AI skills
+- Migration pushed to remote database
+
+---
+
+## What Was Completed Previously (2026-02-22/23)
 
 ### patientContextService Adoption — COMPLETE (3 sessions)
 

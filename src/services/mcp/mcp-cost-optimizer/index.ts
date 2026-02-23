@@ -11,6 +11,7 @@ import { CostTracker } from './costTracker';
 import { selectOptimalModel } from './modelSelector';
 import { calculateCost } from './pricing';
 import { DEFAULT_CONFIG } from './config';
+import { HAIKU_MODEL, SONNET_MODEL } from '../../../constants/aiModels';
 import type {
   CostOptimizationConfig,
   CostMetrics,
@@ -170,7 +171,7 @@ Always prioritize patient safety and HIPAA compliance.`;
       prompt: 'Generate CPT, HCPCS, and ICD-10 codes for this encounter. Return strict JSON.',
       context: encounterData,
       complexity: 'complex',
-      model: 'claude-sonnet-4-5-20250929',
+      model: SONNET_MODEL,
       userId,
     });
   }
@@ -183,7 +184,7 @@ Always prioritize patient safety and HIPAA compliance.`;
       prompt: 'Convert this transcription into a structured SOAP note format.',
       context: { transcription },
       complexity: 'complex',
-      model: 'claude-sonnet-4-5-20250929',
+      model: SONNET_MODEL,
       userId,
     });
   }
@@ -196,7 +197,7 @@ Always prioritize patient safety and HIPAA compliance.`;
       prompt: 'Analyze user behavior and suggest top 3 dashboard improvements. Return JSON.',
       context: userBehavior,
       complexity: 'simple',
-      model: 'claude-haiku-4-5-20250929',
+      model: HAIKU_MODEL,
       userId,
     });
   }

@@ -10,6 +10,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from "../_shared/auditLogger.ts";
+import { HAIKU_MODEL } from "../_shared/models.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const SUPABASE_SERVICE_KEY = SB_SECRET_KEY;
@@ -101,7 +102,7 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: model || 'claude-3-5-haiku-20241022',
+        model: model || HAIKU_MODEL,
         max_tokens: 1024,
         messages: [
           {

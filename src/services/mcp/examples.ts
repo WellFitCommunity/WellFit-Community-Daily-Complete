@@ -10,6 +10,7 @@ import {
   generateCodingSuggestions,
   summarizeClinicalNotes
 } from './index';
+import { HAIKU_MODEL, SONNET_MODEL } from '../../constants/aiModels';
 
 // ============================================================================
 // EXAMPLE 1: Auto-Generate Billing Codes
@@ -114,7 +115,7 @@ export async function exampleSDOHRiskAssessment(
       "concerns": ["concern1", "concern2"],
       "recommendations": ["action1", "action2"]
     }`,
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     userId: socialWorkerId
   });
 
@@ -166,7 +167,7 @@ export async function exampleMedicationInteractionCheck(
       "warnings": ["warning1", "warning2"],
       "recommendation": "prescribe|avoid|adjust_dose"
     }`,
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     userId: physicianId
   });
 
@@ -206,7 +207,7 @@ export async function exampleClinicalNoteQualityCheck(
       "billingLevel": "99211" | "99212" | "99213" | "99214" | "99215",
       "suggestions": ["improvement1", "improvement2"]
     }`,
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     userId: providerId
   });
 
@@ -238,7 +239,7 @@ export async function examplePatientEducation(
     - When to seek immediate care
 
     Keep it under 200 words, warm and reassuring tone.`,
-    model: 'claude-haiku-4-5-20250929',
+    model: HAIKU_MODEL,
     userId: providerId
   });
 
@@ -274,7 +275,7 @@ export async function examplePriorAuthLetter(
     - Expected outcome
 
     Professional medical tone, cite clinical guidelines where applicable.`,
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     userId: providerId
   });
 
@@ -306,7 +307,7 @@ export async function exampleTriageSeverity(
       "recommendedActions": ["action1", "action2"],
       "estimatedWaitTime": "minutes"
     }`,
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     userId: nurseId
   });
 
@@ -336,7 +337,7 @@ export async function exampleLabInterpretation(
     - Recommended follow-up
 
     Return JSON with structured interpretation.`,
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     userId: providerId
   });
 
@@ -372,7 +373,7 @@ export async function exampleDischargeSummary(
     - Patient education provided
 
     Professional medical format suitable for medical record.`,
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     userId: providerId
   });
 

@@ -9,6 +9,7 @@
 
 import { supabase } from '../../lib/supabaseClient';
 import { ServiceResult, success, failure as _failure } from '../_base';
+import { HAIKU_MODEL } from '../../constants/aiModels';
 
 export interface MetricData {
   name: string;
@@ -132,7 +133,7 @@ export class DashboardAnomalyService {
       // Then, get AI-powered insights
       const { data, error: _error } = await supabase.functions.invoke('claude-personalization', {
         body: {
-          model: 'claude-3-5-haiku-20241022',
+          model: HAIKU_MODEL,
           prompt: buildAnalysisPrompt(request, localAnomalies),
           userId: request.tenantId || 'system',
           requestType: 'dashboard_anomaly_detection',
@@ -174,7 +175,7 @@ export class DashboardAnomalyService {
         metadata: {
           analyzed_at: new Date().toISOString(),
           metrics_count: request.metrics.length,
-          model: 'claude-3-5-haiku-20241022',
+          model: HAIKU_MODEL,
         },
       });
     } catch (err: unknown) {

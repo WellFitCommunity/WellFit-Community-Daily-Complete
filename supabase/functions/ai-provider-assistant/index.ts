@@ -18,6 +18,7 @@
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { SONNET_MODEL } from '../_shared/models.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
@@ -297,7 +298,7 @@ async function generateResponse(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: SONNET_MODEL,
         max_tokens: 2048,
         system: systemPrompt,
         messages,
@@ -512,7 +513,7 @@ serve(async (req) => {
       metadata: {
         generatedAt: new Date().toISOString(),
         responseTimeMs: Date.now() - startTime,
-        model: 'claude-sonnet-4-20250514',
+        model: SONNET_MODEL,
         queryCategory: category,
       },
     };

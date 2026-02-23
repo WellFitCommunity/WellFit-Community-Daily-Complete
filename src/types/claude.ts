@@ -10,19 +10,18 @@ export enum UserRole {
 
 // Available Claude models with specific use cases
 // NOTE: Model IDs must match Anthropic's actual API model names
+// NOTE: These values must stay in sync with src/constants/aiModels.ts and supabase/functions/_shared/models.ts
 export enum ClaudeModel {
-  HAIKU_3 = 'claude-3-haiku-20240307', // Legacy - being phased out
-  HAIKU_3_5 = 'claude-3-5-haiku-20241022', // CURRENT: Ultra-fast, intelligent UI/UX personalization
-  SONNET_3_5 = 'claude-3-5-sonnet-20241022', // CURRENT: Best for billing, revenue, medical coding
-  OPUS_3 = 'claude-3-opus-20240229', // Legacy Opus for complex reasoning
-  OPUS_4_5 = 'claude-opus-4-5-20251101', // LATEST: Most capable model for complex tasks
+  HAIKU_3_5 = 'claude-haiku-4-5-20250929', // Fast tier — UI/personalization
+  SONNET_3_5 = 'claude-sonnet-4-5-20250929', // Accurate tier — billing, medical coding
+  OPUS_4_5 = 'claude-opus-4-5-20251101', // Complex tier — research, complex reasoning
 }
 
-// Backwards compatibility aliases (use these in code that references old names)
+// Backwards compatibility aliases
 export const HAIKU_4_5 = ClaudeModel.HAIKU_3_5;
 export const SONNET_4 = ClaudeModel.SONNET_3_5;
 export const SONNET_4_5 = ClaudeModel.SONNET_3_5;
-export const OPUS_4_1 = ClaudeModel.OPUS_4_5; // Updated to use Opus 4.5
+export const OPUS_4_1 = ClaudeModel.OPUS_4_5;
 
 // Request types for determining appropriate model
 export enum RequestType {

@@ -17,6 +17,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
+import { SONNET_MODEL } from '../_shared/models.ts';
 
 import type { AdherenceRequest, AdherencePrediction, MedicationInfo } from './types.ts';
 import { gatherPatientContext } from './patientContext.ts';
@@ -271,7 +272,7 @@ serve(async (req) => {
         metadata: {
           generated_at: new Date().toISOString(),
           response_time_ms: Date.now() - startTime,
-          model: 'claude-sonnet-4-20250514',
+          model: SONNET_MODEL,
           medications_analyzed: medsToAnalyze.length,
         },
       }),

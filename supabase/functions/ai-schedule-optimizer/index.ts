@@ -17,6 +17,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
+import { HAIKU_MODEL } from '../_shared/models.ts';
 
 // ============================================================================
 // Types
@@ -437,7 +438,7 @@ Respond with valid JSON only.`;
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-20250514',
+        model: HAIKU_MODEL,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -599,7 +600,7 @@ serve(async (req) => {
         metadata: {
           generated_at: new Date().toISOString(),
           response_time_ms: Date.now() - startTime,
-          model: 'claude-haiku-4-20250514',
+          model: HAIKU_MODEL,
         },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

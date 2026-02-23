@@ -22,6 +22,9 @@
 | 11 | **Report verification counts** - typecheck/lint/test pass counts before commit | "I checked" without numbers |
 | 12 | **No god files** - 600 line max per file, decompose don't degrade | Any file exceeding 600 lines |
 | 13 | **Visual acceptance required** - new UI/3D features need Maria's eyes before "done" | Declaring visual work complete without screenshot/verification |
+| 14 | **Pin AI model versions** - explicit model ID in `ai_skills.model`, never `latest` | Unversioned model references in clinical AI |
+| 15 | **Synthetic test data only** - obviously fake names/DOBs in test fixtures | Realistic-looking PHI in test code |
+| 16 | **Structured AI output** - new AI edge functions must define a JSON response schema | Free-text parsing in new AI integrations |
 
 ### Session Start Protocol — EVERY NEW SESSION
 
@@ -455,6 +458,21 @@ it('shows loading spinner while fetching, then displays data', async () => {
 - Do NOT use `.skip()` or `.only()` in committed code
 - Location: `src/components/admin/__tests__/ComponentName.test.tsx`
 - Minimum coverage: User interactions, loading/error/success states, data display, error handling
+
+### Synthetic Test Data — PHI Hygiene
+
+**Test fixtures must use obviously fake data.** Realistic-looking PHI in test code can leak into git history, CI logs, and error reports.
+
+| Do This | Not This |
+|---------|----------|
+| `'Test Patient Alpha'` | `'John Smith'` |
+| `'2000-01-01'` (DOB) | `'1958-03-15'` |
+| `'555-0100'` (phone) | `'(713) 555-1234'` |
+| `'000-00-0000'` (SSN) | `'123-45-6789'` |
+| `'123 Test Street'` | `'456 Oak Lane, Houston TX'` |
+| `'user-123'`, `'patient-abc'` (IDs) | Realistic-looking UUIDs from production |
+
+**Why:** SOC2 auditors flag realistic test data. HIPAA breach notifications have been triggered by test fixtures containing data that *looked* real, even when it wasn't. Obviously fake data eliminates this risk entirely.
 
 ### Legacy Test Cleanup — COMPLETE
 All junk tests (Tier 5) have been replaced with meaningful behavioral tests (Tier 1-4). The quality audit is finished. All 8,415 tests test real components with real assertions.
@@ -1004,6 +1022,49 @@ export async function analyzePatientRisk(
   }
 }
 ```
+
+### AI Model Version Pinning — REQUIRED
+
+**Every AI skill must specify an exact model ID. Never use `latest` or unversioned references.**
+
+Clinical AI decisions must be reproducible. When Anthropic deprecates a model, update the `ai_skills.model` column explicitly — do not auto-upgrade.
+
+| Do This | Not This |
+|---------|----------|
+| `model: 'claude-sonnet-4-5-20250929'` | `model: 'claude-sonnet'` |
+| `model: 'claude-haiku-4-5-20251001'` | `model: 'latest'` |
+
+**When a model is deprecated:** Update `ai_skills.model` for affected skills, test outputs, then deploy. This is a conscious migration, not an automatic one.
+
+### Structured AI Output — REQUIRED FOR NEW FUNCTIONS
+
+**All new AI edge functions must define a JSON response schema.** Do not parse free-text responses with regex or string splitting.
+
+```typescript
+// ✅ GOOD - Structured output with defined schema
+const response = await anthropic.messages.create({
+  model: skillConfig.model,
+  messages: [...],
+  response_format: {
+    type: 'json_schema',
+    json_schema: { name: 'risk_assessment', schema: RiskAssessmentSchema }
+  }
+});
+
+// ❌ BAD - Parsing free-text response
+const text = response.content[0].text;
+const riskLevel = text.match(/Risk Level: (\w+)/)?.[1]; // fragile
+```
+
+**Existing AI functions are grandfathered** but should be migrated to structured output when next modified.
+
+### AI Transparency for Patients (HTI-2 Readiness)
+
+Every AI skill registered in `ai_skills` must have:
+- `description` — Technical description (for developers/auditors)
+- `patient_description` — Plain-language explanation (for patients: "This tool checks if your medications interact with each other")
+
+This supports ONC HTI-2 Algorithm Transparency requirements.
 
 ### AI Cost Tracking
 - All AI calls are tracked for billing purposes

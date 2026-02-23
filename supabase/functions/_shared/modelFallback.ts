@@ -8,6 +8,7 @@
 // ============================================================================
 
 import { createLogger } from './auditLogger.ts';
+import { HAIKU_MODEL, SONNET_MODEL } from './models.ts';
 
 const logger = createLogger('model-fallback');
 
@@ -63,7 +64,7 @@ const MODEL_CONFIGS: ModelConfig[] = [
   // Primary: Claude Sonnet 4.5 (best for medical coding)
   {
     provider: 'anthropic',
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     apiKey: ANTHROPIC_API_KEY,
     endpoint: 'https://api.anthropic.com/v1/messages',
     maxTokens: 4096,
@@ -73,7 +74,7 @@ const MODEL_CONFIGS: ModelConfig[] = [
   // Fallback 1: Claude Haiku (faster, cheaper)
   {
     provider: 'anthropic',
-    model: 'claude-3-5-haiku-20241022',
+    model: HAIKU_MODEL,
     apiKey: ANTHROPIC_API_KEY,
     endpoint: 'https://api.anthropic.com/v1/messages',
     maxTokens: 4096,

@@ -9,9 +9,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { EdgeFunctionLogger } from "../_shared/auditLogger.ts";
-
-/** Model identifier for cost calculation */
-const SONNET_MODEL = "claude-sonnet-4-20250514";
+import { SONNET_MODEL } from "../_shared/models.ts";
 
 /**
  * Logs estimated AI usage to the claude_usage_logs table.

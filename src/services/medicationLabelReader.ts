@@ -9,6 +9,7 @@
  */
 
 import { loadAnthropicSDK } from './anthropicLoader';
+import { SONNET_MODEL } from '../constants/aiModels';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -122,7 +123,7 @@ type AnthropicConstructor = new (args: {
 
 const CONFIG = {
   // Claude API Configuration
-  MODEL: import.meta.env.VITE_CLAUDE_DEFAULT_MODEL || 'claude-3-5-sonnet-20241022',
+  MODEL: import.meta.env.VITE_CLAUDE_DEFAULT_MODEL || SONNET_MODEL,
   MAX_TOKENS: 4000,
   TIMEOUT: 60000, // 60 seconds
 

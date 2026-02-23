@@ -27,9 +27,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
+import { SONNET_MODEL } from "../_shared/models.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-const SONNET_MODEL = "claude-sonnet-4-20250514";
 
 // =====================================================
 // TYPES

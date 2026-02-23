@@ -34,9 +34,9 @@ import { matchGuidelinesToConditions, getApplicableScreenings } from "./matching
 import { buildGuidelinePrompt } from "./promptBuilder.ts";
 import { normalizeMatchResult, getDefaultMatchResult } from "./normalize.ts";
 import { logUsage } from "./usageLogging.ts";
+import { SONNET_MODEL } from "../_shared/models.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-const SONNET_MODEL = "claude-sonnet-4-20250514";
 
 /** PHI Redaction for audit logs */
 const redact = (s: string): string =>

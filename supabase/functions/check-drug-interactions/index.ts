@@ -8,10 +8,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { HAIKU_MODEL } from "../_shared/models.ts";
 
 const SUPABASE_SERVICE_ROLE_KEY = SB_SECRET_KEY;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-const HAIKU_MODEL = "claude-haiku-4-5-20250919";
 
 const RXNORM_API_BASE = "https://rxnav.nlm.nih.gov/REST";
 

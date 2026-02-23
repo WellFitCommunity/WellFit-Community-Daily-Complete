@@ -8,6 +8,7 @@
 
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../auditLogger';
+import { HAIKU_MODEL } from '../../constants/aiModels';
 import type { ServiceResult } from '../_base';
 import { success, failure } from '../_base';
 
@@ -196,7 +197,7 @@ export async function generateLaborProgressNote(
       assessment: (note.assessment as string) ?? '',
       plan: (note.plan as string) ?? '',
       generatedAt: new Date().toISOString(),
-      model: (data?.metadata?.model as string) ?? 'claude-haiku-4-5',
+      model: (data?.metadata?.model as string) ?? HAIKU_MODEL,
     };
 
     await auditLogger.info('LD_PROGRESS_NOTE_COMPLETE', { patientId });

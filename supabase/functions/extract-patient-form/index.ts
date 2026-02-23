@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
+import { SONNET_MODEL } from '../_shared/models.ts';
 
 const logger = createLogger('extract-patient-form');
 
@@ -109,7 +110,7 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: SONNET_MODEL,
         max_tokens: 2000,
         messages: [
           {

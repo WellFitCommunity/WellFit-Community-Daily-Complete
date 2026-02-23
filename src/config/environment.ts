@@ -7,7 +7,7 @@ const envSchema = z.object({
   VITE_ANTHROPIC_API_KEY: z.string().optional(),
 
   // Claude Model Configuration - Intelligent routing: Haiku 4.5 for UI, Sonnet 4.5 for revenue
-  VITE_CLAUDE_DEFAULT_MODEL: z.string().default("claude-haiku-4-5-20250919"), // Fast UI/personalization
+  VITE_CLAUDE_DEFAULT_MODEL: z.string().default("claude-haiku-4-5-20250929"), // Fast UI/personalization
   VITE_CLAUDE_ADMIN_MODEL: z.string().default("claude-sonnet-4-5-20250929"), // Accurate billing/revenue
   VITE_CLAUDE_MAX_TOKENS: z.coerce.number().default(4000),
   VITE_CLAUDE_TIMEOUT: z.coerce.number().default(30000),

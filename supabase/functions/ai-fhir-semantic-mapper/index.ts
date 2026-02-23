@@ -18,6 +18,7 @@
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { SONNET_MODEL } from '../_shared/models.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
@@ -465,7 +466,7 @@ Only suggest mappings you are confident about. Respond with valid JSON array onl
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: SONNET_MODEL,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -668,7 +669,7 @@ serve(async (req) => {
         metadata: {
           generated_at: new Date().toISOString(),
           response_time_ms: Date.now() - startTime,
-          model: 'claude-sonnet-4-20250514',
+          model: SONNET_MODEL,
         },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

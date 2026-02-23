@@ -7,22 +7,14 @@ export interface ModelSelectionStrategy {
 }
 
 // Cost per 1K tokens for each model (input, output)
-const MODEL_COSTS = {
-  [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 }, // Legacy
-  [ClaudeModel.HAIKU_3_5]: { input: 0.0001, output: 0.0005 }, // CURRENT: Ultra-fast UI/personalization
-  [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // CURRENT: Revenue-critical billing
-  [ClaudeModel.OPUS_3]: { input: 0.015, output: 0.075 }, // Legacy Opus
-  [ClaudeModel.OPUS_4_5]: { input: 0.015, output: 0.075 } // LATEST: Opus 4.5 premium
-} as const;
+const MODEL_COSTS: Record<ClaudeModel, { input: number; output: number }> = {
+  [ClaudeModel.HAIKU_3_5]: { input: 0.0001, output: 0.0005 }, // Haiku 4.5 — fast tier
+  [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // Sonnet 4.5 — accurate tier
+  [ClaudeModel.OPUS_4_5]: { input: 0.015, output: 0.075 }, // Opus 4.5 — complex tier
+};
 
 // Model capabilities and characteristics
 const _MODEL_CHARACTERISTICS = {
-  [ClaudeModel.HAIKU_3]: {
-    speed: 'fastest',
-    cost: 'lowest',
-    capability: 'basic',
-    bestFor: ['simple_questions', 'basic_health_guidance']
-  },
   [ClaudeModel.HAIKU_3_5]: {
     speed: 'ultra_fast',
     cost: 'ultra_low',
@@ -35,7 +27,7 @@ const _MODEL_CHARACTERISTICS = {
     capability: 'advanced',
     bestFor: ['health_analysis', 'complex_questions', 'care_recommendations', 'senior_interactions', 'clinical_analysis', 'fhir_processing', 'risk_assessment', 'medical_research', 'complex_coding', 'autonomous_agents', 'medical_coding']
   },
-  [ClaudeModel.OPUS_3]: {
+  [ClaudeModel.OPUS_4_5]: {
     speed: 'medium',
     cost: 'premium',
     capability: 'maximum',
@@ -113,7 +105,7 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
 
       case RequestType.HEALTH_QUESTION:
       case RequestType.MEDICATION_GUIDANCE:
-        return complexity === 'complex' ? ClaudeModel.SONNET_3_5 : ClaudeModel.HAIKU_3;
+        return complexity === 'complex' ? ClaudeModel.SONNET_3_5 : ClaudeModel.HAIKU_3_5;
 
       default:
         return ClaudeModel.SONNET_3_5;
@@ -170,7 +162,7 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
       speed: 'fast' | 'medium' | 'slow';
     }> = [
       {
-        model: ClaudeModel.HAIKU_3,
+        model: ClaudeModel.HAIKU_3_5,
         recommendedFor: ['Simple health questions', 'Basic medication info', 'Quick responses'],
         costTier: 'low',
         speed: 'fast'

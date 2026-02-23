@@ -5,6 +5,7 @@
 // =====================================================
 
 import { mcpOptimizer } from './mcp-cost-optimizer';
+import { HAIKU_MODEL, SONNET_MODEL } from '../../constants/aiModels';
 
 /**
  * Drop-in replacement for existing claudeService
@@ -21,8 +22,8 @@ export const claudeService = {
     model?: 'haiku' | 'sonnet';
   }): Promise<string> {
     const modelMap = {
-      haiku: 'claude-haiku-4-5-20250929',
-      sonnet: 'claude-sonnet-4-5-20250929',
+      haiku: HAIKU_MODEL,
+      sonnet: SONNET_MODEL,
     };
 
     const result = await mcpOptimizer.call({
@@ -65,7 +66,7 @@ export const claudeService = {
       prompt: `Summarize the following content in ${options.maxLength || 500} words or less.`,
       context: { content: options.content },
       complexity: 'simple',
-      model: 'claude-haiku-4-5-20250929',
+      model: HAIKU_MODEL,
       userId: options.userId,
     });
 
@@ -80,7 +81,7 @@ export const claudeService = {
       const result = await mcpOptimizer.call({
         prompt: 'Say "OK" if you are working.',
         complexity: 'simple',
-        model: 'claude-haiku-4-5-20250929',
+        model: HAIKU_MODEL,
       });
 
       return {

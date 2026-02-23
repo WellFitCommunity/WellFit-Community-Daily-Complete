@@ -9,8 +9,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/auditLogger.ts";
-
-const SONNET_MODEL = "claude-sonnet-4-20250514";
+import { SONNET_MODEL } from "../_shared/models.ts";
 
 /** Estimated token counts for discharge summary requests */
 const ESTIMATED_INPUT_TOKENS = 3000;

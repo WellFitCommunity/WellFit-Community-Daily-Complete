@@ -3,6 +3,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { HAIKU_MODEL } from '../constants/aiModels';
 
 export interface ClaudeMessage {
   role: 'user' | 'assistant';
@@ -86,7 +87,7 @@ export class ClaudeEdgeService {
   ): Promise<string> {
     const response = await this.chat({
       messages: [{ role: 'user', content: prompt }],
-      model: options?.model || 'claude-haiku-4-5-20250919', // Default to Haiku 4.5 for speed
+      model: options?.model || HAIKU_MODEL, // Default to Haiku 4.5 for speed
       max_tokens: options?.max_tokens || 4000,
       system: options?.system,
     });

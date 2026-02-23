@@ -14,6 +14,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
+import { SONNET_MODEL } from '../constants/aiModels';
 
 export interface DrugInteraction {
   severity: 'high' | 'moderate' | 'low' | 'contraindicated';
@@ -103,7 +104,7 @@ export async function enhanceInteractionWithClaude(
             content: prompt
           }
         ],
-        model: 'claude-sonnet-4.5',
+        model: SONNET_MODEL,
         max_tokens: 1000,
         context: 'drug_interaction_analysis'
       }

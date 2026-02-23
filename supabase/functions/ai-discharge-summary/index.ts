@@ -36,9 +36,9 @@ import { gatherPatientContext } from "./patientContext.ts";
 import { buildDischargeSummaryPrompt } from "./promptBuilder.ts";
 import { normalizeSummaryResponse, getDefaultSummary } from "./normalize.ts";
 import { logUsage } from "./usageLogging.ts";
+import { SONNET_MODEL } from "../_shared/models.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-const SONNET_MODEL = "claude-sonnet-4-20250514";
 
 // =====================================================
 // MAIN HANDLER

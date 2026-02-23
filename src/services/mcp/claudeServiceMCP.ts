@@ -5,6 +5,7 @@
  */
 
 import { analyzeText, generateSuggestion, summarizeContent } from './mcpHelpers';
+import { HAIKU_MODEL, SONNET_MODEL } from '../../constants/aiModels';
 
 export interface ClaudeRequest {
   prompt: string;
@@ -29,8 +30,8 @@ export interface ClaudeResponse {
  */
 export async function analyzeWithClaude(request: ClaudeRequest): Promise<ClaudeResponse> {
   const modelMap = {
-    'haiku': 'claude-haiku-4-5-20250929',
-    'sonnet': 'claude-sonnet-4-5-20250929'
+    'haiku': HAIKU_MODEL,
+    'sonnet': SONNET_MODEL
   };
 
   const model = modelMap[request.model || 'sonnet'];
@@ -63,7 +64,7 @@ export async function generateCodingSuggestions(params: {
   const suggestion = await generateSuggestion({
     context: params.encounterData,
     task: 'Generate CPT, HCPCS, and ICD-10 codes for this encounter. Return strict JSON format.',
-    model: 'claude-sonnet-4-5-20250929',
+    model: SONNET_MODEL,
     userId: params.userId
   });
 
@@ -85,7 +86,7 @@ export async function summarizeClinicalNotes(params: {
   return await summarizeContent({
     content: params.notes,
     maxLength: params.maxLength || 500,
-    model: 'claude-haiku-4-5-20250929',
+    model: HAIKU_MODEL,
     userId: params.userId
   });
 }
@@ -100,7 +101,7 @@ export async function generateDashboardRecommendations(params: {
   const suggestion = await generateSuggestion({
     context: params.userBehavior,
     task: 'Analyze this admin behavior and suggest workflow improvements. Return JSON with top 3 recommendations.',
-    model: 'claude-haiku-4-5-20250929',
+    model: HAIKU_MODEL,
     userId: params.userId
   });
 
