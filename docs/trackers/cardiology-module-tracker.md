@@ -1,6 +1,6 @@
 # Cardiology Module Build Tracker
 
-> **Last Updated:** 2026-02-17
+> **Last Updated:** 2026-02-23
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 
@@ -25,7 +25,7 @@
 | Core Service | BUILT | `src/services/cardiology/cardiologyService.ts` (565 lines) — CRUD, dashboard aggregation, 8 alert types |
 | FHIR Mapping | BUILT | `src/services/fhir/cardiology/` — 13 LOINC codes, 17 SNOMED codes, Observation builders for ECG/echo/HF |
 | UI Dashboard | BUILT | `src/components/cardiology/` — 5 tabs (Overview, ECG, Heart Failure, Devices, Rehab), alerts component |
-| Tests | PARTIAL | 16+ tests (dashboard + service helpers), missing FHIR observation tests |
+| Tests | BUILT | 51 tests (dashboard 12, registry form 13, ECG form 12, echo form 14), missing FHIR observation tests |
 | Route | BUILT | `/heart-health` with feature flag `cardiology`, admin section wired |
 
 **Alert Types Implemented (8):**
@@ -44,16 +44,16 @@
 
 > Same gap as oncology: clinicians can VIEW but cannot CREATE data through the UI.
 
-## Session 1: Registry + ECG + Echo Forms
+## Session 1: Registry + ECG + Echo Forms — DONE (2026-02-23, commit `87351744`)
 
-| Feature | Status | What to Build |
+| Feature | Status | What Was Built |
 |---------|--------|---------------|
-| Cardiac Registry Form | MISSING | Create/edit form: cardiac conditions (multi-select from 10 conditions), risk factors (multi-select from 10), NYHA class, baseline LVEF, CHA2DS2-VASc auto-calculated, enrollment date. |
-| ECG Result Form | MISSING | Record ECG: rhythm dropdown (14 rhythms), HR, intervals (PR, QRS, QTc), axis, ST changes, STEMI flag, findings, interpretation text. Auto-generate FHIR Observations. |
-| Echo Result Form | MISSING | Record echo: LVEF %, RV function, chamber diameters, wall motion abnormalities (multi-select), valve results (JSON), pericardial effusion, diastolic function grade. |
+| Cardiac Registry Form | BUILT | `CardiacRegistryForm.tsx` (312 lines) — 10 conditions, 10 risk factors, NYHA class with descriptions, baseline LVEF with interpretation, CHA2DS2-VASc auto-calculator (shows for AFib). 13 tests. |
+| ECG Result Form | BUILT | `ECGResultForm.tsx` (341 lines) — 14 rhythms, HR, PR/QRS/QTc/axis intervals, ST changes, STEMI flag with cath lab alert, findings, interpretation. FHIR Observation generation. 12 tests. |
+| Echo Result Form | BUILT | `EchoResultForm.tsx` (371 lines) — LVEF% with interpretation, RV function, LV dimensions, 4-valve assessment (stenosis + regurgitation), wall motion abnormalities (8 regions), pericardial effusion, diastolic function. FHIR Observation generation. 14 tests. |
+| Dashboard Wiring | BUILT | `CardiologyDashboard.tsx` updated (434 lines) — form state management, action buttons, form rendering with success/cancel callbacks. |
 
-**Depends on:** Nothing (foundation complete)
-**Estimated effort:** 1 session (~4 hours)
+**Completed in:** 1 session
 
 ---
 
@@ -229,7 +229,7 @@
 | Phase | Sessions | Status | What It Delivers |
 |-------|----------|--------|-----------------|
 | Foundation | — | BUILT | Read-only dashboard, types, DB (9 tables), FHIR, 8 alert types |
-| Phase 1: Data Entry | 6 sessions | MISSING | All clinical forms + anticoagulation + office dashboard + vitals integration |
+| Phase 1: Data Entry | 6 sessions | SESSION 1 DONE | All clinical forms + anticoagulation + office dashboard + vitals integration |
 | Phase 2: Edge Functions | 2 sessions | MISSING | API layer for data ingestion + clinical alerts |
 | Phase 3: AI Services | 2 sessions | MISSING | Risk analysis, AFib advisor, HF predictor, ECG interpreter, patient summary |
 | Phase 4: Advanced | 2-3 sessions | MISSING | PCI outcomes, enhanced echo, EHR integration, billing, patient education |

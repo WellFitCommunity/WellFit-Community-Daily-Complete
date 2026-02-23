@@ -14,6 +14,9 @@ import CardiologyAlerts from './CardiologyAlerts';
 import CardiacRegistryForm from './CardiacRegistryForm';
 import ECGResultForm from './ECGResultForm';
 import EchoResultForm from './EchoResultForm';
+import HeartFailureAssessmentForm from './HeartFailureAssessmentForm';
+import DeviceMonitoringForm from './DeviceMonitoringForm';
+import DeviceBatteryAlert from './DeviceBatteryAlert';
 
 type TabId = 'overview' | 'ecg-tests' | 'heart-failure' | 'devices' | 'rehab';
 
@@ -34,7 +37,7 @@ const TABS: TabConfig[] = [
 const DEMO_PATIENT_ID = '00000000-0000-0000-0000-000000000000';
 const DEMO_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
 
-type ActiveForm = 'registry' | 'ecg' | 'echo' | null;
+type ActiveForm = 'registry' | 'ecg' | 'echo' | 'hf' | 'device' | null;
 
 const CardiologyDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
@@ -136,6 +139,24 @@ const CardiologyDashboard: React.FC = () => {
             onCancel={handleFormCancel}
           />
         )}
+        {activeForm === 'hf' && summary?.registry && (
+          <HeartFailureAssessmentForm
+            patientId={DEMO_PATIENT_ID}
+            tenantId={DEMO_TENANT_ID}
+            registryId={summary.registry.id}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
+        )}
+        {activeForm === 'device' && summary?.registry && (
+          <DeviceMonitoringForm
+            patientId={DEMO_PATIENT_ID}
+            tenantId={DEMO_TENANT_ID}
+            registryId={summary.registry.id}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
+        )}
       </div>
     );
   }
@@ -172,6 +193,18 @@ const CardiologyDashboard: React.FC = () => {
                 className="px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-medium min-h-[44px] hover:bg-red-50"
               >
                 Record Echo
+              </button>
+              <button
+                onClick={() => setActiveForm('hf')}
+                className="px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-medium min-h-[44px] hover:bg-red-50"
+              >
+                HF Assessment
+              </button>
+              <button
+                onClick={() => setActiveForm('device')}
+                className="px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-medium min-h-[44px] hover:bg-red-50"
+              >
+                Device Check
               </button>
             </>
           )}
@@ -346,7 +379,9 @@ const DevicesTab: React.FC<{ summary: CardiologyDashboardSummary }> = ({ summary
   }
 
   return (
-    <div className="bg-white rounded-lg border p-6 space-y-4">
+    <div className="space-y-4">
+      {device.battery_status !== 'good' && <DeviceBatteryAlert device={device} />}
+      <div className="bg-white rounded-lg border p-6 space-y-4">
       <h3 className="text-lg font-semibold">Device Interrogation</h3>
       <p className="text-xs text-gray-500">
         Last checked: {new Date(device.check_date).toLocaleDateString()}
@@ -388,6 +423,7 @@ const DevicesTab: React.FC<{ summary: CardiologyDashboardSummary }> = ({ summary
           <p className="text-lg font-bold">{device.ventricular_pacing_percent ?? 'N/A'}%</p>
         </div>
       </div>
+    </div>
     </div>
   );
 };
