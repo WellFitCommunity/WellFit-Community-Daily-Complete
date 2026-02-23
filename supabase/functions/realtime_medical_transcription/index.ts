@@ -32,7 +32,16 @@ interface AuditLogger {
 // Parsed transcription analysis response
 interface TranscriptionAnalysis {
   conversational_note?: string;
-  suggestedCodes?: Array<{ code: string; type?: string; description?: string; reimbursement?: number; confidence?: number; reasoning?: string }>;
+  suggestedCodes?: Array<{
+    code: string;
+    type?: string;
+    description?: string;
+    reimbursement?: number;
+    confidence?: number;
+    reasoning?: string;
+    transcriptEvidence?: string;
+    missingDocumentation?: string;
+  }>;
   totalRevenueIncrease?: number;
   complianceRisk?: string;
   conversational_suggestions?: string[];
@@ -43,6 +52,12 @@ interface TranscriptionAnalysis {
     plan?: string;
     hpi?: string;
     ros?: string;
+  };
+  groundingFlags?: {
+    statedCount?: number;
+    inferredCount?: number;
+    gapCount?: number;
+    gaps?: string[];
   };
 }
 
@@ -280,12 +295,12 @@ Return ONLY strict JSON:
   "conversational_note": "Brief friendly comment about the encounter (1-2 sentences, conversational tone)",
 
   "soapNote": {
-    "subjective": "Chief complaint, HPI (onset, location, duration, character, alleviating/aggravating factors, radiation, timing, severity - OLDCARTS), and pertinent ROS. Write as a physician would chart in their EHR. 2-4 sentences.",
-    "objective": "Vital signs if mentioned, physical exam findings, relevant labs/imaging results. Use clinical terminology. 2-3 sentences.",
-    "assessment": "Primary and secondary diagnoses with clinical reasoning. Link symptoms to diagnoses. Include ICD-10 codes. 2-3 sentences.",
-    "plan": "Treatment plan including: medications (with dosing), procedures, referrals, patient education, follow-up timeline. Be specific and actionable. 3-5 bullet points.",
-    "hpi": "Detailed narrative HPI suitable for medical chart. Include all OLDCARTS elements mentioned. 3-5 sentences.",
-    "ros": "Pertinent positive and negative findings from review of systems. Format: 'Constitutional: denies fever, chills. Cardiovascular: endorses dyspnea on exertion. Respiratory: denies cough.' 2-4 sentences."
+    "subjective": "ONLY what the patient reported — quote key phrases from transcript. If OLDCARTS elements were not mentioned, write '[NOT DOCUMENTED]' for those elements. 2-4 sentences.",
+    "objective": "ONLY vitals, exam findings, and labs explicitly stated in transcript. Do NOT add findings not described. Mark missing expected elements as '[GAP]'. 2-3 sentences.",
+    "assessment": "Clinical reasoning connecting ONLY documented findings to diagnoses. Every diagnosis must trace to transcript evidence. Include ICD-10 codes. 2-3 sentences.",
+    "plan": "ONLY actions the provider stated they will take. Do NOT invent follow-up plans, referrals, or medication changes not discussed. 3-5 bullet points.",
+    "hpi": "Narrative HPI using ONLY information from the transcript. For OLDCARTS elements not mentioned, write '[NOT DOCUMENTED]'. 3-5 sentences.",
+    "ros": "ONLY review-of-systems elements actually discussed. Systems not reviewed should be listed as '[NOT REVIEWED]' — never fabricate negative findings. 2-4 sentences."
   },
 
   "suggestedCodes": [
@@ -295,7 +310,8 @@ Return ONLY strict JSON:
       "description": "Office/outpatient visit, established patient, 30-39 minutes",
       "reimbursement": 164.00,
       "confidence": 0.92,
-      "reasoning": "Detailed history, detailed exam, moderate complexity MDM based on transcript",
+      "reasoning": "Why this code fits based on transcript content",
+      "transcriptEvidence": "Quote or paraphrase from transcript supporting this code",
       "missingDocumentation": "Document time spent counseling if >50% of visit"
     },
     {
@@ -303,7 +319,8 @@ Return ONLY strict JSON:
       "type": "ICD10",
       "description": "Type 2 diabetes mellitus with hyperglycemia",
       "confidence": 0.95,
-      "reasoning": "Patient has documented T2DM with elevated blood sugar"
+      "reasoning": "Patient has documented T2DM with elevated blood sugar",
+      "transcriptEvidence": "Provider stated 'A1C is 7.8, up from 7.2'"
     }
   ],
 
@@ -312,18 +329,30 @@ Return ONLY strict JSON:
   "conversational_suggestions": [
     "Great job documenting the patient's diabetes management",
     "Consider adding PHQ-9 for depression screening to capture Z-code"
-  ]
+  ],
+  "groundingFlags": {
+    "statedCount": 0,
+    "inferredCount": 0,
+    "gapCount": 0,
+    "gaps": ["List expected elements not found in transcript"]
+  }
 }
 
-**CRITICAL REQUIREMENTS:**
-- SOAP note must be complete, professional, and EHR-ready
+**ANTI-HALLUCINATION RULES — MANDATORY:**
+- TRANSCRIPT IS TRUTH: If it was not said, it does not exist in this encounter
+- NEVER add ROS elements, exam findings, lab values, or doses not in the transcript
+- Every billing code MUST include transcriptEvidence — a quote or paraphrase from the transcript
+- Tag SOAP elements: [STATED] (from transcript), [INFERRED] (explain why), [GAP] (expected but missing)
+- Include groundingFlags — count stated/inferred/gap assertions and list all gaps
+
+**DOCUMENTATION REQUIREMENTS:**
+- SOAP note must be professional and EHR-ready — grounded in transcript content only
 - Use proper medical terminology and standard abbreviations
 - Assessment must include ICD-10 diagnoses where applicable
-- Plan must be specific (include doses, frequencies, quantities for medications)
-- HPI must address OLDCARTS when mentioned: Onset, Location, Duration, Character, Alleviating/Aggravating factors, Radiation, Timing, Severity
-- Be thorough but concise - this goes directly in the patient's medical record
-- If the transcript is too brief (<50 words), generate a minimal SOAP note based on available information
-- Never make up clinical details not in the transcript - use "not documented" if missing`;
+- Plan must be specific (include doses, frequencies, quantities ONLY if stated)
+- HPI must address OLDCARTS when mentioned — mark unmentioned elements as [NOT DOCUMENTED]
+- If the transcript is too brief (<50 words), generate a minimal SOAP note and flag all gaps
+- NEVER make up clinical details — use "[NOT DOCUMENTED]" or "[GAP]" instead`;
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -429,7 +458,11 @@ Return ONLY strict JSON:
           transcript_length: rawTranscript.length,
           suggested_codes_count: parsed.suggestedCodes?.length || 0,
           revenue_increase: parsed.totalRevenueIncrease || 0,
-          compliance_risk: parsed.complianceRisk || 'low'
+          compliance_risk: parsed.complianceRisk || 'low',
+          grounding_stated: parsed.groundingFlags?.statedCount || 0,
+          grounding_inferred: parsed.groundingFlags?.inferredCount || 0,
+          grounding_gaps: parsed.groundingFlags?.gapCount || 0,
+          codes_without_evidence: (parsed.suggestedCodes || []).filter(c => !c.transcriptEvidence).length
         }
       });
     } catch (logError) {
@@ -482,7 +515,8 @@ Return ONLY strict JSON:
         plan: parsed.soapNote?.plan ?? null,
         hpi: parsed.soapNote?.hpi ?? null,
         ros: parsed.soapNote?.ros ?? null
-      }
+      },
+      groundingFlags: parsed.groundingFlags ?? null
     });
   } catch (e) {
     logger.error("Claude analysis exception", { error: e instanceof Error ? e.message : String(e), userId });

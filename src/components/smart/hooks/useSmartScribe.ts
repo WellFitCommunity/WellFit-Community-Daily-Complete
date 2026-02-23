@@ -119,7 +119,16 @@ export interface CodeSuggestion {
   reimbursement: number;
   confidence: number;
   reasoning?: string;
+  transcriptEvidence?: string;
   missingDocumentation?: string;
+}
+
+/** Grounding flags from anti-hallucination system */
+export interface GroundingFlags {
+  statedCount: number;
+  inferredCount: number;
+  gapCount: number;
+  gaps?: string[];
 }
 
 export interface ConversationalMessage {
@@ -146,6 +155,7 @@ export interface CodeSuggestionResponse {
   soapNote?: Partial<SOAPNote>;
   conversational_note?: string;
   suggestions?: string[];
+  groundingFlags?: GroundingFlags;
 }
 
 export interface AssistanceSettings {
@@ -191,6 +201,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
 
   // SOAP Note state
   const [soapNote, setSoapNote] = useState<SOAPNote | null>(null);
+
+  // Grounding flags from anti-hallucination system
+  const [groundingFlags, setGroundingFlags] = useState<GroundingFlags | null>(null);
 
   // Assistance level state
   const [assistanceLevel, setAssistanceLevel] = useState<number>(5);
@@ -603,6 +616,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           if (data.suggestions && Array.isArray(data.suggestions)) {
             setScribeSuggestions(data.suggestions);
           }
+
+          // Capture grounding flags from anti-hallucination system
+          if (data.groundingFlags) {
+            setGroundingFlags(data.groundingFlags);
+          }
         },
         onReady: () => {
           setConversationalMessages([
@@ -915,6 +933,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     showFeedbackPrompt,
     feedbackSubmitted,
     scribeMode,
+    groundingFlags,
 
     // Setters
     setTranscript,

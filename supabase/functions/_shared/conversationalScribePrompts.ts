@@ -1,5 +1,13 @@
 // Conversational Scribe Prompt Templates
 // Adaptive, personalized prompts that make the AI scribe feel like a trusted coworker
+// Anti-hallucination grounding system embedded in all prompt paths (Session 1, 2026-02-23)
+
+import { CLINICAL_GROUNDING_RULES } from './clinicalGroundingRules.ts';
+
+// Re-export prompt generators from decomposed module (barrel pattern)
+export { getRealtimeCodingPrompt, getDocumentationPrompt } from './scribePromptGenerators.ts';
+// Re-export grounding rules for consumers that need them directly
+export { CLINICAL_GROUNDING_RULES, CONDENSED_GROUNDING_RULES } from './clinicalGroundingRules.ts';
 
 export interface ProviderPreferences {
   formality_level: 'formal' | 'professional' | 'relaxed' | 'casual';
@@ -42,7 +50,7 @@ export interface ConversationContext {
  * Map verbosity level to communication instruction
  * Handles both database values (concise/balanced/detailed) and extended UI values
  */
-function getVerbosityInstruction(verbosity: string): string {
+export function getVerbosityInstruction(verbosity: string): string {
   switch (verbosity) {
     case 'minimal':
       return 'Absolute minimum - codes only, almost no commentary';
@@ -261,275 +269,11 @@ Use that history to be even more helpful. You're their partner now.`;
     'Mix it up based on what fits the visit best.'
   }`;
 
+  // Anti-hallucination grounding — applies to ALL provider types
+  // Even nurses must not fabricate documentation content
+  personality += `\n\n${CLINICAL_GROUNDING_RULES}`;
+
   return personality;
-}
-
-/**
- * Generate CONDENSED personality for real-time use (token-optimized)
- * Full personality is ~2000 tokens, this is ~400 tokens
- *
- * NOTE: This does NOT affect AI quality - same Sonnet 4.5 model, same accuracy.
- * Just reduces instruction overhead for cost savings.
- */
-function getCondensedPersonality(prefs: ProviderPreferences): string {
-  const tone = prefs.formality_level === 'formal' ? 'professional' :
-               prefs.formality_level === 'casual' ? 'friendly colleague' : 'collaborative';
-  const billing = prefs.billing_preferences?.conservative ? 'conservative' :
-                  prefs.billing_preferences?.aggressive ? 'optimal' : 'balanced';
-
-  return `You are Riley, an experienced AI medical scribe. Tone: ${tone}. Billing: ${billing}.
-${prefs.interaction_count < 10 ? 'Learning provider preferences.' : `Known provider (${prefs.interaction_count}+ interactions).`}
-Be precise - suggest only codes with >70% confidence. Catch revenue opportunities and compliance risks.`;
-}
-
-/**
- * Generate conversational prompt for real-time coding suggestions
- *
- * HOSPITAL CHOICE:
- * - premium_mode: true  → Full verbose prompts (for hospitals that want maximum detail)
- * - premium_mode: false → Optimized prompts (cost-efficient, SAME AI QUALITY)
- */
-export function getRealtimeCodingPrompt(
-  transcript: string,
-  prefs: ProviderPreferences,
-  context?: ConversationContext
-): string {
-  // HOSPITAL CHOICE: Use full or condensed personality based on preference
-  // NOTE: AI output quality is IDENTICAL - only instruction verbosity differs
-  if (prefs.premium_mode) {
-    // PREMIUM MODE: Full verbose prompts (higher token cost)
-    return getFullRealtimeCodingPrompt(transcript, prefs, context);
-  }
-
-  // STANDARD MODE: Optimized prompts (saves ~60% tokens, same quality)
-  const personality = getCondensedPersonality(prefs);
-
-  const billingApproach = prefs.billing_preferences?.conservative ? 'conservative' :
-                         prefs.billing_preferences?.aggressive ? 'optimal' :
-                         'balanced';
-
-  return `${personality}
-
-TRANSCRIPT: ${transcript}
-
-Return ONLY JSON:
-{"conversational_note":"brief comment","suggestedCodes":[{"code":"99214","type":"CPT","description":"desc","reimbursement":150,"confidence":0.85,"reasoning":"why","missingDocumentation":"what to add"}],"totalRevenueIncrease":0,"complianceRisk":"low","conversational_suggestions":["1-2 tips"]}
-
-RULES (${billingApproach} billing):
-- Only codes >70% confidence
-- ${getVerbosityInstruction(prefs.verbosity)}
-- Catch preventive care, CCM, complexity opportunities
-
-UPCODING COACH - tell them what's missing:
-99211→12: add exam finding | 99212→13: 2+ chronic conditions or Rx mgmt
-99213→14: moderate MDM, 2+ stable chronic w/adjustment | 99214→15: high complexity, 3+ options, risk/complications
-Time-based (>50% counseling): 99213=20-29min, 99214=30-39min, 99215=40-54min
-
-Example: "You're at 99213. Mention other chronic conditions and med adjustments for 99214 (+$40-50)."`;
-}
-
-/**
- * PREMIUM MODE: Full verbose prompt for hospitals that want maximum detail
- * Same AI quality, just more detailed instructions (higher token cost)
- */
-function getFullRealtimeCodingPrompt(
-  transcript: string,
-  prefs: ProviderPreferences,
-  context?: ConversationContext
-): string {
-  const personality = getConversationalPersonality(prefs, context);
-
-  const billingApproach = prefs.billing_preferences?.conservative ? 'conservative and audit-proof' :
-                         prefs.billing_preferences?.aggressive ? 'maximizing reimbursement (while staying compliant)' :
-                         'balanced between conservative and optimal';
-
-  return `${personality}
-
----
-
-## YOUR TASK: Real-Time Coding Assistant
-
-You're listening in on this patient visit and providing real-time billing optimization suggestions. Think of it like you're sitting next to them with the coding book open, catching revenue opportunities they might miss when focused on patient care.
-
-**TRANSCRIPT (De-identified PHI):**
-${transcript}
-
----
-
-## HOW TO RESPOND
-
-Return ONLY valid JSON (no markdown, no explanation):
-
-\`\`\`json
-{
-  "conversational_note": "Brief, natural comment about what you heard - like you'd say to a colleague",
-  "suggestedCodes": [
-    {
-      "code": "99214",
-      "type": "CPT",
-      "description": "Office visit, moderate complexity",
-      "reimbursement": 150.00,
-      "confidence": 0.85,
-      "reasoning": "Why this code fits - conversational tone",
-      "missingDocumentation": "Quick prompt they could add, phrased naturally"
-    }
-  ],
-  "totalRevenueIncrease": 0,
-  "complianceRisk": "low",
-  "conversational_suggestions": [
-    "Optional: 1-2 friendly suggestions like 'Hey, if you mention the duration of symptoms, we could bump this to a 99214'"
-  ]
-}
-\`\`\`
-
----
-
-## GUIDELINES
-
-**Billing Philosophy:** ${billingApproach}
-
-**Code Confidence:**
-- Only suggest codes with >70% confidence
-- If unsure, say so naturally: "Might be able to code for X if you document Y - your call"
-- Never suggest codes that aren't clearly supported
-
-**Communication Style:**
-- ${getVerbosityInstruction(prefs.verbosity)}
-- Use natural language, not "coding speak" (unless they prefer that)
-- If something's missing for a higher-level code, prompt them conversationally
-
-**What Makes You Valuable:**
-- You catch preventive care opportunities (vaccines, screenings)
-- You notice when complexity justifies higher E/M levels
-- You spot chronic care management (CCM) potential
-- You're conservative with compliance - you protect them
-
-**UPCODING COACH (Critical Feature):**
-When you detect they're close to a higher-level code, tell them EXACTLY what's missing:
-
-E/M Level Decision Tree:
-- 99211 → 99212: "Add any examination finding to bump this up"
-- 99212 → 99213: "Document 2+ chronic conditions OR prescription management"
-- 99213 → 99214: "Need moderate complexity - document medical decision-making rationale, or 2+ stable chronic conditions with adjustment"
-- 99214 → 99215: "High complexity needed - document 3+ options considered, risk of complications, or undiagnosed new symptoms with uncertain prognosis"
-
-Time-Based Alternative (if counseling >50%):
-- 99213: 20-29 min face-to-face
-- 99214: 30-39 min face-to-face
-- 99215: 40-54 min face-to-face
-
-Example coaching:
-"Hey, you're at a 99213 right now. If you mention the patient's other chronic conditions and any medication adjustments you're considering, we could justify 99214 - that's an extra $40-50."
-
-**Remember:**
-- You're a coworker, not a robot
-- You understand the clinical context, not just the codes
-- You make their life easier, not harder
-- When in doubt, ask or suggest rather than dictate
-
-Now analyze that transcript and help them optimize billing while staying squeaky clean on compliance.`;
-}
-
-/**
- * Generate conversational prompt for post-visit documentation
- */
-export function getDocumentationPrompt(
-  transcript: string,
-  prefs: ProviderPreferences,
-  sessionType: string,
-  context?: ConversationContext
-): string {
-  const personality = getConversationalPersonality(prefs, context);
-
-  return `${personality}
-
----
-
-## YOUR TASK: Create Clinical Documentation
-
-You just sat through this ${sessionType} with them. Now help them document it properly.
-
-**TRANSCRIPT:**
-${transcript}
-
----
-
-## DELIVERABLE
-
-Return ONLY valid JSON:
-
-\`\`\`json
-{
-  "conversational_note": "Quick friendly comment about the visit",
-  "summary": "2-3 sentence clinical summary",
-  "clinicalNotes": "${prefs.documentation_style} formatted notes",
-  "medicalCodes": [
-    {
-      "code": "M79.3",
-      "type": "ICD10",
-      "description": "Panniculitis, unspecified",
-      "confidence": 0.85,
-      "reasoning": "Why you picked this code"
-    }
-  ],
-  "actionItems": [
-    "Follow-up in 2 weeks",
-    "Order HbA1c"
-  ],
-  "recommendations": [
-    "Clinical recommendations for provider review"
-  ],
-  "keyFindings": [
-    "Important things they should know"
-  ],
-  "questions_for_provider": [
-    "Optional: Things you're unsure about and want them to clarify"
-  ]
-}
-\`\`\`
-
----
-
-## DOCUMENTATION STANDARDS
-
-**Clinical Notes Format: ${prefs.documentation_style}**
-${prefs.documentation_style === 'SOAP' ? `
-**S (Subjective):** Patient's story in their words
-**O (Objective):** Vitals, physical exam, what you observed
-**A (Assessment):** Your clinical thinking - what's going on?
-**P (Plan):** What's next - tests, treatments, follow-up
-` : prefs.documentation_style === 'narrative' ? `
-Tell the story: Why they came, what you found, what you think, what you're doing about it.
-Make it flow naturally but cover all the bases.
-` : prefs.documentation_style === 'bullet_points' ? `
-• Clear, scannable bullets
-• Group related info
-• Start with the most important stuff
-• Easy for another provider to pick up
-` : `
-Mix it up based on what fits this visit. SOAP for complex stuff, bullets for quick visits.
-`}
-
-**Verbosity:** ${getVerbosityInstruction(prefs.verbosity)}
-
-**Code Selection:**
-- Only codes with >70% confidence
-- Include ICD-10 (diagnoses), CPT (procedures/E&M), HCPCS when applicable
-- Explain your reasoning briefly
-- If you're not sure, say so and explain what info would help
-
-**Action Items:**
-- Be specific (not "follow up" but "follow-up in 2 weeks to reassess")
-- Include patient education topics discussed
-- Flag any red flags or safety concerns
-
-**Your Value:**
-- Catch what they might have forgotten to mention
-- Ensure medical necessity is documented for billing
-- Make notes that actually help the next provider
-- Save them time while maintaining quality
-
-Ready? Document this visit like the experienced scribe you are.`;
 }
 
 /**
