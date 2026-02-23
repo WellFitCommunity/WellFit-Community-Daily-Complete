@@ -28,7 +28,7 @@ export interface ScribeFeedback {
   rating: FeedbackRating;
   issues?: FeedbackIssue[];
   comment?: string;
-  scribeMode: 'smartscribe' | 'compass-riley';
+  scribeMode: 'smartscribe' | 'compass-riley' | 'consultation';
   sessionDurationSeconds?: number;
 }
 

@@ -18,8 +18,8 @@
 | 4 | Evidence-Based Reasoning Engine — PubMed Integration | COMPLETE | 2026-02-23 |
 | 5 | Evidence-Based Reasoning Engine — Guideline Matcher Integration | COMPLETE | 2026-02-23 |
 | 6 | Evidence-Based Reasoning Engine — Treatment Pathway Integration | COMPLETE | 2026-02-23 |
-| 7 | Physician Consultation Mode | Pending | — |
-| 8 | Physician Consultation Mode — Differential & Peer Consult | Pending | — |
+| 7 | Physician Consultation Mode | COMPLETE | 2026-02-23 |
+| 8 | Physician Consultation Mode — Differential & Peer Consult | COMPLETE | 2026-02-23 |
 | 9 | Integration Testing & Prompt Tuning | Pending | — |
 | 10 | Edge Case Hardening & Final Audit | Pending | — |
 
@@ -168,24 +168,24 @@ ANTI-HALLUCINATION GROUNDING RULES — MANDATORY:
 
 | # | Task | Status |
 |---|------|--------|
-| 7.1 | Add `consultation` mode to `ScribeMode` type (`'smartscribe' | 'compass-riley' | 'consultation'`) | |
-| 7.2 | Consultation prompt system — clinical reasoning partner, not scribe | |
-| 7.3 | Structured case presentation generator (one-liner, HPI, PMH, meds, allergies, exam, labs, assessment) | |
-| 7.4 | "Help me think through this" mode — Socratic clinical reasoning | |
-| 7.5 | All guardrails from Sessions 1–3 enforced in consultation mode | |
-| 7.6 | Mode switcher UI update — three-way toggle | |
-| 7.7 | Tests for consultation mode | |
+| 7.1 | Add `consultation` mode to `ScribeMode` type (`'smartscribe' | 'compass-riley' | 'consultation'`) | DONE |
+| 7.2 | Consultation prompt system — clinical reasoning partner, not scribe | DONE |
+| 7.3 | Structured case presentation generator (one-liner, HPI, PMH, meds, allergies, exam, labs, assessment) | DONE |
+| 7.4 | "Help me think through this" mode — Socratic clinical reasoning | DONE |
+| 7.5 | All guardrails from Sessions 1–3 enforced in consultation mode | DONE |
+| 7.6 | Mode switcher UI update — three-way toggle | DONE |
+| 7.7 | Tests for consultation mode (53 tests: 37 ConsultationPanel + 16 ScribeModeSwitcher) | DONE |
 
 ### Session 8: Differential Diagnosis & Peer Consult Prep
 
 | # | Task | Status |
 |---|------|--------|
-| 8.1 | Differential diagnosis generator — ranked by probability with evidence | |
-| 8.2 | "What am I missing?" feature — systematic review of uncommon but dangerous diagnoses | |
-| 8.3 | Peer consult prep — "Summarize this case for the cardiologist I'm calling" | |
-| 8.4 | Specialist-aware framing — tailor summary to receiving specialty | |
-| 8.5 | Literature backing for differentials — PubMed citations for each consideration | |
-| 8.6 | Tests for differential generation and consult prep | |
+| 8.1 | Differential diagnosis generator — ranked by probability with evidence, red flags, key test | DONE |
+| 8.2 | "What am I missing?" feature — structured cannot-miss diagnoses with severity, distinguishing features, rule-out tests | DONE |
+| 8.3 | Peer consult prep — SBAR-formatted summary via WebSocket command channel | DONE |
+| 8.4 | Specialist-aware framing — 12 specialties, tailored SBAR summaries with urgency badges | DONE |
+| 8.5 | Literature backing for differentials — `literatureNote` field in differential schema, prompt-driven | DONE |
+| 8.6 | Tests for differential generation and consult prep (66 tests: 49 ConsultationPanel + 17 ConsultPrepPanel) | DONE |
 
 ---
 

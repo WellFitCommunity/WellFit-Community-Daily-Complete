@@ -24,49 +24,12 @@ import { createEmptyEncounterState, mergeEncounterState } from '../_shared/encou
 import { detectEvidenceTriggers, searchPubMedEvidence, formatCitationsForDisplay, createEvidenceRateLimiter, updateRateLimiter } from '../_shared/evidenceRetrievalService.ts';
 import { matchGuidelinesForEncounter } from '../_shared/guidelineReferenceEngine.ts';
 import { matchTreatmentPathways } from '../_shared/treatmentPathwayReference.ts';
+import { runConsultationAnalysis } from '../_shared/consultationAnalyzer.ts';
+import { runConsultPrepAnalysis } from '../_shared/peerConsultAnalyzer.ts';
+import type { ConsultationResponse } from '../_shared/consultationPromptGenerators.ts';
+import { logClaudeAudit, serializeEncounterStateForClient } from '../_shared/scribeHelpers.ts';
+import type { AuditLogger, TranscriptionAnalysis } from '../_shared/scribeHelpers.ts';
 
-// Audit logger interface
-interface AuditLogger {
-  info: (message: string, data?: Record<string, unknown>) => void;
-  warn: (message: string, data?: Record<string, unknown>) => void;
-  error: (message: string, data?: Record<string, unknown>) => void;
-  security: (message: string, data?: Record<string, unknown>) => void;
-  phi: (message: string, data?: Record<string, unknown>) => void;
-}
-
-// Parsed transcription analysis response
-interface TranscriptionAnalysis {
-  conversational_note?: string;
-  suggestedCodes?: Array<{
-    code: string;
-    type?: string;
-    description?: string;
-    reimbursement?: number;
-    confidence?: number;
-    reasoning?: string;
-    transcriptEvidence?: string;
-    missingDocumentation?: string;
-  }>;
-  totalRevenueIncrease?: number;
-  complianceRisk?: string;
-  conversational_suggestions?: string[];
-  soapNote?: {
-    subjective?: string;
-    objective?: string;
-    assessment?: string;
-    plan?: string;
-    hpi?: string;
-    ros?: string;
-  };
-  groundingFlags?: {
-    statedCount?: number;
-    inferredCount?: number;
-    gapCount?: number;
-    gaps?: string[];
-  };
-  /** Progressive reasoning: encounter state update from this analysis chunk */
-  encounterStateUpdate?: Partial<EncounterState>;
-}
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
@@ -145,10 +108,14 @@ serve(async (req: Request) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  // Parse scribe mode from query parameters
+  const scribeMode = url.searchParams.get("mode") || "compass-riley";
+  const isConsultationMode = scribeMode === "consultation";
+
   const { socket, response } = Deno.upgradeWebSocket(req);
 
   const userId = userData.user.id;
-  logger.info('WebSocket connection established', { userId });
+  logger.info('WebSocket connection established', { userId, scribeMode });
 
   // 3) Relay: browser <-> Deepgram
   let deepgramWs: WebSocket | null = null;
@@ -160,6 +127,8 @@ serve(async (req: Request) => {
   let evidenceRateLimiter = createEvidenceRateLimiter();
   const matchedConditions = new Set<string>();
   const matchedPathways = new Set<string>();
+  // Session 8: Track last consultation response for peer consult prep context
+  let lastConsultationResponse: ConsultationResponse | null = null;
 
   socket.onopen = () => {
     const qs = new URLSearchParams({
@@ -207,29 +176,40 @@ serve(async (req: Request) => {
             const now = Date.now();
             if (now - lastAnalysisTime >= ANALYSIS_INTERVAL_MS && fullTranscript.length > 50) {
               lastAnalysisTime = now;
-              analyzeCoding(fullTranscript, socket, userId, admin, logger, encounterState).then((updatedState) => {
-                if (updatedState) {
-                  encounterState = updatedState;
-                  // Session 4: Evidence retrieval — fire-and-forget PubMed search
-                  const triggers = detectEvidenceTriggers(deidentify(fullTranscript, logger), updatedState, evidenceRateLimiter);
-                  if (triggers.shouldSearch) {
-                    const svcKey = Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SECRET_KEY') || '';
-                    searchPubMedEvidence(triggers.queries, SB_URL!, svcKey).then(results => {
-                      evidenceRateLimiter = updateRateLimiter(evidenceRateLimiter, results.length);
-                      if (results.some(r => r.citations.length > 0)) {
-                        safeSend(socket, { type: 'evidence_citations', results, display: formatCitationsForDisplay(results) });
-                      }
-                    }).catch(e => logger.warn('Evidence search non-fatal failure', { error: e instanceof Error ? e.message : String(e) }));
+              if (isConsultationMode) {
+                runConsultationMode(fullTranscript, socket, userId, admin, logger, encounterState).then((consultResult) => {
+                  if (consultResult) {
+                    encounterState = consultResult.state;
+                    lastConsultationResponse = consultResult.response;
                   }
-                  const gMatches = matchGuidelinesForEncounter(updatedState).filter(m => !matchedConditions.has(m.icd10));
-                  if (gMatches.length > 0) { gMatches.forEach(m => matchedConditions.add(m.icd10)); safeSend(socket, { type: 'guideline_references', matches: gMatches }); }
-                  const tMatches = matchTreatmentPathways(updatedState).filter(m => !matchedPathways.has(m.icd10));
-                  if (tMatches.length > 0) { tMatches.forEach(m => matchedPathways.add(m.icd10)); safeSend(socket, { type: 'treatment_pathways', pathways: tMatches }); }
-                }
-              }).catch((e) =>
-                logger.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
-              );
-            }
+                }).catch((e) =>
+                  logger.error("Consultation analysis error", { error: e instanceof Error ? e.message : String(e) })
+                );
+              } else {
+                const analysisPromise = analyzeCoding(fullTranscript, socket, userId, admin, logger, encounterState);
+                analysisPromise.then((updatedState) => {
+                  if (updatedState) {
+                    encounterState = updatedState;
+                    // Session 4: Evidence retrieval — fire-and-forget PubMed search
+                    const triggers = detectEvidenceTriggers(deidentify(fullTranscript, logger), updatedState, evidenceRateLimiter);
+                    if (triggers.shouldSearch) {
+                      const svcKey = Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SECRET_KEY') || '';
+                      searchPubMedEvidence(triggers.queries, SB_URL!, svcKey).then(results => {
+                        evidenceRateLimiter = updateRateLimiter(evidenceRateLimiter, results.length);
+                        if (results.some(r => r.citations.length > 0)) {
+                          safeSend(socket, { type: 'evidence_citations', results, display: formatCitationsForDisplay(results) });
+                        }
+                      }).catch(e => logger.warn('Evidence search non-fatal failure', { error: e instanceof Error ? e.message : String(e) }));
+                    }
+                    const gMatches = matchGuidelinesForEncounter(updatedState).filter(m => !matchedConditions.has(m.icd10));
+                    if (gMatches.length > 0) { gMatches.forEach(m => matchedConditions.add(m.icd10)); safeSend(socket, { type: 'guideline_references', matches: gMatches }); }
+                    const tMatches = matchTreatmentPathways(updatedState).filter(m => !matchedPathways.has(m.icd10));
+                    if (tMatches.length > 0) { tMatches.forEach(m => matchedPathways.add(m.icd10)); safeSend(socket, { type: 'treatment_pathways', pathways: tMatches }); }
+                  }
+                }).catch((e) =>
+                  logger.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
+                );
+              }
           }
         }
       } catch (e) {
@@ -256,7 +236,11 @@ serve(async (req: Request) => {
       deepgramWs.send(buf);
       return;
     }
-    if (typeof d === "string") return;
+    // Session 8: String messages are the command channel (e.g., consult prep requests)
+    if (typeof d === "string") {
+      handleClientCommand(d, socket, userId, admin, logger, encounterState, fullTranscript, lastConsultationResponse);
+      return;
+    }
 
     try {
       // @ts-ignore (best-effort fallback)
@@ -274,28 +258,6 @@ serve(async (req: Request) => {
 
   return response;
 });
-
-/** Helper: insert a claude_api_audit row (fire-and-forget) */
-async function logClaudeAudit(
-  client: SupabaseClient, logger: AuditLogger,
-  params: { requestId: string; userId: string; inputTokens: number; outputTokens: number;
-    cost: number; responseTimeMs: number; success: boolean; errorCode?: string;
-    errorMessage?: string; transcriptLength: number; metadata?: Record<string, unknown> }
-) {
-  try {
-    await client.from('claude_api_audit').insert({
-      request_id: params.requestId, user_id: params.userId,
-      request_type: 'transcription', model: 'claude-sonnet-4-5-20250929',
-      input_tokens: params.inputTokens, output_tokens: params.outputTokens,
-      cost: params.cost, response_time_ms: params.responseTimeMs,
-      success: params.success, error_code: params.errorCode ?? null,
-      error_message: params.errorMessage ?? null, phi_scrubbed: true,
-      metadata: { transcript_length: params.transcriptLength, ...(params.metadata || {}) }
-    });
-  } catch (logError) {
-    logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
-  }
-}
 
 // 4) Periodic coding analysis (de-identified) - WITH CONVERSATIONAL AI + PROGRESSIVE REASONING + DRIFT GUARD
 async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger, currentEncounterState: EncounterState): Promise<EncounterState | null> {
@@ -546,41 +508,7 @@ Return ONLY strict JSON:
         ros: parsed.soapNote?.ros ?? null
       },
       groundingFlags: parsed.groundingFlags ?? null,
-      encounterState: {
-        currentPhase: updatedEncounterState.currentPhase,
-        analysisCount: updatedEncounterState.analysisCount,
-        chiefComplaint: updatedEncounterState.chiefComplaint,
-        diagnosisCount: updatedEncounterState.diagnoses.length,
-        activeDiagnoses: updatedEncounterState.diagnoses
-          .filter(d => d.status !== 'ruled_out')
-          .map(d => ({ condition: d.condition, icd10: d.icd10, confidence: d.confidence })),
-        mdmComplexity: {
-          overallLevel: updatedEncounterState.mdmComplexity.overallLevel,
-          suggestedEMCode: updatedEncounterState.mdmComplexity.suggestedEMCode,
-          nextLevelGap: updatedEncounterState.mdmComplexity.nextLevelGap,
-        },
-        completeness: {
-          overallPercent: updatedEncounterState.completeness.overallPercent,
-          hpiLevel: updatedEncounterState.completeness.hpiLevel,
-          rosLevel: updatedEncounterState.completeness.rosLevel,
-          expectedButMissing: updatedEncounterState.completeness.expectedButMissing,
-        },
-        medicationCount: updatedEncounterState.medications.length,
-        planItemCount: updatedEncounterState.planItems.length,
-        driftState: {
-          primaryDomain: updatedEncounterState.driftState.primaryDomain,
-          relatedDomains: updatedEncounterState.driftState.relatedDomains,
-          driftDetected: updatedEncounterState.driftState.driftDetected,
-          driftDescription: updatedEncounterState.driftState.driftDescription ?? null,
-        },
-        patientSafety: {
-          patientDirectAddress: updatedEncounterState.patientSafety.patientDirectAddress,
-          emergencyDetected: updatedEncounterState.patientSafety.emergencyDetected,
-          emergencyReason: updatedEncounterState.patientSafety.emergencyReason ?? null,
-          requiresProviderConsult: updatedEncounterState.patientSafety.requiresProviderConsult,
-          consultReason: updatedEncounterState.patientSafety.consultReason ?? null,
-        },
-      }
+      encounterState: serializeEncounterStateForClient(updatedEncounterState),
     });
 
     return updatedEncounterState;
@@ -594,5 +522,70 @@ Return ONLY strict JSON:
       transcriptLength: rawTranscript.length
     });
     return null;
+  }
+}
+
+// 5) Consultation mode — delegates to shared consultationAnalyzer, sends WS messages
+async function runConsultationMode(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger, currentEncounterState: EncounterState): Promise<{ state: EncounterState; response: ConsultationResponse } | null> {
+  const transcript = deidentify(rawTranscript, logger);
+  const result = await runConsultationAnalysis({
+    transcript, userId, supabaseClient, logger,
+    encounterState: currentEncounterState,
+    anthropicApiKey: ANTHROPIC_API_KEY!,
+  });
+
+  if (!result) return null;
+
+  // Send consultation response to client
+  safeSend(socket, { type: 'consultation_response', consultation: result.response });
+
+  // Send conversational note so Riley's messages area updates
+  safeSend(socket, {
+    type: 'code_suggestion',
+    conversational_note: result.conversationalNote,
+    codes: [], revenueIncrease: 0, suggestions: [],
+    groundingFlags: result.response.groundingFlags ?? null,
+    encounterState: serializeEncounterStateForClient(currentEncounterState),
+  });
+
+  return { state: currentEncounterState, response: result.response };
+}
+
+// 6) Session 8: Client command channel — handles string WebSocket messages
+function handleClientCommand(
+  raw: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient,
+  logger: AuditLogger, currentEncounterState: EncounterState,
+  fullTranscript: string, consultResponse: ConsultationResponse | null
+): void {
+  let cmd: { type: string; specialty?: string };
+  try { cmd = JSON.parse(raw) as { type: string; specialty?: string }; } catch { return; }
+
+  if (cmd.type === 'prepare_consult' && cmd.specialty) {
+    const specialty = cmd.specialty;
+    logger.info('Consult prep requested', { userId, specialty });
+
+    const transcript = deidentify(fullTranscript, logger);
+    runConsultPrepAnalysis({
+      transcript, specialty, userId, supabaseClient, logger,
+      encounterState: currentEncounterState,
+      anthropicApiKey: ANTHROPIC_API_KEY!,
+      consultationResponse: consultResponse,
+    }).then(result => {
+      if (result) {
+        safeSend(socket, { type: 'consult_prep', summary: result.summary });
+        safeSend(socket, {
+          type: 'code_suggestion',
+          conversational_note: result.conversationalNote,
+          codes: [], revenueIncrease: 0, suggestions: [],
+          groundingFlags: null,
+          encounterState: serializeEncounterStateForClient(currentEncounterState),
+        });
+      } else {
+        safeSend(socket, { type: 'consult_prep_error', message: `Failed to generate ${specialty} consult prep. Please try again.` });
+      }
+    }).catch(e => {
+      logger.error('Consult prep failed', { error: e instanceof Error ? e.message : String(e), userId, specialty });
+      safeSend(socket, { type: 'consult_prep_error', message: 'Consult prep failed. Please try again.' });
+    });
   }
 }

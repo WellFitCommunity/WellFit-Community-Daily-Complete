@@ -1,7 +1,9 @@
 /**
  * ScribeModeSwitcher.test.tsx - Tests for ScribeModeSwitcher component
  *
- * Purpose: Verify mode toggle functionality, accessibility, and disabled states
+ * Purpose: Verify three-way mode toggle (SmartScribe, Compass Riley, Consultation),
+ *          accessibility radio semantics, and disabled states.
+ * Updated for Session 7: Consultation mode added.
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -10,53 +12,70 @@ import { ScribeModeSwitcher } from '../ScribeModeSwitcher';
 
 describe('ScribeModeSwitcher', () => {
   describe('Rendering', () => {
-    it('should render both mode buttons', () => {
+    it('should render all three mode buttons', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
 
       expect(screen.getByText('SmartScribe')).toBeInTheDocument();
       expect(screen.getByText('Compass Riley')).toBeInTheDocument();
+      expect(screen.getByText('Consultation')).toBeInTheDocument();
     });
 
-    it('should show nurse label for SmartScribe', () => {
+    it('should show role sublabels for each mode', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
 
       expect(screen.getByText('(Nurses)')).toBeInTheDocument();
+      expect(screen.getByText('(Scribe)')).toBeInTheDocument();
+      expect(screen.getByText('(Reasoning)')).toBeInTheDocument();
     });
 
-    it('should show physician label for Compass Riley', () => {
+    it('should use radiogroup role for the container', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
 
-      expect(screen.getByText('(Physicians)')).toBeInTheDocument();
+      expect(screen.getByRole('radiogroup', { name: /scribe mode selector/i })).toBeInTheDocument();
+    });
+
+    it('should render radio buttons for each mode', () => {
+      const onModeChange = vi.fn();
+      render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
+
+      const radios = screen.getAllByRole('radio');
+      expect(radios).toHaveLength(3);
     });
   });
 
   describe('Mode Selection', () => {
-    it('should highlight SmartScribe when in smartscribe mode', () => {
+    it('should highlight SmartScribe with blue when active', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="smartscribe" onModeChange={onModeChange} />);
 
-      const smartScribeButton = screen.getByRole('button', { name: /switch to smartscribe/i });
+      const smartScribeButton = screen.getByRole('radio', { name: /smartscribe/i });
       expect(smartScribeButton).toHaveClass('bg-blue-600');
     });
 
-    it('should highlight Compass Riley when in compass-riley mode', () => {
+    it('should highlight Compass Riley with teal when active', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
 
-      const compassButton = screen.getByRole('button', { name: /switch to compass riley/i });
+      const compassButton = screen.getByRole('radio', { name: /compass riley/i });
       expect(compassButton).toHaveClass('bg-[#00857a]');
+    });
+
+    it('should highlight Consultation with purple when active', () => {
+      const onModeChange = vi.fn();
+      render(<ScribeModeSwitcher mode="consultation" onModeChange={onModeChange} />);
+
+      const consultButton = screen.getByRole('radio', { name: /consultation/i });
+      expect(consultButton).toHaveClass('bg-purple-600');
     });
 
     it('should call onModeChange with smartscribe when SmartScribe clicked', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
 
-      const smartScribeButton = screen.getByRole('button', { name: /switch to smartscribe/i });
-      fireEvent.click(smartScribeButton);
-
+      fireEvent.click(screen.getByRole('radio', { name: /smartscribe/i }));
       expect(onModeChange).toHaveBeenCalledWith('smartscribe');
     });
 
@@ -64,32 +83,36 @@ describe('ScribeModeSwitcher', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="smartscribe" onModeChange={onModeChange} />);
 
-      const compassButton = screen.getByRole('button', { name: /switch to compass riley/i });
-      fireEvent.click(compassButton);
-
+      fireEvent.click(screen.getByRole('radio', { name: /compass riley/i }));
       expect(onModeChange).toHaveBeenCalledWith('compass-riley');
+    });
+
+    it('should call onModeChange with consultation when Consultation clicked', () => {
+      const onModeChange = vi.fn();
+      render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
+
+      fireEvent.click(screen.getByRole('radio', { name: /consultation/i }));
+      expect(onModeChange).toHaveBeenCalledWith('consultation');
     });
   });
 
   describe('Disabled State', () => {
-    it('should disable both buttons when disabled prop is true', () => {
+    it('should disable all three buttons when disabled prop is true', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} disabled />);
 
-      const smartScribeButton = screen.getByRole('button', { name: /switch to smartscribe/i });
-      const compassButton = screen.getByRole('button', { name: /switch to compass riley/i });
-
-      expect(smartScribeButton).toBeDisabled();
-      expect(compassButton).toBeDisabled();
+      const radios = screen.getAllByRole('radio');
+      radios.forEach(radio => {
+        expect(radio).toBeDisabled();
+      });
     });
 
     it('should not call onModeChange when disabled and clicked', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} disabled />);
 
-      const smartScribeButton = screen.getByRole('button', { name: /switch to smartscribe/i });
-      fireEvent.click(smartScribeButton);
-
+      fireEvent.click(screen.getByRole('radio', { name: /smartscribe/i }));
+      fireEvent.click(screen.getByRole('radio', { name: /consultation/i }));
       expect(onModeChange).not.toHaveBeenCalled();
     });
 
@@ -97,38 +120,46 @@ describe('ScribeModeSwitcher', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} disabled />);
 
-      const smartScribeButton = screen.getByRole('button', { name: /switch to smartscribe/i });
-      expect(smartScribeButton).toHaveClass('opacity-50');
+      const radios = screen.getAllByRole('radio');
+      radios.forEach(radio => {
+        expect(radio).toHaveClass('opacity-50');
+      });
     });
   });
 
   describe('Accessibility', () => {
-    it('should have aria-pressed attribute on buttons', () => {
+    it('should set aria-checked true on active mode', () => {
       const onModeChange = vi.fn();
-      render(<ScribeModeSwitcher mode="smartscribe" onModeChange={onModeChange} />);
+      render(<ScribeModeSwitcher mode="consultation" onModeChange={onModeChange} />);
 
-      const smartScribeButton = screen.getByRole('button', { name: /switch to smartscribe/i });
-      const compassButton = screen.getByRole('button', { name: /switch to compass riley/i });
+      const consultButton = screen.getByRole('radio', { name: /consultation/i });
+      expect(consultButton).toHaveAttribute('aria-checked', 'true');
 
-      expect(smartScribeButton).toHaveAttribute('aria-pressed', 'true');
-      expect(compassButton).toHaveAttribute('aria-pressed', 'false');
+      const smartScribeButton = screen.getByRole('radio', { name: /smartscribe/i });
+      expect(smartScribeButton).toHaveAttribute('aria-checked', 'false');
+
+      const compassButton = screen.getByRole('radio', { name: /compass riley/i });
+      expect(compassButton).toHaveAttribute('aria-checked', 'false');
     });
 
-    it('should have descriptive aria-labels', () => {
+    it('should have descriptive aria-labels for all modes', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
 
       expect(screen.getByLabelText(/switch to smartscribe mode for nurses/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/switch to compass riley mode for physicians/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/switch to compass riley scribe mode for physicians/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/switch to consultation mode for clinical reasoning/i)).toBeInTheDocument();
     });
 
-    it('should have minimum touch target size of 44px', () => {
+    it('should have minimum touch target size of 44px on all buttons', () => {
       const onModeChange = vi.fn();
       render(<ScribeModeSwitcher mode="compass-riley" onModeChange={onModeChange} />);
 
-      const smartScribeButton = screen.getByRole('button', { name: /switch to smartscribe/i });
-      expect(smartScribeButton).toHaveClass('min-h-[44px]');
-      expect(smartScribeButton).toHaveClass('min-w-[44px]');
+      const radios = screen.getAllByRole('radio');
+      radios.forEach(radio => {
+        expect(radio).toHaveClass('min-h-[44px]');
+        expect(radio).toHaveClass('min-w-[44px]');
+      });
     });
   });
 });

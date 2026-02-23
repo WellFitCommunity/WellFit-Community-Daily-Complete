@@ -231,6 +231,80 @@ export interface TreatmentPathwaySummary {
   };
 }
 
+/** Session 8: Structured cannot-miss diagnosis */
+export interface CannotMissDiagnosisSummary {
+  diagnosis: string;
+  severity: 'life-threatening' | 'emergent' | 'urgent';
+  whyDangerous: string;
+  distinguishingFeatures: string[];
+  ruleOutTest: string;
+  timeframe: string;
+}
+
+/** Consultation response (Sessions 7-8: Physician Consultation Mode) */
+export interface ConsultationResponseSummary {
+  casePresentation: {
+    oneLiner: string;
+    hpi: string;
+    pastMedicalHistory: string[];
+    medications: string[];
+    allergies: string[];
+    socialHistory: string[];
+    familyHistory: string[];
+    ros: string[];
+    physicalExam: Record<string, string[]>;
+    diagnostics: string[];
+    assessment: string;
+    differentials: Array<{
+      diagnosis: string;
+      icd10?: string;
+      probability: 'high' | 'moderate' | 'low';
+      supporting: string[];
+      against: string[];
+      /** Session 8: Red flag symptoms */
+      redFlags?: string[];
+      /** Session 8: Single most discriminating test */
+      keyTest?: string;
+      /** Session 8: Brief PubMed-sourced note */
+      literatureNote?: string;
+    }>;
+    plan: string[];
+  };
+  reasoningSteps: Array<{
+    question: string;
+    analysis: string;
+    considerations: string[];
+    pivotPoints: string[];
+  }>;
+  /** Session 8: Structured cannot-miss (backwards-compat: accepts string[] or structured) */
+  cannotMiss: CannotMissDiagnosisSummary[] | string[];
+  suggestedWorkup: string[];
+  guidelineNotes: string[];
+  confidenceCalibration: {
+    highConfidence: string[];
+    uncertain: string[];
+    insufficientData: string[];
+  };
+  groundingFlags: {
+    statedCount: number;
+    inferredCount: number;
+    gapCount: number;
+    gaps: string[];
+  };
+}
+
+/** Session 8: Peer consult prep summary */
+export interface ConsultPrepSummary {
+  targetSpecialty: string;
+  situation: string;
+  background: string;
+  assessment: string;
+  recommendation: string;
+  criticalData: string[];
+  consultQuestion: string;
+  urgency: 'stat' | 'urgent' | 'routine';
+}
+
 /** Encounter state summary sent from edge function (progressive clinical reasoning) */
 export interface EncounterStateSummary {
   currentPhase: string;
@@ -292,8 +366,8 @@ export interface UseSmartScribeProps {
   onSessionComplete?: (sessionId: string) => void;
   /** Force demo mode regardless of env var. When true, simulates a patient visit. */
   forceDemoMode?: boolean;
-  /** Scribe mode - 'smartscribe' for nurses, 'compass-riley' for physicians */
-  scribeMode?: 'smartscribe' | 'compass-riley';
+  /** Scribe mode - 'smartscribe' for nurses, 'compass-riley' for physicians, 'consultation' for clinical reasoning */
+  scribeMode?: 'smartscribe' | 'compass-riley' | 'consultation';
 }
 
 // ============================================================================
@@ -331,6 +405,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const [guidelineReferences, setGuidelineReferences] = useState<GuidelineMatchSummary[]>([]);
   // Session 6: Treatment pathway references for active diagnoses
   const [treatmentPathways, setTreatmentPathways] = useState<TreatmentPathwaySummary[]>([]);
+  // Session 7: Consultation mode response
+  const [consultationResponse, setConsultationResponse] = useState<ConsultationResponseSummary | null>(null);
+  // Session 8: Peer consult prep
+  const [consultPrepSummary, setConsultPrepSummary] = useState<ConsultPrepSummary | null>(null);
+  const [consultPrepLoading, setConsultPrepLoading] = useState(false);
 
   // Assistance level state
   const [assistanceLevel, setAssistanceLevel] = useState<number>(5);
@@ -631,6 +710,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     setCorrectionsAppliedCount(0);
     setGroundingFlags(null);
     setEncounterState(null);
+    setConsultationResponse(null);
 
     // Start recording state
     setIsRecording(true);
@@ -702,7 +782,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       const base = (import.meta.env.VITE_SUPABASE_URL ?? '').replace('https://', 'wss://');
       const wsUrl = `${base}/functions/v1/realtime_medical_transcription?access_token=${encodeURIComponent(
         session.access_token
-      )}`;
+      )}&mode=${encodeURIComponent(scribeMode)}`;
 
       // Initialize audio recording with config
       const result = await initializeAudioRecording({
@@ -773,6 +853,24 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           if (data.pathways && Array.isArray(data.pathways)) {
             setTreatmentPathways(prev => [...prev, ...data.pathways]);
           }
+        },
+        onConsultationResponse: (data) => {
+          // Sessions 7-8: Consultation mode response
+          if (data.consultation) {
+            setConsultationResponse(data.consultation as unknown as ConsultationResponseSummary);
+          }
+        },
+        onConsultPrep: (data) => {
+          // Session 8: Peer consult prep response
+          if (data.summary) {
+            setConsultPrepSummary(data.summary as unknown as ConsultPrepSummary);
+            setConsultPrepLoading(false);
+          }
+        },
+        onConsultPrepError: (data) => {
+          // Session 8: Consult prep error
+          setConsultPrepLoading(false);
+          auditLogger.warn('SCRIBE_CONSULT_PREP_ERROR', { message: data.message });
         },
         onReady: () => {
           setConversationalMessages([
@@ -1055,6 +1153,20 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     auditLogger.info('SCRIBE_FEEDBACK_SKIPPED', { scribeMode });
   }, [scribeMode]);
 
+  /**
+   * Session 8: Request peer consult prep — sends command via WebSocket
+   */
+  const requestConsultPrep = useCallback((specialty: string) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      auditLogger.warn('SCRIBE_CONSULT_PREP_NO_WS', { specialty });
+      return;
+    }
+    setConsultPrepLoading(true);
+    setConsultPrepSummary(null);
+    wsRef.current.send(JSON.stringify({ type: 'prepare_consult', specialty }));
+    auditLogger.info('SCRIBE_CONSULT_PREP_REQUESTED', { specialty, scribeMode });
+  }, [scribeMode]);
+
   // ============================================================================
   // RETURN VALUES
   // ============================================================================
@@ -1090,6 +1202,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     evidenceCitations,
     guidelineReferences,
     treatmentPathways,
+    consultationResponse,
+    consultPrepSummary,
+    consultPrepLoading,
 
     // Setters
     setTranscript,
@@ -1106,6 +1221,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     handleAssistanceLevelChange,
     handleFeedbackSubmit,
     handleFeedbackSkip,
+    requestConsultPrep,
 
     // Helpers
     getAssistanceSettings,

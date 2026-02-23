@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-23
-**Last Session:** AI model version standardization + CLAUDE.md governance rules + HTI-2 migration
+**Last Session:** Compass Riley Session 8 — Differential Diagnosis & Peer Consult Prep
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -71,6 +71,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Tracker | Path | Status |
 |---------|------|--------|
+| **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **Session 8 COMPLETE — Sessions 9-10 remaining** |
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
@@ -84,8 +85,8 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 8,706 passed, 0 failed | 2026-02-23 |
-| Test Suites | 452 | 2026-02-23 |
+| Tests | 8,941 passed, 0 failed | 2026-02-23 |
+| Test Suites | 463 | 2026-02-23 |
 | Typecheck | 0 errors | 2026-02-23 |
 | Lint | 0 errors, 0 warnings | 2026-02-23 |
 | God files (>600 lines) | 0 violations (all decomposed) | 2026-02-23 |
@@ -117,7 +118,59 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ## What Was Completed Last Session (2026-02-23)
 
-### AI Model Version Standardization — COMPLETE
+### Compass Riley Session 8: Differential Diagnosis & Peer Consult Prep — COMPLETE
+
+**Tracker:** `docs/trackers/compass-riley-reasoning-tracker.md`
+
+Enhanced consultation mode with structured differentials, cannot-miss diagnosis system, and peer consult prep via WebSocket command channel.
+
+**What was built:**
+- **Enhanced differentials** — each differential now includes `redFlags`, `keyTest`, `literatureNote` (prompt-driven)
+- **Structured cannot-miss** — `CannotMissDiagnosis` interface with severity (life-threatening/emergent/urgent), distinguishing features, rule-out test, timeframe. Backwards-compatible with Session 7 `string[]` via runtime type guard
+- **Peer consult prep** — WebSocket command channel (`prepare_consult`) repurposed from dropped string messages. SBAR-formatted summaries tailored to 12 specialties with urgency badges (stat/urgent/routine)
+- **ConsultPrepPanel.tsx** (190 lines, NEW) — specialty selector, SBAR display, urgency badges, loading/disabled states
+- **peerConsultAnalyzer.ts** (166 lines, NEW) — edge function module for Claude-powered consult prep analysis
+
+**Files modified (7):**
+- `consultationPromptGenerators.ts` — enhanced types, schemas, consult prep prompt
+- `realtime_medical_transcription/index.ts` — command channel, consult response tracking (591 lines)
+- `scribeHelpers.ts` — extracted `TranscriptionAnalysis` for 600-line compliance
+- `audioProcessor.ts` — consult prep WebSocket message handlers
+- `useSmartScribe.ts` — consult prep state, request function, WebSocket callbacks
+- `ConsultationPanel.tsx` — enhanced differential cards, structured cannot-miss cards
+- `RealTimeSmartScribe.tsx` — wired ConsultPrepPanel
+
+**Tests: 29 new tests (12 ConsultationPanel Session 8 + 17 ConsultPrepPanel)**
+**Codebase: 8,912 → 8,941 tests (+29), 462 → 463 suites (+1)**
+
+---
+
+### Previous: Compass Riley Session 7: Physician Consultation Mode — COMPLETE
+
+**Tracker:** `docs/trackers/compass-riley-reasoning-tracker.md`
+
+Built consultation mode — Riley's third operating mode where it becomes a clinical reasoning partner (not a scribe). Physicians dictate a case and get structured case presentation, Socratic reasoning steps, differential diagnosis, cannot-miss warnings, and confidence calibration.
+
+**Files created (4 new):**
+- `supabase/functions/_shared/consultationPromptGenerators.ts` (332 lines) — prompt system with condensed + premium modes
+- `supabase/functions/_shared/consultationAnalyzer.ts` (181 lines) — Claude API call, parsing, audit logging
+- `supabase/functions/_shared/scribeHelpers.ts` (90 lines) — shared logClaudeAudit + encounter state serializer
+- `src/components/smart/ConsultationPanel.tsx` (458 lines) — 5-tab UI (Case, Reasoning, Safety, Workup, Confidence)
+
+**Files modified (6):**
+- `src/components/smart/RealTimeSmartScribe.tsx` — added consultation mode routing
+- `src/components/smart/ScribeModeSwitcher.tsx` — rewritten for 3-way radio toggle (SmartScribe/Compass Riley/Consultation)
+- `src/components/smart/hooks/useSmartScribe.ts` — consultation state, WebSocket handler, mode param
+- `src/components/smart/utils/audioProcessor.ts` — consultation WebSocket message type
+- `src/services/scribeFeedbackService.ts` — added consultation to ScribeMode type
+- `supabase/functions/realtime_medical_transcription/index.ts` — consultation mode routing + 600-line compliance (669→569)
+
+**Tests: 53 new tests (37 ConsultationPanel + 16 ScribeModeSwitcher)**
+**Codebase: 8,706 → 8,912 tests (+206), 452 → 462 suites (+10)**
+
+---
+
+### Previous: AI Model Version Standardization — COMPLETE
 
 **Problem:** 350+ hardcoded model strings across 100+ files, 9 different versions, format inconsistencies, and legacy references.
 

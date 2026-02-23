@@ -22,13 +22,15 @@ import { SOAPNote } from './SOAPNote';
 import { VoiceCorrectionModal } from './VoiceCorrectionModal';
 import { ScribeModeSwitcher } from './ScribeModeSwitcher';
 import { SessionFeedback } from './SessionFeedback';
+import { ConsultationPanel } from './ConsultationPanel';
+import { ConsultPrepPanel } from './ConsultPrepPanel';
 
 /**
  * Scribe Mode:
  * - 'smartscribe': For nurses - simple transcription, NO billing codes, burnout reduction
  * - 'compass-riley': For physicians/NPs/PAs - full AI scribe with billing intelligence
  */
-export type ScribeMode = 'smartscribe' | 'compass-riley';
+export type ScribeMode = 'smartscribe' | 'compass-riley' | 'consultation';
 
 interface RealTimeSmartScribeProps {
   selectedPatientId?: string;
@@ -44,6 +46,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
   // Local mode state - allows toggling between modes
   const [currentMode, setCurrentMode] = useState<ScribeMode>(initialMode);
   const isSmartScribeMode = currentMode === 'smartscribe';
+  const isConsultationMode = currentMode === 'consultation';
 
   // Check if demo mode is enabled globally (from DemoPage or elsewhere)
   const { isDemo: globalDemoMode, enableDemo, disableDemo } = useDemoMode();
@@ -78,6 +81,10 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     handleAssistanceLevelChange,
     handleFeedbackSubmit,
     handleFeedbackSkip,
+    consultationResponse,
+    consultPrepSummary,
+    consultPrepLoading,
+    requestConsultPrep,
   } = useSmartScribe({ ...props, forceDemoMode: globalDemoMode || undefined, scribeMode: currentMode });
 
   // Handler for saving voice corrections
@@ -204,17 +211,32 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
         onOpenCorrectionModal={handleOpenCorrectionModal}
       />
 
-      {/* Billing Codes - Only for Compass Riley (physicians), NOT for SmartScribe (nurses) */}
-      {!isSmartScribeMode && (
+      {/* Billing Codes - Only for Compass Riley scribe mode */}
+      {!isSmartScribeMode && !isConsultationMode && (
         <BillingCodesList
           codes={suggestedCodes}
           showReasoningDetails={assistanceSettings.showReasoningDetails}
         />
       )}
 
-      {/* SOAP Note - Only for Compass Riley (physicians) */}
-      {!isSmartScribeMode && soapNote && (
+      {/* SOAP Note - Only for Compass Riley scribe mode */}
+      {!isSmartScribeMode && !isConsultationMode && soapNote && (
         <SOAPNote soapNote={soapNote} />
+      )}
+
+      {/* Consultation Panel - Only for Consultation mode */}
+      {isConsultationMode && consultationResponse && (
+        <ConsultationPanel response={consultationResponse} />
+      )}
+
+      {/* Consult Prep Panel - Only for Consultation mode */}
+      {isConsultationMode && (
+        <ConsultPrepPanel
+          summary={consultPrepSummary}
+          loading={consultPrepLoading}
+          onRequestConsultPrep={requestConsultPrep}
+          hasConsultationResponse={!!consultationResponse}
+        />
       )}
 
       {/* Nursing Note Template - Only for SmartScribe (nurses) */}

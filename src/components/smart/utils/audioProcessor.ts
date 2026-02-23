@@ -100,6 +100,33 @@ export interface TreatmentPathwayResponse {
   }>;
 }
 
+/** Consultation response sent from edge function (Session 7) */
+export interface ConsultationResponseMessage {
+  type: 'consultation_response';
+  consultation: Record<string, unknown>;
+}
+
+/** Session 8: Peer consult prep response */
+export interface ConsultPrepMessage {
+  type: 'consult_prep';
+  summary: {
+    targetSpecialty: string;
+    situation: string;
+    background: string;
+    assessment: string;
+    recommendation: string;
+    criticalData: string[];
+    consultQuestion: string;
+    urgency: 'stat' | 'urgent' | 'routine';
+  };
+}
+
+/** Session 8: Consult prep error */
+export interface ConsultPrepErrorMessage {
+  type: 'consult_prep_error';
+  message: string;
+}
+
 export interface AudioProcessorConfig {
   wsUrl: string;
   voiceProfile: ProviderVoiceProfile | null;
@@ -108,6 +135,9 @@ export interface AudioProcessorConfig {
   onEvidenceCitations?: (data: EvidenceCitationsResponse) => void;
   onGuidelineReferences?: (data: GuidelineReferenceResponse) => void;
   onTreatmentPathways?: (data: TreatmentPathwayResponse) => void;
+  onConsultationResponse?: (data: ConsultationResponseMessage) => void;
+  onConsultPrep?: (data: ConsultPrepMessage) => void;
+  onConsultPrepError?: (data: ConsultPrepErrorMessage) => void;
   onReady: () => void;
   onStatusChange: (status: string) => void;
   onRecordingStateChange: (isRecording: boolean) => void;
@@ -175,6 +205,12 @@ export async function initializeAudioRecording(
           config.onGuidelineReferences?.(data);
         } else if (data.type === 'treatment_pathways') {
           config.onTreatmentPathways?.(data);
+        } else if (data.type === 'consultation_response') {
+          config.onConsultationResponse?.(data);
+        } else if (data.type === 'consult_prep') {
+          config.onConsultPrep?.(data);
+        } else if (data.type === 'consult_prep_error') {
+          config.onConsultPrepError?.(data);
         } else if (data.type === 'ready') {
           config.onReady();
         }
