@@ -1,49 +1,69 @@
-import { supabase } from './supabaseClient';
+/**
+ * Nurse API — Thin wrapper around NurseQuestionService
+ *
+ * Maintains backward compatibility with NurseQuestionManager.tsx imports.
+ * Maps new service types to the old field names the component expects.
+ * Will be replaced by direct service calls in Session 2 (UI wiring).
+ */
 
-// 1) Queue (unassigned, redacted)
-export async function fetchNurseQueue() {
-  const { data, error } = await supabase.rpc("nurse_open_queue");
-  if (error) throw error;
-  return data as { question_id: string; asked_at: string; preview: string }[];
+import { NurseQuestionService } from '../services/nurseQuestionService';
+
+// Legacy return types matching what NurseQuestionManager.tsx expects
+interface LegacyQueueItem {
+  question_id: string;
+  asked_at: string;
+  preview: string;
+}
+
+interface LegacyMyQuestion {
+  question_id: string;
+  asked_at: string;
+  status: string;
+  question: string;
+}
+
+// 1) Queue (unassigned questions)
+export async function fetchNurseQueue(): Promise<LegacyQueueItem[]> {
+  const result = await NurseQuestionService.fetchOpenQueue();
+  if (!result.success) throw new Error(result.error.message);
+  return result.data.map(q => ({
+    question_id: q.question_id,
+    asked_at: q.created_at,
+    preview: q.question_text,
+  }));
 }
 
 // 2) Claim a question
-export async function claimQuestion(questionId: string) {
-  const { data, error } = await supabase.rpc("nurse_claim_question", {
-    p_question_id: questionId,
-  });
-  if (error) throw error;
-  return data;
+export async function claimQuestion(questionId: string): Promise<void> {
+  const result = await NurseQuestionService.claimQuestion(questionId);
+  if (!result.success) throw new Error(result.error.message);
 }
 
 // 3) My assigned list
-export async function fetchMyQuestions() {
-  const { data, error } = await supabase.rpc("nurse_my_questions");
-  if (error) throw error;
-  return data as {
-    question_id: string;
-    asked_at: string;
-    status: string;
-    question: string;
-  }[];
+export async function fetchMyQuestions(): Promise<LegacyMyQuestion[]> {
+  const result = await NurseQuestionService.fetchMyQuestions();
+  if (!result.success) throw new Error(result.error.message);
+  return result.data.map(q => ({
+    question_id: q.question_id,
+    asked_at: q.created_at,
+    status: q.status,
+    question: q.question_text,
+  }));
 }
 
 // 4) Submit patient-facing answer
-export async function submitAnswer(questionId: string, answer: string) {
-  const { data, error } = await supabase.rpc("nurse_submit_answer", {
-    p_question_id: questionId,
-    p_answer: answer,
+export async function submitAnswer(questionId: string, answer: string): Promise<string> {
+  const result = await NurseQuestionService.submitAnswer({
+    questionId,
+    answerText: answer,
   });
-  if (error) throw error;
-  return data;
+  if (!result.success) throw new Error(result.error.message);
+  return result.data;
 }
 
 // 5) Add private nurse note
-export async function addNurseNote(questionId: string, note: string) {
-  const { data, error } = await supabase.rpc("nurse_add_note", {
-    p_question_id: questionId,
-    p_note: note,
-  });
-  if (error) throw error;
-  return data;
+export async function addNurseNote(questionId: string, note: string): Promise<string> {
+  const result = await NurseQuestionService.addNote(questionId, note);
+  if (!result.success) throw new Error(result.error.message);
+  return result.data;
 }

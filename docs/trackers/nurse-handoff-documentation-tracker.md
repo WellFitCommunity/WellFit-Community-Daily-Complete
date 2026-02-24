@@ -131,17 +131,29 @@
 
 > **Problem:** UI component exists (742 lines in `NurseQuestionManager.tsx`) but runs entirely on mock data. No database tables, no RPC functions, no real backend.
 
-## Session 1: Database & API Foundation — NOT STARTED
+## Session 1: Database & API Foundation — COMPLETE
 
-| Feature | Status | What Needs to Be Built |
-|---------|--------|------------------------|
-| `nurse_questions` table | MISSING | Patient questions routed to nurses: question_text, patient_id, status (open/claimed/answered/escalated), priority, category, assigned_nurse_id, tenant_id |
-| `nurse_question_answers` table | MISSING | Nurse responses with AI suggestion tracking (used_ai_suggestion boolean) |
-| `nurse_question_notes` table | MISSING | Internal nurse notes on questions (not visible to patient) |
-| RLS policies | MISSING | Tenant isolation, nurse can only see own unit's questions |
-| RPC functions | MISSING | `nurse_open_queue()`, `nurse_claim_question()`, `nurse_my_questions()`, `nurse_submit_answer()`, `nurse_add_note()` |
-| Migration file | MISSING | Single migration creating all tables, indexes, RLS, RPCs |
-| Tests | MISSING | Service layer tests for queue operations |
+| Feature | Status | What Was Built |
+|---------|--------|----------------|
+| `user_questions` table extension | BUILT | Added `tenant_id`, `assigned_nurse_id`, `claimed_at`, `escalated_at`, `escalation_level` columns; updated status constraint to include 'claimed'/'escalated' |
+| `nurse_question_answers` table | BUILT | Nurse responses with `used_ai_suggestion`, `ai_suggestion_text`, `ai_confidence` tracking; tenant-scoped RLS |
+| `nurse_question_notes` table | BUILT | Internal nurse notes (not patient-visible); tenant-scoped RLS |
+| RLS policies | BUILT | `nurses_view_tenant_questions`, `nurses_update_assigned_questions` on user_questions; tenant-scoped view/insert on answers and notes tables |
+| RPC functions | BUILT | `nurse_open_queue()`, `nurse_claim_question()`, `nurse_my_questions()`, `nurse_submit_answer()`, `nurse_add_note()`, `nurse_escalate_question()` |
+| Migration file | BUILT | `20260224100000_nurse_question_system.sql` — applied to remote DB |
+| Service layer | BUILT | `nurseQuestionService.ts` (310 lines) — ServiceResult pattern, 8 methods, full audit logging |
+| API wrapper | BUILT | `nurseApi.ts` updated — delegates to service with legacy field mapping for backward compat |
+| Tests | BUILT | 17 tests across 7 describe blocks: queue fetch, claim, my questions, submit answer, add note, escalate, notes/answers fetch, error handling |
+
+**Discovery:** `user_questions` table already existed (created in `20250924000002_simple_user_questions_fix.sql`). Extended it with workflow columns instead of creating duplicate table. Three RPC functions had been previously dropped in `20251209110000_drop_broken_functions.sql` — all recreated.
+
+**New files (3):**
+- `supabase/migrations/20260224100000_nurse_question_system.sql` (268 lines)
+- `src/services/nurseQuestionService.ts` (310 lines)
+- `src/services/__tests__/nurseQuestionService.test.ts` (333 lines)
+
+**Modified files (1):**
+- `src/lib/nurseApi.ts` — rewritten to delegate to NurseQuestionService with legacy type mapping
 
 ## Session 2: Service Layer & UI Wiring — NOT STARTED
 

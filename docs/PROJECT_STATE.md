@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-24
-**Last Session:** Shift Handoff Dashboard Session 3 — Integration & Polish (Admin wiring, Audit, Demo, Notification)
+**Last Session:** Nurse Question Manager Session 1 — Database & API Foundation (Migration, Service, Tests)
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -71,7 +71,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Tracker | Path | Status |
 |---------|------|--------|
-| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **Feature 1 COMPLETE (3 sessions), Feature 2 next (3 sessions)** |
+| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **Feature 1 COMPLETE (3 sessions), Feature 2 Session 1 COMPLETE, Session 2 next** |
 | **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **COMPLETE — all 10 sessions done** |
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
@@ -86,8 +86,8 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,131 passed, 0 failed | 2026-02-24 |
-| Test Suites | 470 | 2026-02-24 |
+| Tests | 9,148 passed, 0 failed | 2026-02-24 |
+| Test Suites | 471 | 2026-02-24 |
 | Typecheck | 0 errors | 2026-02-24 |
 | Lint | 0 errors, 0 warnings | 2026-02-24 |
 | God files (>600 lines) | 0 violations (all decomposed) | 2026-02-24 |
@@ -119,7 +119,30 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ## What Was Completed Last Session (2026-02-24)
 
-### Shift Handoff Dashboard Session 3: Integration & Polish — COMPLETE
+### Nurse Question Manager Session 1: Database & API Foundation — COMPLETE
+
+**Tracker:** `docs/trackers/nurse-handoff-documentation-tracker.md`
+
+**What was done:**
+- **Discovery:** `user_questions` table already existed (from `20250924000002_simple_user_questions_fix.sql`). Extended it with workflow columns instead of creating a duplicate table. Three RPC functions had been previously dropped in `20251209110000_drop_broken_functions.sql` — all recreated.
+- **Migration** — `20260224100000_nurse_question_system.sql` (268 lines): extended `user_questions` with `tenant_id`, `assigned_nurse_id`, `claimed_at`, `escalated_at`, `escalation_level`; created `nurse_question_answers` + `nurse_question_notes` tables with RLS; 6 RPC functions; applied to remote DB
+- **Service layer** — `nurseQuestionService.ts` (310 lines): ServiceResult pattern, 8 methods (fetchOpenQueue, claimQuestion, fetchMyQuestions, submitAnswer, addNote, escalateQuestion, getQuestionNotes, getQuestionAnswers), full audit logging
+- **API wrapper** — `nurseApi.ts` rewritten to delegate to NurseQuestionService with legacy field mapping for backward compat with existing NurseQuestionManager.tsx
+- **Tests** — 17 tests across 7 describe blocks: queue fetch, claim, my questions, submit answer, add note, escalate, notes/answers fetch, error handling
+
+**New files (3):**
+- `supabase/migrations/20260224100000_nurse_question_system.sql` (268 lines)
+- `src/services/nurseQuestionService.ts` (310 lines)
+- `src/services/__tests__/nurseQuestionService.test.ts` (333 lines)
+
+**Modified files (1):**
+- `src/lib/nurseApi.ts` — rewritten to delegate to NurseQuestionService
+
+**Tests: 9,148 passed, 0 failed (471 suites) — up from 9,131**
+
+---
+
+### Earlier: Shift Handoff Dashboard Session 3: Integration & Polish — COMPLETE
 
 **Tracker:** `docs/trackers/nurse-handoff-documentation-tracker.md`
 
