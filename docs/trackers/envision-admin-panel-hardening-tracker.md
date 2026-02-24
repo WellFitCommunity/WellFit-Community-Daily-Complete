@@ -33,9 +33,9 @@
 | Envision Auth Flow | 10/10 | Complete 2FA flow |
 | CRUD Operations | 9/10 | Minor gaps in read-only panels |
 | Admin Separation | 9/10 | Needs RLS verification for tenant isolation |
-| Test Coverage | 6/10 | **52/104 components tested (50%)** — +6 from Tier 2 Session 1 |
+| Test Coverage | 7/10 | **58/104 components tested (56%)** — +6 from Tier 2 Session 2 |
 
-**Overall: 94/100 — functionally solid, test coverage improving (50%)**
+**Overall: 95/100 — functionally solid, test coverage at 56%**
 
 ---
 
@@ -87,14 +87,14 @@
 
 ## Session 2: Billing & Revenue Components
 
-| # | Component | Lines | Why High Priority | Status |
-|---|-----------|-------|-------------------|--------|
-| 2.8 | BillingDashboard | ~400 | Revenue operations | TODO |
-| 2.9 | StaffFinancialSavingsTracker | ~300 | Financial reporting | TODO |
-| 2.10 | PriorAuthDashboard | ~350 | Payer authorization | TODO |
-| 2.11 | ClearinghouseConfigPanel | ~150 | EDI credential management | TODO |
-| 2.12 | MCPCostDashboard | ~250 | MCP API cost tracking | TODO |
-| 2.13 | ClaudeBillingMonitoringDashboard | ~300 | AI cost monitoring | TODO |
+| # | Component | Lines | Tests | Why High Priority | Status |
+|---|-----------|-------|-------|-------------------|--------|
+| 2.8 | BillingDashboard | 318 | 26 tests | Revenue operations | DONE |
+| 2.9 | StaffFinancialSavingsTracker | 601 | 22 tests | Financial reporting | DONE |
+| 2.10 | PriorAuthDashboard | 592 | 26 tests | Payer authorization | DONE |
+| 2.11 | ClearinghouseConfigPanel | 342 | 26 tests | EDI credential management | DONE |
+| 2.12 | MCPCostDashboard | 306 | 18 tests | MCP API cost tracking | DONE |
+| 2.13 | ClaudeBillingMonitoringDashboard | 667 | 17 tests | AI cost monitoring | DONE |
 
 ## Session 3: Compliance & Security Components
 
