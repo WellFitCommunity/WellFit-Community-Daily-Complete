@@ -55,17 +55,29 @@
 
 > **Problem:** AI-generated shift summaries exist in the database but nurses have no UI to view, manage, or act on them.
 
-## Session 1: Core Dashboard — NOT STARTED
+## Session 1: Core Dashboard — COMPLETE
 
-| Feature | Status | What Needs to Be Built |
-|---------|--------|------------------------|
-| Dashboard component | MISSING | `src/components/admin/ShiftHandoffDashboard.tsx` — list view of AI-generated handoff summaries for current shift |
-| Unit filter | MISSING | Filter handoffs by hospital unit (ICU, Med-Surg, ED, etc.) |
-| Patient cards | MISSING | Card per patient showing: critical alerts, vitals trends, active meds, pending tasks |
-| Risk tier badges | MISSING | Visual severity (critical/high/medium/low) from `shift_handoff_risk_scores` |
-| Handoff detail panel | MISSING | Expandable view: full AI summary, data sources, override option |
-| Route wiring | MISSING | `/shift-handoff` route in App.tsx with lazy import |
-| Tests | MISSING | Dashboard rendering, filter behavior, risk tier display, empty state |
+| Feature | Status | What Was Built |
+|---------|--------|----------------|
+| Dashboard component | BUILT (pre-existing) | `src/components/nurse/ShiftHandoffDashboard.tsx` — 916→400 lines (decomposed) |
+| Unit filter | BUILT | Unit dropdown in HandoffHeader, queries `getAvailableUnits()` from `ai_shift_handoff_summaries` |
+| Patient cards | BUILT (pre-existing) | High acuity + standard acuity sections with vitals, risk factors, clinical snapshots |
+| Risk tier badges | BUILT (pre-existing) | Color-coded CRITICAL/HIGH/MEDIUM/LOW with icons |
+| Handoff detail panel | BUILT | `AISummaryPanel` — expandable panel showing executive summary, critical alerts, medication alerts, behavioral concerns, pending tasks from `ai_shift_handoff_summaries` |
+| Route wiring | BUILT (pre-existing) | `/shift-handoff` in routeConfig.ts with lazy import |
+| Tests | BUILT | 12 tests (up from 5): header, patient cards, risk filters, unit filter, AI summary panel expand/content, clinical data, risk factors, acuity sections |
+| Decomposition | BUILT | God file (916 lines) → thin orchestrator (400 lines) + 4 submodules in `shift-handoff/` |
+
+**New files created:**
+- `src/components/nurse/shift-handoff/types.ts` (51 lines)
+- `src/components/nurse/shift-handoff/HandoffHeader.tsx` (182 lines)
+- `src/components/nurse/shift-handoff/HighAcuitySection.tsx` (185 lines)
+- `src/components/nurse/shift-handoff/StandardAcuitySection.tsx` (133 lines)
+- `src/components/nurse/shift-handoff/AISummaryPanel.tsx` (186 lines)
+- `src/components/nurse/shift-handoff/index.ts` (9 lines)
+
+**Service additions:**
+- `shiftHandoffService.ts`: Added `getAIShiftSummary()` and `getAvailableUnits()` + `AIShiftSummary` interface
 
 **Data source:** `ai_shift_handoff_summaries` + `shift_handoff_risk_scores` + `shift_handoff_events`
 
@@ -73,11 +85,11 @@
 
 | Feature | Status | What Needs to Be Built |
 |---------|--------|------------------------|
-| Acknowledge handoff | MISSING | Nurse marks each patient as "reviewed" with timestamp |
+| Acknowledge handoff | PARTIAL | Confirm/escalate/de-escalate exist per-patient; need "Acknowledge AI Summary" button on AISummaryPanel |
 | Override AI summary | MISSING | Edit/annotate AI-generated summary; logs to `shift_handoff_overrides` |
 | Print/export view | MISSING | Print-friendly layout for paper backup |
 | Real-time updates | MISSING | Supabase realtime subscription for new summaries during shift change |
-| Shift selector | MISSING | Toggle between current/previous/upcoming shifts |
+| Shift selector | BUILT | Day/Evening/Night toggle exists in HandoffHeader |
 | Tests | MISSING | Acknowledge flow, override audit, print layout |
 
 ## Session 3: Integration & Polish — NOT STARTED

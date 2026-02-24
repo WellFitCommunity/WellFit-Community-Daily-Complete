@@ -473,6 +473,98 @@ export async function getMyTimeSavings(): Promise<{
 }
 
 // ============================================================================
+// PART 8: AI SHIFT SUMMARY
+// ============================================================================
+
+/** AI-generated shift handoff summary */
+export interface AIShiftSummary {
+  id: string;
+  shift_date: string;
+  shift_type: string;
+  unit_name: string | null;
+  executive_summary: string | null;
+  critical_alerts: Array<{ patientId: string; alert: string; severity: string; timeframe?: string }>;
+  high_risk_patients: Array<{ patientId: string; name: string; riskFactors: string[]; actionItems: string[]; priority: number }>;
+  medication_alerts: Array<{ patientId: string; alert: string; followUp: string }>;
+  behavioral_concerns: Array<{ patientId: string; concern: string; intervention: string }>;
+  pending_tasks: Array<{ task: string; priority: string; deadline?: string }>;
+  patient_count: number;
+  high_risk_patient_count: number;
+  acknowledged_by: string | null;
+  acknowledged_at: string | null;
+  generated_at: string;
+}
+
+/**
+ * Get AI-generated shift summary for a given shift
+ */
+export async function getAIShiftSummary(
+  shiftType: ShiftType,
+  unitName?: string
+): Promise<AIShiftSummary | null> {
+  const today = new Date().toISOString().split('T')[0];
+
+  let query = supabase
+    .from('ai_shift_handoff_summaries')
+    .select('id, shift_date, shift_type, unit_name, executive_summary, critical_alerts, high_risk_patients, medication_alerts, behavioral_concerns, pending_tasks, patient_count, high_risk_patient_count, acknowledged_by, acknowledged_at, generated_at')
+    .eq('shift_date', today)
+    .eq('shift_type', shiftType)
+    .order('generated_at', { ascending: false })
+    .limit(1);
+
+  if (unitName) {
+    query = query.eq('unit_name', unitName);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    await auditLogger.warn('AI_SUMMARY_FETCH_FAILED', {
+      shiftType,
+      unitName,
+      error: error.message,
+    });
+    return null;
+  }
+
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    shift_date: data.shift_date,
+    shift_type: data.shift_type,
+    unit_name: data.unit_name,
+    executive_summary: data.executive_summary,
+    critical_alerts: (data.critical_alerts || []) as AIShiftSummary['critical_alerts'],
+    high_risk_patients: (data.high_risk_patients || []) as AIShiftSummary['high_risk_patients'],
+    medication_alerts: (data.medication_alerts || []) as AIShiftSummary['medication_alerts'],
+    behavioral_concerns: (data.behavioral_concerns || []) as AIShiftSummary['behavioral_concerns'],
+    pending_tasks: (data.pending_tasks || []) as AIShiftSummary['pending_tasks'],
+    patient_count: data.patient_count,
+    high_risk_patient_count: data.high_risk_patient_count,
+    acknowledged_by: data.acknowledged_by,
+    acknowledged_at: data.acknowledged_at,
+    generated_at: data.generated_at,
+  };
+}
+
+/**
+ * Get distinct unit names for the unit filter
+ */
+export async function getAvailableUnits(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('ai_shift_handoff_summaries')
+    .select('unit_name')
+    .not('unit_name', 'is', null)
+    .order('unit_name');
+
+  if (error || !data) return [];
+
+  const uniqueUnits = [...new Set(data.map(d => d.unit_name as string))];
+  return uniqueUnits;
+}
+
+// ============================================================================
 // HELPERS
 // ============================================================================
 
@@ -611,6 +703,10 @@ export const ShiftHandoffService = {
   refreshAllAutoScores,
   logHandoffEvent,
   getHandoffDashboardMetrics,
+
+  // AI summary
+  getAIShiftSummary,
+  getAvailableUnits,
 
   // Required by ShiftHandoffDashboard.tsx
   getNurseBypassCount,

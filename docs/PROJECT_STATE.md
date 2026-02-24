@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-02-23
-**Last Session:** Compass Riley Session 10 — Edge Case Hardening & Final Audit (FINAL SESSION)
+**Last Updated:** 2026-02-24
+**Last Session:** Shift Handoff Dashboard Session 1 — Decomposition, Unit Filter & AI Summary Panel
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -71,6 +71,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Tracker | Path | Status |
 |---------|------|--------|
+| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **Session 1 DONE, 5 sessions remaining** |
 | **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **COMPLETE — all 10 sessions done** |
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
@@ -85,11 +86,11 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,085 passed, 0 failed | 2026-02-23 |
-| Test Suites | 469 | 2026-02-23 |
-| Typecheck | 0 errors | 2026-02-23 |
-| Lint | 0 errors, 0 warnings | 2026-02-23 |
-| God files (>600 lines) | 0 violations (all decomposed) | 2026-02-23 |
+| Tests | 9,122 passed, 0 failed | 2026-02-24 |
+| Test Suites | 470 | 2026-02-24 |
+| Typecheck | 0 errors | 2026-02-24 |
+| Lint | 0 errors, 0 warnings | 2026-02-24 |
+| God files (>600 lines) | 0 violations (all decomposed) | 2026-02-24 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
 | Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
@@ -116,9 +117,33 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ---
 
-## What Was Completed Last Session (2026-02-23)
+## What Was Completed Last Session (2026-02-24)
 
-### Compass Riley Session 10: Edge Case Hardening & Final Audit — COMPLETE (FINAL SESSION)
+### Shift Handoff Dashboard Session 1: Decomposition, Unit Filter & AI Summary Panel — COMPLETE
+
+**Tracker:** `docs/trackers/nurse-handoff-documentation-tracker.md`
+
+**What was done:**
+- **Decomposed ShiftHandoffDashboard.tsx** god file: 916 → 400 lines (56% reduction), 4 submodules extracted to `shift-handoff/`
+- **Added unit filter** — dropdown in HandoffHeader querying `getAvailableUnits()` from `ai_shift_handoff_summaries.unit_name`
+- **Built AISummaryPanel** — expandable collapsible panel showing AI-generated shift summary: executive summary, critical alerts, medication alerts, behavioral concerns, pending tasks
+- **Added service methods** — `getAIShiftSummary()` and `getAvailableUnits()` in `shiftHandoffService.ts` with `AIShiftSummary` interface
+- **Expanded tests** — 5 → 12 tests: unit filter dropdown, AI summary panel rendering/expansion, clinical data display, risk factors, acuity section separation
+- **Committed guardian agent work** from previous session (26 files, ProposeWorkflow decomposition)
+
+**New files (7):**
+- `src/components/nurse/shift-handoff/types.ts`
+- `src/components/nurse/shift-handoff/HandoffHeader.tsx`
+- `src/components/nurse/shift-handoff/HighAcuitySection.tsx`
+- `src/components/nurse/shift-handoff/StandardAcuitySection.tsx`
+- `src/components/nurse/shift-handoff/AISummaryPanel.tsx`
+- `src/components/nurse/shift-handoff/index.ts`
+
+**Tests: 9,122 passed, 0 failed (470 suites) — up from 9,085**
+
+---
+
+### Previous: Compass Riley Session 10: Edge Case Hardening & Final Audit — COMPLETE (FINAL SESSION)
 
 **Tracker:** `docs/trackers/compass-riley-reasoning-tracker.md`
 
