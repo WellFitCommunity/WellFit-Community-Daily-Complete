@@ -85,3 +85,48 @@
    - Animations are now defined in tailwind.config.js (wf-slide-in, wf-fade-in, wf-spin).
    - Use classes: animate-wf-slide-in, animate-wf-fade-in, animate-wf-spin.
 */
+
+/* ============================================================================
+   Print Styles — Shift Handoff Dashboard
+   ============================================================================ */
+@media print {
+  /* Hide non-essential UI elements */
+  nav, header, footer,
+  .print\\:hidden,
+  [data-testid="presence-avatars"],
+  [data-testid="activity-feed"],
+  [data-testid="affirmation-toast"],
+  [data-testid="handoff-celebration"],
+  [data-testid="handoff-bypass-modal"],
+  [data-testid="personalized-greeting"] {
+    display: none !important;
+  }
+
+  /* Reset backgrounds for print */
+  .shift-handoff-dashboard {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure content is visible */
+  body {
+    font-size: 12pt;
+    color: #000 !important;
+  }
+
+  /* Force page breaks between sections */
+  .shift-handoff-dashboard > div {
+    break-inside: avoid;
+  }
+
+  /* Remove shadows and unnecessary borders */
+  * {
+    box-shadow: none !important;
+  }
+
+  /* Ensure all AI summary content is expanded for print */
+  #ai-summary-content {
+    display: block !important;
+  }
+}

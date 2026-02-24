@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-24
-**Last Session:** Shift Handoff Dashboard Session 1 — Decomposition, Unit Filter & AI Summary Panel
+**Last Session:** Shift Handoff Dashboard Session 2 — Handoff Workflow (Acknowledge, Notes, Print, Realtime)
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -86,7 +86,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,122 passed, 0 failed | 2026-02-24 |
+| Tests | 9,128 passed, 0 failed | 2026-02-24 |
 | Test Suites | 470 | 2026-02-24 |
 | Typecheck | 0 errors | 2026-02-24 |
 | Lint | 0 errors, 0 warnings | 2026-02-24 |
@@ -119,27 +119,34 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ## What Was Completed Last Session (2026-02-24)
 
-### Shift Handoff Dashboard Session 1: Decomposition, Unit Filter & AI Summary Panel — COMPLETE
+### Shift Handoff Dashboard Session 2: Handoff Workflow — COMPLETE
 
 **Tracker:** `docs/trackers/nurse-handoff-documentation-tracker.md`
 
 **What was done:**
-- **Decomposed ShiftHandoffDashboard.tsx** god file: 916 → 400 lines (56% reduction), 4 submodules extracted to `shift-handoff/`
-- **Added unit filter** — dropdown in HandoffHeader querying `getAvailableUnits()` from `ai_shift_handoff_summaries.unit_name`
-- **Built AISummaryPanel** — expandable collapsible panel showing AI-generated shift summary: executive summary, critical alerts, medication alerts, behavioral concerns, pending tasks
-- **Added service methods** — `getAIShiftSummary()` and `getAvailableUnits()` in `shiftHandoffService.ts` with `AIShiftSummary` interface
-- **Expanded tests** — 5 → 12 tests: unit filter dropdown, AI summary panel rendering/expansion, clinical data display, risk factors, acuity section separation
-- **Committed guardian agent work** from previous session (26 files, ProposeWorkflow decomposition)
+- **Acknowledge AI Summary** — "Acknowledge Summary" button on AISummaryPanel; calls `acknowledgeAIShiftSummary()` → updates `acknowledged_by`/`acknowledged_at`
+- **Nurse Notes** — "Add Notes" / "Edit Notes" button opens inline textarea; saves to `handoff_notes` column via `updateAISummaryNotes()` with audit logging
+- **Print/Export** — "Print Summary" button triggers `window.print()`; `@media print` CSS in `index.css` hides nav, modals, presence; forces content visible
+- **Real-time Updates** — Supabase realtime subscription on `ai_shift_handoff_summaries` INSERT/UPDATE events; auto-refreshes AI summary during shift change
+- **Service Decomposition** — `shiftHandoffService.ts` 717→457 lines; scoring → `shiftHandoffScoring.ts` (231 lines), time tracking → `shiftHandoffTimeTracking.ts` (112 lines)
+- **Tests** — 12 → 18 tests: acknowledge button + service call, add notes button, print button, notes editor open, realtime subscription setup
 
-**New files (7):**
-- `src/components/nurse/shift-handoff/types.ts`
-- `src/components/nurse/shift-handoff/HandoffHeader.tsx`
-- `src/components/nurse/shift-handoff/HighAcuitySection.tsx`
-- `src/components/nurse/shift-handoff/StandardAcuitySection.tsx`
-- `src/components/nurse/shift-handoff/AISummaryPanel.tsx`
-- `src/components/nurse/shift-handoff/index.ts`
+**New files (2):**
+- `src/services/shiftHandoffScoring.ts` (231 lines)
+- `src/services/shiftHandoffTimeTracking.ts` (112 lines)
 
-**Tests: 9,122 passed, 0 failed (470 suites) — up from 9,085**
+**Tests: 9,128 passed, 0 failed (470 suites) — up from 9,122**
+
+---
+
+### Shift Handoff Dashboard Session 1: Decomposition, Unit Filter & AI Summary Panel — COMPLETE
+
+**What was done:**
+- Decomposed ShiftHandoffDashboard.tsx god file: 916 → 400 lines (56% reduction), 4 submodules extracted to `shift-handoff/`
+- Added unit filter, AI summary panel, expanded tests 5 → 12
+- Committed guardian agent work from previous session (26 files)
+
+**New files (7):** types.ts, HandoffHeader.tsx, HighAcuitySection.tsx, StandardAcuitySection.tsx, AISummaryPanel.tsx, index.ts
 
 ---
 

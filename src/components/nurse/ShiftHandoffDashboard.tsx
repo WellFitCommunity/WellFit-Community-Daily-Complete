@@ -6,12 +6,13 @@
 // Architecture: Thin orchestrator — UI sections in shift-handoff/ submodules
 // ============================================================================
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useUser } from '../../contexts/AuthContext';
 import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
 import { useKeyboardShortcutsContextSafe } from '../envision-atlus/EAKeyboardShortcutsProvider';
 import { ShiftHandoffService } from '../../services/shiftHandoffService';
 import type { AIShiftSummary } from '../../services/shiftHandoffService';
+import { supabase } from '../../lib/supabaseClient';
 import HandoffCelebration from './HandoffCelebration';
 import HandoffBypassModal, { BypassFormData } from './HandoffBypassModal';
 import PersonalizedGreeting from '../shared/PersonalizedGreeting';
@@ -142,6 +143,80 @@ export const ShiftHandoffDashboard: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loadHandoffData/loadAISummary are stable via useCallback
   }, [user, shiftType, unitFilter]);
+
+  // Real-time subscription for new AI summaries during shift change
+  const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const channelName = `ai-summary-${shiftType}-${unitFilter || 'all'}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'ai_shift_handoff_summaries',
+        },
+        () => {
+          loadAISummary();
+          auditLogger.info('AI_SUMMARY_REALTIME_UPDATE', { shiftType, unitFilter });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'ai_shift_handoff_summaries',
+        },
+        () => {
+          loadAISummary();
+        }
+      )
+      .subscribe();
+
+    realtimeChannelRef.current = channel;
+
+    return () => {
+      if (realtimeChannelRef.current) {
+        supabase.removeChannel(realtimeChannelRef.current);
+        realtimeChannelRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadAISummary is stable via useCallback
+  }, [user, shiftType, unitFilter]);
+
+  // Acknowledge AI summary
+  const handleAcknowledgeSummary = async (summaryId: string) => {
+    try {
+      await ShiftHandoffService.acknowledgeAIShiftSummary(summaryId);
+      setAiSummary(prev => prev ? { ...prev, acknowledged_by: user?.id || null, acknowledged_at: new Date().toISOString() } : null);
+      showAffirmation('patient_assessed');
+      broadcast('update', 'handoff', 'Acknowledged AI shift summary');
+    } catch (err: unknown) {
+      auditLogger.error('ACKNOWLEDGE_SUMMARY_FAILED', err instanceof Error ? err : new Error('Failed'), { summaryId });
+    }
+  };
+
+  // Update nurse notes on AI summary
+  const handleUpdateNotes = async (summaryId: string, notes: string) => {
+    try {
+      await ShiftHandoffService.updateAISummaryNotes(summaryId, notes);
+      setAiSummary(prev => prev ? { ...prev, handoff_notes: notes } : null);
+      broadcast('update', 'handoff', 'Updated handoff notes');
+    } catch (err: unknown) {
+      auditLogger.error('UPDATE_NOTES_FAILED', err instanceof Error ? err : new Error('Failed'), { summaryId });
+    }
+  };
+
+  // Print shift handoff summary
+  const handlePrint = () => {
+    auditLogger.info('HANDOFF_PRINT_REQUESTED', { shiftType, unitFilter });
+    window.print();
+  };
 
   // Patient selection → PatientContext
   const handlePatientSelect = useCallback((patient: ShiftHandoffSummary) => {
@@ -349,7 +424,13 @@ export const ShiftHandoffDashboard: React.FC = () => {
         onUnitFilterChange={setUnitFilter}
       />
 
-      <AISummaryPanel summary={aiSummary} loading={aiSummaryLoading} />
+      <AISummaryPanel
+        summary={aiSummary}
+        loading={aiSummaryLoading}
+        onAcknowledge={handleAcknowledgeSummary}
+        onUpdateNotes={handleUpdateNotes}
+        onPrint={handlePrint}
+      />
 
       {handoffSummary.length === 0 ? (
         <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-600">

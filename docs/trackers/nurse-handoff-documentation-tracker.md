@@ -81,16 +81,27 @@
 
 **Data source:** `ai_shift_handoff_summaries` + `shift_handoff_risk_scores` + `shift_handoff_events`
 
-## Session 2: Handoff Workflow — NOT STARTED
+## Session 2: Handoff Workflow — COMPLETE
 
-| Feature | Status | What Needs to Be Built |
-|---------|--------|------------------------|
-| Acknowledge handoff | PARTIAL | Confirm/escalate/de-escalate exist per-patient; need "Acknowledge AI Summary" button on AISummaryPanel |
-| Override AI summary | MISSING | Edit/annotate AI-generated summary; logs to `shift_handoff_overrides` |
-| Print/export view | MISSING | Print-friendly layout for paper backup |
-| Real-time updates | MISSING | Supabase realtime subscription for new summaries during shift change |
+| Feature | Status | What Was Built |
+|---------|--------|----------------|
+| Acknowledge handoff | BUILT | "Acknowledge Summary" button on AISummaryPanel; calls `acknowledgeAIShiftSummary()` → updates `acknowledged_by`/`acknowledged_at` in DB |
+| Override AI summary | BUILT | "Add Notes" / "Edit Notes" button opens inline textarea; saves to `handoff_notes` column via `updateAISummaryNotes()` with audit logging |
+| Print/export view | BUILT | "Print Summary" button triggers `window.print()`; `@media print` CSS hides nav, modals, presence; forces summary content visible |
+| Real-time updates | BUILT | Supabase realtime subscription on `ai_shift_handoff_summaries` INSERT/UPDATE events; auto-refreshes AI summary during shift change |
 | Shift selector | BUILT | Day/Evening/Night toggle exists in HandoffHeader |
-| Tests | MISSING | Acknowledge flow, override audit, print layout |
+| Service decomposition | BUILT | `shiftHandoffService.ts` decomposed: 717→457 lines; scoring → `shiftHandoffScoring.ts`, time tracking → `shiftHandoffTimeTracking.ts` |
+| Tests | BUILT | 18 tests (up from 12): acknowledge button, acknowledge service call, add notes button, print button, notes editor open, realtime subscription setup |
+
+**New service methods:**
+- `ShiftHandoffService.acknowledgeAIShiftSummary(summaryId)` — updates acknowledged_by/at
+- `ShiftHandoffService.updateAISummaryNotes(summaryId, notes)` — updates handoff_notes
+
+**New files created:**
+- `src/services/shiftHandoffScoring.ts` (231 lines) — auto-scoring engine + helpers
+- `src/services/shiftHandoffTimeTracking.ts` (112 lines) — time savings tracking
+
+**Print styles added:** `src/index.css` — `@media print` block for shift handoff dashboard
 
 ## Session 3: Integration & Polish — NOT STARTED
 

@@ -3,14 +3,25 @@
 // ============================================================================
 // Displays AI-generated shift handoff summary from ai_shift_handoff_summaries
 // Shows: executive summary, critical alerts, medication alerts,
-//        behavioral concerns, and pending tasks
+//        behavioral concerns, pending tasks
+// Session 2: Added acknowledge, nurse notes, and print button
 // ============================================================================
 
 import React, { useState } from 'react';
 import type { AISummaryPanelProps } from './types';
 
-export const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ summary, loading }) => {
+export const AISummaryPanel: React.FC<AISummaryPanelProps> = ({
+  summary,
+  loading,
+  onAcknowledge,
+  onUpdateNotes,
+  onPrint,
+}) => {
   const [expanded, setExpanded] = useState(false);
+  const [notesText, setNotesText] = useState('');
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [acknowledging, setAcknowledging] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
 
   if (loading) {
     return (
@@ -29,18 +40,43 @@ export const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ summary, loading
   const behavioralCount = summary.behavioral_concerns.length;
   const taskCount = summary.pending_tasks.length;
   const totalItems = alertCount + medAlertCount + behavioralCount + taskCount;
+  const isAcknowledged = !!summary.acknowledged_at;
+
+  const handleAcknowledge = async () => {
+    setAcknowledging(true);
+    try {
+      onAcknowledge(summary.id);
+    } finally {
+      setAcknowledging(false);
+    }
+  };
+
+  const handleStartEditNotes = () => {
+    setNotesText(summary.handoff_notes || '');
+    setEditingNotes(true);
+  };
+
+  const handleSaveNotes = async () => {
+    setSavingNotes(true);
+    try {
+      onUpdateNotes(summary.id, notesText);
+      setEditingNotes(false);
+    } finally {
+      setSavingNotes(false);
+    }
+  };
 
   return (
-    <div className="bg-linear-to-br from-indigo-50 to-purple-50 border-2 border-indigo-300 rounded-xl mb-6 overflow-hidden shadow-md">
+    <div className="bg-linear-to-br from-indigo-50 to-purple-50 border-2 border-indigo-300 rounded-xl mb-6 overflow-hidden shadow-md print:shadow-none print:border print:border-gray-300">
       {/* Collapsible Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 flex items-center justify-between text-left hover:bg-indigo-100/50 transition-colors"
+        className="w-full p-4 flex items-center justify-between text-left hover:bg-indigo-100/50 transition-colors print:hover:bg-transparent"
         aria-expanded={expanded}
         aria-controls="ai-summary-content"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center print:bg-gray-800">
             <span className="text-white text-lg font-bold">AI</span>
           </div>
           <div>
@@ -61,12 +97,12 @@ export const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ summary, loading
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {summary.acknowledged_at && (
+          {isAcknowledged && (
             <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold">
               Acknowledged
             </span>
           )}
-          <span className={`text-indigo-500 text-xl transition-transform ${expanded ? 'rotate-180' : ''}`}>
+          <span className={`text-indigo-500 text-xl transition-transform print:hidden ${expanded ? 'rotate-180' : ''}`}>
             ▼
           </span>
         </div>
@@ -75,13 +111,75 @@ export const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ summary, loading
       {/* Expandable Content */}
       {expanded && (
         <div id="ai-summary-content" className="px-4 pb-4 space-y-4 border-t border-indigo-200">
+          {/* Action Buttons */}
+          <div className="mt-4 flex items-center gap-3 print:hidden">
+            {!isAcknowledged && (
+              <button
+                onClick={handleAcknowledge}
+                disabled={acknowledging}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium text-sm flex items-center gap-2 min-h-[44px]"
+                aria-label="Acknowledge AI shift summary"
+              >
+                {acknowledging ? 'Acknowledging...' : 'Acknowledge Summary'}
+              </button>
+            )}
+            <button
+              onClick={handleStartEditNotes}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm flex items-center gap-2 min-h-[44px]"
+              aria-label="Add or edit handoff notes"
+            >
+              {summary.handoff_notes ? 'Edit Notes' : 'Add Notes'}
+            </button>
+            <button
+              onClick={onPrint}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium text-sm flex items-center gap-2 min-h-[44px]"
+              aria-label="Print shift handoff summary"
+            >
+              Print Summary
+            </button>
+          </div>
+
           {/* Executive Summary */}
           {summary.executive_summary && (
-            <div className="mt-4 p-3 bg-white rounded-lg border border-indigo-100">
+            <div className="p-3 bg-white rounded-lg border border-indigo-100">
               <h4 className="text-sm font-bold text-indigo-800 mb-1">Executive Summary</h4>
               <p className="text-sm text-gray-700 leading-relaxed">{summary.executive_summary}</p>
             </div>
           )}
+
+          {/* Nurse Notes Section */}
+          {editingNotes ? (
+            <div className="p-3 bg-white rounded-lg border border-indigo-200 print:hidden">
+              <h4 className="text-sm font-bold text-indigo-800 mb-2">Handoff Notes</h4>
+              <textarea
+                value={notesText}
+                onChange={(e) => setNotesText(e.target.value)}
+                className="w-full h-24 p-2 border border-gray-300 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Add notes for the receiving nurse..."
+                aria-label="Handoff notes text area"
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={handleSaveNotes}
+                  disabled={savingNotes}
+                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium min-h-[44px]"
+                >
+                  {savingNotes ? 'Saving...' : 'Save Notes'}
+                </button>
+                <button
+                  onClick={() => setEditingNotes(false)}
+                  className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium min-h-[44px]"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : summary.handoff_notes ? (
+            <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <h4 className="text-sm font-bold text-yellow-800 mb-1">Handoff Notes</h4>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{summary.handoff_notes}</p>
+            </div>
+          ) : null}
 
           {/* Critical Alerts */}
           {alertCount > 0 && (

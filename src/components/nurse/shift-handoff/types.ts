@@ -46,6 +46,9 @@ export interface PatientCardListProps {
 export interface AISummaryPanelProps {
   summary: AIShiftSummary | null;
   loading: boolean;
+  onAcknowledge: (summaryId: string) => void;
+  onUpdateNotes: (summaryId: string, notes: string) => void;
+  onPrint: () => void;
 }
 
 // Re-export commonly used types

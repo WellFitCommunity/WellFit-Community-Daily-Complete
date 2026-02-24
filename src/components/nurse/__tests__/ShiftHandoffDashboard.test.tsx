@@ -3,7 +3,7 @@
  *
  * Purpose: AI-assisted nurse shift handoff with auto-scored patient risks
  * Tests: Loading state, header rendering, patient cards, risk filters, accept handoff,
- *        unit filter, AI summary panel, decomposed component integration
+ *        unit filter, AI summary panel, acknowledge, nurse notes, print, realtime
  *
  * Deletion Test: Every test verifies specific content/behavior unique to ShiftHandoffDashboard.
  * An empty <div /> would fail all tests.
@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 // Hoist mock data so it's available inside vi.mock factories
-const { mockHandoffSummaries, mockMetrics, mockAISummary } = vi.hoisted(() => ({
+const { mockHandoffSummaries, mockMetrics, mockAISummary, mockAcknowledgeFn, mockUpdateNotesFn } = vi.hoisted(() => ({
   mockHandoffSummaries: [
     {
       patient_id: 'patient-1',
@@ -88,8 +88,11 @@ const { mockHandoffSummaries, mockMetrics, mockAISummary } = vi.hoisted(() => ({
     high_risk_patient_count: 1,
     acknowledged_by: null,
     acknowledged_at: null,
+    handoff_notes: null,
     generated_at: '2026-02-24T02:00:00Z',
   },
+  mockAcknowledgeFn: vi.fn().mockResolvedValue(undefined),
+  mockUpdateNotesFn: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock user context
@@ -117,6 +120,17 @@ vi.mock('../../envision-atlus/EAKeyboardShortcutsProvider', () => ({
   useKeyboardShortcutsContextSafe: () => null,
 }));
 
+// Mock Supabase client (for realtime subscriptions)
+vi.mock('../../../lib/supabaseClient', () => ({
+  supabase: {
+    channel: vi.fn().mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnThis(),
+    }),
+    removeChannel: vi.fn(),
+  },
+}));
+
 // Mock ShiftHandoffService
 vi.mock('../../../services/shiftHandoffService', () => ({
   ShiftHandoffService: {
@@ -125,6 +139,8 @@ vi.mock('../../../services/shiftHandoffService', () => ({
     getNurseBypassCount: vi.fn().mockResolvedValue(0),
     getAvailableUnits: vi.fn().mockResolvedValue(['ICU', 'Med-Surg', 'ED']),
     getAIShiftSummary: vi.fn().mockResolvedValue(mockAISummary),
+    acknowledgeAIShiftSummary: mockAcknowledgeFn,
+    updateAISummaryNotes: mockUpdateNotesFn,
     nurseReviewHandoffRisk: vi.fn().mockResolvedValue(undefined),
     bulkConfirmAutoScores: vi.fn().mockResolvedValue(undefined),
     refreshAllAutoScores: vi.fn().mockResolvedValue(undefined),
@@ -348,5 +364,111 @@ describe('ShiftHandoffDashboard', () => {
     });
 
     expect(screen.getByText('Standard Acuity')).toBeInTheDocument();
+  });
+
+  // ============================================================================
+  // Session 2: Acknowledge, Notes, and Print Tests
+  // ============================================================================
+
+  it('shows Acknowledge Summary button when summary is not yet acknowledged', async () => {
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('AI Shift Summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('AI Shift Summary'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /acknowledge ai shift summary/i })).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Acknowledge Summary')).toBeInTheDocument();
+  });
+
+  it('calls acknowledgeAIShiftSummary when Acknowledge button is clicked', async () => {
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('AI Shift Summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('AI Shift Summary'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge Summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Acknowledge Summary'));
+
+    await waitFor(() => {
+      expect(mockAcknowledgeFn).toHaveBeenCalledWith('summary-1');
+    });
+  });
+
+  it('shows Add Notes button when expanded and no notes exist', async () => {
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('AI Shift Summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('AI Shift Summary'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add or edit handoff notes/i })).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Add Notes')).toBeInTheDocument();
+  });
+
+  it('shows Print Summary button when expanded', async () => {
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('AI Shift Summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('AI Shift Summary'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /print shift handoff summary/i })).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Print Summary')).toBeInTheDocument();
+  });
+
+  it('opens notes editor when Add Notes button is clicked', async () => {
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('AI Shift Summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('AI Shift Summary'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Add Notes')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Add Notes'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Handoff notes text area')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Save Notes')).toBeInTheDocument();
+    expect(screen.getByText('Cancel')).toBeInTheDocument();
+  });
+
+  it('sets up realtime subscription for ai_shift_handoff_summaries', async () => {
+    const { supabase: mockSupabase } = await import('../../../lib/supabaseClient');
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('AI Shift Summary')).toBeInTheDocument();
+    });
+
+    expect(mockSupabase.channel).toHaveBeenCalled();
   });
 });
