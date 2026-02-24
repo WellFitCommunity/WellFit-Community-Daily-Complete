@@ -12,6 +12,7 @@ import type {
   SecurityAlertRow,
   ActiveSessionRow,
   SecurityRule,
+  TenantSuspensionStatus,
 } from '../components/admin/tenant-security/types';
 
 // ============================================================================
@@ -286,6 +287,72 @@ export const tenantSecurityService = {
         err instanceof Error ? err : new Error(String(err))
       ).catch(() => {});
       return failure('UNKNOWN_ERROR', 'Failed to save security rules');
+    }
+  },
+
+  /**
+   * Get tenant suspension status from tenant_system_status
+   */
+  async getTenantSuspensionStatus(tenantId: string): Promise<ServiceResult<TenantSuspensionStatus>> {
+    try {
+      const { data, error } = await supabase
+        .from('tenant_system_status')
+        .select('is_suspended, is_active, suspension_reason, suspended_at, suspended_by')
+        .eq('tenant_id', tenantId)
+        .single();
+
+      if (error) {
+        // No row = not suspended (table may not have an entry for this tenant)
+        if (error.code === 'PGRST116') {
+          return success({
+            is_suspended: false,
+            is_active: true,
+            suspension_reason: null,
+            suspended_at: null,
+            suspended_by: null,
+            suspended_by_name: null,
+          });
+        }
+        return failure('DATABASE_ERROR', 'Failed to check suspension status');
+      }
+
+      interface SuspensionDbRow {
+        is_suspended: boolean;
+        is_active: boolean;
+        suspension_reason: string | null;
+        suspended_at: string | null;
+        suspended_by: string | null;
+      }
+
+      const row = data as SuspensionDbRow;
+
+      // Resolve suspended_by to a name if suspended
+      let suspendedByName: string | null = null;
+      if (row.is_suspended && row.suspended_by) {
+        const { data: adminData } = await supabase
+          .from('super_admin_users')
+          .select('full_name')
+          .eq('id', row.suspended_by)
+          .single();
+        if (adminData) {
+          suspendedByName = (adminData as { full_name: string | null }).full_name;
+        }
+      }
+
+      return success({
+        is_suspended: row.is_suspended,
+        is_active: row.is_active,
+        suspension_reason: row.suspension_reason,
+        suspended_at: row.suspended_at,
+        suspended_by: row.suspended_by,
+        suspended_by_name: suspendedByName,
+      });
+    } catch (err: unknown) {
+      await auditLogger.error('SUSPENSION_STATUS_FETCH_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { tenantId }
+      ).catch(() => {});
+      return failure('UNKNOWN_ERROR', 'Failed to check suspension status');
     }
   },
 };

@@ -219,6 +219,46 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Login failed. Please try again." }), { status: 500, headers });
     }
 
+    // ---- Tenant suspension check ----
+    try {
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", sessionData.user.id)
+        .single();
+
+      if (profile?.tenant_id) {
+        const { data: tenantStatus } = await admin
+          .from("tenant_system_status")
+          .select("is_suspended, suspension_reason")
+          .eq("tenant_id", profile.tenant_id)
+          .single();
+
+        if (tenantStatus?.is_suspended) {
+          logger.security("Login blocked — tenant suspended", {
+            userId: sessionData.user.id,
+            tenantId: profile.tenant_id,
+            reason: tenantStatus.suspension_reason,
+          });
+
+          // Sign out the user since we already authenticated them
+          await supabase.auth.signOut();
+
+          return new Response(JSON.stringify({
+            error: "Your organization's account has been suspended.",
+            reason: tenantStatus.suspension_reason || "Contact your platform administrator for details.",
+            suspended: true,
+          }), { status: 403, headers });
+        }
+      }
+    } catch (suspErr: unknown) {
+      // Fail open — don't block login if suspension check fails
+      logger.warn("Tenant suspension check failed (failing open)", {
+        error: suspErr instanceof Error ? suspErr.message : String(suspErr),
+        userId: sessionData.user.id,
+      });
+    }
+
     // ---- Post-login route ----
     let nextRoute = "/dashboard";
     try {

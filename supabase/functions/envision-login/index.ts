@@ -154,6 +154,49 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return genericErrorResponse;
     }
 
+    // ---- Tenant suspension check ----
+    // Super admins may be associated with a tenant — check if it's suspended
+    try {
+      const { data: adminProfile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("email", email)
+        .single();
+
+      if (adminProfile?.tenant_id) {
+        const { data: tenantStatus } = await supabase
+          .from("tenant_system_status")
+          .select("is_suspended, suspension_reason")
+          .eq("tenant_id", adminProfile.tenant_id)
+          .single();
+
+        if (tenantStatus?.is_suspended) {
+          logger.security("Envision login blocked — tenant suspended", {
+            superAdminId: superAdmin.id,
+            email,
+            tenantId: adminProfile.tenant_id,
+            reason: tenantStatus.suspension_reason,
+            clientIp,
+          });
+
+          return new Response(JSON.stringify({
+            error: "Your organization's account has been suspended.",
+            reason: tenantStatus.suspension_reason || "Contact your platform administrator for details.",
+            suspended: true,
+          }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    } catch (suspErr: unknown) {
+      // Fail open — don't block login if suspension check fails
+      logger.warn("Tenant suspension check failed (failing open)", {
+        error: suspErr instanceof Error ? suspErr.message : String(suspErr),
+        superAdminId: superAdmin.id,
+      });
+    }
+
     // Check rate limiting
     const { data: lockoutData, error: lockoutError } = await supabase.rpc("check_envision_lockout", {
       p_super_admin_id: superAdmin.id,

@@ -17,6 +17,7 @@ import {
   SecurityAlertsPanel,
   ActiveSessionsPanel,
   SecurityRulesConfig,
+  TenantSuspensionBanner,
 } from './tenant-security';
 import type {
   SecurityAlertRow,
@@ -245,6 +246,9 @@ export const TenantSecurityDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Suspension Status Banner */}
+      <TenantSuspensionBanner tenantId={tenantId} />
+
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => {

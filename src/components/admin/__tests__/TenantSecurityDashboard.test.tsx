@@ -21,6 +21,7 @@ const mockGetActiveSessions = vi.fn();
 const mockForceLogout = vi.fn();
 const mockGetSecurityRules = vi.fn();
 const mockSaveSecurityRules = vi.fn();
+const mockGetTenantSuspensionStatus = vi.fn();
 
 vi.mock('../../../services/tenantSecurityService', () => ({
   tenantSecurityService: {
@@ -31,6 +32,7 @@ vi.mock('../../../services/tenantSecurityService', () => ({
     forceLogout: (...args: unknown[]) => mockForceLogout(...args),
     getSecurityRules: (...args: unknown[]) => mockGetSecurityRules(...args),
     saveSecurityRules: (...args: unknown[]) => mockSaveSecurityRules(...args),
+    getTenantSuspensionStatus: (...args: unknown[]) => mockGetTenantSuspensionStatus(...args),
   },
 }));
 
@@ -149,6 +151,18 @@ describe('TenantSecurityDashboard', () => {
     mockGetSecurityAlerts.mockResolvedValue({ success: true, data: MOCK_ALERTS, error: null });
     mockGetActiveSessions.mockResolvedValue({ success: true, data: MOCK_SESSIONS, error: null });
     mockGetSecurityRules.mockResolvedValue({ success: true, data: MOCK_RULES, error: null });
+    mockGetTenantSuspensionStatus.mockResolvedValue({
+      success: true,
+      data: {
+        is_suspended: false,
+        is_active: true,
+        suspension_reason: null,
+        suspended_at: null,
+        suspended_by: null,
+        suspended_by_name: null,
+      },
+      error: null,
+    });
     mockAcknowledgeAlert.mockResolvedValue({ success: true, data: true, error: null });
     mockResolveAlert.mockResolvedValue({ success: true, data: true, error: null });
     mockForceLogout.mockResolvedValue({ success: true, data: true, error: null });
@@ -328,5 +342,119 @@ describe('TenantSecurityDashboard', () => {
       expect(screen.getByText('Tenant-Scoped Security')).toBeInTheDocument();
     });
     expect(screen.getByText(/HIPAA compliance/)).toBeInTheDocument();
+  });
+
+  // ========================================================================
+  // SUSPENSION BANNER TESTS
+  // ========================================================================
+
+  it('shows active tenant status when not suspended', async () => {
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('suspension-status-active')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Tenant Active')).toBeInTheDocument();
+    expect(screen.getByText(/No suspension on record/)).toBeInTheDocument();
+  });
+
+  it('shows suspension banner with reason when tenant is suspended', async () => {
+    mockGetTenantSuspensionStatus.mockResolvedValue({
+      success: true,
+      data: {
+        is_suspended: true,
+        is_active: false,
+        suspension_reason: 'Non-payment of platform fees',
+        suspended_at: '2026-02-20T14:30:00Z',
+        suspended_by: 'super-admin-1',
+        suspended_by_name: 'Test Platform Admin',
+      },
+      error: null,
+    });
+
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('suspension-status-suspended')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Tenant Suspended')).toBeInTheDocument();
+    expect(screen.getByText('Non-payment of platform fees')).toBeInTheDocument();
+    expect(screen.getByText('Test Platform Admin')).toBeInTheDocument();
+  });
+
+  it('shows suspended date in human-readable format', async () => {
+    mockGetTenantSuspensionStatus.mockResolvedValue({
+      success: true,
+      data: {
+        is_suspended: true,
+        is_active: false,
+        suspension_reason: 'Security breach investigation',
+        suspended_at: '2026-02-20T14:30:00Z',
+        suspended_by: null,
+        suspended_by_name: null,
+      },
+      error: null,
+    });
+
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tenant Suspended')).toBeInTheDocument();
+    });
+    // Should display a formatted date including "February" and "2026"
+    expect(screen.getByText(/February/)).toBeInTheDocument();
+    expect(screen.getByText(/2026/)).toBeInTheDocument();
+  });
+
+  it('shows Platform Administrator when suspended_by_name is null', async () => {
+    mockGetTenantSuspensionStatus.mockResolvedValue({
+      success: true,
+      data: {
+        is_suspended: true,
+        is_active: false,
+        suspension_reason: 'Compliance violation',
+        suspended_at: '2026-02-15T10:00:00Z',
+        suspended_by: null,
+        suspended_by_name: null,
+      },
+      error: null,
+    });
+
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tenant Suspended')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Platform Administrator')).toBeInTheDocument();
+  });
+
+  it('shows appeal instructions in suspension banner', async () => {
+    mockGetTenantSuspensionStatus.mockResolvedValue({
+      success: true,
+      data: {
+        is_suspended: true,
+        is_active: false,
+        suspension_reason: 'Testing',
+        suspended_at: '2026-02-15T10:00:00Z',
+        suspended_by: null,
+        suspended_by_name: null,
+      },
+      error: null,
+    });
+
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tenant Suspended')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/appeal this suspension/i)).toBeInTheDocument();
+  });
+
+  it('calls getTenantSuspensionStatus with correct tenant ID', async () => {
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(mockGetTenantSuspensionStatus).toHaveBeenCalledWith('tenant-abc');
+    });
   });
 });

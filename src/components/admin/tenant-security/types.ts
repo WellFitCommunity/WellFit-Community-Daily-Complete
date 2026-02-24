@@ -76,3 +76,17 @@ export interface SecurityRulesConfigProps {
   onDeleteRule: (ruleId: string) => void;
   onToggleRule: (ruleId: string, active: boolean) => void;
 }
+
+/** Tenant suspension status from tenant_system_status table */
+export interface TenantSuspensionStatus {
+  is_suspended: boolean;
+  is_active: boolean;
+  suspension_reason: string | null;
+  suspended_at: string | null;
+  suspended_by: string | null;
+  suspended_by_name: string | null;
+}
+
+export interface TenantSuspensionBannerProps {
+  tenantId: string;
+}

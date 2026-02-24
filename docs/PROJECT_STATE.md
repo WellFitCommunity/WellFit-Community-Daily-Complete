@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-24
-**Last Session:** Nurse Question Manager Session 3 — Workflow, Notifications & Analytics
+**Last Session:** Tenant Admin Panel Session 4 — Security Dashboard with Alert Management, Sessions & Rules
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -46,24 +46,27 @@
 
 ---
 
-## Current Priority: L&D Module COMPLETE
+## Current Priority: Tenant Admin Panel — Sessions 1-4 COMPLETE, Item 3.4 Next
 
-All 8 L&D sessions are finished. The module has full data entry, monitoring, billing, FHIR, alerts, and 11 AI integrations across 3 tiers.
-
-**Tracker:** `docs/trackers/ld-module-tracker.md`
+**Tracker:** `docs/trackers/tenant-admin-panel-tracker.md`
 
 | Session | Status | What Was Built |
 |---------|--------|----------------|
-| 1 | Done | Data entry forms (prenatal, labor, delivery) |
-| 2 | Done | Monitoring + newborn + postpartum forms |
-| 3 | Done | Partogram + alert persistence + risk assessment |
-| 4 | Done | FHIR mapping + billing suggestions + delivery summary |
-| 5 | Done | Alert persistence in dashboard + edge function |
-| 6 | Done | Tier 1 AI integrations (escalation, progress note, drug interaction, discharge) |
-| 7 | Done | Tier 2 AI integrations (guideline compliance, shift handoff, SDOH detection) |
-| 8 | Done | Tier 3 AI moonshots (birth plan, PPD early warning, contraindication, patient education) |
+| 0 (Audit) | Done | Full audit: 4 store-only settings, 2 orphaned components, 4 missing capabilities |
+| 1 (Tier 1+2) | Done | Wire session timeout + PIN requirement, remove audit/backup toggles, route 2 orphans |
+| 2 (Tier 3.1) | Done | User Role Management UI with hierarchy enforcement |
+| 3 (Tier 3.2) | Done | User Invite/Provisioning with invite form + pending management |
+| 4 (Tier 3.3) | Done | TenantSecurityDashboard: alert management, sessions, security rules |
 
-**Next action:** Move to next priority per Maria's direction (Oncology Phase 1, Cardiology Phase 1, or other).
+**Remaining:** Item 3.4 (Tenant Suspension) — ~4 hours (1 session)
+
+---
+
+## Previous Priority: L&D Module COMPLETE
+
+All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts, and 11 AI integrations across 3 tiers.
+
+**Tracker:** `docs/trackers/ld-module-tracker.md`
 
 ---
 
@@ -75,7 +78,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 | **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **COMPLETE — all 10 sessions done** |
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
-| **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Audit COMPLETE — 4 store-only settings, 2 orphaned components, 4 missing capabilities** |
+| **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-4 COMPLETE — Item 3.4 (Tenant Suspension) remaining** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
@@ -87,8 +90,8 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,186 passed, 0 failed | 2026-02-24 |
-| Test Suites | 472 | 2026-02-24 |
+| Tests | 9,223 passed, 0 failed | 2026-02-24 |
+| Test Suites | 473 | 2026-02-24 |
 | Typecheck | 0 errors | 2026-02-24 |
 | Lint | 0 errors, 0 warnings | 2026-02-24 |
 | God files (>600 lines) | 0 violations (all decomposed) | 2026-02-24 |
@@ -120,54 +123,52 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ## What Was Completed Last Session (2026-02-24)
 
-### Nurse Question Manager Session 3: Workflow, Notifications & Analytics — COMPLETE
+### Tenant Admin Panel Sessions 1-4 — COMPLETE
 
-**Tracker:** `docs/trackers/nurse-handoff-documentation-tracker.md`
+**Tracker:** `docs/trackers/tenant-admin-panel-tracker.md`
 
-**What was done:**
-- **Auto-escalation edge function** — `nurse-question-auto-escalate` edge function: unclaimed questions >2hrs → charge_nurse, claimed-but-unanswered >4hrs → supervisor. Includes cooldown, batch processing, audit logging.
-- **Patient SMS notification** — `notifyPatientAnswered()` service method sends SMS via `send-sms` edge function when nurse answers a question. E.164 phone normalization. Fire-and-forget from UI.
-- **Realtime subscriptions** — `subscribeToNewQuestions()` and `subscribeToQuestionUpdates()` on `user_questions` table. Queue auto-refreshes. New-question alert banner with auto-dismiss and manual Dismiss button.
-- **Analytics view + RPC** — `v_nurse_question_analytics` view aggregates metrics by tenant. `nurse_question_metrics()` RPC returns JSON with response times, AI acceptance rate, urgency/status breakdown, escalation stats, 24h/7d volume.
-- **Analytics panel** — `AnalyticsPanel.tsx` (199 lines) with expandable stats: avg/median response time, AI acceptance %, escalation breakdown, queue status, urgency distribution.
-- **Migration applied** — `20260224300000_nurse_question_analytics_and_escalation.sql` — view, RPC, partial indexes for escalation queries. Applied to remote DB.
-- **Tests** — 38 tests (up from 27): realtime subscriptions (5), patient notification (2), analytics panel (4)
+**Session 1 (Tier 1 + Tier 2):**
+- Wired session timeout — `SessionTimeoutContext` fetches `admin_settings.session_timeout`, validates against allowed values (15/30/60/120 min)
+- Wired PIN requirement — `AdminAuthContext` exposes `requirePinForSensitive` from DB
+- Removed audit logging toggle — replaced with HIPAA § 164.312(b) compliance notice
+- Removed backup settings toggle — replaced with Supabase Pro managed notice
+- Routed TenantConfigHistory — lazy-loaded in security category
+- Routed ClearinghouseConfigPanel — lazy-loaded in admin category with named export adapter
+- Tests: 9,186 passed (472 suites)
 
-**New files (3):**
-- `supabase/functions/nurse-question-auto-escalate/index.ts` (215 lines)
-- `supabase/migrations/20260224300000_nurse_question_analytics_and_escalation.sql`
-- `src/components/admin/nurse-questions/AnalyticsPanel.tsx` (199 lines)
+**Session 2 (Item 3.1 — User Role Management):**
+- `UserRoleManagementPanel.tsx` (322 lines) — staff list with search, filter, stats bar
+- `StaffRoleTable.tsx` (158 lines) + `RoleAssignmentModal.tsx` (185 lines)
+- `userRoleManagementService.ts` (326 lines) — hierarchy-enforced role CRUD
+- 12 new behavioral tests — Tests: 9,198 passed (473 suites)
 
-**Modified files (4):**
-- `src/services/nurseQuestionService.ts` (310→477 lines) — 4 new methods + 2 new interfaces
-- `src/components/admin/NurseQuestionManager.tsx` (129→193 lines) — realtime, alerts, analytics, SMS
-- `src/components/admin/nurse-questions/index.ts` — AnalyticsPanel re-export
-- `src/components/admin/nurse-questions/__tests__/NurseQuestionManager.test.tsx` (27→38 tests)
+**Session 3 (Item 3.2 — User Provisioning):**
+- `UserProvisioningPanel.tsx` (152 lines) — tabbed invite/pending
+- `InviteUserForm.tsx` (302 lines) + `PendingInvitationsTable.tsx` (166 lines)
+- `userProvisioningService.ts` (177 lines) — wraps `admin_register` edge function
+- 13 new behavioral tests — Tests: 9,211 passed (473 suites)
 
-**Tests: 9,186 passed, 0 failed (472 suites) — up from 9,175**
+**Session 4 (Item 3.3 — Security Dashboard):**
+- Decomposed TenantSecurityDashboard: 313-line monolith → orchestrator + 3 sub-panels
+- `SecurityAlertsPanel.tsx` (173 lines) — alert management with acknowledge/resolve
+- `ActiveSessionsPanel.tsx` (158 lines) — session list with force-logout
+- `SecurityRulesConfig.tsx` (294 lines) — configurable alert rules
+- `tenantSecurityService.ts` (322 lines) — full service layer
+- 12 new behavioral tests — Tests: 9,223 passed (473 suites)
 
-**Feature 2 (Nurse Question Manager) is now COMPLETE across all 3 sessions.**
-**The entire Nurse Handoff & Documentation tracker is now COMPLETE (6 sessions total).**
-
----
-
-### Earlier: Nurse Question Manager Session 2: UI Wiring, Decomposition, AI Skill & Escalation — COMPLETE
-
-**What was done:**
-- Decomposition (742→129 lines), service wiring, mock data removal, AI model fix, escalation UI, AI skill registration, 27 tests
-- See tracker for full details
-
-**Tests: 9,175 passed, 0 failed (472 suites) — up from 9,148**
+**Remaining:** Item 3.4 (Tenant Suspension)
 
 ---
 
-### Earlier: Nurse Question Manager Session 1: Database & API Foundation — COMPLETE
+### Earlier: Nurse Question Manager (3 sessions) — COMPLETE
 
 **What was done:**
-- Discovery, migration, service layer, API wrapper, 17 tests
-- See tracker for full details
+- Session 1: Discovery, migration, service layer, API wrapper, 17 tests
+- Session 2: Decomposition (742→129 lines), service wiring, mock data removal, AI model fix, escalation UI, 27 tests
+- Session 3: Auto-escalation edge function, patient SMS notification, realtime subscriptions, analytics view + RPC + panel, 38 tests
+- Tests: 9,148 → 9,175 → 9,186 across 3 sessions
 
-**Tests: 9,148 passed, 0 failed (471 suites) — up from 9,131**
+**The entire Nurse Handoff & Documentation tracker is COMPLETE (6 sessions total).**
 
 ---
 
