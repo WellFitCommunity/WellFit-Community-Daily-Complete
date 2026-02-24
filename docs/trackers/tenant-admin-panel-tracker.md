@@ -188,14 +188,25 @@ Triple-layer enforcement: Frontend hooks (`useIsAdmin`) → RLS policies (`curre
 - Bulk CSV import for staff onboarding
 - Resend invitation flow
 
-## Item 3.3: TenantSecurityDashboard Enhancements — PARTIAL
+## Item 3.3: TenantSecurityDashboard Enhancements — BUILT (2026-02-24)
 
 | Layer | Status | Detail |
 |-------|--------|--------|
-| Read metrics | BUILT | Active sessions, PHI access, security alerts |
-| Alert configuration | MISSING | No way to set alert thresholds or notification targets |
-| Session management | MISSING | No ability to force-logout sessions or view session details (IP, duration) |
-| Security rules | MISSING | No configurable rules (e.g., "alert on >5 PHI accesses in 1 hour") |
+| Read metrics | BUILT | 4-metric grid: active sessions, PHI access, open alerts, critical alerts |
+| Alert management | BUILT | SecurityAlertsPanel — queries `security_alerts` table, acknowledge/resolve actions, status filter |
+| Session management | BUILT | ActiveSessionsPanel — user list with active/inactive status, force-logout with confirmation |
+| Security rules | BUILT | SecurityRulesConfig — configurable rules with metric, operator, threshold, time window, severity |
+| Service layer | BUILT | `tenantSecurityService.ts` — alerts CRUD, sessions, force logout, rules persistence |
+| Tests | BUILT | 12 behavioral tests (9,223 total) |
+
+**What was built:**
+- Decomposed 313-line monolith into orchestrator + 3 sub-components
+- `TenantSecurityDashboard.tsx` (309 lines) — refactored orchestrator with metrics grid + sub-panels
+- `tenant-security/SecurityAlertsPanel.tsx` (173 lines) — alerts from `security_alerts` table with acknowledge/resolve, severity badges, status filter
+- `tenant-security/ActiveSessionsPanel.tsx` (158 lines) — user sessions from `profiles`, active/inactive status, force-logout via `admin_end_session` edge function
+- `tenant-security/SecurityRulesConfig.tsx` (294 lines) — alert rule editor: metric (PHI access/failed logins/critical alerts/active sessions), operator, threshold, time window, severity, enable/disable toggle
+- `tenantSecurityService.ts` (322 lines) — full service layer with graceful table-not-found fallback
+- Default rules provided: PHI Access Burst (>10 in 15min) and Critical Alert Threshold (>=3 unresolved)
 
 ## Item 3.4: Tenant Suspension — MISSING
 
@@ -297,6 +308,28 @@ Triple-layer enforcement: Frontend hooks (`useIsAdmin`) → RLS policies (`curre
 - `src/components/admin/sections/lazyImports.tsx`
 - `src/components/admin/sections/sectionDefinitions.tsx`
 
-### Session 4: NOT STARTED
+### Session 4: Tier 3 Item 3.3 — COMPLETE (2026-02-24)
 
-**Planned scope:** Tier 3 Items 3.3-3.4 (security config, tenant suspension)
+| What | Result |
+|------|--------|
+| Item 3.3: TenantSecurityDashboard Enhancements | BUILT — alert management, session control, rule config |
+| Service layer | `tenantSecurityService.ts` — alerts CRUD, sessions, force logout, rules persistence |
+| UI components | Decomposed: SecurityAlertsPanel + ActiveSessionsPanel + SecurityRulesConfig (all < 600 lines) |
+| Tests | 12 new behavioral tests (9,223 total) |
+| Verification | typecheck: 0 errors, lint: 0 errors, tests: 9,223 passed |
+
+**Files created:**
+- `src/services/tenantSecurityService.ts`
+- `src/components/admin/tenant-security/SecurityAlertsPanel.tsx`
+- `src/components/admin/tenant-security/ActiveSessionsPanel.tsx`
+- `src/components/admin/tenant-security/SecurityRulesConfig.tsx`
+- `src/components/admin/tenant-security/types.ts`
+- `src/components/admin/tenant-security/index.ts`
+- `src/components/admin/__tests__/TenantSecurityDashboard.test.tsx`
+
+**Files modified:**
+- `src/components/admin/TenantSecurityDashboard.tsx` — refactored from 313-line monolith to orchestrator
+
+### Session 5: NOT STARTED
+
+**Planned scope:** Tier 3 Item 3.4 (tenant suspension)

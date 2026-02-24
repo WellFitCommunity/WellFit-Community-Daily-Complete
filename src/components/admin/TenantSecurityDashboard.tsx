@@ -1,46 +1,29 @@
 /**
- * Tenant Security Dashboard
+ * TenantSecurityDashboard — Tenant-scoped security monitoring with alert management
  *
- * Tenant-scoped security monitoring for facility administrators.
- * Shows ONLY data for the current tenant (WellFit, Hospital, Dental, etc.)
- *
- * Features:
- * - PHI access monitoring for this facility
- * - Security alerts for this tenant
- * - Active sessions for this tenant's users
- * - Failed login attempts
+ * Purpose: Real-time security metrics, alert acknowledge/resolve, session management, rule config
+ * Used by: IntelligentAdminPanel (security category section)
  *
  * NOTE: This is DIFFERENT from Platform SOC2 dashboards in Master Panel
  * which show cross-tenant, platform-wide security metrics.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
-import { Shield, AlertTriangle, Users, Activity as _Activity, Eye, Lock } from 'lucide-react';
+import { Shield, AlertTriangle, Users, Eye, Lock } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
-
-interface SecurityMetric {
-  label: string;
-  value: number | string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
-}
-
-interface PHIAccessLog {
-  id: string;
-  user_email: string;
-  patient_name: string;
-  action: string;
-  timestamp: string;
-}
-
-interface SecurityAlert {
-  id: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  message: string;
-  timestamp: string;
-}
+import { tenantSecurityService } from '../../services/tenantSecurityService';
+import {
+  SecurityAlertsPanel,
+  ActiveSessionsPanel,
+  SecurityRulesConfig,
+} from './tenant-security';
+import type {
+  SecurityAlertRow,
+  ActiveSessionRow,
+  SecurityRule,
+  SecurityMetric,
+} from './tenant-security';
 
 export const TenantSecurityDashboard: React.FC = () => {
   const supabase = useSupabaseClient();
@@ -48,21 +31,24 @@ export const TenantSecurityDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<SecurityMetric[]>([]);
-  const [recentAccess, setRecentAccess] = useState<PHIAccessLog[]>([]);
-  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
 
-  useEffect(() => {
-    loadTenantData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Function is stable, deps capture trigger conditions
-  }, [user]);
+  // Sub-component state
+  const [alerts, setAlerts] = useState<SecurityAlertRow[]>([]);
+  const [alertsLoading, setAlertsLoading] = useState(false);
+  const [sessions, setSessions] = useState<ActiveSessionRow[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [rules, setRules] = useState<SecurityRule[]>([]);
+  const [rulesSaving, setRulesSaving] = useState(false);
 
-  const loadTenantData = async () => {
+  // PHI access from audit_logs (kept for metrics)
+  const [phiCount, setPhiCount] = useState(0);
+
+  const loadTenantData = useCallback(async () => {
     if (!user?.id) return;
 
     try {
       setLoading(true);
 
-      // Get current user's tenant_id
       const { data: profile } = await supabase
         .from('profiles')
         .select('tenant_id')
@@ -77,94 +63,162 @@ export const TenantSecurityDashboard: React.FC = () => {
 
       setTenantId(profile.tenant_id);
 
-      // Load security metrics for this tenant only
+      // Load all sections in parallel
       await Promise.all([
-        loadActiveSessions(profile.tenant_id),
-        loadRecentPHIAccess(profile.tenant_id),
-        loadSecurityAlerts(profile.tenant_id),
+        loadAlerts(profile.tenant_id),
+        loadSessions(profile.tenant_id),
+        loadPHIMetric(profile.tenant_id),
+        loadRules(),
       ]);
-
     } catch (error: unknown) {
-      await auditLogger.error('TENANT_SECURITY_LOAD_FAILED', error instanceof Error ? error : new Error(String(error)), { userId: user?.id });
+      await auditLogger.error('TENANT_SECURITY_LOAD_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { userId: user?.id }
+      );
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase client is stable
+  }, [user?.id]);
 
-  const loadActiveSessions = async (tenantId: string) => {
-    // Count active sessions for users in this tenant
-    const { data: sessions, error } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .eq('tenant_id', tenantId);
+  useEffect(() => {
+    loadTenantData();
+  }, [loadTenantData]);
 
-    if (!error && sessions) {
-      const activeCount = sessions.length; // Simplified - could check last_active_at
-      updateMetric('Active Sessions', activeCount, Users, 'text-blue-600', 'bg-blue-50');
+  // Build metrics whenever data changes
+  useEffect(() => {
+    const activeSessions = sessions.filter(s => s.is_active).length;
+    const criticalAlerts = alerts.filter(a => a.severity === 'critical' && ['pending', 'new'].includes(a.status)).length;
+
+    setMetrics([
+      {
+        label: 'Active Sessions',
+        value: activeSessions,
+        icon: Users,
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-50',
+      },
+      {
+        label: 'PHI Access (recent)',
+        value: phiCount,
+        icon: Eye,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50',
+      },
+      {
+        label: 'Open Alerts',
+        value: alerts.filter(a => ['pending', 'new', 'acknowledged'].includes(a.status)).length,
+        icon: AlertTriangle,
+        color: alerts.length > 0 ? 'text-amber-600' : 'text-green-600',
+        bgColor: alerts.length > 0 ? 'bg-amber-50' : 'bg-green-50',
+      },
+      {
+        label: 'Critical Alerts',
+        value: criticalAlerts,
+        icon: Shield,
+        color: criticalAlerts > 0 ? 'text-red-600' : 'text-green-600',
+        bgColor: criticalAlerts > 0 ? 'bg-red-50' : 'bg-green-50',
+      },
+    ]);
+  }, [sessions, alerts, phiCount]);
+
+  const loadAlerts = async (tid: string) => {
+    setAlertsLoading(true);
+    const result = await tenantSecurityService.getSecurityAlerts(tid, 'all');
+    if (result.success) {
+      setAlerts(result.data);
     }
+    setAlertsLoading(false);
   };
 
-  const loadRecentPHIAccess = async (tenantId: string) => {
-    // Get recent PHI access logs for this tenant's patients
-    const { data: logs, error } = await supabase
+  const loadSessions = async (tid: string) => {
+    setSessionsLoading(true);
+    const result = await tenantSecurityService.getActiveSessions(tid);
+    if (result.success) {
+      setSessions(result.data);
+    }
+    setSessionsLoading(false);
+  };
+
+  const loadPHIMetric = async (tid: string) => {
+    const { data, error } = await supabase
       .from('audit_logs')
-      .select('id, user_email, action_type, metadata, created_at')
-      .eq('tenant_id', tenantId)
-      .eq('action_category', 'PHI_ACCESS')
-      .order('created_at', { ascending: false })
-      .limit(10);
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tid)
+      .eq('action_category', 'PHI_ACCESS');
 
-    if (!error && logs) {
-      setRecentAccess(logs.map(log => ({
-        id: log.id,
-        user_email: log.user_email || 'Unknown',
-        patient_name: log.metadata?.patient_name || 'Unknown Patient',
-        action: log.action_type,
-        timestamp: log.created_at,
-      })));
-
-      updateMetric('PHI Access (24h)', logs.length, Eye, 'text-purple-600', 'bg-purple-50');
+    if (!error) {
+      setPhiCount(data?.length || 0);
     }
   };
 
-  const loadSecurityAlerts = async (tenantId: string) => {
-    // Get security alerts for this tenant
-    const { data: alertData, error } = await supabase
-      .from('audit_logs')
-      .select('id, severity, message, created_at')
-      .eq('tenant_id', tenantId)
-      .in('severity', ['high', 'critical'])
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    if (!error && alertData) {
-      setAlerts(alertData.map(alert => ({
-        id: alert.id,
-        severity: alert.severity as 'low' | 'medium' | 'high' | 'critical',
-        message: alert.message || 'Security event detected',
-        timestamp: alert.created_at,
-      })));
-
-      const criticalCount = alertData.filter(a => a.severity === 'critical').length;
-      updateMetric('Critical Alerts', criticalCount, AlertTriangle,
-        criticalCount > 0 ? 'text-red-600' : 'text-green-600',
-        criticalCount > 0 ? 'bg-red-50' : 'bg-green-50'
-      );
+  const loadRules = async () => {
+    if (!user?.id) return;
+    const result = await tenantSecurityService.getSecurityRules(user.id);
+    if (result.success) {
+      setRules(result.data);
     }
   };
 
-  const updateMetric = (label: string, value: number | string, icon: React.ComponentType<{ className?: string }>, color: string, bgColor: string) => {
-    setMetrics(prev => {
-      const existing = prev.findIndex(m => m.label === label);
-      const newMetric = { label, value, icon, color, bgColor };
+  const handleAcknowledge = async (alertId: string) => {
+    if (!user?.id) return;
+    const result = await tenantSecurityService.acknowledgeAlert(alertId, user.id);
+    if (result.success) {
+      setAlerts(prev => prev.map(a =>
+        a.id === alertId ? { ...a, status: 'acknowledged' as const, acknowledged_at: new Date().toISOString() } : a
+      ));
+    }
+  };
 
-      if (existing >= 0) {
-        const updated = [...prev];
-        updated[existing] = newMetric;
-        return updated;
-      }
-      return [...prev, newMetric];
-    });
+  const handleResolve = async (alertId: string) => {
+    if (!user?.id) return;
+    const result = await tenantSecurityService.resolveAlert(alertId, user.id);
+    if (result.success) {
+      setAlerts(prev => prev.map(a =>
+        a.id === alertId ? { ...a, status: 'resolved' as const, resolved_at: new Date().toISOString() } : a
+      ));
+    }
+  };
+
+  const handleForceLogout = async (userId: string) => {
+    if (!user?.id) return;
+    const result = await tenantSecurityService.forceLogout(userId, user.id);
+    if (result.success && tenantId) {
+      await loadSessions(tenantId);
+    }
+  };
+
+  const handleSaveRule = async (rule: SecurityRule) => {
+    if (!user?.id) return;
+    setRulesSaving(true);
+    const updatedRules = rules.some(r => r.id === rule.id)
+      ? rules.map(r => r.id === rule.id ? rule : r)
+      : [...rules, rule];
+    const result = await tenantSecurityService.saveSecurityRules(user.id, updatedRules);
+    if (result.success) {
+      setRules(updatedRules);
+    }
+    setRulesSaving(false);
+  };
+
+  const handleDeleteRule = async (ruleId: string) => {
+    if (!user?.id) return;
+    setRulesSaving(true);
+    const updatedRules = rules.filter(r => r.id !== ruleId);
+    const result = await tenantSecurityService.saveSecurityRules(user.id, updatedRules);
+    if (result.success) {
+      setRules(updatedRules);
+    }
+    setRulesSaving(false);
+  };
+
+  const handleToggleRule = async (ruleId: string, active: boolean) => {
+    if (!user?.id) return;
+    const updatedRules = rules.map(r => r.id === ruleId ? { ...r, is_active: active } : r);
+    const result = await tenantSecurityService.saveSecurityRules(user.id, updatedRules);
+    if (result.success) {
+      setRules(updatedRules);
+    }
   };
 
   if (loading) {
@@ -191,27 +245,18 @@ export const TenantSecurityDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Shield className="w-8 h-8 text-blue-600" />
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Facility Security Dashboard</h2>
-          <p className="text-sm text-gray-600">Real-time security monitoring for your facility</p>
-        </div>
-      </div>
-
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (
-            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg ${metric.bgColor}`}>
-                  <Icon className={`w-6 h-6 ${metric.color}`} />
+            <div key={index} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className={`p-2.5 rounded-lg ${metric.bgColor}`}>
+                  <Icon className={`w-5 h-5 ${metric.color}`} />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">
+              <div className="text-2xl font-bold text-gray-900 mb-0.5">
                 {typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}
               </div>
               <div className="text-sm text-gray-600">{metric.label}</div>
@@ -220,81 +265,32 @@ export const TenantSecurityDashboard: React.FC = () => {
         })}
       </div>
 
-      {/* Recent PHI Access */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Eye className="w-5 h-5 text-purple-600" />
-            Recent PHI Access
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">Last 10 patient record accesses at your facility</p>
-        </div>
-        <div className="divide-y divide-gray-200">
-          {recentAccess.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              No recent PHI access logs
-            </div>
-          ) : (
-            recentAccess.map((log) => (
-              <div key={log.id} className="p-4 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-gray-900">{log.user_email}</div>
-                    <div className="text-sm text-gray-600">
-                      {log.action} - {log.patient_name}
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+      {/* Alerts + Sessions side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SecurityAlertsPanel
+          tenantId={tenantId}
+          alerts={alerts}
+          loading={alertsLoading}
+          onAcknowledge={handleAcknowledge}
+          onResolve={handleResolve}
+          onRefresh={() => loadAlerts(tenantId)}
+        />
+        <ActiveSessionsPanel
+          sessions={sessions}
+          loading={sessionsLoading}
+          onForceLogout={handleForceLogout}
+          onRefresh={() => loadSessions(tenantId)}
+        />
       </div>
 
-      {/* Security Alerts */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-            Security Alerts
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">High and critical security events</p>
-        </div>
-        <div className="divide-y divide-gray-200">
-          {alerts.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              <Shield className="w-12 h-12 text-green-500 mx-auto mb-2" />
-              No security alerts - All clear!
-            </div>
-          ) : (
-            alerts.map((alert) => (
-              <div key={alert.id} className={`p-4 ${
-                alert.severity === 'critical' ? 'bg-red-50' :
-                alert.severity === 'high' ? 'bg-orange-50' : 'bg-gray-50'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`px-2 py-1 rounded text-xs font-semibold ${
-                      alert.severity === 'critical' ? 'bg-red-600 text-white' :
-                      alert.severity === 'high' ? 'bg-orange-600 text-white' :
-                      'bg-gray-600 text-white'
-                    }`}>
-                      {alert.severity.toUpperCase()}
-                    </div>
-                    <div className="text-sm text-gray-900">{alert.message}</div>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(alert.timestamp).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      {/* Security Rules */}
+      <SecurityRulesConfig
+        rules={rules}
+        saving={rulesSaving}
+        onSaveRule={handleSaveRule}
+        onDeleteRule={handleDeleteRule}
+        onToggleRule={handleToggleRule}
+      />
 
       {/* Info Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
