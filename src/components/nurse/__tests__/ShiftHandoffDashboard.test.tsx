@@ -204,8 +204,23 @@ vi.mock('../../patient-avatar', () => ({
   AvatarThumbnail: () => <div data-testid="avatar-thumbnail" />,
 }));
 
+// Mock DemoModeContext
+vi.mock('../../../contexts/DemoModeContext', () => ({
+  useDemoMode: () => ({
+    isDemo: false,
+    enabled: false,
+    startedAt: null,
+    remainingMs: 0,
+    durationMs: 0,
+    enableDemo: vi.fn(),
+    disableDemo: vi.fn(),
+    endDemo: vi.fn(),
+    toggleDemo: vi.fn(),
+  }),
+}));
+
 // Mock audit logger
-vi.mock('../../../services/auditLogger', () => ({
+const { auditLogger: mockAuditLogger } = vi.hoisted(() => ({
   auditLogger: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -213,6 +228,10 @@ vi.mock('../../../services/auditLogger', () => ({
     clinical: vi.fn(),
     auth: vi.fn(),
   },
+}));
+
+vi.mock('../../../services/auditLogger', () => ({
+  auditLogger: mockAuditLogger,
 }));
 
 describe('ShiftHandoffDashboard', () => {
@@ -470,5 +489,59 @@ describe('ShiftHandoffDashboard', () => {
     });
 
     expect(mockSupabase.channel).toHaveBeenCalled();
+  });
+
+  // ============================================================================
+  // Session 3: Audit Logging, Admin Wiring, Demo Mode Tests
+  // ============================================================================
+
+  it('logs SHIFT_HANDOFF_DASHBOARD_VIEW on mount via auditLogger', async () => {
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Smart Shift Handoff')).toBeInTheDocument();
+    });
+
+    expect(mockAuditLogger.info).toHaveBeenCalledWith(
+      'SHIFT_HANDOFF_DASHBOARD_VIEW',
+      expect.objectContaining({ shiftType: 'night', userId: 'nurse-user-id' })
+    );
+  });
+
+  it('logs HANDOFF_PRINT_REQUESTED when print is triggered', async () => {
+    // Mock window.print
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+    await renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('AI Shift Summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('AI Shift Summary'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Print Summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Print Summary'));
+
+    expect(mockAuditLogger.info).toHaveBeenCalledWith(
+      'HANDOFF_PRINT_REQUESTED',
+      expect.objectContaining({ shiftType: 'night' })
+    );
+    expect(printSpy).toHaveBeenCalled();
+    printSpy.mockRestore();
+  });
+
+  it('renders shift-handoff section definition in admin sections', async () => {
+    // This test verifies the section is properly registered
+    const { getAllSections } = await import('../../admin/sections/sectionDefinitions');
+    const sections = getAllSections();
+    const shiftHandoffSection = sections.find(s => s.id === 'shift-handoff');
+
+    expect(shiftHandoffSection).toBeDefined();
+    expect(shiftHandoffSection?.title).toBe('Smart Shift Handoff');
+    expect(shiftHandoffSection?.category).toBe('patient-care');
+    expect(shiftHandoffSection?.roles).toContain('nurse');
   });
 });

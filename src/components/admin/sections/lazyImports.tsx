@@ -35,6 +35,7 @@ export const AdminTransferLogs = lazy(() => import('../../handoff/AdminTransferL
 export const PatientEngagementDashboard = lazy(() => import('../PatientEngagementDashboard'));
 export const HospitalPatientEnrollment = lazy(() => import('../HospitalPatientEnrollment'));
 export const PaperFormScanner = lazy(() => import('../PaperFormScanner'));
+export const ShiftHandoffDashboard = lazy(() => import('../../nurse/ShiftHandoffDashboard'));
 
 // Clinical Specialties
 export const CardiologyDashboard = lazy(() => import('../../cardiology/CardiologyDashboard'));

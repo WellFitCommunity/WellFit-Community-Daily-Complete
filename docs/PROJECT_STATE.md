@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-24
-**Last Session:** Shift Handoff Dashboard Session 2 — Handoff Workflow (Acknowledge, Notes, Print, Realtime)
+**Last Session:** Shift Handoff Dashboard Session 3 — Integration & Polish (Admin wiring, Audit, Demo, Notification)
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -71,7 +71,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Tracker | Path | Status |
 |---------|------|--------|
-| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **Session 1 DONE, 5 sessions remaining** |
+| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **Feature 1 COMPLETE (3 sessions), Feature 2 next (3 sessions)** |
 | **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **COMPLETE — all 10 sessions done** |
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
@@ -86,7 +86,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,128 passed, 0 failed | 2026-02-24 |
+| Tests | 9,131 passed, 0 failed | 2026-02-24 |
 | Test Suites | 470 | 2026-02-24 |
 | Typecheck | 0 errors | 2026-02-24 |
 | Lint | 0 errors, 0 warnings | 2026-02-24 |
@@ -119,23 +119,28 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ## What Was Completed Last Session (2026-02-24)
 
-### Shift Handoff Dashboard Session 2: Handoff Workflow — COMPLETE
+### Shift Handoff Dashboard Session 3: Integration & Polish — COMPLETE
 
 **Tracker:** `docs/trackers/nurse-handoff-documentation-tracker.md`
 
 **What was done:**
-- **Acknowledge AI Summary** — "Acknowledge Summary" button on AISummaryPanel; calls `acknowledgeAIShiftSummary()` → updates `acknowledged_by`/`acknowledged_at`
-- **Nurse Notes** — "Add Notes" / "Edit Notes" button opens inline textarea; saves to `handoff_notes` column via `updateAISummaryNotes()` with audit logging
-- **Print/Export** — "Print Summary" button triggers `window.print()`; `@media print` CSS in `index.css` hides nav, modals, presence; forces content visible
-- **Real-time Updates** — Supabase realtime subscription on `ai_shift_handoff_summaries` INSERT/UPDATE events; auto-refreshes AI summary during shift change
-- **Service Decomposition** — `shiftHandoffService.ts` 717→457 lines; scoring → `shiftHandoffScoring.ts` (231 lines), time tracking → `shiftHandoffTimeTracking.ts` (112 lines)
-- **Tests** — 12 → 18 tests: acknowledge button + service call, add notes button, print button, notes editor open, realtime subscription setup
+- **Admin section wiring** — `lazyImports.tsx` + `sectionDefinitions.tsx` — ShiftHandoffDashboard registered in `patient-care` category, visible to nurse/charge_nurse/admin roles
+- **Audit logging** — `SHIFT_HANDOFF_DASHBOARD_VIEW` on mount, `SHIFT_HANDOFF_ACCEPTED` on accept, `SHIFT_HANDOFF_BYPASS_USED` (warn level) on bypass, `HANDOFF_PRINT_REQUESTED` on print
+- **Notification bridge** — Realtime INSERT handler shows `EAAffirmationToast` ("New AI shift summary available") when new AI summary arrives
+- **Demo mode data** — `shift-handoff/demoData.ts` with 4 demo patients, metrics, AI summary; `useDemoMode()` skips DB calls when active
+- **Tests** — 18 → 21 tests: audit logging on mount, print audit verification, admin section wiring
 
-**New files (2):**
-- `src/services/shiftHandoffScoring.ts` (231 lines)
-- `src/services/shiftHandoffTimeTracking.ts` (112 lines)
+**New file (1):**
+- `src/components/nurse/shift-handoff/demoData.ts` (135 lines)
 
-**Tests: 9,128 passed, 0 failed (470 suites) — up from 9,122**
+**Feature 1 (Shift Handoff Dashboard) is now COMPLETE across all 3 sessions.**
+
+**Tests: 9,131 passed, 0 failed (470 suites) — up from 9,128**
+
+### Previous: Session 2 — Handoff Workflow (same day)
+- Acknowledge AI summary, nurse notes editor, print/export, realtime updates
+- Service decomposition: `shiftHandoffService.ts` 717→457 lines
+- New files: `shiftHandoffScoring.ts` (231), `shiftHandoffTimeTracking.ts` (112)
 
 ---
 

@@ -21,7 +21,9 @@ import { getProviderAffirmation, AffirmationCategory } from '../../services/prov
 import { EAAffirmationToast } from '../envision-atlus/EAAffirmationToast';
 import { usePresence } from '../../hooks/usePresence';
 import { ActivityFeed, useActivityBroadcast } from '../collaboration';
+import { useDemoMode } from '../../contexts/DemoModeContext';
 import { HandoffHeader, HighAcuitySection, StandardAcuitySection, AISummaryPanel } from './shift-handoff';
+import { DEMO_HANDOFF_PATIENTS, DEMO_METRICS, DEMO_AI_SUMMARY, DEMO_UNITS } from './shift-handoff/demoData';
 import type { RiskFilter, PatientCardActions } from './shift-handoff';
 import type {
   ShiftHandoffSummary,
@@ -42,6 +44,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
     componentName: 'ShiftHandoffDashboard',
   });
   const { broadcast } = useActivityBroadcast('dashboard:shift-handoff');
+  const { isDemo } = useDemoMode();
 
   // Core state
   const [shiftType, setShiftType] = useState<ShiftType>('night');
@@ -98,6 +101,14 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
   // Load handoff data
   const loadHandoffData = useCallback(async () => {
+    if (isDemo) {
+      setHandoffSummary(DEMO_HANDOFF_PATIENTS);
+      setMetrics(DEMO_METRICS);
+      setCurrentBypassCount(0);
+      setAvailableUnits(DEMO_UNITS);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -119,10 +130,15 @@ export const ShiftHandoffDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [shiftType]);
+  }, [shiftType, isDemo]);
 
   // Load AI summary
   const loadAISummary = useCallback(async () => {
+    if (isDemo) {
+      setAiSummary(DEMO_AI_SUMMARY);
+      setAiSummaryLoading(false);
+      return;
+    }
     setAiSummaryLoading(true);
     try {
       const summary = await ShiftHandoffService.getAIShiftSummary(shiftType, unitFilter || undefined);
@@ -132,10 +148,11 @@ export const ShiftHandoffDashboard: React.FC = () => {
     } finally {
       setAiSummaryLoading(false);
     }
-  }, [shiftType, unitFilter]);
+  }, [shiftType, unitFilter, isDemo]);
 
   useEffect(() => {
     if (user) {
+      auditLogger.info('SHIFT_HANDOFF_DASHBOARD_VIEW', { shiftType, unitFilter, userId: user.id });
       loadHandoffData();
       loadAISummary();
       const interval = setInterval(loadHandoffData, 5 * 60 * 1000);
@@ -162,6 +179,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
         },
         () => {
           loadAISummary();
+          setAffirmationToast({ message: 'New AI shift summary available', type: 'info' });
           auditLogger.info('AI_SUMMARY_REALTIME_UPDATE', { shiftType, unitFilter });
         }
       )
@@ -337,6 +355,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
     setBypassNumber(0);
     setShowCelebration(true);
     showAffirmation('handoff_complete');
+    auditLogger.clinical('SHIFT_HANDOFF_ACCEPTED', true, { shiftType, patientCount, timeSpentSeconds });
     broadcast('update', 'handoff', `Accepted shift handoff for ${patientCount} patients`, undefined,
       `${shiftType.charAt(0).toUpperCase() + shiftType.slice(1)} Shift`);
   };
@@ -355,6 +374,10 @@ export const ShiftHandoffDashboard: React.FC = () => {
     setBypassNumber(result.bypass_number);
     setShowCelebration(true);
     setCurrentBypassCount(result.weekly_total);
+    auditLogger.warn('SHIFT_HANDOFF_BYPASS_USED', {
+      shiftType, bypassNumber: result.bypass_number, weeklyTotal: result.weekly_total,
+      pendingCount: pendingPatients.length, reason: bypassData.override_reason,
+    });
   };
 
   // Patient card actions

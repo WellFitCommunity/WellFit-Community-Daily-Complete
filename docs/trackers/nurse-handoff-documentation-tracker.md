@@ -103,16 +103,27 @@
 
 **Print styles added:** `src/index.css` — `@media print` block for shift handoff dashboard
 
-## Session 3: Integration & Polish — NOT STARTED
+## Session 3: Integration & Polish — COMPLETE
 
-| Feature | Status | What Needs to Be Built |
-|---------|--------|------------------------|
-| Admin section wiring | MISSING | Add to admin dashboard sections with module access check |
-| Notification bridge | MISSING | Push notification when new shift summary is generated |
-| Avatar integration UI | MISSING | Show patient avatar marker summary inline on handoff cards |
-| Audit logging | MISSING | Log all handoff views and acknowledgments via `auditLogger` |
-| Demo data | MISSING | Seed data for demo mode |
-| Tests | MISSING | Integration tests, audit logging verification |
+| Feature | Status | What Was Built |
+|---------|--------|----------------|
+| Admin section wiring | BUILT | `lazyImports.tsx` + `sectionDefinitions.tsx` — ShiftHandoffDashboard registered in `patient-care` category with nurse/charge_nurse/admin roles |
+| Notification bridge | BUILT | Realtime INSERT handler shows `EAAffirmationToast` ("New AI shift summary available") when new summary arrives |
+| Avatar integration UI | PARTIAL | `AvatarThumbnail` already renders on patient cards (Session 1); markers remain `[]` pending patient avatar marker service endpoint |
+| Audit logging | BUILT | `SHIFT_HANDOFF_DASHBOARD_VIEW` on mount, `SHIFT_HANDOFF_ACCEPTED` on accept, `SHIFT_HANDOFF_BYPASS_USED` (warn) on bypass, `HANDOFF_PRINT_REQUESTED` on print |
+| Demo data | BUILT | `shift-handoff/demoData.ts` — 4 demo patients (Alpha/Bravo/Charlie/Delta), metrics, AI summary, units; `useDemoMode()` skips DB calls when active |
+| Tests | BUILT | 21 tests (up from 18): audit logging on mount, print audit log, admin section wiring verification |
+
+**New files created:**
+- `src/components/nurse/shift-handoff/demoData.ts` (135 lines) — synthetic demo data for presentations
+
+**Files modified:**
+- `src/components/admin/sections/lazyImports.tsx` — added `ShiftHandoffDashboard` lazy import
+- `src/components/admin/sections/sectionDefinitions.tsx` — added `shift-handoff` section definition
+- `src/components/nurse/ShiftHandoffDashboard.tsx` (481→504 lines) — demo mode, audit logging, notification toast
+- `src/components/nurse/__tests__/ShiftHandoffDashboard.test.tsx` (18→21 tests)
+
+**Known gap:** Avatar markers (`markers={[]}`) need a service endpoint to fetch patient-specific avatar marker data from the database. This is a data flow feature, not a UI issue — the thumbnails render correctly.
 
 ---
 
