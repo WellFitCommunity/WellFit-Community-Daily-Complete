@@ -155,26 +155,43 @@
 **Modified files (1):**
 - `src/lib/nurseApi.ts` — rewritten to delegate to NurseQuestionService with legacy type mapping
 
-## Session 2: Service Layer & UI Wiring — NOT STARTED
+## Session 2: UI Wiring, Decomposition & AI Skill — COMPLETE
 
-| Feature | Status | What Needs to Be Built |
-|---------|--------|------------------------|
-| `nurseQuestionService.ts` | MISSING | Service using ServiceResult pattern: fetch queue, claim, answer, escalate |
-| Replace mock data | MISSING | Wire `NurseQuestionManager.tsx` to real service (remove hardcoded data) |
-| `nurseApi.ts` completion | PARTIAL | Currently 50-line stub — needs real Supabase calls |
-| AI suggestion integration | MISSING | Wire Claude for answer suggestions (register in `ai_skills`) |
-| Queue assignment logic | MISSING | Auto-assign based on unit, specialty, or round-robin |
-| Tests | MISSING | Service tests, UI integration tests |
+| Feature | Status | What Was Built |
+|---------|--------|----------------|
+| Decomposition | BUILT | `NurseQuestionManager.tsx` decomposed: 742→129 lines (83% reduction). Extracted to `nurse-questions/` subdirectory: `types.ts` (66), `QuestionList.tsx` (252), `ResponsePanel.tsx` (414), `AISuggestionPanel.tsx` (223), `index.ts` (13) |
+| Wire to real service | BUILT | Replaced `nurseApi.ts` legacy imports with direct `NurseQuestionService` calls using `ServiceResult` pattern — no throw-then-catch, proper error handling |
+| Remove mock data | BUILT | Deleted `mockQuestions` array (had PHI-looking names). Full field mapping from service: `category`, `urgency`, `user_id`, `patient_name`, `patient_phone` |
+| Fix empty catch blocks | BUILT | All 4 empty catch blocks replaced with `auditLogger.error()` calls |
+| AI model fix | BUILT | Replaced hardcoded `'claude-3-5-sonnet-20241022'` with `HAIKU_MODEL` import from `src/constants/aiModels.ts` |
+| AI suggestion tracking | BUILT | `submitAnswer` now passes `usedAiSuggestion`, `aiSuggestionText`, `aiConfidence` to service for AI acceptance rate analytics |
+| Escalation UI | BUILT | "Escalate" button with 3 levels (Charge Nurse, Supervisor, Physician). Includes nurse notes as escalation context. Calls `NurseQuestionService.escalateQuestion()` |
+| AI skill registration | BUILT | Migration `20260224200000_nurse_question_ai_skill.sql` — registered `nurse_question_responder` (skill #62) in `ai_skills` with HTI-2 `patient_description`. Applied to remote DB. |
+| Tests | BUILT | 27 tests across 8 describe blocks: dashboard rendering (4), queue/my toggle (2), filtering/search (3), selection/claiming (3), response submission (3), escalation (3), AI suggestion (5), error handling (2), category/urgency display (2) |
+
+**New files (7):**
+- `src/components/admin/nurse-questions/types.ts` (66 lines)
+- `src/components/admin/nurse-questions/QuestionList.tsx` (252 lines)
+- `src/components/admin/nurse-questions/ResponsePanel.tsx` (414 lines)
+- `src/components/admin/nurse-questions/AISuggestionPanel.tsx` (223 lines)
+- `src/components/admin/nurse-questions/index.ts` (13 lines)
+- `src/components/admin/nurse-questions/__tests__/NurseQuestionManager.test.tsx` (27 tests)
+- `supabase/migrations/20260224200000_nurse_question_ai_skill.sql`
+
+**Modified files (1):**
+- `src/components/admin/NurseQuestionManager.tsx` — rewritten as thin orchestrator (129 lines)
+
+**Tests: 9,175 passed, 0 failed (472 suites) — up from 9,148**
 
 ## Session 3: Workflow & Notifications — NOT STARTED
 
 | Feature | Status | What Needs to Be Built |
 |---------|--------|------------------------|
-| Escalation flow | MISSING | Question unanswered >2hrs auto-escalates to charge nurse |
+| Auto-escalation | MISSING | Question unanswered >2hrs auto-escalates to charge nurse (edge function or cron) |
+| Auto-assignment | MISSING | Auto-assign based on unit, specialty, or round-robin |
 | Patient notification | MISSING | Notify patient when question is answered (SMS/push) |
 | Nurse notification | MISSING | Alert nurse when new question arrives in their queue |
 | Analytics | MISSING | Response time metrics, volume by category, AI suggestion acceptance rate |
-| Audit logging | MISSING | All question interactions logged via `auditLogger` |
 | Tests | MISSING | Escalation timing, notification triggers, analytics queries |
 
 ---

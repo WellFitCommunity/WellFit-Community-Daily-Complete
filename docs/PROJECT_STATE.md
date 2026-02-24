@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-24
-**Last Session:** Nurse Question Manager Session 1 — Database & API Foundation (Migration, Service, Tests)
+**Last Session:** Nurse Question Manager Session 2 — UI Wiring, Decomposition, AI Skill & Escalation
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -71,7 +71,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Tracker | Path | Status |
 |---------|------|--------|
-| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **Feature 1 COMPLETE (3 sessions), Feature 2 Session 1 COMPLETE, Session 2 next** |
+| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **Feature 1 COMPLETE (3 sessions), Feature 2 Sessions 1-2 COMPLETE, Session 3 next** |
 | **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **COMPLETE — all 10 sessions done** |
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
@@ -86,8 +86,8 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,148 passed, 0 failed | 2026-02-24 |
-| Test Suites | 471 | 2026-02-24 |
+| Tests | 9,175 passed, 0 failed | 2026-02-24 |
+| Test Suites | 472 | 2026-02-24 |
 | Typecheck | 0 errors | 2026-02-24 |
 | Lint | 0 errors, 0 warnings | 2026-02-24 |
 | God files (>600 lines) | 0 violations (all decomposed) | 2026-02-24 |
@@ -119,24 +119,42 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ## What Was Completed Last Session (2026-02-24)
 
-### Nurse Question Manager Session 1: Database & API Foundation — COMPLETE
+### Nurse Question Manager Session 2: UI Wiring, Decomposition, AI Skill & Escalation — COMPLETE
 
 **Tracker:** `docs/trackers/nurse-handoff-documentation-tracker.md`
 
 **What was done:**
-- **Discovery:** `user_questions` table already existed (from `20250924000002_simple_user_questions_fix.sql`). Extended it with workflow columns instead of creating a duplicate table. Three RPC functions had been previously dropped in `20251209110000_drop_broken_functions.sql` — all recreated.
-- **Migration** — `20260224100000_nurse_question_system.sql` (268 lines): extended `user_questions` with `tenant_id`, `assigned_nurse_id`, `claimed_at`, `escalated_at`, `escalation_level`; created `nurse_question_answers` + `nurse_question_notes` tables with RLS; 6 RPC functions; applied to remote DB
-- **Service layer** — `nurseQuestionService.ts` (310 lines): ServiceResult pattern, 8 methods (fetchOpenQueue, claimQuestion, fetchMyQuestions, submitAnswer, addNote, escalateQuestion, getQuestionNotes, getQuestionAnswers), full audit logging
-- **API wrapper** — `nurseApi.ts` rewritten to delegate to NurseQuestionService with legacy field mapping for backward compat with existing NurseQuestionManager.tsx
-- **Tests** — 17 tests across 7 describe blocks: queue fetch, claim, my questions, submit answer, add note, escalate, notes/answers fetch, error handling
+- **Decomposition** — `NurseQuestionManager.tsx` decomposed: 742→129 lines (83% reduction). 5 submodules extracted to `nurse-questions/` subdirectory: types.ts, QuestionList.tsx, ResponsePanel.tsx, AISuggestionPanel.tsx, index.ts
+- **Service wiring** — Replaced `nurseApi.ts` legacy imports with direct `NurseQuestionService` calls using `ServiceResult` pattern (no throw-then-catch). Full field mapping from service (category, urgency, user_id, patient_name, patient_phone)
+- **Mock data removed** — Deleted `mockQuestions` array with PHI-looking names (Rule 15 violation). No fallback to fake data.
+- **Empty catch blocks fixed** — All 4 empty catch blocks replaced with `auditLogger.error()` calls
+- **AI model fixed** — Replaced hardcoded `'claude-3-5-sonnet-20241022'` with `HAIKU_MODEL` import (Rule 14)
+- **AI suggestion tracking** — `submitAnswer` now passes `usedAiSuggestion`, `aiSuggestionText`, `aiConfidence` for acceptance rate analytics
+- **Escalation UI** — "Escalate" button with 3 levels (Charge Nurse, Supervisor, Physician). Nurse notes included as escalation context.
+- **AI skill registration** — Migration `20260224200000_nurse_question_ai_skill.sql` — `nurse_question_responder` (skill #62) registered with HTI-2 `patient_description`. Applied to remote DB.
+- **Tests** — 27 tests across 8 describe blocks covering all behaviors
 
-**New files (3):**
-- `supabase/migrations/20260224100000_nurse_question_system.sql` (268 lines)
-- `src/services/nurseQuestionService.ts` (310 lines)
-- `src/services/__tests__/nurseQuestionService.test.ts` (333 lines)
+**New files (7):**
+- `src/components/admin/nurse-questions/types.ts` (66 lines)
+- `src/components/admin/nurse-questions/QuestionList.tsx` (252 lines)
+- `src/components/admin/nurse-questions/ResponsePanel.tsx` (414 lines)
+- `src/components/admin/nurse-questions/AISuggestionPanel.tsx` (223 lines)
+- `src/components/admin/nurse-questions/index.ts` (13 lines)
+- `src/components/admin/nurse-questions/__tests__/NurseQuestionManager.test.tsx` (27 tests)
+- `supabase/migrations/20260224200000_nurse_question_ai_skill.sql`
 
 **Modified files (1):**
-- `src/lib/nurseApi.ts` — rewritten to delegate to NurseQuestionService
+- `src/components/admin/NurseQuestionManager.tsx` — rewritten as thin orchestrator (129 lines)
+
+**Tests: 9,175 passed, 0 failed (472 suites) — up from 9,148**
+
+---
+
+### Earlier: Nurse Question Manager Session 1: Database & API Foundation — COMPLETE
+
+**What was done:**
+- Discovery, migration, service layer, API wrapper, 17 tests
+- See tracker for full details
 
 **Tests: 9,148 passed, 0 failed (471 suites) — up from 9,131**
 
