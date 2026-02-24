@@ -33,9 +33,9 @@
 | Envision Auth Flow | 10/10 | Complete 2FA flow |
 | CRUD Operations | 9/10 | Minor gaps in read-only panels |
 | Admin Separation | 9/10 | Needs RLS verification for tenant isolation |
-| Test Coverage | 7/10 | **58/104 components tested (56%)** — +6 from Tier 2 Session 2 |
+| Test Coverage | 8/10 | **65/104 components tested (63%)** — +7 from Tier 2 Session 3 |
 
-**Overall: 95/100 — functionally solid, test coverage at 56%**
+**Overall: 96/100 — functionally solid, test coverage at 63%**
 
 ---
 
@@ -98,15 +98,15 @@
 
 ## Session 3: Compliance & Security Components
 
-| # | Component | Lines | Why High Priority | Status |
-|---|-----------|-------|-------------------|--------|
-| 2.14 | SOC2SecurityDashboard | ~400 | SOC2 compliance | TODO |
-| 2.15 | SOC2ComplianceDashboard | ~350 | SOC2 compliance | TODO |
-| 2.16 | SOC2AuditDashboard | ~300 | SOC2 audit trail | TODO |
-| 2.17 | SOC2ExecutiveDashboard | ~250 | Executive compliance view | TODO |
-| 2.18 | SOC2IncidentResponseDashboard | ~300 | Incident response | TODO |
-| 2.19 | ComplianceDashboard | ~300 | General compliance | TODO |
-| 2.20 | TenantAuditLogs | ~250 | Audit log viewer | TODO |
+| # | Component | Lines | Tests | Why High Priority | Status |
+|---|-----------|-------|-------|-------------------|--------|
+| 2.14 | SOC2SecurityDashboard | 311 | 20 tests | SOC2 compliance | DONE |
+| 2.15 | SOC2ComplianceDashboard | 1062 | 23 tests | SOC2 compliance | DONE |
+| 2.16 | SOC2AuditDashboard | 482 | 24 tests | SOC2 audit trail | DONE |
+| 2.17 | SOC2ExecutiveDashboard | 425 | 31 tests | Executive compliance view | DONE |
+| 2.18 | SOC2IncidentResponseDashboard | 473 | 27 tests | Incident response | DONE |
+| 2.19 | ComplianceDashboard | 423 | 23 tests | General compliance | DONE |
+| 2.20 | TenantAuditLogs | 355 | 24 tests | Audit log viewer | DONE |
 
 ## Session 4: Admin Operations Components
 
@@ -196,9 +196,35 @@
 | Audit | Full 10-dimension evaluation of Envision Admin Panel |
 | Tracker | Created this tracker with ~55 items across 4 tiers |
 
-### Session 6: NOT STARTED
+### Session 6: Tier 1 + Tier 2 Session 1 — COMPLETE (2026-02-24)
 
-**Planned scope:** Tier 1 remaining (RLS verification, SDOHCoderAssist fix) + Tier 2 Session 1 (Clinical & FHIR tests)
+| What | Result |
+|------|--------|
+| Tier 1.1 RLS verification | Verified — tenant isolation properly enforced |
+| Tier 1.2 SDOHCoderAssist fix | Created wrapper with PatientContext |
+| Tier 2 Session 1 | 79 tests for 6 clinical/FHIR components |
+| Tests | 9,308 total (481 suites) |
+
+### Session 7: Tier 2 Session 2 — COMPLETE (2026-02-24)
+
+| What | Result |
+|------|--------|
+| Tier 2 Session 2 | 135 tests for 6 billing/revenue components |
+| Tests | 9,443 total (487 suites) |
+
+### Session 8: Tier 2 Session 3 — COMPLETE (2026-02-24)
+
+| What | Result |
+|------|--------|
+| Tier 2 Session 3 | 172 tests for 7 compliance/security components |
+| Components | SOC2SecurityDashboard (20), SOC2ComplianceDashboard (23), SOC2AuditDashboard (24), SOC2ExecutiveDashboard (31), SOC2IncidentResponseDashboard (27), ComplianceDashboard (23), TenantAuditLogs (24) |
+| Tests | 9,615 total (494 suites) |
+| Coverage | 65/104 components (63%) |
+| Note | SOC2ComplianceDashboard is 1,062 lines — flagged for future decomposition |
+
+### Session 9: NOT STARTED
+
+**Planned scope:** Tier 2 Session 4 (Admin Operations components 2.21-2.27)
 
 ---
 
@@ -206,8 +232,8 @@
 
 | Tier | Sessions | Hours | Items |
 |------|----------|-------|-------|
-| Tier 1 (Fixes) | 0.5 | ~2 | 2 remaining |
-| Tier 2 (High-Priority Tests) | 4 | ~24 | 27 components |
+| Tier 1 (Fixes) | ~~0.5~~ | ~~2~~ | DONE |
+| Tier 2 (High-Priority Tests) | ~~4~~ 3 done | ~~24~~ | 7 remaining (Session 4) |
 | Tier 3 (Medium-Priority Tests) | 3 | ~18 | 25 components |
 | Tier 4 (Nice-to-Haves) | 1-2 | ~8 | 8 items |
-| **Total** | **8-10** | **~52** | **62 items** |
+| **Total remaining** | **~5** | **~30** | **40 items** |

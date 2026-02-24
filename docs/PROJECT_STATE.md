@@ -46,7 +46,7 @@
 
 ---
 
-## Current Priority: Admin Panel Hardening — Tier 2 Session 1 COMPLETE
+## Current Priority: Admin Panel Hardening — Tier 2 Session 3 COMPLETE
 
 **Tracker:** `docs/trackers/envision-admin-panel-hardening-tracker.md`
 
@@ -55,7 +55,7 @@
 | Tier 1 (1.1-1.3) | DONE | RLS verification, SDOHCoderAssist wrapper, Tenant Suspension |
 | Tier 2 Session 1 (2.1-2.7) | DONE | 79 behavioral tests for 6 clinical/FHIR components |
 | Tier 2 Session 2 (2.8-2.13) | DONE | 135 behavioral tests for 6 billing/revenue components |
-| Tier 2 Session 3 (2.14-2.20) | TODO | Compliance & Security component tests |
+| Tier 2 Session 3 (2.14-2.20) | DONE | 172 behavioral tests for 7 compliance/security components |
 | Tier 2 Session 4 (2.21-2.27) | TODO | Admin Operations component tests |
 | Tier 3 Sessions 5-7 | TODO | Medium-priority test coverage (25 components) |
 | Tier 4 | TODO | Nice-to-haves (8 items) |
@@ -93,11 +93,11 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,443 passed, 0 failed | 2026-02-24 |
-| Test Suites | 487 | 2026-02-24 |
+| Tests | 9,615 passed, 0 failed | 2026-02-24 |
+| Test Suites | 494 | 2026-02-24 |
 | Typecheck | 0 errors | 2026-02-24 |
 | Lint | 0 errors, 0 warnings | 2026-02-24 |
-| God files (>600 lines) | 0 violations (all decomposed) | 2026-02-24 |
+| God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) | 2026-02-24 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
 | Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
