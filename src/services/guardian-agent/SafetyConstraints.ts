@@ -319,8 +319,8 @@ export class VersionManifest {
    */
   private initializeGoldenVersions(): void {
     // These should be loaded from a config file in production
-    this.goldenVersions.set('react', '18.2.0');
-    this.goldenVersions.set('react-dom', '18.2.0');
+    this.goldenVersions.set('react', '19.0.0');
+    this.goldenVersions.set('react-dom', '19.0.0');
     this.goldenVersions.set('@supabase/supabase-js', '2.39.0');
     // Add more as needed
   }
@@ -378,28 +378,38 @@ export class RateLimiter {
   private actionHistory: Map<string, Date[]> = new Map();
 
   /**
-   * Check if action is rate-limited
+   * Creates a tenant-scoped key for rate limiting.
+   * Ensures Tenant A's rate limits don't interfere with Tenant B.
    */
-  isRateLimited(actionType: string): boolean {
-    const history = this.actionHistory.get(actionType) || [];
+  private getKey(actionType: string, tenantId?: string): string {
+    return tenantId ? `${tenantId}:${actionType}` : actionType;
+  }
+
+  /**
+   * Check if action is rate-limited (tenant-scoped)
+   */
+  isRateLimited(actionType: string, tenantId?: string): boolean {
+    const key = this.getKey(actionType, tenantId);
+    const history = this.actionHistory.get(key) || [];
     const now = Date.now();
     const recentActions = history.filter(
       (timestamp) => now - timestamp.getTime() < ACTION_CONSTRAINTS.actionCooldownMs
     );
 
     // Update history
-    this.actionHistory.set(actionType, recentActions);
+    this.actionHistory.set(key, recentActions);
 
     // Check if we've exceeded rate
     return recentActions.length >= 3; // Max 3 of same action per cooldown period
   }
 
   /**
-   * Record an action execution
+   * Record an action execution (tenant-scoped)
    */
-  recordAction(actionType: string): void {
-    const history = this.actionHistory.get(actionType) || [];
+  recordAction(actionType: string, tenantId?: string): void {
+    const key = this.getKey(actionType, tenantId);
+    const history = this.actionHistory.get(key) || [];
     history.push(new Date());
-    this.actionHistory.set(actionType, history);
+    this.actionHistory.set(key, history);
   }
 }

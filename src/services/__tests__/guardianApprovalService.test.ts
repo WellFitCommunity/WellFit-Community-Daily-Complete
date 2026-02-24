@@ -194,6 +194,7 @@ function createMockApplicationResult(success: boolean): ApplicationResult {
 function createMockTicket(overrides?: Partial<GuardianReviewTicket>): GuardianReviewTicket {
   return {
     id: 'ticket-uuid-123',
+    tenant_id: null,
     security_alert_id: 'alert-uuid-456',
     issue_id: 'ISSUE-001',
     issue_category: 'security_vulnerability',

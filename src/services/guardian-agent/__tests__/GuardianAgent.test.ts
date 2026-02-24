@@ -54,6 +54,7 @@ vi.mock('../MonitoringSystem', () => {
     MonitoringSystem: class MockMonitoringSystem {
       start = vi.fn();
       stop = vi.fn();
+      updateConfig = vi.fn();
       getStatistics = vi.fn().mockReturnValue({
         metricsCollected: 100,
         anomaliesDetected: 2,

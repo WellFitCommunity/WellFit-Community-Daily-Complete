@@ -47,6 +47,7 @@ export interface SystemSnapshot {
 
 export interface SessionRecording {
   session_id: string;
+  tenant_id?: string;
   user_id?: string;
   start_time: string;
   end_time?: string;
@@ -83,7 +84,7 @@ export class AISystemRecorder {
   /**
    * Start recording system behavior with rrweb
    */
-  async startRecording(userId?: string): Promise<string> {
+  async startRecording(userId?: string, tenantId?: string): Promise<string> {
     if (this.isRecording) {
       return this.currentSession?.session_id || '';
     }
@@ -92,6 +93,7 @@ export class AISystemRecorder {
 
     this.currentSession = {
       session_id: sessionId,
+      tenant_id: tenantId,
       user_id: userId,
       start_time: new Date().toISOString(),
       snapshots: [],
@@ -181,7 +183,8 @@ export class AISystemRecorder {
     this.lastUploadTime = Date.now();
 
     const chunkId = `${this.currentSession.session_id}-${Date.now()}`;
-    const fileName = `${this.currentSession.session_id}/${chunkId}.json`;
+    const tenantPrefix = this.currentSession.tenant_id ? `${this.currentSession.tenant_id}/` : '';
+    const fileName = `${tenantPrefix}${this.currentSession.session_id}/${chunkId}.json`;
 
     try {
       const blob = new Blob([JSON.stringify(eventsToUpload)], { type: 'application/json' });
@@ -239,10 +242,11 @@ export class AISystemRecorder {
     // Save session metadata to database
     await this.saveRecording(this.currentSession);
 
-    // Generate recording URL
+    // Generate recording URL (tenant-scoped storage path)
+    const tenantPrefix = this.currentSession.tenant_id ? `${this.currentSession.tenant_id}/` : '';
     const { data } = supabase.storage
       .from('guardian-eyes')
-      .getPublicUrl(`${this.currentSession.session_id}/`);
+      .getPublicUrl(`${tenantPrefix}${this.currentSession.session_id}/`);
     this.currentSession.recording_url = data?.publicUrl;
 
     const recording = this.currentSession;
@@ -644,8 +648,8 @@ export function useSystemRecording(autoStart = false) {
   }, []);
 
   return {
-    startRecording: async (userId?: string) => {
-      await aiSystemRecorder.startRecording(userId);
+    startRecording: async (userId?: string, tenantId?: string) => {
+      await aiSystemRecorder.startRecording(userId, tenantId);
       setIsRecording(true);
     },
     stopRecording: async () => {

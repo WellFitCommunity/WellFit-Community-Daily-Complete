@@ -40,7 +40,7 @@ export class AgentBrain {
     this.config = config;
     this.signatureLibrary = new ErrorSignatureLibrary();
     this.healingEngine = new HealingEngine(config);
-    this.learningSystem = new LearningSystem();
+    this.learningSystem = new LearningSystem(config.tenantId);
     this.auditLogger = new AuditLogger();
     this.rateLimiter = new RateLimiter();
     this.sandbox = new SandboxEnvironment();
@@ -85,12 +85,14 @@ export class AgentBrain {
       return null;
     }
 
-    // Create detected issue
+    // Create detected issue (tenant-scoped)
+    const tenantId = context.tenantId || this.config.tenantId;
     const issue: DetectedIssue = {
       id: this.generateId('issue'),
+      tenantId,
       timestamp: new Date(),
       signature,
-      context,
+      context: { ...context, tenantId },
       severity: this.calculateSeverity(signature, context),
       affectedResources: this.identifyAffectedResources(context),
       stackTrace: error instanceof Error ? error.stack : undefined,
@@ -166,6 +168,7 @@ export class AgentBrain {
         // Update cache
         this.patternCache.set(cacheKey, {
           id: signature.id,
+          tenantId: context.tenantId,
           pattern: signature.id,
           solution: signature.healingStrategies.join(','),
           successRate: 1,
@@ -224,8 +227,8 @@ export class AgentBrain {
       return true;
     }
 
-    // Check if we have high confidence in healing strategies from knowledge base
-    const knowledge = this.findRelevantKnowledge(issue.signature.id);
+    // Check if we have high confidence in healing strategies from knowledge base (tenant-scoped)
+    const knowledge = this.findRelevantKnowledge(issue.signature.id, issue.tenantId);
     if (knowledge && knowledge.successRate > 0.85) {
       return true;
     }
@@ -242,9 +245,10 @@ export class AgentBrain {
     // Select optimal healing strategy
     const strategy = this.selectOptimalStrategy(issue);
 
-    // Create healing action
+    // Create healing action (tenant-scoped)
     const action: HealingAction = {
       id: this.generateId('healing'),
+      tenantId: issue.tenantId,
       issueId: issue.id,
       strategy,
       timestamp: new Date(),
@@ -264,8 +268,8 @@ export class AgentBrain {
       return;
     }
 
-    // ✅ SAFETY CHECK 2: Rate limiting to prevent action storms
-    if (this.rateLimiter.isRateLimited(strategy)) {
+    // ✅ SAFETY CHECK 2: Rate limiting to prevent action storms (tenant-scoped)
+    if (this.rateLimiter.isRateLimited(strategy, issue.tenantId)) {
       await this.auditLogger.logBlockedAction(issue, action, `Rate limit exceeded for ${strategy}`);
       this.state.mode = 'monitor';
       return;
@@ -281,8 +285,8 @@ export class AgentBrain {
 
     this.state.healingInProgress.push(action);
 
-    // Record action for rate limiting
-    this.rateLimiter.recordAction(strategy);
+    // Record action for rate limiting (tenant-scoped)
+    this.rateLimiter.recordAction(strategy, issue.tenantId);
 
     // Execute healing
     const result = await this.healingEngine.execute(action, issue);
@@ -332,10 +336,12 @@ export class AgentBrain {
   private selectOptimalStrategy(issue: DetectedIssue): HealingStrategy {
     const strategies = issue.signature.healingStrategies;
 
-    // Find knowledge about each strategy
+    // Find tenant-scoped knowledge about each strategy
     const strategyScores = strategies.map(strategy => {
       const knowledge = this.state.knowledgeBase.find(k =>
-        k.pattern === issue.signature.id && k.solution.includes(strategy)
+        k.pattern === issue.signature.id &&
+        k.solution.includes(strategy) &&
+        (!issue.tenantId || !k.tenantId || k.tenantId === issue.tenantId)
       );
 
       return {
@@ -363,7 +369,7 @@ export class AgentBrain {
     action: HealingAction,
     result: HealingResult
   ): Promise<void> {
-    const knowledge = this.findRelevantKnowledge(issue.signature.id);
+    const knowledge = this.findRelevantKnowledge(issue.signature.id, issue.tenantId);
 
     if (knowledge) {
       // Try alternative strategy
@@ -391,7 +397,7 @@ export class AgentBrain {
     action: HealingAction,
     result: HealingResult
   ): void {
-    const existing = this.findRelevantKnowledge(issue.signature.id);
+    const existing = this.findRelevantKnowledge(issue.signature.id, issue.tenantId);
 
     if (existing) {
       // Update existing knowledge
@@ -403,9 +409,10 @@ export class AgentBrain {
       existing.effectiveness =
         (existing.effectiveness + result.metrics.timeToHeal < 5000 ? 90 : 70) / 2;
     } else {
-      // Add new knowledge
+      // Add new knowledge (tenant-scoped)
       this.state.knowledgeBase.push({
         id: this.generateId('knowledge'),
+        tenantId: issue.tenantId,
         pattern: issue.signature.id,
         solution: action.strategy,
         successRate: result.success ? 1 : 0,
@@ -560,9 +567,76 @@ export class AgentBrain {
     };
   }
 
-  private contextMatches(_signature: ErrorSignature, _context: ErrorContext): boolean {
-    // Implement context matching logic
-    return true; // Simplified
+  private contextMatches(signature: ErrorSignature, context: ErrorContext): boolean {
+    // Security categories are universally relevant — always match
+    const universalCategories = new Set([
+      'security_vulnerability',
+      'phi_exposure_risk',
+      'hipaa_violation',
+      'memory_leak',
+      'infinite_loop',
+      'cascade_failure',
+    ]);
+
+    if (universalCategories.has(signature.category)) {
+      return true;
+    }
+
+    const recentActionsStr = context.recentActions.join(' ').toLowerCase();
+
+    switch (signature.category) {
+      case 'api_failure':
+      case 'network_partition':
+        return !!(
+          context.apiEndpoint ||
+          /fetch|api|request|network|http/i.test(recentActionsStr)
+        );
+
+      case 'database_inconsistency':
+      case 'deadlock':
+      case 'data_corruption':
+        return !!(
+          context.databaseQuery ||
+          /query|supabase|database|insert|update|delete|rpc/i.test(recentActionsStr)
+        );
+
+      case 'authentication_failure':
+      case 'authorization_breach':
+        return !!(
+          context.component?.toLowerCase().includes('auth') ||
+          context.filePath?.includes('auth') ||
+          context.apiEndpoint?.includes('auth') ||
+          context.apiEndpoint?.includes('login') ||
+          context.sessionId
+        );
+
+      case 'state_corruption':
+      case 'race_condition':
+        return !!(context.component || context.filePath?.endsWith('.tsx'));
+
+      case 'type_mismatch':
+      case 'null_reference':
+        return !!(context.component || context.filePath);
+
+      case 'performance_degradation':
+        return !!(
+          context.apiEndpoint ||
+          context.databaseQuery ||
+          context.recentActions.length > 0
+        );
+
+      case 'configuration_error':
+        return (
+          Object.keys(context.environmentState).length > 0 ||
+          !!context.filePath?.includes('config')
+        );
+
+      case 'dependency_failure':
+        return context.recentActions.length >= 2;
+
+      default:
+        return false;
+    }
   }
 
   private calculateSeverity(signature: ErrorSignature, _context: ErrorContext): SeverityLevel {
@@ -586,8 +660,11 @@ export class AgentBrain {
     return resources;
   }
 
-  private findRelevantKnowledge(signatureId: string): KnowledgeEntry | undefined {
-    return this.state.knowledgeBase.find(k => k.pattern === signatureId);
+  private findRelevantKnowledge(signatureId: string, tenantId?: string): KnowledgeEntry | undefined {
+    return this.state.knowledgeBase.find(k =>
+      k.pattern === signatureId &&
+      (!tenantId || !k.tenantId || k.tenantId === tenantId)
+    );
   }
 
   private analyzeFailure(result: HealingResult): string {
@@ -602,6 +679,7 @@ export class AgentBrain {
       title: `Approval Required: ${issue.signature.category} - ${issue.signature.description}`,
       description: `Guardian Agent detected an issue requiring admin approval before proceeding.\n\n` +
         `Issue ID: ${issue.id}\n` +
+        `Tenant: ${issue.tenantId || 'unknown'}\n` +
         `Type: ${issue.signature.category}\n` +
         `Severity: ${issue.severity}\n` +
         `Affected: ${issue.affectedResources.join(', ') || 'Unknown'}\n` +
@@ -670,6 +748,9 @@ export class AgentBrain {
 
   updateConfig(config: Partial<AgentConfig>): void {
     this.config = { ...this.config, ...config };
+    if (config.tenantId) {
+      this.learningSystem.setTenantId(config.tenantId);
+    }
   }
 
   // ✅ AUDIT & COMPLIANCE METHODS

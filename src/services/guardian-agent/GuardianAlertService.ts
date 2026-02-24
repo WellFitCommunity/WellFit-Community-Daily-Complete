@@ -30,6 +30,7 @@ export type AlertCategory =
 
 export interface GuardianAlert {
   id: string;
+  tenant_id?: string;
   timestamp: string;
   severity: AlertSeverity;
   category: AlertCategory;
@@ -98,12 +99,13 @@ export class GuardianAlertService {
     };
 
     try {
-      // Save to database
+      // Save to database (tenant-scoped)
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { data, error } = await supabase
         .from('guardian_alerts')
         .insert({
           id: fullAlert.id,
+          tenant_id: fullAlert.tenant_id,
           severity: fullAlert.severity,
           category: fullAlert.category,
           title: fullAlert.title,
@@ -176,9 +178,10 @@ export class GuardianAlertService {
         },
       });
 
-      // Also insert into notifications table for persistent inbox
+      // Also insert into notifications table for persistent inbox (tenant-scoped)
       await supabase.from('security_notifications').insert({
         type: 'guardian_alert',
+        tenant_id: alert.tenant_id,
         severity: alert.severity,
         title: alert.title,
         message: alert.description,
@@ -201,12 +204,18 @@ export class GuardianAlertService {
    */
   private static async sendEmailNotification(alert: GuardianAlert): Promise<void> {
     try {
-      // Get security team emails
-      const { data: securityTeam } = await supabase
+      // Get security team emails (tenant-scoped)
+      let query = supabase
         .from('profiles')
         .select('email, first_name, last_name')
         .eq('role_code', 'SECURITY_ADMIN')
         .eq('is_active', true);
+
+      if (alert.tenant_id) {
+        query = query.eq('tenant_id', alert.tenant_id);
+      }
+
+      const { data: securityTeam } = await query;
 
       if (!securityTeam || securityTeam.length === 0) return;
 
@@ -496,13 +505,18 @@ export class GuardianAlertService {
   /**
    * Get all pending alerts for Security Panel
    */
-  static async getPendingAlerts(): Promise<GuardianAlert[]> {
-    const { data, error } = await supabase
+  static async getPendingAlerts(tenantId?: string): Promise<GuardianAlert[]> {
+    let query = supabase
       .from('guardian_alerts')
-      .select('id, timestamp, severity, category, title, description, session_recording_id, session_recording_url, video_timestamp, healing_operation_id, generated_fix, affected_component, affected_users, error_stack, status, acknowledged_by, acknowledged_at, resolution_notes, actions, metadata')
+      .select('id, tenant_id, timestamp, severity, category, title, description, session_recording_id, session_recording_url, video_timestamp, healing_operation_id, generated_fix, affected_component, affected_users, error_stack, status, acknowledged_by, acknowledged_at, resolution_notes, actions, metadata')
       .in('status', ['pending', 'acknowledged'])
       .order('created_at', { ascending: false });
 
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
   }
@@ -510,8 +524,8 @@ export class GuardianAlertService {
   /**
    * Acknowledge alert
    */
-  static async acknowledgeAlert(alertId: string, userId: string): Promise<void> {
-    await supabase
+  static async acknowledgeAlert(alertId: string, userId: string, tenantId?: string): Promise<void> {
+    let query = supabase
       .from('guardian_alerts')
       .update({
         status: 'acknowledged',
@@ -519,6 +533,12 @@ export class GuardianAlertService {
         acknowledged_at: new Date().toISOString(),
       })
       .eq('id', alertId);
+
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    await query;
 
     await auditLogger.security('GUARDIAN_ALERT_ACKNOWLEDGED', 'low', {
       alertId,
@@ -529,8 +549,8 @@ export class GuardianAlertService {
   /**
    * Resolve alert
    */
-  static async resolveAlert(alertId: string, userId: string, notes: string): Promise<void> {
-    await supabase
+  static async resolveAlert(alertId: string, userId: string, notes: string, tenantId?: string): Promise<void> {
+    let query = supabase
       .from('guardian_alerts')
       .update({
         status: 'resolved',
@@ -539,6 +559,12 @@ export class GuardianAlertService {
         acknowledged_at: new Date().toISOString(),
       })
       .eq('id', alertId);
+
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    await query;
 
     await auditLogger.security('GUARDIAN_ALERT_RESOLVED', 'low', {
       alertId,

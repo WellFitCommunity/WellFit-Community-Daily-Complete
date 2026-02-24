@@ -18,6 +18,7 @@ export class GuardianAgent {
 
   private constructor(config?: Partial<AgentConfig>) {
     this.config = {
+      tenantId: undefined,
       autoHealEnabled: true,
       requireApprovalForCritical: false, // Fully autonomous
       maxConcurrentHealings: 5,
@@ -32,7 +33,7 @@ export class GuardianAgent {
 
     this.brain = new AgentBrain(this.config);
     this.security = new SecurityScanner();
-    this.monitoring = new MonitoringSystem(this.brain, this.security);
+    this.monitoring = new MonitoringSystem(this.brain, this.security, this.config);
     this.startTime = new Date();
 
   }
@@ -155,6 +156,7 @@ export class GuardianAgent {
     await this.brain.analyze(error, {
       environmentState: {},
       recentActions: [],
+      tenantId: this.config.tenantId,
       ...context
     });
   }
@@ -182,11 +184,29 @@ export class GuardianAgent {
   }
 
   /**
+   * Sets the active tenant for tenant-scoped monitoring and healing.
+   * Call this when auth resolves or tenant switches.
+   */
+  setTenantId(tenantId: string): void {
+    this.config.tenantId = tenantId;
+    this.brain.updateConfig(this.config);
+    this.monitoring.updateConfig(this.config);
+  }
+
+  /**
+   * Gets the current tenant ID
+   */
+  getTenantId(): string | undefined {
+    return this.config.tenantId;
+  }
+
+  /**
    * Updates agent configuration
    */
   updateConfig(config: Partial<AgentConfig>): void {
     this.config = { ...this.config, ...config };
     this.brain.updateConfig(this.config);
+    this.monitoring.updateConfig(this.config);
   }
 
   /**

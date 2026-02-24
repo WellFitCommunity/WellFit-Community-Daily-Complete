@@ -61,6 +61,7 @@ export interface ErrorSignature {
 
 export interface DetectedIssue {
   id: string;
+  tenantId?: string;
   timestamp: Date;
   signature: ErrorSignature;
   context: ErrorContext;
@@ -76,6 +77,7 @@ export interface ErrorContext {
   lineNumber?: number;
   userId?: string;
   sessionId?: string;
+  tenantId?: string;
   apiEndpoint?: string;
   databaseQuery?: string;
   environmentState: Record<string, unknown>;
@@ -84,6 +86,7 @@ export interface ErrorContext {
 
 export interface HealingAction {
   id: string;
+  tenantId?: string;
   issueId: string;
   strategy: HealingStrategy;
   timestamp: Date;
@@ -113,6 +116,7 @@ export interface ValidationRule {
 
 export interface HealingResult {
   actionId: string;
+  tenantId?: string;
   success: boolean;
   timestamp: Date;
   stepsCompleted: number;
@@ -140,6 +144,7 @@ export interface AgentState {
 
 export interface KnowledgeEntry {
   id: string;
+  tenantId?: string;
   pattern: string;
   solution: string;
   successRate: number;
@@ -161,6 +166,7 @@ export interface PerformanceMetrics {
 }
 
 export interface AgentConfig {
+  tenantId?: string;
   autoHealEnabled: boolean;
   requireApprovalForCritical: boolean;
   maxConcurrentHealings: number;

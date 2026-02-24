@@ -22,6 +22,7 @@ interface GuardianEyesSnapshot {
   action: string;
   metadata: Record<string, unknown>;
   severity: 'critical' | 'high' | 'medium' | 'low';
+  tenant_id?: string;
 }
 
 interface SecurityAlert {
@@ -96,32 +97,42 @@ serve(async (req) => {
 
     const { action, data } = await req.json()
 
+    // Resolve tenant_id from request data or auth JWT
+    const tenantId = data?.tenant_id || await resolveTenantId(supabase, req);
+    if (!tenantId) {
+      return new Response(JSON.stringify({ error: 'tenant_id required' }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+
     switch (action) {
       case 'monitor':
-        // Run system monitoring checks
-        const alerts = await runMonitoringChecks(supabase)
+        // Run system monitoring checks (tenant-scoped)
+        const alerts = await runMonitoringChecks(supabase, tenantId)
         return new Response(JSON.stringify({ success: true, alerts }), {
           headers: corsHeaders,
         })
 
       case 'record':
-        // Guardian Eyes - Record a system snapshot
+        // Guardian Eyes - Record a system snapshot (tenant-scoped)
         const snapshot = data as GuardianEyesSnapshot
-        await recordSnapshot(supabase, snapshot)
+        snapshot.tenant_id = tenantId;
+        await recordSnapshot(supabase, snapshot, tenantId)
         return new Response(JSON.stringify({ success: true }), {
           headers: corsHeaders,
         })
 
       case 'analyze':
-        // Analyze recent recordings for patterns
-        const analysis = await analyzeRecordings(supabase)
+        // Analyze recent recordings for patterns (tenant-scoped)
+        const analysis = await analyzeRecordings(supabase, tenantId)
         return new Response(JSON.stringify({ success: true, analysis }), {
           headers: corsHeaders,
         })
 
       case 'heal':
-        // Auto-heal detected issues
-        const healingResult = await autoHeal(supabase, data.alertId)
+        // Auto-heal detected issues (tenant-scoped)
+        const healingResult = await autoHeal(supabase, data.alertId, tenantId)
         return new Response(JSON.stringify({ success: true, result: healingResult }), {
           headers: corsHeaders,
         })
@@ -139,7 +150,37 @@ serve(async (req) => {
   }
 })
 
-async function runMonitoringChecks(supabase: SupabaseClient): Promise<SecurityAlert[]> {
+/**
+ * Resolves tenant_id from the Authorization JWT via profiles table lookup.
+ */
+async function resolveTenantId(supabase: SupabaseClient, req: Request): Promise<string | null> {
+  try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) return null;
+
+    const token = authHeader.replace('Bearer ', '');
+    // Decode JWT payload to get user id (sub claim)
+    const payloadBase64 = token.split('.')[1];
+    if (!payloadBase64) return null;
+
+    const payload = JSON.parse(atob(payloadBase64));
+    const userId = payload.sub;
+    if (!userId) return null;
+
+    // Look up tenant_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', userId)
+      .single();
+
+    return profile?.tenant_id || null;
+  } catch {
+    return null;
+  }
+}
+
+async function runMonitoringChecks(supabase: SupabaseClient, tenantId: string): Promise<SecurityAlert[]> {
   const alerts: SecurityAlert[] = []
 
   // Batch all monitoring queries in parallel for better performance
@@ -155,16 +196,19 @@ async function runMonitoringChecks(supabase: SupabaseClient): Promise<SecurityAl
       .from('audit_logs')
       .select('*')
       .eq('event_type', 'login_failed')
+      .eq('tenant_id', tenantId)
       .gte('created_at', oneHourAgo)
       .limit(10),
     () => supabase
       .from('system_errors')
       .select('*')
+      .eq('tenant_id', tenantId)
       .gte('created_at', oneHourAgo)
       .limit(10),
     () => supabase
       .from('phi_access_logs')
       .select('*')
+      .eq('tenant_id', tenantId)
       .gte('accessed_at', oneHourAgo),
     () => supabase
       .rpc('get_slow_queries', { threshold_ms: 1000 })
@@ -235,10 +279,11 @@ async function runMonitoringChecks(supabase: SupabaseClient): Promise<SecurityAl
     })
   }
 
-  // Batch insert all alerts at once
+  // Batch insert all alerts at once (tenant-scoped)
   if (alerts.length > 0) {
     const alertsToInsert = alerts.map(alert => ({
       ...alert,
+      tenant_id: tenantId,
       status: 'pending',
       created_at: new Date().toISOString()
     }));
@@ -316,16 +361,17 @@ This is an automated alert from Guardian monitoring system.
   }
 }
 
-async function recordSnapshot(supabase: SupabaseClient, snapshot: GuardianEyesSnapshot) {
-  // Store Guardian Eyes recording
+async function recordSnapshot(supabase: SupabaseClient, snapshot: GuardianEyesSnapshot, tenantId: string) {
+  // Store Guardian Eyes recording (tenant-scoped)
   await supabase
     .from('guardian_eyes_recordings')
     .insert({
       ...snapshot,
+      tenant_id: tenantId,
       recorded_at: new Date().toISOString()
     })
 
-  // If it's a critical event, create an immediate alert
+  // If it's a critical event, create an immediate alert (tenant-scoped)
   if (snapshot.severity === 'critical') {
     await supabase
       .from('security_alerts')
@@ -334,6 +380,7 @@ async function recordSnapshot(supabase: SupabaseClient, snapshot: GuardianEyesSn
         category: snapshot.type,
         title: `Critical Event: ${snapshot.action}`,
         message: `Guardian Eyes detected a critical event in ${snapshot.component}`,
+        tenant_id: tenantId,
         metadata: {
           component: snapshot.component,
           action: snapshot.action,
@@ -346,11 +393,12 @@ async function recordSnapshot(supabase: SupabaseClient, snapshot: GuardianEyesSn
   }
 }
 
-async function analyzeRecordings(supabase: SupabaseClient) {
-  // Get recent recordings
+async function analyzeRecordings(supabase: SupabaseClient, tenantId: string) {
+  // Get recent recordings (tenant-scoped)
   const { data: recordings } = await supabase
     .from('guardian_eyes_recordings')
     .select('*')
+    .eq('tenant_id', tenantId)
     .gte('recorded_at', new Date(Date.now() - 3600000).toISOString())
     .order('recorded_at', { ascending: false })
 
@@ -387,12 +435,13 @@ async function analyzeRecordings(supabase: SupabaseClient) {
   return { patterns, anomalies, totalRecordings: typedRecordings.length }
 }
 
-async function autoHeal(supabase: SupabaseClient, alertId: string) {
-  // Get the alert
+async function autoHeal(supabase: SupabaseClient, alertId: string, tenantId: string) {
+  // Get the alert (tenant-scoped — ensures we only heal our own tenant's alerts)
   const { data: alertData } = await supabase
     .from('security_alerts')
     .select('*')
     .eq('id', alertId)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (!alertData) {
@@ -438,6 +487,7 @@ async function autoHeal(supabase: SupabaseClient, alertId: string) {
       }
     })
     .eq('id', alertId)
+    .eq('tenant_id', tenantId)
 
-  return { alertId, healingAction, success: true }
+  return { alertId, tenantId, healingAction, success: true }
 }

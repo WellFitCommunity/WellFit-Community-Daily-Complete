@@ -25,7 +25,7 @@
 | Core Service | BUILT | `src/services/cardiology/cardiologyService.ts` (565 lines) — CRUD, dashboard aggregation, 8 alert types |
 | FHIR Mapping | BUILT | `src/services/fhir/cardiology/` — 13 LOINC codes, 17 SNOMED codes, Observation builders for ECG/echo/HF |
 | UI Dashboard | BUILT | `src/components/cardiology/` — 5 tabs (Overview, ECG, Heart Failure, Devices, Rehab), alerts component |
-| Tests | BUILT | 51 tests (dashboard 12, registry form 13, ECG form 12, echo form 14), missing FHIR observation tests |
+| Tests | BUILT | 82 tests (dashboard 12, registry 13, ECG 12, echo 14, HF 12, device 13, battery alert 6), missing FHIR observation tests |
 | Route | BUILT | `/heart-health` with feature flag `cardiology`, admin section wired |
 
 **Alert Types Implemented (8):**
@@ -57,16 +57,16 @@
 
 ---
 
-## Session 2: Heart Failure + Device Monitoring Forms
+## Session 2: Heart Failure + Device Monitoring Forms — DONE (2026-02-23, commit `ed17ecd7`)
 
-| Feature | Status | What to Build |
+| Feature | Status | What Was Built |
 |---------|--------|---------------|
-| Heart Failure Assessment Form | MISSING | Record HF: NYHA class, BNP/NT-proBNP, weight (auto-calculates daily change via trigger), fluid status, edema grade, dyspnea/orthopnea/PND/JVD/crackles/S3 checkboxes, sodium/fluid restrictions. |
-| Device Monitoring Form | MISSING | Record interrogation: device type (6 types), manufacturer, model, battery status/%, atrial/ventricular pacing %, lead impedance, sensing/thresholds, shocks delivered, ATP events, alerts. |
-| Device Battery Alert Banner | MISSING | Visual alert when battery < 20% or end-of-life status. |
+| Heart Failure Assessment Form | BUILT | `HeartFailureAssessmentForm.tsx` (405 lines) — NYHA class toggle buttons (not dropdown), BNP/NT-proBNP with `interpretBNP()` interpretation, daily + previous weight with auto weight-change alert (color-coded: red >=3 lbs, yellow >=2 lbs), fluid status, edema grade, 6 clinical sign checkboxes (dyspnea, orthopnea, PND, JVD, crackles, S3), restrictions, diuretic adjustment. FHIR BNP Observation generation via `CardiologyObservationService`. 12 tests. |
+| Device Monitoring Form | BUILT | `DeviceMonitoringForm.tsx` (480 lines) — 6 device types, 5 manufacturers (Medtronic, Boston Scientific, Abbott/St. Jude, Biotronik, MicroPort), model, implant date, battery status with conditional red/yellow styling, voltage/longevity, pacing %, lead parameters (impedance, sensing, thresholds for atrial/ventricular), shocks (red highlight >0), ATP events, AF burden, alerts, notes. Success screen shows EOL/ERI battery warnings and shock count. 13 tests. |
+| Device Battery Alert Banner | BUILT | `DeviceBatteryAlert.tsx` (53 lines) — Returns null for 'good' battery. Yellow banner for elective_replacement, red banner for end_of_life. Shows device type, manufacturer, model, longevity estimate. `role="alert"` for accessibility. 6 tests. |
+| Dashboard Wiring | BUILT | `CardiologyDashboard.tsx` updated (470 lines) — HF Assessment + Device Check action buttons, form rendering, DeviceBatteryAlert in DevicesTab. Barrel exports updated. |
 
-**Depends on:** Session 1 (registry must exist)
-**Estimated effort:** 1 session (~4 hours)
+**Completed in:** 1 session
 
 ---
 

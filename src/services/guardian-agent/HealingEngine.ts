@@ -10,10 +10,12 @@ import {
   HealingStrategy,
   AgentConfig
 } from './types';
+import { RuntimeHealer } from './RuntimeHealer';
 
 export class HealingEngine {
   private config: AgentConfig;
   private executionHistory: Map<string, HealingResult[]> = new Map();
+  private runtimeHealer = new RuntimeHealer();
 
   constructor(config: AgentConfig) {
     this.config = config;
@@ -140,6 +142,7 @@ export class HealingEngine {
 
     const result: HealingResult = {
       actionId: action.id,
+      tenantId: action.tenantId,
       success,
       timestamp: new Date(),
       stepsCompleted,
@@ -182,31 +185,8 @@ export class HealingEngine {
     }
   }
 
-  private async performAction(step: HealingStep, _issue: DetectedIssue): Promise<{ success: boolean; message: string; value?: number }> {
-    // This is where actual healing actions are performed
-    // In a real implementation, this would integrate with your application
-    switch (step.action) {
-      case 'clear_cache':
-        return { success: true, message: 'Cache cleared' };
-
-      case 'refresh_token':
-        return { success: true, message: 'Token refreshed' };
-
-      case 'rollback_state':
-        return { success: true, message: 'State rolled back' };
-
-      case 'enable_circuit_breaker':
-        return { success: true, message: 'Circuit breaker enabled' };
-
-      case 'cleanup_resources':
-        return { success: true, message: 'Resources cleaned up' };
-
-      case 'log_security_event':
-        return { success: true, message: 'Security event logged' };
-
-      default:
-        return { success: true, message: `Action ${step.action} executed` };
-    }
+  private async performAction(step: HealingStep, issue: DetectedIssue): Promise<{ success: boolean; message: string; value?: number }> {
+    return this.runtimeHealer.perform(step, issue);
   }
 
   private validateStep(step: HealingStep, result: { success: boolean; message: string; value?: number }): boolean {

@@ -1,14 +1,16 @@
 /**
  * Learning System - Adaptive machine learning for pattern recognition
+ * Persists learned patterns to database (tenant-scoped) so learning
+ * survives page refreshes and can be shared within a tenant.
  */
 
 import {
   DetectedIssue,
   HealingAction,
   HealingResult,
-  // KnowledgeEntry,
   ErrorContext
 } from './types';
+import { supabase } from '../../lib/supabaseClient';
 
 interface Pattern {
   features: string[];
@@ -17,19 +19,154 @@ interface Pattern {
   outcomes: { success: boolean; strategy: string }[];
 }
 
+/** Shape of a row in guardian_learning_patterns */
+interface PatternRow {
+  pattern_key: string;
+  features: string[];
+  frequency: number;
+  contexts: string[];
+  outcomes: { success: boolean; strategy: string }[];
+}
+
+/** Shape of a row in guardian_strategy_success_rates */
+interface StrategyRow {
+  strategy: string;
+  recent_results: number[];
+}
+
 export class LearningSystem {
   private patterns: Map<string, Pattern> = new Map();
   private successRates: Map<string, number[]> = new Map();
   private featureExtractor: FeatureExtractor;
+  private tenantId: string | undefined;
+  private persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private dirty = false;
+  private loaded = false;
 
-  constructor() {
+  constructor(tenantId?: string) {
     this.featureExtractor = new FeatureExtractor();
+    this.tenantId = tenantId;
+  }
+
+  /**
+   * Set the tenant scope for this learning system
+   */
+  setTenantId(tenantId: string): void {
+    this.tenantId = tenantId;
+    this.loaded = false; // Force reload with new tenant
+  }
+
+  /**
+   * Load persisted patterns from database for the current tenant
+   */
+  async loadFromDatabase(): Promise<void> {
+    if (!this.tenantId || this.loaded) return;
+
+    try {
+      // Load patterns
+      const { data: patternRows } = await supabase
+        .from('guardian_learning_patterns')
+        .select('pattern_key, features, frequency, contexts, outcomes')
+        .eq('tenant_id', this.tenantId);
+
+      if (patternRows) {
+        for (const row of patternRows as PatternRow[]) {
+          this.patterns.set(row.pattern_key, {
+            features: row.features,
+            frequency: row.frequency,
+            context: row.contexts,
+            outcomes: row.outcomes,
+          });
+        }
+      }
+
+      // Load success rates
+      const { data: strategyRows } = await supabase
+        .from('guardian_strategy_success_rates')
+        .select('strategy, recent_results')
+        .eq('tenant_id', this.tenantId);
+
+      if (strategyRows) {
+        for (const row of strategyRows as StrategyRow[]) {
+          this.successRates.set(row.strategy, row.recent_results);
+        }
+      }
+
+      this.loaded = true;
+    } catch {
+      // Silently fail — in-memory fallback is fine
+    }
+  }
+
+  /**
+   * Persist current patterns to database (debounced — called after mutations)
+   */
+  private schedulePersist(): void {
+    if (!this.tenantId) return;
+    this.dirty = true;
+
+    if (this.persistTimer) {
+      clearTimeout(this.persistTimer);
+    }
+
+    // Debounce: persist 5 seconds after last mutation
+    this.persistTimer = setTimeout(() => {
+      void this.persistToDatabase();
+    }, 5000);
+  }
+
+  /**
+   * Write all patterns and success rates to database
+   */
+  async persistToDatabase(): Promise<void> {
+    if (!this.tenantId || !this.dirty) return;
+
+    try {
+      // Upsert patterns
+      const patternRows = Array.from(this.patterns.entries()).map(
+        ([key, pattern]) => ({
+          tenant_id: this.tenantId,
+          pattern_key: key,
+          features: pattern.features,
+          frequency: pattern.frequency,
+          contexts: pattern.context,
+          outcomes: pattern.outcomes,
+        })
+      );
+
+      if (patternRows.length > 0) {
+        await supabase
+          .from('guardian_learning_patterns')
+          .upsert(patternRows, { onConflict: 'tenant_id,pattern_key' });
+      }
+
+      // Upsert success rates
+      const strategyRows = Array.from(this.successRates.entries()).map(
+        ([strategy, results]) => ({
+          tenant_id: this.tenantId,
+          strategy,
+          recent_results: results,
+        })
+      );
+
+      if (strategyRows.length > 0) {
+        await supabase
+          .from('guardian_strategy_success_rates')
+          .upsert(strategyRows, { onConflict: 'tenant_id,strategy' });
+      }
+
+      this.dirty = false;
+    } catch {
+      // Silently fail — data remains in memory
+    }
   }
 
   /**
    * Learns from successful and failed healing attempts
    */
   async learn(issue: DetectedIssue, action: HealingAction, result: HealingResult): Promise<void> {
+    await this.loadFromDatabase();
+
     const features = this.featureExtractor.extract(issue);
     const patternKey = this.generatePatternKey(features);
 
@@ -62,6 +199,9 @@ export class LearningSystem {
     }
     this.successRates.set(action.strategy, successHistory);
 
+    // Schedule persistence
+    this.schedulePersist();
+
     // Analyze patterns for insights
     if (pattern.frequency >= 5) {
       await this.analyzePattern(pattern);
@@ -72,9 +212,10 @@ export class LearningSystem {
    * Learns a new error pattern that hasn't been seen before
    */
   async learnNewPattern(errorInfo: Record<string, unknown>, context: ErrorContext): Promise<void> {
+    await this.loadFromDatabase();
+
     const features = this.featureExtractor.extractFromError(errorInfo, context);
     const patternKey = this.generatePatternKey(features);
-
 
     // Create new pattern entry
     this.patterns.set(patternKey, {
@@ -85,20 +226,16 @@ export class LearningSystem {
     });
 
     // Suggest potential healing strategies based on similar patterns
-    const similarPatterns = this.findSimilarPatterns(features);
-    if (similarPatterns.length > 0) {
-    }
+    this.findSimilarPatterns(features);
+
+    // Schedule persistence
+    this.schedulePersist();
   }
 
   /**
    * Analyzes a pattern for insights and optimizations
    */
   private async analyzePattern(pattern: Pattern): Promise<void> {
-    // Calculate overall success rate
-    const successCount = pattern.outcomes.filter(o => o.success).length;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const successRate = successCount / pattern.outcomes.length;
-
     // Find best performing strategy
     const strategyPerformance = new Map<string, { success: number; total: number }>();
 
@@ -109,21 +246,15 @@ export class LearningSystem {
       strategyPerformance.set(outcome.strategy, stats);
     }
 
-    // Identify optimal strategies
-    const optimalStrategies = Array.from(strategyPerformance.entries())
-      .filter(([_, stats]) => stats.total >= 3) // Need at least 3 attempts
+    // Identify optimal strategies (unused assignment removed — analysis is side-effect free for now)
+    Array.from(strategyPerformance.entries())
+      .filter(([_, stats]) => stats.total >= 3)
       .sort((a, b) => (b[1].success / b[1].total) - (a[1].success / a[1].total))
       .slice(0, 3);
 
-    if (optimalStrategies.length > 0) {
-    }
-
     // Detect anti-patterns (consistently failing strategies)
-    const failingStrategies = Array.from(strategyPerformance.entries())
+    Array.from(strategyPerformance.entries())
       .filter(([_, stats]) => stats.total >= 3 && (stats.success / stats.total) < 0.3);
-
-    if (failingStrategies.length > 0) {
-    }
   }
 
   /**
@@ -132,7 +263,6 @@ export class LearningSystem {
   private findSimilarPatterns(features: string[]): Pattern[] {
     const similar: Pattern[] = [];
 
-     
     for (const [_key, pattern] of this.patterns) {
       const similarity = this.calculateSimilarity(features, pattern.features);
       if (similarity > 0.7) {
@@ -212,8 +342,20 @@ export class LearningSystem {
     return {
       totalPatterns,
       totalObservations,
-      strategyStats
+      strategyStats,
+      persisted: this.loaded,
     };
+  }
+
+  /**
+   * Flush pending persistence and clean up timer
+   */
+  async dispose(): Promise<void> {
+    if (this.persistTimer) {
+      clearTimeout(this.persistTimer);
+      this.persistTimer = null;
+    }
+    await this.persistToDatabase();
   }
 }
 

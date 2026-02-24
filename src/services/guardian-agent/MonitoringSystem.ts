@@ -2,7 +2,7 @@
  * Monitoring System - Continuous health monitoring and anomaly detection
  */
 
-import { DetectedIssue, ErrorContext, ErrorSignature, SeverityLevel/*, AgentState*/ } from './types';
+import { DetectedIssue, ErrorContext, ErrorSignature, SeverityLevel, AgentConfig } from './types';
 import { AgentBrain } from './AgentBrain';
 import { SecurityScanner } from './SecurityScanner';
 
@@ -17,6 +17,7 @@ interface HealthMetrics {
 
 interface Anomaly {
   id: string;
+  tenantId?: string;
   type: 'performance' | 'error_spike' | 'security' | 'memory' | 'availability';
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
@@ -28,6 +29,7 @@ interface Anomaly {
 export class MonitoringSystem {
   private agentBrain: AgentBrain;
   private securityScanner: SecurityScanner;
+  private agentConfig?: AgentConfig;
   private metricsHistory: HealthMetrics[] = [];
   private anomalies: Anomaly[] = [];
   private baselines: Map<string, number> = new Map();
@@ -36,10 +38,18 @@ export class MonitoringSystem {
   private errorWindow: { error: Error; timestamp: number }[] = [];
   private performanceObserver?: PerformanceObserver;
 
-  constructor(agentBrain: AgentBrain, securityScanner: SecurityScanner) {
+  constructor(agentBrain: AgentBrain, securityScanner: SecurityScanner, config?: AgentConfig) {
     this.agentBrain = agentBrain;
     this.securityScanner = securityScanner;
+    this.agentConfig = config;
     this.initializeBaselines();
+  }
+
+  /**
+   * Updates the config reference (called when tenant changes)
+   */
+  updateConfig(config: AgentConfig): void {
+    this.agentConfig = config;
   }
 
   /**
@@ -285,6 +295,7 @@ export class MonitoringSystem {
       this.handleError(error || new Error(String(message)), {
         filePath: source,
         lineNumber: lineno,
+        tenantId: this.agentConfig?.tenantId,
         environmentState: {},
         recentActions: []
       });
@@ -302,6 +313,7 @@ export class MonitoringSystem {
       this.handleError(
         event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
         {
+          tenantId: this.agentConfig?.tenantId,
           environmentState: {},
           recentActions: []
         }
@@ -378,6 +390,7 @@ export class MonitoringSystem {
       new Error(`Slow operation: ${entry.name}`),
       {
         component: entry.name,
+        tenantId: this.agentConfig?.tenantId,
         environmentState: { duration: entry.duration },
         recentActions: []
       }
@@ -393,6 +406,7 @@ export class MonitoringSystem {
       new Error(`Slow API response`),
       {
         apiEndpoint: url,
+        tenantId: this.agentConfig?.tenantId,
         environmentState: { duration },
         recentActions: []
       }
@@ -407,6 +421,7 @@ export class MonitoringSystem {
       new Error(`API request failed with status ${status}`),
       {
         apiEndpoint: url,
+        tenantId: this.agentConfig?.tenantId,
         environmentState: { statusCode: status },
         recentActions: []
       }
@@ -421,6 +436,7 @@ export class MonitoringSystem {
       error instanceof Error ? error : new Error(String(error)),
       {
         apiEndpoint: url,
+        tenantId: this.agentConfig?.tenantId,
         environmentState: {},
         recentActions: []
       }
@@ -436,6 +452,7 @@ export class MonitoringSystem {
     await this.agentBrain.analyze(
       new Error(`Failed to load resource: ${target.src ?? 'unknown'}`),
       {
+        tenantId: this.agentConfig?.tenantId,
         environmentState: { resourceType: target.tagName ?? 'unknown' },
         recentActions: []
       }
@@ -530,6 +547,7 @@ export class MonitoringSystem {
   private createContextFromAnomaly(anomaly: Anomaly): ErrorContext {
     return {
       component: anomaly.type,
+      tenantId: this.agentConfig?.tenantId,
       environmentState: {
         metrics: anomaly.metrics
       },

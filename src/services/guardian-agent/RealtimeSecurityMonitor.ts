@@ -5,6 +5,7 @@
  * using Supabase Realtime. Triggers immediate notifications for critical issues.
  *
  * This provides the live monitoring dashboard that SOC 2 compliance requires.
+ * All subscriptions and queries are tenant-scoped to prevent cross-tenant leakage.
  */
 
 import { supabase } from '../../lib/supabaseClient';
@@ -20,6 +21,7 @@ export interface SecurityEventCallback {
 
 interface SecurityAlert {
   id: string;
+  tenant_id?: string;
   alert_type: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   status: string;
@@ -32,6 +34,7 @@ interface SecurityAlert {
 
 interface SecurityEvent {
   id: string;
+  tenant_id?: string;
   event_type: string;
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   description: string;
@@ -41,7 +44,7 @@ interface SecurityEvent {
 }
 
 /**
- * RealtimeSecurityMonitor - Live security event monitoring
+ * RealtimeSecurityMonitor - Live security event monitoring (tenant-scoped)
  */
 export class RealtimeSecurityMonitor {
   private alertsChannel: RealtimeChannel | null = null;
@@ -49,9 +52,18 @@ export class RealtimeSecurityMonitor {
   private alertCallbacks: SecurityAlertCallback[] = [];
   private eventCallbacks: SecurityEventCallback[] = [];
   private isMonitoring = false;
+  private tenantId: string | undefined;
 
   /**
-   * Start monitoring security alerts and events in real-time
+   * Set tenant scope — must be called before startMonitoring
+   */
+  setTenantId(tenantId: string): void {
+    this.tenantId = tenantId;
+  }
+
+  /**
+   * Start monitoring security alerts and events in real-time.
+   * Subscriptions are filtered by tenant_id to prevent cross-tenant leakage.
    */
   async startMonitoring(): Promise<void> {
     if (this.isMonitoring) {
@@ -59,7 +71,12 @@ export class RealtimeSecurityMonitor {
     }
 
     try {
-      // Subscribe to security_alerts table
+      // Build filter string for tenant scoping
+      const tenantFilter = this.tenantId
+        ? `tenant_id=eq.${this.tenantId}`
+        : undefined;
+
+      // Subscribe to security_alerts table (tenant-scoped)
       this.alertsChannel = supabase
         .channel('security_alerts_realtime')
         .on(
@@ -68,6 +85,7 @@ export class RealtimeSecurityMonitor {
             event: 'INSERT',
             schema: 'public',
             table: 'security_alerts',
+            ...(tenantFilter ? { filter: tenantFilter } : {}),
           },
           (payload) => {
             const alert = payload.new as SecurityAlert;
@@ -80,18 +98,16 @@ export class RealtimeSecurityMonitor {
             event: 'UPDATE',
             schema: 'public',
             table: 'security_alerts',
+            ...(tenantFilter ? { filter: tenantFilter } : {}),
           },
           (payload) => {
             const alert = payload.new as SecurityAlert;
             this.handleAlertUpdate(alert);
           }
         )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-          }
-        });
+        .subscribe();
 
-      // Subscribe to security_events table
+      // Subscribe to security_events table (tenant-scoped)
       this.eventsChannel = supabase
         .channel('security_events_realtime')
         .on(
@@ -100,16 +116,14 @@ export class RealtimeSecurityMonitor {
             event: 'INSERT',
             schema: 'public',
             table: 'security_events',
+            ...(tenantFilter ? { filter: tenantFilter } : {}),
           },
           (payload) => {
             const event = payload.new as SecurityEvent;
             this.handleNewEvent(event);
           }
         )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-          }
-        });
+        .subscribe();
 
       this.isMonitoring = true;
     } catch (error: unknown) {
@@ -152,17 +166,12 @@ export class RealtimeSecurityMonitor {
    * Handle new security alert
    */
   private handleNewAlert(alert: SecurityAlert): void {
-
-    // Log to console for visibility
-    if (alert.severity === 'critical' || alert.severity === 'high') {
-      // Logging removed - use audit system instead
-    }
-
     // Notify all registered callbacks
     this.alertCallbacks.forEach((callback) => {
       try {
         callback(alert);
-      } catch (error: unknown) {
+      } catch {
+        // Callback errors should not break the monitor
       }
     });
   }
@@ -171,22 +180,19 @@ export class RealtimeSecurityMonitor {
    * Handle alert update
    */
   private handleAlertUpdate(_alert: SecurityAlert): void {
+    // Placeholder for update handling (e.g., status change notifications)
   }
 
   /**
    * Handle new security event
    */
   private handleNewEvent(event: SecurityEvent): void {
-    // Only log high-priority events to avoid noise
-    if (event.severity === 'HIGH' || event.severity === 'CRITICAL' || event.requires_investigation) {
-      // Logging removed - use audit system instead
-    }
-
     // Notify all registered callbacks
     this.eventCallbacks.forEach((callback) => {
       try {
         callback(event);
-      } catch (error: unknown) {
+      } catch {
+        // Callback errors should not break the monitor
       }
     });
   }
@@ -198,39 +204,47 @@ export class RealtimeSecurityMonitor {
     isMonitoring: boolean;
     alertCallbacksCount: number;
     eventCallbacksCount: number;
+    tenantId: string | undefined;
   } {
     return {
       isMonitoring: this.isMonitoring,
       alertCallbacksCount: this.alertCallbacks.length,
       eventCallbacksCount: this.eventCallbacks.length,
+      tenantId: this.tenantId,
     };
   }
 
   /**
-   * Get recent critical alerts
+   * Get recent critical alerts (tenant-scoped)
    */
   async getCriticalAlerts(limit: number = 10): Promise<SecurityAlert[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('security_alerts')
-        .select('id, alert_type, severity, status, title, description, affected_user_id, created_at, metadata')
+        .select('id, tenant_id, alert_type, severity, status, title, description, affected_user_id, created_at, metadata')
         .in('severity', ['critical', 'high'])
         .in('status', ['new', 'investigating', 'escalated'])
         .order('created_at', { ascending: false })
         .limit(limit);
+
+      if (this.tenantId) {
+        query = query.eq('tenant_id', this.tenantId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         return [];
       }
 
       return data || [];
-    } catch (error: unknown) {
+    } catch {
       return [];
     }
   }
 
   /**
-   * Get event statistics
+   * Get event statistics (tenant-scoped)
    */
   async getEventStatistics(hours: number = 24): Promise<{
     total: number;
@@ -240,10 +254,16 @@ export class RealtimeSecurityMonitor {
     try {
       const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('security_events')
         .select('event_type, severity')
         .gte('timestamp', since);
+
+      if (this.tenantId) {
+        query = query.eq('tenant_id', this.tenantId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         return { total: 0, byType: {}, bySeverity: {} };
@@ -261,7 +281,7 @@ export class RealtimeSecurityMonitor {
       });
 
       return stats;
-    } catch (error: unknown) {
+    } catch {
       return { total: 0, byType: {}, bySeverity: {} };
     }
   }
@@ -271,21 +291,3 @@ export class RealtimeSecurityMonitor {
  * Global singleton instance
  */
 export const realtimeSecurityMonitor = new RealtimeSecurityMonitor();
-
-/**
- * Example usage:
- *
- * // Start monitoring
- * await realtimeSecurityMonitor.startMonitoring();
- *
- * // Register callback for critical alerts
- * realtimeSecurityMonitor.onAlert((alert) => {
- *   if (alert.severity === 'critical') {
- *     // Send email, SMS, Slack notification
- *     sendCriticalAlertNotification(alert);
- *   }
- * });
- *
- * // Get current critical alerts
- * const criticalAlerts = await realtimeSecurityMonitor.getCriticalAlerts();
- */

@@ -78,6 +78,7 @@ export interface ApplicationResult {
 
 export interface GuardianReviewTicket {
   id: string;
+  tenant_id: string | null;
   security_alert_id: string | null;
 
   // Issue details

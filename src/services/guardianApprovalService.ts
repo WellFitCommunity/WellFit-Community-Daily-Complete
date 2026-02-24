@@ -2,12 +2,14 @@
  * Guardian Approval Service
  *
  * Service for managing Guardian Agent review tickets (pool reports).
+ * All queries are tenant-scoped to prevent cross-tenant data leakage.
+ *
  * Provides methods to:
  * - Create review tickets
- * - List pending tickets
+ * - List pending tickets (tenant-filtered via RPC)
  * - Approve/reject tickets
  * - Track application status
- * - Subscribe to real-time updates
+ * - Subscribe to real-time updates (tenant-filtered)
  */
 
 import { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
@@ -25,6 +27,10 @@ import {
 } from '../types/guardianApproval';
 import type { TicketStatus as _TicketStatus } from '../types/guardianApproval';
 
+/** Column list used across all direct-table queries */
+const TICKET_COLUMNS =
+  'id, tenant_id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at';
+
 // ============================================================================
 // Service Class
 // ============================================================================
@@ -32,9 +38,18 @@ import type { TicketStatus as _TicketStatus } from '../types/guardianApproval';
 export class GuardianApprovalService {
   private supabase: SupabaseClient;
   private ticketChannel: RealtimeChannel | null = null;
+  private tenantId: string | undefined;
 
-  constructor(supabase: SupabaseClient) {
+  constructor(supabase: SupabaseClient, tenantId?: string) {
     this.supabase = supabase;
+    this.tenantId = tenantId;
+  }
+
+  /**
+   * Set tenant scope for all subsequent queries
+   */
+  setTenantId(tenantId: string): void {
+    this.tenantId = tenantId;
   }
 
   // ==========================================================================
@@ -91,6 +106,7 @@ export class GuardianApprovalService {
 
   async getPendingTickets(): Promise<ServiceResult<TicketListItem[]>> {
     try {
+      // RPC is tenant-scoped via the function itself (resolves caller's tenant)
       const { data, error } = await this.supabase.rpc('get_pending_guardian_tickets');
 
       if (error) {
@@ -108,11 +124,16 @@ export class GuardianApprovalService {
 
   async getTicketById(ticketId: string): Promise<ServiceResult<GuardianReviewTicket>> {
     try {
-      const { data, error } = await this.supabase
+      let query = this.supabase
         .from('guardian_review_tickets')
-        .select('id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at')
-        .eq('id', ticketId)
-        .single();
+        .select(TICKET_COLUMNS)
+        .eq('id', ticketId);
+
+      if (this.tenantId) {
+        query = query.eq('tenant_id', this.tenantId);
+      }
+
+      const { data, error } = await query.single();
 
       if (error) {
         auditLogger.error('GUARDIAN_GET_TICKET_ERROR', error.message, { ticketId });
@@ -131,8 +152,13 @@ export class GuardianApprovalService {
     try {
       let query = this.supabase
         .from('guardian_review_tickets')
-        .select('id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at')
+        .select(TICKET_COLUMNS)
         .order('created_at', { ascending: false });
+
+      // Tenant filter
+      if (this.tenantId) {
+        query = query.eq('tenant_id', this.tenantId);
+      }
 
       // Apply filters
       if (filters?.status?.length) {
@@ -180,10 +206,16 @@ export class GuardianApprovalService {
       today.setHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      // Get counts by status
-      const { data: tickets, error } = await this.supabase
+      // Get counts by status (tenant-scoped)
+      let query = this.supabase
         .from('guardian_review_tickets')
         .select('status, created_at, reviewed_at, applied_at');
+
+      if (this.tenantId) {
+        query = query.eq('tenant_id', this.tenantId);
+      }
+
+      const { data: tickets, error } = await query;
 
       if (error) {
         auditLogger.error('GUARDIAN_GET_STATS_ERROR', error.message, {});
@@ -228,11 +260,17 @@ export class GuardianApprovalService {
 
   async markInReview(ticketId: string): Promise<ServiceResult<boolean>> {
     try {
-      const { error } = await this.supabase
+      let query = this.supabase
         .from('guardian_review_tickets')
         .update({ status: 'in_review' })
         .eq('id', ticketId)
         .eq('status', 'pending');
+
+      if (this.tenantId) {
+        query = query.eq('tenant_id', this.tenantId);
+      }
+
+      const { error } = await query;
 
       if (error) {
         auditLogger.error('GUARDIAN_MARK_IN_REVIEW_ERROR', error.message, { ticketId });
@@ -364,11 +402,17 @@ export class GuardianApprovalService {
 
   async getApprovedTickets(): Promise<ServiceResult<GuardianReviewTicket[]>> {
     try {
-      const { data, error } = await this.supabase
+      let query = this.supabase
         .from('guardian_review_tickets')
-        .select('id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at')
+        .select(TICKET_COLUMNS)
         .eq('status', 'approved')
         .order('reviewed_at', { ascending: true });
+
+      if (this.tenantId) {
+        query = query.eq('tenant_id', this.tenantId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         auditLogger.error('GUARDIAN_GET_APPROVED_ERROR', error.message, {});
@@ -389,11 +433,16 @@ export class GuardianApprovalService {
 
   async getTicketByAlertId(alertId: string): Promise<ServiceResult<GuardianReviewTicket | null>> {
     try {
-      const { data, error } = await this.supabase
+      let query = this.supabase
         .from('guardian_review_tickets')
-        .select('id, security_alert_id, issue_id, issue_category, issue_severity, issue_description, affected_component, affected_resources, stack_trace, detection_context, action_id, healing_strategy, healing_description, healing_steps, rollback_plan, expected_outcome, sandbox_tested, sandbox_test_results, sandbox_passed, status, reviewed_by, reviewed_at, reviewer_name, code_reviewed, impact_understood, rollback_understood, review_notes, review_metadata, applied_at, applied_by, application_result, application_error, rolled_back_at, rolled_back_by, rollback_reason, created_at, updated_at')
-        .eq('security_alert_id', alertId)
-        .maybeSingle();
+        .select(TICKET_COLUMNS)
+        .eq('security_alert_id', alertId);
+
+      if (this.tenantId) {
+        query = query.eq('tenant_id', this.tenantId);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error) {
         auditLogger.error('GUARDIAN_GET_BY_ALERT_ERROR', error.message, { alertId });
@@ -409,13 +458,17 @@ export class GuardianApprovalService {
   }
 
   // ==========================================================================
-  // Realtime Subscriptions
+  // Realtime Subscriptions (tenant-filtered)
   // ==========================================================================
 
   subscribeToTickets(
     onInsert: (ticket: GuardianReviewTicket) => void,
     onUpdate: (ticket: GuardianReviewTicket) => void
   ): void {
+    const tenantFilter = this.tenantId
+      ? `tenant_id=eq.${this.tenantId}`
+      : undefined;
+
     this.ticketChannel = this.supabase
       .channel('guardian-tickets')
       .on(
@@ -424,6 +477,7 @@ export class GuardianApprovalService {
           event: 'INSERT',
           schema: 'public',
           table: 'guardian_review_tickets',
+          ...(tenantFilter ? { filter: tenantFilter } : {}),
         },
         (payload) => {
           onInsert(payload.new as GuardianReviewTicket);
@@ -435,6 +489,7 @@ export class GuardianApprovalService {
           event: 'UPDATE',
           schema: 'public',
           table: 'guardian_review_tickets',
+          ...(tenantFilter ? { filter: tenantFilter } : {}),
         },
         (payload) => {
           onUpdate(payload.new as GuardianReviewTicket);
