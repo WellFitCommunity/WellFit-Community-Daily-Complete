@@ -150,19 +150,23 @@ Triple-layer enforcement: Frontend hooks (`useIsAdmin`) → RLS policies (`curre
 > **Problem:** Tenant admins lack essential management tools — user role assignment, provisioning, reporting.
 > **Estimate:** ~16-24 hours (3-4 sessions)
 
-## Item 3.1: User Role Management UI — MISSING
+## Item 3.1: User Role Management UI — BUILT (2026-02-24)
 
 | Layer | Status | Detail |
 |-------|--------|--------|
-| UI | MISSING | No admin interface to assign/revoke roles within tenant |
-| Backend | PARTIAL | Edge functions exist for role operations, but no UI calls them |
-| Workaround | Direct DB or edge function calls |
+| UI | BUILT | Staff list with search/filter, role badge, assign modal, revoke confirmation |
+| Service | BUILT | `userRoleManagementService.ts` — getStaffUsers, assignRole, revokeRole |
+| Hierarchy enforcement | BUILT | `ROLE_HIERARCHY` determines assignable roles per admin level |
+| Audit logging | BUILT | All role changes logged with reason, previous role, changed-by |
+| Tests | BUILT | 12 behavioral tests (473 suites, 9,198 total) |
 
-**What's needed:**
-- User list with current roles (filtered by tenant)
-- Role assignment dropdown (respecting hierarchy — admin can't assign super_admin)
-- Role revocation with audit logging
-- Department assignment for clinical roles
+**What was built:**
+- `UserRoleManagementPanel.tsx` (322 lines) — orchestrator with search, filter, stats bar
+- `user-role-management/StaffRoleTable.tsx` (158 lines) — filterable table with role badges
+- `user-role-management/RoleAssignmentModal.tsx` (185 lines) — assign/change role form
+- `userRoleManagementService.ts` (326 lines) — service layer with hierarchy validation
+- Registered in admin dashboard under System Administration category
+- Roles: admin, super_admin, department_head, it_admin
 
 ## Item 3.2: User Invite/Provisioning — MISSING
 
@@ -239,6 +243,29 @@ Triple-layer enforcement: Frontend hooks (`useIsAdmin`) → RLS policies (`curre
 - `src/components/admin/sections/lazyImports.tsx` — add 2 lazy imports
 - `src/components/admin/sections/sectionDefinitions.tsx` — register 2 new sections
 
-### Session 2: NOT STARTED
+### Session 2: Tier 3 Item 3.1 — COMPLETE (2026-02-24)
 
-**Planned scope:** Tier 3 (missing admin capabilities — role management, user provisioning, security config)
+| What | Result |
+|------|--------|
+| Item 3.1: User Role Management UI | BUILT — full CRUD with hierarchy enforcement |
+| Service layer | `userRoleManagementService.ts` — staff list, assign, revoke |
+| UI components | Panel + StaffRoleTable + RoleAssignmentModal (decomposed, all < 600 lines) |
+| Tests | 12 new behavioral tests (9,198 total) |
+| Verification | typecheck: 0 errors, lint: 0 errors, tests: 9,198 passed |
+
+**Files created:**
+- `src/services/userRoleManagementService.ts`
+- `src/components/admin/UserRoleManagementPanel.tsx`
+- `src/components/admin/user-role-management/StaffRoleTable.tsx`
+- `src/components/admin/user-role-management/RoleAssignmentModal.tsx`
+- `src/components/admin/user-role-management/types.ts`
+- `src/components/admin/user-role-management/index.ts`
+- `src/components/admin/__tests__/UserRoleManagementPanel.test.tsx`
+
+**Files modified:**
+- `src/components/admin/sections/lazyImports.tsx`
+- `src/components/admin/sections/sectionDefinitions.tsx`
+
+### Session 3: NOT STARTED
+
+**Planned scope:** Tier 3 Items 3.2-3.4 (user provisioning, security config, tenant suspension)

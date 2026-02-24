@@ -9,6 +9,7 @@ import { lazy } from 'react';
 export const UsersList = lazy(() => import('../UsersList'));
 export const ReportsSection = lazy(() => import('../ReportsSection'));
 export const ExportCheckIns = lazy(() => import('../ExportCheckIns'));
+export const UserRoleManagementPanel = lazy(() => import('../UserRoleManagementPanel'));
 
 // FHIR & Clinical Data
 export const FhirAiDashboard = lazy(() => import('../FhirAiDashboard'));

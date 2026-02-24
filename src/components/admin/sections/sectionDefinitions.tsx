@@ -49,6 +49,7 @@ import {
   EncounterAuditTimeline,
   ResultEscalationDashboard,
   ProviderCoverageDashboard,
+  UserRoleManagementPanel,
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
 
@@ -164,6 +165,17 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><UsersList /></Suspense>,
     category: 'patient-care',
     priority: 'medium',
+  },
+  {
+    id: 'user-role-management',
+    title: 'Staff Role Management',
+    subtitle: 'Assign, change, and revoke staff roles with hierarchy enforcement and audit logging',
+    icon: '\uD83D\uDEE1\uFE0F',
+    headerColor: 'text-blue-900',
+    component: <Suspense fallback={<SectionLoadingFallback />}><UserRoleManagementPanel /></Suspense>,
+    category: 'admin',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'department_head', 'it_admin'],
   },
   {
     id: 'hospital-enrollment',
