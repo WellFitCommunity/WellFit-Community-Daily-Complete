@@ -22,7 +22,6 @@ export const HL7MessageTestPanel = lazy(() => import('../HL7MessageTestPanel'));
 export const BillingDashboard = lazy(() => import('../BillingDashboard'));
 export const BillingProviderForm = lazy(() => import('../BillingProviderForm'));
 export const SmartScribe = lazy(() => import('../../smart/RealTimeSmartScribe'));
-export const SDOHCoderAssist = lazy(() => import('../../billing/SDOHCoderAssist'));
 export const CCMTimeline = lazy(() => import('../../atlas/CCMTimeline'));
 export const RevenueDashboard = lazy(() => import('../../atlas/RevenueDashboard'));
 export const ClaimsSubmissionPanel = lazy(() => import('../../atlas/ClaimsSubmissionPanel'));

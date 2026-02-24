@@ -7,8 +7,8 @@
 
 import React, { Suspense } from 'react';
 import { DashboardSection } from './types';
-import { auditLogger } from '../../../services/auditLogger';
 import { SectionLoadingFallback } from './sectionDefinitions';
+import { SDOHCoderAssistWrapper } from './SDOHCoderAssistWrapper';
 import {
   SmartScribe,
   RevenueDashboard,
@@ -16,7 +16,6 @@ import {
   ClaimsSubmissionPanel,
   ClaimsAppealsPanel,
   PriorAuthDashboard,
-  SDOHCoderAssist,
   BillingDashboard,
   BillingProviderForm,
   StaffFinancialSavingsTracker,
@@ -99,7 +98,7 @@ export const getRevenueSections = (): DashboardSection[] => [
     subtitle: 'Social determinants of health-aware medical coding',
     icon: '\uD83C\uDFE5',
     headerColor: 'text-indigo-800',
-    component: <Suspense fallback={<SectionLoadingFallback />}><SDOHCoderAssist encounterId="demo-encounter-id" patientId="demo-patient-id" onSaved={(data) => auditLogger.debug('SDOH coding saved', data)} /></Suspense>,
+    component: <Suspense fallback={<SectionLoadingFallback />}><SDOHCoderAssistWrapper /></Suspense>,
     category: 'revenue',
     priority: 'low',
   },

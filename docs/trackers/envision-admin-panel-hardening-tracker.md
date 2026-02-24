@@ -1,0 +1,212 @@
+# Envision Admin Panel Hardening Tracker
+
+> **Last Updated:** 2026-02-24
+> **Owner:** Maria (AI System Director)
+> **Reviewer:** Akima (CCO)
+> **Audit Date:** 2026-02-24
+
+---
+
+## How to Read This
+
+| Symbol | Meaning |
+|--------|---------|
+| DONE | Complete, verified |
+| IN PROGRESS | Currently being worked on |
+| TODO | Not started |
+| N/A | Not applicable or by design |
+
+---
+
+## Audit Summary
+
+**70 registered admin sections, 40+ services, 104 top-level components**
+
+| Area | Score | Finding |
+|------|-------|---------|
+| Dashboard Sections | 10/10 | 70/70 functional |
+| Route Connectivity | 10/10 | AdminPanel correctly maps to IntelligentAdminPanel |
+| Role Enforcement | 10/10 | Centralized, fail-safe, triple-layer |
+| Service Layer | 10/10 | All database-backed, proper error handling |
+| Database Wiring | 10/10 | All features use RLS |
+| Edge Function Wiring | 10/10 | All edge functions properly connected |
+| Envision Auth Flow | 10/10 | Complete 2FA flow |
+| CRUD Operations | 9/10 | Minor gaps in read-only panels |
+| Admin Separation | 9/10 | Needs RLS verification for tenant isolation |
+| Test Coverage | 5/10 | **46/104 components tested (44%)** |
+
+**Overall: 93/100 — functionally solid, test coverage is the main gap**
+
+---
+
+# Tier 1 — Verification & Quick Fixes (~2 hours, 1 session)
+
+## Item 1.1: Verify RLS Tenant Isolation on user_roles — TODO
+
+| What | Detail |
+|------|--------|
+| Concern | Tenant admins may be able to see/modify roles in other tenants |
+| Check | Read RLS policies on `user_roles` table, verify `tenant_id` scoping |
+| Action | If gap found, add migration to fix |
+
+## Item 1.2: Fix SDOHCoderAssist Hardcoded Demo IDs — TODO
+
+| What | Detail |
+|------|--------|
+| File | `src/components/admin/sections/revenueSections.tsx` |
+| Problem | `encounterId="demo-encounter-id" patientId="demo-patient-id"` hardcoded |
+| Fix | Accept IDs from context or selected encounter |
+
+## Item 1.3: Tenant Suspension — DONE (Session 5)
+
+| What | Detail |
+|------|--------|
+| Login enforcement | Both `login` and `envision-login` edge functions check `tenant_system_status.is_suspended` |
+| UI banner | `TenantSuspensionBanner` shows active/suspended state with reason, date, admin name |
+| Tests | 6 behavioral tests (9,229 total) |
+
+---
+
+# Tier 2 — High-Priority Test Coverage (~24 hours, 4 sessions)
+
+> Components that write to DB, handle clinical data, or manage compliance.
+> These are the highest risk without tests.
+
+## Session 1: Clinical & FHIR Components
+
+| # | Component | Lines | Why High Priority | Status |
+|---|-----------|-------|-------------------|--------|
+| 2.1 | FHIRInteroperabilityDashboard | ~400 | Core interoperability feature | TODO |
+| 2.2 | FHIRDataMapper | ~300 | Data transformation critical path | TODO |
+| 2.3 | FhirAiDashboard | ~250 | AI-powered FHIR analysis | TODO |
+| 2.4 | RiskAssessmentManager | ~350 | Clinical decision support | TODO |
+| 2.5 | ClinicalNoteSummaryDashboard | ~300 | Note aggregation | TODO |
+| 2.6 | NoteLockingControls | ~200 | 21 CFR Part 11 compliance | TODO |
+| 2.7 | AmendmentWorkflow | ~150 | HIPAA amendment tracking | TODO |
+
+## Session 2: Billing & Revenue Components
+
+| # | Component | Lines | Why High Priority | Status |
+|---|-----------|-------|-------------------|--------|
+| 2.8 | BillingDashboard | ~400 | Revenue operations | TODO |
+| 2.9 | StaffFinancialSavingsTracker | ~300 | Financial reporting | TODO |
+| 2.10 | PriorAuthDashboard | ~350 | Payer authorization | TODO |
+| 2.11 | ClearinghouseConfigPanel | ~150 | EDI credential management | TODO |
+| 2.12 | MCPCostDashboard | ~250 | MCP API cost tracking | TODO |
+| 2.13 | ClaudeBillingMonitoringDashboard | ~300 | AI cost monitoring | TODO |
+
+## Session 3: Compliance & Security Components
+
+| # | Component | Lines | Why High Priority | Status |
+|---|-----------|-------|-------------------|--------|
+| 2.14 | SOC2SecurityDashboard | ~400 | SOC2 compliance | TODO |
+| 2.15 | SOC2ComplianceDashboard | ~350 | SOC2 compliance | TODO |
+| 2.16 | SOC2AuditDashboard | ~300 | SOC2 audit trail | TODO |
+| 2.17 | SOC2ExecutiveDashboard | ~250 | Executive compliance view | TODO |
+| 2.18 | SOC2IncidentResponseDashboard | ~300 | Incident response | TODO |
+| 2.19 | ComplianceDashboard | ~300 | General compliance | TODO |
+| 2.20 | TenantAuditLogs | ~250 | Audit log viewer | TODO |
+
+## Session 4: Admin Operations Components
+
+| # | Component | Lines | Why High Priority | Status |
+|---|-----------|-------|-------------------|--------|
+| 2.21 | FacilityManagementPanel | ~350 | Facility CRUD | TODO |
+| 2.22 | AdminSettingsPanel | 511 | User preferences (store-only fixed) | TODO |
+| 2.23 | TenantModuleConfigPanel | 424 | Feature flags per tenant | TODO |
+| 2.24 | TenantBrandingManager | ~350 | Branding customization | TODO |
+| 2.25 | HospitalPatientEnrollment | ~300 | Patient onboarding | TODO |
+| 2.26 | MPIReviewQueue | ~250 | Master Patient Index | TODO |
+| 2.27 | PatientEngagementDashboard | ~350 | Community analytics | TODO |
+
+---
+
+# Tier 3 — Medium-Priority Test Coverage (~18 hours, 3 sessions)
+
+> Read-only dashboards, monitoring, AI transparency, utility components.
+
+## Session 5: AI & Monitoring
+
+| # | Component | Why | Status |
+|---|-----------|-----|--------|
+| 3.1 | AIModelCardsDashboard | HTI-2 transparency | TODO |
+| 3.2 | AIAccuracyDashboard | Model performance | TODO |
+| 3.3 | AIFinancialDashboard | AI cost analytics | TODO |
+| 3.4 | TenantAIUsageDashboard | Per-tenant AI usage | TODO |
+| 3.5 | GuardianAgentDashboard | AI orchestration | TODO |
+| 3.6 | PerformanceMonitoringDashboard | System monitoring | TODO |
+| 3.7 | CacheMonitoringDashboard | Cache analytics | TODO |
+| 3.8 | DisasterRecoveryDashboard | DR status | TODO |
+
+## Session 6: Admin Utilities
+
+| # | Component | Why | Status |
+|---|-----------|-----|--------|
+| 3.9 | ApiKeyManager | API key CRUD | TODO |
+| 3.10 | TenantConfigHistory | Config audit trail | TODO |
+| 3.11 | TenantComplianceReport | Report generation | TODO |
+| 3.12 | IntelligentAdminPanel | Main orchestrator | TODO |
+| 3.13 | AdminHeader | Navigation | TODO |
+| 3.14 | PinnedDashboardsBar | Dashboard pinning | TODO |
+| 3.15 | SLABreachAlerts | SLA monitoring | TODO |
+| 3.16 | TimeClockAdmin | Staff time tracking | TODO |
+
+## Session 7: Forms & Enrollment
+
+| # | Component | Why | Status |
+|---|-----------|-----|--------|
+| 3.17 | PatientEnrollmentForm | Patient forms | TODO |
+| 3.18 | PaperFormScanner | OCR intake | TODO |
+| 3.19 | PaperFormUploader | File upload | TODO |
+| 3.20 | BulkEnrollmentPanel | Batch enrollment | TODO |
+| 3.21 | BulkExportPanel | Data export | TODO |
+| 3.22 | ExportCheckIns | Check-in export | TODO |
+| 3.23 | RiskAssessmentForm | Risk entry | TODO |
+| 3.24 | CareGapDashboard | Care gap analytics | TODO |
+| 3.25 | PatientMergeWizard | MPI merge | TODO |
+
+---
+
+# Tier 4 — Nice-to-Haves (~8 hours, 1-2 sessions)
+
+| # | Item | Type | Status |
+|---|------|------|--------|
+| 4.1 | Bulk CSV import for UserProvisioningPanel | Feature | TODO |
+| 4.2 | Resend invitation flow for pending users | Feature | TODO |
+| 4.3 | Super admin vs tenant admin role boundary documentation | Doc | TODO |
+| 4.4 | FHIR Conflict Resolution tests (FHIRConflictResolution) | Test | TODO |
+| 4.5 | HospitalAdapterManagementPanel tests | Test | TODO |
+| 4.6 | ClinicalWorkflowWizard tests | Test | TODO |
+| 4.7 | AdminWorkflowModeSwitcher tests | Test | TODO |
+| 4.8 | Remaining utility component tests | Test | TODO |
+
+---
+
+## Session Log
+
+### Session 5: Tier 1.3 + Tracker Creation — COMPLETE (2026-02-24)
+
+| What | Result |
+|------|--------|
+| Tenant suspension enforcement | Login + envision-login edge functions check `tenant_system_status.is_suspended` |
+| TenantSuspensionBanner | Active/suspended state display in TenantSecurityDashboard |
+| Service method | `getTenantSuspensionStatus()` added to tenantSecurityService |
+| Tests | 6 new behavioral tests (9,229 total, 475 suites) |
+| Audit | Full 10-dimension evaluation of Envision Admin Panel |
+| Tracker | Created this tracker with ~55 items across 4 tiers |
+
+### Session 6: NOT STARTED
+
+**Planned scope:** Tier 1 remaining (RLS verification, SDOHCoderAssist fix) + Tier 2 Session 1 (Clinical & FHIR tests)
+
+---
+
+## Estimates
+
+| Tier | Sessions | Hours | Items |
+|------|----------|-------|-------|
+| Tier 1 (Fixes) | 0.5 | ~2 | 2 remaining |
+| Tier 2 (High-Priority Tests) | 4 | ~24 | 27 components |
+| Tier 3 (Medium-Priority Tests) | 3 | ~18 | 25 components |
+| Tier 4 (Nice-to-Haves) | 1-2 | ~8 | 8 items |
+| **Total** | **8-10** | **~52** | **62 items** |
