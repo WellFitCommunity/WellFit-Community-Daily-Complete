@@ -307,4 +307,175 @@ export const NurseQuestionService = {
       return failure('UNKNOWN_ERROR', 'Failed to fetch answers');
     }
   },
+
+  /**
+   * Get aggregated analytics metrics for the current tenant
+   */
+  async fetchMetrics(): Promise<ServiceResult<NurseQuestionMetrics>> {
+    try {
+      const { data, error } = await supabase.rpc('nurse_question_metrics');
+
+      if (error) {
+        await auditLogger.error(
+          'NURSE_METRICS_FETCH_FAILED',
+          new Error(error.message)
+        );
+        return failure('DATABASE_ERROR', error.message);
+      }
+
+      return success(data as NurseQuestionMetrics);
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'NURSE_METRICS_FETCH_FAILED',
+        err instanceof Error ? err : new Error(String(err))
+      );
+      return failure('UNKNOWN_ERROR', 'Failed to fetch metrics');
+    }
+  },
+
+  /**
+   * Notify patient that their question has been answered (SMS via edge function)
+   */
+  async notifyPatientAnswered(
+    questionId: string,
+    patientPhone: string,
+    patientFirstName: string
+  ): Promise<ServiceResult<void>> {
+    try {
+      if (!patientPhone) {
+        return failure('VALIDATION_ERROR', 'No patient phone number available');
+      }
+
+      // Normalize phone to E.164 if not already
+      const phone = patientPhone.startsWith('+') ? patientPhone : `+1${patientPhone.replace(/\D/g, '')}`;
+      if (phone.length < 11) {
+        return failure('VALIDATION_ERROR', 'Invalid phone number');
+      }
+
+      const message = `Hi ${patientFirstName || 'there'}, your care team has responded to your health question. Log in to WellFit to view the answer.`;
+
+      const { error } = await supabase.functions.invoke('send-sms', {
+        body: {
+          to: [phone],
+          message,
+          priority: 'normal' as const,
+        },
+      });
+
+      if (error) {
+        await auditLogger.error(
+          'NURSE_PATIENT_SMS_FAILED',
+          new Error(error.message),
+          { questionId, phone: phone.slice(0, 6) + '****' }
+        );
+        return failure('EXTERNAL_SERVICE_ERROR', error.message);
+      }
+
+      await auditLogger.info('NURSE_PATIENT_ANSWER_NOTIFIED', {
+        questionId,
+        channel: 'sms',
+      });
+      return success(undefined);
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'NURSE_PATIENT_SMS_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { questionId }
+      );
+      return failure('UNKNOWN_ERROR', 'Failed to notify patient');
+    }
+  },
+
+  /**
+   * Subscribe to new questions in realtime (INSERT events on user_questions)
+   * Returns cleanup function.
+   */
+  subscribeToNewQuestions(
+    onNewQuestion: (question: RealtimeQuestionPayload) => void
+  ): () => void {
+    const channel = supabase
+      .channel('nurse-question-inserts')
+      .on(
+        'postgres_changes' as const,
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_questions',
+        },
+        (payload) => {
+          const row = payload.new as unknown as RealtimeQuestionPayload;
+          onNewQuestion(row);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  },
+
+  /**
+   * Subscribe to question status changes (UPDATE events)
+   * Used for detecting auto-escalations and answers.
+   */
+  subscribeToQuestionUpdates(
+    onUpdate: (question: RealtimeQuestionPayload) => void
+  ): () => void {
+    const channel = supabase
+      .channel('nurse-question-updates')
+      .on(
+        'postgres_changes' as const,
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_questions',
+        },
+        (payload) => {
+          const row = payload.new as unknown as RealtimeQuestionPayload;
+          onUpdate(row);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  },
 };
+
+/** Nurse question analytics metrics from nurse_question_metrics() RPC */
+export interface NurseQuestionMetrics {
+  total_questions: number;
+  pending_count: number;
+  claimed_count: number;
+  answered_count: number;
+  escalated_count: number;
+  high_urgency_count: number;
+  medium_urgency_count: number;
+  low_urgency_count: number;
+  avg_response_hours: number;
+  median_response_hours: number;
+  ai_acceptance_rate: number;
+  ai_suggestions_accepted: number;
+  total_answered_with_records: number;
+  escalated_to_charge_nurse: number;
+  escalated_to_supervisor: number;
+  escalated_to_physician: number;
+  questions_last_24h: number;
+  questions_last_7d: number;
+}
+
+/** Payload shape from Supabase realtime for user_questions table */
+export interface RealtimeQuestionPayload {
+  id: string;
+  user_id: string;
+  question_text: string;
+  category: string | null;
+  urgency: string | null;
+  status: string;
+  assigned_nurse_id: string | null;
+  tenant_id: string | null;
+  created_at: string;
+  claimed_at: string | null;
+  escalation_level: string | null;
+}

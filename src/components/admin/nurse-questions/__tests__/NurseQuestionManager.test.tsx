@@ -21,6 +21,11 @@ const mockSubmitAnswer = vi.fn();
 const mockAddNote = vi.fn();
 const mockEscalateQuestion = vi.fn();
 
+const mockNotifyPatientAnswered = vi.fn();
+const mockSubscribeToNewQuestions = vi.fn();
+const mockSubscribeToQuestionUpdates = vi.fn();
+const mockFetchMetrics = vi.fn();
+
 vi.mock('../../../../services/nurseQuestionService', () => ({
   NurseQuestionService: {
     fetchOpenQueue: (...args: unknown[]) => mockFetchOpenQueue(...args),
@@ -31,6 +36,10 @@ vi.mock('../../../../services/nurseQuestionService', () => ({
     escalateQuestion: (...args: unknown[]) => mockEscalateQuestion(...args),
     getQuestionNotes: vi.fn().mockResolvedValue({ success: true, data: [] }),
     getQuestionAnswers: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    notifyPatientAnswered: (...args: unknown[]) => mockNotifyPatientAnswered(...args),
+    subscribeToNewQuestions: (...args: unknown[]) => mockSubscribeToNewQuestions(...args),
+    subscribeToQuestionUpdates: (...args: unknown[]) => mockSubscribeToQuestionUpdates(...args),
+    fetchMetrics: (...args: unknown[]) => mockFetchMetrics(...args),
   },
 }));
 
@@ -147,6 +156,33 @@ describe('NurseQuestionManager', () => {
     mockSubmitAnswer.mockResolvedValue({ success: true, data: 'answer-001' });
     mockAddNote.mockResolvedValue({ success: true, data: 'note-001' });
     mockEscalateQuestion.mockResolvedValue({ success: true });
+    mockNotifyPatientAnswered.mockResolvedValue({ success: true });
+    mockFetchMetrics.mockResolvedValue({
+      success: true,
+      data: {
+        total_questions: 10,
+        pending_count: 3,
+        claimed_count: 2,
+        answered_count: 4,
+        escalated_count: 1,
+        high_urgency_count: 2,
+        medium_urgency_count: 5,
+        low_urgency_count: 3,
+        avg_response_hours: 1.5,
+        median_response_hours: 1.2,
+        ai_acceptance_rate: 65,
+        ai_suggestions_accepted: 3,
+        total_answered_with_records: 4,
+        escalated_to_charge_nurse: 1,
+        escalated_to_supervisor: 0,
+        escalated_to_physician: 0,
+        questions_last_24h: 3,
+        questions_last_7d: 10,
+      },
+    });
+    // Realtime subscriptions return cleanup functions
+    mockSubscribeToNewQuestions.mockReturnValue(() => {});
+    mockSubscribeToQuestionUpdates.mockReturnValue(() => {});
   });
 
   describe('Dashboard Rendering', () => {
@@ -659,6 +695,199 @@ describe('NurseQuestionManager', () => {
         // All three questions should show their status
         const statusBadges = screen.getAllByText('pending');
         expect(statusBadges.length).toBe(3);
+      });
+    });
+  });
+
+  describe('Realtime Subscriptions (Session 3)', () => {
+    it('subscribes to new questions on mount', async () => {
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(mockSubscribeToNewQuestions).toHaveBeenCalledTimes(1);
+        expect(mockSubscribeToNewQuestions).toHaveBeenCalledWith(expect.any(Function));
+      });
+    });
+
+    it('subscribes to question updates on mount', async () => {
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(mockSubscribeToQuestionUpdates).toHaveBeenCalledTimes(1);
+        expect(mockSubscribeToQuestionUpdates).toHaveBeenCalledWith(expect.any(Function));
+      });
+    });
+
+    it('shows new question alert when realtime INSERT fires', async () => {
+      // Capture the callback
+      let insertCallback: (() => void) | null = null;
+      mockSubscribeToNewQuestions.mockImplementation((cb: () => void) => {
+        insertCallback = cb;
+        return () => {};
+      });
+
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(insertCallback).not.toBeNull();
+      });
+
+      // Simulate a new question arriving
+      insertCallback!(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByText(/New patient question received/)).toBeInTheDocument();
+      });
+    });
+
+    it('refreshes queue when new question arrives via realtime', async () => {
+      let insertCallback: (() => void) | null = null;
+      mockSubscribeToNewQuestions.mockImplementation((cb: () => void) => {
+        insertCallback = cb;
+        return () => {};
+      });
+
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(mockFetchOpenQueue).toHaveBeenCalledTimes(1);
+      });
+
+      // Simulate realtime event
+      insertCallback!(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+
+      await waitFor(() => {
+        // Queue should be reloaded
+        expect(mockFetchOpenQueue).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    it('dismisses new question alert when Dismiss is clicked', async () => {
+      let insertCallback: (() => void) | null = null;
+      mockSubscribeToNewQuestions.mockImplementation((cb: () => void) => {
+        insertCallback = cb;
+        return () => {};
+      });
+
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(insertCallback).not.toBeNull();
+      });
+
+      insertCallback!(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+
+      await waitFor(() => {
+        expect(screen.getByText(/New patient question received/)).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Dismiss'));
+
+      await waitFor(() => {
+        expect(screen.queryByText(/New patient question received/)).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Patient Notification on Answer (Session 3)', () => {
+    it('sends SMS notification to patient when question is answered', async () => {
+      const user = userEvent.setup();
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Test Patient Alpha')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Test Patient Alpha'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Responding to Test/)).toBeInTheDocument();
+      });
+
+      const responseArea = screen.getByPlaceholderText(/Type your response to the patient/);
+      await user.type(responseArea, 'Your blood pressure reading is normal.');
+
+      fireEvent.click(screen.getByText('Send Response to Patient'));
+
+      await waitFor(() => {
+        expect(mockSubmitAnswer).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(mockNotifyPatientAnswered).toHaveBeenCalledWith(
+          'q-001',
+          '555-0100',
+          'Test'
+        );
+      });
+    });
+
+    it('does not send SMS notification when question is escalated', async () => {
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Test Patient Alpha')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Test Patient Alpha'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Escalate')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Escalate'));
+      fireEvent.click(screen.getByText('Charge Nurse'));
+
+      await waitFor(() => {
+        expect(mockEscalateQuestion).toHaveBeenCalled();
+      });
+
+      // SMS should NOT be sent for escalations
+      expect(mockNotifyPatientAnswered).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Analytics Panel (Session 3)', () => {
+    it('fetches metrics on mount', async () => {
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(mockFetchMetrics).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('renders analytics panel with expand toggle', async () => {
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Question Analytics')).toBeInTheDocument();
+      });
+    });
+
+    it('shows metrics when analytics panel is expanded', async () => {
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Question Analytics')).toBeInTheDocument();
+      });
+
+      // Expand the panel
+      fireEvent.click(screen.getByText('Question Analytics'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Avg Response')).toBeInTheDocument();
+        expect(screen.getByText('AI Acceptance')).toBeInTheDocument();
+        expect(screen.getByText('1.5h')).toBeInTheDocument();
+        expect(screen.getByText('65%')).toBeInTheDocument();
+      });
+    });
+
+    it('shows daily and weekly volume in analytics header', async () => {
+      render(<NurseQuestionManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/3 today, 10 this week/)).toBeInTheDocument();
       });
     });
   });

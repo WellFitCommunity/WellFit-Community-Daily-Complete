@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-24
-**Last Session:** Nurse Question Manager Session 2 — UI Wiring, Decomposition, AI Skill & Escalation
+**Last Session:** Nurse Question Manager Session 3 — Workflow, Notifications & Analytics
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -71,7 +71,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Tracker | Path | Status |
 |---------|------|--------|
-| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **Feature 1 COMPLETE (3 sessions), Feature 2 Sessions 1-2 COMPLETE, Session 3 next** |
+| **Nurse Handoff & Documentation** | `docs/trackers/nurse-handoff-documentation-tracker.md` | **COMPLETE — Feature 1 (3 sessions) + Feature 2 (3 sessions) all done** |
 | **Compass Riley Reasoning** | `docs/trackers/compass-riley-reasoning-tracker.md` | **COMPLETE — all 10 sessions done** |
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
@@ -86,7 +86,7 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,175 passed, 0 failed | 2026-02-24 |
+| Tests | 9,186 passed, 0 failed | 2026-02-24 |
 | Test Suites | 472 | 2026-02-24 |
 | Typecheck | 0 errors | 2026-02-24 |
 | Lint | 0 errors, 0 warnings | 2026-02-24 |
@@ -119,32 +119,42 @@ All 8 L&D sessions are finished. The module has full data entry, monitoring, bil
 
 ## What Was Completed Last Session (2026-02-24)
 
-### Nurse Question Manager Session 2: UI Wiring, Decomposition, AI Skill & Escalation — COMPLETE
+### Nurse Question Manager Session 3: Workflow, Notifications & Analytics — COMPLETE
 
 **Tracker:** `docs/trackers/nurse-handoff-documentation-tracker.md`
 
 **What was done:**
-- **Decomposition** — `NurseQuestionManager.tsx` decomposed: 742→129 lines (83% reduction). 5 submodules extracted to `nurse-questions/` subdirectory: types.ts, QuestionList.tsx, ResponsePanel.tsx, AISuggestionPanel.tsx, index.ts
-- **Service wiring** — Replaced `nurseApi.ts` legacy imports with direct `NurseQuestionService` calls using `ServiceResult` pattern (no throw-then-catch). Full field mapping from service (category, urgency, user_id, patient_name, patient_phone)
-- **Mock data removed** — Deleted `mockQuestions` array with PHI-looking names (Rule 15 violation). No fallback to fake data.
-- **Empty catch blocks fixed** — All 4 empty catch blocks replaced with `auditLogger.error()` calls
-- **AI model fixed** — Replaced hardcoded `'claude-3-5-sonnet-20241022'` with `HAIKU_MODEL` import (Rule 14)
-- **AI suggestion tracking** — `submitAnswer` now passes `usedAiSuggestion`, `aiSuggestionText`, `aiConfidence` for acceptance rate analytics
-- **Escalation UI** — "Escalate" button with 3 levels (Charge Nurse, Supervisor, Physician). Nurse notes included as escalation context.
-- **AI skill registration** — Migration `20260224200000_nurse_question_ai_skill.sql` — `nurse_question_responder` (skill #62) registered with HTI-2 `patient_description`. Applied to remote DB.
-- **Tests** — 27 tests across 8 describe blocks covering all behaviors
+- **Auto-escalation edge function** — `nurse-question-auto-escalate` edge function: unclaimed questions >2hrs → charge_nurse, claimed-but-unanswered >4hrs → supervisor. Includes cooldown, batch processing, audit logging.
+- **Patient SMS notification** — `notifyPatientAnswered()` service method sends SMS via `send-sms` edge function when nurse answers a question. E.164 phone normalization. Fire-and-forget from UI.
+- **Realtime subscriptions** — `subscribeToNewQuestions()` and `subscribeToQuestionUpdates()` on `user_questions` table. Queue auto-refreshes. New-question alert banner with auto-dismiss and manual Dismiss button.
+- **Analytics view + RPC** — `v_nurse_question_analytics` view aggregates metrics by tenant. `nurse_question_metrics()` RPC returns JSON with response times, AI acceptance rate, urgency/status breakdown, escalation stats, 24h/7d volume.
+- **Analytics panel** — `AnalyticsPanel.tsx` (199 lines) with expandable stats: avg/median response time, AI acceptance %, escalation breakdown, queue status, urgency distribution.
+- **Migration applied** — `20260224300000_nurse_question_analytics_and_escalation.sql` — view, RPC, partial indexes for escalation queries. Applied to remote DB.
+- **Tests** — 38 tests (up from 27): realtime subscriptions (5), patient notification (2), analytics panel (4)
 
-**New files (7):**
-- `src/components/admin/nurse-questions/types.ts` (66 lines)
-- `src/components/admin/nurse-questions/QuestionList.tsx` (252 lines)
-- `src/components/admin/nurse-questions/ResponsePanel.tsx` (414 lines)
-- `src/components/admin/nurse-questions/AISuggestionPanel.tsx` (223 lines)
-- `src/components/admin/nurse-questions/index.ts` (13 lines)
-- `src/components/admin/nurse-questions/__tests__/NurseQuestionManager.test.tsx` (27 tests)
-- `supabase/migrations/20260224200000_nurse_question_ai_skill.sql`
+**New files (3):**
+- `supabase/functions/nurse-question-auto-escalate/index.ts` (215 lines)
+- `supabase/migrations/20260224300000_nurse_question_analytics_and_escalation.sql`
+- `src/components/admin/nurse-questions/AnalyticsPanel.tsx` (199 lines)
 
-**Modified files (1):**
-- `src/components/admin/NurseQuestionManager.tsx` — rewritten as thin orchestrator (129 lines)
+**Modified files (4):**
+- `src/services/nurseQuestionService.ts` (310→477 lines) — 4 new methods + 2 new interfaces
+- `src/components/admin/NurseQuestionManager.tsx` (129→193 lines) — realtime, alerts, analytics, SMS
+- `src/components/admin/nurse-questions/index.ts` — AnalyticsPanel re-export
+- `src/components/admin/nurse-questions/__tests__/NurseQuestionManager.test.tsx` (27→38 tests)
+
+**Tests: 9,186 passed, 0 failed (472 suites) — up from 9,175**
+
+**Feature 2 (Nurse Question Manager) is now COMPLETE across all 3 sessions.**
+**The entire Nurse Handoff & Documentation tracker is now COMPLETE (6 sessions total).**
+
+---
+
+### Earlier: Nurse Question Manager Session 2: UI Wiring, Decomposition, AI Skill & Escalation — COMPLETE
+
+**What was done:**
+- Decomposition (742→129 lines), service wiring, mock data removal, AI model fix, escalation UI, AI skill registration, 27 tests
+- See tracker for full details
 
 **Tests: 9,175 passed, 0 failed (472 suites) — up from 9,148**
 
