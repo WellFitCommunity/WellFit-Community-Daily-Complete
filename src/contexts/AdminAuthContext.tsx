@@ -36,6 +36,9 @@ interface AdminAuthContextType {
   canSupervise: boolean;
   canManageDepartment: boolean;
 
+  /** Whether the admin has enabled "require PIN for sensitive actions" in their settings */
+  requirePinForSensitive: boolean;
+
   // Use this to call admin-only Edge Functions (adds admin token header)
   invokeAdminFunction: <T = unknown>(
     fnName: string,
@@ -62,6 +65,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [_expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [requirePinForSensitive, setRequirePinForSensitive] = useState(true);
 
   const expiryTimerRef = useRef<number | null>(null);
   const adminTokenRef = useRef<string | null>(adminTokenRefGlobal.current);
@@ -105,6 +109,33 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => clearExpiryTimer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch admin-level settings (PIN requirement) once authenticated
+  useEffect(() => {
+    if (!isAdminAuthenticated) return;
+    let cancelled = false;
+
+    const fetchPinSetting = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || cancelled) return;
+
+        const { data, error: fetchErr } = await supabase
+          .from('admin_settings')
+          .select('require_pin_for_sensitive')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (cancelled || fetchErr || !data) return;
+        setRequirePinForSensitive(data.require_pin_for_sensitive ?? true);
+      } catch {
+        // Non-critical — default to requiring PIN
+      }
+    };
+
+    fetchPinSetting();
+    return () => { cancelled = true; };
+  }, [isAdminAuthenticated]);
 
   function persistSession(isAuthenticated: boolean, role: StaffRole | null, expires_at: string | null) {
     if (isAuthenticated && role && expires_at) {
@@ -395,6 +426,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         canViewAdmin,
         canSupervise,
         canManageDepartment,
+        requirePinForSensitive,
         invokeAdminFunction,
       }}
     >

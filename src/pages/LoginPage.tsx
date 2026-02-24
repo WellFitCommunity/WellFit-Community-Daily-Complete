@@ -391,12 +391,13 @@ const LoginPage: React.FC = () => {
       if (signInError) {
         const msg = (signInError.message || '').toLowerCase();
 
+        // Always refresh captcha after any failed login — tokens are single-use
+        refreshCaptcha();
+
         // Check for invalid credentials FIRST (most common case)
         if (msg.includes('invalid login credentials') || msg.includes('invalid password')) {
           setError('Login failed. Check your phone number and password.');
         } else if (msg.includes('captcha verification') || msg.includes('captcha token')) {
-          // Only treat as captcha error if explicitly about captcha verification
-          refreshCaptcha();
           setError('Captcha failed. Please try again.');
         } else if (msg.includes('confirm')) {
           setError('Account not confirmed. Please complete verification.');
@@ -413,6 +414,7 @@ const LoginPage: React.FC = () => {
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : 'Unexpected error during login.';
       auditLogger.auth('LOGIN_FAILED', false, { method: 'phone_password', error: errMsg });
+      refreshCaptcha();
       setError(errMsg);
     } finally {
       setLoading(false);
@@ -481,12 +483,13 @@ const LoginPage: React.FC = () => {
       if (signInError) {
         const msg = (signInError.message || '').toLowerCase();
 
+        // Always refresh captcha after any failed login — tokens are single-use
+        refreshCaptcha();
+
         // Check for invalid credentials FIRST (most common case)
         if (msg.includes('invalid login credentials') || msg.includes('invalid password')) {
           setError('Admin login failed. Check your email and password.');
         } else if (msg.includes('captcha verification') || msg.includes('captcha token')) {
-          // Only treat as captcha error if explicitly about captcha verification
-          refreshCaptcha();
           setError('Captcha failed. Please try again.');
         } else if (msg.includes('confirm')) {
           setError('Email not confirmed. Please check your inbox.');
@@ -503,6 +506,7 @@ const LoginPage: React.FC = () => {
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : 'Unexpected error during admin login.';
       auditLogger.auth('LOGIN_FAILED', false, { method: 'email_password', userType: 'admin', error: errMsg });
+      refreshCaptcha();
       setError(errMsg);
     } finally {
       setLoading(false);

@@ -1,5 +1,5 @@
 // src/contexts/SessionTimeoutContext.tsx
-import React, { createContext, useContext, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
@@ -15,9 +15,13 @@ const toMs = (val: string | undefined, fallback: number) => {
 // - All Users: 30 minutes of inactivity before auto-logout (HIPAA compliant)
 // - Staff/Admin: Additional PIN verification at admin panel level
 // - Override via VITE_INACTIVITY_TIMEOUT_MS env var if needed
+// - Admin-configurable via admin_settings.session_timeout (15/30/60/120 min)
 const DEFAULT_TIMEOUT_MS = toMs(import.meta.env.VITE_INACTIVITY_TIMEOUT_MS, 30 * 60 * 1000); // 30 minutes
 const DEFAULT_WARNING_MS = toMs(import.meta.env.VITE_TIMEOUT_WARNING_MS, 5 * 60 * 1000);        // 5 minutes warning
 const THROTTLE_MS = 500;
+
+// Valid timeout values from admin_settings (minutes)
+const VALID_TIMEOUT_MINUTES = [15, 30, 60, 120];
 
 // ---------- types ----------
 interface SessionTimeoutContextType {
@@ -45,12 +49,16 @@ interface SessionTimeoutProviderProps {
 
 export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
   children,
-  timeoutMs = DEFAULT_TIMEOUT_MS,
+  timeoutMs: propTimeoutMs,
   warningMs = DEFAULT_WARNING_MS,
   onTimeoutWarning,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Dynamic timeout: admin_settings > prop > env > default (30 min)
+  const [adminTimeoutMs, setAdminTimeoutMs] = useState<number | null>(null);
+  const timeoutMs = adminTimeoutMs ?? propTimeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const warningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -118,6 +126,38 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
     scheduleTimeouts();
     safePostMessage({ type: 'ACTIVITY' });
   }, [scheduleTimeouts, safePostMessage]);
+
+  // Fetch admin-configured session timeout from admin_settings table
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchAdminTimeout = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || cancelled) return;
+
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('session_timeout')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (cancelled) return;
+        if (error || !data?.session_timeout) return; // Keep default
+
+        const minutes = data.session_timeout;
+        if (VALID_TIMEOUT_MINUTES.includes(minutes)) {
+          setAdminTimeoutMs(minutes * 60 * 1000);
+        }
+      } catch {
+        // Non-critical — fall through to default timeout
+      }
+    };
+
+    fetchAdminTimeout();
+
+    return () => { cancelled = true; };
+  }, []);
 
   // Init listeners
   useEffect(() => {

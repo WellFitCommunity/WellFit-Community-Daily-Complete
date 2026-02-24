@@ -12,7 +12,6 @@ interface AdminSettings {
   security: {
     sessionTimeout: number;
     requirePinForSensitive: boolean;
-    enableAuditLogging: boolean;
   };
   display: {
     compactMode: boolean;
@@ -20,8 +19,6 @@ interface AdminSettings {
     defaultDashboardView: 'overview' | 'patients' | 'billing';
   };
   system: {
-    autoBackup: boolean;
-    backupFrequency: 'daily' | 'weekly' | 'monthly';
     enableBetaFeatures: boolean;
   };
 }
@@ -41,7 +38,6 @@ const AdminSettingsPanel: React.FC = memo(() => {
     security: {
       sessionTimeout: 30,
       requirePinForSensitive: true,
-      enableAuditLogging: true,
     },
     display: {
       compactMode: false,
@@ -49,8 +45,6 @@ const AdminSettingsPanel: React.FC = memo(() => {
       defaultDashboardView: 'overview',
     },
     system: {
-      autoBackup: true,
-      backupFrequency: 'daily',
       enableBetaFeatures: false,
     },
   });
@@ -67,7 +61,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
       try {
         const { data, error } = await supabase
           .from('admin_settings')
-          .select('user_id, theme, email_notifications, browser_notifications, emergency_alerts, session_timeout, require_pin_for_sensitive, enable_audit_logging, compact_mode, show_advanced_metrics, default_dashboard_view, auto_backup, backup_frequency, enable_beta_features')
+          .select('user_id, theme, email_notifications, browser_notifications, emergency_alerts, session_timeout, require_pin_for_sensitive, compact_mode, show_advanced_metrics, default_dashboard_view, enable_beta_features')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -110,7 +104,6 @@ const AdminSettingsPanel: React.FC = memo(() => {
             security: {
               sessionTimeout: data.session_timeout || 30,
               requirePinForSensitive: data.require_pin_for_sensitive ?? true,
-              enableAuditLogging: data.enable_audit_logging ?? true,
             },
             display: {
               compactMode: data.compact_mode ?? false,
@@ -118,8 +111,6 @@ const AdminSettingsPanel: React.FC = memo(() => {
               defaultDashboardView: data.default_dashboard_view || 'overview',
             },
             system: {
-              autoBackup: data.auto_backup ?? true,
-              backupFrequency: data.backup_frequency || 'daily',
               enableBetaFeatures: data.enable_beta_features ?? false,
             },
           });
@@ -175,12 +166,12 @@ const AdminSettingsPanel: React.FC = memo(() => {
         emergency_alerts: settings.notifications.emergencyAlerts,
         session_timeout: settings.security.sessionTimeout,
         require_pin_for_sensitive: settings.security.requirePinForSensitive,
-        enable_audit_logging: settings.security.enableAuditLogging,
+        enable_audit_logging: true, // Always on — HIPAA § 164.312(b) requires audit controls
         compact_mode: settings.display.compactMode,
         show_advanced_metrics: settings.display.showAdvancedMetrics,
         default_dashboard_view: settings.display.defaultDashboardView,
-        auto_backup: settings.system.autoBackup,
-        backup_frequency: settings.system.backupFrequency,
+        auto_backup: true, // Managed by Supabase Pro — always on
+        backup_frequency: 'daily', // Managed by Supabase Pro
         enable_beta_features: settings.system.enableBetaFeatures,
       };
 
@@ -227,7 +218,6 @@ const AdminSettingsPanel: React.FC = memo(() => {
         security: {
           sessionTimeout: 30,
           requirePinForSensitive: true,
-          enableAuditLogging: true,
         },
         display: {
           compactMode: false,
@@ -235,8 +225,6 @@ const AdminSettingsPanel: React.FC = memo(() => {
           defaultDashboardView: 'overview',
         },
         system: {
-          autoBackup: true,
-          backupFrequency: 'daily',
           enableBetaFeatures: false,
         },
       });
@@ -433,18 +421,13 @@ const AdminSettingsPanel: React.FC = memo(() => {
             />
           </label>
 
-          <label className="flex items-center justify-between">
+          <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-md px-4 py-3">
             <div>
-              <span className="text-sm font-medium text-gray-700">Enable audit logging</span>
-              <p className="text-xs text-gray-500">Log all admin actions (recommended)</p>
+              <span className="text-sm font-medium text-green-800">Audit logging</span>
+              <p className="text-xs text-green-700">Always enabled per HIPAA § 164.312(b) audit control requirements</p>
             </div>
-            <input
-              type="checkbox"
-              checked={settings.security.enableAuditLogging}
-              onChange={(e) => updateSetting('security', 'enableAuditLogging', e.target.checked)}
-              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-          </label>
+            <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-1 rounded">MANDATORY</span>
+          </div>
         </div>
       </div>
 
@@ -457,35 +440,13 @@ const AdminSettingsPanel: React.FC = memo(() => {
             <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Super Admin</span>
           </h2>
           <div className="space-y-4">
-            <label className="flex items-center justify-between">
+            <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-md px-4 py-3">
               <div>
-                <span className="text-sm font-medium text-gray-700">Auto backup</span>
-                <p className="text-xs text-gray-500">Automatically backup system data</p>
+                <span className="text-sm font-medium text-blue-800">Database backups</span>
+                <p className="text-xs text-blue-700">Managed by Supabase Pro plan — daily automated backups with point-in-time recovery</p>
               </div>
-              <input
-                type="checkbox"
-                checked={settings.system.autoBackup}
-                onChange={(e) => updateSetting('system', 'autoBackup', e.target.checked)}
-                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            </label>
-
-            {settings.system.autoBackup && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Backup frequency
-                </label>
-                <select
-                  value={settings.system.backupFrequency}
-                  onChange={(e) => updateSetting('system', 'backupFrequency', e.target.value)}
-                  className="block w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
-            )}
+              <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">MANAGED</span>
+            </div>
 
             <label className="flex items-center justify-between">
               <div>

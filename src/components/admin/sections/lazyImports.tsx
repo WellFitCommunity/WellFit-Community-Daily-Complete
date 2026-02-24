@@ -53,8 +53,10 @@ export const AIModelCardsDashboard = lazy(() => import('../AIModelCardsDashboard
 export const TenantSecurityDashboard = lazy(() => import('../TenantSecurityDashboard'));
 export const TenantAuditLogs = lazy(() => import('../TenantAuditLogs'));
 export const TenantComplianceReport = lazy(() => import('../TenantComplianceReport'));
+export const TenantConfigHistory = lazy(() => import('../TenantConfigHistory'));
 export const TenantModuleConfigPanel = lazy(() => import('../TenantModuleConfigPanel').then(m => ({ default: m.TenantModuleConfigPanel })));
 export const FacilityManagementPanel = lazy(() => import('../FacilityManagementPanel'));
+export const ClearinghouseConfigPanel = lazy(() => import('../ClearinghouseConfigPanel').then(m => ({ default: m.ClearinghouseConfigPanel })));
 export const MfaComplianceDashboard = lazy(() => import('../MfaComplianceDashboard'));
 export const BreachNotificationDashboard = lazy(() => import('../BreachNotificationDashboard'));
 export const BAATrackingDashboard = lazy(() => import('../BAATrackingDashboard'));
