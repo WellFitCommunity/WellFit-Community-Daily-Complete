@@ -50,6 +50,7 @@ import {
   ResultEscalationDashboard,
   ProviderCoverageDashboard,
   UserRoleManagementPanel,
+  UserProvisioningPanel,
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
 
@@ -176,6 +177,17 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'admin',
     priority: 'high',
     roles: ['admin', 'super_admin', 'department_head', 'it_admin'],
+  },
+  {
+    id: 'user-provisioning',
+    title: 'User Provisioning',
+    subtitle: 'Create new user accounts and manage pending registrations',
+    icon: '\uD83D\uDC64',
+    headerColor: 'text-green-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><UserProvisioningPanel /></Suspense>,
+    category: 'admin',
+    priority: 'high',
+    roles: ['admin', 'super_admin'],
   },
   {
     id: 'hospital-enrollment',

@@ -168,17 +168,25 @@ Triple-layer enforcement: Frontend hooks (`useIsAdmin`) → RLS policies (`curre
 - Registered in admin dashboard under System Administration category
 - Roles: admin, super_admin, department_head, it_admin
 
-## Item 3.2: User Invite/Provisioning — MISSING
+## Item 3.2: User Invite/Provisioning — BUILT (2026-02-24)
 
 | Layer | Status | Detail |
 |-------|--------|--------|
-| UI | MISSING | No bulk import, no invite-by-email flow |
-| Backend | PARTIAL | Registration edge functions exist, but no admin-initiated flow |
+| UI | BUILT | Tabbed panel: invite form with role dropdown + delivery method, pending registrations table with delete |
+| Service | BUILT | `userProvisioningService.ts` — wraps `admin_register` edge function, manages pending registrations |
+| Backend | BUILT | `admin_register` edge function (pre-existing) — creates users with temporary password |
+| Tests | BUILT | 13 behavioral tests (9,211 total) |
 
-**What's needed:**
-- Invite user by email (pre-assign role + department)
+**What was built:**
+- `UserProvisioningPanel.tsx` (152 lines) — orchestrator with invite/pending tabs
+- `user-provisioning/InviteUserForm.tsx` (302 lines) — form with name, email, phone, role (grouped elevated/public), delivery method (email/SMS/manual), success state with temporary password display + copy
+- `user-provisioning/PendingInvitationsTable.tsx` (166 lines) — table with name, contact, role badge, status (verified/code sent/pending/expired), delete with confirmation
+- `userProvisioningService.ts` (177 lines) — inviteUser, getPendingRegistrations, deletePendingRegistration
+- Registered in admin dashboard under System Administration category
+
+**Not built (future):**
 - Bulk CSV import for staff onboarding
-- Pending invitation management (resend/revoke)
+- Resend invitation flow
 
 ## Item 3.3: TenantSecurityDashboard Enhancements — PARTIAL
 
@@ -266,6 +274,29 @@ Triple-layer enforcement: Frontend hooks (`useIsAdmin`) → RLS policies (`curre
 - `src/components/admin/sections/lazyImports.tsx`
 - `src/components/admin/sections/sectionDefinitions.tsx`
 
-### Session 3: NOT STARTED
+### Session 3: Tier 3 Item 3.2 — COMPLETE (2026-02-24)
 
-**Planned scope:** Tier 3 Items 3.2-3.4 (user provisioning, security config, tenant suspension)
+| What | Result |
+|------|--------|
+| Item 3.2: User Invite/Provisioning | BUILT — tabbed panel with invite form + pending management |
+| Service layer | `userProvisioningService.ts` — wraps admin_register edge function |
+| UI components | Panel + InviteUserForm + PendingInvitationsTable (decomposed, all < 600 lines) |
+| Tests | 13 new behavioral tests (9,211 total) |
+| Verification | typecheck: 0 errors, lint: 0 errors, tests: 9,211 passed |
+
+**Files created:**
+- `src/services/userProvisioningService.ts`
+- `src/components/admin/UserProvisioningPanel.tsx`
+- `src/components/admin/user-provisioning/InviteUserForm.tsx`
+- `src/components/admin/user-provisioning/PendingInvitationsTable.tsx`
+- `src/components/admin/user-provisioning/types.ts`
+- `src/components/admin/user-provisioning/index.ts`
+- `src/components/admin/__tests__/UserProvisioningPanel.test.tsx`
+
+**Files modified:**
+- `src/components/admin/sections/lazyImports.tsx`
+- `src/components/admin/sections/sectionDefinitions.tsx`
+
+### Session 4: NOT STARTED
+
+**Planned scope:** Tier 3 Items 3.3-3.4 (security config, tenant suspension)

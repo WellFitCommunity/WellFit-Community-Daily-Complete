@@ -10,6 +10,7 @@ export const UsersList = lazy(() => import('../UsersList'));
 export const ReportsSection = lazy(() => import('../ReportsSection'));
 export const ExportCheckIns = lazy(() => import('../ExportCheckIns'));
 export const UserRoleManagementPanel = lazy(() => import('../UserRoleManagementPanel'));
+export const UserProvisioningPanel = lazy(() => import('../UserProvisioningPanel'));
 
 // FHIR & Clinical Data
 export const FhirAiDashboard = lazy(() => import('../FhirAiDashboard'));
