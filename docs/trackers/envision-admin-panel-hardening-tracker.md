@@ -33,29 +33,30 @@
 | Envision Auth Flow | 10/10 | Complete 2FA flow |
 | CRUD Operations | 9/10 | Minor gaps in read-only panels |
 | Admin Separation | 9/10 | Needs RLS verification for tenant isolation |
-| Test Coverage | 5/10 | **46/104 components tested (44%)** |
+| Test Coverage | 6/10 | **52/104 components tested (50%)** — +6 from Tier 2 Session 1 |
 
-**Overall: 93/100 — functionally solid, test coverage is the main gap**
+**Overall: 94/100 — functionally solid, test coverage improving (50%)**
 
 ---
 
 # Tier 1 — Verification & Quick Fixes (~2 hours, 1 session)
 
-## Item 1.1: Verify RLS Tenant Isolation on user_roles — TODO
+## Item 1.1: Verify RLS Tenant Isolation on user_roles — DONE
 
 | What | Detail |
 |------|--------|
 | Concern | Tenant admins may be able to see/modify roles in other tenants |
-| Check | Read RLS policies on `user_roles` table, verify `tenant_id` scoping |
-| Action | If gap found, add migration to fix |
+| Check | RLS policies verified: `user_roles` has `get_current_tenant_id()` scoping on SELECT, INSERT, UPDATE, DELETE |
+| Result | No gap found — tenant isolation is properly enforced |
 
-## Item 1.2: Fix SDOHCoderAssist Hardcoded Demo IDs — TODO
+## Item 1.2: Fix SDOHCoderAssist Hardcoded Demo IDs — DONE
 
 | What | Detail |
 |------|--------|
-| File | `src/components/admin/sections/revenueSections.tsx` |
+| File | `src/components/admin/sections/SDOHCoderAssistWrapper.tsx` (new) |
 | Problem | `encounterId="demo-encounter-id" patientId="demo-patient-id"` hardcoded |
-| Fix | Accept IDs from context or selected encounter |
+| Fix | Created `SDOHCoderAssistWrapper` that reads from `PatientContext`, shows "Select a Patient" prompt when none selected |
+| Commit | `31002ca9` |
 
 ## Item 1.3: Tenant Suspension — DONE (Session 5)
 
@@ -74,15 +75,15 @@
 
 ## Session 1: Clinical & FHIR Components
 
-| # | Component | Lines | Why High Priority | Status |
-|---|-----------|-------|-------------------|--------|
-| 2.1 | FHIRInteroperabilityDashboard | ~400 | Core interoperability feature | TODO |
-| 2.2 | FHIRDataMapper | ~300 | Data transformation critical path | TODO |
-| 2.3 | FhirAiDashboard | ~250 | AI-powered FHIR analysis | TODO |
-| 2.4 | RiskAssessmentManager | ~350 | Clinical decision support | TODO |
-| 2.5 | ClinicalNoteSummaryDashboard | ~300 | Note aggregation | TODO |
-| 2.6 | NoteLockingControls | ~200 | 21 CFR Part 11 compliance | TODO |
-| 2.7 | AmendmentWorkflow | ~150 | HIPAA amendment tracking | TODO |
+| # | Component | Lines | Tests | Why High Priority | Status |
+|---|-----------|-------|-------|-------------------|--------|
+| 2.1 | FHIRInteroperabilityDashboard | ~400 | (covered by FhirAiDashboard) | Core interoperability feature | DONE |
+| 2.2 | FHIRDataMapper | 535 | 12 tests | Data transformation critical path | DONE |
+| 2.3 | FhirAiDashboard | 1039 | 13 tests | AI-powered FHIR analysis | DONE |
+| 2.4 | RiskAssessmentManager | 415 | 19 tests | Clinical decision support | DONE |
+| 2.5 | ClinicalNoteSummaryDashboard | 431 | 14 tests | Note aggregation | DONE |
+| 2.6 | NoteLockingControls | 283 | 10 tests | 21 CFR Part 11 compliance | DONE |
+| 2.7 | AmendmentWorkflow | 488 | 11 tests | HIPAA amendment tracking | DONE |
 
 ## Session 2: Billing & Revenue Components
 

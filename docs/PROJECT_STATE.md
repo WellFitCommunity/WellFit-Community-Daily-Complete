@@ -46,19 +46,21 @@
 
 ---
 
-## Current Priority: Tenant Admin Panel — Sessions 1-4 COMPLETE, Item 3.4 Next
+## Current Priority: Admin Panel Hardening — Tier 2 Session 1 COMPLETE
 
-**Tracker:** `docs/trackers/tenant-admin-panel-tracker.md`
+**Tracker:** `docs/trackers/envision-admin-panel-hardening-tracker.md`
 
-| Session | Status | What Was Built |
-|---------|--------|----------------|
-| 0 (Audit) | Done | Full audit: 4 store-only settings, 2 orphaned components, 4 missing capabilities |
-| 1 (Tier 1+2) | Done | Wire session timeout + PIN requirement, remove audit/backup toggles, route 2 orphans |
-| 2 (Tier 3.1) | Done | User Role Management UI with hierarchy enforcement |
-| 3 (Tier 3.2) | Done | User Invite/Provisioning with invite form + pending management |
-| 4 (Tier 3.3) | Done | TenantSecurityDashboard: alert management, sessions, security rules |
+| Tier | Status | What Was Done |
+|------|--------|---------------|
+| Tier 1 (1.1-1.3) | DONE | RLS verification, SDOHCoderAssist wrapper, Tenant Suspension |
+| Tier 2 Session 1 (2.1-2.7) | DONE | 79 behavioral tests for 6 clinical/FHIR components |
+| Tier 2 Session 2 (2.8-2.13) | TODO | Billing & Revenue component tests |
+| Tier 2 Session 3 (2.14-2.20) | TODO | Compliance & Security component tests |
+| Tier 2 Session 4 (2.21-2.27) | TODO | Admin Operations component tests |
+| Tier 3 Sessions 5-7 | TODO | Medium-priority test coverage (25 components) |
+| Tier 4 | TODO | Nice-to-haves (8 items) |
 
-**Remaining:** Item 3.4 (Tenant Suspension) — ~4 hours (1 session)
+**Next:** Tier 2 Session 2 — Billing & Revenue tests (~4 hours, 1 session)
 
 ---
 
@@ -79,7 +81,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
-| **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **NEW — 62 items, Tier 1 fixes + test coverage across 8-10 sessions** |
+| **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1 DONE, Tier 2 Session 1 DONE — 79 tests added, 50% coverage** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
@@ -91,8 +93,8 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,223 passed, 0 failed | 2026-02-24 |
-| Test Suites | 473 | 2026-02-24 |
+| Tests | 9,308 passed, 0 failed | 2026-02-24 |
+| Test Suites | 481 | 2026-02-24 |
 | Typecheck | 0 errors | 2026-02-24 |
 | Lint | 0 errors, 0 warnings | 2026-02-24 |
 | God files (>600 lines) | 0 violations (all decomposed) | 2026-02-24 |
@@ -124,40 +126,36 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 ## What Was Completed Last Session (2026-02-24)
 
-### Tenant Admin Panel Sessions 1-4 — COMPLETE
+### Admin Panel Hardening — Tier 1 + Tier 2 Session 1
+
+**Tracker:** `docs/trackers/envision-admin-panel-hardening-tracker.md`
+
+**Tier 1 (Items 1.1-1.3):**
+- 1.1: RLS tenant isolation on `user_roles` verified — `get_current_tenant_id()` scoping confirmed
+- 1.2: SDOHCoderAssist hardcoded demo IDs → `SDOHCoderAssistWrapper` reading from PatientContext
+- 1.3: Tenant Suspension — already done in previous session
+
+**Tier 2 Session 1 (Items 2.1-2.7) — 79 new behavioral tests:**
+- `FhirAiDashboard.test.tsx` — 13 tests: tabs, population metrics, risk matrix, loading/error states
+- `FHIRDataMapper.test.tsx` — 12 tests: source selection, mapping rules, FHIR preview, deploy options
+- `ClinicalNoteSummaryDashboard.test.tsx` — 14 tests: metric cards, note list, detail panel, tabs
+- `NoteLockingControls.test.tsx` — 10 tests: lock/unlock flow, confirmation, signature display
+- `AmendmentWorkflow.test.tsx` — 11 tests: create form, approve/reject, type selector, expand/collapse
+- `RiskAssessmentManager.test.tsx` — 19 tests: role access, assessment list, filtering, patient selector
+
+**Tests: 9,308 passed (481 suites) — up from 9,229**
+
+---
+
+### Earlier: Tenant Admin Panel Sessions 1-5 — COMPLETE
 
 **Tracker:** `docs/trackers/tenant-admin-panel-tracker.md`
 
-**Session 1 (Tier 1 + Tier 2):**
-- Wired session timeout — `SessionTimeoutContext` fetches `admin_settings.session_timeout`, validates against allowed values (15/30/60/120 min)
-- Wired PIN requirement — `AdminAuthContext` exposes `requirePinForSensitive` from DB
-- Removed audit logging toggle — replaced with HIPAA § 164.312(b) compliance notice
-- Removed backup settings toggle — replaced with Supabase Pro managed notice
-- Routed TenantConfigHistory — lazy-loaded in security category
-- Routed ClearinghouseConfigPanel — lazy-loaded in admin category with named export adapter
-- Tests: 9,186 passed (472 suites)
-
-**Session 2 (Item 3.1 — User Role Management):**
-- `UserRoleManagementPanel.tsx` (322 lines) — staff list with search, filter, stats bar
-- `StaffRoleTable.tsx` (158 lines) + `RoleAssignmentModal.tsx` (185 lines)
-- `userRoleManagementService.ts` (326 lines) — hierarchy-enforced role CRUD
-- 12 new behavioral tests — Tests: 9,198 passed (473 suites)
-
-**Session 3 (Item 3.2 — User Provisioning):**
-- `UserProvisioningPanel.tsx` (152 lines) — tabbed invite/pending
-- `InviteUserForm.tsx` (302 lines) + `PendingInvitationsTable.tsx` (166 lines)
-- `userProvisioningService.ts` (177 lines) — wraps `admin_register` edge function
-- 13 new behavioral tests — Tests: 9,211 passed (473 suites)
-
-**Session 4 (Item 3.3 — Security Dashboard):**
-- Decomposed TenantSecurityDashboard: 313-line monolith → orchestrator + 3 sub-panels
-- `SecurityAlertsPanel.tsx` (173 lines) — alert management with acknowledge/resolve
-- `ActiveSessionsPanel.tsx` (158 lines) — session list with force-logout
-- `SecurityRulesConfig.tsx` (294 lines) — configurable alert rules
-- `tenantSecurityService.ts` (322 lines) — full service layer
-- 12 new behavioral tests — Tests: 9,223 passed (473 suites)
-
-**Remaining:** Item 3.4 (Tenant Suspension)
+- Session 1: Wire session timeout + PIN requirement, remove audit/backup toggles, route orphans
+- Session 2: User Role Management UI with hierarchy enforcement (12 tests)
+- Session 3: User Invite/Provisioning with invite form + pending management (13 tests)
+- Session 4: TenantSecurityDashboard decomposition + alert management, sessions, rules (12 tests)
+- Session 5: Tenant Suspension — login enforcement, UI banner (6 tests)
 
 ---
 
