@@ -23,10 +23,10 @@ import userEvent from '@testing-library/user-event';
 // MOCKS
 // ============================================================================
 
-// Supabase chain mock
+// Supabase chain mock — typed broadly to allow setupSuccessMocks to override return shape
 const mockOrder = vi.fn();
 const mockSelect = vi.fn(() => ({ order: mockOrder }));
-const mockFrom = vi.fn(() => ({ select: mockSelect }));
+const mockFrom: ReturnType<typeof vi.fn> = vi.fn(() => ({ select: mockSelect }));
 
 const mockSupabase = { from: mockFrom };
 
@@ -196,7 +196,7 @@ function setupSuccessMocks(
   // Simplest: make .select() return { order: fn, then: fn } and .order() resolve data.
   // Actually the component awaits each call. Let's use mockFrom to track calls.
 
-  mockFrom.mockImplementation((_table: string) => {
+  mockFrom.mockImplementation(() => {
     const idx = callIndex++;
     const selectFn = vi.fn(() => {
       if (idx === 0) {
@@ -207,11 +207,6 @@ function setupSuccessMocks(
         return { order: vi.fn().mockResolvedValue({ data: skills, error: null }) };
       } else {
         // ai_model_cards — no .order(), the select IS the result
-        // But actually the component does NOT call .order() on model_cards.
-        // Wait — re-reading the component: line 130-133:
-        //   .from('ai_model_cards').select('...') — no .order()
-        // So the select() call resolves directly.
-        // We need select() to return a thenable (Promise-like).
         return Promise.resolve({ data: cards, error: null });
       }
     });

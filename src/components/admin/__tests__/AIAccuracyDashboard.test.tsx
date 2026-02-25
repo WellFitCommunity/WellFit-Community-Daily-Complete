@@ -574,8 +574,8 @@ describe('AIAccuracyDashboard', () => {
       {
         skill_name: 'test_skill',
         total_predictions: 10,
-        accuracy_rate: null,
-        avg_confidence: null,
+        accuracy_rate: null as unknown as number,
+        avg_confidence: null as unknown as number,
         total_cost: 1.00,
       },
     ];

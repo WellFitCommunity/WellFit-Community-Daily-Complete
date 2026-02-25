@@ -134,7 +134,7 @@ interface BackupRecord {
 let mockRpcResults: Record<string, { data: unknown; error: unknown }> = {};
 let mockFromResults: Record<string, { data: unknown; error: unknown }> = {};
 
-const mockSupabaseRpc = vi.fn((name: string) => {
+const mockSupabaseRpc = vi.fn((name: string, _params?: unknown) => {
   const result = mockRpcResults[name] ?? { data: null, error: null };
   return Promise.resolve(result);
 });
@@ -152,7 +152,9 @@ const mockSupabaseFrom = vi.fn((table: string) => {
 
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
-    rpc: (...args: unknown[]) => mockSupabaseRpc(args[0] as string, ...args.slice(1)),
+    rpc: (...args: unknown[]) => args.length > 1
+      ? mockSupabaseRpc(args[0] as string, args[1])
+      : mockSupabaseRpc(args[0] as string),
     from: (...args: unknown[]) => mockSupabaseFrom(args[0] as string),
   },
 }));
