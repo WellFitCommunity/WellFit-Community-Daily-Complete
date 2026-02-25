@@ -274,10 +274,11 @@ const HospitalPatientEnrollment: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Required Fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="enroll-first-name" className="block text-sm font-medium text-gray-700 mb-1">
                 First Name <span className="text-red-600">*</span>
               </label>
               <input
+                id="enroll-first-name"
                 type="text"
                 required
                 value={formData.firstName}
@@ -287,10 +288,11 @@ const HospitalPatientEnrollment: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="enroll-last-name" className="block text-sm font-medium text-gray-700 mb-1">
                 Last Name <span className="text-red-600">*</span>
               </label>
               <input
+                id="enroll-last-name"
                 type="text"
                 required
                 value={formData.lastName}
@@ -300,10 +302,11 @@ const HospitalPatientEnrollment: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="enroll-dob" className="block text-sm font-medium text-gray-700 mb-1">
                 Date of Birth <span className="text-red-600">*</span>
               </label>
               <input
+                id="enroll-dob"
                 type="date"
                 required
                 value={formData.dob}

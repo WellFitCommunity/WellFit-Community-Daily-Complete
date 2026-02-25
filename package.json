@@ -140,7 +140,7 @@
     "db:migrate:staging": "./scripts/migrate.sh staging",
     "db:migrate:production": "./scripts/migrate.sh production",
     "db:new-migration": "./scripts/create-migration.sh",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
     "db:types": "npx supabase gen types typescript --project-id xkybsjnvuohpqpbkikyn > src/types/database.generated.ts",
     "serve:register": "npx supabase functions serve --env-file ./supabase/.env.local --no-verify-jwt",
     "deploy:register": "npx supabase functions deploy register",
