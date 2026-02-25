@@ -46,7 +46,7 @@
 
 ---
 
-## Current Priority: Admin Panel Hardening — Tier 2 Session 4 NEXT
+## Current Priority: Admin Panel Hardening — Tier 3 Session 5 NEXT
 
 **Tracker:** `docs/trackers/envision-admin-panel-hardening-tracker.md`
 
@@ -55,12 +55,12 @@
 | Tier 1 (1.1-1.3) | DONE | RLS verification, SDOHCoderAssist wrapper, Tenant Suspension |
 | Tier 2 Session 1 (2.1-2.7) | DONE | 79 behavioral tests for 6 clinical/FHIR components |
 | Tier 2 Session 2 (2.8-2.13) | DONE | 135 behavioral tests for 6 billing/revenue components |
-| Tier 2 Session 3 (2.14-2.20) | DONE | 172 behavioral tests for 7 compliance/security components + 5 admin ops tests (repaired) |
-| Tier 2 Session 4 (2.21-2.27) | TODO | Admin Operations component tests |
+| Tier 2 Session 3 (2.14-2.20) | DONE | 172 behavioral tests for 7 compliance/security components |
+| Tier 2 Session 4 (2.21-2.27) | DONE | 264 behavioral tests for 7 admin operations components |
 | Tier 3 Sessions 5-7 | TODO | Medium-priority test coverage (25 components) |
 | Tier 4 | TODO | Nice-to-haves (8 items) |
 
-**Next:** Tier 2 Session 4 — Admin Operations tests (~4 hours, 1 session)
+**Next:** Tier 3 Session 5 — AI & Monitoring tests (~6 hours, 1 session)
 
 ---
 
@@ -81,7 +81,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
-| **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1 DONE, Tier 2 Sessions 1-3 DONE — 386 tests added + 175 repaired** |
+| **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1 DONE, Tier 2 COMPLETE (all 4 sessions) — 650 tests, 72/104 components (69%)** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
@@ -93,8 +93,8 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,790 passed, 0 failed | 2026-02-25 |
-| Test Suites | 499 | 2026-02-25 |
+| Tests | 9,879 passed, 0 failed | 2026-02-25 |
+| Test Suites | 501 | 2026-02-25 |
 | Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-02-25 |
 | Lint | 0 errors, 0 warnings | 2026-02-25 |
 | God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) | 2026-02-24 |
@@ -126,7 +126,26 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 ## What Was Completed Last Session (2026-02-25)
 
-### Test & Build Repair Session
+### Admin Panel Hardening — Tier 2 Session 4 (COMPLETE)
+
+**264 behavioral tests across 7 admin operations components.** Tier 2 is now fully complete.
+
+| Component | Tests | Key Coverage |
+|-----------|-------|-------------|
+| FacilityManagementPanel | 37 | CRUD, search, inactive toggle, modals, validation |
+| AdminSettingsPanel | 41 | Preferences, dropdowns, apply/reset, loading states |
+| TenantModuleConfigPanel | 37 | Module grouping, entitlement model, save/cancel |
+| TenantBrandingManager | 30 | Color validation, logo upload, tenant switching |
+| HospitalPatientEnrollment | 30 | Form validation, patient search, enrollment flow |
+| MPIReviewQueue | 36 | Duplicate review, expand/collapse, defer/reject/merge, lazy-load address |
+| PatientEngagementDashboard | 53 | Engagement scores, risk levels, mood indicators, pagination, filtering |
+
+**New files (2):** `MPIReviewQueue.test.tsx`, `PatientEngagementDashboard.test.tsx`
+**Tests: 9,879 passed, 0 failed (501 suites)**
+
+---
+
+### Test & Build Repair (same session)
 
 **Problem:** Previous session (Tier 2 Session 3) was interrupted mid-work, leaving 5 uncommitted test files with 15 failures and a typecheck OOM crash.
 
