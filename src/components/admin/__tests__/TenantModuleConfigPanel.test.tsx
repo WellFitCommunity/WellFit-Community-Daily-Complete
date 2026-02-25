@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // ============================================================================
@@ -356,7 +356,7 @@ describe('TenantModuleConfigPanel', () => {
     const communitySwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
     expect(communitySwitch).toBeTruthy();
 
-    await user.click(communitySwitch!);
+    await user.click(communitySwitch as HTMLElement);
 
     // After toggling, the unsaved changes bar should appear
     await waitFor(() => {
@@ -375,7 +375,7 @@ describe('TenantModuleConfigPanel', () => {
     // Toggle a switch to create pending changes
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();
@@ -395,7 +395,7 @@ describe('TenantModuleConfigPanel', () => {
     // Toggle community off
     const switches = screen.getAllByRole('switch');
     const communitySwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(communitySwitch!);
+    await user.click(communitySwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();
@@ -421,7 +421,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();
@@ -445,7 +445,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();
@@ -470,7 +470,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Cancel')).toBeInTheDocument();
@@ -525,7 +525,7 @@ describe('TenantModuleConfigPanel', () => {
     // Click the Core Platform category header to collapse it
     const coreCategoryButton = screen.getByText('Core Platform').closest('button');
     expect(coreCategoryButton).toBeTruthy();
-    await user.click(coreCategoryButton!);
+    await user.click(coreCategoryButton as HTMLElement);
 
     // Community Features should no longer be visible (collapsed)
     await waitFor(() => {
@@ -569,7 +569,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText(/unsaved changes to 1 module\b/)).toBeInTheDocument();
@@ -588,7 +588,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();
@@ -613,7 +613,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Cancel')).toBeInTheDocument();
@@ -641,7 +641,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();
@@ -669,7 +669,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();
@@ -743,7 +743,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();
@@ -764,7 +764,7 @@ describe('TenantModuleConfigPanel', () => {
 
     const switches = screen.getAllByRole('switch');
     const enabledSwitch = switches.find((s) => s.getAttribute('aria-checked') === 'true');
-    await user.click(enabledSwitch!);
+    await user.click(enabledSwitch as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Save Changes')).toBeInTheDocument();

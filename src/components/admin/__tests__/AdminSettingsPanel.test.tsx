@@ -194,7 +194,7 @@ describe('AdminSettingsPanel — display settings', () => {
     });
     expect(dashboardSelect).toBeDefined();
 
-    const options = within(dashboardSelect!).getAllByRole('option');
+    const options = within(dashboardSelect as HTMLElement).getAllByRole('option');
     const optionTexts = options.map((o) => o.textContent);
 
     expect(optionTexts).toContain('Overview');
@@ -256,7 +256,7 @@ describe('AdminSettingsPanel — security', () => {
     });
     expect(timeoutSelect).toBeDefined();
 
-    const options = within(timeoutSelect!).getAllByRole('option');
+    const options = within(timeoutSelect as HTMLElement).getAllByRole('option');
     const values = options.map((o) => o.textContent);
     expect(values).toContain('15 minutes');
     expect(values).toContain('30 minutes');
@@ -527,7 +527,7 @@ describe('AdminSettingsPanel — save button state', () => {
   it('shows "Applying..." text while save is in progress', async () => {
     resolveLoad();
     // Create a promise we control to keep save in-flight
-    let resolveUpsert: (value: { error: null }) => void;
+    let resolveUpsert: (value: { error: null }) => void = () => {};
     const upsertPromise = new Promise<{ error: null }>((resolve) => {
       resolveUpsert = resolve;
     });
@@ -545,7 +545,7 @@ describe('AdminSettingsPanel — save button state', () => {
     expect(screen.getByRole('button', { name: /applying/i })).toBeDisabled();
 
     // Resolve to clean up
-    resolveUpsert!({ error: null });
+    resolveUpsert({ error: null });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /apply settings/i })).toBeInTheDocument();
