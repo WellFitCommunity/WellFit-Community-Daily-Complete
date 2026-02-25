@@ -46,7 +46,7 @@
 
 ---
 
-## Current Priority: Admin Panel Hardening — Tier 3 Session 5 NEXT
+## Current Priority: Admin Panel Hardening — Tier 3 Session 6 NEXT
 
 **Tracker:** `docs/trackers/envision-admin-panel-hardening-tracker.md`
 
@@ -57,10 +57,11 @@
 | Tier 2 Session 2 (2.8-2.13) | DONE | 135 behavioral tests for 6 billing/revenue components |
 | Tier 2 Session 3 (2.14-2.20) | DONE | 172 behavioral tests for 7 compliance/security components |
 | Tier 2 Session 4 (2.21-2.27) | DONE | 264 behavioral tests for 7 admin operations components |
-| Tier 3 Sessions 5-7 | TODO | Medium-priority test coverage (25 components) |
+| Tier 3 Session 5 (3.1-3.8) | DONE | 220 behavioral tests for 8 AI & monitoring components |
+| Tier 3 Sessions 6-7 | TODO | Medium-priority test coverage (17 components) |
 | Tier 4 | TODO | Nice-to-haves (8 items) |
 
-**Next:** Tier 3 Session 5 — AI & Monitoring tests (~6 hours, 1 session)
+**Next:** Tier 3 Session 6 — Admin Utilities tests (~6 hours, 1 session)
 
 ---
 
