@@ -12,11 +12,11 @@
 
 | Priority | Items | Status |
 |----------|-------|--------|
-| P0 Critical (Security) | 8 | **4/8 done** (P0-1 through P0-4) |
+| P0 Critical (Security) | 8 | **5/8 done** (P0-1 through P0-5) |
 | P1 Hardening | 3 | 0/3 done |
 | P2 Moderate (Functional) | 7 | 0/7 done |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **4/23 done** |
+| **Total** | **23** | **5/23 done** |
 
 ### Cross-Audit Note
 
@@ -169,25 +169,26 @@ function isAnonKey(token: string): boolean {
 
 ### P0-5: God File Decomposition (6 servers exceed 600 lines) **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-27)
 **Estimated:** ~8 hours (1 session)
 
-Decompose using the proven barrel re-export pattern (same as FHIR, HL7, Clearinghouse decompositions).
+Decomposed all 6 servers using the proven barrel re-export pattern (factory function + extracted modules).
 
-| Server | Current Lines | Target | Decomposition Plan |
-|--------|--------------|--------|-------------------|
-| `mcp-prior-auth-server/index.ts` | 913 | <400 index + modules | Extract: types.ts, toolHandlers.ts, audit.ts |
-| `mcp-npi-registry-server/index.ts` | 863 | <400 index + modules | Extract: types.ts, npiApiClient.ts, toolHandlers.ts, responseMappers.ts |
-| `mcp-cms-coverage-server/index.ts` | 728 | <350 index + modules | Extract: types.ts, cmsApiClient.ts, toolHandlers.ts |
-| `mcp-medical-codes-server/index.ts` | 720 | <350 index + modules | Extract: types.ts, codeSearch.ts, validation.ts, toolHandlers.ts |
-| `mcp-edge-functions-server/index.ts` | 683 | <350 index + modules | Extract: types.ts, functionInvoker.ts, toolHandlers.ts, audit.ts |
-| `mcp-postgres-server/index.ts` | 664 | <300 index + modules | Extract: types.ts, whitelistedQueries.ts, toolHandlers.ts, audit.ts |
+| Server | Before | After (index.ts) | Modules Extracted |
+|--------|--------|-------------------|-------------------|
+| `mcp-prior-auth-server` | 929 | 224 | types.ts, tools.ts, fhirConverter.ts, toolHandlers.ts |
+| `mcp-npi-registry-server` | 863 | 155 | taxonomyCodes.ts, npiApi.ts, tools.ts, toolHandlers.ts |
+| `mcp-cms-coverage-server` | 728 | 155 | coverageData.ts, tools.ts, toolHandlers.ts |
+| `mcp-medical-codes-server` | 734 | 158 | types.ts, codeData.ts, tools.ts, toolHandlers.ts |
+| `mcp-edge-functions-server` | 703 | 197 | functionWhitelist.ts, tools.ts, toolHandlers.ts |
+| `mcp-postgres-server` | 690 | 183 | queryWhitelist.ts, tools.ts, toolHandlers.ts |
 
-**Verification:**
-```bash
-wc -l supabase/functions/mcp-*/index.ts  # All must be <600
-npm run typecheck && npm test
-```
+**Verification (passed):**
+- All 6 index.ts files: 155–224 lines (well under 600)
+- All extracted modules: under 425 lines each
+- typecheck: 0 errors
+- lint: 0 errors, 0 warnings
+- tests: 10,304 passed, 0 failed
 
 ---
 
