@@ -7,7 +7,7 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { EdgeFunctionLogger } from "../_shared/auditLogger.ts";
 import { handlePing, type MCPInitResult } from "../_shared/mcpServerBase.ts";
 import type { ToolResult, CareTeamParticipant, PractitionerRecord } from "./types.ts";
-import { FHIR_TABLES } from "./tools.ts";
+import { FHIR_TABLES, getFHIRColumns } from "./tools.ts";
 import { createFHIRBundle } from "./bundleBuilder.ts";
 import { validateResource } from "./validation.ts";
 import { logFHIROperation } from "./audit.ts";
@@ -177,7 +177,7 @@ async function handleGetResource(
   const table = FHIR_TABLES[resourceType];
   if (!table) throw new Error(`Unknown resource type: ${resourceType}`);
 
-  const { data, error } = await sb.from(table).select('*').eq('id', resourceId).single();
+  const { data, error } = await sb.from(table).select(getFHIRColumns(table)).eq('id', resourceId).single();
   if (error) throw new Error(`Resource not found: ${error.message}`);
   return { resourceType, ...data };
 }
@@ -237,7 +237,7 @@ async function handleGetObservations(
   const dateTo = toolArgs.date_to as string | undefined;
   const limit = toolArgs.limit as number | undefined;
 
-  let query = sb.from('fhir_observations').select('*').eq('patient_id', patientId);
+  let query = sb.from('fhir_observations').select(getFHIRColumns('fhir_observations')).eq('patient_id', patientId);
   if (category) query = query.eq('category', category);
   if (code) query = query.eq('code', code);
   if (dateFrom) query = query.gte('effective_date', dateFrom);
@@ -262,7 +262,7 @@ async function handleGetMedicationList(
   const status = toolArgs.status as string | undefined;
   const includeHistory = toolArgs.include_history as boolean | undefined;
 
-  let query = sb.from('fhir_medication_requests').select('*').eq('patient_id', patientId);
+  let query = sb.from('fhir_medication_requests').select(getFHIRColumns('fhir_medication_requests')).eq('patient_id', patientId);
 
   if (status && status !== 'all') {
     query = query.eq('status', status);
@@ -300,7 +300,7 @@ async function handleGetConditionList(
   const clinicalStatus = toolArgs.clinical_status as string | undefined;
   const category = toolArgs.category as string | undefined;
 
-  let query = sb.from('fhir_conditions').select('*').eq('patient_id', patientId);
+  let query = sb.from('fhir_conditions').select(getFHIRColumns('fhir_conditions')).eq('patient_id', patientId);
   if (clinicalStatus) query = query.eq('clinical_status', clinicalStatus);
   if (category) query = query.eq('category', category);
 
@@ -333,7 +333,7 @@ async function handleGetSdohAssessments(
   const patientId = toolArgs.patient_id as string;
 
   const query = sb.from('fhir_observations')
-    .select('*')
+    .select(getFHIRColumns('fhir_observations'))
     .eq('patient_id', patientId)
     .eq('category', 'sdoh');
 
@@ -379,7 +379,7 @@ async function handleGetCareTeam(
   const includeContactInfo = toolArgs.include_contact_info as boolean | undefined;
 
   const { data: careTeams, error } = await sb.from('fhir_care_teams')
-    .select('*')
+    .select(getFHIRColumns('fhir_care_teams'))
     .eq('patient_id', patientId)
     .eq('status', 'active');
 
@@ -469,7 +469,7 @@ async function handleTriggerEhrSync(
 
   // Get connection details
   const { data: connection, error: connError } = await sb.from('fhir_connections')
-    .select('*')
+    .select('id, name, ehr_type, base_url, status, sync_mode, tenant_id')
     .eq('id', connectionId)
     .single();
 

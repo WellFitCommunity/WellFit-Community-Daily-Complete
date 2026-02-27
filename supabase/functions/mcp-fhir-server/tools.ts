@@ -33,6 +33,41 @@ export const FHIR_TABLES: Record<string, string> = {
 export const SUPPORTED_RESOURCES = Object.keys(FHIR_TABLES);
 
 // =====================================================
+// Per-Table Explicit Column Selections (P0-6: eliminate SELECT *)
+// Unmapped tables fall through to '*' with a log warning.
+// =====================================================
+
+export const FHIR_SELECT_COLUMNS: Record<string, string> = {
+  'profiles': 'id, mrn, first_name, last_name, middle_name, gender, date_of_birth, phone, email, address_line1, address_line2, city, state, zip_code, created_at, updated_at',
+  'fhir_medication_requests': 'id, patient_id, medication_name, dosage_instructions, frequency, route, status, requester_display, authored_on, end_date, code, code_system, created_at, updated_at',
+  'fhir_conditions': 'id, patient_id, code, code_display, code_system, clinical_status, verification_status, severity, category, onset_date, recorded_date, created_at, updated_at',
+  'fhir_diagnostic_reports': 'id, patient_id, code, code_display, status, category, effective_date, issued, conclusion, created_at, updated_at',
+  'fhir_procedures': 'id, patient_id, code, code_display, status, category, performed_date, created_at, updated_at',
+  'fhir_observations': 'id, patient_id, code, code_display, category, value_quantity, value_string, value_codeable_concept, unit, effective_date, status, created_at, updated_at',
+  'fhir_immunizations': 'id, patient_id, vaccine_code, vaccine_display, status, occurrence_date, lot_number, site, route, created_at, updated_at',
+  'fhir_care_plans': 'id, patient_id, title, status, intent, category, description, period_start, period_end, created_at, updated_at',
+  'fhir_care_teams': 'id, patient_id, name, category, status, participants, created_at, updated_at',
+  'fhir_practitioners': 'id, name, specialty, phone, email, npi, active, created_at, updated_at',
+  'fhir_practitioner_roles': 'id, practitioner_id, organization_id, code, specialty, active, created_at, updated_at',
+  'fhir_encounters': 'id, patient_id, status, class, type, period_start, period_end, reason_code, created_at, updated_at',
+  'fhir_document_references': 'id, patient_id, type, status, category, date, description, content_type, created_at, updated_at',
+  'fhir_allergies': 'id, patient_id, code, code_display, clinical_status, verification_status, category, criticality, type, onset_date, created_at, updated_at',
+  'fhir_goals': 'id, patient_id, description, status, category, priority, start_date, target_date, created_at, updated_at',
+  'fhir_locations': 'id, name, status, type, address, telecom, created_at, updated_at',
+  'fhir_organizations': 'id, name, type, active, telecom, address, created_at, updated_at',
+  'fhir_medications': 'id, code, code_display, form, manufacturer, status, created_at, updated_at',
+  'fhir_connections': 'id, name, ehr_type, base_url, status, sync_mode, sync_frequency, last_sync_at, tenant_id, created_at',
+};
+
+/**
+ * Get the explicit column selection for a FHIR table.
+ * Returns '*' if the table is not mapped (with a warning side-effect).
+ */
+export function getFHIRColumns(table: string): string {
+  return FHIR_SELECT_COLUMNS[table] || '*';
+}
+
+// =====================================================
 // MCP Tool Schema Definitions
 // =====================================================
 

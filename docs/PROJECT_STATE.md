@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-02-27
-**Last Session:** MCP Server Compliance Session 1 — P0-1 through P0-4 security fixes
+**Last Session:** MCP Server Compliance Sessions 1-2 — P0-1 through P0-5 (security fixes + god file decomposition)
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -36,19 +36,20 @@
 
 | Priority | Items | Status |
 |----------|-------|--------|
-| P0 Critical (Security) | 8 | **4/8 done** (P0-1 through P0-4) |
-| P1 Hardening | 3 | 0/3 done |
+| P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
+| P1 Hardening | 3 | **1/3 done** (P1-1) |
 | P2 Moderate (Functional) | 7 | 0/7 done |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **4/23 done** |
+| **Total** | **23** | **9/23 done** |
 
 **Session plan:**
 - ~~Session 1: P0-1 through P0-4~~ — **DONE** (auth binding, tenant isolation, base64url fix, SECURITY DEFINER)
-- Session 2: P0-5 — God file decomposition for 6 MCP servers (~8 hrs)
-- Session 3: P0-6/7/8 + P1-1 — SELECT *, rate limiting, auth gate, JWKS (~7 hrs)
-- Sessions 4-6: P1-2/3, P2-1 through P2-6, P3-1 through P3-5
+- ~~Session 2: P0-5~~ — **DONE** (6 MCP servers decomposed: 929→224 max, 28 files changed)
+- ~~Session 3: P0-6/7/8 + P1-1~~ — **DONE** (SELECT *, rate limiting, auth gate, JWKS — 10 files changed)
+- Session 4: P1-2/3, P2-1 — tools auth, rate limit identity, input validation (~7 hrs)
+- Session 5: P2-2 through P2-6, P3-1 through P3-5 — config, audit, health, polish (~17 hrs)
 
-**Total estimated:** ~35-43 hours remaining (5-6 sessions)
+**Total estimated:** ~24-30 hours remaining (3-4 sessions)
 
 ---
 
@@ -60,9 +61,9 @@
 
 ---
 
-## Current Priority: MCP Server Compliance & Hardening — Session 2 NEXT
+## Current Priority: MCP Server Compliance & Hardening — Session 4 NEXT
 
-See tracker section above. Session 1 (P0-1 through P0-4) DONE. Session 2 (P0-5: god file decomposition) is next.
+See tracker section above. Sessions 1-3 (P0-1 through P0-8 + P1-1) DONE. Session 4 (P1-2/3 + P2-1) is next.
 
 ---
 
@@ -103,7 +104,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
 | **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1-3 Session 5 DONE — 870+ tests, Tier 3 Sessions 6-7 TODO** |
-| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **NEW — 23 items, 0/23 done, Session 1 NEXT** |
+| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **9/23 done — All P0 DONE, P1-1 DONE, Session 4 NEXT** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
@@ -119,7 +120,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | Test Suites | 517 | 2026-02-27 |
 | Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-02-27 |
 | Lint | 0 errors, 0 warnings | 2026-02-27 |
-| God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) + 6 MCP servers (P0-5) | 2026-02-27 |
+| God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) — MCP servers all under 600 | 2026-02-27 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
 | Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
@@ -147,6 +148,40 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 ---
 
 ## What Was Completed Last Session (2026-02-27)
+
+### MCP Server Compliance Session 3 — P0-6, P0-7, P0-8, P1-1
+
+Eliminated all remaining P0 security items and completed the first P1 hardening item. All 8 P0 critical security items are now resolved.
+
+| Item | Fix | Files Changed |
+|------|-----|---------------|
+| **P0-6: SELECT * elimination** | Replaced 17 `select('*')` instances across 3 servers with explicit column lists. Created `FHIR_SELECT_COLUMNS` map (18 tables) + `getFHIRColumns()` helper. PHI fields (`clinical_notes`, `clinical_rationale`) excluded from default prior auth queries (included only in FHIR Claim converter where clinically authorized). | 6 files |
+| **P0-7: Rate limiting** | Added `checkMCPRateLimit()` to `mcp-edge-functions-server` (was the only Tier 3 server without it). Uses `MCP_RATE_LIMITS.edgeFunctions` (50 req/min). | 1 file |
+| **P0-8: Auth gate** | Made `extractCallerIdentity` a hard gate in `mcp-medical-codes-server`. Returns 401 if no valid JWT. Previously allowed unauthenticated tool calls. | 1 file |
+| **P1-1: JWKS verification** | Created `mcpJwksVerifier.ts` (82 lines) with local JWT verification via `jose@v5.2.0`. `verifyAdminAccess()` now tries JWKS first (saves 100-300ms), falls back to `auth.getUser()`. Consolidated auth response helpers to keep `mcpAuthGate.ts` at 591 lines. | 2 files (1 new) |
+
+**Files changed: 10 (9 modified, 1 new)**
+**Tests: 10,304 passed, 0 failed (517 suites)**
+
+---
+
+### MCP Server Compliance Session 2 — P0-5 God File Decomposition
+
+Decomposed all 6 MCP servers exceeding the 600-line limit into modular architecture (factory function + barrel re-export pattern). Each `index.ts` is now a thin MCP JSON-RPC protocol shell (155–224 lines).
+
+| Server | Before → After | Extracted Modules |
+|--------|---------------|-------------------|
+| mcp-prior-auth-server | 929→224 | types, tools, fhirConverter, toolHandlers |
+| mcp-npi-registry-server | 863→155 | taxonomyCodes, npiApi, tools, toolHandlers |
+| mcp-cms-coverage-server | 728→155 | coverageData, tools, toolHandlers |
+| mcp-medical-codes-server | 734→158 | types, codeData, tools, toolHandlers |
+| mcp-edge-functions-server | 703→197 | functionWhitelist, tools, toolHandlers |
+| mcp-postgres-server | 690→183 | queryWhitelist, tools, toolHandlers |
+
+**Files changed: 28 (22 new modules, 6 index.ts files trimmed)**
+**Tests: 10,304 passed, 0 failed (517 suites)**
+
+---
 
 ### MCP Server Compliance Session 1 — P0-1 through P0-4 Security Fixes
 

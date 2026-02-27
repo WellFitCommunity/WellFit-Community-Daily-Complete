@@ -123,8 +123,11 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
     };
   }
 
+  // Explicit column list for prior_authorizations — excludes PHI fields (clinical_notes, clinical_rationale)
+  const PRIOR_AUTH_COLUMNS = 'id, patient_id, payer_id, payer_name, member_id, service_codes, diagnosis_codes, urgency, ordering_provider_npi, rendering_provider_npi, facility_npi, date_of_service, requested_units, status, auth_number, trace_number, submitted_at, decision_due_at, approved_units, approved_at, expires_at, created_at, updated_at, fhir_resource_id, tenant_id';
+
   async function handleGetPriorAuth(args: Record<string, unknown>) {
-    let query = sb.from('prior_authorizations').select('*');
+    let query = sb.from('prior_authorizations').select(PRIOR_AUTH_COLUMNS);
 
     if (args.prior_auth_id) {
       query = query.eq('id', args.prior_auth_id);
@@ -146,14 +149,14 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
     // Get service lines
     const { data: serviceLines } = await sb
       .from('prior_auth_service_lines')
-      .select('*')
+      .select('id, prior_auth_id, line_number, service_code, description, units, status')
       .eq('prior_auth_id', data.id)
       .order('line_number', { ascending: true });
 
     // Get decisions
     const { data: decisions } = await sb
       .from('prior_auth_decisions')
-      .select('*')
+      .select('id, prior_auth_id, decision_type, decision_date, auth_number, approved_units, approved_start_date, approved_end_date, denial_reason_code, denial_reason_description, appeal_deadline, decision_reason, tenant_id')
       .eq('prior_auth_id', data.id)
       .order('decision_date', { ascending: false });
 
@@ -168,7 +171,7 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
   async function handleGetPatientPriorAuths(args: Record<string, unknown>) {
     let query = sb
       .from('prior_authorizations')
-      .select('*')
+      .select(PRIOR_AUTH_COLUMNS)
       .eq('patient_id', args.patient_id)
       .order('created_at', { ascending: false });
 

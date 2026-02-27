@@ -19,7 +19,7 @@ import {
   handleHealthCheck,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
-import { getRequestId } from "../_shared/mcpAuthGate.ts";
+import { getRequestId, createUnauthorizedResponse } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
@@ -95,16 +95,24 @@ serve(async (req: Request) => {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
-      // Per-request client: forwards caller's JWT so RLS evaluates against
-      // the actual user, not the global anon key (P0-1 security fix)
-      const userClient = createPerRequestClient(req);
-
-      // P0-2: Extract caller identity for audit logging
+      // P0-8: Auth gate — require valid authenticated JWT before tool execution
       const caller = await extractCallerIdentity(req, {
         serverName: SERVER_CONFIG.name,
         toolName,
         logger,
       });
+
+      if (!caller) {
+        return createUnauthorizedResponse(
+          "Authentication required. Provide a valid Bearer token.",
+          requestId,
+          corsHeaders
+        );
+      }
+
+      // Per-request client: forwards caller's JWT so RLS evaluates against
+      // the actual user, not the global anon key (P0-1 security fix)
+      const userClient = createPerRequestClient(req);
 
       const { result, codesReturned } = await handleToolCall(
         toolName,

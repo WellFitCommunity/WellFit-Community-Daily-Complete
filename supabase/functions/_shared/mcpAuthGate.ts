@@ -18,9 +18,10 @@
  * @module mcpAuthGate
  */
 
-import { createClient, SupabaseClient, User } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SB_SECRET_KEY } from "./env.ts";
 import { createLogger, EdgeFunctionLogger } from "./auditLogger.ts";
+import { verifyJWTLocally } from "./mcpJwksVerifier.ts";
 
 // Crypto for key hashing
 const encoder = new TextEncoder();
@@ -407,38 +408,56 @@ export async function verifyAdminAccess(
     };
   }
 
-  // Step 3: Verify token with Supabase Auth
-  let user: User;
-  try {
-    const adminClient = getAdminClient();
-    const { data, error } = await adminClient.auth.getUser(token);
+  // Step 3: Verify token — try local JWKS first, fall back to auth.getUser()
+  let userId: string;
+  let userEmail: string | undefined;
 
-    if (error || !data?.user) {
-      logger.security("MCP_AUTH_GATE_INVALID_TOKEN", {
+  // P1-1: Local JWKS verification (no network round-trip)
+  const jwksResult = await verifyJWTLocally(token, logger);
+
+  if (jwksResult) {
+    // JWKS succeeded — use payload directly (saves 100-300ms)
+    userId = jwksResult.userId;
+    userEmail = jwksResult.email;
+    logger.debug("MCP_AUTH_JWKS_SUCCESS", {
+      requestId,
+      userId,
+      server: options.serverName
+    });
+  } else {
+    // JWKS failed — graceful fallback to auth.getUser() (network call)
+    try {
+      const adminClient = getAdminClient();
+      const { data, error } = await adminClient.auth.getUser(token);
+
+      if (error || !data?.user) {
+        logger.security("MCP_AUTH_GATE_INVALID_TOKEN", {
+          requestId,
+          reason: "token_verification_failed",
+          error: error?.message,
+          server: options.serverName,
+          tool: options.toolName
+        });
+        return {
+          authorized: false,
+          error: "Invalid or expired authentication token",
+          statusCode: 401
+        };
+      }
+      userId = data.user.id;
+      userEmail = data.user.email;
+    } catch (err: unknown) {
+      logger.error("MCP_AUTH_GATE_ERROR", {
         requestId,
-        reason: "token_verification_failed",
-        error: error?.message,
-        server: options.serverName,
-        tool: options.toolName
+        error: err instanceof Error ? err.message : String(err),
+        server: options.serverName
       });
       return {
         authorized: false,
-        error: "Invalid or expired authentication token",
-        statusCode: 401
+        error: "Authentication service error",
+        statusCode: 500
       };
     }
-    user = data.user;
-  } catch (err) {
-    logger.error("MCP_AUTH_GATE_ERROR", {
-      requestId,
-      error: err instanceof Error ? err.message : String(err),
-      server: options.serverName
-    });
-    return {
-      authorized: false,
-      error: "Authentication service error",
-      statusCode: 500
-    };
   }
 
   // Step 4: Look up user role from profiles table
@@ -449,13 +468,13 @@ export async function verifyAdminAccess(
     const { data: profile, error } = await adminClient
       .from("profiles")
       .select("role_id, tenant_id, roles:role_id ( id, name )")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (error) {
       logger.error("MCP_AUTH_GATE_PROFILE_ERROR", {
         requestId,
-        userId: user.id,
+        userId,
         error: error.message,
         server: options.serverName
       });
@@ -471,10 +490,10 @@ export async function verifyAdminAccess(
     const rolesData = Array.isArray(rolesArray) ? rolesArray[0] : null;
     roleName = rolesData?.name ?? null;
     tenantId = profile?.tenant_id ?? null;
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error("MCP_AUTH_GATE_ROLE_ERROR", {
       requestId,
-      userId: user.id,
+      userId,
       error: err instanceof Error ? err.message : String(err),
       server: options.serverName
     });
@@ -489,7 +508,7 @@ export async function verifyAdminAccess(
   if (!roleName || !allowedRoles.includes(roleName)) {
     logger.security("MCP_AUTH_GATE_INSUFFICIENT_ROLE", {
       requestId,
-      userId: user.id,
+      userId,
       role: roleName,
       requiredRoles: [...allowedRoles],
       server: options.serverName,
@@ -504,8 +523,8 @@ export async function verifyAdminAccess(
 
   // Success - build caller identity
   const caller: CallerIdentity = {
-    userId: user.id,
-    email: user.email,
+    userId,
+    email: userEmail,
     role: roleName,
     tenantId,
     requestId,
@@ -515,7 +534,7 @@ export async function verifyAdminAccess(
 
   logger.security("MCP_AUTH_GATE_SUCCESS", {
     requestId,
-    userId: user.id,
+    userId,
     role: roleName,
     tenantId,
     server: options.serverName,
@@ -544,54 +563,28 @@ export async function verifyClinicalAccess(
   });
 }
 
-/**
- * Create a 403 Forbidden JSON-RPC response for MCP
- */
-export function createForbiddenResponse(
-  error: string,
-  requestId: string,
-  corsHeaders: Record<string, string>
+/** Create an MCP JSON-RPC auth error response (shared by 401/403 helpers) */
+function createAuthErrorResponse(
+  error: string, requestId: string, corsHeaders: Record<string, string>, status: number
 ): Response {
   return new Response(
-    JSON.stringify({
-      jsonrpc: "2.0",
-      error: {
-        code: -32603,
-        message: error,
-        data: { requestId }
-      },
-      id: null
-    }),
-    {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    }
+    JSON.stringify({ jsonrpc: "2.0", error: { code: -32603, message: error, data: { requestId } }, id: null }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }
 
-/**
- * Create a 401 Unauthorized JSON-RPC response for MCP
- */
-export function createUnauthorizedResponse(
-  error: string,
-  requestId: string,
-  corsHeaders: Record<string, string>
+/** Create a 403 Forbidden JSON-RPC response for MCP */
+export function createForbiddenResponse(
+  error: string, requestId: string, corsHeaders: Record<string, string>
 ): Response {
-  return new Response(
-    JSON.stringify({
-      jsonrpc: "2.0",
-      error: {
-        code: -32603,
-        message: error,
-        data: { requestId }
-      },
-      id: null
-    }),
-    {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    }
-  );
+  return createAuthErrorResponse(error, requestId, corsHeaders, 403);
+}
+
+/** Create a 401 Unauthorized JSON-RPC response for MCP */
+export function createUnauthorizedResponse(
+  error: string, requestId: string, corsHeaders: Record<string, string>
+): Response {
+  return createAuthErrorResponse(error, requestId, corsHeaders, 401);
 }
 
 export { ADMIN_ROLES, CLINICAL_ADMIN_ROLES };

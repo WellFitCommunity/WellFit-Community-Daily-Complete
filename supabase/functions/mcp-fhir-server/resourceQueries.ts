@@ -5,7 +5,7 @@
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { FHIRResource, PatientBundleOptions, ResourceSearchFilters } from "./types.ts";
-import { FHIR_TABLES, SUPPORTED_RESOURCES } from "./tools.ts";
+import { FHIR_TABLES, SUPPORTED_RESOURCES, getFHIRColumns } from "./tools.ts";
 import { createFHIRBundle, toFHIRPatient } from "./bundleBuilder.ts";
 
 /**
@@ -46,7 +46,7 @@ export async function getPatientBundle(
     const table = FHIR_TABLES[resourceType];
     if (!table) continue;
 
-    let query = sb.from(table).select('*').eq('patient_id', patientId);
+    let query = sb.from(table).select(getFHIRColumns(table)).eq('patient_id', patientId);
 
     if (options.startDate) {
       query = query.gte('created_at', options.startDate);
@@ -115,7 +115,7 @@ export async function searchResources(
     throw new Error(`Unknown resource type: ${resourceType}`);
   }
 
-  let query = sb.from(table).select('*');
+  let query = sb.from(table).select(getFHIRColumns(table));
 
   if (filters.patientId) {
     query = query.eq('patient_id', filters.patientId);

@@ -10,6 +10,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import {
   initMCPServer,
   createInitializeResponse,
@@ -63,6 +64,13 @@ serve(async (req: Request) => {
   // Health check endpoint (GET request)
   if (req.method === "GET") {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
+  }
+
+  // Rate limiting (P0-7)
+  const identifier = getRequestIdentifier(req);
+  const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.edgeFunctions);
+  if (!rateLimitResult.allowed) {
+    return createRateLimitResponse(rateLimitResult, MCP_RATE_LIMITS.edgeFunctions, corsHeaders);
   }
 
   try {

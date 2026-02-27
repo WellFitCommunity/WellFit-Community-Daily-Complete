@@ -8,9 +8,10 @@ export async function handleToFHIRClaim(
   args: Record<string, unknown>,
   sb: SupabaseClient
 ) {
+  // clinical_notes included here — needed for FHIR Claim supportingInfo (authorized clinical data path)
   const { data: priorAuth, error } = await sb
     .from('prior_authorizations')
-    .select('*')
+    .select('id, fhir_resource_id, patient_id, payer_id, payer_name, ordering_provider_npi, urgency, diagnosis_codes, service_codes, date_of_service, requested_units, clinical_notes, status, created_at')
     .eq('id', args.prior_auth_id)
     .single();
 

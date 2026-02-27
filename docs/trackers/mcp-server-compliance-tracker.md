@@ -12,11 +12,11 @@
 
 | Priority | Items | Status |
 |----------|-------|--------|
-| P0 Critical (Security) | 8 | **5/8 done** (P0-1 through P0-5) |
-| P1 Hardening | 3 | 0/3 done |
+| P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
+| P1 Hardening | 3 | **1/3 done** (P1-1) |
 | P2 Moderate (Functional) | 7 | 0/7 done |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **5/23 done** |
+| **Total** | **23** | **9/23 done** |
 
 ### Cross-Audit Note
 
@@ -192,33 +192,33 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ---
 
-### P0-6: Prior Auth — Replace `SELECT *` with Explicit Columns **(Claude)**
+### P0-6: Replace `SELECT *` with Explicit Columns Across 3 MCP Servers **(Claude)**
 
-**Status:** TODO
-**Estimated:** ~1 hour
+**Status:** DONE (2026-02-27)
+**Estimated:** ~2.5 hours
 
-**Problem:** `mcp-prior-auth-server` uses `select('*')` in 3+ queries, returning all columns including `clinical_notes`, `clinical_rationale`.
+**Problem:** 17 `select('*')` instances across 3 MCP servers exposed unnecessary columns (including PHI like `clinical_notes`).
 
-**Locations:**
-- `handleGetPriorAuth()` — line ~365
-- `handleGetPatientPriorAuths()` — line ~407-411
-- `handleToFHIRClaim()` — line ~633
-- Service line queries on `prior_auth_service_lines` and `prior_auth_decisions`
+**Fix applied:**
+- `mcp-prior-auth-server/toolHandlers.ts` — 4 queries: `handleGetPriorAuth`, `handleGetPatientPriorAuths` use `PRIOR_AUTH_COLUMNS` (excludes `clinical_notes`, `clinical_rationale`); `prior_auth_service_lines` and `prior_auth_decisions` use explicit columns
+- `mcp-prior-auth-server/fhirConverter.ts` — 1 query: explicit columns (includes `clinical_notes` — authorized FHIR clinical data path for `supportingInfo`)
+- `mcp-medical-codes-server/toolHandlers.ts` — 3 fallback queries on legacy tables (`cpt_codes`, `icd10_codes`, `hcpcs_codes`) → `select('code, description')`
+- `mcp-fhir-server/toolHandlers.ts` — 7 queries: all use `getFHIRColumns(table)` from per-table column map
+- `mcp-fhir-server/resourceQueries.ts` — 2 queries: bundle export + search use `getFHIRColumns(table)`
+- `mcp-fhir-server/tools.ts` — Added `FHIR_SELECT_COLUMNS` map (18 FHIR tables → explicit columns) + `getFHIRColumns()` helper
 
-**Fix:** Replace with explicit column lists.
-
-**Files:** `supabase/functions/mcp-prior-auth-server/index.ts`
+**Files:** 6 files modified
 
 ---
 
 ### P0-7: Edge Functions MCP — Add Missing Rate Limiting **(Claude)**
 
-**Status:** TODO
-**Estimated:** ~30 min
+**Status:** DONE (2026-02-27)
+**Estimated:** ~20 min
 
-**Problem:** `mcp-edge-functions-server` imports the rate limiter but NEVER calls it in the request handler. Only Tier 3 server without rate limiting.
+**Problem:** `mcp-edge-functions-server` had auth gate but no rate limiter call. Config existed (`MCP_RATE_LIMITS.edgeFunctions`: 50 req/min) but was never checked.
 
-**Fix:** Add `checkMCPRateLimit()` call before `tools/call` handling.
+**Fix:** Added rate limit imports + check after CORS/before JSON parse (same pattern as other servers).
 
 **Files:** `supabase/functions/mcp-edge-functions-server/index.ts`
 
@@ -226,12 +226,12 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P0-8: Medical Codes MCP — Add Auth Gate **(Both)**
 
-**Status:** TODO
-**Estimated:** ~1 hour
+**Status:** DONE (2026-02-27)
+**Estimated:** ~45 min
 
-**Problem:** Tier 2 server with no auth verification on tool calls. Same structural issue as P0-1/P0-2.
+**Problem:** Tier 2 server had per-request client binding (P0-1) and caller identity extraction (P0-2) but no auth verification. Any request with just an anon key could call tools.
 
-**Fix:** Add per-request client binding (P0-1 pattern) and auth verification.
+**Fix:** Made `extractCallerIdentity` a hard gate before tool execution. Returns 401 if no valid JWT provided. Moved auth check before `handleToolCall`, returning `createUnauthorizedResponse` when `caller` is null.
 
 **Files:** `supabase/functions/mcp-medical-codes-server/index.ts`
 
@@ -241,36 +241,19 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P1-1: Replace auth.getUser() with Local JWKS Verification **(ChatGPT)**
 
-**Status:** TODO
-**Estimated:** ~4 hours
+**Status:** DONE (2026-02-27)
+**Estimated:** ~3 hours
 
-**Problem:** `mcpAuthGate.ts:402` calls `adminClient.auth.getUser(token)` on every MCP tool call. This is a network round-trip to the Supabase Auth server. Two network calls per request (auth.getUser + profiles lookup).
+**Problem:** `mcpAuthGate.ts` called `adminClient.auth.getUser(token)` on every MCP tool call — 100-300ms network round-trip, availability dependency on Supabase Auth.
 
-**Impact:**
-- Latency: 100-300ms added per request
-- Resilience: Auth server downtime = all MCP servers down
-- Cost: Every MCP call hits the Auth server
+**Fix applied:**
+1. Created `_shared/mcpJwksVerifier.ts` (82 lines) — module-level JWKS cache using `jose@v5.2.0`, `verifyJWTLocally()` function
+2. Updated `mcpAuthGate.ts` `verifyAdminAccess()` — tries JWKS first, falls back to `auth.getUser()` on failure (graceful degradation)
+3. Profile lookup for role/tenant remains unchanged (still needed for authorization)
+4. Consolidated `createForbiddenResponse`/`createUnauthorizedResponse` into shared `createAuthErrorResponse` helper to keep file under 600 lines (591 lines final)
+5. Removed unused `User` import from supabase-js
 
-**Fix:**
-1. Fetch JWKS from `https://{project-id}.supabase.co/auth/v1/.well-known/jwks.json` (cache 10 min)
-2. Verify JWT locally using `jose` library (asymmetric key verification)
-3. Fall back to `auth.getUser()` only if JWKS verification fails
-4. Keep profiles lookup for role/tenant resolution (still needed)
-
-```typescript
-import { jwtVerify, createRemoteJWKSet } from "https://deno.land/x/jose/index.ts";
-
-const JWKS = createRemoteJWKSet(new URL(`${SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
-
-async function verifyJWTLocally(token: string) {
-  const { payload } = await jwtVerify(token, JWKS, {
-    issuer: `${SUPABASE_URL}/auth/v1`
-  });
-  return payload; // Contains sub (user ID), role, exp
-}
-```
-
-**Files:** `supabase/functions/_shared/mcpAuthGate.ts`
+**Files:** `_shared/mcpJwksVerifier.ts` (NEW), `_shared/mcpAuthGate.ts`
 
 ---
 
