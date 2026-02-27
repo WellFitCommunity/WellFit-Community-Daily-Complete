@@ -12,11 +12,11 @@
 
 | Priority | Items | Status |
 |----------|-------|--------|
-| P0 Critical (Security) | 8 | 0/8 done |
+| P0 Critical (Security) | 8 | **4/8 done** (P0-1 through P0-4) |
 | P1 Hardening | 3 | 0/3 done |
 | P2 Moderate (Functional) | 7 | 0/7 done |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **0/23 done** |
+| **Total** | **23** | **4/23 done** |
 
 ### Cross-Audit Note
 
@@ -32,7 +32,7 @@ Items marked **(ChatGPT)** were identified by the cross-audit. Items marked **(C
 
 ### P0-1: Per-Request Supabase Client Binding for User-Scoped Servers **(ChatGPT)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-27)
 **Estimated:** ~4 hours
 **Severity:** CRITICAL — multi-tenant data exposure
 
@@ -66,7 +66,7 @@ const userClient = createClient(SUPABASE_URL, SB_ANON_KEY, {
 
 ### P0-2: Tenant ID Must Be Derived from Identity, Not Tool Args **(ChatGPT)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-27)
 **Estimated:** ~3 hours
 **Severity:** CRITICAL — tenant isolation bypass
 
@@ -104,7 +104,7 @@ const tenantId = profile.tenant_id; // Server-derived, NOT from toolArgs
 
 ### P0-3: Fix base64url Decoding Bug in isAnonKey() **(ChatGPT)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-27)
 **Estimated:** ~30 min
 **Severity:** CRITICAL — auth bypass potential
 
@@ -150,7 +150,7 @@ function isAnonKey(token: string): boolean {
 
 ### P0-4: execute_safe_query SECURITY DEFINER Without Tenant Enforcement **(ChatGPT)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-27)
 **Estimated:** ~2 hours
 **Severity:** CRITICAL — coupled with P0-2
 

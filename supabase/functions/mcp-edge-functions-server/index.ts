@@ -26,6 +26,7 @@ import {
   createUnauthorizedResponse,
   CallerIdentity
 } from "../_shared/mcpAuthGate.ts";
+import { resolveTenantId } from "../_shared/mcpIdentity.ts";
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -513,12 +514,21 @@ serve(async (req: Request) => {
       }
 
       const caller = authResult.caller as CallerIdentity;
+
+      // P0-2: Resolve tenant from caller identity, not tool args
+      const resolvedTenant = resolveTenantId(
+        caller,
+        (toolArgs?.payload?.tenant_id ?? toolArgs?.tenant_id) as string | undefined,
+        logger,
+        requestId
+      );
+
       logger.info("EDGE_FUNCTIONS_TOOL_CALL", {
         requestId,
         tool: toolName,
         userId: caller.userId,
         role: caller.role,
-        tenantId: caller.tenantId
+        tenantId: resolvedTenant
       });
 
       let result: unknown;
@@ -530,7 +540,12 @@ serve(async (req: Request) => {
         }
 
         case "invoke_function": {
-          const { function_name, payload = {}, timeout } = toolArgs;
+          const { function_name, timeout } = toolArgs;
+          // P0-2: Inject identity-resolved tenant_id into payload
+          const payload = { ...(toolArgs.payload || {}) };
+          if (resolvedTenant) {
+            payload.tenant_id = resolvedTenant;
+          }
 
           const invocationResult = await invokeFunction(
             function_name,
@@ -539,10 +554,10 @@ serve(async (req: Request) => {
             timeout
           );
 
-          // Audit log
+          // Audit log — use identity-resolved tenant
           await logFunctionInvocation({
             userId: caller.userId,
-            tenantId: payload.tenant_id,
+            tenantId: resolvedTenant,
             functionName: function_name,
             success: invocationResult.success,
             executionTimeMs: invocationResult.executionTimeMs,
@@ -593,11 +608,16 @@ serve(async (req: Request) => {
           }> = [];
 
           for (const invocation of invocations) {
-            const { function_name, payload = {} } = invocation;
+            const { function_name } = invocation;
+            // P0-2: Inject identity-resolved tenant into each batch payload
+            const batchPayload = { ...(invocation.payload || {}) };
+            if (resolvedTenant) {
+              batchPayload.tenant_id = resolvedTenant;
+            }
 
             const invocationResult = await invokeFunction(
               function_name,
-              payload,
+              batchPayload,
               authToken
             );
 
@@ -606,15 +626,15 @@ serve(async (req: Request) => {
               ...invocationResult
             });
 
-            // Audit log each invocation
+            // Audit log each invocation — use identity-resolved tenant
             await logFunctionInvocation({
               userId: caller.userId,
-              tenantId: payload.tenant_id,
+              tenantId: resolvedTenant,
               functionName: function_name,
               success: invocationResult.success,
               executionTimeMs: invocationResult.executionTimeMs,
               errorMessage: invocationResult.error,
-              payloadSize: JSON.stringify(payload).length
+              payloadSize: JSON.stringify(batchPayload).length
             });
 
             if (!invocationResult.success && stop_on_error) {

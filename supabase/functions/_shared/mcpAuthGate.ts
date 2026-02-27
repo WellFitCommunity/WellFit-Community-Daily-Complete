@@ -121,6 +121,18 @@ function extractBearerToken(req: Request): string | null {
 }
 
 /**
+ * Decode a base64url-encoded string (RFC 7515 / JWT standard).
+ * Standard atob() fails on tokens containing `-` or `_` characters.
+ */
+function decodeBase64Url(str: string): string {
+  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = base64.length % 4;
+  if (pad === 2) base64 += "==";
+  else if (pad === 3) base64 += "=";
+  return atob(base64);
+}
+
+/**
  * Check if a token is the anon key (not a user JWT)
  * Anon keys are JWTs with role="anon" in the payload
  */
@@ -130,7 +142,7 @@ function isAnonKey(token: string): boolean {
     const parts = token.split(".");
     if (parts.length !== 3) return false;
 
-    const payload = JSON.parse(atob(parts[1]));
+    const payload = JSON.parse(decodeBase64Url(parts[1]));
     return payload.role === "anon";
   } catch {
     return false;

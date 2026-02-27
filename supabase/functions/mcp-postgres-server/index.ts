@@ -17,10 +17,12 @@ import {
   createErrorResponse,
   handlePing,
   handleHealthCheck,
+  createPerRequestClient,
   PING_TOOL,
   MCPInitResult
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
+import { extractCallerIdentity, resolveTenantId } from "../_shared/mcpIdentity.ts";
 
 // Initialize as Tier 2 (user_scoped) - uses anon key with RLS
 const SERVER_CONFIG = {
@@ -306,14 +308,14 @@ const TOOLS = {
           description: "Name of the whitelisted query to execute",
           enum: Object.keys(WHITELISTED_QUERIES)
         },
-        tenant_id: { type: "string", description: "Tenant ID for RLS" },
+        tenant_id: { type: "string", description: "Tenant ID (resolved from caller identity; optional override for backward compat)" },
         parameters: {
           type: "object",
           description: "Additional query parameters",
           additionalProperties: true
         }
       },
-      required: ["query_name", "tenant_id"]
+      required: ["query_name"]
     }
   },
   "list_queries": {
@@ -481,22 +483,45 @@ serve(async (req: Request) => {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
+      // Per-request client: forwards caller's JWT so RLS evaluates against
+      // the actual user, not the global anon key (P0-1 security fix)
+      const userClient = createPerRequestClient(req);
+
+      // P0-2: Extract tenant from caller identity, not tool args
+      const caller = await extractCallerIdentity(req, {
+        serverName: SERVER_CONFIG.name,
+        toolName,
+        logger,
+      });
+      const resolvedTenantId = resolveTenantId(
+        caller,
+        toolArgs.tenant_id as string | undefined,
+        logger,
+        requestId
+      );
+
       let result: unknown;
       let rowsReturned = 0;
 
       switch (toolName) {
         case "execute_query": {
-          const { query_name, tenant_id, parameters: extraParams } = toolArgs;
+          const { query_name, parameters: extraParams } = toolArgs;
 
           const queryDef = WHITELISTED_QUERIES[query_name];
           if (!queryDef) {
             throw new Error(`Query '${query_name}' is not whitelisted`);
           }
 
+          if (!resolvedTenantId) {
+            throw new Error("Tenant ID required: could not resolve from caller identity or arguments");
+          }
+
           // Execute the query with tenant_id parameter via RPC
+          // Uses global sb (SECURITY DEFINER RPC), but passes caller's tenant for enforcement
           const { data, error } = await sb.rpc('execute_safe_query', {
             query_text: queryDef.query,
-            params: JSON.stringify([tenant_id, ...(extraParams ? Object.values(extraParams) : [])])
+            params: JSON.stringify([resolvedTenantId, ...(extraParams ? Object.values(extraParams) : [])]),
+            p_caller_tenant_id: resolvedTenantId
           });
 
           if (error) {
@@ -541,13 +566,13 @@ serve(async (req: Request) => {
             throw new Error(`Table '${table_name}' schema is not accessible`);
           }
 
-          const { data, error } = await sb.rpc('get_table_columns', {
+          const { data, error } = await userClient.rpc('get_table_columns', {
             p_table_name: table_name
           });
 
           if (error) {
             // Fallback: use information_schema directly
-            const { data: schemaData, error: schemaError } = await sb
+            const { data: schemaData, error: schemaError } = await userClient
               .from('information_schema.columns')
               .select('column_name, data_type, is_nullable, column_default')
               .eq('table_name', table_name)
@@ -566,16 +591,17 @@ serve(async (req: Request) => {
         }
 
         case "get_row_count": {
-          const { table_name, tenant_id } = toolArgs;
+          const { table_name } = toolArgs;
 
           if (!SAFE_TABLES.has(table_name)) {
             throw new Error(`Table '${table_name}' is not accessible`);
           }
 
-          let query = sb.from(table_name).select('*', { count: 'exact', head: true });
+          let query = userClient.from(table_name).select('*', { count: 'exact', head: true });
 
-          if (tenant_id) {
-            query = query.eq('tenant_id', tenant_id);
+          // P0-2: Use resolved tenant from identity, not tool args
+          if (resolvedTenantId) {
+            query = query.eq('tenant_id', resolvedTenantId);
           }
 
           const { count, error } = await query;
@@ -595,10 +621,10 @@ serve(async (req: Request) => {
 
       const executionTimeMs = Date.now() - startTime;
 
-      // Audit log
+      // Audit log — use identity-resolved tenant and caller, not tool args
       await logMCPRequest({
-        userId: toolArgs.userId,
-        tenantId: toolArgs.tenant_id,
+        userId: caller?.userId,
+        tenantId: resolvedTenantId,
         tool: toolName,
         queryName: toolArgs.query_name,
         rowsReturned,

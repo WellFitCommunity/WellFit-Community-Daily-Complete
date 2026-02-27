@@ -15,12 +15,15 @@ import {
   createInitializeResponse,
   createToolsListResponse,
   createErrorResponse,
+  createPerRequestClient,
   PING_TOOL,
   handlePing,
   handleHealthCheck,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
+import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -329,8 +332,8 @@ async function logCodeLookup(params: {
 // Search Functions
 // =====================================================
 
-async function searchCPT(query: string, category?: string, limit = 20): Promise<CPTCode[]> {
-  let queryBuilder = sb
+async function searchCPT(query: string, category?: string, limit = 20, client: SupabaseClient = sb): Promise<CPTCode[]> {
+  let queryBuilder = client
     .from('code_cpt')
     .select('code, short_description, long_description, category, work_rvu, facility_rvu')
     .or(`code.ilike.%${query}%,short_description.ilike.%${query}%,long_description.ilike.%${query}%`)
@@ -344,7 +347,7 @@ async function searchCPT(query: string, category?: string, limit = 20): Promise<
 
   if (error) {
     // Try alternate table name
-    const { data: altData, error: altError } = await sb
+    const { data: altData, error: altError } = await client
       .from('cpt_codes')
       .select('*')
       .or(`code.ilike.%${query}%,description.ilike.%${query}%`)
@@ -357,8 +360,8 @@ async function searchCPT(query: string, category?: string, limit = 20): Promise<
   return data || [];
 }
 
-async function searchICD10(query: string, chapter?: string, limit = 20): Promise<ICD10Code[]> {
-  let queryBuilder = sb
+async function searchICD10(query: string, chapter?: string, limit = 20, client: SupabaseClient = sb): Promise<ICD10Code[]> {
+  let queryBuilder = client
     .from('code_icd10')
     .select('code, description, chapter, category, is_billable')
     .or(`code.ilike.%${query}%,description.ilike.%${query}%`)
@@ -372,7 +375,7 @@ async function searchICD10(query: string, chapter?: string, limit = 20): Promise
 
   if (error) {
     // Try alternate table name
-    const { data: altData, error: altError } = await sb
+    const { data: altData, error: altError } = await client
       .from('icd10_codes')
       .select('*')
       .or(`code.ilike.%${query}%,description.ilike.%${query}%`)
@@ -385,8 +388,8 @@ async function searchICD10(query: string, chapter?: string, limit = 20): Promise
   return data || [];
 }
 
-async function searchHCPCS(query: string, level?: string, limit = 20): Promise<HCPCSCode[]> {
-  let queryBuilder = sb
+async function searchHCPCS(query: string, level?: string, limit = 20, client: SupabaseClient = sb): Promise<HCPCSCode[]> {
+  let queryBuilder = client
     .from('code_hcpcs')
     .select('code, short_description, long_description, level, pricing_indicator')
     .or(`code.ilike.%${query}%,short_description.ilike.%${query}%,long_description.ilike.%${query}%`)
@@ -400,7 +403,7 @@ async function searchHCPCS(query: string, level?: string, limit = 20): Promise<H
 
   if (error) {
     // Try alternate table name
-    const { data: altData, error: altError } = await sb
+    const { data: altData, error: altError } = await client
       .from('hcpcs_codes')
       .select('*')
       .or(`code.ilike.%${query}%,description.ilike.%${query}%`)
@@ -413,8 +416,8 @@ async function searchHCPCS(query: string, level?: string, limit = 20): Promise<H
   return data || [];
 }
 
-async function getModifiers(code: string, codeType?: string) {
-  const { data, error } = await sb
+async function getModifiers(code: string, codeType?: string, client: SupabaseClient = sb) {
+  const { data, error } = await client
     .from('code_modifiers')
     .select('modifier, description, applies_to')
     .or(`applies_to.cs.{${codeType || 'cpt'}},applies_to.cs.{all}`)
@@ -524,6 +527,17 @@ serve(async (req: Request) => {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
+      // Per-request client: forwards caller's JWT so RLS evaluates against
+      // the actual user, not the global anon key (P0-1 security fix)
+      const userClient = createPerRequestClient(req);
+
+      // P0-2: Extract caller identity for audit logging (best-effort, no role enforcement)
+      const caller = await extractCallerIdentity(req, {
+        serverName: SERVER_CONFIG.name,
+        toolName,
+        logger,
+      });
+
       let result: unknown;
       let codesReturned = 0;
 
@@ -535,7 +549,7 @@ serve(async (req: Request) => {
 
         case "search_cpt": {
           const { query, category, limit } = toolArgs;
-          const cptResults = await searchCPT(query, category, limit);
+          const cptResults = await searchCPT(query, category, limit, userClient);
           result = cptResults;
           codesReturned = cptResults.length;
           break;
@@ -543,7 +557,7 @@ serve(async (req: Request) => {
 
         case "search_icd10": {
           const { query, chapter, limit } = toolArgs;
-          const icd10Results = await searchICD10(query, chapter, limit);
+          const icd10Results = await searchICD10(query, chapter, limit, userClient);
           result = icd10Results;
           codesReturned = icd10Results.length;
           break;
@@ -551,7 +565,7 @@ serve(async (req: Request) => {
 
         case "search_hcpcs": {
           const { query, level, limit } = toolArgs;
-          const hcpcsResults = await searchHCPCS(query, level, limit);
+          const hcpcsResults = await searchHCPCS(query, level, limit, userClient);
           result = hcpcsResults;
           codesReturned = hcpcsResults.length;
           break;
@@ -559,7 +573,7 @@ serve(async (req: Request) => {
 
         case "get_modifiers": {
           const { code, code_type } = toolArgs;
-          const modifierResults = await getModifiers(code, code_type);
+          const modifierResults = await getModifiers(code, code_type, userClient);
           result = modifierResults;
           codesReturned = modifierResults.length;
           break;
@@ -571,7 +585,7 @@ serve(async (req: Request) => {
           // Validate CPT codes exist
           const cptValidation = await Promise.all(
             cpt_codes.map(async (code: string) => {
-              const results = await searchCPT(code, undefined, 1);
+              const results = await searchCPT(code, undefined, 1, userClient);
               return { code, valid: results.length > 0 };
             })
           );
@@ -579,7 +593,7 @@ serve(async (req: Request) => {
           // Validate ICD-10 codes exist
           const icdValidation = await Promise.all(
             icd10_codes.map(async (code: string) => {
-              const results = await searchICD10(code, undefined, 1);
+              const results = await searchICD10(code, undefined, 1, userClient);
               return { code, valid: results.length > 0 };
             })
           );
@@ -612,13 +626,13 @@ serve(async (req: Request) => {
 
           switch (code_type) {
             case "cpt":
-              detailResults = await searchCPT(code, undefined, 1);
+              detailResults = await searchCPT(code, undefined, 1, userClient);
               break;
             case "icd10":
-              detailResults = await searchICD10(code, undefined, 1);
+              detailResults = await searchICD10(code, undefined, 1, userClient);
               break;
             case "hcpcs":
-              detailResults = await searchHCPCS(code, undefined, 1);
+              detailResults = await searchHCPCS(code, undefined, 1, userClient);
               break;
             default:
               throw new Error(`Invalid code_type: ${code_type}`);
@@ -635,13 +649,13 @@ serve(async (req: Request) => {
           const suggestions: CodeSuggestions = {};
 
           if (code_types.includes("cpt")) {
-            suggestions.cpt = await searchCPT(description, undefined, limit);
+            suggestions.cpt = await searchCPT(description, undefined, limit, userClient);
           }
           if (code_types.includes("icd10")) {
-            suggestions.icd10 = await searchICD10(description, undefined, limit);
+            suggestions.icd10 = await searchICD10(description, undefined, limit, userClient);
           }
           if (code_types.includes("hcpcs")) {
-            suggestions.hcpcs = await searchHCPCS(description, undefined, limit);
+            suggestions.hcpcs = await searchHCPCS(description, undefined, limit, userClient);
           }
 
           result = suggestions;
@@ -670,9 +684,9 @@ serve(async (req: Request) => {
 
       const executionTimeMs = Date.now() - startTime;
 
-      // Audit log (graceful failure for user_scoped tier)
+      // Audit log — use identity-resolved caller (graceful failure for user_scoped tier)
       await logCodeLookup({
-        userId: toolArgs.userId,
+        userId: caller?.userId,
         tool: toolName,
         query: toolArgs.query || toolArgs.description || toolArgs.code,
         codesReturned,

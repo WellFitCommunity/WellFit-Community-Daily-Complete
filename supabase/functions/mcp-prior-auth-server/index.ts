@@ -29,6 +29,7 @@ import {
   createUnauthorizedResponse,
   CallerIdentity
 } from "../_shared/mcpAuthGate.ts";
+import { resolveTenantId } from "../_shared/mcpIdentity.ts";
 
 // Initialize as Tier 3 (admin) - requires service role key for DB writes
 const SERVER_CONFIG = {
@@ -857,15 +858,30 @@ serve(async (req) => {
         }
 
         const caller = authResult.caller as CallerIdentity;
+
+        // P0-2: Resolve tenant from caller identity, not tool args
+        const resolvedTenant = resolveTenantId(
+          caller,
+          (args || {}).tenant_id as string | undefined,
+          logger,
+          requestId
+        );
+
+        // Override tenant_id in args with identity-resolved value
+        const securedArgs = { ...(args || {}) };
+        if (resolvedTenant) {
+          securedArgs.tenant_id = resolvedTenant;
+        }
+
         logger.info("PRIOR_AUTH_TOOL_CALL", {
           requestId,
           tool: name,
           userId: caller.userId,
           role: caller.role,
-          tenantId: caller.tenantId
+          tenantId: resolvedTenant
         });
 
-        const result = await handleToolCall(name, args || {});
+        const result = await handleToolCall(name, securedArgs);
 
         return new Response(JSON.stringify({
           jsonrpc: "2.0",

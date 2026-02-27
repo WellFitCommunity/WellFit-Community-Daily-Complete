@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-02-25
-**Last Session:** Test & Build Repair — 15 failing tests fixed, typecheck OOM resolved
+**Last Updated:** 2026-02-27
+**Last Session:** MCP Server Compliance Session 1 — P0-1 through P0-4 security fixes
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -29,24 +29,44 @@
 
 ---
 
+## MCP Server Compliance & Hardening (2026-02-27) — IN PROGRESS
+
+**Tracker:** `docs/trackers/mcp-server-compliance-tracker.md`
+**Cross-audit:** Claude Opus 4.6 (compliance) + ChatGPT (code-level security)
+
+| Priority | Items | Status |
+|----------|-------|--------|
+| P0 Critical (Security) | 8 | **4/8 done** (P0-1 through P0-4) |
+| P1 Hardening | 3 | 0/3 done |
+| P2 Moderate (Functional) | 7 | 0/7 done |
+| P3 Low (Polish) | 5 | 0/5 done |
+| **Total** | **23** | **4/23 done** |
+
+**Session plan:**
+- ~~Session 1: P0-1 through P0-4~~ — **DONE** (auth binding, tenant isolation, base64url fix, SECURITY DEFINER)
+- Session 2: P0-5 — God file decomposition for 6 MCP servers (~8 hrs)
+- Session 3: P0-6/7/8 + P1-1 — SELECT *, rate limiting, auth gate, JWKS (~7 hrs)
+- Sessions 4-6: P1-2/3, P2-1 through P2-6, P3-1 through P3-5
+
+**Total estimated:** ~35-43 hours remaining (5-6 sessions)
+
+---
+
 ## MCP Server Ecosystem Audit (2026-02-21)
 
 **Full audit report:** [`docs/MCP_SERVER_AUDIT.md`](MCP_SERVER_AUDIT.md)
 
-**Summary:** 11 MCP servers, 96 total tools, 3 security tiers. All 11 LIVE after Tier 3 auth fix (VARCHAR/TEXT type mismatch in `validate_mcp_key`). 3 servers wired to UI, 8 have clients built but not connected. 5 cross-server chains identified, 0 implemented.
-
-**Top action items:**
-1. ~~FIX: Tier 3 auth~~ — **DONE** (2026-02-21)
-2. FIX: Clearinghouse needs vendor credentials (Waystar/Change Healthcare/Availity)
-3. WIRE: NPI Registry → provider onboarding (~2 hrs)
-4. WIRE: Medical Codes → encounter billing (~4 hrs)
-5. BUILD: Claims submission pipeline — Chain 1 (~16 hrs, biggest revenue opportunity)
-
-**Total estimated remaining MCP work:** ~46 hours (6-8 sessions)
+**Summary:** 11 MCP servers, 96 total tools, 3 security tiers. All 11 LIVE after Tier 3 auth fix (VARCHAR/TEXT type mismatch in `validate_mcp_key`). 10 of 11 wired to UI. 5 cross-server chains identified, 0 implemented.
 
 ---
 
-## Current Priority: Admin Panel Hardening — Tier 3 Session 6 NEXT
+## Current Priority: MCP Server Compliance & Hardening — Session 2 NEXT
+
+See tracker section above. Session 1 (P0-1 through P0-4) DONE. Session 2 (P0-5: god file decomposition) is next.
+
+---
+
+## Secondary Priority: Admin Panel Hardening — Tier 3 Session 6
 
 **Tracker:** `docs/trackers/envision-admin-panel-hardening-tracker.md`
 
@@ -82,7 +102,8 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | **Patient Context Adoption** | `docs/trackers/patient-context-adoption-tracker.md` | **COMPLETE — all 6 phases done across 3 sessions** |
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
-| **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1 DONE, Tier 2 COMPLETE (all 4 sessions) — 650 tests, 72/104 components (69%)** |
+| **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1-3 Session 5 DONE — 870+ tests, Tier 3 Sessions 6-7 TODO** |
+| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **NEW — 23 items, 0/23 done, Session 1 NEXT** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
@@ -94,11 +115,11 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 9,879 passed, 0 failed | 2026-02-25 |
-| Test Suites | 501 | 2026-02-25 |
-| Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-02-25 |
-| Lint | 0 errors, 0 warnings | 2026-02-25 |
-| God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) | 2026-02-24 |
+| Tests | 10,304 passed, 0 failed | 2026-02-27 |
+| Test Suites | 517 | 2026-02-27 |
+| Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-02-27 |
+| Lint | 0 errors, 0 warnings | 2026-02-27 |
+| God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) + 6 MCP servers (P0-5) | 2026-02-27 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
 | Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
@@ -125,9 +146,51 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 ---
 
-## What Was Completed Last Session (2026-02-25)
+## What Was Completed Last Session (2026-02-27)
 
-### Admin Panel Hardening — Tier 2 Session 4 (COMPLETE)
+### MCP Server Compliance Session 1 — P0-1 through P0-4 Security Fixes
+
+4 critical security vulnerabilities fixed across 11 MCP servers:
+
+| Item | Fix | Files |
+|------|-----|-------|
+| **P0-3: base64url decoding** | `isAnonKey()` now uses base64url-safe decoder (handles `-`/`_` chars and padding) | `_shared/mcpAuthGate.ts` |
+| **P0-1: Per-request Supabase client** | `createPerRequestClient(req)` factory forwards caller's JWT for RLS enforcement; `mcp-postgres-server` and `mcp-medical-codes-server` use it for data queries | `_shared/mcpServerBase.ts`, 2 servers |
+| **P0-2: Tenant from identity** | New `_shared/mcpIdentity.ts` extracts `tenant_id` from caller JWT/MCP key instead of trusting tool args; `resolveTenantId()` logs `TENANT_MISMATCH_REJECTED` on mismatch | `_shared/mcpIdentity.ts` (NEW), 4 servers |
+| **P0-4: execute_safe_query enforcement** | New `p_caller_tenant_id` param on `execute_safe_query()` SQL function verifies query tenant matches caller tenant | Migration `20260227000001`, `mcp-postgres-server` |
+
+**Files modified (7):** `_shared/mcpAuthGate.ts`, `_shared/mcpServerBase.ts`, `mcp-postgres-server/index.ts`, `mcp-prior-auth-server/index.ts`, `mcp-edge-functions-server/index.ts`, `mcp-medical-codes-server/index.ts`
+**Files created (2):** `_shared/mcpIdentity.ts`, migration `20260227000001_secure_execute_safe_query.sql`
+**Tests: 10,304 passed, 0 failed (517 suites)**
+
+**Migration NOT yet pushed** — run `npx supabase db push` to deploy.
+
+---
+
+### Previous Session (same day): Test File Review & Fix — 205 tests for 8 admin components
+
+Reviewed 8 uncommitted test files from previous session. Found and fixed 3 bugs, 4 type errors, 8 lint warnings. All 205 tests passing.
+
+| Component | Tests | Key Coverage |
+|-----------|-------|-------------|
+| AdminHeader | 24 | Title/branding, nav, role visibility, settings dropdown, dark mode |
+| ApiKeyManager | 36 | CRUD, validation, generation, search/filter, clipboard copy |
+| IntelligentAdminPanel | 27 | Mission Control orchestrator, quick actions, categories |
+| PinnedDashboardsBar | 20 | Pin/unpin, expand/collapse, filtering, empty states |
+| SLABreachAlerts | 32 | Summary cards, breach list, acknowledge, filters |
+| TenantComplianceReport | 21 | HIPAA metrics, compliance score, download report |
+| TenantConfigHistory | 24 | Audit trail, stats, detail modal, export CSV/JSON |
+| TimeClockAdmin | 21 | Module access gating, entries table, date filters, export |
+
+**Bugs fixed:** PinnedDashboardsBar inverted assertion, ApiKeyManager clipboard/submit timing with fake timers, SLABreachAlerts god file (632→566 lines), 4 type errors, 8 lint warnings.
+
+### MCP Server Compliance Tracker Merged (PR #91)
+
+Cross-audit findings from Claude + ChatGPT merged. 23 items identified across 11 MCP servers. See tracker section above.
+
+---
+
+### Previous Session (2026-02-25): Admin Panel Hardening — Tier 2 Session 4 (COMPLETE)
 
 **264 behavioral tests across 7 admin operations components.** Tier 2 is now fully complete.
 

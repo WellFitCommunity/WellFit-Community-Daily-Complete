@@ -316,6 +316,29 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
+/**
+ * Create a per-request Supabase client that forwards the caller's Authorization header.
+ * This ensures RLS policies evaluate against the actual user's JWT, not the global anon key.
+ *
+ * Use this for data queries in user_scoped servers. The global `sb` client should only
+ * be used for SECURITY DEFINER RPCs or operations that need the server-level key.
+ *
+ * @param req - The incoming HTTP request containing the Authorization header
+ * @returns A Supabase client scoped to the caller's identity
+ */
+export function createPerRequestClient(req: Request): SupabaseClient {
+  if (!SUPABASE_URL || !SB_ANON_KEY) {
+    throw new Error("Missing SUPABASE_URL or SB_ANON_KEY for per-request client");
+  }
+  const authHeader = req.headers.get("Authorization");
+  return createClient(SUPABASE_URL, SB_ANON_KEY, {
+    auth: { persistSession: false },
+    global: {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    },
+  });
+}
+
 export default {
   initMCPServer,
   createInitializeResponse,
@@ -325,5 +348,6 @@ export default {
   createHealthResponse,
   handleHealthCheck,
   checkInMemoryRateLimit,
+  createPerRequestClient,
   PING_TOOL
 };
