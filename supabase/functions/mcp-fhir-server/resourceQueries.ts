@@ -7,6 +7,7 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { FHIRResource, PatientBundleOptions, ResourceSearchFilters } from "./types.ts";
 import { FHIR_TABLES, SUPPORTED_RESOURCES, getFHIRColumns } from "./tools.ts";
 import { createFHIRBundle, toFHIRPatient } from "./bundleBuilder.ts";
+import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 
 /**
  * Exports a complete FHIR Bundle for a patient, including demographics
@@ -27,11 +28,14 @@ export async function getPatientBundle(
   const bundleResources: FHIRResource[] = [];
 
   // Get patient demographics
-  const { data: patient, error: patientError } = await sb
-    .from('profiles')
-    .select('id, mrn, first_name, last_name, middle_name, gender, date_of_birth, phone, email, address_line1, address_line2, city, state, zip_code, created_at, updated_at')
-    .eq('id', patientId)
-    .single();
+  const { data: patient, error: patientError } = await withTimeout(
+    sb.from('profiles')
+      .select('id, mrn, first_name, last_name, middle_name, gender, date_of_birth, phone, email, address_line1, address_line2, city, state, zip_code, created_at, updated_at')
+      .eq('id', patientId)
+      .single(),
+    MCP_TIMEOUT_CONFIG.fhir.single,
+    'Patient demographics lookup'
+  );
 
   if (patientError) {
     throw new Error(`Patient not found: ${patientError.message}`);
@@ -55,7 +59,11 @@ export async function getPatientBundle(
       query = query.lte('created_at', options.endDate);
     }
 
-    const { data, error } = await query.limit(100);
+    const { data, error } = await withTimeout(
+      query.limit(100),
+      MCP_TIMEOUT_CONFIG.fhir.bundle,
+      `FHIR ${resourceType} bundle query`
+    );
 
     if (!error && data) {
       for (const record of data) {
@@ -136,7 +144,11 @@ export async function searchResources(
     query = query.lte('created_at', filters.dateTo);
   }
 
-  const { data, error } = await query.limit(filters.limit || 50);
+  const { data, error } = await withTimeout(
+    query.limit(filters.limit || 50),
+    MCP_TIMEOUT_CONFIG.fhir.search,
+    `FHIR ${resourceType} search`
+  );
 
   if (error) {
     throw new Error(`Search failed: ${error.message}`);

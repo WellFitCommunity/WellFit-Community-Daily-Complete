@@ -239,8 +239,11 @@ async function renderWithAccess(entries = MOCK_ENTRIES) {
   const { TimeClockAdmin } = await import('../TimeClockAdmin');
   render(<TimeClockAdmin />);
 
+  // Wait for content that only appears AFTER loading completes.
+  // "Time Clock Management" shows in both loading and loaded states,
+  // so we wait for "Filters:" text which only renders post-loading.
   await waitFor(() => {
-    expect(screen.getByText('Time Clock Management')).toBeInTheDocument();
+    expect(screen.getByText('Filters:')).toBeInTheDocument();
   });
 }
 

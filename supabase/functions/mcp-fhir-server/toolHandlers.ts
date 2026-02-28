@@ -14,6 +14,7 @@ import { logFHIROperation } from "./audit.ts";
 import { getPatientBundle } from "./resourceQueries.ts";
 import { searchResources } from "./resourceQueries.ts";
 import { getPatientSummary } from "./patientSummary.ts";
+import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 
 /**
  * Context passed to every tool handler call, providing
@@ -177,7 +178,11 @@ async function handleGetResource(
   const table = FHIR_TABLES[resourceType];
   if (!table) throw new Error(`Unknown resource type: ${resourceType}`);
 
-  const { data, error } = await sb.from(table).select(getFHIRColumns(table)).eq('id', resourceId).single();
+  const { data, error } = await withTimeout(
+    sb.from(table).select(getFHIRColumns(table)).eq('id', resourceId).single(),
+    MCP_TIMEOUT_CONFIG.fhir.single,
+    `FHIR get ${resourceType}`
+  );
   if (error) throw new Error(`Resource not found: ${error.message}`);
   return { resourceType, ...data };
 }
@@ -197,11 +202,15 @@ async function handleCreateResource(
     throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
   }
 
-  const { data: created, error } = await sb.from(table).insert({
-    ...data,
-    patient_id: patientId,
-    created_at: new Date().toISOString()
-  }).select().single();
+  const { data: created, error } = await withTimeout(
+    sb.from(table).insert({
+      ...data,
+      patient_id: patientId,
+      created_at: new Date().toISOString()
+    }).select().single(),
+    MCP_TIMEOUT_CONFIG.fhir.write,
+    `FHIR create ${resourceType}`
+  );
 
   if (error) throw new Error(`Create failed: ${error.message}`);
   return { resourceType, ...created };
@@ -217,10 +226,14 @@ async function handleUpdateResource(
   const table = FHIR_TABLES[resourceType];
   if (!table) throw new Error(`Unknown resource type: ${resourceType}`);
 
-  const { data: updated, error } = await sb.from(table).update({
-    ...data,
-    updated_at: new Date().toISOString()
-  }).eq('id', resourceId).select().single();
+  const { data: updated, error } = await withTimeout(
+    sb.from(table).update({
+      ...data,
+      updated_at: new Date().toISOString()
+    }).eq('id', resourceId).select().single(),
+    MCP_TIMEOUT_CONFIG.fhir.write,
+    `FHIR update ${resourceType}`
+  );
 
   if (error) throw new Error(`Update failed: ${error.message}`);
   return { resourceType, ...updated };
@@ -243,9 +256,11 @@ async function handleGetObservations(
   if (dateFrom) query = query.gte('effective_date', dateFrom);
   if (dateTo) query = query.lte('effective_date', dateTo);
 
-  const { data, error } = await query
-    .order('effective_date', { ascending: false })
-    .limit(limit || 50);
+  const { data, error } = await withTimeout(
+    query.order('effective_date', { ascending: false }).limit(limit || 50),
+    MCP_TIMEOUT_CONFIG.fhir.search,
+    'FHIR observations search'
+  );
   if (error) throw new Error(`Query failed: ${error.message}`);
 
   return createFHIRBundle(
@@ -270,9 +285,11 @@ async function handleGetMedicationList(
     query = query.in('status', ['active', 'on-hold']);
   }
 
-  const { data, error } = await query
-    .order('authored_on', { ascending: false })
-    .limit(100);
+  const { data, error } = await withTimeout(
+    query.order('authored_on', { ascending: false }).limit(100),
+    MCP_TIMEOUT_CONFIG.fhir.search,
+    'FHIR medication list'
+  );
   if (error) throw new Error(`Query failed: ${error.message}`);
 
   return {
@@ -304,9 +321,11 @@ async function handleGetConditionList(
   if (clinicalStatus) query = query.eq('clinical_status', clinicalStatus);
   if (category) query = query.eq('category', category);
 
-  const { data, error } = await query
-    .order('recorded_date', { ascending: false })
-    .limit(50);
+  const { data, error } = await withTimeout(
+    query.order('recorded_date', { ascending: false }).limit(50),
+    MCP_TIMEOUT_CONFIG.fhir.search,
+    'FHIR condition list'
+  );
   if (error) throw new Error(`Query failed: ${error.message}`);
 
   return {
@@ -337,16 +356,22 @@ async function handleGetSdohAssessments(
     .eq('patient_id', patientId)
     .eq('category', 'sdoh');
 
-  const { data: observations, error } = await query
-    .order('effective_date', { ascending: false })
-    .limit(50);
+  const { data: observations, error } = await withTimeout(
+    query.order('effective_date', { ascending: false }).limit(50),
+    MCP_TIMEOUT_CONFIG.fhir.search,
+    'FHIR SDOH assessments'
+  );
 
   // Also check sdoh_flags table
-  const { data: flags } = await sb.from('sdoh_flags')
-    .select('id, flag_type, severity, description, detected_date')
-    .eq('patient_id', patientId)
-    .eq('resolved', false)
-    .limit(20);
+  const { data: flags } = await withTimeout(
+    sb.from('sdoh_flags')
+      .select('id, flag_type, severity, description, detected_date')
+      .eq('patient_id', patientId)
+      .eq('resolved', false)
+      .limit(20),
+    MCP_TIMEOUT_CONFIG.fhir.search,
+    'FHIR SDOH flags'
+  );
 
   if (error) throw new Error(`Query failed: ${error.message}`);
 
@@ -378,10 +403,14 @@ async function handleGetCareTeam(
   const patientId = toolArgs.patient_id as string;
   const includeContactInfo = toolArgs.include_contact_info as boolean | undefined;
 
-  const { data: careTeams, error } = await sb.from('fhir_care_teams')
-    .select(getFHIRColumns('fhir_care_teams'))
-    .eq('patient_id', patientId)
-    .eq('status', 'active');
+  const { data: careTeams, error } = await withTimeout(
+    sb.from('fhir_care_teams')
+      .select(getFHIRColumns('fhir_care_teams'))
+      .eq('patient_id', patientId)
+      .eq('status', 'active'),
+    MCP_TIMEOUT_CONFIG.fhir.search,
+    'FHIR care team lookup'
+  );
 
   if (error) throw new Error(`Query failed: ${error.message}`);
 
@@ -440,7 +469,11 @@ async function handleListEhrConnections(
   if (tenantId) query = query.eq('tenant_id', tenantId);
   if (status) query = query.eq('status', status);
 
-  const { data, error } = await query.order('name');
+  const { data, error } = await withTimeout(
+    query.order('name'),
+    MCP_TIMEOUT_CONFIG.fhir.search,
+    'FHIR EHR connections list'
+  );
   if (error) throw new Error(`Query failed: ${error.message}`);
 
   return {

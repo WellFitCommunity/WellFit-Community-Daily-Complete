@@ -79,6 +79,14 @@
         "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
+    },
+    "pubmed": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-pubmed-server",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
     }
   }
 }

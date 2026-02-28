@@ -5,6 +5,7 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { WHITELISTED_QUERIES, SAFE_TABLES } from "./queryWhitelist.ts";
 import { handlePing } from "../_shared/mcpServerBase.ts";
+import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 
 interface MCPLogger {
   info(event: string, data?: Record<string, unknown>): void;
@@ -106,11 +107,15 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
           throw new Error("Tenant ID required: could not resolve from caller identity or arguments");
         }
 
-        const { data, error } = await sb.rpc('execute_safe_query', {
-          query_text: queryDef.query,
-          params: JSON.stringify([resolvedTenantId, ...(extraParams ? Object.values(extraParams as Record<string, unknown>) : [])]),
-          p_caller_tenant_id: resolvedTenantId
-        });
+        const { data, error } = await withTimeout(
+          sb.rpc('execute_safe_query', {
+            query_text: queryDef.query,
+            params: JSON.stringify([resolvedTenantId, ...(extraParams ? Object.values(extraParams as Record<string, unknown>) : [])]),
+            p_caller_tenant_id: resolvedTenantId
+          }),
+          MCP_TIMEOUT_CONFIG.postgres.query,
+          `Postgres query: ${query_name}`
+        );
 
         if (error) {
           logger.error("Query execution failed", {
@@ -152,9 +157,13 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
           throw new Error(`Table '${table_name}' schema is not accessible`);
         }
 
-        const { data, error } = await userClient.rpc('get_table_columns', {
-          p_table_name: table_name as string
-        });
+        const { data, error } = await withTimeout(
+          userClient.rpc('get_table_columns', {
+            p_table_name: table_name as string
+          }),
+          MCP_TIMEOUT_CONFIG.postgres.schema,
+          `Schema lookup: ${table_name}`
+        );
 
         if (error) {
           const { data: schemaData, error: schemaError } = await userClient
@@ -188,7 +197,11 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
           query = query.eq('tenant_id', resolvedTenantId);
         }
 
-        const { count, error } = await query;
+        const { count, error } = await withTimeout(
+          query,
+          MCP_TIMEOUT_CONFIG.postgres.count,
+          `Row count: ${table_name}`
+        );
 
         if (error) {
           throw new Error(`Count failed: ${error.message}`);

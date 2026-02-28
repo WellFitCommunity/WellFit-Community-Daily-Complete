@@ -5,6 +5,7 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { PriorAuthStatus, PriorAuthUrgency } from "./types.ts";
 import { handleToFHIRClaim } from "./fhirConverter.ts";
+import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 
 interface MCPLogger {
   info(event: string, data?: Record<string, unknown>): void;
@@ -17,29 +18,32 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
   async function handleCreatePriorAuth(args: Record<string, unknown>) {
     const now = new Date();
 
-    const { data, error } = await sb
-      .from('prior_authorizations')
-      .insert({
-        patient_id: args.patient_id,
-        payer_id: args.payer_id,
-        payer_name: args.payer_name,
-        member_id: args.member_id,
-        service_codes: args.service_codes,
-        diagnosis_codes: args.diagnosis_codes,
-        urgency: args.urgency || 'routine',
-        ordering_provider_npi: args.ordering_provider_npi,
-        rendering_provider_npi: args.rendering_provider_npi,
-        facility_npi: args.facility_npi,
-        date_of_service: args.date_of_service,
-        clinical_notes: args.clinical_notes,
-        requested_units: args.requested_units,
-        status: 'draft',
-        tenant_id: args.tenant_id,
-        created_at: now.toISOString(),
-        updated_at: now.toISOString()
-      })
-      .select()
-      .single();
+    const { data, error } = await withTimeout(
+      sb.from('prior_authorizations')
+        .insert({
+          patient_id: args.patient_id,
+          payer_id: args.payer_id,
+          payer_name: args.payer_name,
+          member_id: args.member_id,
+          service_codes: args.service_codes,
+          diagnosis_codes: args.diagnosis_codes,
+          urgency: args.urgency || 'routine',
+          ordering_provider_npi: args.ordering_provider_npi,
+          rendering_provider_npi: args.rendering_provider_npi,
+          facility_npi: args.facility_npi,
+          date_of_service: args.date_of_service,
+          clinical_notes: args.clinical_notes,
+          requested_units: args.requested_units,
+          status: 'draft',
+          tenant_id: args.tenant_id,
+          created_at: now.toISOString(),
+          updated_at: now.toISOString()
+        })
+        .select()
+        .single(),
+      MCP_TIMEOUT_CONFIG.priorAuth.create,
+      'Prior auth create'
+    );
 
     if (error) throw error;
 
@@ -137,7 +141,11 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
       throw new Error('Either prior_auth_id or auth_number is required');
     }
 
-    const { data, error } = await query.single();
+    const { data, error } = await withTimeout(
+      query.single(),
+      MCP_TIMEOUT_CONFIG.priorAuth.query,
+      'Prior auth lookup'
+    );
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -309,12 +317,16 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
   }
 
   async function handleCheckPriorAuthRequired(args: Record<string, unknown>) {
-    const { data, error } = await sb.rpc('check_prior_auth_for_claim', {
-      p_tenant_id: args.tenant_id,
-      p_patient_id: args.patient_id,
-      p_service_codes: args.service_codes,
-      p_date_of_service: args.date_of_service
-    });
+    const { data, error } = await withTimeout(
+      sb.rpc('check_prior_auth_for_claim', {
+        p_tenant_id: args.tenant_id,
+        p_patient_id: args.patient_id,
+        p_service_codes: args.service_codes,
+        p_date_of_service: args.date_of_service
+      }),
+      MCP_TIMEOUT_CONFIG.priorAuth.rpc,
+      'Prior auth requirement check'
+    );
 
     if (error) throw error;
 
