@@ -1,54 +1,33 @@
 // =====================================================
 // MCP FHIR Server - Audit Logging
-// Purpose: FHIR operation audit trail with fallback to claude_usage_logs
+// Purpose: FHIR operation audit trail via unified mcp_audit_logs (P2-4)
 // =====================================================
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { EdgeFunctionLogger } from "../_shared/auditLogger.ts";
 import type { FHIRAuditParams } from "./types.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 
 /**
- * Logs a FHIR operation to the mcp_fhir_logs table.
- * Falls back to claude_usage_logs if the primary table fails.
- *
- * @param sb - The Supabase client (service role)
- * @param logger - The edge function logger instance
- * @param params - Audit parameters for the FHIR operation
+ * Logs a FHIR operation to the unified mcp_audit_logs table.
+ * FHIR-specific fields are stored in the metadata JSONB column.
  */
 export async function logFHIROperation(
   sb: SupabaseClient,
   logger: EdgeFunctionLogger,
   params: FHIRAuditParams
 ): Promise<void> {
-  try {
-    await sb.from("mcp_fhir_logs").insert({
-      user_id: params.userId,
-      tenant_id: params.tenantId,
-      operation: params.operation,
+  await logMCPAudit(sb, logger, {
+    serverName: "mcp-fhir-server",
+    toolName: params.operation,
+    userId: params.userId,
+    tenantId: params.tenantId,
+    executionTimeMs: params.executionTimeMs,
+    success: params.success,
+    errorMessage: params.errorMessage,
+    metadata: {
       resource_type: params.resourceType,
-      resource_id: params.resourceId,
-      success: params.success,
-      execution_time_ms: params.executionTimeMs,
-      error_message: params.errorMessage,
-      created_at: new Date().toISOString()
-    });
-  } catch (err: unknown) {
-    // Fallback to claude_usage_logs
-    try {
-      await sb.from("claude_usage_logs").insert({
-        user_id: params.userId,
-        request_id: crypto.randomUUID(),
-        request_type: `mcp_fhir_${params.operation}`,
-        response_time_ms: params.executionTimeMs,
-        success: params.success,
-        error_message: params.errorMessage,
-        created_at: new Date().toISOString()
-      });
-    } catch (innerErr: unknown) {
-      logger.error("Audit log fallback failed", {
-        originalError: err instanceof Error ? err.message : String(err),
-        fallbackError: innerErr instanceof Error ? innerErr.message : String(innerErr)
-      });
+      resource_id: params.resourceId
     }
-  }
+  });
 }

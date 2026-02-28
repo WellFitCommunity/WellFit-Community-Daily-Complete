@@ -29,6 +29,7 @@ import {
   CallerIdentity
 } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -315,7 +316,7 @@ serve(async (req: Request) => {
       const outputTokens = response.usage.output_tokens;
       const cost = calculateCost(model, inputTokens, outputTokens);
 
-      // Audit log with caller identity
+      // Audit log: claude_usage_logs for billing + unified mcp_audit_logs for operations
       await logMCPRequest({
         userId: caller.userId,
         tool: toolName,
@@ -325,6 +326,16 @@ serve(async (req: Request) => {
         cost,
         responseTimeMs,
         success: true
+      });
+      await logMCPAudit(sb, logger, {
+        serverName: "mcp-claude-server",
+        toolName,
+        userId: caller.userId,
+        tenantId: caller.tenantId,
+        authMethod: "jwt",
+        executionTimeMs: responseTimeMs,
+        success: true,
+        metadata: { model, inputTokens, outputTokens, cost }
       });
 
       const content = response.content[0];

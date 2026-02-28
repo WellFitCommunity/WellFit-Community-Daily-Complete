@@ -5,61 +5,13 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ALLOWED_FUNCTIONS, BLOCKED_FUNCTIONS } from "./functionWhitelist.ts";
 import { handlePing } from "../_shared/mcpServerBase.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 
 interface MCPLogger {
   info(event: string, data?: Record<string, unknown>): void;
   error(event: string, data?: Record<string, unknown>): void;
   debug(event: string, data?: Record<string, unknown>): void;
   security(event: string, data?: Record<string, unknown>): void;
-}
-
-// =====================================================
-// Audit Logging
-// =====================================================
-
-async function logFunctionInvocation(
-  sb: SupabaseClient,
-  logger: MCPLogger,
-  params: {
-    userId?: string;
-    tenantId?: string;
-    functionName: string;
-    success: boolean;
-    executionTimeMs: number;
-    errorMessage?: string;
-    payloadSize?: number;
-  }
-) {
-  try {
-    await sb.from("mcp_function_logs").insert({
-      user_id: params.userId,
-      tenant_id: params.tenantId,
-      function_name: params.functionName,
-      success: params.success,
-      execution_time_ms: params.executionTimeMs,
-      error_message: params.errorMessage,
-      payload_size: params.payloadSize,
-      created_at: new Date().toISOString()
-    });
-  } catch (err) {
-    // Fallback to claude_usage_logs
-    try {
-      await sb.from("claude_usage_logs").insert({
-        user_id: params.userId,
-        request_id: crypto.randomUUID(),
-        request_type: `mcp_edge_fn_${params.functionName}`,
-        response_time_ms: params.executionTimeMs,
-        success: params.success,
-        error_message: params.errorMessage,
-        created_at: new Date().toISOString()
-      });
-    } catch (innerErr: unknown) {
-      logger.error("Audit log fallback failed", {
-        originalError: err instanceof Error ? err.message : String(err),
-        fallbackError: innerErr instanceof Error ? innerErr.message : String(innerErr)
-      });
-    }
-  }
 }
 
 // =====================================================
@@ -185,14 +137,18 @@ export function createToolHandlers(
           timeout as number | undefined
         );
 
-        await logFunctionInvocation(sb, logger, {
+        await logMCPAudit(sb, logger, {
+          serverName: "mcp-edge-functions-server",
+          toolName: "invoke_function",
           userId: caller.userId,
           tenantId: resolvedTenant,
-          functionName: function_name as string,
-          success: invocationResult.success,
           executionTimeMs: invocationResult.executionTimeMs,
+          success: invocationResult.success,
           errorMessage: invocationResult.error,
-          payloadSize: JSON.stringify(payload).length
+          metadata: {
+            function_name: function_name as string,
+            payload_size: JSON.stringify(payload).length
+          }
         });
 
         return invocationResult;
@@ -246,14 +202,18 @@ export function createToolHandlers(
 
           results.push({ function_name, ...invocationResult });
 
-          await logFunctionInvocation(sb, logger, {
+          await logMCPAudit(sb, logger, {
+            serverName: "mcp-edge-functions-server",
+            toolName: "batch_invoke",
             userId: caller.userId,
             tenantId: resolvedTenant,
-            functionName: function_name,
-            success: invocationResult.success,
             executionTimeMs: invocationResult.executionTimeMs,
+            success: invocationResult.success,
             errorMessage: invocationResult.error,
-            payloadSize: JSON.stringify(batchPayload).length
+            metadata: {
+              function_name,
+              payload_size: JSON.stringify(batchPayload).length
+            }
           });
 
           if (!invocationResult.success && stop_on_error) {

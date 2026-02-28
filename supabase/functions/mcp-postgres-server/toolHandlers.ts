@@ -6,65 +6,12 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { WHITELISTED_QUERIES, SAFE_TABLES } from "./queryWhitelist.ts";
 import { handlePing } from "../_shared/mcpServerBase.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 
 interface MCPLogger {
   info(event: string, data?: Record<string, unknown>): void;
   error(event: string, data?: Record<string, unknown>): void;
   debug(event: string, data?: Record<string, unknown>): void;
-}
-
-// =====================================================
-// Audit Logging
-// =====================================================
-
-async function logMCPRequest(
-  sb: SupabaseClient,
-  logger: MCPLogger,
-  params: {
-    userId?: string;
-    tenantId?: string;
-    tool: string;
-    queryName?: string;
-    rowsReturned: number;
-    executionTimeMs: number;
-    success: boolean;
-    errorMessage?: string;
-    requestId?: string;
-  }
-) {
-  try {
-    await sb.from("mcp_query_logs").insert({
-      user_id: params.userId,
-      tenant_id: params.tenantId,
-      tool_name: params.tool,
-      query_name: params.queryName,
-      rows_returned: params.rowsReturned,
-      execution_time_ms: params.executionTimeMs,
-      success: params.success,
-      error_message: params.errorMessage,
-      request_id: params.requestId,
-      created_at: new Date().toISOString()
-    });
-  } catch (err) {
-    // Fallback to claude_usage_logs if mcp_query_logs doesn't exist
-    try {
-      await sb.from("claude_usage_logs").insert({
-        user_id: params.userId,
-        request_id: params.requestId || crypto.randomUUID(),
-        request_type: `mcp_postgres_${params.tool}`,
-        response_time_ms: params.executionTimeMs,
-        success: params.success,
-        error_message: params.errorMessage,
-        created_at: new Date().toISOString()
-      });
-    } catch (innerErr: unknown) {
-      logger.error("Audit log fallback failed", {
-        originalError: err instanceof Error ? err.message : String(err),
-        fallbackError: innerErr instanceof Error ? innerErr.message : String(innerErr),
-        requestId: params.requestId
-      });
-    }
-  }
 }
 
 // =====================================================
@@ -216,17 +163,18 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
         throw new Error(`Tool ${toolName} not implemented`);
     }
 
-    // Audit log
-    const startTime = Date.now();
-    await logMCPRequest(sb, logger, {
+    // Audit log via unified mcp_audit_logs (P2-4)
+    await logMCPAudit(sb, logger, {
+      serverName: "mcp-postgres-server",
+      toolName,
+      requestId,
       userId: caller?.userId,
       tenantId: resolvedTenantId,
-      tool: toolName,
-      queryName: toolArgs.query_name as string | undefined,
-      rowsReturned,
-      executionTimeMs: Date.now() - startTime,
       success: true,
-      requestId
+      metadata: {
+        query_name: toolArgs.query_name,
+        rows_returned: rowsReturned
+      }
     });
 
     return { result, rowsReturned };

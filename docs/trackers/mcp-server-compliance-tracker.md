@@ -14,9 +14,9 @@
 |----------|-------|--------|
 | P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
 | P1 Hardening | 3 | **3/3 done** (P1-1, P1-2, P1-3) |
-| P2 Moderate (Functional) | 7 | **4/7 done** (P2-1, P2-2, P2-3, P2-5) |
+| P2 Moderate (Functional) | 7 | **5/7 done** (P2-1, P2-2, P2-3, P2-4, P2-5) |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **15/23 done** |
+| **Total** | **23** | **16/23 done** |
 
 ### Cross-Audit Note
 
@@ -335,30 +335,20 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P2-4: Unified MCP Audit Log Table **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-28)
 **Estimated:** ~2 hours
 
-**Problem:** Inconsistent audit logging across servers (claude_usage_logs, mcp_query_logs, mcp_function_logs).
+**Fix applied:**
+1. Created `mcp_audit_logs` table migration with RLS (service_role write, admin read), 4 indexes (server+time, tenant+time, user+time, failures)
+2. Created `_shared/mcpAudit.ts` — `logMCPAudit()` + `createServerAudit()` helper with fallback to `claude_usage_logs`
+3. Wired into 5 servers:
+   - `mcp-fhir-server/audit.ts` — replaced per-table logging with `logMCPAudit()`, FHIR fields in metadata
+   - `mcp-hl7-x12-server/audit.ts` — replaced per-table logging, input/output format in metadata
+   - `mcp-postgres-server/toolHandlers.ts` — replaced inline `logMCPRequest()` with `logMCPAudit()`, query_name + rows_returned in metadata
+   - `mcp-edge-functions-server/toolHandlers.ts` — replaced `logFunctionInvocation()` with `logMCPAudit()`, function_name + payload_size in metadata
+   - `mcp-claude-server/index.ts` — added `logMCPAudit()` alongside existing `claude_usage_logs` (kept for billing)
 
-**Fix:** Create unified `mcp_audit_logs` table with common schema:
-```sql
-CREATE TABLE mcp_audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  server_name TEXT NOT NULL,
-  tool_name TEXT NOT NULL,
-  request_id TEXT NOT NULL,
-  user_id TEXT,
-  tenant_id TEXT,
-  auth_method TEXT,
-  execution_time_ms INTEGER,
-  success BOOLEAN NOT NULL,
-  error_message TEXT,
-  metadata JSONB,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-**Files:** New migration + shared `mcpAudit.ts` module + update all servers
+**Files:** Migration, `_shared/mcpAudit.ts` (NEW), `mcp-fhir-server/audit.ts`, `mcp-hl7-x12-server/audit.ts`, `mcp-postgres-server/toolHandlers.ts`, `mcp-edge-functions-server/toolHandlers.ts`, `mcp-claude-server/index.ts`
 
 ---
 
