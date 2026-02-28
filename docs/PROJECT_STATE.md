@@ -89,6 +89,36 @@ See tracker section above. Sessions 1-4 (P0-1 through P0-8 + P1-1/2/3 + P2-1) DO
 
 ---
 
+## Upcoming: Skills Overhaul — 10 New Skills + 5 Updates
+
+**Assessment:** `docs/SKILLS_ASSESSMENT_2026-02-28.md`
+**System Readiness:** `docs/SYSTEM_READINESS_ASSESSMENT_2026-02-28.md`
+
+**5 existing skills need updating** (outdated test counts, stale references, `/demo-ready` still says Methodist Dec 2025):
+- `/security-scan`, `/demo-ready`, `/cost-check`, `/test-runner`, `/pre-commit`
+- `SKILLS_AND_COMMANDS.md` needs full rewrite (last updated Nov 2025)
+
+**10 new skills to build** (all approved by Maria 2026-02-28):
+
+| # | Skill | Command | Priority | Value |
+|---|-------|---------|----------|-------|
+| 1 | **Tenant Onboard** | `/onboard-tenant` | **HIGHEST** | Repeatable process when an org signs up — CORS, branding, modules, roles, admin account, domain, edge redeploy, AI config, RLS verification |
+| 2 | Pilot Prep | `/pilot-prep` | High | Hospital pilot readiness — replaces stale `/demo-ready` |
+| 3 | Session Start | `/session-start` | High | Automates session start protocol (read PROJECT_STATE, report status) |
+| 4 | FHIR Check | `/fhir-check` | High | FHIR R4 compliance, interop endpoints, SMART on FHIR validation |
+| 5 | Clinical Validation | `/clinical-validate` | High | SOAP note accuracy, readmission predictions, grounding rules |
+| 6 | Deploy Edge | `/deploy-edge` | Medium | Edge function deployment with pre/post verification |
+| 7 | God File Check | `/god-check` | Medium | Scan for >600 line violations |
+| 8 | Audit Trail | `/audit-check` | Medium | Verify audit logging coverage for SOC2 |
+| 9 | AI Transparency Report | `/ai-report` | Nice-to-have | Generate HTI-2 transparency report for all AI skills |
+| 10 | Codebase Health | `/health` | Nice-to-have | Quick snapshot: tests, lint, typecheck, god files, bundle size |
+
+**Maria's note:** `/onboard-tenant` is the largest value-add. "Valuable on a great level."
+
+**Status:** NOT YET BUILT — waiting for Maria to be at her computer.
+
+---
+
 ## Secondary Priority: Admin Panel Hardening — Tier 3 Session 6
 
 **Tracker:** `docs/trackers/envision-admin-panel-hardening-tracker.md`
