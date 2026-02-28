@@ -68,8 +68,8 @@ export const BODY_REGIONS_FRONT: BodyRegion[] = [
     id: 'heart',
     label: 'Heart',
     view: 'front',
-    center: { x: 55, y: 32 },
-    bounds: { minX: 50, maxX: 60, minY: 28, maxY: 38 },
+    center: { x: 57, y: 28 },
+    bounds: { minX: 52, maxX: 62, minY: 25, maxY: 32 },
   },
   {
     id: 'sternum',
