@@ -68,6 +68,27 @@ See tracker section above. Sessions 1-4 (P0-1 through P0-8 + P1-1/2/3 + P2-1) DO
 
 ---
 
+## Upcoming: Compass Riley V2 + Cultural Competency MCP Server
+
+**Designed:** 2026-02-28 brainstorm session (Maria + Claude Opus 4.6 + ChatGPT + Perplexity)
+
+**Build order (after MCP Server Compliance completes):**
+
+| # | Feature | Tracker | Sessions | Status |
+|---|---------|---------|----------|--------|
+| 1 | Compass Riley V2 — CoT/ToT Reasoning Modes | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | 3 | TODO |
+| 2 | Cultural Competency MCP Server | `docs/trackers/cultural-competency-mcp-tracker.md` | 3-4 | TODO |
+| 3 | Integration — Cultural context feeds ToT confidence | Both trackers | Part of session 3 of each | TODO |
+
+**Key design decisions:**
+- **"Reason broadly, speak narrowly"** — Tree of Thought runs internally, Chain of Thought is the output voice
+- **Proportional response** — confidence score determines output verbosity (>85 concise, 60-84 concise+caution, <60 expand)
+- **3 modes:** AUTO (default), FORCE_CHAIN, FORCE_TREE — user can always grab the wheel
+- **Cultural competency as MCP server** — any of the 26 AI skills can call it for population-specific guidance
+- **8 population profiles:** Veterans, Unhoused, Spanish-Speaking/Latino, Black/AA, Isolated Elderly, Indigenous, Immigrant/Refugee, LGBTQ+ Elderly
+
+---
+
 ## Secondary Priority: Admin Panel Hardening — Tier 3 Session 6
 
 **Tracker:** `docs/trackers/envision-admin-panel-hardening-tracker.md`
@@ -106,6 +127,8 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
 | **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1-3 Session 5 DONE — 870+ tests, Tier 3 Sessions 6-7 TODO** |
 | **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **12/23 done — All P0+P1 DONE, P2-1 DONE, Session 5 NEXT** |
+| **Compass Riley V2 Reasoning** | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | **NEW — Chain/Tree of Thought modes, 3 sessions, after MCP compliance** |
+| **Cultural Competency MCP** | `docs/trackers/cultural-competency-mcp-tracker.md` | **NEW — 8 population profiles, 8 MCP tools, 3-4 sessions, after Riley V2** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |

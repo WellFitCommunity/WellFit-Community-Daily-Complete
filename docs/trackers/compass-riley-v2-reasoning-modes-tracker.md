@@ -1,0 +1,204 @@
+# Compass Riley V2 — Chain of Thought / Tree of Thought Reasoning Modes
+
+> **Purpose:** Add proportional reasoning to Compass Riley — Chain of Thought (concise, linear) for clear-cut cases and Tree of Thought (branching differential) for ambiguous/high-stakes cases. The system reasons broadly but speaks narrowly. Tree runs silently; Chain is the voice. The user can always grab the wheel.
+
+**Total Estimated Sessions:** 3
+**Priority:** After MCP Server Compliance tracker completion
+**Started:** TBD
+**Design Origin:** Brainstorm session 2026-02-28 (Maria + Claude Opus 4.6 + ChatGPT design spec)
+
+---
+
+## Core Philosophy
+
+> "The system may reason expansively, but it must respond proportionally."
+
+- **Chain of Thought (CoT):** Linear reasoning. A -> B -> C -> Conclusion. For clear-cut presentations.
+- **Tree of Thought (ToT):** Branching differential. Explore 2-4 paths, score, rule out, converge. For ambiguity/risk.
+- **Default:** Chain is the voice. Tree is the brain. Tree runs silently unless escalation is warranted.
+- **Override:** User can force Chain, force Tree, or leave on Auto. System always complies.
+
+---
+
+## The Behavioral Contract
+
+1. Default output is Chain (simple, direct, no extra chatter).
+2. Tree runs silently as a background differential detector.
+3. Escalate only when necessary (anomalies / ambiguity / high stakes / failed verification).
+4. If it escalates, it says ONE short line to signal why — then proceeds.
+5. Override is always honored (FORCE_CHAIN / FORCE_TREE / AUTO).
+6. If user expects Chain but system sees risk, it flags it briefly, then either:
+   - Continues in Chain if user forced it, or
+   - Switches to Tree if in Auto.
+
+---
+
+## 3 Modes Exposed
+
+| Mode | Behavior |
+|------|----------|
+| **AUTO** (default) | Chain output + silent Tree monitor |
+| **FORCE_CHAIN** | Never branch. Still allowed to warn once. |
+| **FORCE_TREE** | Always branch (capped), then converge. |
+
+---
+
+## Tree Trigger Logic
+
+Tree engages when ANY of these trip:
+
+### 1. Anomaly / Conflict Triggers
+- Contradictory inputs (symptom A reported + symptom A denied)
+- Vitals don't match reported symptoms
+- Medication conflicts with diagnosis
+- Schema mismatch, unexpected nulls
+
+### 2. Ambiguity Triggers
+- Multiple plausible diagnoses
+- Missing information that changes the assessment materially
+- Symptoms span multiple clinical domains
+
+### 3. High-Stakes Triggers
+- Red flag symptoms (chest pain, sudden neuro changes, suicidal ideation)
+- Pediatric weight-based dosing
+- Medication reconciliation with 5+ active meds
+- Post-surgical assessment
+
+### 4. Low-Confidence Triggers
+- Model confidence below threshold (< 75)
+- Too many assumptions required
+- Sparse transcript data
+
+**If none trigger -> Chain.**
+
+---
+
+## Tree Constraints (No Overthinking)
+
+| Parameter | Limit |
+|-----------|-------|
+| Branches | 2-4 max |
+| Depth | 2 max |
+| Convergence | Mandatory — pick ONE and execute |
+| If can't converge | Flag for provider review |
+
+### Scoring Rubric (Fixed, Not Creative)
+- Safety / correctness
+- Clinical evidence strength
+- Blast radius (what happens if wrong?)
+- Reversibility (can we course-correct?)
+
+---
+
+## Reason Codes (Audit Trail)
+
+| Code | Meaning | Example |
+|------|---------|---------|
+| `CONFLICTING_SIGNALS` | Contradictory clinical data | "Reports no pain" but HR elevated |
+| `HIGH_BLAST_RADIUS` | Wrong answer has severe consequences | Medication dosing, allergy miss |
+| `SECURITY_SENSITIVE` | PHI/auth/access control involved | N/A for clinical (maps to system use) |
+| `AMBIGUOUS_REQUIREMENTS` | Multiple valid interpretations | Cough could be URI, GERD, or TB |
+| `VERIFICATION_FAILED` | Prior assertion didn't hold | Lab results contradict initial assessment |
+| `LOW_CONFIDENCE` | Model confidence < 75 | Sparse transcript, unclear presentation |
+
+---
+
+## Output Examples
+
+### Chain Output (Confidence >= 85)
+> Assessment: Allergic rhinitis. Symptoms consistent with seasonal allergies — nasal congestion, sneezing, clear rhinorrhea, no fever. `[STATED]`
+
+### Chain + Caution (Confidence 60-84)
+> Assessment: Likely viral URI. Cough duration worth monitoring if no improvement in 7 days. `[STATED]` `[GAP: duration not specified — verify with patient]`
+
+### Tree Escalation (Confidence < 60)
+> "Signals conflict — ruling out alternatives before committing."
+>
+> Assessment: Persistent nonproductive cough with 8lb unintentional weight loss over 2 months. `[STATED]`
+>
+> Differential considered:
+> - URI: Ruled out — no acute onset, no fever, no nasal symptoms `[INFERRED]`
+> - GERD: Possible — recommend positional symptom assessment `[GAP]`
+> - Pulmonary pathology: Cannot rule out given weight loss + duration — recommend chest imaging `[INFERRED — FLAGGED FOR PROVIDER REVIEW]`
+
+### User Forces Chain But System Disagrees
+> "I can do the direct path; note: weight loss + persistent cough warrants imaging."
+
+---
+
+## Session Map
+
+| Session | Focus | Deliverables | Status |
+|---------|-------|-------------|--------|
+| 1 | Reasoning Engine Core | Mode Router, Tree Trigger Engine, Branch Evaluator, Override Gate, Minimal Explain Layer | TODO |
+| 2 | Integration with Compass Riley | Wire into SOAP note generator, consultation mode, realtime transcription. Confidence threshold tuning. | TODO |
+| 3 | Testing & Audit | Behavioral tests for all trigger types, output format verification, reason code audit logging, edge cases | TODO |
+
+---
+
+## Session 1: Reasoning Engine Core (~6 hours)
+
+**Goal:** Build the 5 core components that sit between "AI thought" and "AI spoke."
+
+### Deliverables
+
+| # | Task | File | Status |
+|---|------|------|--------|
+| 1.1 | Mode Router — determines AUTO/FORCE_CHAIN/FORCE_TREE from request metadata | `supabase/functions/_shared/compass-riley/modeRouter.ts` | TODO |
+| 1.2 | Tree Trigger Engine — evaluates anomaly/ambiguity/stakes/confidence, emits escalate + reason_code | `supabase/functions/_shared/compass-riley/treeTriggerEngine.ts` | TODO |
+| 1.3 | Branch Evaluator — generates 2-4 branches, scores with fixed rubric, converges | `supabase/functions/_shared/compass-riley/branchEvaluator.ts` | TODO |
+| 1.4 | Minimal Explain Layer — maps reason_code to one 12-word sentence | `supabase/functions/_shared/compass-riley/minimalExplainLayer.ts` | TODO |
+| 1.5 | Override Gate — user mode wins, warn once max | `supabase/functions/_shared/compass-riley/overrideGate.ts` | TODO |
+| 1.6 | Types — ReasoningMode, TriggerResult, BranchResult, ReasonCode interfaces | `supabase/functions/_shared/compass-riley/types.ts` | TODO |
+| 1.7 | Unit tests for all 5 components | New test file(s) | TODO |
+
+---
+
+## Session 2: Integration with Compass Riley (~6 hours)
+
+**Goal:** Wire reasoning engine into existing clinical AI edge functions.
+
+### Deliverables
+
+| # | Task | File(s) | Status |
+|---|------|---------|--------|
+| 2.1 | Wire into SOAP note generation (standard mode) | `conversationalScribePrompts.ts`, `realtime_medical_transcription/index.ts` | TODO |
+| 2.2 | Wire into consultation mode (premium reasoning) | `consultationAnalyzer.ts`, `consultationPromptGenerators.ts` | TODO |
+| 2.3 | Wire into readmission predictor | `ai-readmission-predictor/index.ts` | TODO |
+| 2.4 | Add mode selector to ScribeModeSwitcher UI | `ScribeModeSwitcher.tsx` | TODO |
+| 2.5 | Confidence threshold tuning — calibrate 60/85 thresholds against real encounter data | Config/constants | TODO |
+| 2.6 | Audit logging — reason codes to ai_transparency_log | Edge functions | TODO |
+
+---
+
+## Session 3: Testing & Audit (~6 hours)
+
+**Goal:** Comprehensive behavioral tests, edge cases, and audit verification.
+
+### Deliverables
+
+| # | Task | File(s) | Status |
+|---|------|---------|--------|
+| 3.1 | Trigger tests — each trigger type fires correctly | New test file | TODO |
+| 3.2 | Output format tests — Chain concise, Tree structured, escalation one-liner | New test file | TODO |
+| 3.3 | Override tests — FORCE_CHAIN/FORCE_TREE honored, warn-once verified | New test file | TODO |
+| 3.4 | Confidence threshold tests — boundary behavior at 59/60/84/85 | New test file | TODO |
+| 3.5 | Reason code audit — all codes logged to ai_transparency_log correctly | New test file | TODO |
+| 3.6 | Edge cases — empty transcript, single-word input, contradictory vitals | New test file | TODO |
+| 3.7 | Integration smoke — full encounter through CoT/ToT pipeline | New test file | TODO |
+
+---
+
+## Dependencies
+
+- Existing Compass Riley infrastructure (Sessions 1-10 COMPLETE)
+- `_shared/clinicalGroundingRules.ts` — grounding tags
+- `_shared/conversationDriftGuard.ts` — drift detection (feeds trigger engine)
+- `_shared/evidenceRetrievalService.ts` — PubMed evidence
+- `_shared/guidelineReferenceEngine.ts` — guideline matching
+- `log-ai-confidence-score` — confidence scoring (feeds trigger engine)
+- `ai_transparency_log` table — audit trail for reason codes
+
+## Future: Cultural Competency Integration (Session 3+)
+
+After the Cultural Competency MCP Server is built, Tree Trigger Engine will gain a cultural context input that adjusts confidence calculations based on patient population factors (veteran status, housing stability, language, cultural health practices). See `docs/trackers/cultural-competency-mcp-tracker.md`.
