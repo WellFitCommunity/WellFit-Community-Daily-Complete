@@ -14,9 +14,9 @@
 |----------|-------|--------|
 | P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
 | P1 Hardening | 3 | **3/3 done** (P1-1, P1-2, P1-3) |
-| P2 Moderate (Functional) | 7 | **5/7 done** (P2-1, P2-2, P2-3, P2-4, P2-5) |
+| P2 Moderate (Functional) | 7 | **6/7 done** (P2-1, P2-2, P2-3, P2-4, P2-5, P2-6) |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **16/23 done** |
+| **Total** | **23** | **17/23 done** |
 
 ### Cross-Audit Note
 
@@ -365,12 +365,21 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P2-6: MCP Server Health Dashboard **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-28)
 **Estimated:** ~4 hours
 
-**Fix:** Create `MCPServerHealthPanel` admin component aggregating all 11 `/health` endpoints.
+**Fix applied:**
+1. Created `src/services/mcpHealthService.ts` (194 lines) — service layer calling all 11 MCP server `/health` endpoints in parallel via `Promise.allSettled`, 5s timeout per server via `AbortController`, status mapping (200→healthy, 503→degraded, timeout→down), `ServiceResult` pattern
+2. Created `src/components/admin/MCPServerHealthPanel.tsx` (276 lines) — admin dashboard with:
+   - Summary bar: X/11 healthy, degraded/down counts, overall status EABadge
+   - Server grid: 11 cards with display name, tier badge, status indicator, response time, dependencies, errors
+   - Critical/warning alerts when servers are down or degraded
+   - 60s polling with exponential backoff (doubles on error, pauses after 5 consecutive failures)
+   - Manual "Refresh All" button, loading skeleton
+3. Created `src/components/admin/__tests__/MCPServerHealthPanel.test.tsx` — 10 behavioral tests (loading→data transition, all 11 names render, correct status badges, alert on down, summary counts, refresh triggers re-check, dependencies display, error messages, failure state, tier badges)
+4. Wired into admin panel: lazy import in `lazyImports.tsx`, section definition in `sectionDefinitions.tsx` (SYSTEM ADMINISTRATION category, admin/super_admin roles)
 
-**Files:** New component in `src/components/admin/`
+**Files:** `src/services/mcpHealthService.ts` (NEW), `src/components/admin/MCPServerHealthPanel.tsx` (NEW), `src/components/admin/__tests__/MCPServerHealthPanel.test.tsx` (NEW), `src/components/admin/sections/lazyImports.tsx`, `src/components/admin/sections/sectionDefinitions.tsx`
 
 ---
 

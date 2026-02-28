@@ -51,6 +51,7 @@ import {
   ProviderCoverageDashboard,
   UserRoleManagementPanel,
   UserProvisioningPanel,
+  MCPServerHealthPanel,
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
 
@@ -526,6 +527,17 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><ClearinghouseConfigPanel /></Suspense>,
     category: 'admin',
     priority: 'medium',
+    roles: ['admin', 'super_admin'],
+  },
+  {
+    id: 'mcp-server-health',
+    title: 'MCP Server Health Monitor',
+    subtitle: 'Real-time health and performance monitoring for all 11 MCP servers',
+    icon: '\uD83D\uDD0C',
+    headerColor: 'text-blue-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><MCPServerHealthPanel /></Suspense>,
+    category: 'admin',
+    priority: 'high',
     roles: ['admin', 'super_admin'],
   },
   {
