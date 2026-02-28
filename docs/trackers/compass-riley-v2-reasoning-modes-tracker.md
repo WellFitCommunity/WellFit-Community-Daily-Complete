@@ -17,6 +17,7 @@
 - **Tree of Thought (ToT):** Branching differential. Explore 2-4 paths, score, rule out, converge. For ambiguity/risk.
 - **Default:** Chain is the voice. Tree is the brain. Tree runs silently unless escalation is warranted.
 - **Override:** User can force Chain, force Tree, or leave on Auto. System always complies.
+- **No hardcoded ratio.** The CoT/ToT split emerges from clinical signals, not a preset percentage. A rural clinic and an academic ED will naturally produce different ratios — the system adapts to where it lands.
 
 ---
 
@@ -45,7 +46,7 @@
 
 ## Tree Trigger Logic
 
-Tree engages when ANY of these trip:
+Tree engages when ANY of these trip. Confidence thresholds are adjusted by the tenant-level **Tree Sensitivity** setting (see below).
 
 ### 1. Anomaly / Conflict Triggers
 - Contradictory inputs (symptom A reported + symptom A denied)
@@ -65,11 +66,50 @@ Tree engages when ANY of these trip:
 - Post-surgical assessment
 
 ### 4. Low-Confidence Triggers
-- Model confidence below threshold (< 75)
+- Model confidence below threshold (adjusted by sensitivity — see below)
 - Too many assumptions required
 - Sparse transcript data
 
 **If none trigger -> Chain.**
+
+---
+
+## Tree Sensitivity Knob (Tenant-Level)
+
+The CoT/ToT ratio is NOT hardcoded. It emerges from clinical signals. But different deployment contexts have different baseline complexity — a rural clinic sees mostly straightforward presentations, an academic ED sees ambiguity on every patient. The sensitivity knob lets each tenant tune how eagerly Tree engages.
+
+**Stored in:** `tenant_ai_skill_config` (key: `tree_sensitivity`)
+
+| Sensitivity | CoT Threshold | Caution Band | Tree Fires When... | Best For |
+|-------------|---------------|--------------|---------------------|----------|
+| `conservative` | confidence >= 90 | 70-89 | Almost any uncertainty triggers branching | Academic medical centers, teaching hospitals, specialty clinics |
+| `balanced` (default) | confidence >= 80 | 60-79 | Moderate uncertainty triggers branching | General hospitals, multi-specialty, post-acute |
+| `aggressive` | confidence >= 65 | 50-64 | Only serious anomalies trigger branching | Rural primary care, urgent care, high-volume clinics |
+
+### How Sensitivity Adjusts Behavior
+
+| Output Zone | `conservative` | `balanced` | `aggressive` |
+|-------------|----------------|------------|--------------|
+| **Chain (concise)** | >= 90 | >= 80 | >= 65 |
+| **Chain + Caution** | 70-89 | 60-79 | 50-64 |
+| **Tree Escalation** | < 70 | < 60 | < 50 |
+
+### Expected Natural Ratios (Not Enforced — Just Observed)
+
+These are what the system is likely to produce given the clinical case mix at each site type. The system logs `reasoning_mode_used` per encounter so tenants can see their actual ratio over time.
+
+| Deployment Context | Expected CoT/ToT | Why |
+|---|---|---|
+| Rural primary care | ~85/15 | Mostly URI, HTN, diabetes refills |
+| Urban ED | ~50/50 | High acuity, undifferentiated complaints |
+| Academic medical center | ~40/60 | Complex multi-morbidity, rare presentations |
+| Oncology/Cardiology specialty | ~30/70 | Almost everything is complex by definition |
+| Post-acute/SNF | ~60/40 | Medication reconciliation, falls, delirium |
+| Pediatrics | ~65/35 | Weight-based dosing, atypical presentations |
+
+### Pitch-Ready Summary
+
+> "Compass Riley auto-calibrates its reasoning depth to clinical complexity. In a rural clinic, it's fast and direct. In an academic ED, it branches differentials automatically. Same system, proportional intelligence."
 
 ---
 
@@ -99,19 +139,21 @@ Tree engages when ANY of these trip:
 | `SECURITY_SENSITIVE` | PHI/auth/access control involved | N/A for clinical (maps to system use) |
 | `AMBIGUOUS_REQUIREMENTS` | Multiple valid interpretations | Cough could be URI, GERD, or TB |
 | `VERIFICATION_FAILED` | Prior assertion didn't hold | Lab results contradict initial assessment |
-| `LOW_CONFIDENCE` | Model confidence < 75 | Sparse transcript, unclear presentation |
+| `LOW_CONFIDENCE` | Model confidence below tenant threshold | Sparse transcript, unclear presentation |
 
 ---
 
 ## Output Examples
 
-### Chain Output (Confidence >= 85)
+*Thresholds shown below use `balanced` sensitivity defaults. Actual thresholds vary by tenant setting.*
+
+### Chain Output (Confidence >= CoT threshold)
 > Assessment: Allergic rhinitis. Symptoms consistent with seasonal allergies — nasal congestion, sneezing, clear rhinorrhea, no fever. `[STATED]`
 
-### Chain + Caution (Confidence 60-84)
+### Chain + Caution (Caution band)
 > Assessment: Likely viral URI. Cough duration worth monitoring if no improvement in 7 days. `[STATED]` `[GAP: duration not specified — verify with patient]`
 
-### Tree Escalation (Confidence < 60)
+### Tree Escalation (Below caution band)
 > "Signals conflict — ruling out alternatives before committing."
 >
 > Assessment: Persistent nonproductive cough with 8lb unintentional weight loss over 2 months. `[STATED]`
@@ -130,27 +172,28 @@ Tree engages when ANY of these trip:
 
 | Session | Focus | Deliverables | Status |
 |---------|-------|-------------|--------|
-| 1 | Reasoning Engine Core | Mode Router, Tree Trigger Engine, Branch Evaluator, Override Gate, Minimal Explain Layer | TODO |
-| 2 | Integration with Compass Riley | Wire into SOAP note generator, consultation mode, realtime transcription. Confidence threshold tuning. | TODO |
-| 3 | Testing & Audit | Behavioral tests for all trigger types, output format verification, reason code audit logging, edge cases | TODO |
+| 1 | Reasoning Engine Core | Mode Router, Tree Trigger Engine, Branch Evaluator, Override Gate, Minimal Explain Layer, Sensitivity Knob | TODO |
+| 2 | Integration with Compass Riley | Wire into SOAP note generator, consultation mode, realtime transcription. Per-tenant sensitivity config. | TODO |
+| 3 | Testing & Audit | Behavioral tests for all trigger types, output format verification, reason code audit logging, sensitivity boundary tests, edge cases | TODO |
 
 ---
 
 ## Session 1: Reasoning Engine Core (~6 hours)
 
-**Goal:** Build the 5 core components that sit between "AI thought" and "AI spoke."
+**Goal:** Build the 6 core components that sit between "AI thought" and "AI spoke."
 
 ### Deliverables
 
 | # | Task | File | Status |
 |---|------|------|--------|
 | 1.1 | Mode Router — determines AUTO/FORCE_CHAIN/FORCE_TREE from request metadata | `supabase/functions/_shared/compass-riley/modeRouter.ts` | TODO |
-| 1.2 | Tree Trigger Engine — evaluates anomaly/ambiguity/stakes/confidence, emits escalate + reason_code | `supabase/functions/_shared/compass-riley/treeTriggerEngine.ts` | TODO |
+| 1.2 | Tree Trigger Engine — evaluates anomaly/ambiguity/stakes/confidence against sensitivity-adjusted thresholds, emits escalate + reason_code | `supabase/functions/_shared/compass-riley/treeTriggerEngine.ts` | TODO |
 | 1.3 | Branch Evaluator — generates 2-4 branches, scores with fixed rubric, converges | `supabase/functions/_shared/compass-riley/branchEvaluator.ts` | TODO |
 | 1.4 | Minimal Explain Layer — maps reason_code to one 12-word sentence | `supabase/functions/_shared/compass-riley/minimalExplainLayer.ts` | TODO |
 | 1.5 | Override Gate — user mode wins, warn once max | `supabase/functions/_shared/compass-riley/overrideGate.ts` | TODO |
-| 1.6 | Types — ReasoningMode, TriggerResult, BranchResult, ReasonCode interfaces | `supabase/functions/_shared/compass-riley/types.ts` | TODO |
-| 1.7 | Unit tests for all 5 components | New test file(s) | TODO |
+| 1.6 | Sensitivity Config — reads `tree_sensitivity` from `tenant_ai_skill_config`, returns confidence thresholds for CoT/Caution/ToT zones. Defaults to `balanced` if unset. Logs `reasoning_mode_used` per encounter for observability. | `supabase/functions/_shared/compass-riley/sensitivityConfig.ts` | TODO |
+| 1.7 | Types — ReasoningMode, TriggerResult, BranchResult, ReasonCode, TreeSensitivity, ConfidenceThresholds interfaces | `supabase/functions/_shared/compass-riley/types.ts` | TODO |
+| 1.8 | Unit tests for all 6 components + sensitivity boundary tests (conservative/balanced/aggressive threshold edges) | New test file(s) | TODO |
 
 ---
 
@@ -166,7 +209,7 @@ Tree engages when ANY of these trip:
 | 2.2 | Wire into consultation mode (premium reasoning) | `consultationAnalyzer.ts`, `consultationPromptGenerators.ts` | TODO |
 | 2.3 | Wire into readmission predictor | `ai-readmission-predictor/index.ts` | TODO |
 | 2.4 | Add mode selector to ScribeModeSwitcher UI | `ScribeModeSwitcher.tsx` | TODO |
-| 2.5 | Confidence threshold tuning — calibrate 60/85 thresholds against real encounter data | Config/constants | TODO |
+| 2.5 | Per-tenant sensitivity wiring — read `tree_sensitivity` from `tenant_ai_skill_config` at encounter start, pass thresholds to trigger engine | Edge functions + config | TODO |
 | 2.6 | Audit logging — reason codes to ai_transparency_log | Edge functions | TODO |
 
 ---
@@ -182,7 +225,7 @@ Tree engages when ANY of these trip:
 | 3.1 | Trigger tests — each trigger type fires correctly | New test file | TODO |
 | 3.2 | Output format tests — Chain concise, Tree structured, escalation one-liner | New test file | TODO |
 | 3.3 | Override tests — FORCE_CHAIN/FORCE_TREE honored, warn-once verified | New test file | TODO |
-| 3.4 | Confidence threshold tests — boundary behavior at 59/60/84/85 | New test file | TODO |
+| 3.4 | Sensitivity threshold tests — boundary behavior at each sensitivity level (conservative: 69/70/89/90, balanced: 59/60/79/80, aggressive: 49/50/64/65) | New test file | TODO |
 | 3.5 | Reason code audit — all codes logged to ai_transparency_log correctly | New test file | TODO |
 | 3.6 | Edge cases — empty transcript, single-word input, contradictory vitals | New test file | TODO |
 | 3.7 | Integration smoke — full encounter through CoT/ToT pipeline | New test file | TODO |
@@ -198,6 +241,7 @@ Tree engages when ANY of these trip:
 - `_shared/guidelineReferenceEngine.ts` — guideline matching
 - `log-ai-confidence-score` — confidence scoring (feeds trigger engine)
 - `ai_transparency_log` table — audit trail for reason codes
+- `tenant_ai_skill_config` table — per-tenant `tree_sensitivity` setting (conservative/balanced/aggressive)
 
 ## Future: Cultural Competency Integration (Session 3+)
 
