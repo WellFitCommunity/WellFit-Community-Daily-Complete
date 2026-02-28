@@ -62,23 +62,26 @@ A 6,000-line consolidated service causes AI to:
 
 ## MCP Server Architecture
 
-This codebase runs **8 specialized MCP servers**:
+This codebase runs **11 specialized MCP servers** across 3 security tiers (96 total tools):
 
-| Server | Domain | Lines | Why Separate |
-|--------|--------|-------|--------------|
-| `mcp-clearinghouse-server` | Claims, eligibility, prior auth | ~700 | Real external integration (Waystar, Change Healthcare, Availity) |
-| `mcp-npi-registry-server` | Provider validation | ~800 | Regulatory requirement, CMS NPI Registry API |
-| `mcp-cms-coverage-server` | Medicare coverage lookups | ~700 | Prior auth decisions need focused context |
-| `mcp-medical-codes-server` | ICD-10, CPT, HCPCS | ~600 | Coding is its own specialized domain |
-| `mcp-fhir-server` | Healthcare interoperability | ~700 | Industry standard, complex specification |
-| `mcp-hl7-x12-server` | EDI transactions | ~650 | Healthcare-specific format (837, 835, 270/271) |
-| `mcp-postgres-server` | Database operations | ~600 | Direct data access layer |
-| `mcp-edge-functions-server` | Function management | ~550 | Deployment and invocation tooling |
+| Server | Domain | Tier | Why Separate |
+|--------|--------|------|--------------|
+| `mcp-claude-server` | AI inference proxy | 3 (Admin) | Claude API access with cost tracking |
+| `mcp-fhir-server` | Healthcare interoperability | 3 (Admin) | FHIR R4 CRUD, industry standard |
+| `mcp-hl7-x12-server` | EDI transactions | 3 (Admin) | Healthcare-specific format (837, 835, 270/271) |
+| `mcp-prior-auth-server` | Prior authorization workflow | 3 (Admin) | Clinical decision support |
+| `mcp-edge-functions-server` | Function management | 3 (Admin) | Deployment and invocation tooling |
+| `mcp-postgres-server` | Database analytics | 2 (User) | Direct data access layer |
+| `mcp-medical-codes-server` | ICD-10, CPT, HCPCS | 2 (User) | Coding is its own specialized domain |
+| `mcp-npi-registry-server` | Provider validation | 1 (Public) | Regulatory requirement, CMS NPI Registry API |
+| `mcp-cms-coverage-server` | Medicare coverage lookups | 1 (Public) | Prior auth decisions need focused context |
+| `mcp-clearinghouse-server` | Claims, eligibility | 1 (Public) | Real external integration (Waystar, Change Healthcare, Availity) |
+| `mcp-pubmed-server` | Medical literature search | 1 (Public) | Evidence-based citations for clinical decisions |
 
-### Why 8 Servers Instead of 1-2?
+### Why 11 Servers Instead of 1-2?
 
-**Human concern:** "8 servers is too many to maintain"
-**AI reality:** AI can deploy, monitor, and debug all 8 simultaneously
+**Human concern:** "11 servers is too many to maintain"
+**AI reality:** AI can deploy, monitor, and debug all 11 simultaneously
 
 **Human concern:** "Risk of inconsistency across servers"
 **AI reality:** AI found and fixed protocol inconsistencies across 2 servers in 10 minutes
@@ -88,7 +91,7 @@ This codebase runs **8 specialized MCP servers**:
 
 The question isn't "can humans manage this?" — it's "does this architecture let AI operate effectively?"
 
-8 well-defined servers with clear domains = 8 things AI can fully hold in context and fix confidently.
+11 well-defined servers with clear domains = 11 things AI can fully hold in context and fix confidently.
 
 1 server at 6,000 lines = something AI will fumble, make partial fixes, introduce regressions.
 
@@ -139,13 +142,13 @@ Clean, consistent interfaces (like MCP JSON-RPC) let AI interact reliably. Inter
 **Problem:** 2 of 8 MCP servers returning 404
 
 **AI approach:**
-1. Tested all 8 servers in parallel (30 seconds)
+1. Tested all 11 servers in parallel (30 seconds)
 2. Identified 2 failing servers
 3. Read both server files completely (~1,400 lines total)
 4. Identified root cause: path-based routing vs JSON-RPC protocol
 5. Fixed both servers with identical pattern
 6. Deployed both in parallel
-7. Verified all 8 servers working
+7. Verified all 11 servers working
 8. Committed and pushed
 
 **Total time:** ~15 minutes
@@ -166,7 +169,7 @@ Traditional "over-engineering" means building complexity humans can't maintain.
 
 AI-first architecture means building structure AI can operate effectively.
 
-**8 services is not too many when AI is the operator.**
+**11 services is not too many when AI is the operator.**
 **600-line files are not too small when AI precision matters.**
 **Separation is not overhead when AI can manage it.**
 
@@ -181,7 +184,7 @@ As AI capabilities improve:
 - Reasoning improves → more complex interdependencies become tractable
 - Tool use matures → more sophisticated service orchestration becomes possible
 
-But today, in January 2026, the architecture that works is:
+But today, in February 2026, the architecture that works is:
 - Small, focused services
 - Clear domain boundaries
 - Consistent protocols
@@ -197,7 +200,7 @@ When this succeeds, it becomes the pattern. Others will follow because they have
 
 | Principle | Implementation |
 |-----------|----------------|
-| Design for AI operation | 8 specialized MCP servers |
+| Design for AI operation | 11 specialized MCP servers (96 tools, 3 security tiers) |
 | Optimize for AI comprehension | 600-800 line files |
 | Enable precise tool use | Clear service boundaries |
 | Support parallel operation | Independent, deployable services |

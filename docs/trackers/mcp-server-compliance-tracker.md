@@ -14,9 +14,9 @@
 |----------|-------|--------|
 | P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
 | P1 Hardening | 3 | **3/3 done** (P1-1, P1-2, P1-3) |
-| P2 Moderate (Functional) | 7 | **1/7 done** (P2-1) |
+| P2 Moderate (Functional) | 7 | **4/7 done** (P2-1, P2-2, P2-3, P2-5) |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **12/23 done** |
+| **Total** | **23** | **15/23 done** |
 
 ### Cross-Audit Note
 
@@ -315,7 +315,7 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P2-2: Add PubMed to .mcp.example.json **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (already present — PubMed was added to `.mcp.example.json` during MCP server build)
 **Estimated:** ~10 min
 
 **Files:** `.mcp.example.json`
@@ -324,12 +324,12 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P2-3: Database Query Timeouts for Tier 3 Servers **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-28 — implemented as `_shared/mcpQueryTimeout.ts` during P2-1 session)
 **Estimated:** ~2 hours
 
-**Fix:** Add `AbortController` timeout or `statement_timeout` to database-heavy operations.
+**Fix applied:** Created `_shared/mcpQueryTimeout.ts` with `withTimeout()` Promise.race wrapper and `MCP_TIMEOUT_CONFIG` per-server configs (5s lookups, 15s queries, 30s bundles). Wired into all 3 database-heavy servers: `mcp-fhir-server` (14 queries), `mcp-prior-auth-server` (4 queries), `mcp-postgres-server` (3 queries).
 
-**Files:** `mcp-fhir-server/toolHandlers.ts`, `mcp-prior-auth-server/index.ts`
+**Files:** `_shared/mcpQueryTimeout.ts` (NEW), `mcp-fhir-server/toolHandlers.ts`, `mcp-fhir-server/resourceQueries.ts`, `mcp-prior-auth-server/toolHandlers.ts`, `mcp-postgres-server/toolHandlers.ts`
 
 ---
 
@@ -364,10 +364,10 @@ CREATE TABLE mcp_audit_logs (
 
 ### P2-5: Update AI Architecture Doc **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-28)
 **Estimated:** ~30 min
 
-**Problem:** `docs/architecture/AI_FIRST_ARCHITECTURE.md` says "8 specialized MCP servers" but there are 11.
+**Fix applied:** Updated all references from "8 MCP servers" to "11 MCP servers (96 tools, 3 security tiers)". Added 3 missing servers (claude, prior-auth, pubmed) to the table. Added security tier column. Updated date from January to February 2026.
 
 **Files:** `docs/architecture/AI_FIRST_ARCHITECTURE.md`
 
