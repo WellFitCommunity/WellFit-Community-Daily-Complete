@@ -167,7 +167,37 @@ export function checkMCPRateLimit(
 }
 
 /**
- * Extract identifier from request
+ * Caller identity shape (matches CallerIdentity from mcpAuthGate)
+ * Redefined here to avoid circular imports.
+ */
+interface RateLimitCallerIdentity {
+  userId: string;
+  tenantId: string | null;
+  authMethod: 'user_jwt' | 'mcp_key';
+  mcpKeyId?: string;
+}
+
+/**
+ * Get identity-based rate limit identifier from authenticated caller (P1-3).
+ *
+ * Use this AFTER the auth gate succeeds to rate-limit per user/key
+ * instead of per IP. Provides fairer limits behind shared IPs (corporate NAT)
+ * and prevents a single MCP key from consuming another key's quota.
+ *
+ * @param caller - The authenticated caller identity
+ * @returns A stable identifier string for rate limiting
+ */
+export function getCallerRateLimitId(caller: RateLimitCallerIdentity): string {
+  if (caller.authMethod === 'mcp_key' && caller.mcpKeyId) {
+    return `mcp_key:${caller.mcpKeyId}`;
+  }
+  // User JWT: scope by userId + tenantId for multi-tenant fairness
+  const tenantSuffix = caller.tenantId ? `:${caller.tenantId}` : '';
+  return `user:${caller.userId}${tenantSuffix}`;
+}
+
+/**
+ * Extract identifier from request (IP-based fallback for unauthenticated paths)
  */
 export function getRequestIdentifier(req: Request): string {
   // Try various headers for identifier

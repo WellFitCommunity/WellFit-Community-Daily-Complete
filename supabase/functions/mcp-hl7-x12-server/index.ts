@@ -26,6 +26,7 @@ import {
   createUnauthorizedResponse,
   CallerIdentity
 } from "../_shared/mcpAuthGate.ts";
+import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
 
 // Module imports
 import type { ClaimData } from './types.ts';
@@ -235,8 +236,15 @@ serve(async (req: Request) => {
       });
     }
 
-    // MCP Protocol: List tools
+    // MCP Protocol: List tools (auth required on Tier 3 — P1-2)
     if (method === "tools/list") {
+      const caller = await extractCallerIdentity(req, { serverName: SERVER_CONFIG.name, logger });
+      if (!caller) {
+        return createUnauthorizedResponse(
+          "Authentication required for tool discovery on admin servers",
+          requestId, corsHeaders
+        );
+      }
       return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });

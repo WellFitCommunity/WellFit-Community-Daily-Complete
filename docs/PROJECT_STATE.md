@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-02-27
-**Last Session:** MCP Server Compliance Sessions 1-2 — P0-1 through P0-5 (security fixes + god file decomposition)
+**Last Updated:** 2026-02-28
+**Last Session:** MCP Server Compliance Session 4 — P1-2, P1-3, P2-1 (tools auth, rate limit identity, input validation)
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -37,19 +37,20 @@
 | Priority | Items | Status |
 |----------|-------|--------|
 | P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
-| P1 Hardening | 3 | **1/3 done** (P1-1) |
-| P2 Moderate (Functional) | 7 | 0/7 done |
+| P1 Hardening | 3 | **3/3 done** (P1-1, P1-2, P1-3) |
+| P2 Moderate (Functional) | 7 | **1/7 done** (P2-1) |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **9/23 done** |
+| **Total** | **23** | **12/23 done** |
 
 **Session plan:**
 - ~~Session 1: P0-1 through P0-4~~ — **DONE** (auth binding, tenant isolation, base64url fix, SECURITY DEFINER)
 - ~~Session 2: P0-5~~ — **DONE** (6 MCP servers decomposed: 929→224 max, 28 files changed)
 - ~~Session 3: P0-6/7/8 + P1-1~~ — **DONE** (SELECT *, rate limiting, auth gate, JWKS — 10 files changed)
-- Session 4: P1-2/3, P2-1 — tools auth, rate limit identity, input validation (~7 hrs)
-- Session 5: P2-2 through P2-6, P3-1 through P3-5 — config, audit, health, polish (~17 hrs)
+- ~~Session 4: P1-2/3, P2-1~~ — **DONE** (tools auth, rate limit identity, input validation — 8 files changed, 1 new)
+- Session 5: P2-2 through P2-6 — config, timeouts, unified audit, docs, health dashboard (~9 hrs)
+- Session 6: P3-1 through P3-5 — persistence, key rotation, body limits, pricing, provenance (~8 hrs)
 
-**Total estimated:** ~24-30 hours remaining (3-4 sessions)
+**Total estimated:** ~17 hours remaining (2-3 sessions)
 
 ---
 
@@ -61,9 +62,9 @@
 
 ---
 
-## Current Priority: MCP Server Compliance & Hardening — Session 4 NEXT
+## Current Priority: MCP Server Compliance & Hardening — Session 5 NEXT
 
-See tracker section above. Sessions 1-3 (P0-1 through P0-8 + P1-1) DONE. Session 4 (P1-2/3 + P2-1) is next.
+See tracker section above. Sessions 1-4 (P0-1 through P0-8 + P1-1/2/3 + P2-1) DONE. Session 5 (P2-2 through P2-6) is next.
 
 ---
 
@@ -104,7 +105,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
 | **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1-3 Session 5 DONE — 870+ tests, Tier 3 Sessions 6-7 TODO** |
-| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **9/23 done — All P0 DONE, P1-1 DONE, Session 4 NEXT** |
+| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **12/23 done — All P0+P1 DONE, P2-1 DONE, Session 5 NEXT** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
@@ -116,10 +117,10 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 10,304 passed, 0 failed | 2026-02-27 |
-| Test Suites | 517 | 2026-02-27 |
+| Tests | 10,304 passed, 0 failed | 2026-02-28 |
+| Test Suites | 517 | 2026-02-28 |
 | Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-02-27 |
-| Lint | 0 errors, 0 warnings | 2026-02-27 |
+| Lint | 0 errors, 0 warnings | 2026-02-28 |
 | God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) — MCP servers all under 600 | 2026-02-27 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
 | Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
@@ -147,9 +148,25 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 ---
 
-## What Was Completed Last Session (2026-02-27)
+## What Was Completed Last Session (2026-02-28)
 
-### MCP Server Compliance Session 3 — P0-6, P0-7, P0-8, P1-1
+### MCP Server Compliance Session 4 — P1-2, P1-3, P2-1
+
+Completed all 3 Session 4 items: tools/list auth gating on admin servers, identity-based rate limiting, and input validation framework.
+
+| Item | Fix | Files Changed |
+|------|-----|---------------|
+| **P1-2: tools/list auth** | Added `extractCallerIdentity()` check before `tools/list` on all 5 Tier 3 servers. Returns 401 for unauthenticated callers. `initialize` stays public per MCP protocol. | 5 files |
+| **P1-3: Rate limit identity** | Added `getCallerRateLimitId(caller)` to `mcpRateLimiter.ts` — returns `mcp_key:{keyId}` or `user:{userId}:{tenantId}`. Added identity-based rate limit as second check (after auth gate) in 3 servers. | 4 files |
+| **P2-1: Input validation** | Created `mcpInputValidator.ts` (401 lines) — declarative validation framework with healthcare-specific validators (UUID, NPI with Luhn, CPT, HCPCS, ICD-10, dates, state codes, ZIP codes). Wired `VALIDATION: ToolSchemaRegistry` + `validateForTool()` call into 4 servers: prior-auth (11 tools), FHIR (14 tools), NPI registry (8 tools), medical codes (9 tools). | 5 files (1 new) |
+
+**Files changed: 9 (8 modified, 1 new)**
+**Tests: 10,304 passed, 0 failed (517 suites)**
+**Lint: 0 errors, 0 warnings**
+
+---
+
+### MCP Server Compliance Session 3 (2026-02-27) — P0-6, P0-7, P0-8, P1-1
 
 Eliminated all remaining P0 security items and completed the first P1 hardening item. All 8 P0 critical security items are now resolved.
 

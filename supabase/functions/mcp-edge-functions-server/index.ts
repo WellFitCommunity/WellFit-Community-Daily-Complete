@@ -10,7 +10,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { checkMCPRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import {
   initMCPServer,
   createInitializeResponse,
@@ -25,7 +25,7 @@ import {
   createUnauthorizedResponse,
   CallerIdentity
 } from "../_shared/mcpAuthGate.ts";
-import { resolveTenantId } from "../_shared/mcpIdentity.ts";
+import { extractCallerIdentity, resolveTenantId } from "../_shared/mcpIdentity.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
 
@@ -87,8 +87,15 @@ serve(async (req: Request) => {
       });
     }
 
-    // MCP Protocol: List tools
+    // MCP Protocol: List tools (auth required on Tier 3 — P1-2)
     if (method === "tools/list") {
+      const listCaller = await extractCallerIdentity(req, { serverName: SERVER_CONFIG.name, logger });
+      if (!listCaller) {
+        return createUnauthorizedResponse(
+          "Authentication required for tool discovery on admin servers",
+          requestId, corsHeaders
+        );
+      }
       return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
@@ -130,6 +137,14 @@ serve(async (req: Request) => {
       }
 
       const caller = authResult.caller as CallerIdentity;
+
+      // P1-3: Identity-based rate limiting (per user/key, not just IP)
+      const identityRateResult = checkMCPRateLimit(
+        getCallerRateLimitId(caller), MCP_RATE_LIMITS.edgeFunctions
+      );
+      if (!identityRateResult.allowed) {
+        return createRateLimitResponse(identityRateResult, MCP_RATE_LIMITS.edgeFunctions, corsHeaders);
+      }
 
       // P0-2: Resolve tenant from caller identity, not tool args
       const resolvedTenant = resolveTenantId(

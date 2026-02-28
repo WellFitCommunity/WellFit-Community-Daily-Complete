@@ -13,10 +13,10 @@
 | Priority | Items | Status |
 |----------|-------|--------|
 | P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
-| P1 Hardening | 3 | **1/3 done** (P1-1) |
-| P2 Moderate (Functional) | 7 | 0/7 done |
+| P1 Hardening | 3 | **3/3 done** (P1-1, P1-2, P1-3) |
+| P2 Moderate (Functional) | 7 | **1/7 done** (P2-1) |
 | P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **9/23 done** |
+| **Total** | **23** | **12/23 done** |
 
 ### Cross-Audit Note
 
@@ -259,34 +259,33 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P1-2: Require Auth for tools/list on Admin-Tier Servers **(ChatGPT, upgraded from L-4)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-28)
 **Estimated:** ~2 hours
 
 **Problem:** `tools/list` returns full capability names (e.g., "prior_auth_submit", "execute_query") without authentication on admin-tier servers. This is capability disclosure to unauthenticated callers.
 
-**Fix:** On Tier 3 (admin) servers, either:
-1. Require auth for `tools/list` (return 401 without valid credentials), OR
-2. Return a redacted list (tool names only, no descriptions/schemas) without auth
+**Fix applied:** Added `extractCallerIdentity()` check before `tools/list` response on all 5 Tier 3 servers. Returns 401 `createUnauthorizedResponse` for unauthenticated callers. `initialize` remains public per MCP protocol. Tier 1 servers unaffected.
 
-Keep `initialize` public (per MCP protocol). Keep Tier 1 tools/list public (external API tools are not sensitive).
+**Servers modified:** `mcp-fhir-server`, `mcp-hl7-x12-server`, `mcp-prior-auth-server`, `mcp-claude-server`, `mcp-edge-functions-server`
 
-**Files:** Each Tier 3 server's `tools/list` handler
+**Files:** Each Tier 3 server's `index.ts` tools/list handler
 
 ---
 
 ### P1-3: Rate Limit Identity Improvements **(ChatGPT)**
 
-**Status:** TODO
+**Status:** DONE (2026-02-28)
 **Estimated:** ~1 hour
 
 **Problem:** Rate limiting currently uses IP address or token hash as identifier (`mcpRateLimiter.ts:172-193`). For MCP key calls, the key ID or tenant ID should drive rate limiting, not just IP. For user JWT calls, userId + tenantId should be the key.
 
-**Fix:** After auth gate (which now provides `CallerIdentity`), use:
-- MCP key calls: `mcp_key:{keyId}` as rate limit identifier
-- User JWT calls: `user:{userId}:{tenantId}` as rate limit identifier
-- Fallback to IP only for unauthenticated discovery methods
+**Fix applied:**
+1. Added `getCallerRateLimitId(caller)` function and `RateLimitCallerIdentity` interface to `mcpRateLimiter.ts`
+2. Returns `mcp_key:{keyId}` for MCP key auth, `user:{userId}:{tenantId}` for JWT auth
+3. Added identity-based rate limit as SECOND check (after auth gate) in 3 servers that have existing rate limiting: `mcp-prior-auth-server`, `mcp-claude-server`, `mcp-edge-functions-server`
+4. Early IP-based check retained for DoS protection on unauthenticated paths
 
-**Files:** `supabase/functions/_shared/mcpRateLimiter.ts`, each server's rate limit call
+**Files:** `supabase/functions/_shared/mcpRateLimiter.ts`, `mcp-prior-auth-server/index.ts`, `mcp-claude-server/index.ts`, `mcp-edge-functions-server/index.ts`
 
 ---
 
@@ -294,26 +293,23 @@ Keep `initialize` public (per MCP protocol). Keep Tier 1 tools/list public (exte
 
 ### P2-1: Input Validation Framework for MCP Tool Arguments **(Claude + ChatGPT "tool contracts")**
 
-**Status:** TODO
+**Status:** DONE (2026-02-28)
 **Estimated:** ~4 hours
 
 **Problem:** All 11 servers destructure tool arguments directly from JSON without length limits, format validation, array size limits, or type coercion checks.
 
-**Fix:** Create shared `mcpInputValidator.ts` in `_shared/` with:
-- `validateUUID(value)` — UUID format check
-- `validateString(value, maxLength)` — length limit
-- `validateArray(value, maxItems)` — array size limit
-- `validateDate(value)` — ISO date format
-- `validateNPI(value)` — 10-digit Luhn check
-- `validateMedicalCode(value, codeSystem)` — CPT/ICD-10/HCPCS format
+**Fix applied:**
+1. Created `_shared/mcpInputValidator.ts` (401 lines) — declarative validation framework with:
+   - Individual validators: `isValidUUID`, `isValidNPI` (Luhn check with 80840 prefix), `isValidCPT`, `isValidHCPCS`, `isValidICD10`, `isValidMedicalCode`, `isValidDate`, `isValidStateCode`, `isValidZipCode`
+   - Declarative `FieldSchema` union type (uuid, npi, date, state, zip, string, number, enum, array, medical_code, object, boolean)
+   - Schema-driven `validateToolArgs()`, `validateForTool()` registry lookup, `validationErrorResponse()` JSON-RPC helper
+2. Wired validation into 4 MCP servers with `VALIDATION: ToolSchemaRegistry` + `validateForTool()` call before tool dispatch:
+   - `mcp-prior-auth-server` — 11 tools with full schemas (uuid, enum, npi, string, number, date, array)
+   - `mcp-fhir-server` — 14 tools with full schemas (uuid, string, number, date, array, object)
+   - `mcp-npi-registry-server` — 8 tools with full schemas (npi, string, state, zip, enum, number, array)
+   - `mcp-medical-codes-server` — 9 tools with full schemas (string, enum, number, array)
 
-**ChatGPT "Tool Contracts" extension:** Per-tool metadata defining:
-- Allowed data classes (PHI/no PHI)
-- Max rows / max payload bytes
-- Required roles and scopes
-- Logging requirements (redactions)
-
-**Files:** New `supabase/functions/_shared/mcpInputValidator.ts` + each server's handler
+**Files:** `_shared/mcpInputValidator.ts` (NEW), `mcp-prior-auth-server/index.ts`, `mcp-fhir-server/index.ts`, `mcp-npi-registry-server/index.ts`, `mcp-medical-codes-server/index.ts`
 
 ---
 

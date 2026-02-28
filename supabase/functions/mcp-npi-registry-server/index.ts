@@ -21,8 +21,49 @@ import {
   checkInMemoryRateLimit,
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
+import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
+
+// P2-1: Input validation schemas for NPI registry tools
+const VALIDATION: ToolSchemaRegistry = {
+  validate_npi: {
+    npi: { type: 'npi', required: true },
+  },
+  lookup_npi: {
+    npi: { type: 'npi', required: true },
+  },
+  search_providers: {
+    first_name: { type: 'string', maxLength: 100 },
+    last_name: { type: 'string', maxLength: 100 },
+    organization_name: { type: 'string', maxLength: 200 },
+    taxonomy_description: { type: 'string', maxLength: 200 },
+    city: { type: 'string', maxLength: 100 },
+    state: { type: 'state' },
+    postal_code: { type: 'zip' },
+    enumeration_type: { type: 'enum', values: ['NPI-1', 'NPI-2'] },
+    limit: { type: 'number', min: 1, max: 200, integer: true },
+  },
+  search_by_specialty: {
+    taxonomy_code: { type: 'string', required: true, maxLength: 20 },
+    state: { type: 'state' },
+    city: { type: 'string', maxLength: 100 },
+    limit: { type: 'number', min: 1, max: 200, integer: true },
+  },
+  get_taxonomy_codes: {
+    specialty: { type: 'string', required: true, maxLength: 200 },
+    category: { type: 'enum', values: ['individual', 'organization', 'all'] },
+  },
+  bulk_validate_npis: {
+    npis: { type: 'array', required: true, minItems: 1, maxItems: 50, itemType: 'npi' },
+  },
+  get_provider_identifiers: {
+    npi: { type: 'npi', required: true },
+  },
+  check_npi_deactivation: {
+    npi: { type: 'npi', required: true },
+  },
+};
 
 // Initialize as Tier 1 (external_api) - no Supabase required
 const SERVER_CONFIG = {
@@ -109,6 +150,12 @@ serve(async (req) => {
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
+        }
+
+        // P2-1: Validate tool arguments before dispatch
+        const validationErrors = validateForTool(name, args || {}, VALIDATION);
+        if (validationErrors && validationErrors.length > 0) {
+          return validationErrorResponse(validationErrors, id, corsHeaders);
         }
 
         const result = await handleToolCall(name, args || {});

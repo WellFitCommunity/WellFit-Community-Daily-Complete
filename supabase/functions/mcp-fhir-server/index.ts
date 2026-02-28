@@ -33,9 +33,76 @@ import {
   createUnauthorizedResponse,
   type CallerIdentity
 } from "../_shared/mcpAuthGate.ts";
+import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
+import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 
 import { TOOLS } from "./tools.ts";
 import { executeToolHandler } from "./toolHandlers.ts";
+
+// P2-1: Input validation schemas for FHIR tools
+const VALIDATION: ToolSchemaRegistry = {
+  export_patient_bundle: {
+    patient_id: { type: 'uuid', required: true },
+    resources: { type: 'array', maxItems: 20, itemType: 'string' },
+    start_date: { type: 'date' },
+    end_date: { type: 'date' },
+  },
+  get_resource: {
+    resource_type: { type: 'string', required: true, maxLength: 50 },
+    resource_id: { type: 'uuid', required: true },
+  },
+  search_resources: {
+    resource_type: { type: 'string', required: true, maxLength: 50 },
+    patient_id: { type: 'uuid' },
+    date_from: { type: 'date' },
+    date_to: { type: 'date' },
+    limit: { type: 'number', min: 1, max: 500, integer: true },
+  },
+  create_resource: {
+    resource_type: { type: 'string', required: true, maxLength: 50 },
+    data: { type: 'object', required: true, maxSize: 65536 },
+    patient_id: { type: 'uuid' },
+  },
+  update_resource: {
+    resource_type: { type: 'string', required: true, maxLength: 50 },
+    resource_id: { type: 'uuid', required: true },
+    data: { type: 'object', required: true, maxSize: 65536 },
+  },
+  validate_resource: {
+    resource_type: { type: 'string', required: true, maxLength: 50 },
+    data: { type: 'object', required: true, maxSize: 65536 },
+  },
+  get_patient_summary: {
+    patient_id: { type: 'uuid', required: true },
+    include_sections: { type: 'array', maxItems: 20, itemType: 'string' },
+  },
+  get_observations: {
+    patient_id: { type: 'uuid', required: true },
+    date_from: { type: 'date' },
+    date_to: { type: 'date' },
+    limit: { type: 'number', min: 1, max: 500, integer: true },
+  },
+  get_medication_list: {
+    patient_id: { type: 'uuid', required: true },
+  },
+  get_condition_list: {
+    patient_id: { type: 'uuid', required: true },
+  },
+  get_sdoh_assessments: {
+    patient_id: { type: 'uuid', required: true },
+  },
+  get_care_team: {
+    patient_id: { type: 'uuid', required: true },
+  },
+  list_ehr_connections: {
+    tenant_id: { type: 'uuid' },
+  },
+  trigger_ehr_sync: {
+    connection_id: { type: 'uuid', required: true },
+    patient_id: { type: 'uuid' },
+    resources: { type: 'array', maxItems: 20, itemType: 'string' },
+  },
+};
 
 // =====================================================
 // Server Initialization
@@ -85,8 +152,15 @@ serve(async (req: Request) => {
       });
     }
 
-    // MCP Protocol: List tools (no auth required - discovery)
+    // MCP Protocol: List tools (auth required on Tier 3 — P1-2)
     if (method === "tools/list") {
+      const caller = await extractCallerIdentity(req, { serverName: SERVER_CONFIG.name, logger });
+      if (!caller) {
+        return createUnauthorizedResponse(
+          "Authentication required for tool discovery on admin servers",
+          requestId, corsHeaders
+        );
+      }
       return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
@@ -136,6 +210,12 @@ serve(async (req: Request) => {
         role: caller.role,
         tenantId: caller.tenantId
       });
+
+      // P2-1: Validate tool arguments before dispatch
+      const validationErrors = validateForTool(toolName, toolArgs, VALIDATION);
+      if (validationErrors && validationErrors.length > 0) {
+        return validationErrorResponse(validationErrors, id, corsHeaders);
+      }
 
       // Delegate to tool handler
       const { result, executionTimeMs } = await executeToolHandler(

@@ -21,8 +21,52 @@ import {
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId, createUnauthorizedResponse } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
+import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
+
+// P2-1: Input validation schemas for medical codes tools
+const VALIDATION: ToolSchemaRegistry = {
+  search_cpt: {
+    query: { type: 'string', required: true, maxLength: 200 },
+    category: { type: 'string', maxLength: 100 },
+    limit: { type: 'number', min: 1, max: 100, integer: true },
+  },
+  search_icd10: {
+    query: { type: 'string', required: true, maxLength: 200 },
+    chapter: { type: 'string', maxLength: 100 },
+    limit: { type: 'number', min: 1, max: 100, integer: true },
+  },
+  search_hcpcs: {
+    query: { type: 'string', required: true, maxLength: 200 },
+    level: { type: 'enum', values: ['I', 'II'] },
+    limit: { type: 'number', min: 1, max: 100, integer: true },
+  },
+  get_modifiers: {
+    code: { type: 'string', required: true, maxLength: 10 },
+    code_type: { type: 'enum', values: ['cpt', 'hcpcs'] },
+  },
+  validate_code_combination: {
+    cpt_codes: { type: 'array', required: true, minItems: 1, maxItems: 50, itemType: 'string' },
+    icd10_codes: { type: 'array', required: true, minItems: 1, maxItems: 50, itemType: 'string' },
+    modifiers: { type: 'array', maxItems: 20, itemType: 'string' },
+  },
+  check_bundling: {
+    cpt_codes: { type: 'array', required: true, minItems: 1, maxItems: 50, itemType: 'string' },
+  },
+  get_code_details: {
+    code: { type: 'string', required: true, maxLength: 10 },
+    code_type: { type: 'enum', required: true, values: ['cpt', 'icd10', 'hcpcs'] },
+  },
+  suggest_codes: {
+    description: { type: 'string', required: true, maxLength: 2000 },
+    code_types: { type: 'array', maxItems: 3, itemType: 'string' },
+    limit: { type: 'number', min: 1, max: 20, integer: true },
+  },
+  get_sdoh_codes: {
+    category: { type: 'enum', values: ['housing', 'food', 'transportation', 'employment', 'education', 'social', 'all'] },
+  },
+};
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -108,6 +152,12 @@ serve(async (req: Request) => {
           requestId,
           corsHeaders
         );
+      }
+
+      // P2-1: Validate tool arguments before dispatch
+      const validationErrors = validateForTool(toolName, toolArgs, VALIDATION);
+      if (validationErrors && validationErrors.length > 0) {
+        return validationErrorResponse(validationErrors, id, corsHeaders);
       }
 
       // Per-request client: forwards caller's JWT so RLS evaluates against
