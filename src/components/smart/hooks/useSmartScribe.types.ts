@@ -249,6 +249,26 @@ export interface CodeSuggestionResponse {
   encounterState?: EncounterStateSummary;
 }
 
+/** Session 2 (V2): Reasoning pipeline result for client display */
+export interface ReasoningResultSummary {
+  modeUsed: string;
+  outputZone: string;
+  confidenceScore: number;
+  reasonCodes: string[];
+  explainText: string | null;
+  overrideWarning: string | null;
+  sensitivity: string;
+  branches: Array<{
+    hypothesis: string;
+    supporting: string[];
+    against: string[];
+    score: number;
+    selected: boolean;
+  }> | null;
+  convergence: { hypothesis: string; score: number } | null;
+  requiresProviderReview: boolean;
+}
+
 export interface AssistanceSettings {
   label: string;
   description: string;
@@ -268,4 +288,6 @@ export interface UseSmartScribeProps {
   forceDemoMode?: boolean;
   /** Scribe mode - 'smartscribe' for nurses, 'compass-riley' for physicians, 'consultation' for clinical reasoning */
   scribeMode?: 'smartscribe' | 'compass-riley' | 'consultation';
+  /** Reasoning mode for CoT/ToT proportional reasoning - auto (default), chain, or tree */
+  reasoningMode?: 'auto' | 'chain' | 'tree';
 }

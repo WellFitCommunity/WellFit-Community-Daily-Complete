@@ -29,6 +29,8 @@ import { runConsultPrepAnalysis } from '../_shared/peerConsultAnalyzer.ts';
 import type { ConsultationResponse } from '../_shared/consultationPromptGenerators.ts';
 import { logClaudeAudit, serializeEncounterStateForClient, buildNurseFallbackPrompt, buildPhysicianFallbackPrompt } from '../_shared/scribeHelpers.ts';
 import type { AuditLogger, TranscriptionAnalysis } from '../_shared/scribeHelpers.ts';
+import { resolveMode } from '../_shared/compass-riley/modeRouter.ts';
+import { fetchTenantSensitivity, runAndSendReasoning } from './reasoningIntegration.ts';
 
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
@@ -121,6 +123,13 @@ serve(async (req: Request) => {
   const isConsultationMode = scribeMode === "consultation";
   const isNurseMode = scribeMode === "smartscribe";
 
+  // Session 2: Parse reasoning mode (auto/chain/tree) from query params
+  const reasoningModeParam = url.searchParams.get("reasoning_mode") || "auto";
+  const reasoningMode = resolveMode(reasoningModeParam);
+
+  // Session 2: Fetch tenant sensitivity for CoT/ToT thresholds
+  const tenantSettings = await fetchTenantSensitivity(admin, userId, logger);
+
   const { socket, response } = Deno.upgradeWebSocket(req);
 
   const userId = userData.user.id;
@@ -190,6 +199,8 @@ serve(async (req: Request) => {
                   if (consultResult) {
                     encounterState = consultResult.state;
                     lastConsultationResponse = consultResult.response;
+                    // Session 2: Run CoT/ToT reasoning pipeline for consultation mode
+                    runAndSendReasoning(consultResult.state, tenantSettings, reasoningMode, socket, userId, admin, logger, safeSend);
                   }
                 }).catch((e) =>
                   logger.error("Consultation analysis error", { error: e instanceof Error ? e.message : String(e) })
@@ -199,6 +210,10 @@ serve(async (req: Request) => {
                 analysisPromise.then((updatedState) => {
                   if (updatedState) {
                     encounterState = updatedState;
+                    // Session 2: Run CoT/ToT reasoning pipeline (physician modes only)
+                    if (!isNurseMode) {
+                      runAndSendReasoning(updatedState, tenantSettings, reasoningMode, socket, userId, admin, logger, safeSend);
+                    }
                     // Physician-only features: evidence citations, guidelines, treatment pathways
                     // Skip for nurse mode — nurses don't need billing/clinical reasoning intelligence
                     if (!isNurseMode) {
@@ -555,3 +570,4 @@ function handleClientCommand(
     });
   }
 }
+

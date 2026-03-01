@@ -45,3 +45,9 @@ export { getExplainText, getExplainForCode } from './minimalExplainLayer.ts';
 // Override Gate
 export { applyOverride, determineOutputZone } from './overrideGate.ts';
 export type { OverrideResult } from './overrideGate.ts';
+
+// Session 2: Reasoning Pipeline (orchestrator)
+export { runReasoningPipeline, serializeReasoningForClient } from './reasoningPipeline.ts';
+
+// Session 2: Reasoning Audit Logger
+export { logReasoningAudit } from './reasoningAuditLogger.ts';

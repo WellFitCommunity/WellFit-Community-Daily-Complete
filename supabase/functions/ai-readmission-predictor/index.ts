@@ -9,6 +9,8 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { runReasoningPipeline, serializeReasoningForClient } from '../_shared/compass-riley/reasoningPipeline.ts';
+import type { ReasoningEncounterInput } from '../_shared/compass-riley/types.ts';
 
 const SUPABASE_URL = SUPABASE_URL!;
 const SERVICE_KEY = SB_SECRET_KEY!;
@@ -177,7 +179,45 @@ serve(async (req) => {
       primaryDiagnosisDescription
     };
 
-    // 4. Return structure (in production, would call actual AI service)
+    // 4. Session 2: Run CoT/ToT reasoning to determine prediction complexity
+    const { data: tenantSkillConfig } = await supabase
+      .from('tenant_ai_skill_config')
+      .select('settings')
+      .eq('tenant_id', effectiveTenantId)
+      .eq('skill_key', 'compass_riley')
+      .maybeSingle();
+
+    const reasoningInput: ReasoningEncounterInput = {
+      chiefComplaint: primaryDiagnosisDescription || 'Discharge readmission risk assessment',
+      diagnoses: primaryDiagnosisCode ? [{
+        condition: primaryDiagnosisDescription || primaryDiagnosisCode,
+        icd10: primaryDiagnosisCode,
+        confidence: patientData.hasActiveCarePlan ? 0.7 : 0.5,
+        supportingEvidence: [
+          ...(patientData.readmissionCount > 0 ? [`${patientData.readmissionCount} prior readmissions in 90 days`] : []),
+          ...(patientData.sdohRiskFactors > 0 ? [`${patientData.sdohRiskFactors} active SDOH risk factors`] : []),
+        ],
+        refutingEvidence: [
+          ...(patientData.hasActiveCarePlan ? ['Active care plan in place'] : []),
+          ...(patientData.checkInCompletionRate > 0.8 ? ['High check-in compliance'] : []),
+        ],
+        status: 'working' as const,
+      }] : [],
+      medications: [],
+      mdmComplexity: {
+        riskLevel: patientData.readmissionCount >= 2 || patientData.sdohRiskFactors >= 3 ? 'high' : 'moderate',
+      },
+      completeness: { overallPercent: 60, expectedButMissing: ['medication reconciliation', 'follow-up plan'] },
+      driftState: { driftDetected: false },
+      patientSafety: { emergencyDetected: false },
+      analysisCount: 1,
+      transcriptWordCount: 100,
+    };
+
+    const tenantSettings = (tenantSkillConfig?.settings ?? null) as Record<string, unknown> | null;
+    const reasoningResult = runReasoningPipeline(reasoningInput, tenantSettings, 'auto');
+
+    // 5. Return structure with reasoning metadata
     return new Response(
       JSON.stringify({
         success: true,
@@ -188,6 +228,7 @@ serve(async (req) => {
           checkInCompletionRate: patientData.checkInCompletionRate,
           hasActiveCarePlan: patientData.hasActiveCarePlan
         },
+        reasoning: serializeReasoningForClient(reasoningResult),
         message: 'Readmission risk prediction generated',
         timestamp: new Date().toISOString()
       }),

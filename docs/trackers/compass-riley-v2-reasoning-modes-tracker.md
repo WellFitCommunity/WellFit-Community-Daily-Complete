@@ -173,8 +173,8 @@ These are what the system is likely to produce given the clinical case mix at ea
 | Session | Focus | Deliverables | Status |
 |---------|-------|-------------|--------|
 | 1 | Reasoning Engine Core | Mode Router, Tree Trigger Engine, Branch Evaluator, Override Gate, Minimal Explain Layer, Sensitivity Knob | DONE |
-| 2 | Integration with Compass Riley | Wire into SOAP note generator, consultation mode, realtime transcription. Per-tenant sensitivity config. | TODO |
-| 3 | Testing & Audit | Behavioral tests for all trigger types, output format verification, reason code audit logging, sensitivity boundary tests, edge cases | TODO |
+| 2 | Integration with Compass Riley | Wire into SOAP note generator, consultation mode, realtime transcription. Per-tenant sensitivity config. | DONE |
+| 3 | Testing & Audit | Behavioral tests for all trigger types, output format verification, reason code audit logging, sensitivity boundary tests, edge cases | DONE |
 
 ---
 
@@ -205,12 +205,12 @@ These are what the system is likely to produce given the clinical case mix at ea
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 2.1 | Wire into SOAP note generation (standard mode) | `conversationalScribePrompts.ts`, `realtime_medical_transcription/index.ts` | TODO |
-| 2.2 | Wire into consultation mode (premium reasoning) | `consultationAnalyzer.ts`, `consultationPromptGenerators.ts` | TODO |
-| 2.3 | Wire into readmission predictor | `ai-readmission-predictor/index.ts` | TODO |
-| 2.4 | Add mode selector to ScribeModeSwitcher UI | `ScribeModeSwitcher.tsx` | TODO |
-| 2.5 | Per-tenant sensitivity wiring — read `tree_sensitivity` from `tenant_ai_skill_config` at encounter start, pass thresholds to trigger engine | Edge functions + config | TODO |
-| 2.6 | Audit logging — reason codes to ai_transparency_log | Edge functions | TODO |
+| 2.1 | Wire into SOAP note generation (standard mode) — pipeline orchestrator + client relay via `reasoning_result` WebSocket message | `reasoningPipeline.ts`, `reasoningIntegration.ts`, `realtime_medical_transcription/index.ts` | DONE |
+| 2.2 | Wire into consultation mode (premium reasoning) — reasoning runs after consultation analysis | `realtime_medical_transcription/index.ts`, `reasoningIntegration.ts` | DONE |
+| 2.3 | Wire into readmission predictor — synthetic ReasoningEncounterInput from patient data | `ai-readmission-predictor/index.ts` | DONE |
+| 2.4 | Add mode selector to ScribeModeSwitcher UI — Auto/Chain/Tree radio group | `ScribeModeSwitcher.tsx`, `RealTimeSmartScribe.tsx` | DONE |
+| 2.5 | Per-tenant sensitivity wiring — reads `tree_sensitivity` from `tenant_ai_skill_config` at session start, passes to pipeline | `reasoningIntegration.ts`, `ai-readmission-predictor/index.ts` | DONE |
+| 2.6 | Audit logging — reason codes fire-and-forget to `ai_transparency_log` via `reasoningAuditLogger.ts` | `reasoningAuditLogger.ts`, `reasoningIntegration.ts` | DONE |
 
 ---
 
@@ -222,13 +222,13 @@ These are what the system is likely to produce given the clinical case mix at ea
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 3.1 | Trigger tests — each trigger type fires correctly | New test file | TODO |
-| 3.2 | Output format tests — Chain concise, Tree structured, escalation one-liner | New test file | TODO |
-| 3.3 | Override tests — FORCE_CHAIN/FORCE_TREE honored, warn-once verified | New test file | TODO |
-| 3.4 | Sensitivity threshold tests — boundary behavior at each sensitivity level (conservative: 69/70/89/90, balanced: 59/60/79/80, aggressive: 49/50/64/65) | New test file | TODO |
-| 3.5 | Reason code audit — all codes logged to ai_transparency_log correctly | New test file | TODO |
-| 3.6 | Edge cases — empty transcript, single-word input, contradictory vitals | New test file | TODO |
-| 3.7 | Integration smoke — full encounter through CoT/ToT pipeline | New test file | TODO |
+| 3.1 | Trigger tests — each trigger type fires correctly | `compassRileyReasoningV2.test.ts` (edge cases section) | DONE |
+| 3.2 | Output format tests — Chain concise, Tree structured, escalation one-liner | `compassRileyReasoningV2Integration.test.ts` (section 4) | DONE |
+| 3.3 | Override tests — FORCE_CHAIN/FORCE_TREE honored, warn-once verified | `compassRileyReasoningV2.test.ts` (pipeline section) | DONE |
+| 3.4 | Sensitivity threshold tests — boundary behavior at each sensitivity level (conservative: 69/70/89/90, balanced: 59/60/79/80, aggressive: 49/50/64/65) | `compassRileyReasoningV2Integration.test.ts` (section 5) | DONE |
+| 3.5 | Reason code audit — all codes fire correctly, payload shape verified | `compassRileyReasoningV2Integration.test.ts` (section 6) | DONE |
+| 3.6 | Edge cases — empty transcript, zero diagnoses, contradictory vitals, extreme confidence | `compassRileyReasoningV2.test.ts` (section 3) | DONE |
+| 3.7 | Integration smoke — full encounter through CoT/ToT pipeline (6 scenarios) | `compassRileyReasoningV2Integration.test.ts` (section 7) | DONE |
 
 ---
 
