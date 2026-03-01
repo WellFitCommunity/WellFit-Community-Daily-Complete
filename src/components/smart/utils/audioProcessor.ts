@@ -127,9 +127,34 @@ export interface ConsultPrepErrorMessage {
   message: string;
 }
 
+/** Session 2 (V2): Reasoning pipeline result (CoT/ToT) */
+export interface ReasoningResultMessage {
+  type: 'reasoning_result';
+  reasoning: {
+    modeUsed: string;
+    outputZone: string;
+    confidenceScore: number;
+    reasonCodes: string[];
+    explainText: string | null;
+    overrideWarning: string | null;
+    sensitivity: string;
+    branches: Array<{
+      hypothesis: string;
+      supporting: string[];
+      against: string[];
+      score: number;
+      selected: boolean;
+    }> | null;
+    convergence: { hypothesis: string; score: number } | null;
+    requiresProviderReview: boolean;
+  };
+}
+
 export interface AudioProcessorConfig {
   wsUrl: string;
   voiceProfile: ProviderVoiceProfile | null;
+  /** Provider ID for reinforcing corrections on successful application */
+  providerId?: string;
   onTranscript: (text: string, appliedCorrections: number) => void;
   onCodeSuggestion: (data: CodeSuggestionResponse) => void;
   onEvidenceCitations?: (data: EvidenceCitationsResponse) => void;
@@ -138,6 +163,7 @@ export interface AudioProcessorConfig {
   onConsultationResponse?: (data: ConsultationResponseMessage) => void;
   onConsultPrep?: (data: ConsultPrepMessage) => void;
   onConsultPrepError?: (data: ConsultPrepErrorMessage) => void;
+  onReasoningResult?: (data: ReasoningResultMessage) => void;
   onReady: () => void;
   onStatusChange: (status: string) => void;
   onRecordingStateChange: (isRecording: boolean) => void;
@@ -194,6 +220,15 @@ export async function initializeAudioRecording(
             const result = VoiceLearningService.applyCorrections(text, config.voiceProfile);
             text = result.corrected;
             appliedCount = result.appliedCount;
+
+            // Reinforce successfully-applied corrections (fire-and-forget)
+            if (config.providerId && result.appliedCorrections.length > 0) {
+              for (const correctedText of result.appliedCorrections) {
+                VoiceLearningService.reinforceCorrection(config.providerId, correctedText).catch(() => {
+                  // Silent fail — reinforcement is enhancement, not critical
+                });
+              }
+            }
           }
 
           config.onTranscript(text, appliedCount);
@@ -211,6 +246,8 @@ export async function initializeAudioRecording(
           config.onConsultPrep?.(data);
         } else if (data.type === 'consult_prep_error') {
           config.onConsultPrepError?.(data);
+        } else if (data.type === 'reasoning_result') {
+          config.onReasoningResult?.(data);
         } else if (data.type === 'ready') {
           config.onReady();
         }

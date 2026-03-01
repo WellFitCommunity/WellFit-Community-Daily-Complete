@@ -16,6 +16,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { auditLogger } from '../../../services/auditLogger';
 import { VoiceLearningService, ProviderVoiceProfile } from '../../../services/voiceLearningService';
+import { updateVoiceProfile } from '../../../services/aiTransparencyService';
 import { submitScribeFeedback, SessionFeedbackData } from '../../../services/scribeFeedbackService';
 
 // Decomposed modules
@@ -52,6 +53,7 @@ export type {
   CodeSuggestionResponse,
   AssistanceSettings,
   UseSmartScribeProps,
+  ReasoningResultSummary,
 } from './useSmartScribe.types';
 
 import type {
@@ -66,6 +68,7 @@ import type {
   ConversationalMessage,
   SOAPNote,
   UseSmartScribeProps,
+  ReasoningResultSummary,
 } from './useSmartScribe.types';
 
 // Check if demo mode is enabled
@@ -76,7 +79,7 @@ const DEMO_MODE = import.meta.env.VITE_COMPASS_DEMO === 'true';
 // ============================================================================
 
 export function useSmartScribe(props: UseSmartScribeProps) {
-  const { selectedPatientId, onSessionComplete, forceDemoMode, scribeMode = 'compass-riley' } = props;
+  const { selectedPatientId, onSessionComplete, forceDemoMode, scribeMode = 'compass-riley', reasoningMode = 'auto' } = props;
 
   // Core state
   const [transcript, setTranscript] = useState('');
@@ -111,6 +114,8 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   // Session 8: Peer consult prep
   const [consultPrepSummary, setConsultPrepSummary] = useState<ConsultPrepSummary | null>(null);
   const [consultPrepLoading, setConsultPrepLoading] = useState(false);
+  // Session 2 (V2): Reasoning pipeline result
+  const [reasoningResult, setReasoningResult] = useState<ReasoningResultSummary | null>(null);
 
   // Compose preferences sub-hook
   const preferences = useScribePreferences();
@@ -129,6 +134,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const [lastSessionId, setLastSessionId] = useState<string | null>(null);
   const [lastSessionDuration, setLastSessionDuration] = useState<number>(0);
 
+  // Milestone celebration state (from update-voice-profile edge function)
+  const [milestoneToast, setMilestoneToast] = useState<string | null>(null);
+
   // Refs for audio resources (will be set by audioProcessor)
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -143,7 +151,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   // EFFECTS
   // ============================================================================
 
-  /** Load voice profile on mount */
+  /** Load voice profile on mount and decay stale corrections */
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -158,6 +166,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         if (profile && profile.corrections.length > 0) {
           setStatus(`Voice learning active (${profile.corrections.length} corrections learned)`);
         }
+
+        // Decay old corrections on session start (fire-and-forget, idempotent)
+        VoiceLearningService.decayOldCorrections(user.id, 60).catch(() => {
+          // Silent fail — decay is enhancement, not critical
+        });
       } catch (_error: unknown) {
         // Silent fail
       }
@@ -331,7 +344,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     }
 
     try {
-      const result = await initializeRecording(scribeMode, voiceProfile, {
+      const result = await initializeRecording(scribeMode, voiceProfile, reasoningMode, {
         setTranscript,
         setCorrectionsAppliedCount,
         setSuggestedCodes,
@@ -347,6 +360,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         setConsultationResponse,
         setConsultPrepSummary,
         setConsultPrepLoading,
+        setReasoningResult,
         setIsRecording,
         setRecordingStartTime: (time: number) => setRecordingStartTime(time),
         setStatus,
@@ -404,6 +418,40 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         setLastSessionId(sessionId);
         setLastSessionDuration(durationSeconds);
         if (onSessionComplete) onSessionComplete(sessionId);
+
+        // --- Ambient learning: fire-and-forget post-session updates ---
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const userId = authUser?.id ?? '';
+
+        // 1.2: Update running accuracy average
+        const wordCount = transcript.trim().split(/\s+/).length;
+        const sessionAccuracy = correctionsAppliedCount > 0 && wordCount > 0
+          ? Math.max(0, 1 - (correctionsAppliedCount / wordCount))
+          : 1.0;
+        VoiceLearningService.updateAccuracy(userId, sessionAccuracy)
+          .catch(() => { /* Silent fail */ });
+
+        // 1.1: Update voice profile via edge function (maturity, milestones)
+        const learnedTerms = voiceProfile?.corrections
+          .map(c => c.correct)
+          .slice(-20) ?? [];
+        updateVoiceProfile({
+          session_duration_seconds: durationSeconds,
+          corrections_made: correctionsAppliedCount,
+          medical_terms_learned: learnedTerms,
+          workflow_interactions: {},
+        }).then((result) => {
+          // 1.6: Show milestone celebration if any milestones achieved
+          if (result.milestones_achieved && result.milestones_achieved.length > 0) {
+            const milestoneMessages: Record<string, string> = {
+              voice_profile_10_sessions: '🎤 10 Sessions Complete! Riley is learning your voice.',
+              voice_profile_50_sessions: '🏆 50 Sessions — Expert Level! Riley knows your voice incredibly well.',
+              voice_profile_fully_adapted: '⭐ Fully Adapted! Riley is perfectly tuned to your voice.',
+            };
+            const firstMilestone = result.milestones_achieved[0];
+            setMilestoneToast(milestoneMessages[firstMilestone] ?? `Achievement unlocked: ${firstMilestone}`);
+          }
+        }).catch(() => { /* Silent fail */ });
       } else {
         setStatus('Recording stopped (save failed)');
       }
@@ -510,6 +558,8 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     consultationResponse,
     consultPrepSummary,
     consultPrepLoading,
+    reasoningResult,
+    milestoneToast,
 
     // Setters
     setTranscript,
@@ -519,6 +569,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     setCorrectionCorrect,
     setSelectedTextForCorrection,
     setVoiceProfile,
+    setMilestoneToast,
 
     // Actions
     startRecording,

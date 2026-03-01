@@ -21,9 +21,12 @@ import { BillingCodesList } from './BillingCodesList';
 import { SOAPNote } from './SOAPNote';
 import { VoiceCorrectionModal } from './VoiceCorrectionModal';
 import { ScribeModeSwitcher } from './ScribeModeSwitcher';
+import type { ReasoningModeUI } from './ScribeModeSwitcher';
 import { SessionFeedback } from './SessionFeedback';
 import { ConsultationPanel } from './ConsultationPanel';
 import { ConsultPrepPanel } from './ConsultPrepPanel';
+import { VoiceLearningProgress } from './VoiceLearningProgress';
+import { EAAffirmationToast } from '../envision-atlus/EAAffirmationToast';
 
 /**
  * Scribe Mode:
@@ -45,6 +48,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
 
   // Local mode state - allows toggling between modes
   const [currentMode, setCurrentMode] = useState<ScribeMode>(initialMode);
+  const [reasoningMode, setReasoningMode] = useState<ReasoningModeUI>('auto');
   const isSmartScribeMode = currentMode === 'smartscribe';
   const isConsultationMode = currentMode === 'consultation';
 
@@ -85,7 +89,9 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     consultPrepSummary,
     consultPrepLoading,
     requestConsultPrep,
-  } = useSmartScribe({ ...props, forceDemoMode: globalDemoMode || undefined, scribeMode: currentMode });
+    milestoneToast,
+    setMilestoneToast,
+  } = useSmartScribe({ ...props, forceDemoMode: globalDemoMode || undefined, scribeMode: currentMode, reasoningMode });
 
   // Handler for saving voice corrections
   const handleSaveCorrection = useCallback(async () => {
@@ -134,6 +140,8 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
       <ScribeModeSwitcher
         mode={currentMode}
         onModeChange={setCurrentMode}
+        reasoningMode={reasoningMode}
+        onReasoningModeChange={setReasoningMode}
         disabled={isRecording}
       />
 
@@ -262,6 +270,25 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
         onSubmit={handleFeedbackSubmit}
         onSkip={handleFeedbackSkip}
       />
+
+      {/* Voice Learning Progress - shown post-session when profile exists */}
+      {!isRecording && voiceProfile && (
+        <VoiceLearningProgress
+          providerId={voiceProfile.providerId}
+          compact={true}
+        />
+      )}
+
+      {/* Milestone celebration toast */}
+      {milestoneToast && (
+        <EAAffirmationToast
+          message={milestoneToast}
+          type="achievement"
+          autoDismiss={5000}
+          onDismiss={() => setMilestoneToast(null)}
+          position="top-center"
+        />
+      )}
 
       {/* Privacy Notice */}
       <div className="text-center py-2">

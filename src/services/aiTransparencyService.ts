@@ -168,7 +168,7 @@ export const getConfidenceScoreHistory = async (limit: number = 50) => {
 
 export const updateVoiceProfile = async (
   updateData: VoiceProfileUpdate
-): Promise<{ success: boolean; profile?: VoiceProfile; error?: string }> => {
+): Promise<{ success: boolean; profile?: VoiceProfile; milestones_achieved?: string[]; error?: string }> => {
   try {
     const session = await supabase.auth.getSession();
     const token = session.data.session?.access_token;
@@ -185,7 +185,11 @@ export const updateVoiceProfile = async (
 
     if (error) throw error;
 
-    return { success: true, profile: data.profile };
+    return {
+      success: true,
+      profile: data.profile,
+      milestones_achieved: Array.isArray(data.milestones_achieved) ? data.milestones_achieved : [],
+    };
   } catch (err: unknown) {
     return { success: false, error: getErrorMessage(err) };
   }

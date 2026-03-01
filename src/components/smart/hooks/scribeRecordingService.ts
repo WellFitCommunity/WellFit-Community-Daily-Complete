@@ -22,6 +22,7 @@ import type {
   ConsultPrepSummary,
   SOAPNote,
   GroundingFlags,
+  ReasoningResultSummary,
 } from './useSmartScribe.types';
 
 // ============================================================================
@@ -44,6 +45,7 @@ export interface ScribeStateSetters {
   setConsultationResponse: (response: ConsultationResponseSummary) => void;
   setConsultPrepSummary: (summary: ConsultPrepSummary) => void;
   setConsultPrepLoading: (loading: boolean) => void;
+  setReasoningResult: (result: ReasoningResultSummary) => void;
   setIsRecording: (recording: boolean) => void;
   setRecordingStartTime: (time: number) => void;
   setStatus: (status: string) => void;
@@ -66,6 +68,7 @@ export interface RecordingResources {
 export async function initializeRecording(
   scribeMode: string,
   voiceProfile: ProviderVoiceProfile | null,
+  reasoningMode: string = 'auto',
   setters: ScribeStateSetters,
 ): Promise<RecordingResources> {
   const { initializeAudioRecording } = await import('../utils/audioProcessor');
@@ -75,14 +78,20 @@ export async function initializeRecording(
   } = await supabase.auth.getSession();
   if (!session?.access_token) throw new Error('Not authenticated');
 
+  // Get user ID for voice learning reinforcement
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const base = (import.meta.env.VITE_SUPABASE_URL ?? '').replace('https://', 'wss://');
   const wsUrl = `${base}/functions/v1/realtime_medical_transcription?access_token=${encodeURIComponent(
     session.access_token
-  )}&mode=${encodeURIComponent(scribeMode)}`;
+  )}&mode=${encodeURIComponent(scribeMode)}&reasoning_mode=${encodeURIComponent(reasoningMode)}`;
 
   const result = await initializeAudioRecording({
     wsUrl,
     voiceProfile,
+    providerId: user?.id,
     onTranscript: (text: string, appliedCorrections: number) => {
       setters.setTranscript(prev => (prev ? `${prev} ${text}` : text));
       if (appliedCorrections > 0) {
@@ -158,6 +167,11 @@ export async function initializeRecording(
     onConsultPrepError: (data: { message: string }) => {
       setters.setConsultPrepLoading(false);
       auditLogger.warn('SCRIBE_CONSULT_PREP_ERROR', { message: data.message });
+    },
+    onReasoningResult: (data: { reasoning: ReasoningResultSummary }) => {
+      if (data.reasoning) {
+        setters.setReasoningResult(data.reasoning);
+      }
     },
     onReady: () => {
       setters.setConversationalMessages(() => [
