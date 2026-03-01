@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-02-28
-**Last Session:** MCP Server Compliance Session 4 — P1-2, P1-3, P2-1 (tools auth, rate limit identity, input validation)
+**Last Updated:** 2026-03-01
+**Last Session:** MCP Server Compliance Session 6 — P3-1 through P3-5 COMPLETE (persistent rate limits, key management, body limits, dynamic pricing, provenance)
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -29,7 +29,7 @@
 
 ---
 
-## MCP Server Compliance & Hardening (2026-02-27) — IN PROGRESS
+## MCP Server Compliance & Hardening (2026-02-27) — COMPLETE
 
 **Tracker:** `docs/trackers/mcp-server-compliance-tracker.md`
 **Cross-audit:** Claude Opus 4.6 (compliance) + ChatGPT (code-level security)
@@ -38,19 +38,19 @@
 |----------|-------|--------|
 | P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
 | P1 Hardening | 3 | **3/3 done** (P1-1, P1-2, P1-3) |
-| P2 Moderate (Functional) | 7 | **1/7 done** (P2-1) |
-| P3 Low (Polish) | 5 | 0/5 done |
-| **Total** | **23** | **12/23 done** |
+| P2 Moderate (Functional) | 7 | **6/7 done** (P2-1 through P2-6; P2-7 deferred) |
+| P3 Low (Polish) | 5 | **5/5 done** (P3-1 through P3-5) |
+| **Total** | **23** | **22/23 done (P2-7 deferred)** |
 
-**Session plan:**
+**Session plan — ALL COMPLETE:**
 - ~~Session 1: P0-1 through P0-4~~ — **DONE** (auth binding, tenant isolation, base64url fix, SECURITY DEFINER)
 - ~~Session 2: P0-5~~ — **DONE** (6 MCP servers decomposed: 929→224 max, 28 files changed)
 - ~~Session 3: P0-6/7/8 + P1-1~~ — **DONE** (SELECT *, rate limiting, auth gate, JWKS — 10 files changed)
 - ~~Session 4: P1-2/3, P2-1~~ — **DONE** (tools auth, rate limit identity, input validation — 8 files changed, 1 new)
-- Session 5: P2-2 through P2-6 — config, timeouts, unified audit, docs, health dashboard (~9 hrs)
-- Session 6: P3-1 through P3-5 — persistence, key rotation, body limits, pricing, provenance (~8 hrs)
+- ~~Session 5: P2-2 through P2-6~~ — **DONE** (config, timeouts, unified audit, health dashboard — 15 files changed)
+- ~~Session 6: P3-1 through P3-5~~ — **DONE** (persistent rate limits, key management, body limits, pricing, provenance — 17 files changed)
 
-**Total estimated:** ~17 hours remaining (2-3 sessions)
+**P2-7 (Cross-Server Pipeline) deferred** — requires Claims Pipeline implementation (Chain 1) which depends on vendor clearinghouse credentials.
 
 ---
 
@@ -62,9 +62,17 @@
 
 ---
 
-## Current Priority: MCP Server Compliance & Hardening — Session 5 NEXT
+## Current Priority: Compass Riley V2 / Skills Overhaul — NEXT
 
-See tracker section above. Sessions 1-4 (P0-1 through P0-8 + P1-1/2/3 + P2-1) DONE. Session 5 (P2-2 through P2-6) is next.
+MCP Server Compliance is COMPLETE (22/23, P2-7 deferred). Next priorities per Maria's direction:
+
+| # | Feature | Tracker | Sessions | Status |
+|---|---------|---------|----------|--------|
+| 1 | Compass Riley V2 — CoT/ToT Reasoning Modes | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | 3 | TODO |
+| 2 | Cultural Competency MCP Server | `docs/trackers/cultural-competency-mcp-tracker.md` | 3-4 | TODO |
+| 3 | Skills Overhaul — 10 new skills + 5 updates | `docs/SKILLS_ASSESSMENT_2026-02-28.md` | 2-3 | TODO |
+
+**Maria to decide priority order at next session.**
 
 ---
 
@@ -156,7 +164,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
 | **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1-3 Session 5 DONE — 870+ tests, Tier 3 Sessions 6-7 TODO** |
-| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **12/23 done — All P0+P1 DONE, P2-1 DONE, Session 5 NEXT** |
+| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **COMPLETE — 22/23 done (P2-7 deferred), 6 sessions** |
 | **Compass Riley V2 Reasoning** | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | **NEW — Chain/Tree of Thought modes, 3 sessions, after MCP compliance** |
 | **Cultural Competency MCP** | `docs/trackers/cultural-competency-mcp-tracker.md` | **NEW — 8 population profiles, 8 MCP tools, 3-4 sessions, after Riley V2** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
@@ -170,13 +178,14 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 10,304 passed, 0 failed | 2026-02-28 |
-| Test Suites | 517 | 2026-02-28 |
-| Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-02-27 |
-| Lint | 0 errors, 0 warnings | 2026-02-28 |
+| Tests | 10,327 passed, 0 failed | 2026-03-01 |
+| Test Suites | 519 | 2026-03-01 |
+| Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-03-01 |
+| Lint | 0 errors, 0 warnings | 2026-03-01 |
 | God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) — MCP servers all under 600 | 2026-02-27 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
 | Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
+| MCP Server Compliance | 22/23 complete (P2-7 deferred) | 2026-03-01 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
 
 ---
@@ -201,9 +210,42 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 ---
 
-## What Was Completed Last Session (2026-02-28)
+## What Was Completed Last Session (2026-03-01)
 
-### MCP Server Compliance Session 4 — P1-2, P1-3, P2-1
+### MCP Server Compliance Session 6 — P3-1 through P3-5 (ALL P3 COMPLETE)
+
+Completed all 5 P3 (Low/Polish) items. MCP Server Compliance tracker is now 22/23 complete (P2-7 deferred).
+
+| Item | Fix | Files Changed |
+|------|-----|---------------|
+| **P3-1: Persistent rate limiting** | `mcp_rate_limit_entries` table + `check_rate_limit()` RPC (atomic increment-and-check). Hybrid approach: in-memory for IP-based DoS, Supabase RPC for identity-based cross-instance persistence. Graceful fallback if RPC fails. Wired into Prior Auth, Edge Functions, Claude servers. | 4 files (1 migration) |
+| **P3-2: Key rotation admin UI** | `MCPKeyManagementPanel` component + `mcpKeyManagementService.ts` service. Create, rotate (new key + revoke old), revoke with confirmation. Expiry alert banner warns 14 days before expiration. Super_admin only (RLS). 13 behavioral tests. Wired into admin panel sections. | 6 files (3 new) |
+| **P3-3: Request body size limits** | `checkBodySize()` in `mcpServerBase.ts` — Content-Length header check (zero overhead). 512KB for standard servers, 2MB for FHIR/HL7 (large payloads). Returns 413 Payload Too Large. Wired into 7 servers. | 8 files |
+| **P3-4: Dynamic pricing** | Centralized `MODEL_PRICING` record + `calculateModelCost()` in `_shared/models.ts`. Replaced hardcoded `calculateCost` in Claude server. Added Opus pricing (was missing). | 2 files |
+| **P3-5: Confidence + provenance** | `MCPProvenance` interface + `buildProvenance()` helper. Applied server-appropriate values: Claude=`ai_generated` + clinical review flags, FHIR/Postgres=`database` + freshness, HL7/X12=`computed`, Medical Codes=`reference_only`. | 8 files |
+
+**Files changed: 17 (13 modified, 4 new)**
+**Tests: 10,327 passed, 0 failed (519 suites)**
+**Lint: 0 errors, 0 warnings**
+**Typecheck: 0 errors**
+
+---
+
+### MCP Server Compliance Session 5 (2026-02-28) — P2-2 through P2-6
+
+Completed 5 of the 7 P2 items (P2-7 deferred).
+
+| Item | Fix |
+|------|-----|
+| **P2-2: Server config** | Centralized `SERVER_CONFIG` objects with name, version, tier across all servers |
+| **P2-3: Timeout/retry** | Edge function timeout configuration for external API calls |
+| **P2-4: Unified audit** | Unified `auditMCPToolCall()` logging across 5 MCP servers |
+| **P2-5: Docs** | Updated feature list and user manual with MCP server documentation |
+| **P2-6: Health dashboard** | `MCPServerHealthPanel` admin component + `mcpHealthService.ts` for real-time health monitoring of all 11 servers |
+
+---
+
+### MCP Server Compliance Session 4 (2026-02-28) — P1-2, P1-3, P2-1
 
 Completed all 3 Session 4 items: tools/list auth gating on admin servers, identity-based rate limiting, and input validation framework.
 
