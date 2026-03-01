@@ -11,13 +11,16 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { checkMCPRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { checkMCPRateLimit, checkPersistentRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import {
   initMCPServer,
   createInitializeResponse,
   createToolsListResponse,
   handlePing,
   handleHealthCheck,
+  checkBodySize,
+  buildProvenance,
+  MCP_BODY_LIMIT_BYTES,
   MCPInitResult
 } from "../_shared/mcpServerBase.ts";
 import {
@@ -132,6 +135,10 @@ serve(async (req) => {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
 
+  // P3-3: Body size limit (512KB)
+  const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_BYTES, corsHeaders);
+  if (bodySizeResponse) return bodySizeResponse;
+
   try {
     // Rate limiting
     const rateLimitId = getRequestIdentifier(req);
@@ -216,9 +223,9 @@ serve(async (req) => {
 
         const caller = authResult.caller as CallerIdentity;
 
-        // P1-3: Identity-based rate limiting (per user/key, not just IP)
-        const identityRateResult = checkMCPRateLimit(
-          getCallerRateLimitId(caller), MCP_RATE_LIMITS.prior_auth
+        // P1-3 + P3-1: Persistent identity-based rate limiting (cross-instance)
+        const identityRateResult = await checkPersistentRateLimit(
+          sb, getCallerRateLimitId(caller), MCP_RATE_LIMITS.prior_auth
         );
         if (!identityRateResult.allowed) {
           return createRateLimitResponse(identityRateResult, MCP_RATE_LIMITS.prior_auth, corsHeaders);
@@ -265,7 +272,10 @@ serve(async (req) => {
               caller: {
                 userId: caller.userId,
                 role: caller.role
-              }
+              },
+              provenance: buildProvenance('database', {
+                dataFreshnessISO: new Date().toISOString()
+              })
             }
           },
           id

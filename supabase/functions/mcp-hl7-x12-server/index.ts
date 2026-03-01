@@ -17,6 +17,9 @@ import {
   createToolsListResponse,
   handlePing,
   handleHealthCheck,
+  checkBodySize,
+  buildProvenance,
+  MCP_BODY_LIMIT_LARGE,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
 import {
@@ -225,6 +228,10 @@ serve(async (req: Request) => {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
 
+  // P3-3: Body size limit (2MB for HL7/X12 messages)
+  const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_LARGE, corsHeaders);
+  if (bodySizeResponse) return bodySizeResponse;
+
   try {
     const body = await req.json();
     const { method, params, id } = body;
@@ -318,7 +325,10 @@ serve(async (req: Request) => {
             caller: {
               userId: caller.userId,
               role: caller.role
-            }
+            },
+            provenance: buildProvenance('computed', {
+              safetyFlags: ['reference_only']
+            })
           }
         },
         id

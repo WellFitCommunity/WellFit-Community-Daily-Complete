@@ -52,6 +52,7 @@ import {
   UserRoleManagementPanel,
   UserProvisioningPanel,
   MCPServerHealthPanel,
+  MCPKeyManagementPanel,
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
 
@@ -539,6 +540,17 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'admin',
     priority: 'high',
     roles: ['admin', 'super_admin'],
+  },
+  {
+    id: 'mcp-key-management',
+    title: 'MCP API Key Management',
+    subtitle: 'Create, rotate, and revoke machine-to-machine API keys for MCP servers',
+    icon: '\uD83D\uDD11',
+    headerColor: 'text-indigo-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><MCPKeyManagementPanel /></Suspense>,
+    category: 'admin',
+    priority: 'high',
+    roles: ['super_admin'],
   },
   {
     id: 'data-export',

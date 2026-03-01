@@ -17,6 +17,9 @@ import {
   createErrorResponse,
   createPerRequestClient,
   handleHealthCheck,
+  checkBodySize,
+  buildProvenance,
+  MCP_BODY_LIMIT_BYTES,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
@@ -58,6 +61,10 @@ serve(async (req: Request) => {
   }
 
   const requestId = getRequestId(req);
+
+  // P3-3: Body size limit (512KB)
+  const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_BYTES, corsHeaders);
+  if (bodySizeResponse) return bodySizeResponse;
 
   // Rate limiting
   const identifier = getRequestIdentifier(req);
@@ -134,7 +141,10 @@ serve(async (req: Request) => {
             rowsReturned,
             executionTimeMs,
             queryName: toolArgs.query_name,
-            requestId
+            requestId,
+            provenance: buildProvenance('database', {
+              dataFreshnessISO: new Date().toISOString()
+            })
           }
         },
         id

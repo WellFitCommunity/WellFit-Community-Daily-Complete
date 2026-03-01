@@ -1,10 +1,13 @@
 // =====================================================
 // MCP Rate Limiter
-// Purpose: In-memory rate limiting for MCP servers with database fallback
-// Features: Fast in-memory checks, cleanup, per-tool limits
+// Purpose: Persistent rate limiting for MCP servers (P3-1)
+// Strategy: In-memory fast path + Supabase persistence via check_rate_limit() RPC
+// Features: Fast in-memory checks, persistent cross-instance limits, cleanup
 // =====================================================
 
-// In-memory rate limit store (per-instance, resets on cold start)
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// In-memory rate limit store (per-instance fast path)
 interface RateLimitEntry {
   count: number;
   windowStart: number;
@@ -164,6 +167,55 @@ export function checkMCPRateLimit(
     remaining: config.maxRequests - entry.count,
     resetAt: entry.windowStart + config.windowMs
   };
+}
+
+/**
+ * Persistent rate limit check via Supabase RPC (P3-1).
+ *
+ * Uses the `check_rate_limit()` database function for cross-instance
+ * persistence. Falls back to in-memory if the RPC fails (graceful degradation).
+ *
+ * Call this for identity-based limits (after auth) to enforce limits across
+ * all edge function instances. The in-memory `checkMCPRateLimit` remains
+ * the fast path for IP-based DoS protection.
+ *
+ * @param sb - Supabase client (service role)
+ * @param identifier - Rate limit key (from getCallerRateLimitId)
+ * @param config - Rate limit configuration
+ * @returns RateLimitResult
+ */
+export async function checkPersistentRateLimit(
+  sb: SupabaseClient,
+  identifier: string,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  const rateKey = `${config.keyPrefix}:${identifier}`;
+
+  try {
+    const { data, error } = await sb.rpc("check_rate_limit", {
+      p_rate_key: rateKey,
+      p_max_requests: config.maxRequests,
+      p_window_ms: config.windowMs
+    });
+
+    if (error || !data || !Array.isArray(data) || data.length === 0) {
+      // Fallback to in-memory on RPC failure
+      return checkMCPRateLimit(identifier, config);
+    }
+
+    const row = data[0] as { allowed: boolean; remaining: number; reset_at: string };
+    const resetAt = new Date(row.reset_at).getTime();
+
+    return {
+      allowed: row.allowed,
+      remaining: row.remaining,
+      resetAt,
+      ...(!row.allowed ? { retryAfterMs: Math.max(resetAt - Date.now(), 1000) } : {})
+    };
+  } catch {
+    // Graceful degradation: use in-memory on any failure
+    return checkMCPRateLimit(identifier, config);
+  }
 }
 
 /**

@@ -339,6 +339,81 @@ export function createPerRequestClient(req: Request): SupabaseClient {
   });
 }
 
+/**
+ * MCP Response Provenance Metadata (P3-5)
+ *
+ * Enriches MCP tool responses with data source, freshness, confidence,
+ * and clinical safety flags. Consumers (dashboards, AI services) use
+ * this metadata for trust decisions and audit compliance.
+ */
+export interface MCPProvenance {
+  /** Where the data came from */
+  dataSource: 'database' | 'external_api' | 'cache' | 'ai_generated' | 'computed';
+  /** ISO timestamp of the underlying data (not the response) */
+  dataFreshnessISO?: string;
+  /** AI confidence score (0-1), only present for AI-generated results */
+  confidenceScore?: number;
+  /** Clinical safety flags for results that touch clinical guidance */
+  safetyFlags?: Array<'ai_generated' | 'requires_clinical_review' | 'experimental' | 'reference_only'>;
+  /** Cache status */
+  cacheHit?: boolean;
+}
+
+/**
+ * Build provenance metadata for an MCP tool response.
+ *
+ * @param source - Where the data came from
+ * @param opts - Optional provenance fields
+ * @returns MCPProvenance object to merge into response metadata
+ */
+export function buildProvenance(
+  source: MCPProvenance['dataSource'],
+  opts?: Partial<Omit<MCPProvenance, 'dataSource'>>
+): MCPProvenance {
+  return {
+    dataSource: source,
+    ...opts
+  };
+}
+
+/**
+ * Request body size limit enforcement (P3-3).
+ *
+ * Returns a 413 Payload Too Large response if the request body exceeds the limit.
+ * Returns null if the request is within limits (caller proceeds normally).
+ *
+ * @param req - The incoming HTTP request
+ * @param maxBytes - Maximum allowed body size (default 512KB)
+ * @param corsHeaders - CORS headers for the response
+ * @returns Response if body too large, null otherwise
+ */
+export const MCP_BODY_LIMIT_BYTES = 512 * 1024; // 512KB default
+export const MCP_BODY_LIMIT_LARGE = 2 * 1024 * 1024; // 2MB for FHIR bundles / HL7 messages
+
+export function checkBodySize(
+  req: Request,
+  maxBytes: number = MCP_BODY_LIMIT_BYTES,
+  corsHeaders: Record<string, string> = {}
+): Response | null {
+  const contentLength = req.headers.get("content-length");
+  if (contentLength) {
+    const size = parseInt(contentLength, 10);
+    if (!isNaN(size) && size > maxBytes) {
+      return new Response(JSON.stringify({
+        error: {
+          code: "payload_too_large",
+          message: `Request body exceeds ${Math.round(maxBytes / 1024)}KB limit (received ${Math.round(size / 1024)}KB).`,
+          maxBytes
+        }
+      }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+  }
+  return null;
+}
+
 export default {
   initMCPServer,
   createInitializeResponse,
@@ -349,5 +424,8 @@ export default {
   handleHealthCheck,
   checkInMemoryRateLimit,
   createPerRequestClient,
-  PING_TOOL
+  checkBodySize,
+  PING_TOOL,
+  MCP_BODY_LIMIT_BYTES,
+  MCP_BODY_LIMIT_LARGE
 };

@@ -11,12 +11,15 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1";
-import { checkMCPRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { checkMCPRateLimit, checkPersistentRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import {
   initMCPServer,
   createInitializeResponse,
   createToolsListResponse,
   handleHealthCheck,
+  checkBodySize,
+  buildProvenance,
+  MCP_BODY_LIMIT_BYTES,
   PING_TOOL,
   handlePing,
   type MCPInitResult
@@ -161,15 +164,8 @@ async function logMCPRequest(params: {
   }
 }
 
-// Calculate cost based on model
-function calculateCost(model: string, inputTokens: number, outputTokens: number): number {
-  const pricing: Record<string, { input: number; output: number }> = {
-    "claude-sonnet-4-5-20250929": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
-    "claude-haiku-4-5-20250929": { input: 0.8 / 1_000_000, output: 4.0 / 1_000_000 }
-  };
-  const rates = pricing[model] || pricing["claude-sonnet-4-5-20250929"];
-  return (inputTokens * rates.input) + (outputTokens * rates.output);
-}
+// P3-4: Centralized pricing from _shared/models.ts
+import { calculateModelCost } from "../_shared/models.ts";
 
 // MCP Request Handler
 serve(async (req: Request) => {
@@ -187,6 +183,10 @@ serve(async (req: Request) => {
       { name: "anthropic", ready: !!ANTHROPIC_API_KEY }
     ]);
   }
+
+  // P3-3: Body size limit (512KB for AI text operations)
+  const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_BYTES, corsHeaders);
+  if (bodySizeResponse) return bodySizeResponse;
 
   // Strict rate limiting for expensive AI calls
   const identifier = getRequestIdentifier(req);
@@ -248,9 +248,9 @@ serve(async (req: Request) => {
 
       const caller = authResult.caller as CallerIdentity;
 
-      // P1-3: Identity-based rate limiting (per user/key, not just IP)
-      const identityRateResult = checkMCPRateLimit(
-        getCallerRateLimitId(caller), MCP_RATE_LIMITS.claude
+      // P1-3 + P3-1: Persistent identity-based rate limiting (cross-instance)
+      const identityRateResult = await checkPersistentRateLimit(
+        sb, getCallerRateLimitId(caller), MCP_RATE_LIMITS.claude
       );
       if (!identityRateResult.allowed) {
         return createRateLimitResponse(identityRateResult, MCP_RATE_LIMITS.claude, corsHeaders);
@@ -314,7 +314,7 @@ serve(async (req: Request) => {
       const responseTimeMs = Date.now() - startTime;
       const inputTokens = response.usage.input_tokens;
       const outputTokens = response.usage.output_tokens;
-      const cost = calculateCost(model, inputTokens, outputTokens);
+      const cost = calculateModelCost(model, inputTokens, outputTokens);
 
       // Audit log: claude_usage_logs for billing + unified mcp_audit_logs for operations
       await logMCPRequest({
@@ -355,7 +355,11 @@ serve(async (req: Request) => {
             caller: {
               userId: caller.userId,
               role: caller.role
-            }
+            },
+            provenance: buildProvenance('ai_generated', {
+              confidenceScore: undefined,
+              safetyFlags: ['ai_generated', 'requires_clinical_review']
+            })
           }
         },
         id

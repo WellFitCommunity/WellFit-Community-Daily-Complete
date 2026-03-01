@@ -87,3 +87,6 @@ export const ClaimResubmissionDashboard = lazy(() => import('../ClaimResubmissio
 
 // MCP Server Health
 export const MCPServerHealthPanel = lazy(() => import('../MCPServerHealthPanel'));
+
+// MCP Key Management
+export const MCPKeyManagementPanel = lazy(() => import('../MCPKeyManagementPanel'));

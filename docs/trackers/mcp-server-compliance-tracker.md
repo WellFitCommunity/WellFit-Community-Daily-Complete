@@ -402,50 +402,51 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P3-1: Persistent Rate Limiting **(Claude + ChatGPT)**
 
-**Status:** TODO
+**Status:** DONE (Session 6)
 **Estimated:** ~2 hours
 
-**Fix:** Redis or Supabase-backed rate limiter for cross-instance persistence.
+**Fix:** Supabase-backed rate limiter via `mcp_rate_limit_entries` table + `check_rate_limit()` RPC. Hybrid approach: in-memory for IP-based DoS protection, Supabase RPC for identity-based cross-instance persistence. Graceful fallback to in-memory if RPC fails. Applied to Prior Auth, Edge Functions, and Claude servers.
 
 ---
 
 ### P3-2: MCP Key Rotation Automation **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (Session 6)
 **Estimated:** ~2 hours
 
-**Fix:** Admin UI for key management + expiry alerts.
+**Fix:** Admin UI panel (`MCPKeyManagementPanel`) for key lifecycle: create, rotate, revoke, expiry alerts. Service layer (`mcpKeyManagementService.ts`) wrapping existing `create_mcp_key()`, `revoke_mcp_key()` RPCs. Rotation creates replacement key then revokes old. Expiry alert banner warns 14 days before expiration. Super_admin only (RLS enforced). 13 behavioral tests.
 
 ---
 
 ### P3-3: Request Body Size Limits **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (Session 6)
 **Estimated:** ~1 hour
 
-**Fix:** Content-Length check, reject > 512KB for most servers.
+**Fix:** `checkBodySize()` in `mcpServerBase.ts` checks Content-Length header (zero-overhead). 512KB limit for standard servers (Claude, Prior Auth, Edge Functions, Postgres, Medical Codes), 2MB limit for FHIR and HL7/X12 servers (large payloads). Returns 413 Payload Too Large with JSON-RPC error.
 
 ---
 
 ### P3-4: Dynamic Pricing for Claude Cost Tracker **(Claude)**
 
-**Status:** TODO
+**Status:** DONE (Session 6)
 **Estimated:** ~1 hour
 
-**Fix:** Move pricing to `_shared/models.ts` or database table.
+**Fix:** Centralized `MODEL_PRICING` record and `calculateModelCost()` in `_shared/models.ts`. Replaced hardcoded `calculateCost` in Claude server. Added Opus pricing (was missing). Single source of truth for all model cost calculations.
 
 ---
 
 ### P3-5: Confidence + Provenance Metadata **(ChatGPT)**
 
-**Status:** TODO
+**Status:** DONE (Session 6)
 **Estimated:** ~2 hours
 
-**Fix:** Extend MCP response metadata with:
-- Data source provenance (DB vs external registry)
-- Freshness timestamp
-- Confidence score (if AI involved)
-- Safety flags (if output touches clinical guidance)
+**Fix:** `MCPProvenance` interface + `buildProvenance()` helper in `mcpServerBase.ts`. Applied server-appropriate values across 7 servers:
+- Claude: `ai_generated` + `requires_clinical_review` safety flags
+- FHIR/Postgres/Prior Auth: `database` source + `dataFreshnessISO`
+- Medical Codes: `database` + `reference_only` flag
+- HL7/X12: `computed` + `reference_only` flag
+- Edge Functions: `computed`
 
 **Files:** `_shared/mcpServerBase.ts` (extend metadata schema), each server's response builder
 
