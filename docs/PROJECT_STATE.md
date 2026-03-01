@@ -4,7 +4,7 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-03-01
-**Last Session:** MCP Server Compliance Session 6 — P3-1 through P3-5 COMPLETE (persistent rate limits, key management, body limits, dynamic pricing, provenance)
+**Last Session:** Compass Riley V2 Session 1 — Reasoning Engine Core COMPLETE (7 modules + 69 tests)
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -62,17 +62,15 @@
 
 ---
 
-## Current Priority: Compass Riley V2 / Skills Overhaul — NEXT
+## Current Priority: Compass Riley V2 — IN PROGRESS
 
-MCP Server Compliance is COMPLETE (22/23, P2-7 deferred). Next priorities per Maria's direction:
+MCP Server Compliance is COMPLETE (22/23, P2-7 deferred). Compass Riley V2 started.
 
 | # | Feature | Tracker | Sessions | Status |
 |---|---------|---------|----------|--------|
-| 1 | Compass Riley V2 — CoT/ToT Reasoning Modes | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | 3 | TODO |
+| 1 | Compass Riley V2 — CoT/ToT Reasoning Modes | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | 3 | **Session 1 DONE, Sessions 2-3 TODO** |
 | 2 | Cultural Competency MCP Server | `docs/trackers/cultural-competency-mcp-tracker.md` | 3-4 | TODO |
 | 3 | Skills Overhaul — 10 new skills + 5 updates | `docs/SKILLS_ASSESSMENT_2026-02-28.md` | 2-3 | TODO |
-
-**Maria to decide priority order at next session.**
 
 ---
 
@@ -84,7 +82,7 @@ MCP Server Compliance is COMPLETE (22/23, P2-7 deferred). Next priorities per Ma
 
 | # | Feature | Tracker | Sessions | Status |
 |---|---------|---------|----------|--------|
-| 1 | Compass Riley V2 — CoT/ToT Reasoning Modes | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | 3 | TODO |
+| 1 | Compass Riley V2 — CoT/ToT Reasoning Modes | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | 3 | **Session 1 DONE** |
 | 2 | Cultural Competency MCP Server | `docs/trackers/cultural-competency-mcp-tracker.md` | 3-4 | TODO |
 | 3 | Integration — Cultural context feeds ToT confidence | Both trackers | Part of session 3 of each | TODO |
 
@@ -165,7 +163,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
 | **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1-3 Session 5 DONE — 870+ tests, Tier 3 Sessions 6-7 TODO** |
 | **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **COMPLETE — 22/23 done (P2-7 deferred), 6 sessions** |
-| **Compass Riley V2 Reasoning** | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | **NEW — Chain/Tree of Thought modes, 3 sessions, after MCP compliance** |
+| **Compass Riley V2 Reasoning** | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | **Session 1 DONE — engine core (7 modules, 69 tests). Sessions 2-3 TODO** |
 | **Cultural Competency MCP** | `docs/trackers/cultural-competency-mcp-tracker.md` | **NEW — 8 population profiles, 8 MCP tools, 3-4 sessions, after Riley V2** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
@@ -178,8 +176,8 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 10,327 passed, 0 failed | 2026-03-01 |
-| Test Suites | 519 | 2026-03-01 |
+| Tests | 10,396 passed, 0 failed | 2026-03-01 |
+| Test Suites | 520 | 2026-03-01 |
 | Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-03-01 |
 | Lint | 0 errors, 0 warnings | 2026-03-01 |
 | God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) — MCP servers all under 600 | 2026-02-27 |
@@ -212,7 +210,33 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 ## What Was Completed Last Session (2026-03-01)
 
-### MCP Server Compliance Session 6 — P3-1 through P3-5 (ALL P3 COMPLETE)
+### Compass Riley V2 Session 1 — Reasoning Engine Core (ALL 8 DELIVERABLES COMPLETE)
+
+Built 7 core modules + barrel export in `supabase/functions/_shared/compass-riley/` for Chain of Thought / Tree of Thought proportional reasoning:
+
+| Module | Purpose | Lines |
+|--------|---------|-------|
+| `types.ts` | 13 interfaces: ReasoningMode, TreeSensitivity, ReasonCode, ConfidenceThresholds, TriggerResult, Branch, BranchResult, OutputZone, ReasoningResult + self-contained input types (ReasoningEncounterInput, DiagnosisInput, MedicationInput) | 175 |
+| `modeRouter.ts` | Resolves AUTO/FORCE_CHAIN/FORCE_TREE with shorthand aliases (chain→force_chain, tree→force_tree) | 38 |
+| `sensitivityConfig.ts` | Tenant-level tree sensitivity → confidence thresholds. Conservative: 90/70, Balanced: 80/60, Aggressive: 65/50 | 56 |
+| `treeTriggerEngine.ts` | 4 trigger categories: anomaly/conflict, ambiguity, high-stakes (red flags, 5+ meds, high MDM), low-confidence | 195 |
+| `branchEvaluator.ts` | 2-4 branches, fixed rubric (safety 40%, evidence 30%, blast radius 20%, reversibility 10%), convergence or provider review | 137 |
+| `minimalExplainLayer.ts` | ReasonCode → one short sentence, priority-ordered (HIGH_BLAST_RADIUS > CONFLICTING_SIGNALS > ...) | 46 |
+| `overrideGate.ts` | User mode wins always, warn once if FORCE_CHAIN overrides tree recommendation | 98 |
+| `index.ts` | Barrel re-export | 45 |
+
+**Architecture:** Self-contained input interfaces (ReasoningEncounterInput) structurally compatible with EncounterState — avoids Deno/Node `.ts` import chain issues while maintaining type safety.
+
+**Tests:** 69 tests in `src/services/__tests__/compassRileyReasoning.test.ts` — sensitivity boundary tests at all threshold edges (90/89, 80/79, 70/69, 65/64, 60/59, 50/49), all 4 trigger categories, branch convergence, override scenarios, 4 full pipeline integration scenarios.
+
+**Files changed: 10 (9 new, 1 modified tracker)**
+**Tests: 10,396 passed, 0 failed (520 suites)**
+**Lint: 0 errors, 0 warnings**
+**Typecheck: 0 errors**
+
+---
+
+### Previous Session: MCP Server Compliance Session 6 — P3-1 through P3-5 (ALL P3 COMPLETE)
 
 Completed all 5 P3 (Low/Polish) items. MCP Server Compliance tracker is now 22/23 complete (P2-7 deferred).
 
