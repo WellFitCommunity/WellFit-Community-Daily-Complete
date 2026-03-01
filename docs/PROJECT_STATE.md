@@ -4,8 +4,56 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-03-01
-**Last Session:** Compass Riley V2 Session 1 — Reasoning Engine Core COMPLETE (7 modules + 69 tests)
+**Last Session:** Compass Riley Ambient Learning Session 1 — Wire Disconnected Features COMPLETE (6 deliverables: voice profile update, accuracy tracking, correction reinforcement, stale decay, learning progress UI, milestone celebrations)
 **Updated By:** Claude Opus 4.6
+
+---
+
+## Compass Riley V2 — Reasoning Modes (2026-03-01) — COMPLETE
+
+**Tracker:** `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md`
+
+| Session | Focus | Status |
+|---------|-------|--------|
+| 1 | Reasoning Engine Core (7 modules, 69 tests) | **DONE** |
+| 2 | Integration (pipeline orchestrator, edge functions, UI, audit) | **DONE** |
+| 3 | Testing & Audit (54 tests: triggers, output, override, sensitivity, edge cases, smoke) | **DONE** |
+
+**Session 3 deliverables (all DONE):**
+- `compassRileyReasoningV2.test.ts` (430 lines, 25 tests) — pipeline orchestrator, serialization, edge cases (zero diagnoses, null chief complaint, sparse transcript, contradictory data, extreme confidence, single diagnosis, all-ruled-out)
+- `compassRileyReasoningV2Integration.test.ts` (546 lines, 29 tests) — output format verification (chain/caution/tree), override warning format, sensitivity boundary tests (all 3 levels at exact boundary values), reason code audit payload shape, integration smoke tests (6 clinical scenarios: rural HTN, academic ED, polypharmacy, user override flow, progressive encounter, pediatric dosing)
+
+**New files:**
+- `src/services/__tests__/compassRileyReasoningV2.test.ts`
+- `src/services/__tests__/compassRileyReasoningV2Integration.test.ts`
+
+**Total Compass Riley V2 test coverage:** 123 tests (69 Session 1 + 54 Session 3)
+
+---
+
+## Compass Riley — Ambient Learning & Physician Intuition Engine (2026-03-01) — IN PROGRESS
+
+**Tracker:** `docs/trackers/compass-riley-ambient-learning-tracker.md`
+
+| Session | Focus | Status |
+|---------|-------|--------|
+| 1 | Wire Disconnected Features (6 deliverables: voice profile update, accuracy tracking, correction reinforcement, stale decay, learning progress UI, milestone celebrations) | **DONE** |
+| 2 | Clinical Style Profiler (SOAP note edit observation, style fingerprint, specialty-aware terminology) | **TODO — NEXT** |
+| 3 | Intuitive Adaptation Engine (auto-calibrating assistance, proactive corrections, adaptive SOAP generation) | TODO |
+| 4 | Testing & Verification (learning lifecycle, maturity progression, style profiler, edge cases) | TODO |
+
+**Session 1 deliverables (all DONE):**
+- 1.1: `updateVoiceProfile()` called fire-and-forget at session end (maturity scoring via edge function)
+- 1.2: `VoiceLearningService.updateAccuracy()` updates running average at session end
+- 1.3: `reinforceCorrection()` called per applied correction during live transcription
+- 1.4: `decayOldCorrections(60 days)` runs on session mount (idempotent, stale cleanup)
+- 1.5: `VoiceLearningProgress` rendered in compact mode post-session
+- 1.6: `EAAffirmationToast` milestone celebrations from edge function response (10/50/fully-adapted)
+- 1.7: Smart section ordering — skipped (dashboard concern, not scribe pipeline)
+
+**Files modified:** `useSmartScribe.ts` (585 lines), `audioProcessor.ts` (346), `scribeRecordingService.ts` (291), `RealTimeSmartScribe.tsx` (318), `aiTransparencyService.ts` — all under 600 lines.
+
+**Commit:** `fc96a78e` — `feat(compass-riley): wire disconnected ambient learning features`
 
 ---
 
