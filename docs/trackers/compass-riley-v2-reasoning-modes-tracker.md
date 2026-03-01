@@ -4,7 +4,7 @@
 
 **Total Estimated Sessions:** 3
 **Priority:** After MCP Server Compliance tracker completion
-**Started:** TBD
+**Started:** 2026-03-01
 **Design Origin:** Brainstorm session 2026-02-28 (Maria + Claude Opus 4.6 + ChatGPT design spec)
 
 ---
@@ -172,7 +172,7 @@ These are what the system is likely to produce given the clinical case mix at ea
 
 | Session | Focus | Deliverables | Status |
 |---------|-------|-------------|--------|
-| 1 | Reasoning Engine Core | Mode Router, Tree Trigger Engine, Branch Evaluator, Override Gate, Minimal Explain Layer, Sensitivity Knob | TODO |
+| 1 | Reasoning Engine Core | Mode Router, Tree Trigger Engine, Branch Evaluator, Override Gate, Minimal Explain Layer, Sensitivity Knob | DONE |
 | 2 | Integration with Compass Riley | Wire into SOAP note generator, consultation mode, realtime transcription. Per-tenant sensitivity config. | TODO |
 | 3 | Testing & Audit | Behavioral tests for all trigger types, output format verification, reason code audit logging, sensitivity boundary tests, edge cases | TODO |
 
@@ -186,14 +186,14 @@ These are what the system is likely to produce given the clinical case mix at ea
 
 | # | Task | File | Status |
 |---|------|------|--------|
-| 1.1 | Mode Router — determines AUTO/FORCE_CHAIN/FORCE_TREE from request metadata | `supabase/functions/_shared/compass-riley/modeRouter.ts` | TODO |
-| 1.2 | Tree Trigger Engine — evaluates anomaly/ambiguity/stakes/confidence against sensitivity-adjusted thresholds, emits escalate + reason_code | `supabase/functions/_shared/compass-riley/treeTriggerEngine.ts` | TODO |
-| 1.3 | Branch Evaluator — generates 2-4 branches, scores with fixed rubric, converges | `supabase/functions/_shared/compass-riley/branchEvaluator.ts` | TODO |
-| 1.4 | Minimal Explain Layer — maps reason_code to one 12-word sentence | `supabase/functions/_shared/compass-riley/minimalExplainLayer.ts` | TODO |
-| 1.5 | Override Gate — user mode wins, warn once max | `supabase/functions/_shared/compass-riley/overrideGate.ts` | TODO |
-| 1.6 | Sensitivity Config — reads `tree_sensitivity` from `tenant_ai_skill_config`, returns confidence thresholds for CoT/Caution/ToT zones. Defaults to `balanced` if unset. Logs `reasoning_mode_used` per encounter for observability. | `supabase/functions/_shared/compass-riley/sensitivityConfig.ts` | TODO |
-| 1.7 | Types — ReasoningMode, TriggerResult, BranchResult, ReasonCode, TreeSensitivity, ConfidenceThresholds interfaces | `supabase/functions/_shared/compass-riley/types.ts` | TODO |
-| 1.8 | Unit tests for all 6 components + sensitivity boundary tests (conservative/balanced/aggressive threshold edges) | New test file(s) | TODO |
+| 1.1 | Mode Router — determines AUTO/FORCE_CHAIN/FORCE_TREE from request metadata | `supabase/functions/_shared/compass-riley/modeRouter.ts` | DONE |
+| 1.2 | Tree Trigger Engine — evaluates anomaly/ambiguity/stakes/confidence against sensitivity-adjusted thresholds, emits escalate + reason_code | `supabase/functions/_shared/compass-riley/treeTriggerEngine.ts` | DONE |
+| 1.3 | Branch Evaluator — generates 2-4 branches, scores with fixed rubric, converges | `supabase/functions/_shared/compass-riley/branchEvaluator.ts` | DONE |
+| 1.4 | Minimal Explain Layer — maps reason_code to one 12-word sentence | `supabase/functions/_shared/compass-riley/minimalExplainLayer.ts` | DONE |
+| 1.5 | Override Gate — user mode wins, warn once max | `supabase/functions/_shared/compass-riley/overrideGate.ts` | DONE |
+| 1.6 | Sensitivity Config — reads `tree_sensitivity` from `tenant_ai_skill_config`, returns confidence thresholds for CoT/Caution/ToT zones. Defaults to `balanced` if unset. | `supabase/functions/_shared/compass-riley/sensitivityConfig.ts` | DONE |
+| 1.7 | Types — ReasoningMode, TriggerResult, BranchResult, ReasonCode, TreeSensitivity, ConfidenceThresholds + ReasoningEncounterInput, DiagnosisInput, MedicationInput | `supabase/functions/_shared/compass-riley/types.ts` | DONE |
+| 1.8 | Unit tests — 69 tests across all 6 components + sensitivity boundary tests + full pipeline integration scenarios | `src/services/__tests__/compassRileyReasoning.test.ts` | DONE |
 
 ---
 
