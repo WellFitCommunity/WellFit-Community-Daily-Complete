@@ -209,7 +209,8 @@ export class VoiceLearningService {
   }
 
   // Apply corrections to transcript with smart matching
-  static applyCorrections(transcript: string, profile: ProviderVoiceProfile | null): {
+  // specialtyContext: optional detected specialty from PhysicianStyleProfile for weighted sorting
+  static applyCorrections(transcript: string, profile: ProviderVoiceProfile | null, specialtyContext?: string): {
     corrected: string;
     appliedCount: number;
     appliedCorrections: string[];
@@ -225,13 +226,16 @@ export class VoiceLearningService {
     let corrected = transcript;
     const appliedCorrections: string[] = [];
 
-    // Sort by: 1) longer phrases first (more specific), 2) confidence * frequency
+    // Sort by: 1) longer phrases first (more specific), 2) specialty boost, 3) confidence * frequency
     const sorted = [...profile.corrections].sort((a, b) => {
       // Longer phrases are more specific, apply first
       const lengthDiff = b.heard.split(' ').length - a.heard.split(' ').length;
       if (lengthDiff !== 0) return lengthDiff;
-      // Then by confidence * frequency score
-      return (b.confidence * b.frequency) - (a.confidence * a.frequency);
+      // Boost corrections matching physician's detected specialty (2x weight)
+      const aBoost = specialtyContext && a.medicalDomain === specialtyContext ? 2 : 1;
+      const bBoost = specialtyContext && b.medicalDomain === specialtyContext ? 2 : 1;
+      // Then by boosted confidence * frequency score
+      return (b.confidence * b.frequency * bBoost) - (a.confidence * a.frequency * aBoost);
     });
 
     sorted.forEach(correction => {

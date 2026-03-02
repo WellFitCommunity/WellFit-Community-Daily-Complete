@@ -386,7 +386,7 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 ### P2-7: Cross-Server Chain Implementation **(Claude)**
 
 **Status:** TODO — Deferred (business prioritization required)
-**Estimated:** ~46 hours (6-8 sessions)
+**Estimated:** ~70 hours (8-10 sessions) — includes Chain 6: Medical Coding Processor (24h)
 
 | Chain | Servers | Est. Hours | Business Value |
 |-------|---------|-----------|---------------|
@@ -395,6 +395,54 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 | 3. Clinical Decision Support | FHIR → PubMed → CMS → Claude | 8 | HIGH |
 | 4. Encounter-to-Claim | FHIR → Medical Codes → CMS → HL7 → Clearinghouse | 16 | HIGH |
 | 5. Prior Auth Workflow | CMS → Prior Auth → FHIR → Clearinghouse | 12 | HIGH |
+| 6. Medical Coding Processor (Daily Billable Snapshot) | FHIR → Claude → Medical Codes → CMS → Postgres | 24 | **CRITICAL** |
+
+#### Chain 6: Medical Coding Processor — Per-Day Encounter Ledger
+
+**Purpose:** Auto-capture and optimize inpatient revenue by aggregating all billable activity per calendar day of stay, running DRG grouping, and validating charge completeness against payer rules.
+
+**Problem it solves:** Siloed systems (lab, pharmacy, radiology, nursing, case management) don't roll into a unified daily view. Missing charges, under-coded days, and weak documentation cause straight revenue loss on per diem contracts and missed carve-outs on DRG/case rates.
+
+**Components:**
+
+| Component | Description | Est. Hours |
+|-----------|-------------|-----------|
+| 6a. Payer Rules Engine | `payer_rules` table — Medicare (DRG-based, FY-versioned) + Medicaid (state-configurable, per diem tiers). FY2026 TX Medicaid seed data. | 4 |
+| 6b. Daily Charge Aggregator | Per-day encounter ledger — aggregate labs (CPT 8xxxx), imaging, nursing interventions, meds administered, case management, physician E/M codes for a single patient + single date of service | 6 |
+| 6c. DRG Grouper Integration | MS-DRG grouping via AI extraction (Claude) — ICD-10 dx/px, CC/MCC flagging, run grouper 3x (base, +CC, +MCC), pick highest valid DRG. Pin model version per ai_skills. | 6 |
+| 6d. Per-Day Revenue Optimizer | AI validation — "Does this day's documentation support the acuity tier? Missing codes?" Revenue code assignment (HCPCS/CPT per day). Compliance: suggestions only, never auto-file. Audit trail via mcp_audit_logs. | 4 |
+| 6e. Daily Billable Snapshot UI | Admin panel — pick patient + date, see aggregated charges, DRG projection, missing code alerts, revenue code bundle, "midcycle daily audit" queue for coding/case management. | 4 |
+
+**Data model additions:**
+- `payer_rules` — fiscal year, payer type, state code, rule type, acuity tier, rate, revenue codes, COS criteria (JSONB)
+- `daily_charge_snapshots` — patient_id, admit_date, service_date, day_number, charges (JSONB), drg_projection, revenue_codes, optimization_suggestions, status (draft/reviewed/finalized)
+- `drg_grouping_results` — patient_id, encounter_id, icd_codes, drg_code, drg_weight, cc_mcc_flags, grouper_version, ai_skill_key
+
+**FY update automation:** Cron job (pg_cron, Oct 1 Medicare / state-specific Medicaid) to scrape CMS IPPS final rule + state payer updates, LLM-extract rate changes, upsert `payer_rules`, alert admins.
+
+**Payer rule structure:**
+- **Medicare:** DRG-based (MS-DRG v43 FY2026), 2.6% IPPS increase, new DRGs (209, 213), wage index. Hardcoded federal baseline.
+- **TX Medicaid:** Per diem dominant. Rural: 100% allowable; others: 72-76%; spell-of-illness limit. State-configurable.
+- **Other states:** Configurable on tenant onboard (state_code + payer_type in `payer_rules`).
+
+**Architecture decision (defer to implementation time):**
+
+| Option | Approach | Pros | Cons |
+|--------|----------|------|------|
+| **A: New MCP Server** (`mcp-medical-coding-server`, #12) | Standalone server with tools for DRG grouping, charge aggregation, payer rules | Callable by external AI agents/MCP clients, follows existing infra (auth, rate limits, audit, validation) | Another server to maintain, deploy, monitor |
+| **B: Edge Functions + Service Layer** (no new server) | Edge functions (`ai-drg-grouper`, `daily-charge-aggregator`) + `dailyChargeService.ts` + admin panel | Lighter, consumes existing MCP servers (FHIR, Medical Codes, CMS) via Chain 4, fewer moving parts | Not externally callable as MCP tools |
+
+**Decision: Option A — New MCP Server (`mcp-medical-coding-server`, #12).** This is a revenue-critical differentiator. It deserves its own server with full MCP infrastructure (auth gate, rate limiting, audit, input validation, provenance). Externally callable by AI agents and MCP clients.
+
+**Standalone product opportunity:** This server can be sold independently as a SaaS API. Hospitals integrate it into their existing EHR via MCP protocol (or REST wrapper). No WellFit or Envision Atlus UI required. Tools like `optimize_drg`, `aggregate_daily_charges`, `get_payer_rules` are self-contained. Potential new license tier beyond the existing `0`/`8`/`9` model.
+
+**Integration points:**
+- Reads: `encounters`, `lab_results`, `medications`, `clinical_notes`, `fhir_observations`, `fhir_procedures`
+- Writes: `daily_charge_snapshots`, `drg_grouping_results`, `payer_rules`
+- AI: Registered in `ai_skills` (pinned model, structured JSON output, audit trail)
+- Billing: Feeds into existing `claims` / `claim_lines` tables for UB-04 export
+
+**Revenue impact:** Estimated 15-20% missed revenue recovery via DRG bumps + per-day charge completeness.
 
 ---
 
@@ -462,7 +510,8 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 | **4** | P1-2, P1-3, P2-1 | ~7 | **Tools auth, rate limit identity, input validation** |
 | **5** | P2-2, P2-3, P2-4, P2-5, P2-6 | ~9 | **Config, timeouts, unified audit, docs, health dashboard** |
 | **6** | P3-1 through P3-5 | ~8 | **Persistence, key rotation, body limits, pricing, provenance** |
-| **7+** | P2-7 (chains) | ~46 | **Cross-server orchestration (business decision)** |
+| **7+** | P2-7 (chains 1-5) | ~46 | **Cross-server orchestration (business decision)** |
+| **TBD** | P2-7 chain 6 (Medical Coding Processor) | ~24 | **Per-day charge capture, DRG grouping, payer rules, revenue optimization** |
 
 **Session 1 is the highest-priority session.** P0-1 through P0-4 are security fixes that close the multi-tenant data leak path.
 

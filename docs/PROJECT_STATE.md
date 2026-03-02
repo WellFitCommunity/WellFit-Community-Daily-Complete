@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-01
-**Last Session:** Compass Riley Ambient Learning Session 1 — Wire Disconnected Features COMPLETE (6 deliverables: voice profile update, accuracy tracking, correction reinforcement, stale decay, learning progress UI, milestone celebrations)
+**Last Updated:** 2026-03-02
+**Last Session:** Compass Riley Ambient Learning Session 2 — Clinical Style Profiler CODE COMPLETE (6 deliverables: SOAP edit observer, style profiler, style profile table + scribe_sessions columns, specialty-aware corrections, style profile UI, SOAP generator decomposition). Migrations pushed. Tests pending (Session 4).
 **Updated By:** Claude Opus 4.6
 
 ---
@@ -38,9 +38,9 @@
 | Session | Focus | Status |
 |---------|-------|--------|
 | 1 | Wire Disconnected Features (6 deliverables: voice profile update, accuracy tracking, correction reinforcement, stale decay, learning progress UI, milestone celebrations) | **DONE** |
-| 2 | Clinical Style Profiler (SOAP note edit observation, style fingerprint, specialty-aware terminology) | **TODO — NEXT** |
+| 2 | Clinical Style Profiler (SOAP note edit observation, style fingerprint, specialty-aware terminology) | **DONE** (code complete, migrations pushed, tests in Session 4) |
 | 3 | Intuitive Adaptation Engine (auto-calibrating assistance, proactive corrections, adaptive SOAP generation) | TODO |
-| 4 | Testing & Verification (learning lifecycle, maturity progression, style profiler, edge cases) | TODO |
+| 4 | Testing & Verification (learning lifecycle, maturity progression, style profiler, edge cases) | TODO — **NEXT** |
 
 **Session 1 deliverables (all DONE):**
 - 1.1: `updateVoiceProfile()` called fire-and-forget at session end (maturity scoring via edge function)
@@ -54,6 +54,18 @@
 **Files modified:** `useSmartScribe.ts` (585 lines), `audioProcessor.ts` (346), `scribeRecordingService.ts` (291), `RealTimeSmartScribe.tsx` (318), `aiTransparencyService.ts` — all under 600 lines.
 
 **Commit:** `fc96a78e` — `feat(compass-riley): wire disconnected ambient learning features`
+
+**Session 2 deliverables (all DONE):**
+- 2.1: `soapNoteEditObserver.ts` (236 lines) — word-level diffing of SOAP note edits using `diffWords`
+- 2.2: `physicianStyleProfiler.ts` (376 lines) — EMA-based style profiling, verbosity scoring, terminology overrides, specialty detection
+- 2.3: `physician_style_profiles` table + `physician_note_*` columns on `scribe_sessions` — migrations pushed
+- 2.4: Specialty-aware terminology in `voiceLearningService.ts:applyCorrections()` — `specialtyContext` parameter
+- 2.5: `EditableSOAPNote.tsx` (314 lines) + `PhysicianStyleProfile.tsx` (225 lines) — editable SOAP + style transparency UI
+- 2.6: `ai-soap-note-generator` decomposed into 5 focused modules (types, contextGatherer, promptBuilder, responseNormalizer, usageLogger)
+
+**New files:** `soapNoteEditObserver.ts`, `physicianStyleProfiler.ts`, `EditableSOAPNote.tsx`, `PhysicianStyleProfile.tsx`, `ai-soap-note-generator/{types,contextGatherer,promptBuilder,responseNormalizer,usageLogger}.ts`
+**Modified:** `useSmartScribe.ts`, `scribeRecordingService.ts`, `RealTimeSmartScribe.tsx`, `voiceLearningService.ts`, `ai-soap-note-generator/index.ts`
+**Fixed:** `20260228000001_unified_mcp_audit_logs.sql` — `uuid = text` type mismatch in RLS policy
 
 ---
 

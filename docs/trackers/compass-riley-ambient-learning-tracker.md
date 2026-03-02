@@ -74,8 +74,8 @@
 
 | Session | Focus | Deliverables | Status |
 |---------|-------|-------------|--------|
-| 1 | Wire Disconnected Features | Connect all dead code, fire `update-voice-profile`, render learning progress, activate milestone celebrations | TODO |
-| 2 | Clinical Style Profiler | Observe SOAP note edits, build physician style profile, specialty-aware terminology | TODO |
+| 1 | Wire Disconnected Features | Connect all dead code, fire `update-voice-profile`, render learning progress, activate milestone celebrations | **DONE** (2026-03-01) |
+| 2 | Clinical Style Profiler | Observe SOAP note edits, build physician style profile, specialty-aware terminology | **IN PROGRESS** — code complete, needs migrations + tests |
 | 3 | Intuitive Adaptation Engine | Auto-calibrating assistance, proactive correction suggestions, dictation cadence | TODO |
 | 4 | Testing & Verification | Behavioral tests, learning progression scenarios, edge cases | TODO |
 
@@ -89,13 +89,13 @@
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 1.1 | Call `updateVoiceProfile` edge function at end of each scribe session — send session duration, corrections count, learned phrases, terminology | `useSmartScribe.ts` or `scribeRecordingService.ts` | TODO |
-| 1.2 | Call `updateAccuracy()` with session accuracy at recording stop | `useSmartScribe.ts` | TODO |
-| 1.3 | Call `reinforceCorrection()` when a correction is successfully applied during transcription | `audioProcessor.ts` | TODO |
-| 1.4 | Call `decayOldCorrections()` on voice profile load (once per session, if last decay > 24 hours) | `useSmartScribe.ts` | TODO |
-| 1.5 | Render `VoiceLearningProgress` in the scribe UI (compact mode during recording, detailed in session summary) | `RealTimeSmartScribe.tsx` | TODO |
-| 1.6 | Display milestone celebrations when `update-voice-profile` returns new milestones (toast/confetti/modal) | `RealTimeSmartScribe.tsx` or new `MilestoneCelebration.tsx` | TODO |
-| 1.7 | Wire smart section ordering — call `get_smart_section_order()` on dashboard load, apply returned order | Physician panel or dashboard component | TODO |
+| 1.1 | Call `updateVoiceProfile` edge function at end of each scribe session — send session duration, corrections count, learned phrases, terminology | `useSmartScribe.ts` | **DONE** |
+| 1.2 | Call `updateAccuracy()` with session accuracy at recording stop | `useSmartScribe.ts` | **DONE** |
+| 1.3 | Call `reinforceCorrection()` when a correction is successfully applied during transcription | `audioProcessor.ts` | **DONE** |
+| 1.4 | Call `decayOldCorrections()` on voice profile load (once per session, if last decay > 24 hours) | `useSmartScribe.ts` | **DONE** |
+| 1.5 | Render `VoiceLearningProgress` in the scribe UI (compact mode during recording, detailed in session summary) | `RealTimeSmartScribe.tsx` | **DONE** |
+| 1.6 | Display milestone celebrations when `update-voice-profile` returns new milestones (toast/confetti/modal) | `RealTimeSmartScribe.tsx` | **DONE** |
+| 1.7 | Wire smart section ordering — skipped (dashboard concern, not scribe pipeline) | — | **SKIPPED** |
 
 ---
 
@@ -107,11 +107,12 @@
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 2.1 | SOAP Note Edit Observer — detect when physician edits a generated SOAP note (diff between generated and final saved version) | New: `soapNoteEditObserver.ts` | TODO |
-| 2.2 | Style fingerprint extraction — from edit diffs, extract patterns: verbosity preference (word count delta), section emphasis (which sections get expanded/reduced), terminology replacements (Riley said X, doc changed to Y) | New: `physicianStyleProfiler.ts` | TODO |
-| 2.3 | Physician style profile table — store per-provider: preferred_verbosity (measured, not manual), section_emphasis map, terminology_overrides, avg_note_length, documentation_speed | Migration + new table `physician_style_profiles` | TODO |
-| 2.4 | Specialty-aware terminology prioritization — tag corrections with medical domain, weight specialty-relevant corrections higher in `applyCorrections()` | `voiceLearningService.ts` | TODO |
-| 2.5 | Style profile display — show physician what Riley has learned about their documentation style (read-only, transparent) | New component in scribe settings | TODO |
+| 2.1 | SOAP Note Edit Observer — detect when physician edits a generated SOAP note (diff between generated and final saved version) | `soapNoteEditObserver.ts` (236 lines) | **DONE** |
+| 2.2 | Style fingerprint extraction — from edit diffs, extract patterns: verbosity preference (word count delta), section emphasis (which sections get expanded/reduced), terminology replacements (Riley said X, doc changed to Y) | `physicianStyleProfiler.ts` (376 lines) | **DONE** |
+| 2.3 | Physician style profile table — store per-provider: preferred_verbosity (measured, not manual), section_emphasis map, terminology_overrides, avg_note_length, documentation_speed | Migration `20260302000001_physician_style_profiles.sql` + `20260302000000_add_physician_edited_soap.sql` | **DONE** (migration files created, NOT yet pushed to DB) |
+| 2.4 | Specialty-aware terminology prioritization — tag corrections with medical domain, weight specialty-relevant corrections higher in `applyCorrections()` | `voiceLearningService.ts` | **DONE** |
+| 2.5 | Style profile display — show physician what Riley has learned about their documentation style (read-only, transparent) | `PhysicianStyleProfile.tsx` (225 lines), `EditableSOAPNote.tsx` (314 lines) | **DONE** |
+| 2.6 | AI SOAP Note Generator decomposition — split god file into focused modules | `ai-soap-note-generator/{types,contextGatherer,promptBuilder,responseNormalizer,usageLogger}.ts` | **DONE** |
 
 ---
 

@@ -21,7 +21,10 @@ import { submitScribeFeedback, SessionFeedbackData } from '../../../services/scr
 
 // Decomposed modules
 import { useScribePreferences, getAssistanceSettings } from './useScribePreferences';
-import { initializeRecording, saveScribeSession } from './scribeRecordingService';
+import { initializeRecording, saveScribeSession, savePhysicianEdits } from './scribeRecordingService';
+import { analyzeSOAPEdits } from '../../../services/soapNoteEditObserver';
+import { loadStyleProfile, updateStyleProfile } from '../../../services/physicianStyleProfiler';
+import type { PhysicianStyleProfile } from '../../../services/physicianStyleProfiler';
 import {
   DEMO_TRANSCRIPT, DEMO_CODES, DEMO_SOAP, DEMO_SUGGESTIONS, DEMO_MESSAGES,
   DEMO_GROUNDING_FLAGS, DEMO_ENCOUNTER_STATE, DEMO_EVIDENCE_CITATIONS,
@@ -128,6 +131,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const [selectedTextForCorrection, setSelectedTextForCorrection] = useState('');
   const [correctionsAppliedCount, setCorrectionsAppliedCount] = useState(0);
 
+  // Physician style profile (ambient learning Session 2)
+  const [styleProfile, setStyleProfile] = useState<PhysicianStyleProfile | null>(null);
+
   // Session feedback state
   const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -166,6 +172,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         if (profile && profile.corrections.length > 0) {
           setStatus(`Voice learning active (${profile.corrections.length} corrections learned)`);
         }
+
+        // Load physician style profile (ambient learning Session 2)
+        loadStyleProfile(user.id).then(sp => setStyleProfile(sp)).catch(() => {});
 
         // Decay old corrections on session start (fire-and-forget, idempotent)
         VoiceLearningService.decayOldCorrections(user.id, 60).catch(() => {
@@ -473,6 +482,33 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   };
 
   // ============================================================================
+  // PHYSICIAN STYLE LEARNING (SOAP EDIT SAVE)
+  // ============================================================================
+
+  /** Handle saving physician edits to SOAP note — runs observer, persists, updates style profile */
+  const handleSaveEdits = useCallback(async (original: SOAPNote, edited: SOAPNote) => {
+    if (!lastSessionId) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const editAnalysis = analyzeSOAPEdits(original, edited, lastSessionId, user.id);
+
+    // Persist edited note + diff to scribe_sessions
+    await savePhysicianEdits({ sessionId: lastSessionId, editedNote: edited, editAnalysis });
+
+    // Update style profile with EMA (fire-and-forget)
+    updateStyleProfile(user.id, editAnalysis)
+      .then(updated => { if (updated) setStyleProfile(updated); })
+      .catch(() => {});
+
+    auditLogger.info('SCRIBE_SOAP_EDITS_PROCESSED', {
+      sessionId: lastSessionId,
+      sectionsModified: editAnalysis.sectionsModified,
+      verbosityDelta: editAnalysis.overallVerbosityDelta,
+    });
+  }, [lastSessionId]);
+
+  // ============================================================================
   // FEEDBACK & CONSULT PREP
   // ============================================================================
 
@@ -560,6 +596,8 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     consultPrepLoading,
     reasoningResult,
     milestoneToast,
+    styleProfile,
+    lastSessionId,
 
     // Setters
     setTranscript,
@@ -578,6 +616,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     handleFeedbackSubmit,
     handleFeedbackSkip,
     requestConsultPrep,
+    handleSaveEdits,
 
     // Helpers
     getAssistanceSettings,

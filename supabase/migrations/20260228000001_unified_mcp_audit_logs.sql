@@ -55,7 +55,7 @@ CREATE POLICY "Admins can read mcp_audit_logs"
   USING (
     EXISTS (
       SELECT 1 FROM user_roles
-      WHERE user_roles.user_id = auth.uid()::TEXT
+      WHERE user_roles.user_id = auth.uid()
         AND user_roles.role IN ('admin', 'super_admin')
     )
   );

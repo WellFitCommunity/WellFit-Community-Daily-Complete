@@ -18,7 +18,8 @@ import { AssistanceLevelControl } from './AssistanceLevelControl';
 import { RecordingButton } from './RecordingButton';
 import { LiveTranscript } from './LiveTranscript';
 import { BillingCodesList } from './BillingCodesList';
-import { SOAPNote } from './SOAPNote';
+import { EditableSOAPNote } from './EditableSOAPNote';
+import { PhysicianStyleProfile } from './PhysicianStyleProfile';
 import { VoiceCorrectionModal } from './VoiceCorrectionModal';
 import { ScribeModeSwitcher } from './ScribeModeSwitcher';
 import type { ReasoningModeUI } from './ScribeModeSwitcher';
@@ -91,6 +92,9 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     requestConsultPrep,
     milestoneToast,
     setMilestoneToast,
+    styleProfile: _styleProfile,
+    lastSessionId,
+    handleSaveEdits,
   } = useSmartScribe({ ...props, forceDemoMode: globalDemoMode || undefined, scribeMode: currentMode, reasoningMode });
 
   // Handler for saving voice corrections
@@ -229,7 +233,13 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
 
       {/* SOAP Note - Only for Compass Riley scribe mode */}
       {!isSmartScribeMode && !isConsultationMode && soapNote && (
-        <SOAPNote soapNote={soapNote} />
+        <EditableSOAPNote
+          soapNote={soapNote}
+          sessionId={lastSessionId}
+          providerId={voiceProfile?.providerId ?? ''}
+          readOnly={isRecording}
+          onSaveEdits={handleSaveEdits}
+        />
       )}
 
       {/* Consultation Panel - Only for Consultation mode */}
@@ -274,6 +284,14 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
       {/* Voice Learning Progress - shown post-session when profile exists */}
       {!isRecording && voiceProfile && (
         <VoiceLearningProgress
+          providerId={voiceProfile.providerId}
+          compact={true}
+        />
+      )}
+
+      {/* Physician Style Profile — shown post-session after enough data (Session 2) */}
+      {!isRecording && voiceProfile && (
+        <PhysicianStyleProfile
           providerId={voiceProfile.providerId}
           compact={true}
         />

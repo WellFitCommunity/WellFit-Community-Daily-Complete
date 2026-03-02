@@ -24,10 +24,17 @@ import type {
   GroundingFlags,
   ReasoningResultSummary,
 } from './useSmartScribe.types';
+import type { SOAPEditAnalysis } from '../../../services/soapNoteEditObserver';
 
 // ============================================================================
 // Types for callback interface
 // ============================================================================
+
+export interface SavePhysicianEditsParams {
+  sessionId: string;
+  editedNote: SOAPNote;
+  editAnalysis: SOAPEditAnalysis;
+}
 
 export interface ScribeStateSetters {
   setTranscript: (fn: (prev: string) => string) => void;
@@ -288,4 +295,44 @@ export async function saveScribeSession(params: SaveSessionParams): Promise<stri
   });
 
   return session.id;
+}
+
+// ============================================================================
+// Physician Edit Save
+// ============================================================================
+
+/**
+ * Save physician edits to a scribe session's SOAP note.
+ * Persists the edited note and the diff analysis for style profiling.
+ */
+export async function savePhysicianEdits(params: SavePhysicianEditsParams): Promise<boolean> {
+  const { sessionId, editedNote, editAnalysis } = params;
+
+  const { error } = await supabase
+    .from('scribe_sessions')
+    .update({
+      physician_note_subjective: editedNote.subjective || null,
+      physician_note_objective: editedNote.objective || null,
+      physician_note_assessment: editedNote.assessment || null,
+      physician_note_plan: editedNote.plan || null,
+      physician_note_hpi: editedNote.hpi || null,
+      physician_note_ros: editedNote.ros || null,
+      soap_edit_analysis: editAnalysis,
+    })
+    .eq('id', sessionId);
+
+  if (error) {
+    auditLogger.error('SCRIBE_PHYSICIAN_EDITS_SAVE_FAILED', error, {
+      component: 'scribeRecordingService',
+      sessionId,
+    });
+    return false;
+  }
+
+  auditLogger.info('SCRIBE_PHYSICIAN_EDITS_SAVED', {
+    sessionId,
+    sectionsModified: editAnalysis.sectionsModified,
+  });
+
+  return true;
 }
