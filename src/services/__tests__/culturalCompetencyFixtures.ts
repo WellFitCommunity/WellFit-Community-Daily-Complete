@@ -1,9 +1,11 @@
 /**
- * Cultural Competency MCP Server — Test Fixtures
+ * Cultural Competency MCP Server — Test Fixtures (Session 1)
  *
- * Profile data mirrors the edge function profiles for Node test environment.
- * Separated from tests to keep both files under 600 lines.
+ * Types + 4 base profiles: veterans, unhoused, latino, black_aa.
+ * Session 2 profiles in culturalCompetencyFixturesSession2.ts.
  */
+
+import { SESSION_2_PROFILES } from './culturalCompetencyFixturesSession2';
 
 // =====================================================
 // Type definitions (mirror edge function types)
@@ -333,6 +335,7 @@ export const PROFILES: Record<string, CulturalProfile> = {
       },
     ],
   },
+  ...SESSION_2_PROFILES,
 };
 
 /**

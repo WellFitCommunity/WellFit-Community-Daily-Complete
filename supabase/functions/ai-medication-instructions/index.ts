@@ -19,6 +19,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
 
 const getEnv = (...keys: string[]): string => {
   for (const k of keys) {
@@ -69,6 +70,8 @@ interface RequestBody {
   patientContext?: PatientContext;
   includeVisualAids?: boolean;
   tenantId?: string;
+  /** Cultural competency: population hints for culturally-informed instructions */
+  populationHints?: string[];
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -108,9 +111,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { medication, patientContext = {} } = body;
+    const { medication, patientContext = {}, populationHints } = body;
     const language = patientContext.language || "English";
     const readingLevel = patientContext.readingLevel || "simple";
+
+    // Fetch cultural competency context if population hints are provided
+    let culturalPromptSection = "";
+    if (populationHints && populationHints.length > 0) {
+      const culturalContexts = await Promise.all(
+        populationHints.map((pop) => fetchCulturalContext(pop, logger))
+      );
+      const validContexts = culturalContexts.filter(
+        (ctx): ctx is NonNullable<typeof ctx> => ctx !== null
+      );
+      if (validContexts.length > 0) {
+        culturalPromptSection = validContexts
+          .map((ctx) => formatCulturalContextForPrompt(ctx, "medication"))
+          .join("\n");
+        logger.info("Cultural context injected into medication instructions prompt", {
+          populations: validContexts.map((c) => c.population),
+        });
+      }
+    }
 
     // Build the prompt
     const systemPrompt = `You are a medication education specialist who creates patient-friendly medication instructions.
@@ -126,7 +148,7 @@ Language: ${language}
 Reading Level: ${readingLevel === "simple" ? "Very simple (6th grade)" : readingLevel === "detailed" ? "Detailed with medical terms" : "Standard patient education"}
 ${patientContext.hasVisionImpairment ? "Patient has vision impairment - use clear, large-text-friendly descriptions" : ""}
 ${patientContext.hasCognitiveImpairment ? "Patient has cognitive considerations - use extra simple language and reminders" : ""}
-${patientContext.caregiverAdministered ? "A caregiver will be administering this medication - include caregiver-specific instructions" : ""}
+${patientContext.caregiverAdministered ? "A caregiver will be administering this medication - include caregiver-specific instructions" : ""}${culturalPromptSection ? `\n\n${culturalPromptSection}` : ""}
 
 IMPORTANT SAFETY RULES:
 1. Always recommend contacting healthcare provider for questions

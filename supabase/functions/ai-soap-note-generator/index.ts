@@ -20,6 +20,7 @@ import { gatherEncounterContext } from "./contextGatherer.ts";
 import { buildSOAPPrompt } from "./promptBuilder.ts";
 import { normalizeSOAPResponse, getDefaultSOAPNote, redact } from "./responseNormalizer.ts";
 import { logUsage } from "./usageLogger.ts";
+import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -44,6 +45,7 @@ serve(async (req) => {
       providerNotes,
       templateStyle = "standard",
       physicianStyle,
+      populationHints,
     } = body;
 
     // Session 3 (3.5): If no style was passed by the client, fetch from DB using the request JWT
@@ -105,9 +107,28 @@ serve(async (req) => {
       logger
     );
 
+    // Fetch cultural competency context if population hints are provided
+    let culturalPromptSection: string | undefined;
+    if (populationHints && populationHints.length > 0) {
+      const culturalContexts = await Promise.all(
+        populationHints.map((pop) => fetchCulturalContext(pop, logger))
+      );
+      const validContexts = culturalContexts.filter(
+        (ctx): ctx is NonNullable<typeof ctx> => ctx !== null
+      );
+      if (validContexts.length > 0) {
+        culturalPromptSection = validContexts
+          .map((ctx) => formatCulturalContextForPrompt(ctx, "diagnosis"))
+          .join("\n");
+        logger.info("Cultural context injected into SOAP prompt", {
+          populations: validContexts.map((c) => c.population),
+        });
+      }
+    }
+
     // Generate SOAP note via Claude (Session 3: pass style for adaptive generation)
     const startTime = Date.now();
-    const soapNote = await generateSOAPNote(context, templateStyle, logger, resolvedStyle);
+    const soapNote = await generateSOAPNote(context, templateStyle, logger, resolvedStyle, culturalPromptSection);
     const responseTime = Date.now() - startTime;
 
     // Log PHI access for HIPAA compliance
@@ -160,9 +181,10 @@ async function generateSOAPNote(
   context: ReturnType<typeof gatherEncounterContext> extends Promise<infer T> ? T : never,
   templateStyle: string,
   logger: ReturnType<typeof createLogger>,
-  physicianStyle?: PhysicianStyleHint
+  physicianStyle?: PhysicianStyleHint,
+  culturalContext?: string
 ): Promise<GeneratedSOAPNote> {
-  const prompt = buildSOAPPrompt(context, templateStyle, physicianStyle);
+  const prompt = buildSOAPPrompt(context, templateStyle, physicianStyle, culturalContext);
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",

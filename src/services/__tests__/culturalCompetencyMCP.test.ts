@@ -1,12 +1,11 @@
 /**
- * Cultural Competency MCP Server — Behavioral Tests
+ * Cultural Competency MCP Server — Handler Tests (Session 1)
  *
  * Tests the population profile data structures, tool handler logic,
- * and cultural context retrieval. Validates clinical accuracy of
- * profile data and handler edge cases.
+ * and cultural context retrieval for all 8 profiles.
  *
- * Session 1: Veterans, Unhoused, Latino, Black/AA (4 profiles)
- * Session 2: Remaining 4 profiles + AI skill integration
+ * Session 2 tests (SDOH, drug interactions, trust, clinical accuracy,
+ * anti-stereotyping, completeness) in culturalCompetencyMCPSession2.test.ts.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -186,6 +185,41 @@ describe('Cultural Competency MCP Server', () => {
       const conditions = PROFILES.latino.clinicalConsiderations.map((cc) => cc.condition);
       expect(conditions.some((c) => c.includes('Diabetes'))).toBe(true);
     });
+
+    it('isolated elderly profile includes falls, polypharmacy, and social isolation', () => {
+      const conditions = PROFILES.isolated_elderly.clinicalConsiderations.map((cc) => cc.condition);
+      expect(conditions.some((c) => c.includes('Falls'))).toBe(true);
+      expect(conditions.some((c) => c.includes('Polypharmacy'))).toBe(true);
+      expect(conditions.some((c) => c.includes('Social Isolation'))).toBe(true);
+    });
+
+    it('indigenous profile includes diabetes as highest-rate population', () => {
+      const diabetes = PROFILES.indigenous.clinicalConsiderations.find(
+        (cc) => cc.condition.includes('Diabetes')
+      );
+      expect(diabetes).toBeDefined();
+      expect(diabetes?.prevalence).toContain('2.5x');
+    });
+
+    it('indigenous profile includes suicide risk for youth', () => {
+      const suicide = PROFILES.indigenous.clinicalConsiderations.find(
+        (cc) => cc.condition.includes('Suicide')
+      );
+      expect(suicide).toBeDefined();
+      expect(suicide?.prevalence).toContain('highest');
+    });
+
+    it('immigrant/refugee profile includes infectious disease screening and PTSD', () => {
+      const conditions = PROFILES.immigrant_refugee.clinicalConsiderations.map((cc) => cc.condition);
+      expect(conditions.some((c) => c.includes('Infectious') || c.includes('disease'))).toBe(true);
+      expect(conditions.some((c) => c.includes('PTSD') || c.includes('Trauma'))).toBe(true);
+    });
+
+    it('LGBTQ+ elderly profile includes HIV long-term survivors and transgender aging', () => {
+      const conditions = PROFILES.lgbtq_elderly.clinicalConsiderations.map((cc) => cc.condition);
+      expect(conditions.some((c) => c.includes('HIV'))).toBe(true);
+      expect(conditions.some((c) => c.toLowerCase().includes('transgender'))).toBe(true);
+    });
   });
 
   // ---------------------------------------------------
@@ -225,184 +259,42 @@ describe('Cultural Competency MCP Server', () => {
       expect(stigmaBarrier).toBeDefined();
       expect(stigmaBarrier?.impact).toContain('6-8 years');
     });
-  });
 
-  // ---------------------------------------------------
-  // Tool Handler: get_sdoh_codes
-  // ---------------------------------------------------
-  describe('get_sdoh_codes', () => {
-    it('unhoused profile includes Z59.00 (homelessness)', () => {
-      const codes = PROFILES.unhoused.sdohCodes.map((c) => c.code);
-      expect(codes).toContain('Z59.00');
-    });
-
-    it('veterans profile includes Z91.82 (military deployment)', () => {
-      const codes = PROFILES.veterans.sdohCodes.map((c) => c.code);
-      expect(codes).toContain('Z91.82');
-    });
-
-    it('unhoused profile distinguishes sheltered vs unsheltered', () => {
-      const codes = PROFILES.unhoused.sdohCodes.map((c) => c.code);
-      expect(codes).toContain('Z59.01');
-      expect(codes).toContain('Z59.02');
-    });
-  });
-
-  // ---------------------------------------------------
-  // Tool Handler: check_drug_interaction_cultural
-  // ---------------------------------------------------
-  describe('check_drug_interaction_cultural', () => {
-    it('veteran remedies include kratom with warning level', () => {
-      const kratom = PROFILES.veterans.culturalRemedies.find(
-        (r) => r.remedy.toLowerCase().includes('kratom')
+    it('isolated elderly addresses technology barriers', () => {
+      const techBarrier = PROFILES.isolated_elderly.barriers.find(
+        (b) => b.barrier.toLowerCase().includes('technology')
       );
-      expect(kratom).toBeDefined();
-      expect(kratom?.warningLevel).toBe('warning');
-      expect(kratom?.potentialInteractions.some((i) => i.toLowerCase().includes('opioid'))).toBe(true);
+      expect(techBarrier).toBeDefined();
+      expect(techBarrier?.mitigation).toContain('Phone');
     });
 
-    it('Latino remedies include ruda with abortifacient warning', () => {
-      const ruda = PROFILES.latino.culturalRemedies.find(
-        (r) => r.remedy.toLowerCase().includes('ruda')
+    it('indigenous profile addresses IHS funding gap', () => {
+      const fundingBarrier = PROFILES.indigenous.barriers.find(
+        (b) => b.barrier.toLowerCase().includes('ihs') || b.barrier.toLowerCase().includes('funding')
       );
-      expect(ruda).toBeDefined();
-      expect(ruda?.warningLevel).toBe('warning');
-      expect(ruda?.potentialInteractions.some((i) => i.includes('ABORTIFACIENT'))).toBe(true);
+      expect(fundingBarrier).toBeDefined();
     });
 
-    it('unhoused remedies flag alcohol self-medication', () => {
-      const alcohol = PROFILES.unhoused.culturalRemedies.find(
-        (r) => r.remedy.toLowerCase().includes('alcohol')
+    it('immigrant/refugee profile addresses language and fear barriers', () => {
+      const langBarrier = PROFILES.immigrant_refugee.barriers.find(
+        (b) => b.barrier.toLowerCase().includes('language')
       );
-      expect(alcohol).toBeDefined();
-      expect(alcohol?.warningLevel).toBe('warning');
-    });
-
-    it('Black/AA remedies include castor oil with caution level', () => {
-      const castor = PROFILES.black_aa.culturalRemedies.find(
-        (r) => r.remedy.toLowerCase().includes('castor')
+      const fearBarrier = PROFILES.immigrant_refugee.barriers.find(
+        (b) => b.barrier.toLowerCase().includes('fear') || b.barrier.toLowerCase().includes('immigration')
       );
-      expect(castor).toBeDefined();
-      expect(castor?.warningLevel).toBe('caution');
+      expect(langBarrier).toBeDefined();
+      expect(fearBarrier).toBeDefined();
     });
 
-    it('chamomile tea has info level (low risk)', () => {
-      const chamomile = PROFILES.latino.culturalRemedies.find(
-        (r) => r.remedy.toLowerCase().includes('manzanilla')
+    it('LGBTQ+ elderly addresses discrimination in healthcare and long-term care', () => {
+      const healthcareBarrier = PROFILES.lgbtq_elderly.barriers.find(
+        (b) => b.barrier.toLowerCase().includes('discrimination')
       );
-      expect(chamomile).toBeDefined();
-      expect(chamomile?.warningLevel).toBe('info');
-    });
-  });
-
-  // ---------------------------------------------------
-  // Tool Handler: get_trust_building_guidance
-  // ---------------------------------------------------
-  describe('get_trust_building_guidance', () => {
-    it('Black/AA profile references Tuskegee and Henrietta Lacks', () => {
-      const factors = PROFILES.black_aa.trustFactors.map((tf) => tf.factor);
-      expect(factors.some((f) => f.includes('Tuskegee'))).toBe(true);
-      expect(factors.some((f) => f.includes('Henrietta Lacks'))).toBe(true);
-    });
-
-    it('veteran profile references VA scandals', () => {
-      const factors = PROFILES.veterans.trustFactors.map((tf) => tf.factor);
-      expect(factors.some((f) => f.includes('VA'))).toBe(true);
-    });
-
-    it('unhoused profile addresses institutional trauma', () => {
-      const factors = PROFILES.unhoused.trustFactors.map((tf) => tf.factor);
-      expect(factors.some((f) => f.includes('Institutional'))).toBe(true);
-    });
-
-    it('Latino profile addresses forced sterilization history', () => {
-      const factors = PROFILES.latino.trustFactors.map((tf) => tf.factor);
-      expect(factors.some((f) => f.includes('sterilization'))).toBe(true);
-    });
-
-    it('every trust factor includes a building strategy', () => {
-      for (const profile of Object.values(PROFILES)) {
-        for (const tf of profile.trustFactors) {
-          expect(tf.trustBuildingStrategy).toBeTruthy();
-          expect(tf.trustBuildingStrategy.length).toBeGreaterThan(10);
-        }
-      }
-    });
-  });
-
-  // ---------------------------------------------------
-  // Clinical Accuracy Checks
-  // ---------------------------------------------------
-  describe('Clinical accuracy', () => {
-    it('hypertension note acknowledges evolving race-based prescribing guidelines', () => {
-      const htn = PROFILES.black_aa.clinicalConsiderations.find(
-        (cc) => cc.condition.includes('Hypertension')
+      const ltcBarrier = PROFILES.lgbtq_elderly.barriers.find(
+        (b) => b.barrier.toLowerCase().includes('long-term care')
       );
-      expect(htn?.clinicalNote).toContain('no longer recommend race-based');
-    });
-
-    it('maternal mortality note states disparity persists across income levels', () => {
-      const maternal = PROFILES.black_aa.clinicalConsiderations.find(
-        (cc) => cc.condition.includes('Maternal Mortality')
-      );
-      expect(maternal?.clinicalNote).toContain('ALL income and education levels');
-    });
-
-    it('sickle cell note addresses undertreated pain', () => {
-      const scd = PROFILES.black_aa.clinicalConsiderations.find(
-        (cc) => cc.condition.includes('Sickle Cell')
-      );
-      expect(scd?.clinicalNote).toContain('undertreated');
-    });
-
-    it('PTSD screening uses PC-PTSD-5 (current validated tool)', () => {
-      const ptsd = PROFILES.veterans.clinicalConsiderations.find(
-        (cc) => cc.condition.includes('PTSD')
-      );
-      expect(ptsd?.screeningRecommendation).toContain('PC-PTSD-5');
-    });
-
-    it('TB screening for unhoused uses IGRA (preferred over TST)', () => {
-      const tb = PROFILES.unhoused.clinicalConsiderations.find(
-        (cc) => cc.condition.includes('Respiratory')
-      );
-      expect(tb?.screeningRecommendation).toContain('IGRA');
-    });
-  });
-
-  // ---------------------------------------------------
-  // Anti-Stereotyping Safeguards
-  // ---------------------------------------------------
-  describe('Anti-stereotyping safeguards', () => {
-    it('every profile has a non-trivial caveat warning against assumptions', () => {
-      for (const profile of Object.values(PROFILES)) {
-        expect(profile.caveat.length).toBeGreaterThanOrEqual(30);
-        const lowerCaveat = profile.caveat.toLowerCase();
-        const hasWarning =
-          lowerCaveat.includes('not') ||
-          lowerCaveat.includes('avoid') ||
-          lowerCaveat.includes('varies') ||
-          lowerCaveat.includes('ask');
-        expect(hasWarning).toBe(true);
-      }
-    });
-
-    it('avoid phrases prevent harmful communication', () => {
-      expect(PROFILES.veterans.communication.avoidPhrases.some(
-        (p) => p.toLowerCase().includes('kill')
-      )).toBe(true);
-
-      expect(PROFILES.latino.communication.avoidPhrases.some(
-        (p) => p.toLowerCase().includes('legal') || p.toLowerCase().includes('papers')
-      )).toBe(true);
-
-      expect(PROFILES.black_aa.communication.avoidPhrases.some(
-        (p) => p.toLowerCase().includes('you people')
-      )).toBe(true);
-
-      expect(PROFILES.unhoused.communication.avoidPhrases.some(
-        (p) => p.toLowerCase().includes('non-compliant') || p.toLowerCase().includes('compliant')
-      )).toBe(true);
+      expect(healthcareBarrier).toBeDefined();
+      expect(ltcBarrier).toBeDefined();
     });
   });
 });

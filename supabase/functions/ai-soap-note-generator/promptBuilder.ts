@@ -2,6 +2,7 @@
  * SOAP Note Prompt Builder
  *
  * Constructs the Claude API prompt from encounter context.
+ * Supports cultural competency context injection (Session 2.5).
  */
 
 import type { EncounterContext, PhysicianStyleHint } from "./types.ts";
@@ -10,11 +11,14 @@ import type { EncounterContext, PhysicianStyleHint } from "./types.ts";
  * Build the prompt for SOAP note generation.
  * When physicianStyle is provided (Session 3 — 3.5), the prompt adapts to
  * the physician's learned documentation preferences.
+ * When culturalContext is provided (Session 2.5), cultural competency
+ * guidance is injected to produce culturally-informed documentation.
  */
 export function buildSOAPPrompt(
   context: EncounterContext,
   templateStyle: string,
-  physicianStyle?: PhysicianStyleHint
+  physicianStyle?: PhysicianStyleHint,
+  culturalContext?: string
 ): string {
   const sections = [];
 
@@ -121,7 +125,7 @@ ENCOUNTER DATA:
 ${sections.join("\n")}
 
 DOCUMENTATION STYLE: ${templateStyle}
-${styleInstructions[templateStyle] || styleInstructions.standard}${styleAdaptationLines.length > 0 ? `\n\nPHYSICIAN STYLE ADAPTATION (learned from this physician's edits — follow these closely):\n${styleAdaptationLines.join("\n")}` : ""}
+${styleInstructions[templateStyle] || styleInstructions.standard}${styleAdaptationLines.length > 0 ? `\n\nPHYSICIAN STYLE ADAPTATION (learned from this physician's edits — follow these closely):\n${styleAdaptationLines.join("\n")}` : ""}${culturalContext ? `\n\n${culturalContext}` : ""}
 
 Generate a complete SOAP note following these guidelines:
 1. SUBJECTIVE: Patient's reported symptoms, concerns, and relevant history

@@ -4,7 +4,7 @@
 
 **Total Estimated Sessions:** 3-4
 **Priority:** After MCP Server Compliance tracker + Compass Riley V2 reasoning modes
-**Started:** TBD
+**Started:** 2026-03-03 (Sessions 1+2 completed same day)
 **Design Origin:** Brainstorm session 2026-02-28 (Maria + Claude Opus 4.6 + Perplexity design spec)
 
 ---
@@ -104,8 +104,8 @@ When any AI skill needs cultural context, it calls the Cultural Competency MCP s
 
 | Session | Focus | Status |
 |---------|-------|--------|
-| 1 | MCP Server + Population Profiles (1-4) | TODO |
-| 2 | Population Profiles (5-8) + Integration with 3 AI skills | TODO |
+| 1 | MCP Server + Population Profiles (1-4) | DONE (2026-03-03) |
+| 2 | Population Profiles (5-8) + Integration with 3 AI skills | DONE (2026-03-03) |
 | 3 | Integration with remaining AI skills + Testing | TODO |
 | 4 | (Optional) Database-backed profiles + Tenant customization | TODO |
 
@@ -119,15 +119,15 @@ When any AI skill needs cultural context, it calls the Cultural Competency MCP s
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 1.1 | MCP server scaffold (JSON-RPC, auth gate, rate limiting) | `mcp-cultural-competency-server/index.ts` | TODO |
-| 1.2 | Tool definitions and handlers | `mcp-cultural-competency-server/tools.ts`, `toolHandlers.ts` | TODO |
-| 1.3 | Population profile: Veterans | `mcp-cultural-competency-server/profiles/veterans.ts` | TODO |
-| 1.4 | Population profile: Unhoused | `mcp-cultural-competency-server/profiles/unhoused.ts` | TODO |
-| 1.5 | Population profile: Spanish-Speaking / Latino | `mcp-cultural-competency-server/profiles/latino.ts` | TODO |
-| 1.6 | Population profile: Black / African American | `mcp-cultural-competency-server/profiles/black-aa.ts` | TODO |
-| 1.7 | Types — CulturalProfile, CommunicationGuidance, ClinicalConsideration interfaces | `mcp-cultural-competency-server/types.ts` | TODO |
-| 1.8 | Unit tests | New test file(s) | TODO |
-| 1.9 | Deploy + ping verification | Deployment | TODO |
+| 1.1 | MCP server scaffold (JSON-RPC, auth gate, rate limiting) | `mcp-cultural-competency-server/index.ts` | DONE |
+| 1.2 | Tool definitions and handlers | `mcp-cultural-competency-server/tools.ts`, `toolHandlers.ts` | DONE |
+| 1.3 | Population profile: Veterans | `mcp-cultural-competency-server/profiles/veterans.ts` | DONE |
+| 1.4 | Population profile: Unhoused | `mcp-cultural-competency-server/profiles/unhoused.ts` | DONE |
+| 1.5 | Population profile: Spanish-Speaking / Latino | `mcp-cultural-competency-server/profiles/latino.ts` | DONE |
+| 1.6 | Population profile: Black / African American | `mcp-cultural-competency-server/profiles/blackAA.ts` | DONE |
+| 1.7 | Types — CulturalProfile, CommunicationGuidance, ClinicalConsideration interfaces | `mcp-cultural-competency-server/types.ts` | DONE |
+| 1.8 | Unit tests | `culturalCompetencyMCP.test.ts` | DONE (39 tests) |
+| 1.9 | Deploy + ping verification | Deployment | PENDING (needs `supabase functions deploy`) |
 
 ---
 
@@ -139,14 +139,14 @@ When any AI skill needs cultural context, it calls the Cultural Competency MCP s
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 2.1 | Population profile: Isolated Elderly | `profiles/isolated-elderly.ts` | TODO |
-| 2.2 | Population profile: Indigenous / Native American | `profiles/indigenous.ts` | TODO |
-| 2.3 | Population profile: Immigrant / Refugee | `profiles/immigrant-refugee.ts` | TODO |
-| 2.4 | Population profile: LGBTQ+ Elderly | `profiles/lgbtq-elderly.ts` | TODO |
-| 2.5 | Wire into SOAP Note Generator | `ai-soap-note-generator` | TODO |
-| 2.6 | Wire into Care Plan Generator | `ai-care-plan-generator` | TODO |
-| 2.7 | Wire into Medication Instructions | `ai-medication-instructions` | TODO |
-| 2.8 | MCP client hook for UI access | `src/hooks/useCulturalCompetency.ts` | TODO |
+| 2.1 | Population profile: Isolated Elderly | `profiles/isolatedElderly.ts` | DONE |
+| 2.2 | Population profile: Indigenous / Native American | `profiles/indigenous.ts` | DONE |
+| 2.3 | Population profile: Immigrant / Refugee | `profiles/immigrantRefugee.ts` | DONE |
+| 2.4 | Population profile: LGBTQ+ Elderly | `profiles/lgbtqElderly.ts` | DONE |
+| 2.5 | Wire into SOAP Note Generator | `ai-soap-note-generator` | DONE |
+| 2.6 | Wire into Care Plan Generator | `ai-care-plan-generator` | DONE |
+| 2.7 | Wire into Medication Instructions | `ai-medication-instructions` | DONE |
+| 2.8 | MCP client hook for UI access | `src/hooks/useCulturalCompetency.ts` | DONE |
 
 ---
 
@@ -163,7 +163,7 @@ When any AI skill needs cultural context, it calls the Cultural Competency MCP s
 | 3.3 | Wire into Discharge Summary | `ai-discharge-summary` | TODO |
 | 3.4 | Wire into SDOH Coder | `sdoh-coding-suggest` | TODO |
 | 3.5 | Wire into Compass Riley Tree Trigger Engine | `compass-riley/treeTriggerEngine.ts` | TODO |
-| 3.6 | Behavioral tests — each population profile returns correct data | New test file | TODO |
+| 3.6 | Behavioral tests — each population profile returns correct data | `culturalCompetencyMCP*.test.ts` | DONE (82 tests across 2 suites) |
 | 3.7 | Integration tests — AI skills correctly incorporate cultural context | New test file | TODO |
 | 3.8 | Audit tests — cultural context usage logged to ai_transparency_log | New test file | TODO |
 

@@ -24,6 +24,8 @@ export interface SOAPNoteRequest {
   templateStyle?: "standard" | "comprehensive" | "brief";
   /** Session 3 (3.5): Optional physician style hint for adaptive generation */
   physicianStyle?: PhysicianStyleHint;
+  /** Cultural competency: population hints for culturally-informed documentation */
+  populationHints?: string[];
 }
 
 export interface SOAPNoteSection {

@@ -25,6 +25,8 @@ export interface CarePlanRequest {
   includeMedications?: boolean;
   careTeamRoles?: string[];
   durationWeeks?: number;
+  /** Cultural competency: population hints for culturally-informed care plans */
+  populationHints?: string[];
 }
 
 // =====================================================

@@ -15,13 +15,16 @@ import type { PatientContext } from "./types.ts";
  * Assembles patient demographics, conditions, medications, vitals,
  * SDOH factors, utilization history, and allergies into a structured
  * prompt that requests a JSON care plan response.
+ * When culturalContext is provided (Session 2.6), cultural competency
+ * guidance is injected for culturally-informed care planning.
  */
 export function buildCarePlanPrompt(
   context: PatientContext,
   planType: string,
   focusConditions: string[],
   careTeamRoles: string[],
-  durationWeeks: number
+  durationWeeks: number,
+  culturalContext?: string
 ): string {
   const sections: string[] = [];
 
@@ -118,7 +121,7 @@ export function buildCarePlanPrompt(
 
   return `You are an expert clinical care coordinator creating an evidence-based care plan.
 
-${sections.join("\n")}
+${sections.join("\n")}${culturalContext ? `\n\n${culturalContext}` : ""}
 
 Generate a comprehensive, individualized care plan following these guidelines:
 1. Goals should be SMART (Specific, Measurable, Achievable, Relevant, Time-bound)

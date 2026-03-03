@@ -7,6 +7,10 @@ import { veteransProfile } from "./veterans.ts";
 import { unhousedProfile } from "./unhoused.ts";
 import { latinoProfile } from "./latino.ts";
 import { blackAAProfile } from "./blackAA.ts";
+import { isolatedElderlyProfile } from "./isolatedElderly.ts";
+import { indigenousProfile } from "./indigenous.ts";
+import { immigrantRefugeeProfile } from "./immigrantRefugee.ts";
+import { lgbtqElderlyProfile } from "./lgbtqElderly.ts";
 
 /** Registry of all available population profiles */
 const PROFILE_REGISTRY: Record<string, CulturalProfile> = {
@@ -14,11 +18,10 @@ const PROFILE_REGISTRY: Record<string, CulturalProfile> = {
   unhoused: unhousedProfile,
   latino: latinoProfile,
   black_aa: blackAAProfile,
-  // Session 2 additions:
-  // isolated_elderly: isolatedElderlyProfile,
-  // indigenous: indigenousProfile,
-  // immigrant_refugee: immigrantRefugeeProfile,
-  // lgbtq_elderly: lgbtqElderlyProfile,
+  isolated_elderly: isolatedElderlyProfile,
+  indigenous: indigenousProfile,
+  immigrant_refugee: immigrantRefugeeProfile,
+  lgbtq_elderly: lgbtqElderlyProfile,
 };
 
 /**
@@ -50,4 +53,8 @@ export {
   unhousedProfile,
   latinoProfile,
   blackAAProfile,
+  isolatedElderlyProfile,
+  indigenousProfile,
+  immigrantRefugeeProfile,
+  lgbtqElderlyProfile,
 };

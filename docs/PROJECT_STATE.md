@@ -4,8 +4,8 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-03-03
-**Last Session:** Compass Riley Ambient Learning Session 3 — Intuitive Adaptation Engine complete. 5 deliverables: auto-calibrating assistance (3.1), proactive correction detector (3.2), session pattern learning (3.3), dictation cadence awareness (3.4), adaptive SOAP generation with physician style (3.5). 14 new tests. 10,526 total tests, 0 lint warnings, 0 typecheck errors. useSmartScribe.ts decomposed from 624 → 522 lines.
-**Updated By:** Claude Sonnet 4.6
+**Last Session:** Cultural Competency MCP Server — Sessions 1+2 completed. 8 population profiles (veterans, unhoused, latino, black_aa, isolated_elderly, indigenous, immigrant_refugee, lgbtq_elderly). MCP server with 8 tools. Wired into 3 AI skills (SOAP Note Generator, Care Plan Generator, Medication Instructions). React hook + shared edge function client. 82 behavioral tests. 10,608 total tests, 0 lint warnings, 0 typecheck errors.
+**Updated By:** Claude Opus 4.6
 
 ---
 

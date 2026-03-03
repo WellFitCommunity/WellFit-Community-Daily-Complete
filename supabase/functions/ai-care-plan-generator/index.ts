@@ -38,6 +38,7 @@ import {
 } from "./normalize.ts";
 import { logUsage } from "./usageLogging.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
+import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -61,6 +62,7 @@ serve(async (req) => {
       includeMedications = true,
       careTeamRoles = ["nurse", "physician", "care_coordinator"],
       durationWeeks = 12,
+      populationHints,
     } = body;
 
     if (!patientId) {
@@ -105,6 +107,25 @@ serve(async (req) => {
       logger
     );
 
+    // Fetch cultural competency context if population hints are provided
+    let culturalPromptSection: string | undefined;
+    if (populationHints && populationHints.length > 0) {
+      const culturalContexts = await Promise.all(
+        populationHints.map((pop) => fetchCulturalContext(pop, logger))
+      );
+      const validContexts = culturalContexts.filter(
+        (ctx): ctx is NonNullable<typeof ctx> => ctx !== null
+      );
+      if (validContexts.length > 0) {
+        culturalPromptSection = validContexts
+          .map((ctx) => formatCulturalContextForPrompt(ctx, "care_plan"))
+          .join("\n");
+        logger.info("Cultural context injected into care plan prompt", {
+          populations: validContexts.map((c) => c.population),
+        });
+      }
+    }
+
     // Generate care plan via Claude
     const startTime = Date.now();
     const carePlan = await generateCarePlan(
@@ -113,7 +134,8 @@ serve(async (req) => {
       focusConditions || [],
       careTeamRoles,
       durationWeeks,
-      logger
+      logger,
+      culturalPromptSection
     );
     const responseTime = Date.now() - startTime;
 
@@ -193,14 +215,16 @@ async function generateCarePlan(
   focusConditions: string[],
   careTeamRoles: string[],
   durationWeeks: number,
-  logger: ReturnType<typeof createLogger>
+  logger: ReturnType<typeof createLogger>,
+  culturalContext?: string
 ): Promise<GeneratedCarePlan> {
   const prompt = buildCarePlanPrompt(
     context,
     planType,
     focusConditions,
     careTeamRoles,
-    durationWeeks
+    durationWeeks,
+    culturalContext
   );
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
