@@ -317,6 +317,15 @@ export {
 } from './mcpNPIRegistryClient';
 
 // =====================================================
+// NPI-to-FHIR MAPPER (Cross-Server Chain)
+// =====================================================
+
+export {
+  mapNPIToFHIRPractitioner,
+  type FHIRPractitionerResource
+} from './npiToFHIRMapper';
+
+// =====================================================
 // CMS COVERAGE MCP (Medicare Coverage Lookups)
 // =====================================================
 
@@ -344,6 +353,25 @@ export {
   type CoverageArticle,
   type CMSCoverageResult
 } from './mcpCMSCoverageClient';
+
+// =====================================================
+// PRIOR AUTH MCP (Authorization Lifecycle)
+// =====================================================
+
+export {
+  // Client class
+  priorAuthMCP,
+  // Types
+  type PriorAuthRequest as PriorAuthMCPRequest,
+  type PriorAuthRecord,
+  type PriorAuthDecision,
+  type PriorAuthAppeal as PriorAuthMCPAppeal,
+  type PriorAuthAppealRecord,
+  type PriorAuthRequiredCheck,
+  type PriorAuthStatistics,
+  type FHIRClaimResource,
+  type PriorAuthResult as PriorAuthMCPResult
+} from './mcpPriorAuthClient';
 
 // =====================================================
 // PUBMED MCP (Biomedical Literature Search)

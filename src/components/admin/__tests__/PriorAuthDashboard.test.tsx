@@ -49,6 +49,44 @@ vi.mock('../../../services/auditLogger', () => ({
   },
 }));
 
+vi.mock('../../../hooks/usePriorAuthMCP', () => ({
+  usePriorAuthMCP: () => ({
+    status: 'idle',
+    error: null,
+    isLoading: false,
+    createPriorAuth: vi.fn(),
+    submitPriorAuth: vi.fn(),
+    recordDecision: vi.fn(),
+    createAppeal: vi.fn(),
+    checkRequired: vi.fn(),
+    getStatistics: vi.fn(),
+    cancelAuth: vi.fn(),
+    exportToFHIR: vi.fn().mockResolvedValue(null),
+    resetState: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../services/mcp/mcpPriorAuthClient', () => ({
+  priorAuthMCP: {
+    checkPriorAuthRequired: vi.fn().mockResolvedValue({ success: false }),
+  },
+}));
+
+vi.mock('../../../hooks/usePubMedEvidence', () => ({
+  usePubMedEvidence: () => ({
+    status: 'idle',
+    result: null,
+    error: null,
+    selectedAbstract: null,
+    loadingAbstract: false,
+    searchGuidelineEvidence: vi.fn(),
+    searchDrugInteractionEvidence: vi.fn(),
+    searchEvidence: vi.fn(),
+    fetchAbstract: vi.fn(),
+    reset: vi.fn(),
+  }),
+}));
+
 vi.mock('lucide-react', () => ({
   Clock: () => <span data-testid="icon-clock" />,
   CheckCircle: () => <span data-testid="icon-check" />,
@@ -60,6 +98,17 @@ vi.mock('lucide-react', () => ({
   RefreshCw: () => <span data-testid="icon-refresh" />,
   TrendingUp: () => <span data-testid="icon-trending" />,
   Shield: () => <span data-testid="icon-shield" />,
+  ClipboardCheck: () => <span data-testid="icon-clipboard-check" />,
+  Download: () => <span data-testid="icon-download" />,
+  Loader2: () => <span data-testid="icon-loader" />,
+  AlertCircle: () => <span data-testid="icon-alert-circle" />,
+  X: () => <span data-testid="icon-x-close" />,
+  Copy: () => <span data-testid="icon-copy" />,
+  BookOpen: () => <span data-testid="icon-book" />,
+  ChevronDown: () => <span data-testid="icon-chevron-down" />,
+  ChevronRight: () => <span data-testid="icon-chevron-right" />,
+  Search: () => <span data-testid="icon-search" />,
+  ExternalLink: () => <span data-testid="icon-external" />,
 }));
 
 import PriorAuthDashboard from '../PriorAuthDashboard';

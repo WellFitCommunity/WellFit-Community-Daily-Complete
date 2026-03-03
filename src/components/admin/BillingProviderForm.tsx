@@ -12,6 +12,8 @@ import { useNPIValidation, type NPIValidationStatus } from '../../hooks/useNPIVa
 import { useCreateBillingProvider, useUpdateBillingProvider, useBillingProviders } from '../../hooks/useBillingData';
 import type { BillingProvider, CreateBillingProvider } from '../../types/billing';
 import { isValidNPIFormat } from '../../services/mcp/mcpNPIRegistryClient';
+import { mapNPIToFHIRPractitioner } from '../../services/mcp/npiToFHIRMapper';
+import { fhirMCP } from '../../services/mcp/mcpFHIRClient';
 import { auditLogger } from '../../services/auditLogger';
 
 interface BillingProviderFormProps {
@@ -60,6 +62,8 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
 
   const [showProviderList, setShowProviderList] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [fhirCreating, setFhirCreating] = useState(false);
+  const [fhirResult, setFhirResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const isEditing = !!editingProvider;
 
@@ -94,6 +98,36 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
     if (!formData.npi) return;
     await npiValidation.validateAndLookup(formData.npi);
   }, [formData.npi, npiValidation]);
+
+  const handleCreateFHIRPractitioner = useCallback(async () => {
+    if (!formData.npi || !npiValidation.provider) return;
+    setFhirCreating(true);
+    setFhirResult(null);
+
+    try {
+      const practitionerResource = mapNPIToFHIRPractitioner(formData.npi, npiValidation.provider);
+      const result = await fhirMCP.createResource('Practitioner', practitionerResource as unknown as Record<string, unknown>);
+      if (result.success) {
+        setFhirResult({ success: true, message: 'FHIR Practitioner created successfully' });
+        await auditLogger.clinical('FHIR_PRACTITIONER_CREATED_FROM_NPI', false, {
+          npi: formData.npi,
+          providerName: npiValidation.provider.name,
+        });
+      } else {
+        setFhirResult({ success: false, message: result.error || 'Failed to create FHIR Practitioner' });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create FHIR Practitioner';
+      setFhirResult({ success: false, message: msg });
+      await auditLogger.error(
+        'FHIR_PRACTITIONER_CREATE_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { npi: formData.npi }
+      );
+    } finally {
+      setFhirCreating(false);
+    }
+  }, [formData.npi, npiValidation.provider]);
 
   const handleFieldChange = useCallback((field: keyof CreateBillingProvider, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -280,6 +314,31 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
                 );
               })()}
             </div>
+          </div>
+        )}
+
+        {/* Create FHIR Practitioner */}
+        {npiValidation.provider && npiValidation.status === 'valid' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-blue-800">FHIR Interoperability</h4>
+                <p className="text-xs text-blue-600 mt-0.5">Create a FHIR R4 Practitioner resource from this NPI data</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCreateFHIRPractitioner}
+                disabled={fhirCreating}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all min-h-[44px]"
+              >
+                {fhirCreating ? 'Creating...' : 'Create FHIR Practitioner'}
+              </button>
+            </div>
+            {fhirResult && (
+              <p className={`mt-2 text-sm font-medium ${fhirResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                {fhirResult.message}
+              </p>
+            )}
           </div>
         )}
 

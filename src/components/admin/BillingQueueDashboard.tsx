@@ -459,10 +459,25 @@ const BillingQueueDashboard: React.FC = () => {
                       </EAButton>
                     )}
                     {enc.superbill_status === 'draft' && (
+                      <>
                       <EAButton variant="ghost" size="sm" disabled>
                         <ArrowRight className="w-3 h-3 mr-1" />
                         Submit
                       </EAButton>
+                      <EAButton
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          // Navigate to HL7 Message Lab with Generate 837P mode
+                          window.dispatchEvent(new CustomEvent('navigate-to-section', {
+                            detail: { section: 'hl7-message-test', mode: 'generate_837p' },
+                          }));
+                        }}
+                      >
+                        <FileText className="w-3 h-3 mr-1" />
+                        Generate X12
+                      </EAButton>
+                      </>
                     )}
                   </span>
                 </div>
