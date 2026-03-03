@@ -444,7 +444,9 @@ describe('NurseQuestionManager', () => {
 
       fireEvent.click(screen.getByText('Escalate'));
 
-      expect(screen.getByText('Charge Nurse')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Charge Nurse')).toBeInTheDocument();
+      });
       expect(screen.getByText('Supervisor')).toBeInTheDocument();
       expect(screen.getByText('Physician')).toBeInTheDocument();
     });
@@ -463,7 +465,9 @@ describe('NurseQuestionManager', () => {
       });
 
       fireEvent.click(screen.getByText('Escalate'));
-      fireEvent.click(screen.getByText('Charge Nurse'));
+
+      const chargeNurseBtn = await screen.findByText('Charge Nurse');
+      fireEvent.click(chargeNurseBtn);
 
       await waitFor(() => {
         expect(mockEscalateQuestion).toHaveBeenCalledWith('q-001', 'charge_nurse', undefined);
@@ -488,7 +492,9 @@ describe('NurseQuestionManager', () => {
       await user.type(notesArea, 'Needs physician review for medication concern.');
 
       fireEvent.click(screen.getByText('Escalate'));
-      fireEvent.click(screen.getByText('Physician'));
+
+      const physicianBtn = await screen.findByText('Physician');
+      fireEvent.click(physicianBtn);
 
       await waitFor(() => {
         expect(mockEscalateQuestion).toHaveBeenCalledWith(
@@ -837,7 +843,9 @@ describe('NurseQuestionManager', () => {
       });
 
       fireEvent.click(screen.getByText('Escalate'));
-      fireEvent.click(screen.getByText('Charge Nurse'));
+
+      const chargeNurseBtn = await screen.findByText('Charge Nurse');
+      fireEvent.click(chargeNurseBtn);
 
       await waitFor(() => {
         expect(mockEscalateQuestion).toHaveBeenCalled();

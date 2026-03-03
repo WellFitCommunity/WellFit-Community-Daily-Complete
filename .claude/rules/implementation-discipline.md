@@ -26,3 +26,29 @@ Use this scale (based on the user's proven AI session cadence):
 - If declaring work "complete" but the estimate was multi-session, explicitly say what's done and what remains.
 - Never say "complete" when only one session of a multi-session feature is finished.
 - When a session is about to compact, summarize: what's done, what's next, estimated sessions remaining.
+
+## Pre-Push Checks — REQUIRED
+
+### New files with healthcare URIs
+
+Before pushing any new file that contains `http://` URIs, check `.github/workflows/security-scan.yml` for the exclusion list. Healthcare standard URIs (`http://nucc.org`, `http://hl7.org`, etc.) are identifiers, not insecure protocols — but the security scan doesn't know that unless they're excluded.
+
+- If the URI's domain is already excluded: no action needed.
+- If the URI's domain is NOT excluded: add it to the `grep -v` chain in the insecure protocol scan step before pushing.
+- **Never assume a healthcare URI is already excluded.** Read the actual exclusion list.
+
+### Test timing resilience
+
+Every test that clicks a button which triggers a React state update (e.g., toggling a panel, opening a modal) must use `await screen.findByText()` or `await waitFor()` before interacting with the newly rendered content. `fireEvent.click` followed by an immediate `screen.getByText` on conditional content is a flaky test — it passes locally and fails in CI.
+
+Pattern:
+```typescript
+// ❌ Flaky — works locally, fails in CI
+fireEvent.click(screen.getByText('Escalate'));
+fireEvent.click(screen.getByText('Charge Nurse')); // DOM may not have updated yet
+
+// ✅ Resilient — waits for state update to render
+fireEvent.click(screen.getByText('Escalate'));
+const chargeNurseBtn = await screen.findByText('Charge Nurse');
+fireEvent.click(chargeNurseBtn);
+```

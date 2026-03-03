@@ -56,7 +56,7 @@ jobs:
           echo "## Insecure Protocol Scan" >> $GITHUB_STEP_SUMMARY
 
           # Healthcare standard URIs use http:// by specification - these are NOT security issues
-          # FHIR, LOINC, SNOMED, HL7, UCUM, ADA, AMA-CPT all use http:// URIs as identifiers
+          # FHIR, LOINC, SNOMED, HL7, UCUM, ADA, AMA-CPT, NUCC all use http:// URIs as identifiers
           MATCH_HTTP=$(grep -RniE '\bhttp://' . \
             --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git --exclude-dir=archive --exclude-dir=coverage --exclude-dir=.temp \
             --exclude=package-lock.json --exclude=yarn.lock --exclude=logo.png 2>/dev/null | \
@@ -66,7 +66,7 @@ jobs:
             grep -v "unitsofmeasure\.org" | grep -v "wellfitcommunity\.org" | \
             grep -v "wellfit-community\.com" | grep -v "wellfit.*\.com" | \
             grep -v "www\.w3\.org" | grep -v "ama-assn\.org" | grep -v "ada\.org" | \
-            grep -v "www\.nlm\.nih\.gov" | grep -v "pillbox\.nlm\.nih\.gov" | grep -v "rxnorm" | \
+            grep -v "www\.nlm\.nih\.gov" | grep -v "pillbox\.nlm\.nih\.gov" | grep -v "rxnorm" | grep -v "nucc\.org" | \
             grep -v "example\.com" | grep -v "example\.org" | grep -v "smarthealthit\.org" | grep -v "xmlns=" | grep -v "cvx" | \
             grep -v "\.md:" | grep -v "\.html:" | grep -v "\.svg:" | \
             grep -v "\.json:" | grep -v "\.yml:" | grep -v "\.yaml:" | grep -v "\.test\." || true)
