@@ -105,9 +105,9 @@ When any AI skill needs cultural context, it calls the Cultural Competency MCP s
 | Session | Focus | Status |
 |---------|-------|--------|
 | 1 | MCP Server + Population Profiles (1-4) | DONE (2026-03-03) |
-| 2 | Population Profiles (5-8) + Integration with 3 AI skills | DONE (2026-03-03) |
-| 3 | Integration with remaining AI skills + Testing | TODO |
-| 4 | (Optional) Database-backed profiles + Tenant customization | TODO |
+| 2 | Population Profiles (5-8) + Integration with 7 AI skills + tree trigger | DONE (2026-03-03) |
+| 3 | Integration tests + Audit tests | DONE (2026-03-03) |
+| 4 | (Optional) Database-backed profiles + Tenant customization | DEFERRED |
 
 ---
 
@@ -158,14 +158,14 @@ When any AI skill needs cultural context, it calls the Cultural Competency MCP s
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 3.1 | Wire into Readmission Predictor | `ai-readmission-predictor` | TODO |
-| 3.2 | Wire into Patient Education | `ai-patient-education` | TODO |
-| 3.3 | Wire into Discharge Summary | `ai-discharge-summary` | TODO |
-| 3.4 | Wire into SDOH Coder | `sdoh-coding-suggest` | TODO |
-| 3.5 | Wire into Compass Riley Tree Trigger Engine | `compass-riley/treeTriggerEngine.ts` | TODO |
+| 3.1 | Wire into Readmission Predictor | `ai-readmission-predictor` | DONE (wired in Session 2) |
+| 3.2 | Wire into Patient Education | `ai-patient-education` | DONE (wired in Session 2) |
+| 3.3 | Wire into Discharge Summary | `ai-discharge-summary` | DONE (wired in Session 2) |
+| 3.4 | Wire into SDOH Coder | `sdoh-coding-suggest` | DONE (wired in Session 2) |
+| 3.5 | Wire into Compass Riley Tree Trigger Engine | `compass-riley/treeTriggerEngine.ts` | DONE (wired in Session 2) |
 | 3.6 | Behavioral tests — each population profile returns correct data | `culturalCompetencyMCP*.test.ts` | DONE (82 tests across 2 suites) |
-| 3.7 | Integration tests — AI skills correctly incorporate cultural context | New test file | TODO |
-| 3.8 | Audit tests — cultural context usage logged to ai_transparency_log | New test file | TODO |
+| 3.7 | Integration tests — AI skills correctly incorporate cultural context | `culturalCompetencyIntegration.test.ts` | DONE (35 tests) |
+| 3.8 | Audit tests — cultural context usage logged to ai_transparency_log | `culturalCompetencyAudit.test.ts` | DONE (21 tests) |
 
 ---
 

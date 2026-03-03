@@ -4,8 +4,9 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-03-03
-**Last Session:** Cultural Competency MCP Server — Sessions 1+2 completed. 8 population profiles (veterans, unhoused, latino, black_aa, isolated_elderly, indigenous, immigrant_refugee, lgbtq_elderly). MCP server with 8 tools. Wired into 3 AI skills (SOAP Note Generator, Care Plan Generator, Medication Instructions). React hook + shared edge function client. 82 behavioral tests. 10,608 total tests, 0 lint warnings, 0 typecheck errors.
+**Last Session:** CI/CD fix — resolved security scan failure (nucc.org healthcare URI exclusion) + flaky NurseQuestionManager escalation test (async timing). Added pre-push discipline rules. Previous: MCP Chains Session 2 + Cultural Competency Sessions 1+2.
 **Updated By:** Claude Opus 4.6
+**Codebase Health:** 10,681 tests (534 suites), 0 lint warnings, 0 typecheck errors
 
 ---
 
@@ -151,36 +152,54 @@ Chains 1/2/4/5 partial wired to admin UI (10,474 tests passing, 0 lint warnings)
 
 ---
 
-## Current Priority: Compass Riley V2 — IN PROGRESS
+## Current Priority Summary
 
-MCP Server Compliance is COMPLETE (22/23, P2-7 deferred). Compass Riley V2 started.
+### COMPLETE
 
-| # | Feature | Tracker | Sessions | Status |
-|---|---------|---------|----------|--------|
-| 1 | Compass Riley V2 — CoT/ToT Reasoning Modes | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | 3 | **Session 1 DONE, Sessions 2-3 TODO** |
-| 2 | Cultural Competency MCP Server | `docs/trackers/cultural-competency-mcp-tracker.md` | 3-4 | TODO |
-| 3 | Skills Overhaul — 10 new skills + 5 updates | `docs/SKILLS_ASSESSMENT_2026-02-28.md` | 2-3 | TODO |
+| Feature | Tracker | Sessions | Completed |
+|---------|---------|----------|-----------|
+| Compass Riley V2 — Reasoning Modes | `compass-riley-v2-reasoning-modes-tracker.md` | 3/3 | 2026-03-01 |
+| Compass Riley — Ambient Learning | `compass-riley-ambient-learning-tracker.md` | 4/4 | 2026-03-01 |
+| Patient Context Adoption | `patient-context-adoption-tracker.md` | 3/3 (6 phases) | 2026-02-23 |
+| LD Module (Tier 1+2) | `ld-module-tracker.md` | 7/7 | 2026-02-18 |
+| Oncology Foundation | `oncology-module-tracker.md` | done | 2026-02-17 |
+| Cardiology Foundation | `cardiology-module-tracker.md` | done | 2026-02-17 |
+| Guardian Agent Audit | `guardian-agent-audit-tracker.md` | 3/3 | 2026-02-27 |
+| Nurse Handoff Documentation | `nurse-handoff-documentation-tracker.md` | done | — |
+| Compass Riley Reasoning (v1) | `compass-riley-reasoning-tracker.md` | 10/10 | — |
+| MCP Cross-Server Chains | (PROJECT_STATE inline) | 2 sessions | 2026-03-03 |
+
+### RECENTLY COMPLETED
+
+| Feature | Tracker | Completed |
+|---------|---------|-----------|
+| Cultural Competency MCP (Sessions 1-3) | `cultural-competency-mcp-tracker.md` | 2026-03-03 — 8 profiles, 7 AI skills wired, 138 tests (82 behavioral + 35 integration + 21 audit) |
+
+### DEFERRED POLISH (low priority, do when convenient)
+
+| Feature | Tracker | What's Left |
+|---------|---------|-------------|
+| Tenant Admin Panel Phase 2 | `tenant-admin-panel-tracker.md` | Audit/hardening |
+| MCP Server Compliance P3 | `mcp-server-compliance-tracker.md` | 5 polish items |
+| Envision Admin Hardening | `envision-admin-panel-hardening-tracker.md` | P3 polish |
+
+### NOT STARTED (future work)
+
+| # | Feature | Estimate | Notes |
+|---|---------|----------|-------|
+| 1 | Skills Overhaul — 10 new + 5 updates | 2-3 sessions | `/onboard-tenant` is highest value |
+| 2 | LD Module Tier 3 Moonshots | 4-5 sessions | Birth plan AI, PPD warning, contraindication, patient education |
+| 3 | Oncology Production Build | ~11 sessions | Foundation done, needs full production features |
+| 4 | Cardiology Production Build | ~12-13 sessions | Foundation done, needs full production features |
 
 ---
 
-## Upcoming: Compass Riley V2 + Cultural Competency MCP Server
+## Compass Riley V2 + Cultural Competency — Design Decisions (Reference)
 
 **Designed:** 2026-02-28 brainstorm session (Maria + Claude Opus 4.6 + ChatGPT + Perplexity)
 
-**Build order (after MCP Server Compliance completes):**
-
-| # | Feature | Tracker | Sessions | Status |
-|---|---------|---------|----------|--------|
-| 1 | Compass Riley V2 — CoT/ToT Reasoning Modes | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | 3 | **Session 1 DONE** |
-| 2 | Cultural Competency MCP Server | `docs/trackers/cultural-competency-mcp-tracker.md` | 3-4 | TODO |
-| 3 | Integration — Cultural context feeds ToT confidence | Both trackers | Part of session 3 of each | TODO |
-
-**Key design decisions:**
-- **"Reason broadly, speak narrowly"** — Tree of Thought runs internally, Chain of Thought is the output voice
-- **Proportional response** — confidence score determines output verbosity (>85 concise, 60-84 concise+caution, <60 expand)
-- **3 modes:** AUTO (default), FORCE_CHAIN, FORCE_TREE — user can always grab the wheel
-- **Cultural competency as MCP server** — any of the 26 AI skills can call it for population-specific guidance
-- **8 population profiles:** Veterans, Unhoused, Spanish-Speaking/Latino, Black/AA, Isolated Elderly, Indigenous, Immigrant/Refugee, LGBTQ+ Elderly
+- **Compass Riley V2:** COMPLETE. "Reason broadly, speak narrowly" — Tree of Thought internal, Chain of Thought output. 3 modes: AUTO, FORCE_CHAIN, FORCE_TREE. Proportional response by confidence score.
+- **Cultural Competency:** COMPLETE (Sessions 1-3). 8 population profiles, MCP server with 8 tools, wired into 7 AI skills + Compass Riley tree trigger. 138 tests (82 behavioral + 35 integration + 21 audit). Session 4 (DB-backed profiles) deferred.
 
 ---
 
@@ -829,11 +848,12 @@ Built consultation mode — Riley's third operating mode where it becomes a clin
 
 ---
 
-## Action Items (Time-Sensitive)
+## Action Items
 
-- [ ] **Run headless scripts to generate feature list + user manual** — Maria is excited about this, do it TODAY or TOMORROW
+- [ ] **Run headless scripts to generate feature list + user manual** (from 2026-02-16, still pending)
   - `bash scripts/headless/generate-feature-list.sh > docs/FEATURE_LIST.md`
   - `bash scripts/headless/generate-manual.sh > docs/USER_MANUAL.md`
+- [ ] **Fix Codespace GH_TOKEN** — set to placeholder `your classic PAT`, overrides valid GITHUB_TOKEN. Update or delete in GitHub Settings > Codespaces > Secrets.
 
 ## Blocked Items
 
