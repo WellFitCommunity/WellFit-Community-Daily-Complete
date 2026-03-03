@@ -19,6 +19,7 @@ import {
   XCircle,
   Search,
   Clock,
+  Lock,
 } from 'lucide-react';
 import {
   EACard,
@@ -266,15 +267,13 @@ const EligibilityVerificationPanel: React.FC = () => {
             }
           }
 
-          if (priorAuthCodes.length > 0 || docNeeded.length > 0) {
-            setCoverageAlerts(prev => ({
-              ...prev,
-              [enc.encounter_id]: {
-                priorAuthCodes,
-                documentationNeeded: [...new Set(docNeeded)],
-              },
-            }));
-          }
+          setCoverageAlerts(prev => ({
+            ...prev,
+            [enc.encounter_id]: {
+              priorAuthCodes,
+              documentationNeeded: [...new Set(docNeeded)],
+            },
+          }));
 
           await auditLogger.info('ELIGIBILITY_CMS_COVERAGE_CHECKED', {
             encounterId: enc.encounter_id,
@@ -400,6 +399,7 @@ const EligibilityVerificationPanel: React.FC = () => {
             <span className="w-32">Payer</span>
             <span className="w-28">Date of Service</span>
             <span className="w-24">Coverage</span>
+            <span className="w-28">Prior Auth</span>
             <span className="w-28">Verified At</span>
             <span className="flex-1 text-right">Actions</span>
           </div>
@@ -449,6 +449,27 @@ const EligibilityVerificationPanel: React.FC = () => {
                           {badge.icon} {badge.label}
                         </span>
                       </EABadge>
+                    </span>
+
+                    {/* Prior Auth Badge */}
+                    <span className="w-28">
+                      {coverageAlerts[enc.encounter_id] ? (
+                        coverageAlerts[enc.encounter_id].priorAuthCodes.length > 0 ? (
+                          <a
+                            href="/admin/prior-auth"
+                            className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-800 border border-red-200 px-2 py-0.5 rounded-full hover:bg-red-200 transition-colors font-medium"
+                            title={`PA required for: ${coverageAlerts[enc.encounter_id].priorAuthCodes.join(', ')}`}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <Lock className="w-2.5 h-2.5" />
+                            PA Required
+                          </a>
+                        ) : (
+                          <EABadge variant="normal" size="sm">No PA Needed</EABadge>
+                        )
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
                     </span>
 
                     <span className="w-28 text-xs text-gray-500">

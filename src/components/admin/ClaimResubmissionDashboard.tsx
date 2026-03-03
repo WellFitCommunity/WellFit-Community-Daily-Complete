@@ -20,6 +20,7 @@ import {
   Edit3,
   Link,
   Search,
+  Activity,
 } from 'lucide-react';
 import {
   EACard,
@@ -37,6 +38,12 @@ import type {
   ResubmissionStatusFilter,
 } from '../../services/claimResubmissionService';
 import { CorrectionModal, VoidModal, ChainModal } from './ClaimResubmissionModals';
+import {
+  clearinghouseMCP,
+  type ClaimStatus,
+  type RejectionGuidance,
+} from '../../services/mcp/mcpClearinghouseClient';
+import { auditLogger } from '../../services/auditLogger';
 
 function formatCurrency(amount: number): string {
   return `$${(amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -80,6 +87,8 @@ const ClaimResubmissionDashboard: React.FC = () => {
   const [correctionTarget, setCorrectionTarget] = useState<RejectedClaim | null>(null);
   const [voidTarget, setVoidTarget] = useState<RejectedClaim | null>(null);
   const [chainData, setChainData] = useState<ResubmissionChainEntry[] | null>(null);
+  const [claimStatuses, setClaimStatuses] = useState<Record<string, ClaimStatus | 'not_configured' | 'checking'>>({});
+  const [rejectionGuidance, setRejectionGuidance] = useState<Record<string, RejectionGuidance>>({});
 
   const fetchData = useCallback(async (filter?: ResubmissionStatusFilter, search?: string) => {
     setLoading(true);
@@ -133,6 +142,52 @@ const ClaimResubmissionDashboard: React.FC = () => {
     const result = await claimResubmissionService.getResubmissionChain(claimId);
     if (result.success) setChainData(result.data);
   };
+
+  const handleCheckStatus = useCallback(async (claim: RejectedClaim) => {
+    setClaimStatuses(prev => ({ ...prev, [claim.claim_id]: 'checking' }));
+
+    try {
+      const res = await clearinghouseMCP.checkClaimStatus({
+        payer_id: claim.payer_name || 'unknown',
+        provider_npi: '',
+        date_of_service_from: claim.created_at.slice(0, 10),
+        claim_id: claim.claim_id,
+        trace_number: claim.control_number || undefined,
+      });
+
+      if (res.success && res.data?.status_response) {
+        const status = res.data.status_response.status;
+        setClaimStatuses(prev => ({ ...prev, [claim.claim_id]: status }));
+
+        // Load rejection guidance if denial code available
+        const denialCode = claim.denial?.denial_code;
+        if (denialCode && !rejectionGuidance[claim.claim_id]) {
+          try {
+            const guidanceRes = await clearinghouseMCP.getRejectionReasons({ rejection_code: denialCode });
+            if (guidanceRes.success && guidanceRes.data) {
+              const guidance = guidanceRes.data;
+              setRejectionGuidance(prev => ({ ...prev, [claim.claim_id]: guidance }));
+            }
+          } catch (guidanceErr: unknown) {
+            await auditLogger.error(
+              'REJECTION_GUIDANCE_FAILED',
+              guidanceErr instanceof Error ? guidanceErr : new Error(String(guidanceErr)),
+              { claimId: claim.claim_id, denialCode }
+            );
+          }
+        }
+      } else {
+        setClaimStatuses(prev => ({ ...prev, [claim.claim_id]: 'not_configured' }));
+      }
+    } catch (err: unknown) {
+      setClaimStatuses(prev => ({ ...prev, [claim.claim_id]: 'not_configured' }));
+      await auditLogger.error(
+        'CLAIM_STATUS_CHECK_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { claimId: claim.claim_id }
+      );
+    }
+  }, [rejectionGuidance]);
 
   if (loading) {
     return (
@@ -236,39 +291,88 @@ const ClaimResubmissionDashboard: React.FC = () => {
               <p className="text-xs mt-1">All claims are in good standing.</p>
             </div>
           ) : (
-            claims.map(claim => (
-              <div key={claim.claim_id} className="flex flex-wrap sm:flex-nowrap items-center gap-4 px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 transition-colors">
-                <span className="text-sm text-gray-900 w-28 truncate font-medium" title={claim.control_number || claim.claim_id}>
-                  {claim.control_number || claim.claim_id.slice(0, 8)}
-                </span>
-                <span className="text-sm text-gray-600 w-32 truncate" title={claim.payer_name || 'Unknown'}>
-                  {claim.payer_name || 'Unknown'}
-                </span>
-                <span className="text-sm font-medium text-gray-900 w-20 text-right">
-                  {formatCurrency(claim.total_charge)}
-                </span>
-                <span className="w-16 text-center"><ClaimStatusBadge status={claim.status} /></span>
-                <span className="w-16 text-center text-sm text-gray-700">{claim.aging_days}d</span>
-                <span className="text-xs text-gray-500 w-32 truncate" title={claim.denial?.denial_reason || ''}>
-                  {claim.denial?.denial_reason || '--'}
-                </span>
-                <span className="flex-1 flex gap-2 justify-end flex-wrap">
-                  {claim.status === 'rejected' && (
-                    <>
-                      <EAButton variant="primary" size="sm" onClick={() => setCorrectionTarget(claim)}>
-                        <Edit3 className="w-3 h-3 mr-1" />Correct
+            claims.map(claim => {
+              const claimStatus = claimStatuses[claim.claim_id];
+              const guidance = rejectionGuidance[claim.claim_id];
+
+              return (
+                <div key={claim.claim_id} className="border-b last:border-b-0">
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
+                    <span className="text-sm text-gray-900 w-28 truncate font-medium" title={claim.control_number || claim.claim_id}>
+                      {claim.control_number || claim.claim_id.slice(0, 8)}
+                    </span>
+                    <span className="text-sm text-gray-600 w-32 truncate" title={claim.payer_name || 'Unknown'}>
+                      {claim.payer_name || 'Unknown'}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 w-20 text-right">
+                      {formatCurrency(claim.total_charge)}
+                    </span>
+                    <span className="w-16 text-center"><ClaimStatusBadge status={claim.status} /></span>
+                    <span className="w-16 text-center text-sm text-gray-700">{claim.aging_days}d</span>
+                    <span className="text-xs text-gray-500 w-32 truncate" title={claim.denial?.denial_reason || ''}>
+                      {claim.denial?.denial_reason || '--'}
+                    </span>
+                    <span className="flex-1 flex gap-2 justify-end flex-wrap items-center">
+                      {/* Clearinghouse Status Badge */}
+                      {claimStatus === 'checking' && (
+                        <RefreshCw className="w-3 h-3 animate-spin text-blue-500" />
+                      )}
+                      {claimStatus && claimStatus !== 'checking' && claimStatus !== 'not_configured' && (
+                        <EABadge variant={claimStatus === 'paid' ? 'normal' : claimStatus === 'denied' ? 'critical' : 'info'} size="sm">
+                          {claimStatus}
+                        </EABadge>
+                      )}
+                      {claimStatus === 'not_configured' && (
+                        <span className="text-xs text-orange-600" title="Clearinghouse not configured — add vendor credentials in Supabase secrets">
+                          ⚠ Not configured
+                        </span>
+                      )}
+
+                      <EAButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCheckStatus(claim)}
+                        disabled={claimStatus === 'checking'}
+                        title="Check status with clearinghouse"
+                      >
+                        <Activity className="w-3 h-3 mr-1" />Status
                       </EAButton>
-                      <EAButton variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => setVoidTarget(claim)}>
-                        <XCircle className="w-3 h-3 mr-1" />Void
+
+                      {claim.status === 'rejected' && (
+                        <>
+                          <EAButton variant="primary" size="sm" onClick={() => setCorrectionTarget(claim)}>
+                            <Edit3 className="w-3 h-3 mr-1" />Correct
+                          </EAButton>
+                          <EAButton variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => setVoidTarget(claim)}>
+                            <XCircle className="w-3 h-3 mr-1" />Void
+                          </EAButton>
+                        </>
+                      )}
+                      <EAButton variant="ghost" size="sm" onClick={() => handleViewChain(claim.claim_id)}>
+                        <Link className="w-3 h-3 mr-1" />History
                       </EAButton>
-                    </>
+                    </span>
+                  </div>
+
+                  {/* Rejection Guidance (expanded inline) */}
+                  {guidance && guidance.reasons.length > 0 && (
+                    <div className="px-4 pb-3 bg-amber-50 border-t border-amber-100">
+                      <p className="text-xs font-medium text-amber-800 mt-2 mb-1">Remediation Guidance</p>
+                      {guidance.reasons.slice(0, 2).map((r, i) => (
+                        <div key={i} className="text-xs text-amber-700 mb-1">
+                          <span className="font-mono font-medium">{r.code}</span>: {r.remediation}
+                        </div>
+                      ))}
+                      {guidance.appeal_guidance && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          Appeal timeframe: {guidance.appeal_guidance.timeframe}
+                        </p>
+                      )}
+                    </div>
                   )}
-                  <EAButton variant="ghost" size="sm" onClick={() => handleViewChain(claim.claim_id)}>
-                    <Link className="w-3 h-3 mr-1" />History
-                  </EAButton>
-                </span>
-              </div>
-            ))
+                </div>
+              );
+            })
           )}
         </EACardContent>
       </EACard>

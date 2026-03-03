@@ -30,6 +30,22 @@ vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'user-test-001' } }),
 }));
 
+const mockTestConnection = vi.fn();
+const mockGetPayerList = vi.fn();
+
+vi.mock('../../../services/mcp/mcpClearinghouseClient', () => ({
+  clearinghouseMCP: {
+    testConnection: (...args: unknown[]) => mockTestConnection(...args),
+    getPayerList: (...args: unknown[]) => mockGetPayerList(...args),
+  },
+}));
+
+vi.mock('../../../services/auditLogger', () => ({
+  auditLogger: {
+    info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), clinical: vi.fn(), ai: vi.fn(),
+  },
+}));
+
 vi.mock('lucide-react', () => ({
   Save: () => <span data-testid="icon-save" />,
   Eye: () => <span data-testid="icon-eye" />,
@@ -37,6 +53,7 @@ vi.mock('lucide-react', () => ({
   CheckCircle: () => <span data-testid="icon-check" />,
   XCircle: () => <span data-testid="icon-x" />,
   AlertTriangle: () => <span data-testid="icon-alert" />,
+  Wifi: () => <span data-testid="icon-wifi" />,
 }));
 
 // --- Synthetic test data ---
@@ -90,6 +107,9 @@ describe('ClearinghouseConfigPanel', () => {
     vi.restoreAllMocks();
     // Default mount mock: empty config (no existing credentials)
     mockMountRpc();
+    // Default MCP mocks
+    mockTestConnection.mockResolvedValue({ success: false, data: { connected: false } });
+    mockGetPayerList.mockResolvedValue({ success: true, data: { payers: [], total: 0 } });
   });
 
   describe('Provider dropdown', () => {
@@ -340,114 +360,110 @@ describe('ClearinghouseConfigPanel', () => {
       ).toBeInTheDocument();
     });
 
-    it('disables test button when required fields are empty', () => {
+    it('enables test button without requiring filled credential fields', () => {
       renderPanel();
 
       const testBtn = screen.getByRole('button', { name: /Test Connection/i });
-      expect(testBtn).toBeDisabled();
+      // Button is always enabled (MCP probe works regardless of local fields)
+      expect(testBtn).toBeEnabled();
     });
 
-    it('shows success message when test connection succeeds', async () => {
+    it('shows success message and Connected status when MCP testConnection returns connected', async () => {
+      mockTestConnection.mockResolvedValueOnce({
+        success: true,
+        data: { success: true, connected: true, provider: 'waystar', tested_at: '2026-03-03T00:00:00Z' },
+      });
+      mockGetPayerList.mockResolvedValueOnce({
+        success: true,
+        data: { payers: [{ id: 'p1', name: 'Test Payer Alpha', type: 'commercial', states: ['TX'] }], total: 1 },
+      });
+
       renderPanel();
       const user = userEvent.setup();
-
-      await fillRequiredFields(user);
-
-      const mockFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-        new Response(JSON.stringify({ access_token: 'test-token-mock' }), {
-          status: 200,
-        })
-      );
 
       const testBtn = screen.getByRole('button', { name: /Test Connection/i });
       await user.click(testBtn);
 
       await waitFor(() => {
-        expect(screen.getByText(/Connection successful/i)).toBeInTheDocument();
+        expect(screen.getByText(/Clearinghouse connected/i)).toBeInTheDocument();
       });
 
-      mockFetch.mockRestore();
+      expect(mockTestConnection).toHaveBeenCalled();
     });
 
-    it('shows error message when test connection returns non-OK status', async () => {
+    it('shows "Clearinghouse not configured" banner when MCP testConnection returns failure', async () => {
+      mockTestConnection.mockResolvedValueOnce({
+        success: false,
+        error: 'CLEARINGHOUSE_API_KEY not set',
+      });
+
       renderPanel();
       const user = userEvent.setup();
-
-      await fillRequiredFields(user);
-
-      const mockFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-        new Response('Invalid credentials', { status: 401 })
-      );
 
       const testBtn = screen.getByRole('button', { name: /Test Connection/i });
       await user.click(testBtn);
 
       await waitFor(() => {
-        expect(screen.getByText(/Authentication failed/i)).toBeInTheDocument();
+        expect(screen.getByText(/Clearinghouse not configured/i)).toBeInTheDocument();
       });
 
-      mockFetch.mockRestore();
+      expect(screen.getByText(/CLEARINGHOUSE_API_KEY/)).toBeInTheDocument();
+      expect(screen.getByText(/CLEARINGHOUSE_ENDPOINT/)).toBeInTheDocument();
+      expect(screen.getByText(/CLEARINGHOUSE_SENDER_ID/)).toBeInTheDocument();
     });
 
-    it('shows connection error message when fetch throws a network error', async () => {
+    it('shows "not configured" banner when MCP testConnection throws a network error', async () => {
+      mockTestConnection.mockRejectedValueOnce(new Error('Network request failed'));
+
       renderPanel();
       const user = userEvent.setup();
-
-      await fillRequiredFields(user);
-
-      const mockFetch = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(
-        new Error('Network request failed')
-      );
 
       const testBtn = screen.getByRole('button', { name: /Test Connection/i });
       await user.click(testBtn);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Connection error: Network request failed/i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Clearinghouse not configured/i)).toBeInTheDocument();
       });
-
-      mockFetch.mockRestore();
     });
 
-    it('sends OAuth token request to configured API URL with correct body', async () => {
+    it('calls clearinghouseMCP.testConnection when Test Connection button is clicked', async () => {
       renderPanel();
       const user = userEvent.setup();
-
-      await user.type(
-        screen.getByPlaceholderText('https://api.waystar.com/v1'),
-        'https://api.test.example.com'
-      );
-      await user.type(screen.getByPlaceholderText('abc123-your-org-id'), 'test-id-kappa');
-      await user.type(screen.getByPlaceholderText('sk_live_xyz789...'), 'test-secret-kappa');
-
-      const mockFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-        new Response(JSON.stringify({ access_token: 'tok' }), { status: 200 })
-      );
 
       const testBtn = screen.getByRole('button', { name: /Test Connection/i });
       await user.click(testBtn);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.test.example.com/oauth/token',
-          expect.objectContaining({
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          })
-        );
+        expect(mockTestConnection).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('shows payer names when connection succeeds and payers are returned', async () => {
+      mockTestConnection.mockResolvedValueOnce({
+        success: true,
+        data: { success: true, connected: true },
+      });
+      mockGetPayerList.mockResolvedValueOnce({
+        success: true,
+        data: {
+          payers: [
+            { id: 'p1', name: 'Medicare', type: 'medicare', states: ['TX'] },
+            { id: 'p2', name: 'BlueCross', type: 'commercial', states: ['TX'] },
+          ],
+          total: 2,
+        },
       });
 
-      // Verify the body contains correct OAuth parameters
-      const callArgs = mockFetch.mock.calls[0];
-      const requestInit = callArgs[1] as RequestInit;
-      const params = requestInit.body as URLSearchParams;
-      expect(params.get('grant_type')).toBe('client_credentials');
-      expect(params.get('client_id')).toBe('test-id-kappa');
-      expect(params.get('client_secret')).toBe('test-secret-kappa');
+      renderPanel();
+      const user = userEvent.setup();
 
-      mockFetch.mockRestore();
+      const testBtn = screen.getByRole('button', { name: /Test Connection/i });
+      await user.click(testBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('Medicare')).toBeInTheDocument();
+        expect(screen.getByText('BlueCross')).toBeInTheDocument();
+      });
     });
   });
 

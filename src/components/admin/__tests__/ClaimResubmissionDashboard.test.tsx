@@ -38,6 +38,16 @@ vi.mock('../../../services/auditLogger', () => ({
   },
 }));
 
+const mockCheckClaimStatus = vi.fn();
+const mockGetRejectionReasons = vi.fn();
+
+vi.mock('../../../services/mcp/mcpClearinghouseClient', () => ({
+  clearinghouseMCP: {
+    checkClaimStatus: (...args: unknown[]) => mockCheckClaimStatus(...args),
+    getRejectionReasons: (...args: unknown[]) => mockGetRejectionReasons(...args),
+  },
+}));
+
 import ClaimResubmissionDashboard from '../ClaimResubmissionDashboard';
 
 // ============================================================================
@@ -106,6 +116,9 @@ const EMPTY_CLAIMS = { success: true, data: [], error: null };
 describe('ClaimResubmissionDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: MCP not configured
+    mockCheckClaimStatus.mockResolvedValue({ success: false, error: 'CLEARINGHOUSE_API_KEY not set' });
+    mockGetRejectionReasons.mockResolvedValue({ success: false, error: 'Not configured' });
   });
 
   it('shows loading spinner while fetching data', () => {
@@ -407,6 +420,79 @@ describe('ClaimResubmissionDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Connection timeout')).toBeInTheDocument();
+    });
+  });
+
+  describe('Check Status (clearinghouse MCP)', () => {
+    it('renders a Status button per claim row', async () => {
+      mockGetRejectedClaims.mockResolvedValue(CLAIMS_SUCCESS);
+      mockGetResubmissionStats.mockResolvedValue(STATS_SUCCESS);
+
+      render(<ClaimResubmissionDashboard />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Aetna')).toBeInTheDocument();
+      });
+
+      const statusBtns = screen.getAllByTitle('Check status with clearinghouse');
+      expect(statusBtns.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('shows "Not configured" indicator when MCP returns failure on status check', async () => {
+      mockGetRejectedClaims.mockResolvedValue(CLAIMS_SUCCESS);
+      mockGetResubmissionStats.mockResolvedValue(STATS_SUCCESS);
+      mockCheckClaimStatus.mockResolvedValue({ success: false, error: 'Not configured' });
+
+      render(<ClaimResubmissionDashboard />);
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Aetna')).toBeInTheDocument();
+      });
+
+      const statusBtns = screen.getAllByTitle('Check status with clearinghouse');
+      await user.click(statusBtns[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Not configured/i)).toBeInTheDocument();
+      });
+
+      expect(mockCheckClaimStatus).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows clearinghouse status badge when MCP returns claim status', async () => {
+      mockGetRejectedClaims.mockResolvedValue(CLAIMS_SUCCESS);
+      mockGetResubmissionStats.mockResolvedValue(STATS_SUCCESS);
+      mockCheckClaimStatus.mockResolvedValue({
+        success: true,
+        data: {
+          status_response: {
+            claim_id: 'claim-001',
+            payer_id: 'payer-001',
+            status: 'in_review',
+            status_code: '2',
+            status_date: '2026-03-01',
+            status_category: 'Pending',
+            status_category_description: 'Under review',
+          },
+        },
+      });
+      // No guidance needed — claim has a denial code but we won't trigger guidance check in this test
+      mockGetRejectionReasons.mockResolvedValue({ success: false });
+
+      render(<ClaimResubmissionDashboard />);
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Aetna')).toBeInTheDocument();
+      });
+
+      const statusBtns = screen.getAllByTitle('Check status with clearinghouse');
+      await user.click(statusBtns[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText('in_review')).toBeInTheDocument();
+      });
     });
   });
 });

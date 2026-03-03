@@ -269,6 +269,16 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
               )}
               <div><span className="text-green-600">Status:</span> {npiValidation.provider.status}</div>
               <div><span className="text-green-600">Since:</span> {npiValidation.provider.enumeration_date}</div>
+              {(() => {
+                const addr = npiValidation.provider.addresses.find(a => a.type === 'LOCATION') || npiValidation.provider.addresses[0];
+                if (!addr) return null;
+                return (
+                  <div className="col-span-2">
+                    <span className="text-green-600">Address:</span>{' '}
+                    {addr.address_1}, {addr.city}, {addr.state} {addr.postal_code}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}

@@ -62,6 +62,25 @@ vi.mock('../../../services/auditLogger', () => ({
   },
 }));
 
+vi.mock('../../../services/mcp/mcpMedicalCodesClient', () => ({
+  validateBillingCodes: vi.fn().mockResolvedValue({ success: true, data: { is_valid: true, bundling_issues: [], cpt_validation: [], icd10_validation: [] } }),
+}));
+
+// Mock MedicalCodeSearch so BillingQueueDashboard tests stay focused on the dashboard behavior
+vi.mock('../MedicalCodeSearch', () => ({
+  default: ({ onCodeSelect }: { onCodeSelect: (code: string, type: string, desc: string) => void }) => (
+    <div data-testid="medical-code-search-mock">
+      <button
+        type="button"
+        data-testid="mock-select-cpt"
+        onClick={() => onCodeSelect('99213', 'cpt', 'Office visit')}
+      >
+        Select CPT
+      </button>
+    </div>
+  ),
+}));
+
 import BillingQueueDashboard from '../BillingQueueDashboard';
 
 // ============================================================================
@@ -461,6 +480,82 @@ describe('BillingQueueDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Superbill already exists')).toBeInTheDocument();
+    });
+  });
+
+  describe('Code Lookup panel', () => {
+    it('renders Code Lookup toggle button', async () => {
+      mockGetBillingQueue.mockResolvedValue(MOCK_QUEUE_SUCCESS);
+      mockGetBillingQueueStats.mockResolvedValue(MOCK_STATS_SUCCESS);
+
+      render(<BillingQueueDashboard />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Code Lookup')).toBeInTheDocument();
+      });
+    });
+
+    it('expands Code Lookup panel when toggle button is clicked', async () => {
+      mockGetBillingQueue.mockResolvedValue(MOCK_QUEUE_SUCCESS);
+      mockGetBillingQueueStats.mockResolvedValue(MOCK_STATS_SUCCESS);
+
+      render(<BillingQueueDashboard />);
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Code Lookup')).toBeInTheDocument();
+      });
+
+      const toggleBtn = screen.getByRole('button', { name: /Code Lookup/i });
+      expect(toggleBtn).toHaveAttribute('aria-expanded', 'false');
+
+      await user.click(toggleBtn);
+
+      expect(toggleBtn).toHaveAttribute('aria-expanded', 'true');
+      // MedicalCodeSearch mock should be visible
+      expect(screen.getByTestId('medical-code-search-mock')).toBeInTheDocument();
+    });
+
+    it('shows selected code chip after code is selected from MedicalCodeSearch', async () => {
+      mockGetBillingQueue.mockResolvedValue(MOCK_QUEUE_SUCCESS);
+      mockGetBillingQueueStats.mockResolvedValue(MOCK_STATS_SUCCESS);
+
+      render(<BillingQueueDashboard />);
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Code Lookup')).toBeInTheDocument();
+      });
+
+      // Open the panel
+      await user.click(screen.getByRole('button', { name: /Code Lookup/i }));
+
+      // Simulate selecting a CPT code via mock
+      await user.click(screen.getByTestId('mock-select-cpt'));
+
+      // CPT code chip should appear
+      await waitFor(() => {
+        expect(screen.getByText('CPT: 99213')).toBeInTheDocument();
+      });
+    });
+
+    it('closes Code Lookup panel when toggle is clicked again', async () => {
+      mockGetBillingQueue.mockResolvedValue(MOCK_QUEUE_SUCCESS);
+      mockGetBillingQueueStats.mockResolvedValue(MOCK_STATS_SUCCESS);
+
+      render(<BillingQueueDashboard />);
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Code Lookup')).toBeInTheDocument();
+      });
+
+      const toggleBtn = screen.getByRole('button', { name: /Code Lookup/i });
+      await user.click(toggleBtn);
+      expect(screen.getByTestId('medical-code-search-mock')).toBeInTheDocument();
+
+      await user.click(toggleBtn);
+      expect(screen.queryByTestId('medical-code-search-mock')).not.toBeInTheDocument();
     });
   });
 });

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
-import { Save, Eye, EyeOff, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Save, Eye, EyeOff, CheckCircle, XCircle, AlertTriangle, Wifi } from 'lucide-react';
+import { clearinghouseMCP, type PayerInfo } from '../../services/mcp/mcpClearinghouseClient';
+import { auditLogger } from '../../services/auditLogger';
 
 interface ClearinghouseConfig {
   provider: 'waystar' | 'change_healthcare' | 'availity';
@@ -22,6 +24,8 @@ export function ClearinghouseConfigPanel() {
   });
   const [showSecret, setShowSecret] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'not_configured' | 'error'>('unknown');
+  const [payerList, setPayerList] = useState<PayerInfo[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -81,34 +85,44 @@ export function ClearinghouseConfigPanel() {
 
   const testConnection = async () => {
     setTestStatus('testing');
+    setConnectionStatus('unknown');
+    setPayerList([]);
     setMessage('');
 
     try {
-      // Test authentication
-      const response = await fetch(`${config.apiUrl}/oauth/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: config.clientId,
-          client_secret: config.clientSecret
-        })
-      });
+      const result = await clearinghouseMCP.testConnection();
 
-      if (response.ok) {
+      if (result.success && result.data?.connected) {
         setTestStatus('success');
-        setMessage('✅ Connection successful! Credentials are valid.');
+        setConnectionStatus('connected');
+        setMessage('✅ Clearinghouse connected! Credentials are valid.');
+
+        // Load available payers
+        try {
+          const payerResult = await clearinghouseMCP.getPayerList();
+          if (payerResult.success && payerResult.data?.payers) {
+            setPayerList(payerResult.data.payers.slice(0, 5));
+          }
+        } catch (payerErr: unknown) {
+          await auditLogger.error(
+            'CLEARINGHOUSE_PAYER_LIST_FAILED',
+            payerErr instanceof Error ? payerErr : new Error(String(payerErr)),
+            {}
+          );
+        }
       } else {
         setTestStatus('error');
-        const errorText = await response.text();
-        setMessage(`❌ Authentication failed: ${errorText}`);
+        setConnectionStatus('not_configured');
+        setMessage('');
       }
-    } catch (error: unknown) {
+    } catch (err: unknown) {
       setTestStatus('error');
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setMessage(`❌ Connection error: ${errorMessage}`);
+      setConnectionStatus('not_configured');
+      await auditLogger.error(
+        'CLEARINGHOUSE_TEST_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        {}
+      );
     }
 
     setTimeout(() => setTestStatus('idle'), 5000);
@@ -250,8 +264,51 @@ export function ClearinghouseConfigPanel() {
           </p>
         </div>
 
-        {/* Status Message */}
-        {message && (
+        {/* Not Configured Banner */}
+        {connectionStatus === 'not_configured' && (
+          <div className="mb-6 p-4 rounded-lg border bg-orange-50 border-orange-200 text-orange-900" role="alert">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0 text-orange-600" />
+              <div>
+                <p className="font-semibold mb-1">Clearinghouse not configured</p>
+                <p className="text-sm">Add vendor credentials in Supabase secrets:</p>
+                <ul className="mt-1 text-sm font-mono list-disc list-inside space-y-0.5 text-orange-800">
+                  <li>CLEARINGHOUSE_API_KEY</li>
+                  <li>CLEARINGHOUSE_ENDPOINT</li>
+                  <li>CLEARINGHOUSE_SENDER_ID</li>
+                </ul>
+                <p className="text-xs mt-2 text-orange-700">Supported vendors: Waystar, Change Healthcare, Availity</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Connected Status + Payer List */}
+        {connectionStatus === 'connected' && (
+          <div className="mb-6 p-4 rounded-lg border bg-green-50 border-green-200">
+            <div className="flex items-center gap-2 text-green-800 font-semibold mb-2">
+              <Wifi className="h-4 w-4" />
+              Connected
+              {payerList.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-green-700">
+                  — {payerList.length}+ payers available
+                </span>
+              )}
+            </div>
+            {payerList.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {payerList.map(p => (
+                  <span key={p.id} className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                    {p.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Status Message (success/general) */}
+        {message && connectionStatus !== 'not_configured' && (
           <div className={`mb-6 p-4 rounded-lg border ${
             testStatus === 'success'
               ? 'bg-green-50 border-green-200 text-green-800'
@@ -276,7 +333,7 @@ export function ClearinghouseConfigPanel() {
 
           <button
             onClick={testConnection}
-            disabled={testStatus === 'testing' || !config.apiUrl || !config.clientId || !config.clientSecret}
+            disabled={testStatus === 'testing'}
             className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {testStatus === 'testing' ? (

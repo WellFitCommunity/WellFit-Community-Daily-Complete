@@ -38,6 +38,11 @@ vi.mock('../../../services/auditLogger', () => ({
   },
 }));
 
+const mockCheckPriorAuthRequired = vi.fn();
+vi.mock('../../../services/mcp/mcpCMSCoverageClient', () => ({
+  checkPriorAuthRequired: (...args: unknown[]) => mockCheckPriorAuthRequired(...args),
+}));
+
 import EligibilityVerificationPanel from '../EligibilityVerificationPanel';
 
 // ============================================================================
@@ -132,6 +137,11 @@ const MOCK_EMPTY_STATS = {
 describe('EligibilityVerificationPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: CMS prior auth not required
+    mockCheckPriorAuthRequired.mockResolvedValue({
+      success: true,
+      data: { requires_prior_auth: false, cpt_code: '', documentation_required: [] },
+    });
   });
 
   it('shows loading spinner while fetching data', () => {
@@ -368,6 +378,91 @@ describe('EligibilityVerificationPanel', () => {
 
     await waitFor(() => {
       expect(screen.getByText('No payer assigned to this encounter')).toBeInTheDocument();
+    });
+  });
+
+  describe('Prior Authorization badge', () => {
+    it('shows PA Required badge with link when CMS checkPriorAuthRequired returns true', async () => {
+      mockGetEncountersForVerification.mockResolvedValue(MOCK_ENCOUNTERS_SUCCESS);
+      mockGetEligibilityStats.mockResolvedValue(MOCK_STATS_SUCCESS);
+      mockVerifyEncounterEligibility.mockResolvedValue({
+        success: true,
+        data: { coverage_status: 'active' },
+        error: null,
+      });
+      mockCheckPriorAuthRequired.mockResolvedValue({
+        success: true,
+        data: {
+          requires_prior_auth: true,
+          cpt_code: '90837',
+          documentation_required: ['Clinical notes', 'Diagnosis summary'],
+        },
+      });
+
+      // Use an encounter with a procedure_codes field
+      const encounterWithCodes = {
+        ...MOCK_ENCOUNTERS[0],
+        procedure_codes: ['90837'],
+      };
+      mockGetEncountersForVerification.mockResolvedValue({
+        success: true,
+        data: [encounterWithCodes],
+        error: null,
+      });
+
+      render(<EligibilityVerificationPanel />);
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Verify')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByText('Verify'));
+
+      await waitFor(() => {
+        expect(screen.getByText('PA Required')).toBeInTheDocument();
+      });
+
+      // The PA Required badge should be a link to /admin/prior-auth
+      const paLink = screen.getByText('PA Required').closest('a');
+      expect(paLink).toHaveAttribute('href', '/admin/prior-auth');
+    });
+
+    it('shows "No PA Needed" badge when verification finds no prior auth requirements', async () => {
+      mockGetEncountersForVerification.mockResolvedValue(MOCK_ENCOUNTERS_SUCCESS);
+      mockGetEligibilityStats.mockResolvedValue(MOCK_STATS_SUCCESS);
+      mockVerifyEncounterEligibility.mockResolvedValue({
+        success: true,
+        data: { coverage_status: 'active' },
+        error: null,
+      });
+      mockCheckPriorAuthRequired.mockResolvedValue({
+        success: true,
+        data: { requires_prior_auth: false, cpt_code: '99213', documentation_required: [] },
+      });
+
+      const encounterWithCodes = {
+        ...MOCK_ENCOUNTERS[0],
+        procedure_codes: ['99213'],
+      };
+      mockGetEncountersForVerification.mockResolvedValue({
+        success: true,
+        data: [encounterWithCodes],
+        error: null,
+      });
+
+      render(<EligibilityVerificationPanel />);
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Verify')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByText('Verify'));
+
+      await waitFor(() => {
+        expect(screen.getByText('No PA Needed')).toBeInTheDocument();
+      });
     });
   });
 });

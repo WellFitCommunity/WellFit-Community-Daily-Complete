@@ -19,6 +19,8 @@ import {
   Plus,
   Search,
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   EACard,
@@ -37,6 +39,9 @@ import type {
   SuperbillStatus,
 } from '../../services/encounterBillingBridgeService';
 import { useBillingCodeValidation, type CodeValidationState } from '../../hooks/useBillingCodeValidation';
+import MedicalCodeSearch, { type CodeType } from './MedicalCodeSearch';
+import { validateBillingCodes } from '../../services/mcp/mcpMedicalCodesClient';
+import { auditLogger } from '../../services/auditLogger';
 
 // =============================================================================
 // TYPES
@@ -113,6 +118,10 @@ const BillingQueueDashboard: React.FC = () => {
   const [patientSearch, setPatientSearch] = useState('');
   const [generating, setGenerating] = useState<string | null>(null);
   const [validationResults, setValidationResults] = useState<Record<string, CodeValidationState>>({});
+  const [codeLookupOpen, setCodeLookupOpen] = useState(false);
+  const [lookupSelectedCPT, setLookupSelectedCPT] = useState<string[]>([]);
+  const [lookupSelectedICD10, setLookupSelectedICD10] = useState<string[]>([]);
+  const [lookupValidation, setLookupValidation] = useState<{ valid: boolean; issues: string[] } | null>(null);
   const codeValidation = useBillingCodeValidation();
 
   const fetchData = useCallback(async () => {
@@ -141,6 +150,30 @@ const BillingQueueDashboard: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleCodeSelect = useCallback(async (code: string, codeType: CodeType, _description: string) => {
+    const newCPT = codeType === 'cpt' ? [...lookupSelectedCPT, code] : lookupSelectedCPT;
+    const newICD10 = codeType === 'icd10' ? [...lookupSelectedICD10, code] : lookupSelectedICD10;
+
+    if (codeType === 'cpt') setLookupSelectedCPT(newCPT);
+    if (codeType === 'icd10') setLookupSelectedICD10(newICD10);
+
+    if (newCPT.length > 0 || newICD10.length > 0) {
+      try {
+        const res = await validateBillingCodes(newCPT, newICD10);
+        if (res.success && res.data) {
+          const issues = res.data.bundling_issues.map(i => i.issue);
+          setLookupValidation({ valid: res.data.is_valid, issues });
+        }
+      } catch (err: unknown) {
+        await auditLogger.error(
+          'CODE_LOOKUP_VALIDATION_FAILED',
+          err instanceof Error ? err : new Error(String(err)),
+          { cptCodes: newCPT, icd10Codes: newICD10 }
+        );
+      }
+    }
+  }, [lookupSelectedCPT, lookupSelectedICD10]);
 
   const handleGenerate = async (enc: BillingQueueEncounter) => {
     setGenerating(enc.encounter_id);
@@ -225,6 +258,72 @@ const BillingQueueDashboard: React.FC = () => {
           {error}
         </EAAlert>
       )}
+
+      {/* Code Lookup Panel */}
+      <EACard>
+        <button
+          type="button"
+          onClick={() => setCodeLookupOpen(o => !o)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          aria-expanded={codeLookupOpen}
+        >
+          <span className="flex items-center gap-2">
+            <Search className="w-4 h-4 text-gray-400" />
+            Code Lookup
+            {lookupSelectedCPT.length > 0 && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                {lookupSelectedCPT.length} CPT{lookupSelectedICD10.length > 0 ? `, ${lookupSelectedICD10.length} ICD-10` : ''}
+              </span>
+            )}
+          </span>
+          {codeLookupOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {codeLookupOpen && (
+          <EACardContent className="pt-0 pb-4 px-4 space-y-3">
+            <MedicalCodeSearch
+              onCodeSelect={handleCodeSelect}
+              selectedCodes={[...lookupSelectedCPT, ...lookupSelectedICD10]}
+            />
+
+            {/* Selected Codes Summary */}
+            {(lookupSelectedCPT.length > 0 || lookupSelectedICD10.length > 0) && (
+              <div className="flex flex-wrap gap-1.5">
+                {lookupSelectedCPT.map(c => (
+                  <span key={c} className="text-xs bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded font-mono">CPT: {c}</span>
+                ))}
+                {lookupSelectedICD10.map(c => (
+                  <span key={c} className="text-xs bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded font-mono">ICD: {c}</span>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => { setLookupSelectedCPT([]); setLookupSelectedICD10([]); setLookupValidation(null); }}
+                  className="text-xs text-gray-500 hover:text-red-600 underline ml-1"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            {/* Validation Badge */}
+            {lookupValidation && (
+              <div className={`flex items-center gap-1.5 text-sm ${lookupValidation.valid ? 'text-green-700' : 'text-amber-700'}`}>
+                {lookupValidation.valid ? (
+                  <><CheckCircle className="w-4 h-4" /> Codes valid ✓</>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-4 h-4" />
+                    {lookupValidation.issues.length} code issue{lookupValidation.issues.length !== 1 ? 's' : ''}:
+                    {lookupValidation.issues.map((issue, i) => (
+                      <span key={i} className="text-xs"> {issue}</span>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </EACardContent>
+        )}
+      </EACard>
 
       {/* Queue Table */}
       <EACard>

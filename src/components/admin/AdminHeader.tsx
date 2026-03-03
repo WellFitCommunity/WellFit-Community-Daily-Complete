@@ -31,6 +31,10 @@ import {
   X,
   Heart,
   Smartphone,
+  Brain,
+  Pill,
+  BedDouble,
+  UserCheck,
 } from 'lucide-react';
 
 interface AdminHeaderProps {
@@ -99,41 +103,86 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
-  // Navigation items
-  const navItems = [
-    {
-      label: branding?.appName || 'Community',
-      path: '/dashboard',
-      icon: Home,
-      show: true,
-      accent: true, // Special styling for community button - uses branding colors
-    },
-    {
-      label: 'Readmission Prevention',
-      path: '/community-readmission',
-      icon: Heart,
-      show: true,
-      methodist: true, // Methodist branding
-    },
-    {
-      label: 'Risk Assessment',
-      path: '/admin-questions',
-      icon: ClipboardList,
-      show: showRiskAssessment,
-    },
-    {
-      label: 'Billing',
-      path: '/billing',
-      icon: CreditCard,
-      show: true,
-    },
-    {
-      label: 'API Keys',
-      path: '/admin/api-keys',
-      icon: Key,
-      show: adminRole === 'super_admin',
-    },
-  ];
+  // Role-aware navigation items
+  const getRoleNavItems = () => {
+    const isNurseRole = adminRole === 'nurse' || adminRole === 'nurse_practitioner' || adminRole === 'clinical_supervisor';
+    const isPhysicianRole = adminRole === 'physician' || adminRole === 'doctor' || adminRole === 'physician_assistant';
+    const isCHWRole = adminRole === 'community_health_worker' || adminRole === 'chw';
+    const isCaseManagerRole = adminRole === 'case_manager' || adminRole === 'social_worker';
+
+    if (isNurseRole) {
+      return [
+        { label: 'Nurse Dashboard', path: '/nurse-dashboard', icon: Activity, show: true },
+        { label: 'ER Dashboard', path: '/er-dashboard', icon: Shield, show: true },
+        { label: 'Bed Board', path: '/bed-management', icon: BedDouble, show: true },
+        { label: 'Shift Handoff', path: '/shift-handoff', icon: FileText, show: true },
+        { label: 'Census', path: '/nurse-census', icon: ClipboardList, show: true },
+      ];
+    }
+
+    if (isPhysicianRole) {
+      return [
+        { label: 'Physician Dashboard', path: '/physician-dashboard', icon: UserCheck, show: true },
+        { label: 'ER Dashboard', path: '/er-dashboard', icon: Shield, show: true },
+        { label: 'Compass Riley', path: '/compass-riley', icon: Brain, show: true },
+        { label: 'Medications', path: '/medication-manager', icon: Pill, show: true },
+      ];
+    }
+
+    if (isCHWRole) {
+      return [
+        { label: 'CHW Dashboard', path: '/chw-dashboard', icon: Activity, show: true },
+        { label: 'Readmission Prevention', path: '/community-readmission', icon: Heart, show: true, methodist: true },
+        { label: 'Care Coordination', path: '/care-coordination', icon: Users, show: true },
+      ];
+    }
+
+    if (isCaseManagerRole) {
+      return [
+        { label: 'Readmission Prevention', path: '/community-readmission', icon: Heart, show: true, methodist: true },
+        { label: 'Care Coordination', path: '/care-coordination', icon: Users, show: true },
+        { label: 'Referrals', path: '/referrals', icon: FileText, show: true },
+      ];
+    }
+
+    // Admin / super_admin / all other roles — default behavior
+    return [
+      {
+        label: branding?.appName || 'Community',
+        path: '/dashboard',
+        icon: Home,
+        show: true,
+        accent: true,
+      },
+      {
+        label: 'Readmission Prevention',
+        path: '/community-readmission',
+        icon: Heart,
+        show: true,
+        methodist: true,
+      },
+      {
+        label: 'Risk Assessment',
+        path: '/admin-questions',
+        icon: ClipboardList,
+        show: showRiskAssessment,
+      },
+      {
+        label: 'Billing',
+        path: '/billing',
+        icon: CreditCard,
+        show: true,
+      },
+      {
+        label: 'API Keys',
+        path: '/admin/api-keys',
+        icon: Key,
+        show: adminRole === 'super_admin',
+      },
+    ];
+  };
+
+  const navItems = getRoleNavItems();
 
   // Settings dropdown items
   const settingsItems = [
