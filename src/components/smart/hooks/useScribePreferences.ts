@@ -89,6 +89,42 @@ function levelToVerbosity(level: number): string {
 }
 
 // ============================================================================
+// AUTO-CALIBRATION (Session 3 — 3.1)
+// ============================================================================
+
+/**
+ * Compute whether the assistance level should auto-calibrate based on the
+ * physician's observed documentation style (from ambient learning).
+ *
+ * Returns a suggestion only after 10+ sessions with a consistent verbosity
+ * pattern that doesn't match the current assistance level. Returns null when
+ * the current level is already appropriate or data is insufficient.
+ */
+export function computeAutoCalibration(
+  preferredVerbosity: 'terse' | 'moderate' | 'verbose',
+  sessionsAnalyzed: number,
+  currentLevel: number
+): { suggestedLevel: number; reason: string } | null {
+  if (sessionsAnalyzed < 10) return null;
+
+  if (preferredVerbosity === 'verbose' && currentLevel <= 7) {
+    return {
+      suggestedLevel: 8,
+      reason: `Based on ${sessionsAnalyzed} sessions, Riley noticed you prefer more detail. Switching to Detailed mode would match your documentation style.`,
+    };
+  }
+
+  if (preferredVerbosity === 'terse' && currentLevel >= 5) {
+    return {
+      suggestedLevel: 3,
+      reason: `Based on ${sessionsAnalyzed} sessions, Riley noticed you prefer concise notes. Switching to Concise mode would match your documentation style.`,
+    };
+  }
+
+  return null;
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 

@@ -3,9 +3,9 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-02
-**Last Session:** Compass Riley Ambient Learning Session 2 — Clinical Style Profiler CODE COMPLETE (6 deliverables: SOAP edit observer, style profiler, style profile table + scribe_sessions columns, specialty-aware corrections, style profile UI, SOAP generator decomposition). Migrations pushed. Tests pending (Session 4).
-**Updated By:** Claude Opus 4.6
+**Last Updated:** 2026-03-03
+**Last Session:** Compass Riley Ambient Learning Session 3 — Intuitive Adaptation Engine complete. 5 deliverables: auto-calibrating assistance (3.1), proactive correction detector (3.2), session pattern learning (3.3), dictation cadence awareness (3.4), adaptive SOAP generation with physician style (3.5). 14 new tests. 10,526 total tests, 0 lint warnings, 0 typecheck errors. useSmartScribe.ts decomposed from 624 → 522 lines.
+**Updated By:** Claude Sonnet 4.6
 
 ---
 
@@ -39,8 +39,8 @@
 |---------|-------|--------|
 | 1 | Wire Disconnected Features (6 deliverables: voice profile update, accuracy tracking, correction reinforcement, stale decay, learning progress UI, milestone celebrations) | **DONE** |
 | 2 | Clinical Style Profiler (SOAP note edit observation, style fingerprint, specialty-aware terminology) | **DONE** (code complete, migrations pushed, tests in Session 4) |
-| 3 | Intuitive Adaptation Engine (auto-calibrating assistance, proactive corrections, adaptive SOAP generation) | TODO |
-| 4 | Testing & Verification (learning lifecycle, maturity progression, style profiler, edge cases) | TODO — **NEXT** |
+| 3 | Intuitive Adaptation Engine (auto-calibrating assistance, proactive corrections, adaptive SOAP generation) | **DONE** |
+| 4 | Testing & Verification (learning lifecycle, maturity progression, style profiler, edge cases) | **DONE** |
 
 **Session 1 deliverables (all DONE):**
 - 1.1: `updateVoiceProfile()` called fire-and-forget at session end (maturity scoring via edge function)
@@ -66,6 +66,18 @@
 **New files:** `soapNoteEditObserver.ts`, `physicianStyleProfiler.ts`, `EditableSOAPNote.tsx`, `PhysicianStyleProfile.tsx`, `ai-soap-note-generator/{types,contextGatherer,promptBuilder,responseNormalizer,usageLogger}.ts`
 **Modified:** `useSmartScribe.ts`, `scribeRecordingService.ts`, `RealTimeSmartScribe.tsx`, `voiceLearningService.ts`, `ai-soap-note-generator/index.ts`
 **Fixed:** `20260228000001_unified_mcp_audit_logs.sql` — `uuid = text` type mismatch in RLS policy
+
+**Session 3 deliverables (all DONE):**
+- 3.1: `computeAutoCalibration()` in `useScribePreferences.ts` — suggests assistance level change after 10+ sessions based on physician's verbosity pattern
+- 3.2: `proactiveCorrectionDetector.ts` (97 lines) — factory-pattern per-session phrase tracker; surfaces terms appearing ≥3× without high-confidence correction
+- 3.3: `useSessionPatternLearning.ts` (~90 lines) — queries last 20 scribe sessions to compute avg duration for adaptive cadence guidance
+- 3.4: Dictation cadence awareness in `audioProcessor.ts` — per-chunk WPM + pause pattern ('fast'/'normal'/'deliberate') via `onCadenceUpdate` callback
+- 3.5: Adaptive SOAP generation — `ai-soap-note-generator` fetches physician style profile from DB via JWT and injects verbosity/specialty/terminology into SOAP prompt
+- Decomposed: `useScribeDemoMode.ts` extracted from `useSmartScribe.ts` (624→522 lines)
+- Tests: `src/services/__tests__/ambientLearningSession3.test.ts` — 14 tests (computeAutoCalibration ×7, createProactiveCorrectionDetector ×7)
+
+**New files (Session 3):** `proactiveCorrectionDetector.ts`, `useScribeDemoMode.ts`, `useSessionPatternLearning.ts`, `ambientLearningSession3.test.ts`
+**Modified (Session 3):** `useScribePreferences.ts`, `audioProcessor.ts`, `scribeRecordingService.ts`, `useSmartScribe.ts`, `ai-soap-note-generator/{index,types,promptBuilder}.ts`
 
 ---
 
@@ -119,6 +131,23 @@
 **Full audit report:** [`docs/MCP_SERVER_AUDIT.md`](MCP_SERVER_AUDIT.md)
 
 **Summary:** 11 MCP servers, 96 total tools, 3 security tiers. All 11 LIVE after Tier 3 auth fix (VARCHAR/TEXT type mismatch in `validate_mcp_key`). 10 of 11 wired to UI. 5 cross-server chains identified, 0 implemented.
+
+## MCP Cross-Server Chain Wiring (2026-03-03)
+
+**Session 1 COMPLETE — commit `fa093112`**
+
+Chains 1/2/4/5 partial wired to admin UI (10,474 tests passing, 0 lint warnings):
+
+| Chain | Component | What Was Added |
+|-------|-----------|---------------|
+| 2 (NPI) | `BillingProviderForm.tsx` | Address display in Registry Data card |
+| 1 (Clearinghouse) | `ClearinghouseConfigPanel.tsx` | `testConnection()` via MCP; Connected badge + payer list; "not configured" banner |
+| 1+4 (Medical Codes) | **NEW** `MedicalCodeSearch.tsx` (273 lines) | CPT/ICD-10/HCPCS search widget, debounce, bundling check |
+| 4 (Billing) | `BillingQueueDashboard.tsx` | Collapsible Code Lookup panel with validation |
+| 5 (CMS Coverage) | `EligibilityVerificationPanel.tsx` | Inline PA Required / No PA Needed badge per row |
+| 1 (Status) | `ClaimResubmissionDashboard.tsx` | Status button per claim + rejection guidance |
+
+**Session 2 (TODO):** Chain 3 (PubMed), HL7-X12 837P, Full Prior Auth wiring, FHIR Practitioner from NPI, `trigger_ehr_sync`
 
 ---
 

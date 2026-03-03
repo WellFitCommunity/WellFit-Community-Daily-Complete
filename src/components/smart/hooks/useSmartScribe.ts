@@ -20,17 +20,13 @@ import { updateVoiceProfile } from '../../../services/aiTransparencyService';
 import { submitScribeFeedback, SessionFeedbackData } from '../../../services/scribeFeedbackService';
 
 // Decomposed modules
-import { useScribePreferences, getAssistanceSettings } from './useScribePreferences';
+import { useScribePreferences, getAssistanceSettings, computeAutoCalibration } from './useScribePreferences';
 import { initializeRecording, saveScribeSession, savePhysicianEdits } from './scribeRecordingService';
 import { analyzeSOAPEdits } from '../../../services/soapNoteEditObserver';
 import { loadStyleProfile, updateStyleProfile } from '../../../services/physicianStyleProfiler';
 import type { PhysicianStyleProfile } from '../../../services/physicianStyleProfiler';
-import {
-  DEMO_TRANSCRIPT, DEMO_CODES, DEMO_SOAP, DEMO_SUGGESTIONS, DEMO_MESSAGES,
-  DEMO_GROUNDING_FLAGS, DEMO_ENCOUNTER_STATE, DEMO_EVIDENCE_CITATIONS,
-  DEMO_GUIDELINE_REFERENCES, DEMO_TREATMENT_PATHWAYS,
-  DEMO_CONSULTATION_RESPONSE, DEMO_CONSULT_PREP,
-} from './scribeDemoData';
+import { useScribeDemoMode } from './useScribeDemoMode';
+import { useSessionPatternLearning } from './useSessionPatternLearning';
 
 // Re-export all types for consumers (zero-breaking-change barrel)
 export type { SessionFeedbackData } from '../../../services/scribeFeedbackService';
@@ -73,9 +69,6 @@ import type {
   UseSmartScribeProps,
   ReasoningResultSummary,
 } from './useSmartScribe.types';
-
-// Check if demo mode is enabled
-const DEMO_MODE = import.meta.env.VITE_COMPASS_DEMO === 'true';
 
 // ============================================================================
 // HOOK
@@ -134,6 +127,13 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   // Physician style profile (ambient learning Session 2)
   const [styleProfile, setStyleProfile] = useState<PhysicianStyleProfile | null>(null);
 
+  // Session 3: Auto-calibration hint (derived from style profile, shown once after 10+ sessions)
+  const [autoCalibrationHint, setAutoCalibrationHint] = useState<{ suggestedLevel: number; reason: string } | null>(null);
+  // Session 3 (3.2): Proactive correction suggestions (phrases Riley may have consistently mishear)
+  const [proactiveSuggestions, setProactiveSuggestions] = useState<string[]>([]);
+  // Session 3 (3.4): Dictation cadence from the current recording
+  const [sessionCadence, setSessionCadence] = useState<{ wpm: number; pattern: 'fast' | 'normal' | 'deliberate' } | null>(null);
+
   // Session feedback state
   const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -148,10 +148,23 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Demo mode state
-  const isDemoMode = forceDemoMode ?? DEMO_MODE;
-  const demoIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const demoTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  // Demo mode sub-hook (decomposed in Ambient Learning Session 3)
+  const { isDemoMode, startDemoRecording, stopDemoRecording } = useScribeDemoMode({
+    forceDemoMode,
+    scribeMode,
+    setters: {
+      setTranscript, setSuggestedCodes, setSoapNote, setConversationalMessages,
+      setScribeSuggestions, setCorrectionsAppliedCount, setGroundingFlags, setEncounterState,
+      setEvidenceCitations, setGuidelineReferences, setTreatmentPathways,
+      setConsultationResponse, setConsultPrepSummary,
+      setIsRecording, setRecordingStartTime, setStatus,
+      setLastSessionDuration, setShowFeedbackPrompt, setFeedbackSubmitted,
+    },
+  });
+
+  // Session 3 (3.3): Session pattern stats for adaptive cadence awareness
+  const [currentProviderId, setCurrentProviderId] = useState<string | null>(null);
+  const sessionPatternStats = useSessionPatternLearning(currentProviderId);
 
   // ============================================================================
   // EFFECTS
@@ -175,6 +188,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
 
         // Load physician style profile (ambient learning Session 2)
         loadStyleProfile(user.id).then(sp => setStyleProfile(sp)).catch(() => {});
+
+        // Session 3 (3.3): Resolve provider ID for session pattern learning
+        setCurrentProviderId(user.id);
 
         // Decay old corrections on session start (fire-and-forget, idempotent)
         VoiceLearningService.decayOldCorrections(user.id, 60).catch(() => {
@@ -202,144 +218,16 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     return () => clearInterval(interval);
   }, [isRecording, recordingStartTime]);
 
-  // ============================================================================
-  // DEMO MODE SIMULATION
-  // ============================================================================
-
-  /** Clean up demo mode intervals and timeouts */
-  const cleanupDemo = useCallback(() => {
-    if (demoIntervalRef.current) {
-      clearInterval(demoIntervalRef.current);
-      demoIntervalRef.current = null;
-    }
-    demoTimeoutsRef.current.forEach(t => clearTimeout(t));
-    demoTimeoutsRef.current = [];
-  }, []);
-
-  /** Run demo simulation with realistic typing and progressive updates */
-  const runDemoSimulation = useCallback(() => {
-    const words = DEMO_TRANSCRIPT.split(' ');
-    let wordIndex = 0;
-
-    setConversationalMessages([{
-      type: 'scribe',
-      message: DEMO_MESSAGES[0],
-      timestamp: new Date(),
-      context: 'greeting',
-    }]);
-    setStatus('Demo Mode - Simulating transcription...');
-
-    // Simulate typing transcript word by word
-    demoIntervalRef.current = setInterval(() => {
-      if (wordIndex < words.length) {
-        const wordsToAdd = words.slice(wordIndex, wordIndex + 3).join(' ');
-        setTranscript(prev => prev ? `${prev} ${wordsToAdd}` : wordsToAdd);
-        wordIndex += 3;
-      } else {
-        if (demoIntervalRef.current) {
-          clearInterval(demoIntervalRef.current);
-          demoIntervalRef.current = null;
-        }
-      }
-    }, 150);
-
-    // Helper to schedule a demo timeout
-    const schedule = (delayMs: number, fn: () => void) => {
-      const timeout = setTimeout(fn, delayMs);
-      demoTimeoutsRef.current.push(timeout);
-    };
-
-    // Riley messages progressively
-    [3000, 8000, 15000, 22000].forEach((delay, idx) => {
-      if (idx > 0 && idx < DEMO_MESSAGES.length) {
-        schedule(delay, () => {
-          setConversationalMessages(prev => [...prev, {
-            type: 'scribe',
-            message: DEMO_MESSAGES[idx],
-            timestamp: new Date(),
-            context: 'suggestion',
-          }]);
-        });
-      }
-    });
-
-    // Codes progressively
-    [5000, 10000, 14000, 18000, 21000].forEach((delay, idx) => {
-      if (idx < DEMO_CODES.length) {
-        schedule(delay, () => setSuggestedCodes(prev => [...prev, DEMO_CODES[idx]]));
-      }
-    });
-
-    // Suggestions, grounding, encounter state, evidence, SOAP, guidelines, pathways
-    schedule(12000, () => setScribeSuggestions(DEMO_SUGGESTIONS));
-    schedule(16000, () => setGroundingFlags(DEMO_GROUNDING_FLAGS));
-    schedule(20000, () => setEncounterState(DEMO_ENCOUNTER_STATE));
-    schedule(23000, () => setEvidenceCitations(DEMO_EVIDENCE_CITATIONS));
-    schedule(25000, () => { setSoapNote(DEMO_SOAP); setStatus('Demo Mode - Documentation complete'); });
-    schedule(27000, () => { setGuidelineReferences(DEMO_GUIDELINE_REFERENCES); setTreatmentPathways(DEMO_TREATMENT_PATHWAYS); });
-
-    // Consultation mode data
-    if (scribeMode === 'consultation') {
-      schedule(29000, () => { setConsultationResponse(DEMO_CONSULTATION_RESPONSE); setStatus('Demo Mode - Consultation analysis complete'); });
-      schedule(32000, () => setConsultPrepSummary(DEMO_CONSULT_PREP));
-    }
-  }, [scribeMode]);
-
-  /** Start demo mode simulation */
-  const startDemoRecording = useCallback(() => {
-    setTranscript('');
-    setSuggestedCodes([]);
-    setSoapNote(null);
-    setConversationalMessages([]);
-    setScribeSuggestions([]);
-    setCorrectionsAppliedCount(0);
-    setGroundingFlags(null);
-    setEncounterState(null);
-    setEvidenceCitations([]);
-    setGuidelineReferences([]);
-    setTreatmentPathways([]);
-    setConsultationResponse(null);
-    setConsultPrepSummary(null);
-
-    setIsRecording(true);
-    setRecordingStartTime(Date.now());
-    setStatus('Demo Mode - Recording...');
-    runDemoSimulation();
-  }, [runDemoSimulation]);
-
-  /** Stop demo mode simulation */
-  const stopDemoRecording = useCallback(() => {
-    cleanupDemo();
-    const duration = recordingStartTime ? Math.floor((Date.now() - recordingStartTime) / 1000) : 0;
-    setIsRecording(false);
-    setRecordingStartTime(null);
-    setStatus('Demo Mode - Session ended');
-    setLastSessionDuration(duration);
-
-    // Ensure all demo data is shown when stopping early
-    if (suggestedCodes.length < DEMO_CODES.length) setSuggestedCodes(DEMO_CODES);
-    if (!soapNote) setSoapNote(DEMO_SOAP);
-    if (scribeSuggestions.length === 0) setScribeSuggestions(DEMO_SUGGESTIONS);
-    if (!groundingFlags) setGroundingFlags(DEMO_GROUNDING_FLAGS);
-    if (!encounterState) setEncounterState(DEMO_ENCOUNTER_STATE);
-    if (evidenceCitations.length === 0) setEvidenceCitations(DEMO_EVIDENCE_CITATIONS);
-    if (guidelineReferences.length === 0) setGuidelineReferences(DEMO_GUIDELINE_REFERENCES);
-    if (treatmentPathways.length === 0) setTreatmentPathways(DEMO_TREATMENT_PATHWAYS);
-    if (scribeMode === 'consultation') {
-      if (!consultationResponse) setConsultationResponse(DEMO_CONSULTATION_RESPONSE);
-      if (!consultPrepSummary) setConsultPrepSummary(DEMO_CONSULT_PREP);
-    }
-
-    setShowFeedbackPrompt(true);
-    setFeedbackSubmitted(false);
-  }, [cleanupDemo, suggestedCodes.length, soapNote, scribeSuggestions.length,
-    groundingFlags, encounterState, evidenceCitations.length, guidelineReferences.length,
-    treatmentPathways.length, consultationResponse, consultPrepSummary, scribeMode, recordingStartTime]);
-
-  // Cleanup demo on unmount
+  /** Session 3 (3.1): Compute auto-calibration hint when style profile updates */
   useEffect(() => {
-    return () => cleanupDemo();
-  }, [cleanupDemo]);
+    if (!styleProfile) return;
+    const hint = computeAutoCalibration(
+      styleProfile.preferredVerbosity,
+      styleProfile.sessionsAnalyzed,
+      preferences.assistanceLevel
+    );
+    setAutoCalibrationHint(hint);
+  }, [styleProfile, preferences.assistanceLevel]);
 
   // ============================================================================
   // RECORDING HANDLERS
@@ -373,6 +261,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         setIsRecording,
         setRecordingStartTime: (time: number) => setRecordingStartTime(time),
         setStatus,
+        // Session 3 (3.2): Proactive correction suggestion callback
+        onProactiveSuggestion: (terms: string[]) => setProactiveSuggestions(terms),
+        // Session 3 (3.4): Dictation cadence awareness callback
+        onCadenceUpdate: (wpm: number, pattern: 'fast' | 'normal' | 'deliberate') =>
+          setSessionCadence({ wpm, pattern }),
       });
 
       wsRef.current = result.webSocket;
@@ -598,6 +491,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     milestoneToast,
     styleProfile,
     lastSessionId,
+    // Session 3: Intuitive Adaptation Engine
+    autoCalibrationHint,
+    proactiveSuggestions,
+    sessionCadence,
+    sessionPatternStats,
 
     // Setters
     setTranscript,

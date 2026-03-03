@@ -4,6 +4,17 @@
  * Extracted from index.ts for modularity.
  */
 
+/**
+ * Physician style hint passed from the UI to the edge function.
+ * Derived from the physician_style_profiles table (Ambient Learning Session 2/3).
+ */
+export interface PhysicianStyleHint {
+  preferredVerbosity: "terse" | "moderate" | "verbose";
+  specialtyDetected: string | null;
+  terminologyPreferences: Array<{ aiTerm: string; physicianPreferred: string }>;
+  avgNoteWordCount: number;
+}
+
 export interface SOAPNoteRequest {
   encounterId: string;
   patientId?: string;
@@ -11,6 +22,8 @@ export interface SOAPNoteRequest {
   includeTranscript?: boolean;
   providerNotes?: string;
   templateStyle?: "standard" | "comprehensive" | "brief";
+  /** Session 3 (3.5): Optional physician style hint for adaptive generation */
+  physicianStyle?: PhysicianStyleHint;
 }
 
 export interface SOAPNoteSection {

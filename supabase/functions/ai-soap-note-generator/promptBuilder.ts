@@ -4,12 +4,18 @@
  * Constructs the Claude API prompt from encounter context.
  */
 
-import type { EncounterContext } from "./types.ts";
+import type { EncounterContext, PhysicianStyleHint } from "./types.ts";
 
 /**
- * Build the prompt for SOAP note generation
+ * Build the prompt for SOAP note generation.
+ * When physicianStyle is provided (Session 3 — 3.5), the prompt adapts to
+ * the physician's learned documentation preferences.
  */
-export function buildSOAPPrompt(context: EncounterContext, templateStyle: string): string {
+export function buildSOAPPrompt(
+  context: EncounterContext,
+  templateStyle: string,
+  physicianStyle?: PhysicianStyleHint
+): string {
   const sections = [];
 
   // Chief Complaint
@@ -82,13 +88,40 @@ export function buildSOAPPrompt(context: EncounterContext, templateStyle: string
     comprehensive: "Include full detail with clinical reasoning and differential considerations.",
   };
 
+  // Session 3 (3.5): Build physician style instructions if profile is available
+  const styleAdaptationLines: string[] = [];
+  if (physicianStyle) {
+    const verbosityGuide: Record<string, string> = {
+      terse: "Write concisely. The physician edits AI notes to be shorter — aim for 30% fewer words than a standard note.",
+      verbose: "Write with full detail. The physician edits AI notes to be more comprehensive — include clinical reasoning and context.",
+      moderate: "Use standard clinical documentation length.",
+    };
+    styleAdaptationLines.push(verbosityGuide[physicianStyle.preferredVerbosity] || verbosityGuide.moderate);
+
+    if (physicianStyle.specialtyDetected) {
+      styleAdaptationLines.push(`Specialty context: ${physicianStyle.specialtyDetected} — use specialty-appropriate terminology and emphasis.`);
+    }
+
+    if (physicianStyle.terminologyPreferences.length > 0) {
+      const termLines = physicianStyle.terminologyPreferences
+        .slice(0, 10)
+        .map(t => `  - Use "${t.physicianPreferred}" instead of "${t.aiTerm}"`)
+        .join("\n");
+      styleAdaptationLines.push(`Preferred terminology (use these physician-preferred terms):\n${termLines}`);
+    }
+
+    if (physicianStyle.avgNoteWordCount > 0) {
+      styleAdaptationLines.push(`Target note length: approximately ${physicianStyle.avgNoteWordCount} words total.`);
+    }
+  }
+
   return `You are an expert clinical documentation specialist. Generate a comprehensive SOAP note based on the following encounter data.
 
 ENCOUNTER DATA:
 ${sections.join("\n")}
 
 DOCUMENTATION STYLE: ${templateStyle}
-${styleInstructions[templateStyle] || styleInstructions.standard}
+${styleInstructions[templateStyle] || styleInstructions.standard}${styleAdaptationLines.length > 0 ? `\n\nPHYSICIAN STYLE ADAPTATION (learned from this physician's edits — follow these closely):\n${styleAdaptationLines.join("\n")}` : ""}
 
 Generate a complete SOAP note following these guidelines:
 1. SUBJECTIVE: Patient's reported symptoms, concerns, and relevant history

@@ -56,6 +56,10 @@ export interface ScribeStateSetters {
   setIsRecording: (recording: boolean) => void;
   setRecordingStartTime: (time: number) => void;
   setStatus: (status: string) => void;
+  /** Session 3 (3.2): Proactive correction suggestion callback */
+  onProactiveSuggestion?: (heardTerms: string[]) => void;
+  /** Session 3 (3.4): Dictation cadence callback */
+  onCadenceUpdate?: (wpm: number, pausePattern: 'fast' | 'normal' | 'deliberate') => void;
 }
 
 export interface RecordingResources {
@@ -180,6 +184,8 @@ export async function initializeRecording(
         setters.setReasoningResult(data.reasoning);
       }
     },
+    onProactiveSuggestion: setters.onProactiveSuggestion,
+    onCadenceUpdate: setters.onCadenceUpdate,
     onReady: () => {
       setters.setConversationalMessages(() => [
         {

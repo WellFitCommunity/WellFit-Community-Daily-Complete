@@ -6,6 +6,7 @@
 
 import { ProviderVoiceProfile, VoiceLearningService } from '../../../services/voiceLearningService';
 import { auditLogger } from '../../../services/auditLogger';
+import { createProactiveCorrectionDetector } from '../../../services/proactiveCorrectionDetector';
 
 // WebSocket response data for code suggestions - matches useSmartScribe.CodeSuggestionResponse
 export interface CodeSuggestionResponse {
@@ -164,6 +165,10 @@ export interface AudioProcessorConfig {
   onConsultPrep?: (data: ConsultPrepMessage) => void;
   onConsultPrepError?: (data: ConsultPrepErrorMessage) => void;
   onReasoningResult?: (data: ReasoningResultMessage) => void;
+  /** Session 3 (3.2): Called when Riley detects repeated phrases that may have been misheard. */
+  onProactiveSuggestion?: (heardTerms: string[]) => void;
+  /** Session 3 (3.4): Called on each final transcript chunk with dictation cadence data. */
+  onCadenceUpdate?: (wpm: number, pausePattern: 'fast' | 'normal' | 'deliberate') => void;
   onReady: () => void;
   onStatusChange: (status: string) => void;
   onRecordingStateChange: (isRecording: boolean) => void;
@@ -184,6 +189,11 @@ export interface AudioProcessorResult {
 export async function initializeAudioRecording(
   config: AudioProcessorConfig
 ): Promise<AudioProcessorResult> {
+  // Session 3 (3.2): Per-session proactive correction detector
+  const detector = createProactiveCorrectionDetector();
+  // Session 3 (3.4): Cadence tracking — timestamps and word counts
+  let lastTranscriptMs = Date.now();
+
   try {
     config.onStatusChange('Requesting microphone access…');
 
@@ -232,6 +242,27 @@ export async function initializeAudioRecording(
           }
 
           config.onTranscript(text, appliedCount);
+
+          // Session 3 (3.2): Track phrase hits and surface proactive suggestions
+          if (config.onProactiveSuggestion) {
+            detector.trackChunk(text);
+            const suggestions = detector.detectSuggestedReviews(config.voiceProfile);
+            if (suggestions.length > 0) {
+              config.onProactiveSuggestion(suggestions);
+            }
+          }
+
+          // Session 3 (3.4): Compute dictation cadence from inter-chunk timing
+          if (config.onCadenceUpdate) {
+            const now = Date.now();
+            const gapSeconds = (now - lastTranscriptMs) / 1000;
+            const chunkWords = text.trim().split(/\s+/).length;
+            const chunkWpm = gapSeconds > 0 ? Math.round((chunkWords / gapSeconds) * 60) : 0;
+            const pausePattern: 'fast' | 'normal' | 'deliberate' =
+              gapSeconds < 2 ? 'fast' : gapSeconds < 5 ? 'normal' : 'deliberate';
+            lastTranscriptMs = now;
+            config.onCadenceUpdate(chunkWpm, pausePattern);
+          }
         } else if (data.type === 'code_suggestion') {
           config.onCodeSuggestion(data);
         } else if (data.type === 'evidence_citations') {

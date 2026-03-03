@@ -15,7 +15,7 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 
-import type { SOAPNoteRequest, GeneratedSOAPNote, ParsedSOAPResponse } from "./types.ts";
+import type { SOAPNoteRequest, GeneratedSOAPNote, ParsedSOAPResponse, PhysicianStyleHint } from "./types.ts";
 import { gatherEncounterContext } from "./contextGatherer.ts";
 import { buildSOAPPrompt } from "./promptBuilder.ts";
 import { normalizeSOAPResponse, getDefaultSOAPNote, redact } from "./responseNormalizer.ts";
@@ -43,7 +43,40 @@ serve(async (req) => {
       includeTranscript = true,
       providerNotes,
       templateStyle = "standard",
+      physicianStyle,
     } = body;
+
+    // Session 3 (3.5): If no style was passed by the client, fetch from DB using the request JWT
+    let resolvedStyle: PhysicianStyleHint | undefined = physicianStyle;
+    if (!resolvedStyle) {
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.slice(7);
+        const { data: { user } } = await supabase.auth.getUser(token);
+        if (user?.id) {
+          const { data: styleRow } = await supabase
+            .from("physician_style_profiles")
+            .select("preferred_verbosity, specialty_detected, terminology_overrides, avg_note_word_count")
+            .eq("provider_id", user.id)
+            .maybeSingle();
+          if (styleRow) {
+            interface StyleRow {
+              preferred_verbosity: string;
+              specialty_detected: string | null;
+              terminology_overrides: Array<{ aiTerm: string; physicianPreferred: string }> | null;
+              avg_note_word_count: number | null;
+            }
+            const typed = styleRow as StyleRow;
+            resolvedStyle = {
+              preferredVerbosity: typed.preferred_verbosity as PhysicianStyleHint["preferredVerbosity"],
+              specialtyDetected: typed.specialty_detected,
+              terminologyPreferences: (typed.terminology_overrides ?? []).slice(0, 15),
+              avgNoteWordCount: typed.avg_note_word_count ?? 0,
+            };
+          }
+        }
+      }
+    }
 
     // Validate required fields
     if (!encounterId) {
@@ -72,9 +105,9 @@ serve(async (req) => {
       logger
     );
 
-    // Generate SOAP note via Claude
+    // Generate SOAP note via Claude (Session 3: pass style for adaptive generation)
     const startTime = Date.now();
-    const soapNote = await generateSOAPNote(context, templateStyle, logger);
+    const soapNote = await generateSOAPNote(context, templateStyle, logger, resolvedStyle);
     const responseTime = Date.now() - startTime;
 
     // Log PHI access for HIPAA compliance
@@ -126,9 +159,10 @@ serve(async (req) => {
 async function generateSOAPNote(
   context: ReturnType<typeof gatherEncounterContext> extends Promise<infer T> ? T : never,
   templateStyle: string,
-  logger: ReturnType<typeof createLogger>
+  logger: ReturnType<typeof createLogger>,
+  physicianStyle?: PhysicianStyleHint
 ): Promise<GeneratedSOAPNote> {
-  const prompt = buildSOAPPrompt(context, templateStyle);
+  const prompt = buildSOAPPrompt(context, templateStyle, physicianStyle);
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
