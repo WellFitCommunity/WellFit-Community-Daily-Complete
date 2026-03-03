@@ -385,17 +385,30 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 
 ### P2-7: Cross-Server Chain Implementation **(Claude)**
 
-**Status:** TODO — Deferred (business prioritization required)
-**Estimated:** ~70 hours (8-10 sessions) — includes Chain 6: Medical Coding Processor (24h)
+**Status:** DONE (Chains 1-5) — 2 sessions (2026-03-03). Chain 6 deferred (standalone project).
+**Estimated:** ~70 hours → **Actual: ~12 hours** (chains 1-5 in 2 sessions)
 
-| Chain | Servers | Est. Hours | Business Value |
-|-------|---------|-----------|---------------|
-| 1. Claims Pipeline | Medical Codes → CMS → Prior Auth → HL7 → Clearinghouse | 16 | HIGH |
-| 2. Provider Onboarding | NPI → FHIR → Postgres | 4 | MEDIUM |
-| 3. Clinical Decision Support | FHIR → PubMed → CMS → Claude | 8 | HIGH |
-| 4. Encounter-to-Claim | FHIR → Medical Codes → CMS → HL7 → Clearinghouse | 16 | HIGH |
-| 5. Prior Auth Workflow | CMS → Prior Auth → FHIR → Clearinghouse | 12 | HIGH |
-| 6. Medical Coding Processor (Daily Billable Snapshot) | FHIR → Claude → Medical Codes → CMS → Postgres | 24 | **CRITICAL** |
+| Chain | Servers | Est. Hours | Status | Commit |
+|-------|---------|-----------|--------|--------|
+| 1. Claims Pipeline | Medical Codes → CMS → Prior Auth → HL7 → Clearinghouse | 16 | **DONE** | `fa093112` (Session 1) |
+| 2. Provider Onboarding | NPI → FHIR → Postgres | 4 | **DONE** | `fa093112` + `33471bc7` |
+| 3. Clinical Decision Support | FHIR → PubMed → CMS → Claude | 8 | **DONE** | `33471bc7` (Session 2) |
+| 4. Encounter-to-Claim | FHIR → Medical Codes → CMS → HL7 → Clearinghouse | 16 | **DONE** | `fa093112` + `33471bc7` |
+| 5. Prior Auth Workflow | CMS → Prior Auth → FHIR → Clearinghouse | 12 | **DONE** | `fa093112` + `33471bc7` |
+| 6. Medical Coding Processor (Daily Billable Snapshot) | FHIR → Claude → Medical Codes → CMS → Postgres | 24 | **DEFERRED** | Standalone project |
+
+**Session 1 deliverables** (`fa093112`):
+- Chain 1: ClearinghouseConfigPanel MCP test connection + Connected badge + payer list; ClaimResubmissionDashboard clearinghouse status + rejection guidance
+- Chain 2: BillingProviderForm NPI address lookup from CMS registry
+- Chain 4: MedicalCodeSearch component (CPT/ICD-10/HCPCS search, debounce, bundling check); BillingQueueDashboard code lookup + validation badge
+- Chain 5: EligibilityVerificationPanel PA Required badge per encounter
+
+**Session 2 deliverables** (`33471bc7`):
+- Chain 3: PubMed Evidence Panel (collapsible literature search in PA create form)
+- Chain 5 expansion: Full Prior Auth MCP client (11 tools), usePriorAuthMCP hook, decision/appeal/FHIR modals, PA-required auto-check
+- Chain 2 expansion: NPI→FHIR Practitioner mapper + Create FHIR Practitioner button
+- Chain 4 expansion: 837P Generation UI — full claim form + Generate 837P tab in HL7 Lab
+- God file decomposition: FHIRInteroperabilityDashboard (821→8 files), PriorAuthDashboard (592→10 files), HL7MessageTestPanel (549→7 files)
 
 #### Chain 6: Medical Coding Processor — Per-Day Encounter Ledger
 
@@ -510,8 +523,8 @@ Decomposed all 6 servers using the proven barrel re-export pattern (factory func
 | **4** | P1-2, P1-3, P2-1 | ~7 | **Tools auth, rate limit identity, input validation** |
 | **5** | P2-2, P2-3, P2-4, P2-5, P2-6 | ~9 | **Config, timeouts, unified audit, docs, health dashboard** |
 | **6** | P3-1 through P3-5 | ~8 | **Persistence, key rotation, body limits, pricing, provenance** |
-| **7+** | P2-7 (chains 1-5) | ~46 | **Cross-server orchestration (business decision)** |
-| **TBD** | P2-7 chain 6 (Medical Coding Processor) | ~24 | **Per-day charge capture, DRG grouping, payer rules, revenue optimization** |
+| **7** | P2-7 (chains 1-5) | ~12 | **DONE** — Cross-server orchestration (2 sessions, 2026-03-03) |
+| **TBD** | P2-7 chain 6 (Medical Coding Processor) | ~24 | **DEFERRED** — Per-day charge capture, DRG grouping, payer rules, revenue optimization |
 
 **Session 1 is the highest-priority session.** P0-1 through P0-4 are security fixes that close the multi-tenant data leak path.
 

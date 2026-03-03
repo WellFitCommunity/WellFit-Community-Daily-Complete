@@ -101,6 +101,13 @@ export const MCP_RATE_LIMITS = {
     maxRequests: 100,
     windowMs: 60 * 1000,
     keyPrefix: 'mcp:npi'
+  },
+
+  // Medical Coding Processor MCP - moderate limits (AI calls + DB writes)
+  medical_coding: {
+    maxRequests: 30,
+    windowMs: 60 * 1000,
+    keyPrefix: 'mcp:medical_coding'
   }
 };
 

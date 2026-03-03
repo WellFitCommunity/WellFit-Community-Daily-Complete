@@ -111,9 +111,9 @@
 |----------|-------|--------|
 | P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
 | P1 Hardening | 3 | **3/3 done** (P1-1, P1-2, P1-3) |
-| P2 Moderate (Functional) | 7 | **6/7 done** (P2-1 through P2-6; P2-7 deferred) |
+| P2 Moderate (Functional) | 7 | **7/7 done** (P2-1 through P2-7; chains 1-5 wired 2026-03-03) |
 | P3 Low (Polish) | 5 | **5/5 done** (P3-1 through P3-5) |
-| **Total** | **23** | **22/23 done (P2-7 deferred)** |
+| **Total** | **23** | **23/23 done** (Chain 6 Medical Coding Processor deferred — standalone project) |
 
 **Session plan — ALL COMPLETE:**
 - ~~Session 1: P0-1 through P0-4~~ — **DONE** (auth binding, tenant isolation, base64url fix, SECURITY DEFINER)
@@ -123,7 +123,7 @@
 - ~~Session 5: P2-2 through P2-6~~ — **DONE** (config, timeouts, unified audit, health dashboard — 15 files changed)
 - ~~Session 6: P3-1 through P3-5~~ — **DONE** (persistent rate limits, key management, body limits, pricing, provenance — 17 files changed)
 
-**P2-7 (Cross-Server Pipeline) deferred** — requires Claims Pipeline implementation (Chain 1) which depends on vendor clearinghouse credentials.
+**P2-7 (Cross-Server Chains 1-5) DONE** — 2 sessions (2026-03-03). Chain 6 (Medical Coding Processor) deferred as standalone project (~24h).
 
 ---
 
@@ -131,7 +131,7 @@
 
 **Full audit report:** [`docs/MCP_SERVER_AUDIT.md`](MCP_SERVER_AUDIT.md)
 
-**Summary:** 11 MCP servers, 96 total tools, 3 security tiers. All 11 LIVE after Tier 3 auth fix (VARCHAR/TEXT type mismatch in `validate_mcp_key`). 10 of 11 wired to UI. 5 cross-server chains identified, 0 implemented.
+**Summary:** 11 MCP servers, 96 total tools, 3 security tiers. All 11 LIVE after Tier 3 auth fix (VARCHAR/TEXT type mismatch in `validate_mcp_key`). 10 of 11 wired to UI. 5 cross-server chains wired (2026-03-03).
 
 ## MCP Cross-Server Chain Wiring (2026-03-03)
 
@@ -148,7 +148,22 @@ Chains 1/2/4/5 partial wired to admin UI (10,474 tests passing, 0 lint warnings)
 | 5 (CMS Coverage) | `EligibilityVerificationPanel.tsx` | Inline PA Required / No PA Needed badge per row |
 | 1 (Status) | `ClaimResubmissionDashboard.tsx` | Status button per claim + rejection guidance |
 
-**Session 2 (TODO):** Chain 3 (PubMed), HL7-X12 837P, Full Prior Auth wiring, FHIR Practitioner from NPI, `trigger_ehr_sync`
+**Session 2 COMPLETE — commit `33471bc7`**
+
+Chains 3/6 wired + 3 god files decomposed (10,681 tests passing, 0 lint warnings):
+
+| Chain | Component | What Was Added |
+|-------|-----------|---------------|
+| 3 (PubMed) | **NEW** `PubMedEvidencePanel.tsx` (266 lines) | Collapsible literature search in PA create form |
+| 5 (Prior Auth) | **NEW** `mcpPriorAuthClient.ts` (252 lines), `usePriorAuthMCP.ts` (187 lines) | 11 MCP tools, decision/appeal/FHIR modals, PA-required auto-check |
+| 2 (NPI→FHIR) | **NEW** `npiToFHIRMapper.ts` (240 lines) | NPI→FHIR Practitioner mapper + Create button |
+| 4 (837P) | **NEW** `X12Generate837PPanel.tsx` (467 lines) | Full claim form + Generate 837P tab in HL7 Lab |
+| FHIR | `fhir-interoperability/SyncTab.tsx` | EHR Sync Trigger — Sync All Active button |
+
+God file decomposition (0 breaking changes):
+- FHIRInteroperabilityDashboard: 821→8 files (`fhir-interoperability/`)
+- PriorAuthDashboard: 592→10 files (`prior-auth/`)
+- HL7MessageTestPanel: 549→7 files (`hl7-message-test/`)
 
 ---
 
@@ -179,9 +194,8 @@ Chains 1/2/4/5 partial wired to admin UI (10,474 tests passing, 0 lint warnings)
 
 | Feature | Tracker | What's Left |
 |---------|---------|-------------|
-| Tenant Admin Panel Phase 2 | `tenant-admin-panel-tracker.md` | Audit/hardening |
-| MCP Server Compliance P3 | `mcp-server-compliance-tracker.md` | 5 polish items |
-| Envision Admin Hardening | `envision-admin-panel-hardening-tracker.md` | P3 polish |
+| Tenant Admin Panel Phase 2 | `tenant-admin-panel-tracker.md` | Suspension UI (1 item) |
+| Envision Admin Hardening | `envision-admin-panel-hardening-tracker.md` | 24 untested components |
 
 ### NOT STARTED (future work)
 
