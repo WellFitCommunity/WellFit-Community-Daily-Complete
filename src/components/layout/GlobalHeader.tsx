@@ -154,9 +154,9 @@ export default function GlobalHeader() {
           {/* Brand */}
           <Link to={ROUTES.dashboard} className={`flex items-center ${textColor} text-xl font-semibold tracking-tight hover:opacity-90`}>
             {branding?.logoUrl && (
-              <img src={branding.logoUrl} alt="WellFit Logo" className="h-10 w-auto mr-3 rounded-md" />
+              <img src={branding.logoUrl} alt={`${branding?.appName || 'Platform'} logo`} className="h-10 w-auto mr-3 rounded-md" />
             )}
-            {branding?.appName || 'WellFit Community'}
+            {branding?.appName || 'Community'}
           </Link>
 
           {/* Desktop Nav */}
@@ -344,16 +344,18 @@ export default function GlobalHeader() {
                     )}
 
                     <div className="border-t my-2" />
-                    <a
-                      href="https://www.TheWellFitCommunity.org"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                      role="menuitem"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-3 text-gray-400" />
-                      {t.nav.visitWebsite}
-                    </a>
+                    {branding?.websiteUrl && (
+                      <a
+                        href={branding.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                        role="menuitem"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-3 text-gray-400" />
+                        {t.nav.visitWebsite}
+                      </a>
+                    )}
                     <Link
                       to={ROUTES.logout}
                       className="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 font-semibold"
@@ -481,17 +483,19 @@ export default function GlobalHeader() {
 
           {/* External Link & Logout */}
           <div className="pt-4 space-y-3">
-            <a
-              href="https://www.TheWellFitCommunity.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg font-semibold text-white shadow-md"
-              style={{ backgroundColor: WELLFIT_GREEN }}
-              onClick={() => setMenuOpen(false)}
-            >
-              <ExternalLink className="w-4 h-4" />
-              {t.nav.visitWebsite}
-            </a>
+            {branding?.websiteUrl && (
+              <a
+                href={branding.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg font-semibold text-white shadow-md"
+                style={{ backgroundColor: secondary }}
+                onClick={() => setMenuOpen(false)}
+              >
+                <ExternalLink className="w-4 h-4" />
+                {t.nav.visitWebsite}
+              </a>
+            )}
 
             <Link
               to={ROUTES.logout}

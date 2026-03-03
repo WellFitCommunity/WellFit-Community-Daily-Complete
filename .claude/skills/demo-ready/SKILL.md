@@ -1,383 +1,262 @@
-# Deployment Checklist Skill
+# /demo-ready — Hospital Pilot Readiness Check
 
-## Purpose
-Comprehensive pre-deployment validation to ensure zero-downtime deployments for production and the Methodist Hospital demo (Dec 5th, 2025).
+Validate that the Envision ATLUS I.H.I.S. platform is ready for a hospital pilot demonstration. Runs 12 checks across code quality, infrastructure, clinical AI, interoperability, and security.
 
-## What This Skill Does
+## Steps
 
-Validates all deployment prerequisites across multiple layers:
-1. **Code Quality** - Linting, types, tests
-2. **Database Migrations** - All migrations applied
-3. **Environment Variables** - Required secrets configured
-4. **Edge Functions** - Supabase functions deployed
-5. **MCP Server** - Claude MCP server operational
-6. **Security** - GPG signing, encryption keys
-7. **HIPAA Compliance** - Audit logs, RLS policies
-8. **Performance** - Bundle size, load times
-9. **Monitoring** - Alerts configured
+### Step 1: Code Quality Gate
 
-## Deployment Validation Steps
-
-### Step 1: Code Quality Validation
 ```bash
-# Run complete validation suite
-npm run lint && npm run typecheck && npm test
+npm run typecheck && npm run lint && npm test
 ```
 
-**Success criteria:**
-- ✅ 0 linting errors
-- ✅ 0 TypeScript errors
-- ✅ 625+ tests passing
-- ✅ 0 critical warnings
+**Report:**
+```
+[1/12] Code Quality
+  typecheck: X errors
+  lint: X errors, X warnings
+  tests: X passed, X failed (Y suites)
+```
 
-### Step 2: Database Migrations Check
+**Baseline (must meet or exceed):**
+- 0 typecheck errors
+- 0 lint errors, 0 warnings
+- 10,600+ tests passing, 0 failed
 
-Verify all migrations are applied:
+If ANY fail, stop and fix before continuing.
+
+### Step 2: Environment Variables
+
+Verify all required Vite env vars are configured:
+
 ```bash
-# Check for unapplied migrations
-npx supabase db pull
+# Check .env or .env.local for required vars
+```
+
+**Required (frontend):**
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_HCAPTCHA_SITE_KEY`
+
+**Required (Supabase secrets):**
+- `SB_ANON_KEY` or `SUPABASE_ANON_KEY` (JWT format)
+- `SB_SECRET_KEY` or `SB_SERVICE_ROLE_KEY`
+- `ANTHROPIC_API_KEY`
+- `ALLOWED_ORIGINS` (explicit domains, no wildcards)
+
+Report missing vars as blockers.
+
+### Step 3: Database Schema Integrity
+
+Verify schema is current:
+
+```bash
 npx supabase migration list
 ```
 
-**Validate:**
-- All migrations in `supabase/migrations/` are applied
-- No pending migrations
-- Schema matches production
+**Check:**
+- No unapplied migrations
+- 248+ tables in public schema
+- RLS enabled on all tenant-scoped tables
 
-**Critical tables to verify:**
-- `profiles`
-- `medications`
-- `encounters`
-- `fhir_*` tables
-- `phi_access_logs`
-- `audit_logs`
-- `ai_skill_config`
+Report unapplied migration count.
 
-### Step 3: Environment Variables Check
+### Step 4: Edge Function Deployment
 
-Verify all required environment variables are set:
+Verify all edge functions are deployed and healthy:
 
-**Frontend (.env):**
 ```bash
-# Required variables
-REACT_APP_SUPABASE_URL
-REACT_APP_SUPABASE_ANON_KEY
-REACT_APP_HCAPTCHA_SITE_KEY
-REACT_APP_PHI_ENCRYPTION_KEY
-```
-
-**Supabase Secrets:**
-```bash
-# Check secrets are configured
-npx supabase secrets list
-```
-
-**Required secrets:**
-- `ANTHROPIC_API_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `MAILERSEND_API_TOKEN` (if email enabled)
-
-### Step 4: Edge Functions Deployment
-
-Verify Supabase Edge Functions are deployed:
-```bash
-# List deployed functions
 npx supabase functions list
 ```
 
-**Required functions:**
-- `mcp-claude-server` (Claude MCP integration)
-- `ai-billing-suggester` (if AI skills enabled)
-- `ai-readmission-predictor` (if AI skills enabled)
+**Baseline:** 137+ functions deployed.
 
-**Test function health:**
-```bash
-# Test MCP server
-curl -X POST https://YOUR_PROJECT.supabase.co/functions/v1/mcp-claude-server \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ANON_KEY" \
-  -d '{"method":"tools/list"}'
+**Spot-check critical functions (health endpoint or list response):**
+- `login`, `envision-login` (auth)
+- `create-checkin` (community)
+- `ai-readmission-predictor` (clinical AI)
+- `ai-soap-note-generator` (documentation)
+- `fhir-r4` (interoperability)
+- `smart-authorize`, `smart-token` (SMART on FHIR)
+
+Report any missing or errored functions.
+
+### Step 5: MCP Server Health
+
+Verify all 11 MCP servers respond to ping:
+
+| # | Server | Tool Count |
+|---|--------|-----------|
+| 1 | mcp-claude-server | 3 |
+| 2 | mcp-fhir-server | 14 |
+| 3 | mcp-hl7-x12-server | 9 |
+| 4 | mcp-prior-auth-server | 11 |
+| 5 | mcp-clearinghouse-server | 10 |
+| 6 | mcp-cms-coverage-server | 8 |
+| 7 | mcp-npi-registry-server | 9 |
+| 8 | mcp-postgres-server | 5 |
+| 9 | mcp-medical-codes-server | 7 |
+| 10 | mcp-edge-functions-server | 5 |
+| 11 | mcp-medical-coding-server | 11 |
+
+**Total: 96 tools across 11 servers.**
+
+Check that MCP server files exist and export the expected tool count:
+
+```
+Use Grep to search for `tools/list` handlers in supabase/functions/mcp-*/index.ts
 ```
 
-### Step 5: MCP Server Validation
+Report any server with missing files or incorrect tool registration.
 
-Test Claude MCP server is operational:
+### Step 6: AI Skills Validation
+
+Verify AI skill registry is complete and models are pinned:
+
+```sql
+SELECT skill_key, model, is_active, patient_description IS NOT NULL as has_transparency
+FROM ai_skills
+ORDER BY skill_number;
+```
 
 **Check:**
-1. MCP server responds to health check
-2. Available tools: `analyze-text`, `generate-suggestion`, `summarize`
-3. Prompt caching enabled
-4. De-identification working
-5. Audit logging to `claude_usage_logs`
+- All active skills have pinned model versions (not `latest`)
+- All skills have `patient_description` (HTI-2 transparency)
+- 26+ edge function AI skills registered
+- 19+ service-layer AI skills registered
 
-**Test query:**
-```sql
--- Verify recent MCP usage
-SELECT * FROM claude_usage_logs
-WHERE request_type LIKE 'mcp_%'
-ORDER BY created_at DESC
-LIMIT 5;
+Use Grep to scan for unversioned model references:
+
+```
+Search src/services/ and supabase/functions/ for model strings without version dates
 ```
 
-### Step 6: Security Validation
+Report any skill with `model = 'latest'` or missing `patient_description`.
 
-Verify security controls:
+### Step 7: FHIR Interoperability
 
-**GPG Commit Signing:**
+Verify FHIR R4 infrastructure is intact:
+
+**Check files exist:**
+- `supabase/functions/fhir-r4/index.ts`
+- `supabase/functions/fhir-metadata/index.ts`
+- `supabase/functions/smart-authorize/index.ts`
+- `supabase/functions/smart-token/index.ts`
+- `supabase/functions/ccda-export/index.ts`
+
+**Check FHIR tables:**
+- `fhir_patients`, `fhir_practitioners`, `fhir_conditions`
+- `fhir_medication_requests`, `fhir_observations`
+- `fhir_connections`, `fhir_resource_sync`
+
+**Check My Health Hub routes exist in App.tsx:**
+- `/my-health`, `/health-observations`, `/immunizations`
+- `/care-plans`, `/allergies`, `/conditions`
+- `/medicine-cabinet`, `/health-records-download`
+
+Report any missing FHIR components.
+
+### Step 8: Clinical AI Guardrails
+
+Verify Compass Riley grounding and safety:
+
+**Check files exist:**
+- `supabase/functions/_shared/compass-riley/` (7+ modules)
+- `supabase/functions/_shared/cultural-competency/` (MCP tools)
+
+**Check guardrails in code:**
+- Temperature 0.1 on clinical calls (Grep for `temperature:`)
+- Grounding tags: `[STATED]`, `[INFERRED]`, `[GAP]`
+- Confidence scoring logged to `ai_confidence_scores`
+- Circuit breaker on Claude service (5-failure halt)
+
+Report any clinical AI call with temperature > 0.3.
+
+### Step 9: Security Posture
+
+Run the core security checks (subset of `/security-scan`):
+
+**CORS/CSP:**
+- No wildcards in `ALLOWED_ORIGINS`
+- No `frame-ancestors *` or `connect-src *`
+
+**Secrets:**
+- No hardcoded API keys in source (Grep for `sk-ant-`, `AKIA`, `BEGIN PRIVATE KEY`)
+- No `console.log` in production code (Grep `src/` excluding test files)
+
+**Auth:**
+- Edge functions use `mcpAuthGate` or equivalent JWT verification
+- No `getSession()` on server-side (must use `getClaims()` or `getUser()`)
+
+Report any violations as blockers.
+
+### Step 10: Tenant Isolation
+
+Verify multi-tenant security:
+
+- `get_current_tenant_id()` function exists in database
+- RLS policies reference `tenant_id` on all tenant-scoped tables
+- Edge functions derive tenant from JWT, not from request body
+
+Use Grep to check for tenant_id bypass patterns.
+
+### Step 11: Build & Bundle
+
 ```bash
-git config --get commit.gpgsign  # Should return "true"
-git config --get user.signingkey  # Should return key ID
-```
-
-**Encryption Keys:**
-- PHI encryption key configured
-- Master encryption key secured
-- Backup encryption tested
-
-**RLS Policies:**
-```sql
--- Count RLS-enabled tables
-SELECT COUNT(*) FROM pg_tables
-WHERE schemaname = 'public'
-  AND rowsecurity = true;
--- Should be 80+
-```
-
-### Step 7: HIPAA Compliance Check
-
-Run HIPAA compliance scan:
-- No PHI in logs
-- All audit logging active
-- Encryption enabled
-- RLS policies on all PHI tables
-
-Reference: Run `/security-scan` command
-
-### Step 8: Performance Validation
-
-Check bundle size and performance:
-
-```bash
-# Build production bundle
 npm run build
-
-# Check bundle size
-du -sh build/static/js/*.js | sort -h
 ```
-
-**Targets:**
-- Total bundle size: < 2 MB
-- Main chunk: < 500 KB
-- Vendor chunk: < 800 KB
-- Load time (3G): < 3 seconds
-
-### Step 9: Monitoring & Alerts
-
-Verify monitoring is configured:
-
-**Database Monitoring:**
-```sql
--- Check security monitoring dashboard
-SELECT * FROM security_monitoring_dashboard;
-```
-
-**Alerts configured for:**
-- Critical security events
-- Failed login attempts (>5)
-- PHI access anomalies
-- Database errors
-- API failures
-
-### Step 10: Backup Verification
-
-Verify backups are working:
 
 **Check:**
-- Last backup timestamp < 24 hours
-- Backup restoration tested (quarterly)
-- Encryption keys backed up
-- Code signed commits in git history
+- Build succeeds with 0 errors
+- Bundle size reasonable (report `dist/` total size)
+- No `process.env.REACT_APP_*` references in built output
 
-## Methodist Hospital Demo Checklist
+### Step 12: Demo Data Readiness
 
-**Additional checks for Dec 5th demo:**
+Verify demo/test data exists:
 
-### Demo-Specific Features
-- [ ] FHIR integration working
-- [ ] Epic sync functional
-- [ ] Medication Cabinet AI working
-- [ ] Care gap detection active
-- [ ] Quality metrics dashboard ready
-- [ ] Guardian Agent operational
-- [ ] White-label branding configured
+```sql
+-- Check default test tenant
+SELECT id, tenant_code, organization_name
+FROM tenants WHERE tenant_code = 'WF-0001';
 
-### Demo Data
-- [ ] Test patient accounts created
-- [ ] Sample encounters loaded
-- [ ] Medications pre-populated
-- [ ] Care plans generated
-- [ ] Quality metrics showing
+-- Check test patients exist
+SELECT COUNT(*) FROM profiles WHERE tenant_id = '2b902657-6a20-4435-a78a-576f397517ca';
 
-### Demo Environment
-- [ ] Production-like environment
-- [ ] HTTPS enabled
-- [ ] Fast load times
-- [ ] Mobile responsive
-- [ ] No console errors
+-- Check AI skills are active
+SELECT COUNT(*) FROM ai_skills WHERE is_active = true;
+```
 
 ## Output Format
 
 ```
-🚀 DEPLOYMENT READINESS CHECK
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOSPITAL PILOT READINESS CHECK
+===
 
-[1/9] Code Quality Validation...
-✅ Linting passed (0 errors)
-✅ Type checking passed (0 errors)
-✅ Tests passed (627 passing)
+[1/12]  Code Quality ........... PASS/FAIL
+[2/12]  Environment Variables ... PASS/FAIL
+[3/12]  Database Schema ........ PASS/FAIL
+[4/12]  Edge Functions ......... PASS/FAIL (X/137 deployed)
+[5/12]  MCP Servers ............ PASS/FAIL (X/11 healthy)
+[6/12]  AI Skills .............. PASS/FAIL (X active, X pinned)
+[7/12]  FHIR Interop ........... PASS/FAIL
+[8/12]  Clinical AI Guardrails . PASS/FAIL
+[9/12]  Security Posture ....... PASS/FAIL
+[10/12] Tenant Isolation ....... PASS/FAIL
+[11/12] Build & Bundle ......... PASS/FAIL (X MB)
+[12/12] Demo Data .............. PASS/FAIL
 
-[2/9] Database Migrations...
-✅ All migrations applied (143 total)
-✅ Schema matches production
-
-[3/9] Environment Variables...
-✅ All 4 frontend variables configured
-✅ All 3 Supabase secrets configured
-
-[4/9] Edge Functions Deployment...
-✅ MCP server deployed (v1.2.3)
-✅ AI billing suggester deployed
-✅ AI readmission predictor deployed
-
-[5/9] MCP Server Health...
-✅ MCP server responding
-✅ 3 tools available
-✅ Prompt caching active
-
-[6/9] Security Validation...
-✅ GPG signing enabled (Key: D1578B97AFE4D408)
-✅ PHI encryption key configured
-✅ RLS enabled on 87 tables
-
-[7/9] HIPAA Compliance...
-✅ No PHI logging violations
-✅ Audit logging active
-✅ All security controls passing
-
-[8/9] Performance Check...
-✅ Bundle size: 1.4 MB (target: <2 MB)
-✅ Main chunk: 423 KB
-✅ Load time: 2.1s (target: <3s)
-
-[9/9] Monitoring & Alerts...
-✅ Security dashboard active
-✅ Alerts configured (5 critical rules)
-✅ Last backup: 6 hours ago
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ DEPLOYMENT READY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Summary:
-  ✅ Code Quality: Passing
-  ✅ Database: 143 migrations applied
-  ✅ Security: All controls active
-  ✅ Performance: 1.4 MB bundle
-  ✅ Monitoring: Configured
-
-🟢 SAFE TO DEPLOY TO PRODUCTION
-
-Next Steps:
-  1. Create deployment tag: git tag v1.2.3
-  2. Push to production branch
-  3. Monitor deployment logs
-  4. Run post-deployment smoke tests
+---
+RESULT: PILOT READY / NOT READY
+Blockers: (list any FAIL items)
+Warnings: (list any non-critical issues)
 ```
 
-## Failure Output Format
+## Rules
 
-```
-🚀 DEPLOYMENT READINESS CHECK
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[1/9] Code Quality Validation...
-✅ Linting passed
-✅ Type checking passed
-❌ Tests failed (3 failures)
-
-Failed Tests:
-  ✗ MedicationService › should encrypt PHI
-  ✗ FhirService › should sync with Epic
-  ✗ BillingService › should calculate CCM time
-
-[2/9] Database Migrations...
-⚠️ WARNING: 2 unapplied migrations
-
-Unapplied:
-  - 20251116000000_add_demo_features.sql
-  - 20251116120000_update_rls_policies.sql
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-❌ DEPLOYMENT BLOCKED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Critical Issues:
-  ❌ 3 failing tests
-  ⚠️ 2 unapplied migrations
-
-🔴 DO NOT DEPLOY
-
-Required Actions:
-  1. Fix failing tests
-  2. Apply pending migrations: npx supabase db push
-  3. Re-run deployment check
-  4. Get approval before deploying
-```
-
-## When to Use This Skill
-
-**Pre-Deployment:**
-- Before every production deployment
-- Before staging deployments
-- Before demo environment setup
-
-**Methodist Demo:**
-- Nov 30th - Final validation
-- Dec 1st - Demo environment check
-- Dec 4th - Pre-demo validation
-- Dec 5th - Morning of demo
-
-**Regular Schedule:**
-- Weekly deployments
-- After major features
-- After security updates
-
-## Rollback Plan
-
-If deployment check fails after deployment:
-
-1. **Immediate actions:**
-   - Revert to previous version
-   - Restore database backup
-   - Notify team
-
-2. **Investigation:**
-   - Review deployment logs
-   - Check error reports
-   - Run this skill again
-
-3. **Fix and redeploy:**
-   - Address root cause
-   - Re-run deployment check
-   - Deploy with approval
-
-## Notes for AI Agent
-
-- Run ALL 9 steps (don't skip any)
-- Block deployment if ANY critical check fails
-- Warnings are okay, errors are not
-- Show detailed failure reasons
-- Provide clear remediation steps
-- Track deployment readiness score
-- Suggest rollback plan if needed
-- Cross-reference with Methodist demo date
+- Run ALL 12 checks. Do not skip any.
+- A single FAIL in steps 1, 9, or 10 (code quality, security, tenant isolation) blocks the entire check.
+- Steps 4-8 can have warnings without blocking if the specific demo doesn't need that feature.
+- Report exact counts — not "looks good."
+- If the build fails, that's a blocker regardless of everything else.
+- Do NOT fix issues during this skill — report them. Fixing is a separate task.

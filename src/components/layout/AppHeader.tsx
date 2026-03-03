@@ -1,77 +1,49 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import GlobalHeader from './GlobalHeader';
 import WelcomeHeader from './WelcomeHeader';
+import { allRoutes } from '../../routes/routeConfig';
 
 const WELCOME_ROUTES = ['/', '/welcome'];
 const AUTH_ROUTES = ['/login', '/register', '/verify', '/admin-login', '/reset-password', '/change-password'];
 
-// Routes that have their own AdminHeader (Envision Atlus clinical panels)
-// These routes should NOT show the GlobalHeader to avoid double-header
-const ENVISION_ATLUS_ROUTES = [
-  '/admin',
-  '/super-admin',
-  '/tenant-selector',
-  '/multi-tenant-monitor',
-  '/nurse-dashboard',
-  '/physician-dashboard',
-  '/case-manager',
-  '/social-worker',
-  '/enroll-senior',
-  '/admin-questions',
-  '/billing',
-  '/photo-approval',
-  '/neuro-suite',
-  '/physical-therapy',
-  '/care-coordination',
-  '/referrals',
-  '/questionnaire-analytics',
-  '/memory-clinic',
-  '/mental-health',
-  '/frequent-flyer',
-  '/frequent-flyers',
-  '/community-readmission',
-  '/revenue-dashboard',
-  '/shift-handoff',
-  '/discharged-patients',
-  '/specialist-dashboard',
-  '/field-visit',
-  '/fhir-conflicts',
-  '/ems-metrics',
-  '/coordinated-response',
-  '/envision',
-  '/time-clock-admin',
-  '/tenant-it',
-  '/admin-settings',
-  '/audit-logs',
-  '/system-admin',
-  '/healthcare-algorithms',
-  '/ai-revenue',
-  '/staff-wellness',
-  '/hospital-transfer',
-  '/transfer-logs',
-  '/bed-management',
-];
+// Categories that have their own AdminHeader — suppress GlobalHeader on these.
+// Derived from routeConfig.ts so new routes are automatically handled.
+const OWN_HEADER_CATEGORIES = new Set(['admin', 'superAdmin', 'clinical', 'chw', 'ems', 'workflow']);
+
+// Build the exclusion set once at module load (static route config, no runtime cost per render)
+const ENVISION_ATLUS_ROUTES: string[] = allRoutes
+  .filter((r) => OWN_HEADER_CATEGORIES.has(r.category))
+  .map((r) => r.path.replace(/\/:[^/]+/g, '')) // Strip dynamic segments for prefix matching
+  .filter((p, i, arr) => arr.indexOf(p) === i); // Dedupe
+
+// Also suppress on /envision auth routes (not in routeConfig as admin/clinical)
+const EXTRA_SUPPRESS = ['/envision'];
 
 export default function AppHeader() {
   const { pathname } = useLocation();
 
-  const isWelcome = WELCOME_ROUTES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
+  const headerType = useMemo(() => {
+    if (WELCOME_ROUTES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+      return 'welcome';
+    }
 
-  const isAuthPage = AUTH_ROUTES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
+    if (AUTH_ROUTES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+      return 'none';
+    }
 
-  // Check if this is an Envision Atlus clinical route (has its own AdminHeader)
-  const isEnvisionAtlus = ENVISION_ATLUS_ROUTES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
+    // Check if this is an admin/clinical/chw/ems route (has its own AdminHeader)
+    const isEnvisionAtlus =
+      ENVISION_ATLUS_ROUTES.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
+      EXTRA_SUPPRESS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
-  if (isWelcome) return <WelcomeHeader />;
-  if (isAuthPage) return null;
-  if (isEnvisionAtlus) return null; // Envision Atlus routes have their own header
+    if (isEnvisionAtlus) return 'none';
+
+    return 'global';
+  }, [pathname]);
+
+  if (headerType === 'welcome') return <WelcomeHeader />;
+  if (headerType === 'none') return null;
 
   return <GlobalHeader />;
 }

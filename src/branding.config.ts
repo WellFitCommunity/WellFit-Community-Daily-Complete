@@ -9,6 +9,9 @@ export interface BrandingConfig {
   contactInfo: string;
   gradient: string;   // Made required - always has a default value
   customFooter?: string; // tenant-specific footer override (optional)
+  websiteUrl?: string; // tenant website link (e.g., header "Visit Website" button)
+  tagline?: string;    // short tagline below brand name (e.g., "Move · Nourish · Connect")
+  poweredBy?: string;  // footer attribution line (e.g., "Powered by Acme Health")
 }
 
 export interface TenantBranding extends BrandingConfig {
@@ -25,6 +28,9 @@ export const defaultBranding: BrandingConfig = {
   textColor: '#ffffff',              // white by default (pairs with dark blue)
   gradient: 'linear-gradient(to bottom right, #003865, #8cc63f)',
   contactInfo: `© ${new Date().getFullYear()} WellFit Community. All rights reserved.`,
+  websiteUrl: 'https://www.TheWellFitCommunity.org',
+  tagline: 'Move \u00b7 Nourish \u00b7 Connect',
+  poweredBy: 'WellFit Community, Inc., Vital Edge Healthcare Consulting, Envision Virtual Edge Group',
   // customFooter intentionally omitted so global/Alliance default footer shows
 };
 

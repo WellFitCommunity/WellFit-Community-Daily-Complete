@@ -33,7 +33,7 @@
 | Envision Auth Flow | 10/10 | Complete 2FA flow |
 | CRUD Operations | 9/10 | Minor gaps in read-only panels |
 | Admin Separation | 9/10 | Needs RLS verification for tenant isolation |
-| Test Coverage | 9/10 | **80/104 components tested (77%)** — +8 from Tier 3 Session 5 |
+| Test Coverage | 9/10 | **88/104 components tested (85%)** — +8 from Tier 3 Session 6 |
 
 **Overall: 98/100 — functionally solid, test coverage at 77%**
 
@@ -141,16 +141,16 @@
 
 ## Session 6: Admin Utilities
 
-| # | Component | Why | Status |
-|---|-----------|-----|--------|
-| 3.9 | ApiKeyManager | API key CRUD | TODO |
-| 3.10 | TenantConfigHistory | Config audit trail | TODO |
-| 3.11 | TenantComplianceReport | Report generation | TODO |
-| 3.12 | IntelligentAdminPanel | Main orchestrator | TODO |
-| 3.13 | AdminHeader | Navigation | TODO |
-| 3.14 | PinnedDashboardsBar | Dashboard pinning | TODO |
-| 3.15 | SLABreachAlerts | SLA monitoring | TODO |
-| 3.16 | TimeClockAdmin | Staff time tracking | TODO |
+| # | Component | Tests | Why | Status |
+|---|-----------|-------|-----|--------|
+| 3.9 | ApiKeyManager | 36 | API key CRUD | DONE |
+| 3.10 | TenantConfigHistory | 25 | Config audit trail | DONE |
+| 3.11 | TenantComplianceReport | 21 | Report generation | DONE |
+| 3.12 | IntelligentAdminPanel | 21 | Main orchestrator | DONE |
+| 3.13 | AdminHeader | 24 | Navigation | DONE |
+| 3.14 | PinnedDashboardsBar | 20 | Dashboard pinning | DONE |
+| 3.15 | SLABreachAlerts | 30 | SLA monitoring | DONE |
+| 3.16 | TimeClockAdmin | 28 | Staff time tracking | DONE |
 
 ## Session 7: Forms & Enrollment
 

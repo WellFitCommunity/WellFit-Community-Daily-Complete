@@ -30,7 +30,7 @@ const Footer: React.FC = () => {
 
   const footerText =
     branding?.customFooter ??
-    `© ${new Date().getFullYear()} ${branding?.appName || 'WellFit Community'}. All rights reserved.`;
+    `© ${new Date().getFullYear()} ${branding?.appName || 'Community Platform'}. All rights reserved.`;
 
   const linkStyle: React.CSSProperties = { color: 'inherit', textDecoration: 'underline' };
 
@@ -43,21 +43,25 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col items-center gap-1">
         <div>{footerText}</div>
 
-        <div className="mt-1">
-          Powered by WellFit Community, Inc., Vital Edge Healthcare Consulting,{' '}
-          <Link
-            to="/envision"
-            className="hover:underline cursor-pointer transition-opacity hover:opacity-80"
-            style={{ color: 'inherit' }}
-            aria-label="Envision Portal"
-          >
-            Envision Virtual Edge Group
-          </Link>
-        </div>
+        {branding?.poweredBy && (
+          <div className="mt-1">
+            Powered by{' '}
+            <Link
+              to="/envision"
+              className="hover:underline cursor-pointer transition-opacity hover:opacity-80"
+              style={{ color: 'inherit' }}
+              aria-label="Envision Portal"
+            >
+              {branding.poweredBy}
+            </Link>
+          </div>
+        )}
 
-        <div className="mt-1 text-sm opacity-90">
-          {branding?.contactInfo || 'Contact us at info@thewellfitcommunity.org'}
-        </div>
+        {branding?.contactInfo && (
+          <div className="mt-1 text-sm opacity-90">
+            {branding.contactInfo}
+          </div>
+        )}
 
         {/* Legal and administrative links */}
         <nav className="mt-2 flex flex-wrap justify-center gap-4 text-sm" aria-label="Footer navigation">

@@ -1,205 +1,246 @@
-# HIPAA Compliance Checker Skill
+# /security-scan — HIPAA Security Compliance Scan
 
-## Purpose
-Automated scanning for HIPAA compliance violations in code to ensure Protected Health Information (PHI) is properly secured.
+Automated scanning for HIPAA compliance violations, CORS/CSP security, MCP server auth, edge function hardening, and code hygiene. Run before commits, demos, and audits.
 
-## What This Skill Does
-
-Scans the codebase for common HIPAA compliance issues:
-
-1. **PHI Logging Violations** - Detect console.log() in PHI-handling code
-2. **Missing RLS Policies** - Verify Row-Level Security on database tables
-3. **Unencrypted PHI Fields** - Check for PHI columns without encryption
-4. **Missing Audit Logging** - Ensure PHI access is logged
-5. **Hardcoded Credentials** - Scan for exposed API keys or secrets
-
-## Execution Steps
+## Steps
 
 ### Step 1: PHI Logging Violations
-Scan for active logging in PHI-handling code:
-```bash
-# Search for console statements in PHI services
-grep -rn "console\.\(log\|error\|warn\|info\)" \
-  src/services/phi* \
-  src/utils/phi* \
-  src/api/medications* \
-  src/services/fhir* \
-  src/components/*Patient* \
-  src/components/*Medical* \
-  --exclude-dir=__tests__ \
-  --exclude="*.test.ts" \
-  --exclude="*.test.tsx"
+
+Scan ALL source code for console statements that could leak PHI:
+
+```
+Grep for console\.(log|error|warn|info|debug) in src/ — exclude __tests__/ and *.test.ts(x)
 ```
 
-**Violations to report:**
-- `console.log()` with patient data
-- `console.error()` with PHI
-- Uncommented debug statements
+**Violations:**
+- Any `console.*` in `src/services/`, `src/components/`, `src/hooks/`, `src/contexts/`
+- Exception: Test files are allowed to use console for debugging
 
-### Step 2: Database RLS Policy Check
-Verify RLS is enabled on all PHI tables:
-```bash
-# Check migration files for RLS policies
-grep -l "ALTER TABLE.*ENABLE ROW LEVEL SECURITY" supabase/migrations/*.sql | wc -l
+Report file:line for each violation.
+
+### Step 2: TypeScript `any` Type Regression
+
+Scan for `any` type usage that bypasses type safety:
+
+```
+Grep for ": any" and "as any" in src/ — exclude __tests__/, *.test.ts(x), *.d.ts
 ```
 
-**Tables requiring RLS:**
-- `profiles` (patient data)
-- `medications`
-- `health_assessments`
-- `vital_signs`
-- `encounters`
-- `lab_results`
-- `fhir_*` tables
-- `phi_access_logs`
-- `audit_logs`
+**Current baseline: 0 `any` types in production code** (eliminated Jan 2026).
 
-### Step 3: Encryption Validation
-Check for PHI fields with encryption:
-```bash
-# Look for encrypted column definitions
-grep -r "_encrypted" supabase/migrations/*.sql
+Report any new occurrences as regressions. Each one is a violation.
+
+### Step 3: Database RLS Policy Coverage
+
+Verify Row-Level Security is enabled on all tenant-scoped tables:
+
+```sql
+-- Count RLS-enabled tables
+SELECT COUNT(*) FROM pg_tables
+WHERE schemaname = 'public' AND rowsecurity = true;
+
+-- Find tables WITHOUT RLS (potential gaps)
+SELECT tablename FROM pg_tables
+WHERE schemaname = 'public'
+  AND rowsecurity = false
+  AND tablename NOT LIKE 'pg_%'
+  AND tablename NOT IN ('schema_migrations')
+ORDER BY tablename;
 ```
 
-**Required encrypted fields:**
-- `email_encrypted`
-- `phone_encrypted`
-- `ssn_encrypted` (if exists)
-- `date_of_birth_encrypted`
-- `access_token_encrypted`
+**Baseline: 248+ tables total.** All tenant-scoped tables must have RLS.
 
-### Step 4: Audit Logging Coverage
-Verify audit logging for PHI access:
-```bash
-# Check for auditLogger calls in services
-grep -r "auditLogger\.\(phi\|clinical\)" src/services/*.ts | wc -l
+Tables without RLS are acceptable ONLY if they are:
+- Reference/lookup tables (code sets, static config)
+- System tables (schema_migrations, etc.)
+
+Report any tenant-scoped table missing RLS as critical.
+
+### Step 4: CORS/CSP Wildcard Scan
+
+Scan for forbidden wildcard patterns:
+
+```
+Grep for: frame-ancestors \*, connect-src \*, Access-Control-Allow-Origin.*\*
+Scan: src/, supabase/functions/, public/
 ```
 
-**Services requiring audit logging:**
-- PHI encryption service
-- FHIR integration service
-- Medication service
-- Health assessment service
-- Patient profile service
-
-### Step 5: Secret Scanning
-Scan for hardcoded credentials:
-```bash
-# Search for potential secrets (excluding node_modules)
-grep -rn --exclude-dir={node_modules,.git,dist,build} \
-  -E "(sk-ant-|AKIA|BEGIN PRIVATE KEY|postgres://|mysql://)" .
+Also check:
+```
+Grep for: WHITE_LABEL_MODE in supabase/functions/ and src/
 ```
 
-**Patterns to detect:**
-- Anthropic API keys: `sk-ant-*`
-- AWS keys: `AKIA*`
-- Private keys: `BEGIN PRIVATE KEY`
-- Database URLs: `postgres://`, `mysql://`
-- Supabase keys: Long alphanumeric strings
+**Any wildcard in CORS or CSP is a HIPAA violation** (164.312(e)(1) transmission security).
 
-## Compliance Checks Matrix
+Report file:line for each wildcard found.
 
-| Check | HIPAA Requirement | Status |
-|-------|-------------------|--------|
-| PHI Logging | §164.312(b) - Audit Controls | Check |
-| RLS Policies | §164.312(a)(1) - Access Control | Check |
-| Encryption | §164.312(a)(2)(iv) - Encryption | Check |
-| Audit Logging | §164.312(b) - Audit Controls | Check |
-| Secret Management | §164.312(a)(2)(i) - Unique User ID | Check |
+### Step 5: Hardcoded Secrets Scan
+
+Scan for exposed credentials:
+
+```
+Grep for: sk-ant-, AKIA, BEGIN PRIVATE KEY, BEGIN RSA, postgres://, mysql://
+Scan: entire repo — exclude node_modules/, .git/, dist/
+```
+
+Also check for Supabase keys accidentally committed:
+
+```
+Grep for: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 (JWT header prefix)
+Scan: src/, supabase/functions/ — exclude *.test.*, __tests__/
+```
+
+Report any match as critical.
+
+### Step 6: Edge Function Auth Gate
+
+Verify all edge functions enforce authentication:
+
+```
+Grep for: mcpAuthGate|corsFromRequest|handleOptions
+Scan: supabase/functions/*/index.ts
+```
+
+**Every edge function must either:**
+1. Use `mcpAuthGate` (MCP servers), OR
+2. Use `corsFromRequest` + JWT verification (regular edge functions), OR
+3. Be explicitly public (login, register, health-monitor)
+
+**Known public functions (no auth required):**
+- `login`, `register`, `envision-login`
+- `health-monitor`, `system-status`
+- `smart-configuration`, `fhir-metadata`
+- `verify-hcaptcha`
+
+Report any non-public function missing auth as critical.
+
+### Step 7: MCP Server Security
+
+Verify all 11 MCP servers have proper security controls:
+
+**For each server in `supabase/functions/mcp-*`:**
+
+1. **Auth binding:** Uses `createClient` with per-request JWT (not shared client)
+   ```
+   Grep for: createClient in supabase/functions/mcp-*/index.ts
+   ```
+
+2. **Rate limiting:** Has rate limit configuration
+   ```
+   Grep for: rateLimit|RATE_LIMIT in supabase/functions/mcp-*/
+   ```
+
+3. **Input validation:** Has VALIDATION schema
+   ```
+   Grep for: VALIDATION|inputSchema in supabase/functions/mcp-*/
+   ```
+
+4. **Tenant isolation:** Derives tenant_id from JWT, not from tool args
+   ```
+   Grep for: tenant_id.*payload|payload.*tenant in supabase/functions/mcp-*/
+   ```
+
+Report any MCP server missing these controls.
+
+### Step 8: JWT Verification
+
+Verify proper JWT handling:
+
+```
+Grep for: getSession\(\) in supabase/functions/ — this is INSECURE on server-side
+```
+
+**`getSession()` must NOT be used in edge functions.** Use `getClaims()` or `getUser()` instead.
+
+Also verify JWKS endpoint usage:
+```
+Grep for: .well-known/jwks in supabase/functions/
+```
+
+Report any `getSession()` in edge functions as critical.
+
+### Step 9: God File Check
+
+Scan for files exceeding the 600-line limit:
+
+```bash
+find src/ -name '*.ts' -o -name '*.tsx' | xargs wc -l | sort -rn | head -20
+```
+
+**Baseline: 0 god files** (all previously decomposed).
+
+Report any file over 600 lines with its current line count.
+
+### Step 10: PHI in Frontend Check
+
+Verify no PHI fields are exposed in client-side code:
+
+```
+Grep for: ssn|social_security|date_of_birth_raw|full_address
+Scan: src/components/, src/hooks/ — exclude __tests__/
+```
+
+**Allowed patterns:**
+- `date_of_birth` in a type definition (interface, not usage)
+- Patient ID references (IDs are not PHI)
+- Test fixture data with obviously fake values
+
+Report any direct PHI field access in UI components.
+
+### Step 11: Audit Logging Coverage
+
+Verify audit logging is present in critical services:
+
+```
+Grep for: auditLogger in src/services/
+```
+
+**Services that MUST have audit logging:**
+- PHI encryption/decryption
+- Patient data access
+- FHIR operations
+- AI clinical decisions
+- Authentication events
+- Admin operations
+
+Count services with auditLogger vs total services. Report coverage percentage.
 
 ## Output Format
 
 ```
-🏥 HIPAA COMPLIANCE SCAN
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HIPAA SECURITY COMPLIANCE SCAN
+===
 
-[1/5] Scanning for PHI logging violations...
-✅ No PHI logging violations found
+[1/11]  PHI Logging ............. PASS/FAIL (X violations)
+[2/11]  any Type Regression ..... PASS/FAIL (X occurrences)
+[3/11]  RLS Coverage ............ PASS/FAIL (X/Y tables with RLS)
+[4/11]  CORS/CSP Wildcards ...... PASS/FAIL (X wildcards found)
+[5/11]  Hardcoded Secrets ....... PASS/FAIL (X exposures)
+[6/11]  Edge Function Auth ...... PASS/FAIL (X/Y functions secured)
+[7/11]  MCP Server Security ..... PASS/FAIL (X/11 servers compliant)
+[8/11]  JWT Verification ........ PASS/FAIL
+[9/11]  God Files (>600 lines) .. PASS/FAIL (X violations)
+[10/11] PHI in Frontend ......... PASS/FAIL
+[11/11] Audit Logging ........... PASS/FAIL (X% coverage)
 
-[2/5] Verifying RLS policies...
-✅ RLS enabled on 87 tables
-✅ All PHI tables have RLS policies
+---
+RESULT: COMPLIANT / NON-COMPLIANT
+Critical: (list any critical violations)
+Warnings: (list any non-critical findings)
 
-[3/5] Checking field encryption...
-✅ Found 12 encrypted fields
-✅ All required PHI fields encrypted
-
-[4/5] Validating audit logging...
-✅ Audit logging found in 15 PHI-handling services
-✅ All critical operations logged
-
-[5/5] Scanning for hardcoded secrets...
-✅ No exposed credentials found
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ HIPAA COMPLIANCE: PASSED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Summary:
-  ✅ PHI Logging: Clean
-  ✅ RLS Policies: 87/87 tables
-  ✅ Encryption: 12/12 fields
-  ✅ Audit Logging: 15 services
-  ✅ Secret Scanning: Clean
-
-Ready for SOC2 audit!
+HIPAA References:
+  164.312(a)(1) — Access Control (RLS, auth)
+  164.312(a)(2)(iv) — Encryption
+  164.312(b) — Audit Controls (logging)
+  164.312(e)(1) — Transmission Security (CORS/CSP)
 ```
 
-## Failure Output Format
+## Rules
 
-```
-🏥 HIPAA COMPLIANCE SCAN
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[1/5] Scanning for PHI logging violations...
-❌ Found 3 PHI logging violations
-
-Violations:
-  src/services/phiEncryption.ts:145 - console.log(patientId, encryptedData)
-  src/api/medications.ts:89 - console.error(medicationDetails)
-  src/components/PatientProfile.tsx:203 - console.log(profile)
-
-[2/5] Verifying RLS policies...
-⚠️ WARNING: 2 tables missing RLS policies
-
-Missing RLS:
-  - vital_signs (line 1423 in migration)
-  - wearable_data (no policy found)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-❌ HIPAA COMPLIANCE: FAILED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Critical Issues:
-  ❌ 3 PHI logging violations
-  ⚠️ 2 tables missing RLS
-
-Recommended Actions:
-  1. Remove console.log from PHI-handling code
-  2. Add RLS policies to vital_signs and wearable_data tables
-  3. Re-run scan after fixes
-```
-
-## When to Use This Skill
-
-- **Before Methodist demo** - Ensure compliance for hospital presentation
-- **Before commits** - Part of pre-commit validation
-- **Weekly security review** - Regular compliance audits
-- **Before SOC2 audit** - Validate audit readiness
-- **After adding PHI fields** - Verify new fields are protected
-
-## Integration with Security Documentation
-
-This skill validates the controls documented in:
-- `docs/HIPAA_SOC2_SECURITY_AUDIT.md`
-- `docs/HIPAA_COMPLIANCE.md`
-- `docs/SOC2_SECURITY_CONTROLS.md`
-
-## Notes for AI Agent
-
-- Report all violations (don't hide issues)
-- Provide file paths and line numbers for violations
-- Prioritize critical issues (PHI exposure) over warnings
-- Suggest remediation actions for each violation
-- Cross-reference with HIPAA requirements (§164.312)
-- Track compliance score over time
+- Run ALL 11 checks. Do not skip any.
+- Steps 1, 3, 4, 5, 6, 8 are critical — any FAIL blocks compliance.
+- Steps 2, 9 are code quality — FAIL is a regression, not a compliance violation.
+- Use the Grep tool (not bash grep) for all searches — better output formatting.
+- Report exact file:line for every violation.
+- Do NOT fix issues during this skill — report them. Fixing is a separate task.
+- Cross-reference findings with HIPAA section numbers.
