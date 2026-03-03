@@ -154,6 +154,12 @@ export interface ReasoningEncounterInput {
   patientSafety: { emergencyDetected: boolean; emergencyReason?: string };
   analysisCount: number;
   transcriptWordCount: number;
+  /** Optional cultural context summaries from Cultural Competency MCP server */
+  culturalContext?: {
+    populations: string[];
+    barriers: string[];
+    clinicalNotes: string[];
+  };
 }
 
 /**

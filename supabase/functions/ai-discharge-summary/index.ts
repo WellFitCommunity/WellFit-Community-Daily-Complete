@@ -37,6 +37,7 @@ import { buildDischargeSummaryPrompt } from "./promptBuilder.ts";
 import { normalizeSummaryResponse, getDefaultSummary } from "./normalize.ts";
 import { logUsage } from "./usageLogging.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
+import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -63,6 +64,7 @@ serve(async (req) => {
       dischargeDisposition = "home",
       attendingPhysician = "Attending Physician",
       includePatientInstructions = true,
+      populationHints,
     } = body;
 
     // Validate required fields
@@ -96,6 +98,25 @@ serve(async (req) => {
       logger
     );
 
+    // Fetch cultural competency context if population hints are provided
+    let culturalPromptSection: string | undefined;
+    if (populationHints && populationHints.length > 0) {
+      const culturalContexts = await Promise.all(
+        populationHints.map((pop) => fetchCulturalContext(pop, logger))
+      );
+      const validContexts = culturalContexts.filter(
+        (ctx): ctx is NonNullable<typeof ctx> => ctx !== null
+      );
+      if (validContexts.length > 0) {
+        culturalPromptSection = validContexts
+          .map((ctx) => formatCulturalContextForPrompt(ctx, "discharge"))
+          .join("\n");
+        logger.info("Cultural context injected into discharge summary prompt", {
+          populations: validContexts.map((c) => c.population),
+        });
+      }
+    }
+
     // Generate discharge summary via Claude
     const startTime = Date.now();
     const summary = await generateDischargeSummary(
@@ -103,7 +124,8 @@ serve(async (req) => {
       dischargeDisposition,
       attendingPhysician,
       includePatientInstructions,
-      logger
+      logger,
+      culturalPromptSection
     );
     const responseTime = Date.now() - startTime;
 
@@ -159,13 +181,15 @@ async function generateDischargeSummary(
   dischargeDisposition: string,
   attendingPhysician: string,
   includePatientInstructions: boolean,
-  logger: ReturnType<typeof createLogger>
+  logger: ReturnType<typeof createLogger>,
+  culturalContext?: string
 ): Promise<DischargeSummary> {
   const prompt = buildDischargeSummaryPrompt(
     context,
     dischargeDisposition,
     attendingPhysician,
-    includePatientInstructions
+    includePatientInstructions,
+    culturalContext
   );
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {

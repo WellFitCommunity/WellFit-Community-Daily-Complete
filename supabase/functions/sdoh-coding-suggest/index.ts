@@ -6,6 +6,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from "../_shared/auditLogger.ts";
+import { fetchCulturalContext, type CulturalContextResponse } from "../_shared/culturalCompetencyClient.ts";
 
 const logger = createLogger('sdoh-coding-suggest');
 
@@ -17,6 +18,8 @@ interface SDOHCodingRequest {
     icd10?: string[]
     cpt?: string[]
   }
+  /** Cultural competency: population hints for culturally-informed SDOH coding */
+  populationHints?: string[]
 }
 
 // Database record types
@@ -82,7 +85,7 @@ serve(async (req) => {
       }
     }
 
-    const { encounterId, patientId, clinicalNotes, existingCodes }: SDOHCodingRequest = await req.json()
+    const { encounterId, patientId, clinicalNotes, existingCodes, populationHints }: SDOHCodingRequest = await req.json()
 
     if (!encounterId) {
       return new Response(JSON.stringify({ error: 'encounterId is required' }), {
@@ -158,9 +161,27 @@ serve(async (req) => {
       existingSDOH: sdohAssessment?.[0] || null
     }
 
+    // Fetch cultural competency context for SDOH-relevant Z-codes
+    let culturalSDOHCodes: Array<{ code: string; description: string; applicability: string }> = [];
+    if (populationHints && populationHints.length > 0) {
+      const culturalContexts = await Promise.all(
+        populationHints.map((pop) => fetchCulturalContext(pop, logger))
+      );
+      const validContexts = culturalContexts.filter(
+        (ctx): ctx is CulturalContextResponse => ctx !== null
+      );
+      if (validContexts.length > 0) {
+        culturalSDOHCodes = validContexts.flatMap((ctx) => ctx.sdohCodes);
+        logger.info("Cultural SDOH codes enriched coding analysis", {
+          populations: validContexts.map((c) => c.population),
+          codeCount: culturalSDOHCodes.length,
+        });
+      }
+    }
+
     // Call Claude AI for enhanced analysis
     const startTime = Date.now();
-    const aiAnalysis = await analyzeWithClaude(analysisContext, userId, encounterId, supabaseClient);
+    const aiAnalysis = await analyzeWithClaude(analysisContext, userId, encounterId, supabaseClient, culturalSDOHCodes);
     const processingTime = Date.now() - startTime;
 
     // Save coding audit log (keep existing for backward compatibility)
@@ -190,7 +211,7 @@ serve(async (req) => {
   }
 })
 
-async function analyzeWithClaude(context: AnalysisContext, userId: string | null, encounterId: string, supabaseClient: SupabaseClient) {
+async function analyzeWithClaude(context: AnalysisContext, userId: string | null, encounterId: string, supabaseClient: SupabaseClient, culturalSDOHCodes: Array<{ code: string; description: string; applicability: string }> = []) {
   const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY')
 
   if (!claudeApiKey) {
@@ -218,7 +239,10 @@ CCM Eligibility Criteria:
 - Basic CCM (99490): 2+ chronic conditions, 20+ minutes
 - Complex CCM (99487): Multiple conditions + SDOH factors, 60+ minutes
 
-Respond with structured JSON including codes, rationales, SDOH assessment, CCM recommendations, and audit readiness score.`
+Respond with structured JSON including codes, rationales, SDOH assessment, CCM recommendations, and audit readiness score.${culturalSDOHCodes.length > 0 ? `
+
+POPULATION-SPECIFIC SDOH Z-CODES (from cultural competency profiles — consider these in your analysis):
+${culturalSDOHCodes.map(c => `- ${c.code}: ${c.description} (${c.applicability})`).join("\n")}` : ""}`
 
   const userPrompt = `Analyze this clinical encounter for coding opportunities:
 

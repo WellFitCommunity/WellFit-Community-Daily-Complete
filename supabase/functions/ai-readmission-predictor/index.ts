@@ -11,6 +11,8 @@ import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { runReasoningPipeline, serializeReasoningForClient } from '../_shared/compass-riley/reasoningPipeline.ts';
 import type { ReasoningEncounterInput } from '../_shared/compass-riley/types.ts';
+import { createLogger } from '../_shared/auditLogger.ts';
+import { fetchCulturalContext, formatCulturalContextCompact } from '../_shared/culturalCompetencyClient.ts';
 
 const SUPABASE_URL = SUPABASE_URL!;
 const SERVICE_KEY = SB_SECRET_KEY!;
@@ -115,7 +117,8 @@ serve(async (req) => {
       dischargeFacility,
       dischargeDisposition,
       primaryDiagnosisCode,
-      primaryDiagnosisDescription
+      primaryDiagnosisDescription,
+      populationHints,
     } = await req.json();
 
     // =========================================================================
@@ -179,7 +182,35 @@ serve(async (req) => {
       primaryDiagnosisDescription
     };
 
-    // 4. Session 2: Run CoT/ToT reasoning to determine prediction complexity
+    // 4a. Fetch cultural competency context if population hints are provided
+    const readmissionLogger = createLogger('ai-readmission-predictor', req);
+    let culturalBarrierNotes: string[] = [];
+    let reasoningCulturalContext: ReasoningEncounterInput['culturalContext'];
+    if (populationHints && Array.isArray(populationHints) && populationHints.length > 0) {
+      const culturalContexts = await Promise.all(
+        populationHints.map((pop: string) => fetchCulturalContext(pop, readmissionLogger))
+      );
+      const validContexts = culturalContexts.filter(
+        (ctx): ctx is NonNullable<typeof ctx> => ctx !== null
+      );
+      if (validContexts.length > 0) {
+        culturalBarrierNotes = validContexts.flatMap((ctx) =>
+          ctx.barriers.map((b) => `${b.barrier}: ${b.impact}`)
+        );
+        reasoningCulturalContext = {
+          populations: validContexts.map((c) => c.population),
+          barriers: validContexts.flatMap((ctx) => ctx.barriers.map((b) => b.barrier)),
+          clinicalNotes: validContexts.flatMap((ctx) =>
+            ctx.clinicalConsiderations.slice(0, 2).map((cc) => `${cc.condition}: ${cc.clinicalNote}`)
+          ),
+        };
+        readmissionLogger.info("Cultural context injected into readmission predictor", {
+          populations: validContexts.map((c) => c.population),
+        });
+      }
+    }
+
+    // 4b. Session 2: Run CoT/ToT reasoning to determine prediction complexity
     const { data: tenantSkillConfig } = await supabase
       .from('tenant_ai_skill_config')
       .select('settings')
@@ -196,6 +227,7 @@ serve(async (req) => {
         supportingEvidence: [
           ...(patientData.readmissionCount > 0 ? [`${patientData.readmissionCount} prior readmissions in 90 days`] : []),
           ...(patientData.sdohRiskFactors > 0 ? [`${patientData.sdohRiskFactors} active SDOH risk factors`] : []),
+          ...culturalBarrierNotes.slice(0, 3),
         ],
         refutingEvidence: [
           ...(patientData.hasActiveCarePlan ? ['Active care plan in place'] : []),
@@ -212,6 +244,7 @@ serve(async (req) => {
       patientSafety: { emergencyDetected: false },
       analysisCount: 1,
       transcriptWordCount: 100,
+      culturalContext: reasoningCulturalContext,
     };
 
     const tenantSettings = (tenantSkillConfig?.settings ?? null) as Record<string, unknown> | null;

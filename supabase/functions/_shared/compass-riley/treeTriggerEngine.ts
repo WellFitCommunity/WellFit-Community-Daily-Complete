@@ -61,6 +61,24 @@ export function evaluateTriggers(
     encounterState, thresholds, confidenceScore, reasonCodes, triggerDescriptions
   );
 
+  // Enrich trigger descriptions with cultural context when available
+  if (encounterState.culturalContext && encounterState.culturalContext.populations.length > 0) {
+    const cc = encounterState.culturalContext;
+    triggerDescriptions.push(
+      `Cultural context active: ${cc.populations.join(", ")}`
+    );
+    if (cc.barriers.length > 0) {
+      triggerDescriptions.push(
+        `Population barriers: ${cc.barriers.slice(0, 3).join("; ")}`
+      );
+    }
+    if (cc.clinicalNotes.length > 0) {
+      triggerDescriptions.push(
+        `Clinical considerations: ${cc.clinicalNotes.slice(0, 3).join("; ")}`
+      );
+    }
+  }
+
   return {
     escalate: reasonCodes.length > 0,
     reasonCodes,

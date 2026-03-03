@@ -20,7 +20,8 @@ export function buildDischargeSummaryPrompt(
   context: PatientContext,
   dischargeDisposition: string,
   attendingPhysician: string,
-  includePatientInstructions: boolean
+  includePatientInstructions: boolean,
+  culturalContext?: string
 ): string {
   const sections: string[] = [];
 
@@ -115,7 +116,7 @@ export function buildDischargeSummaryPrompt(
   // Build the full prompt with JSON output schema
   return `You are a clinical documentation specialist generating a comprehensive discharge summary.
 
-${sections.join("\n")}
+${sections.join("\n")}${culturalContext ? `\n\n${culturalContext}` : ""}
 
 Generate a complete discharge summary following hospital standards. Compare admission and discharge medications to identify:
 - CONTINUED: Medications that were continued unchanged

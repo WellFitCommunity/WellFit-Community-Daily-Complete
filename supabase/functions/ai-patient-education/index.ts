@@ -17,6 +17,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { HAIKU_MODEL } from "../_shared/models.ts";
+import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -28,6 +29,8 @@ interface EducationRequest {
   format?: "article" | "bullet_points" | "qa" | "instructions";
   includeWarnings?: boolean;
   maxLength?: number;
+  /** Cultural competency: population hints for culturally-informed education */
+  populationHints?: string[];
 }
 
 interface EducationContent {
@@ -68,6 +71,7 @@ serve(async (req) => {
       format = "article",
       includeWarnings = true,
       maxLength = 500,
+      populationHints,
     } = body;
 
     if (!topic) {
@@ -84,8 +88,27 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
+    // Fetch cultural competency context if population hints are provided
+    let culturalPromptSection = "";
+    if (populationHints && populationHints.length > 0) {
+      const culturalContexts = await Promise.all(
+        populationHints.map((pop) => fetchCulturalContext(pop, logger))
+      );
+      const validContexts = culturalContexts.filter(
+        (ctx): ctx is NonNullable<typeof ctx> => ctx !== null
+      );
+      if (validContexts.length > 0) {
+        culturalPromptSection = validContexts
+          .map((ctx) => formatCulturalContextForPrompt(ctx))
+          .join("\n");
+        logger.info("Cultural context injected into patient education prompt", {
+          populations: validContexts.map((c) => c.population),
+        });
+      }
+    }
+
     // Build prompt
-    const prompt = buildEducationPrompt(topic, condition, language, format, includeWarnings, maxLength);
+    const prompt = buildEducationPrompt(topic, condition, language, format, includeWarnings, maxLength, culturalPromptSection);
 
     const startTime = Date.now();
 
@@ -195,7 +218,8 @@ function buildEducationPrompt(
   language: string,
   format: string,
   includeWarnings: boolean,
-  maxLength: number
+  maxLength: number,
+  culturalContext?: string
 ): string {
   const formatInstructions: Record<string, string> = {
     article: "Write as a short article with introduction, body, and conclusion.",
@@ -215,7 +239,7 @@ CRITICAL REQUIREMENTS:
 4. Be empathetic and encouraging
 5. Include practical, actionable guidance
 6. ${formatInstructions[format] || formatInstructions.article}
-${includeWarnings ? "7. Include important warnings or when to seek medical help" : ""}
+${includeWarnings ? "7. Include important warnings or when to seek medical help" : ""}${culturalContext ? `\n\n${culturalContext}` : ""}
 
 IMPORTANT MEDICAL DISCLAIMER:
 - Do NOT provide specific medical diagnoses

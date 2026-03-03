@@ -19,6 +19,8 @@ export interface DischargeSummaryRequest {
   dischargeDisposition?: string;
   attendingPhysician?: string;
   includePatientInstructions?: boolean;
+  /** Cultural competency: population hints for culturally-informed discharge instructions */
+  populationHints?: string[];
 }
 
 export interface MedicationReconciliation {
