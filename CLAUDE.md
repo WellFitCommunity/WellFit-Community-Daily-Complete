@@ -125,6 +125,14 @@ This codebase eliminated 1,400+ `any` violations and 1,671 total lint warnings i
 | Claiming refactor was done without verifying | Check `wc -l` on the actual file | AI sees intent ("I planned to") as completion ("I did it") |
 | Sub-agents ignoring CLAUDE.md rules | Sub-Agent Governance: same rules, no exceptions | Lead agent delegates but forgets to enforce rules on workers |
 | Declaring visual work "done" without showing it | Visual Acceptance Checkpoint: Maria must see it rendered | AI cannot judge visual quality from code — SVG paths that compile can still look like a gingerbread man |
+| Re-reading own buggy code and seeing "looks right" | STOP AND ASK after 2+ failed fix attempts | AI sees what it *intended* to write, not what it *actually* wrote — like a typo your brain autocompletes |
+| `vi.clearAllMocks()` doesn't reset `mockImplementation` | Reset mock implementations explicitly in `beforeEach` | AI assumes "clear all" means "reset all" — one test's mock setup silently poisons every test after it |
+| `<label>` next to `<input>` without `htmlFor`/`id` pairing | Always pair `htmlFor` + `id` on label/input | AI thinks visually ("they're next to each other") but `getByLabelText` needs DOM association, not proximity |
+| Typing an API response interface from one sample | Test with `null`, absent, and empty-array variants | AI builds the type from *one example* — fields that are sometimes `null` or missing get typed as `string` |
+| Importing `.ts` files in edge functions without extension | Deno requires explicit `.ts` extensions; Node/Vite strips them | AI doesn't track which runtime it's writing for — same import syntax, different rules |
+| Writing service code before confirming migration was pushed | Run `npx supabase db push` immediately after creating migration | AI sees the migration *file* as proof the column exists — but the real database doesn't have it until pushed |
+| Writing tests that mirror implementation instead of specifying behavior | Deletion Test: would it fail if component logic was removed? | AI writes code and test simultaneously, unconsciously shaping the test to pass what it just wrote (confirmation bias) |
+| Losing early-session decisions after 50+ tool calls | Summarize at compaction: what's done, what's next, constraints established | Context window compression drops early decisions — AI may re-introduce patterns it already fixed or forget constraints from message #3 |
 
 **The STOP AND ASK protocol is the highest-value rule.** Most AI mistakes stem from continuing when uncertain rather than asking.
 
