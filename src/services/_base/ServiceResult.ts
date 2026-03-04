@@ -167,7 +167,15 @@ export type ServiceErrorCode =
   // Superbill Approval errors
   | 'SUPERBILL_NOT_APPROVED'
   | 'SUPERBILL_APPROVAL_FAILED'
-  | 'SUPERBILL_REJECTION_FAILED';
+  | 'SUPERBILL_REJECTION_FAILED'
+  // Chain Orchestration errors
+  | 'CHAIN_NOT_FOUND'
+  | 'CHAIN_ALREADY_RUNNING'
+  | 'CHAIN_NOT_RESUMABLE'
+  | 'CHAIN_STEP_NOT_APPROVABLE'
+  | 'CHAIN_EXECUTION_FAILED'
+  | 'CHAIN_CANCELLED'
+  | 'CHAIN_TIMED_OUT';
 
 /**
  * Structured error information

@@ -397,3 +397,19 @@ export {
   type MeSHTerm,
   type PubMedResult
 } from './mcpPubMedClient';
+
+// =====================================================
+// CHAIN ORCHESTRATION (Multi-Server Pipelines)
+// =====================================================
+
+export { chainOrchestrationService } from './chainOrchestrationService';
+
+export type {
+  ChainDefinition as ChainOrchestrationDefinition,
+  ChainRun as ChainOrchestrationRun,
+  ChainStepResult as ChainOrchestrationStepResult,
+  ChainStatusResponse as ChainOrchestrationStatusResponse,
+  ChainRunStatus as ChainOrchestrationRunStatus,
+  ChainStepStatus as ChainOrchestrationStepStatus,
+  ChainRunFilters as ChainOrchestrationRunFilters,
+} from './chainOrchestration.types';
