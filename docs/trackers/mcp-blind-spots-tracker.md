@@ -49,8 +49,8 @@ Previous Claude sessions marked "Cross-Server Chains 1-5" as **DONE** in `PROJEC
 | S2 — Security Gap | 2 | 2/2 fixed |
 | S3 — Hollow Implementation | 1 | 0/1 fixed |
 | S4 — Architecture Gap | 4 | 3/4 fixed |
-| S5 — Configuration Debt | 3 | 1/3 fixed |
-| **Total** | **12** | **8/12 fixed** |
+| S5 — Configuration Debt | 3 | 2/3 fixed |
+| **Total** | **12** | **9/12 fixed** |
 
 ---
 
@@ -364,26 +364,17 @@ A database-driven state machine for multi-server MCP pipelines. Architecture: Op
 
 ### S5-2: .mcp.json Contains Credentials in Git History
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-04, Session 6)
 **Severity:** S5 — Configuration Debt (borderline S2)
 
-**Evidence:** `.mcp.json` contains:
-- The MCP key: `mcp_deb87fb957ded2691215ae7e47c87a66`
-- The Supabase anon key (JWT)
+**What was done:**
+1. **All 13 MCP keys rotated** — migration `20260304000004_rotate_mcp_keys.sql` revokes old keys and inserts new ones
+2. **Old keys are useless** — `revoked_at` set on all previous keys, auth gate rejects revoked keys
+3. **`.mcp.json` already gitignored** (line 87 of `.gitignore`) and untracked
+4. **`.mcp.example.json` updated** — 13 servers with `X-MCP-KEY` header pattern (was 11 with old `Authorization` header)
+5. **Anon key remains** — it's designed to be public (client-side key), not a security concern
 
-These are in git history. Even if the file is later gitignored, the keys persist in commit history.
-
-**Assessment:**
-- The anon key is designed to be public (it's the client-side key)
-- The MCP key IS sensitive — it grants admin-level access to Tier 3 servers
-- Git history is permanent unless force-pushed (which has its own risks)
-
-**Remediation:**
-1. Rotate the MCP key
-2. Move `.mcp.json` to `.mcp.local.json` (gitignored) with `.mcp.example.json` (committed, no real keys)
-3. Or: use environment variables instead of hardcoded keys in the config file
-
-**Estimated effort:** ~1 hour
+**Git history note:** The old keys remain in git history but are now revoked in the database. Any attempt to use them will fail with `revoked` status and be logged in `mcp_key_audit_log`.
 
 ---
 
@@ -412,7 +403,7 @@ These are in git history. Even if the file is later gitignored, the keys persist
 | 1 | S1-1 + S1-2 | **Fix the record** — documentation must match reality | 1 |
 | 2 | S5-1 | 10-minute fix, unblocks Claude Code MCP usage for 2 servers | 0.2 |
 | 3 | S2-1 | **FIXED** (per-server key isolation, commit `e050bc88`) | ~~4~~ **DONE** |
-| 4 | S5-2 | MCP key in git history (rotate after S2-1) | 1 |
+| 4 | S5-2 | **FIXED** (all 13 keys rotated, old keys revoked in DB) | ~~1~~ **DONE** |
 | 5 | S2-2 | **FIXED** (dual-layer rate limiting on all 13 servers, 29 tests) | ~~2~~ **DONE** |
 | 6 | S3-1 | Clearinghouse is revenue-critical, currently hollow | 8-12 |
 | 7 | S4-1 | **FIXED** (Session 1: DB + edge fn + service + tests; Session 2: admin UI + migrations pushed) | ~~40-60~~ **DONE** |
@@ -492,7 +483,7 @@ Unlike the clearinghouse server (S3-1, hollow) and the chains (S1-1, UI widgets 
 | 2026-03-04 | Session 3 | S5-1: Added 2 missing servers to .mcp.json. S1-1 + S1-2: Fixed documentation in PROJECT_STATE.md, MCP_SERVER_AUDIT.md, compliance tracker | Documentation corrections only |
 | 2026-03-04 | Session 4 | S2-1: Per-server key isolation (commit `e050bc88`). 13 scoped keys, shared key revoked, 7 edge functions updated + redeployed | Security fix |
 | 2026-03-04 | Session 5 | PROJECT_STATE.md corrective update — 5 commits documented, migration pushed, 7 functions redeployed | Documentation + deployment |
-| 2026-03-04 | Session 6 | S2-2: Dual-layer rate limiting on all 13 servers (6 servers upgraded, 3 configs added, 5 redeployed). S4-2: 29 chain integration tests | Security + testing |
+| 2026-03-04 | Session 6 | S2-2: Dual-layer rate limiting (6 servers, 5 redeployed). S4-2: 58 integration tests. S5-2: All 13 MCP keys rotated, old keys revoked | Security + testing + key rotation |
 
 ---
 

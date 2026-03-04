@@ -4,7 +4,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-claude-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_CLAUDE_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -12,7 +12,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-cms-coverage-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_CMS_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -20,7 +20,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-npi-registry-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_NPI_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -28,7 +28,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-postgres-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_POSTGRES_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -36,7 +36,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-edge-functions-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_EDGE_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -44,7 +44,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-medical-codes-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_MEDICAL_CODES_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -52,7 +52,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-fhir-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_FHIR_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -60,7 +60,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-hl7-x12-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_HL7_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -68,7 +68,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-clearinghouse-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_CLEARINGHOUSE_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -76,7 +76,7 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-prior-auth-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_PRIOR_AUTH_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     },
@@ -84,7 +84,23 @@
       "type": "http",
       "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-pubmed-server",
       "headers": {
-        "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY_OR_MCP_KEY",
+        "X-MCP-KEY": "mcp_YOUR_PUBMED_KEY_HERE",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "cultural-competency": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-cultural-competency-server",
+      "headers": {
+        "X-MCP-KEY": "mcp_YOUR_CULTURAL_KEY_HERE",
+        "apikey": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "medical-coding": {
+      "type": "http",
+      "url": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/mcp-medical-coding-server",
+      "headers": {
+        "X-MCP-KEY": "mcp_YOUR_MEDICAL_CODING_KEY_HERE",
         "apikey": "YOUR_SUPABASE_ANON_KEY"
       }
     }
