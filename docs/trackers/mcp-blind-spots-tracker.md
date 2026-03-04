@@ -49,8 +49,8 @@ Previous Claude sessions marked "Cross-Server Chains 1-5" as **DONE** in `PROJEC
 | S2 — Security Gap | 2 | 2/2 fixed |
 | S3 — Hollow Implementation | 1 | 0/1 fixed |
 | S4 — Architecture Gap | 4 | 3/4 fixed |
-| S5 — Configuration Debt | 3 | 2/3 fixed |
-| **Total** | **12** | **9/12 fixed** |
+| S5 — Configuration Debt | 3 | 3/3 fixed |
+| **Total** | **12** | **10/12 fixed** |
 
 ---
 
@@ -380,19 +380,25 @@ A database-driven state machine for multi-server MCP pipelines. Architecture: Op
 
 ### S5-3: Cultural Competency Data Is Hardcoded
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-04, Session 6)
 **Severity:** S5 — Configuration Debt
 
-**Evidence:** `mcp-cultural-competency-server` contains 8 population profiles hardcoded in the server source code. Adding a new cultural context (e.g., "Hmong community," "Deaf/Hard of Hearing") requires redeploying the edge function.
+**What was done:**
+1. **Created `cultural_profiles` table** — migration `20260304000005_cultural_profiles_table.sql`
+   - JSONB `profile_data` column holds the full nested profile structure
+   - `tenant_id` column enables per-tenant customization (NULL = global default)
+   - RLS policies: authenticated users read global + own-tenant profiles, admins manage all
+   - Unique constraint on `(population_key, tenant_id)` prevents duplicates
+2. **Updated server to query DB first** — `toolHandlers.ts` tries Supabase lookup, falls back to hardcoded
+3. **Added `seed_profiles` tool** — admin can push all 8 built-in profiles to DB via MCP call (idempotent upsert)
+4. **Server tier upgraded** from `external_api` to `user_scoped` (now has DB access)
+5. **Version bumped** to 1.1.0
+6. **Hardcoded profiles preserved** as fallback — server works even without DB
 
-**Current profiles:** Veterans, Unhoused, Spanish-speaking, Black/African American, Isolated Elderly, Indigenous, Immigrant/Refugee, LGBTQ+ Elderly
-
-**What should happen:** Profiles should live in a `cultural_profiles` database table so tenants can:
-- Add profiles relevant to their community
-- Customize guidance per region
-- Update content without redeployment
-
-**Estimated effort:** ~4 hours (create table, migration, update server to query instead of hardcode)
+**Tenant customization now possible:**
+- Add new populations (e.g., "Hmong community", "Deaf/HoH") via INSERT into `cultural_profiles`
+- Customize existing profiles per tenant (tenant-specific row overrides global)
+- Update content without edge function redeployment
 
 ---
 
@@ -407,7 +413,7 @@ A database-driven state machine for multi-server MCP pipelines. Architecture: Op
 | 5 | S2-2 | **FIXED** (dual-layer rate limiting on all 13 servers, 29 tests) | ~~2~~ **DONE** |
 | 6 | S3-1 | Clearinghouse is revenue-critical, currently hollow | 8-12 |
 | 7 | S4-1 | **FIXED** (Session 1: DB + edge fn + service + tests; Session 2: admin UI + migrations pushed) | ~~40-60~~ **DONE** |
-| 8 | S5-3 | Cultural data in code → database | 4 |
+| 8 | S5-3 | **FIXED** (cultural_profiles table + DB-first lookup + seed tool) | ~~4~~ **DONE** |
 | 9 | S4-2 | **FIXED** (29 chain integration tests covering state machine, data flow, audit) | ~~8+~~ **DONE** |
 | 10 | S4-4 | Tool utilization gap (ongoing, not one-time) | Ongoing |
 | 11 | S4-3 | FHIR conformance (not needed for pilot) | 40+ |
@@ -483,7 +489,7 @@ Unlike the clearinghouse server (S3-1, hollow) and the chains (S1-1, UI widgets 
 | 2026-03-04 | Session 3 | S5-1: Added 2 missing servers to .mcp.json. S1-1 + S1-2: Fixed documentation in PROJECT_STATE.md, MCP_SERVER_AUDIT.md, compliance tracker | Documentation corrections only |
 | 2026-03-04 | Session 4 | S2-1: Per-server key isolation (commit `e050bc88`). 13 scoped keys, shared key revoked, 7 edge functions updated + redeployed | Security fix |
 | 2026-03-04 | Session 5 | PROJECT_STATE.md corrective update — 5 commits documented, migration pushed, 7 functions redeployed | Documentation + deployment |
-| 2026-03-04 | Session 6 | S2-2: Dual-layer rate limiting (6 servers, 5 redeployed). S4-2: 58 integration tests. S5-2: All 13 MCP keys rotated, old keys revoked | Security + testing + key rotation |
+| 2026-03-04 | Session 6 | S2-2: Dual-layer rate limiting (6 servers, 5 redeployed). S4-2: 58 integration tests. S5-2: All 13 MCP keys rotated. S5-3: Cultural profiles to DB | Security + testing + key rotation + config |
 
 ---
 

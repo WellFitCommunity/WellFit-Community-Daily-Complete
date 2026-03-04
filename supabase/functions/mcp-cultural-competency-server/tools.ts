@@ -144,5 +144,14 @@ export const TOOLS = {
     },
   },
 
+  "seed_profiles": {
+    description:
+      "Admin tool: Push all 8 built-in cultural profiles to the database. This enables tenant customization and content updates without redeployment. Idempotent — safe to call multiple times (uses upsert).",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+
   "ping": PING_TOOL,
 };

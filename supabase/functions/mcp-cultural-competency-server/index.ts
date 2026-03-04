@@ -21,22 +21,26 @@ import {
   handlePing,
   handleHealthCheck,
   checkInMemoryRateLimit,
+  type MCPInitResult,
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
 
-// Initialize as external_api tier (hardcoded reference data, no DB needed)
-// Auth is handled via Supabase apikey header (edge function access)
+// Initialize as user_scoped tier (profiles now in database)
+// Falls back to hardcoded profiles if DB unavailable
 const SERVER_CONFIG = {
   name: "mcp-cultural-competency-server",
-  version: "1.0.0",
-  tier: "external_api" as const,
+  version: "1.1.0",
+  tier: "user_scoped" as const,
 };
 
-const initResult = initMCPServer(SERVER_CONFIG);
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
 const { logger, canRateLimit } = initResult;
-const { handleToolCall } = createToolHandlers(logger);
+
+// Supabase client for database profile lookups (optional — falls back to hardcoded)
+const sb = initResult.supabase ?? null;
+const { handleToolCall } = createToolHandlers(logger, sb);
 
 // =====================================================
 // Main Handler (MCP JSON-RPC Protocol)
@@ -147,7 +151,7 @@ serve(async (req) => {
                 tool: name,
                 executionTimeMs: Date.now() - startTime,
                 provenance: {
-                  dataSource: "reference_data",
+                  dataSource: sb ? "database_with_fallback" : "reference_data",
                   safetyFlags: ["reference_only"],
                 },
               },

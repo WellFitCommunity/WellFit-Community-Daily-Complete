@@ -9,35 +9,120 @@ import type {
   CulturalRemedy,
 } from "./types.ts";
 import { VALID_CONTEXTS } from "./types.ts";
-import { getProfile, getAvailablePopulations } from "./profiles/index.ts";
+import { getProfile, getAvailablePopulations, getAllProfiles } from "./profiles/index.ts";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 interface MCPLogger {
   info(event: string, data?: Record<string, unknown>): void;
   error(event: string, data?: Record<string, unknown>): void;
 }
 
-export function createToolHandlers(logger: MCPLogger) {
+/** Row shape from cultural_profiles table */
+interface CulturalProfileRow {
+  population_key: string;
+  display_name: string;
+  description: string;
+  caveat: string;
+  profile_data: Record<string, unknown>;
+  tenant_id: string | null;
+}
+
+/**
+ * Convert a database row to a CulturalProfile.
+ * profile_data JSONB contains the nested sections.
+ */
+function rowToProfile(row: CulturalProfileRow): CulturalProfile {
+  const pd = row.profile_data;
+  return {
+    populationKey: row.population_key,
+    displayName: row.display_name,
+    description: row.description,
+    caveat: row.caveat,
+    communication: pd.communication,
+    clinicalConsiderations: pd.clinicalConsiderations,
+    barriers: pd.barriers,
+    culturalPractices: pd.culturalPractices,
+    trustFactors: pd.trustFactors,
+    supportSystems: pd.supportSystems,
+    sdohCodes: pd.sdohCodes,
+    culturalRemedies: pd.culturalRemedies,
+  } as CulturalProfile;
+}
+
+export function createToolHandlers(logger: MCPLogger, sb: SupabaseClient | null) {
   /**
-   * Resolve population string to profile, returning error object if not found.
+   * Try database first, then fall back to hardcoded profile.
+   * DB lookup: global profiles (tenant_id IS NULL) OR tenant-specific.
    */
-  function resolveProfile(
+  async function resolveProfile(
     population: string
-  ): CulturalProfile | { error: string; available: string[] } {
+  ): Promise<CulturalProfile | { error: string; available: string[] }> {
+    const key = population.toLowerCase().replace(/[\s-]+/g, "_");
+
+    // Try database first
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from("cultural_profiles")
+          .select("population_key, display_name, description, caveat, profile_data, tenant_id")
+          .eq("population_key", key)
+          .eq("is_active", true)
+          .order("tenant_id", { ascending: true, nullsFirst: false })
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          logger.info("Profile loaded from database", { population: key });
+          return rowToProfile(data[0] as CulturalProfileRow);
+        }
+      } catch (err: unknown) {
+        logger.error("DB profile lookup failed, falling back to hardcoded", {
+          population: key,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    // Fall back to hardcoded profiles
     const profile = getProfile(population);
     if (!profile) {
+      // Also check DB for available populations
+      const available = await getAvailablePopulationsWithDB();
       return {
         error: `Unknown population: '${population}'`,
-        available: getAvailablePopulations(),
+        available,
       };
     }
     return profile;
+  }
+
+  /**
+   * Get available populations from DB + hardcoded.
+   */
+  async function getAvailablePopulationsWithDB(): Promise<string[]> {
+    const hardcoded = getAvailablePopulations() as string[];
+    if (!sb) return hardcoded;
+
+    try {
+      const { data } = await sb
+        .from("cultural_profiles")
+        .select("population_key")
+        .eq("is_active", true);
+      if (data) {
+        const dbKeys = data.map((r: { population_key: string }) => r.population_key);
+        const merged = new Set([...hardcoded, ...dbKeys]);
+        return Array.from(merged);
+      }
+    } catch {
+      // Fall back to hardcoded
+    }
+    return hardcoded;
   }
 
   // -----------------------------------------------
   // Tool 1: get_cultural_context — full profile
   // -----------------------------------------------
   async function getCulturalContext(params: { population: string }) {
-    const result = resolveProfile(params.population);
+    const result = await resolveProfile(params.population);
     if ("error" in result) return result;
 
     logger.info("Cultural context retrieved", {
@@ -69,7 +154,7 @@ export function createToolHandlers(logger: MCPLogger) {
     population: string;
     context?: string;
   }) {
-    const result = resolveProfile(params.population);
+    const result = await resolveProfile(params.population);
     if ("error" in result) return result;
 
     const ctx = (params.context || "general") as CommunicationContext;
@@ -110,7 +195,7 @@ export function createToolHandlers(logger: MCPLogger) {
     population: string;
     conditions?: string[];
   }) {
-    const result = resolveProfile(params.population);
+    const result = await resolveProfile(params.population);
     if ("error" in result) return result;
 
     let considerations = result.clinicalConsiderations;
@@ -147,7 +232,7 @@ export function createToolHandlers(logger: MCPLogger) {
   // Tool 4: get_barriers_to_care
   // -----------------------------------------------
   async function getBarriersToCare(params: { population: string }) {
-    const result = resolveProfile(params.population);
+    const result = await resolveProfile(params.population);
     if ("error" in result) return result;
 
     logger.info("Barriers to care retrieved", {
@@ -168,7 +253,7 @@ export function createToolHandlers(logger: MCPLogger) {
   // Tool 5: get_sdoh_codes
   // -----------------------------------------------
   async function getSDOHCodes(params: { population: string }) {
-    const result = resolveProfile(params.population);
+    const result = await resolveProfile(params.population);
     if ("error" in result) return result;
 
     logger.info("SDOH codes retrieved", {
@@ -191,7 +276,7 @@ export function createToolHandlers(logger: MCPLogger) {
     population: string;
     medications?: string[];
   }) {
-    const result = resolveProfile(params.population);
+    const result = await resolveProfile(params.population);
     if ("error" in result) return result;
 
     const remedies = result.culturalRemedies;
@@ -233,7 +318,7 @@ export function createToolHandlers(logger: MCPLogger) {
   // Tool 7: get_trust_building_guidance
   // -----------------------------------------------
   async function getTrustBuildingGuidance(params: { population: string }) {
-    const result = resolveProfile(params.population);
+    const result = await resolveProfile(params.population);
     if ("error" in result) return result;
 
     logger.info("Trust building guidance retrieved", {
@@ -251,6 +336,63 @@ export function createToolHandlers(logger: MCPLogger) {
         avoidPhrases: result.communication.avoidPhrases,
         familyInvolvementNorm: result.communication.familyInvolvementNorm,
       },
+    };
+  }
+
+  // -----------------------------------------------
+  // Tool 8: seed_profiles — push hardcoded to DB
+  // -----------------------------------------------
+  async function seedProfiles() {
+    if (!sb) {
+      return {
+        status: "error",
+        error: "No database connection available. Cannot seed profiles.",
+      };
+    }
+
+    const profiles = getAllProfiles();
+    let seeded = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (const profile of profiles) {
+      const { populationKey, displayName, description, caveat, ...rest } = profile;
+
+      const { error } = await sb
+        .from("cultural_profiles")
+        .upsert(
+          {
+            population_key: populationKey,
+            display_name: displayName,
+            description,
+            caveat,
+            profile_data: rest,
+            tenant_id: null, // Global profile
+            is_active: true,
+          },
+          { onConflict: "population_key,tenant_id" }
+        );
+
+      if (error) {
+        errors.push(`${populationKey}: ${error.message}`);
+      } else {
+        seeded++;
+      }
+    }
+
+    logger.info("Cultural profiles seeded to database", {
+      tool: "seed_profiles",
+      seeded,
+      skipped,
+      errors: errors.length,
+    });
+
+    return {
+      status: errors.length === 0 ? "success" : "partial",
+      seeded,
+      skipped,
+      totalProfiles: profiles.length,
+      errors: errors.length > 0 ? errors : undefined,
     };
   }
 
@@ -282,6 +424,8 @@ export function createToolHandlers(logger: MCPLogger) {
         );
       case "get_trust_building_guidance":
         return getTrustBuildingGuidance(args as { population: string });
+      case "seed_profiles":
+        return seedProfiles();
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }

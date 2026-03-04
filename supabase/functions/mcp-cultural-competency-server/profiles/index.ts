@@ -48,6 +48,13 @@ export function hasProfile(population: string): boolean {
   return key in PROFILE_REGISTRY;
 }
 
+/**
+ * Get all hardcoded profiles (for seeding to database).
+ */
+export function getAllProfiles(): CulturalProfile[] {
+  return Object.values(PROFILE_REGISTRY);
+}
+
 export {
   veteransProfile,
   unhousedProfile,
