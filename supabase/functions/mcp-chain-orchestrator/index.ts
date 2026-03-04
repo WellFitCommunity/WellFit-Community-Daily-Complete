@@ -13,6 +13,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { verifyClinicalAccess } from "../_shared/mcpAuthGate.ts";
+import { checkMCPRateLimit, checkPersistentRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   startChain,
   resumeChain,
@@ -28,6 +31,9 @@ import type {
 
 const logger = createLogger("mcp-chain-orchestrator");
 
+// Service role client for persistent rate limiting
+const sb = createClient(SUPABASE_URL, SB_SECRET_KEY, { auth: { persistSession: false } });
+
 Deno.serve(async (req: Request): Promise<Response> => {
   // CORS preflight
   if (req.method === "OPTIONS") {
@@ -36,6 +42,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const { headers: corsHeaders } = corsFromRequest(req);
   const requestId = crypto.randomUUID();
+
+  // S2-2: In-memory rate limiting (DoS protection)
+  const identifier = getRequestIdentifier(req);
+  const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.chain_orchestrator);
+  if (!rateLimitResult.allowed) {
+    return createRateLimitResponse(rateLimitResult, MCP_RATE_LIMITS.chain_orchestrator, corsHeaders);
+  }
 
   try {
     // Auth gate — require clinical access
@@ -53,6 +66,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     const caller = authResult.caller;
+
+    // S2-2: Persistent identity-based rate limiting (cross-instance)
+    const identityRateResult = await checkPersistentRateLimit(
+      sb, getCallerRateLimitId(caller), MCP_RATE_LIMITS.chain_orchestrator
+    );
+    if (!identityRateResult.allowed) {
+      return createRateLimitResponse(identityRateResult, MCP_RATE_LIMITS.chain_orchestrator, corsHeaders);
+    }
+
     const userId = caller.userId;
     const tenantId = caller.tenantId;
 

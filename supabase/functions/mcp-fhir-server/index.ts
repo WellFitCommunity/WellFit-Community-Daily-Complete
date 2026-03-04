@@ -37,6 +37,7 @@ import {
   type CallerIdentity
 } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
+import { checkMCPRateLimit, checkPersistentRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 
 import { TOOLS } from "./tools.ts";
@@ -148,6 +149,13 @@ serve(async (req: Request) => {
   const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_LARGE, corsHeaders);
   if (bodySizeResponse) return bodySizeResponse;
 
+  // S2-2: In-memory rate limiting (DoS protection)
+  const identifier = getRequestIdentifier(req);
+  const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.fhir);
+  if (!rateLimitResult.allowed) {
+    return createRateLimitResponse(rateLimitResult, MCP_RATE_LIMITS.fhir, corsHeaders);
+  }
+
   try {
     const body = await req.json();
     const { method, params, id } = body;
@@ -211,6 +219,15 @@ serve(async (req: Request) => {
       }
 
       const caller = authResult.caller as CallerIdentity;
+
+      // S2-2: Persistent identity-based rate limiting (cross-instance)
+      const identityRateResult = await checkPersistentRateLimit(
+        sb, getCallerRateLimitId(caller), MCP_RATE_LIMITS.fhir
+      );
+      if (!identityRateResult.allowed) {
+        return createRateLimitResponse(identityRateResult, MCP_RATE_LIMITS.fhir, corsHeaders);
+      }
+
       logger.info("FHIR_TOOL_CALL", {
         requestId,
         tool: toolName,

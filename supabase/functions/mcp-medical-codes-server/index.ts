@@ -9,7 +9,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { checkMCPRateLimit, checkPersistentRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import {
   initMCPServer,
   createInitializeResponse,
@@ -159,6 +159,16 @@ serve(async (req: Request) => {
           requestId,
           corsHeaders
         );
+      }
+
+      // S2-2: Persistent identity-based rate limiting (cross-instance)
+      if (initResult.supabase) {
+        const identityRateResult = await checkPersistentRateLimit(
+          initResult.supabase, getCallerRateLimitId(caller), MCP_RATE_LIMITS.medicalCodes
+        );
+        if (!identityRateResult.allowed) {
+          return createRateLimitResponse(identityRateResult, MCP_RATE_LIMITS.medicalCodes, corsHeaders);
+        }
       }
 
       // P2-1: Validate tool arguments before dispatch

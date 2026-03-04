@@ -108,6 +108,27 @@ export const MCP_RATE_LIMITS = {
     maxRequests: 30,
     windowMs: 60 * 1000,
     keyPrefix: 'mcp:medical_coding'
+  },
+
+  // Chain Orchestrator MCP - moderate limits (multi-server pipeline)
+  chain_orchestrator: {
+    maxRequests: 30,
+    windowMs: 60 * 1000,
+    keyPrefix: 'mcp:chain'
+  },
+
+  // PubMed MCP - generous limits (external read-only API)
+  pubmed: {
+    maxRequests: 60,
+    windowMs: 60 * 1000,
+    keyPrefix: 'mcp:pubmed'
+  },
+
+  // Cultural Competency MCP - generous limits (read-only lookups)
+  cultural_competency: {
+    maxRequests: 100,
+    windowMs: 60 * 1000,
+    keyPrefix: 'mcp:cultural'
   }
 };
 
