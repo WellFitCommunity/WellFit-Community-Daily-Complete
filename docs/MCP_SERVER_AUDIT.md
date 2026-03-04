@@ -10,7 +10,7 @@
 
 The Envision ATLUS I.H.I.S. platform runs **11 MCP (Model Context Protocol) servers** deployed as Supabase Edge Functions, providing **96 total tools** across healthcare interoperability, clinical decision support, revenue cycle, and AI services.
 
-**Current state:** 3 servers are actively wired to UI. 8 servers have client libraries built but are not yet connected to application workflows. 5 cross-server orchestration chains have been identified — none are implemented. The biggest revenue opportunity is Chain 1 (Claims Submission Pipeline), which would automate the entire revenue cycle from encounter documentation through payer reimbursement.
+**Current state (updated 2026-03-04):** 13 MCP servers deployed (11 original + cultural-competency + medical-coding). 10 wired to UI via individual tool touchpoints. Chain orchestration engine built (database state machine, edge function orchestrator, admin UI panel). Chains 1 + 6 defined in DB with step-by-step orchestration. Chains 2-5 have UI touchpoints but no DB chain definitions yet. No chain has been executed end-to-end. The biggest revenue opportunity remains Chain 1 (Claims Submission Pipeline).
 
 ---
 
@@ -112,7 +112,7 @@ All 11 servers now responding: 9/9 ping OK via Claude Code MCP tools + Prior Aut
 
 ## Cross-Server Chains — Orchestration Opportunities
 
-These chains connect multiple MCP servers into automated workflows. None are currently implemented — each server operates in isolation.
+These chains connect multiple MCP servers into automated workflows. **Update (2026-03-04):** A chain orchestration engine now exists (database state machine + edge function orchestrator + admin UI). Chains 1 + 6 have DB definitions. The engine has not yet been tested end-to-end. UI touchpoints for individual server tools were wired in 2026-03-03.
 
 ### Chain 1: Claims Submission Pipeline (Revenue Cycle)
 
@@ -408,14 +408,16 @@ The Claude MCP client includes a cost optimization layer at `src/services/mcp/mc
 
 | Metric | Count |
 |--------|-------|
-| MCP Servers | 11 (deployed as Supabase Edge Functions) |
-| Total MCP Tools | 96 across all servers |
+| MCP Servers | 13 (deployed as Supabase Edge Functions) |
+| Total MCP Tools | ~100 across all servers |
 | MCP Client Wrappers | 12 TypeScript files + cost optimizer (5 modules) |
-| Servers LIVE | 11 (all responding after type mismatch fix) |
-| Servers with UI integration | 3 (Claude, Postgres, Clearinghouse) |
-| Servers client-built but not in UI | 8 |
-| Cross-server chains identified | 5 |
-| Cross-server chains implemented | 0 |
+| Servers LIVE | 13 (all responding after type mismatch fix) |
+| Servers with UI integration | 10 (via individual tool touchpoints) |
+| Servers without UI integration | 3 (cultural-competency, medical-coding, edge-functions) |
+| Cross-server chains identified | 6 |
+| Chain orchestration engine | Built (DB state machine + edge fn + admin UI) |
+| Chains with DB definitions | 2 (Chain 1: Claims Pipeline, Chain 6: Medical Coding) |
+| Chains end-to-end tested | 0 |
 | Supported FHIR R4 resource types | 18 |
 | Supported HL7 message types | ADT, ORU, ORM |
 | Supported X12 transaction types | 837P, 837I, 835, 270/271, 276/277, 278 |
@@ -440,5 +442,5 @@ Zero breaking changes. All `index.ts` files remain thin Supabase entry points.
 
 ---
 
-*This audit is a point-in-time snapshot. Update when servers are wired to UI or chains are implemented.*
+*This audit is a point-in-time snapshot. Last updated 2026-03-04 (chain orchestration engine, 2 new servers).*
 *Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.*

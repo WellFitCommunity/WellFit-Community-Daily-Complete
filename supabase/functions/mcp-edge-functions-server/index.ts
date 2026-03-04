@@ -127,7 +127,8 @@ serve(async (req: Request) => {
       const authResult = await verifyAdminAccess(req, {
         serverName: SERVER_CONFIG.name,
         toolName: toolName,
-        logger
+        logger,
+        requiredScope: "mcp:edge_functions"
       });
 
       if (!authResult.authorized) {

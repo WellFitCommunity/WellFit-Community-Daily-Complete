@@ -51,6 +51,9 @@ const AVAILABLE_SCOPES = [
   'mcp:medical_codes',
   'mcp:edge_functions',
   'mcp:claude',
+  'mcp:pubmed',
+  'mcp:cultural_competency',
+  'mcp:medical_coding',
   'mcp:read_only',
 ];
 

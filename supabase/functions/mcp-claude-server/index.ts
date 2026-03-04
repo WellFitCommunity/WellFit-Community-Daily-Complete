@@ -230,7 +230,8 @@ serve(async (req: Request) => {
       const authResult = await verifyAdminAccess(req, {
         serverName: SERVER_CONFIG.name,
         toolName,
-        logger
+        logger,
+        requiredScope: "mcp:claude"
       });
 
       if (!authResult.authorized) {

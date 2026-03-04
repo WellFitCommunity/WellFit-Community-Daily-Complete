@@ -193,7 +193,8 @@ serve(async (req: Request) => {
       const authResult = await verifyClinicalAccess(req, {
         serverName: SERVER_CONFIG.name,
         toolName,
-        logger
+        logger,
+        requiredScope: "mcp:fhir"
       });
 
       if (!authResult.authorized) {

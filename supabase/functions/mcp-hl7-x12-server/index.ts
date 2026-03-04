@@ -276,7 +276,8 @@ serve(async (req: Request) => {
       const authResult = await verifyAdminAccess(req, {
         serverName: SERVER_CONFIG.name,
         toolName,
-        logger
+        logger,
+        requiredScope: "mcp:hl7_x12"
       });
 
       if (!authResult.authorized) {

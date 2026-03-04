@@ -42,6 +42,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const authResult = await verifyClinicalAccess(req, {
       serverName: "mcp-chain-orchestrator",
       logger,
+      requiredScope: "mcp:admin",
     });
 
     if (!authResult.authorized || !authResult.caller) {

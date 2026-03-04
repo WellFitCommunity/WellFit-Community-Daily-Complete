@@ -258,7 +258,8 @@ serve(async (req) => {
         const authResult = await verifyClinicalAccess(req, {
           serverName: SERVER_CONFIG.name,
           toolName: name,
-          logger
+          logger,
+          requiredScope: "mcp:medical_coding"
         });
 
         if (!authResult.authorized) {

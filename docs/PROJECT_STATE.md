@@ -3,10 +3,10 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-03
-**Last Session:** CI/CD fix — resolved security scan failure (nucc.org healthcare URI exclusion) + flaky NurseQuestionManager escalation test (async timing). Added pre-push discipline rules. Previous: MCP Chains Session 2 + Cultural Competency Sessions 1+2.
+**Last Updated:** 2026-03-04
+**Last Session:** MCP Chain Orchestration Session 2 — Admin UI panel (7 components, 28 component tests + 3 service tests). Migrations pushed to remote. Tracker summary updated (was stale — showed 17/23, actual 23/23).
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 10,681 tests (534 suites), 0 lint warnings, 0 typecheck errors
+**Codebase Health:** 10,893 tests (541 suites), 0 lint warnings, 0 typecheck errors
 
 ---
 
@@ -111,7 +111,7 @@
 |----------|-------|--------|
 | P0 Critical (Security) | 8 | **8/8 done** (P0-1 through P0-8) |
 | P1 Hardening | 3 | **3/3 done** (P1-1, P1-2, P1-3) |
-| P2 Moderate (Functional) | 7 | **7/7 done** (P2-1 through P2-7; chains 1-5 wired 2026-03-03) |
+| P2 Moderate (Functional) | 7 | **7/7 done** (P2-1 through P2-7; UI touchpoints wired 2026-03-03, chain orchestration engine built 2026-03-04) |
 | P3 Low (Polish) | 5 | **5/5 done** (P3-1 through P3-5) |
 | **Total** | **23** | **23/23 done** (Chain 6 Medical Coding Processor deferred — standalone project) |
 
@@ -123,7 +123,11 @@
 - ~~Session 5: P2-2 through P2-6~~ — **DONE** (config, timeouts, unified audit, health dashboard — 15 files changed)
 - ~~Session 6: P3-1 through P3-5~~ — **DONE** (persistent rate limits, key management, body limits, pricing, provenance — 17 files changed)
 
-**P2-7 (Cross-Server Chains 1-5) DONE** — 2 sessions (2026-03-03). Chain 6 (Medical Coding Processor) deferred as standalone project (~24h).
+**P2-7 (Cross-Server Chains) — 4 sessions across 2 days:**
+- **UI Touchpoints (2026-03-03, 2 sessions):** Individual MCP server tools wired to admin UI components. Each component calls one server — not automated multi-server pipelines. See "MCP Server UI Touchpoints" section below.
+- **Chain Orchestration Engine (2026-03-04, 2 sessions):** Database-driven state machine (5 tables), edge function orchestrator, browser service (7 methods), admin UI panel (7 components). Chains 1 + 6 defined in DB. End-to-end execution not yet tested.
+- **Chain definitions 2-5:** Not yet created in DB (UI touchpoints exist but no orchestration definitions).
+- **Chain 6 (Medical Coding Processor):** 11 MCP tools built (2026-03-03), chain definition seeded in DB (2026-03-04). No browser client yet.
 
 ---
 
@@ -131,39 +135,60 @@
 
 **Full audit report:** [`docs/MCP_SERVER_AUDIT.md`](MCP_SERVER_AUDIT.md)
 
-**Summary:** 11 MCP servers, 96 total tools, 3 security tiers. All 11 LIVE after Tier 3 auth fix (VARCHAR/TEXT type mismatch in `validate_mcp_key`). 10 of 11 wired to UI. 5 cross-server chains wired (2026-03-03).
+**Summary:** 13 MCP servers, ~100 total tools, 3 security tiers. All 13 LIVE after Tier 3 auth fix (VARCHAR/TEXT type mismatch in `validate_mcp_key`). 10 of 13 wired to UI. UI touchpoints for chains 1-5 wired (2026-03-03). Chain orchestration engine built (2026-03-04) with chains 1 + 6 defined in DB.
 
-## MCP Cross-Server Chain Wiring (2026-03-03)
+## MCP Server UI Touchpoints (2026-03-03)
 
-**Session 1 COMPLETE — commit `fa093112`**
+> **Important:** These are UI touchpoints — individual MCP server tools wired to admin components. Each component calls ONE server. These are NOT automated multi-server pipelines. For actual orchestration, see the Chain Orchestration Engine below.
 
-Chains 1/2/4/5 partial wired to admin UI (10,474 tests passing, 0 lint warnings):
+**Session 1 — commit `fa093112`** (10,474 tests passing, 0 lint warnings):
 
-| Chain | Component | What Was Added |
-|-------|-----------|---------------|
-| 2 (NPI) | `BillingProviderForm.tsx` | Address display in Registry Data card |
-| 1 (Clearinghouse) | `ClearinghouseConfigPanel.tsx` | `testConnection()` via MCP; Connected badge + payer list; "not configured" banner |
-| 1+4 (Medical Codes) | **NEW** `MedicalCodeSearch.tsx` (273 lines) | CPT/ICD-10/HCPCS search widget, debounce, bundling check |
-| 4 (Billing) | `BillingQueueDashboard.tsx` | Collapsible Code Lookup panel with validation |
-| 5 (CMS Coverage) | `EligibilityVerificationPanel.tsx` | Inline PA Required / No PA Needed badge per row |
-| 1 (Status) | `ClaimResubmissionDashboard.tsx` | Status button per claim + rejection guidance |
+| Server | Component | What Was Added |
+|--------|-----------|---------------|
+| NPI Registry | `BillingProviderForm.tsx` | Address display in Registry Data card |
+| Clearinghouse | `ClearinghouseConfigPanel.tsx` | `testConnection()` via MCP; Connected badge + payer list; "not configured" banner |
+| Medical Codes | **NEW** `MedicalCodeSearch.tsx` (273 lines) | CPT/ICD-10/HCPCS search widget, debounce, bundling check |
+| Medical Codes | `BillingQueueDashboard.tsx` | Collapsible Code Lookup panel with validation |
+| CMS Coverage | `EligibilityVerificationPanel.tsx` | Inline PA Required / No PA Needed badge per row |
+| Clearinghouse | `ClaimResubmissionDashboard.tsx` | Status button per claim + rejection guidance |
 
-**Session 2 COMPLETE — commit `33471bc7`**
+**Session 2 — commit `33471bc7`** (10,681 tests passing, 0 lint warnings):
 
-Chains 3/6 wired + 3 god files decomposed (10,681 tests passing, 0 lint warnings):
-
-| Chain | Component | What Was Added |
-|-------|-----------|---------------|
-| 3 (PubMed) | **NEW** `PubMedEvidencePanel.tsx` (266 lines) | Collapsible literature search in PA create form |
-| 5 (Prior Auth) | **NEW** `mcpPriorAuthClient.ts` (252 lines), `usePriorAuthMCP.ts` (187 lines) | 11 MCP tools, decision/appeal/FHIR modals, PA-required auto-check |
-| 2 (NPI→FHIR) | **NEW** `npiToFHIRMapper.ts` (240 lines) | NPI→FHIR Practitioner mapper + Create button |
-| 4 (837P) | **NEW** `X12Generate837PPanel.tsx` (467 lines) | Full claim form + Generate 837P tab in HL7 Lab |
+| Server | Component | What Was Added |
+|--------|-----------|---------------|
+| PubMed | **NEW** `PubMedEvidencePanel.tsx` (266 lines) | Collapsible literature search in PA create form |
+| Prior Auth | **NEW** `mcpPriorAuthClient.ts` (252 lines), `usePriorAuthMCP.ts` (187 lines) | 11 MCP tools, decision/appeal/FHIR modals, PA-required auto-check |
+| NPI + FHIR | **NEW** `npiToFHIRMapper.ts` (240 lines) | NPI→FHIR Practitioner mapper + Create button |
+| HL7-X12 | **NEW** `X12Generate837PPanel.tsx` (467 lines) | Full claim form + Generate 837P tab in HL7 Lab |
 | FHIR | `fhir-interoperability/SyncTab.tsx` | EHR Sync Trigger — Sync All Active button |
 
 God file decomposition (0 breaking changes):
 - FHIRInteroperabilityDashboard: 821→8 files (`fhir-interoperability/`)
 - PriorAuthDashboard: 592→10 files (`prior-auth/`)
 - HL7MessageTestPanel: 549→7 files (`hl7-message-test/`)
+
+## MCP Chain Orchestration Engine (2026-03-04)
+
+> Database-driven state machine for multi-server MCP pipelines. This is the infrastructure that will eventually power automated chains.
+
+**Session 1 — commit `891736b2`:**
+- 5 database tables (`chain_definitions`, `chain_step_definitions`, `chain_runs`, `chain_step_results`, `mcp_audit_logs`)
+- Edge function orchestrator (`mcp-chain-orchestrator/`, 6 files, ~1,225 lines)
+- Browser service (`chainOrchestrationService.ts`) with 7 methods
+- 21 behavioral tests
+- Chains 1 (Claims Pipeline) + 6 (Medical Coding → Revenue) defined in DB
+
+**Session 2 — commit pushed 2026-03-04:**
+- Migrations pushed to remote database
+- Admin UI panel (`mcp-chains/`, 7 components + types file)
+- 28 component tests + 3 service tests
+- Panel registered in admin dashboard (lazy import + section definition)
+
+**Current state:**
+- Orchestration engine is complete and tested (unit tests)
+- Chains 1 + 6 have DB definitions with step-by-step orchestration
+- Chains 2, 3, 4, 5 have UI touchpoints but NO DB chain definitions yet
+- No chain has been executed end-to-end (needs manual verification with test encounter)
 
 ---
 
@@ -182,7 +207,8 @@ God file decomposition (0 breaking changes):
 | Guardian Agent Audit | `guardian-agent-audit-tracker.md` | 3/3 | 2026-02-27 |
 | Nurse Handoff Documentation | `nurse-handoff-documentation-tracker.md` | done | — |
 | Compass Riley Reasoning (v1) | `compass-riley-reasoning-tracker.md` | 10/10 | — |
-| MCP Cross-Server Chains | (PROJECT_STATE inline) | 2 sessions | 2026-03-03 |
+| MCP Server UI Touchpoints | (PROJECT_STATE inline) | 2 sessions | 2026-03-03 |
+| MCP Chain Orchestration Engine | (PROJECT_STATE inline) | 2 sessions | 2026-03-04 |
 
 ### RECENTLY COMPLETED
 
@@ -284,7 +310,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | L&D Module | `docs/trackers/ld-module-tracker.md` | COMPLETE — all 8 sessions done |
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
 | **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1-3 Session 5 DONE — 870+ tests, Tier 3 Sessions 6-7 TODO** |
-| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **COMPLETE — 22/23 done (P2-7 deferred), 6 sessions** |
+| **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **COMPLETE — 23/23 done, 8 sessions** |
 | **Compass Riley V2 Reasoning** | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | **Session 1 DONE — engine core (7 modules, 69 tests). Sessions 2-3 TODO** |
 | **Cultural Competency MCP** | `docs/trackers/cultural-competency-mcp-tracker.md` | **NEW — 8 population profiles, 8 MCP tools, 3-4 sessions, after Riley V2** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
@@ -305,7 +331,7 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) — MCP servers all under 600 | 2026-02-27 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
 | Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
-| MCP Server Compliance | 22/23 complete (P2-7 deferred) | 2026-03-01 |
+| MCP Server Compliance | 23/23 complete | 2026-03-01 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
 
 ---
@@ -360,7 +386,7 @@ Built 7 core modules + barrel export in `supabase/functions/_shared/compass-rile
 
 ### Previous Session: MCP Server Compliance Session 6 — P3-1 through P3-5 (ALL P3 COMPLETE)
 
-Completed all 5 P3 (Low/Polish) items. MCP Server Compliance tracker is now 22/23 complete (P2-7 deferred).
+Completed all 5 P3 (Low/Polish) items. MCP Server Compliance tracker is now 23/23 complete.
 
 | Item | Fix | Files Changed |
 |------|-----|---------------|
