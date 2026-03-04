@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-04
-**Last Session:** MCP Chain Orchestration Session 2 — Admin UI panel (7 components, 28 component tests + 3 service tests). Migrations pushed to remote. Tracker summary updated (was stale — showed 17/23, actual 23/23).
+**Last Updated:** 2026-03-04 (corrective update — previous agents failed to update this file)
+**Last Session:** Documentation correction session — PROJECT_STATE.md brought current with 5 missing commits. Migration pushed. 7 edge functions redeployed.
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 10,893 tests (541 suites), 0 lint warnings, 0 typecheck errors
 
@@ -32,7 +32,7 @@
 
 ---
 
-## Compass Riley — Ambient Learning & Physician Intuition Engine (2026-03-01) — IN PROGRESS
+## Compass Riley — Ambient Learning & Physician Intuition Engine (2026-03-01) — COMPLETE
 
 **Tracker:** `docs/trackers/compass-riley-ambient-learning-tracker.md`
 
@@ -190,6 +190,52 @@ God file decomposition (0 breaking changes):
 - Chains 2, 3, 4, 5 have UI touchpoints but NO DB chain definitions yet
 - No chain has been executed end-to-end (needs manual verification with test encounter)
 
+## Per-Server MCP Key Isolation (2026-03-04) — COMPLETE
+
+> Commit `e050bc88` — fixes S2-1 from the MCP Blind Spots tracker.
+
+Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one per server. If one key leaks, only that server is compromised.
+
+| Deliverable | Details |
+|------------|---------|
+| Migration | `20260304000003_per_server_mcp_keys.sql` — creates 13 keys with server-specific scopes, revokes shared key |
+| Edge functions updated | 7 servers updated with `requiredScope` parameter on auth checks |
+| Admin panel | 3 new scopes added to MCPKeyManagementPanel (pubmed, cultural_competency, medical_coding) |
+| Migration pushed | 2026-03-04 |
+| Functions deployed | 7 MCP servers redeployed 2026-03-04 |
+
+## Skills Overhaul — Partial (2026-03-03) — IN PROGRESS
+
+> Commit `dd69bdf7` — 3 of 10 new skills built/rewritten.
+
+| Skill | Status | Notes |
+|-------|--------|-------|
+| `/onboard-tenant` | **BUILT** (NEW) | 10-step tenant onboarding — CORS, DB, branding, modules, roles, AI config, RLS verification |
+| `/demo-ready` | **REWRITTEN** | 12-check hospital pilot readiness (removed stale Methodist Dec 2025 references) |
+| `/security-scan` | **REWRITTEN** | 11-check HIPAA scan (MCP server security, CORS wildcards, edge function auth, any regression) |
+| `SKILLS_AND_COMMANDS.md` | **REWRITTEN** | Updated from Nov 2025 to current (8 skills, correct baselines) |
+
+**White-Label Branding Fixes (same commit):**
+- Added `websiteUrl`, `tagline`, `poweredBy` to BrandingConfig interface
+- WelcomeHeader, Footer, GlobalHeader now use `useBranding()` context instead of hardcoded values
+- AppHeader admin route exclusion: replaced stale 54-route hardcoded list with dynamic derivation from `routeConfig.ts`
+
+**Remaining skills (7 of 10 not yet built):**
+- `/pilot-prep`, `/session-start`, `/fhir-check`, `/clinical-validate`, `/deploy-edge`, `/god-check`, `/audit-check`
+- Nice-to-have: `/ai-report`, `/health`
+
+## Chain 6 Medical Coding Processor (2026-03-03) — COMPLETE
+
+> Commit `5a50c529` — 11 MCP tools across 3 build sessions.
+
+| Session | Tools Built |
+|---------|------------|
+| 1 | Payer rules engine: `get/upsert_payer_rule`, `get_revenue_projection`, `ping` |
+| 2 | Charge aggregation: `aggregate_daily_charges`, `get/save_daily_snapshot` + DRG Grouper AI: `run_drg_grouper`, `get_drg_result` |
+| 3 | Revenue optimizer AI: `optimize_daily_revenue` + Charge validation: `validate_charge_completeness` |
+
+2 AI tools (Claude Sonnet), 9 database/rules tools. 3 tables + RLS + migration.
+
 ---
 
 ## Current Priority Summary
@@ -209,12 +255,16 @@ God file decomposition (0 breaking changes):
 | Compass Riley Reasoning (v1) | `compass-riley-reasoning-tracker.md` | 10/10 | — |
 | MCP Server UI Touchpoints | (PROJECT_STATE inline) | 2 sessions | 2026-03-03 |
 | MCP Chain Orchestration Engine | (PROJECT_STATE inline) | 2 sessions | 2026-03-04 |
+| Per-Server MCP Key Isolation | (PROJECT_STATE inline) | 1 session | 2026-03-04 |
+| Chain 6 Medical Coding Processor | (PROJECT_STATE inline) | 3 sessions | 2026-03-03 |
+| Cultural Competency MCP | `cultural-competency-mcp-tracker.md` | 3 sessions | 2026-03-03 |
+| Compass Riley — Ambient Learning | `compass-riley-ambient-learning-tracker.md` | 4 sessions | 2026-03-01 |
 
 ### RECENTLY COMPLETED
 
 | Feature | Tracker | Completed |
 |---------|---------|-----------|
-| Cultural Competency MCP (Sessions 1-3) | `cultural-competency-mcp-tracker.md` | 2026-03-03 — 8 profiles, 7 AI skills wired, 138 tests (82 behavioral + 35 integration + 21 audit) |
+| Skills Overhaul (partial: 3/10) | (PROJECT_STATE inline) | 2026-03-03 — `/onboard-tenant` NEW, `/demo-ready` + `/security-scan` rewritten |
 
 ### DEFERRED POLISH (low priority, do when convenient)
 
@@ -269,7 +319,7 @@ God file decomposition (0 breaking changes):
 
 **Maria's note:** `/onboard-tenant` is the largest value-add. "Valuable on a great level."
 
-**Status:** NOT YET BUILT — waiting for Maria to be at her computer.
+**Status:** 3/10 DONE (commit `dd69bdf7` 2026-03-03). `/onboard-tenant` built, `/demo-ready` + `/security-scan` rewritten. 7 remaining.
 
 ---
 
@@ -311,8 +361,9 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | **Tenant Admin Panel** | `docs/trackers/tenant-admin-panel-tracker.md` | **Sessions 1-5 COMPLETE (Tenant Suspension done)** |
 | **Admin Panel Hardening** | `docs/trackers/envision-admin-panel-hardening-tracker.md` | **Tier 1-3 Session 5 DONE — 870+ tests, Tier 3 Sessions 6-7 TODO** |
 | **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **COMPLETE — 23/23 done, 8 sessions** |
-| **Compass Riley V2 Reasoning** | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | **Session 1 DONE — engine core (7 modules, 69 tests). Sessions 2-3 TODO** |
-| **Cultural Competency MCP** | `docs/trackers/cultural-competency-mcp-tracker.md` | **NEW — 8 population profiles, 8 MCP tools, 3-4 sessions, after Riley V2** |
+| **Compass Riley V2 Reasoning** | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | **COMPLETE — 3/3 sessions done, 123 tests** |
+| **Cultural Competency MCP** | `docs/trackers/cultural-competency-mcp-tracker.md` | **COMPLETE — 3 sessions, 138 tests** |
+| **MCP Blind Spots** | `docs/trackers/mcp-blind-spots-tracker.md` | **5/12 fixed — S2-1 key isolation done, 7 items remaining** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
@@ -324,14 +375,16 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 10,396 passed, 0 failed | 2026-03-01 |
-| Test Suites | 520 | 2026-03-01 |
-| Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-03-01 |
-| Lint | 0 errors, 0 warnings | 2026-03-01 |
+| Tests | 10,893 passed, 0 failed | 2026-03-04 |
+| Test Suites | 541 | 2026-03-04 |
+| Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-03-04 |
+| Lint | 0 errors, 0 warnings | 2026-03-04 |
 | God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) — MCP servers all under 600 | 2026-02-27 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
-| Edge Functions Deployed | 137 functions, all live | 2026-02-23 |
+| Edge Functions Deployed | 137+ functions, all live (7 MCP servers redeployed 2026-03-04) | 2026-03-04 |
 | MCP Server Compliance | 23/23 complete | 2026-03-01 |
+| MCP Blind Spots | 5/12 fixed (see `mcp-blind-spots-tracker.md`) | 2026-03-04 |
+| MCP Key Security | Per-server key isolation — 13 scoped keys, shared key revoked | 2026-03-04 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
 
 ---
@@ -351,40 +404,54 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | 9 | HL7-X12 | DONE | HL7MessageTestPanel (parse/validate/convert) | 2026-02-21 |
 | 10 | Prior Auth | DONE | Already wired (PriorAuthorizationManager) | Pre-audit |
 | 11 | Edge Functions | DONE | Already wired (mcpEdgeFunctionsClient) | Pre-audit |
+| 12 | Cultural Competency | DONE | 8 tools consumed by AI edge functions (by design, not direct UI) | 2026-03-03 |
+| 13 | Medical Coding | DONE | 11 tools, no browser client yet (chain 6 orchestration defined) | 2026-03-03 |
 
-**Progress: 10 of 11 wired. Only Clearinghouse (#4) remains — blocked on vendor credentials.**
+**Progress: 12 of 13 wired. Only Clearinghouse (#4) remains — blocked on vendor credentials. Medical Coding (#13) has server tools but no browser client.**
 
 ---
 
-## What Was Completed Last Session (2026-03-01)
+## What Was Completed Recently (2026-03-03 through 2026-03-04)
 
-### Compass Riley V2 Session 1 — Reasoning Engine Core (ALL 8 DELIVERABLES COMPLETE)
+### 2026-03-04: Per-Server MCP Key Isolation (commit `e050bc88`)
+- Replaced shared MCP key with 13 scoped keys (1 per server)
+- Migration `20260304000003_per_server_mcp_keys.sql` pushed to remote
+- 7 MCP edge functions redeployed with `requiredScope` auth
+- Fixes S2-1 from MCP Blind Spots tracker
 
-Built 7 core modules + barrel export in `supabase/functions/_shared/compass-riley/` for Chain of Thought / Tree of Thought proportional reasoning:
+### 2026-03-04: MCP Chain Orchestration Session 2 (commit `e142a5c9`)
+- Admin UI panel: 7 components (`mcp-chains/`) + types file
+- 28 component tests + 3 service tests
+- Panel registered in admin dashboard (lazy import + section definition)
+- Migrations pushed to remote
 
-| Module | Purpose | Lines |
-|--------|---------|-------|
-| `types.ts` | 13 interfaces: ReasoningMode, TreeSensitivity, ReasonCode, ConfidenceThresholds, TriggerResult, Branch, BranchResult, OutputZone, ReasoningResult + self-contained input types (ReasoningEncounterInput, DiagnosisInput, MedicationInput) | 175 |
-| `modeRouter.ts` | Resolves AUTO/FORCE_CHAIN/FORCE_TREE with shorthand aliases (chain→force_chain, tree→force_tree) | 38 |
-| `sensitivityConfig.ts` | Tenant-level tree sensitivity → confidence thresholds. Conservative: 90/70, Balanced: 80/60, Aggressive: 65/50 | 56 |
-| `treeTriggerEngine.ts` | 4 trigger categories: anomaly/conflict, ambiguity, high-stakes (red flags, 5+ meds, high MDM), low-confidence | 195 |
-| `branchEvaluator.ts` | 2-4 branches, fixed rubric (safety 40%, evidence 30%, blast radius 20%, reversibility 10%), convergence or provider review | 137 |
-| `minimalExplainLayer.ts` | ReasonCode → one short sentence, priority-ordered (HIGH_BLAST_RADIUS > CONFLICTING_SIGNALS > ...) | 46 |
-| `overrideGate.ts` | User mode wins always, warn once if FORCE_CHAIN overrides tree recommendation | 98 |
-| `index.ts` | Barrel re-export | 45 |
+### 2026-03-04: MCP Chain Orchestration Session 1 (commit `891736b2`)
+- Database-driven state machine: 5 tables, edge function orchestrator, browser service
+- 21 behavioral tests
+- Chains 1 (Claims Pipeline) + 6 (Medical Coding → Revenue) defined in DB
 
-**Architecture:** Self-contained input interfaces (ReasoningEncounterInput) structurally compatible with EncounterState — avoids Deno/Node `.ts` import chain issues while maintaining type safety.
+### 2026-03-03: `/onboard-tenant` Skill + Branding Fixes (commit `dd69bdf7`)
+- NEW `/onboard-tenant` skill — 10-step tenant onboarding
+- Rewrote `/demo-ready` (12 checks) and `/security-scan` (11 checks)
+- White-label branding: WelcomeHeader, Footer, GlobalHeader use `useBranding()` context
+- AppHeader: replaced 54-route hardcoded exclusion list with dynamic derivation
 
-**Tests:** 69 tests in `src/services/__tests__/compassRileyReasoning.test.ts` — sensitivity boundary tests at all threshold edges (90/89, 80/79, 70/69, 65/64, 60/59, 50/49), all 4 trigger categories, branch convergence, override scenarios, 4 full pipeline integration scenarios.
+### 2026-03-03: Chain 6 Medical Coding Processor (commit `5a50c529`)
+- 11 MCP tools across 3 build sessions (2 AI + 9 database/rules)
+- 3 tables + RLS + migration
+- Revenue cycle logic: DRG grouper, charge aggregation, revenue optimization
 
-**Files changed: 10 (9 new, 1 modified tracker)**
+---
+
+### Previous: Compass Riley V2 Session 1 — Reasoning Engine Core (2026-03-01)
+
+Built 7 core modules + barrel export in `supabase/functions/_shared/compass-riley/` for Chain of Thought / Tree of Thought proportional reasoning. 69 tests.
+
 **Tests: 10,396 passed, 0 failed (520 suites)**
-**Lint: 0 errors, 0 warnings**
-**Typecheck: 0 errors**
 
 ---
 
-### Previous Session: MCP Server Compliance Session 6 — P3-1 through P3-5 (ALL P3 COMPLETE)
+### Previous: MCP Server Compliance Session 6 — P3-1 through P3-5 (ALL P3 COMPLETE)
 
 Completed all 5 P3 (Low/Polish) items. MCP Server Compliance tracker is now 23/23 complete.
 

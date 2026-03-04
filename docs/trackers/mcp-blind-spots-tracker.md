@@ -46,11 +46,11 @@ Previous Claude sessions marked "Cross-Server Chains 1-5" as **DONE** in `PROJEC
 | Severity | Items | Status |
 |----------|-------|--------|
 | S1 — Misrepresentation | 2 | 2/2 fixed |
-| S2 — Security Gap | 2 | 0/2 fixed |
+| S2 — Security Gap | 2 | 1/2 fixed |
 | S3 — Hollow Implementation | 1 | 0/1 fixed |
 | S4 — Architecture Gap | 4 | 2/4 fixed |
 | S5 — Configuration Debt | 3 | 1/3 fixed |
-| **Total** | **12** | **5/12 fixed** |
+| **Total** | **12** | **6/12 fixed** |
 
 ---
 
@@ -117,23 +117,18 @@ Both files are in the same repo, checked into `main`. One says "none implemented
 
 ### S2-1: All 13 MCP Servers Share One Key
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-04, commit `e050bc88`)
 **Severity:** S2 — Security Gap
 
-**Evidence:** `.mcp.json` — every server entry uses the identical `X-MCP-KEY`:
-```
-"X-MCP-KEY": "mcp_deb87fb957ded2691215ae7e47c87a66"
-```
+**What was done:**
+- Migration `20260304000003_per_server_mcp_keys.sql` creates 13 individual keys with server-specific scopes
+- Shared key revoked in DB
+- 7 edge functions updated with `requiredScope` parameter on auth checks
+- Admin panel updated with 3 new scopes (pubmed, cultural_competency, medical_coding)
+- Migration pushed to remote database
+- 7 MCP servers redeployed
 
-**Risk:** If this key leaks (git history, logs, CI output, clipboard), an attacker gets access to ALL 13 MCP servers simultaneously — including FHIR CRUD, prior auth lifecycle, edge function execution, and Claude AI calls.
-
-**Remediation:**
-1. Generate unique keys per server (or per security tier at minimum)
-2. Scope key permissions: PubMed key should NOT have FHIR write access
-3. Store keys in Supabase vault, not in committed config files
-4. Rotate the current shared key (it's now in git history)
-
-**Estimated effort:** ~4 hours (1 session)
+**Remaining concern:** The old shared key is still in git history (tracked separately as S5-2).
 
 ---
 
@@ -413,7 +408,7 @@ These are in git history. Even if the file is later gitignored, the keys persist
 |----------|------|-----------|-----------|
 | 1 | S1-1 + S1-2 | **Fix the record** — documentation must match reality | 1 |
 | 2 | S5-1 | 10-minute fix, unblocks Claude Code MCP usage for 2 servers | 0.2 |
-| 3 | S2-1 | Shared MCP key is a real security risk | 4 |
+| 3 | S2-1 | **FIXED** (per-server key isolation, commit `e050bc88`) | ~~4~~ **DONE** |
 | 4 | S5-2 | MCP key in git history (rotate after S2-1) | 1 |
 | 5 | S2-2 | Rate limiting gap under load | 2 |
 | 6 | S3-1 | Clearinghouse is revenue-critical, currently hollow | 8-12 |
@@ -492,6 +487,8 @@ Unlike the clearinghouse server (S3-1, hollow) and the chains (S1-1, UI widgets 
 | 2026-03-04 | Session 1 | S4-1: Chain Orchestration — database + edge function + browser service | 10 new files, 21 tests, 0 typecheck errors |
 | 2026-03-04 | Session 2 | S4-1: Admin UI panel + migrations pushed + S1-1 partially addressed (real orchestration now exists) | 8 new files, 31 tests, 10,893 total tests passing |
 | 2026-03-04 | Session 3 | S5-1: Added 2 missing servers to .mcp.json. S1-1 + S1-2: Fixed documentation in PROJECT_STATE.md, MCP_SERVER_AUDIT.md, compliance tracker | Documentation corrections only |
+| 2026-03-04 | Session 4 | S2-1: Per-server key isolation (commit `e050bc88`). 13 scoped keys, shared key revoked, 7 edge functions updated + redeployed | Security fix |
+| 2026-03-04 | Session 5 | PROJECT_STATE.md corrective update — 5 commits documented, migration pushed, 7 functions redeployed | Documentation + deployment |
 
 ---
 

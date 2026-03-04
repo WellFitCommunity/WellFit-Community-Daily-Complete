@@ -75,7 +75,7 @@ npm run typecheck && npm run lint && npm test
 ```
 ✅ typecheck: 0 errors
 ✅ lint: 0 errors, 0 warnings
-✅ tests: 8,415 passed, 0 failed
+✅ tests: 10,893 passed, 0 failed
 ```
 
 Or if failing:
@@ -379,7 +379,7 @@ const result = processData(input as unknown as ExpectedType); // NO
 ### Test Baseline
 | Metric | Current |
 |--------|---------|
-| Total Tests | 8,415 (all behavioral — quality audit complete, all junk tests replaced with meaningful tests) |
+| Total Tests | 10,893 (all behavioral — quality audit complete, all junk tests replaced with meaningful tests) |
 | Test Suites | 429 |
 | Pass Rate Required | 100% |
 
@@ -483,7 +483,7 @@ it('shows loading spinner while fetching, then displays data', async () => {
 **Why:** SOC2 auditors flag realistic test data. HIPAA breach notifications have been triggered by test fixtures containing data that *looked* real, even when it wasn't. Obviously fake data eliminates this risk entirely.
 
 ### Legacy Test Cleanup — COMPLETE
-All junk tests (Tier 5) have been replaced with meaningful behavioral tests (Tier 1-4). The quality audit is finished. All 8,415 tests test real components with real assertions.
+All junk tests (Tier 5) have been replaced with meaningful behavioral tests (Tier 1-4). The quality audit is finished. All 10,893 tests test real components with real assertions.
 
 ---
 
@@ -861,7 +861,7 @@ npm test           # Run tests
 
 1. `npm run lint` - Must pass with 0 errors
 2. `npm run typecheck` - Verify TypeScript types
-3. `npm test` - All 8,415 tests must pass
+3. `npm test` - All 10,893 tests must pass
 4. Visual inspection - Ensure UI/UX functions correctly
 5. Route verification - New pages are accessible
 
@@ -1398,4 +1398,4 @@ VITE_FEATURE_NEURO_SUITE=true
 - **UI**: Envision Atlus design system migration in progress
 - **Build**: Vite + React 19 (migrated December 2025)
 - **CSS**: Tailwind CSS 4.1.18 (migrated December 2025)
-- **Tests**: 8,415 tests across 429 suites (100% pass rate, 0 skipped)
+- **Tests**: 10,893 tests across 541 suites (100% pass rate, 0 skipped)
