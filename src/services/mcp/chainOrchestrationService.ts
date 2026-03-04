@@ -19,6 +19,7 @@ import type { ServiceResult } from '../_base/ServiceResult';
 import type {
   ChainDefinition,
   ChainRun,
+  ChainStepDefinition,
   ChainStepResult,
   ChainStatusResponse,
   ChainRunFilters,
@@ -88,6 +89,35 @@ export const chainOrchestrationService = {
       }
 
       return success((data || []) as ChainDefinition[]);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      return failure('DATABASE_ERROR', error.message, err);
+    }
+  },
+
+  /**
+   * List step definitions for a specific chain.
+   * Ordered by step_order ascending.
+   */
+  async listChainSteps(
+    chainDefinitionId: string
+  ): Promise<ServiceResult<ChainStepDefinition[]>> {
+    if (!chainDefinitionId) {
+      return failure('INVALID_INPUT', 'chain_definition_id is required');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('chain_step_definitions')
+        .select('*')
+        .eq('chain_definition_id', chainDefinitionId)
+        .order('step_order');
+
+      if (error) {
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      return success((data || []) as ChainStepDefinition[]);
     } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error(String(err));
       return failure('DATABASE_ERROR', error.message, err);

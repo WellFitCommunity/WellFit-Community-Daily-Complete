@@ -51,6 +51,8 @@ export interface ChainStepDefinition {
   is_placeholder: boolean;
   placeholder_message: string | null;
   timeout_ms: number;
+  input_mapping: Record<string, string>;
+  max_retries: number;
 }
 
 /** Chain run (from chain_runs table) */

@@ -500,6 +500,87 @@ describe('chainOrchestrationService', () => {
   });
 
   // ========================================================
+  // Tier 3: Integration — listChainSteps (direct DB read)
+  // ========================================================
+  describe('listChainSteps', () => {
+    it('returns step definitions ordered by step_order for a chain', async () => {
+      const mockSteps = [
+        {
+          id: 'stepdef-001',
+          chain_definition_id: 'def-001',
+          step_order: 1,
+          step_key: 'aggregate_charges',
+          display_name: 'Aggregate Daily Charges',
+          mcp_server: 'mcp-medical-coding-server',
+          tool_name: 'aggregate_daily_charges',
+          requires_approval: false,
+          approval_role: null,
+          is_conditional: false,
+          is_placeholder: false,
+          placeholder_message: null,
+          timeout_ms: 30000,
+          input_mapping: { '$.input.encounter_id': 'encounter_id' },
+          max_retries: 1,
+        },
+        {
+          id: 'stepdef-002',
+          chain_definition_id: 'def-001',
+          step_order: 2,
+          step_key: 'save_snapshot',
+          display_name: 'Save Daily Snapshot',
+          mcp_server: 'mcp-medical-coding-server',
+          tool_name: 'save_daily_snapshot',
+          requires_approval: false,
+          approval_role: null,
+          is_conditional: false,
+          is_placeholder: false,
+          placeholder_message: null,
+          timeout_ms: 30000,
+          input_mapping: {},
+          max_retries: 1,
+        },
+      ];
+      const mockQuery = createQueryMock({ data: mockSteps, error: null });
+      vi.mocked(supabase.from).mockReturnValue(mockQuery as unknown as ReturnType<typeof supabase.from>);
+
+      const result = await chainOrchestrationService.listChainSteps('def-001');
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toHaveLength(2);
+        expect(result.data[0].step_key).toBe('aggregate_charges');
+        expect(result.data[0].input_mapping).toEqual({ '$.input.encounter_id': 'encounter_id' });
+        expect(result.data[1].step_order).toBe(2);
+      }
+
+      expect(supabase.from).toHaveBeenCalledWith('chain_step_definitions');
+    });
+
+    it('returns failure for empty chain_definition_id', async () => {
+      const result = await chainOrchestrationService.listChainSteps('');
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('INVALID_INPUT');
+      }
+    });
+
+    it('returns failure when database query fails', async () => {
+      const mockQuery = createQueryMock({
+        data: null,
+        error: { message: 'relation "chain_step_definitions" does not exist' },
+      });
+      vi.mocked(supabase.from).mockReturnValue(mockQuery as unknown as ReturnType<typeof supabase.from>);
+
+      const result = await chainOrchestrationService.listChainSteps('def-001');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('DATABASE_ERROR');
+      }
+    });
+  });
+
+  // ========================================================
   // Tier 4: Edge Cases
   // ========================================================
   describe('edge cases', () => {

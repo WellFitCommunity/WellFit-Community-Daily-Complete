@@ -90,3 +90,6 @@ export const MCPServerHealthPanel = lazy(() => import('../MCPServerHealthPanel')
 
 // MCP Key Management
 export const MCPKeyManagementPanel = lazy(() => import('../MCPKeyManagementPanel'));
+
+// MCP Chain Orchestration
+export const MCPChainManagementPanel = lazy(() => import('../mcp-chains/MCPChainManagementPanel'));

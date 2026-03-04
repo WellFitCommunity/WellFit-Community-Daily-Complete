@@ -53,6 +53,7 @@ import {
   UserProvisioningPanel,
   MCPServerHealthPanel,
   MCPKeyManagementPanel,
+  MCPChainManagementPanel,
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
 
@@ -551,6 +552,17 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'admin',
     priority: 'high',
     roles: ['super_admin'],
+  },
+  {
+    id: 'mcp-chain-management',
+    title: 'MCP Chain Orchestration',
+    subtitle: 'Manage multi-server pipelines, monitor chain runs, and approve clinical gates',
+    icon: '\u26D3',
+    headerColor: 'text-teal-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><MCPChainManagementPanel /></Suspense>,
+    category: 'admin',
+    priority: 'high',
+    roles: ['admin', 'super_admin'],
   },
   {
     id: 'data-export',

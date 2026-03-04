@@ -407,6 +407,7 @@ export { chainOrchestrationService } from './chainOrchestrationService';
 export type {
   ChainDefinition as ChainOrchestrationDefinition,
   ChainRun as ChainOrchestrationRun,
+  ChainStepDefinition as ChainOrchestrationStepDefinition,
   ChainStepResult as ChainOrchestrationStepResult,
   ChainStatusResponse as ChainOrchestrationStatusResponse,
   ChainRunStatus as ChainOrchestrationRunStatus,
