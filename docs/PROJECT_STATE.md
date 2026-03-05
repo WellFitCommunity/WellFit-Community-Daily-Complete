@@ -3,10 +3,41 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-04 (Session 6)
-**Last Session:** S2-2 cross-instance rate limiting (6 servers upgraded, 5 redeployed) + S4-2 chain integration tests (58 new tests). Blind spots tracker: 8/12 fixed.
+**Last Updated:** 2026-03-05 (Deep MCP Audit + Constraint Architecture)
+**Last Session:** Deep code audit of all 14 MCP servers + 11 clinical AI edge functions. Built shared constraint file (`clinicalGroundingRules.ts`). Identified 4 additional safety gaps. Created DRG grouper strategy doc for Akima. Tracker expanded from 22 to 26 items.
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 10,951 tests (543 suites), 0 lint warnings, 0 typecheck errors
+
+---
+
+## MCP Production Readiness (2026-03-05) — IN PROGRESS
+
+**Tracker:** `docs/trackers/mcp-production-readiness-tracker.md`
+
+**Context:** Deep audit found 26 issues across functional correctness, clinical accuracy, safety infrastructure, integration gaps, and data completeness. Builds on prior compliance (23/23 done) and blind spots (10/12 done) trackers.
+
+| Priority | Items | Status | Focus |
+|----------|-------|--------|-------|
+| P0 Broken | 5 | 0/5 | Client parsing bugs, dead code, chain security |
+| P1 Clinical Risk | 9 | 0/9 | DRG validation, FHIR refs, X12 validation, HL7 depth, AI constraints (shared file built), adversarial testing, prompt injection guard, post-output validation, CMS freshness |
+| P2 Integration Gap | 4 | 0/4 | Fee schedules, patient filtering, structured AI output, approval roles |
+| P3 Data Gap | 4 | 0/4 | CMS coverage, medical codes, clearinghouse, taxonomy |
+| P4 Polish | 4 | 0/4 | Auth tokens, FHIR search, conformance, clinical review |
+
+**Estimated:** ~109 hours across 10-13 sessions
+
+**Completed this session (no code changes except):**
+- Built `supabase/functions/_shared/clinicalGroundingRules.ts` — shared "do NOT" constraint file with 7 categories + `buildConstraintBlock()` helper (299 lines)
+- Created `docs/product/DRG_GROUPER_STRATEGY.md` — standalone product strategy for Akima review
+- Audited all 11 clinical AI edge functions for constraint gaps (3 safe, 3 critical, 3 high, 2 medium)
+
+**Session 1 priority:** P0-1 + P0-2 + P0-3 (fix broken browser clients — parsing bugs + endpoint mismatches + type alignment). ~6 hours.
+
+**New items added this session (P1-6 through P1-9):**
+- P1-6: Adversarial constraint testing — prove guardrails work (~50 test cases)
+- P1-7: Prompt injection sanitization for clinical text input
+- P1-8: Post-output validation layer for non-DRG functions
+- P1-9: CMS update monitoring — reference data freshness alerts
 
 ---
 

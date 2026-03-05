@@ -1,6 +1,7 @@
-// Clinical Grounding Rules — Anti-Hallucination System for Compass Riley
-// Embedded in ALL prompt paths. Zero fabrication tolerance for clinical documentation.
-// Session 1 of Compass Riley Clinical Reasoning Hardening (2026-02-23)
+// Clinical Grounding Rules — Anti-Hallucination System for ALL Clinical AI
+// Embedded in ALL prompt paths. Zero fabrication tolerance for clinical output.
+// Phase 1 (2026-02-23): Compass Riley SOAP/transcription grounding
+// Phase 2 (2026-03-05): Expanded to billing, escalation, risk scoring, care planning
 
 /**
  * Clinical grounding rules that MUST be included in every prompt
@@ -87,3 +88,212 @@ NURSE SCOPE BOUNDARIES (MANDATORY — SmartScribe Mode):
    - Fall risk, skin integrity, pain assessment documentation
 6. SCOPE LIMIT: If the transcript discusses physician orders, transcribe them as stated. Do NOT interpret, expand, or suggest alternatives.
 `;
+
+// ============================================================================
+// Phase 2: Expanded Constraint Categories (2026-03-05)
+// Each clinical AI edge function imports the categories it needs.
+// ============================================================================
+
+/**
+ * Billing and medical coding constraints.
+ * Used by: coding-suggest, sdoh-coding-suggest, ai-billing-suggester,
+ * DRG grouper, revenue optimizer
+ */
+export const BILLING_CODING_CONSTRAINTS = `
+BILLING & CODING CONSTRAINTS — MANDATORY, NO EXCEPTIONS:
+
+1. ICD-10 ONLY: Do NOT suggest ICD-9 codes under any circumstance. This system
+   uses ICD-10-CM exclusively. V-codes (V60.0, etc.) are obsolete — use Z-codes.
+
+2. DOCUMENTATION-DRIVEN CODING:
+   - Do NOT suggest CPT codes for services not performed during the encounter
+   - Do NOT suggest HCPCS codes for supplies not documented as administered
+   - Do NOT fabricate modifier codes — only suggest modifiers with documented clinical justification
+   - Do NOT assign codes based on historical patterns — each encounter stands on its own documentation
+   - Do NOT suggest modifier 25 without a documented separate E/M service
+
+3. NO UPCODING:
+   - Do NOT recommend higher-specificity codes unless documentation contains the specific clinical finding
+   - Do NOT suggest codes for revenue optimization if documentation does not support them
+   - Do NOT present suggestions as final — always label as "advisory, requires coder review"
+   - Do NOT auto-populate charge amounts — amounts come from fee schedules, not AI
+
+4. EVERY CODE MUST CITE EVIDENCE: Include the specific documentation excerpt that
+   supports each suggested code. If documentation is insufficient, say what is
+   missing — do NOT fill the gap with assumptions.
+`;
+
+/**
+ * SDOH-specific Z-code constraints.
+ * Used by: sdoh-coding-suggest, any function that assigns social determinant codes
+ */
+export const SDOH_CODING_CONSTRAINTS = `
+SDOH Z-CODE CONSTRAINTS — MANDATORY:
+
+1. Do NOT fabricate Z-codes that do not exist in the ICD-10-CM Z55-Z65 range.
+2. Do NOT assign SDOH Z-codes unless social determinants are explicitly documented
+   in clinical notes or patient-reported check-ins.
+3. Do NOT infer housing insecurity, food insecurity, or transportation barriers
+   from demographics alone — documentation must support each code.
+4. Do NOT assign Z-codes based on neighborhood, zip code, or assumed socioeconomic status.
+5. Do NOT suggest Z59-Z60 codes without a specific, documented patient statement
+   or social work assessment.
+6. CULTURAL CONTEXT IS NOT DIAGNOSIS: Cultural competency profiles inform screening
+   priorities but do NOT justify code assignment without individual documentation.
+`;
+
+/**
+ * DRG grouping constraints.
+ * Used by: mcp-medical-coding-server DRG grouper and revenue optimizer
+ */
+export const DRG_GROUPER_CONSTRAINTS = `
+DRG GROUPER CONSTRAINTS — MANDATORY:
+
+1. Do NOT fabricate ICD-10 codes not explicitly stated in the clinical documentation.
+2. Do NOT infer a diagnosis the physician did not document — if it is not written, it does not exist.
+3. Do NOT assign a DRG code that does not exist in the current fiscal year MS-DRG table.
+4. Do NOT upgrade CC/MCC status based on suspected but undocumented conditions.
+5. Do NOT suggest a higher-specificity code unless the documentation contains the specific clinical finding.
+6. Do NOT generate a confidence score above 0.8 unless every extracted code has a direct documentation reference.
+7. If uncertain, respond with "uncertain" and flag for human review — do NOT guess.
+8. Do NOT omit the documentation reference for any suggested code.
+9. All output is ADVISORY ONLY — requires certified coder review before use.
+`;
+
+/**
+ * Escalation and risk scoring constraints.
+ * Used by: ai-care-escalation-scorer, ai-fall-risk-predictor, ai-readmission-predictor,
+ * ai-missed-checkin-escalation
+ */
+export const ESCALATION_RISK_CONSTRAINTS = `
+ESCALATION & RISK SCORING CONSTRAINTS — MANDATORY:
+
+1. DATA-GROUNDED SCORING:
+   - Do NOT assign risk factors not present in the patient data
+   - Do NOT fabricate vital sign trends not present in the input
+   - Do NOT escalate based on conditions not documented in the current encounter
+   - Do NOT inflate risk scores based on assumed or suspected conditions
+
+2. ESCALATION INTEGRITY:
+   - Do NOT assign CRITICAL escalation status without specific, documented clinical triggers
+   - Do NOT populate escalation queues with synthetic or assumed severity values
+   - Do NOT escalate a patient based on data from a different patient
+   - Every escalation must cite the specific data point that triggered it
+
+3. PATIENT IDENTITY PROTECTION:
+   - Do NOT use patient names in risk narratives or escalation lists
+   - Use patient ID and room/bed number only
+   - Do NOT include PHI in AI reasoning output
+
+4. INTERVENTION SAFETY:
+   - Do NOT recommend interventions that contradict the patient's documented condition
+     (e.g., do NOT recommend increased unsupervised mobility for a HIGH fall-risk patient)
+   - Do NOT suppress required review flags — all risk assessments require clinician review
+`;
+
+/**
+ * Care planning and clinical recommendation constraints.
+ * Used by: ai-care-plan-generator, ai-clinical-guideline-matcher,
+ * ai-treatment-pathway, ai-discharge-summary
+ */
+export const CARE_PLANNING_CONSTRAINTS = `
+CARE PLANNING & RECOMMENDATION CONSTRAINTS — MANDATORY:
+
+1. CONDITION-MATCHED CARE:
+   - Do NOT recommend interventions for conditions the patient does not have
+   - Do NOT prioritize billable activities over clinical necessity
+   - Do NOT suggest timelines unsupported by evidence for the patient's condition
+   - Do NOT create goals that reference undocumented patient preferences
+
+2. GUIDELINE INTEGRITY:
+   - Do NOT cite guidelines that do not exist or reference incorrect publication years
+   - Do NOT recommend guideline-based care that contradicts documented contraindications
+   - Do NOT apply guidelines designed for different populations without flagging the mismatch
+   - If evidence grade is unknown, say "evidence level not verified" — do NOT invent one
+
+3. MEDICATION SAFETY:
+   - Do NOT recommend medications the patient is allergic to
+   - Do NOT omit documented allergies from medication reconciliation
+   - Do NOT recommend follow-up care the physician did not order (for discharge summaries)
+   - Do NOT fabricate medication changes not documented in the encounter
+
+4. ALL OUTPUT IS ADVISORY: Every recommendation requires clinician review before action.
+`;
+
+/**
+ * Universal constraints that apply to ALL clinical AI functions.
+ * This is the minimum constraint set — every function gets this plus its category.
+ */
+export const UNIVERSAL_CLINICAL_CONSTRAINTS = `
+UNIVERSAL CLINICAL AI CONSTRAINTS — APPLY TO ALL FUNCTIONS:
+
+1. Do NOT fabricate clinical findings not present in the source data.
+2. Do NOT recommend care contradicting documented allergies or contraindications.
+3. Do NOT assign confidence scores above 0.8 without explicit data support for every assertion.
+4. Do NOT suppress required review flags — all clinical AI output requires human review.
+5. Do NOT use patient names in AI output — use patient IDs only.
+6. Do NOT infer diagnoses, risk factors, or social determinants not documented.
+7. If uncertain about any clinical assertion, flag it for review — do NOT guess.
+`;
+
+// ============================================================================
+// Constraint Builder — assembles prompt constraint blocks by category
+// ============================================================================
+
+/**
+ * Constraint categories that can be combined for any clinical AI function.
+ */
+export type ConstraintCategory =
+  | 'universal'
+  | 'grounding'
+  | 'grounding_condensed'
+  | 'billing'
+  | 'sdoh'
+  | 'drg'
+  | 'escalation'
+  | 'care_planning'
+  | 'nurse_scope';
+
+const CONSTRAINT_MAP: Record<ConstraintCategory, string> = {
+  universal: UNIVERSAL_CLINICAL_CONSTRAINTS,
+  grounding: CLINICAL_GROUNDING_RULES,
+  grounding_condensed: CONDENSED_GROUNDING_RULES,
+  billing: BILLING_CODING_CONSTRAINTS,
+  sdoh: SDOH_CODING_CONSTRAINTS,
+  drg: DRG_GROUPER_CONSTRAINTS,
+  escalation: ESCALATION_RISK_CONSTRAINTS,
+  care_planning: CARE_PLANNING_CONSTRAINTS,
+  nurse_scope: NURSE_SCOPE_GUARD,
+};
+
+/**
+ * Build a combined constraint block from selected categories.
+ * Universal constraints are ALWAYS included unless explicitly excluded.
+ *
+ * Usage:
+ *   import { buildConstraintBlock } from '../_shared/clinicalGroundingRules.ts';
+ *   const constraints = buildConstraintBlock(['billing', 'sdoh']);
+ *   const systemPrompt = `You are a coding specialist...\n\n${constraints}`;
+ *
+ * @param categories - Array of constraint categories to include
+ * @param includeUniversal - Whether to prepend universal constraints (default: true)
+ */
+export function buildConstraintBlock(
+  categories: ConstraintCategory[],
+  includeUniversal = true
+): string {
+  const blocks: string[] = [];
+
+  if (includeUniversal && !categories.includes('universal')) {
+    blocks.push(UNIVERSAL_CLINICAL_CONSTRAINTS);
+  }
+
+  for (const category of categories) {
+    const block = CONSTRAINT_MAP[category];
+    if (block) {
+      blocks.push(block);
+    }
+  }
+
+  return blocks.join('\n');
+}
