@@ -58,7 +58,7 @@ describe('Chain Definition CRUD', () => {
       };
 
       mockFrom.mockReturnValue(
-        createQueryMock({ data: mockChain, error: null }) as ReturnType<typeof supabase.from>
+        createQueryMock({ data: mockChain, error: null }) as unknown as ReturnType<typeof supabase.from>
       );
 
       const result = await chainOrchestrationService.createChainDefinition(
@@ -97,7 +97,7 @@ describe('Chain Definition CRUD', () => {
         createQueryMock({
           data: null,
           error: { message: 'duplicate key value violates unique constraint' },
-        }) as ReturnType<typeof supabase.from>
+        }) as unknown as ReturnType<typeof supabase.from>
       );
 
       const result = await chainOrchestrationService.createChainDefinition(
@@ -125,7 +125,7 @@ describe('Chain Definition CRUD', () => {
       };
 
       mockFrom.mockReturnValue(
-        createQueryMock({ data: mockUpdated, error: null }) as ReturnType<typeof supabase.from>
+        createQueryMock({ data: mockUpdated, error: null }) as unknown as ReturnType<typeof supabase.from>
       );
 
       const result = await chainOrchestrationService.updateChainDefinition('def-001', {
@@ -152,7 +152,7 @@ describe('Chain Definition CRUD', () => {
         createQueryMock({
           data: { id: 'def-001', is_active: false },
           error: null,
-        }) as ReturnType<typeof supabase.from>
+        }) as unknown as ReturnType<typeof supabase.from>
       );
 
       const result = await chainOrchestrationService.updateChainDefinition('def-001', {
@@ -173,10 +173,10 @@ describe('Chain Definition CRUD', () => {
         callCount++;
         if (callCount === 1) {
           // Check for runs
-          return createQueryMock({ data: [], error: null }) as ReturnType<typeof supabase.from>;
+          return createQueryMock({ data: [], error: null }) as unknown as ReturnType<typeof supabase.from>;
         }
         // Delete steps or definition
-        return createQueryMock({ data: null, error: null }) as ReturnType<typeof supabase.from>;
+        return createQueryMock({ data: null, error: null }) as unknown as ReturnType<typeof supabase.from>;
       });
 
       const result = await chainOrchestrationService.deleteChainDefinition('def-001');
@@ -192,7 +192,7 @@ describe('Chain Definition CRUD', () => {
         createQueryMock({
           data: [{ id: 'run-001' }],
           error: null,
-        }) as ReturnType<typeof supabase.from>
+        }) as unknown as ReturnType<typeof supabase.from>
       );
 
       const result = await chainOrchestrationService.deleteChainDefinition('def-001');
@@ -231,7 +231,7 @@ describe('Chain Definition CRUD', () => {
       };
 
       mockFrom.mockReturnValue(
-        createQueryMock({ data: mockStep, error: null }) as ReturnType<typeof supabase.from>
+        createQueryMock({ data: mockStep, error: null }) as unknown as ReturnType<typeof supabase.from>
       );
 
       const result = await chainOrchestrationService.createStepDefinition('def-001', {
@@ -283,7 +283,7 @@ describe('Chain Definition CRUD', () => {
         createQueryMock({
           data: { id: 'stepdef-001', display_name: 'Updated Step', timeout_ms: 60000 },
           error: null,
-        }) as ReturnType<typeof supabase.from>
+        }) as unknown as ReturnType<typeof supabase.from>
       );
 
       const result = await chainOrchestrationService.updateStepDefinition('stepdef-001', {
@@ -306,7 +306,7 @@ describe('Chain Definition CRUD', () => {
   describe('deleteStepDefinition', () => {
     it('should delete a step definition', async () => {
       mockFrom.mockReturnValue(
-        createQueryMock({ data: null, error: null }) as ReturnType<typeof supabase.from>
+        createQueryMock({ data: null, error: null }) as unknown as ReturnType<typeof supabase.from>
       );
 
       const result = await chainOrchestrationService.deleteStepDefinition('stepdef-001');

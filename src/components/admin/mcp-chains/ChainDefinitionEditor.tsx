@@ -90,7 +90,23 @@ export const ChainDefinitionEditor: React.FC<ChainDefinitionEditorProps> = ({
     if (!chain) return;
     const result = await chainOrchestrationService.listChainSteps(chain.id);
     if (result.success) {
-      setSteps(result.data.map((s) => ({ ...s })));
+      setSteps(result.data.map((s) => ({
+        id: s.id,
+        step_order: s.step_order,
+        step_key: s.step_key,
+        display_name: s.display_name,
+        mcp_server: s.mcp_server,
+        tool_name: s.tool_name,
+        requires_approval: s.requires_approval,
+        approval_role: s.approval_role,
+        is_conditional: s.is_conditional,
+        condition_expression: null,
+        is_placeholder: s.is_placeholder,
+        placeholder_message: s.placeholder_message,
+        timeout_ms: s.timeout_ms,
+        max_retries: s.max_retries,
+        input_mapping: s.input_mapping,
+      })));
     }
   }, [chain]);
 
