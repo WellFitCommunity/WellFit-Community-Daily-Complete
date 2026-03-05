@@ -28,6 +28,7 @@ import {
   EligibilityVerificationPanel,
   ERAPaymentPostingDashboard,
   ClaimResubmissionDashboard,
+  MedicalCodingMCPPanel,
 } from './lazyImports';
 
 export const getRevenueSections = (): DashboardSection[] => [
@@ -232,5 +233,16 @@ export const getRevenueSections = (): DashboardSection[] => [
     category: 'revenue',
     priority: 'high',
     roles: ['admin', 'super_admin', 'billing_specialist', 'finance'],
+  },
+  {
+    id: 'medical-coding-mcp',
+    title: 'Medical Coding & DRG Grouper',
+    subtitle: 'Payer reimbursement rules, AI-powered DRG grouping, revenue projection and charge validation',
+    icon: '\uD83E\uDDEC',
+    headerColor: 'text-violet-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><MedicalCodingMCPPanel /></Suspense>,
+    category: 'revenue',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'billing_specialist', 'physician'],
   },
 ];

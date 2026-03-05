@@ -10,6 +10,7 @@
  * 5. FHIR MCP - Healthcare interoperability (FHIR R4)
  * 6. HL7/X12 MCP - Healthcare message transformation
  * 7. Clearinghouse MCP - Claims submission and eligibility
+ * 8. Medical Coding MCP - Revenue cycle, DRG grouping, charge aggregation
  */
 
 // =====================================================
@@ -397,6 +398,43 @@ export {
   type MeSHTerm,
   type PubMedResult
 } from './mcpPubMedClient';
+
+// =====================================================
+// MEDICAL CODING MCP (Revenue Cycle & DRG Grouping)
+// =====================================================
+
+export {
+  // Payer rules
+  getPayerRules,
+  upsertPayerRule,
+  // Charge aggregation
+  aggregateDailyCharges,
+  getDailySnapshot,
+  saveDailySnapshot,
+  // DRG grouper
+  runDRGGrouper,
+  getDRGResult,
+  // Revenue optimization
+  optimizeDailyRevenue,
+  validateChargeCompleteness,
+  // Revenue projection
+  getRevenueProjection,
+  // Client class
+  MedicalCodingMCPClient,
+  // Types
+  type PayerType as MedicalCodingPayerType,
+  type RuleType,
+  type AcuityTier,
+  type SnapshotStatus,
+  type PayerRule,
+  type ChargeCategory,
+  type DailyChargeSnapshot,
+  type DRGResult,
+  type RevenueOptimization,
+  type ChargeValidation,
+  type RevenueProjection,
+  type MedicalCodingResult
+} from './mcpMedicalCodingClient';
 
 // =====================================================
 // CHAIN ORCHESTRATION (Multi-Server Pipelines)
