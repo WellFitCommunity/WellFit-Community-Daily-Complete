@@ -437,6 +437,41 @@ export {
 } from './mcpMedicalCodingClient';
 
 // =====================================================
+// CULTURAL COMPETENCY MCP (Population-Specific Care)
+// =====================================================
+
+export {
+  // Context functions
+  getCulturalContext,
+  getClinicalConsiderations,
+  getCommunicationGuidance,
+  getBarriersToCare,
+  getTrustBuildingGuidance,
+  checkDrugInteractionCultural,
+  getSdohCodes as getCulturalSdohCodes,
+  seedCulturalProfiles,
+  // Reference data
+  VALID_POPULATIONS,
+  VALID_CONTEXTS,
+  // Client class
+  CulturalCompetencyMCPClient,
+  // Types
+  type PopulationKey,
+  type CommunicationContext,
+  type CulturalProfile,
+  type CommunicationGuidance as CulturalCommunicationGuidance,
+  type ClinicalConsideration,
+  type BarrierToCare,
+  type CulturalHealthPractice,
+  type TrustFactor,
+  type SupportSystem,
+  type SDOHCode as CulturalSDOHCode,
+  type CulturalRemedy,
+  type DrugInteractionCultural,
+  type CulturalCompetencyResult
+} from './mcpCulturalCompetencyClient';
+
+// =====================================================
 // CHAIN ORCHESTRATION (Multi-Server Pipelines)
 // =====================================================
 
