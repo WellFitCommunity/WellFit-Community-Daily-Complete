@@ -48,33 +48,21 @@ describe('useHL7X12', () => {
   });
 
   describe('HL7 Operations', () => {
-    it('parses HL7 message and returns structured patient data', async () => {
+    it('parses HL7 message and returns structured data', async () => {
       const parsedMessage = {
-        message_type: 'ADT',
-        event_type: 'A01',
-        control_id: 'MSG001',
+        success: true,
+        messageType: 'ADT',
+        messageControlId: 'MSG001',
         version: '2.4',
-        sending_application: 'ATLUS',
-        sending_facility: 'WELLFIT',
-        receiving_application: 'EHR',
-        receiving_facility: 'HOSPITAL',
-        timestamp: '20260221120000',
+        sendingApplication: 'ATLUS',
+        sendingFacility: 'WELLFIT',
         segments: [
-          { name: 'MSH', fields: [] },
-          { name: 'PID', fields: [] },
-          { name: 'PV1', fields: [] },
+          { name: 'MSH', fieldCount: 12 },
+          { name: 'PID', fieldCount: 8 },
+          { name: 'PV1', fieldCount: 6 },
         ],
-        patient: {
-          id: 'PAT-001',
-          name: { family: 'DOE', given: 'JANE' },
-          dob: '19500315',
-          gender: 'F',
-        },
-        encounter: {
-          id: 'ENC-001',
-          class: 'I',
-          location: 'ICU^ROOM1^BED2',
-        },
+        errors: [],
+        warnings: [],
       };
 
       mockClient.parseHL7.mockResolvedValue({
@@ -93,11 +81,11 @@ describe('useHL7X12', () => {
       expect(result.current.loading).toBe(false);
       expect(result.current.error).toBeNull();
 
-      // Verify patient data was extracted
+      // Verify structured data was extracted
       const parsed = result.current.result as typeof parsedMessage;
-      expect(parsed.patient?.id).toBe('PAT-001');
-      expect(parsed.patient?.name.family).toBe('DOE');
-      expect(parsed.encounter?.id).toBe('ENC-001');
+      expect(parsed.messageType).toBe('ADT');
+      expect(parsed.messageControlId).toBe('MSG001');
+      expect(parsed.sendingApplication).toBe('ATLUS');
       expect(parsed.segments).toHaveLength(3);
     });
 
@@ -106,8 +94,8 @@ describe('useHL7X12', () => {
         valid: false,
         errors: ['Missing required PID segment', 'Invalid date format in OBR-7'],
         warnings: ['OBX-5 value exceeds expected range'],
-        message_type: 'ORU',
-        segment_count: 5,
+        messageType: 'ORU',
+        segmentCount: 5,
       };
 
       mockClient.validateHL7.mockResolvedValue({
@@ -126,7 +114,7 @@ describe('useHL7X12', () => {
       expect(validation.errors).toHaveLength(2);
       expect(validation.errors[0]).toContain('PID segment');
       expect(validation.warnings).toHaveLength(1);
-      expect(validation.segment_count).toBe(5);
+      expect(validation.segmentCount).toBe(5);
     });
 
     it('converts HL7 to FHIR R4 Bundle', async () => {
@@ -163,10 +151,8 @@ describe('useHL7X12', () => {
 
     it('generates ACK response for incoming message', async () => {
       const ackResult = {
-        message: 'MSH|^~\\&|...\rMSA|AA|MSG001|Message accepted',
-        control_id: 'ACK001',
-        ack_code: 'AA' as const,
-        text_message: 'Message accepted',
+        ack_message: 'MSH|^~\\&|...\rMSA|AA|MSG001|Message accepted',
+        ack_code: 'AA',
       };
 
       mockClient.generateHL7ACK.mockResolvedValue({
@@ -182,31 +168,28 @@ describe('useHL7X12', () => {
 
       const ack = result.current.result as typeof ackResult;
       expect(ack.ack_code).toBe('AA');
-      expect(ack.control_id).toBe('ACK001');
+      expect(ack.ack_message).toContain('MSH');
     });
   });
 
   describe('X12 Operations', () => {
-    it('parses X12 837P claim and extracts service lines', async () => {
+    it('parses X12 837P claim and extracts procedures', async () => {
       const parsedClaim = {
-        control_number: '000000001',
-        transaction_type: '837P',
-        submitter: { name: 'WellFit Health', id: 'SUB001' },
-        receiver: { name: 'Blue Cross', id: 'BCBS' },
-        subscriber: { id: 'MBR-12345', name: 'Jane Doe', dob: '1950-03-15' },
-        claims: [{
-          claim_id: 'CLM-001',
-          total_charge: 450.00,
-          place_of_service: '11',
-          service_lines: [
-            { line_number: 1, cpt_code: '99213', charge_amount: 150.00, units: 1, date_of_service: '2026-02-21' },
-            { line_number: 2, cpt_code: '85025', charge_amount: 75.00, units: 1, date_of_service: '2026-02-21' },
-            { line_number: 3, cpt_code: '80053', charge_amount: 225.00, units: 1, date_of_service: '2026-02-21' },
-          ],
-          diagnoses: ['E11.9', 'I10'],
-        }],
-        loop_count: 5,
-        segment_count: 28,
+        interchangeControlNumber: '000000001',
+        groupControlNumber: '1',
+        transactionSetControlNumber: '0001',
+        claimId: 'CLM-001',
+        totalCharges: 450.00,
+        diagnoses: ['E11.9', 'I10'],
+        procedures: [
+          { code: '99213', charges: 150.00, units: 1 },
+          { code: '85025', charges: 75.00, units: 1 },
+          { code: '80053', charges: 225.00, units: 1 },
+        ],
+        patientName: 'Test Patient Alpha',
+        payerName: 'Test Payer Alpha',
+        providerName: 'Test Provider Alpha',
+        serviceDate: '2026-02-21',
       };
 
       mockClient.parseX12.mockResolvedValue({
@@ -221,12 +204,11 @@ describe('useHL7X12', () => {
       });
 
       const claim = result.current.result as typeof parsedClaim;
-      expect(claim.transaction_type).toBe('837P');
-      expect(claim.claims[0].claim_id).toBe('CLM-001');
-      expect(claim.claims[0].total_charge).toBe(450.00);
-      expect(claim.claims[0].service_lines).toHaveLength(3);
-      expect(claim.claims[0].service_lines[0].cpt_code).toBe('99213');
-      expect(claim.claims[0].diagnoses).toContain('E11.9');
+      expect(claim.claimId).toBe('CLM-001');
+      expect(claim.totalCharges).toBe(450.00);
+      expect(claim.procedures).toHaveLength(3);
+      expect(claim.procedures[0].code).toBe('99213');
+      expect(claim.diagnoses).toContain('E11.9');
     });
 
     it('validates X12 837P structure and reports issues', async () => {
@@ -234,9 +216,7 @@ describe('useHL7X12', () => {
         valid: true,
         errors: [],
         warnings: ['Modifier 25 typically requires documentation'],
-        transaction_type: '837P',
-        segment_count: 28,
-        loop_count: 5,
+        segmentCount: 28,
       };
 
       mockClient.validateX12.mockResolvedValue({
@@ -254,7 +234,7 @@ describe('useHL7X12', () => {
       expect(validation.valid).toBe(true);
       expect(validation.errors).toHaveLength(0);
       expect(validation.warnings).toHaveLength(1);
-      expect(validation.segment_count).toBe(28);
+      expect(validation.segmentCount).toBe(28);
     });
 
     it('converts X12 837P to FHIR Claim resource', async () => {
@@ -347,16 +327,15 @@ describe('useHL7X12', () => {
       mockClient.parseHL7.mockResolvedValue({
         success: true,
         data: {
-          message_type: 'ADT',
-          event_type: 'A01',
-          control_id: 'MSG001',
+          success: true,
+          messageType: 'ADT',
+          messageControlId: 'MSG001',
           version: '2.4',
-          sending_application: '',
-          sending_facility: '',
-          receiving_application: '',
-          receiving_facility: '',
-          timestamp: '',
+          sendingApplication: '',
+          sendingFacility: '',
           segments: [],
+          errors: [],
+          warnings: [],
         },
       });
 
@@ -379,8 +358,8 @@ describe('useHL7X12', () => {
     });
 
     it('updates operation type correctly for each action', async () => {
-      mockClient.parseHL7.mockResolvedValue({ success: true, data: { message_type: 'ADT', event_type: 'A01', control_id: '', version: '', sending_application: '', sending_facility: '', receiving_application: '', receiving_facility: '', timestamp: '', segments: [] } });
-      mockClient.validateX12.mockResolvedValue({ success: true, data: { valid: true, errors: [], warnings: [] } });
+      mockClient.parseHL7.mockResolvedValue({ success: true, data: { success: true, messageType: 'ADT', messageControlId: '', version: '', sendingApplication: '', sendingFacility: '', segments: [], errors: [], warnings: [] } });
+      mockClient.validateX12.mockResolvedValue({ success: true, data: { valid: true, errors: [], warnings: [], segmentCount: 0 } });
 
       const { result } = renderHook(() => useHL7X12());
 
@@ -397,14 +376,18 @@ describe('useHL7X12', () => {
 
     it('gets supported message types', async () => {
       const messageTypes = {
-        hl7_types: [
-          { type: 'ADT', events: ['A01', 'A02', 'A03', 'A04', 'A08'], description: 'Admit/Discharge/Transfer' },
-          { type: 'ORU', events: ['R01'], description: 'Observation Result' },
-          { type: 'ORM', events: ['O01'], description: 'Order Message' },
-        ],
-        x12_types: [
-          { type: '837P', description: 'Professional Claims' },
-        ],
+        hl7: {
+          supported: ['ADT', 'ORU', 'ORM'],
+          versions: ['2.3', '2.4', '2.5'],
+        },
+        x12: {
+          supported: ['837P'],
+          versions: ['5010'],
+        },
+        fhir: {
+          supported: ['Bundle', 'Claim', 'Patient'],
+          version: 'R4',
+        },
       };
 
       mockClient.getMessageTypes.mockResolvedValue({
@@ -419,10 +402,11 @@ describe('useHL7X12', () => {
       });
 
       const types = result.current.result as typeof messageTypes;
-      expect(types.hl7_types).toHaveLength(3);
-      expect(types.hl7_types[0].type).toBe('ADT');
-      expect(types.hl7_types[0].events).toContain('A01');
-      expect(types.x12_types[0].type).toBe('837P');
+      expect(types.hl7.supported).toHaveLength(3);
+      expect(types.hl7.supported[0]).toBe('ADT');
+      expect(types.hl7.supported).toContain('ORU');
+      expect(types.x12.supported[0]).toBe('837P');
+      expect(types.fhir.version).toBe('R4');
     });
   });
 });

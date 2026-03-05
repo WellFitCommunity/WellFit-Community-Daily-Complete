@@ -32,12 +32,12 @@ This tracker targets **functional correctness and clinical accuracy** — the th
 
 | Severity | Items | Fixed | Remaining |
 |----------|-------|-------|-----------|
-| P0 — Broken | 5 | 0 | 5 |
+| P0 — Broken | 5 | 5 | 0 |
 | P1 — Clinical Risk | 9 | 0 | 9 (P1-5 shared file built, P1-6 through P1-9 new) |
 | P2 — Integration Gap | 4 | 0 | 4 |
 | P3 — Data Gap | 4 | 0 | 4 |
 | P4 — Polish | 4 | 0 | 4 |
-| **Total** | **26** | **0** | **26** |
+| **Total** | **26** | **5** | **21** |
 
 ---
 
@@ -45,82 +45,65 @@ This tracker targets **functional correctness and clinical accuracy** — the th
 
 ### P0-1: Client Response Parsing Bug (.data vs .text)
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-05)
 **Affects:** PubMed, Postgres, Medical Coding clients
 **Est:** 2 hours
 
 **Bug:** Three browser clients expect `result.content[0].data` but MCP servers return `result.content[0].text` (a JSON string). Every call from these clients fails silently.
 
-**Files to fix:**
-- `src/services/mcp/mcpPubMedClient.ts` — change `.data` to `JSON.parse(.text)`
-- `src/services/mcp/mcpPostgresClient.ts` — same fix
-- `src/services/mcp/mcpMedicalCodingClient.ts` — same fix
-
-**Test:** Call each client function and verify response parses correctly.
+**Fix applied:** All three clients now parse `result.result?.content?.[0]?.text ?? result.content?.[0]?.text` via `JSON.parse()`. Tests updated to match JSON-RPC text format.
 
 ---
 
 ### P0-2: Client Endpoint Mismatch (/call vs tools/call)
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-05)
 **Affects:** Medical Coding, Cultural Competency clients
 **Est:** 1 hour
 
 **Bug:** Two clients POST to `${baseUrl}/call` but MCP servers expect JSON-RPC body with `method: 'tools/call'`. Requests hit 404 or get ignored.
 
-**Files to fix:**
-- `src/services/mcp/mcpMedicalCodingClient.ts` — fix endpoint + request body format
-- `src/services/mcp/mcpCulturalCompetencyClient.ts` — fix endpoint + request body format
-
-**Note:** Cultural competency works by accident (falls back to hardcoded profiles). Medical coding is completely broken.
+**Fix applied:** Both clients now POST to base URL with JSON-RPC body `{ method: 'tools/call', params: { name, arguments } }`. Response parsing also fixed to match JSON-RPC text format. Tests updated.
 
 ---
 
 ### P0-3: HL7/X12 Client Type Mismatch
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-05)
 **Affects:** HL7/X12 client
 **Est:** 3 hours
 
-**Bug:** Client TypeScript interfaces don't match server response shapes. `HL7ParsedMessage` expects `message_type`, `event_type`, `segments[]` but server returns `messageType`, `messageControlId`, flat segment list. Client code would crash at runtime on any HL7 parse call.
+**Bug:** Client TypeScript interfaces don't match server response shapes. `HL7ParsedMessage` expects `message_type`, `event_type`, `segments[]` but server returns `messageType`, `messageControlId`, flat segment list.
 
-**Files to fix:**
-- `src/services/mcp/mcpHL7X12Client.ts` — align response types to actual server output
+**Fix applied:** Updated 7 interfaces in `mcpHL7X12Client.ts` to match actual server response shapes (camelCase, flat structures). Updated `ResultDisplay.tsx`, `X12Generate837PPanel.tsx`, and all related test files.
 
 ---
 
 ### P0-4: X12 278 (Prior Auth Transaction) — Dead Code
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-05) — Option 1: Implemented 278 handlers
 **Affects:** HL7/X12 server + client
 **Est:** 8 hours
 
-**Bug:** Client defines `generate278Request()`, `parse278Response()`, `validate278()` methods and 100+ lines of types. Server has no handler for any of these tools. Every call returns `"Tool not implemented"`.
-
-**Options:**
-1. **Implement 278 handlers** on the server (correct — CMS-0057-F mandate Jan 2027)
-2. **Remove dead code** from client (honest — stop claiming capability that doesn't exist)
-
-**Recommendation:** Option 1 if targeting CMS compliance. Option 2 if deferring 278 support.
-
-**Files:**
-- `supabase/functions/mcp-hl7-x12-server/index.ts` — add tool handlers
-- New files: `x12_278Generator.ts`, `x12_278Parser.ts`
-- OR: Remove from `src/services/mcp/mcpHL7X12Client.ts` lines ~650-1050
+**Fix applied:** Built full X12 278 Health Care Services Review implementation (CMS-0057-F):
+- `x12_278Generator.ts` — generates 278 request with full hierarchical loops (2000A-F), UM/HI/SV1 segments (277 lines)
+- `x12_278Parser.ts` — parses 278 response (action codes, auth numbers, denial reasons) + validates 278 structure (286 lines)
+- Added 3 tool definitions (`generate_278_request`, `parse_278_response`, `validate_278`) to `tools.ts`
+- Wired 3 case handlers in `index.ts` + updated `get_message_types` to include 278/005010X217
+- Added types to `types.ts`: `PriorAuthRequestData`, `PriorAuth278Response`, `Generated278Result`
+- 61 new tests across 3 files: client tests, generator/parser unit tests, validator tests
 
 ---
 
 ### P0-5: Chain Orchestrator Scoped Key Fallback
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-05)
 **Affects:** Chain orchestrator security
 **Est:** 1 hour
 
-**Bug:** `mcpKeyResolver.ts` lines 48-52: if a scoped MCP key isn't set in env, chain silently falls back to the **service role key** — granting full admin access to any server. A chain meant for medical-coding could call mcp-postgres-server with unrestricted access.
+**Bug:** `mcpKeyResolver.ts` lines 48-52: if a scoped MCP key isn't set in env, chain silently falls back to the **service role key** — granting full admin access to any server.
 
-**Fix:** Fail hard if scoped key is missing. Never fall back to service role.
-
-**File:** `supabase/functions/mcp-chain-orchestrator/mcpKeyResolver.ts`
+**Fix applied:** Removed service role fallback. Now throws hard error with actionable message naming the missing env var. Tests updated to expect throws instead of fallback.
 
 ---
 

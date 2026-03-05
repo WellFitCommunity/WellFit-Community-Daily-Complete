@@ -43,10 +43,9 @@ beforeEach(() => {
     success: true,
     data: {
       x12_content: 'ISA*00*          *00*          *ZZ*SENDER*ZZ*RECEIVER...',
-      control_number: 'CTL-TEST-001',
-      claim_id: 'CLM-TEST-001',
-      total_charge: 250.00,
-      service_line_count: 1,
+      control_numbers: { isa: '000000001', gs: '000000001', st: '0001' },
+      segment_count: 12,
+      validation: { valid: true, errors: [], warnings: [], segmentCount: 12 },
     },
   });
 });
@@ -183,7 +182,7 @@ describe('X12Generate837PPanel', () => {
       await waitFor(() => {
         expect(screen.getByText(/837P Generated/i)).toBeInTheDocument();
       });
-      expect(screen.getByText(/CTL-TEST-001/)).toBeInTheDocument();
+      expect(screen.getByText(/000000001/)).toBeInTheDocument();
       expect(screen.getByText(/ISA\*00/)).toBeInTheDocument();
     });
 

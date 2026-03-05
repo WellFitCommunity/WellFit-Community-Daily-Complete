@@ -33,7 +33,7 @@ import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
 import { checkMCPRateLimit, checkPersistentRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 
 // Module imports
-import type { ClaimData } from './types.ts';
+import type { ClaimData, PriorAuthRequestData } from './types.ts';
 import { TOOLS } from './tools.ts';
 import { parseHL7Message } from './hl7Parser.ts';
 import { hl7ToFHIR } from './hl7ToFhir.ts';
@@ -42,6 +42,8 @@ import { generate837P } from './x12Generator.ts';
 import { validateX12 } from './x12Validator.ts';
 import { parseX12 } from './x12Parser.ts';
 import { x12ToFHIR } from './x12ToFhir.ts';
+import { generate278Request } from './x12_278Generator.ts';
+import { parse278Response, validate278 } from './x12_278Parser.ts';
 import { logTransformation } from './audit.ts';
 
 // Server configuration
@@ -190,6 +192,27 @@ async function handleToolCall(
       return { claim: conversion.claim, bundle: conversion.bundle };
     }
 
+    case "generate_278_request": {
+      const requestData = toolArgs.request_data as Record<string, unknown>;
+      if (!requestData) {
+        throw new Error('request_data is required');
+      }
+      const controlNumbers = {
+        isa: String(Date.now()).slice(-9).padStart(9, '0'),
+        gs: String(Date.now()).slice(-9).padStart(9, '0'),
+        st: String(Date.now()).slice(-4).padStart(4, '0')
+      };
+      // System boundary cast: MCP tool args arrive as untyped JSON
+      const typedRequest = requestData as unknown as PriorAuthRequestData;
+      return generate278Request(typedRequest, controlNumbers);
+    }
+
+    case "parse_278_response":
+      return parse278Response(toolArgs.x12_content as string);
+
+    case "validate_278":
+      return validate278(toolArgs.x12_content as string);
+
     case "get_message_types":
       return {
         hl7: {
@@ -197,8 +220,8 @@ async function handleToolCall(
           versions: ['2.3', '2.3.1', '2.4', '2.5', '2.5.1', '2.6', '2.7', '2.8']
         },
         x12: {
-          supported: ['837P'],
-          versions: ['005010X222A1']
+          supported: ['837P', '278'],
+          versions: ['005010X222A1', '005010X217']
         },
         fhir: {
           supported: ['Patient', 'Encounter', 'Observation', 'Condition', 'AllergyIntolerance', 'Claim'],

@@ -43,7 +43,11 @@ Object.defineProperty(global, 'localStorage', {
 
 const mockMCPResponse = <T>(data: T) => ({
   ok: true,
-  json: async () => ({ content: [{ type: 'json', data }] }),
+  json: async () => ({
+    jsonrpc: '2.0',
+    result: { content: [{ type: 'text', text: JSON.stringify(data) }] },
+    id: 1,
+  }),
 });
 
 const mockErrorResponse = (status: number, text: string) => ({
@@ -98,9 +102,10 @@ describe('MedicalCodingMCPClient', () => {
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body as string);
-      expect(fetchBody.name).toBe('get_payer_rules');
-      expect(fetchBody.arguments.payer_type).toBe('medicare');
-      expect(fetchBody.arguments.fiscal_year).toBe(2026);
+      expect(fetchBody.method).toBe('tools/call');
+      expect(fetchBody.params.name).toBe('get_payer_rules');
+      expect(fetchBody.params.arguments.payer_type).toBe('medicare');
+      expect(fetchBody.params.arguments.fiscal_year).toBe(2026);
     });
 
     it('should pass optional state code and rule type filters', async () => {
@@ -109,8 +114,8 @@ describe('MedicalCodingMCPClient', () => {
       await getPayerRules('medicaid', 2026, { stateCode: 'TX', ruleType: 'per_diem' });
 
       const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body as string);
-      expect(fetchBody.arguments.state_code).toBe('TX');
-      expect(fetchBody.arguments.rule_type).toBe('per_diem');
+      expect(fetchBody.params.arguments.state_code).toBe('TX');
+      expect(fetchBody.params.arguments.rule_type).toBe('per_diem');
     });
 
     it('should handle HTTP errors', async () => {
@@ -234,9 +239,10 @@ describe('MedicalCodingMCPClient', () => {
       expect(result.data?.drg_weight).toBe(1.4974);
 
       const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body as string);
-      expect(fetchBody.name).toBe('run_drg_grouper');
-      expect(fetchBody.arguments.principal_diagnosis).toBe('J18.9');
-      expect(fetchBody.arguments.additional_diagnoses).toEqual(['E11.9', 'I10']);
+      expect(fetchBody.method).toBe('tools/call');
+      expect(fetchBody.params.name).toBe('run_drg_grouper');
+      expect(fetchBody.params.arguments.principal_diagnosis).toBe('J18.9');
+      expect(fetchBody.params.arguments.additional_diagnoses).toEqual(['E11.9', 'I10']);
     });
   });
 

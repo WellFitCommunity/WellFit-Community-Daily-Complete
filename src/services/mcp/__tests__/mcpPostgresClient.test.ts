@@ -6,18 +6,8 @@ import {
   getDashboardMetrics,
   getPatientRiskDistribution,
   getReadmissionRiskSummary,
-  // getEncounterSummary - tested indirectly
-  // getSDOHFlagsSummary - tested indirectly
-  // getMedicationAdherenceStats - tested indirectly
   getClaimsStatusSummary,
-  // getBillingRevenueSummary - tested indirectly
-  // getCarePlanSummary - tested indirectly
-  // getTaskCompletionRate - tested indirectly
-  // getReferralSummary - tested indirectly
   getBedAvailability,
-  // getShiftHandoffSummary - tested indirectly
-  // getQualityMetrics - tested indirectly
-  // PostgresMCPClient - class available but not directly tested
 } from '../mcpPostgresClient';
 
 // Mock fetch
@@ -38,6 +28,21 @@ Object.defineProperty(global, 'localStorage', {
   }
 });
 
+/** Helper: mock a successful MCP JSON-RPC response */
+function mockMCPResponse<T>(data: T) {
+  return {
+    ok: true,
+    json: async () => ({
+      jsonrpc: '2.0',
+      result: {
+        content: [{ type: 'text', text: JSON.stringify(data) }],
+        metadata: { rowsReturned: 1, executionTimeMs: 30 },
+      },
+      id: 1,
+    }),
+  };
+}
+
 describe('PostgresMCPClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,13 +58,7 @@ describe('PostgresMCPClient', () => {
         active_sdoh_flags: 8
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: [{ type: 'json', data: [mockData] }],
-          metadata: { rowsReturned: 1, executionTimeMs: 50 }
-        })
-      });
+      mockFetch.mockResolvedValueOnce(mockMCPResponse([mockData]));
 
       const result = await getDashboardMetrics('tenant-123');
 
@@ -100,13 +99,7 @@ describe('PostgresMCPClient', () => {
         { risk_level: 'low', count: 65 }
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: [{ type: 'json', data: mockData }],
-          metadata: { rowsReturned: 3, executionTimeMs: 30 }
-        })
-      });
+      mockFetch.mockResolvedValueOnce(mockMCPResponse(mockData));
 
       const result = await getPatientRiskDistribution('tenant-123');
 
@@ -123,13 +116,7 @@ describe('PostgresMCPClient', () => {
         { risk_category: 'low', patient_count: 55 }
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: [{ type: 'json', data: mockData }],
-          metadata: { rowsReturned: 3, executionTimeMs: 25 }
-        })
-      });
+      mockFetch.mockResolvedValueOnce(mockMCPResponse(mockData));
 
       const result = await getReadmissionRiskSummary('tenant-123');
 
@@ -146,13 +133,7 @@ describe('PostgresMCPClient', () => {
         { status: 'denied', count: 5, total_charges: 12000 }
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: [{ type: 'json', data: mockData }],
-          metadata: { rowsReturned: 3, executionTimeMs: 40 }
-        })
-      });
+      mockFetch.mockResolvedValueOnce(mockMCPResponse(mockData));
 
       const result = await getClaimsStatusSummary('tenant-123');
 
@@ -171,13 +152,7 @@ describe('PostgresMCPClient', () => {
         { unit: 'Med-Surg', status: 'occupied', count: 30 }
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: [{ type: 'json', data: mockData }],
-          metadata: { rowsReturned: 4, executionTimeMs: 35 }
-        })
-      });
+      mockFetch.mockResolvedValueOnce(mockMCPResponse(mockData));
 
       const result = await getBedAvailability('tenant-123');
 
@@ -197,23 +172,14 @@ describe('PostgresMCPClient', () => {
     });
 
     it('should handle missing auth token gracefully', async () => {
-      // Clear the mock token
       delete mockLocalStorage['sb-xkybsjnvuohpqpbkikyn-auth-token'];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: [{ type: 'json', data: [] }],
-          metadata: { rowsReturned: 0, executionTimeMs: 10 }
-        })
-      });
+      mockFetch.mockResolvedValueOnce(mockMCPResponse([]));
 
       const _result = await getDashboardMetrics('tenant-123');
 
-      // Should still make the request (auth handled server-side)
       expect(mockFetch).toHaveBeenCalled();
 
-      // Restore the token
       mockLocalStorage['sb-xkybsjnvuohpqpbkikyn-auth-token'] = JSON.stringify({ access_token: 'test-token' });
     });
   });

@@ -24,57 +24,34 @@ export type HL7MessageType = 'ADT' | 'ORU' | 'ORM' | 'ACK' | 'OTHER';
 
 export interface HL7Segment {
   name: string;
-  fields: (string | string[])[];
+  fieldCount: number;
 }
 
 export interface HL7ParsedMessage {
-  message_type: string;
-  event_type: string;
-  control_id: string;
+  success: boolean;
+  messageType: string;
+  messageControlId: string;
   version: string;
-  sending_application: string;
-  sending_facility: string;
-  receiving_application: string;
-  receiving_facility: string;
-  timestamp: string;
+  sendingApplication: string;
+  sendingFacility: string;
   segments: HL7Segment[];
-  patient?: {
-    id: string;
-    name: {
-      family: string;
-      given: string;
-    };
-    dob?: string;
-    gender?: string;
-    address?: {
-      street?: string;
-      city?: string;
-      state?: string;
-      zip?: string;
-    };
-  };
-  encounter?: {
-    id: string;
-    class: string;
-    location?: string;
-    admit_date?: string;
-    attending_physician?: string;
-  };
+  errors: string[];
+  warnings: string[];
 }
 
 export interface HL7ValidationResult {
   valid: boolean;
   errors: string[];
   warnings: string[];
-  message_type?: string;
-  segment_count?: number;
+  messageType?: string;
+  expectedType?: string;
+  typeMatch?: boolean;
+  segmentCount?: number;
 }
 
 export interface HL7ACK {
-  message: string;
-  control_id: string;
-  ack_code: 'AA' | 'AE' | 'AR';
-  text_message?: string;
+  ack_message: string;
+  ack_code: string;
 }
 
 export interface X12ClaimData {
@@ -153,56 +130,43 @@ export interface X12ClaimData {
 
 export interface X12GeneratedClaim {
   x12_content: string;
-  control_number: string;
-  claim_id: string;
-  total_charge: number;
-  service_line_count: number;
+  control_numbers: {
+    isa: string;
+    gs: string;
+    st: string;
+  };
+  segment_count: number;
+  validation: {
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+    segmentCount: number;
+  };
 }
 
 export interface X12ParsedClaim {
-  control_number: string;
-  transaction_type: string;
-  submitter?: {
-    name: string;
-    id: string;
-  };
-  receiver?: {
-    name: string;
-    id: string;
-  };
-  subscriber?: {
-    id: string;
-    name: string;
-    dob?: string;
-  };
-  patient?: {
-    name: string;
-    relationship?: string;
-  };
-  claims: Array<{
-    claim_id: string;
-    total_charge: number;
-    place_of_service?: string;
-    service_lines: Array<{
-      line_number: number;
-      cpt_code: string;
-      charge_amount: number;
-      units: number;
-      date_of_service?: string;
-    }>;
-    diagnoses: string[];
+  interchangeControlNumber: string;
+  groupControlNumber: string;
+  transactionSetControlNumber: string;
+  claimId: string;
+  totalCharges: number;
+  diagnoses: string[];
+  procedures: Array<{
+    code: string;
+    charges: number;
+    units: number;
   }>;
-  loop_count: number;
-  segment_count: number;
+  patientName: string;
+  payerName: string;
+  providerName: string;
+  serviceDate: string;
 }
 
 export interface X12ValidationResult {
   valid: boolean;
   errors: string[];
   warnings: string[];
-  transaction_type?: string;
-  segment_count?: number;
-  loop_count?: number;
+  segmentCount: number;
 }
 
 export interface FHIRBundle {
@@ -273,15 +237,18 @@ export interface FHIRClaim {
 }
 
 export interface MessageTypeInfo {
-  hl7_types: Array<{
-    type: string;
-    events: string[];
-    description: string;
-  }>;
-  x12_types: Array<{
-    type: string;
-    description: string;
-  }>;
+  hl7: {
+    supported: string[];
+    versions: string[];
+  };
+  x12: {
+    supported: string[];
+    versions: string[];
+  };
+  fhir: {
+    supported: string[];
+    version: string;
+  };
 }
 
 // =====================================================

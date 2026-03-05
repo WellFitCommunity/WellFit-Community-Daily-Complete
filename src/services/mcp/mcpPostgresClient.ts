@@ -117,10 +117,14 @@ class PostgresMCPClient {
 
       const result = await response.json();
 
+      // MCP servers return JSON-RPC: { jsonrpc, result: { content: [{ type: "text", text }] }, id }
+      const textContent = result.result?.content?.[0]?.text ?? result.content?.[0]?.text;
+      const parsed = textContent ? JSON.parse(textContent) : [];
+
       return {
         success: true,
-        data: result.content?.[0]?.data || [],
-        metadata: result.metadata
+        data: Array.isArray(parsed) ? parsed : [parsed],
+        metadata: result.result?.metadata ?? result.metadata
       };
     } catch (error: unknown) {
       return {
@@ -155,7 +159,8 @@ class PostgresMCPClient {
       }
 
       const result = await response.json();
-      return result.content?.[0]?.data || [];
+      const textContent = result.result?.content?.[0]?.text ?? result.content?.[0]?.text;
+      return textContent ? JSON.parse(textContent) : [];
     } catch {
       return [];
     }
@@ -190,10 +195,13 @@ class PostgresMCPClient {
       }
 
       const result = await response.json();
+      const textContent = result.result?.content?.[0]?.text ?? result.content?.[0]?.text;
+      const parsed = textContent ? JSON.parse(textContent) : [];
+
       return {
         success: true,
-        data: result.content?.[0]?.data || [],
-        metadata: result.metadata
+        data: Array.isArray(parsed) ? parsed : [parsed],
+        metadata: result.result?.metadata ?? result.metadata
       };
     } catch (error: unknown) {
       return {
@@ -235,10 +243,13 @@ class PostgresMCPClient {
       }
 
       const result = await response.json();
+      const textContent = result.result?.content?.[0]?.text ?? result.content?.[0]?.text;
+      const parsed = textContent ? JSON.parse(textContent) : { table: tableName, count: 0 };
+
       return {
         success: true,
-        data: [result.content?.[0]?.data || { table: tableName, count: 0 }],
-        metadata: result.metadata
+        data: [parsed],
+        metadata: result.result?.metadata ?? result.metadata
       };
     } catch (error: unknown) {
       return {

@@ -84,7 +84,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: mockProfile }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify(mockProfile) }] },
+          id: 1
         })
       });
 
@@ -126,7 +128,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: mockConsiderations }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify(mockConsiderations) }] },
+          id: 1
         })
       });
 
@@ -142,7 +146,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: { populationKey: 'latino', considerations: [] } }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify({ populationKey: 'latino', considerations: [] }) }] },
+          id: 1
         })
       });
 
@@ -174,7 +180,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: mockGuidance }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify(mockGuidance) }] },
+          id: 1
         })
       });
 
@@ -189,7 +197,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: { populationKey: 'indigenous', guidance: {} } }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify({ populationKey: 'indigenous', guidance: {} }) }] },
+          id: 1
         })
       });
 
@@ -218,7 +228,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: mockBarriers }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify(mockBarriers) }] },
+          id: 1
         })
       });
 
@@ -245,7 +257,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: mockTrust }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify(mockTrust) }] },
+          id: 1
         })
       });
 
@@ -274,7 +288,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: mockInteraction }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify(mockInteraction) }] },
+          id: 1
         })
       });
 
@@ -291,15 +307,18 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: { populationKey: 'veterans', medications: [], culturalRemedies: [], warnings: [], recommendations: [] } }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify({ populationKey: 'veterans', medications: [], culturalRemedies: [], warnings: [], recommendations: [] }) }] },
+          id: 1
         })
       });
 
       await checkDrugInteractionCultural('veterans', ['lisinopril']);
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(callBody.arguments.medications).toEqual(['lisinopril']);
-      expect(callBody.arguments.population_key).toBe('veterans');
+      expect(callBody.method).toBe('tools/call');
+      expect(callBody.params.arguments.medications).toEqual(['lisinopril']);
+      expect(callBody.params.arguments.population_key).toBe('veterans');
     });
   });
 
@@ -316,7 +335,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: mockCodes }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify(mockCodes) }] },
+          id: 1
         })
       });
 
@@ -331,7 +352,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: { codes: [], category: 'housing' } }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify({ codes: [], category: 'housing' }) }] },
+          id: 1
         })
       });
 
@@ -356,7 +379,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: mockSeed }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify(mockSeed) }] },
+          id: 1
         })
       });
 
@@ -422,7 +447,9 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: { populationKey: 'veterans' } }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify({ populationKey: 'veterans' }) }] },
+          id: 1
         })
       });
 
@@ -433,7 +460,6 @@ describe('CulturalCompetencyMCPClient', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             'Authorization': 'Bearer test-token',
-            'apikey': 'test-token'
           })
         })
       );
@@ -443,15 +469,18 @@ describe('CulturalCompetencyMCPClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          content: [{ type: 'json', data: { populationKey: 'black_aa', barriers: [] } }]
+          jsonrpc: '2.0',
+          result: { content: [{ type: 'text', text: JSON.stringify({ populationKey: 'black_aa', barriers: [] }) }] },
+          id: 1
         })
       });
 
       await getBarriersToCare('black_aa');
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(callBody.name).toBe('get_barriers_to_care');
-      expect(callBody.arguments.population_key).toBe('black_aa');
+      expect(callBody.method).toBe('tools/call');
+      expect(callBody.params.name).toBe('get_barriers_to_care');
+      expect(callBody.params.arguments.population_key).toBe('black_aa');
     });
   });
 });

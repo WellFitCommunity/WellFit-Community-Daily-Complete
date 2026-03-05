@@ -133,5 +133,41 @@ export const TOOLS: Record<string, ToolDefinition> = {
       properties: {},
       required: []
     }
+  },
+
+  "generate_278_request": {
+    description: "Generate X12 278 Health Care Services Review request (prior authorization). CMS-0057-F compliant.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        request_data: {
+          type: "object",
+          description: "Prior authorization request data including subscriber, provider, diagnoses, and procedures"
+        }
+      },
+      required: ["request_data"]
+    }
+  },
+
+  "parse_278_response": {
+    description: "Parse X12 278 Health Care Services Review response from payer. Extracts action code, auth number, and decision details.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        x12_content: { type: "string", description: "Raw X12 278 response content" }
+      },
+      required: ["x12_content"]
+    }
+  },
+
+  "validate_278": {
+    description: "Validate X12 278 message structure and required segments",
+    inputSchema: {
+      type: "object",
+      properties: {
+        x12_content: { type: "string", description: "Raw X12 278 content" }
+      },
+      required: ["x12_content"]
+    }
   }
 };

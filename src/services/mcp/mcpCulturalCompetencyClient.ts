@@ -173,14 +173,16 @@ export class CulturalCompetencyMCPClient {
     try {
       const token = this.getAuthToken();
 
-      const response = await fetch(`${this.baseUrl}/call`, {
+      const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-          'apikey': token
         },
-        body: JSON.stringify({ name: tool, arguments: args })
+        body: JSON.stringify({
+          method: 'tools/call',
+          params: { name: tool, arguments: args },
+        })
       });
 
       if (!response.ok) {
@@ -190,8 +192,10 @@ export class CulturalCompetencyMCPClient {
 
       const result = await response.json();
 
-      if (result.content?.[0]?.data) {
-        return { success: true, data: result.content[0].data as T };
+      // MCP servers return JSON-RPC: { jsonrpc, result: { content: [{ type: "text", text }] }, id }
+      const textContent = result.result?.content?.[0]?.text ?? result.content?.[0]?.text;
+      if (textContent) {
+        return { success: true, data: JSON.parse(textContent) as T };
       }
 
       return { success: false, error: 'Invalid response format' };

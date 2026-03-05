@@ -171,14 +171,16 @@ export class MedicalCodingMCPClient {
     try {
       const token = this.getAuthToken();
 
-      const response = await fetch(`${this.baseUrl}/call`, {
+      const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-          'apikey': token
         },
-        body: JSON.stringify({ name: tool, arguments: args })
+        body: JSON.stringify({
+          method: 'tools/call',
+          params: { name: tool, arguments: args },
+        })
       });
 
       if (!response.ok) {
@@ -186,10 +188,14 @@ export class MedicalCodingMCPClient {
         return { success: false, error: `HTTP ${response.status}: ${errorText}` };
       }
 
-      const result = await response.json() as { content?: Array<{ data?: T }> };
+      const result = await response.json() as Record<string, unknown>;
 
-      if (result.content?.[0]?.data) {
-        return { success: true, data: result.content[0].data };
+      // MCP servers return JSON-RPC: { jsonrpc, result: { content: [{ type: "text", text }] }, id }
+      const resultObj = result.result as Record<string, unknown> | undefined;
+      const content = (resultObj?.content ?? result.content) as Array<{ type?: string; text?: string }> | undefined;
+      const textContent = content?.[0]?.text;
+      if (textContent) {
+        return { success: true, data: JSON.parse(textContent) as T };
       }
 
       return { success: false, error: 'Invalid response format' };

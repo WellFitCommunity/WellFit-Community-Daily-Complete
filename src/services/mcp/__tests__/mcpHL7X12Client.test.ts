@@ -44,22 +44,18 @@ describe('HL7X12MCPClient', () => {
     describe('parseHL7Message', () => {
       it('should parse an ADT^A01 message', async () => {
         const mockParsed = {
-          message_type: 'ADT',
-          event_type: 'A01',
-          control_id: 'MSG00001',
+          success: true,
+          messageType: 'ADT',
+          messageControlId: 'MSG00001',
           version: '2.4',
-          sending_application: 'HIS',
-          sending_facility: 'FACILITY',
+          sendingApplication: 'HIS',
+          sendingFacility: 'FACILITY',
           segments: [
-            { name: 'MSH', fields: ['|', '^~\\&', 'HIS', 'FACILITY'] },
-            { name: 'PID', fields: ['1', '', 'P12345'] }
+            { name: 'MSH', fieldCount: 4 },
+            { name: 'PID', fieldCount: 3 }
           ],
-          patient: {
-            id: 'P12345',
-            name: { family: 'DOE', given: 'JOHN' },
-            dob: '19500101',
-            gender: 'M'
-          }
+          errors: [],
+          warnings: []
         };
 
         mockFetch.mockResolvedValueOnce({
@@ -75,8 +71,8 @@ describe('HL7X12MCPClient', () => {
         const result = await parseHL7Message('MSH|^~\\&|HIS|FACILITY...');
 
         expect(result.success).toBe(true);
-        expect(result.data?.message_type).toBe('ADT');
-        expect(result.data?.patient?.id).toBe('P12345');
+        expect(result.data?.messageType).toBe('ADT');
+        expect(result.data?.messageControlId).toBe('MSG00001');
       });
 
       it('should handle network errors', async () => {
@@ -129,8 +125,8 @@ describe('HL7X12MCPClient', () => {
                 valid: true,
                 errors: [],
                 warnings: [],
-                message_type: 'ADT',
-                segment_count: 5
+                messageType: 'ADT',
+                segmentCount: 5
               }}]
             }
           })
@@ -172,10 +168,8 @@ describe('HL7X12MCPClient', () => {
           json: async () => ({
             result: {
               content: [{ type: 'json', data: {
-                message: 'MSH|^~\\&|...|ACK^A01...',
-                control_id: 'ACK00001',
-                ack_code: 'AA',
-                text_message: 'Message accepted'
+                ack_message: 'MSH|^~\\&|...|ACK^A01...',
+                ack_code: 'AA'
               }}]
             }
           })
@@ -185,6 +179,7 @@ describe('HL7X12MCPClient', () => {
 
         expect(result.success).toBe(true);
         expect(result.data?.ack_code).toBe('AA');
+        expect(result.data?.ack_message).toContain('ACK');
       });
 
       it('should generate AE (error) acknowledgment', async () => {
@@ -193,10 +188,8 @@ describe('HL7X12MCPClient', () => {
           json: async () => ({
             result: {
               content: [{ type: 'json', data: {
-                message: 'MSH|...',
-                control_id: 'ACK00002',
-                ack_code: 'AE',
-                text_message: 'Patient not found'
+                ack_message: 'MSH|...|MSA|AE|MSG00001|Patient not found',
+                ack_code: 'AE'
               }}]
             }
           })
@@ -206,7 +199,6 @@ describe('HL7X12MCPClient', () => {
 
         expect(result.success).toBe(true);
         expect(result.data?.ack_code).toBe('AE');
-        expect(result.data?.text_message).toBe('Patient not found');
       });
     });
   });
@@ -219,26 +211,26 @@ describe('HL7X12MCPClient', () => {
           claim_type: 'professional' as const,
           subscriber: {
             id: 'SUB123',
-            first_name: 'John',
-            last_name: 'Doe',
-            dob: '1950-01-15',
+            first_name: 'Test',
+            last_name: 'Patient Alpha',
+            dob: '2000-01-01',
             gender: 'M' as const,
             address: {
-              street: '123 Main St',
-              city: 'Anytown',
+              street: '123 Test Street',
+              city: 'Testville',
               state: 'TX',
               zip: '75001'
             },
-            payer_id: 'AETNA001',
-            payer_name: 'Aetna'
+            payer_id: 'PAYER001',
+            payer_name: 'Test Payer Alpha'
           },
           provider: {
             npi: '1234567890',
-            name: 'Dr. Smith',
+            name: 'Test Provider Alpha',
             tax_id: '123456789',
             address: {
-              street: '456 Medical Dr',
-              city: 'Anytown',
+              street: '456 Test Medical Dr',
+              city: 'Testville',
               state: 'TX',
               zip: '75002'
             }
@@ -266,10 +258,18 @@ describe('HL7X12MCPClient', () => {
             result: {
               content: [{ type: 'json', data: {
                 x12_content: 'ISA*00*...',
-                control_number: '000000001',
-                claim_id: 'CLM001',
-                total_charge: 150.00,
-                service_line_count: 1
+                control_numbers: {
+                  isa: '000000001',
+                  gs: '1',
+                  st: '0001'
+                },
+                segment_count: 42,
+                validation: {
+                  valid: true,
+                  errors: [],
+                  warnings: [],
+                  segmentCount: 42
+                }
               }}]
             }
           })
@@ -278,8 +278,9 @@ describe('HL7X12MCPClient', () => {
         const result = await generate837PClaim(claimData);
 
         expect(result.success).toBe(true);
-        expect(result.data?.claim_id).toBe('CLM001');
         expect(result.data?.x12_content).toContain('ISA');
+        expect(result.data?.control_numbers.isa).toBe('000000001');
+        expect(result.data?.segment_count).toBe(42);
       });
     });
 
@@ -290,25 +291,21 @@ describe('HL7X12MCPClient', () => {
           json: async () => ({
             result: {
               content: [{ type: 'json', data: {
-                control_number: '000000001',
-                transaction_type: '837P',
-                submitter: {
-                  name: 'Medical Practice',
-                  id: '1234567890'
-                },
-                claims: [{
-                  claim_id: 'CLM001',
-                  total_charge: 150.00,
-                  service_lines: [{
-                    line_number: 1,
-                    cpt_code: '99213',
-                    charge_amount: 150.00,
-                    units: 1
-                  }],
-                  diagnoses: ['I10']
+                interchangeControlNumber: '000000001',
+                groupControlNumber: '1',
+                transactionSetControlNumber: '0001',
+                claimId: 'CLM001',
+                totalCharges: 150.00,
+                diagnoses: ['I10'],
+                procedures: [{
+                  code: '99213',
+                  charges: 150.00,
+                  units: 1
                 }],
-                loop_count: 5,
-                segment_count: 42
+                patientName: 'Test Patient Alpha',
+                payerName: 'Test Payer Alpha',
+                providerName: 'Test Provider Alpha',
+                serviceDate: '2024-01-10'
               }}]
             }
           })
@@ -317,8 +314,10 @@ describe('HL7X12MCPClient', () => {
         const result = await parseX12Claim('ISA*00*...');
 
         expect(result.success).toBe(true);
-        expect(result.data?.transaction_type).toBe('837P');
-        expect(result.data?.claims).toHaveLength(1);
+        expect(result.data?.claimId).toBe('CLM001');
+        expect(result.data?.totalCharges).toBe(150.00);
+        expect(result.data?.procedures).toHaveLength(1);
+        expect(result.data?.procedures[0].code).toBe('99213');
       });
     });
 
@@ -332,9 +331,7 @@ describe('HL7X12MCPClient', () => {
                 valid: true,
                 errors: [],
                 warnings: [],
-                transaction_type: '837P',
-                segment_count: 42,
-                loop_count: 5
+                segmentCount: 42
               }}]
             }
           })
@@ -354,7 +351,8 @@ describe('HL7X12MCPClient', () => {
               content: [{ type: 'json', data: {
                 valid: false,
                 errors: ['Missing ISA segment', 'Invalid control number'],
-                warnings: []
+                warnings: [],
+                segmentCount: 0
               }}]
             }
           })
@@ -404,14 +402,18 @@ describe('HL7X12MCPClient', () => {
           json: async () => ({
             result: {
               content: [{ type: 'json', data: {
-                hl7_types: [
-                  { type: 'ADT', events: ['A01', 'A02', 'A03', 'A04', 'A08'], description: 'Admission, Discharge, Transfer' },
-                  { type: 'ORU', events: ['R01'], description: 'Observation Result' }
-                ],
-                x12_types: [
-                  { type: '837P', description: 'Professional Claim' },
-                  { type: '835', description: 'Remittance Advice' }
-                ]
+                hl7: {
+                  supported: ['ADT', 'ORU', 'ORM'],
+                  versions: ['2.3', '2.4', '2.5']
+                },
+                x12: {
+                  supported: ['837P', '835', '278'],
+                  versions: ['5010']
+                },
+                fhir: {
+                  supported: ['Bundle', 'Claim', 'Patient'],
+                  version: 'R4'
+                }
               }}]
             }
           })
@@ -420,8 +422,9 @@ describe('HL7X12MCPClient', () => {
         const result = await getSupportedMessageTypes();
 
         expect(result.success).toBe(true);
-        expect(result.data?.hl7_types).toBeDefined();
-        expect(result.data?.x12_types).toBeDefined();
+        expect(result.data?.hl7.supported).toContain('ADT');
+        expect(result.data?.x12.supported).toContain('837P');
+        expect(result.data?.fhir.version).toBe('R4');
       });
     });
   });
@@ -433,8 +436,8 @@ describe('HL7X12MCPClient', () => {
         sendingApp: 'HIS',
         sendingFacility: 'HOSPITAL',
         patientId: 'P12345',
-        patientName: { family: 'DOE', given: 'JOHN' },
-        dob: '19500115',
+        patientName: { family: 'ALPHA', given: 'TESTPATIENT' },
+        dob: '20000101',
         gender: 'M',
         encounterId: 'E001',
         admitDate: '20240115'
@@ -443,7 +446,7 @@ describe('HL7X12MCPClient', () => {
       expect(message).toContain('MSH|^~\\&|HIS|HOSPITAL');
       expect(message).toContain('ADT^A01');
       expect(message).toContain('P12345');
-      expect(message).toContain('DOE^JOHN');
+      expect(message).toContain('ALPHA^TESTPATIENT');
     });
 
     it('should generate ADT^A03 template', () => {

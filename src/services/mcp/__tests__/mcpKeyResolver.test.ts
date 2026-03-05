@@ -4,8 +4,8 @@
  * Tests per-server scoped key resolution for chain orchestrator:
  * - Known servers resolve to scoped key env vars
  * - Scoped keys use X-MCP-KEY header
- * - Fallback to service role key when no scoped key configured
- * - Unknown servers fall back gracefully
+ * - Hard failure when no scoped key configured (no service role fallback)
+ * - Unknown servers throw error (no silent fallback)
  * - Auth method tracking (scoped vs service_role)
  */
 
@@ -54,13 +54,13 @@ function resolveMCPAuth(
     };
   }
 
-  return {
-    headers: {
-      Authorization: `Bearer ${fallbackKey}`,
-      apikey: fallbackKey,
-    },
-    usedScopedKey: false,
-  };
+  // SECURITY: Never fall back to service role key.
+  const envName = envVarName || `MCP_KEY_${serverName.replace(/^mcp-|-server$/g, '').replace(/-/g, '_').toUpperCase()}`;
+  throw new Error(
+    `MCP scoped key not configured for "${serverName}". ` +
+    `Set the ${envName} environment variable in Supabase secrets. ` +
+    `Chain execution cannot proceed without a scoped key.`
+  );
 }
 
 function hasKnownServer(serverName: string): boolean {
@@ -89,24 +89,20 @@ describe('MCP Key Resolver', () => {
       expect(result.headers['Authorization']).toBeUndefined();
     });
 
-    it('should fall back to service role key when no scoped key is set', () => {
+    it('should throw error when no scoped key is set (never fall back to service role)', () => {
       const envLookup = () => undefined;
 
-      const result = resolveMCPAuth('mcp-fhir-server', envLookup, SERVICE_ROLE_KEY, ANON_KEY);
-
-      expect(result.usedScopedKey).toBe(false);
-      expect(result.headers['Authorization']).toBe(`Bearer ${SERVICE_ROLE_KEY}`);
-      expect(result.headers['apikey']).toBe(SERVICE_ROLE_KEY);
-      expect(result.headers['X-MCP-KEY']).toBeUndefined();
+      expect(() =>
+        resolveMCPAuth('mcp-fhir-server', envLookup, SERVICE_ROLE_KEY, ANON_KEY)
+      ).toThrow('MCP scoped key not configured for "mcp-fhir-server"');
     });
 
-    it('should fall back for unknown server names', () => {
+    it('should throw error for unknown server names', () => {
       const envLookup = () => 'mcp_some_key';
 
-      const result = resolveMCPAuth('unknown-server', envLookup, SERVICE_ROLE_KEY, ANON_KEY);
-
-      expect(result.usedScopedKey).toBe(false);
-      expect(result.headers['Authorization']).toContain('Bearer');
+      expect(() =>
+        resolveMCPAuth('unknown-server', envLookup, SERVICE_ROLE_KEY, ANON_KEY)
+      ).toThrow('MCP scoped key not configured for "unknown-server"');
     });
 
     it('should resolve all 13 known MCP servers to env var names', () => {
@@ -180,12 +176,13 @@ describe('MCP Key Resolver', () => {
   });
 
   describe('Security properties', () => {
-    it('should never include service role key in X-MCP-KEY header', () => {
+    it('should never include service role key in X-MCP-KEY header (throws instead)', () => {
       const envLookup = () => undefined;
 
-      const result = resolveMCPAuth('mcp-fhir-server', envLookup, SERVICE_ROLE_KEY, ANON_KEY);
-
-      expect(result.headers['X-MCP-KEY']).toBeUndefined();
+      // Without a scoped key, the resolver throws — it never puts the service role key anywhere
+      expect(() =>
+        resolveMCPAuth('mcp-fhir-server', envLookup, SERVICE_ROLE_KEY, ANON_KEY)
+      ).toThrow('MCP scoped key not configured');
     });
 
     it('should never include scoped key in Authorization header', () => {
@@ -206,13 +203,10 @@ describe('MCP Key Resolver', () => {
       );
       expect(withKey.usedScopedKey).toBe(true);
 
-      const withoutKey = resolveMCPAuth(
-        'mcp-fhir-server',
-        () => undefined,
-        SERVICE_ROLE_KEY,
-        ANON_KEY
-      );
-      expect(withoutKey.usedScopedKey).toBe(false);
+      // Without a scoped key, resolver throws (never returns usedScopedKey: false)
+      expect(() =>
+        resolveMCPAuth('mcp-fhir-server', () => undefined, SERVICE_ROLE_KEY, ANON_KEY)
+      ).toThrow('MCP scoped key not configured');
     });
   });
 });

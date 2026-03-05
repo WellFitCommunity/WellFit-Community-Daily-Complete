@@ -120,8 +120,10 @@ class PubMedMCPClient {
 
       const result = await response.json();
 
-      if (result.content?.[0]?.data) {
-        return { success: true, data: result.content[0].data as T };
+      // MCP servers return JSON-RPC: { jsonrpc, result: { content: [{ type: "text", text }] }, id }
+      const textContent = result.result?.content?.[0]?.text ?? result.content?.[0]?.text;
+      if (textContent) {
+        return { success: true, data: JSON.parse(textContent) as T };
       }
 
       return { success: false, error: 'Invalid response format' };

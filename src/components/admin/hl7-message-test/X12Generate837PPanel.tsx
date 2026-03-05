@@ -441,7 +441,7 @@ export const X12Generate837PPanel: React.FC = () => {
               <div className="text-sm text-slate-300">
                 <span className="font-medium">837P Generated</span>
                 <span className="text-slate-500 ml-2">
-                  Control #: {generatedResult.control_number} | {generatedResult.service_line_count} line(s) | ${generatedResult.total_charge.toFixed(2)}
+                  Control #: {generatedResult.control_numbers.isa} | {generatedResult.segment_count} segment(s)
                 </span>
               </div>
               <button

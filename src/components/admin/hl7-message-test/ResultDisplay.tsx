@@ -37,30 +37,38 @@ export const InfoChip: React.FC<{ label: string; value: string }> = ({ label, va
 export const HL7ParseResultDisplay: React.FC<{ data: HL7ParsedMessage }> = ({ data }) => (
   <div className="space-y-3">
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <InfoChip label="Type" value={`${data.message_type}^${data.event_type}`} />
+      <InfoChip label="Type" value={data.messageType} />
       <InfoChip label="Version" value={data.version} />
-      <InfoChip label="Control ID" value={data.control_id} />
+      <InfoChip label="Control ID" value={data.messageControlId} />
       <InfoChip label="Segments" value={String(data.segments.length)} />
     </div>
-    {data.patient && (
+    {data.sendingApplication && (
       <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-        <h4 className="text-sm font-semibold text-slate-300 mb-2">Patient</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <InfoChip label="ID" value={data.patient.id} />
-          <InfoChip label="Name" value={`${data.patient.name.family}, ${data.patient.name.given}`} />
-          {data.patient.dob && <InfoChip label="DOB" value={data.patient.dob} />}
-          {data.patient.gender && <InfoChip label="Gender" value={data.patient.gender} />}
+        <h4 className="text-sm font-semibold text-slate-300 mb-2">Source</h4>
+        <div className="grid grid-cols-2 gap-2">
+          <InfoChip label="Application" value={data.sendingApplication} />
+          <InfoChip label="Facility" value={data.sendingFacility} />
         </div>
       </div>
     )}
-    {data.encounter && (
-      <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-        <h4 className="text-sm font-semibold text-slate-300 mb-2">Encounter</h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <InfoChip label="ID" value={data.encounter.id} />
-          <InfoChip label="Class" value={data.encounter.class} />
-          {data.encounter.location && <InfoChip label="Location" value={data.encounter.location} />}
-        </div>
+    {data.errors.length > 0 && (
+      <div className="space-y-1">
+        <h4 className="text-sm font-semibold text-red-400">Errors</h4>
+        {data.errors.map((err, i) => (
+          <div key={i} className="text-sm text-red-300 bg-red-900/20 rounded px-3 py-1.5 border border-red-800/30">
+            {err}
+          </div>
+        ))}
+      </div>
+    )}
+    {data.warnings.length > 0 && (
+      <div className="space-y-1">
+        <h4 className="text-sm font-semibold text-amber-400">Warnings</h4>
+        {data.warnings.map((warn, i) => (
+          <div key={i} className="text-sm text-amber-300 bg-amber-900/20 rounded px-3 py-1.5 border border-amber-800/30">
+            {warn}
+          </div>
+        ))}
       </div>
     )}
   </div>
@@ -86,8 +94,8 @@ export const ValidationResultDisplay: React.FC<{
           <span className="font-semibold">Invalid</span>
         </div>
       )}
-      {'segment_count' in data && data.segment_count !== undefined && (
-        <span className="text-xs text-slate-400">({data.segment_count} segments)</span>
+      {'segmentCount' in data && typeof data.segmentCount === 'number' && (
+        <span className="text-xs text-slate-400">({data.segmentCount} segments)</span>
       )}
     </div>
     {data.errors.length > 0 && (
@@ -120,31 +128,39 @@ export const ValidationResultDisplay: React.FC<{
 export const X12ParseResultDisplay: React.FC<{ data: X12ParsedClaim }> = ({ data }) => (
   <div className="space-y-3">
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <InfoChip label="Control #" value={data.control_number} />
-      <InfoChip label="Type" value={data.transaction_type} />
-      <InfoChip label="Segments" value={String(data.segment_count)} />
-      <InfoChip label="Loops" value={String(data.loop_count)} />
+      <InfoChip label="Interchange #" value={data.interchangeControlNumber} />
+      <InfoChip label="Group #" value={data.groupControlNumber} />
+      <InfoChip label="Transaction #" value={data.transactionSetControlNumber} />
+      <InfoChip label="Total Charges" value={`$${(data.totalCharges ?? 0).toFixed(2)}`} />
     </div>
-    {data.claims.map((claim, i) => (
-      <div key={i} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-        <h4 className="text-sm font-semibold text-slate-300 mb-2">
-          Claim: {claim.claim_id} — ${(claim.total_charge ?? 0).toFixed(2)}
-        </h4>
+    <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+      <h4 className="text-sm font-semibold text-slate-300 mb-2">
+        Claim: {data.claimId}
+      </h4>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2">
+        <InfoChip label="Patient" value={data.patientName} />
+        <InfoChip label="Payer" value={data.payerName} />
+        <InfoChip label="Provider" value={data.providerName} />
+      </div>
+      {data.serviceDate && (
+        <div className="text-xs text-slate-400 mb-2">Service Date: {data.serviceDate}</div>
+      )}
+      {data.procedures.length > 0 && (
         <div className="space-y-1">
-          {claim.service_lines.map((line, j) => (
+          {data.procedures.map((proc, j) => (
             <div key={j} className="text-sm text-slate-400 flex justify-between">
-              <span>Line {line.line_number}: {line.cpt_code}</span>
-              <span>${(line.charge_amount ?? 0).toFixed(2)} x{line.units}</span>
+              <span>{proc.code}</span>
+              <span>${(proc.charges ?? 0).toFixed(2)} x{proc.units}</span>
             </div>
           ))}
         </div>
-        {claim.diagnoses.length > 0 && (
-          <div className="mt-2 text-xs text-slate-500">
-            Dx: {claim.diagnoses.join(', ')}
-          </div>
-        )}
-      </div>
-    ))}
+      )}
+      {data.diagnoses.length > 0 && (
+        <div className="mt-2 text-xs text-slate-500">
+          Dx: {data.diagnoses.join(', ')}
+        </div>
+      )}
+    </div>
   </div>
 );
 
@@ -176,26 +192,48 @@ export const FHIRResultDisplay: React.FC<{ data: FHIRBundle | FHIRClaim }> = ({ 
 export const MessageTypesDisplay: React.FC<{ data: MessageTypeInfo }> = ({ data }) => (
   <div className="space-y-4">
     <div>
-      <h4 className="text-sm font-semibold text-slate-300 mb-2">HL7 v2.x Message Types</h4>
-      <div className="space-y-2">
-        {data.hl7_types.map((type, i) => (
-          <div key={i} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-            <div className="font-medium text-white">{type.type}</div>
-            <div className="text-xs text-slate-400">{type.description}</div>
-            <div className="text-xs text-slate-500 mt-1">Events: {type.events.join(', ')}</div>
-          </div>
-        ))}
+      <h4 className="text-sm font-semibold text-slate-300 mb-2">HL7 v2.x</h4>
+      <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+        <div className="text-sm text-slate-300 mb-1">Supported Types</div>
+        <div className="flex flex-wrap gap-1">
+          {data.hl7.supported.map((t) => (
+            <span key={t} className="text-xs bg-slate-700 text-slate-200 rounded px-2 py-0.5">{t}</span>
+          ))}
+        </div>
+        <div className="text-sm text-slate-300 mt-2 mb-1">Versions</div>
+        <div className="flex flex-wrap gap-1">
+          {data.hl7.versions.map((v) => (
+            <span key={v} className="text-xs bg-slate-700 text-slate-200 rounded px-2 py-0.5">{v}</span>
+          ))}
+        </div>
       </div>
     </div>
     <div>
-      <h4 className="text-sm font-semibold text-slate-300 mb-2">X12 Transaction Types</h4>
-      <div className="space-y-2">
-        {data.x12_types.map((type, i) => (
-          <div key={i} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-            <div className="font-medium text-white">{type.type}</div>
-            <div className="text-xs text-slate-400">{type.description}</div>
-          </div>
-        ))}
+      <h4 className="text-sm font-semibold text-slate-300 mb-2">X12</h4>
+      <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+        <div className="text-sm text-slate-300 mb-1">Supported Types</div>
+        <div className="flex flex-wrap gap-1">
+          {data.x12.supported.map((t) => (
+            <span key={t} className="text-xs bg-slate-700 text-slate-200 rounded px-2 py-0.5">{t}</span>
+          ))}
+        </div>
+        <div className="text-sm text-slate-300 mt-2 mb-1">Versions</div>
+        <div className="flex flex-wrap gap-1">
+          {data.x12.versions.map((v) => (
+            <span key={v} className="text-xs bg-slate-700 text-slate-200 rounded px-2 py-0.5">{v}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+    <div>
+      <h4 className="text-sm font-semibold text-slate-300 mb-2">FHIR</h4>
+      <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+        <div className="text-sm text-slate-300 mb-1">Version: {data.fhir.version}</div>
+        <div className="flex flex-wrap gap-1">
+          {data.fhir.supported.map((t) => (
+            <span key={t} className="text-xs bg-slate-700 text-slate-200 rounded px-2 py-0.5">{t}</span>
+          ))}
+        </div>
       </div>
     </div>
   </div>

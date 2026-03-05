@@ -55,14 +55,15 @@ export function resolveMCPAuth(serverName: string): MCPAuthHeaders {
     };
   }
 
-  // Fallback: service role key (pre-migration behavior)
-  return {
-    headers: {
-      Authorization: `Bearer ${SB_SECRET_KEY}`,
-      apikey: SB_SECRET_KEY,
-    },
-    usedScopedKey: false,
-  };
+  // SECURITY: Never fall back to service role key.
+  // A missing scoped key means the server is not configured for chain use.
+  // Failing hard prevents privilege escalation via chain orchestrator.
+  const envName = envVarName || `MCP_KEY_${serverName.replace(/^mcp-|-server$/g, '').replace(/-/g, '_').toUpperCase()}`;
+  throw new Error(
+    `MCP scoped key not configured for "${serverName}". ` +
+    `Set the ${envName} environment variable in Supabase secrets. ` +
+    `Chain execution cannot proceed without a scoped key.`
+  );
 }
 
 /** Check if a server name has a known MCP key env var mapping */

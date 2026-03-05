@@ -3,10 +3,10 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-05 (Deep MCP Audit + Constraint Architecture)
-**Last Session:** Deep code audit of all 14 MCP servers + 11 clinical AI edge functions. Built shared constraint file (`clinicalGroundingRules.ts`). Identified 4 additional safety gaps. Created DRG grouper strategy doc for Akima. Tracker expanded from 22 to 26 items.
+**Last Updated:** 2026-03-05 (P0 Fixes — MCP Production Readiness)
+**Last Session:** Fixed 4 of 5 P0 items from MCP Production Readiness Tracker. Client parsing bugs (P0-1), endpoint mismatches (P0-2), HL7/X12 type alignment (P0-3), chain orchestrator security hole (P0-5). P0-4 (X12 278 dead code) awaits Maria's decision.
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 10,951 tests (543 suites), 0 lint warnings, 0 typecheck errors
+**Codebase Health:** 11,062 tests (550 suites), 0 lint warnings, 0 typecheck errors
 
 ---
 
@@ -18,7 +18,7 @@
 
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
-| P0 Broken | 5 | 0/5 | Client parsing bugs, dead code, chain security |
+| P0 Broken | 5 | 5/5 | ALL DONE — P0-1/2/3/5 fixed, P0-4 built (278 implemented) |
 | P1 Clinical Risk | 9 | 0/9 | DRG validation, FHIR refs, X12 validation, HL7 depth, AI constraints (shared file built), adversarial testing, prompt injection guard, post-output validation, CMS freshness |
 | P2 Integration Gap | 4 | 0/4 | Fee schedules, patient filtering, structured AI output, approval roles |
 | P3 Data Gap | 4 | 0/4 | CMS coverage, medical codes, clearinghouse, taxonomy |
@@ -26,12 +26,16 @@
 
 **Estimated:** ~109 hours across 10-13 sessions
 
-**Completed this session (no code changes except):**
-- Built `supabase/functions/_shared/clinicalGroundingRules.ts` — shared "do NOT" constraint file with 7 categories + `buildConstraintBlock()` helper (299 lines)
-- Created `docs/product/DRG_GROUPER_STRATEGY.md` — standalone product strategy for Akima review
-- Audited all 11 clinical AI edge functions for constraint gaps (3 safe, 3 critical, 3 high, 2 medium)
+**Completed this session:**
+- **P0-1 FIXED:** PubMed, Postgres, Medical Coding clients — `.data` → `JSON.parse(.text)` response parsing
+- **P0-2 FIXED:** Medical Coding, Cultural Competency clients — URL `/call` removed, body → JSON-RPC format
+- **P0-3 FIXED:** HL7/X12 client — 7 interfaces aligned to actual server response shapes (camelCase), downstream UI + tests updated
+- **P0-5 FIXED:** Chain orchestrator — removed service role key fallback, now throws hard error with env var name
+- **P0-4 FIXED:** Built full X12 278 implementation — generator (277 lines), parser+validator (286 lines), 3 server tools, 61 new tests
+- All test files updated for new response formats
+- Built `supabase/functions/_shared/clinicalGroundingRules.ts` — shared "do NOT" constraint file (prior session)
 
-**Session 1 priority:** P0-1 + P0-2 + P0-3 (fix broken browser clients — parsing bugs + endpoint mismatches + type alignment). ~6 hours.
+**Next session priority:** P1 items (clinical risk). Start with P1-1 (DRG validation table) or P1-2 (FHIR bundle references).
 
 **New items added this session (P1-6 through P1-9):**
 - P1-6: Adversarial constraint testing — prove guardrails work (~50 test cases)
