@@ -249,4 +249,211 @@ export const chainOrchestrationService = {
       return failure('DATABASE_ERROR', error.message, err);
     }
   },
+
+  // ============================================================
+  // Chain Definition CRUD
+  // ============================================================
+
+  /**
+   * Create a new chain definition.
+   */
+  async createChainDefinition(
+    chainKey: string,
+    displayName: string,
+    description: string | null
+  ): Promise<ServiceResult<ChainDefinition>> {
+    if (!chainKey || !displayName) {
+      return failure('INVALID_INPUT', 'chain_key and display_name are required');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('chain_definitions')
+        .insert({
+          chain_key: chainKey,
+          display_name: displayName,
+          description,
+          version: 1,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      return success(data as ChainDefinition);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      return failure('DATABASE_ERROR', error.message, err);
+    }
+  },
+
+  /**
+   * Update a chain definition.
+   */
+  async updateChainDefinition(
+    id: string,
+    updates: { display_name?: string; description?: string | null; is_active?: boolean }
+  ): Promise<ServiceResult<ChainDefinition>> {
+    if (!id) {
+      return failure('INVALID_INPUT', 'id is required');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('chain_definitions')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      return success(data as ChainDefinition);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      return failure('DATABASE_ERROR', error.message, err);
+    }
+  },
+
+  /**
+   * Delete a chain definition and its step definitions.
+   * Only allowed if no runs reference this definition.
+   */
+  async deleteChainDefinition(id: string): Promise<ServiceResult<{ deleted: boolean }>> {
+    if (!id) {
+      return failure('INVALID_INPUT', 'id is required');
+    }
+
+    try {
+      // Check for existing runs
+      const { data: runs } = await supabase
+        .from('chain_runs')
+        .select('id')
+        .eq('chain_definition_id', id)
+        .limit(1);
+
+      if (runs && runs.length > 0) {
+        return failure(
+          'CONSTRAINT_VIOLATION',
+          'Cannot delete chain with existing runs. Deactivate it instead.'
+        );
+      }
+
+      // Delete steps first (FK constraint)
+      await supabase
+        .from('chain_step_definitions')
+        .delete()
+        .eq('chain_definition_id', id);
+
+      const { error } = await supabase
+        .from('chain_definitions')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      return success({ deleted: true });
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      return failure('DATABASE_ERROR', error.message, err);
+    }
+  },
+
+  // ============================================================
+  // Chain Step Definition CRUD
+  // ============================================================
+
+  /**
+   * Create a new step definition for a chain.
+   */
+  async createStepDefinition(
+    chainDefinitionId: string,
+    step: Omit<ChainStepDefinition, 'id' | 'chain_definition_id'>
+  ): Promise<ServiceResult<ChainStepDefinition>> {
+    if (!chainDefinitionId) {
+      return failure('INVALID_INPUT', 'chain_definition_id is required');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('chain_step_definitions')
+        .insert({
+          chain_definition_id: chainDefinitionId,
+          ...step,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      return success(data as ChainStepDefinition);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      return failure('DATABASE_ERROR', error.message, err);
+    }
+  },
+
+  /**
+   * Update a step definition.
+   */
+  async updateStepDefinition(
+    stepId: string,
+    updates: Partial<Omit<ChainStepDefinition, 'id' | 'chain_definition_id'>>
+  ): Promise<ServiceResult<ChainStepDefinition>> {
+    if (!stepId) {
+      return failure('INVALID_INPUT', 'step id is required');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('chain_step_definitions')
+        .update(updates)
+        .eq('id', stepId)
+        .select()
+        .single();
+
+      if (error) {
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      return success(data as ChainStepDefinition);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      return failure('DATABASE_ERROR', error.message, err);
+    }
+  },
+
+  /**
+   * Delete a step definition.
+   */
+  async deleteStepDefinition(stepId: string): Promise<ServiceResult<{ deleted: boolean }>> {
+    if (!stepId) {
+      return failure('INVALID_INPUT', 'step id is required');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chain_step_definitions')
+        .delete()
+        .eq('id', stepId);
+
+      if (error) {
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      return success({ deleted: true });
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      return failure('DATABASE_ERROR', error.message, err);
+    }
+  },
 };

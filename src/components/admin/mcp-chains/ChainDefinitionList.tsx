@@ -14,11 +14,15 @@ import { chainOrchestrationService } from '../../../services/mcp/chainOrchestrat
 interface ChainDefinitionListProps {
   chains: ChainDefinition[];
   onStartChain: (chain: ChainDefinition) => void;
+  onEditChain?: (chain: ChainDefinition) => void;
+  onDeleteChain?: (chain: ChainDefinition) => void;
 }
 
 export const ChainDefinitionList: React.FC<ChainDefinitionListProps> = ({
   chains,
   onStartChain,
+  onEditChain,
+  onDeleteChain,
 }) => {
   const [stepCounts, setStepCounts] = useState<Record<string, number>>({});
 
@@ -73,14 +77,36 @@ export const ChainDefinitionList: React.FC<ChainDefinitionListProps> = ({
                 ? `${stepCounts[chain.id]} steps`
                 : 'Loading steps...'}
             </span>
-            <EAButton
-              variant="primary"
-              size="sm"
-              onClick={() => onStartChain(chain)}
-              data-testid={`start-chain-${chain.chain_key}`}
-            >
-              Start Chain
-            </EAButton>
+            <div className="flex items-center gap-2">
+              {onEditChain && (
+                <EAButton
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => onEditChain(chain)}
+                  data-testid={`edit-chain-${chain.chain_key}`}
+                >
+                  Edit
+                </EAButton>
+              )}
+              {onDeleteChain && (
+                <EAButton
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => onDeleteChain(chain)}
+                  data-testid={`delete-chain-${chain.chain_key}`}
+                >
+                  Delete
+                </EAButton>
+              )}
+              <EAButton
+                variant="primary"
+                size="sm"
+                onClick={() => onStartChain(chain)}
+                data-testid={`start-chain-${chain.chain_key}`}
+              >
+                Start Chain
+              </EAButton>
+            </div>
           </div>
         </div>
       ))}

@@ -10,6 +10,7 @@
 // ============================================================
 
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
+import { resolveMCPAuth } from "./mcpKeyResolver.ts";
 import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import type { EdgeFunctionLogger } from "../_shared/auditLogger.ts";
 import type {
@@ -465,16 +466,17 @@ async function callMCPServer(
   const url = `${SUPABASE_URL}/functions/v1/${serverName}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const { headers: authHeaders, usedScopedKey } = resolveMCPAuth(serverName);
 
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${SB_SECRET_KEY}`,
-        apikey: SB_SECRET_KEY,
+        ...authHeaders,
         "x-request-id": crypto.randomUUID(),
         "x-chain-run-id": chainRunId,
+        "x-auth-method": usedScopedKey ? "mcp_key" : "service_role",
       },
       body: JSON.stringify({
         method: "tools/call",

@@ -19,6 +19,7 @@ import { ChainDefinitionList } from './ChainDefinitionList';
 import { ChainRunsList } from './ChainRunsList';
 import { ChainApprovalQueue } from './ChainApprovalQueue';
 import { StartChainModal } from './StartChainModal';
+import { ChainDefinitionEditor } from './ChainDefinitionEditor';
 
 // ============================================================
 // Constants
@@ -44,6 +45,10 @@ const MCPChainManagementPanel: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startChainTarget, setStartChainTarget] = useState<ChainDefinition | null>(null);
+  const [editorTarget, setEditorTarget] = useState<ChainDefinition | null | undefined>(undefined);
+  // undefined = closed, null = create mode, ChainDefinition = edit mode
+  const [deleteTarget, setDeleteTarget] = useState<ChainDefinition | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Polling refs
   const consecutiveErrorsRef = useRef(0);
@@ -136,6 +141,37 @@ const MCPChainManagementPanel: React.FC = () => {
     loadData(true);
   };
 
+  const handleEditChain = (chain: ChainDefinition) => {
+    setEditorTarget(chain);
+  };
+
+  const handleCreateChain = () => {
+    setEditorTarget(null);
+  };
+
+  const handleEditorSaved = () => {
+    setEditorTarget(undefined);
+    loadData(true);
+  };
+
+  const handleDeleteChain = (chain: ChainDefinition) => {
+    setDeleteTarget(chain);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const result = await chainOrchestrationService.deleteChainDefinition(deleteTarget.id);
+    setDeleting(false);
+    if (result.success) {
+      setDeleteTarget(null);
+      loadData(true);
+    } else {
+      setError(result.error.message);
+      setDeleteTarget(null);
+    }
+  };
+
   // --------------------------------------------------------
   // Derived state
   // --------------------------------------------------------
@@ -156,15 +192,25 @@ const MCPChainManagementPanel: React.FC = () => {
             Manage multi-server pipelines, monitor runs, and approve clinical gates
           </p>
         </div>
-        <EAButton
-          variant="secondary"
-          size="sm"
-          loading={refreshing}
-          onClick={handleRefresh}
-          data-testid="refresh-chains"
-        >
-          Refresh
-        </EAButton>
+        <div className="flex items-center gap-2">
+          <EAButton
+            variant="primary"
+            size="sm"
+            onClick={handleCreateChain}
+            data-testid="create-chain-btn"
+          >
+            + New Chain
+          </EAButton>
+          <EAButton
+            variant="secondary"
+            size="sm"
+            loading={refreshing}
+            onClick={handleRefresh}
+            data-testid="refresh-chains"
+          >
+            Refresh
+          </EAButton>
+        </div>
       </div>
 
       {/* Error alert */}
@@ -211,6 +257,8 @@ const MCPChainManagementPanel: React.FC = () => {
             <ChainDefinitionList
               chains={chains}
               onStartChain={handleStartChain}
+              onEditChain={handleEditChain}
+              onDeleteChain={handleDeleteChain}
             />
           )}
 
@@ -234,6 +282,42 @@ const MCPChainManagementPanel: React.FC = () => {
           onClose={() => setStartChainTarget(null)}
           onStarted={handleChainStarted}
         />
+      )}
+
+      {/* Chain definition editor (create/edit) */}
+      {editorTarget !== undefined && (
+        <ChainDefinitionEditor
+          chain={editorTarget}
+          onSave={handleEditorSaved}
+          onCancel={() => setEditorTarget(undefined)}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" data-testid="delete-chain-dialog">
+          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6 max-w-md">
+            <h3 className="text-lg font-bold text-white mb-2">Delete Chain?</h3>
+            <p className="text-slate-300 mb-4">
+              Are you sure you want to delete <strong>{deleteTarget.display_name}</strong>?
+              This cannot be undone. Chains with existing runs cannot be deleted.
+            </p>
+            <div className="flex justify-end gap-3">
+              <EAButton variant="secondary" size="sm" onClick={() => setDeleteTarget(null)}>
+                Cancel
+              </EAButton>
+              <EAButton
+                variant="primary"
+                size="sm"
+                loading={deleting}
+                onClick={confirmDelete}
+                data-testid="confirm-delete-btn"
+              >
+                Delete
+              </EAButton>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
