@@ -18,6 +18,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { checkReferenceDataFreshness } from "../_shared/referenceDataFreshness.ts";
 
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
@@ -479,11 +480,34 @@ Deno.serve(async (req: Request): Promise<Response> => {
         );
       }
 
+      case "check_reference_data": {
+        const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+        const report = await checkReferenceDataFreshness(sb);
+
+        logger.info("REFERENCE_DATA_FRESHNESS_CHECK", {
+          totalSources: report.totalSources,
+          current: report.currentCount,
+          warning: report.warningCount,
+          stale: report.staleCount,
+          critical: report.criticalCount,
+          empty: report.emptyCount,
+          blockDRG: report.blockDRG,
+        });
+
+        return new Response(
+          JSON.stringify(report),
+          {
+            status: report.criticalCount > 0 ? 503 : 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+
       default:
         return new Response(
           JSON.stringify({
             error: "Invalid action",
-            valid_actions: ['check_all', 'check_one', 'get_status', 'recover', 'health']
+            valid_actions: ['check_all', 'check_one', 'get_status', 'recover', 'health', 'check_reference_data']
           }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

@@ -33,11 +33,11 @@ This tracker targets **functional correctness and clinical accuracy** — the th
 | Severity | Items | Fixed | Remaining |
 |----------|-------|-------|-----------|
 | P0 — Broken | 5 | 5 | 0 |
-| P1 — Clinical Risk | 9 | 5 | 4 (P1-1 needs Akima, P1-6/P1-8/P1-9 remaining) |
-| P2 — Integration Gap | 4 | 3 | 1 (P2-4 remaining) |
+| P1 — Clinical Risk | 9 | 6 | 3 (P1-1 needs Akima, P1-6 adversarial testing, P1-8 post-output validation) |
+| P2 — Integration Gap | 4 | 4 | 0 |
 | P3 — Data Gap | 4 | 0 | 4 |
 | P4 — Polish | 4 | 0 | 4 |
-| **Total** | **26** | **13** | **13** |
+| **Total** | **26** | **15** | **11** |
 
 ---
 
@@ -432,15 +432,15 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P2-4: Approval Gates Don't Enforce Roles
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-05)
 **Affects:** Chain orchestrator
 **Est:** 2 hours
 
 **Problem:** `approval_role` field exists in chain step definitions but is never checked. Any authenticated user can approve any step. A billing clerk could approve a DRG grouping step meant for a physician.
 
-**Fix:** Check `stepDef.approval_role` against caller's roles before allowing approval.
+**Fix applied:** `chainActions.ts` `approveStep()` now looks up `chain_steps.approval_role` for the step definition and checks the approving user's `user_roles`. Throws with actionable error if role mismatch. Logged as `CHAIN_APPROVAL_ROLE_DENIED`.
 
-**File:** `supabase/functions/mcp-chain-orchestrator/chainEngine.ts`
+**File:** `supabase/functions/mcp-chain-orchestrator/chainActions.ts`
 
 ---
 
@@ -645,32 +645,22 @@ These four items were identified during the "do NOT" constraint brainstorming se
 
 ### P1-9: CMS Update Monitoring — Reference Data Freshness
 
-**Status:** NOT STARTED
+**Status:** FIXED (2026-03-06)
 **Affects:** DRG grouper, medical codes, CMS coverage, fee schedules
 **Est:** 4 hours
 
-**Problem:** Multiple MCP servers depend on CMS reference data that changes on a known schedule:
+**Problem:** Multiple MCP servers depend on CMS reference data that changes on a known schedule. Nobody was watching for updates.
 
-| Data | Update Frequency | Source |
-|------|-----------------|--------|
-| MS-DRG weights + definitions | Annually (Oct 1 — IPPS Final Rule) | cms.gov |
-| ICD-10-CM codes | Annually (Oct 1) + quarterly updates | cms.gov |
-| CPT codes | Annually (Jan 1) | AMA (licensed) |
-| HCPCS codes | Quarterly | cms.gov |
-| LCD/NCD coverage policies | Ongoing (no fixed schedule) | cms.gov |
-| Fee schedule rates | Annually (Jan 1 — MPFS Final Rule) | cms.gov |
-
-If the reference table has FY2026 data and it's now FY2027, every DRG suggestion, code validation, and coverage lookup is wrong. Nobody is watching for these updates today.
-
-**Fix:**
-1. Add `reference_data_versions` table tracking what data version each server uses and when it was last updated
-2. Add `data_freshness_check` edge function (or cron) that compares current date against known CMS release dates
-3. Alert when reference data is >30 days past expected update date
-4. Block DRG grouper output if MS-DRG table is from a prior fiscal year (hard fail, not soft warning)
+**Fix applied:**
+1. Migration `20260306000001_reference_data_versions.sql` — creates `reference_data_versions` table with 7 seeded data sources (ms_drg, icd10_cm, cpt, hcpcs, fee_schedule, nucc_taxonomy, lcd_ncd). Each has `expected_update_date`, `update_frequency`, `fiscal_year`, `record_count`.
+2. `_shared/referenceDataFreshness.ts` — `checkReferenceDataFreshness()` evaluates all sources against thresholds (30d warning, 60d stale, 90d critical). Also checks CMS fiscal year (Oct→Sep) for annual sources. Returns `blockDRG: true` if MS-DRG data is from prior fiscal year.
+3. `checkSingleSource()` for edge functions that depend on specific data (DRG grouper can pre-check before running).
+4. Wired into health-monitor as `check_reference_data` action.
 
 **Files:**
-- New migration: `reference_data_versions` table
-- New or existing edge function: freshness check (could be added to `health-monitor`)
+- `supabase/migrations/20260306000001_reference_data_versions.sql` (NEW)
+- `supabase/functions/_shared/referenceDataFreshness.ts` (NEW)
+- `supabase/functions/health-monitor/index.ts`
 
 ---
 
