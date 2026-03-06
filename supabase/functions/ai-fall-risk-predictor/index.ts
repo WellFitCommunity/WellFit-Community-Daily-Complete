@@ -27,6 +27,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -657,7 +658,9 @@ Return ONLY valid JSON:
   "confidence": <0-1>,
   "reviewReasons": ["Reasons requiring clinical review"],
   "plainLanguageExplanation": "Simple explanation for patient/family"
-}`;
+}
+
+${buildConstraintBlock(['escalation'])}`;
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",

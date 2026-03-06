@@ -7,6 +7,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from "../_shared/auditLogger.ts";
 import { fetchCulturalContext, type CulturalContextResponse } from "../_shared/culturalCompetencyClient.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
 
 const logger = createLogger('sdoh-coding-suggest');
 
@@ -242,7 +243,9 @@ CCM Eligibility Criteria:
 Respond with structured JSON including codes, rationales, SDOH assessment, CCM recommendations, and audit readiness score.${culturalSDOHCodes.length > 0 ? `
 
 POPULATION-SPECIFIC SDOH Z-CODES (from cultural competency profiles — consider these in your analysis):
-${culturalSDOHCodes.map(c => `- ${c.code}: ${c.description} (${c.applicability})`).join("\n")}` : ""}`
+${culturalSDOHCodes.map(c => `- ${c.code}: ${c.description} (${c.applicability})`).join("\n")}` : ""}
+
+${buildConstraintBlock(['billing', 'sdoh'])}`
 
   const userPrompt = `Analyze this clinical encounter for coding opportunities:
 

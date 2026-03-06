@@ -284,15 +284,36 @@ export function createChargeAggregationHandlers(
     }
 
     // --- 4. Claim Lines (already-filed charges — CPT/HCPCS) ---
+    // First get claim IDs for this encounter/patient, then filter claim_lines
     {
-      const { data: clRows, error: clErr } = await withTimeout(
-        sb.from('claim_lines')
-          .select('id, code_system, procedure_code, charge_amount, units, modifiers, service_date, claim_id')
-          .eq('service_date', serviceDate)
-          .in('code_system', ['CPT', 'HCPCS']),
+      // Look up claims for this encounter (or patient + date as fallback)
+      let claimIds: string[] = [];
+      const { data: claimRows } = await withTimeout(
+        encounterId
+          ? sb.from('claims').select('id').eq('encounter_id', encounterId)
+          : sb.from('claims').select('id').eq('patient_id', patientId).eq('service_date', serviceDate),
         timeoutMs,
-        'Claim lines lookup'
+        'Claims lookup for encounter'
       );
+      if (claimRows) {
+        claimIds = (claimRows as Array<{ id: string }>).map(r => r.id);
+      }
+
+      let clRows: unknown[] | null = null;
+      let clErr: unknown = null;
+
+      if (claimIds.length > 0) {
+        const result = await withTimeout(
+          sb.from('claim_lines')
+            .select('id, code_system, procedure_code, charge_amount, units, modifiers, service_date, claim_id')
+            .in('claim_id', claimIds)
+            .in('code_system', ['CPT', 'HCPCS']),
+          timeoutMs,
+          'Claim lines lookup'
+        );
+        clRows = result.data;
+        clErr = result.error;
+      }
 
       if (clErr) {
         logger.error('CHARGE_AGG_CLAIM_LINES_FAILED', {
@@ -300,8 +321,7 @@ export function createChargeAggregationHandlers(
         });
       }
 
-      // Filter claim lines to those belonging to claims for this encounter
-      // (claim_lines -> claims -> encounter linkage)
+      // Process claim lines scoped to this encounter's claims
       for (const row of (clRows || []) as ClaimLineRow[]) {
         const entry: ChargeEntry = {
           code: row.procedure_code,

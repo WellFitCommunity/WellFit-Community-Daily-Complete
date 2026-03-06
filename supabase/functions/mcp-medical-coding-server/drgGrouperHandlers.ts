@@ -18,6 +18,8 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
 import type { MCPLogger, DRGGroupingResult } from "./types.ts";
 import { SONNET_MODEL, calculateModelCost } from "../_shared/models.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
+import { buildConstraintBlock } from "../../_shared/clinicalGroundingRules.ts";
+import { buildSafeDocumentSection } from "../../_shared/promptInjectionGuard.ts";
 
 // -------------------------------------------------------
 // Database row shapes (system boundary casts)
@@ -119,6 +121,8 @@ function buildDRGGrouperPrompt(
     ? clinicalContext.existingProcedures.join('\n  - ')
     : 'None documented';
 
+  const safeNotes = buildSafeDocumentSection(clinicalContext.notes, 'Clinical Documentation');
+
   return `You are a certified medical coding specialist (CCS) performing MS-DRG assignment for an inpatient encounter. Your task is to extract ICD-10 codes from clinical documentation and assign the optimal DRG through 3-pass analysis.
 
 CRITICAL RULES:
@@ -136,7 +140,7 @@ EXISTING PROCEDURES ON RECORD:
   - ${procList}
 
 CLINICAL DOCUMENTATION:
-${clinicalContext.notes}
+${safeNotes.text}
 
 Perform 3-pass DRG analysis:
   Pass 1: Identify principal diagnosis → assign BASE DRG
@@ -196,7 +200,9 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
   "confidence": 0.85,
   "requires_clinical_review": true,
   "review_reasons": ["List any reasons a human coder should review"]
-}`;
+}
+
+${buildConstraintBlock(['drg'])}`;
 }
 
 // -------------------------------------------------------

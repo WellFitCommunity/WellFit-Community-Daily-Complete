@@ -8,6 +8,8 @@
  */
 
 import type { PatientContext } from "./types.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { buildSafeDocumentSection } from "../_shared/promptInjectionGuard.ts";
 
 /**
  * Build the prompt for care plan generation.
@@ -119,9 +121,11 @@ export function buildCarePlanPrompt(
     sections.push(`\nALLERGIES: ${context.allergies.join(", ")}`);
   }
 
+  const safeClinicalContext = buildSafeDocumentSection(sections.join("\n"), 'Clinical Context');
+
   return `You are an expert clinical care coordinator creating an evidence-based care plan.
 
-${sections.join("\n")}${culturalContext ? `\n\n${culturalContext}` : ""}
+${safeClinicalContext.text}${culturalContext ? `\n\n${culturalContext}` : ""}
 
 Generate a comprehensive, individualized care plan following these guidelines:
 1. Goals should be SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
@@ -193,5 +197,7 @@ Return a JSON object with this structure:
   "reviewReasons": ["Reasons requiring clinician review"]
 }
 
-Respond with ONLY the JSON object, no other text.`;
+Respond with ONLY the JSON object, no other text.
+
+${buildConstraintBlock(['care_planning'])}`;
 }

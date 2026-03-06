@@ -28,6 +28,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -792,7 +793,9 @@ Return a JSON object with this structure:
   "disclaimer": "These recommendations are for clinical decision support only and require verification by a licensed healthcare provider."
 }
 
-Respond with ONLY the JSON object, no other text.`;
+Respond with ONLY the JSON object, no other text.
+
+${buildConstraintBlock(['care_planning'])}`;
 }
 
 function normalizePathwayResponse(

@@ -11,6 +11,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
 
 const logger = createLogger('coding-suggest');
 
@@ -114,7 +115,9 @@ Rules:
 - ICD-10 codes must be valid and as specific as possible; use 'unspecified' only if necessary.
 - Include rationales referencing generalized clinical facts only (no PHI).
 - If uncertain, lower the confidence and explain in notes.
-- Output JSON only—no extra text.`;
+- Output JSON only—no extra text.
+
+${buildConstraintBlock(['billing'])}`;
 
 function userPrompt(payload: Record<string, unknown>) {
   return [

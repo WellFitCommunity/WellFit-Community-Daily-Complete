@@ -88,6 +88,44 @@ export async function approveStep(
     );
   }
 
+  // --- Enforce approval_role from step definition ---
+  // Look up the chain step definition to check required approval role
+  const { data: stepDefData } = await sb
+    .from("chain_steps")
+    .select("approval_role")
+    .eq("chain_definition_id", (await sb
+      .from("chain_runs")
+      .select("chain_definition_id")
+      .eq("id", chainRunId)
+      .single()
+    ).data?.chain_definition_id)
+    .eq("step_key", step.step_key)
+    .single();
+
+  const requiredRole = (stepDefData as { approval_role: string | null } | null)?.approval_role;
+
+  if (requiredRole) {
+    // Check if the approving user has the required role
+    const { data: roleData } = await sb
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", approvedBy)
+      .eq("role", requiredRole)
+      .maybeSingle();
+
+    if (!roleData) {
+      logger.warn("CHAIN_APPROVAL_ROLE_DENIED", {
+        chainRunId,
+        stepKey: step.step_key,
+        requiredRole,
+        attemptedBy: approvedBy,
+      });
+      throw new Error(
+        `User ${approvedBy} does not have required role "${requiredRole}" to approve step ${step.step_key}`
+      );
+    }
+  }
+
   const newStatus: ChainStepStatus =
     decision === "approved" ? "approved" : "rejected";
 

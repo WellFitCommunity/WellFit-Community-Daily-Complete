@@ -12,6 +12,8 @@ import type {
   PatientContext,
   PreventiveScreening,
 } from "./types.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { buildSafeDocumentSection } from "../_shared/promptInjectionGuard.ts";
 
 /**
  * Constructs the full prompt for Claude to analyze patient data
@@ -82,9 +84,11 @@ export function buildGuidelinePrompt(
     });
   }
 
+  const safeClinicalData = buildSafeDocumentSection(sections.join("\n"), 'Clinical Data');
+
   return `You are a clinical decision support system that matches patient data against evidence-based clinical guidelines.
 
-${sections.join("\n")}
+${safeClinicalData.text}
 
 Analyze this patient's data against the applicable clinical guidelines. Identify:
 1. ADHERENCE GAPS - Where current care doesn't align with guideline recommendations
@@ -143,5 +147,7 @@ Return a JSON object with this structure:
   "reviewReasons": ["Reasons this needs clinician review"]
 }
 
-Respond with ONLY the JSON object, no other text.`;
+Respond with ONLY the JSON object, no other text.
+
+${buildConstraintBlock(['care_planning'])}`;
 }

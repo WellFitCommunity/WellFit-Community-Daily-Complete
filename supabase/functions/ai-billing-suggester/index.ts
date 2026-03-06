@@ -11,6 +11,7 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { buildConstraintBlock } from '../_shared/clinicalGroundingRules.ts';
 
 const SUPABASE_URL = SUPABASE_URL!;
 const SERVICE_KEY = SB_SECRET_KEY!;
@@ -200,6 +201,8 @@ async function processSingleEncounter(
   };
 
   // 5. Call billing suggester service (would import from shared package)
+  // Clinical constraints for system prompt when AI call is wired
+  const _billingConstraints = buildConstraintBlock(['billing']);
   // For now, return structure
   return new Response(
     JSON.stringify({

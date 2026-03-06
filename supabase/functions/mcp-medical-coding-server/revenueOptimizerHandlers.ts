@@ -20,6 +20,8 @@ import type {
 } from "./types.ts";
 import { SONNET_MODEL, calculateModelCost } from "../_shared/models.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
+import { buildConstraintBlock } from "../../_shared/clinicalGroundingRules.ts";
+import { buildSafeDocumentSection } from "../../_shared/promptInjectionGuard.ts";
 
 // -------------------------------------------------------
 // Database row shapes (system boundary casts)
@@ -129,6 +131,8 @@ function buildOptimizationPrompt(
       }).join('\n\n')
     : '  (no clinical notes for this date)';
 
+  const safeNotes = buildSafeDocumentSection(noteSummary, 'Clinical Documentation');
+
   return `You are a certified inpatient revenue cycle specialist reviewing a daily charge snapshot for completeness and optimization opportunities.
 
 ENCOUNTER CONTEXT:
@@ -144,7 +148,7 @@ DIAGNOSES ON RECORD:
 ${diagSummary}
 
 CLINICAL DOCUMENTATION:
-${noteSummary}
+${safeNotes.text}
 
 TASK: Review the charges against the clinical documentation and identify:
 1. Missing charges that documentation supports but are not captured
@@ -207,7 +211,9 @@ Return ONLY a JSON object:
   "total_potential_uplift": 500.00,
   "confidence": 0.80,
   "requires_clinical_review": true
-}`;
+}
+
+${buildConstraintBlock(['drg', 'billing'])}`;
 }
 
 // -------------------------------------------------------

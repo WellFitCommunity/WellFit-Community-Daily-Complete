@@ -24,8 +24,46 @@ export function stripMLLP(message: string): string {
 }
 
 /**
+ * HL7 v2.x encoding character positions within MSH-2:
+ *   Position 0: Component separator    (default ^)
+ *   Position 1: Repetition separator   (default ~)
+ *   Position 2: Escape character       (default \)
+ *   Position 3: Subcomponent separator (default &)
+ */
+export interface HL7Delimiters {
+  field: string;       // MSH[3] — default |
+  component: string;   // MSH-2[0] — default ^
+  repetition: string;  // MSH-2[1] — default ~
+  escape: string;      // MSH-2[2] — default \
+  subcomponent: string; // MSH-2[3] — default &
+}
+
+/**
+ * Split an HL7 field value by the repetition separator (~).
+ * Returns an array of repetition values. If no repetition separator
+ * is present, returns a single-element array with the original value.
+ */
+export function splitRepetitions(fieldValue: string, delimiters?: HL7Delimiters): string[] {
+  const sep = delimiters?.repetition || '~';
+  if (!fieldValue || !fieldValue.includes(sep)) return [fieldValue];
+  return fieldValue.split(sep);
+}
+
+/**
+ * Split an HL7 component value by the subcomponent separator (&).
+ * Returns an array of subcomponent values. If no subcomponent separator
+ * is present, returns a single-element array with the original value.
+ */
+export function splitSubcomponents(componentValue: string, delimiters?: HL7Delimiters): string[] {
+  const sep = delimiters?.subcomponent || '&';
+  if (!componentValue || !componentValue.includes(sep)) return [componentValue];
+  return componentValue.split(sep);
+}
+
+/**
  * Parse a raw HL7 v2.x message into structured data.
- * Handles field/component separators and extracts MSH metadata.
+ * Handles all HL7 separators: field (|), component (^),
+ * repetition (~), escape (\), and subcomponent (&).
  */
 export function parseHL7Message(rawMessage: string): ParseResult {
   const errors: string[] = [];
@@ -47,7 +85,13 @@ export function parseHL7Message(rawMessage: string): ParseResult {
 
     const fieldSeparator = mshLine[3] || '|';
     const encodingChars = mshLine.substring(4, 8);
-    const componentSeparator = encodingChars[0] || '^';
+    const delimiters: HL7Delimiters = {
+      field: fieldSeparator,
+      component: encodingChars[0] || '^',
+      repetition: encodingChars[1] || '~',
+      escape: encodingChars[2] || '\\',
+      subcomponent: encodingChars[3] || '&',
+    };
 
     const segments: HL7Segment[] = [];
 
@@ -71,7 +115,7 @@ export function parseHL7Message(rawMessage: string): ParseResult {
     }
 
     const messageTypeField = msh.fields[9] || '';
-    const messageTypeParts = messageTypeField.split(componentSeparator);
+    const messageTypeParts = messageTypeField.split(delimiters.component);
     const messageType = messageTypeParts.length >= 2
       ? `${messageTypeParts[0]}_${messageTypeParts[1]}`
       : messageTypeParts[0] || 'UNKNOWN';
@@ -102,7 +146,13 @@ export function parseHL7Message(rawMessage: string): ParseResult {
       }
     }
 
-    return { success: true, message: parsedMessage, errors, warnings };
+    return {
+      success: true,
+      message: parsedMessage,
+      errors,
+      warnings,
+      delimiters
+    };
 
   } catch (error: unknown) {
     return {

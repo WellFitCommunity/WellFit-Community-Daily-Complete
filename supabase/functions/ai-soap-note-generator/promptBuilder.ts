@@ -6,6 +6,8 @@
  */
 
 import type { EncounterContext, PhysicianStyleHint } from "./types.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { buildSafeDocumentSection } from "../_shared/promptInjectionGuard.ts";
 
 /**
  * Build the prompt for SOAP note generation.
@@ -119,10 +121,12 @@ export function buildSOAPPrompt(
     }
   }
 
+  const safeEncounterData = buildSafeDocumentSection(sections.join("\n"), 'Encounter Data');
+
   return `You are an expert clinical documentation specialist. Generate a comprehensive SOAP note based on the following encounter data.
 
 ENCOUNTER DATA:
-${sections.join("\n")}
+${safeEncounterData.text}
 
 DOCUMENTATION STYLE: ${templateStyle}
 ${styleInstructions[templateStyle] || styleInstructions.standard}${styleAdaptationLines.length > 0 ? `\n\nPHYSICIAN STYLE ADAPTATION (learned from this physician's edits — follow these closely):\n${styleAdaptationLines.join("\n")}` : ""}${culturalContext ? `\n\n${culturalContext}` : ""}
@@ -160,5 +164,7 @@ IMPORTANT:
 - Set requiresReview=true if critical information is missing or unclear
 - Add reviewReasons for any items requiring clinician attention
 
-Respond with ONLY the JSON object, no other text.`;
+Respond with ONLY the JSON object, no other text.
+
+${buildConstraintBlock(['grounding'])}`;
 }

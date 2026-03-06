@@ -8,6 +8,8 @@
  */
 
 import type { PatientContext } from "./types.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { buildSafeDocumentSection } from "../_shared/promptInjectionGuard.ts";
 
 /**
  * Build the Claude prompt for discharge summary generation.
@@ -114,9 +116,11 @@ export function buildDischargeSummaryPrompt(
   }
 
   // Build the full prompt with JSON output schema
+  const safePatientData = buildSafeDocumentSection(sections.join("\n"), 'Patient Data');
+
   return `You are a clinical documentation specialist generating a comprehensive discharge summary.
 
-${sections.join("\n")}${culturalContext ? `\n\n${culturalContext}` : ""}
+${safePatientData.text}${culturalContext ? `\n\n${culturalContext}` : ""}
 
 Generate a complete discharge summary following hospital standards. Compare admission and discharge medications to identify:
 - CONTINUED: Medications that were continued unchanged
@@ -187,5 +191,7 @@ Return a JSON object with this structure:
   "disclaimer": "This discharge summary was generated with AI assistance and requires physician review and approval before release."
 }
 
-Respond with ONLY the JSON object, no other text.`;
+Respond with ONLY the JSON object, no other text.
+
+${buildConstraintBlock(['care_planning'])}`;
 }

@@ -24,9 +24,9 @@ export interface FHIRClaim extends FHIRResource {
   type: { coding: Array<{ system: string; code: string }> };
   use: string;
   created: string;
-  provider: { display: string };
-  insurer: { display: string };
-  patient: { display: string };
+  provider: { reference?: string; display: string };
+  insurer: { reference?: string; display: string };
+  patient: { reference?: string; display: string };
   total: { value: number; currency: string };
   diagnosis: Array<{
     sequence: number;
@@ -66,12 +66,22 @@ export interface HL7Message {
   dateTime: string;
 }
 
+/** HL7 v2.x encoding delimiters extracted from MSH-2 */
+export interface HL7Delimiters {
+  field: string;
+  component: string;
+  repetition: string;
+  escape: string;
+  subcomponent: string;
+}
+
 /** Result of parsing an HL7 message */
 export interface ParseResult {
   success: boolean;
   message?: HL7Message;
   errors: string[];
   warnings: string[];
+  delimiters?: HL7Delimiters;
 }
 
 // =====================================================

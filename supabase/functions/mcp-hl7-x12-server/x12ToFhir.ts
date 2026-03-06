@@ -3,7 +3,7 @@
 // Purpose: Convert X12 837P claims to FHIR Claim + Bundle
 // =====================================================
 
-import type { FHIRClaim, FHIRBundle } from './types.ts';
+import type { FHIRResource, FHIRClaim, FHIRBundle } from './types.ts';
 import { parseX12 } from './x12Parser.ts';
 
 /**
@@ -15,6 +15,14 @@ export function x12ToFHIR(x12Content: string): {
   bundle: FHIRBundle;
 } {
   const parsed = parseX12(x12Content);
+
+  // Create Patient resource from parsed claim data
+  const patientId = `patient-${parsed.interchangeControlNumber || Date.now()}`;
+  const patient: FHIRResource = {
+    resourceType: 'Patient',
+    id: patientId,
+    name: parsed.patientName ? [{ text: parsed.patientName }] : undefined,
+  };
 
   const claim: FHIRClaim = {
     resourceType: 'Claim' as const,
@@ -35,6 +43,7 @@ export function x12ToFHIR(x12Content: string): {
       display: parsed.payerName
     },
     patient: {
+      reference: `Patient/${patientId}`,
       display: parsed.patientName
     },
     total: {
@@ -72,7 +81,10 @@ export function x12ToFHIR(x12Content: string): {
     resourceType: 'Bundle' as const,
     type: 'collection',
     timestamp: new Date().toISOString(),
-    entry: [{ fullUrl: `urn:uuid:${claim.id}`, resource: claim }]
+    entry: [
+      { fullUrl: `urn:uuid:${patient.id}`, resource: patient },
+      { fullUrl: `urn:uuid:${claim.id}`, resource: claim }
+    ]
   };
 
   return { claim, bundle };

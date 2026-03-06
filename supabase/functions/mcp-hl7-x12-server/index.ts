@@ -101,7 +101,7 @@ async function handleToolCall(
       if (!parseResult.success || !parseResult.message) {
         throw new Error(`Parse failed: ${parseResult.errors.join(', ')}`);
       }
-      const conversion = hl7ToFHIR(parseResult.message);
+      const conversion = hl7ToFHIR(parseResult.message, parseResult.delimiters);
       return {
         bundle: conversion.bundle,
         resourceCount: conversion.resourceCount,
