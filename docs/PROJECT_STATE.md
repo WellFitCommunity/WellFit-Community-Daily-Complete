@@ -3,10 +3,41 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-06 (P2 Integration Gaps — MCP Production Readiness)
-**Last Session:** Fixed P2-1 (fee schedule lookup), P2-3 (structured AI output via tool_choice), fixed import path bug in medical coding server. P2-2 was already fixed prior session. Tracker: 13/26 done.
+**Last Updated:** 2026-03-06 (Clinical Validation Hooks Architecture — Design Session)
+**Last Session:** Design session with Maria. Created AI Agent Quality Variance doc + Clinical Validation Hooks Architecture doc. No code changes — architecture and governance documentation only. MCP tracker: 15/26 done.
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,100 tests (552 suites), 0 lint warnings, 0 typecheck errors
+
+---
+
+## Clinical Validation Hooks (2026-03-06) — NEXT PRIORITY
+
+**Tracker:** `docs/trackers/clinical-validation-hooks-tracker.md`
+**Design Doc:** `docs/CLINICAL_VALIDATION_HOOKS_ARCHITECTURE.md`
+**Supporting Doc:** `docs/AI_AGENT_QUALITY_VARIANCE.md`
+
+**What:** Runtime validation hooks that catch AI-hallucinated clinical codes (ICD-10, CPT, DRG, Z-codes) before they reach human reviewers. Validates against live CMS/NLM government APIs (free). Covers the full FHIR interoperability pipeline.
+
+**Why:** Defense in depth. Constraints (preventive) + hooks (detective) + audit (proof). Answers the #1 hospital objection: "How do you know the AI isn't making things up?"
+
+**Maria's Requirements:**
+- Both **PDF export** AND **admin dashboard** — Akima reviews without reading code
+- PDF for offline analysis, dashboard for live monitoring
+
+| Phase | Focus | Est. Hours | Status |
+|-------|-------|-----------|--------|
+| 1. Reference Data | NLM API + ICD-10 cache + MS-DRG table | 8 | 0/4 |
+| 2. Validator Module | `clinicalOutputValidator.ts` shared module | 8 | 0/3 |
+| 3. Wire Into AI Functions | All 14 AI edge functions | 6 | 0/2 |
+| 4. Results Table | `validation_hook_results` migration + audit | 2 | 0/2 |
+| 5. Admin Dashboard | Validation dashboard + reference data health | 12 | 0/3 |
+| 6. PDF Export | Validation reports + DRG table export | 6 | 0/3 |
+| 7. Clinical Content Export | Cultural competency PDFs for Akima review | 4 | 0/2 |
+| **Total** | | **~46** | **0/19** |
+
+**Blocked:** Failure behavior policy (Akima decision), CPT license (Maria business decision)
+
+**Absorbs:** MCP tracker P1-1 (DRG table) and P1-8 (post-output validation) — now part of this tracker.
 
 ---
 
@@ -19,29 +50,24 @@
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
 | P0 Broken | 5 | 5/5 | ALL DONE |
-| P1 Clinical Risk | 9 | 5/9 | FHIR refs, X12 validation, HL7 depth, AI constraints, prompt injection — DONE. Remaining: P1-1 (DRG table, needs Akima), P1-6 (adversarial testing), P1-8 (post-output validation), P1-9 (CMS freshness) |
-| P2 Integration Gap | 4 | 3/4 | Fee schedules, patient filtering, structured AI output — DONE. Remaining: P2-4 (approval role enforcement) |
+| P1 Clinical Risk | 9 | 6/9 | FHIR refs, X12 validation, HL7 depth, AI constraints, prompt injection, CMS freshness — DONE. Remaining: P1-1 (DRG table, needs Akima), P1-6 (adversarial testing), P1-8 (NOW part of Validation Hooks priority above) |
+| P2 Integration Gap | 4 | 4/4 | ALL DONE |
 | P3 Data Gap | 4 | 0/4 | CMS coverage, medical codes, clearinghouse, taxonomy |
 | P4 Polish | 4 | 0/4 | Auth tokens, FHIR search, conformance, clinical review |
 
-**Estimated remaining:** ~65 hours across 6-8 sessions
+**Estimated remaining:** ~55 hours across 5-7 sessions (reduced — P1-8 absorbed into Validation Hooks)
 
-**Completed this session:**
-- **P0-1 FIXED:** PubMed, Postgres, Medical Coding clients — `.data` → `JSON.parse(.text)` response parsing
-- **P0-2 FIXED:** Medical Coding, Cultural Competency clients — URL `/call` removed, body → JSON-RPC format
-- **P0-3 FIXED:** HL7/X12 client — 7 interfaces aligned to actual server response shapes (camelCase), downstream UI + tests updated
-- **P0-5 FIXED:** Chain orchestrator — removed service role key fallback, now throws hard error with env var name
-- **P0-4 FIXED:** Built full X12 278 implementation — generator (277 lines), parser+validator (286 lines), 3 server tools, 61 new tests
-- All test files updated for new response formats
-- Built `supabase/functions/_shared/clinicalGroundingRules.ts` — shared "do NOT" constraint file (prior session)
+**Note:** P1-8 (post-output validation) has been expanded into the Clinical Validation Hooks architecture above. It is no longer a standalone tracker item — it's the foundation of the full validation system including dashboard + PDF export.
 
-**Next session priority:** P1 items (clinical risk). Start with P1-1 (DRG validation table) or P1-2 (FHIR bundle references).
+**Prior session completed (same day, earlier):**
+- **P1-5 FIXED:** Wired `buildConstraintBlock()` into all 13 active AI edge functions
+- **P1-7 FIXED:** Built `promptInjectionGuard.ts` — 11 patterns, wired into 6 free-text functions
+- **P1-9 FIXED:** Built `referenceDataFreshness.ts` + `reference_data_versions` migration + health-monitor integration
+- **P2-1 FIXED:** Fee schedule resolver for $0 CPT/HCPCS charges
+- **P2-3 FIXED:** Structured AI output via `tool_choice` pattern (DRG grouper + revenue optimizer)
+- **P2-4 FIXED:** Approval role enforcement in chain orchestrator
 
-**New items added this session (P1-6 through P1-9):**
-- P1-6: Adversarial constraint testing — prove guardrails work (~50 test cases)
-- P1-7: Prompt injection sanitization for clinical text input
-- P1-8: Post-output validation layer for non-DRG functions
-- P1-9: CMS update monitoring — reference data freshness alerts
+**Next MCP session priority:** P1-1 (DRG validation table — Akima review needed for which fiscal year and whether reference table is sufficient) or P3-2 (medical codes seeding — can proceed autonomously with NLM API integration).
 
 ---
 
