@@ -190,7 +190,6 @@ The principle is identical: **don't trust the AI to be right — build structura
 
 | Metric | Value |
 |--------|-------|
-| Total development cost | ~$645 |
 | Engineering staff | 0 |
 | People who built it | 2 (Social/Behavioral Science + Nursing) |
 | AI sessions | 2,000+ |
@@ -205,7 +204,7 @@ The principle is identical: **don't trust the AI to be right — build structura
 | HIPAA compliance | Full (audit logging, PHI protection, encryption) |
 | Multi-tenant | Yes (white-label, tenant-isolated) |
 
-This is not a prototype. It is an enterprise-grade, HIPAA-compliant healthcare platform with clinical AI, FHIR interoperability, HL7/X12 integration, DRG grouping, claims processing, and a community wellness engagement system. Built by two people who don't write code, using AI governed by documents.
+This is not a prototype. It is an enterprise-grade, HIPAA-compliant healthcare platform with clinical AI, FHIR interoperability, HL7/X12 integration, DRG grouping, claims processing, and a community wellness engagement system. Built by two people with zero engineering background, using AI governed by documents.
 
 ---
 
