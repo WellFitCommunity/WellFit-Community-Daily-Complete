@@ -18,8 +18,9 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
 import type { MCPLogger, DRGGroupingResult } from "./types.ts";
 import { SONNET_MODEL, calculateModelCost } from "../_shared/models.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
-import { buildConstraintBlock } from "../../_shared/clinicalGroundingRules.ts";
-import { buildSafeDocumentSection } from "../../_shared/promptInjectionGuard.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { buildSafeDocumentSection } from "../_shared/promptInjectionGuard.ts";
+import { DRG_ANALYSIS_TOOL } from "./aiToolSchemas.ts";
 
 // -------------------------------------------------------
 // Database row shapes (system boundary casts)
@@ -148,59 +149,7 @@ Perform 3-pass DRG analysis:
   Pass 3: Check all secondary diagnoses for MCC status → assign MCC-DRG if applicable
   Final: Select the DRG with the HIGHEST weight from all 3 passes
 
-Return ONLY a JSON object with this exact structure (no markdown, no explanation outside JSON):
-{
-  "principal_diagnosis": {
-    "code": "ICD-10-CM code (e.g., I21.01)",
-    "description": "Full code description",
-    "rationale": "Why this is the principal diagnosis, not a secondary"
-  },
-  "secondary_diagnoses": [
-    {
-      "code": "ICD-10-CM code",
-      "description": "Full code description",
-      "is_cc": true,
-      "is_mcc": false,
-      "rationale": "Clinical evidence supporting this diagnosis"
-    }
-  ],
-  "procedure_codes": [
-    {
-      "code": "ICD-10-PCS or CPT code",
-      "code_system": "ICD-10-PCS or CPT",
-      "description": "Procedure description"
-    }
-  ],
-  "drg_assignment": {
-    "base_drg": {
-      "code": "DRG code (e.g., 305)",
-      "description": "DRG description",
-      "weight": 0.7003,
-      "mdc": "MDC code (e.g., 05)",
-      "mdc_description": "MDC description"
-    },
-    "cc_drg": {
-      "code": "DRG code or null if no CC",
-      "description": "DRG description",
-      "weight": 0.9121
-    },
-    "mcc_drg": {
-      "code": "DRG code or null if no MCC",
-      "description": "DRG description",
-      "weight": 1.5432
-    },
-    "optimal_drg": {
-      "code": "Highest-weight DRG from the 3 passes",
-      "description": "DRG description",
-      "weight": 1.5432,
-      "pass_used": "pass_3_mcc"
-    }
-  },
-  "clinical_reasoning": "Brief explanation of why this DRG was selected over alternatives",
-  "confidence": 0.85,
-  "requires_clinical_review": true,
-  "review_reasons": ["List any reasons a human coder should review"]
-}
+Use the submit_drg_analysis tool to return your structured result. Include all 3-pass DRG assignments (base, CC, MCC) and select the highest-weight DRG as optimal. Set cc_drg and mcc_drg to null if no CC/MCC codes are supported by documentation.
 
 ${buildConstraintBlock(['drg'])}`;
 }
@@ -335,31 +284,43 @@ export function createDRGGrouperHandlers(
     const aiResponse = await anthropic.messages.create({
       model: SONNET_MODEL,
       max_tokens: 3000,
-      messages: [{ role: "user", content: prompt }]
+      messages: [{ role: "user", content: prompt }],
+      tools: [DRG_ANALYSIS_TOOL],
+      tool_choice: { type: "tool", name: "submit_drg_analysis" }
     });
 
     const responseTimeMs = Date.now() - startTime;
-    const responseText = aiResponse.content[0]?.type === "text"
-      ? aiResponse.content[0].text
-      : "";
 
-    // --- 3. Parse structured response ---
+    // --- 3. Extract structured response from tool use ---
+    const toolBlock = aiResponse.content.find(
+      (block: { type: string }) => block.type === "tool_use"
+    ) as { type: "tool_use"; input: unknown } | undefined;
+
     let analysis: DRGAnalysisResponse;
-    try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON found in AI response");
-      analysis = JSON.parse(jsonMatch[0]) as DRGAnalysisResponse;
-    } catch (parseErr: unknown) {
-      const error = parseErr instanceof Error ? parseErr : new Error(String(parseErr));
-      logger.error('DRG_GROUPER_PARSE_FAILED', {
-        encounterId,
-        error: error.message,
-        responseLength: responseText.length
-      });
-      return {
-        error: 'Failed to parse DRG grouping AI response. The clinical documentation may need more detail.',
-        drg_result: null
-      };
+    if (toolBlock) {
+      analysis = toolBlock.input as unknown as DRGAnalysisResponse;
+    } else {
+      // Fallback: try parsing text content as JSON
+      const textBlock = aiResponse.content.find(
+        (block: { type: string }) => block.type === "text"
+      ) as { type: "text"; text: string } | undefined;
+      const responseText = textBlock?.text ?? "";
+      try {
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("No JSON found in AI response");
+        analysis = JSON.parse(jsonMatch[0]) as DRGAnalysisResponse;
+      } catch (parseErr: unknown) {
+        const error = parseErr instanceof Error ? parseErr : new Error(String(parseErr));
+        logger.error('DRG_GROUPER_PARSE_FAILED', {
+          encounterId,
+          error: error.message,
+          responseLength: responseText.length
+        });
+        return {
+          error: 'Failed to parse DRG grouping AI response. The clinical documentation may need more detail.',
+          drg_result: null
+        };
+      }
     }
 
     // --- 4. Extract 3-pass results ---

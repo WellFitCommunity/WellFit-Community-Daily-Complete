@@ -3,14 +3,14 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-05 (P0 Fixes — MCP Production Readiness)
-**Last Session:** Fixed 4 of 5 P0 items from MCP Production Readiness Tracker. Client parsing bugs (P0-1), endpoint mismatches (P0-2), HL7/X12 type alignment (P0-3), chain orchestrator security hole (P0-5). P0-4 (X12 278 dead code) awaits Maria's decision.
+**Last Updated:** 2026-03-06 (P2 Integration Gaps — MCP Production Readiness)
+**Last Session:** Fixed P2-1 (fee schedule lookup), P2-3 (structured AI output via tool_choice), fixed import path bug in medical coding server. P2-2 was already fixed prior session. Tracker: 13/26 done.
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,062 tests (550 suites), 0 lint warnings, 0 typecheck errors
+**Codebase Health:** 11,100 tests (552 suites), 0 lint warnings, 0 typecheck errors
 
 ---
 
-## MCP Production Readiness (2026-03-05) — IN PROGRESS
+## MCP Production Readiness (2026-03-06) — IN PROGRESS
 
 **Tracker:** `docs/trackers/mcp-production-readiness-tracker.md`
 
@@ -18,13 +18,13 @@
 
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
-| P0 Broken | 5 | 5/5 | ALL DONE — P0-1/2/3/5 fixed, P0-4 built (278 implemented) |
-| P1 Clinical Risk | 9 | 0/9 | DRG validation, FHIR refs, X12 validation, HL7 depth, AI constraints (shared file built), adversarial testing, prompt injection guard, post-output validation, CMS freshness |
-| P2 Integration Gap | 4 | 0/4 | Fee schedules, patient filtering, structured AI output, approval roles |
+| P0 Broken | 5 | 5/5 | ALL DONE |
+| P1 Clinical Risk | 9 | 5/9 | FHIR refs, X12 validation, HL7 depth, AI constraints, prompt injection — DONE. Remaining: P1-1 (DRG table, needs Akima), P1-6 (adversarial testing), P1-8 (post-output validation), P1-9 (CMS freshness) |
+| P2 Integration Gap | 4 | 3/4 | Fee schedules, patient filtering, structured AI output — DONE. Remaining: P2-4 (approval role enforcement) |
 | P3 Data Gap | 4 | 0/4 | CMS coverage, medical codes, clearinghouse, taxonomy |
 | P4 Polish | 4 | 0/4 | Auth tokens, FHIR search, conformance, clinical review |
 
-**Estimated:** ~109 hours across 10-13 sessions
+**Estimated remaining:** ~65 hours across 6-8 sessions
 
 **Completed this session:**
 - **P0-1 FIXED:** PubMed, Postgres, Medical Coding clients — `.data` → `JSON.parse(.text)` response parsing

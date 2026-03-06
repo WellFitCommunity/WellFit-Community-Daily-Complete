@@ -34,10 +34,10 @@ This tracker targets **functional correctness and clinical accuracy** — the th
 |----------|-------|-------|-----------|
 | P0 — Broken | 5 | 5 | 0 |
 | P1 — Clinical Risk | 9 | 5 | 4 (P1-1 needs Akima, P1-6/P1-8/P1-9 remaining) |
-| P2 — Integration Gap | 4 | 0 | 4 |
+| P2 — Integration Gap | 4 | 3 | 1 (P2-4 remaining) |
 | P3 — Data Gap | 4 | 0 | 4 |
 | P4 — Polish | 4 | 0 | 4 |
-| **Total** | **26** | **10** | **16** |
+| **Total** | **26** | **13** | **13** |
 
 ---
 
@@ -383,27 +383,29 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P2-1: Charge Aggregation Missing Fee Schedule Lookup
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-06)
 **Affects:** Medical Coding server
 **Est:** 4 hours
 
 **Problem:** Medications get `charge_amount: 0` because "NDC doesn't carry amount — needs fee schedule lookup." LOINC observations also $0. The `fee_schedules` and `fee_schedule_rates` tables exist in the database but aren't queried. Pharmacy and lab charges are invisible in daily snapshots.
 
-**Fix:** Query `fee_schedule_rates` for NDC→charge and LOINC→CPT→charge mapping.
+**Fix applied:** Created `feeScheduleResolver.ts` with `resolveZeroCharges()`. After all charges are aggregated, scans for CPT/HCPCS entries with $0 and resolves them against the most recent active fee schedule. NDC→HCPCS and LOINC→CPT crosswalk mappings require P3-2 (reference data loading) before they can be resolved.
 
-**File:** `supabase/functions/mcp-medical-coding-server/chargeAggregationHandlers.ts`
+**Files:**
+- `supabase/functions/mcp-medical-coding-server/feeScheduleResolver.ts` (NEW)
+- `supabase/functions/mcp-medical-coding-server/chargeAggregationHandlers.ts`
 
 ---
 
 ### P2-2: Charge Aggregation Not Filtered by Patient/Encounter
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-05)
 **Affects:** Medical Coding server
 **Est:** 2 hours
 
-**Problem:** `claim_lines` query (chargeAggregationHandlers.ts:288-295) filters by `service_date` and `code_system` but NOT by `patient_id` or `encounter_id`. Two patients with charges on the same date get mixed together.
+**Problem:** `claim_lines` query filtered by `service_date` and `code_system` but NOT by `patient_id` or `encounter_id`. Two patients with charges on the same date get mixed together.
 
-**Fix:** Add patient/encounter filter to claim_lines query.
+**Fix applied:** Claim lines query now first looks up `claims` by `encounter_id` (or `patient_id + service_date` as fallback), then queries `claim_lines` scoped to those claim IDs only.
 
 **File:** `supabase/functions/mcp-medical-coding-server/chargeAggregationHandlers.ts`
 
@@ -411,17 +413,20 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P2-3: Medical Coding AI Output Parsed by Regex Instead of Structured Output
 
-**Status:** NOT FIXED
+**Status:** FIXED (2026-03-06)
 **Affects:** Medical Coding server (DRG grouper + revenue optimizer)
 **Est:** 3 hours
 
 **Problem:** DRG grouper and revenue optimizer ask Claude for JSON but parse with `responseText.match(/\{[\s\S]*\}/)`. Per CLAUDE.md rule 16: "new AI edge functions must define a JSON response schema." Regex parsing is fragile — if Claude adds explanatory text before JSON, it can capture wrong content.
 
-**Fix:** Use `response_format: { type: 'json_schema' }` with defined schemas.
+**Fix applied:** Both functions now use Anthropic `tool_choice` pattern — schema defined in `aiToolSchemas.ts`, forced via `tool_choice: { type: "tool", name: "..." }`. Claude returns structured data through tool use block, eliminating regex parsing. Fallback to regex only if tool block somehow missing.
 
 **Files:**
+- `supabase/functions/mcp-medical-coding-server/aiToolSchemas.ts` (NEW — DRG_ANALYSIS_TOOL + REVENUE_OPTIMIZATION_TOOL)
 - `supabase/functions/mcp-medical-coding-server/drgGrouperHandlers.ts`
 - `supabase/functions/mcp-medical-coding-server/revenueOptimizerHandlers.ts`
+
+**Also fixed:** Import path bug — `../../_shared/` → `../_shared/` for clinicalGroundingRules and promptInjectionGuard imports (would have failed at runtime).
 
 ---
 

@@ -20,8 +20,9 @@ import type {
 } from "./types.ts";
 import { SONNET_MODEL, calculateModelCost } from "../_shared/models.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
-import { buildConstraintBlock } from "../../_shared/clinicalGroundingRules.ts";
-import { buildSafeDocumentSection } from "../../_shared/promptInjectionGuard.ts";
+import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { buildSafeDocumentSection } from "../_shared/promptInjectionGuard.ts";
+import { REVENUE_OPTIMIZATION_TOOL } from "./aiToolSchemas.ts";
 
 // -------------------------------------------------------
 // Database row shapes (system boundary casts)
@@ -162,56 +163,7 @@ COMPLIANCE RULES:
 - All suggestions are advisory — require human review
 - Flag any charge that seems unsupported by documentation
 
-Return ONLY a JSON object:
-{
-  "documentation_assessment": {
-    "acuity_supported": true,
-    "current_acuity": "med_surg or icu or step_down",
-    "documented_acuity": "what the documentation actually supports",
-    "gaps": ["list of documentation deficiencies"]
-  },
-  "missing_codes": [
-    {
-      "code": "CPT/HCPCS code",
-      "code_system": "CPT or HCPCS",
-      "description": "What the charge is for",
-      "rationale": "Why documentation supports this",
-      "potential_impact": 125.00,
-      "confidence": 0.85
-    }
-  ],
-  "upgrade_opportunities": [
-    {
-      "current_code": "existing code",
-      "suggested_code": "higher-specificity code",
-      "description": "What changes",
-      "rationale": "Documentation evidence",
-      "weight_difference": 0.3,
-      "revenue_impact": 1500.00,
-      "confidence": 0.75
-    }
-  ],
-  "documentation_gaps": [
-    {
-      "gap_type": "severity_not_documented",
-      "description": "What's missing",
-      "impact": "Revenue impact if addressed",
-      "suggested_action": "What clinician should document"
-    }
-  ],
-  "modifier_suggestions": [
-    {
-      "code": "existing CPT code",
-      "suggested_modifier": "25 or 59 etc",
-      "description": "Why modifier applies",
-      "rationale": "Documentation evidence"
-    }
-  ],
-  "summary": "Brief summary of findings",
-  "total_potential_uplift": 500.00,
-  "confidence": 0.80,
-  "requires_clinical_review": true
-}
+Use the submit_revenue_analysis tool to return your structured result. Include all missing codes, upgrade opportunities, documentation gaps, and modifier suggestions found.
 
 ${buildConstraintBlock(['drg', 'billing'])}`;
 }
@@ -303,28 +255,41 @@ export function createRevenueOptimizerHandlers(
     const aiResponse = await anthropic.messages.create({
       model: SONNET_MODEL,
       max_tokens: 3000,
-      messages: [{ role: "user", content: prompt }]
+      messages: [{ role: "user", content: prompt }],
+      tools: [REVENUE_OPTIMIZATION_TOOL],
+      tool_choice: { type: "tool", name: "submit_revenue_analysis" }
     });
 
     const responseTimeMs = Date.now() - startTime;
-    const responseText = aiResponse.content[0]?.type === "text"
-      ? aiResponse.content[0].text : "";
 
-    // 5. Parse structured response
+    // 5. Extract structured response from tool use
+    const toolBlock = aiResponse.content.find(
+      (block: { type: string }) => block.type === "tool_use"
+    ) as { type: "tool_use"; input: unknown } | undefined;
+
     let analysis: RevenueOptimizationResponse;
-    try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON found in AI response");
-      analysis = JSON.parse(jsonMatch[0]) as RevenueOptimizationResponse;
-    } catch (parseErr: unknown) {
-      const error = parseErr instanceof Error ? parseErr : new Error(String(parseErr));
-      logger.error('REVENUE_OPTIMIZER_PARSE_FAILED', {
-        encounterId, error: error.message
-      });
-      return {
-        error: 'Failed to parse revenue optimization AI response',
-        optimization: null
-      };
+    if (toolBlock) {
+      analysis = toolBlock.input as unknown as RevenueOptimizationResponse;
+    } else {
+      // Fallback: try parsing text content as JSON
+      const textBlock = aiResponse.content.find(
+        (block: { type: string }) => block.type === "text"
+      ) as { type: "text"; text: string } | undefined;
+      const responseText = textBlock?.text ?? "";
+      try {
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("No JSON found in AI response");
+        analysis = JSON.parse(jsonMatch[0]) as RevenueOptimizationResponse;
+      } catch (parseErr: unknown) {
+        const error = parseErr instanceof Error ? parseErr : new Error(String(parseErr));
+        logger.error('REVENUE_OPTIMIZER_PARSE_FAILED', {
+          encounterId, error: error.message
+        });
+        return {
+          error: 'Failed to parse revenue optimization AI response',
+          optimization: null
+        };
+      }
     }
 
     // 6. Convert to OptimizationSuggestion format for snapshot update

@@ -18,6 +18,7 @@ import type {
   DailyChargeSnapshot
 } from "./types.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
+import { resolveZeroCharges } from "./feeScheduleResolver.ts";
 
 // -------------------------------------------------------
 // Database row shapes (system boundary casts)
@@ -383,11 +384,16 @@ export function createChargeAggregationHandlers(
       }
     }
 
+    // --- 6. Resolve zero-amount charges via fee schedule ---
+    const feeScheduleResolved = await resolveZeroCharges(sb, charges, timeoutMs, logger);
+    totalAmount += feeScheduleResolved;
+
     logger.info('DAILY_CHARGES_AGGREGATED', {
       encounterId,
       serviceDate,
       chargeCount,
       totalAmount: Math.round(totalAmount * 100) / 100,
+      feeScheduleResolved: Math.round(feeScheduleResolved * 100) / 100,
       categories: {
         lab: charges.lab.length,
         imaging: charges.imaging.length,
