@@ -49,6 +49,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: '/home', component: 'Home', auth: 'none', category: 'public' },
   { path: '/demo', component: 'DemoPage', auth: 'none', category: 'public' },
   { path: '/law-enforcement', component: 'LawEnforcementLandingPage', auth: 'none', category: 'public', featureFlag: 'lawEnforcement' },
+  { path: '/pitch-deck', component: 'PitchDeckPage', auth: 'none', category: 'public' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

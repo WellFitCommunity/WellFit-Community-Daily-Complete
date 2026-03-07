@@ -15,6 +15,7 @@ export const EnvisionTotpSetupPage = React.lazy(() => import('../pages/EnvisionT
 export const AdminMfaSetupPage = React.lazy(() => import('../pages/AdminMfaSetupPage'));
 export const MetricsPage = React.lazy(() => import('../pages/MetricsPage'));
 export const DemoPage = React.lazy(() => import('../pages/DemoPage'));
+export const PitchDeckPage = React.lazy(() => import('../pages/PitchDeckPage'));
 
 // Legal/Static
 export const PrivacyPolicy = React.lazy(() => import('../pages/PrivacyPolicy'));
