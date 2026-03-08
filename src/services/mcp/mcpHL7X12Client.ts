@@ -20,6 +20,8 @@
 // Types
 // =====================================================
 
+import { getSupabaseAuthToken } from './mcpHelpers';
+
 export type HL7MessageType = 'ADT' | 'ORU' | 'ORM' | 'ACK' | 'OTHER';
 
 export interface HL7Segment {
@@ -446,17 +448,8 @@ export class HL7X12MCPClient {
   /**
    * Get authentication token from localStorage
    */
-  private getAuthToken(): string | null {
-    const authData = localStorage.getItem('sb-xkybsjnvuohpqpbkikyn-auth-token');
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData);
-        return parsed.access_token;
-      } catch {
-        return null;
-      }
-    }
-    return null;
+  private getAuthToken(): string {
+    return getSupabaseAuthToken();
   }
 
   /**

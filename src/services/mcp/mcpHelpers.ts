@@ -7,6 +7,28 @@ import { getMCPClient } from './mcpClient';
 import { HAIKU_MODEL, SONNET_MODEL } from '../../constants/aiModels';
 
 /**
+ * Extract Supabase auth token from localStorage using the project ref
+ * derived from VITE_SUPABASE_URL. Eliminates hardcoded project IDs.
+ */
+export function getSupabaseAuthToken(): string {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    // URL format: https://<project-ref>.supabase.co
+    const match = supabaseUrl.match(/\/\/([^.]+)\.supabase/);
+    if (!match) return '';
+    const projectRef = match[1];
+    const authData = localStorage.getItem(`sb-${projectRef}-auth-token`);
+    if (authData) {
+      const parsed = JSON.parse(authData) as Record<string, unknown>;
+      return (parsed.access_token as string) || '';
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return '';
+}
+
+/**
  * Analyze text with Claude via MCP
  */
 export async function analyzeText(params: {

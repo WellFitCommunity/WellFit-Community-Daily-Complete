@@ -16,6 +16,8 @@
 // Types
 // =====================================================
 
+import { getSupabaseAuthToken } from './mcpHelpers';
+
 export type ClearinghouseProvider = 'waystar' | 'change_healthcare' | 'availity';
 
 export type ClaimType = '837P' | '837I';
@@ -322,17 +324,8 @@ export class ClearinghouseMCPClient {
   /**
    * Get authentication token from localStorage
    */
-  private getAuthToken(): string | null {
-    const authData = localStorage.getItem('sb-xkybsjnvuohpqpbkikyn-auth-token');
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData);
-        return parsed.access_token;
-      } catch {
-        return null;
-      }
-    }
-    return null;
+  private getAuthToken(): string {
+    return getSupabaseAuthToken();
   }
 
   /**

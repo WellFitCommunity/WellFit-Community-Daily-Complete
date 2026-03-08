@@ -15,6 +15,7 @@
  */
 
 import { SB_URL } from '../../settings/settings';
+import { getSupabaseAuthToken } from './mcpHelpers';
 
 // =====================================================
 // Types
@@ -119,16 +120,7 @@ export class NPIRegistryMCPClient {
   }
 
   private getAuthToken(): string {
-    try {
-      const authData = localStorage.getItem('sb-xkybsjnvuohpqpbkikyn-auth-token');
-      if (authData) {
-        const parsed = JSON.parse(authData);
-        return parsed.access_token || '';
-      }
-    } catch {
-      // Ignore errors
-    }
-    return '';
+    return getSupabaseAuthToken();
   }
 
   private async request<T>(tool: string, args: Record<string, unknown>): Promise<NPIRegistryResult<T>> {
@@ -398,6 +390,7 @@ export function isValidNPIFormat(npi: string): boolean {
 // =====================================================
 
 export const COMMON_TAXONOMY_CODES: Record<string, TaxonomyCode> = {
+  // Physicians
   internal_medicine: { code: '207R00000X', type: 'individual', classification: 'Internal Medicine' },
   family_medicine: { code: '207Q00000X', type: 'individual', classification: 'Family Medicine' },
   cardiology: { code: '207RC0000X', type: 'individual', classification: 'Internal Medicine', specialization: 'Cardiovascular Disease' },
@@ -407,12 +400,52 @@ export const COMMON_TAXONOMY_CODES: Record<string, TaxonomyCode> = {
   ob_gyn: { code: '207V00000X', type: 'individual', classification: 'Obstetrics & Gynecology' },
   psychiatry: { code: '2084P0800X', type: 'individual', classification: 'Psychiatry & Neurology', specialization: 'Psychiatry' },
   emergency_medicine: { code: '207P00000X', type: 'individual', classification: 'Emergency Medicine' },
+  general_surgery: { code: '208600000X', type: 'individual', classification: 'Surgery' },
+  dermatology: { code: '207N00000X', type: 'individual', classification: 'Dermatology' },
+  radiology: { code: '2085R0202X', type: 'individual', classification: 'Radiology', specialization: 'Diagnostic Radiology' },
+  anesthesiology: { code: '207L00000X', type: 'individual', classification: 'Anesthesiology' },
+  urology: { code: '208800000X', type: 'individual', classification: 'Urology' },
+  oncology: { code: '207RX0202X', type: 'individual', classification: 'Internal Medicine', specialization: 'Medical Oncology' },
+  gastroenterology: { code: '207RG0100X', type: 'individual', classification: 'Internal Medicine', specialization: 'Gastroenterology' },
+  pulmonology: { code: '207RP1001X', type: 'individual', classification: 'Internal Medicine', specialization: 'Pulmonary Disease' },
+  nephrology: { code: '207RN0300X', type: 'individual', classification: 'Internal Medicine', specialization: 'Nephrology' },
+  endocrinology: { code: '207RE0101X', type: 'individual', classification: 'Internal Medicine', specialization: 'Endocrinology, Diabetes & Metabolism' },
+  geriatric_medicine: { code: '207RG0300X', type: 'individual', classification: 'Internal Medicine', specialization: 'Geriatric Medicine' },
+  hospitalist: { code: '207RI0008X', type: 'individual', classification: 'Internal Medicine', specialization: 'Hospitalist' },
+  ophthalmology: { code: '207W00000X', type: 'individual', classification: 'Ophthalmology' },
+  // Nursing & PAs
+  nursing: { code: '163W00000X', type: 'individual', classification: 'Registered Nurse' },
   nurse_practitioner: { code: '363L00000X', type: 'individual', classification: 'Nurse Practitioner' },
+  nurse_anesthetist: { code: '367500000X', type: 'individual', classification: 'Certified Registered Nurse Anesthetist' },
   physician_assistant: { code: '363A00000X', type: 'individual', classification: 'Physician Assistant' },
+  clinical_social_worker: { code: '1041C0700X', type: 'individual', classification: 'Social Worker', specialization: 'Clinical' },
+  // Therapy
+  physical_therapy: { code: '225100000X', type: 'individual', classification: 'Physical Therapist' },
+  occupational_therapy: { code: '225X00000X', type: 'individual', classification: 'Occupational Therapist' },
+  speech_language_pathologist: { code: '235Z00000X', type: 'individual', classification: 'Speech-Language Pathologist' },
+  respiratory_therapist: { code: '227800000X', type: 'individual', classification: 'Respiratory Therapist, Certified' },
+  // Behavioral
+  psychologist_clinical: { code: '103TC0700X', type: 'individual', classification: 'Psychologist', specialization: 'Clinical' },
+  counselor_mental_health: { code: '101YM0800X', type: 'individual', classification: 'Counselor', specialization: 'Mental Health' },
+  // Pharmacy & Other
+  pharmacist: { code: '183500000X', type: 'individual', classification: 'Pharmacist' },
+  dietitian: { code: '133V00000X', type: 'individual', classification: 'Dietitian, Registered' },
+  chiropractor: { code: '111N00000X', type: 'individual', classification: 'Chiropractor' },
+  optometrist: { code: '152W00000X', type: 'individual', classification: 'Optometrist' },
+  podiatrist: { code: '213E00000X', type: 'individual', classification: 'Podiatrist' },
+  community_health_worker: { code: '172V00000X', type: 'individual', classification: 'Community Health Worker' },
+  paramedic: { code: '146L00000X', type: 'individual', classification: 'Emergency Medical Technician, Paramedic' },
+  // Organizations
   hospital: { code: '282N00000X', type: 'organization', classification: 'General Acute Care Hospital' },
+  clinic: { code: '261QM1300X', type: 'organization', classification: 'Clinic/Center', specialization: 'Multi-Specialty' },
+  clinic_federally_qualified: { code: '261QF0400X', type: 'organization', classification: 'Clinic/Center', specialization: 'Federally Qualified Health Center' },
+  clinic_urgent_care: { code: '261QU0200X', type: 'organization', classification: 'Clinic/Center', specialization: 'Urgent Care' },
   pharmacy: { code: '333600000X', type: 'organization', classification: 'Pharmacy' },
   home_health: { code: '251E00000X', type: 'organization', classification: 'Home Health' },
-  skilled_nursing: { code: '314000000X', type: 'organization', classification: 'Skilled Nursing Facility' }
+  skilled_nursing: { code: '314000000X', type: 'organization', classification: 'Skilled Nursing Facility' },
+  dme_supplier: { code: '332B00000X', type: 'organization', classification: 'Durable Medical Equipment & Medical Supplies' },
+  clinical_lab: { code: '291U00000X', type: 'organization', classification: 'Clinical Medical Laboratory' },
+  ambulance_ground: { code: '341100000X', type: 'organization', classification: 'Transportation Services', specialization: 'Ambulance, Ground' },
 };
 
 export default npiRegistryClient;

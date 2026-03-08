@@ -19,13 +19,16 @@ import {
   ClearinghouseMCPClient
 } from '../mcpClearinghouseClient';
 
+// Mock import.meta.env
+vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+
 // Mock fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
 const mockLocalStorage: Record<string, string> = {
-  'sb-xkybsjnvuohpqpbkikyn-auth-token': JSON.stringify({ access_token: 'test-token' })
+  'sb-test-auth-token': JSON.stringify({ access_token: 'test-token' })
 };
 
 Object.defineProperty(global, 'localStorage', {
@@ -659,7 +662,7 @@ describe('ClearinghouseMCPClient', () => {
     });
 
     it('should handle missing authentication', async () => {
-      delete mockLocalStorage['sb-xkybsjnvuohpqpbkikyn-auth-token'];
+      delete mockLocalStorage['sb-test-auth-token'];
 
       const client = new ClearinghouseMCPClient();
       const result = await client.testConnection();
@@ -668,7 +671,7 @@ describe('ClearinghouseMCPClient', () => {
       expect(result.error).toBe('Not authenticated');
 
       // Restore
-      mockLocalStorage['sb-xkybsjnvuohpqpbkikyn-auth-token'] = JSON.stringify({ access_token: 'test-token' });
+      mockLocalStorage['sb-test-auth-token'] = JSON.stringify({ access_token: 'test-token' });
     });
   });
 });

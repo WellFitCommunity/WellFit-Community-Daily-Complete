@@ -9,6 +9,8 @@
  * For local development with stdio transport, use the separate mcpClientNode.ts file.
  */
 
+import { getSupabaseAuthToken } from './mcpHelpers';
+
 export interface MCPConfig {
   edgeFunctionUrl?: string;
 }
@@ -67,18 +69,8 @@ export class MCPClient {
     const timeout = options.timeout || 30000; // 30s default
 
     // Get auth token from Supabase session
-    const getAuthToken = () => {
-      try {
-        // Try to get from localStorage (Supabase stores it here)
-        const authData = localStorage.getItem('sb-xkybsjnvuohpqpbkikyn-auth-token');
-        if (authData) {
-          const parsed = JSON.parse(authData);
-          return parsed.access_token || '';
-        }
-      } catch {
-        // Ignore errors
-      }
-      return '';
+    const getAuthToken = (): string => {
+      return getSupabaseAuthToken();
     };
 
     const response = await fetch(this.config.edgeFunctionUrl, {

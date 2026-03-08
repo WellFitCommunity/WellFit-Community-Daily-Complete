@@ -33,11 +33,11 @@ This tracker targets **functional correctness and clinical accuracy** — the th
 | Severity | Items | Fixed | Remaining |
 |----------|-------|-------|-----------|
 | P0 — Broken | 5 | 5 | 0 |
-| P1 — Clinical Risk | 9 | 6 | 3 (P1-1 needs Akima, P1-6 adversarial testing, P1-8 post-output validation) |
+| P1 — Clinical Risk | 9 | 8 | 1 (P1-6 adversarial testing) |
 | P2 — Integration Gap | 4 | 4 | 0 |
-| P3 — Data Gap | 4 | 0 | 4 |
-| P4 — Polish | 4 | 0 | 4 |
-| **Total** | **26** | **15** | **11** |
+| P3 — Data Gap | 4 | 2 | 2 (P3-1 CMS coverage, P3-3 clearinghouse blocked) |
+| P4 — Polish | 4 | 1 | 3 (P4-2 FHIR search, P4-3 FHIR conformance, P4-4 Akima review) |
+| **Total** | **26** | **20** | **6** |
 
 ---
 
@@ -111,20 +111,11 @@ This tracker targets **functional correctness and clinical accuracy** — the th
 
 ### P1-1: DRG Grouper Has No Validation Table
 
-**Status:** NOT FIXED
+**Status:** ✅ FIXED (2026-03-07) — Absorbed into Clinical Validation Hooks tracker (Phase 1-3)
 **Affects:** Medical Coding server
 **Est:** 8 hours
 
-**Problem:** Claude AI suggests DRG codes. The system stores whatever Claude returns without checking against actual MS-DRG tables. If Claude hallucinates DRG 999, it goes into the database.
-
-**Fix options:**
-1. Build `ms_drg_reference` table with valid DRG codes + weights + MDC mappings. Validate AI output against it before storing.
-2. Integrate external grouper API (Optum/3M) — most accurate but requires license.
-3. Accept AI-only with mandatory human review workflow and clear disclaimers.
-
-**Recommendation:** Option 1 (reference table) for pilot. Option 2 for production scale.
-
-**Impact:** Revenue cycle decisions based on unvalidated AI output. Hospitals won't accept this.
+**Fix applied:** Built `ms_drg_reference` table via migration `20260306000002_ms_drg_reference.sql` with all MS-DRG codes, descriptions, relative weights, MDC assignments, and type (medical/surgical). `clinicalOutputValidator.ts` validates AI DRG output against this table. PDF export available from admin dashboard. Akima can review via exported DRG Reference Table PDF.
 
 ---
 
@@ -464,15 +455,13 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P3-2: Medical Codes — CPT/ICD-10/HCPCS Incomplete
 
-**Status:** NOT FIXED
+**Status:** ✅ FIXED (2026-03-08) — ~260 CPT + ~150 HCPCS + ~500 ICD-10 seeded
 **Affects:** Medical Codes server
 **Est:** 4 hours (data loading, not code changes)
 
-**Problem:** Only E/M CPT codes seeded (~120 rows). ICD-10 not seeded. HCPCS not seeded. ~99% of medical codes missing. NCCI bundling has 6 rules (real systems have thousands).
+**Fix applied:** Migration `20260308000004` seeds ~200 additional CPT codes (surgery, radiology, lab, cardiology, GI/endoscopy, orthopedics, OB/GYN, urology, neurology, pulmonary, ophthalmology, pathology, wound care, infusion) and ~100 additional HCPCS codes (injectable drugs, biologics, immunizations, DME respiratory/mobility/orthotics, supplies, transport, telehealth). Combined with prior seeds: ~260 CPT, ~150 HCPCS, ~500 ICD-10 codes. Reference data versions updated with counts.
 
-**Fix:** Load CMS reference files into `code_cpt`, `code_icd10`, `code_hcpcs` tables. Note: CPT codes require AMA license for full set. ICD-10 and HCPCS are freely available from CMS.
-
-**Licensing note:** AMA CPT license required for production. CMS ICD-10 and HCPCS are public domain.
+**Licensing note:** AMA CPT license required for full 10,000+ code set in production. Current set uses CMS-published short descriptors (public domain). ICD-10 and HCPCS are fully public domain.
 
 ---
 
@@ -491,15 +480,13 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P3-4: NPI Taxonomy Codes — Only 24 of 600+
 
-**Status:** NOT FIXED
+**Status:** ✅ FIXED (2026-03-08)
 **Affects:** NPI Registry server
 **Est:** 2 hours
 
-**Problem:** Only 24 NUCC taxonomy codes hardcoded. Missing hundreds of common specialties. Multi-state deployments will hit gaps.
+**Fix applied:** Expanded `taxonomyCodes.ts` from 24 to 206 codes covering: 50 physician specialties, 10 dental, 15 nursing, 3 PAs, 15 therapy/rehab, 12 behavioral health, 6 pharmacy, 5 vision, 3 podiatry, 5 chiropractic/alternative, 3 dietetics, 4 EMS, 8 lab technologists, 5 community health, 10 hospitals, 12 clinics, 8 long-term care, 5 home health, 4 pharmacy orgs, 4 DME, 5 labs, 4 transport, 4 managed care, 5 other orgs. Also expanded browser client `COMMON_TAXONOMY_CODES` from 15 to 50. Migration `20260308000003` updates `reference_data_versions` record count.
 
-**Fix:** Load full NUCC taxonomy from `https://nucc.org/index.php/code-sets-mainmenu-41/provider-taxonomy-mainmenu-40/csv-mainmenu-57`
-
-**File:** `supabase/functions/mcp-npi-registry-server/taxonomyCodes.ts` (or move to DB table)
+**Files:** `taxonomyCodes.ts`, `mcpNPIRegistryClient.ts`, migration `20260308000003`
 
 ---
 
@@ -507,15 +494,13 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P4-1: Hardcoded Project Reference in JWT Extraction
 
-**Status:** NOT FIXED
+**Status:** ✅ FIXED (2026-03-08)
 **Affects:** All browser MCP clients
 **Est:** 1 hour
 
-**Problem:** `localStorage.getItem('sb-xkybsjnvuohpqpbkikyn-auth-token')` hardcodes the Supabase project ID. If a tenant uses a different project, all clients fail silently.
+**Fix applied:** Created shared `getSupabaseAuthToken()` in `mcpHelpers.ts` that dynamically extracts project ref from `VITE_SUPABASE_URL` instead of hardcoding `xkybsjnvuohpqpbkikyn`. Updated all 13 MCP client files + 12 test files to use the shared function.
 
-**Fix:** Use `supabase.auth.getSession()` to get the token instead of reading localStorage directly.
-
-**Files:** `mcpClient.ts`, all `mcp*Client.ts` files that extract auth tokens
+**Files:** `mcpHelpers.ts` (new function), all 13 `mcp*Client.ts` files, 12 test files
 
 ---
 
@@ -613,10 +598,9 @@ These four items were identified during the "do NOT" constraint brainstorming se
 
 ### P1-8: Post-Output Validation Layer for Non-DRG Functions
 
-**Status:** NOT STARTED
+**Status:** ✅ FIXED (2026-03-08) — Absorbed into Clinical Validation Hooks tracker (Phases 2-3)
 **Affects:** Fall risk, escalation scorer, SDOH coding, care planning, guideline matcher
 **Est:** 8 hours
-**Dependency:** P3-2 (medical code reference data) enhances this but is not required
 
 **Problem:** P1-1 adds a reference table to validate DRG output. But no equivalent exists for other functions. Constraints are **preventive** controls (tell AI what not to do). This item adds **detective** controls (catch it when AI does it anyway).
 

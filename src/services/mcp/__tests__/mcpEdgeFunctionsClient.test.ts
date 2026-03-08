@@ -16,13 +16,16 @@ import {
   EdgeFunctionsMCPClient
 } from '../mcpEdgeFunctionsClient';
 
+// Mock import.meta.env
+vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+
 // Mock fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
 const mockLocalStorage: Record<string, string> = {
-  'sb-xkybsjnvuohpqpbkikyn-auth-token': JSON.stringify({ access_token: 'test-token' })
+  'sb-test-auth-token': JSON.stringify({ access_token: 'test-token' })
 };
 
 Object.defineProperty(global, 'localStorage', {

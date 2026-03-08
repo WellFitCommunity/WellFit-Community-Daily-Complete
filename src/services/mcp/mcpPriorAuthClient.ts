@@ -13,6 +13,7 @@
  */
 
 import { SB_URL } from '../../settings/settings';
+import { getSupabaseAuthToken } from './mcpHelpers';
 
 // =====================================================
 // Types
@@ -128,16 +129,7 @@ class PriorAuthMCPClient {
   }
 
   private getAuthToken(): string {
-    try {
-      const authData = localStorage.getItem('sb-xkybsjnvuohpqpbkikyn-auth-token');
-      if (authData) {
-        const parsed = JSON.parse(authData);
-        return parsed.access_token || '';
-      }
-    } catch {
-      // Ignore parse errors
-    }
-    return '';
+    return getSupabaseAuthToken();
   }
 
   private async callTool<T>(toolName: string, args: Record<string, unknown>): Promise<PriorAuthResult<T>> {

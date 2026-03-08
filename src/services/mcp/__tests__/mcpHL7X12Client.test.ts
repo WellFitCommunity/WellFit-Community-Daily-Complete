@@ -17,13 +17,16 @@ import {
   HL7X12MCPClient
 } from '../mcpHL7X12Client';
 
+// Mock import.meta.env
+vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+
 // Mock fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
 const mockLocalStorage: Record<string, string> = {
-  'sb-xkybsjnvuohpqpbkikyn-auth-token': JSON.stringify({ access_token: 'test-token' })
+  'sb-test-auth-token': JSON.stringify({ access_token: 'test-token' })
 };
 
 Object.defineProperty(global, 'localStorage', {
@@ -527,7 +530,7 @@ describe('HL7X12MCPClient', () => {
 
     it('should handle missing authentication', async () => {
       // Clear auth token
-      delete mockLocalStorage['sb-xkybsjnvuohpqpbkikyn-auth-token'];
+      delete mockLocalStorage['sb-test-auth-token'];
 
       const client = new HL7X12MCPClient();
       const result = await client.parseHL7('MSH|...');
@@ -536,7 +539,7 @@ describe('HL7X12MCPClient', () => {
       expect(result.error).toBe('Not authenticated');
 
       // Restore auth token
-      mockLocalStorage['sb-xkybsjnvuohpqpbkikyn-auth-token'] = JSON.stringify({ access_token: 'test-token' });
+      mockLocalStorage['sb-test-auth-token'] = JSON.stringify({ access_token: 'test-token' });
     });
   });
 });

@@ -97,7 +97,7 @@ describe('MCPClient', () => {
       });
 
       // Setup localStorage with auth token
-      mockLocalStorage['sb-xkybsjnvuohpqpbkikyn-auth-token'] = JSON.stringify({
+      mockLocalStorage['sb-test-auth-token'] = JSON.stringify({
         access_token: 'test-token',
       });
 
@@ -133,7 +133,7 @@ describe('MCPClient', () => {
         }),
       });
 
-      mockLocalStorage['sb-xkybsjnvuohpqpbkikyn-auth-token'] = JSON.stringify({
+      mockLocalStorage['sb-test-auth-token'] = JSON.stringify({
         access_token: 'my-auth-token',
       });
 
