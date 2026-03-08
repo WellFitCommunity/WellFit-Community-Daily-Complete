@@ -13,10 +13,15 @@ import React from 'react';
 // Mock PDF exports
 const mockExportValidationReport = vi.fn();
 const mockExportDRGReference = vi.fn();
+const mockExportCulturalCompetency = vi.fn();
 
 vi.mock('../pdfExportService', () => ({
   exportValidationReportPDF: (...args: unknown[]) => mockExportValidationReport(...args),
   exportDRGReferencePDF: (...args: unknown[]) => mockExportDRGReference(...args),
+}));
+
+vi.mock('../culturalProfilePdfExport', () => ({
+  exportCulturalCompetencyPDF: (...args: unknown[]) => mockExportCulturalCompetency(...args),
 }));
 
 // --- Mock data ---
@@ -94,6 +99,27 @@ const mockReferenceData = [
   },
 ];
 
+const mockCulturalProfiles = [
+  {
+    id: 'cp-1',
+    population_key: 'veterans',
+    display_name: 'Veterans / Military Service Members',
+    description: 'Test veteran profile description',
+    caveat: 'Test caveat',
+    profile_data: {
+      communication: { languagePreferences: [], formalityLevel: 'moderate', familyInvolvementNorm: '', keyPhrases: [], avoidPhrases: [], contextSpecific: {} },
+      clinicalConsiderations: [],
+      barriers: [],
+      culturalPractices: [],
+      trustFactors: [],
+      supportSystems: [],
+      sdohCodes: [],
+      culturalRemedies: [],
+    },
+    is_active: true,
+  },
+];
+
 // --- Supabase mock ---
 
 function createQueryChain(data: unknown[]) {
@@ -123,6 +149,9 @@ const mockFrom = vi.fn((table: string) => {
   if (table === 'reference_data_versions') {
     return createQueryChain(mockReferenceData);
   }
+  if (table === 'cultural_profiles') {
+    return createQueryChain(mockCulturalProfiles);
+  }
   return createQueryChain([]);
 });
 
@@ -145,6 +174,9 @@ describe('ClinicalValidationDashboard', () => {
       }
       if (table === 'reference_data_versions') {
         return createQueryChain(mockReferenceData);
+      }
+      if (table === 'cultural_profiles') {
+        return createQueryChain(mockCulturalProfiles);
       }
       return createQueryChain([]);
     });
@@ -452,6 +484,67 @@ describe('ClinicalValidationDashboard', () => {
 
     await waitFor(() => {
       expect(mockExportDRGReference).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // --- Phase 7 tests: Clinical Content Review Panel ---
+
+  it('renders Clinical Content Review panel with content items', async () => {
+    render(<ClinicalValidationDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Clinical Content Review')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Cultural Competency Profiles')).toBeInTheDocument();
+    expect(screen.getByText('MS-DRG Reference Table')).toBeInTheDocument();
+    expect(screen.getByText('AI Code Validation Report')).toBeInTheDocument();
+  });
+
+  it('shows review status badges in content review panel', async () => {
+    render(<ClinicalValidationDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Clinical Content Review')).toBeInTheDocument();
+    });
+
+    // All items should show pending status
+    const pendingBadges = screen.getAllByText('pending');
+    expect(pendingBadges.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('shows review cycle information for each content item', async () => {
+    render(<ClinicalValidationDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Clinical Content Review')).toBeInTheDocument();
+    });
+
+    // Review cycle labels appear as text within content items
+    const annualElements = screen.getAllByText(/Review cycle: Annual/);
+    expect(annualElements.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Review cycle: Monthly/)).toBeInTheDocument();
+  });
+
+  it('exports cultural competency profiles as PDF when button clicked', async () => {
+    render(<ClinicalValidationDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Cultural Competency Profiles')).toBeInTheDocument();
+    });
+
+    // The content review panel has Export PDF buttons — the first one is for cultural profiles
+    const exportButtons = screen.getAllByRole('button', { name: 'Export PDF' });
+    expect(exportButtons.length).toBeGreaterThanOrEqual(1);
+
+    fireEvent.click(exportButtons[0]);
+
+    await waitFor(() => {
+      expect(mockFrom).toHaveBeenCalledWith('cultural_profiles');
+    });
+
+    await waitFor(() => {
+      expect(mockExportCulturalCompetency).toHaveBeenCalledTimes(1);
     });
   });
 });

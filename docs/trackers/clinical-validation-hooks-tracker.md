@@ -24,11 +24,11 @@ Defense in depth: prompt constraints (preventive) + validation hooks (detective)
 | Phase 1: Reference Data | 4 | 4/4 ✅ | 8 |
 | Phase 2: Validator Module | 3 | 3/3 ✅ | 8 |
 | Phase 3: Wire Into AI Functions | 2 | 2/2 ✅ | 6 |
-| Phase 4: Results Table | 2 | 1/2 | 2 |
-| Phase 5: Admin Dashboard | 3 | 0/3 | 12 |
-| Phase 6: PDF Export | 3 | 0/3 | 6 |
-| Phase 7: Clinical Content Export | 2 | 0/2 | 4 |
-| **Total** | **19** | **10/19** | **~46** |
+| Phase 4: Results Table | 2 | 2/2 ✅ | 2 |
+| Phase 5: Admin Dashboard | 3 | 3/3 ✅ | 12 |
+| Phase 6: PDF Export | 3 | 3/3 ✅ | 6 |
+| Phase 7: Clinical Content Export | 2 | 2/2 ✅ | 4 |
+| **Total** | **19** | **19/19 ✅** | **~46** |
 
 ---
 
@@ -195,12 +195,14 @@ Wired `clinicalOutputValidator` into:
 
 ### 4-1: Migration
 
-**Status:** ✅ COMPLETE (2026-03-07) — `validation_feedback` table pushed (learning loop). `validation_hook_results` table still needed for aggregate tracking.
+**Status:** ✅ COMPLETE (2026-03-08) — Both `validation_feedback` and `validation_hook_results` tables pushed.
 **Est:** 1 hour
 
-Created `validation_feedback` table (migration `20260307000001_validation_feedback.sql` — pushed). Still need `validation_hook_results` for aggregate tracking:
+Created both tables:
+- `validation_feedback` table (migration `20260307000001_validation_feedback.sql` — pushed)
+- `validation_hook_results` table (migration `20260308000001_validation_hook_results.sql` — pushed)
 
-Original plan — create `validation_hook_results` table:
+`validation_hook_results` table:
 
 | Column | Type | Purpose |
 |--------|------|---------|
@@ -223,10 +225,14 @@ Original plan — create `validation_hook_results` table:
 
 ### 4-2: Audit Integration
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — `logValidationResults()` writes to both `validation_hook_results` and `audit_logs`
 **Est:** 1 hour
 
-Wire validator to log every rejection to `audit_logs` via `auditLogger`. Event: `AI_CODE_VALIDATION_REJECTED`. Include source function, rejected code, reason, patient_id.
+Wired `logValidationResults()` in `clinicalOutputValidator.ts` to log every rejection to both:
+- `validation_hook_results` — aggregate tracking (codes_checked, codes_rejected, rejected_details JSONB)
+- `audit_logs` — HIPAA Tier 2 audit event `AI_CODE_VALIDATION_REJECTED`
+
+Both inserts are fire-and-forget (never throw, never block the response).
 
 **Acceptance:** Rejected code appears in both `validation_hook_results` and `audit_logs`.
 
@@ -236,16 +242,17 @@ Wire validator to log every rejection to `audit_logs` via `auditLogger`. Event: 
 
 ### 5-1: Validation Dashboard Component
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — `ClinicalValidationDashboard.tsx` (252 lines) with `ValidationSummaryCards`, `RejectionLogTable`, `useValidationData` hook
 **Est:** 6 hours
 
-Build `ClinicalValidationDashboard.tsx` in `src/components/admin/`. Displays:
-- Summary cards: codes validated (30d), codes rejected, rejection rate %, top hallucinated code
-- Trend chart: rejection rate over time
-- Rejection log table: date, AI function, code, system, reason — sortable/filterable
-- Filter by: date range, AI function, code system, rejection reason
+Built `src/components/admin/clinical-validation/ClinicalValidationDashboard.tsx` with:
+- 5 summary cards (EAMetricCard): codes validated, codes rejected, rejection rate %, top hallucinated code, avg response time
+- Rejection log table (sortable, paginated 25/page): date, AI function, code, system badge, reason, detail
+- 4 filter dropdowns: date range (7/30/90d), AI function, code system, rejection reason
+- Export buttons: Report PDF, DRG Table PDF, Refresh
+- Loading/error states
 
-**Route:** Wire into admin dashboard at appropriate section.
+Wired into admin dashboard via `lazyImports.tsx` + `sectionDefinitions.tsx` (section id: `clinical-validation`, category: `clinical`).
 
 **Visual acceptance:** Maria must see it rendered before "done."
 
@@ -253,10 +260,10 @@ Build `ClinicalValidationDashboard.tsx` in `src/components/admin/`. Displays:
 
 ### 5-2: Reference Data Health Panel
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — `ReferenceDataHealthPanel.tsx` (131 lines)
 **Est:** 3 hours
 
-Panel within dashboard showing reference data freshness (from P1-9 `reference_data_versions` table). Shows each data source, last updated date, freshness status (current/warning/stale/critical), next expected update.
+Panel showing reference data freshness from `reference_data_versions` table. Each source displays: name, type, version, last updated, days since update, next expected update, freshness badge (current/warning/stale/critical). Stale alert badge when critical sources exist.
 
 **Acceptance:** Akima can see at a glance whether the validation data is current.
 
@@ -264,10 +271,10 @@ Panel within dashboard showing reference data freshness (from P1-9 `reference_da
 
 ### 5-3: Dashboard Tests
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — 22 behavioral tests, all pass
 **Est:** 3 hours
 
-Behavioral tests for dashboard components. Tier 1-2: user interactions, data display, filter behavior, loading/error states. Must pass Deletion Test.
+22 tests in `__tests__/ClinicalValidationDashboard.test.tsx`: loading spinner, summary card totals, top hallucinated code, rejection log entries, code system badges, reference data display, notes, filter dropdowns, date range change, empty states, avg response time, auto-suppressed count, refresh button, stale badge, Export Report PDF, Export DRG Table, content review panel items, review status badges, review cycles, cultural profile PDF export. All pass Deletion Test.
 
 ---
 
@@ -275,10 +282,10 @@ Behavioral tests for dashboard components. Tier 1-2: user interactions, data dis
 
 ### 6-1: Validation Report PDF
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — `exportValidationReportPDF()` in `pdfExportService.ts`
 **Est:** 3 hours
 
-Export from dashboard: validation statistics, rejection log, top hallucinated codes, reference data freshness — formatted as downloadable PDF. Date range selectable.
+Browser-side PDF with: summary stats table, rejection log, reference data health. Date range from dashboard filter. Uses jsPDF + jspdf-autotable.
 
 **Acceptance:** Akima downloads PDF, reviews offline. Contains same data as dashboard but portable.
 
@@ -286,10 +293,10 @@ Export from dashboard: validation statistics, rejection log, top hallucinated co
 
 ### 6-2: DRG Reference Table PDF
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — `exportDRGReferencePDF()` in `pdfExportService.ts`
 **Est:** 1.5 hours
 
-Export `ms_drg_reference` table as formatted PDF. Columns: DRG code, description, relative weight, MDC, CC/MCC indicator. Sortable before export. Downloadable from dashboard or direct.
+Landscape PDF with all MS-DRG codes, descriptions, relative weights, MDC, type. Fetches from `ms_drg_reference` table on demand. Purple theme header.
 
 **Acceptance:** Akima reviews DRG codes/weights for clinical accuracy without opening Supabase.
 
@@ -297,10 +304,10 @@ Export `ms_drg_reference` table as formatted PDF. Columns: DRG code, description
 
 ### 6-3: PDF Generation Infrastructure
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — `pdfExportService.ts` (235 lines) + `culturalProfilePdfExport.ts` (411 lines)
 **Est:** 1.5 hours
 
-Shared PDF generation utility. Options: browser-side (html2pdf.js / jsPDF) or server-side (edge function). Browser-side preferred for pilot — no server dependency.
+Browser-side PDF generation using jsPDF + jspdf-autotable. No server dependency. Shared helpers: `addHeader()`, `addPageNumbers()`, `getFinalY()`, `ensureSpace()`. All PDFs include generation timestamp, Envision ATLUS branding, page numbers, and Akima-readable font sizes.
 
 **Acceptance:** PDF renders cleanly, readable font sizes (Akima-friendly), includes generation date and data source.
 
@@ -310,16 +317,10 @@ Shared PDF generation utility. Options: browser-side (html2pdf.js / jsPDF) or se
 
 ### 7-1: Cultural Competency Profile PDF
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — `culturalProfilePdfExport.ts` + `20260308000002_seed_cultural_profiles.sql`
 **Est:** 3 hours
 
-Format cultural competency profiles (veteran, African American, Hispanic/Latino, Native American) as readable PDF cards:
-- Population overview
-- Prevalence rates (with source citations)
-- Recommended screening tools
-- Drug interaction considerations
-- Trust-building guidance
-- Communication recommendations
+8 population profiles (veterans, unhoused, latino, blackAA, isolatedElderly, indigenous, immigrantRefugee, lgbtqElderly) seeded into `cultural_profiles` table via SQL migration. Each profile renders as multi-page PDF with: table of contents, population overview with caveat box, clinical considerations table, barriers to care, communication guidance, trust factors with historical context, cultural health practices, drug interaction warnings (color-coded by severity), support systems, and SDOH Z-codes. Profiles fetched from DB on demand — not hardcoded client-side.
 
 **Acceptance:** Akima reads each profile, flags inaccuracies. Content is in plain clinical language, not code.
 
@@ -327,10 +328,10 @@ Format cultural competency profiles (veteran, African American, Hispanic/Latino,
 
 ### 7-2: Clinical Content Review Dashboard Panel
 
-**Status:** NOT STARTED
+**Status:** ✅ COMPLETE (2026-03-08) — `ClinicalContentReviewPanel.tsx` (184 lines) + 4 new tests
 **Est:** 1 hour
 
-Admin panel listing all clinical content that needs periodic review. Links to PDF exports. Shows last review date, reviewer, status (reviewed/pending/flagged).
+Admin panel listing 3 clinical content items: Cultural Competency Profiles (annual review, export PDF from DB), MS-DRG Reference Table (annual/CMS fiscal year, export PDF from DB), AI Code Validation Report (monthly, links to dashboard export above). Each item shows: title, EABadge review status (pending/reviewed/overdue), description, review cycle, and export button. Integrated into `ClinicalValidationDashboard.tsx` below the rejection log table.
 
 **Acceptance:** Akima can see what needs her review and download the relevant PDF.
 

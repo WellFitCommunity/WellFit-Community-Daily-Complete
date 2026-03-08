@@ -14,6 +14,7 @@ import { EAAlert } from '../../envision-atlus/EAAlert';
 import { ValidationSummaryCards } from './ValidationSummaryCards';
 import { RejectionLogTable } from './RejectionLogTable';
 import { ReferenceDataHealthPanel } from './ReferenceDataHealthPanel';
+import { ClinicalContentReviewPanel } from './ClinicalContentReviewPanel';
 import { useValidationData } from './useValidationData';
 import { exportValidationReportPDF, exportDRGReferencePDF } from './pdfExportService';
 import type { DRGReferenceEntry } from './pdfExportService';
@@ -241,6 +242,9 @@ export const ClinicalValidationDashboard: React.FC = () => {
 
       {/* Rejection Log Table */}
       <RejectionLogTable entries={rejectionLog} />
+
+      {/* Clinical Content Review (Phase 7-2) */}
+      <ClinicalContentReviewPanel />
     </div>
   );
 };
