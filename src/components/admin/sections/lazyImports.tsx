@@ -96,3 +96,6 @@ export const MCPChainManagementPanel = lazy(() => import('../mcp-chains/MCPChain
 
 // MCP Medical Coding
 export const MedicalCodingMCPPanel = lazy(() => import('../medical-coding/MedicalCodingMCPPanel'));
+
+// Clinical Validation
+export const ClinicalValidationDashboard = lazy(() => import('../clinical-validation'));

@@ -12,6 +12,8 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 const logger = createLogger('coding-suggest');
 
@@ -222,6 +224,24 @@ serve(async (req) => {
 
     const responseTime = Date.now() - startTime;
 
+    // --- Clinical Validation Hook ---
+    // Validate AI-generated codes before returning to the caller
+    const validationResult = await validateClinicalOutput(
+      parsed as CodingOutput,
+      { source: "coding-suggest", sb, patientId: userId ?? undefined }
+    );
+
+    // Log validation results to DB (fire-and-forget)
+    logValidationResults(validationResult, sb, undefined, 0).catch(() => {});
+
+    if (validationResult.rejectedCodes.length > 0) {
+      logger.warn("AI codes flagged by validation hook", {
+        source: "coding-suggest",
+        flaggedCount: String(validationResult.rejectedCodes.length),
+        totalChecked: String(validationResult.audit.codesChecked),
+      });
+    }
+
     // Calculate cost (Sonnet 4.5 pricing: $3 per 1M input, $15 per 1M output)
     const inputTokens = claudeResponse?.usage?.input_tokens || 0;
     const outputTokens = claudeResponse?.usage?.output_tokens || 0;
@@ -267,7 +287,9 @@ serve(async (req) => {
     });
     if (auditErr) logger.error("coding_audits insert failed", { error: auditErr.message });
 
-    const resp = DEBUG ? { ...parsed, _debug: { raw_len: text.length } } : parsed;
+    // Return flagged output (codes stay visible, invalid ones marked _validated: false)
+    const flagged = validationResult.flaggedOutput ?? parsed;
+    const resp = DEBUG ? { ...flagged, _debug: { raw_len: text.length } } : flagged;
     return new Response(JSON.stringify(resp), { headers, status: 200 });
 
   } catch (err: unknown) {

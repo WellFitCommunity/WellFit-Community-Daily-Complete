@@ -28,6 +28,8 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -244,6 +246,27 @@ serve(async (req) => {
       logger
     );
     const responseTime = Date.now() - startTime;
+
+    // --- Clinical Validation Hook ---
+    // Validate AI risk score is within valid range
+    const codingOutput: CodingOutput = {
+      risk_score: aiAssessment.overallRiskScore,
+    };
+    const validationResult = await validateClinicalOutput(codingOutput, {
+      source: "ai-fall-risk-predictor",
+      sb: supabase,
+      patientId,
+    });
+
+    // Log validation results to DB (fire-and-forget)
+    logValidationResults(validationResult, supabase, undefined, 0).catch(() => {});
+
+    if (validationResult.rejectedCodes.length > 0) {
+      logger.warn("Fall risk score flagged by validation hook", {
+        score: String(aiAssessment.overallRiskScore),
+        reason: validationResult.rejectedCodes[0]?.detail ?? "unknown",
+      });
+    }
 
     // Build final assessment
     const assessmentId = crypto.randomUUID();

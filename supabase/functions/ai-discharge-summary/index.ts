@@ -38,6 +38,8 @@ import { normalizeSummaryResponse, getDefaultSummary } from "./normalize.ts";
 import { logUsage } from "./usageLogging.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -128,6 +130,28 @@ serve(async (req) => {
       culturalPromptSection
     );
     const responseTime = Date.now() - startTime;
+
+    // --- Clinical Validation Hook ---
+    // Validate AI-generated diagnosis codes and risk score
+    const codingOutput: CodingOutput = {
+      icd10: summary.dischargeDiagnoses.map((d: { code: string; display: string }) => ({
+        code: d.code, rationale: d.display,
+      })),
+      risk_score: summary.readmissionRiskScore,
+    };
+    const validationResult = await validateClinicalOutput(codingOutput, {
+      source: "ai-discharge-summary",
+      sb: supabase,
+      patientId,
+    });
+
+    // Log validation results to DB (fire-and-forget)
+    logValidationResults(validationResult, supabase, undefined, 0).catch(() => {});
+
+    if (validationResult.rejectedCodes.length > 0) {
+      (summary as Record<string, unknown>)._codeValidation = validationResult.flaggedOutput?._validationSummary ?? null;
+      (summary as Record<string, unknown>)._rejectedCodes = validationResult.rejectedCodes;
+    }
 
     // Log PHI access
     logger.phi("Generated discharge summary", {

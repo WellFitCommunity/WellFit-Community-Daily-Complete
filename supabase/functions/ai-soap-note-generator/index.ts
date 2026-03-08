@@ -21,6 +21,8 @@ import { buildSOAPPrompt } from "./promptBuilder.ts";
 import { normalizeSOAPResponse, getDefaultSOAPNote, redact } from "./responseNormalizer.ts";
 import { logUsage } from "./usageLogger.ts";
 import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -130,6 +132,30 @@ serve(async (req) => {
     const startTime = Date.now();
     const soapNote = await generateSOAPNote(context, templateStyle, logger, resolvedStyle, culturalPromptSection);
     const responseTime = Date.now() - startTime;
+
+    // --- Clinical Validation Hook ---
+    // Validate AI-suggested ICD-10 and CPT codes in the SOAP note
+    const codingOutput: CodingOutput = {
+      icd10: soapNote.icd10Suggestions.map((s: { code: string; display: string }) => ({
+        code: s.code, rationale: s.display,
+      })),
+      cpt: soapNote.cptSuggestions.map((s: { code: string; display: string }) => ({
+        code: s.code, rationale: s.display,
+      })),
+    };
+    const validationResult = await validateClinicalOutput(codingOutput, {
+      source: "ai-soap-note-generator",
+      sb: supabase,
+    });
+
+    // Log validation results to DB (fire-and-forget)
+    logValidationResults(validationResult, supabase, undefined, 0).catch(() => {});
+
+    // Attach validation flags to the SOAP note code suggestions
+    if (validationResult.flaggedOutput) {
+      (soapNote as Record<string, unknown>)._codeValidation = validationResult.flaggedOutput._validationSummary;
+      (soapNote as Record<string, unknown>)._rejectedCodes = validationResult.rejectedCodes;
+    }
 
     // Log PHI access for HIPAA compliance
     logger.phi("Generated AI SOAP note", {

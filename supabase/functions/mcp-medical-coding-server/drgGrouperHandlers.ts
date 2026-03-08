@@ -21,6 +21,8 @@ import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
 import { buildSafeDocumentSection } from "../_shared/promptInjectionGuard.ts";
 import { DRG_ANALYSIS_TOOL } from "./aiToolSchemas.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 // -------------------------------------------------------
 // Database row shapes (system boundary casts)
@@ -338,6 +340,37 @@ export function createDRGGrouperHandlers(
       .filter(d => d.is_mcc)
       .map(d => d.code);
 
+    // --- 4b. Clinical Validation Hook ---
+    const codingOutput: CodingOutput = {
+      icd10: [
+        { code: analysis.principal_diagnosis.code, rationale: analysis.principal_diagnosis.description },
+        ...analysis.secondary_diagnoses.map(d => ({
+          code: d.code, rationale: d.description,
+        })),
+      ],
+      drg: {
+        code: optimal.code,
+        description: optimal.description,
+        weight: optimal.weight,
+      },
+    };
+    const validationResult = await validateClinicalOutput(codingOutput, {
+      source: "mcp-drg-grouper",
+      sb,
+      patientId,
+    });
+
+    // Log validation results to DB (fire-and-forget)
+    logValidationResults(validationResult, sb, tenantId, 0).catch(() => {});
+
+    let codeValidation: Record<string, unknown> | undefined;
+    if (validationResult.rejectedCodes.length > 0) {
+      codeValidation = {
+        _validationSummary: validationResult.flaggedOutput?._validationSummary ?? null,
+        _rejectedCodes: validationResult.rejectedCodes,
+      };
+    }
+
     // --- 5. Persist DRG result ---
     const drgResult = {
       tenant_id: tenantId || null,
@@ -465,6 +498,7 @@ export function createDRGGrouperHandlers(
         output_tokens: outputTokens,
         response_time_ms: responseTimeMs
       },
+      ...(codeValidation ? { code_validation: codeValidation } : {}),
       advisory: 'DRG assignment is advisory only. All codes require clinical review and confirmation before billing.'
     };
   }

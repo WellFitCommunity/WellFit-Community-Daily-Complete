@@ -25,6 +25,8 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -186,6 +188,33 @@ serve(async (req) => {
     );
 
     const responseTime = Date.now() - startTime;
+
+    // --- Clinical Validation Hook ---
+    // Validate medication names from reconciliation output
+    const allMedNames = [
+      ...(result.reconciliationSummary.continued || []).map((m: MedicationEntry) => m.name),
+      ...(result.reconciliationSummary.new || []).map((m: MedicationEntry) => m.name),
+      ...(result.reconciliationSummary.discontinued || []).map((m: MedicationEntry) => m.name),
+    ].filter(Boolean);
+
+    if (allMedNames.length > 0) {
+      const codingOutput: CodingOutput = {
+        medications: allMedNames.map((name: string) => ({ name })),
+      };
+      const validationResult = await validateClinicalOutput(codingOutput, {
+        source: "ai-medication-reconciliation",
+        sb: supabase,
+        patientId,
+      });
+
+      // Log validation results to DB (fire-and-forget)
+      logValidationResults(validationResult, supabase, undefined, 0).catch(() => {});
+
+      if (validationResult.rejectedCodes.length > 0) {
+        (result as Record<string, unknown>)._medicationValidation = validationResult.flaggedOutput?._validationSummary ?? null;
+        (result as Record<string, unknown>)._rejectedMedications = validationResult.rejectedCodes;
+      }
+    }
 
     // Log usage
     await supabase.from("claude_usage_logs").insert({

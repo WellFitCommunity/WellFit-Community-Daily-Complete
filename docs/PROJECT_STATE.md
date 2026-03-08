@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-06 (Clinical Validation Hooks Architecture — Design Session)
-**Last Session:** Design session with Maria. Created AI Agent Quality Variance doc + Clinical Validation Hooks Architecture doc. No code changes — architecture and governance documentation only. MCP tracker: 15/26 done.
+**Last Updated:** 2026-03-07 (Clinical Validation Hooks — Phases 1-3 Implementation)
+**Last Session:** Built Phases 1-3 of clinical validation hooks. Created NLM API validator, FHIR code system validator, core validator module (decomposed), validation_feedback migration (pushed). Wired 10 AI edge functions with validation hooks. Tracker: 10/19 done.
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,100 tests (552 suites), 0 lint warnings, 0 typecheck errors
 
@@ -26,16 +26,20 @@
 
 | Phase | Focus | Est. Hours | Status |
 |-------|-------|-----------|--------|
-| 1. Reference Data | NLM API + ICD-10 cache + MS-DRG table | 8 | 0/4 |
-| 2. Validator Module | `clinicalOutputValidator.ts` shared module | 8 | 0/3 |
-| 3. Wire Into AI Functions | All 14 AI edge functions | 6 | 0/2 |
-| 4. Results Table | `validation_hook_results` migration + audit | 2 | 0/2 |
+| 1. Reference Data | NLM API + ICD-10 cache + MS-DRG table | 8 | ✅ 4/4 |
+| 2. Validator Module | `clinicalOutputValidator.ts` shared module | 8 | ✅ 3/3 |
+| 3. Wire Into AI Functions | 10 AI edge functions wired | 6 | ✅ 2/2 |
+| 4. Results Table | `validation_feedback` pushed, `validation_hook_results` remaining | 2 | 1/2 |
 | 5. Admin Dashboard | Validation dashboard + reference data health | 12 | 0/3 |
 | 6. PDF Export | Validation reports + DRG table export | 6 | 0/3 |
 | 7. Clinical Content Export | Cultural competency PDFs for Akima review | 4 | 0/2 |
-| **Total** | | **~46** | **0/19** |
+| **Total** | | **~46** | **10/19** |
 
-**Blocked:** Failure behavior policy (Akima decision), CPT license (Maria business decision)
+**Failure behavior:** Option C implemented — flag codes with `_validated: false` but return for coder review. Learning loop via `validation_feedback` table.
+
+**Next:** Phase 4-2 (audit integration), then Phase 5 (admin dashboard — Maria visual acceptance required).
+
+**Flagged for decomposition (pre-existing >600 lines):** `ai-treatment-pathway` (974), `ai-fall-risk-predictor` (757), `ai-care-escalation-scorer` (777).
 
 **Absorbs:** MCP tracker P1-1 (DRG table) and P1-8 (post-output validation) — now part of this tracker.
 

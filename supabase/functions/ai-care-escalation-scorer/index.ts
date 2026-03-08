@@ -18,6 +18,8 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -172,6 +174,26 @@ serve(async (req) => {
     );
 
     const responseTime = Date.now() - startTime;
+
+    // --- Clinical Validation Hook ---
+    // Validate AI escalation score is within valid range
+    const codingOutput: CodingOutput = {
+      risk_score: escalationScore.overallEscalationScore,
+    };
+    const scoreValidation = await validateClinicalOutput(codingOutput, {
+      source: "ai-care-escalation-scorer",
+      sb: supabase,
+      patientId,
+    });
+
+    // Log validation results to DB (fire-and-forget)
+    logValidationResults(scoreValidation, supabase, undefined, 0).catch(() => {});
+
+    if (scoreValidation.rejectedCodes.length > 0) {
+      logger.warn("Escalation score flagged by validation hook", {
+        score: String(escalationScore.overallEscalationScore),
+      });
+    }
 
     // Store assessment
     await storeAssessment(supabase, escalationScore, logger);

@@ -54,6 +54,7 @@ import {
   MCPServerHealthPanel,
   MCPKeyManagementPanel,
   MCPChainManagementPanel,
+  ClinicalValidationDashboard,
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
 
@@ -283,6 +284,17 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'clinical',
     priority: 'high',
     roles: ['admin', 'super_admin', 'case_manager', 'physician'],
+  },
+  {
+    id: 'clinical-validation',
+    title: 'AI Code Validation Dashboard',
+    subtitle: 'Monitor AI-generated clinical code validation — rejection rates, hallucination trends, reference data health',
+    icon: '\u2705',
+    headerColor: 'text-emerald-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ClinicalValidationDashboard /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin'],
   },
   {
     id: 'public-health-reporting',

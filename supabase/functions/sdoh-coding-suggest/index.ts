@@ -8,6 +8,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from "../_shared/auditLogger.ts";
 import { fetchCulturalContext, type CulturalContextResponse } from "../_shared/culturalCompetencyClient.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 const logger = createLogger('sdoh-coding-suggest');
 
@@ -381,12 +383,43 @@ Format as JSON with this structure:
 
       // PHI: User/Encounter IDs not logged per HIPAA - data stored in claude_api_audit table
 
-      // Validate and enhance the response
+      // --- Clinical Validation Hook ---
+      // Map SDOH output shape to CodingOutput for validation
+      const codingOutput: CodingOutput = {
+        icd10: (analysis.medicalCodes?.icd10 ?? []).map((c: { code: string; rationale?: string; principal?: boolean }) => ({
+          code: c.code, rationale: c.rationale, principal: c.principal,
+        })),
+        cpt: (analysis.procedureCodes?.cpt ?? []).map((c: { code: string; modifiers?: string[]; rationale?: string }) => ({
+          code: c.code, modifiers: c.modifiers, rationale: c.rationale,
+        })),
+        risk_score: analysis.sdohAssessment?.overallComplexityScore,
+        confidence: analysis.confidence,
+      };
+
+      const validationResult = await validateClinicalOutput(codingOutput, {
+        source: "sdoh-coding-suggest",
+        sb: supabaseClient,
+      });
+
+      // Log validation results to DB (fire-and-forget)
+      logValidationResults(validationResult, supabaseClient, undefined, 0).catch(() => {});
+
+      if (validationResult.rejectedCodes.length > 0) {
+        logger.warn("SDOH codes flagged by validation hook", {
+          source: "sdoh-coding-suggest",
+          flaggedCount: String(validationResult.rejectedCodes.length),
+          totalChecked: String(validationResult.audit.codesChecked),
+        });
+      }
+
+      // Attach validation metadata to the response
       return {
         ...analysis,
         confidence: Math.min(Math.max(analysis.confidence || 75, 0), 100),
         timestamp: new Date().toISOString(),
-        model: 'claude-sonnet-4-5-20250929'
+        model: 'claude-sonnet-4-5-20250929',
+        _validation: validationResult.flaggedOutput?._validationSummary ?? null,
+        _rejectedCodes: validationResult.rejectedCodes,
       }
     } catch (parseError: unknown) {
       const parseErrorMessage = parseError instanceof Error ? parseError.message : String(parseError);

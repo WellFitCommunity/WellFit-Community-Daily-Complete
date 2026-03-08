@@ -23,6 +23,8 @@ import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
 import { buildSafeDocumentSection } from "../_shared/promptInjectionGuard.ts";
 import { REVENUE_OPTIMIZATION_TOOL } from "./aiToolSchemas.ts";
+import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
+import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
 // -------------------------------------------------------
 // Database row shapes (system boundary casts)
@@ -324,6 +326,40 @@ export function createRevenueOptimizerHandlers(
       }))
     ];
 
+    // 6b. Clinical Validation Hook — validate AI-suggested codes
+    const suggestedCptCodes = [
+      ...analysis.missing_codes
+        .filter(mc => mc.code_system === 'CPT' || mc.code_system === 'cpt')
+        .map(mc => ({ code: mc.code, rationale: mc.description })),
+      ...analysis.upgrade_opportunities
+        .map(uo => ({ code: uo.suggested_code, rationale: uo.description })),
+    ];
+    const suggestedHcpcsCodes = analysis.missing_codes
+      .filter(mc => mc.code_system === 'HCPCS' || mc.code_system === 'hcpcs')
+      .map(mc => ({ code: mc.code, rationale: mc.description }));
+
+    let revenueCodeValidation: Record<string, unknown> | undefined;
+    if (suggestedCptCodes.length > 0 || suggestedHcpcsCodes.length > 0) {
+      const codingOutput: CodingOutput = {
+        ...(suggestedCptCodes.length > 0 ? { cpt: suggestedCptCodes } : {}),
+        ...(suggestedHcpcsCodes.length > 0 ? { hcpcs: suggestedHcpcsCodes } : {}),
+      };
+      const validationResult = await validateClinicalOutput(codingOutput, {
+        source: "mcp-revenue-optimizer",
+        sb,
+        patientId: snapshot.patient_id,
+      });
+      // Log validation results to DB (fire-and-forget)
+      logValidationResults(validationResult, sb, tenantId, 0).catch(() => {});
+
+      if (validationResult.rejectedCodes.length > 0) {
+        revenueCodeValidation = {
+          _validationSummary: validationResult.flaggedOutput?._validationSummary ?? null,
+          _rejectedCodes: validationResult.rejectedCodes,
+        };
+      }
+    }
+
     // 7. Update snapshot with suggestions
     await withTimeout(
       sb.from('daily_charge_snapshots')
@@ -385,6 +421,7 @@ export function createRevenueOptimizerHandlers(
         output_tokens: outputTokens,
         response_time_ms: responseTimeMs
       },
+      ...(revenueCodeValidation ? { code_validation: revenueCodeValidation } : {}),
       advisory: 'All suggestions are advisory only. Revenue optimization requires clinical review and confirmation.'
     };
   }
