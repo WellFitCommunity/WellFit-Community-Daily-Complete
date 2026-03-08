@@ -8,14 +8,17 @@
  * Visual acceptance required: Maria must see this rendered before "done."
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { EACard, EACardContent } from '../../envision-atlus/EACard';
 import { EAAlert } from '../../envision-atlus/EAAlert';
 import { ValidationSummaryCards } from './ValidationSummaryCards';
 import { RejectionLogTable } from './RejectionLogTable';
 import { ReferenceDataHealthPanel } from './ReferenceDataHealthPanel';
 import { useValidationData } from './useValidationData';
+import { exportValidationReportPDF, exportDRGReferencePDF } from './pdfExportService';
+import type { DRGReferenceEntry } from './pdfExportService';
 import type { ValidationFilters } from './ClinicalValidationDashboard.types';
+import { useSupabaseClient } from '../../../contexts/AuthContext';
 
 /** AI functions that are wired with validation hooks */
 const SOURCE_FUNCTIONS = [
@@ -51,6 +54,7 @@ const REJECTION_REASONS = [
 ];
 
 export const ClinicalValidationDashboard: React.FC = () => {
+  const supabase = useSupabaseClient();
   const {
     summary,
     rejectionLog,
@@ -61,6 +65,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
     setFilters,
     refresh,
   } = useValidationData();
+  const [exporting, setExporting] = useState(false);
 
   const handleFilterChange = useCallback(
     (key: keyof ValidationFilters, value: string | null) => {
@@ -68,6 +73,44 @@ export const ClinicalValidationDashboard: React.FC = () => {
     },
     [filters, setFilters]
   );
+
+  /** Export validation report as PDF */
+  const handleExportReport = useCallback(() => {
+    if (!summary) return;
+    exportValidationReportPDF({
+      summary,
+      rejectionLog,
+      referenceData,
+      dateRange: filters.dateRange,
+    });
+  }, [summary, rejectionLog, referenceData, filters.dateRange]);
+
+  /** Fetch DRG reference data and export as PDF */
+  const handleExportDRG = useCallback(async () => {
+    setExporting(true);
+    try {
+      const { data, error: drgError } = await supabase
+        .from('ms_drg_reference')
+        .select('drg_code, description, relative_weight, mdc, type')
+        .order('drg_code');
+
+      if (drgError) {
+        throw new Error(drgError.message);
+      }
+
+      const entries = (data ?? []) as DRGReferenceEntry[];
+      if (entries.length === 0) {
+        return; // No data to export
+      }
+      exportDRGReferencePDF(entries);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // Show error via alert since this is a user action
+      window.alert(`Failed to export DRG table: ${msg}`);
+    } finally {
+      setExporting(false);
+    }
+  }, [supabase]);
 
   if (loading) {
     return (
@@ -163,8 +206,22 @@ export const ClinicalValidationDashboard: React.FC = () => {
               </select>
             </div>
 
-            {/* Refresh */}
-            <div className="ml-auto self-end">
+            {/* Actions */}
+            <div className="ml-auto self-end flex gap-2">
+              <button
+                onClick={handleExportReport}
+                disabled={!summary}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Export Report PDF
+              </button>
+              <button
+                onClick={handleExportDRG}
+                disabled={exporting}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exporting ? 'Exporting...' : 'Export DRG Table'}
+              </button>
               <button
                 onClick={refresh}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px]"

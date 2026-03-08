@@ -10,6 +10,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
+// Mock PDF exports
+const mockExportValidationReport = vi.fn();
+const mockExportDRGReference = vi.fn();
+
+vi.mock('../pdfExportService', () => ({
+  exportValidationReportPDF: (...args: unknown[]) => mockExportValidationReport(...args),
+  exportDRGReferencePDF: (...args: unknown[]) => mockExportDRGReference(...args),
+}));
+
 // --- Mock data ---
 
 const mockValidationResults = [
@@ -400,6 +409,49 @@ describe('ClinicalValidationDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('1 stale')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Export Report PDF button that calls export function', async () => {
+    render(<ClinicalValidationDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Export Report PDF' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export Report PDF' }));
+    expect(mockExportValidationReport).toHaveBeenCalledTimes(1);
+
+    // Verify it passes the correct data shape
+    const callArgs = mockExportValidationReport.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs).toHaveProperty('summary');
+    expect(callArgs).toHaveProperty('rejectionLog');
+    expect(callArgs).toHaveProperty('referenceData');
+    expect(callArgs).toHaveProperty('dateRange', '30d');
+  });
+
+  it('renders Export DRG Table button that fetches and exports DRG data', async () => {
+    // Mock ms_drg_reference query
+    const originalImpl = mockFrom.getMockImplementation();
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'ms_drg_reference') {
+        return createQueryChain([
+          { drg_code: '001', description: 'Test DRG', relative_weight: 1.5, mdc: '01', type: 'SURG' },
+        ]);
+      }
+      return originalImpl ? originalImpl(table) : createQueryChain([]);
+    });
+
+    render(<ClinicalValidationDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Export DRG Table' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export DRG Table' }));
+
+    await waitFor(() => {
+      expect(mockExportDRGReference).toHaveBeenCalledTimes(1);
     });
   });
 });
