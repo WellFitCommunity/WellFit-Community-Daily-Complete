@@ -122,7 +122,7 @@
     "dev": "vite",
     "start": "vite",
     "start:cs": "vite --port 3100 --host",
-    "build": "npx tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

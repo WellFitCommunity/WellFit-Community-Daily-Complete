@@ -3,14 +3,40 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-08 (Clinical Validation Hooks — Phases 4-7 Complete, Tracker 19/19 DONE)
-**Last Session:** Completed all remaining phases (4-7) of clinical validation hooks. Built admin dashboard with summary cards, rejection log table, reference data health panel. Built PDF export for validation reports, DRG reference table, and cultural competency profiles (8 populations). Built clinical content review panel. Seeded cultural profiles via SQL migration. Tracker: 19/19 done.
+**Last Updated:** 2026-03-10 (MCP Ecosystem Audit — Full findings report + completion tracker created)
+**Last Session:** Full audit of all 14 MCP servers. Identified ~76 idle tools, 4 undefined chains, missing retry logic, hollow clearinghouse, FHIR wiring gaps. Created findings report + 18-item completion tracker. Adversarial testing planned for tonight.
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,122 tests (553 suites), 0 lint warnings, 0 typecheck errors
 
 ---
 
-## Clinical Validation Hooks (2026-03-06) — NEXT PRIORITY
+## MCP Ecosystem Completion (2026-03-10) — NEXT PRIORITY
+
+**Tracker:** `docs/trackers/mcp-completion-tracker.md`
+**Findings Report:** `docs/MCP_ECOSYSTEM_FINDINGS_2026-03-10.md`
+
+**What:** Close ALL remaining MCP gaps — wire ~76 idle tools, define chains 2-5, add retry logic, activate clearinghouse, build unified cost dashboard, fix medical coding security.
+
+**Why:** 128+ tools built across 14 servers, but only ~52 are callable from UI. Hospital pilot needs full tool coverage — "if we don't wire them all, something will get missed."
+
+| Priority | Items | Status | Focus |
+|----------|-------|--------|-------|
+| P0 Tonight | 1 | 0/1 | Adversarial testing (Maria + Akima + Claude) |
+| P1 Chain Infrastructure | 3 | 0/3 | Retry logic, chains 2-5, end-to-end verification |
+| P2 Revenue Tool Wiring | 3 | 0/3 | Medical coding client, clearinghouse activation |
+| P3 Clinical Tool Wiring | 3 | 0/3 | FHIR CRUD, prior auth queue, edge fn tools |
+| P4 Reference Tool Wiring | 4 | 0/4 | PubMed, medical codes, CMS, NPI, HL7 idle tools |
+| P5 Observability | 2 | 0/2 | Unified cost dashboard, cultural competency client |
+| P6 Security Polish | 2 | 0/2 | Medical coding tenant_id fix, structured AI output |
+| **Total** | **18** | **0/18** | |
+
+**Estimated remaining:** ~55-65 hours across 7 sessions + tonight's adversarial testing
+
+**Clearinghouse dependency:** Sandbox credentials arriving week of 2026-03-16. P2-2 blocked until then.
+
+---
+
+## Clinical Validation Hooks (2026-03-06) — COMPLETE
 
 **Tracker:** `docs/trackers/clinical-validation-hooks-tracker.md`
 **Design Doc:** `docs/CLINICAL_VALIDATION_HOOKS_ARCHITECTURE.md`
@@ -428,7 +454,8 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | **MCP Server Compliance** | `docs/trackers/mcp-server-compliance-tracker.md` | **COMPLETE — 23/23 done, 8 sessions** |
 | **Compass Riley V2 Reasoning** | `docs/trackers/compass-riley-v2-reasoning-modes-tracker.md` | **COMPLETE — 3/3 sessions done, 123 tests** |
 | **Cultural Competency MCP** | `docs/trackers/cultural-competency-mcp-tracker.md` | **COMPLETE — 3 sessions, 138 tests** |
-| **MCP Blind Spots** | `docs/trackers/mcp-blind-spots-tracker.md` | **5/12 fixed — S2-1 key isolation done, 7 items remaining** |
+| **MCP Blind Spots** | `docs/trackers/mcp-blind-spots-tracker.md` | **10/12 fixed — S3-1 (clearinghouse) + S4-4 (idle tools) remain** |
+| **MCP Completion** | `docs/trackers/mcp-completion-tracker.md` | **0/18 — NEW: Full ecosystem wiring (chains, tools, cost, security)** |
 | Oncology Module | `docs/trackers/oncology-module-tracker.md` | Foundation BUILT, Phase 1 next (11 sessions total) |
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
@@ -448,7 +475,8 @@ All 8 L&D sessions finished. Full data entry, monitoring, billing, FHIR, alerts,
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
 | Edge Functions Deployed | 137+ functions, all live (7 MCP servers redeployed 2026-03-04) | 2026-03-04 |
 | MCP Server Compliance | 23/23 complete | 2026-03-01 |
-| MCP Blind Spots | 5/12 fixed (see `mcp-blind-spots-tracker.md`) | 2026-03-04 |
+| MCP Blind Spots | 10/12 fixed (see `mcp-blind-spots-tracker.md`) | 2026-03-04 |
+| MCP Completion | 0/18 — NEW tracker for full ecosystem wiring | 2026-03-10 |
 | MCP Key Security | Per-server key isolation — 13 scoped keys, shared key revoked | 2026-03-04 |
 | Congruency Audit | COMPLETE — all findings remediated | 2026-02-22 |
 
