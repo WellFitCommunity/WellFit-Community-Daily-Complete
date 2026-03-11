@@ -581,6 +581,192 @@ describe('chainOrchestrationService', () => {
   });
 
   // ========================================================
+  // Tier 2: State — retry_count visibility in step results
+  // ========================================================
+  describe('retry_count in step results', () => {
+    it('returns retry_count for steps that required retries', async () => {
+      const stepsWithRetry = [
+        {
+          ...MOCK_STEP_RESULTS[0],
+          retry_count: 2,
+        },
+        {
+          ...MOCK_STEP_RESULTS[1],
+          retry_count: 0,
+        },
+      ];
+      mockInvoke.mockResolvedValueOnce({
+        data: { run: { ...MOCK_CHAIN_RUN, status: 'completed' }, steps: stepsWithRetry },
+        error: null,
+      });
+
+      const result = await chainOrchestrationService.getChainStatus('run-001');
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.steps[0].retry_count).toBe(2);
+        expect(result.data.steps[1].retry_count).toBe(0);
+      }
+    });
+
+    it('defaults retry_count to 0 for steps that succeeded on first try', async () => {
+      const stepsNoRetry = MOCK_STEP_RESULTS.map((s) => ({ ...s, retry_count: 0 }));
+      mockInvoke.mockResolvedValueOnce({
+        data: { run: MOCK_CHAIN_RUN, steps: stepsNoRetry },
+        error: null,
+      });
+
+      const result = await chainOrchestrationService.getChainStatus('run-001');
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        result.data.steps.forEach((step) => {
+          expect(step.retry_count).toBe(0);
+        });
+      }
+    });
+  });
+
+  // ========================================================
+  // Tier 2: State — new chain definitions (chains 2-5)
+  // ========================================================
+  describe('new chain definitions (chains 2-5)', () => {
+    it('can start a provider_onboarding chain', async () => {
+      const onboardingRun = {
+        ...MOCK_CHAIN_RUN,
+        chain_key: 'provider_onboarding',
+        status: 'running',
+      };
+      mockInvoke.mockResolvedValueOnce({
+        data: { run: onboardingRun },
+        error: null,
+      });
+
+      const result = await chainOrchestrationService.startChain(
+        'provider_onboarding',
+        { npi: '1234567890', first_name: 'Test Provider Alpha', last_name: 'Test', state: 'TX' }
+      );
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.run.chain_key).toBe('provider_onboarding');
+      }
+      expect(mockInvoke).toHaveBeenCalledWith('mcp-chain-orchestrator', {
+        body: {
+          action: 'start',
+          chain_key: 'provider_onboarding',
+          input_params: { npi: '1234567890', first_name: 'Test Provider Alpha', last_name: 'Test', state: 'TX' },
+        },
+      });
+    });
+
+    it('can start a clinical_decision_support chain that pauses at physician review', async () => {
+      const cdsRun = {
+        ...MOCK_CHAIN_RUN,
+        chain_key: 'clinical_decision_support',
+        status: 'awaiting_approval',
+        current_step_order: 5,
+      };
+      mockInvoke.mockResolvedValueOnce({
+        data: { run: cdsRun },
+        error: null,
+      });
+
+      const result = await chainOrchestrationService.startChain(
+        'clinical_decision_support',
+        { patient_id: 'patient-abc', clinical_query: 'hypertension treatment', cpt_code: '99213', icd_codes: ['I10'] }
+      );
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.run.status).toBe('awaiting_approval');
+        expect(result.data.run.current_step_order).toBe(5);
+      }
+    });
+
+    it('can start an encounter_to_claim chain that pauses at coder review', async () => {
+      const e2cRun = {
+        ...MOCK_CHAIN_RUN,
+        chain_key: 'encounter_to_claim',
+        status: 'awaiting_approval',
+        current_step_order: 2,
+      };
+      mockInvoke.mockResolvedValueOnce({
+        data: { run: e2cRun },
+        error: null,
+      });
+
+      const result = await chainOrchestrationService.startChain(
+        'encounter_to_claim',
+        { patient_id: 'patient-abc', encounter_id: 'enc-123', provider_npi: '1234567890', payer_id: 'payer-001', service_date: '2026-03-11' }
+      );
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.run.chain_key).toBe('encounter_to_claim');
+        expect(result.data.run.status).toBe('awaiting_approval');
+        expect(result.data.run.current_step_order).toBe(2);
+      }
+    });
+
+    it('can start a prior_auth_workflow chain that skips steps when PA not required', async () => {
+      const paRun = {
+        ...MOCK_CHAIN_RUN,
+        chain_key: 'prior_auth_workflow',
+        status: 'completed',
+        current_step_order: 5,
+      };
+      const paSteps = [
+        { step_key: 'check_pa_required', status: 'completed', output_data: { prior_auth_required: false } },
+        { step_key: 'create_pa', status: 'skipped' },
+        { step_key: 'search_evidence', status: 'skipped' },
+        { step_key: 'submit_pa', status: 'skipped' },
+        { step_key: 'submit_278', status: 'skipped' },
+      ];
+      mockInvoke.mockResolvedValueOnce({
+        data: { run: paRun, steps: paSteps },
+        error: null,
+      });
+
+      const result = await chainOrchestrationService.getChainStatus('run-pa');
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.run.status).toBe('completed');
+        expect(result.data.steps[0].status).toBe('completed');
+        expect(result.data.steps[1].status).toBe('skipped');
+        expect(result.data.steps[2].status).toBe('skipped');
+        expect(result.data.steps[3].status).toBe('skipped');
+        expect(result.data.steps[4].status).toBe('skipped');
+      }
+    });
+
+    it('lists all 6 chain definitions including new chains', async () => {
+      const allChains = [
+        ...MOCK_CHAIN_DEFINITIONS,
+        { id: 'def-003', chain_key: 'provider_onboarding', display_name: 'Provider Onboarding Pipeline', version: 1, is_active: true },
+        { id: 'def-004', chain_key: 'clinical_decision_support', display_name: 'Clinical Decision Support Pipeline', version: 1, is_active: true },
+        { id: 'def-005', chain_key: 'encounter_to_claim', display_name: 'Encounter-to-Claim Pipeline', version: 1, is_active: true },
+        { id: 'def-006', chain_key: 'prior_auth_workflow', display_name: 'Prior Authorization Workflow', version: 1, is_active: true },
+      ];
+      const mockQuery = createQueryMock({ data: allChains, error: null });
+      vi.mocked(supabase.from).mockReturnValue(mockQuery as unknown as ReturnType<typeof supabase.from>);
+
+      const result = await chainOrchestrationService.listChains();
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toHaveLength(6);
+        const keys = result.data.map((c) => c.chain_key);
+        expect(keys).toContain('provider_onboarding');
+        expect(keys).toContain('clinical_decision_support');
+        expect(keys).toContain('encounter_to_claim');
+        expect(keys).toContain('prior_auth_workflow');
+      }
+    });
+  });
+
+  // ========================================================
   // Tier 4: Edge Cases
   // ========================================================
   describe('edge cases', () => {

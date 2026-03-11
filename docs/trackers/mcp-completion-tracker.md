@@ -13,7 +13,7 @@
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
 | P0 — Tonight | 1 | 0/1 | Adversarial testing (Maria + Akima + Claude) |
-| P1 — Chain Infrastructure | 3 | 0/3 | Retry logic, chains 2-5, end-to-end verification |
+| P1 — Chain Infrastructure | 3 | 2/3 | ~~Retry logic~~, ~~chains 2-5~~, end-to-end verification |
 | P2 — Tool Wiring (Revenue) | 3 | 0/3 | Medical coding client, clearinghouse activation, rejection/stats tools |
 | P3 — Tool Wiring (Clinical) | 3 | 0/3 | FHIR CRUD, prior auth queue, edge function tools |
 | P4 — Tool Wiring (Reference) | 4 | 0/4 | PubMed, medical codes, CMS, NPI, HL7 idle tools |
@@ -113,7 +113,7 @@
 ## P1 — Chain Infrastructure
 
 ### P1-1: Chain Retry Logic
-**Status:** NOT DONE
+**Status:** DONE (2026-03-11)
 **Estimated:** ~4 hours
 
 **What:** Implement retry loop in `mcp-chain-orchestrator` for failed steps.
@@ -130,7 +130,7 @@
 ---
 
 ### P1-2: Define Chains 2-5 in Database
-**Status:** NOT DONE
+**Status:** DONE (2026-03-11)
 **Estimated:** ~8-12 hours
 
 **Chain 2: Provider Onboarding**

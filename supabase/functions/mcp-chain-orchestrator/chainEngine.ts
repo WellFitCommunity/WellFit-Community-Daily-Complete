@@ -32,6 +32,10 @@ import {
   updateRunStep,
   refreshChainRun,
 } from "./chainActions.ts";
+import {
+  executeWithRetry,
+  type RetryAuditContext,
+} from "./retryEngine.ts";
 
 // Re-export actions so index.ts can import from one place
 export { approveStep, cancelChain, getChainStatus } from "./chainActions.ts";
@@ -258,14 +262,22 @@ async function executeSteps(
     const startTime = Date.now();
 
     try {
+      const retryCtx: RetryAuditContext = {
+        chainRunId: run.id,
+        chainKey: run.chain_key,
+        userId: run.started_by,
+        tenantId: run.tenant_id,
+      };
       const { output: toolOutput, attempts } = await executeWithRetry(
         stepDef,
         resolvedArgs,
-        run.id,
-        logger
+        retryCtx,
+        logger,
+        callMCPServer
       );
       const execMs = Date.now() - startTime;
-      const retryMetadata = attempts > 1 ? { retryAttempts: attempts - 1 } : undefined;
+      const retryCount = attempts - 1;
+      const retryMetadata = retryCount > 0 ? { retryAttempts: retryCount } : undefined;
 
       // --- Approval gate ---
       if (stepDef.requires_approval) {
@@ -275,6 +287,7 @@ async function executeSteps(
             status: "awaiting_approval" as ChainStepStatus,
             output_data: toolOutput,
             execution_time_ms: execMs,
+            retry_count: retryCount,
           })
           .eq("id", stepResult.id);
 
@@ -308,6 +321,7 @@ async function executeSteps(
           status: "completed" as ChainStepStatus,
           output_data: toolOutput,
           execution_time_ms: execMs,
+          retry_count: retryCount,
           completed_at: new Date().toISOString(),
         })
         .eq("id", stepResult.id);
@@ -370,82 +384,6 @@ async function executeSteps(
 
   logger.info("CHAIN_COMPLETED", { chainRunId: run.id, chainKey: run.chain_key });
   return refreshChainRun(sb, run.id);
-}
-
-// ============================================================
-// Retry Logic
-// ============================================================
-
-/** Determine if an error is transient and worth retrying */
-function isRetryableError(errMsg: string): boolean {
-  const retryablePatterns = [
-    /timed out/i,
-    /timeout/i,
-    /returned 5\d{2}/,       // 5xx server errors
-    /returned 429/,           // rate limited
-    /network/i,
-    /ECONNREFUSED/i,
-    /ECONNRESET/i,
-    /AbortError/i,
-    /fetch failed/i,
-  ];
-  return retryablePatterns.some((p) => p.test(errMsg));
-}
-
-/** Calculate exponential backoff with jitter */
-function getBackoffMs(attempt: number): number {
-  const base = Math.min(1000 * Math.pow(2, attempt), 30000);
-  const jitter = Math.floor(Math.random() * 500);
-  return base + jitter;
-}
-
-/** Execute an MCP call with retry support */
-async function executeWithRetry(
-  stepDef: ChainStepDefinition,
-  resolvedArgs: Record<string, unknown>,
-  chainRunId: string,
-  logger: EdgeFunctionLogger
-): Promise<{ output: Record<string, unknown>; totalMs: number; attempts: number }> {
-  const maxRetries = stepDef.max_retries || 0;
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    if (attempt > 0) {
-      const backoffMs = getBackoffMs(attempt - 1);
-      logger.info("CHAIN_STEP_RETRY", {
-        chainRunId,
-        stepKey: stepDef.step_key,
-        attempt,
-        maxRetries,
-        backoffMs,
-        lastError: lastError?.message,
-      });
-      await new Promise((resolve) => setTimeout(resolve, backoffMs));
-    }
-
-    const startTime = Date.now();
-    try {
-      const output = await callMCPServer(
-        stepDef.mcp_server,
-        stepDef.tool_name,
-        resolvedArgs,
-        stepDef.timeout_ms,
-        chainRunId,
-        logger
-      );
-      return { output, totalMs: Date.now() - startTime, attempts: attempt + 1 };
-    } catch (err: unknown) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-
-      // Non-retryable errors fail immediately
-      if (!isRetryableError(lastError.message) || attempt >= maxRetries) {
-        throw lastError;
-      }
-    }
-  }
-
-  // Should not reach here, but TypeScript needs it
-  throw lastError ?? new Error("Retry loop exited unexpectedly");
 }
 
 // ============================================================

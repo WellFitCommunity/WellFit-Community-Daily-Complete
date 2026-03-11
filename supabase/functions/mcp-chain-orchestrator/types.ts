@@ -92,6 +92,7 @@ export interface ChainStepResult {
   approved_at: string | null;
   approval_notes: string | null;
   placeholder_message: string | null;
+  retry_count: number;
 }
 
 /** Request body for starting a chain */

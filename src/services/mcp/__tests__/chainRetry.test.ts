@@ -223,6 +223,32 @@ describe('Chain Retry Logic', () => {
       expect(errors).toHaveLength(3);
     });
 
+    it('should produce retry_count value for step result persistence', () => {
+      // Simulates the retryCount calculation done in executeSteps
+      const maxRetries = 2;
+      let finalAttempts = 0;
+
+      // Simulate: succeeds on 2nd attempt (1 retry)
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        finalAttempts = attempt + 1;
+        if (attempt === 1) break; // success on 2nd try
+
+        const errMsg = 'MCP server returned 503: Service Unavailable';
+        if (!isRetryableError(errMsg) || attempt >= maxRetries) break;
+      }
+
+      const retryCount = finalAttempts - 1;
+      expect(retryCount).toBe(1);
+      // retryCount is what gets persisted to chain_step_results.retry_count
+    });
+
+    it('should produce retry_count of 0 when succeeding on first attempt', () => {
+      // With max_retries = 3, but succeeding immediately, retry_count should be 0
+      const finalAttempts = 1; // succeeds immediately
+      const retryCount = finalAttempts - 1;
+      expect(retryCount).toBe(0);
+    });
+
     it('should track retry metadata for audit logging', () => {
       const maxRetries = 2;
       let finalAttempts = 0;

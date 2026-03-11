@@ -91,6 +91,7 @@ function makeStepResult(overrides: Partial<ChainStepResult> = {}): ChainStepResu
     approved_at: null,
     approval_notes: null,
     placeholder_message: null,
+    retry_count: 0,
     ...overrides,
   };
 }

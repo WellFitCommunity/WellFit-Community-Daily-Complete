@@ -3,10 +3,10 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-10 (MCP Ecosystem Audit — Full findings report + completion tracker created)
-**Last Session:** Full audit of all 14 MCP servers. Identified ~76 idle tools, 4 undefined chains, missing retry logic, hollow clearinghouse, FHIR wiring gaps. Created findings report + 18-item completion tracker. Adversarial testing planned for tonight.
+**Last Updated:** 2026-03-11 (P1-1 + P1-2 — chain retry gaps closed, chains 2-5 defined)
+**Last Session:** Closed P1-1 retry gaps (retry_count column, per-retry audit logging, retryEngine.ts extraction). Created P1-2 migration with chains 2-5 (provider_onboarding, clinical_decision_support, encounter_to_claim, prior_auth_workflow). Added 9 new tests. P1-3 (end-to-end verification) remains.
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,122 tests (553 suites), 0 lint warnings, 0 typecheck errors
+**Codebase Health:** 11,131 tests (553 suites), 0 lint warnings, 0 typecheck errors
 
 ---
 

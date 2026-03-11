@@ -91,6 +91,7 @@ export interface ChainStepResult {
   approved_at: string | null;
   approval_notes: string | null;
   placeholder_message: string | null;
+  retry_count: number;
 }
 
 /** Chain status response (run + all step results) */
