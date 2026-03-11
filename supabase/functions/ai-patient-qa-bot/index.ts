@@ -22,6 +22,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
+import { FULL_DRIFT_GUARD } from "../_shared/conversationDriftGuard.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -496,7 +497,9 @@ async function generateAnswer(
  * Get system prompt for the Q&A bot
  */
 function getSystemPrompt(language: string): string {
-  return `You are a compassionate, knowledgeable health assistant helping patients understand their health better.
+  return `${FULL_DRIFT_GUARD}
+
+You are a compassionate, knowledgeable health assistant helping patients understand their health better.
 
 CRITICAL RULES:
 1. NEVER diagnose conditions or provide definitive medical advice

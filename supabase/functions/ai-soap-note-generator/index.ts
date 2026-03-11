@@ -18,6 +18,7 @@ import { SONNET_MODEL } from "../_shared/models.ts";
 import type { SOAPNoteRequest, GeneratedSOAPNote, ParsedSOAPResponse, PhysicianStyleHint } from "./types.ts";
 import { gatherEncounterContext } from "./contextGatherer.ts";
 import { buildSOAPPrompt } from "./promptBuilder.ts";
+import { FULL_DRIFT_GUARD } from "../_shared/conversationDriftGuard.ts";
 import { normalizeSOAPResponse, getDefaultSOAPNote, redact } from "./responseNormalizer.ts";
 import { logUsage } from "./usageLogger.ts";
 import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
@@ -222,6 +223,7 @@ async function generateSOAPNote(
     body: JSON.stringify({
       model: SONNET_MODEL,
       max_tokens: 4096,
+      system: FULL_DRIFT_GUARD,
       messages: [{ role: "user", content: prompt }],
     }),
   });

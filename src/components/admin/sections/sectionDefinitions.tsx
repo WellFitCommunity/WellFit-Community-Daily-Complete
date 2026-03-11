@@ -51,12 +51,10 @@ import {
   ProviderCoverageDashboard,
   UserRoleManagementPanel,
   UserProvisioningPanel,
-  MCPServerHealthPanel,
-  MCPKeyManagementPanel,
-  MCPChainManagementPanel,
   ClinicalValidationDashboard,
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
+import { getMcpSections } from './mcpSections';
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -543,39 +541,9 @@ export const getAllSections = (): DashboardSection[] => [
     priority: 'medium',
     roles: ['admin', 'super_admin'],
   },
-  {
-    id: 'mcp-server-health',
-    title: 'MCP Server Health Monitor',
-    subtitle: 'Real-time health and performance monitoring for all 11 MCP servers',
-    icon: '\uD83D\uDD0C',
-    headerColor: 'text-blue-800',
-    component: <Suspense fallback={<SectionLoadingFallback />}><MCPServerHealthPanel /></Suspense>,
-    category: 'admin',
-    priority: 'high',
-    roles: ['admin', 'super_admin'],
-  },
-  {
-    id: 'mcp-key-management',
-    title: 'MCP API Key Management',
-    subtitle: 'Create, rotate, and revoke machine-to-machine API keys for MCP servers',
-    icon: '\uD83D\uDD11',
-    headerColor: 'text-indigo-800',
-    component: <Suspense fallback={<SectionLoadingFallback />}><MCPKeyManagementPanel /></Suspense>,
-    category: 'admin',
-    priority: 'high',
-    roles: ['super_admin'],
-  },
-  {
-    id: 'mcp-chain-management',
-    title: 'MCP Chain Orchestration',
-    subtitle: 'Manage multi-server pipelines, monitor chain runs, and approve clinical gates',
-    icon: '\u26D3',
-    headerColor: 'text-teal-800',
-    component: <Suspense fallback={<SectionLoadingFallback />}><MCPChainManagementPanel /></Suspense>,
-    category: 'admin',
-    priority: 'high',
-    roles: ['admin', 'super_admin'],
-  },
+  // MCP sections extracted to mcpSections.tsx for 600-line compliance
+  ...getMcpSections(),
+
   {
     id: 'data-export',
     title: 'Data Export & Advanced Tools',

@@ -32,6 +32,7 @@ import type {
 import { redact } from "./types.ts";
 import { gatherPatientContext } from "./patientContext.ts";
 import { buildCarePlanPrompt } from "./promptBuilder.ts";
+import { FULL_DRIFT_GUARD } from "../_shared/conversationDriftGuard.ts";
 import {
   normalizeCarePlanResponse,
   getDefaultCarePlan,
@@ -237,6 +238,7 @@ async function generateCarePlan(
     body: JSON.stringify({
       model: SONNET_MODEL,
       max_tokens: 4096,
+      system: FULL_DRIFT_GUARD,
       messages: [{ role: "user", content: prompt }],
     }),
   });

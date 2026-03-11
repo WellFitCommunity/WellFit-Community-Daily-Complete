@@ -18,6 +18,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { HAIKU_MODEL } from "../_shared/models.ts";
+import { CONDENSED_DRIFT_GUARD } from "../_shared/conversationDriftGuard.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -258,6 +259,7 @@ async function generateQuestions(
     body: JSON.stringify({
       model: HAIKU_MODEL,
       max_tokens: 2048,
+      system: CONDENSED_DRIFT_GUARD,
       messages: [{ role: "user", content: prompt }],
     }),
   });

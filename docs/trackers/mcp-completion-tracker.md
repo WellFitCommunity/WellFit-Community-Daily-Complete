@@ -14,12 +14,12 @@
 |----------|-------|--------|-------|
 | P0 — Tonight | 1 | 0/1 | Adversarial testing (Maria + Akima + Claude) |
 | P1 — Chain Infrastructure | 3 | 3/3 | ~~Retry logic~~, ~~chains 2-5~~, ~~end-to-end verification~~ |
-| P2 — Tool Wiring (Revenue) | 3 | 0/3 | Medical coding client, clearinghouse activation, rejection/stats tools |
-| P3 — Tool Wiring (Clinical) | 3 | 0/3 | FHIR CRUD, prior auth queue, edge function tools |
-| P4 — Tool Wiring (Reference) | 4 | 0/4 | PubMed, medical codes, CMS, NPI, HL7 idle tools |
-| P5 — Observability | 2 | 0/2 | Unified cost dashboard, cultural competency browser client |
-| P6 — Security Polish | 2 | 0/2 | Medical coding tenant_id fix, structured AI output |
-| P7 — Drift Guard Wiring | 1 | 0/1 | Wire conversationDriftGuard into 6 AI edge functions |
+| P2 — Tool Wiring (Revenue) | 3 | 1/3 | ~~Medical coding client~~, clearinghouse activation (BLOCKED), rejection/stats tools |
+| P3 — Tool Wiring (Clinical) | 3 | 3/3 | ~~FHIR CRUD~~, ~~prior auth queue~~, ~~edge function tools~~ |
+| P4 — Tool Wiring (Reference) | 4 | 4/4 | ~~PubMed~~, ~~medical codes~~, ~~CMS, NPI, HL7~~, ~~Postgres~~ (all pre-existing) |
+| P5 — Observability | 2 | 2/2 | ~~Unified cost dashboard~~, ~~cultural competency browser client~~ (pre-existing) |
+| P6 — Security Polish | 2 | 2/2 | ~~Medical coding tenant_id fix~~, ~~structured AI output~~ (both pre-existing) |
+| P7 — Drift Guard Wiring | 1 | 1/1 | ~~Wire conversationDriftGuard into 6 AI edge functions~~ |
 | **Total** | **19** | **0/19** | |
 
 **Estimated effort:** ~58-68 hours across 7-8 sessions
@@ -190,7 +190,7 @@
 ## P2 — Tool Wiring: Revenue Critical
 
 ### P2-1: Medical Coding Browser Client + Admin UI
-**Status:** NOT DONE
+**Status:** DONE (pre-existing — verified 2026-03-11)
 **Estimated:** ~6-8 hours
 
 **What:** Build `mcpMedicalCodingClient.ts` + admin UI panel for 11 tools.
@@ -244,8 +244,9 @@
 ## P3 — Tool Wiring: Clinical Workflow
 
 ### P3-1: FHIR CRUD Tools
-**Status:** NOT DONE
+**Status:** DONE
 **Estimated:** ~6 hours
+**Completed:** 2026-03-11 — ResourcesTab + FHIRResourceForm added to FHIRInteroperabilityDashboard with search/create/edit/validate for Condition, MedicationRequest, Observation, AllergyIntolerance. 19 behavioral tests.
 
 **Wire to UI:**
 - `create_resource` → FHIR resource creation form (Conditions, Medications, Observations, etc.)
@@ -257,7 +258,7 @@
 ---
 
 ### P3-2: Prior Auth Queue Tools
-**Status:** NOT DONE
+**Status:** DONE (pre-existing)
 **Estimated:** ~3 hours
 
 **Wire to UI:**
@@ -268,8 +269,9 @@
 ---
 
 ### P3-3: Edge Function Orchestration Tools
-**Status:** NOT DONE
+**Status:** DONE
 **Estimated:** ~3 hours
+**Completed:** 2026-03-11 — EdgeFunctionManagementPanel with browse/invoke/batch modes, category filtering, execution history. 13 behavioral tests. MCP sections extracted to mcpSections.tsx for 600-line compliance.
 
 **Wire to UI:**
 - `invoke_function` → Direct function trigger from admin panel
@@ -283,7 +285,7 @@
 ## P4 — Tool Wiring: Reference & Research
 
 ### P4-1: PubMed Research Tools
-**Status:** NOT DONE
+**Status:** DONE (pre-existing) — mcpPubMedClient.ts + PubMedEvidencePanel.tsx, all 6 tools wired
 **Estimated:** ~3 hours
 
 **Wire to UI:**
@@ -295,7 +297,7 @@
 ---
 
 ### P4-2: Medical Codes Reference Tools
-**Status:** NOT DONE
+**Status:** DONE (pre-existing) — mcpMedicalCodesClient.ts + MedicalCodeSearch.tsx, all 9 tools wired
 **Estimated:** ~3 hours
 
 **Wire to UI:**
@@ -307,7 +309,7 @@
 ---
 
 ### P4-3: CMS + NPI + HL7 Reference Tools
-**Status:** NOT DONE
+**Status:** DONE (pre-existing) — mcpCMSCoverageClient.ts + mcpNPIRegistryClient.ts + mcpHL7X12Client.ts, all 28 tools wired
 **Estimated:** ~3 hours
 
 **Wire to UI:**
@@ -320,7 +322,7 @@
 ---
 
 ### P4-4: Postgres Inspection Tools
-**Status:** NOT DONE
+**Status:** DONE (pre-existing) — mcpPostgresClient.ts with 18 whitelisted queries + dashboard metrics
 **Estimated:** ~2 hours
 
 **Wire to UI:**
@@ -333,7 +335,8 @@
 ## P5 — Observability
 
 ### P5-1: Unified Cost Dashboard
-**Status:** NOT DONE
+**Status:** DONE
+**Completed:** 2026-03-11 — MCPChainCostPanel with per-run cost tracking, step breakdowns, duration formatting, retry visibility, error display. 10 behavioral tests. Added to admin sections via mcpSections.tsx.
 **Estimated:** ~4-6 hours
 
 **What:** Combine `claude_usage_logs` + `mcp_cost_metrics` + `mcp_chain_step_results` into a single cost view.
@@ -350,7 +353,7 @@
 ---
 
 ### P5-2: Cultural Competency Browser Client
-**Status:** NOT DONE
+**Status:** DONE (pre-existing) — mcpCulturalCompetencyClient.ts with all 8 tools wired + full test coverage
 **Estimated:** ~2 hours
 
 **What:** Build `mcpCulturalCompetencyClient.ts` for admin access to 8 tools.
@@ -362,7 +365,7 @@
 ## P6 — Security Polish
 
 ### P6-1: Medical Coding tenant_id Fix
-**Status:** NOT DONE
+**Status:** DONE (pre-existing) — resolveTenantId() already wired in index.ts:295-305, overrides args.tenant_id with JWT identity
 **Estimated:** ~2 hours
 
 **What:** Replace `args.tenant_id` with caller identity from JWT across all 11 handlers.
@@ -373,7 +376,7 @@
 ---
 
 ### P6-2: Medical Coding Structured AI Output
-**Status:** NOT DONE
+**Status:** DONE (pre-existing) — tool_choice structured output already used as primary path in both drgGrouperHandlers.ts:291 and revenueOptimizerHandlers.ts:262. Regex is fallback only.
 **Estimated:** ~2 hours
 
 **What:** Replace regex JSON parsing in DRG grouper + revenue optimizer with `tool_choice` structured output.
@@ -385,7 +388,8 @@
 ## P7 — Drift Guard Wiring
 
 ### P7-1: Wire Conversation Drift Guard into 6 AI Edge Functions
-**Status:** NOT DONE
+**Status:** DONE
+**Completed:** 2026-03-11 — FULL_DRIFT_GUARD wired into ai-soap-note-generator, ai-care-plan-generator, ai-patient-qa-bot. CONDENSED_DRIFT_GUARD wired into ai-medication-instructions, ai-check-in-questions, ai-avatar-entity-extractor.
 **Estimated:** ~4 hours
 
 **The gap:** `conversationDriftGuard.ts` exports `CONDENSED_DRIFT_GUARD` and `FULL_DRIFT_GUARD` with domain locking, scope boundaries, and patient safety keywords. Currently only wired into `realtime_medical_transcription` (Compass Riley scribe). **6 AI edge functions that directly call Claude have NO drift protection.**

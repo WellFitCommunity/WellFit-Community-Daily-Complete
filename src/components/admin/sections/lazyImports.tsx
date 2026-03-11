@@ -94,6 +94,12 @@ export const MCPKeyManagementPanel = lazy(() => import('../MCPKeyManagementPanel
 // MCP Chain Orchestration
 export const MCPChainManagementPanel = lazy(() => import('../mcp-chains/MCPChainManagementPanel'));
 
+// MCP Edge Function Management
+export const EdgeFunctionManagementPanel = lazy(() => import('../EdgeFunctionManagementPanel'));
+
+// MCP Chain Cost Panel
+export const MCPChainCostPanel = lazy(() => import('../MCPChainCostPanel'));
+
 // MCP Medical Coding
 export const MedicalCodingMCPPanel = lazy(() => import('../medical-coding/MedicalCodingMCPPanel'));
 

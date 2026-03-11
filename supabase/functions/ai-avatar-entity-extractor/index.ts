@@ -13,6 +13,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { CONDENSED_DRIFT_GUARD } from "../_shared/conversationDriftGuard.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
@@ -96,6 +97,7 @@ async function extractEntitiesWithAI(
     body: JSON.stringify({
       model: HAIKU_MODEL,
       max_tokens: 2048,
+      system: CONDENSED_DRIFT_GUARD,
       messages: [
         {
           role: "user",

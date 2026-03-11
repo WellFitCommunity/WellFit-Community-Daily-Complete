@@ -20,6 +20,7 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
+import { CONDENSED_DRIFT_GUARD } from "../_shared/conversationDriftGuard.ts";
 
 const getEnv = (...keys: string[]): string => {
   for (const k of keys) {
@@ -134,8 +135,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Build the prompt
-    const systemPrompt = `You are a medication education specialist who creates patient-friendly medication instructions.
+    // Build the prompt with drift guard
+    const systemPrompt = `${CONDENSED_DRIFT_GUARD}
+
+You are a medication education specialist who creates patient-friendly medication instructions.
 
 Your instructions MUST be:
 - Written at a 6th-grade reading level (simple words, short sentences)

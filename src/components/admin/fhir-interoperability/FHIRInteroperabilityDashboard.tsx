@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, Database, RefreshCw, Plus, Settings, AlertCircle, Zap } from 'lucide-react';
+import { Activity, Database, RefreshCw, Plus, Settings, AlertCircle, Zap, FileText } from 'lucide-react';
 import {
   useFHIRIntegration,
   SyncHistoryEntry,
@@ -23,6 +23,7 @@ import { SyncTab } from './SyncTab';
 import { MappingsTab } from './MappingsTab';
 import { AnalyticsTab } from './AnalyticsTab';
 import { CreateConnectionModal } from './CreateConnectionModal';
+import { ResourcesTab } from './ResourcesTab';
 
 export const FHIRInteroperabilityDashboard: React.FC = () => {
   const {
@@ -146,6 +147,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
     { id: 'sync' as TabId, label: 'Sync Status', icon: RefreshCw },
     { id: 'mappings' as TabId, label: 'Patient Mappings', icon: Settings },
     { id: 'analytics' as TabId, label: 'Analytics', icon: Zap },
+    { id: 'resources' as TabId, label: 'Resources', icon: FileText },
   ];
 
   return (
@@ -266,6 +268,9 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
         )}
         {activeTab === 'analytics' && (
           <AnalyticsTab connections={connections} syncStats={syncStats} complianceMetrics={complianceMetrics} />
+        )}
+        {activeTab === 'resources' && (
+          <ResourcesTab />
         )}
       </div>
 
