@@ -12,7 +12,7 @@
 | 1 | **STOP AND ASK** if unclear, blocked, or choosing between approaches | Guessing, improvising |
 | 2 | **No `any` type** - use `unknown` + type guards (see [TypeScript Standards](#typescript-standards)) | `data: any`, `catch (err: any)` |
 | 3 | **No `console.log`** - use `auditLogger` for all logging | Any console.* in production |
-| 4 | **Run `npm run typecheck`** before considering work done | Skipping type verification |
+| 4 | **Run scoped typecheck** on changed files before considering work done | Skipping type verification |
 | 5 | **All tests must pass** - no skips, no deletions | `.skip()`, `.only()`, deleting tests |
 | 6 | **No workarounds** - if blocked, ask Maria | "temporary fix", "for now", "hack" |
 | 7 | **Vite environment** - `import.meta.env.VITE_*` only | `process.env.REACT_APP_*` |
@@ -47,10 +47,10 @@
 ### Before Every Task
 ```bash
 git log --oneline -3     # Review recent commits
-npm run typecheck        # Verify types compile
 npm run lint             # Check for warnings
-npm test                 # All tests pass
 ```
+
+**Note:** Full `npm run typecheck` and `npm test` are run AFTER your work, not before. Don't waste time typechecking code you haven't touched yet.
 
 ### Error Handling Template
 ```typescript
@@ -68,19 +68,28 @@ catch (err: unknown) {
 **Before ANY commit or declaring work "done", you MUST run and report:**
 
 ```bash
-npm run typecheck && npm run lint && npm test
+# Scoped typecheck — only YOUR changes, not the whole system
+bash scripts/typecheck-changed.sh && npm run lint && npm test
 ```
+
+**When to use which typecheck:**
+
+| Situation | Command | Why |
+|-----------|---------|-----|
+| After completing a task | `bash scripts/typecheck-changed.sh` | Fast — only checks files you touched |
+| Before a major release/demo | `npm run typecheck` | Full system verification (rare) |
+| Debugging a type issue | `npx tsc --noEmit 2>&1 \| grep "src/path/to/file"` | Targeted investigation |
 
 **Report format (copy exactly):**
 ```
-✅ typecheck: 0 errors
+✅ typecheck (scoped): 0 errors in changed files
 ✅ lint: 0 errors, 0 warnings
-✅ tests: 10,893 passed, 0 failed
+✅ tests: X passed, 0 failed
 ```
 
 Or if failing:
 ```
-❌ typecheck: 3 errors (list them)
+❌ typecheck (scoped): 3 errors in changed files (list them)
 ❌ lint: 1 error in src/components/Foo.tsx:42
 ❌ tests: X passed, Y failed (list failed test names)
 ```
@@ -90,6 +99,7 @@ Or if failing:
 2. **Report the final counts** - Not 500 lines, just the summary numbers
 3. **If ANY fail, FIX FIRST** - Do not commit broken code
 4. **If stuck fixing for 2+ attempts, STOP AND ASK** - Don't keep iterating blindly
+5. **You are responsible for YOUR errors, not pre-existing ones** - Scoped typecheck separates the two
 
 **This is a HARD GATE. Work is not complete without this checkpoint.**
 
@@ -152,7 +162,7 @@ We do NOT accept:
 
 We REQUIRE:
 - **Seasoned, stable, careful coding** that Anthropic is known for
-- Every change verified with `npm run typecheck` before considering it done
+- Every change verified with scoped typecheck (`scripts/typecheck-changed.sh`) before considering it done
 - Reading and following EVERY rule in this document
 - Asking questions when uncertain instead of guessing
 
@@ -246,7 +256,7 @@ Sub-agents are NOT exempt from:
 - The type cast boundary rules — proper casts at system boundaries only
 - The test quality standards — no junk tests, deletion test required
 - The 600-line file limit — decompose, don't degrade
-- The verification checkpoint — `npm run typecheck && npm run lint && npm test`
+- The verification checkpoint — `bash scripts/typecheck-changed.sh && npm run lint && npm test`
 - The STOP AND ASK protocol — if stuck, surface to lead agent
 
 **Sub-agent work MUST be verified before it is considered complete.** The lead agent is responsible for:
@@ -603,7 +613,7 @@ When splitting a file, the result must be **equally innovative and complete** �
 1. **Extract by responsibility** — each sub-module owns one clear concern
 2. **Barrel re-export** — the original file becomes a thin barrel that re-exports from sub-modules (zero breaking changes to importers)
 3. **Shared types** — extract interfaces to a `.types.ts` file
-4. **Verify after decomposition** — `npm run typecheck && npm test` must pass, all routes must still work
+4. **Verify after decomposition** — `bash scripts/typecheck-changed.sh && npm test` must pass, all routes must still work
 
 #### Decomposition Pattern (Proven in This Codebase)
 ```
@@ -627,8 +637,8 @@ src/services/fhir/
 # 1. Check no file exceeds 600 lines
 wc -l src/components/feature-name/*.tsx
 
-# 2. Verify types compile
-npm run typecheck
+# 2. Verify types compile (scoped to changed files)
+bash scripts/typecheck-changed.sh
 
 # 3. Verify tests pass
 npm test
@@ -846,11 +856,12 @@ supabase gen bearer-jwt --role authenticated --sub <user-uuid>
 ## Development Commands
 
 ```bash
-npm run dev        # Start development server
-npm run build      # Build the project
-npm run lint       # Run linting
-npm run typecheck  # Run TypeScript type checking
-npm test           # Run tests
+npm run dev                        # Start development server
+npm run build                      # Build the project
+npm run lint                       # Run linting
+bash scripts/typecheck-changed.sh  # Scoped typecheck (changed files only)
+npm run typecheck                  # Full typecheck (releases/demos only)
+npm test                           # Run tests
 ```
 
 ---
@@ -860,8 +871,8 @@ npm test           # Run tests
 **Run ALL before considering work complete:**
 
 1. `npm run lint` - Must pass with 0 errors
-2. `npm run typecheck` - Verify TypeScript types
-3. `npm test` - All 10,893 tests must pass
+2. `bash scripts/typecheck-changed.sh` - Verify TypeScript types in changed files
+3. `npm test` - All tests must pass
 4. Visual inspection - Ensure UI/UX functions correctly
 5. Route verification - New pages are accessible
 

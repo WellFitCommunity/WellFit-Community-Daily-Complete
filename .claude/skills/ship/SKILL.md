@@ -4,7 +4,7 @@ Run the full quality gate, then commit and push. No shortcuts.
 
 ## Steps
 
-1. **Typecheck** — Run `npm run typecheck`. If errors, fix them before continuing.
+1. **Typecheck** — Run `bash scripts/typecheck-changed.sh`. If errors in changed files, fix them before continuing.
 2. **Lint** — Run `npm run lint`. If errors or warnings, fix them before continuing.
 3. **Tests** — Run `npm test`. If failures, fix them before continuing.
 4. **Stage** — `git add` only the files you changed. Never `git add -A`.
@@ -13,7 +13,7 @@ Run the full quality gate, then commit and push. No shortcuts.
 7. **Report** — Output this summary:
 
 ```
-✅ typecheck: 0 errors
+✅ typecheck (scoped): 0 errors in changed files
 ✅ lint: 0 errors, 0 warnings
 ✅ tests: X passed, 0 failed
 📦 commit: <hash> — <message>

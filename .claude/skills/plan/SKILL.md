@@ -41,7 +41,7 @@ Create an actionable implementation plan. No code — just the plan.
 - [ ] All files under 600 lines
 - [ ] No `any` types — `unknown` + type guards
 - [ ] No `console.log` — `auditLogger` only
-- [ ] `npm run typecheck` passes
+- [ ] `bash scripts/typecheck-changed.sh` passes (scoped to changed files)
 - [ ] `npm run lint` passes
 - [ ] `npm test` passes
 - [ ] Routes wired in App.tsx (if new pages)

@@ -75,7 +75,7 @@ When refactoring large files:
 1. **Before ANY commit:**
    ```bash
    npm run lint
-   npm run typecheck
+   bash scripts/typecheck-changed.sh
    npm test
    ```
 

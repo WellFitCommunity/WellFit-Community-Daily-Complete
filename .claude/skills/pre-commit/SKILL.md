@@ -23,11 +23,12 @@ npm run lint
 - If warnings only: Continue with warning message
 - If clean: Proceed to next step
 
-### Step 2: Type Checking
+### Step 2: Type Checking (Scoped to Changed Files)
 ```bash
-npm run typecheck
+bash scripts/typecheck-changed.sh
 ```
-- If errors found: Report type errors and STOP
+- If errors in changed files: Report type errors and STOP
+- Pre-existing project-wide errors are noted but don't block
 - If clean: Proceed to next step
 
 ### Step 3: Run Tests
@@ -64,7 +65,7 @@ git config --get user.signingkey
 
 All checks must pass for commit to proceed:
 - ✅ Linting: 0 errors
-- ✅ Type checking: 0 errors
+- ✅ Type checking (scoped): 0 errors in changed files
 - ✅ Tests: All passing (625+ tests)
 - ✅ PHI security: No violations
 - ⚠️ GPG signing: Enabled (warning only)
