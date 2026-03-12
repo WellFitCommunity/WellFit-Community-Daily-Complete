@@ -17,11 +17,11 @@ interface EAButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function EAButton({ className, variant = 'primary', size = 'md', loading, icon, children, disabled, ref, ...props }: EAButtonProps) {
   const variants = {
-    primary: 'bg-[#00857a] hover:bg-[#006d64] active:bg-[#00554e] text-white',
+    primary: 'bg-[var(--ea-primary,#00857a)] hover:bg-[var(--ea-primary-hover,#006d64)] active:bg-[var(--ea-primary-active,#00554e)] text-[var(--ea-text-on-primary,white)]',
     secondary: 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-600',
     ghost: 'hover:bg-slate-700/50 text-slate-300 hover:text-white',
     danger: 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white',
-    accent: 'bg-[#FF6B35] hover:bg-[#e55a2b] active:bg-[#cc4f24] text-white',
+    accent: 'bg-[var(--ea-secondary,#FF6B35)] hover:opacity-90 active:opacity-80 text-white',
   };
 
   const sizes = {
@@ -37,7 +37,7 @@ export function EAButton({ className, variant = 'primary', size = 'md', loading,
       className={cn(
         'inline-flex items-center justify-center font-medium rounded-md',
         'transition-colors duration-150',
-        'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50 focus:ring-offset-2 focus:ring-offset-slate-900',
+        'focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]/50 focus:ring-offset-2 focus:ring-offset-slate-900',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],

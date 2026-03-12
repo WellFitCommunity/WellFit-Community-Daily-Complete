@@ -107,10 +107,10 @@ export const EATabsTrigger: React.FC<EATabsTriggerProps> = ({
       className={cn(
         'inline-flex items-center justify-center whitespace-nowrap rounded-md',
         'px-3 py-1.5 text-sm font-medium transition-all',
-        'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50 focus:ring-offset-2 focus:ring-offset-slate-900',
+        'focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]/50 focus:ring-offset-2 focus:ring-offset-slate-900',
         'disabled:pointer-events-none disabled:opacity-50',
         isActive
-          ? 'bg-[#00857a] text-white shadow-xs'
+          ? 'bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,white)] shadow-xs'
           : 'text-slate-400 hover:text-white hover:bg-slate-700/50',
         className
       )}

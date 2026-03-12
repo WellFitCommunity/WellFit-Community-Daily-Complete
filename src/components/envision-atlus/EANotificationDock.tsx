@@ -253,7 +253,7 @@ const EANotificationDockInner: React.FC<EANotificationDockProps> = ({ children }
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800">
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-[#00857a]" />
+            <Bell className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />
             <h2 className="font-semibold text-white">Notifications</h2>
             {totalCount > 0 && (
               <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded-full">
@@ -353,7 +353,7 @@ const EANotificationDockInner: React.FC<EANotificationDockProps> = ({ children }
               onClick={() => { navigate('/dashboard'); toggleDock(); }}
               className="w-full flex items-center gap-3 p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
             >
-              <Activity className="w-5 h-5 text-[#00857a]" />
+              <Activity className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />
               <div className="text-left">
                 <p className="text-sm font-medium text-white">Dashboard</p>
                 <p className="text-xs text-slate-400">Return to main view</p>

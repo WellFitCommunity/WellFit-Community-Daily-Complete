@@ -223,7 +223,8 @@ describe('MCPChainCostPanel', () => {
   it('shows error when chain runs fail to load', async () => {
     mockListChainRuns.mockResolvedValue({
       success: false,
-      error: 'Database unavailable',
+      data: null,
+      error: { code: 'DATABASE_ERROR', message: 'Database unavailable' },
     });
 
     render(<MCPChainCostPanel />);

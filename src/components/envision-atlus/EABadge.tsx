@@ -20,7 +20,7 @@ export function EABadge({ className, variant = 'neutral', size = 'md', pulse, ch
     high: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
     elevated: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
     normal: 'bg-green-500/20 text-green-400 border-green-500/30',
-    info: 'bg-[#00857a]/20 text-[#33bfb7] border-[#00857a]/30',
+    info: 'bg-[var(--ea-primary,#00857a)]/20 text-[var(--ea-primary,#33bfb7)] border-[var(--ea-primary,#00857a)]/30',
     neutral: 'bg-slate-600/50 text-slate-300 border-slate-500/30',
   };
 
@@ -50,7 +50,7 @@ export function EABadge({ className, variant = 'neutral', size = 'md', pulse, ch
               variant === 'high' && 'bg-amber-400',
               variant === 'elevated' && 'bg-yellow-400',
               variant === 'normal' && 'bg-green-400',
-              variant === 'info' && 'bg-[#00857a]',
+              variant === 'info' && 'bg-[var(--ea-primary,#00857a)]',
               variant === 'neutral' && 'bg-slate-400'
             )}
           />
@@ -61,7 +61,7 @@ export function EABadge({ className, variant = 'neutral', size = 'md', pulse, ch
               variant === 'high' && 'bg-amber-500',
               variant === 'elevated' && 'bg-yellow-500',
               variant === 'normal' && 'bg-green-500',
-              variant === 'info' && 'bg-[#00857a]',
+              variant === 'info' && 'bg-[var(--ea-primary,#00857a)]',
               variant === 'neutral' && 'bg-slate-500'
             )}
           />

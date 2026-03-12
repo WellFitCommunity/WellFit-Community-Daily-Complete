@@ -11,6 +11,7 @@ import { BrandingConfig } from '../branding.config';
 import { BrandingContext } from '../BrandingContext';
 import { GuardianErrorBoundary } from '../components/GuardianErrorBoundary';
 import { initializePHIEncryption } from '../lib/phi-encryption';
+import { useDashboardTheme } from '../hooks/useDashboardTheme';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -18,6 +19,16 @@ interface AppProvidersProps {
   setBranding: React.Dispatch<React.SetStateAction<BrandingConfig>>;
   refreshBranding: () => Promise<void>;
 }
+
+/**
+ * Injects tenant branding as CSS custom properties on :root.
+ * Must be rendered inside BrandingContext.Provider.
+ */
+const BrandingCSSInjector: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // This hook reads useBranding() and sets --ea-primary, --ea-secondary, etc. on :root
+  useDashboardTheme();
+  return <>{children}</>;
+};
 
 /**
  * Composes all providers in the correct order.
@@ -39,6 +50,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({
   return (
     <GuardianErrorBoundary>
       <BrandingContext.Provider value={{ branding, setBranding, loading: false, refreshBranding }}>
+        <BrandingCSSInjector>
         <SessionTimeoutProvider>
           <TimeClockProvider>
             <PatientProvider>
@@ -52,6 +64,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({
             </PatientProvider>
           </TimeClockProvider>
         </SessionTimeoutProvider>
+        </BrandingCSSInjector>
       </BrandingContext.Provider>
     </GuardianErrorBoundary>
   );

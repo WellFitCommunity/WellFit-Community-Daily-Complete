@@ -8,6 +8,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Play, RefreshCw, Loader2, CheckCircle, XCircle, Zap, Info, Layers } from 'lucide-react';
 import { EdgeFunctionsMCPClient } from '../../services/mcp/mcpEdgeFunctionsClient';
+import type { AllowedFunctionName } from '../../services/mcp/mcpEdgeFunctionsClient';
 import { auditLogger } from '../../services/auditLogger';
 
 interface FunctionDef {
@@ -58,12 +59,14 @@ const EdgeFunctionManagementPanel: React.FC = () => {
     setError(null);
     try {
       const category = categoryFilter === 'all' ? undefined : categoryFilter;
-      const result = await client.listFunctions(category);
-      if (result.success && result.data) {
-        setFunctions(result.data as FunctionDef[]);
-      } else {
-        setError(result.error || 'Failed to load functions');
-      }
+      const definitions = await client.listFunctions(category);
+      setFunctions(definitions.map(d => ({
+        name: d.name,
+        description: d.description,
+        category: d.category,
+        parameters: (d.parameters ?? {}) as Record<string, unknown>,
+        hasSideEffects: d.sideEffects !== 'none',
+      })));
     } catch (err: unknown) {
       await auditLogger.error(
         'EDGE_FUNCTION_LIST_ERROR',
@@ -91,7 +94,7 @@ const EdgeFunctionManagementPanel: React.FC = () => {
         parsedPayload = JSON.parse(payload) as Record<string, unknown>;
       }
 
-      const result = await client.invokeFunction(selectedFunction.name, parsedPayload);
+      const result = await client.invokeFunction(selectedFunction.name as AllowedFunctionName, parsedPayload);
       const invocationResult: InvocationResult = {
         functionName: selectedFunction.name,
         success: result.success,
@@ -130,15 +133,12 @@ const EdgeFunctionManagementPanel: React.FC = () => {
     setInvoking(true);
     setError(null);
     try {
-      const invocations = batchFunctions.map(name => ({ functionName: name }));
-      const result = await client.batchInvoke(invocations);
+      const invocations = batchFunctions.map(name => ({ function_name: name as AllowedFunctionName }));
+      const batchResult = await client.batchInvoke(invocations);
 
-      if (result.success && result.data) {
-        const batchData = result.data as {
-          results: Array<{ functionName: string; success: boolean; data?: unknown; error?: string; executionTimeMs: number }>;
-        };
-        const batchResults: InvocationResult[] = (batchData.results || []).map(r => ({
-          functionName: r.functionName,
+      if (batchResult.results && batchResult.results.length > 0) {
+        const batchResults: InvocationResult[] = batchResult.results.map(r => ({
+          functionName: r.function_name,
           success: r.success,
           data: r.data,
           error: r.error,
@@ -433,7 +433,7 @@ const EdgeFunctionManagementPanel: React.FC = () => {
                 {result.error && (
                   <p className="text-sm text-red-600 mt-1">{result.error}</p>
                 )}
-                {result.success && result.data && (
+                {result.success && result.data != null && (
                   <pre className="text-xs text-gray-600 mt-1 bg-gray-50 rounded p-2 max-h-24 overflow-auto font-mono">
                     {JSON.stringify(result.data, null, 2).substring(0, 500)}
                   </pre>

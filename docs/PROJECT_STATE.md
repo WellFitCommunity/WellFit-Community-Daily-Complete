@@ -3,14 +3,41 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-11 (P1 COMPLETE — chain infrastructure done)
-**Last Session:** Completed all 3 P1 items: retry gaps (P1-1), chains 2-5 definitions (P1-2), end-to-end verification with 31 new integration tests (P1-3). P1 is fully done. Next: P2 (revenue tool wiring).
+**Last Updated:** 2026-03-11 (Dashboard assessment + tenant branding tracker created)
+**Last Session:** Assessed all 82 dashboards for production-readiness. Found 8 god files, 69 dashboards missing tenant branding, 29 missing accessibility. Created `tenant-branding-tracker.md`. Also found 5 typecheck errors in EdgeFunctionManagementPanel.tsx and MCPChainCostPanel.tsx from prior MCP session.
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,162 tests (554 suites), 0 lint warnings, 0 typecheck errors
+**Codebase Health:** 11,162 tests (554 suites), 0 lint warnings, 5 typecheck errors (EdgeFunctionManagementPanel + MCPChainCostPanel)
 
 ---
 
-## MCP Ecosystem Completion (2026-03-10) — NEXT PRIORITY
+## Tenant Branding Migration (2026-03-11) — NEW
+
+**Tracker:** `docs/trackers/tenant-branding-tracker.md`
+
+**What:** Migrate all 82 dashboards from hardcoded EA teal/orange to tenant-specific branding. Each tenant sees their own colors, logo, gradient, and app name across every dashboard.
+
+**Why:** EA components use hardcoded `#00857a` — tenants deploying WellFit or Atlus need their own corporate branding. Only 6 of 82 dashboards currently use `useBranding()`. Hospital pilot needs every screen to look like the hospital's brand, not ours.
+
+| Priority | Items | Status | Focus |
+|----------|-------|--------|-------|
+| P0 Foundation | 6 | 0/6 | Theme token system — make EA components branding-aware via CSS vars |
+| P1 God File Decomposition | 8 | 0/8 | 8 files over 600-line limit — decompose before branding |
+| P2 High-Impact Dashboards | 8 | 0/8 | BillingDashboard, BedMgmt, SystemAdmin, PatientEngagement |
+| P3 Compliance Dashboards | 12 | 0/12 | SOC2 (x5), Breach, MFA, Training, DR, BAA |
+| P4 Revenue & Billing | 11 | 0/11 | AIFinancial, AICost, ClaimAging, ERA, HCC |
+| P5 Clinical Tools | 13 | 0/13 | FHIR, Referrals, CareGap, Documentation |
+| P6 AI & Monitoring | 7 | 0/7 | AIAccuracy, ModelCards, MCP panels |
+| P7 Admin Panels & Pages | 16 | 0/16 | TenantIT, StaffWellness, CHW, Caregiver, Facility |
+| P8 Accessibility Pass | 5 | 0/5 | ARIA labels, contrast verification, focus indicators |
+| **Total** | **86** | **0/86** | |
+
+**Estimated remaining:** 5-6 sessions
+
+**Key insight:** The `useBranding()` hook and `tenants` table already work. The blocker is that EA components (`EAButton`, `EACard`, etc.) have hardcoded hex colors. P0 fixes this at the foundation level — then P2-P7 are mechanical migrations.
+
+---
+
+## MCP Ecosystem Completion (2026-03-10) — IN PROGRESS
 
 **Tracker:** `docs/trackers/mcp-completion-tracker.md`
 **Findings Report:** `docs/MCP_ECOSYSTEM_FINDINGS_2026-03-10.md`

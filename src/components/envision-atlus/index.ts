@@ -24,3 +24,7 @@ export { EANotificationDock, useDock } from './EANotificationDock';
 // Re-export theme utilities
 export { envisionAtlus, getRiskStyles } from '../../styles/envision-atlus-theme';
 export type { RiskLevel } from '../../styles/envision-atlus-theme';
+
+// Dashboard theme hook (tenant branding → CSS vars)
+export { useDashboardTheme } from '../../hooks/useDashboardTheme';
+export type { DashboardTheme } from '../../hooks/useDashboardTheme';

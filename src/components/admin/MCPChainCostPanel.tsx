@@ -37,7 +37,7 @@ const MCPChainCostPanel: React.FC = () => {
       if (result.success && result.data) {
         setRuns(result.data as ChainRunWithSteps[]);
       } else {
-        setError(result.error || 'Failed to load chain runs');
+        setError(result.error?.message || 'Failed to load chain runs');
       }
     } catch (err: unknown) {
       await auditLogger.error(

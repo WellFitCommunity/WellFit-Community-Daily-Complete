@@ -67,10 +67,10 @@ export const EASlider: React.FC<EASliderProps> = ({
             '[&::-webkit-slider-thumb]:w-4',
             '[&::-webkit-slider-thumb]:h-4',
             '[&::-webkit-slider-thumb]:rounded-full',
-            '[&::-webkit-slider-thumb]:bg-[#00857a]',
+            '[&::-webkit-slider-thumb]:bg-[var(--ea-primary,#00857a)]',
             '[&::-webkit-slider-thumb]:cursor-pointer',
             '[&::-webkit-slider-thumb]:border-2',
-            '[&::-webkit-slider-thumb]:border-[#33bfb7]',
+            '[&::-webkit-slider-thumb]:border-[var(--ea-primary,#33bfb7)]',
             '[&::-webkit-slider-thumb]:shadow-lg',
             '[&::-webkit-slider-thumb]:transition-transform',
             '[&::-webkit-slider-thumb]:hover:scale-110',
@@ -78,10 +78,10 @@ export const EASlider: React.FC<EASliderProps> = ({
             '[&::-moz-range-thumb]:w-4',
             '[&::-moz-range-thumb]:h-4',
             '[&::-moz-range-thumb]:rounded-full',
-            '[&::-moz-range-thumb]:bg-[#00857a]',
+            '[&::-moz-range-thumb]:bg-[var(--ea-primary,#00857a)]',
             '[&::-moz-range-thumb]:cursor-pointer',
             '[&::-moz-range-thumb]:border-2',
-            '[&::-moz-range-thumb]:border-[#33bfb7]',
+            '[&::-moz-range-thumb]:border-[var(--ea-primary,#33bfb7)]',
             // Track styling
             '[&::-webkit-slider-runnable-track]:rounded-lg',
             '[&::-moz-range-track]:rounded-lg',
@@ -90,7 +90,7 @@ export const EASlider: React.FC<EASliderProps> = ({
             disabled && '[&::-moz-range-thumb]:cursor-not-allowed'
           )}
           style={{
-            background: `linear-gradient(to right, #00857a ${percentage}%, #475569 ${percentage}%)`,
+            background: `linear-gradient(to right, var(--ea-primary, #00857a) ${percentage}%, #475569 ${percentage}%)`,
           }}
         />
       </div>

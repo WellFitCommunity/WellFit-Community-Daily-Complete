@@ -45,10 +45,10 @@ export const EAAlert: React.FC<EAAlertProps> = ({
       text: 'text-green-200',
     },
     info: {
-      container: 'bg-[#00857a]/10 border-l-4 border-[#00857a]',
-      icon: <Info className="h-5 w-5 text-[#33bfb7]" />,
-      title: 'text-[#66cfc9]',
-      text: 'text-[#99dfdb]',
+      container: 'bg-[var(--ea-primary,#00857a)]/10 border-l-4 border-[var(--ea-primary,#00857a)]',
+      icon: <Info className="h-5 w-5 text-[var(--ea-primary,#33bfb7)]" />,
+      title: 'text-[var(--ea-primary,#66cfc9)]',
+      text: 'text-teal-200',
     },
   };
 

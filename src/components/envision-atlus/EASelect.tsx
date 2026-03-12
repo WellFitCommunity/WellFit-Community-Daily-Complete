@@ -77,7 +77,7 @@ export const EASelectTrigger: React.FC<EASelectTriggerProps> = ({ className, pla
       className={cn(
         'flex h-10 w-full items-center justify-between rounded-md px-3 py-2 text-sm',
         'bg-slate-700 border border-slate-600 text-white',
-        'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50 focus:border-[#00857a]',
+        'focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]/50 focus:border-[var(--ea-primary,#00857a)]',
         'hover:border-slate-500 transition-colors',
         className
       )}
@@ -147,12 +147,12 @@ export const EASelectItem: React.FC<EASelectItemProps> = ({ value, className, ch
       className={cn(
         'relative flex cursor-pointer select-none items-center px-3 py-2 text-sm',
         'text-slate-200 hover:bg-slate-600 transition-colors',
-        isSelected && 'bg-[#00857a]/20 text-[#33bfb7]',
+        isSelected && 'bg-[var(--ea-primary,#00857a)]/20 text-[var(--ea-primary,#33bfb7)]',
         className
       )}
     >
       <span className="flex-1">{children}</span>
-      {isSelected && <Check className="h-4 w-4 text-[#00857a]" />}
+      {isSelected && <Check className="h-4 w-4 text-[var(--ea-primary,#00857a)]" />}
     </div>
   );
 };

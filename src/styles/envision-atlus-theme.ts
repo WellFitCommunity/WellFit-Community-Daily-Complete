@@ -104,7 +104,7 @@ export const envisionAtlusColors = {
   border: {
     DEFAULT: '#334155',
     light: '#475569',
-    focus: '#00857a',
+    focus: 'var(--ea-primary, #00857a)',
   },
 } as const;
 
@@ -123,11 +123,11 @@ export const envisionAtlusComponents = {
 
   // Button variants
   button: {
-    primary: 'bg-[#00857a] hover:bg-[#006d64] active:bg-[#00554e] text-white font-medium',
+    primary: 'bg-[var(--ea-primary,#00857a)] hover:bg-[var(--ea-primary-hover,#006d64)] active:bg-[var(--ea-primary-active,#00554e)] text-[var(--ea-text-on-primary,white)] font-medium',
     secondary: 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-600',
     ghost: 'hover:bg-slate-700/50 text-slate-300 hover:text-white',
     danger: 'bg-red-600 hover:bg-red-700 text-white',
-    accent: 'bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-medium',
+    accent: 'bg-[var(--ea-secondary,#FF6B35)] hover:opacity-90 text-white font-medium',
   },
 
   // Badge/Status indicators
@@ -143,7 +143,7 @@ export const envisionAtlusComponents = {
   // Input styles
   input: {
     base: 'bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-md',
-    focus: 'focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden',
+    focus: 'focus:border-[var(--ea-primary,#00857a)] focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]/20 focus:outline-hidden',
     disabled: 'opacity-50 cursor-not-allowed',
   },
 
@@ -159,7 +159,7 @@ export const envisionAtlusComponents = {
     critical: 'bg-red-500/10 border-l-4 border-red-500 text-red-200',
     warning: 'bg-amber-500/10 border-l-4 border-amber-500 text-amber-200',
     success: 'bg-green-500/10 border-l-4 border-green-500 text-green-200',
-    info: 'bg-[#00857a]/10 border-l-4 border-[#00857a] text-teal-200',
+    info: 'bg-[var(--ea-primary,#00857a)]/10 border-l-4 border-[var(--ea-primary,#00857a)] text-teal-200',
   },
 } as const;
 
@@ -262,7 +262,22 @@ export function getRiskStyles(level: RiskLevel | string) {
 // CSS VARIABLES (for Tailwind config)
 // =====================================================
 
+/**
+ * Default CSS variable values.
+ * At runtime, BrandingProvider overrides these via useDashboardTheme()
+ * which sets --ea-primary, --ea-primary-hover, --ea-primary-active,
+ * --ea-secondary, and --ea-text-on-primary on :root from tenant branding.
+ *
+ * Components should reference var(--ea-primary, #00857a) with fallbacks.
+ */
 export const envisionAtlusCSSVars = {
+  '--ea-primary': '#00857a',
+  '--ea-primary-hover': '#006d64',
+  '--ea-primary-active': '#00554e',
+  '--ea-secondary': '#FF6B35',
+  '--ea-text-on-primary': '#ffffff',
+  '--ea-text-primary': '#f8fafc',
+  // Legacy aliases (kept for backward compat, overridden by useDashboardTheme)
   '--ea-teal-500': '#00857a',
   '--ea-teal-600': '#006d64',
   '--ea-teal-700': '#00554e',
@@ -277,19 +292,19 @@ export const envisionAtlusCSSVars = {
 
 export const envisionAtlusGradients = {
   // Primary header gradient
-  header: 'bg-linear-to-r from-[#00857a] to-[#006d64]',
+  header: 'bg-linear-to-r from-[var(--ea-primary,#00857a)] to-[var(--ea-primary-hover,#006d64)]',
 
   // Page background
   pageBg: 'bg-linear-to-br from-slate-900 to-slate-800',
 
   // Card highlight gradient
-  cardHighlight: 'bg-linear-to-br from-[#00857a]/10 to-transparent',
+  cardHighlight: 'bg-linear-to-br from-[var(--ea-primary,#00857a)]/10 to-transparent',
 
   // Accent gradient for CTAs
-  accent: 'bg-linear-to-r from-[#FF6B35] to-[#ff8c5a]',
+  accent: 'bg-linear-to-r from-[var(--ea-secondary,#FF6B35)] to-[var(--ea-secondary,#FF6B35)]/70',
 
   // Text gradient for headings
-  textTeal: 'bg-linear-to-r from-[#33bfb7] to-[#00857a] bg-clip-text text-transparent',
+  textTeal: 'bg-linear-to-r from-[var(--ea-primary,#00857a)]/60 to-[var(--ea-primary,#00857a)] bg-clip-text text-transparent',
 } as const;
 
 // =====================================================

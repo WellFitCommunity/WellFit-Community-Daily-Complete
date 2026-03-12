@@ -35,27 +35,31 @@ vi.mock('../../../services/auditLogger', () => ({
 import EdgeFunctionManagementPanel from '../EdgeFunctionManagementPanel';
 
 // --- Test Data ---
+// Mock data matches FunctionDefinition shape from mcpEdgeFunctionsClient
 const mockFunctions = [
   {
     name: 'get-welfare-priorities',
     description: 'Calculate welfare priorities for a patient',
     category: 'analytics',
-    parameters: { patient_id: 'string' },
-    hasSideEffects: false,
+    parameters: { patient_id: { type: 'string', description: 'Patient ID' } },
+    sideEffects: 'none' as const,
+    requiresAuth: true,
   },
   {
     name: 'send-sms',
     description: 'Send an SMS message',
     category: 'utility',
-    parameters: { phone: 'string', message: 'string' },
-    hasSideEffects: true,
+    parameters: { phone: { type: 'string', description: 'Phone' }, message: { type: 'string', description: 'Message' } },
+    sideEffects: 'write' as const,
+    requiresAuth: true,
   },
   {
     name: 'generate-engagement-report',
     description: 'Generate patient engagement report',
     category: 'reports',
     parameters: {},
-    hasSideEffects: false,
+    sideEffects: 'none' as const,
+    requiresAuth: true,
   },
 ];
 
@@ -67,10 +71,8 @@ beforeEach(() => {
     invokeFunction: mockInvokeFunction,
     batchInvoke: mockBatchInvoke,
   });
-  mockListFunctions.mockResolvedValue({
-    success: true,
-    data: mockFunctions,
-  });
+  // listFunctions returns FunctionDefinition[] directly (not ServiceResult)
+  mockListFunctions.mockResolvedValue(mockFunctions);
 });
 
 describe('EdgeFunctionManagementPanel', () => {
@@ -101,13 +103,9 @@ describe('EdgeFunctionManagementPanel', () => {
   });
 
   it('filters functions by category', async () => {
-    mockListFunctions.mockResolvedValueOnce({
-      success: true,
-      data: mockFunctions,
-    }).mockResolvedValueOnce({
-      success: true,
-      data: [mockFunctions[0]], // Only analytics
-    });
+    mockListFunctions
+      .mockResolvedValueOnce(mockFunctions)
+      .mockResolvedValueOnce([mockFunctions[0]]); // Only analytics
 
     render(<EdgeFunctionManagementPanel />);
 
@@ -228,14 +226,15 @@ describe('EdgeFunctionManagementPanel', () => {
   });
 
   it('executes batch invocation and shows results', async () => {
+    // batchInvoke returns BatchInvocationResult directly (not ServiceResult)
     mockBatchInvoke.mockResolvedValue({
-      success: true,
-      data: {
-        results: [
-          { functionName: 'get-welfare-priorities', success: true, data: {}, executionTimeMs: 100 },
-          { functionName: 'send-sms', success: true, data: {}, executionTimeMs: 200 },
-        ],
-      },
+      results: [
+        { function_name: 'get-welfare-priorities', success: true, data: {}, executionTimeMs: 100 },
+        { function_name: 'send-sms', success: true, data: {}, executionTimeMs: 200 },
+      ],
+      completed: 2,
+      total: 2,
+      allSucceeded: true,
     });
 
     render(<EdgeFunctionManagementPanel />);
@@ -255,15 +254,13 @@ describe('EdgeFunctionManagementPanel', () => {
   });
 
   it('shows error state when function list fails to load', async () => {
-    mockListFunctions.mockResolvedValue({
-      success: false,
-      error: 'MCP server unavailable',
-    });
+    // listFunctions throws on failure (returns array on success)
+    mockListFunctions.mockRejectedValue(new Error('MCP server unavailable'));
 
     render(<EdgeFunctionManagementPanel />);
 
     await waitFor(() => {
-      expect(screen.getByText('MCP server unavailable')).toBeInTheDocument();
+      expect(screen.getByText('Failed to load edge functions')).toBeInTheDocument();
     });
   });
 

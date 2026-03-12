@@ -16,7 +16,7 @@ export function EACard({ className, variant = 'default', ref, ...props }: EACard
   const variants = {
     default: 'bg-slate-800 border-slate-700',
     elevated: 'bg-slate-800 border-slate-600 shadow-lg shadow-black/20',
-    highlight: 'bg-linear-to-br from-[#00857a]/10 to-slate-800 border-[#00857a]/30',
+    highlight: 'bg-linear-to-br from-[var(--ea-primary,#00857a)]/10 to-slate-800 border-[var(--ea-primary,#00857a)]/30',
   };
 
   return (
@@ -46,7 +46,7 @@ export function EACardHeader({ className, icon, action, children, ref, ...props 
       {...props}
     >
       <div className="flex items-center gap-3">
-        {icon && <span className="text-[#00857a]">{icon}</span>}
+        {icon && <span className="text-[var(--ea-primary,#00857a)]">{icon}</span>}
         <div>{children}</div>
       </div>
       {action && <div>{action}</div>}
