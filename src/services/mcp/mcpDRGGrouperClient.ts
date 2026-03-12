@@ -1,13 +1,17 @@
 /**
- * DRG Grouper MCP Client (Standalone)
+ * DRG Grouper MCP Client (Standalone Revenue Intelligence)
  *
  * Browser-safe client for the standalone DRG Grouper SaaS API.
  * This connects to `mcp-drg-grouper-server` — the monetizable
- * standalone product extracted from the medical coding server.
+ * standalone revenue intelligence engine.
  *
- * 2 tools:
+ * 6 tools:
  * - run_drg_grouper: AI-powered 3-pass MS-DRG assignment
  * - get_drg_result: Retrieve existing DRG grouping result
+ * - estimate_reimbursement: DRG weight × base rate × wage index
+ * - validate_coding: Rule-based charge completeness check
+ * - flag_revenue_risk: AI-powered revenue risk analysis
+ * - get_payer_rules: Payer rate reference lookup
  *
  * Advisory Only: All AI suggestions are advisory — never auto-assigned.
  * Audit: All operations logged for compliance.
@@ -60,6 +64,34 @@ export interface RunDRGGrouperParams {
 export interface GetDRGResultParams {
   encounter_id: string;
   grouper_version?: string;
+}
+
+export interface EstimateReimbursementParams {
+  encounter_id?: string;
+  drg_code?: string;
+  drg_weight?: number;
+  payer_type: string;
+  fiscal_year?: number;
+  state_code?: string;
+  wage_index_override?: number;
+}
+
+export interface ValidateCodingParams {
+  encounter_id: string;
+  service_date: string;
+}
+
+export interface FlagRevenueRiskParams {
+  encounter_id: string;
+  service_date: string;
+}
+
+export interface GetPayerRulesParams {
+  payer_type: string;
+  fiscal_year: number;
+  state_code?: string;
+  rule_type?: string;
+  is_active?: boolean;
 }
 
 // =====================================================
@@ -142,6 +174,37 @@ export class DRGGrouperMCPClient {
   }
 
   /**
+   * Calculate expected reimbursement from DRG weight × payer base rate.
+   * Supports Medicare DRG-based and Medicaid per diem models.
+   */
+  async estimateReimbursement(params: EstimateReimbursementParams): Promise<DRGGrouperResult<unknown>> {
+    return this.request<unknown>('estimate_reimbursement', params as unknown as Record<string, unknown>);
+  }
+
+  /**
+   * Rule-based charge completeness validation.
+   * Checks for commonly missed charges by category (lab, imaging, pharmacy, etc.).
+   */
+  async validateCoding(params: ValidateCodingParams): Promise<DRGGrouperResult<unknown>> {
+    return this.request<unknown>('validate_coding', params as unknown as Record<string, unknown>);
+  }
+
+  /**
+   * AI-powered revenue risk analysis.
+   * Identifies missing codes, upgrade opportunities, documentation gaps.
+   */
+  async flagRevenueRisk(params: FlagRevenueRiskParams): Promise<DRGGrouperResult<unknown>> {
+    return this.request<unknown>('flag_revenue_risk', params as unknown as Record<string, unknown>);
+  }
+
+  /**
+   * Look up payer reimbursement rules (base rates, per diem, wage index).
+   */
+  async getPayerRules(params: GetPayerRulesParams): Promise<DRGGrouperResult<unknown>> {
+    return this.request<unknown>('get_payer_rules', params as unknown as Record<string, unknown>);
+  }
+
+  /**
    * Health check — verify the DRG grouper server is responsive.
    */
   async ping(): Promise<DRGGrouperResult<{ status: string }>> {
@@ -188,6 +251,52 @@ export async function getDRGResult(
   return drgGrouperClient.getDRGResult({
     encounter_id: encounterId,
     grouper_version: grouperVersion
+  });
+}
+
+/**
+ * Estimate reimbursement for a DRG (convenience function).
+ */
+export async function estimateReimbursement(
+  payerType: string,
+  options?: {
+    encounter_id?: string;
+    drg_code?: string;
+    drg_weight?: number;
+    fiscal_year?: number;
+    state_code?: string;
+    wage_index_override?: number;
+  }
+): Promise<DRGGrouperResult<unknown>> {
+  return drgGrouperClient.estimateReimbursement({
+    payer_type: payerType,
+    ...options
+  });
+}
+
+/**
+ * Validate coding completeness for an encounter day (convenience function).
+ */
+export async function validateCoding(
+  encounterId: string,
+  serviceDate: string
+): Promise<DRGGrouperResult<unknown>> {
+  return drgGrouperClient.validateCoding({
+    encounter_id: encounterId,
+    service_date: serviceDate
+  });
+}
+
+/**
+ * Flag revenue risks for an encounter day (convenience function).
+ */
+export async function flagRevenueRisk(
+  encounterId: string,
+  serviceDate: string
+): Promise<DRGGrouperResult<unknown>> {
+  return drgGrouperClient.flagRevenueRisk({
+    encounter_id: encounterId,
+    service_date: serviceDate
   });
 }
 

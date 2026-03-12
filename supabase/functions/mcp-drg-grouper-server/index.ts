@@ -48,6 +48,8 @@ import {
 import type { ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 import { TOOLS } from "./tools.ts";
 import { createDRGGrouperHandlers } from "./drgGrouperHandlers.ts";
+import { createRevenueHandlers } from "./revenueHandlers.ts";
+import { createRevenueOptimizerHandlers } from "./revenueOptimizerHandlers.ts";
 
 // Server configuration — Tier 3 (admin), standalone product
 const SERVER_CONFIG = {
@@ -71,6 +73,21 @@ const VALIDATION: ToolSchemaRegistry = {
   },
   get_drg_result: {
     encounter_id: { type: 'uuid', required: true }
+  },
+  estimate_reimbursement: {
+    payer_type: { type: 'string', required: true }
+  },
+  validate_coding: {
+    encounter_id: { type: 'uuid', required: true },
+    service_date: { type: 'string', required: true }
+  },
+  flag_revenue_risk: {
+    encounter_id: { type: 'uuid', required: true },
+    service_date: { type: 'string', required: true }
+  },
+  get_payer_rules: {
+    payer_type: { type: 'string', required: true },
+    fiscal_year: { type: 'number', required: true }
   }
 };
 
@@ -86,6 +103,8 @@ if (!initResult.supabase) {
 
 const sb = initResult.supabase;
 const { handleRunDRGGrouper, handleGetDRGResult } = createDRGGrouperHandlers(sb, logger);
+const { handleEstimateReimbursement, handleGetPayerRules } = createRevenueHandlers(sb, logger);
+const { handleFlagRevenueRisk, handleValidateCoding } = createRevenueOptimizerHandlers(sb, logger);
 
 // =====================================================
 // MCP JSON-RPC Server
@@ -249,6 +268,18 @@ serve(async (req) => {
           case 'get_drg_result':
             result = await handleGetDRGResult(securedArgs);
             break;
+          case 'estimate_reimbursement':
+            result = await handleEstimateReimbursement(securedArgs);
+            break;
+          case 'get_payer_rules':
+            result = await handleGetPayerRules(securedArgs);
+            break;
+          case 'flag_revenue_risk':
+            result = await handleFlagRevenueRisk(securedArgs);
+            break;
+          case 'validate_coding':
+            result = await handleValidateCoding(securedArgs);
+            break;
           default:
             return new Response(JSON.stringify({
               jsonrpc: "2.0",
@@ -259,9 +290,10 @@ serve(async (req) => {
             });
         }
 
-        // All DRG tools are AI-generated and require clinical review
+        // AI tools require clinical review flagging
+        const aiTools = ['run_drg_grouper', 'flag_revenue_risk'];
         const safetyFlags: Array<'ai_generated' | 'requires_clinical_review'> =
-          name === 'run_drg_grouper'
+          aiTools.includes(name)
             ? ['ai_generated', 'requires_clinical_review']
             : [];
 
@@ -281,7 +313,7 @@ serve(async (req) => {
                 role: caller.role
               },
               provenance: buildProvenance(
-                name === 'run_drg_grouper' ? 'ai_generated' : 'database',
+                aiTools.includes(name) ? 'ai_generated' : 'database',
                 {
                   dataFreshnessISO: new Date().toISOString(),
                   safetyFlags: safetyFlags.length > 0 ? safetyFlags : undefined

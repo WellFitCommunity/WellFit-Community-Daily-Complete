@@ -1,7 +1,11 @@
 // =====================================================
 // MCP DRG Grouper Server — AI Tool Schemas
-// Structured output schema for Claude tool_choice pattern.
+// Structured output schemas for Claude tool_choice pattern.
 // Guarantees JSON structure without regex parsing.
+//
+// 2 schemas:
+// - DRG_ANALYSIS_TOOL: 3-pass DRG grouping output
+// - REVENUE_OPTIMIZATION_TOOL: Revenue risk/optimization output
 // =====================================================
 
 /**
@@ -101,6 +105,96 @@ export const DRG_ANALYSIS_TOOL = {
       confidence: { type: "number" as const },
       requires_clinical_review: { type: "boolean" as const },
       review_reasons: { type: "array" as const, items: { type: "string" as const } }
+    }
+  }
+};
+
+/**
+ * Revenue Optimizer output schema — forces Claude to return
+ * structured revenue optimization analysis via tool use.
+ */
+export const REVENUE_OPTIMIZATION_TOOL = {
+  name: "submit_revenue_analysis",
+  description: "Submit the structured revenue optimization result",
+  input_schema: {
+    type: "object" as const,
+    required: [
+      "documentation_assessment", "missing_codes", "upgrade_opportunities",
+      "documentation_gaps", "modifier_suggestions", "summary",
+      "total_potential_uplift", "confidence", "requires_clinical_review"
+    ],
+    properties: {
+      documentation_assessment: {
+        type: "object" as const,
+        required: ["acuity_supported", "current_acuity", "documented_acuity", "gaps"],
+        properties: {
+          acuity_supported: { type: "boolean" as const },
+          current_acuity: { type: "string" as const },
+          documented_acuity: { type: "string" as const },
+          gaps: { type: "array" as const, items: { type: "string" as const } }
+        }
+      },
+      missing_codes: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          required: ["code", "code_system", "description", "rationale", "potential_impact", "confidence"],
+          properties: {
+            code: { type: "string" as const },
+            code_system: { type: "string" as const },
+            description: { type: "string" as const },
+            rationale: { type: "string" as const },
+            potential_impact: { type: "number" as const },
+            confidence: { type: "number" as const }
+          }
+        }
+      },
+      upgrade_opportunities: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          required: ["current_code", "suggested_code", "description", "rationale", "weight_difference", "revenue_impact", "confidence"],
+          properties: {
+            current_code: { type: "string" as const },
+            suggested_code: { type: "string" as const },
+            description: { type: "string" as const },
+            rationale: { type: "string" as const },
+            weight_difference: { type: "number" as const },
+            revenue_impact: { type: "number" as const },
+            confidence: { type: "number" as const }
+          }
+        }
+      },
+      documentation_gaps: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          required: ["gap_type", "description", "impact", "suggested_action"],
+          properties: {
+            gap_type: { type: "string" as const },
+            description: { type: "string" as const },
+            impact: { type: "string" as const },
+            suggested_action: { type: "string" as const }
+          }
+        }
+      },
+      modifier_suggestions: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          required: ["code", "suggested_modifier", "description", "rationale"],
+          properties: {
+            code: { type: "string" as const },
+            suggested_modifier: { type: "string" as const },
+            description: { type: "string" as const },
+            rationale: { type: "string" as const }
+          }
+        }
+      },
+      summary: { type: "string" as const },
+      total_potential_uplift: { type: "number" as const },
+      confidence: { type: "number" as const },
+      requires_clinical_review: { type: "boolean" as const }
     }
   }
 };

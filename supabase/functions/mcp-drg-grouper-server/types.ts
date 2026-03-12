@@ -46,6 +46,110 @@ export interface DRGGroupingResult {
   updated_at: string;
 }
 
+// --- Payer Rules ---
+
+export type PayerType = 'medicare' | 'medicaid' | 'commercial' | 'tricare' | 'workers_comp';
+
+export type RuleType = 'drg_based' | 'per_diem' | 'case_rate' | 'percent_of_charges' | 'fee_schedule';
+
+export interface PayerRule {
+  id: string;
+  tenant_id: string;
+  payer_type: PayerType;
+  state_code: string | null;
+  fiscal_year: number;
+  rule_type: RuleType;
+  acuity_tier: string | null;
+  base_rate_amount: number | null;
+  capital_rate_amount: number | null;
+  wage_index_factor: number;
+  cost_of_living_adjustment: number;
+  per_diem_rate: number | null;
+  allowable_percentage: number | null;
+  max_days: number | null;
+  outlier_threshold: number | null;
+  carve_out_codes: unknown[];
+  rule_description: string | null;
+  source_reference: string | null;
+  is_active: boolean;
+  effective_date: string;
+  expiration_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// --- Revenue Projection ---
+
+export interface RevenueProjection {
+  drg_code: string;
+  drg_weight: number;
+  base_rate: number;
+  wage_index: number;
+  capital_rate: number;
+  operating_payment: number;
+  capital_payment: number;
+  total_estimated: number;
+  payer_type: PayerType;
+  adjustments_applied: string[];
+}
+
+// --- Daily Charge Snapshots ---
+
+export type SnapshotStatus = 'draft' | 'reviewed' | 'finalized' | 'billed';
+
+export interface ChargeEntry {
+  code: string;
+  code_system: string;
+  description: string;
+  charge_amount: number;
+  units: number;
+  modifiers: string[];
+  source_table: string;
+  source_id: string;
+}
+
+export interface ChargesByCategory {
+  lab: ChargeEntry[];
+  imaging: ChargeEntry[];
+  pharmacy: ChargeEntry[];
+  nursing: ChargeEntry[];
+  procedure: ChargeEntry[];
+  evaluation: ChargeEntry[];
+  other: ChargeEntry[];
+}
+
+export interface OptimizationSuggestion {
+  type: 'missing_charge' | 'upgrade_opportunity' | 'documentation_gap' | 'modifier_suggestion';
+  description: string;
+  potential_impact_amount: number | null;
+  suggested_code: string | null;
+  confidence: number;
+}
+
+export interface DailyChargeSnapshot {
+  id: string;
+  tenant_id: string;
+  patient_id: string;
+  encounter_id: string;
+  admit_date: string;
+  service_date: string;
+  day_number: number;
+  charges: ChargesByCategory;
+  total_charge_amount: number;
+  charge_count: number;
+  projected_drg_code: string | null;
+  projected_drg_weight: number | null;
+  projected_reimbursement: number | null;
+  optimization_suggestions: OptimizationSuggestion[];
+  missing_charge_alerts: unknown[];
+  documentation_gaps: unknown[];
+  status: SnapshotStatus;
+  ai_skill_key: string;
+  ai_model_used: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // --- MCP Logger interface ---
 
 export interface MCPLogger {
