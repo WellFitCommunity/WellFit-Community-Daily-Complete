@@ -759,6 +759,16 @@ const SelfReportingPage: React.FC = () => {
               symptoms,
               physical_activity: physicalActivity,
             }}
+            historicalReports={selfReports.map((r) => ({
+              created_at: r.created_at,
+              mood: r.mood,
+              bp_systolic: r.bp_systolic,
+              bp_diastolic: r.bp_diastolic,
+              blood_sugar: r.blood_sugar,
+              blood_oxygen: r.blood_oxygen,
+              heart_rate: r.heart_rate,
+              weight: r.weight,
+            }))}
           />
         </div>
 

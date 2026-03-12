@@ -18,6 +18,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { HAIKU_MODEL } from "../_shared/models.ts";
+import { recordDecisionLink } from "../_shared/decisionChain.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -166,6 +167,35 @@ serve(async (req) => {
       escalationLevel: escalation.escalationLevel,
       notifyCaregiver: escalation.notifyCaregiver,
     });
+
+    // Record decision chain (fire-and-forget)
+    (async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", patientId)
+        .single();
+      if (profile?.tenant_id) {
+        await recordDecisionLink({
+          tenant_id: profile.tenant_id,
+          trigger_type: triggerType === "scheduled_check" ? "scheduled" : "system_event",
+          trigger_source: "ai-missed-checkin-escalation",
+          context_snapshot: {
+            patient_id: patientId,
+            consecutive_missed: context.consecutiveMissed,
+            risk_level: context.riskLevel,
+          },
+          model_id: HAIKU_MODEL,
+          skill_key: "missed_checkin_escalation",
+          decision_type: "escalation",
+          decision_summary: `Escalation level: ${escalation.escalationLevel}, notify caregiver: ${escalation.notifyCaregiver}, ${context.consecutiveMissed} consecutive missed`,
+          confidence_score: 0.7,
+          authority_tier: 1,
+          action_taken: escalation.notifyCaregiver ? "Caregiver notification triggered" : "Escalation logged, no notification",
+          outcome: "success",
+        });
+      }
+    })().catch(() => { /* fire-and-forget */ });
 
     return new Response(
       JSON.stringify({

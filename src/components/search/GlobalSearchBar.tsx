@@ -34,10 +34,12 @@ import {
   Loader2,
   Mic,
   MicOff,
+  FileCode2,
+  FileText,
 } from 'lucide-react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { parseVoiceEntity, EntityType, ParsedEntity, SearchResult, ENTITY_ROUTES } from '../../contexts/VoiceActionContext';
-import { voiceSearch, searchPatients, searchBeds, searchProviders } from '../../services/voiceSearchService';
+import { voiceSearch, searchPatients, searchBeds, searchProviders, searchMedicalCodes, searchClinicalNotes } from '../../services/voiceSearchService';
 import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
 import { auditLogger } from '../../services/auditLogger';
 import { useVoiceCommand } from '../../hooks/useVoiceCommand';
@@ -61,6 +63,8 @@ const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
   diagnosis: <Stethoscope className="w-4 h-4" />,
   admission: <LogIn className="w-4 h-4" />,
   discharge: <LogOut className="w-4 h-4" />,
+  medical_code: <FileCode2 className="w-4 h-4" />,
+  clinical_note: <FileText className="w-4 h-4" />,
 };
 
 const ENTITY_COLORS: Record<EntityType, string> = {
@@ -78,6 +82,8 @@ const ENTITY_COLORS: Record<EntityType, string> = {
   diagnosis: 'text-orange-400 bg-orange-400/10',
   admission: 'text-emerald-400 bg-emerald-400/10',
   discharge: 'text-rose-400 bg-rose-400/10',
+  medical_code: 'text-sky-400 bg-sky-400/10',
+  clinical_note: 'text-lime-400 bg-lime-400/10',
 };
 
 const ENTITY_LABELS: Record<EntityType, string> = {
@@ -95,6 +101,8 @@ const ENTITY_LABELS: Record<EntityType, string> = {
   diagnosis: 'Diagnosis',
   admission: 'Admission',
   discharge: 'Discharge',
+  medical_code: 'Medical Code',
+  clinical_note: 'Clinical Note',
 };
 
 // ============================================================================
@@ -109,6 +117,9 @@ const SEARCH_EXAMPLES = [
   'high risk patients',
   'pending alerts',
   'admissions today',
+  'code 99213',
+  'CPT knee replacement',
+  'notes diabetes management',
 ];
 
 // ============================================================================
@@ -273,6 +284,12 @@ export const GlobalSearchBar: React.FC = () => {
               break;
             case 'provider':
               searchResults = await searchProviders(supabase, entity);
+              break;
+            case 'medical_code':
+              searchResults = await searchMedicalCodes(supabase, entity);
+              break;
+            case 'clinical_note':
+              searchResults = await searchClinicalNotes(supabase, entity);
               break;
             default:
               searchResults = await voiceSearch(supabase, entity);

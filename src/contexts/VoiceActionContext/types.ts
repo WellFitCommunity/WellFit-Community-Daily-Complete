@@ -22,7 +22,9 @@ export type EntityType =
   | 'medication'
   | 'diagnosis'
   | 'admission'
-  | 'discharge';
+  | 'discharge'
+  | 'medical_code'
+  | 'clinical_note';
 
 export interface ParsedEntity {
   type: EntityType;
@@ -119,4 +121,6 @@ export const ENTITY_ROUTES: Record<EntityType, string> = {
   diagnosis: '/admin',
   admission: '/admin',
   discharge: '/admin',
+  medical_code: '/billing',
+  clinical_note: '/admin',
 };

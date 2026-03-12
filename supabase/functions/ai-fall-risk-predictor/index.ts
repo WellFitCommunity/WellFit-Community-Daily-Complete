@@ -28,6 +28,7 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { recordDecisionLink } from "../_shared/decisionChain.ts";
 import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
 import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
@@ -318,6 +319,31 @@ serve(async (req) => {
       riskCategory: assessment.riskCategory,
       overallScore: assessment.overallRiskScore,
     });
+
+    // Record decision chain (fire-and-forget — tenant lookup included)
+    (async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", assessorId)
+        .single();
+      if (profile?.tenant_id) {
+        await recordDecisionLink({
+          tenant_id: profile.tenant_id,
+          trigger_type: "user_request",
+          trigger_source: "ai-fall-risk-predictor",
+          context_snapshot: { patient_id: patientId, assessment_context: assessmentContext },
+          model_id: SONNET_MODEL,
+          skill_key: "fall_risk_predictor",
+          decision_type: "clinical",
+          decision_summary: `Fall risk: ${assessment.riskCategory} (score ${assessment.overallRiskScore}/100)`,
+          confidence_score: (assessment.overallRiskScore ?? 50) / 100,
+          authority_tier: 1,
+          action_taken: "Fall risk assessment returned to clinician",
+          outcome: "success",
+        });
+      }
+    })().catch(() => { /* fire-and-forget */ });
 
     return new Response(
       JSON.stringify({

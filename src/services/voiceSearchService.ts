@@ -14,6 +14,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { ParsedEntity, SearchResult } from '../contexts/VoiceActionContext';
 import { auditLogger } from './auditLogger';
 import { VoiceLearningService } from './voiceLearningService';
+import { medicalSynonymService } from './medicalSynonymService';
 
 // ============================================================================
 // TYPES
@@ -506,6 +507,164 @@ export async function searchProviders(
   }
 }
 
+// ============================================================================
+// MEDICAL CODE SEARCH (Full-text via PostgreSQL function)
+// ============================================================================
+
+interface MedicalCodeRow {
+  code: string;
+  code_system: string;
+  description: string;
+  category: string;
+  relevance: number;
+}
+
+/**
+ * Search medical codes (CPT, ICD-10, HCPCS) using full-text search
+ */
+/** Map raw medical code rows to SearchResult format */
+function mapMedicalCodeResults(
+  data: MedicalCodeRow[] | null,
+  maxScore: number
+): SearchResult[] {
+  if (!data || data.length === 0) return [];
+  return data.map((row) => {
+    const matchScore = row.relevance > 0
+      ? Math.min(maxScore, Math.round(row.relevance * 100 + (maxScore - 50)))
+      : Math.round(maxScore * 0.6);
+    return {
+      id: `${row.code_system}-${row.code}`,
+      type: 'medical_code' as const,
+      primaryText: `${row.code} (${row.code_system})`,
+      secondaryText: row.description,
+      matchScore,
+      metadata: {
+        code: row.code,
+        codeSystem: row.code_system,
+        description: row.description,
+        category: row.category,
+      },
+    };
+  });
+}
+
+export async function searchMedicalCodes(
+  supabase: SupabaseClient,
+  entity: ParsedEntity
+): Promise<SearchResult[]> {
+  try {
+    const searchTerm = entity.filters.name || entity.query;
+    if (!searchTerm || searchTerm.length < 2) return [];
+
+    const { data, error } = await supabase
+      .rpc('search_medical_codes', {
+        p_query: searchTerm,
+        p_limit: 20,
+      });
+
+    if (error) {
+      auditLogger.error('MEDICAL_CODE_SEARCH_FAILED', error);
+      return [];
+    }
+
+    // Build initial results from direct search
+    const directResults = mapMedicalCodeResults(data as MedicalCodeRow[] | null, 100);
+
+    // If direct search found few results, try synonym expansion
+    // e.g., "heart attack" → also search "myocardial infarction"
+    if (directResults.length < 5) {
+      const expansion = await medicalSynonymService.expandSearchTerm(searchTerm);
+      if (expansion.success && expansion.data.has_synonyms) {
+        const seenIds = new Set(directResults.map(r => r.id));
+        for (const expanded of expansion.data.expanded_terms) {
+          if (expanded.is_canonical && expanded.term.toLowerCase() !== searchTerm.toLowerCase()) {
+            const { data: synonymData } = await supabase
+              .rpc('search_medical_codes', { p_query: expanded.term, p_limit: 10 });
+            const synonymResults = mapMedicalCodeResults(synonymData as MedicalCodeRow[] | null, 80);
+            for (const sr of synonymResults) {
+              if (!seenIds.has(sr.id)) {
+                seenIds.add(sr.id);
+                directResults.push(sr);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return directResults.sort((a, b) => b.matchScore - a.matchScore);
+  } catch (err: unknown) {
+    auditLogger.error(
+      'MEDICAL_CODE_SEARCH_ERROR',
+      err instanceof Error ? err : new Error(String(err))
+    );
+    return [];
+  }
+}
+
+/** Row shape from search_clinical_notes RPC */
+interface ClinicalNoteRow {
+  note_id: string;
+  encounter_id: string;
+  note_type: string;
+  content_snippet: string;
+  author_id: string;
+  tenant_id: string;
+  created_at: string;
+  relevance: number;
+}
+
+/**
+ * Search clinical notes by content via full-text search
+ */
+export async function searchClinicalNotes(
+  supabase: SupabaseClient,
+  entity: ParsedEntity
+): Promise<SearchResult[]> {
+  try {
+    const searchTerm = entity.filters.name || entity.query;
+    if (!searchTerm || searchTerm.length < 2) return [];
+
+    const { data, error } = await supabase
+      .rpc('search_clinical_notes', {
+        p_query: searchTerm,
+        p_limit: 20,
+      });
+
+    if (error) {
+      auditLogger.error('CLINICAL_NOTE_SEARCH_FAILED', error);
+      return [];
+    }
+
+    if (!data || data.length === 0) return [];
+
+    return (data as ClinicalNoteRow[]).map((row) => {
+      const matchScore = row.relevance > 0
+        ? Math.min(100, Math.round(row.relevance * 100 + 50))
+        : 60;
+
+      return {
+        id: row.note_id,
+        type: 'clinical_note' as const,
+        primaryText: `${row.note_type.toUpperCase()} Note`,
+        secondaryText: row.content_snippet,
+        matchScore,
+        metadata: {
+          encounter_id: row.encounter_id,
+          note_type: row.note_type,
+          created_at: row.created_at,
+        },
+      };
+    });
+  } catch (err: unknown) {
+    auditLogger.error(
+      'CLINICAL_NOTE_SEARCH_ERROR',
+      err instanceof Error ? err : new Error(String(err))
+    );
+    return [];
+  }
+}
+
 /**
  * Search for patients by room number (convenience function)
  */
@@ -561,6 +720,10 @@ export async function voiceSearch(
       return [...bedResults, ...patientResults].sort((a, b) => b.matchScore - a.matchScore);
     case 'provider':
       return searchProviders(supabase, correctedEntity);
+    case 'medical_code':
+      return searchMedicalCodes(supabase, correctedEntity);
+    case 'clinical_note':
+      return searchClinicalNotes(supabase, correctedEntity);
     default:
       auditLogger.warn('VOICE_SEARCH_UNKNOWN_TYPE', { entityType: correctedEntity.type });
       return [];
@@ -571,6 +734,8 @@ export default {
   searchPatients,
   searchBeds,
   searchProviders,
+  searchMedicalCodes,
+  searchClinicalNotes,
   searchByRoom,
   voiceSearch,
 };

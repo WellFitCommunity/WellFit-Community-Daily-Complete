@@ -3,6 +3,26 @@ import React, { useState, useEffect } from 'react';
 import claudeService from '../services/claudeService';
 import { getSmartSuggestions, getLocalSuggestions, SmartSuggestion } from '../services/smartSuggestionsService';
 
+interface HistoricalReport {
+  created_at: string;
+  mood?: string;
+  bp_systolic?: number | null;
+  bp_diastolic?: number | null;
+  blood_sugar?: number | null;
+  blood_oxygen?: number | null;
+  heart_rate?: number | null;
+  weight?: number | null;
+}
+
+interface TrendData {
+  metric: string;
+  label: string;
+  current: number | null;
+  avg7d: number | null;
+  avg30d: number | null;
+  direction: 'up' | 'down' | 'stable' | 'unknown';
+}
+
 interface HealthInsightsProps {
   healthData: {
     mood?: string;
@@ -15,14 +35,72 @@ interface HealthInsightsProps {
     symptoms?: string | null;
     physical_activity?: string | null;
   };
+  historicalReports?: HistoricalReport[];
   onClose?: () => void;
 }
 
-const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClose }) => {
+/**
+ * Compute averages from historical reports within a given number of days
+ */
+function computeAvg(reports: HistoricalReport[], field: keyof HistoricalReport, days: number): number | null {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const values = reports
+    .filter((r) => new Date(r.created_at) >= cutoff)
+    .map((r) => r[field])
+    .filter((v): v is number => typeof v === 'number' && v > 0);
+  if (values.length === 0) return null;
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
+/**
+ * Determine trend direction by comparing recent 3-day avg to prior 7-day avg
+ */
+function getTrendDirection(reports: HistoricalReport[], field: keyof HistoricalReport): TrendData['direction'] {
+  const recent = computeAvg(reports, field, 3);
+  const prior = computeAvg(reports, field, 14);
+  if (recent === null || prior === null) return 'unknown';
+  const delta = (recent - prior) / prior;
+  if (delta > 0.05) return 'up';
+  if (delta < -0.05) return 'down';
+  return 'stable';
+}
+
+function computeTrends(current: HealthInsightsProps['healthData'], reports: HistoricalReport[]): TrendData[] {
+  const metrics: { metric: keyof HistoricalReport; label: string; currentVal: number | null | undefined }[] = [
+    { metric: 'bp_systolic', label: 'Blood Pressure (systolic)', currentVal: current.bp_systolic },
+    { metric: 'bp_diastolic', label: 'Blood Pressure (diastolic)', currentVal: current.bp_diastolic },
+    { metric: 'blood_sugar', label: 'Blood Sugar', currentVal: current.blood_sugar },
+    { metric: 'blood_oxygen', label: 'Blood Oxygen', currentVal: current.blood_oxygen },
+    { metric: 'weight', label: 'Weight', currentVal: current.weight },
+    { metric: 'heart_rate', label: 'Heart Rate', currentVal: current.heart_rate },
+  ];
+
+  return metrics
+    .map(({ metric, label, currentVal }) => ({
+      metric,
+      label,
+      current: currentVal ?? null,
+      avg7d: computeAvg(reports, metric, 7),
+      avg30d: computeAvg(reports, metric, 30),
+      direction: getTrendDirection(reports, metric),
+    }))
+    .filter((t) => t.current !== null || t.avg7d !== null);
+}
+
+const DIRECTION_ICONS: Record<TrendData['direction'], string> = {
+  up: '📈',
+  down: '📉',
+  stable: '➡️',
+  unknown: '—',
+};
+
+const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, historicalReports, onClose }) => {
   const [insights, setInsights] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<SmartSuggestion[]>([]);
   const [_suggestionSource, setSuggestionSource] = useState<'haiku' | 'fallback' | 'local'>('local');
+  const [trends, setTrends] = useState<TrendData[]>([]);
 
   useEffect(() => {
     if (hasHealthData(healthData)) {
@@ -40,16 +118,36 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
   const generateInsights = async () => {
     setIsLoading(true);
     try {
-      // Generate health insights (existing logic)
+      // Compute trends from historical data
+      const computedTrends = historicalReports && historicalReports.length > 0
+        ? computeTrends(healthData, historicalReports)
+        : [];
+      setTrends(computedTrends);
+
+      // Build enriched health data with trend context for AI
+      const enrichedData: Record<string, unknown> = { ...healthData };
+      if (computedTrends.length > 0) {
+        enrichedData.trends = computedTrends
+          .filter((t) => t.avg7d !== null)
+          .map((t) => ({
+            metric: t.label,
+            current: t.current,
+            sevenDayAverage: t.avg7d !== null ? Math.round(t.avg7d * 10) / 10 : null,
+            thirtyDayAverage: t.avg30d !== null ? Math.round(t.avg30d * 10) / 10 : null,
+            direction: t.direction,
+          }));
+      }
+
+      // Generate health insights with trend-enriched data
       let interpretation = '';
       try {
         const serviceStatus = claudeService.getServiceStatus?.();
         if (serviceStatus && !serviceStatus.isHealthy) {
           throw new Error('Claude AI service not available');
         }
-        interpretation = await claudeService.interpretHealthData(healthData);
+        interpretation = await claudeService.interpretHealthData(enrichedData);
       } catch {
-        interpretation = generateFallbackInsights(healthData);
+        interpretation = generateFallbackInsights(healthData, computedTrends);
       }
       setInsights(interpretation);
 
@@ -80,7 +178,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
 
     } catch {
       // Use fallback insights when AI is unavailable
-      setInsights(generateFallbackInsights(healthData));
+      setInsights(generateFallbackInsights(healthData, trends));
       setSuggestions([
         { text: 'Keep tracking your health daily', type: 'practical' },
         { text: 'Stay hydrated', type: 'practical' },
@@ -92,37 +190,46 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
     }
   };
 
-  const generateFallbackInsights = (data: HealthInsightsProps['healthData']): string => {
-    const insights = [];
+  const generateFallbackInsights = (data: HealthInsightsProps['healthData'], trendData: TrendData[] = []): string => {
+    const parts = [];
 
     if (data.mood) {
       if (['Great', 'Good'].includes(data.mood)) {
-        insights.push("Your mood is positive today - that's wonderful!");
+        parts.push("Your mood is positive today - that's wonderful!");
       } else if (['Okay'].includes(data.mood)) {
-        insights.push("Your mood is neutral today. Consider some activities that make you feel good.");
+        parts.push("Your mood is neutral today. Consider some activities that make you feel good.");
       } else {
-        insights.push("I notice you're not feeling your best today. Remember it's okay to have difficult days.");
+        parts.push("I notice you're not feeling your best today. Remember it's okay to have difficult days.");
       }
     }
 
     if (data.bp_systolic && data.bp_diastolic) {
       if (data.bp_systolic < 120 && data.bp_diastolic < 80) {
-        insights.push("Your blood pressure looks normal - keep up the good work!");
+        parts.push("Your blood pressure looks normal - keep up the good work!");
       } else if (data.bp_systolic >= 140 || data.bp_diastolic >= 90) {
-        insights.push("Your blood pressure is elevated. Consider discussing this with your doctor.");
+        parts.push("Your blood pressure is elevated. Consider discussing this with your doctor.");
       }
     }
 
     if (data.blood_sugar) {
       if (data.blood_sugar >= 70 && data.blood_sugar <= 140) {
-        insights.push("Your blood sugar is in a healthy range.");
+        parts.push("Your blood sugar is in a healthy range.");
       } else {
-        insights.push("Your blood sugar may need attention. Consult with your healthcare provider.");
+        parts.push("Your blood sugar may need attention. Consult with your healthcare provider.");
       }
     }
 
-    return insights.length > 0
-      ? insights.join(' ')
+    // Add trend-based insights from historical data
+    for (const trend of trendData) {
+      if (trend.direction === 'up' && trend.avg7d !== null) {
+        parts.push(`Your ${trend.label.toLowerCase()} has been trending upward (7-day avg: ${Math.round(trend.avg7d)}).`);
+      } else if (trend.direction === 'down' && trend.avg7d !== null) {
+        parts.push(`Your ${trend.label.toLowerCase()} has been trending downward (7-day avg: ${Math.round(trend.avg7d)}).`);
+      }
+    }
+
+    return parts.length > 0
+      ? parts.join(' ')
       : "Thank you for tracking your health today. Keep up the good work!";
   };
 
@@ -158,6 +265,35 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
           <p className="text-gray-800 text-base mb-4 leading-relaxed bg-white/50 rounded-lg p-3">
             {insights}
           </p>
+
+          {/* Health Trends from Historical Data */}
+          {trends.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                <span className="text-2xl mr-2">📊</span>
+                Your Health Trends
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {trends.map((trend) => (
+                  <div
+                    key={trend.metric}
+                    className="bg-white/60 rounded-lg p-3 border border-blue-100 flex items-center gap-3"
+                  >
+                    <span className="text-2xl">{DIRECTION_ICONS[trend.direction]}</span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-gray-800 truncate">{trend.label}</div>
+                      <div className="text-xs text-gray-600">
+                        {trend.current !== null && <span>Now: {Math.round(trend.current)}</span>}
+                        {trend.avg7d !== null && (
+                          <span className="ml-2">7d avg: {Math.round(trend.avg7d)}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {suggestions.length > 0 && (
             <div className="mt-4">

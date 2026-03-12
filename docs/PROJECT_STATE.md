@@ -411,6 +411,26 @@ Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one
 
 ---
 
+## ChatGPT Audit Gap Closure (2026-03-12) — IN PROGRESS
+
+**Tracker:** `docs/trackers/chatgpt-audit-gaps-tracker.md`
+**Audit Report:** `docs/audits/CHATGPT_ARCHITECTURE_AUDIT_2026-03-12.md`
+
+**What:** Close all actionable gaps identified across 3 ChatGPT architecture audit passes — governance enforcement, AI decision auditability, search intelligence, clinical notes search.
+
+**Why:** ChatGPT found 7 governance blind spots (6 closed, 1 spec-only) and identified search/auditability gaps in 3 subsystem reviews. These gaps affect hospital pilot readiness and auditor confidence.
+
+| Session | Items | Status | Focus |
+|---------|-------|--------|-------|
+| S1: Quick Wins | 2 | 0/2 | Full-text search → GlobalSearchBar wiring + governance scripts → CI |
+| S2: Decision Chain | 4 | 0/4 | `ai_decision_chain` table, service, edge function wiring, auditor view |
+| S3: Synonym + Notes | 3 | 0/3 | Medical synonym dictionary, search expansion, clinical notes search |
+| **Total** | **9** | **0/9** | |
+
+**Estimated remaining:** ~20-25 hours across 3 sessions
+
+---
+
 ## Upcoming: Skills Overhaul — 10 New Skills + 5 Updates
 
 **Assessment:** `docs/SKILLS_ASSESSMENT_2026-02-28.md`

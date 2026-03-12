@@ -204,13 +204,14 @@ const CommunityMoments: React.FC = () => {
     (async () => {
       setInitialLoading(true);
       try {
+        // Include approved photos + the current user's own pending photos
         const { data, error, count } = await supabase
           .from('community_moments')
           .select(
             'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, approval_status, created_at, profile:profiles(first_name, last_name)',
             { count: 'exact' }
           )
-          .eq('approval_status', 'approved')
+          .or(`approval_status.eq.approved${userId ? `,and(approval_status.eq.pending,user_id.eq.${userId})` : ''}`)
           .order('created_at', { ascending: false })
           .range(0, PAGE_SIZE - 1);
 
@@ -244,7 +245,7 @@ const CommunityMoments: React.FC = () => {
       }
     })();
     return () => { cancelled = true; };
-  }, [supabase]);
+  }, [supabase, userId]);
 
   // Load more
   const loadMore = async () => {
@@ -253,12 +254,13 @@ const CommunityMoments: React.FC = () => {
     try {
       const from = page * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
+      // Include approved photos + the current user's own pending photos
       const { data, error } = await supabase
         .from('community_moments')
         .select(
           'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, approval_status, created_at, profile:profiles(first_name, last_name)'
         )
-        .eq('approval_status', 'approved')
+        .or(`approval_status.eq.approved${userId ? `,and(approval_status.eq.pending,user_id.eq.${userId})` : ''}`)
         .order('created_at', { ascending: false })
         .range(from, to);
       if (error) throw error;
@@ -415,16 +417,16 @@ const CommunityMoments: React.FC = () => {
       }
 
       // Show success message
-      alert('🎉 Your photo has been uploaded! Our team will review it and it will appear here soon. Thank you for sharing!');
+      alert('🎉 Your photo has been uploaded! It will appear in the gallery while our team reviews it. Thank you for sharing!');
 
-      // Refresh
+      // Refresh — include user's own pending photos so they see their upload immediately
       setInitialLoading(true);
       const { data } = await supabase
         .from('community_moments')
         .select(
           'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, approval_status, created_at, profile:profiles(first_name, last_name)'
         )
-        .eq('approval_status', 'approved')
+        .or(`approval_status.eq.approved,and(approval_status.eq.pending,user_id.eq.${sessionUserId})`)
         .order('created_at', { ascending: false })
         .range(0, PAGE_SIZE - 1);
       // Database boundary cast
@@ -465,14 +467,21 @@ const CommunityMoments: React.FC = () => {
     // Use cached signed URL hook - prevents redundant Supabase Storage API calls
     const { data: signedUrl } = useSignedImageUrl(supabase, m.file_path);
     const url = signedUrl || m.file_url || null;
+    const isPending = m.approval_status === 'pending';
 
     return (
       <motion.div
-        className={`bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center transition-all hover:shadow-2xl ${featured ? 'border-4 border-yellow-400' : 'border-2 border-gray-200'}`}
+        className={`bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center transition-all hover:shadow-2xl ${featured ? 'border-4 border-yellow-400' : isPending ? 'border-2 border-amber-300 opacity-90' : 'border-2 border-gray-200'}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
+        {isPending && (
+          <div className="bg-amber-100 text-amber-800 font-bold px-4 py-2 rounded-full mb-3 text-lg flex items-center gap-2 border-2 border-amber-300">
+            <span className="text-xl">🕐</span>
+            <span>Pending Approval</span>
+          </div>
+        )}
         {featured && (
           <div className="bg-yellow-400 text-gray-900 font-bold px-4 py-2 rounded-full mb-3 text-xl flex items-center gap-2">
             <span className="text-2xl">⭐</span>

@@ -13,6 +13,7 @@ import { runReasoningPipeline, serializeReasoningForClient } from '../_shared/co
 import type { ReasoningEncounterInput } from '../_shared/compass-riley/types.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
 import { fetchCulturalContext, formatCulturalContextCompact } from '../_shared/culturalCompetencyClient.ts';
+import { recordDecisionLink } from '../_shared/decisionChain.ts';
 
 const SUPABASE_URL = SUPABASE_URL!;
 const SERVICE_KEY = SB_SECRET_KEY!;
@@ -250,7 +251,24 @@ serve(async (req) => {
     const tenantSettings = (tenantSkillConfig?.settings ?? null) as Record<string, unknown> | null;
     const reasoningResult = runReasoningPipeline(reasoningInput, tenantSettings, 'auto');
 
-    // 5. Return structure with reasoning metadata
+    // 5. Record decision chain (fire-and-forget)
+    const riskLevel = patientData.readmissionCount >= 2 || patientData.sdohRiskFactors >= 3 ? 'high' : 'moderate';
+    recordDecisionLink({
+      tenant_id: effectiveTenantId,
+      trigger_type: 'system_event',
+      trigger_source: 'ai-readmission-predictor',
+      context_snapshot: { patient_id: patientId, discharge_date: dischargeDate },
+      model_id: 'compass-riley-' + reasoningResult.modeUsed,
+      skill_key: 'readmission_predictor',
+      decision_type: 'clinical',
+      decision_summary: `Readmission risk: ${riskLevel} (${patientData.readmissionCount} prior readmissions, ${patientData.sdohRiskFactors} SDOH risk factors)`,
+      confidence_score: (reasoningResult.triggerResult.confidenceScore ?? 70) / 100,
+      authority_tier: 1,
+      action_taken: 'Readmission risk prediction returned to clinician',
+      outcome: 'success',
+    }).catch(() => { /* fire-and-forget */ });
+
+    // 6. Return structure with reasoning metadata
     return new Response(
       JSON.stringify({
         success: true,

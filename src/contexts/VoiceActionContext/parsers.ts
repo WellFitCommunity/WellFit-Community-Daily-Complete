@@ -32,6 +32,8 @@ export function parseVoiceEntity(transcript: string): ParsedEntity | null {
     parseReferralCommand(normalized, transcript) ||
     parseShiftHandoffCommand(normalized, transcript) ||
     parseAdmissionDischargeCommand(normalized, transcript) ||
+    parseMedicalCodeCommand(normalized, transcript) ||
+    parseClinicalNoteCommand(normalized, transcript) ||
     parseMedicationPatientCommand(normalized, transcript) ||
     parseDiagnosisPatientCommand(normalized, transcript) ||
     parseUnitPatientCommand(normalized, transcript) ||
@@ -260,6 +262,62 @@ function parseAdmissionDischargeCommand(normalized: string, transcript: string):
         type: isAdmission ? 'admission' : 'discharge',
         query: `${filters.status || ''} ${isAdmission ? 'admissions' : 'discharges'} ${filters.timeframe || ''}`.trim(),
         filters,
+        rawTranscript: transcript,
+        confidence: 85,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Parse medical code search commands
+ * "code 99213", "CPT knee replacement", "ICD diabetes", "HCPCS E0601", "lookup code 99214"
+ */
+function parseMedicalCodeCommand(normalized: string, transcript: string): ParsedEntity | null {
+  const patterns = [
+    /(?:search|find|lookup|look\s+up)\s+(?:medical\s+)?code\s+(.+)/i,
+    /(?:cpt|icd|hcpcs|icd-?10)\s+(?:code\s+)?(.+)/i,
+    /code\s+(\d{4,5}[a-z]?)/i,
+    /(?:what\s+is\s+)?(?:medical\s+)?code\s+([a-z]\d{2,}(?:\.\d+)?)/i,
+    /(?:billing|procedure|diagnosis)\s+code\s+(.+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern);
+    if (match) {
+      const searchTerm = match[1].trim();
+      return {
+        type: 'medical_code',
+        query: searchTerm,
+        filters: { name: searchTerm },
+        rawTranscript: transcript,
+        confidence: 90,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Parse clinical note search commands
+ * "notes about diabetes", "search notes hypertension", "clinical notes knee replacement"
+ */
+function parseClinicalNoteCommand(normalized: string, transcript: string): ParsedEntity | null {
+  const patterns = [
+    /(?:search|find|lookup|look\s+up)\s+(?:clinical\s+)?notes?\s+(?:about\s+|for\s+)?(.+)/i,
+    /(?:clinical\s+)?notes?\s+(?:about|for|on|mentioning)\s+(.+)/i,
+    /(?:notes?|documentation)\s+(.+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern);
+    if (match) {
+      const searchTerm = match[1].trim();
+      return {
+        type: 'clinical_note',
+        query: searchTerm,
+        filters: { name: searchTerm },
         rawTranscript: transcript,
         confidence: 85,
       };
