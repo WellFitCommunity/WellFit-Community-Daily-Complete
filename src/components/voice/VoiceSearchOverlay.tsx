@@ -25,6 +25,8 @@ import {
   ArrowRightLeft,
   LogIn,
   LogOut,
+  Hash,
+  FileText,
 } from 'lucide-react';
 import { useVoiceActionSafe, EntityType } from '../../contexts/VoiceActionContext';
 
@@ -43,6 +45,8 @@ const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
   diagnosis: <Stethoscope className="w-5 h-5" />,
   admission: <LogIn className="w-5 h-5" />,
   discharge: <LogOut className="w-5 h-5" />,
+  medical_code: <Hash className="w-5 h-5" />,
+  clinical_note: <FileText className="w-5 h-5" />,
 };
 
 const ENTITY_COLORS: Record<EntityType, string> = {
@@ -60,6 +64,8 @@ const ENTITY_COLORS: Record<EntityType, string> = {
   diagnosis: 'text-orange-400',
   admission: 'text-emerald-400',
   discharge: 'text-rose-400',
+  medical_code: 'text-sky-400',
+  clinical_note: 'text-slate-400',
 };
 
 export const VoiceSearchOverlay: React.FC = () => {
