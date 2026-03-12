@@ -2,10 +2,11 @@
 // MCP CMS Coverage Database Server
 // Purpose: Medicare coverage lookups for prior authorization
 // Features: LCD/NCD search, coverage requirements, article lookup
-// API: CMS Medicare Coverage Database API
+// Data: Real CMS reference data from Supabase database tables
 //
-// TIER 1 (external_api): No Supabase required - calls public CMS API
-// Auth: Supabase apikey header only (for edge function access)
+// TIER 2 (user_scoped): Authenticated reference data queries
+// Auth: JWT validation for authenticated users
+// Fallback: Hardcoded subset when DB unavailable (Tier 1 resilience)
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -19,21 +20,26 @@ import {
   handlePing,
   handleHealthCheck,
   checkInMemoryRateLimit,
+  type MCPInitResult,
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
 
-// Initialize as Tier 1 (external_api) - no Supabase required
+// Initialize as Tier 2 (user_scoped) — queries real CMS database tables
+// Falls back to hardcoded data if DB unavailable
 const SERVER_CONFIG = {
   name: "mcp-cms-coverage-server",
-  version: "1.1.0",
-  tier: "external_api" as const
+  version: "2.0.0",
+  tier: "user_scoped" as const
 };
 
-const initResult = initMCPServer(SERVER_CONFIG);
+const initResult: MCPInitResult = initMCPServer(SERVER_CONFIG);
 const { logger, canRateLimit } = initResult;
-const { handleToolCall } = createToolHandlers(logger);
+
+// Supabase client for database lookups (optional — falls back to hardcoded)
+const sb = initResult.supabase ?? null;
+const { handleToolCall } = createToolHandlers(logger, sb);
 
 // =====================================================
 // Main Handler (MCP JSON-RPC Protocol)
@@ -52,7 +58,7 @@ serve(async (req) => {
   }
 
   try {
-    // Rate limiting (in-memory since no Supabase required)
+    // Rate limiting (in-memory + identity-based when available)
     const identifier = getRequestIdentifier(req);
     const rateLimitResult = checkInMemoryRateLimit(identifier, 100, 60000);
 
@@ -95,11 +101,11 @@ serve(async (req) => {
         const { name, arguments: args } = params || {};
         const startTime = Date.now();
 
-        logger.info("CMS Coverage tool call", { tool: name });
+        logger.info("CMS Coverage tool call", { tool: name, hasDB: sb !== null });
 
         // Handle ping tool
         if (name === "ping") {
-          const pingResult = handlePing(SERVER_CONFIG, { supabase: null, logger, canRateLimit });
+          const pingResult = handlePing(SERVER_CONFIG, { supabase: sb, logger, canRateLimit });
           return new Response(JSON.stringify({
             jsonrpc: "2.0",
             result: {

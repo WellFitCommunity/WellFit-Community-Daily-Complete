@@ -1,9 +1,17 @@
 // =====================================================
-// MCP CMS Coverage Server — Reference Data
+// MCP CMS Coverage Server — Fallback Reference Data
+//
+// FALLBACK ONLY: Used when Supabase database is unreachable.
+// Primary data source is now the cms_* database tables
+// seeded in migration 20260312000001_cms_coverage_reference_tables.sql
+//
+// This file provides Tier 1 resilience — the server can still
+// answer common prior auth and MAC contractor queries even if
+// the database connection fails.
 // =====================================================
 
-// Common Prior Auth Requirements by CPT/HCPCS Code
-export const COMMON_PRIOR_AUTH_CODES: Record<string, {
+// Common Prior Auth Requirements by CPT/HCPCS Code (fallback subset)
+export const FALLBACK_PRIOR_AUTH_CODES: Record<string, {
   description: string;
   requires_prior_auth: boolean;
   documentation_required: string[];
@@ -45,7 +53,7 @@ export const COMMON_PRIOR_AUTH_CODES: Record<string, {
   "E0601": {
     description: "CPAP device",
     requires_prior_auth: true,
-    documentation_required: ["Sleep study (AHI ≥15 or AHI 5-14 with symptoms)", "Face-to-face evaluation", "Diagnosis of OSA"],
+    documentation_required: ["Sleep study (AHI >= 15 or AHI 5-14 with symptoms)", "Face-to-face evaluation", "Diagnosis of OSA"],
     typical_approval_time: "3-7 business days"
   },
   "K0823": {
@@ -58,13 +66,13 @@ export const COMMON_PRIOR_AUTH_CODES: Record<string, {
   "J0897": {
     description: "Denosumab injection",
     requires_prior_auth: true,
-    documentation_required: ["Bone density scan (T-score ≤-2.5)", "Contraindication to bisphosphonates or failure"],
+    documentation_required: ["Bone density scan (T-score <= -2.5)", "Contraindication to bisphosphonates or failure"],
     typical_approval_time: "3-5 business days"
   }
 };
 
-// MAC Contractor Information by State
-export const MAC_CONTRACTORS: Record<string, {
+// MAC Contractor Information by State (fallback subset — 7 states)
+export const FALLBACK_MAC_CONTRACTORS: Record<string, {
   part_a_b: { name: string; number: string; };
   dme: { name: string; number: string; };
 }> = {
