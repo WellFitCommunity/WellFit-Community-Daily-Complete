@@ -16,6 +16,8 @@ import { ServiceResult, success, failure } from '../_base/ServiceResult';
 import { auditLogger } from '../auditLogger';
 import { AccuracyTrackingService, createAccuracyTrackingService } from './accuracyTrackingService';
 import { getNotificationService } from '../notificationService';
+import { ConfidenceCalibrationService } from './confidenceCalibrationService';
+import type { RiskFactor as CalibrationRiskFactor } from './confidenceCalibrationService';
 
 // ============================================================================
 // Types
@@ -245,6 +247,45 @@ export class FallRiskPredictorService {
         overallScore: assessment.overallRiskScore,
         confidence: assessment.confidence,
       });
+
+      // P3-4: Calibrate fall risk score with population context
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const tenantId = session?.session?.user?.app_metadata?.tenant_id as string | undefined;
+        if (tenantId) {
+          const calibrationFactors: CalibrationRiskFactor[] = assessment.riskFactors.map(f => ({
+            name: f.factor,
+            original_weight: f.weight,
+            category: f.category,
+            data_source: 'fall-risk-predictor',
+            data_freshness: 'current',
+          }));
+
+          const calibResult = await ConfidenceCalibrationService.calibrateFallRisk(
+            request.patientId,
+            tenantId,
+            assessment.overallRiskScore,
+            assessment.confidence,
+            calibrationFactors
+          );
+
+          if (calibResult.success && calibResult.data) {
+            assessment.overallRiskScore = calibResult.data.calibrated_score;
+            assessment.confidence = calibResult.data.calibrated_confidence;
+            auditLogger.info('FALL_RISK_CALIBRATED', {
+              patientId: request.patientId.substring(0, 8) + '...',
+              direction: calibResult.data.adjustment_direction,
+              delta: calibResult.data.score_delta,
+            });
+          }
+        }
+      } catch (calibErr: unknown) {
+        // Non-blocking: calibration failure doesn't block assessment
+        auditLogger.warn('FALL_RISK_CALIBRATION_SKIPPED', {
+          patientId: request.patientId.substring(0, 8) + '...',
+          reason: calibErr instanceof Error ? calibErr.message : String(calibErr),
+        });
+      }
 
       // Record prediction for learning loop
       const predictionResult = await this.trackPrediction(request, assessment, data.metadata);

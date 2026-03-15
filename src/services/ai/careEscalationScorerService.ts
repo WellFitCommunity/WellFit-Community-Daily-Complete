@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { ServiceResult, success, failure } from '../_base/ServiceResult';
 import { auditLogger } from '../auditLogger';
 import { getNotificationService } from '../notificationService';
+import { TriageSignalAggregationService } from './triageSignalAggregationService';
 
 // ============================================================================
 // Types
@@ -224,6 +225,31 @@ export const CareEscalationScorerService = {
             }
           );
         }
+      }
+
+      // P1-3: After scoring, run meta-triage to detect conflicting signals
+      // across AI skills and resolve them with Claude-in-Claude reasoning.
+      // This is fire-and-forget — meta-triage failures don't block the score.
+      try {
+        const triageResult = await TriageSignalAggregationService.triagePatient(
+          patientId,
+          assessorId,
+          '' // tenant resolved from session in the service
+        );
+        if (triageResult.success && triageResult.data) {
+          await auditLogger.info('META_TRIAGE_COMPLETED', {
+            patientId: patientId.substring(0, 8) + '...',
+            hasConflicts: triageResult.data.aggregation.has_conflicts,
+            resolvedLevel: triageResult.data.aggregation.current_decision,
+            hadResolution: triageResult.data.resolution !== null,
+          });
+        }
+      } catch (triageErr: unknown) {
+        // Non-blocking: log but don't fail the escalation score
+        await auditLogger.warn('META_TRIAGE_SKIPPED', {
+          patientId: patientId.substring(0, 8) + '...',
+          reason: triageErr instanceof Error ? triageErr.message : String(triageErr),
+        });
       }
 
       return success(data as EscalationResponse);

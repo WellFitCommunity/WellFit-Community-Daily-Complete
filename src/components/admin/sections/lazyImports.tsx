@@ -105,3 +105,7 @@ export const MedicalCodingMCPPanel = lazy(() => import('../medical-coding/Medica
 
 // Clinical Validation
 export const ClinicalValidationDashboard = lazy(() => import('../clinical-validation'));
+
+// Claude-in-Claude Triage Intelligence
+export const ConsolidatedAlertPanel = lazy(() => import('../ConsolidatedAlertPanel'));
+export const EscalationOverrideDashboard = lazy(() => import('../EscalationOverrideDashboard'));

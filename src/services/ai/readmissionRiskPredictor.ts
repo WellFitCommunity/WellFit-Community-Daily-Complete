@@ -22,6 +22,9 @@ import {
   ENGAGEMENT_FEATURE_WEIGHTS as _ENGAGEMENT_FEATURE_WEIGHTS
 } from '../../types/readmissionRiskFeatures';
 import { createAccuracyTrackingService, type AccuracyTrackingService } from './accuracyTrackingService';
+import { ConfidenceCalibrationService } from './confidenceCalibrationService';
+import type { RiskFactor as CalibrationRiskFactor } from './confidenceCalibrationService';
+import { auditLogger } from '../auditLogger';
 
 // =====================================================
 // TYPES
@@ -452,6 +455,41 @@ export class ReadmissionRiskPredictor {
 
     // Generate risk prediction with AI (Sonnet for accuracy)
     const prediction = await this.generatePredictionWithAI(context, features, config);
+
+    // P3-3: Calibrate readmission risk score with population context
+    try {
+      const calibrationFactors: CalibrationRiskFactor[] = prediction.riskFactors.map(f => ({
+        name: f.factor,
+        original_weight: f.weight,
+        category: f.category,
+        data_source: 'readmission-predictor',
+        data_freshness: 'current',
+      }));
+
+      const calibResult = await ConfidenceCalibrationService.calibrateReadmissionRisk(
+        context.patientId,
+        context.tenantId,
+        prediction.readmissionRisk30Day * 100, // MCP expects 0-100
+        prediction.predictionConfidence,
+        calibrationFactors
+      );
+
+      if (calibResult.success && calibResult.data) {
+        prediction.readmissionRisk30Day = calibResult.data.calibrated_score / 100; // Back to 0-1
+        prediction.predictionConfidence = calibResult.data.calibrated_confidence;
+        await auditLogger.info('READMISSION_RISK_CALIBRATED', {
+          patientId: context.patientId.substring(0, 8) + '...',
+          direction: calibResult.data.adjustment_direction,
+          delta: calibResult.data.score_delta,
+        });
+      }
+    } catch (calibErr: unknown) {
+      // Non-blocking: calibration failure doesn't block prediction
+      await auditLogger.warn('READMISSION_CALIBRATION_SKIPPED', {
+        patientId: context.patientId.substring(0, 8) + '...',
+        reason: calibErr instanceof Error ? calibErr.message : String(calibErr),
+      });
+    }
 
     // Store prediction in database with comprehensive features
     await this.storePrediction(context, prediction, features);

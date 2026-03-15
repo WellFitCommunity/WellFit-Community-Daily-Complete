@@ -52,6 +52,7 @@ import {
   UserRoleManagementPanel,
   UserProvisioningPanel,
   ClinicalValidationDashboard,
+  EscalationOverrideDashboard,
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
 import { getMcpSections } from './mcpSections';
@@ -492,6 +493,19 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'security',
     priority: 'medium',
     roles: ['admin', 'super_admin', 'compliance_officer'],
+  },
+
+  // ==================== AI TRIAGE INTELLIGENCE ====================
+  {
+    id: 'escalation-override-audit',
+    title: 'AI Escalation Override Audit',
+    subtitle: 'Clinician overrides and appeals of AI escalation decisions — pattern analysis and AI blind spots',
+    icon: '\uD83D\uDEE1\uFE0F',
+    headerColor: 'text-amber-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><EscalationOverrideDashboard tenantId="" /></Suspense>,
+    category: 'clinical',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'charge_nurse'],
   },
 
   // ==================== ENCOUNTER AUDIT (Phase 1 P6) ====================

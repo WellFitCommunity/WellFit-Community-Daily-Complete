@@ -8,6 +8,7 @@ import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 import { auditLogger } from './auditLogger';
 import { getErrorMessage } from '../lib/getErrorMessage';
+import { AlertBatchingService } from './ai/alertBatchingService';
 
 export interface ReadmissionEvent {
   id?: string;
@@ -212,6 +213,23 @@ export class ReadmissionTrackingService {
         },
         status: 'active'
       });
+
+      // P2: After creating alert, trigger alert batching/consolidation
+      // If multiple AI skills fire for the same patient within 60s,
+      // alerts are consolidated into a single actionable summary.
+      try {
+        await AlertBatchingService.batchAndConsolidate(
+          readmission.patient_id,
+          '', // tenant resolved from RLS context
+          { windowMs: 60_000, minAlerts: 2 }
+        );
+      } catch (batchErr: unknown) {
+        // Non-blocking: batching failure doesn't affect alert creation
+        await auditLogger.warn('ALERT_BATCHING_SKIPPED', {
+          patientId: readmission.patient_id,
+          reason: batchErr instanceof Error ? batchErr.message : String(batchErr),
+        });
+      }
 
       // 2. Check if patient needs care plan
       const { data: existingPlans } = await supabase
