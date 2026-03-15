@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { UniversalAdapterRegistry, AdapterMetadata, AdapterConfig } from '../../adapters/UniversalAdapterRegistry';
 import { supabase } from '../../lib/supabaseClient';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface ConnectionStatus {
   adapterId: string;
@@ -24,6 +25,7 @@ interface ConnectionStatus {
 }
 
 const HospitalAdapterManagementPanel: React.FC = () => {
+  useDashboardTheme();
   const [adapters, setAdapters] = useState<AdapterMetadata[]>([]);
   const [connections, setConnections] = useState<Map<string, ConnectionStatus>>(new Map());
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -242,20 +244,20 @@ const HospitalAdapterManagementPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
+      <div className="bg-linear-to-r from-[var(--ea-primary,#00857a)] to-[var(--ea-primary-hover,#006d64)] rounded-xl p-6 text-[var(--ea-text-on-primary,#ffffff)]">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <Database className="w-8 h-8" />
               Hospital EHR/EMR Adapter Management
             </h1>
-            <p className="mt-2 text-blue-100">
+            <p className="mt-2 text-[var(--ea-text-on-primary,#ffffff)]/80">
               Connect to Epic, Cerner, Athenahealth, and other healthcare systems
             </p>
           </div>
           <button
             onClick={() => setShowAddDialog(true)}
-            className="flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+            className="flex items-center gap-2 bg-white text-[var(--ea-primary,#00857a)] px-4 py-2 rounded-lg font-semibold hover:bg-[var(--ea-primary,#00857a)]/5 transition-colors"
           >
             <Plus className="w-5 h-5" />
             Add Connection
@@ -264,9 +266,9 @@ const HospitalAdapterManagementPanel: React.FC = () => {
       </div>
 
       {/* Auto-Detection Tool */}
-      <div className="bg-white rounded-xl border-2 border-blue-200 p-6">
+      <div className="bg-white rounded-xl border-2 border-[var(--ea-primary,#00857a)]/20 p-6">
         <div className="flex items-start gap-3 mb-4">
-          <Info className="w-6 h-6 text-blue-600 mt-1" />
+          <Info className="w-6 h-6 text-[var(--ea-primary,#00857a)] mt-1" />
           <div>
             <h2 className="text-xl font-bold text-gray-900">Auto-Detect EHR System</h2>
             <p className="text-gray-600 mt-1">
@@ -281,12 +283,12 @@ const HospitalAdapterManagementPanel: React.FC = () => {
             value={autoDetectUrl}
             onChange={(e) => setAutoDetectUrl(e.target.value)}
             placeholder="https://fhir.hospital.org/api/FHIR/R4"
-            className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+            className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
           />
           <button
             onClick={handleAutoDetect}
             disabled={detecting}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] px-6 py-2 rounded-lg font-semibold hover:bg-[var(--ea-primary-hover,#006d64)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {detecting ? (
               <>
@@ -323,7 +325,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
           return (
             <div
               key={adapter.id}
-              className="bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 transition-colors p-6"
+              className="bg-white rounded-xl border-2 border-gray-200 hover:border-[var(--ea-primary,#00857a)] transition-colors p-6"
             >
               {/* Adapter Header */}
               <div className="flex items-start justify-between mb-4">
@@ -342,7 +344,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                   {adapter.protocols.map((protocol) => (
                     <span
                       key={protocol}
-                      className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-sm"
+                      className="px-2 py-1 bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)] text-xs font-medium rounded-sm"
                     >
                       {protocol}
                     </span>
@@ -400,7 +402,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                     <button
                       onClick={() => handleTestConnection(adapter.id)}
                       disabled={testingAdapter === adapter.id}
-                      className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm"
+                      className="flex items-center justify-center gap-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] px-4 py-2 rounded-lg font-semibold hover:bg-[var(--ea-primary-hover,#006d64)] disabled:opacity-50 transition-colors text-sm"
                     >
                       <RefreshCw className={`w-4 h-4 ${testingAdapter === adapter.id ? 'animate-spin' : ''}`} />
                     </button>
@@ -420,7 +422,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                     <button
                       onClick={() => handleTestConnection(adapter.id)}
                       disabled={testingAdapter === adapter.id}
-                      className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm"
+                      className="flex items-center justify-center gap-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] px-4 py-2 rounded-lg font-semibold hover:bg-[var(--ea-primary-hover,#006d64)] disabled:opacity-50 transition-colors text-sm"
                     >
                       <RefreshCw className={`w-4 h-4 ${testingAdapter === adapter.id ? 'animate-spin' : ''}`} />
                     </button>
@@ -453,7 +455,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                   value={configForm.endpoint}
                   onChange={(e) => setConfigForm({ ...configForm, endpoint: e.target.value })}
                   placeholder="https://fhir.hospital.org/api/FHIR/R4"
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                 />
               </div>
 
@@ -465,7 +467,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                 <select
                   value={configForm.authType}
                   onChange={(e) => setConfigForm({ ...configForm, authType: e.target.value as AdapterConfig['authType'] })}
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                 >
                   <option value="oauth2">OAuth 2.0</option>
                   <option value="api-key">API Key</option>
@@ -486,7 +488,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                     value={configForm.apiKey || ''}
                     onChange={(e) => setConfigForm({ ...configForm, apiKey: e.target.value })}
                     placeholder="Enter API key"
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                   />
                 </div>
               )}
@@ -502,7 +504,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                       value={configForm.clientId || ''}
                       onChange={(e) => setConfigForm({ ...configForm, clientId: e.target.value })}
                       placeholder="Enter client ID"
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                     />
                   </div>
                   <div>
@@ -514,7 +516,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                       value={configForm.clientSecret || ''}
                       onChange={(e) => setConfigForm({ ...configForm, clientSecret: e.target.value })}
                       placeholder="Enter client secret"
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                     />
                   </div>
                 </>
@@ -531,7 +533,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                       value={configForm.username || ''}
                       onChange={(e) => setConfigForm({ ...configForm, username: e.target.value })}
                       placeholder="Enter username"
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                     />
                   </div>
                   <div>
@@ -543,7 +545,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                       value={configForm.password || ''}
                       onChange={(e) => setConfigForm({ ...configForm, password: e.target.value })}
                       placeholder="Enter password"
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                     />
                   </div>
                 </>
@@ -559,7 +561,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                   value={configForm.syncSchedule}
                   onChange={(e) => setConfigForm({ ...configForm, syncSchedule: e.target.value })}
                   placeholder="0 */6 * * *"
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Default: Every 6 hours (0 */6 * * *)
@@ -589,7 +591,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                   <button
                     onClick={() => handleTestConnection(selectedAdapter.id)}
                     disabled={testingAdapter === selectedAdapter.id}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    className="px-6 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-lg font-semibold hover:bg-[var(--ea-primary-hover,#006d64)] disabled:opacity-50 transition-colors"
                   >
                     Test Connection
                   </button>
@@ -607,24 +609,24 @@ const HospitalAdapterManagementPanel: React.FC = () => {
       )}
 
       {/* Documentation Link */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+      <div className="bg-[var(--ea-primary,#00857a)]/5 border border-[var(--ea-primary,#00857a)]/20 rounded-xl p-6">
         <div className="flex items-start gap-3">
-          <ExternalLink className="w-6 h-6 text-blue-600 mt-1" />
+          <ExternalLink className="w-6 h-6 text-[var(--ea-primary,#00857a)] mt-1" />
           <div>
-            <h3 className="text-lg font-bold text-blue-900">Need Help?</h3>
-            <p className="text-blue-800 mt-1">
+            <h3 className="text-lg font-bold text-[var(--ea-primary,#00857a)]">Need Help?</h3>
+            <p className="text-[var(--ea-primary,#00857a)]/80 mt-1">
               Check out our Universal Adapter System documentation for detailed setup instructions
             </p>
             <div className="mt-3 flex gap-3">
               <a
                 href="/docs/UNIVERSAL_ADAPTER_SYSTEM.md"
-                className="text-blue-600 hover:text-blue-700 font-semibold underline"
+                className="text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] font-semibold underline"
               >
                 View Full Documentation
               </a>
               <a
                 href="/docs/QUICK_START_ADAPTER.md"
-                className="text-blue-600 hover:text-blue-700 font-semibold underline"
+                className="text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] font-semibold underline"
               >
                 Quick Start Guide
               </a>

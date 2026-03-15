@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   tenantConfigAuditService,
   ConfigChange,
@@ -36,6 +37,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
   tenantId: propTenantId,
   className = '',
 }) => {
+  useDashboardTheme();
   const [currentTenantId, setCurrentTenantId] = useState<string | null>(null);
   const tenantId = propTenantId || currentTenantId || '';
 
@@ -154,7 +156,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
       case 'INSERT':
         return 'bg-green-100 text-green-800';
       case 'UPDATE':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]';
       case 'DELETE':
         return 'bg-red-100 text-red-800';
       default:
@@ -220,7 +222,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <EACard>
             <EACardContent className="p-4">
-              <div className="text-3xl font-bold text-blue-600">{stats.totalChanges}</div>
+              <div className="text-3xl font-bold text-[var(--ea-primary,#00857a)]">{stats.totalChanges}</div>
               <div className="text-sm text-gray-600">Total Changes (30d)</div>
             </EACardContent>
           </EACard>
@@ -235,7 +237,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                   <div className="text-xs text-gray-500">Inserts</div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-blue-600">
+                  <div className="text-xl font-bold text-[var(--ea-primary,#00857a)]">
                     {stats.changesByAction['UPDATE'] || 0}
                   </div>
                   <div className="text-xs text-gray-500">Updates</div>
@@ -290,7 +292,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                 />
                 <button
                   onClick={handleSearch}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm"
+                  className="px-3 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-md text-sm"
                 >
                   Search
                 </button>
@@ -396,7 +398,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
         <EACardContent>
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--ea-primary,#00857a)]" />
             </div>
           ) : changes.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
@@ -460,7 +462,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                         <td className="px-4 py-3 text-sm">
                           <button
                             onClick={() => setSelectedChange(change)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)]"
                           >
                             View Details
                           </button>

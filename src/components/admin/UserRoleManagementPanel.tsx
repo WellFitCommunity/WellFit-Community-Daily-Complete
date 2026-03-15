@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { userRoleManagementService } from '../../services/userRoleManagementService';
 import { ROLE_DISPLAY_NAMES, type StaffRole } from '../../types/roles';
@@ -25,6 +26,7 @@ const FILTER_ROLES: StaffRole[] = [
 ];
 
 export const UserRoleManagementPanel: React.FC = () => {
+  useDashboardTheme();
   const { adminRole, isAdminAuthenticated } = useAdminAuth();
 
   const [users, setUsers] = useState<StaffUserRow[]>([]);
@@ -206,7 +208,7 @@ export const UserRoleManagementPanel: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, email, or role..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -214,7 +216,7 @@ export const UserRoleManagementPanel: React.FC = () => {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value as StaffRole | 'all')}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
           >
             <option value="all">All Roles</option>
             {FILTER_ROLES.map(role => (

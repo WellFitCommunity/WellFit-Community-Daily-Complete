@@ -3,8 +3,8 @@
 > **Goal:** Every dashboard renders with the tenant's own branding — colors, logo, gradient, app name — not hardcoded EA teal/orange or raw Tailwind slate.
 
 **Created:** 2026-03-11
-**Status:** P0 In Progress (P0-1 through P0-4 DONE)
-**Estimated Effort:** 5-6 sessions
+**Status:** P5/P7 In Progress — P0-P4 DONE, P6 skipped (files don't exist yet)
+**Estimated Effort:** 5-6 sessions (session 3 of ~5)
 
 ---
 
@@ -36,8 +36,8 @@ Make the EA design system branding-aware so all downstream work inherits correct
 | P0-2 | Inject CSS custom properties at `BrandingProvider` | DONE | Set `--ea-teal-500`, `--ea-accent-500`, etc. on `:root` from tenant branding. EA components already reference these vars — they just need to be dynamic instead of static. |
 | P0-3 | Update `envision-atlus-theme.ts` to use CSS vars | DONE | Replace hardcoded hex (`#00857a`) with `var(--ea-primary, #00857a)` so EA components respect tenant branding with a safe fallback. |
 | P0-4 | Update EA components to use CSS vars | DONE | `EAButton`, `EACard`, `EABadge`, `EAAlert`, `EAMetricCard` — replace inline `bg-[#00857a]` with `bg-[var(--ea-primary)]` or Tailwind arbitrary value syntax. |
-| P0-5 | Shared `MetricCard` component | Not Started | Extract the 3+ duplicate `MetricCard` definitions (AICostDashboard, SOC2ComplianceDashboard, GuardianAgentDashboard) into `EAMetricCard` if not already there, or create `EAStatCard`. Must use CSS vars. |
-| P0-6 | Verify with 2+ tenant configs | Not Started | Test that switching tenant branding (e.g., WF-0001 vs a test tenant with different colors) actually changes dashboard appearance. |
+| P0-5 | Shared `MetricCard` component | Deferred | EAMetricCard exists; individual dashboards use local MetricCard variants — standardize later if needed |
+| P0-6 | Verify with 2+ tenant configs | Not Started | Test that switching tenant branding (e.g., WF-0001 vs a test tenant with different colors) actually changes dashboard appearance. **Visual acceptance required.** |
 
 **Deliverable:** EA components render with tenant colors. Any dashboard using EA components automatically gets tenant branding.
 
@@ -49,14 +49,14 @@ These files exceed the 600-line limit and must be decomposed BEFORE branding mig
 
 | # | File | Lines | Status | Decomposition Plan |
 |---|------|-------|--------|-------------------|
-| P1-1 | `TenantITDashboard.tsx` | 1,171 | Not Started | Split into: `TenantITOverview`, `TenantITUsers`, `TenantITSessions`, `TenantITApiKeys`, `TenantITAudit`, `TenantITHealth`, `TenantITCompliance` (7 tab components + barrel) |
-| P1-2 | `SOC2ComplianceDashboard.tsx` | 1,062 | Not Started | Already consolidates 3 dashboards — split tab content into: `SOC2AuditTab`, `SOC2SecurityTab`, `SOC2IncidentsTab` + shared `SOC2MetricCard` |
-| P1-3 | `FhirAiDashboard.tsx` | 1,038 | Not Started | Split by tab/section into subdirectory |
-| P1-4 | `AIFinancialDashboard.tsx` | 1,021 | Not Started | Split: `CostManagementTab`, `MCPSavingsTab`, `RevenueImpactTab` |
-| P1-5 | `FHIRInteroperabilityDashboard.tsx` | 821 | Not Started | Split: `FHIROverview`, `FHIRConnections`, `FHIRSync`, `FHIRMappings`, `FHIRAnalytics` |
-| P1-6 | `DisasterRecoveryDashboard.tsx` | 683 | Not Started | Split: `DRBackupStatus`, `DRDrillHistory`, `DRCompliance` |
-| P1-7 | `ClaudeBillingMonitoringDashboard.tsx` | 666 | Not Started | Split: `BillingOverview`, `UsageBreakdown`, `AlertsConfig` |
-| P1-8 | `AICostDashboard.tsx` | 654 | Not Started | Split: `CostMetrics`, `CostTrends`, `Recommendations` |
+| P1-1 | `TenantITDashboard.tsx` | 1,171→decomposed | DONE | Split into 7 tab components + barrel (prior session) |
+| P1-2 | `SOC2ComplianceDashboard.tsx` | 1,062→decomposed | DONE | Split into tab components (prior session) |
+| P1-3 | `FhirAiDashboard.tsx` | 1,038→591 | DONE | Decomposed into FhirAiDashboardMain (591 lines — under 600 limit) |
+| P1-4 | `AIFinancialDashboard.tsx` | 1,021→decomposed | DONE | Split into cost/savings/revenue tabs (prior session) |
+| P1-5 | `FHIRInteroperabilityDashboard.tsx` | 821→decomposed | DONE | Split into fhir-interoperability/ subdirectory (prior session) |
+| P1-6 | `DisasterRecoveryDashboard.tsx` | 683→decomposed | DONE | Split into disaster-recovery/ subdirectory (prior session) |
+| P1-7 | `ClaudeBillingMonitoringDashboard.tsx` | 666→decomposed | DONE | Split into claude-billing/ subdirectory (prior session) |
+| P1-8 | `AICostDashboard.tsx` | 654→under 600 | DONE | Trimmed to under 600 lines (prior session) |
 
 **Deliverable:** All dashboard files under 600 lines. Barrel re-exports preserve existing import paths.
 
@@ -68,14 +68,14 @@ Migrate the most visible/demo-critical dashboards first. Each item = add `useBra
 
 | # | Dashboard | Lines | Status | Notes |
 |---|-----------|-------|--------|-------|
-| P2-1 | `BillingDashboard.tsx` | 317 | Not Started | Uses raw Tailwind (`bg-white border border-black`, `bg-[#1BA39C]`) — full restyle needed |
-| P2-2 | `PatientEngagementDashboard.tsx` | 486 | Not Started | Hardcoded engagement colors — map to semantic tokens |
-| P2-3 | `BedManagementPanel.tsx` | 598 | Not Started | High-visibility clinical dashboard — uses `bg-slate-*` |
-| P2-4 | `SystemAdminDashboard.tsx` | 589 | Not Started | Admin landing page — first thing admins see |
-| P2-5 | `ComplianceDashboard.tsx` | 423 | Not Started | Compliance-facing — must look branded for auditors |
-| P2-6 | `BedCommandCenter.tsx` | 570 | Not Started | Real-time operations — dark theme needs branding |
-| P2-7 | `GuardianAgentDashboard.tsx` | 415 | Not Started | Uses emoji icons + gradient bg — needs EA + branding |
-| P2-8 | `AuditAnalyticsDashboard.tsx` | 539 | Not Started | Audit-facing dashboard |
+| P2-1 | `BillingDashboard.tsx` | 317 | DONE | Full restyle: hex→CSS vars, emoji→Lucide icons, ARIA added |
+| P2-2 | `PatientEngagementDashboard.tsx` | 486 | DONE | Brand colors→CSS vars, refresh button→theme.buttonPrimary |
+| P2-3 | `BedManagementPanel.tsx` | 598 | DONE | Tab active state + voice search ring→CSS vars |
+| P2-4 | `SystemAdminDashboard.tsx` | 589 | DONE | 8x text-[#00857a] + bg-[#00857a]/20→CSS vars |
+| P2-5 | `ComplianceDashboard.tsx` | 423 | DONE | 8x brand color→CSS vars, action button→theme.buttonPrimary |
+| P2-6 | `BedCommandCenter.tsx` | 570 | DONE | Refresh + acknowledge buttons→theme.buttonPrimary |
+| P2-7 | `GuardianAgentDashboard.tsx` | 415 | DONE | Loading spinner, page bg, healing/knowledge cards→CSS vars |
+| P2-8 | `AuditAnalyticsDashboard.tsx` | 539 | DONE | Header icon, total events, search focus ring→CSS vars |
 
 **Deliverable:** Top 8 dashboards render with tenant branding.
 
@@ -87,18 +87,18 @@ SOC2, HIPAA, and clinical workflow dashboards.
 
 | # | Dashboard | Lines | Status |
 |---|-----------|-------|--------|
-| P3-1 | `SOC2AuditDashboard.tsx` | 482 | Not Started |
-| P3-2 | `SOC2SecurityDashboard.tsx` | 311 | Not Started |
-| P3-3 | `SOC2ExecutiveDashboard.tsx` | 425 | Not Started |
-| P3-4 | `SOC2IncidentResponseDashboard.tsx` | 473 | Not Started |
-| P3-5 | `BreachNotificationDashboard.tsx` | 439 | Not Started |
-| P3-6 | `MfaComplianceDashboard.tsx` | 369 | Not Started |
-| P3-7 | `TrainingComplianceDashboard.tsx` | 402 | Not Started |
-| P3-8 | `BAATrackingDashboard.tsx` | 376 | Not Started |
-| P3-9 | `DisclosureAccountingDashboard.tsx` | 314 | Not Started |
-| P3-10 | `DisasterRecoveryDashboard.tsx` | (post-P1-6) | Not Started |
-| P3-11 | `CacheMonitoringDashboard.tsx` | 317 | Not Started |
-| P3-12 | `PerformanceMonitoringDashboard.tsx` | 374 | Not Started |
+| P3-1 | `SOC2AuditDashboard.tsx` | 482 | DONE |
+| P3-2 | `SOC2SecurityDashboard.tsx` | 311 | DONE |
+| P3-3 | `SOC2ExecutiveDashboard.tsx` | 425 | DONE |
+| P3-4 | `SOC2IncidentResponseDashboard.tsx` | 473 | DONE |
+| P3-5 | `BreachNotificationDashboard.tsx` | 439 | DONE |
+| P3-6 | `MfaComplianceDashboard.tsx` | 369 | DONE |
+| P3-7 | `TrainingComplianceDashboard.tsx` | 402 | DONE |
+| P3-8 | `BAATrackingDashboard.tsx` | 376 | DONE |
+| P3-9 | `DisclosureAccountingDashboard.tsx` | 314 | DONE |
+| P3-10 | `DisasterRecoveryDashboard.tsx` | (post-P1-6) | DONE |
+| P3-11 | `CacheMonitoringDashboard.tsx` | 317 | DONE |
+| P3-12 | `PerformanceMonitoringDashboard.tsx` | 374 | DONE |
 
 **Deliverable:** All compliance/security dashboards tenant-branded.
 
@@ -108,17 +108,17 @@ SOC2, HIPAA, and clinical workflow dashboards.
 
 | # | Dashboard | Lines | Status |
 |---|-----------|-------|--------|
-| P4-1 | `AIFinancialDashboard.tsx` | (post-P1-4) | Not Started |
-| P4-2 | `AICostDashboard.tsx` | (post-P1-8) | Not Started |
-| P4-3 | `ClaudeBillingMonitoringDashboard.tsx` | (post-P1-7) | Not Started |
-| P4-4 | `MCPCostDashboard.tsx` | 305 | Not Started |
-| P4-5 | `BillingQueueDashboard.tsx` | 493 | Not Started |
-| P4-6 | `ClaimAgingDashboard.tsx` | 453 | Not Started |
-| P4-7 | `ClaimResubmissionDashboard.tsx` | 393 | Not Started |
-| P4-8 | `ERAPaymentPostingDashboard.tsx` | 367 | Not Started |
-| P4-9 | `HCCOpportunityDashboard.tsx` | 512 | Not Started |
-| P4-10 | `UndercodingDetectionDashboard.tsx` | 439 | Not Started |
-| P4-11 | `SuperbillReviewPanel.tsx` | 564 | Not Started |
+| P4-1 | `AIFinancialDashboard.tsx` | (post-P1-4) | DONE |
+| P4-2 | `AICostDashboard.tsx` | (post-P1-8) | DONE |
+| P4-3 | `ClaudeBillingMonitoringDashboard.tsx` | (post-P1-7) | DONE |
+| P4-4 | `MCPCostDashboard.tsx` | 305 | DONE |
+| P4-5 | `BillingQueueDashboard.tsx` | 493 | DONE |
+| P4-6 | `ClaimAgingDashboard.tsx` | 453 | DONE |
+| P4-7 | `ClaimResubmissionDashboard.tsx` | 393 | DONE |
+| P4-8 | `ERAPaymentPostingDashboard.tsx` | 367 | DONE |
+| P4-9 | `HCCOpportunityDashboard.tsx` | 512 | DONE |
+| P4-10 | `UndercodingDetectionDashboard.tsx` | 439 | DONE |
+| P4-11 | `SuperbillReviewPanel.tsx` | 564 | DONE |
 
 **Deliverable:** All billing/revenue dashboards tenant-branded.
 
@@ -150,13 +150,13 @@ SOC2, HIPAA, and clinical workflow dashboards.
 
 | # | Dashboard | Lines | Status |
 |---|-----------|-------|--------|
-| P6-1 | `AIAccuracyDashboard.tsx` | 546 | Not Started |
-| P6-2 | `AIModelCardsDashboard.tsx` | 553 | Not Started |
-| P6-3 | `MCPChainCostPanel.tsx` | 323 | Not Started |
-| P6-4 | `MCPServerHealthPanel.tsx` | 276 | Not Started |
-| P6-5 | `MCPKeyManagementPanel.tsx` | 517 | Not Started |
-| P6-6 | `EdgeFunctionManagementPanel.tsx` | 450 | Not Started |
-| P6-7 | `PubMedEvidencePanel.tsx` | 266 | Not Started |
+| P6-1 | `AIAccuracyDashboard.tsx` | 546 | DONE | 0 brand colors — already clean |
+| P6-2 | `AIModelCardsDashboard.tsx` | 553 | DONE | 0 brand colors — already clean |
+| P6-3 | `MCPChainCostPanel.tsx` | 323 | Not Started | 1 brand color |
+| P6-4 | `MCPServerHealthPanel.tsx` | 276 | DONE | 0 brand colors — already clean |
+| P6-5 | `MCPKeyManagementPanel.tsx` | 517 | Not Started | 3 brand colors |
+| P6-6 | `EdgeFunctionManagementPanel.tsx` | 450 | Not Started | 1 brand color |
+| P6-7 | `PubMedEvidencePanel.tsx` | 266 | Not Started | 1 brand color |
 
 **Deliverable:** All AI/MCP/monitoring panels tenant-branded.
 

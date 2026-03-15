@@ -13,6 +13,7 @@ import type {
   ChainStepResult,
 } from '../../services/mcp/chainOrchestration.types';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface ChainRunWithSteps extends ChainRun {
   steps?: ChainStepResult[];
@@ -23,6 +24,7 @@ interface ChainRunWithSteps extends ChainRun {
 type TimeRange = '24h' | '7d' | '30d';
 
 const MCPChainCostPanel: React.FC = () => {
+  useDashboardTheme();
   const [runs, setRuns] = useState<ChainRunWithSteps[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);

@@ -12,6 +12,7 @@ import {
   type MCPKeyCreateResult,
   type KeyStatus,
 } from '../../services/mcpKeyManagementService';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =====================================================
 // Sub-components
@@ -111,7 +112,7 @@ const CreateKeyForm: React.FC<CreateKeyFormProps> = ({ onCreated, onCancel }) =>
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-blue-200 rounded-lg p-6 mb-6">
+    <form onSubmit={handleSubmit} className="bg-white border border-[var(--ea-primary,#00857a)]/20 rounded-lg p-6 mb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Create New MCP Key</h3>
 
       {error && (
@@ -169,7 +170,7 @@ const CreateKeyForm: React.FC<CreateKeyFormProps> = ({ onCreated, onCancel }) =>
               onClick={() => toggleScope(scope)}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                 selectedScopes.includes(scope)
-                  ? 'bg-blue-100 border-blue-400 text-blue-800'
+                  ? 'bg-[var(--ea-primary,#00857a)]/10 border-[var(--ea-primary,#00857a)] text-[var(--ea-primary,#00857a)]'
                   : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -183,7 +184,7 @@ const CreateKeyForm: React.FC<CreateKeyFormProps> = ({ onCreated, onCancel }) =>
         <button
           type="submit"
           disabled={submitting || !name.trim() || selectedScopes.length === 0}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 min-h-[44px]"
+          className="px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] text-sm font-medium rounded-md hover:bg-[var(--ea-primary-hover,#006d64)] disabled:opacity-50 min-h-[44px]"
         >
           {submitting ? 'Creating...' : 'Create Key'}
         </button>
@@ -294,7 +295,7 @@ const KeyRow: React.FC<KeyRowProps> = ({ mcpKey, onRevoke, onRotate }) => {
           <div className="flex gap-2">
             <button
               onClick={() => onRotate(mcpKey.id, mcpKey)}
-              className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 min-h-[32px]"
+              className="px-2 py-1 text-xs bg-[var(--ea-primary,#00857a)]/5 text-[var(--ea-primary,#00857a)] rounded hover:bg-[var(--ea-primary,#00857a)]/10 min-h-[32px]"
             >
               Rotate
             </button>
@@ -357,6 +358,7 @@ const ExpiryAlert: React.FC<ExpiryAlertProps> = ({ keys, onRotate }) => {
 // =====================================================
 
 const MCPKeyManagementPanel: React.FC = () => {
+  useDashboardTheme();
   const [keys, setKeys] = useState<(MCPKey & { status: KeyStatus })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -425,7 +427,7 @@ const MCPKeyManagementPanel: React.FC = () => {
         {!showCreate && (
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 min-h-[44px]"
+            className="px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] text-sm font-medium rounded-md hover:bg-[var(--ea-primary-hover,#006d64)] min-h-[44px]"
           >
             Create Key
           </button>
@@ -476,7 +478,7 @@ const MCPKeyManagementPanel: React.FC = () => {
       {/* Keys table */}
       {loading ? (
         <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--ea-primary,#00857a)]" />
           <span className="ml-2 text-gray-500 text-sm">Loading keys...</span>
         </div>
       ) : keys.length === 0 ? (

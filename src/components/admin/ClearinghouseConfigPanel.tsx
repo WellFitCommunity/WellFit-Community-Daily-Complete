@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Save, Eye, EyeOff, CheckCircle, XCircle, AlertTriangle, Wifi } from 'lucide-react';
 import { clearinghouseMCP, type PayerInfo } from '../../services/mcp/mcpClearinghouseClient';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface ClearinghouseConfig {
   provider: 'waystar' | 'change_healthcare' | 'availity';
@@ -15,6 +16,7 @@ interface ClearinghouseConfig {
 
 export function ClearinghouseConfigPanel() {
   const { user } = useAuth();
+  const { theme } = useDashboardTheme();
   const [config, setConfig] = useState<ClearinghouseConfig>({
     provider: 'waystar',
     apiUrl: '',
@@ -177,14 +179,14 @@ export function ClearinghouseConfigPanel() {
               const defaults = getProviderDefaults(provider);
               setConfig({ ...config, provider, apiUrl: defaults.apiUrl });
             }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
           >
             <option value="waystar">Waystar (Most Popular)</option>
             <option value="change_healthcare">Change Healthcare (Largest Network)</option>
             <option value="availity">Availity (Free/Low-Cost)</option>
           </select>
           <p className="text-xs text-gray-500 mt-1">
-            Documentation: <a href={defaults.docs} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{defaults.docs}</a>
+            Documentation: <a href={defaults.docs} target="_blank" rel="noopener noreferrer" className="text-[var(--ea-primary,#00857a)] hover:underline">{defaults.docs}</a>
           </p>
         </div>
 
@@ -198,7 +200,7 @@ export function ClearinghouseConfigPanel() {
             value={config.apiUrl}
             onChange={(e) => setConfig({ ...config, apiUrl: e.target.value })}
             placeholder="https://api.waystar.com/v1"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
           />
           <p className="text-xs text-gray-500 mt-1">
             Production API endpoint (not sandbox)
@@ -215,7 +217,7 @@ export function ClearinghouseConfigPanel() {
             value={config.clientId}
             onChange={(e) => setConfig({ ...config, clientId: e.target.value })}
             placeholder="abc123-your-org-id"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
           />
           <p className="text-xs text-gray-500 mt-1">
             Provided by your clearinghouse account rep
@@ -233,7 +235,7 @@ export function ClearinghouseConfigPanel() {
               value={config.clientSecret}
               onChange={(e) => setConfig({ ...config, clientSecret: e.target.value })}
               placeholder="sk_live_xyz789..."
-              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
             />
             <button
               onClick={() => setShowSecret(!showSecret)}
@@ -257,7 +259,7 @@ export function ClearinghouseConfigPanel() {
             value={config.submitterId}
             onChange={(e) => setConfig({ ...config, submitterId: e.target.value })}
             placeholder="1234567890"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
           />
           <p className="text-xs text-gray-500 mt-1">
             Your organization's NPI or clearinghouse-assigned submitter ID
@@ -314,7 +316,7 @@ export function ClearinghouseConfigPanel() {
               ? 'bg-green-50 border-green-200 text-green-800'
               : testStatus === 'error'
               ? 'bg-red-50 border-red-200 text-red-800'
-              : 'bg-blue-50 border-blue-200 text-blue-800'
+              : 'bg-[var(--ea-primary,#00857a)]/5 border-[var(--ea-primary,#00857a)]/20 text-[var(--ea-primary,#00857a)]'
           }`}>
             {message}
           </div>
@@ -325,7 +327,7 @@ export function ClearinghouseConfigPanel() {
           <button
             onClick={saveConfig}
             disabled={saving || !config.apiUrl || !config.clientId || !config.clientSecret}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors ${theme.buttonPrimary}`}
           >
             <Save className="h-5 w-5" />
             {saving ? 'Saving...' : 'Save Configuration'}
@@ -382,11 +384,11 @@ export function ClearinghouseConfigPanel() {
         </div>
 
         {/* Cost Information */}
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">
+        <div className="mt-4 p-4 bg-[var(--ea-primary,#00857a)]/5 rounded-lg border border-[var(--ea-primary,#00857a)]/20">
+          <h3 className="text-sm font-semibold text-[var(--ea-primary,#00857a)] mb-2">
             Estimated Costs:
           </h3>
-          <ul className="text-sm text-blue-800 space-y-1">
+          <ul className="text-sm text-[var(--ea-primary,#00857a)]/80 space-y-1">
             <li><strong>Waystar:</strong> ~$500-1,200/month (setup + monthly + per-claim fees)</li>
             <li><strong>Change Healthcare:</strong> ~$400-1,000/month</li>
             <li><strong>Availity:</strong> FREE (portal) or ~$100-300/month (API access)</li>

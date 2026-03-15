@@ -10,6 +10,7 @@ import { Play, RefreshCw, Loader2, CheckCircle, XCircle, Zap, Info, Layers } fro
 import { EdgeFunctionsMCPClient } from '../../services/mcp/mcpEdgeFunctionsClient';
 import type { AllowedFunctionName } from '../../services/mcp/mcpEdgeFunctionsClient';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface FunctionDef {
   name: string;
@@ -41,6 +42,7 @@ const CATEGORIES: Array<{ value: CategoryFilter; label: string }> = [
 ];
 
 const EdgeFunctionManagementPanel: React.FC = () => {
+  useDashboardTheme();
   const [viewMode, setViewMode] = useState<ViewMode>('browse');
   const [functions, setFunctions] = useState<FunctionDef[]>([]);
   const [loading, setLoading] = useState(false);
@@ -263,7 +265,7 @@ const EdgeFunctionManagementPanel: React.FC = () => {
                   <tr key={fn.name} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-3 text-sm font-mono text-gray-900">{fn.name}</td>
                     <td className="px-6 py-3 text-sm">
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]">
                         {fn.category}
                       </span>
                     </td>

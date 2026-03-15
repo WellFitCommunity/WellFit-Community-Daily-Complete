@@ -36,6 +36,7 @@ import type {
   PlaceOfServiceCode,
 } from '../../types/facility';
 import { getFacilityTypeLabel } from '../../types/facility';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // Facility type icons
 const facilityTypeIcons: Record<FacilityType, LucideIcon> = {
@@ -89,6 +90,7 @@ const emptyFormData: FacilityFormData = {
 };
 
 const FacilityManagementPanel: React.FC = () => {
+  useDashboardTheme();
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
@@ -296,7 +298,7 @@ const FacilityManagementPanel: React.FC = () => {
   if (loading && facilities.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-teal-600 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-[var(--ea-primary,#00857a)] animate-spin" />
       </div>
     );
   }
@@ -313,7 +315,7 @@ const FacilityManagementPanel: React.FC = () => {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary,#00857a)] text-white rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Facility
@@ -339,7 +341,7 @@ const FacilityManagementPanel: React.FC = () => {
             placeholder="Search facilities..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-transparent"
           />
         </div>
         <label className="flex items-center gap-2 text-sm text-gray-600">
@@ -347,7 +349,7 @@ const FacilityManagementPanel: React.FC = () => {
             type="checkbox"
             checked={showInactive}
             onChange={(e) => setShowInactive(e.target.checked)}
-            className="rounded-sm border-gray-300 text-teal-600 focus:ring-teal-500"
+            className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
           />
           Show inactive
         </label>
@@ -368,7 +370,7 @@ const FacilityManagementPanel: React.FC = () => {
             <p className="text-gray-600">No facilities found</p>
             <button
               onClick={() => handleOpenModal()}
-              className="mt-4 text-teal-600 hover:text-teal-700"
+              className="mt-4 text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary,#00857a)]"
             >
               Add your first facility
             </button>
@@ -387,12 +389,12 @@ const FacilityManagementPanel: React.FC = () => {
                   <div className="flex items-start gap-4">
                     <div
                       className={`p-3 rounded-lg ${
-                        facility.is_primary ? 'bg-teal-100' : 'bg-gray-100'
+                        facility.is_primary ? 'bg-[var(--ea-primary,#00857a)]/10' : 'bg-gray-100'
                       }`}
                     >
                       <Icon
                         className={`w-6 h-6 ${
-                          facility.is_primary ? 'text-teal-600' : 'text-gray-600'
+                          facility.is_primary ? 'text-[var(--ea-primary,#00857a)]' : 'text-gray-600'
                         }`}
                       />
                     </div>
@@ -400,7 +402,7 @@ const FacilityManagementPanel: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900">{facility.name}</h3>
                         {facility.is_primary && (
-                          <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full">
+                          <span className="px-2 py-0.5 bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)] text-xs rounded-full">
                             Primary
                           </span>
                         )}
@@ -441,14 +443,14 @@ const FacilityManagementPanel: React.FC = () => {
                     {!facility.is_primary && facility.is_active && (
                       <button
                         onClick={() => handleSetPrimary(facility)}
-                        className="p-2 text-gray-400 hover:text-teal-600"
+                        className="p-2 text-gray-400 hover:text-[var(--ea-primary,#00857a)]"
                         title="Set as primary"
                       >
                         <StarOff className="w-4 h-4" />
                       </button>
                     )}
                     {facility.is_primary && (
-                      <span className="p-2 text-teal-600" title="Primary facility">
+                      <span className="p-2 text-[var(--ea-primary,#00857a)]" title="Primary facility">
                         <Star className="w-4 h-4 fill-current" />
                       </span>
                     )}
@@ -505,7 +507,7 @@ const FacilityManagementPanel: React.FC = () => {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                     placeholder="Houston Methodist Sugar Land"
                   />
                 </div>
@@ -518,7 +520,7 @@ const FacilityManagementPanel: React.FC = () => {
                     type="text"
                     value={formData.facility_code}
                     onChange={(e) => setFormData({ ...formData, facility_code: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                     placeholder="METH-SL"
                   />
                 </div>
@@ -532,7 +534,7 @@ const FacilityManagementPanel: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, facility_type: e.target.value as FacilityType })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                   >
                     <option value="hospital">Hospital</option>
                     <option value="clinic">Clinic</option>
@@ -556,7 +558,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.address_line1}
                       onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Street Address"
                     />
                   </div>
@@ -565,7 +567,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.address_line2}
                       onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Suite, Floor, etc."
                     />
                   </div>
@@ -574,7 +576,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="City"
                     />
                   </div>
@@ -583,7 +585,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="State"
                       maxLength={2}
                     />
@@ -591,7 +593,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.zip_code}
                       onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="ZIP"
                     />
                   </div>
@@ -607,7 +609,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Phone"
                     />
                   </div>
@@ -616,7 +618,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="tel"
                       value={formData.fax}
                       onChange={(e) => setFormData({ ...formData, fax: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Fax"
                     />
                   </div>
@@ -625,7 +627,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Email"
                     />
                   </div>
@@ -642,7 +644,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.npi}
                       onChange={(e) => setFormData({ ...formData, npi: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="10-digit NPI"
                       maxLength={10}
                     />
@@ -653,7 +655,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.tax_id}
                       onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       placeholder="XX-XXXXXXX"
                     />
                   </div>
@@ -664,7 +666,7 @@ const FacilityManagementPanel: React.FC = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, place_of_service_code: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                     >
                       <option value="11">11 - Office</option>
                       <option value="21">21 - Inpatient Hospital</option>
@@ -687,7 +689,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="checkbox"
                       checked={formData.is_primary}
                       onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-                      className="rounded-sm border-gray-300 text-teal-600 focus:ring-teal-500"
+                      className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
                     />
                     <span className="text-sm text-gray-700">Primary facility</span>
                   </label>
@@ -697,7 +699,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="number"
                       value={formData.bed_count}
                       onChange={(e) => setFormData({ ...formData, bed_count: e.target.value })}
-                      className="w-20 px-2 py-1 border border-gray-300 rounded-sm focus:ring-2 focus:ring-teal-500"
+                      className="w-20 px-2 py-1 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                       min="0"
                     />
                   </div>
@@ -715,7 +717,7 @@ const FacilityManagementPanel: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-[var(--ea-primary,#00857a)] text-white rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] transition-colors disabled:opacity-50"
               >
                 {saving ? 'Saving...' : editingFacility ? 'Update Facility' : 'Create Facility'}
               </button>

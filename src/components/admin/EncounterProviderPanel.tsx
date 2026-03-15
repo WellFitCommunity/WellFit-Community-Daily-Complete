@@ -40,6 +40,7 @@ import type {
 import { ROLE_DISPLAY, ENCOUNTER_PROVIDER_ROLES } from '../../types/encounterProvider';
 import { isEditable } from '../../types/encounterStatus';
 import type { EncounterStatus } from '../../types/encounterStatus';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -91,7 +92,7 @@ function ProviderRow({
     <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
       <div className="flex items-center gap-3">
         <div className="p-2 bg-white rounded-lg shadow-sm">
-          <Stethoscope className="w-5 h-5 text-blue-600" />
+          <Stethoscope className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />
         </div>
         <div>
           <p className="text-sm font-medium text-gray-900">{displayName}</p>
@@ -127,6 +128,7 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
   onProviderChange,
   compact = false,
 }) => {
+  useDashboardTheme();
   const [providers, setProviders] = useState<EncounterProviderWithDetails[]>([]);
   const [availableProviders, setAvailableProviders] = useState<AvailableProvider[]>([]);
   const [auditTrail, setAuditTrail] = useState<EncounterProviderAudit[]>([]);
@@ -433,16 +435,16 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
 
         {/* Assign Form */}
         {showAssignForm && editable && (
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h5 className="font-medium text-blue-900 mb-3">New Provider Assignment</h5>
+          <div className="p-4 bg-[var(--ea-primary,#00857a)]/5 border border-[var(--ea-primary,#00857a)]/20 rounded-lg">
+            <h5 className="font-medium text-[var(--ea-primary,#00857a)] mb-3">New Provider Assignment</h5>
             <div className="space-y-3">
               {/* Provider Select */}
               <label className="block">
-                <span className="text-sm text-blue-800">Provider</span>
+                <span className="text-sm text-[var(--ea-primary,#00857a)]">Provider</span>
                 <select
                   value={selectedProviderId}
                   onChange={e => setSelectedProviderId(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
                 >
                   <option value="">Select a provider...</option>
                   {unassignedProviders.map(p => (
@@ -456,11 +458,11 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
 
               {/* Role Select */}
               <label className="block">
-                <span className="text-sm text-blue-800">Role</span>
+                <span className="text-sm text-[var(--ea-primary,#00857a)]">Role</span>
                 <select
                   value={selectedRole}
                   onChange={e => setSelectedRole(e.target.value as EncounterProviderRole)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
                 >
                   {ENCOUNTER_PROVIDER_ROLES.map(role => (
                     <option key={role} value={role}>
@@ -469,20 +471,20 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-xs text-blue-600">
+                <p className="mt-1 text-xs text-[var(--ea-primary,#00857a)]">
                   {ROLE_DISPLAY[selectedRole].description}
                 </p>
               </label>
 
               {/* Notes */}
               <label className="block">
-                <span className="text-sm text-blue-800">Notes (optional)</span>
+                <span className="text-sm text-[var(--ea-primary,#00857a)]">Notes (optional)</span>
                 <input
                   type="text"
                   value={assignNotes}
                   onChange={e => setAssignNotes(e.target.value)}
                   placeholder="Assignment notes..."
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
                 />
               </label>
 

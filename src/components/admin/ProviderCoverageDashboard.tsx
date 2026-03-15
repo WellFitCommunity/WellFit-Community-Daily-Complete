@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   Calendar,
   UserCheck,
@@ -115,7 +116,7 @@ function MetricCard({ label, value, variant }: {
 }) {
   const colors = {
     default: 'bg-white border-gray-200 text-gray-900',
-    info: 'bg-blue-50 border-blue-200 text-blue-900',
+    info: 'bg-[var(--ea-primary,#00857a)]/5 border-[var(--ea-primary,#00857a)]/20 text-[var(--ea-primary,#00857a)]',
     warning: 'bg-amber-50 border-amber-200 text-amber-900',
     success: 'bg-green-50 border-green-200 text-green-900',
     critical: 'bg-red-50 border-red-200 text-red-900',
@@ -134,6 +135,7 @@ function MetricCard({ label, value, variant }: {
 // =============================================================================
 
 const ProviderCoverageDashboard: React.FC = () => {
+  useDashboardTheme();
   const [activeTab, setActiveTab] = useState<ActiveTab>('coverage');
   const [assignments, setAssignments] = useState<CoverageSummaryRow[]>([]);
   const [schedules, setSchedules] = useState<OnCallSchedule[]>([]);
@@ -214,7 +216,7 @@ const ProviderCoverageDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading provider coverage data...</span>
         </EACardContent>
       </EACard>
@@ -248,12 +250,12 @@ const ProviderCoverageDashboard: React.FC = () => {
 
       <div className="flex gap-2 border-b pb-0">
         <button type="button" onClick={() => setActiveTab('coverage')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'coverage' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'coverage' ? 'border-[var(--ea-primary,#00857a)] text-[var(--ea-primary,#00857a)]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >
           <UserCheck className="w-4 h-4 inline mr-1 -mt-0.5" />Coverage Assignments
         </button>
         <button type="button" onClick={() => setActiveTab('oncall')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'oncall' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'oncall' ? 'border-[var(--ea-primary,#00857a)] text-[var(--ea-primary,#00857a)]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >
           <Calendar className="w-4 h-4 inline mr-1 -mt-0.5" />On-Call Schedule
         </button>
@@ -276,7 +278,7 @@ const ProviderCoverageDashboard: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b bg-gray-50">
               <Filter className="w-4 h-4 text-gray-400" />
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" aria-label="Filter by status">
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]" aria-label="Filter by status">
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
                 <option value="upcoming">Upcoming</option>
@@ -284,7 +286,7 @@ const ProviderCoverageDashboard: React.FC = () => {
                 <option value="cancelled">Cancelled</option>
               </select>
               <select value={reasonFilter} onChange={e => setReasonFilter(e.target.value as CoverageReason | 'all')}
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" aria-label="Filter by reason">
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]" aria-label="Filter by reason">
                 <option value="all">All Reasons</option>
                 <option value="vacation">Vacation</option>
                 <option value="pto">PTO</option>
@@ -348,7 +350,7 @@ const ProviderCoverageDashboard: React.FC = () => {
           <EACardHeader icon={<Calendar className="w-5 h-5" />}
             action={<div className="flex items-center gap-3">
               <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" aria-label="Schedule date" />
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]" aria-label="Schedule date" />
               <EAButton variant="ghost" size="sm" onClick={fetchData}>
                 <RefreshCw className="w-4 h-4 mr-1" />Refresh
               </EAButton>

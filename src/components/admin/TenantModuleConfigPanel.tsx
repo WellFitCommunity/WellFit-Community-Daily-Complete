@@ -44,6 +44,7 @@ import {
   ChevronUp,
   Settings
 } from 'lucide-react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface ModuleToggleProps {
   moduleName: ModuleName;
@@ -127,6 +128,7 @@ function ModuleToggle({ moduleName, isEnabled, isEntitled, currentTier, onChange
 }
 
 export function TenantModuleConfigPanel() {
+  useDashboardTheme();
   const { config, loading, error, refresh } = useTenantModules();
   const [pendingChanges, setPendingChanges] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
@@ -274,7 +276,7 @@ export function TenantModuleConfigPanel() {
     <div className="space-y-6">
       {/* Header */}
       <EACard>
-        <EACardHeader icon={<Settings className="w-5 h-5 text-[#00857a]" />}>
+        <EACardHeader icon={<Settings className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />}>
           <div className="flex items-center justify-between w-full">
             <div>
               <h2 className="text-lg font-semibold text-white">Module Configuration</h2>
@@ -347,10 +349,10 @@ export function TenantModuleConfigPanel() {
               className="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 transition-colors text-left border-b border-slate-700"
             >
               <div className="flex items-center gap-3">
-                <Settings className="w-5 h-5 text-[#00857a]" />
+                <Settings className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />
                 <h3 className="text-lg font-semibold text-white">{label}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-[#00857a]/20 text-[#33bfb7] text-xs rounded-full font-medium">
+                  <span className="px-2 py-0.5 bg-[var(--ea-primary,#00857a)]/20 text-[var(--ea-primary,#00857a)] text-xs rounded-full font-medium">
                     {categoryEntitledCount}/{modules.length} in plan
                   </span>
                   <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full font-medium">
@@ -390,10 +392,10 @@ export function TenantModuleConfigPanel() {
 
       {/* Save Actions */}
       {hasPendingChanges && (
-        <EACard className="sticky bottom-4 border-[#00857a]/50 bg-[#00857a]/10">
+        <EACard className="sticky bottom-4 border-[var(--ea-primary,#00857a)]/50 bg-[var(--ea-primary,#00857a)]/10">
           <EACardContent className="py-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-[#33bfb7]">
+              <p className="text-sm text-[var(--ea-primary,#00857a)]">
                 You have unsaved changes to {Object.keys(pendingChanges).length} module
                 {Object.keys(pendingChanges).length === 1 ? '' : 's'}
               </p>

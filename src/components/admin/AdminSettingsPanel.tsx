@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 
@@ -24,6 +25,7 @@ interface AdminSettings {
 }
 
 const AdminSettingsPanel: React.FC = memo(() => {
+  const { theme } = useDashboardTheme();
   const { adminRole } = useAdminAuth();
   const supabase = useSupabaseClient();
   const user = useUser();
@@ -265,7 +267,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
             <button
               onClick={saveSettings}
               disabled={saving}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              className={`px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium ${theme.buttonPrimary}`}
             >
               {saving ? 'Applying...' : 'Apply Settings'}
             </button>
@@ -283,17 +285,17 @@ const AdminSettingsPanel: React.FC = memo(() => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
             <div className="grid grid-cols-3 gap-3">
-              {(['light', 'dark', 'auto'] as const).map((theme) => (
+              {(['light', 'dark', 'auto'] as const).map((themeOption) => (
                 <button
-                  key={theme}
-                  onClick={() => setSettings(prev => ({ ...prev, theme }))}
+                  key={themeOption}
+                  onClick={() => setSettings(prev => ({ ...prev, theme: themeOption }))}
                   className={`p-3 border rounded-lg text-sm font-medium capitalize transition-colors ${
-                    settings.theme === theme
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    settings.theme === themeOption
+                      ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5 text-[var(--ea-primary,#00857a)]'
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
-                  {theme === 'light' && '☀️'} {theme === 'dark' && '🌙'} {theme === 'auto' && '🔄'} {theme}
+                  {themeOption === 'light' && '☀️'} {themeOption === 'dark' && '🌙'} {themeOption === 'auto' && '🔄'} {themeOption}
                 </button>
               ))}
             </div>
@@ -305,7 +307,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.display.compactMode}
                 onChange={(e) => updateSetting('display', 'compactMode', e.target.checked)}
-                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
               />
               <span className="ml-2 text-sm text-gray-700">Compact mode</span>
             </label>
@@ -315,7 +317,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.display.showAdvancedMetrics}
                 onChange={(e) => updateSetting('display', 'showAdvancedMetrics', e.target.checked)}
-                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
               />
               <span className="ml-2 text-sm text-gray-700">Show advanced metrics</span>
             </label>
@@ -326,7 +328,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
             <select
               value={settings.display.defaultDashboardView}
               onChange={(e) => updateSetting('display', 'defaultDashboardView', e.target.value)}
-              className="block w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
             >
               <option value="overview">Overview</option>
               <option value="patients">Patients</option>
@@ -352,7 +354,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.email}
               onChange={(e) => updateSetting('notifications', 'email', e.target.checked)}
-              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
             />
           </label>
 
@@ -365,7 +367,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.browser}
               onChange={(e) => updateSetting('notifications', 'browser', e.target.checked)}
-              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
             />
           </label>
 
@@ -378,7 +380,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.emergencyAlerts}
               onChange={(e) => updateSetting('notifications', 'emergencyAlerts', e.target.checked)}
-              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
               disabled
             />
           </label>
@@ -399,7 +401,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
             <select
               value={settings.security.sessionTimeout}
               onChange={(e) => updateSetting('security', 'sessionTimeout', parseInt(e.target.value))}
-              className="block w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
             >
               <option value={15}>15 minutes</option>
               <option value={30}>30 minutes</option>
@@ -417,7 +419,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.security.requirePinForSensitive}
               onChange={(e) => updateSetting('security', 'requirePinForSensitive', e.target.checked)}
-              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
             />
           </label>
 
@@ -440,12 +442,12 @@ const AdminSettingsPanel: React.FC = memo(() => {
             <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Super Admin</span>
           </h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-md px-4 py-3">
+            <div className="flex items-center justify-between bg-[var(--ea-primary,#00857a)]/5 border border-[var(--ea-primary,#00857a)]/20 rounded-md px-4 py-3">
               <div>
-                <span className="text-sm font-medium text-blue-800">Database backups</span>
-                <p className="text-xs text-blue-700">Managed by Supabase Pro plan — daily automated backups with point-in-time recovery</p>
+                <span className="text-sm font-medium text-[var(--ea-primary,#00857a)]">Database backups</span>
+                <p className="text-xs text-[var(--ea-primary,#00857a)]/80">Managed by Supabase Pro plan — daily automated backups with point-in-time recovery</p>
               </div>
-              <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">MANAGED</span>
+              <span className="text-xs font-semibold text-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10 px-2 py-1 rounded">MANAGED</span>
             </div>
 
             <label className="flex items-center justify-between">
@@ -457,7 +459,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.system.enableBetaFeatures}
                 onChange={(e) => updateSetting('system', 'enableBetaFeatures', e.target.checked)}
-                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
               />
             </label>
           </div>

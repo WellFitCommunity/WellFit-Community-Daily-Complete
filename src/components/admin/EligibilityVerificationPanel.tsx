@@ -41,6 +41,7 @@ import {
   checkPriorAuthRequired,
 } from '../../services/mcp/mcpCMSCoverageClient';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -198,6 +199,7 @@ function CMSCoverageAlertPanel({ alert }: { alert: { priorAuthCodes: string[]; d
 // =============================================================================
 
 const EligibilityVerificationPanel: React.FC = () => {
+  useDashboardTheme();
   const [encounters, setEncounters] = useState<EncounterEligibility[]>([]);
   const [stats, setStats] = useState<EligibilityStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -309,7 +311,7 @@ const EligibilityVerificationPanel: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading eligibility data...</span>
         </EACardContent>
       </EACard>
@@ -369,7 +371,7 @@ const EligibilityVerificationPanel: React.FC = () => {
             <select
               value={filter}
               onChange={e => setFilter(e.target.value as StatusFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by coverage status"
             >
               <option value="all">All Statuses</option>
@@ -387,7 +389,7 @@ const EligibilityVerificationPanel: React.FC = () => {
                 value={patientSearch}
                 onChange={e => setPatientSearch(e.target.value)}
                 placeholder="Search patient..."
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 w-44 pl-7"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-44 pl-7"
                 aria-label="Search by patient name"
               />
             </div>

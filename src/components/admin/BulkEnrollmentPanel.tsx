@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useToast } from '../../hooks/useToast';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface EnrollmentRecord {
   firstName: string;
@@ -38,6 +39,7 @@ const BulkEnrollmentPanel: React.FC = () => {
   const navigate = useNavigate();
   const { adminRole } = useAdminAuth();
   const { showToast, ToastContainer } = useToast();
+  const { theme } = useDashboardTheme();
   const [enrollmentJob, setEnrollmentJob] = useState<BulkEnrollmentJob | null>(null);
   const [, setCsvData] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -458,7 +460,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
       {/* Back Button */}
       <button
         onClick={() => navigate('/admin')}
-        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[var(--ea-primary,#00857a)] transition-colors"
       >
         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -495,7 +497,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
               <h2 className="text-lg font-semibold text-gray-900">Upload CSV File</h2>
               <button
                 onClick={downloadTemplate}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                className={`px-4 py-2 rounded-md text-sm font-medium ${theme.buttonPrimary}`}
               >
                 📥 Download Template
               </button>
@@ -603,7 +605,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
               {enrollmentJob.status === 'completed' && (
                 <button
                   onClick={exportResults}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${theme.buttonPrimary}`}
                 >
                   📊 Export Results
                 </button>
@@ -692,12 +694,12 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
       )}
 
       {/* Security Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-[var(--ea-primary,#00857a)]/5 border border-[var(--ea-primary,#00857a)]/20 rounded-lg p-4">
         <div className="flex items-start">
-          <span className="text-blue-600 mr-2">🔒</span>
+          <span className="text-[var(--ea-primary,#00857a)] mr-2">🔒</span>
           <div className="text-sm">
-            <p className="font-medium text-blue-800">Security & Compliance</p>
-            <p className="text-blue-700 mt-1">
+            <p className="font-medium text-[var(--ea-primary,#00857a)]">Security & Compliance</p>
+            <p className="text-[var(--ea-primary,#00857a)]/80 mt-1">
               All enrollments generate secure temporary passwords and are logged for audit purposes.
               Patient data is encrypted and handled according to HIPAA requirements.
             </p>

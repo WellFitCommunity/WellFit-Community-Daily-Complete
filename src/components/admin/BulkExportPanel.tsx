@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface ExportJob {
   id: string;
@@ -28,6 +29,7 @@ interface ExportFilters {
 const BulkExportPanel: React.FC = () => {
   const navigate = useNavigate();
   const { adminRole } = useAdminAuth();
+  const { theme } = useDashboardTheme();
   const [activeJobs, setActiveJobs] = useState<ExportJob[]>([]);
   const [filters, setFilters] = useState<ExportFilters>({
     dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
@@ -261,7 +263,7 @@ const BulkExportPanel: React.FC = () => {
       {/* Back Button */}
       <button
         onClick={() => navigate('/admin')}
-        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[var(--ea-primary,#00857a)] transition-colors"
       >
         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -305,7 +307,7 @@ const BulkExportPanel: React.FC = () => {
               type="date"
               value={filters.dateFrom}
               onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-              className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
             />
           </div>
           <div>
@@ -314,7 +316,7 @@ const BulkExportPanel: React.FC = () => {
               type="date"
               value={filters.dateTo}
               onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-              className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
             />
           </div>
           <div>
@@ -322,7 +324,7 @@ const BulkExportPanel: React.FC = () => {
             <select
               value={filters.format}
               onChange={(e) => setFilters(prev => ({ ...prev, format: e.target.value as 'csv' | 'xlsx' | 'json' }))}
-              className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
             >
               <option value="csv">CSV</option>
               <option value="xlsx">Excel (XLSX)</option>
@@ -335,7 +337,7 @@ const BulkExportPanel: React.FC = () => {
                 type="checkbox"
                 checked={filters.compression}
                 onChange={(e) => setFilters(prev => ({ ...prev, compression: e.target.checked }))}
-                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
               />
               <span className="ml-2 text-sm text-gray-700">Compress</span>
             </label>
@@ -344,7 +346,7 @@ const BulkExportPanel: React.FC = () => {
                 type="checkbox"
                 checked={filters.includeArchived}
                 onChange={(e) => setFilters(prev => ({ ...prev, includeArchived: e.target.checked }))}
-                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
               />
               <span className="ml-2 text-sm text-gray-700">Archived</span>
             </label>
@@ -375,7 +377,7 @@ const BulkExportPanel: React.FC = () => {
 
             <button
               onClick={() => startExport(exportType.key)}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium"
+              className={`w-full px-4 py-2 rounded-md focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:ring-offset-2 text-sm font-medium ${theme.buttonPrimary}`}
             >
               Start Export
             </button>

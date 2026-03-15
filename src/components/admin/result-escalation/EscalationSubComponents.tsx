@@ -39,7 +39,7 @@ export function MetricCard({ label, value, color }: {
   const colorMap = {
     red: 'bg-red-50 border-red-200 text-red-900',
     orange: 'bg-orange-50 border-orange-200 text-orange-900',
-    blue: 'bg-blue-50 border-blue-200 text-blue-900',
+    blue: 'bg-[var(--ea-primary,#00857a)]/5 border-[var(--ea-primary,#00857a)]/20 text-[var(--ea-primary,#00857a)]',
     green: 'bg-green-50 border-green-200 text-green-900',
     purple: 'bg-purple-50 border-purple-200 text-purple-900',
   };
@@ -98,7 +98,7 @@ export function ResolveModal({ escalation, onClose, onResolve }: {
           value={notes}
           onChange={e => setNotes(e.target.value)}
           rows={3}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
           placeholder="Describe the clinical resolution..."
         />
 

@@ -22,6 +22,7 @@ import {
   FileText,
   X,
 } from 'lucide-react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =====================================================
 // Props
@@ -66,7 +67,7 @@ const ArticleCard: React.FC<{
       <button
         onClick={() => onViewAbstract(article.pmid)}
         disabled={loadingAbstract}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded hover:bg-indigo-100 transition min-h-[32px]"
+        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5 rounded hover:bg-[var(--ea-primary,#00857a)]/10 transition min-h-[32px]"
       >
         {loadingAbstract ? (
           <Loader2 className="w-3 h-3 animate-spin" />
@@ -80,7 +81,7 @@ const ArticleCard: React.FC<{
           href={`https://doi.org/${article.doi}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100 transition min-h-[32px]"
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5 rounded hover:bg-[var(--ea-primary,#00857a)]/10 transition min-h-[32px]"
         >
           <ExternalLink className="w-3 h-3" />
           DOI
@@ -98,9 +99,9 @@ const AbstractDisplay: React.FC<{
   abstract: ArticleAbstract;
   onClose: () => void;
 }> = ({ abstract, onClose }) => (
-  <div className="bg-white border border-indigo-200 rounded-lg p-4 space-y-2">
+  <div className="bg-white border border-[var(--ea-primary,#00857a)]/20 rounded-lg p-4 space-y-2">
     <div className="flex items-start justify-between">
-      <h4 className="text-sm font-bold text-indigo-900">{abstract.title}</h4>
+      <h4 className="text-sm font-bold text-[var(--ea-primary,#00857a)]">{abstract.title}</h4>
       <button
         onClick={onClose}
         className="p-1 text-gray-400 hover:text-gray-700 transition min-h-[32px] min-w-[32px] flex items-center justify-center"
@@ -133,6 +134,7 @@ export const PubMedEvidencePanel: React.FC<PubMedEvidencePanelProps> = ({
   collapsed = true,
   maxResults = 5,
 }) => {
+  useDashboardTheme();
   const [isOpen, setIsOpen] = useState(!collapsed);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -176,7 +178,7 @@ export const PubMedEvidencePanel: React.FC<PubMedEvidencePanelProps> = ({
         ) : (
           <ChevronRight className="w-4 h-4 text-gray-500 shrink-0" />
         )}
-        <BookOpen className="w-4 h-4 text-indigo-600 shrink-0" />
+        <BookOpen className="w-4 h-4 text-[var(--ea-primary,#00857a)] shrink-0" />
         <span className="text-sm font-semibold text-gray-900">Supporting Literature</span>
         {result && (
           <span className="text-xs text-gray-500 ml-auto">
@@ -200,7 +202,7 @@ export const PubMedEvidencePanel: React.FC<PubMedEvidencePanelProps> = ({
               type="button"
               onClick={handleSearch}
               disabled={status === 'searching' || !condition.trim()}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed transition min-h-[44px]"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[var(--ea-primary,#00857a)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] disabled:bg-[var(--ea-primary,#00857a)]/30 disabled:cursor-not-allowed transition min-h-[44px]"
             >
               {status === 'searching' ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
