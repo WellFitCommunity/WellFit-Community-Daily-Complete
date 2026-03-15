@@ -35,9 +35,9 @@ This tracker targets **functional correctness and clinical accuracy** — the th
 | P0 — Broken | 5 | 5 | 0 |
 | P1 — Clinical Risk | 9 | 8 | 1 (P1-6 adversarial testing) |
 | P2 — Integration Gap | 4 | 4 | 0 |
-| P3 — Data Gap | 4 | 2 | 2 (P3-1 CMS coverage, P3-3 clearinghouse blocked) |
-| P4 — Polish | 4 | 1 | 3 (P4-2 FHIR search, P4-3 FHIR conformance, P4-4 Akima review) |
-| **Total** | **26** | **20** | **6** |
+| P3 — Data Gap | 4 | 3 | 1 (P3-3 clearinghouse blocked on sandbox creds) |
+| P4 — Polish | 4 | 3 | 1 (P4-4 Akima clinical review) |
+| **Total** | **26** | **23** | **3** |
 
 ---
 
@@ -439,7 +439,7 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P3-1: CMS Coverage Server Is 100% Mock
 
-**Status:** NOT FIXED
+**Status:** ✅ FIXED (2026-03-12, verified 2026-03-15)
 **Affects:** CMS Coverage server
 **Est:** 12 hours (with API integration) or 4 hours (static LCD/NCD database load)
 
@@ -506,7 +506,7 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P4-2: FHIR Search Parameters Don't Match Spec
 
-**Status:** NOT FIXED
+**Status:** ✅ FIXED (2026-03-15)
 **Affects:** FHIR server
 **Est:** 6 hours
 
@@ -518,7 +518,7 @@ const constraints = buildConstraintBlock(['billing', 'sdoh']);
 
 ### P4-3: Missing FHIR Conformance Statement
 
-**Status:** NOT FIXED
+**Status:** ✅ FIXED (2026-03-15)
 **Affects:** FHIR server
 **Est:** 4 hours
 
