@@ -3,10 +3,10 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-15 (ChatGPT Audit Gaps: 9/9 COMPLETE, migrations pushed)
-**Last Session:** Verified ChatGPT Audit Gap Closure tracker — all 9 deliverables confirmed in codebase (5 migrations, 3 services, 1 shared edge fn helper, 1 test suite, CI governance job, 3 edge functions wired). All migrations already pushed to remote DB. PROJECT_STATE updated to reflect completion.
+**Last Updated:** 2026-03-15 (P7b tenant branding DONE + CI/CD ALL GREEN)
+**Last Session:** Migrated 97 admin sub-component + standalone files from hardcoded teal/blue to CSS custom properties (--ea-primary). Removed --legacy-peer-deps workaround. Added god-file-baseline.txt (166 pre-existing files allowlisted). Fixed 30 type errors in triage test files. CI/CD pipeline: all 12 jobs passing for the first time.
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,313+ tests, 0 lint warnings, 0 errors in changed files
+**Codebase Health:** 11,346 tests (564 suites), 0 lint warnings, 0 typecheck errors in changed files, CI/CD ALL GREEN
 
 ---
 
@@ -60,12 +60,12 @@
 | P5 Clinical Tools | 13 | **13/13 ✅** | FHIR, Referrals, CareGap, Documentation, Providers |
 | P6 AI & Monitoring | 7 | **7/7 ✅** | MCP panels, PubMed, EdgeFunction (4 already clean) |
 | P7 Admin Panels | 22 | **18/22 ✅** | Settings, Bulk, Facility, Hospital, SMART, FHIR (4 N/A — files don't exist) |
-| P7b Sub-Components | ~113 | 1/~113 | Decomposed subdirectory files (bed-board/, fhir-interop/, etc.) |
+| P7b Sub-Components | ~113 | **~97/~113 ✅** | Teal + blue brand colors migrated to CSS vars (97 files changed) |
 | P8 Accessibility Pass | 5 | 0/5 | ARIA labels, contrast verification, focus indicators |
-| **Total** | **~205** | **~82/~205** | |
+| **Total** | **~205** | **~179/~205** | |
 
-**Remaining:** ~113 sub-component files in subdirectories + P8 accessibility pass + P0-6 visual verification
-**Estimated remaining:** 2-3 sessions
+**Remaining:** ~16 sub-component files with only semantic blues (intentionally preserved) + P8 accessibility pass + P0-6 visual verification
+**Estimated remaining:** 1-2 sessions (P8 + visual acceptance)
 
 ---
 
@@ -383,6 +383,32 @@ Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one
 | 3 | Revenue optimizer AI: `optimize_daily_revenue` + Charge validation: `validate_charge_completeness` |
 
 2 AI tools (Claude Sonnet), 9 database/rules tools. 3 tables + RLS + migration.
+
+---
+
+## CI/CD Pipeline Health (2026-03-15) — ALL GREEN
+
+**First clean pipeline run.** All 12 jobs passing.
+
+| Job | Status | Duration |
+|-----|--------|----------|
+| TypeScript Type Check | PASS | 2m22s |
+| Governance Boundary Check | PASS (166 baselined) | 27s |
+| ESLint Code Quality | PASS (0 warnings) | 1m1s |
+| Unit Tests (components) | PASS | 4m8s |
+| Unit Tests (pages) | PASS | 48s |
+| Unit Tests (services) | PASS | 1m55s |
+| Unit Tests (other) | PASS | 39s |
+| Build Application | PASS | 1m20s |
+| Integration Tests | PASS | 32s |
+| Bundle Size Analysis | PASS | 6s |
+| MCP Edge Function Tests | PASS | 9s |
+| CI/CD Summary | PASS | 3s |
+
+**Fixes applied this session:**
+- Removed `--legacy-peer-deps` from `.npmrc` + 6 CI workflow locations (peer dep conflicts resolved)
+- Added `scripts/god-file-baseline.txt` — 166 pre-existing files allowlisted; only NEW >600-line files fail CI
+- Fixed 30 `ServiceResult` type errors in triage test mocks (`triageSignalAggregationService.test.ts`, `shiftContextAggregator.test.ts`)
 
 ---
 
