@@ -14,6 +14,7 @@ import { logFHIROperation } from "./audit.ts";
 import { getPatientBundle } from "./resourceQueries.ts";
 import { searchResources } from "./resourceQueries.ts";
 import { getPatientSummary } from "./patientSummary.ts";
+import { buildCapabilityStatement } from "./conformance.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 
 /**
@@ -142,6 +143,11 @@ export async function executeToolHandler(
 
     case "trigger_ehr_sync": {
       result = await handleTriggerEhrSync(ctx.sb, toolArgs);
+      break;
+    }
+
+    case "get_capability_statement": {
+      result = buildCapabilityStatement();
       break;
     }
 

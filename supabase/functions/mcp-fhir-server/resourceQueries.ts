@@ -8,6 +8,7 @@ import type { FHIRResource, PatientBundleOptions, ResourceSearchFilters } from "
 import { FHIR_TABLES, SUPPORTED_RESOURCES, getFHIRColumns } from "./tools.ts";
 import { createFHIRBundle, toFHIRPatient } from "./bundleBuilder.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
+import { parseCodeParam, parseMultiValue } from "./searchParamParser.ts";
 
 /**
  * Exports a complete FHIR Bundle for a patient, including demographics
@@ -135,7 +136,26 @@ export async function searchResources(
     query = query.eq('category', filters.category);
   }
   if (filters.code) {
-    query = query.or(`code.eq.${filters.code},code_system.eq.${filters.code}`);
+    // Parse FHIR R4 token search format: "system|code", "code", "|code", "system|"
+    const codeValues = parseMultiValue(filters.code);
+
+    if (codeValues.length > 1) {
+      // Comma-separated OR search: code IN (code1, code2, ...)
+      query = query.in('code', codeValues);
+    } else {
+      const parsed = parseCodeParam(filters.code);
+
+      if (parsed.system !== undefined && parsed.code) {
+        // "system|code" — match both system and code
+        query = query.eq('code_system', parsed.system).eq('code', parsed.code);
+      } else if (parsed.system !== undefined && !parsed.code) {
+        // "system|" — any code within this system
+        query = query.eq('code_system', parsed.system);
+      } else if (parsed.code) {
+        // "code" only — match code regardless of system
+        query = query.eq('code', parsed.code);
+      }
+    }
   }
   if (filters.dateFrom) {
     query = query.gte('created_at', filters.dateFrom);

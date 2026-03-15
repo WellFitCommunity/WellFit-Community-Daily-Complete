@@ -121,7 +121,7 @@ export const TOOLS: Record<string, {
         patient_id: { type: "string", description: "Filter by patient" },
         status: { type: "string", description: "Filter by status" },
         category: { type: "string", description: "Filter by category" },
-        code: { type: "string", description: "Filter by code" },
+        code: { type: "string", description: "Filter by code (FHIR format: 'system|code', 'code', or comma-separated)" },
         date_from: { type: "string", description: "Filter from date" },
         date_to: { type: "string", description: "Filter to date" },
         limit: { type: "number", description: "Max results (default 50)" }
@@ -313,6 +313,15 @@ export const TOOLS: Record<string, {
         }
       },
       required: ["connection_id"]
+    }
+  },
+
+  "get_capability_statement": {
+    description: "Get FHIR CapabilityStatement (conformance/metadata endpoint)",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: []
     }
   }
 };
