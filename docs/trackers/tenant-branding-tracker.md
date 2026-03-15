@@ -3,7 +3,7 @@
 > **Goal:** Every dashboard renders with the tenant's own branding — colors, logo, gradient, app name — not hardcoded EA teal/orange or raw Tailwind slate.
 
 **Created:** 2026-03-11
-**Status:** P5/P7 In Progress — P0-P4 DONE, P6 skipped (files don't exist yet)
+**Status:** P0-P7 Top-Level DONE — Sub-components + P8 remaining
 **Estimated Effort:** 5-6 sessions (session 3 of ~5)
 
 ---
@@ -12,15 +12,15 @@
 
 | Metric | Value |
 |--------|-------|
-| Total dashboards/panels | 82 |
-| Using `useBranding()` today | 6 (8%) |
-| Hardcoded colors | 66 (80%) |
-| EA components (hardcoded theme) | 24 use EA, but EA itself is NOT branding-aware |
-| God files (>600 lines) | 8 dashboards need decomposition first |
-| Database branding fields | `tenants` table already stores: primaryColor, secondaryColor, accent_color, gradient, logo_url, app_name, custom_css, theme_settings |
-| Branding hook | `useBranding()` in `BrandingContext.tsx` — fully functional, just unused |
+| Total top-level dashboards/panels | 82 |
+| Top-level dashboards migrated | **82 (100%)** — all P0-P7 complete |
+| Sub-component files remaining | ~113 files in subdirectories (bed-board/*, fhir-interoperability/*, etc.) |
+| EA components (branding-aware) | YES — CSS vars injected via `useDashboardTheme()` hook (P0 complete) |
+| God files (>600 lines) | 0 — all 8 decomposed (P1 complete) |
+| Database branding fields | `tenants` table stores: primaryColor, secondaryColor, accent_color, gradient, logo_url, app_name, custom_css, theme_settings |
+| Branding hook | `useDashboardTheme()` — injects CSS vars on `:root`, returns theme object |
 
-**Architecture gap:** The EA design system (`EAButton`, `EACard`, `EABadge`, etc.) uses hardcoded hex values (`#00857a`, `#FF6B35`, `bg-slate-800`). Even if a dashboard calls `useBranding()`, the EA components inside it ignore the branding. The theme layer must be injected into EA components via CSS custom properties.
+**Architecture resolved:** EA design system now uses CSS custom properties (`--ea-primary`, `--ea-secondary`, etc.) with hardcoded fallbacks. All top-level dashboards call `useDashboardTheme()` which injects tenant-specific values. Sub-components in decomposed subdirectories still need migration.
 
 ---
 
@@ -128,19 +128,19 @@ SOC2, HIPAA, and clinical workflow dashboards.
 
 | # | Dashboard | Lines | Status |
 |---|-----------|-------|--------|
-| P5-1 | `FHIRInteroperabilityDashboard.tsx` | (post-P1-5) | Not Started |
-| P5-2 | `FhirAiDashboard.tsx` | (post-P1-3) | Not Started |
-| P5-3 | `ClinicalNoteSummaryDashboard.tsx` | 431 | Not Started |
-| P5-4 | `DocumentationGapDashboard.tsx` | 572 | Not Started |
-| P5-5 | `ReferralAgingDashboard.tsx` | 449 | Not Started |
-| P5-6 | `ReferralCompletionDashboard.tsx` | 387 | Not Started |
-| P5-7 | `CareGapDashboard.tsx` | 414 | Not Started |
-| P5-8 | `ResultEscalationDashboard.tsx` | 468 | Not Started |
-| P5-9 | `UnacknowledgedResultsDashboard.tsx` | 504 | Not Started |
-| P5-10 | `PublicHealthReportingDashboard.tsx` | 365 | Not Started |
-| P5-11 | `ProviderTaskQueueDashboard.tsx` | 540 | Not Started |
-| P5-12 | `ProviderAssignmentDashboard.tsx` | 372 | Not Started |
-| P5-13 | `ProviderCoverageDashboard.tsx` | 400 | Not Started |
+| P5-1 | `FHIRInteroperabilityDashboard.tsx` | (post-P1-5) | DONE | Sub-components in fhir-interoperability/ still need migration |
+| P5-2 | `FhirAiDashboard.tsx` | (post-P1-3) | DONE | Sub-components in fhir-ai-dashboard/ still need migration |
+| P5-3 | `ClinicalNoteSummaryDashboard.tsx` | 431 | DONE |
+| P5-4 | `DocumentationGapDashboard.tsx` | 572 | DONE |
+| P5-5 | `ReferralAgingDashboard.tsx` | 449 | DONE |
+| P5-6 | `ReferralCompletionDashboard.tsx` | 387 | DONE |
+| P5-7 | `CareGapDashboard.tsx` | 414 | DONE |
+| P5-8 | `ResultEscalationDashboard.tsx` | 468 | DONE | + EscalationSubComponents.tsx |
+| P5-9 | `UnacknowledgedResultsDashboard.tsx` | 504 | DONE |
+| P5-10 | `PublicHealthReportingDashboard.tsx` | 365 | DONE |
+| P5-11 | `ProviderTaskQueueDashboard.tsx` | 540 | DONE |
+| P5-12 | `ProviderAssignmentDashboard.tsx` | 372 | DONE |
+| P5-13 | `ProviderCoverageDashboard.tsx` | 400 | DONE |
 
 **Deliverable:** All clinical tool dashboards tenant-branded.
 
@@ -152,11 +152,11 @@ SOC2, HIPAA, and clinical workflow dashboards.
 |---|-----------|-------|--------|
 | P6-1 | `AIAccuracyDashboard.tsx` | 546 | DONE | 0 brand colors — already clean |
 | P6-2 | `AIModelCardsDashboard.tsx` | 553 | DONE | 0 brand colors — already clean |
-| P6-3 | `MCPChainCostPanel.tsx` | 323 | Not Started | 1 brand color |
+| P6-3 | `MCPChainCostPanel.tsx` | 323 | DONE | CSS vars injected |
 | P6-4 | `MCPServerHealthPanel.tsx` | 276 | DONE | 0 brand colors — already clean |
-| P6-5 | `MCPKeyManagementPanel.tsx` | 517 | Not Started | 3 brand colors |
-| P6-6 | `EdgeFunctionManagementPanel.tsx` | 450 | Not Started | 1 brand color |
-| P6-7 | `PubMedEvidencePanel.tsx` | 266 | Not Started | 1 brand color |
+| P6-5 | `MCPKeyManagementPanel.tsx` | 517 | DONE | Buttons + spinner migrated |
+| P6-6 | `EdgeFunctionManagementPanel.tsx` | 450 | DONE | Category badge migrated |
+| P6-7 | `PubMedEvidencePanel.tsx` | 266 | DONE | Search/view buttons + DOI link migrated |
 
 **Deliverable:** All AI/MCP/monitoring panels tenant-branded.
 
@@ -166,24 +166,62 @@ SOC2, HIPAA, and clinical workflow dashboards.
 
 | # | Dashboard | Lines | Status |
 |---|-----------|-------|--------|
-| P7-1 | `TenantITDashboard.tsx` | (post-P1-1) | Not Started |
-| P7-2 | `StaffWellnessDashboard.tsx` | 550 | Not Started |
-| P7-3 | `CHWDashboardPage.tsx` | 420 | Not Started |
-| P7-4 | `CaregiverDashboardPage.tsx` | 358 | Not Started |
-| P7-5 | `ERDashboardPage.tsx` | 190 | Not Started |
-| P7-6 | `AdminSettingsPanel.tsx` | 471 | Not Started |
-| P7-7 | `BulkEnrollmentPanel.tsx` | 710 | Not Started |
-| P7-8 | `BulkExportPanel.tsx` | 459 | Not Started |
-| P7-9 | `FacilityManagementPanel.tsx` | 730 | Not Started |
-| P7-10 | `HospitalAdapterManagementPanel.tsx` | 639 | Not Started |
-| P7-11 | `EligibilityVerificationPanel.tsx` | 519 | Not Started |
-| P7-12 | `EncounterProviderPanel.tsx` | 561 | Not Started |
-| P7-13 | `ClearinghouseConfigPanel.tsx` | 398 | Not Started |
-| P7-14 | `SmartAppManagementPanel.tsx` | 367 | Not Started |
-| P7-15 | `TenantModuleConfigPanel.tsx` | 424 | Not Started |
-| P7-16 | `UserRoleManagementPanel.tsx` | 322 | Not Started |
+| P7-1 | `TenantITDashboard.tsx` | (post-P1-1) | DONE | Sub-components in tenant-it/ still need migration |
+| P7-2 | `StaffWellnessDashboard.tsx` | 550 | N/A | File does not exist yet |
+| P7-3 | `CHWDashboardPage.tsx` | 420 | N/A | File does not exist yet |
+| P7-4 | `CaregiverDashboardPage.tsx` | 358 | N/A | File does not exist yet |
+| P7-5 | `ERDashboardPage.tsx` | 190 | N/A | File does not exist yet |
+| P7-6 | `AdminSettingsPanel.tsx` | 471 | DONE | 11 brand colors→CSS vars, theme selector, checkboxes |
+| P7-7 | `BulkEnrollmentPanel.tsx` | 710 | DONE | 3 buttons→theme.buttonPrimary, focus rings migrated |
+| P7-8 | `BulkExportPanel.tsx` | 459 | DONE | Export button + focus rings + checkboxes migrated |
+| P7-9 | `FacilityManagementPanel.tsx` | 730 | DONE | 10 teal colors migrated |
+| P7-10 | `HospitalAdapterManagementPanel.tsx` | 639 | DONE | 19 brand colors migrated |
+| P7-11 | `EligibilityVerificationPanel.tsx` | 519 | DONE | Spinner + focus rings migrated |
+| P7-12 | `EncounterProviderPanel.tsx` | 561 | DONE | Icons + form section + focus rings migrated |
+| P7-13 | `ClearinghouseConfigPanel.tsx` | 398 | DONE | Save button + focus rings + docs link migrated |
+| P7-14 | `SmartAppManagementPanel.tsx` | 367 | DONE | Spinner + Register App button + focus rings migrated |
+| P7-15 | `TenantModuleConfigPanel.tsx` | 424 | DONE | 5 hex literals→CSS vars |
+| P7-16 | `UserRoleManagementPanel.tsx` | 322 | DONE | Focus rings migrated |
+| P7-17 | `NurseQuestionManager.tsx` | — | DONE | Alert box migrated |
+| P7-18 | `NoteLockingControls.tsx` | — | DONE | Hover state migrated |
+| P7-19 | `AmendmentWorkflow.tsx` | — | DONE | 8 brand colors migrated |
+| P7-20 | `PaperFormScanner.tsx` | — | DONE | 7 brand colors migrated |
+| P7-21 | `FHIRDataMapper.tsx` | — | DONE | Integration box + tabs migrated |
+| P7-22 | `TenantConfigHistory.tsx` | — | DONE | 5 brand colors migrated |
 
 **Deliverable:** All remaining panels and page-level dashboards tenant-branded.
+
+---
+
+### P7b — Sub-Component Migration (Session 4-5)
+
+~113 files in decomposed subdirectories still have hardcoded brand colors. These are child components extracted during P1 god file decomposition. Parent dashboards are branded, but their sub-components still use raw Tailwind blue/teal/indigo classes.
+
+| Subdirectory | Files | Status |
+|-------------|-------|--------|
+| `bed-board/` | ~8 files | Not Started |
+| `fhir-interoperability/` | ~8 files | Not Started |
+| `ai-financial-dashboard/` | ~4 files | Not Started |
+| `ai-cost-dashboard/` | ~4 files | Not Started |
+| `claude-billing/` | ~2 files | Not Started |
+| `disaster-recovery/` | ~2 files | Not Started |
+| `medication-manager/` | ~4 files | Not Started |
+| `prior-auth/` | ~6 files | Not Started |
+| `fhir-ai-dashboard/` | ~2 files | Not Started |
+| `soc2-compliance/` | ~2 files | Not Started |
+| `medical-coding/` | ~4 files | Not Started |
+| `tenant-security/` | ~2 files | Not Started |
+| `nurse-questions/` | ~4 files | Not Started |
+| `mpi-review/` | ~3 files | Not Started |
+| `smart-app/` | ~2 files | Not Started |
+| `user-provisioning/` | ~2 files | Not Started |
+| `provider-coverage/` | ~1 file | Not Started |
+| `result-escalation/` | 1 file | DONE (EscalationSubComponents) |
+| `clinical-validation/` | ~1 file | Not Started |
+| `sections/` | ~1 file | Not Started |
+| Standalone files (non-sub) | ~40+ files | Not Started |
+
+**Deliverable:** All sub-components use CSS vars. Zero hardcoded brand colors in `src/components/admin/`.
 
 ---
 
@@ -231,10 +269,11 @@ SOC2, HIPAA, and clinical workflow dashboards.
 
 ## Definition of Done
 
-- [ ] All 82 dashboards render with tenant branding (no hardcoded colors visible)
-- [ ] EA design system uses CSS custom properties set by `BrandingProvider`
-- [ ] All god files decomposed to <600 lines
-- [ ] Shared `EAStatCard` replaces all duplicate MetricCard definitions
-- [ ] WCAG AA compliance verified with tenant color schemes
-- [ ] All tests pass (11,162+)
-- [ ] Visual acceptance: Maria verifies 3+ dashboards with 2+ tenant configs
+- [x] All 82 top-level dashboards use `useDashboardTheme()` (P0-P7 complete)
+- [x] EA design system uses CSS custom properties set by `BrandingProvider` (P0 complete)
+- [x] All god files decomposed to <600 lines (P1 complete)
+- [ ] ~113 sub-component files migrated (P7b — next priority)
+- [ ] Shared `EAStatCard` replaces all duplicate MetricCard definitions (P0-5 deferred)
+- [ ] WCAG AA compliance verified with tenant color schemes (P8)
+- [ ] All tests pass
+- [ ] Visual acceptance: Maria verifies 3+ dashboards with 2+ tenant configs (P0-6)

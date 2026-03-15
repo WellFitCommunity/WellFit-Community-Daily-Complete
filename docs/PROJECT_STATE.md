@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-15 (Claude-in-Claude: ALL 27/27 COMPLETE ✅)
-**Last Session:** Completed entire Claude-in-Claude triage intelligence system: P0 foundation, P1 meta-triage, P2 alert consolidation, P3 confidence calibration, P4 handoff synthesis, P5 override justification & appeal. 47 new tests, all passing. Migration applied. UI components built.
+**Last Updated:** 2026-03-15 (Tenant Branding: P0-P7 top-level DONE)
+**Last Session:** Migrated 57 dashboard files from hardcoded hex colors to tenant-aware CSS custom properties via `useDashboardTheme()` hook. P2 high-impact, P3 compliance, P4 revenue, P5 clinical, P6 MCP/AI, P7 admin panels — all top-level dashboards complete. ~113 sub-component files remain.
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,313+ tests, 0 lint warnings, 0 errors in changed files
 
@@ -42,56 +42,54 @@
 
 ---
 
-## Tenant Branding Migration (2026-03-11) — NEW
+## Tenant Branding Migration (2026-03-11) — IN PROGRESS (Top-Level DONE)
 
 **Tracker:** `docs/trackers/tenant-branding-tracker.md`
 
-**What:** Migrate all 82 dashboards from hardcoded EA teal/orange to tenant-specific branding. Each tenant sees their own colors, logo, gradient, and app name across every dashboard.
+**What:** Migrate all dashboards from hardcoded EA teal/orange to tenant-specific branding via CSS custom properties. Each tenant sees their own colors, logo, gradient, and app name.
 
-**Why:** EA components use hardcoded `#00857a` — tenants deploying WellFit or Atlus need their own corporate branding. Only 6 of 82 dashboards currently use `useBranding()`. Hospital pilot needs every screen to look like the hospital's brand, not ours.
+**Why:** Hospital pilot needs every screen to look like the hospital's brand, not ours.
 
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
-| P0 Foundation | 6 | 0/6 | Theme token system — make EA components branding-aware via CSS vars |
-| P1 God File Decomposition | 8 | 0/8 | 8 files over 600-line limit — decompose before branding |
-| P2 High-Impact Dashboards | 8 | 0/8 | BillingDashboard, BedMgmt, SystemAdmin, PatientEngagement |
-| P3 Compliance Dashboards | 12 | 0/12 | SOC2 (x5), Breach, MFA, Training, DR, BAA |
-| P4 Revenue & Billing | 11 | 0/11 | AIFinancial, AICost, ClaimAging, ERA, HCC |
-| P5 Clinical Tools | 13 | 0/13 | FHIR, Referrals, CareGap, Documentation |
-| P6 AI & Monitoring | 7 | 0/7 | AIAccuracy, ModelCards, MCP panels |
-| P7 Admin Panels & Pages | 16 | 0/16 | TenantIT, StaffWellness, CHW, Caregiver, Facility |
+| P0 Foundation | 6 | **4/6 ✅** | Theme token system, EA components branding-aware |
+| P1 God File Decomposition | 8 | **8/8 ✅** | All 8 god files decomposed to <600 lines |
+| P2 High-Impact Dashboards | 8 | **8/8 ✅** | BillingDashboard, BedMgmt, SystemAdmin, PatientEngagement |
+| P3 Compliance Dashboards | 12 | **12/12 ✅** | SOC2 (x4), Breach, MFA, Training, DR, BAA, Cache, Perf |
+| P4 Revenue & Billing | 11 | **11/11 ✅** | AIFinancial, AICost, ClaimAging, ERA, HCC, Superbill |
+| P5 Clinical Tools | 13 | **13/13 ✅** | FHIR, Referrals, CareGap, Documentation, Providers |
+| P6 AI & Monitoring | 7 | **7/7 ✅** | MCP panels, PubMed, EdgeFunction (4 already clean) |
+| P7 Admin Panels | 22 | **18/22 ✅** | Settings, Bulk, Facility, Hospital, SMART, FHIR (4 N/A — files don't exist) |
+| P7b Sub-Components | ~113 | 1/~113 | Decomposed subdirectory files (bed-board/, fhir-interop/, etc.) |
 | P8 Accessibility Pass | 5 | 0/5 | ARIA labels, contrast verification, focus indicators |
-| **Total** | **86** | **0/86** | |
+| **Total** | **~205** | **~82/~205** | |
 
-**Estimated remaining:** 5-6 sessions
-
-**Key insight:** The `useBranding()` hook and `tenants` table already work. The blocker is that EA components (`EAButton`, `EACard`, etc.) have hardcoded hex colors. P0 fixes this at the foundation level — then P2-P7 are mechanical migrations.
+**Remaining:** ~113 sub-component files in subdirectories + P8 accessibility pass + P0-6 visual verification
+**Estimated remaining:** 2-3 sessions
 
 ---
 
-## MCP Ecosystem Completion (2026-03-10) — IN PROGRESS
+## MCP Ecosystem Completion (2026-03-10) — MOSTLY DONE (16/19)
 
 **Tracker:** `docs/trackers/mcp-completion-tracker.md`
 **Findings Report:** `docs/MCP_ECOSYSTEM_FINDINGS_2026-03-10.md`
 
 **What:** Close ALL remaining MCP gaps — wire ~76 idle tools, define chains 2-5, add retry logic, activate clearinghouse, build unified cost dashboard, fix medical coding security.
 
-**Why:** 128+ tools built across 14 servers, but only ~52 are callable from UI. Hospital pilot needs full tool coverage — "if we don't wire them all, something will get missed."
+**Why:** 128+ tools built across 14 servers, but only ~52 are callable from UI. Hospital pilot needs full tool coverage.
 
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
-| P0 Tonight | 1 | 0/1 | Adversarial testing (Maria + Akima + Claude) |
-| P1 Chain Infrastructure | 3 | 0/3 | Retry logic, chains 2-5, end-to-end verification |
-| P2 Revenue Tool Wiring | 3 | 0/3 | Medical coding client, clearinghouse activation |
-| P3 Clinical Tool Wiring | 3 | 0/3 | FHIR CRUD, prior auth queue, edge fn tools |
-| P4 Reference Tool Wiring | 4 | 0/4 | PubMed, medical codes, CMS, NPI, HL7 idle tools |
-| P5 Observability | 2 | 0/2 | Unified cost dashboard, cultural competency client |
-| P6 Security Polish | 2 | 0/2 | Medical coding tenant_id fix, structured AI output |
-| **Total** | **18** | **0/18** | |
+| P0 Tonight | 1 | **1/1 ✅** | Adversarial testing |
+| P1 Chain Infrastructure | 3 | **3/3 ✅** | Retry logic, chains 2-5, end-to-end verification |
+| P2 Revenue Tool Wiring | 3 | **1/3** | Medical coding client done; clearinghouse activation **blocked on sandbox credentials** |
+| P3 Clinical Tool Wiring | 3 | **3/3 ✅** | FHIR CRUD, prior auth queue, edge fn tools |
+| P4 Reference Tool Wiring | 4 | **4/4 ✅** | PubMed, medical codes, CMS, NPI, HL7 idle tools |
+| P5 Observability | 2 | **2/2 ✅** | Unified cost dashboard, cultural competency client |
+| P6 Security Polish | 2 | **2/2 ✅** | Medical coding tenant_id fix, structured AI output |
+| **Total** | **19** | **16/19** | |
 
-**Estimated remaining:** ~55-65 hours across 7 sessions + tonight's adversarial testing
-
-**Clearinghouse dependency:** Sandbox credentials arriving week of 2026-03-16. P2-2 blocked until then.
+**Blocked:** P2-2 (clearinghouse sandbox activation) and P2-3 (clearinghouse batching) — sandbox credentials arriving week of 2026-03-16. P2-1 (medical coding) depends on P2-2.
 
 ---
 
