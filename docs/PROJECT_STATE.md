@@ -3,10 +3,42 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-11 (Dashboard assessment + tenant branding tracker created)
-**Last Session:** Assessed all 82 dashboards for production-readiness. Found 8 god files, 69 dashboards missing tenant branding, 29 missing accessibility. Created `tenant-branding-tracker.md`. Also found 5 typecheck errors in EdgeFunctionManagementPanel.tsx and MCPChainCostPanel.tsx from prior MCP session.
+**Last Updated:** 2026-03-15 (Claude-in-Claude: ALL 27/27 COMPLETE ✅)
+**Last Session:** Completed entire Claude-in-Claude triage intelligence system: P0 foundation, P1 meta-triage, P2 alert consolidation, P3 confidence calibration, P4 handoff synthesis, P5 override justification & appeal. 47 new tests, all passing. Migration applied. UI components built.
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,162 tests (554 suites), 0 lint warnings, 5 typecheck errors (EdgeFunctionManagementPanel + MCPChainCostPanel)
+**Codebase Health:** 11,313+ tests, 0 lint warnings, 0 errors in changed files
+
+---
+
+## Claude-in-Claude Triage Intelligence (2026-03-15) — NEW
+
+**Tracker:** `docs/trackers/claude-in-claude-triage-tracker.md`
+
+**What:** Add a meta-reasoning layer where Claude reasons about outputs from the 26 existing AI skills — resolving conflicts, calibrating confidence, consolidating alerts, and synthesizing handoff narratives. Extends `mcp-claude-server` with 4 clinical-specific tools.
+
+**Why:** 26 AI skills fire independently. When vitals say "worsening" but self-report says "feeling great," no one reasons about the conflict. Clinicians see 20+ alerts/shift. Shift handoffs lose escalation context. Claude-in-Claude adds the "driver" to the Ferrari engine — meta-triage that sits *above* individual skills.
+
+| Priority | Items | Status | Focus |
+|----------|-------|--------|-------|
+| P0 Foundation | 5 | **5/5 ✅** | Schemas, clinical grounding, structured output, decision chain |
+| P1 Meta-Triage | 4 | **4/4 ✅** | Signal aggregation, conflict resolution, meta-triage wiring, 14 tests |
+| P2 Alert Consolidation | 4 | **4/4 ✅** | Batching service + 13 tests, ConsolidatedAlertPanel UI |
+| P3 Confidence Calibration | 5 | **5/5 ✅** | Population fetcher, readmission + fall risk wiring, 7 tests |
+| P4 Handoff Synthesis | 4 | **4/4 ✅** | Shift aggregator + 5 tests, handoff workflow wiring |
+| P5 Override & Appeal | 5 | **5/5 ✅** | Override service + 8 tests, migration, EscalationOverrideDashboard |
+| **Total** | **27** | **27/27 ✅** | |
+
+**New files this session:**
+- `src/services/ai/triageSignalAggregationService.ts` (P1-2/P1-3)
+- `src/services/ai/alertBatchingService.ts` (P2-2)
+- `src/services/ai/populationContextFetcher.ts` (P3-2)
+- `src/services/ai/confidenceCalibrationService.ts` (P3-3/P3-4)
+- `src/services/ai/shiftContextAggregator.ts` (P4-2)
+- `src/services/ai/escalationOverrideService.ts` (P5-1/P5-2)
+- `src/components/admin/ConsolidatedAlertPanel.tsx` (P2-3)
+- `src/components/admin/EscalationOverrideDashboard.tsx` (P5-4)
+- `supabase/migrations/20260315140000_ai_escalation_overrides.sql` (P5-3)
+- 5 test files with 47 tests total
 
 ---
 

@@ -1,11 +1,19 @@
 // =====================================================
 // Self-hosted MCP Server for Claude operations
-// Consolidates your 3 Claude integration points
+// Consolidates Claude integration + Claude-in-Claude triage
 // Adds prompt caching for 30-40% cost reduction
-// Uses your existing audit logging and de-identification
+// Uses existing audit logging and de-identification
 //
 // TIER 3 (admin): Requires service role key for audit logging
 // Auth: Supabase apikey + service role key + admin role verification
+//
+// Tools:
+//   Generic: analyze-text, generate-suggestion, summarize, ping
+//   Triage:  evaluate-escalation-conflict, consolidate-alerts,
+//            calibrate-confidence, synthesize-handoff-narrative
+//
+// Tracker: docs/trackers/claude-in-claude-triage-tracker.md
+// Copyright © 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -20,7 +28,6 @@ import {
   checkBodySize,
   buildProvenance,
   MCP_BODY_LIMIT_BYTES,
-  PING_TOOL,
   handlePing,
   type MCPInitResult
 } from "../_shared/mcpServerBase.ts";
@@ -33,11 +40,16 @@ import {
 } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
 import { logMCPAudit } from "../_shared/mcpAudit.ts";
+import { calculateModelCost } from "../_shared/models.ts";
+
+// Tool registry and triage dispatcher
+import { ALL_TOOLS, isTriageTool } from "./tools.ts";
+import { dispatchTriageTool } from "./triageTools.ts";
 
 // Server configuration
 const SERVER_CONFIG = {
   name: "mcp-claude-server",
-  version: "1.1.0",
+  version: "2.0.0",
   tier: "admin" as const
 };
 
@@ -59,7 +71,7 @@ if (!ANTHROPIC_API_KEY) throw new Error("Missing Anthropic API key");
 
 const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-// De-identification (copied from your coding-suggest function)
+// De-identification for generic tools (triage tools handle their own via triageTools.ts)
 const redact = (s: string): string =>
   s
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[EMAIL]")
@@ -90,48 +102,7 @@ function deepDeidentify(obj: unknown): unknown {
   return obj;
 }
 
-// MCP Tools
-const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required: string[] } }> = {
-  "ping": PING_TOOL,
-  "analyze-text": {
-    description: "Analyze text with Claude AI",
-    inputSchema: {
-      type: "object",
-      properties: {
-        text: { type: "string", description: "Text to analyze" },
-        prompt: { type: "string", description: "Analysis instructions" },
-        model: { type: "string", default: "claude-sonnet-4-5-20250929" }
-      },
-      required: ["text", "prompt"]
-    }
-  },
-  "generate-suggestion": {
-    description: "Generate AI suggestions",
-    inputSchema: {
-      type: "object",
-      properties: {
-        context: { type: "object", description: "Context data" },
-        task: { type: "string", description: "Task description" },
-        model: { type: "string", default: "claude-haiku-4-5-20250929" }
-      },
-      required: ["context", "task"]
-    }
-  },
-  "summarize": {
-    description: "Summarize content",
-    inputSchema: {
-      type: "object",
-      properties: {
-        content: { type: "string", description: "Content to summarize" },
-        maxLength: { type: "number", default: 500 },
-        model: { type: "string", default: "claude-haiku-4-5-20250929" }
-      },
-      required: ["content"]
-    }
-  }
-};
-
-// Audit logging (uses your existing table)
+// Audit logging (uses existing table)
 async function logMCPRequest(params: {
   userId?: string;
   tool: string;
@@ -164,10 +135,30 @@ async function logMCPRequest(params: {
   }
 }
 
-// P3-4: Centralized pricing from _shared/models.ts
-import { calculateModelCost } from "../_shared/models.ts";
+// ============================================================================
+// Generic tool handler (analyze-text, generate-suggestion, summarize)
+// ============================================================================
 
+function buildGenericPrompt(
+  toolName: string,
+  sanitizedArgs: Record<string, unknown>
+): string {
+  switch (toolName) {
+    case "analyze-text":
+      return `${String(sanitizedArgs.prompt || '')}\n\nText to analyze:\n${String(sanitizedArgs.text || '')}`;
+    case "generate-suggestion":
+      return `Task: ${String(sanitizedArgs.task || '')}\n\nContext: ${JSON.stringify(sanitizedArgs.context, null, 2)}`;
+    case "summarize":
+      return `Summarize the following content in ${Number(sanitizedArgs.maxLength) || 500} words or less:\n\n${String(sanitizedArgs.content || '')}`;
+    default:
+      throw new Error(`Unknown generic tool: ${toolName}`);
+  }
+}
+
+// ============================================================================
 // MCP Request Handler
+// ============================================================================
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -184,7 +175,7 @@ serve(async (req: Request) => {
     ]);
   }
 
-  // P3-3: Body size limit (512KB for AI text operations)
+  // Body size limit (512KB for AI text operations)
   const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_BYTES, corsHeaders);
   if (bodySizeResponse) return bodySizeResponse;
 
@@ -205,7 +196,7 @@ serve(async (req: Request) => {
       });
     }
 
-    // MCP Protocol: List tools (auth required on Tier 3 — P1-2)
+    // MCP Protocol: List tools (auth required on Tier 3)
     if (method === "tools/list") {
       const caller = await extractCallerIdentity(req, { serverName: SERVER_CONFIG.name, logger });
       if (!caller) {
@@ -214,7 +205,7 @@ serve(async (req: Request) => {
           requestId, corsHeaders
         );
       }
-      return new Response(JSON.stringify(createToolsListResponse(TOOLS, id)), {
+      return new Response(JSON.stringify(createToolsListResponse(ALL_TOOLS, id)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
@@ -224,9 +215,7 @@ serve(async (req: Request) => {
       const { name: toolName, arguments: toolArgs } = params;
       const startTime = Date.now();
 
-      // ============================================================
       // AUTH GATE: Verify caller has admin access for AI operations
-      // ============================================================
       const authResult = await verifyAdminAccess(req, {
         serverName: SERVER_CONFIG.name,
         toolName,
@@ -249,7 +238,7 @@ serve(async (req: Request) => {
 
       const caller = authResult.caller as CallerIdentity;
 
-      // P1-3 + P3-1: Persistent identity-based rate limiting (cross-instance)
+      // Persistent identity-based rate limiting (cross-instance)
       const identityRateResult = await checkPersistentRateLimit(
         sb, getCallerRateLimitId(caller), MCP_RATE_LIMITS.claude
       );
@@ -257,11 +246,11 @@ serve(async (req: Request) => {
         return createRateLimitResponse(identityRateResult, MCP_RATE_LIMITS.claude, corsHeaders);
       }
 
-      if (!TOOLS[toolName as keyof typeof TOOLS]) {
+      if (!ALL_TOOLS[toolName as keyof typeof ALL_TOOLS]) {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
-      // Handle ping tool first
+      // Handle ping tool
       if (toolName === "ping") {
         return new Response(JSON.stringify({
           jsonrpc: "2.0",
@@ -275,34 +264,88 @@ serve(async (req: Request) => {
         });
       }
 
-      // De-identify input data
-      // De-identify input data - cast to Record for property access
-      const sanitizedArgs = deepDeidentify(toolArgs) as Record<string, unknown>;
+      // ============================================================
+      // TRIAGE TOOLS: Claude-in-Claude meta-reasoning
+      // Uses structured JSON output + clinical grounding + decision chain
+      // ============================================================
+      if (isTriageTool(toolName)) {
+        // De-identify triage input (preserves patient_id for routing but strips PHI)
+        const sanitizedArgs = deepDeidentify(toolArgs) as Record<string, unknown>;
 
-      let userPrompt = "";
-      const model = (toolArgs.model as string) || "claude-sonnet-4-5-20250929";
+        const triageResult = await dispatchTriageTool(
+          toolName,
+          sanitizedArgs,
+          anthropic,
+          logger
+        );
 
-      // Tool-specific logic
-      switch (toolName) {
-        case "analyze-text":
-          userPrompt = `${String(sanitizedArgs.prompt || '')}\n\nText to analyze:\n${String(sanitizedArgs.text || '')}`;
-          break;
-        case "generate-suggestion":
-          userPrompt = `Task: ${String(sanitizedArgs.task || '')}\n\nContext: ${JSON.stringify(sanitizedArgs.context, null, 2)}`;
-          break;
-        case "summarize":
-          userPrompt = `Summarize the following content in ${Number(sanitizedArgs.maxLength) || 500} words or less:\n\n${String(sanitizedArgs.content || '')}`;
-          break;
-        default:
-          throw new Error(`Tool ${toolName} not implemented`);
+        const responseTimeMs = Date.now() - startTime;
+        const cost = calculateModelCost(triageResult.model, triageResult.inputTokens, triageResult.outputTokens);
+
+        // Audit log
+        await logMCPRequest({
+          userId: caller.userId,
+          tool: toolName,
+          model: triageResult.model,
+          inputTokens: triageResult.inputTokens,
+          outputTokens: triageResult.outputTokens,
+          cost,
+          responseTimeMs,
+          success: true
+        });
+        await logMCPAudit(sb, logger, {
+          serverName: "mcp-claude-server",
+          toolName,
+          userId: caller.userId,
+          tenantId: caller.tenantId,
+          authMethod: "jwt",
+          executionTimeMs: responseTimeMs,
+          success: true,
+          metadata: {
+            model: triageResult.model,
+            inputTokens: triageResult.inputTokens,
+            outputTokens: triageResult.outputTokens,
+            cost,
+            triageTool: true
+          }
+        });
+
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          result: {
+            content: [{ type: "text", text: JSON.stringify(triageResult.output) }],
+            metadata: {
+              inputTokens: triageResult.inputTokens,
+              outputTokens: triageResult.outputTokens,
+              cost,
+              responseTimeMs,
+              model: triageResult.model,
+              requestId,
+              caller: { userId: caller.userId, role: caller.role },
+              provenance: buildProvenance('ai_generated', {
+                confidenceScore: undefined,
+                safetyFlags: ['ai_generated', 'requires_clinical_review', 'meta_triage']
+              })
+            }
+          },
+          id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
+
+      // ============================================================
+      // GENERIC TOOLS: analyze-text, generate-suggestion, summarize
+      // ============================================================
+      const sanitizedArgs = deepDeidentify(toolArgs) as Record<string, unknown>;
+      const model = (toolArgs.model as string) || "claude-sonnet-4-5-20250929";
+      const userPrompt = buildGenericPrompt(toolName, sanitizedArgs);
 
       // Call Claude with prompt caching
       const response = await anthropic.messages.create({
         model,
         max_tokens: 4096,
         messages: [{ role: "user", content: userPrompt }],
-        // Enable prompt caching for repeated patterns
         system: [
           {
             type: "text",
@@ -317,7 +360,7 @@ serve(async (req: Request) => {
       const outputTokens = response.usage.output_tokens;
       const cost = calculateModelCost(model, inputTokens, outputTokens);
 
-      // Audit log: claude_usage_logs for billing + unified mcp_audit_logs for operations
+      // Audit log
       await logMCPRequest({
         userId: caller.userId,
         tool: toolName,
@@ -353,10 +396,7 @@ serve(async (req: Request) => {
             responseTimeMs,
             model,
             requestId,
-            caller: {
-              userId: caller.userId,
-              role: caller.role
-            },
+            caller: { userId: caller.userId, role: caller.role },
             provenance: buildProvenance('ai_generated', {
               confidenceScore: undefined,
               safetyFlags: ['ai_generated', 'requires_clinical_review']

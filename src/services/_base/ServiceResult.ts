@@ -175,7 +175,13 @@ export type ServiceErrorCode =
   | 'CHAIN_STEP_NOT_APPROVABLE'
   | 'CHAIN_EXECUTION_FAILED'
   | 'CHAIN_CANCELLED'
-  | 'CHAIN_TIMED_OUT';
+  | 'CHAIN_TIMED_OUT'
+  // Triage Signal Aggregation errors
+  | 'NO_SIGNALS'
+  | 'AGGREGATION_FAILED'
+  | 'META_TRIAGE_FAILED'
+  | 'META_TRIAGE_EMPTY'
+  | 'META_TRIAGE_ERROR';
 
 /**
  * Structured error information

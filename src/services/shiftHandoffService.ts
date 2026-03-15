@@ -429,6 +429,57 @@ export async function getAvailableUnits(): Promise<string[]> {
 }
 
 // ============================================================================
+// PART 7: CLAUDE-IN-CLAUDE NARRATIVE SYNTHESIS (P4-3)
+// ============================================================================
+
+import { ShiftContextAggregator } from './ai/shiftContextAggregator';
+import type { HandoffNarrativeResult } from './ai/shiftContextAggregator';
+export type { HandoffNarrativeResult };
+
+/**
+ * Generate a Claude-in-Claude narrative synthesis for a shift handoff.
+ *
+ * Aggregates shift events, care plan changes, and pending actions for all
+ * patients on a unit, then sends to the synthesize-handoff-narrative MCP tool
+ * for Claude meta-reasoning about what matters most for the incoming shift.
+ *
+ * This extends the existing AI summary with deeper cross-patient reasoning.
+ */
+export async function generateHandoffNarrative(
+  unitId: string,
+  tenantId: string,
+  shiftType: ShiftType = 'day',
+  shiftDate?: Date
+): Promise<HandoffNarrativeResult | null> {
+  try {
+    const result = await ShiftContextAggregator.aggregateAndSynthesize(
+      unitId,
+      tenantId,
+      shiftType as 'day' | 'evening' | 'night',
+      shiftDate
+    );
+
+    if (!result.success) {
+      await auditLogger.warn('HANDOFF_NARRATIVE_GENERATION_FAILED', {
+        unitId,
+        shiftType,
+        error: result.error?.message ?? 'Unknown error',
+      });
+      return null;
+    }
+
+    return result.data;
+  } catch (err: unknown) {
+    await auditLogger.error(
+      'HANDOFF_NARRATIVE_GENERATION_ERROR',
+      err instanceof Error ? err : new Error(String(err)),
+      { unitId, shiftType }
+    );
+    return null;
+  }
+}
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 
@@ -446,6 +497,9 @@ export const ShiftHandoffService = {
   acknowledgeAIShiftSummary,
   updateAISummaryNotes,
   getAvailableUnits,
+
+  // Claude-in-Claude narrative synthesis (P4-3)
+  generateHandoffNarrative,
 
   // Emergency bypass
   getNurseBypassCount,
