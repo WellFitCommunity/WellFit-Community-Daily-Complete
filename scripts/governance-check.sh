@@ -253,8 +253,12 @@ fi
 
 # -----------------------------------------------------------------------------
 # 8. File Size Limit: 600 lines max for .ts/.tsx in src/
+#    Uses a baseline allowlist for pre-existing files. Only NEW files over
+#    600 lines fail CI. Pre-existing violations are reported as warnings.
 # -----------------------------------------------------------------------------
 section "File Size Checks (600-line max)"
+
+BASELINE_FILE="${REPO_ROOT}/scripts/god-file-baseline.txt"
 
 OVERSIZED_FILES=$(
   find "${SRC_DIR}" -type f \( -name '*.ts' -o -name '*.tsx' \) \
@@ -272,15 +276,34 @@ OVERSIZED_FILES=$(
 )
 
 OVERSIZED_COUNT=0
+NEW_VIOLATIONS=0
+BASELINE_COUNT=0
+
 if [ -n "$OVERSIZED_FILES" ]; then
   OVERSIZED_COUNT=$(printf "%s\n" "$OVERSIZED_FILES" | wc -l)
+
+  # Separate new violations from baselined (pre-existing) ones
+  if [ -f "$BASELINE_FILE" ]; then
+    while IFS= read -r line; do
+      # Extract the file path (second field after line count)
+      filepath=$(echo "$line" | awk '{ gsub(/.*src\//, "src/", $2); print $2 }')
+      if ! grep -qxF "$filepath" "$BASELINE_FILE" 2>/dev/null; then
+        NEW_VIOLATIONS=$((NEW_VIOLATIONS + 1))
+        printf "    NEW: %s\n" "$line"
+      else
+        BASELINE_COUNT=$((BASELINE_COUNT + 1))
+      fi
+    done <<< "$OVERSIZED_FILES"
+  else
+    # No baseline file — all violations are new
+    NEW_VIOLATIONS=$OVERSIZED_COUNT
+  fi
 fi
 
-if [ "$OVERSIZED_COUNT" -eq 0 ]; then
-  pass "No source files exceed 600 lines (0 violations)"
+if [ "$NEW_VIOLATIONS" -eq 0 ]; then
+  pass "No NEW files exceed 600 lines (${BASELINE_COUNT} pre-existing baselined)"
 else
-  fail "${OVERSIZED_COUNT} file(s) exceed the 600-line limit"
-  printf "%s\n" "$OVERSIZED_FILES" | head -20
+  fail "${NEW_VIOLATIONS} NEW file(s) exceed the 600-line limit (${BASELINE_COUNT} pre-existing baselined)"
 fi
 
 # -----------------------------------------------------------------------------

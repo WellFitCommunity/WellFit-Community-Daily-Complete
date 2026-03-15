@@ -70,14 +70,13 @@ function assertFailure(result: ServiceResult<unknown>, expectedCode: string): vo
 // Test Fixtures — Synthetic data (obviously fake per CLAUDE.md rules)
 // ============================================================================
 
+// Test mock boundary — cast to ServiceResult at boundary per CLAUDE.md type cast rules
 function createMockCareResponse(overrides?: {
   escalationCategory?: string;
   confidenceLevel?: number;
   overallTrend?: string;
 }) {
-  return {
-    success: true,
-    data: {
+  return { success: true, error: null, data: {
       assessment: {
         assessmentId: 'assessment-test-001',
         patientId: 'patient-test-alpha',
@@ -110,16 +109,13 @@ function createMockCareResponse(overrides?: {
         response_time_ms: 1200,
         model: 'claude-sonnet-4-5-20250929',
       },
-    },
-  };
+  } } as unknown as ServiceResult<never>;
 }
 
 function createMockMissedCheckInResponse(overrides?: {
   escalationLevel?: string;
 }) {
-  return {
-    success: true,
-    data: {
+  return { success: true, error: null, data: {
       escalation: {
         escalationLevel: overrides?.escalationLevel ?? 'low',
         reasoning: 'Test Patient Alpha missed 1 check-in',
@@ -142,39 +138,35 @@ function createMockMissedCheckInResponse(overrides?: {
         trigger_type: 'scheduled_check',
         response_time_ms: 500,
       },
-    },
-  };
+  } } as unknown as ServiceResult<never>;
 }
 
 function createMockLabEscalations(overrides?: {
   severity?: string;
   testName?: string;
 }) {
-  return {
-    success: true,
-    data: [
-      {
-        id: 'escalation-test-001',
-        rule_id: 'rule-test-001',
-        result_id: 'result-test-001',
-        result_source: 'lab_results',
-        patient_id: 'patient-test-alpha',
-        test_name: overrides?.testName ?? 'Potassium',
-        test_value: 6.8,
-        test_unit: 'mmol/L',
-        severity: overrides?.severity ?? 'high',
-        route_to_specialty: 'nephrology',
-        routed_to_provider_id: null,
-        task_id: null,
-        escalation_status: 'pending',
-        resolved_at: null,
-        resolved_by: null,
-        resolution_notes: null,
-        tenant_id: 'tenant-test-001',
-        created_at: '2026-01-01T00:00:00Z',
-      },
-    ],
-  };
+  return { success: true, error: null, data: [
+    {
+      id: 'escalation-test-001',
+      rule_id: 'rule-test-001',
+      result_id: 'result-test-001',
+      result_source: 'lab_results',
+      patient_id: 'patient-test-alpha',
+      test_name: overrides?.testName ?? 'Potassium',
+      test_value: 6.8,
+      test_unit: 'mmol/L',
+      severity: overrides?.severity ?? 'high',
+      route_to_specialty: 'nephrology',
+      routed_to_provider_id: null,
+      task_id: null,
+      escalation_status: 'pending',
+      resolved_at: null,
+      resolved_by: null,
+      resolution_notes: null,
+      tenant_id: 'tenant-test-001',
+      created_at: '2026-01-01T00:00:00Z',
+    },
+  ] } as unknown as ServiceResult<never>;
 }
 
 // ============================================================================
@@ -302,7 +294,7 @@ describe('TriageSignalAggregationService', () => {
       vi.spyOn(MissedCheckInEscalationService, 'analyzeAndEscalate')
         .mockResolvedValue(createMockMissedCheckInResponse());
       vi.spyOn(resultEscalationService, 'getActiveEscalations')
-        .mockResolvedValue({ success: true, data: [] });
+        .mockResolvedValue({ success: true, error: null, data: [] } as unknown as ServiceResult<never>);
 
       const result = await TriageSignalAggregationService.aggregateSignals(
         'patient-test-alpha', 'assessor-test-001', 'tenant-test-001'
@@ -318,7 +310,7 @@ describe('TriageSignalAggregationService', () => {
       vi.spyOn(MissedCheckInEscalationService, 'analyzeAndEscalate')
         .mockResolvedValue(createMockMissedCheckInResponse());
       vi.spyOn(resultEscalationService, 'getActiveEscalations')
-        .mockResolvedValue({ success: true, data: [] });
+        .mockResolvedValue({ success: true, error: null, data: [] } as unknown as ServiceResult<never>);
 
       const result = await TriageSignalAggregationService.aggregateSignals(
         'patient-test-alpha', 'assessor-test-001', 'tenant-test-001'
@@ -441,7 +433,7 @@ describe('TriageSignalAggregationService', () => {
       vi.spyOn(MissedCheckInEscalationService, 'analyzeAndEscalate')
         .mockResolvedValue(createMockMissedCheckInResponse({ escalationLevel: 'low' }));
       vi.spyOn(resultEscalationService, 'getActiveEscalations')
-        .mockResolvedValue({ success: true, data: [] });
+        .mockResolvedValue({ success: true, error: null, data: [] } as unknown as ServiceResult<never>);
 
       const result = await TriageSignalAggregationService.triagePatient(
         'patient-test-alpha', 'assessor-test-001', 'tenant-test-001'
@@ -496,7 +488,7 @@ describe('TriageSignalAggregationService', () => {
       vi.spyOn(MissedCheckInEscalationService, 'analyzeAndEscalate')
         .mockResolvedValue(createMockMissedCheckInResponse({ escalationLevel: 'emergency' }));
       vi.spyOn(resultEscalationService, 'getActiveEscalations')
-        .mockResolvedValue({ success: true, data: [] });
+        .mockResolvedValue({ success: true, error: null, data: [] } as unknown as ServiceResult<never>);
 
       mockInvoke.mockResolvedValue({
         data: null,

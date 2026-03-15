@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ServiceResult } from '../../_base';
+import type { ServiceResult, ServiceSuccess, ServiceFailure } from '../../_base';
 import { ShiftContextAggregator } from '../shiftContextAggregator';
 import type { HandoffNarrativeResult } from '../shiftContextAggregator';
 
@@ -71,12 +71,12 @@ vi.mock('../../auditLogger', () => ({
 // Test Helpers
 // ============================================================================
 
-function assertSuccess<T>(result: ServiceResult<T>): asserts result is { success: true; data: T; error: null } {
+function assertSuccess<T>(result: ServiceResult<T>): asserts result is ServiceSuccess<T> {
   expect(result.success).toBe(true);
   if (!result.success) throw new Error(`Expected success but got failure: ${result.error?.message}`);
 }
 
-function assertFailure(result: ServiceResult<unknown>): asserts result is { success: false; data: null; error: { code: string; message: string } } {
+function assertFailure(result: ServiceResult<unknown>): asserts result is ServiceFailure {
   expect(result.success).toBe(false);
   if (result.success) throw new Error('Expected failure but got success');
 }
