@@ -22,6 +22,7 @@ import {
   type BAAStatus,
 } from '../../services/baaTrackingService';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -47,7 +48,7 @@ const STATUS_STYLES: Record<BAAStatus, { bg: string; text: string; label: string
   active: { bg: 'bg-green-100', text: 'text-green-800', label: 'Active' },
   expired: { bg: 'bg-red-100', text: 'text-red-800', label: 'Expired' },
   terminated: { bg: 'bg-red-200', text: 'text-red-900', label: 'Terminated' },
-  not_required: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Not Required' },
+  not_required: { bg: 'bg-[var(--ea-primary,#00857a)]/15', text: 'text-[var(--ea-primary,#00857a)]', label: 'Not Required' },
 };
 
 const ASSOCIATE_TYPE_LABELS: Record<string, string> = {
@@ -110,6 +111,7 @@ function filterBAAs(
 // =============================================================================
 
 const BAATrackingDashboard: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const [allBaas, setAllBaas] = useState<BAA[]>([]);
   const [expiringBaas, setExpiringBaas] = useState<BAA[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,7 +165,7 @@ const BAATrackingDashboard: React.FC = () => {
         role="status"
         aria-label="Loading business associate agreements"
       >
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--ea-primary,#00857a)]" />
         <span className="ml-3 text-gray-600 text-lg">Loading BAA data...</span>
       </div>
     );
@@ -201,7 +203,7 @@ const BAATrackingDashboard: React.FC = () => {
         <button
           onClick={loadData}
           disabled={loading}
-          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base font-medium disabled:opacity-50"
+          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
           aria-label="Refresh BAA data"
         >
           Refresh
@@ -250,8 +252,8 @@ const BAATrackingDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <button
           onClick={() => setStatusFilter('all')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            statusFilter === 'all' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+            statusFilter === 'all' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'all'}
           aria-label={`Show all BAAs: ${stats.total}`}
@@ -262,8 +264,8 @@ const BAATrackingDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('active')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            statusFilter === 'active' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+            statusFilter === 'active' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'active'}
           aria-label={`Show active BAAs: ${stats.active}`}
@@ -274,8 +276,8 @@ const BAATrackingDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('expiring')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            statusFilter === 'expiring' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+            statusFilter === 'expiring' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'expiring'}
           aria-label={`Show expiring BAAs: ${stats.expiringSoon}`}
@@ -286,8 +288,8 @@ const BAATrackingDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('expired')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            statusFilter === 'expired' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+            statusFilter === 'expired' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'expired'}
           aria-label={`Show expired BAAs: ${stats.expired}`}
@@ -352,7 +354,7 @@ const BAATrackingDashboard: React.FC = () => {
                         <span>No expiration date</span>
                       )}
                       {baa.auto_renew && (
-                        <span className="text-blue-600">Auto-renew enabled</span>
+                        <span className="text-[var(--ea-primary,#00857a)]">Auto-renew enabled</span>
                       )}
                     </div>
 

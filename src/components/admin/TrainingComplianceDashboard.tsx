@@ -23,6 +23,7 @@ import {
   type TrainingCourse,
 } from '../../services/trainingTrackingService';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -84,6 +85,7 @@ function filterStatuses(
 // =============================================================================
 
 const TrainingComplianceDashboard: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const [compliance, setCompliance] = useState<TenantComplianceRate | null>(null);
   const [statuses, setStatuses] = useState<EmployeeTrainingStatus[]>([]);
   const [courses, setCourses] = useState<TrainingCourse[]>([]);
@@ -140,7 +142,7 @@ const TrainingComplianceDashboard: React.FC = () => {
         role="status"
         aria-label="Loading training compliance data"
       >
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--ea-primary,#00857a)]" />
         <span className="ml-3 text-gray-600 text-lg">Loading training data...</span>
       </div>
     );
@@ -176,7 +178,7 @@ const TrainingComplianceDashboard: React.FC = () => {
         <button
           onClick={loadData}
           disabled={loading}
-          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base font-medium disabled:opacity-50"
+          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
           aria-label="Refresh training data"
         >
           Refresh
@@ -231,8 +233,8 @@ const TrainingComplianceDashboard: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               onClick={() => setComplianceFilter('all')}
-              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                complianceFilter === 'all' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+                complianceFilter === 'all' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
               }`}
               aria-pressed={complianceFilter === 'all'}
               aria-label={`Show all: ${compliance.total_employees} employees`}
@@ -243,8 +245,8 @@ const TrainingComplianceDashboard: React.FC = () => {
 
             <button
               onClick={() => setComplianceFilter('current')}
-              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                complianceFilter === 'current' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+                complianceFilter === 'current' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
               }`}
               aria-pressed={complianceFilter === 'current'}
               aria-label={`Show compliant: ${compliance.compliant_employees} employees`}
@@ -257,8 +259,8 @@ const TrainingComplianceDashboard: React.FC = () => {
 
             <button
               onClick={() => setComplianceFilter('overdue')}
-              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                complianceFilter === 'overdue' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+                complianceFilter === 'overdue' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
               }`}
               aria-pressed={complianceFilter === 'overdue'}
               aria-label={`Show overdue: ${compliance.overdue_count} items`}
@@ -271,8 +273,8 @@ const TrainingComplianceDashboard: React.FC = () => {
 
             <button
               onClick={() => setComplianceFilter('expiring')}
-              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                complianceFilter === 'expiring' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+                complianceFilter === 'expiring' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
               }`}
               aria-pressed={complianceFilter === 'expiring'}
               aria-label={`Show expiring soon: ${compliance.expiring_soon_count} items`}
@@ -293,7 +295,7 @@ const TrainingComplianceDashboard: React.FC = () => {
               id="course-filter"
               value={courseFilter}
               onChange={e => setCourseFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[44px]"
+              className="border border-gray-300 rounded-lg p-2 text-base focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] min-h-[44px]"
               aria-label="Filter training records by course"
             >
               <option value="all">All Courses</option>

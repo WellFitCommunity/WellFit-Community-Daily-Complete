@@ -17,9 +17,11 @@ const MAX_POLL_INTERVAL = 300000; // 5 minutes max
 const MAX_CONSECUTIVE_ERRORS = 5;
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 export const SOC2AuditDashboard: React.FC = () => {
   const supabase = useSupabaseClient();
+  const { theme } = useDashboardTheme();
   const [phiAccess, setPhiAccess] = useState<PHIAccessAudit[]>([]);
   const [auditStats, setAuditStats] = useState<AuditSummaryStats[]>([]);
   const [complianceStatus, setComplianceStatus] = useState<ComplianceStatus[]>([]);
@@ -186,7 +188,7 @@ export const SOC2AuditDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadAuditData}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
         >
           Refresh
         </button>
@@ -199,14 +201,14 @@ export const SOC2AuditDashboard: React.FC = () => {
       )}
 
       {/* Compliance Score Card */}
-      <Card className="bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+      <Card className="bg-linear-to-br from-[var(--ea-primary,#00857a)]/5 to-[var(--ea-primary,#00857a)]/10 border-2 border-[var(--ea-primary,#00857a)]/20">
         <CardHeader>
           <CardTitle className="text-xl">SOC 2 Compliance Score</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-6xl font-bold text-blue-600">{complianceScore}%</div>
+              <div className="text-6xl font-bold text-[var(--ea-primary,#00857a)]">{complianceScore}%</div>
               <p className="text-sm text-gray-600 mt-2">
                 {compliantControls} of {totalControls} controls compliant
               </p>
@@ -378,7 +380,7 @@ export const SOC2AuditDashboard: React.FC = () => {
               <button
                 onClick={() => setFilterRiskLevel('ALL')}
                 className={`px-3 py-1 text-xs rounded ${
-                  filterRiskLevel === 'ALL' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                  filterRiskLevel === 'ALL' ? `${theme.buttonPrimary}` : 'bg-gray-200 text-gray-700'
                 }`}
               >
                 All

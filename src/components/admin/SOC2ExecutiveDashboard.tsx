@@ -12,9 +12,11 @@ import { useSupabaseClient } from '../../contexts/AuthContext';
 import { createSOC2MonitoringService, ComplianceStatus } from '../../services/soc2MonitoringService';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 export const SOC2ExecutiveDashboard: React.FC = () => {
   const supabase = useSupabaseClient();
+  const { theme } = useDashboardTheme();
   const [summary, setSummary] = useState<{
     totalSecurityEvents: number;
     criticalEvents: number;
@@ -83,7 +85,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
     switch (trend) {
       case 'UP': return 'text-red-600'; // More security events is bad
       case 'DOWN': return 'text-green-600'; // Fewer security events is good
-      case 'STABLE': return 'text-blue-600';
+      case 'STABLE': return 'text-[var(--ea-primary,#00857a)]';
     }
   };
 
@@ -113,15 +115,15 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadExecutiveData}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
         >
           Refresh
         </button>
       </div>
 
       {/* Disclaimer */}
-      <Alert className="bg-blue-50 border-blue-200">
-        <AlertDescription className="text-blue-900">
+      <Alert className="bg-[var(--ea-primary,#00857a)]/5 border-[var(--ea-primary,#00857a)]/20">
+        <AlertDescription className="text-gray-900">
           <strong>Note:</strong> This dashboard measures <strong>technical implementation</strong> of SOC 2 controls (encryption, audit logging, access controls).
           Full SOC 2 compliance requires additional documentation including policies, procedures, training records, and vendor assessments maintained in your compliance binder.
           A formal SOC 2 Type I or Type II audit by a qualified CPA firm is required for official certification.
@@ -137,7 +139,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
       {summary && (
         <>
           {/* Hero Compliance Score */}
-          <Card className="bg-linear-to-br from-blue-600 to-indigo-700 text-white shadow-xl">
+          <Card className="text-white shadow-xl" style={{ background: theme.gradient }}>
             <CardContent className="pt-8 pb-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="text-center">
@@ -176,14 +178,14 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
 
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-l-4 border-blue-500">
+            <Card className="border-l-4 border-[var(--ea-primary,#00857a)]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
                   Security Events (24h)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold text-blue-600">
+                <div className="text-4xl font-bold text-[var(--ea-primary,#00857a)]">
                   {summary.totalSecurityEvents}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">All severity levels</p>
@@ -220,14 +222,14 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-indigo-500">
+            <Card className="border-l-4 border-[var(--ea-secondary,#FF6B35)]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
                   PHI Access Events
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold text-indigo-600">
+                <div className="text-4xl font-bold text-[var(--ea-secondary,#FF6B35)]">
                   {summary.phiAccessCount}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Protected data accessed</p>
@@ -370,8 +372,8 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
 
           {/* Recommendations */}
           <Card>
-            <CardHeader className="bg-blue-50">
-              <CardTitle className="text-blue-900">Recommendations</CardTitle>
+            <CardHeader className="bg-[var(--ea-primary,#00857a)]/5">
+              <CardTitle className="text-gray-900">Recommendations</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <ul className="space-y-2">
@@ -410,7 +412,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
                   </li>
                 )}
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
+                  <span className="text-[var(--ea-primary,#00857a)] font-bold">•</span>
                   <span className="text-gray-700">
                     <strong>Ongoing:</strong> Continue monitoring PHI access patterns and review audit logs weekly.
                   </span>

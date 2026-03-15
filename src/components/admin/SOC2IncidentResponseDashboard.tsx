@@ -14,9 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useToast } from '../../hooks/useToast';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 export const SOC2IncidentResponseDashboard: React.FC = () => {
   const supabase = useSupabaseClient();
+  const { theme } = useDashboardTheme();
   const { showToast, ToastContainer } = useToast();
   const [incidents, setIncidents] = useState<IncidentResponseItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,7 +158,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadIncidents}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
         >
           Refresh
         </button>
@@ -215,7 +217,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
             <CardTitle className="text-sm font-medium text-gray-600">Total Open</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">
+            <div className="text-3xl font-bold text-[var(--ea-primary,#00857a)]">
               {incidents.filter(i => !i.investigated).length}
             </div>
             <p className="text-xs text-gray-500 mt-1">Requires investigation</p>
@@ -331,7 +333,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
                         {!incident.investigated ? (
                           <button
                             onClick={() => setSelectedIncident(incident)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded-sm hover:bg-blue-700"
+                            className={`px-3 py-1 rounded-sm ${theme.buttonPrimary}`}
                           >
                             Investigate
                           </button>

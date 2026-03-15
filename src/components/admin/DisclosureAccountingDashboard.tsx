@@ -21,6 +21,7 @@ import {
   type RecipientType,
 } from '../../services/disclosureAccountingService';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -97,6 +98,7 @@ function computeStats(disclosures: Disclosure[]): DisclosureStats {
 // =============================================================================
 
 const DisclosureAccountingDashboard: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const defaultRange = getDefaultDateRange();
   const [disclosures, setDisclosures] = useState<Disclosure[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +148,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
         role="status"
         aria-label="Loading disclosure accounting data"
       >
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--ea-primary,#00857a)]" />
         <span className="ml-3 text-gray-600 text-lg">Loading disclosure data...</span>
       </div>
     );
@@ -184,7 +186,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
         <button
           onClick={loadData}
           disabled={loading}
-          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base font-medium disabled:opacity-50"
+          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
           aria-label="Refresh disclosure data"
         >
           Refresh
@@ -210,7 +212,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="min-h-[44px] w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="min-h-[44px] w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           <div className="flex-1">
@@ -222,7 +224,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="min-h-[44px] w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="min-h-[44px] w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
         </div>
@@ -236,7 +238,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
         </div>
         <div className="p-4 rounded-lg border border-gray-200 bg-white">
           <p className="text-sm text-gray-500">Electronic/Portal</p>
-          <p className="text-3xl font-bold text-blue-600">{stats.electronic}</p>
+          <p className="text-3xl font-bold text-[var(--ea-primary,#00857a)]">{stats.electronic}</p>
         </div>
         <div className="p-4 rounded-lg border border-gray-200 bg-white">
           <p className="text-sm text-gray-500">Verbal/In-Person</p>

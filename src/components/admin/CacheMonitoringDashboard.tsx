@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { cacheService, CacheStatistics, ConnectionMetrics } from '../../services/caching/CacheService';
 import { supabase } from '../../lib/supabaseClient';
 import useRealtimeSubscription from '../../hooks/useRealtimeSubscription';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface SubscriptionHealth {
   component_name: string;
@@ -25,6 +26,7 @@ interface MemoryCacheStats {
 }
 
 export const CacheMonitoringDashboard: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const [cacheStats, setCacheStats] = useState<CacheStatistics[]>([]);
   const [connectionMetrics, setConnectionMetrics] = useState<ConnectionMetrics | null>(null);
   const [memoryCacheStats, setMemoryCacheStats] = useState<MemoryCacheStats | null>(null);
@@ -79,7 +81,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
   if (loading && !cacheStats.length) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary,#00857a)]"></div>
       </div>
     );
   }
@@ -100,7 +102,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
             <MetricCard
               label="Avg Total Connections"
               value={Math.round(connectionMetrics.avgTotalConnections)}
-              color="blue"
+              color="brand"
             />
             <MetricCard
               label="Peak Total Connections"
@@ -138,7 +140,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
             <MetricCard
               label="Current Size"
               value={memoryCacheStats.size}
-              color="blue"
+              color="brand"
             />
             <MetricCard
               label="Max Size"
@@ -283,7 +285,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
       <div className="flex justify-end">
         <button
           onClick={loadMetrics}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className={`px-6 py-2 ${theme.buttonPrimary} rounded-lg transition-colors`}
         >
           Refresh Metrics
         </button>
@@ -296,10 +298,10 @@ export const CacheMonitoringDashboard: React.FC = () => {
 const MetricCard: React.FC<{
   label: string;
   value: string | number;
-  color: 'blue' | 'green' | 'orange' | 'red' | 'gray';
+  color: 'brand' | 'green' | 'orange' | 'red' | 'gray';
 }> = ({ label, value, color }) => {
   const colorClasses = {
-    blue: 'bg-blue-50 border-blue-200 text-blue-900',
+    brand: 'bg-[var(--ea-primary,#00857a)]/10 border-[var(--ea-primary,#00857a)]/30 text-[var(--ea-primary,#00857a)]',
     green: 'bg-green-50 border-green-200 text-green-900',
     orange: 'bg-orange-50 border-orange-200 text-orange-900',
     red: 'bg-red-50 border-red-200 text-red-900',

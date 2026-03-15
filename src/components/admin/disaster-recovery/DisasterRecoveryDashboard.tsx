@@ -11,6 +11,7 @@
 import React from 'react';
 import { Shield, RefreshCw } from 'lucide-react';
 import { EAButton, EAAlert } from '../../envision-atlus';
+import { useDashboardTheme } from '../../../hooks/useDashboardTheme';
 import { useDisasterRecoveryData } from './useDisasterRecoveryData';
 import { getStatusConfig } from './statusHelpers';
 import { BackupVerificationCard } from './BackupVerificationCard';
@@ -18,6 +19,7 @@ import { DrillComplianceCard } from './DrillComplianceCard';
 import { ComplianceTargetsCard } from './ComplianceTargetsCard';
 
 export const DisasterRecoveryDashboard: React.FC = () => {
+  useDashboardTheme();
   const {
     backupStatus,
     drillStatus,
@@ -35,7 +37,7 @@ export const DisasterRecoveryDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
+        <RefreshCw className="w-8 h-8 animate-spin text-[var(--ea-primary,#00857a)]" />
         <span className="ml-3 text-gray-500">Loading disaster recovery status...</span>
       </div>
     );
@@ -57,7 +59,7 @@ export const DisasterRecoveryDashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <Shield className="w-8 h-8 text-blue-600" />
+            <Shield className="w-8 h-8 text-[var(--ea-primary,#00857a)]" />
             Disaster Recovery Dashboard
           </h1>
           <p className="text-gray-500 mt-1">

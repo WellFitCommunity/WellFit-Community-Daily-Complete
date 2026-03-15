@@ -44,6 +44,7 @@ import {
   type RejectionGuidance,
 } from '../../services/mcp/mcpClearinghouseClient';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 function formatCurrency(amount: number): string {
   return `$${(amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -77,6 +78,7 @@ function ClaimStatusBadge({ status }: { status: string }) {
 }
 
 const ClaimResubmissionDashboard: React.FC = () => {
+  useDashboardTheme();
   const [claims, setClaims] = useState<RejectedClaim[]>([]);
   const [stats, setStats] = useState<ResubmissionStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -193,7 +195,7 @@ const ClaimResubmissionDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading resubmission data...</span>
         </EACardContent>
       </EACard>
@@ -315,7 +317,7 @@ const ClaimResubmissionDashboard: React.FC = () => {
                     <span className="flex-1 flex gap-2 justify-end flex-wrap items-center">
                       {/* Clearinghouse Status Badge */}
                       {claimStatus === 'checking' && (
-                        <RefreshCw className="w-3 h-3 animate-spin text-blue-500" />
+                        <RefreshCw className="w-3 h-3 animate-spin text-[var(--ea-primary,#00857a)]" />
                       )}
                       {claimStatus && claimStatus !== 'checking' && claimStatus !== 'not_configured' && (
                         <EABadge variant={claimStatus === 'paid' ? 'normal' : claimStatus === 'denied' ? 'critical' : 'info'} size="sm">

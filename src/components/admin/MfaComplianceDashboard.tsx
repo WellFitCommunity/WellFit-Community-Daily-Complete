@@ -22,6 +22,7 @@ import { getMfaComplianceReport, grantExemption } from '../../services/mfaEnroll
 import type { MfaComplianceRow } from '../../services/mfaEnrollmentService.types';
 import { auditLogger } from '../../services/auditLogger';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface NonCompliantUser {
   user_id: string;
@@ -33,6 +34,7 @@ interface NonCompliantUser {
 }
 
 const MfaComplianceDashboard: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const supabase = useSupabaseClient();
   const [complianceData, setComplianceData] = useState<MfaComplianceRow[]>([]);
   const [nonCompliantUsers, setNonCompliantUsers] = useState<NonCompliantUser[]>([]);
@@ -189,7 +191,7 @@ const MfaComplianceDashboard: React.FC = () => {
             type="button"
             onClick={loadData}
             disabled={loading}
-            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 min-h-[44px]"
+            className="text-sm text-[var(--ea-primary,#00857a)] hover:opacity-80 flex items-center gap-1 min-h-[44px]"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -268,7 +270,7 @@ const MfaComplianceDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setExemptionUserId(u.user_id)}
-                  className="text-sm text-blue-600 hover:text-blue-800 min-h-[44px] px-3"
+                  className="text-sm text-[var(--ea-primary,#00857a)] hover:opacity-80 min-h-[44px] px-3"
                 >
                   Grant Exemption
                 </button>
@@ -295,7 +297,7 @@ const MfaComplianceDashboard: React.FC = () => {
                 value={exemptionReason}
                 onChange={(e) => setExemptionReason(e.target.value)}
                 placeholder="e.g., Shared workstation, hardware limitation..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                 rows={3}
               />
             </div>
@@ -314,7 +316,7 @@ const MfaComplianceDashboard: React.FC = () => {
                 type="button"
                 onClick={handleGrantExemption}
                 disabled={!exemptionReason.trim() || exemptionLoading}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50 min-h-[44px]"
+                className={`px-4 py-2 ${theme.buttonPrimary} text-sm font-medium rounded-lg disabled:opacity-50 min-h-[44px]`}
               >
                 {exemptionLoading ? 'Granting...' : 'Grant Exemption'}
               </button>
@@ -336,7 +338,7 @@ interface SummaryCardProps {
 }
 
 const colorMap = {
-  blue: 'bg-blue-50 text-blue-600 border-blue-200',
+  blue: 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)] border-[var(--ea-primary,#00857a)]/30',
   green: 'bg-green-50 text-green-600 border-green-200',
   red: 'bg-red-50 text-red-600 border-red-200',
   yellow: 'bg-yellow-50 text-yellow-600 border-yellow-200',

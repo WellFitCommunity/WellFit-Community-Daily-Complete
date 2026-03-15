@@ -30,12 +30,14 @@ import {
   EACardHeader,
   EACardContent,
 } from '../envision-atlus';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
 const AICostDashboard: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const {
     loading,
     costMetrics,
@@ -104,7 +106,7 @@ const AICostDashboard: React.FC = () => {
           </label>
           <button
             onClick={loadMetrics}
-            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
           >
             Refresh
           </button>
@@ -186,11 +188,11 @@ const AICostDashboard: React.FC = () => {
               <span className="text-slate-300">MCP Optimizer Active</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-teal-500" />
+              <div className="w-2 h-2 rounded-full bg-[var(--ea-primary,#00857a)]" />
               <span className="text-slate-300">Batch Queue Running</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <div className="w-2 h-2 rounded-full bg-[var(--ea-secondary,#FF6B35)]" />
               <span className="text-slate-300">Prompt Caching Enabled</span>
             </div>
           </div>

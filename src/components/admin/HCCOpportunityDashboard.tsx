@@ -36,6 +36,7 @@ import type {
   HCCOpportunityType,
 } from '../../services/hccOpportunityService';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -199,7 +200,7 @@ function DismissModal({ opportunity, onClose, onDismiss }: {
           id="dismiss-reason"
           value={reason}
           onChange={e => setReason(e.target.value)}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 text-sm"
+          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
           rows={3}
           placeholder="Provider reviewed and determined this HCC has been captured elsewhere or does not apply because..."
         />
@@ -225,6 +226,7 @@ function DismissModal({ opportunity, onClose, onDismiss }: {
 // =============================================================================
 
 const HCCOpportunityDashboard: React.FC = () => {
+  useDashboardTheme();
   const [opportunities, setOpportunities] = useState<HCCOpportunity[]>([]);
   const [stats, setStats] = useState<HCCOpportunityStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -304,7 +306,7 @@ const HCCOpportunityDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-purple-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Analyzing HCC opportunities...</span>
         </EACardContent>
       </EACard>
@@ -378,7 +380,7 @@ const HCCOpportunityDashboard: React.FC = () => {
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value as TypeFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by opportunity type"
             >
               <option value="all">All Types</option>
@@ -390,7 +392,7 @@ const HCCOpportunityDashboard: React.FC = () => {
             <select
               value={String(confidenceFilter)}
               onChange={e => setConfidenceFilter(parseFloat(e.target.value))}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by confidence"
             >
               <option value="0.50">50%+ Confidence</option>
@@ -404,7 +406,7 @@ const HCCOpportunityDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search ICD-10 or HCC..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 w-52"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-52"
               aria-label="Search codes"
             />
           </div>

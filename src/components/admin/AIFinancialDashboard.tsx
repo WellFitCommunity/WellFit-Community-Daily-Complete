@@ -24,6 +24,7 @@ import {
   EATabsList,
   EATabsTrigger,
 } from '../envision-atlus';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   DollarSign,
   TrendingDown,
@@ -51,6 +52,7 @@ import RevenueImpactTab from './ai-financial-dashboard/RevenueImpactTab';
 // ============================================================================
 
 const AIFinancialDashboard: React.FC = () => {
+  useDashboardTheme();
   const supabase = useSupabaseClient();
   const { user } = useAuth();
 
@@ -413,7 +415,7 @@ const AIFinancialDashboard: React.FC = () => {
               <span>MCP Optimizer Active</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-teal-500" />
+              <div className="w-2 h-2 rounded-full bg-[var(--ea-primary,#00857a)]" />
               <span>Batch Queue Running</span>
             </div>
           </div>

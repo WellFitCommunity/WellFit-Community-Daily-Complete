@@ -35,6 +35,7 @@ import type {
   PaymentStats,
   PaymentMatch,
 } from '../../services/eraPaymentPostingService';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // HELPERS
@@ -135,6 +136,7 @@ function MatchableClaimsModal({ claims, onPost, onClose }: {
 // =============================================================================
 
 const ERAPaymentPostingDashboard: React.FC = () => {
+  useDashboardTheme();
   const [remittances, setRemittances] = useState<UnpostedRemittance[]>([]);
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -209,7 +211,7 @@ const ERAPaymentPostingDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading payment data...</span>
         </EACardContent>
       </EACard>
@@ -355,7 +357,7 @@ const ERAPaymentPostingDashboard: React.FC = () => {
       {posting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-lg p-6 shadow-xl flex items-center gap-3">
-            <RefreshCw className="w-5 h-5 animate-spin text-blue-600" />
+            <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)]" />
             <span className="text-gray-700">Posting payment...</span>
           </div>
         </div>

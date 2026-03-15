@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { DollarSign, TrendingDown, Zap, Target, Activity, Award } from 'lucide-react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 interface CostMetrics {
   total_spent: number;
@@ -28,6 +29,7 @@ interface DailySavings {
 }
 
 export const MCPCostDashboard: React.FC = () => {
+  useDashboardTheme();
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<CostMetrics | null>(null);
   const [dailySavings, setDailySavings] = useState<DailySavings[]>([]);
@@ -84,9 +86,9 @@ export const MCPCostDashboard: React.FC = () => {
 
   if (!metrics || metrics.total_calls === 0) {
     return (
-      <div className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200">
+      <div className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-[var(--ea-primary,#00857a)]/20">
         <div className="flex items-center space-x-3">
-          <Zap className="w-8 h-8 text-blue-600" />
+          <Zap className="w-8 h-8 text-[var(--ea-primary,#00857a)]" />
           <div>
             <h3 className="font-bold text-gray-800">MCP Cost Optimizer Active</h3>
             <p className="text-sm text-gray-600">
@@ -148,11 +150,11 @@ export const MCPCostDashboard: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200 hover:shadow-lg transition-shadow"
+          className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-[var(--ea-primary,#00857a)]/20 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between mb-3">
-            <Target className="w-8 h-8 text-blue-600" />
-            <span className="text-3xl font-bold text-blue-600">
+            <Target className="w-8 h-8 text-[var(--ea-primary,#00857a)]" />
+            <span className="text-3xl font-bold text-[var(--ea-primary,#00857a)]">
               {(metrics.avg_cache_hit_rate ?? 0).toFixed(0)}%
             </span>
           </div>
@@ -267,10 +269,10 @@ export const MCPCostDashboard: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200"
+        className="bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-[var(--ea-primary,#00857a)]/20"
       >
         <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-indigo-600" />
+          <Zap className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />
           Optimization Tips
         </h3>
         <ul className="space-y-2 text-sm text-gray-700">

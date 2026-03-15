@@ -42,6 +42,7 @@ import { useBillingCodeValidation, type CodeValidationState } from '../../hooks/
 import MedicalCodeSearch, { type CodeType } from './MedicalCodeSearch';
 import { validateBillingCodes } from '../../services/mcp/mcpMedicalCodesClient';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -110,6 +111,7 @@ function StatCard({ label, value, color }: {
 // =============================================================================
 
 const BillingQueueDashboard: React.FC = () => {
+  useDashboardTheme();
   const [queue, setQueue] = useState<BillingQueueEncounter[]>([]);
   const [stats, setStats] = useState<BillingQueueStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -220,7 +222,7 @@ const BillingQueueDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading billing queue...</span>
         </EACardContent>
       </EACard>
@@ -271,7 +273,7 @@ const BillingQueueDashboard: React.FC = () => {
             <Search className="w-4 h-4 text-gray-400" />
             Code Lookup
             {lookupSelectedCPT.length > 0 && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)] px-2 py-0.5 rounded-full">
                 {lookupSelectedCPT.length} CPT{lookupSelectedICD10.length > 0 ? `, ${lookupSelectedICD10.length} ICD-10` : ''}
               </span>
             )}
@@ -347,7 +349,7 @@ const BillingQueueDashboard: React.FC = () => {
             <select
               value={filter}
               onChange={e => setFilter(e.target.value as QueueFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All</option>
@@ -365,7 +367,7 @@ const BillingQueueDashboard: React.FC = () => {
                 value={patientSearch}
                 onChange={e => setPatientSearch(e.target.value)}
                 placeholder="Search patient..."
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 w-44 pl-7"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-44 pl-7"
                 aria-label="Search by patient name"
               />
             </div>

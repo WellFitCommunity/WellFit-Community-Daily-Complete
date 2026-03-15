@@ -38,6 +38,7 @@ import type {
   ClaimStatusEntry,
   ClaimStatusFilter,
 } from '../../services/claimAgingService';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -147,7 +148,7 @@ function ClaimHistoryModal({ claimId, controlNumber, onClose }: {
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-2" />
+            <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-2" />
             <span className="text-gray-600">Loading history...</span>
           </div>
         ) : history.length === 0 ? (
@@ -193,6 +194,7 @@ function ClaimHistoryModal({ claimId, controlNumber, onClose }: {
 // =============================================================================
 
 const ClaimAgingDashboard: React.FC = () => {
+  useDashboardTheme();
   const [claims, setClaims] = useState<AgingClaim[]>([]);
   const [stats, setStats] = useState<ClaimAgingStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -254,7 +256,7 @@ const ClaimAgingDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading claim aging data...</span>
         </EACardContent>
       </EACard>
@@ -324,7 +326,7 @@ const ClaimAgingDashboard: React.FC = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as ClaimStatusFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All Statuses</option>
@@ -341,7 +343,7 @@ const ClaimAgingDashboard: React.FC = () => {
                 value={payerSearch}
                 onChange={e => setPayerSearch(e.target.value)}
                 placeholder="Search payer..."
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 w-40 pl-7"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-40 pl-7"
                 aria-label="Search by payer"
               />
             </div>
@@ -353,7 +355,7 @@ const ClaimAgingDashboard: React.FC = () => {
                 value={controlSearch}
                 onChange={e => setControlSearch(e.target.value)}
                 placeholder="Search control #..."
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 w-44 pl-7"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-44 pl-7"
                 aria-label="Search by control number"
               />
             </div>

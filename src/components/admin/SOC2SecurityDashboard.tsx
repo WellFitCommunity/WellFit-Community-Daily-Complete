@@ -12,9 +12,11 @@ import { useSupabaseClient } from '../../contexts/AuthContext';
 import { createSOC2MonitoringService, SecurityMetrics, SecurityEvent } from '../../services/soc2MonitoringService';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 export const SOC2SecurityDashboard: React.FC = () => {
   const supabase = useSupabaseClient();
+  const { theme } = useDashboardTheme();
   const [metrics, setMetrics] = useState<SecurityMetrics | null>(null);
   const [recentEvents, setRecentEvents] = useState<SecurityEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +111,7 @@ export const SOC2SecurityDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadSecurityData}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
         >
           Refresh
         </button>
@@ -176,7 +178,7 @@ export const SOC2SecurityDashboard: React.FC = () => {
               <CardTitle className="text-sm font-medium text-gray-600">Total Security Events</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{metrics.security_events_24h}</div>
+              <div className="text-3xl font-bold text-[var(--ea-primary,#00857a)]">{metrics.security_events_24h}</div>
               <p className="text-xs text-gray-500 mt-1">Last 24 hours</p>
             </CardContent>
           </Card>
@@ -209,7 +211,7 @@ export const SOC2SecurityDashboard: React.FC = () => {
               <CardTitle className="text-sm font-medium text-gray-600">PHI Access</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-indigo-600">{metrics.phi_access_24h}</div>
+              <div className="text-3xl font-bold text-[var(--ea-primary,#00857a)]">{metrics.phi_access_24h}</div>
               <p className="text-xs text-gray-500 mt-1">Protected data accessed</p>
             </CardContent>
           </Card>

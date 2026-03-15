@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // Polling configuration with exponential backoff
 const INITIAL_POLL_INTERVAL = 30000; // 30 seconds
@@ -29,6 +30,7 @@ interface PerformanceDashboardProps {
 }
 
 const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ className = '' }) => {
+  useDashboardTheme();
   const supabase = useSupabaseClient();
   const [errors, setErrors] = useState<ErrorLog[]>([]);
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
@@ -207,7 +209,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
         <h2 className="text-2xl font-bold text-gray-900">Performance Monitoring</h2>
         <button
           onClick={loadMonitoringData}
-          className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+          className="inline-flex items-center px-3 py-2 text-sm font-medium text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006b62)] hover:bg-[var(--ea-primary,#00857a)]/5 rounded-md transition-colors"
         >
           <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

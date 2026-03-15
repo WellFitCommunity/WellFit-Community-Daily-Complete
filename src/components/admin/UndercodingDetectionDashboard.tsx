@@ -37,6 +37,7 @@ import type {
   GapType,
 } from '../../services/undercodingDetectionService';
 import { auditLogger } from '../../services/auditLogger';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // =============================================================================
 // TYPES
@@ -129,7 +130,7 @@ function DismissModal({ gap, onClose, onDismiss }: {
           id="dismiss-reason"
           value={reason}
           onChange={e => setReason(e.target.value)}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
           rows={3}
           placeholder="Provider reviewed and determined the current coding is correct because..."
         />
@@ -155,6 +156,7 @@ function DismissModal({ gap, onClose, onDismiss }: {
 // =============================================================================
 
 const UndercodingDetectionDashboard: React.FC = () => {
+  useDashboardTheme();
   const [gaps, setGaps] = useState<UndercodingGap[]>([]);
   const [stats, setStats] = useState<UndercodingStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -233,7 +235,7 @@ const UndercodingDetectionDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Analyzing coding gaps...</span>
         </EACardContent>
       </EACard>
@@ -307,7 +309,7 @@ const UndercodingDetectionDashboard: React.FC = () => {
             <select
               value={gapTypeFilter}
               onChange={e => setGapTypeFilter(e.target.value as GapTypeFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by gap type"
             >
               <option value="all">All Gap Types</option>
@@ -319,7 +321,7 @@ const UndercodingDetectionDashboard: React.FC = () => {
             <select
               value={String(confidenceThreshold)}
               onChange={e => setConfidenceThreshold(parseFloat(e.target.value))}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by confidence threshold"
             >
               <option value="0.50">50%+ Confidence</option>
@@ -333,7 +335,7 @@ const UndercodingDetectionDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search codes..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 w-48"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-48"
               aria-label="Search codes"
             />
           </div>

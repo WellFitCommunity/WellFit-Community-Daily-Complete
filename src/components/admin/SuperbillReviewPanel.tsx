@@ -24,6 +24,7 @@ import {
   DollarSign, FileText, AlertTriangle, Loader2, ShieldAlert,
 } from 'lucide-react';
 import { useCMSCoverageCheck, type CoverageCheckState } from '../../hooks/useCMSCoverageCheck';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -113,6 +114,7 @@ function CoverageCheckPanel({ coverageState }: { coverageState: CoverageCheckSta
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _tenantId }) => {
+  useDashboardTheme();
   const user = useUser();
 
   const [loading, setLoading] = useState(true);
@@ -253,7 +255,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
   if (loading) {
     return (
       <Card><CardContent className="p-6 text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-[var(--ea-primary,#00857a)]" />
         <div>Loading superbills awaiting review...</div>
       </CardContent></Card>
     );
@@ -276,7 +278,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <FileCheck className="h-6 w-6 text-blue-600" />
+            <FileCheck className="h-6 w-6 text-[var(--ea-primary,#00857a)]" />
             Superbill Provider Sign-Off
           </h2>
           <p className="text-gray-600 text-sm">Review and approve superbills before clearinghouse submission</p>
@@ -323,7 +325,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
                     key={claim.id}
                     onClick={() => handleClaimSelect(claim)}
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedClaim?.id === claim.id ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                      selectedClaim?.id === claim.id ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5' : 'hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
@@ -472,7 +474,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
                         value={signature}
                         onChange={(e) => setSignature(e.target.value)}
                         placeholder="Type your full name"
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
                       />
                     </div>
 
@@ -486,7 +488,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
                         onChange={(e) => setApprovalNotes(e.target.value)}
                         placeholder="Any notes for this approval..."
                         rows={2}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden resize-none"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden resize-none"
                       />
                     </div>
 
