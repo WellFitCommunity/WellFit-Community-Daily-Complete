@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   RefreshCw,
   Filter,
@@ -97,7 +98,7 @@ function MetricCard({ label, value, color }: {
     green: 'bg-green-50 border-green-200 text-green-900',
     orange: 'bg-orange-50 border-orange-200 text-orange-900',
     red: 'bg-red-50 border-red-200 text-red-900',
-    blue: 'bg-blue-50 border-blue-200 text-blue-900',
+    blue: 'bg-[var(--ea-primary,#00857a)]/5 border-[var(--ea-primary,#00857a)]/20 text-[var(--ea-primary,#00857a)]',
   };
 
   return (
@@ -161,7 +162,7 @@ function DetailModal({ gap, onClose, onAcknowledge }: {
             <ul className="space-y-1">
               {gap.actionable_steps.map((step, idx) => (
                 <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                  <span className="text-teal-600 font-bold mt-0.5">{idx + 1}.</span>
+                  <span className="text-[var(--ea-primary,#00857a)] font-bold mt-0.5">{idx + 1}.</span>
                   <span>{step}</span>
                 </li>
               ))}
@@ -218,7 +219,7 @@ function DismissModal({ gap, onClose, onDismiss }: {
           id="dismiss-reason"
           value={reason}
           onChange={e => setReason(e.target.value)}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
           rows={3}
           placeholder="Provider reviewed and determined the current documentation level is appropriate because..."
         />
@@ -244,6 +245,7 @@ function DismissModal({ gap, onClose, onDismiss }: {
 // =============================================================================
 
 const DocumentationGapDashboard: React.FC = () => {
+  useDashboardTheme();
   const [gaps, setGaps] = useState<DocumentationGap[]>([]);
   const [stats, setStats] = useState<DocumentationGapStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -339,7 +341,7 @@ const DocumentationGapDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-teal-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Analyzing documentation gaps...</span>
         </EACardContent>
       </EACard>
@@ -413,7 +415,7 @@ const DocumentationGapDashboard: React.FC = () => {
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value as CategoryFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-teal-500 focus:border-teal-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by category"
             >
               <option value="all">All Categories</option>
@@ -426,7 +428,7 @@ const DocumentationGapDashboard: React.FC = () => {
             <select
               value={priorityFilter}
               onChange={e => setPriorityFilter(e.target.value as PriorityFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-teal-500 focus:border-teal-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by priority"
             >
               <option value="all">All Priorities</option>
@@ -438,7 +440,7 @@ const DocumentationGapDashboard: React.FC = () => {
             <select
               value={String(confidenceThreshold)}
               onChange={e => setConfidenceThreshold(parseFloat(e.target.value))}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-teal-500 focus:border-teal-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by confidence threshold"
             >
               <option value="0.50">50%+ Confidence</option>
@@ -452,7 +454,7 @@ const DocumentationGapDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search codes..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-teal-500 focus:border-teal-500 w-48"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-48"
               aria-label="Search codes"
             />
           </div>

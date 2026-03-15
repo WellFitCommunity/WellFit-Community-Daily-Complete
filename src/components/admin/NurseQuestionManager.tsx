@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { NurseQuestionService } from '../../services/nurseQuestionService';
 import { auditLogger } from '../../services/auditLogger';
 import { QuestionList } from './nurse-questions/QuestionList';
@@ -35,6 +36,7 @@ function mapQueueQuestion(q: QueueQuestion): Question {
 }
 
 const NurseQuestionManager: React.FC = () => {
+  useDashboardTheme();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
@@ -148,15 +150,15 @@ const NurseQuestionManager: React.FC = () => {
       {/* New question realtime alert */}
       {newQuestionAlert && (
         <div
-          className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between"
+          className="mb-4 p-3 bg-[var(--ea-primary,#00857a)]/5 border border-[var(--ea-primary,#00857a)]/20 rounded-lg flex items-center justify-between"
           role="alert"
         >
-          <span className="text-blue-800 font-medium">
+          <span className="text-[var(--ea-primary,#00857a)] font-medium">
             New patient question received — queue refreshed
           </span>
           <button
             onClick={() => setNewQuestionAlert(false)}
-            className="text-blue-600 hover:text-blue-800 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             Dismiss
           </button>

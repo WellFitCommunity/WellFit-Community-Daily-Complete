@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -14,6 +15,7 @@ interface FormData {
 }
 
 const FHIRDataMapper: React.FC = () => {
+  useDashboardTheme();
   const [state, actions] = useFHIRMapping();
   const [viewMode, setViewMode] = React.useState<'rules' | 'preview' | 'code'>('rules');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -219,9 +221,9 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                 ))}
               </div>
 
-              <div className="mt-4 bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">🎯 WellFit Integration</h4>
-                <p className="text-sm text-blue-700">
+              <div className="mt-4 bg-[var(--ea-primary,#00857a)]/5 border border-[var(--ea-primary,#00857a)]/20 p-3 rounded-lg">
+                <h4 className="font-medium text-[var(--ea-primary,#00857a)] mb-2">🎯 WellFit Integration</h4>
+                <p className="text-sm text-[var(--ea-primary,#00857a)]/80">
                   Generated mappings will include transformation code specifically for your 
                   WellFit database schema (profiles, check_ins, self_reports tables).
                 </p>
@@ -318,19 +320,19 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('rules')}
-                  className={`px-3 py-1 text-sm ${viewMode === 'rules' ? 'bg-blue-100 text-blue-700' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm ${viewMode === 'rules' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
                 >
                   📋 Mapping Rules
                 </button>
                 <button
                   onClick={() => setViewMode('preview')}
-                  className={`px-3 py-1 text-sm border-l border-gray-300 ${viewMode === 'preview' ? 'bg-blue-100 text-blue-700' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm border-l border-gray-300 ${viewMode === 'preview' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
                 >
                   👁️ FHIR Preview
                 </button>
                 <button
                   onClick={() => setViewMode('code')}
-                  className={`px-3 py-1 text-sm border-l border-gray-300 ${viewMode === 'code' ? 'bg-blue-100 text-blue-700' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm border-l border-gray-300 ${viewMode === 'code' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
                 >
                   💻 WellFit Integration Code
                 </button>
@@ -341,11 +343,11 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
             {/* Validation Results Summary */}
             {state.generatedMapping?.validationResults && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-blue-600">
+                <div className="bg-[var(--ea-primary,#00857a)]/5 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-[var(--ea-primary,#00857a)]">
                     {state.generatedMapping.validationResults.totalFields}
                   </div>
-                  <div className="text-sm text-blue-800">Total Fields</div>
+                  <div className="text-sm text-[var(--ea-primary,#00857a)]">Total Fields</div>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg text-center">
                   <div className="text-2xl font-bold text-green-600">
@@ -390,7 +392,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                             <div className="text-xs text-gray-500">{rule.sourceType}</div>
                           </td>
                           <td className="border border-gray-300 px-4 py-2">
-                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-sm text-xs">
+                            <span className="bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)] px-2 py-1 rounded-sm text-xs">
                               {rule.fhirResource}
                             </span>
                           </td>
@@ -436,7 +438,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                         <div className="space-y-2">
                           {rules.slice(0, 5).map((rule, index) => (
                             <div key={index} className="text-sm">
-                              <div className="font-mono text-blue-600">{rule.fhirPath}</div>
+                              <div className="font-mono text-[var(--ea-primary,#00857a)]">{rule.fhirPath}</div>
                               <div className="text-gray-500">← {rule.sourceField}</div>
                             </div>
                           ))}

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   Camera,
   Upload,
@@ -72,6 +73,7 @@ interface UploadedForm {
  */
 
 const PaperFormScanner: React.FC = () => {
+  useDashboardTheme();
   const [uploadedForms, setUploadedForms] = useState<UploadedForm[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedForm, setSelectedForm] = useState<UploadedForm | null>(null);
@@ -314,7 +316,7 @@ const PaperFormScanner: React.FC = () => {
     switch (status) {
       case 'uploading':
       case 'processing':
-        return <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />;
+        return <Loader2 className="w-5 h-5 text-[var(--ea-primary,#00857a)] animate-spin" />;
       case 'success':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'enrolled':
@@ -342,16 +344,16 @@ const PaperFormScanner: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-[var(--ea-primary,#00857a)]/5 border border-[var(--ea-primary,#00857a)]/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <FileText className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+          <FileText className="w-5 h-5 text-[var(--ea-primary,#00857a)] mt-0.5 shrink-0" />
           <div className="flex-1">
-            <h4 className="font-semibold text-blue-900">Paper Form Scanner</h4>
-            <p className="text-sm text-blue-800 mt-1">
+            <h4 className="font-semibold text-[var(--ea-primary,#00857a)]">Paper Form Scanner</h4>
+            <p className="text-sm text-[var(--ea-primary,#00857a)]/80 mt-1">
               Upload photos or scans of completed patient enrollment forms. Our AI will
               automatically extract the information and prepare it for review and enrollment.
             </p>
-            <ul className="list-disc ml-5 text-sm text-blue-800 mt-2">
+            <ul className="list-disc ml-5 text-sm text-[var(--ea-primary,#00857a)]/80 mt-2">
               <li>Take clear, well-lit photos with all text visible</li>
               <li>Supported formats: JPG, PNG, HEIC, WebP</li>
               <li>Maximum file size: 10MB per image</li>
@@ -384,7 +386,7 @@ const PaperFormScanner: React.FC = () => {
       <div
         className={`border-4 border-dashed rounded-xl p-8 text-center transition-colors ${
           isDragging
-            ? 'border-blue-600 bg-blue-50'
+            ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5'
             : 'border-gray-300 hover:border-gray-400 bg-gray-50'
         }`}
         onDragOver={handleDragOver}
@@ -393,8 +395,8 @@ const PaperFormScanner: React.FC = () => {
       >
         <div className="flex flex-col items-center gap-4">
           <div className="flex gap-4">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-              <Camera className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 bg-[var(--ea-primary,#00857a)]/10 rounded-full flex items-center justify-center">
+              <Camera className="w-8 h-8 text-[var(--ea-primary,#00857a)]" />
             </div>
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
               <Upload className="w-8 h-8 text-green-600" />
@@ -411,7 +413,7 @@ const PaperFormScanner: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={handleCameraClick}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] transition-colors"
             >
               <Camera className="w-5 h-5" />
               Take Photo
@@ -499,7 +501,7 @@ const PaperFormScanner: React.FC = () => {
                       </div>
                       <button
                         onClick={() => setSelectedForm(form)}
-                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                        className="mt-3 w-full px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] text-sm font-medium"
                       >
                         Review & Enroll
                       </button>
@@ -527,7 +529,7 @@ const PaperFormScanner: React.FC = () => {
               <div className="text-sm text-gray-600">Total Forms</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-[var(--ea-primary,#00857a)]">
                 {
                   uploadedForms.filter(
                     (f) => f.status === 'processing' || f.status === 'uploading'

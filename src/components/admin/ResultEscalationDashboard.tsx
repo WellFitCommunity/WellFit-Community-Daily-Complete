@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   AlertTriangle,
   Shield,
@@ -78,6 +79,7 @@ function formatAge(createdAt: string): string {
 // =============================================================================
 
 const ResultEscalationDashboard: React.FC = () => {
+  useDashboardTheme();
   const [metrics, setMetrics] = useState<EscalationMetrics | null>(null);
   const [escalations, setEscalations] = useState<EscalationLogEntry[]>([]);
   const [rules, setRules] = useState<EscalationRule[]>([]);
@@ -159,7 +161,7 @@ const ResultEscalationDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading escalation data...</span>
         </EACardContent>
       </EACard>
@@ -218,7 +220,7 @@ const ResultEscalationDashboard: React.FC = () => {
               type="button"
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'escalations'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-[var(--ea-primary,#00857a)] text-[var(--ea-primary,#00857a)]'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
               onClick={() => setActiveTab('escalations')}
@@ -230,7 +232,7 @@ const ResultEscalationDashboard: React.FC = () => {
               type="button"
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'rules'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-[var(--ea-primary,#00857a)] text-[var(--ea-primary,#00857a)]'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
               onClick={() => setActiveTab('rules')}
@@ -249,7 +251,7 @@ const ResultEscalationDashboard: React.FC = () => {
                 <select
                   value={severityFilter}
                   onChange={e => setSeverityFilter(e.target.value as SeverityFilter)}
-                  className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
                   aria-label="Filter by severity"
                 >
                   <option value="all">All Severities</option>
@@ -261,7 +263,7 @@ const ResultEscalationDashboard: React.FC = () => {
                 <select
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                  className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
                   aria-label="Filter by status"
                 >
                   <option value="all">All Statuses</option>
@@ -440,7 +442,7 @@ function RulesTab({ rules, togglingId, onToggleRule, onAddRule }: {
                 onClick={() => onToggleRule(rule.id, rule.is_active)}
                 disabled={togglingId === rule.id}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  rule.is_active ? 'bg-blue-600' : 'bg-gray-300'
+                  rule.is_active ? 'bg-[var(--ea-primary,#00857a)]' : 'bg-gray-300'
                 }`}
                 aria-label={`Toggle ${rule.display_name} ${rule.is_active ? 'off' : 'on'}`}
               >

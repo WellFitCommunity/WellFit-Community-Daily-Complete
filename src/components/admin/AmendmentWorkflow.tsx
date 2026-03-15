@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   FileText,
   Plus,
@@ -84,6 +85,8 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
   noteType,
   onAmendmentCreated,
 }) => {
+  useDashboardTheme();
+
   // State
   const [amendments, setAmendments] = useState<AmendmentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -224,7 +227,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-          <History className="w-5 h-5 text-blue-600" />
+          <History className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />
           Amendment History
         </h3>
         <div className="flex gap-2">
@@ -248,9 +251,9 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
 
       {/* Create Amendment Form */}
       {showCreateForm && (
-        <EACard className="border-2 border-blue-200">
-          <EACardHeader className="bg-blue-50">
-            <h4 className="font-medium text-blue-900">Create Amendment</h4>
+        <EACard className="border-2 border-[var(--ea-primary,#00857a)]/20">
+          <EACardHeader className="bg-[var(--ea-primary,#00857a)]/5">
+            <h4 className="font-medium text-[var(--ea-primary,#00857a)]">Create Amendment</h4>
           </EACardHeader>
           <EACardContent className="p-4 space-y-4">
             {/* Amendment Type */}
@@ -265,12 +268,12 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
                       onClick={() => setAmendmentType(type)}
                       className={`p-3 rounded-lg border-2 text-left transition-colors ${
                         amendmentType === type
-                          ? 'border-blue-500 bg-blue-50'
+                          ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <Icon className={`w-4 h-4 ${amendmentType === type ? 'text-blue-600' : 'text-gray-500'}`} />
+                        <Icon className={`w-4 h-4 ${amendmentType === type ? 'text-[var(--ea-primary,#00857a)]' : 'text-gray-500'}`} />
                         <span className="font-medium text-sm">{config.label}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">{config.description}</p>
@@ -289,7 +292,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
                 <textarea
                   value={originalContent}
                   onChange={(e) => setOriginalContent(e.target.value)}
-                  className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                  className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                   rows={3}
                   placeholder="Enter the original text that needs correction..."
                 />
@@ -305,7 +308,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
                 type="text"
                 value={fieldAmended}
                 onChange={(e) => setFieldAmended(e.target.value)}
-                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                 placeholder="e.g., Assessment, Plan, Medications"
               />
             </div>
@@ -318,7 +321,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
               <textarea
                 value={amendmentContent}
                 onChange={(e) => setAmendmentContent(e.target.value)}
-                className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                 rows={4}
                 placeholder="Enter the amendment text..."
                 required
@@ -333,7 +336,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
               <textarea
                 value={amendmentReason}
                 onChange={(e) => setAmendmentReason(e.target.value)}
-                className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                 rows={2}
                 placeholder="Explain why this amendment is necessary..."
                 required
@@ -370,7 +373,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
       {/* Amendments List */}
       {loading ? (
         <div className="text-center py-8">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-blue-500" />
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[var(--ea-primary,#00857a)]" />
           <p className="mt-2 text-gray-500">Loading amendments...</p>
         </div>
       ) : amendments.length === 0 ? (

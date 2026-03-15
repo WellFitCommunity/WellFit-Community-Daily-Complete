@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   ClipboardCheck,
   RefreshCw,
@@ -93,7 +94,7 @@ function CompletionMetricCard({ label, value, color }: {
   color: 'blue' | 'red' | 'green' | 'amber';
 }) {
   const colorMap = {
-    blue: 'bg-blue-50 border-blue-200 text-blue-900',
+    blue: 'bg-[var(--ea-primary,#00857a)]/5 border-[var(--ea-primary,#00857a)]/20 text-[var(--ea-primary,#00857a)]',
     red: 'bg-red-50 border-red-200 text-red-900',
     green: 'bg-green-50 border-green-200 text-green-900',
     amber: 'bg-amber-50 border-amber-200 text-amber-900',
@@ -112,6 +113,7 @@ function CompletionMetricCard({ label, value, color }: {
 // =============================================================================
 
 const ReferralCompletionDashboard: React.FC = () => {
+  useDashboardTheme();
   const [referrals, setReferrals] = useState<AwaitingReferral[]>([]);
   const [stats, setStats] = useState<CompletionStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,7 +180,7 @@ const ReferralCompletionDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-teal-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading specialist confirmation data...</span>
         </EACardContent>
       </EACard>
@@ -254,7 +256,7 @@ const ReferralCompletionDashboard: React.FC = () => {
             <select
               value={completionFilter}
               onChange={e => setCompletionFilter(e.target.value as CompletionFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-teal-500 focus:border-teal-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by completion status"
             >
               <option value="all">All Statuses</option>
@@ -268,7 +270,7 @@ const ReferralCompletionDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search org or patient..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-teal-500 focus:border-teal-500 w-48"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-48"
               aria-label="Search referrals"
             />
           </div>

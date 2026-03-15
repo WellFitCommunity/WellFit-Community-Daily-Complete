@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   Lock,
   Unlock,
@@ -61,6 +62,7 @@ export const NoteLockingControls: React.FC<NoteLockingControlsProps> = ({
   showAmendmentHistory = true,
   compact = false,
 }) => {
+  useDashboardTheme();
   const [lockDetails, setLockDetails] = useState<LockDetails | null>(null);
   const [amendmentCount, setAmendmentCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -148,7 +150,7 @@ export const NoteLockingControls: React.FC<NoteLockingControlsProps> = ({
         ) : (
           <button
             onClick={() => setShowConfirm(true)}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+            className="flex items-center gap-1.5 text-gray-600 hover:text-[var(--ea-primary,#00857a)] hover:bg-[var(--ea-primary,#00857a)]/5 px-2 py-1 rounded transition-colors"
           >
             <Unlock className="w-4 h-4" />
             <span className="text-xs">Lock</span>

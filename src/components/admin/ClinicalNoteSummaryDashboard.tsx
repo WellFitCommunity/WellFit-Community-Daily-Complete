@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import {
   EACard,
@@ -71,6 +72,7 @@ type TabId = 'clinical-notes' | 'progress-notes' | 'metrics';
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const ClinicalNoteSummaryDashboard: React.FC = () => {
+  useDashboardTheme();
   const supabase = useSupabaseClient();
   const [activeTab, setActiveTab] = useState<TabId>('clinical-notes');
   const [loading, setLoading] = useState(true);
@@ -183,7 +185,7 @@ const ClinicalNoteSummaryDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--ea-primary,#00857a)]" />
         <span className="ml-3 text-gray-600 text-lg">Loading clinical notes...</span>
       </div>
     );
@@ -270,7 +272,7 @@ const ClinicalNoteSummaryDashboard: React.FC = () => {
                         onClick={() => setSelectedNote(note)}
                         className={`w-full text-left p-4 rounded-lg border transition-colors ${
                           selectedNote?.id === note.id
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                       >

@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   Clock,
   RefreshCw,
@@ -138,7 +139,7 @@ function HistoryModal({ referralId, onClose }: {
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-2" />
+            <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-2" />
             <span className="text-gray-600">Loading history...</span>
           </div>
         ) : history.length === 0 ? (
@@ -180,6 +181,7 @@ function HistoryModal({ referralId, onClose }: {
 // =============================================================================
 
 const ReferralAgingDashboard: React.FC = () => {
+  useDashboardTheme();
   const [referrals, setReferrals] = useState<AgingReferral[]>([]);
   const [stats, setStats] = useState<ReferralAgingStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -260,7 +262,7 @@ const ReferralAgingDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading referral aging data...</span>
         </EACardContent>
       </EACard>
@@ -318,7 +320,7 @@ const ReferralAgingDashboard: React.FC = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All Statuses</option>
@@ -330,7 +332,7 @@ const ReferralAgingDashboard: React.FC = () => {
             <select
               value={agingFilter}
               onChange={e => setAgingFilter(e.target.value as AgingBucket)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by aging bucket"
             >
               <option value="all">All Aging</option>
@@ -344,7 +346,7 @@ const ReferralAgingDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search org or phone..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 w-48"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-48"
               aria-label="Search referrals"
             />
           </div>

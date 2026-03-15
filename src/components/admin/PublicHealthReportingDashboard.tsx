@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   publicHealthReportingService,
   type UnifiedTransmission,
@@ -38,14 +39,14 @@ const TYPE_LABELS: Record<TransmissionType, string> = {
 };
 
 const TYPE_BADGE_STYLES: Record<TransmissionType, { bg: string; text: string }> = {
-  syndromic: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  syndromic: { bg: 'bg-[var(--ea-primary,#00857a)]/10', text: 'text-[var(--ea-primary,#00857a)]' },
   immunization: { bg: 'bg-green-100', text: 'text-green-800' },
   ecr: { bg: 'bg-purple-100', text: 'text-purple-800' },
 };
 
 const STATUS_STYLES: Record<TransmissionStatus, { bg: string; text: string; label: string }> = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending' },
-  submitted: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Submitted' },
+  submitted: { bg: 'bg-[var(--ea-primary,#00857a)]/10', text: 'text-[var(--ea-primary,#00857a)]', label: 'Submitted' },
   accepted: { bg: 'bg-green-100', text: 'text-green-800', label: 'Accepted' },
   rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
   error: { bg: 'bg-red-100', text: 'text-red-800', label: 'Error' },
@@ -58,6 +59,7 @@ const REFRESH_INTERVAL_MS = 30_000;
 // =============================================================================
 
 const PublicHealthReportingDashboard: React.FC = () => {
+  useDashboardTheme();
   const user = useUser();
   const supabaseClient = useSupabaseClient();
 
@@ -230,7 +232,7 @@ const PublicHealthReportingDashboard: React.FC = () => {
               onClick={() => setTypeFilter(t)}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 typeFilter === t
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)]'
                   : 'bg-white text-slate-600 hover:bg-slate-50'
               }`}
             >
@@ -311,7 +313,7 @@ const PublicHealthReportingDashboard: React.FC = () => {
                           <button
                             onClick={() => handleRetry(tx)}
                             disabled={isRetrying === tx.id}
-                            className="text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                            className="text-sm font-medium text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] disabled:opacity-50"
                           >
                             {isRetrying === tx.id ? 'Retrying...' : 'Retry'}
                           </button>
@@ -346,7 +348,7 @@ interface MetricCardProps {
 
 const MetricCard: React.FC<MetricCardProps> = ({ label, value, color }) => {
   const colorStyles: Record<string, { bg: string; text: string; border: string }> = {
-    blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+    blue: { bg: 'bg-[var(--ea-primary,#00857a)]/5', text: 'text-[var(--ea-primary,#00857a)]', border: 'border-[var(--ea-primary,#00857a)]/20' },
     green: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
     yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
     red: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },

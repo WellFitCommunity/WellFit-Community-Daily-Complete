@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import {
   EACard,
@@ -61,6 +62,7 @@ type TabId = 'overview' | 'by-patient' | 'by-type';
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const CareGapDashboard: React.FC = () => {
+  useDashboardTheme();
   const supabase = useSupabaseClient();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [loading, setLoading] = useState(true);
@@ -209,7 +211,7 @@ const CareGapDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--ea-primary,#00857a)]" />
         <span className="ml-3 text-gray-600 text-lg">Loading care gaps...</span>
       </div>
     );
@@ -393,7 +395,7 @@ const CareGapDashboard: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
                           <div
-                            className="bg-blue-600 h-2 rounded-full"
+                            className="bg-[var(--ea-primary,#00857a)] h-2 rounded-full"
                             style={{ width: `${Math.min((count / (metrics.totalGaps || 1)) * 100, 100)}%` }}
                           />
                         </div>

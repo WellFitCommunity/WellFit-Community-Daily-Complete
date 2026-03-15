@@ -19,6 +19,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { Plus, Search, RefreshCw, XCircle, Shield } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -29,6 +30,7 @@ import { SmartAppRegistrationModal } from './smart-app/SmartAppRegistrationModal
 import { SmartAppReviewModal } from './smart-app/SmartAppReviewModal';
 
 const SmartAppManagementPanel: React.FC = () => {
+  useDashboardTheme();
   const [apps, setApps] = useState<SmartApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -191,7 +193,7 @@ const SmartAppManagementPanel: React.FC = () => {
   if (loading && apps.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-teal-600 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-[var(--ea-primary,#00857a)] animate-spin" />
       </div>
     );
   }
@@ -208,7 +210,7 @@ const SmartAppManagementPanel: React.FC = () => {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Register App
@@ -243,14 +245,14 @@ const SmartAppManagementPanel: React.FC = () => {
             placeholder="Search apps..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-transparent"
           />
         </div>
 
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
         >
           <option value="all">All Statuses</option>
           <option value="pending">Pending</option>
@@ -263,7 +265,7 @@ const SmartAppManagementPanel: React.FC = () => {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
         >
           <option value="all">All Types</option>
           <option value="patient">Patient Apps</option>
@@ -296,7 +298,7 @@ const SmartAppManagementPanel: React.FC = () => {
           <div className="text-sm text-gray-600">Pending Review</div>
         </div>
         <div className="bg-white border rounded-lg p-4">
-          <div className="text-2xl font-semibold text-teal-600">
+          <div className="text-2xl font-semibold text-[var(--ea-primary,#00857a)]">
             {apps.reduce((sum, a) => sum + a.active_authorizations, 0)}
           </div>
           <div className="text-sm text-gray-600">Active Authorizations</div>
@@ -317,7 +319,7 @@ const SmartAppManagementPanel: React.FC = () => {
             <p className="text-gray-600">No apps found</p>
             <button
               onClick={() => handleOpenModal()}
-              className="mt-4 text-teal-600 hover:text-teal-700"
+              className="mt-4 text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)]"
             >
               Register your first app
             </button>

@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   AlertTriangle,
   RefreshCw,
@@ -171,7 +172,7 @@ function ActionModal({ task, mode, onConfirm, onClose }: {
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Notes about task completion..."
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               rows={3}
               aria-label="Completion notes"
             />
@@ -197,6 +198,7 @@ function ActionModal({ task, mode, onConfirm, onClose }: {
 // =============================================================================
 
 const ProviderTaskQueueDashboard: React.FC = () => {
+  useDashboardTheme();
   const [tasks, setTasks] = useState<ProviderTaskQueueRow[]>([]);
   const [metrics, setMetrics] = useState<TaskMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -302,7 +304,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
     return (
       <EACard>
         <EACardContent className="flex items-center justify-center p-12">
-          <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+          <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary,#00857a)] mr-3" />
           <span className="text-gray-600">Loading provider task queue...</span>
         </EACardContent>
       </EACard>
@@ -382,7 +384,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
             <select
               value={priorityFilter}
               onChange={e => setPriorityFilter(e.target.value as PriorityFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by priority"
             >
               <option value="all">All Priorities</option>
@@ -394,7 +396,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value as TypeFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by task type"
             >
               <option value="all">All Types</option>
@@ -408,7 +410,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All Statuses</option>
@@ -421,7 +423,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
             <select
               value={assignFilter}
               onChange={e => setAssignFilter(e.target.value as AssignFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by assignment"
             >
               <option value="all">All Tasks</option>
