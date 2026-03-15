@@ -218,9 +218,17 @@ export class ReadmissionTrackingService {
       // If multiple AI skills fire for the same patient within 60s,
       // alerts are consolidated into a single actionable summary.
       try {
+        // Resolve tenant from patient's profile
+        const { data: patientProfile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', readmission.patient_id)
+          .single();
+        const batchTenantId = (patientProfile?.tenant_id as string) || '';
+
         await AlertBatchingService.batchAndConsolidate(
           readmission.patient_id,
-          '', // tenant resolved from RLS context
+          batchTenantId,
           { windowMs: 60_000, minAlerts: 2 }
         );
       } catch (batchErr: unknown) {

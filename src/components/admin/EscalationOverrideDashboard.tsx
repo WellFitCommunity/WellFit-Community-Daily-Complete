@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import {
   ShieldAlert,
   TrendingUp,
@@ -25,6 +26,7 @@ import { EABadge } from '../envision-atlus/EABadge';
 import { EAAlert } from '../envision-atlus/EAAlert';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../../services/auditLogger';
+import { useUser } from '../../contexts/AuthContext';
 
 // ============================================================================
 // Types
@@ -58,7 +60,7 @@ interface OverrideStats {
 }
 
 interface EscalationOverrideDashboardProps {
-  tenantId: string;
+  tenantId?: string;
 }
 
 // ============================================================================
@@ -88,7 +90,7 @@ function formatSkillKey(key: string): string {
 function StatCard({ label, value, icon: Icon, color }: {
   label: string;
   value: number;
-  icon: React.ElementType;
+  icon: LucideIcon;
   color: string;
 }) {
   return (
@@ -229,15 +231,41 @@ function TopOverriddenSkills({ skills }: { skills: Array<{ skill_key: string; co
 // ============================================================================
 
 export const EscalationOverrideDashboard: React.FC<EscalationOverrideDashboardProps> = ({
-  tenantId,
+  tenantId: tenantIdProp,
 }) => {
+  const user = useUser();
+  const [resolvedTenantId, setResolvedTenantId] = useState<string | null>(tenantIdProp || null);
   const [records, setRecords] = useState<OverrideRecord[]>([]);
   const [stats, setStats] = useState<OverrideStats | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Resolve tenant ID from user profile if not provided via props
+  useEffect(() => {
+    if (tenantIdProp) {
+      setResolvedTenantId(tenantIdProp);
+      return;
+    }
+    if (!user?.id) return;
+
+    const resolveTenant = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile?.tenant_id) {
+        setResolvedTenantId(profile.tenant_id as string);
+      }
+    };
+    void resolveTenant();
+  }, [user?.id, tenantIdProp]);
+
   const fetchOverrides = useCallback(async () => {
+    if (!resolvedTenantId) return;
+
     setIsLoading(true);
     setError(null);
 
@@ -245,7 +273,7 @@ export const EscalationOverrideDashboard: React.FC<EscalationOverrideDashboardPr
       const { data, error: dbError } = await supabase
         .from('ai_escalation_overrides')
         .select('id, skill_key, action_type, original_level, override_level, clinician_reason, is_justified, risk_assessment, appeal_supported, systematic_issue, ai_blind_spots, requires_supervisor_review, supervisor_decision, created_at')
-        .eq('tenant_id', tenantId)
+        .eq('tenant_id', resolvedTenantId)
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -282,13 +310,13 @@ export const EscalationOverrideDashboard: React.FC<EscalationOverrideDashboardPr
       await auditLogger.error(
         'OVERRIDE_DASHBOARD_LOAD_FAILED',
         err instanceof Error ? err : new Error(String(err)),
-        { tenantId }
+        { tenantId: resolvedTenantId }
       );
       setError('Failed to load override data');
     } finally {
       setIsLoading(false);
     }
-  }, [tenantId]);
+  }, [resolvedTenantId]);
 
   useEffect(() => {
     void fetchOverrides();

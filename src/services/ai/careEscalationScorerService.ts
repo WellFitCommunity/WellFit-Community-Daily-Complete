@@ -231,10 +231,12 @@ export const CareEscalationScorerService = {
       // across AI skills and resolve them with Claude-in-Claude reasoning.
       // This is fire-and-forget — meta-triage failures don't block the score.
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const triageTenantId = sessionData?.session?.user?.app_metadata?.tenant_id as string | undefined;
         const triageResult = await TriageSignalAggregationService.triagePatient(
           patientId,
           assessorId,
-          '' // tenant resolved from session in the service
+          triageTenantId || ''
         );
         if (triageResult.success && triageResult.data) {
           await auditLogger.info('META_TRIAGE_COMPLETED', {
