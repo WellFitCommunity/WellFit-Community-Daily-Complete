@@ -46,7 +46,7 @@ export const ActiveSessionsPanel: React.FC<ActiveSessionsPanelProps> = ({
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-blue-600" />
+          <Users className="w-5 h-5 text-[var(--ea-primary)]" />
           <h3 className="text-base font-semibold text-gray-900">Active Sessions</h3>
           <EABadge variant="normal" size="sm">{activeSessions.length} active</EABadge>
         </div>

@@ -119,7 +119,7 @@ export const PayerRulesTab: React.FC = () => {
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50"
             >
               <Search className="w-4 h-4" />
               {loading ? 'Searching...' : 'Search Rules'}

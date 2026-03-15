@@ -270,7 +270,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
           className="relative z-10 inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
         >
           {/* Header */}
-          <div className="bg-linear-to-r from-blue-600 to-purple-600 px-6 py-5">
+          <div className="bg-linear-to-r from-[var(--ea-primary)] to-purple-600 px-6 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <span className="text-4xl" role="img" aria-label="Sparkles">✨</span>
@@ -282,7 +282,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               <button
                 ref={closeButtonRef}
                 onClick={() => handleClose(false)}
-                className="text-white hover:text-gray-200 transition-colors focus:outline-hidden focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 rounded-lg p-1"
+                className="text-white hover:text-gray-200 transition-colors focus:outline-hidden focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--ea-primary)] rounded-lg p-1"
                 aria-label="Close what's new modal"
                 type="button"
               >
@@ -312,7 +312,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                   onClick={() => handleFeatureClick(feature)}
                   className={`border border-gray-200 rounded-lg p-4 transition-all ${
                     feature.link
-                      ? 'cursor-pointer hover:shadow-lg hover:border-blue-400 hover:bg-blue-50'
+                      ? 'cursor-pointer hover:shadow-lg hover:border-[var(--ea-primary)]/60 hover:bg-[var(--ea-primary)]/5'
                       : 'hover:shadow-md'
                   }`}
                   role={feature.link ? 'button' : undefined}
@@ -332,7 +332,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                         <div className="flex items-center gap-2">
                           <h4 className="text-lg font-semibold text-gray-900">{feature.title}</h4>
                           {feature.link && (
-                            <span className="text-blue-500 text-sm" aria-hidden="true">→</span>
+                            <span className="text-[var(--ea-primary)] text-sm" aria-hidden="true">→</span>
                           )}
                         </div>
                         <span
@@ -353,7 +353,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                           })}
                         </p>
                         {feature.link && (
-                          <span className="text-xs text-blue-600 font-medium">Click to view</span>
+                          <span className="text-xs text-[var(--ea-primary)] font-medium">Click to view</span>
                         )}
                       </div>
                     </div>
@@ -382,7 +382,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               </div>
               <button
                 onClick={() => handleClose(false)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                className="px-6 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary)] focus:ring-offset-2 transition-colors font-medium"
                 type="button"
               >
                 Got it!
@@ -396,7 +396,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                   type="checkbox"
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                  className="w-4 h-4 text-[var(--ea-primary)] border-gray-300 rounded-sm focus:ring-[var(--ea-primary)] focus:ring-2 cursor-pointer"
                   aria-label="Don't show What's New automatically anymore"
                 />
                 <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800">

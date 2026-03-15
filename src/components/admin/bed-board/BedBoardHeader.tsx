@@ -29,12 +29,12 @@ export const BedBoardHeader: React.FC<BedBoardHeaderProps> = ({
     {/* Voice Command Feedback (ATLUS: Intuitive Technology) */}
     {isVoiceListening && (
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-3 px-4 py-3 bg-slate-800 border border-teal-500 rounded-lg shadow-lg">
+        <div className="flex items-center gap-3 px-4 py-3 bg-slate-800 border border-[var(--ea-primary)] rounded-lg shadow-lg">
           <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
           <span className="text-white font-medium">
             {voiceTranscript || 'Listening... Try "Mark bed 205A ready"'}
           </span>
-          <Volume2 className="w-4 h-4 text-teal-400 animate-pulse" />
+          <Volume2 className="w-4 h-4 text-[var(--ea-primary)] animate-pulse" />
         </div>
       </div>
     )}
@@ -44,7 +44,7 @@ export const BedBoardHeader: React.FC<BedBoardHeaderProps> = ({
       <div className="flex items-center gap-4">
         <div>
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <BedIcon className="w-6 h-6 text-teal-400" />
+            <BedIcon className="w-6 h-6 text-[var(--ea-primary)]" />
             Bed Management
           </h2>
           <p className="text-sm text-slate-400 mt-1">

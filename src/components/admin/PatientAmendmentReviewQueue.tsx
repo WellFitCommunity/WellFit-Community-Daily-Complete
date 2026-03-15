@@ -202,7 +202,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
         role="status"
         aria-label="Loading amendment requests"
       >
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--ea-primary)]" />
         <span className="ml-3 text-gray-600 text-lg">Loading amendment requests...</span>
       </div>
     );
@@ -238,7 +238,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
         <button
           onClick={loadRequests}
           disabled={loading}
-          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base font-medium disabled:opacity-50"
+          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary)] text-base font-medium disabled:opacity-50"
           aria-label="Refresh amendment requests"
         >
           Refresh
@@ -263,7 +263,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <p className="text-sm text-gray-500">Pending Requests</p>
-          <p className="text-3xl font-bold text-blue-600">{requests.length}</p>
+          <p className="text-3xl font-bold text-[var(--ea-primary)]">{requests.length}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <p className="text-sm text-gray-500">Urgent (7 days or less)</p>
@@ -299,7 +299,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
               value={denialReason}
               onChange={e => setDenialReason(e.target.value)}
               rows={4}
-              className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
               placeholder="Provide the clinical basis for denying this amendment..."
             />
             <div className="flex gap-3 justify-end mt-4">

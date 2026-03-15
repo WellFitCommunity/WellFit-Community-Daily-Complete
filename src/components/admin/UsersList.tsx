@@ -140,8 +140,8 @@ const UserCard: React.FC<{
   return (
     <div 
       className={`bg-white border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-        onUserClick ? 'cursor-pointer hover:border-blue-300' : ''
-      } ${isSelected ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'}`}
+        onUserClick ? 'cursor-pointer hover:border-[var(--ea-primary)]/50' : ''
+      } ${isSelected ? 'ring-2 ring-[var(--ea-primary)] border-[var(--ea-primary)]' : 'border-gray-200'}`}
       onClick={() => onUserClick?.(user)}
       role={onUserClick ? 'button' : undefined}
       tabIndex={onUserClick ? 0 : undefined}
@@ -533,7 +533,7 @@ const UsersList: React.FC = () => {
               <button
                 onClick={() => setViewMode('grid')}
                 className={`px-3 py-2 text-sm ${
-                  viewMode === 'grid' ? 'bg-blue-100 text-blue-700' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  viewMode === 'grid' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 📱 Grid
@@ -541,7 +541,7 @@ const UsersList: React.FC = () => {
               <button
                 onClick={() => setViewMode('table')}
                 className={`px-3 py-2 text-sm border-l border-gray-300 ${
-                  viewMode === 'table' ? 'bg-blue-100 text-blue-700' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  viewMode === 'table' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 📋 Table
@@ -552,9 +552,9 @@ const UsersList: React.FC = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-            <div className="text-sm text-blue-800">Total Users</div>
+          <div className="bg-[var(--ea-primary)]/5 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-[var(--ea-primary)]">{stats.total}</div>
+            <div className="text-sm text-[var(--ea-primary)]">Total Users</div>
           </div>
           <div className="bg-green-50 p-4 rounded-lg">
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
@@ -582,10 +582,10 @@ const UsersList: React.FC = () => {
               placeholder="Search by name, phone, or user ID..."
               value={rawSearch}
               onChange={(e) => setRawSearch(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
             />
           </div>
-          
+
           <div>
             <label htmlFor="filter" className="block text-sm font-medium text-gray-700 mb-1">
               Filter by Status
@@ -594,7 +594,7 @@ const UsersList: React.FC = () => {
               id="filter"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'inactive' | 'emergency')}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
             >
               <option value="all">All Users</option>
               <option value="active">Active (7 days)</option>
@@ -616,7 +616,7 @@ const UsersList: React.FC = () => {
                   setSortField(field as SortField);
                   setSortDirection(direction as SortDirection);
                 }}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
               >
                 <option value="first_name-asc">Name A-Z</option>
                 <option value="first_name-desc">Name Z-A</option>
@@ -640,7 +640,7 @@ const UsersList: React.FC = () => {
                 setSearchTerm('');
                 setFilterStatus('all');
               }}
-              className="ml-2 text-blue-600 hover:text-blue-800 underline"
+              className="ml-2 text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] underline"
             >
               Clear filters
             </button>
@@ -665,7 +665,7 @@ const UsersList: React.FC = () => {
                     setSearchTerm('');
                     setFilterStatus('all');
                   }}
-                  className="text-blue-600 hover:text-blue-800 underline"
+                  className="text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] underline"
                 >
                   Clear all filters
                 </button>
@@ -761,7 +761,7 @@ const UsersList: React.FC = () => {
                       return (
                         <tr 
                           key={user.user_id}
-                          className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}
+                          className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-[var(--ea-primary)]/5 transition-colors`}
                         >
                           <td className="border border-gray-300 px-4 py-3">
                             <div className="font-medium text-gray-900">

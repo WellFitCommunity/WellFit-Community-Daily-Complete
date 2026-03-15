@@ -125,7 +125,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         <div className="flex flex-wrap gap-4 items-center">
           <button
             onClick={loadQueue}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 min-h-[44px]"
+            className="px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] min-h-[44px]"
           >
             Queue
           </button>
@@ -144,7 +144,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
               placeholder="Search questions or patient names..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
             />
           </div>
 
@@ -153,7 +153,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             <select
               value={filterStatus}
               onChange={(e) => onFilterStatusChange(e.target.value as FilterStatus)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -167,7 +167,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             <select
               value={filterUrgency}
               onChange={(e) => onFilterUrgencyChange(e.target.value as FilterUrgency)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
             >
               <option value="all">All Priority</option>
               <option value="high">High Priority</option>
@@ -199,7 +199,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                 key={question.id}
                 className={`p-4 cursor-pointer hover:bg-gray-50 ${
                   selectedQuestionId === question.id
-                    ? 'bg-blue-50 border-r-4 border-blue-500'
+                    ? 'bg-[var(--ea-primary)]/10 border-r-4 border-[var(--ea-primary)]'
                     : ''
                 }`}
                 onClick={() => handleSelectQuestion(question)}

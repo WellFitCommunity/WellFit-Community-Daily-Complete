@@ -194,7 +194,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
                   type="text"
                   value={formData.client_name}
                   onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
                   placeholder="My Health App"
                 />
               </div>
@@ -203,7 +203,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
                 <textarea
                   value={formData.client_description}
                   onChange={(e) => setFormData({ ...formData, client_description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
                   placeholder="Brief description of what your app does..."
                   rows={2}
                 />
@@ -213,7 +213,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
                 <select
                   value={formData.app_type}
                   onChange={(e) => setFormData({ ...formData, app_type: e.target.value as SmartAppFormData['app_type'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
                 >
                   <option value="patient">Patient App</option>
                   <option value="provider">Provider App</option>
@@ -227,7 +227,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
                     type="checkbox"
                     checked={formData.is_confidential}
                     onChange={(e) => setFormData({ ...formData, is_confidential: e.target.checked })}
-                    className="rounded-sm border-gray-300 text-teal-600 focus:ring-teal-500"
+                    className="rounded-sm border-gray-300 text-[var(--ea-primary)] focus:ring-[var(--ea-primary)]"
                     disabled={!!editingApp}
                   />
                   <span className="text-sm text-gray-700">Confidential Client</span>
@@ -237,7 +237,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
                     type="checkbox"
                     checked={formData.pkce_required}
                     onChange={(e) => setFormData({ ...formData, pkce_required: e.target.checked })}
-                    className="rounded-sm border-gray-300 text-teal-600 focus:ring-teal-500"
+                    className="rounded-sm border-gray-300 text-[var(--ea-primary)] focus:ring-[var(--ea-primary)]"
                   />
                   <span className="text-sm text-gray-700">PKCE Required</span>
                 </label>
@@ -256,7 +256,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
                 <textarea
                   value={formData.redirect_uris}
                   onChange={(e) => setFormData({ ...formData, redirect_uris: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 font-mono text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] font-mono text-sm"
                   placeholder={'https://myapp.com/callback\nhttp://localhost:3000/callback'}
                   rows={3}
                 />
@@ -269,7 +269,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
                   type="url"
                   value={formData.launch_uri}
                   onChange={(e) => setFormData({ ...formData, launch_uri: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
                   placeholder="https://myapp.com/launch"
                 />
               </div>
@@ -292,7 +292,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
                         setFormData({ ...formData, scopes_allowed: formData.scopes_allowed.filter((s) => s !== scope.value) });
                       }
                     }}
-                    className="mt-1 rounded-sm border-gray-300 text-teal-600 focus:ring-teal-500"
+                    className="mt-1 rounded-sm border-gray-300 text-[var(--ea-primary)] focus:ring-[var(--ea-primary)]"
                   />
                   <div>
                     <div className="text-sm font-medium text-gray-700">{scope.label}</div>
@@ -309,27 +309,27 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Developer Name</label>
-                <input type="text" value={formData.developer_name} onChange={(e) => setFormData({ ...formData, developer_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                <input type="text" value={formData.developer_name} onChange={(e) => setFormData({ ...formData, developer_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Developer Email</label>
-                <input type="email" value={formData.developer_email} onChange={(e) => setFormData({ ...formData, developer_email: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                <input type="email" value={formData.developer_email} onChange={(e) => setFormData({ ...formData, developer_email: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
-                <input type="url" value={formData.client_uri} onChange={(e) => setFormData({ ...formData, client_uri: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="https://myapp.com" />
+                <input type="url" value={formData.client_uri} onChange={(e) => setFormData({ ...formData, client_uri: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]" placeholder="https://myapp.com" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
-                <input type="url" value={formData.logo_uri} onChange={(e) => setFormData({ ...formData, logo_uri: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="https://myapp.com/logo.png" />
+                <input type="url" value={formData.logo_uri} onChange={(e) => setFormData({ ...formData, logo_uri: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]" placeholder="https://myapp.com/logo.png" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Terms of Service URL</label>
-                <input type="url" value={formData.tos_uri} onChange={(e) => setFormData({ ...formData, tos_uri: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                <input type="url" value={formData.tos_uri} onChange={(e) => setFormData({ ...formData, tos_uri: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Privacy Policy URL</label>
-                <input type="url" value={formData.policy_uri} onChange={(e) => setFormData({ ...formData, policy_uri: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                <input type="url" value={formData.policy_uri} onChange={(e) => setFormData({ ...formData, policy_uri: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]" />
               </div>
             </div>
           </div>
@@ -346,7 +346,7 @@ export const SmartAppRegistrationModal: React.FC<SmartAppRegistrationModalProps>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors disabled:opacity-50"
             >
               {saving ? 'Saving...' : editingApp ? 'Update App' : 'Register App'}
             </button>

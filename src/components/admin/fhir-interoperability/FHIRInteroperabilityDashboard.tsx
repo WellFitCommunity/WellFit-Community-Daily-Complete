@@ -158,7 +158,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Database className="w-8 h-8 text-blue-600" />
+                <Database className="w-8 h-8 text-[var(--ea-primary)]" />
                 FHIR Interoperability Hub
               </h1>
               <p className="text-gray-600 mt-2">
@@ -167,7 +167,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] transition"
             >
               <Plus className="w-5 h-5" />
               New Connection
@@ -188,7 +188,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-6 py-4 font-medium transition ${
                     activeTab === tab.id
-                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      ? 'text-[var(--ea-primary)] border-b-2 border-[var(--ea-primary)]'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -224,7 +224,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
             </div>
             <div className="w-full bg-blue-200 rounded-full h-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="bg-[var(--ea-primary)] h-2 rounded-full transition-all duration-300"
                 style={{ width: `${syncProgress.progress}%` }}
               />
             </div>

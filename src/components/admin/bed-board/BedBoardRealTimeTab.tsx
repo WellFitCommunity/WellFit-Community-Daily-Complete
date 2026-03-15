@@ -54,14 +54,14 @@ export const BedBoardRealTimeTab: React.FC<BedBoardRealTimeTabProps> = ({
               onClick={() => onSetUnitTypeCategory(category.id)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 selectedUnitTypeCategory === category.id
-                  ? 'bg-teal-600 text-white'
+                  ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                   : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
               }`}
             >
               {category.label}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                 selectedUnitTypeCategory === category.id
-                  ? 'bg-teal-700 text-teal-100'
+                  ? 'bg-[var(--ea-primary-active)] text-[var(--ea-text-on-primary)]'
                   : 'bg-slate-700 text-slate-400'
               }`}>
                 {bedCount}
@@ -81,14 +81,14 @@ export const BedBoardRealTimeTab: React.FC<BedBoardRealTimeTabProps> = ({
           placeholder="Search beds, rooms, patients..."
           value={searchQuery}
           onChange={(e) => onSetSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
         />
       </div>
 
       <select
         value={selectedUnit}
         onChange={(e) => onSetUnit(e.target.value)}
-        className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+        className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-[var(--ea-primary)]"
       >
         <option value="">All Units</option>
         {units.map((unit) => (
@@ -99,7 +99,7 @@ export const BedBoardRealTimeTab: React.FC<BedBoardRealTimeTabProps> = ({
       <select
         value={selectedStatus}
         onChange={(e) => onSetStatus(e.target.value as BedStatus | '')}
-        className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+        className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-[var(--ea-primary)]"
       >
         <option value="">All Statuses</option>
         <option value="available">Available</option>
@@ -152,7 +152,7 @@ export const BedBoardRealTimeTab: React.FC<BedBoardRealTimeTabProps> = ({
                   <div
                     key={bed.bed_id}
                     id={`bed-${bed.bed_id}`}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all hover:ring-2 hover:ring-teal-500 ${getBedStatusColor(bed.status)}`}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all hover:ring-2 hover:ring-[var(--ea-primary)] ${getBedStatusColor(bed.status)}`}
                     onClick={() => {
                       onSelectBed(bed);
                       onSetEditing(true, `bed-${bed.bed_label}`);
@@ -240,7 +240,7 @@ export const BedBoardRealTimeTab: React.FC<BedBoardRealTimeTabProps> = ({
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-16 bg-slate-700 rounded-full h-2">
                           <div
-                            className={`h-2 rounded-full ${(unit.occupancy_pct ?? 0) >= 90 ? 'bg-red-500' : 'bg-teal-500'}`}
+                            className={`h-2 rounded-full ${(unit.occupancy_pct ?? 0) >= 90 ? 'bg-red-500' : 'bg-[var(--ea-primary)]'}`}
                             style={{ width: `${Math.min(unit.occupancy_pct ?? 0, 100)}%` }}
                           />
                         </div>
@@ -252,7 +252,7 @@ export const BedBoardRealTimeTab: React.FC<BedBoardRealTimeTabProps> = ({
                     <td className="p-4 text-center">
                       <button
                         onClick={() => onGenerateForecast(unit.unit_id)}
-                        className="text-teal-400 hover:text-teal-300 text-sm"
+                        className="text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] text-sm"
                       >
                         <TrendingUp className="w-4 h-4 inline mr-1" />
                         Forecast

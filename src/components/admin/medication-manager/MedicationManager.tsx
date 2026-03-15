@@ -206,7 +206,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
   if (loading) {
     return (
       <Card><CardContent className="p-6 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary)] mx-auto mb-4" />
         <div>Loading medication management data...</div>
       </CardContent></Card>
     );
@@ -242,7 +242,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
           { icon: <Activity className="h-6 w-6 mx-auto mb-2 text-purple-600" />, value: overview.polypharmacyCount, label: 'Polypharmacy' },
           { icon: <Zap className="h-6 w-6 mx-auto mb-2 text-orange-600" />, value: overview.interactionsDetected, label: 'Interactions' },
           { icon: <FileText className="h-6 w-6 mx-auto mb-2 text-indigo-600" />, value: overview.reconciliationPending, label: 'Need Review' },
-          { icon: <TrendingUp className="h-6 w-6 mx-auto mb-2 text-teal-600" />, value: overview.totalMedications, label: 'Total Meds' },
+          { icon: <TrendingUp className="h-6 w-6 mx-auto mb-2 text-[var(--ea-primary)]" />, value: overview.totalMedications, label: 'Total Meds' },
         ].map((stat, idx) => (
           <Card key={idx}><CardContent className="p-4 text-center">
             {stat.icon}

@@ -98,7 +98,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps }) => 
             {index > 0 && (
               <div
                 className={`h-1 w-16 mx-2 ${
-                  isComplete ? 'bg-blue-500' : 'bg-gray-200'
+                  isComplete ? 'bg-[var(--ea-primary)]' : 'bg-gray-200'
                 }`}
               />
             )}
@@ -106,9 +106,9 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps }) => 
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
                   isComplete
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                     : isCurrent
-                    ? 'bg-blue-500 text-white ring-4 ring-blue-200'
+                    ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] ring-4 ring-[var(--ea-primary)]/30'
                     : 'bg-gray-200 text-gray-600'
                 }`}
               >
@@ -116,7 +116,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps }) => 
               </div>
               <div
                 className={`mt-2 text-xs font-medium ${
-                  isCurrent ? 'text-blue-600' : 'text-gray-500'
+                  isCurrent ? 'text-[var(--ea-primary)]' : 'text-gray-500'
                 }`}
               >
                 {step.label}
@@ -148,7 +148,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
     <div
       className={`border-2 rounded-lg p-4 transition-all ${
         isSelected
-          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+          ? 'border-[var(--ea-primary)] bg-[var(--ea-primary)]/5 ring-2 ring-[var(--ea-primary)]/30'
           : 'border-gray-200 hover:border-gray-300'
       } ${onSelect ? 'cursor-pointer' : ''}`}
       onClick={onSelect}
@@ -156,7 +156,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium text-gray-500">{label}</span>
         {isSelected && (
-          <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+          <span className="px-2 py-1 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] text-xs rounded-full">
             Surviving Record
           </span>
         )}
@@ -440,7 +440,7 @@ const PatientMergeWizard: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-500" />
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto text-[var(--ea-primary)]" />
           <p className="mt-4 text-gray-500">Loading patient data...</p>
         </div>
       </div>
@@ -478,7 +478,7 @@ const PatientMergeWizard: React.FC = () => {
           Back to MPI Queue
         </button>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <GitMerge className="w-7 h-7 text-blue-600" />
+          <GitMerge className="w-7 h-7 text-[var(--ea-primary)]" />
           Patient Merge Wizard
         </h1>
         <p className="text-gray-500 mt-1">
@@ -547,7 +547,7 @@ const PatientMergeWizard: React.FC = () => {
                       <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-500">
                         Field
                       </th>
-                      <th className="px-4 py-3 bg-blue-50 text-left text-sm font-medium text-blue-700">
+                      <th className="px-4 py-3 bg-[var(--ea-primary)]/5 text-left text-sm font-medium text-[var(--ea-primary)]">
                         Surviving Record
                       </th>
                       <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-500">
@@ -616,12 +616,12 @@ const PatientMergeWizard: React.FC = () => {
               </p>
 
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-[var(--ea-primary)]/5 border border-[var(--ea-primary)]/20 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Shield className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-blue-900">Surviving Patient</span>
+                    <Shield className="w-5 h-5 text-[var(--ea-primary)]" />
+                    <span className="font-medium text-[var(--ea-primary)]">Surviving Patient</span>
                   </div>
-                  <div className="text-blue-800">
+                  <div className="text-[var(--ea-primary)]">
                     {survivingPatient.first_name} {survivingPatient.last_name} (MRN:{' '}
                     {survivingPatient.mrn || 'N/A'})
                   </div>
@@ -690,7 +690,7 @@ const PatientMergeWizard: React.FC = () => {
                   <textarea
                     value={mergeReason}
                     onChange={(e) => setMergeReason(e.target.value)}
-                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[var(--ea-primary)]"
                     rows={3}
                     placeholder="Enter the reason for this merge..."
                   />

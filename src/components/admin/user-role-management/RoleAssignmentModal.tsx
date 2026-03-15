@@ -57,7 +57,7 @@ export const RoleAssignmentModal: React.FC<RoleAssignmentModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-blue-600" />
+            <ShieldCheck className="w-5 h-5 text-[var(--ea-primary)]" />
             <h3 className="text-lg font-semibold text-gray-900">Assign Role</h3>
           </div>
           <button
@@ -96,7 +96,7 @@ export const RoleAssignmentModal: React.FC<RoleAssignmentModalProps> = ({
               id="role-select"
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as StaffRole | '')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
               disabled={saving}
             >
               <option value="">Select a role...</option>
@@ -122,7 +122,7 @@ export const RoleAssignmentModal: React.FC<RoleAssignmentModalProps> = ({
               id="dept-select"
               value={selectedDept || ''}
               onChange={(e) => setSelectedDept((e.target.value || null) as Department)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
               disabled={saving}
             >
               {DEPARTMENTS.map(opt => (
@@ -144,7 +144,7 @@ export const RoleAssignmentModal: React.FC<RoleAssignmentModalProps> = ({
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g., New hire onboarding, role promotion, department transfer..."
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)] resize-none"
               disabled={saving}
             />
             <p className="text-xs text-gray-400 mt-1">
@@ -170,7 +170,7 @@ export const RoleAssignmentModal: React.FC<RoleAssignmentModalProps> = ({
             <button
               type="submit"
               disabled={saving || assignableRoles.length === 0}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[var(--ea-primary)] rounded-md hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {saving ? 'Saving...' : 'Assign Role'}

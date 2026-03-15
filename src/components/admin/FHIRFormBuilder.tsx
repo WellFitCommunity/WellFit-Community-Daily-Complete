@@ -248,7 +248,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
                   className="text-left p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                   disabled={isGenerating}
                 >
-                  <div className="font-medium text-blue-600">{template.name}</div>
+                  <div className="font-medium text-[var(--ea-primary)]">{template.name}</div>
                   <div className="text-xs text-gray-500 mt-1">{template.description}</div>
                 </button>
               ))}
@@ -271,7 +271,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
             <Button
               onClick={() => generateForm()}
               disabled={isGenerating || !naturalLanguageInput.trim()}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-[var(--ea-primary)] hover:bg-[var(--ea-primary-hover)]"
             >
               {isGenerating ? 'Generating...' : '🚀 Generate FHIR Form'}
             </Button>
@@ -307,13 +307,13 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setPreviewMode('form')}
-                  className={`px-3 py-1 text-sm ${previewMode === 'form' ? 'bg-blue-100 text-blue-700' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm ${previewMode === 'form' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
                 >
                   📝 Form Preview
                 </button>
                 <button
                   onClick={() => setPreviewMode('json')}
-                  className={`px-3 py-1 text-sm border-l border-gray-300 ${previewMode === 'json' ? 'bg-blue-100 text-blue-700' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm border-l border-gray-300 ${previewMode === 'json' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
                 >
                   📋 FHIR JSON
                 </button>

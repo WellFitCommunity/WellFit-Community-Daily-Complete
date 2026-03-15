@@ -247,8 +247,8 @@ const WorkflowWizardModal: React.FC<WorkflowWizardModalProps> = ({ workflow, onC
       const element = document.getElementById(`section-${step.sectionId}`);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        element.classList.add('ring-2', 'ring-teal-500');
-        setTimeout(() => element.classList.remove('ring-2', 'ring-teal-500'), 2000);
+        element.classList.add('ring-2', 'ring-[var(--ea-primary)]');
+        setTimeout(() => element.classList.remove('ring-2', 'ring-[var(--ea-primary)]'), 2000);
       } else {
         const sectionElement = document.querySelector(`[data-section-id="${step.sectionId}"]`);
         if (sectionElement) {
@@ -283,11 +283,11 @@ const WorkflowWizardModal: React.FC<WorkflowWizardModalProps> = ({ workflow, onC
         <div className="px-6 pt-4">
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-gray-600">{completedCount}/{totalSteps} steps complete</span>
-            <span className="font-medium text-teal-700">{progressPct}%</span>
+            <span className="font-medium text-[var(--ea-primary)]">{progressPct}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-teal-600 h-2 rounded-full transition-all duration-300"
+              className="bg-[var(--ea-primary)] h-2 rounded-full transition-all duration-300"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -303,7 +303,7 @@ const WorkflowWizardModal: React.FC<WorkflowWizardModalProps> = ({ workflow, onC
                 className={`rounded-xl border-2 p-4 transition-all ${
                   isComplete
                     ? 'border-green-200 bg-green-50/50'
-                    : 'border-gray-200 bg-white hover:border-teal-200'
+                    : 'border-gray-200 bg-white hover:border-[var(--ea-primary)]/20'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -329,7 +329,7 @@ const WorkflowWizardModal: React.FC<WorkflowWizardModalProps> = ({ workflow, onC
                   </div>
                   <button
                     onClick={() => handleNavigate(step)}
-                    className="flex-shrink-0 px-3 py-1.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-1"
+                    className="flex-shrink-0 px-3 py-1.5 bg-[var(--ea-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors flex items-center gap-1"
                   >
                     {step.actionLabel}
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -374,11 +374,11 @@ const ClinicalWorkflowWizard: React.FC<ClinicalWorkflowWizardProps> = ({ userRol
 
   return (
     <>
-      <div className="bg-linear-to-r from-teal-50 to-cyan-50 rounded-xl border-2 border-teal-200 p-6">
+      <div className="bg-linear-to-r from-[var(--ea-primary)]/5 to-cyan-50 rounded-xl border-2 border-[var(--ea-primary)]/20 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Play className="w-5 h-5 text-teal-700" />
-          <h3 className="text-lg font-bold text-teal-900">Clinical Workflows</h3>
-          <span className="text-xs text-teal-600">Step-by-step guides</span>
+          <Play className="w-5 h-5 text-[var(--ea-primary)]" />
+          <h3 className="text-lg font-bold text-[var(--ea-primary)]">Clinical Workflows</h3>
+          <span className="text-xs text-[var(--ea-primary)]">Step-by-step guides</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {availableWorkflows.map(workflow => {
@@ -391,10 +391,10 @@ const ClinicalWorkflowWizard: React.FC<ClinicalWorkflowWizardProps> = ({ userRol
               <button
                 key={workflow.id}
                 onClick={() => setActiveWorkflow(workflow)}
-                className="bg-white rounded-xl p-4 text-left shadow-sm border border-teal-100 hover:border-teal-300 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl p-4 text-left shadow-sm border border-[var(--ea-primary)]/10 hover:border-[var(--ea-primary)]/30 hover:shadow-md transition-all group"
               >
                 <span className="text-2xl">{workflow.icon}</span>
-                <h4 className="font-semibold text-gray-900 mt-2 group-hover:text-teal-700 transition-colors">
+                <h4 className="font-semibold text-gray-900 mt-2 group-hover:text-[var(--ea-primary)] transition-colors">
                   {workflow.name}
                 </h4>
                 <p className="text-xs text-gray-500 mt-1 line-clamp-2">{workflow.description}</p>
@@ -402,11 +402,11 @@ const ClinicalWorkflowWizard: React.FC<ClinicalWorkflowWizardProps> = ({ userRol
                   <div className="mt-2">
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
                       <div
-                        className="bg-teal-500 h-1.5 rounded-full"
+                        className="bg-[var(--ea-primary)] h-1.5 rounded-full"
                         style={{ width: `${Math.round((completedCount / totalSteps) * 100)}%` }}
                       />
                     </div>
-                    <span className="text-xs text-teal-600 mt-1">{completedCount}/{totalSteps} done</span>
+                    <span className="text-xs text-[var(--ea-primary)] mt-1">{completedCount}/{totalSteps} done</span>
                   </div>
                 )}
                 {completedCount === totalSteps && totalSteps > 0 && (

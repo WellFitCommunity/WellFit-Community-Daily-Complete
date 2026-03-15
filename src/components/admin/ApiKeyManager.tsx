@@ -572,9 +572,9 @@ const ApiKeyManager: React.FC = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-            <div className="text-sm text-blue-800">Total Keys</div>
+          <div className="bg-[var(--ea-primary)]/5 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-[var(--ea-primary)]">{stats.total}</div>
+            <div className="text-sm text-[var(--ea-primary)]">Total Keys</div>
           </div>
           <div className="bg-green-50 p-4 rounded-lg">
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
@@ -613,7 +613,7 @@ const ApiKeyManager: React.FC = () => {
                 value={newOrgName}
                 onChange={e => setNewOrgName(e.target.value)}
                 placeholder="Enter organization name"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
                 disabled={loading}
                 maxLength={100}
                 pattern="[a-zA-Z0-9\s\-_.]+"
@@ -624,7 +624,7 @@ const ApiKeyManager: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || !newOrgName.trim()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                className="px-6 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus:ring-2 focus:ring-[var(--ea-primary)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
               >
                 {loading ? (
                   <>
@@ -691,7 +691,7 @@ const ApiKeyManager: React.FC = () => {
               placeholder="Search by organization or key ID..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
             />
           </div>
 
@@ -703,7 +703,7 @@ const ApiKeyManager: React.FC = () => {
               id="filter"
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value as 'all' | 'active' | 'inactive')}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
             >
               <option value="all">All Keys</option>
               <option value="active">Active Only</option>
@@ -755,7 +755,7 @@ const ApiKeyManager: React.FC = () => {
                 setSearchTerm('');
                 setFilterStatus('all');
               }}
-              className="mt-2 text-blue-600 hover:text-blue-800 underline"
+              className="mt-2 text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] underline"
             >
               Clear all filters
             </button>
@@ -826,7 +826,7 @@ const ApiKeyManager: React.FC = () => {
                 {filteredAndSortedKeys.map((key, index) => (
                   <tr
                     key={key.id}
-                    className={`${loading ? 'opacity-50' : ''} ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}
+                    className={`${loading ? 'opacity-50' : ''} ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-[var(--ea-primary)]/5 transition-colors`}
                   >
                     <td className="border border-gray-300 px-4 py-3">
                       <div className="font-medium text-gray-900">{key.org_name}</div>
@@ -834,7 +834,7 @@ const ApiKeyManager: React.FC = () => {
                         <span>ID: {key.id.slice(0, 8)}...</span>
                         <button
                           onClick={() => copyToClipboard(key.id, 'Key ID')}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          className="text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] transition-colors"
                           title="Copy full key ID"
                         >
                           📋
@@ -846,7 +846,7 @@ const ApiKeyManager: React.FC = () => {
                         <span>{displayableApiKeyRepresentation(key.api_key_hash, key.org_name)}</span>
                         <button
                           onClick={() => copyToClipboard(key.id, 'Key ID')}
-                          className="text-blue-600 hover:text-blue-800 transition-colors text-xs"
+                          className="text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] transition-colors text-xs"
                           title="Copy key ID"
                         >
                           📋

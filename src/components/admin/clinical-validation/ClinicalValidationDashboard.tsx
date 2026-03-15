@@ -116,7 +116,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--ea-primary)]" />
         <span className="ml-3 text-slate-400">Loading validation data...</span>
       </div>
     );
@@ -125,7 +125,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
   if (error) {
     return (
       <EAAlert variant="warning" title="Error Loading Validation Data">
-        {error}. <button onClick={refresh} className="underline text-blue-400 min-h-[44px]">Retry</button>
+        {error}. <button onClick={refresh} className="underline text-[var(--ea-primary)] min-h-[44px]">Retry</button>
       </EAAlert>
     );
   }
@@ -225,7 +225,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
               </button>
               <button
                 onClick={refresh}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px]"
+                className="bg-[var(--ea-primary)] hover:bg-[var(--ea-primary-hover)] text-white px-4 py-2 rounded text-sm font-medium min-h-[44px]"
               >
                 Refresh
               </button>

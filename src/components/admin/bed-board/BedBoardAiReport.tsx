@@ -54,7 +54,7 @@ export const BedBoardAiReport: React.FC<BedBoardAiReportProps> = ({ aiReport }) 
       <EACard>
         <EACardContent className="p-4 text-center">
           <p className="text-sm text-slate-400">AI Cost</p>
-          <p className="text-3xl font-bold text-teal-400">${aiReport.totalAiCost.toFixed(3)}</p>
+          <p className="text-3xl font-bold text-[var(--ea-primary)]">${aiReport.totalAiCost.toFixed(3)}</p>
           <p className="text-xs text-slate-500">This report</p>
         </EACardContent>
       </EACard>
@@ -161,7 +161,7 @@ export const BedBoardAiReport: React.FC<BedBoardAiReportProps> = ({ aiReport }) 
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Available Beds</span>
-                    <span className="text-teal-400 font-medium">{forecast.predictedAvailableBeds}</span>
+                    <span className="text-[var(--ea-primary)] font-medium">{forecast.predictedAvailableBeds}</span>
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-700">
@@ -289,7 +289,7 @@ export const BedBoardAiReport: React.FC<BedBoardAiReportProps> = ({ aiReport }) 
                     <td className="py-3 pr-4">
                       <span className={`px-2 py-1 rounded text-xs ${
                         rec.dischargeReadiness === 'ready' ? 'bg-green-500/20 text-green-400' :
-                        rec.dischargeReadiness === 'likely_today' ? 'bg-teal-500/20 text-teal-400' :
+                        rec.dischargeReadiness === 'likely_today' ? 'bg-[var(--ea-primary)]/20 text-[var(--ea-primary)]' :
                         rec.dischargeReadiness === 'likely_tomorrow' ? 'bg-yellow-500/20 text-yellow-400' :
                         'bg-slate-600 text-slate-400'
                       }`}>

@@ -51,7 +51,7 @@ const SystemAdminCategory = lazy(() => import('./sections/SystemAdminCategory'))
 // Category loading fallback
 const CategoryLoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center p-12">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary)]"></div>
     <span className="ml-3 text-gray-700 text-lg">Loading category...</span>
   </div>
 );
@@ -78,9 +78,9 @@ const IntelligentAdminPanel: React.FC = () => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      element.classList.add('ring-2', 'ring-teal-500');
+      element.classList.add('ring-2', 'ring-[var(--ea-primary)]');
       setTimeout(() => {
-        element.classList.remove('ring-2', 'ring-teal-500');
+        element.classList.remove('ring-2', 'ring-[var(--ea-primary)]');
       }, 2000);
     }
   }, []);
@@ -330,7 +330,7 @@ const IntelligentAdminPanel: React.FC = () => {
 
           {/* Role Panel Navigation - Super Admin Only */}
           {adminRole === 'super_admin' && (
-            <div className="bg-linear-to-r from-teal-600 to-cyan-700 rounded-xl shadow-lg p-6">
+            <div className="bg-linear-to-r from-[var(--ea-primary)] to-cyan-700 rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-white text-xl font-bold">🏥 View Role Dashboards</h2>
               </div>

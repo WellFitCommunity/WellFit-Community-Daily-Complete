@@ -329,7 +329,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
                 type="button"
                 onClick={handleCreateFHIRPractitioner}
                 disabled={fhirCreating}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all min-h-[44px]"
+                className="px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] text-sm font-semibold rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:bg-blue-300 disabled:cursor-not-allowed transition-all min-h-[44px]"
               >
                 {fhirCreating ? 'Creating...' : 'Create FHIR Practitioner'}
               </button>

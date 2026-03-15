@@ -244,7 +244,7 @@ export const FHIRResourceForm: React.FC<FHIRResourceFormProps> = ({
             id="resource-type-select"
             value={resourceType}
             onChange={(e) => handleResourceTypeChange(e.target.value as FHIRResourceType)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
           >
             {SUPPORTED_RESOURCE_TYPES.map(type => (
               <option key={type} value={type}>{type}</option>
@@ -266,7 +266,7 @@ export const FHIRResourceForm: React.FC<FHIRResourceFormProps> = ({
                 id={`field-${field.key}`}
                 value={formData[field.key] || ''}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
               >
                 <option value="">Select...</option>
                 {field.options.map(opt => (
@@ -280,7 +280,7 @@ export const FHIRResourceForm: React.FC<FHIRResourceFormProps> = ({
                 value={formData[field.key] || ''}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
               />
             )}
           </div>
@@ -349,7 +349,7 @@ export const FHIRResourceForm: React.FC<FHIRResourceFormProps> = ({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 min-h-[44px]"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] transition disabled:opacity-50 min-h-[44px]"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin" />

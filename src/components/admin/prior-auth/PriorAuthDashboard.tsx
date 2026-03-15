@@ -192,7 +192,7 @@ const PriorAuthDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--ea-primary)]" />
         <span className="ml-3 text-lg text-gray-600">Loading prior authorizations...</span>
       </div>
     );

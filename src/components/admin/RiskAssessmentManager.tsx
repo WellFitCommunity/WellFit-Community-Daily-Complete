@@ -157,7 +157,7 @@ const RiskAssessmentManager: React.FC = () => {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary)] mx-auto mb-4"></div>
           <div>Loading risk assessments...</div>
         </CardContent>
       </Card>
@@ -365,7 +365,7 @@ const RiskAssessmentManager: React.FC = () => {
                         setEditingAssessment(null);
                       }}
                       className={`p-4 border rounded-lg text-left hover:bg-gray-50 transition-colors ${
-                        selectedPatient === patient.user_id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                        selectedPatient === patient.user_id ? 'border-[var(--ea-primary)] bg-[var(--ea-primary)]/5' : 'border-gray-200'
                       }`}
                     >
                       <div className="font-medium">

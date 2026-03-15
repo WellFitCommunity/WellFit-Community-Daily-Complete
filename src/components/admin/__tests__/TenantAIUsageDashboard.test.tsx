@@ -281,7 +281,7 @@ describe('TenantAIUsageDashboard', () => {
     render(<TenantAIUsageDashboard />);
     await waitFor(() => {
       const btn = screen.getByText('30 Days');
-      expect(btn.className).toContain('bg-blue-600');
+      expect(btn.className).toContain('bg-[var(--ea-primary)]');
     });
   });
 

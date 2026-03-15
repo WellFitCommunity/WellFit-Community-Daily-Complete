@@ -34,7 +34,7 @@ export const CostTrendsSection: React.FC<CostTrendsSectionProps> = ({ costTrends
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center">
                     <div
-                      className="w-full bg-teal-500 rounded-t transition-all duration-300"
+                      className="w-full bg-[var(--ea-primary)] rounded-t transition-all duration-300"
                       style={{ height: `${height}%`, minHeight: '4px' }}
                       title={`${trend.date}: $${trend.cost.toFixed(2)}`}
                     />

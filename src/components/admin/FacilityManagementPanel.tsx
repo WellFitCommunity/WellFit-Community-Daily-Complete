@@ -456,7 +456,7 @@ const FacilityManagementPanel: React.FC = () => {
                     )}
                     <button
                       onClick={() => handleOpenModal(facility)}
-                      className="p-2 text-gray-400 hover:text-blue-600"
+                      className="p-2 text-gray-400 hover:text-[var(--ea-primary)]"
                       title="Edit"
                     >
                       <Edit2 className="w-4 h-4" />

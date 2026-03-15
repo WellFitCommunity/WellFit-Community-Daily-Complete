@@ -58,7 +58,7 @@ export const BedDischargeModal: React.FC<BedDischargeModalProps> = ({
             <select
               value={dischargeDisposition}
               onChange={(e) => onSetDisposition(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-[var(--ea-primary)]"
             >
               <option value="">Select disposition...</option>
               {DISCHARGE_DISPOSITIONS.map((opt) => (
@@ -68,11 +68,11 @@ export const BedDischargeModal: React.FC<BedDischargeModalProps> = ({
           </div>
 
           {selectedDisp?.isPostAcute && (
-            <div className="p-4 bg-teal-500/10 border border-teal-500/30 rounded-lg">
+            <div className="p-4 bg-[var(--ea-primary)]/10 border border-[var(--ea-primary)]/30 rounded-lg">
               <div className="flex items-start gap-3">
-                <FileText className="w-5 h-5 text-teal-400 mt-0.5" />
+                <FileText className="w-5 h-5 text-[var(--ea-primary)] mt-0.5" />
                 <div>
-                  <p className="text-sm text-teal-400 font-medium">Transfer Packet Required</p>
+                  <p className="text-sm text-[var(--ea-primary)] font-medium">Transfer Packet Required</p>
                   <p className="text-xs text-slate-400 mt-1">
                     This discharge type requires a clinical handoff packet. After confirming
                     discharge, you will be redirected to create the transfer documentation.

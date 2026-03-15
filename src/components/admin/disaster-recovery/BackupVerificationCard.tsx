@@ -150,7 +150,7 @@ export const BackupVerificationCard: React.FC<BackupVerificationCardProps> = ({
             {/* History Toggle */}
             <button
               onClick={() => setShowBackupHistory(!showBackupHistory)}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+              className="flex items-center gap-2 text-sm text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]"
             >
               {showBackupHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               {showBackupHistory ? 'Hide' : 'Show'} Recent History

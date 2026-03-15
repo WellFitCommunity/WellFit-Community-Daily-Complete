@@ -54,7 +54,7 @@ export const PendingInvitationsTable: React.FC<PendingInvitationsTableProps> = (
         <p className="text-sm">No pending registrations</p>
         <button
           onClick={onRefresh}
-          className="mt-2 text-xs text-blue-600 hover:text-blue-700"
+          className="mt-2 text-xs text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]"
         >
           Refresh
         </button>
@@ -71,7 +71,7 @@ export const PendingInvitationsTable: React.FC<PendingInvitationsTableProps> = (
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+          className="flex items-center gap-1 text-xs text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]"
         >
           <RefreshCw className="w-3 h-3" /> Refresh
         </button>

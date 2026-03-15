@@ -330,7 +330,7 @@ export const ResponsePanel: React.FC<ResponsePanelProps> = ({
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
               rows={6}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
               placeholder="Type your response to the patient here... (autosaves every 3 seconds)"
             />
           </div>
@@ -343,7 +343,7 @@ export const ResponsePanel: React.FC<ResponsePanelProps> = ({
               value={nurseNotes}
               onChange={(e) => setNurseNotes(e.target.value)}
               rows={3}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
               placeholder="Add notes for other care team members..."
             />
           </div>
@@ -353,7 +353,7 @@ export const ResponsePanel: React.FC<ResponsePanelProps> = ({
             <button
               onClick={submitResponse}
               disabled={submitting || !responseText.trim()}
-              className="flex-1 py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
+              className="flex-1 py-3 px-4 bg-[var(--ea-primary)] text-white font-medium rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
             >
               {submitting ? (
                 'Sending Response...'

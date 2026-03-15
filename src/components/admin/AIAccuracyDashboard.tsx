@@ -316,7 +316,7 @@ export default function AIAccuracyDashboard() {
                   key={skill.skillName}
                   className={`cursor-pointer transition-all ${
                     selectedSkill === skill.skillName
-                      ? 'ring-2 ring-teal-500 bg-slate-800/80'
+                      ? 'ring-2 ring-[var(--ea-primary)] bg-slate-800/80'
                       : 'hover:bg-slate-800/50'
                   }`}
                   onClick={() => setSelectedSkill(
@@ -327,7 +327,7 @@ export default function AIAccuracyDashboard() {
                     <h3 className="font-medium text-white">
                       {SKILL_DISPLAY_NAMES[skill.skillName] || skill.skillName}
                       {selectedSkill === skill.skillName && (
-                        <span className="ml-2 text-xs text-teal-400">● Selected</span>
+                        <span className="ml-2 text-xs text-[var(--ea-primary)]">● Selected</span>
                       )}
                     </h3>
                     <EABadge variant={getAccuracyColor(skill.accuracyRate)}>

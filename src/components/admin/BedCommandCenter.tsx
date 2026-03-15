@@ -70,7 +70,7 @@ export const BedCommandCenter: React.FC = () => {
   if (isLoading && !summary) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary)]" />
       </div>
     );
   }
@@ -223,7 +223,7 @@ export const BedCommandCenter: React.FC = () => {
               Filtered by: {getAlertLevelLabel(currentFilters.alertLevel)}
               <button
                 onClick={() => filterByAlertLevel(null)}
-                className="ml-2 text-blue-600 hover:underline"
+                className="ml-2 text-[var(--ea-primary)] hover:underline"
               >
                 Clear
               </button>
@@ -318,7 +318,7 @@ const AlertStatusCard: React.FC<AlertStatusCardProps> = ({
     <button
       onClick={onClick}
       className={`rounded-lg border p-4 text-left transition-all ${
-        active ? 'ring-2 ring-blue-500' : ''
+        active ? 'ring-2 ring-[var(--ea-primary)]' : ''
       } ${getAlertLevelColor(level)}`}
     >
       <p className="text-xs uppercase tracking-wide opacity-75">{label}</p>
@@ -485,7 +485,7 @@ const FacilityDetailModal: React.FC<FacilityDetailModalProps> = ({
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
               <p className="text-2xl font-bold text-blue-700">{facility.reserved_beds}</p>
-              <p className="text-xs text-blue-600">Reserved</p>
+              <p className="text-xs text-[var(--ea-primary)]">Reserved</p>
             </div>
           </div>
 
@@ -555,7 +555,7 @@ const UnitRow: React.FC<{ label: string; occupied: number; available: number }> 
 const PredictionBox: React.FC<{ label: string; value: number }> = ({ label, value }) => (
   <div className="text-center p-2 bg-blue-50 rounded">
     <p className="text-lg font-semibold text-blue-700">{value}</p>
-    <p className="text-xs text-blue-600">{label}</p>
+    <p className="text-xs text-[var(--ea-primary)]">{label}</p>
   </div>
 );
 

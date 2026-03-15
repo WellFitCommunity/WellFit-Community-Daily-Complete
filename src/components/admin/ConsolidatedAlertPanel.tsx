@@ -100,7 +100,7 @@ function RootCauseCard({ cause, index }: { cause: RootCause; index: number }) {
       </div>
       <p className="text-sm text-slate-600 mb-2">{cause.description}</p>
       <div className="flex items-start gap-2 p-2 bg-blue-50 rounded text-sm">
-        <Shield className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+        <Shield className="h-4 w-4 text-[var(--ea-primary)] mt-0.5 shrink-0" />
         <span className="text-blue-800">{cause.recommended_intervention}</span>
       </div>
     </div>
@@ -255,7 +255,7 @@ export const ConsolidatedAlertPanel: React.FC<ConsolidatedAlertPanelProps> = ({
         <div className="p-4 border-t border-slate-100 bg-slate-50">
           <button
             onClick={onAcknowledge}
-            className="w-full min-h-[44px] bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors"
+            className="w-full min-h-[44px] bg-[var(--ea-primary)] text-white rounded-lg font-medium hover:bg-[var(--ea-primary-hover)] transition-colors"
           >
             Acknowledge & Continue
           </button>

@@ -29,7 +29,7 @@ const PatientEnrollmentForm: React.FC = () => {
       <div className="print:hidden mb-6 flex justify-end">
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)]"
         >
           <Printer className="w-5 h-5" />
           Print Form

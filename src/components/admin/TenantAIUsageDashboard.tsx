@@ -218,7 +218,7 @@ const TenantAIUsageDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadAIUsage}
-          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-xs"
+          className="mt-4 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] px-4 py-2 rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors shadow-xs"
         >
           Retry
         </button>
@@ -244,7 +244,7 @@ const TenantAIUsageDashboard: React.FC = () => {
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -255,7 +255,7 @@ const TenantAIUsageDashboard: React.FC = () => {
           <button
             onClick={loadAIUsage}
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs"
+            className="bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] px-4 py-2 rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs"
           >
             <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -281,7 +281,7 @@ const TenantAIUsageDashboard: React.FC = () => {
 
           <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
             <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-5 h-5 text-blue-600" />
+              <Zap className="w-5 h-5 text-[var(--ea-primary)]" />
               <span className="font-semibold text-blue-900">Total Tokens</span>
             </div>
             <div className="text-3xl font-bold text-blue-900">
@@ -381,7 +381,7 @@ const TenantAIUsageDashboard: React.FC = () => {
       {/* Info */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <DollarSign className="w-5 h-5 text-blue-600 mt-0.5" />
+          <DollarSign className="w-5 h-5 text-[var(--ea-primary)] mt-0.5" />
           <div className="text-sm text-blue-900">
             <p className="font-medium mb-1">AI Cost Breakdown</p>
             <p className="text-blue-800">

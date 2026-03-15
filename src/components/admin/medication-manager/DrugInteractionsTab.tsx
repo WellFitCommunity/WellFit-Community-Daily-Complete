@@ -105,7 +105,7 @@ export const DrugInteractionsTab: React.FC<DrugInteractionsTabProps> = ({
                       size="sm"
                       variant="ghost"
                       onClick={() => handleViewEvidence(interaction)}
-                      className="text-xs text-blue-600"
+                      className="text-xs text-[var(--ea-primary)]"
                     >
                       <BookOpen className="h-3 w-3 mr-1" />
                       {evidenceTarget === `${interaction.drug1}-${interaction.drug2}` ? 'Hide Evidence' : 'View Evidence'}
@@ -207,7 +207,7 @@ function EvidenceCitationPanel({ articles, loading, error }: {
                 href={`https://doi.org/${article.doi}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                className="text-[var(--ea-primary)] hover:underline inline-flex items-center gap-0.5"
               >
                 DOI: {article.doi} <ExternalLink className="h-2.5 w-2.5" />
               </a>

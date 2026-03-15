@@ -99,7 +99,7 @@ export const PriorAuthList: React.FC<PriorAuthListProps> = ({
                     {auth.status === 'draft' && (
                       <button
                         onClick={() => onSubmit(auth.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 min-h-[32px]"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-[var(--ea-primary)] rounded hover:bg-[var(--ea-primary-hover)] min-h-[32px]"
                         title="Submit to payer"
                       >
                         <Send className="w-3.5 h-3.5" /> Submit

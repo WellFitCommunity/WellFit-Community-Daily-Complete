@@ -442,14 +442,14 @@ describe('TimeClockAdmin', () => {
     const todayBtn = screen.getByRole('button', { name: 'Today' });
     await user.click(todayBtn);
 
-    expect(todayBtn).toHaveClass('bg-teal-500');
+    expect(todayBtn).toHaveClass('bg-[var(--ea-primary)]');
   });
 
   it('Week filter is active by default', async () => {
     await renderWithAccess();
 
     const weekBtn = screen.getByRole('button', { name: 'Week' });
-    expect(weekBtn).toHaveClass('bg-teal-500');
+    expect(weekBtn).toHaveClass('bg-[var(--ea-primary)]');
   });
 
   it('highlights Month button when Month filter is clicked', async () => {
@@ -459,7 +459,7 @@ describe('TimeClockAdmin', () => {
     const monthBtn = screen.getByRole('button', { name: 'Month' });
     await user.click(monthBtn);
 
-    expect(monthBtn).toHaveClass('bg-teal-500');
+    expect(monthBtn).toHaveClass('bg-[var(--ea-primary)]');
   });
 
   // ---------- View Mode Filters ----------------------------------------------

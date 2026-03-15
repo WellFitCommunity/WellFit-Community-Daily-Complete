@@ -60,7 +60,7 @@ import { getMcpSections } from './mcpSections';
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center p-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--ea-primary)]"></div>
     <span className="ml-3 text-gray-600">Loading section...</span>
   </div>
 );
@@ -133,7 +133,7 @@ export const getAllSections = (): DashboardSection[] => [
     title: 'Provider Coverage & On-Call',
     subtitle: 'Manage provider absence coverage, on-call rotations, and automatic task routing',
     icon: '\uD83D\uDD04',
-    headerColor: 'text-teal-800',
+    headerColor: 'text-[var(--ea-primary)]',
     component: <Suspense fallback={<SectionLoadingFallback />}><ProviderCoverageDashboard /></Suspense>,
     category: 'patient-care',
     priority: 'high',
@@ -144,7 +144,7 @@ export const getAllSections = (): DashboardSection[] => [
     title: 'Patient Handoff System',
     subtitle: 'Secure transfer of care between facilities - HIPAA compliant',
     icon: '\uD83C\uDFE5',
-    headerColor: 'text-teal-800',
+    headerColor: 'text-[var(--ea-primary)]',
     component: <Suspense fallback={<SectionLoadingFallback />}><AdminTransferLogs showExportButton={true} /></Suspense>,
     category: 'patient-care',
     priority: 'medium',
@@ -300,7 +300,7 @@ export const getAllSections = (): DashboardSection[] => [
     title: 'Public Health Reporting',
     subtitle: 'Monitor syndromic surveillance, immunization registry, and eCR transmissions',
     icon: '\uD83D\uDCE1',
-    headerColor: 'text-teal-800',
+    headerColor: 'text-[var(--ea-primary)]',
     component: <Suspense fallback={<SectionLoadingFallback />}><PublicHealthReportingDashboard /></Suspense>,
     category: 'clinical',
     priority: 'high',
@@ -331,7 +331,7 @@ export const getAllSections = (): DashboardSection[] => [
     title: 'FHIR Data Mapper',
     subtitle: 'Transform legacy data into FHIR-compliant formats',
     icon: '\uD83D\uDD04',
-    headerColor: 'text-teal-800',
+    headerColor: 'text-[var(--ea-primary)]',
     component: <Suspense fallback={<SectionLoadingFallback />}><FHIRDataMapper /></Suspense>,
     category: 'clinical',
     priority: 'low',
@@ -374,7 +374,7 @@ export const getAllSections = (): DashboardSection[] => [
     title: 'Specialist Confirmation Tracking',
     subtitle: 'Record specialist completion, flag overdue referrals, and close the referral loop',
     icon: '\u2705',
-    headerColor: 'text-teal-800',
+    headerColor: 'text-[var(--ea-primary)]',
     component: <Suspense fallback={<SectionLoadingFallback />}><ReferralCompletionDashboard /></Suspense>,
     category: 'clinical',
     priority: 'high',
@@ -538,7 +538,7 @@ export const getAllSections = (): DashboardSection[] => [
     title: 'Module Configuration',
     subtitle: 'Enable or disable platform modules for your organization',
     icon: '\u2699\uFE0F',
-    headerColor: 'text-teal-800',
+    headerColor: 'text-[var(--ea-primary)]',
     component: <Suspense fallback={<SectionLoadingFallback />}><TenantModuleConfigPanel /></Suspense>,
     category: 'admin',
     priority: 'high',

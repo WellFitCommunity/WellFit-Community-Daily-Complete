@@ -115,7 +115,7 @@ const CostManagementTab: React.FC<CostManagementTabProps> = ({
                   <div className="text-sm text-slate-400">Queued</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-teal-400">{batchStats?.processingCount ?? 0}</div>
+                  <div className="text-2xl font-bold text-[var(--ea-primary)]">{batchStats?.processingCount ?? 0}</div>
                   <div className="text-sm text-slate-400">Processing</div>
                 </div>
               </div>
@@ -145,7 +145,7 @@ const CostManagementTab: React.FC<CostManagementTabProps> = ({
                       return (
                         <div key={idx} className="flex-1 flex flex-col items-center">
                           <div
-                            className="w-full bg-teal-500 rounded-t transition-all duration-300"
+                            className="w-full bg-[var(--ea-primary)] rounded-t transition-all duration-300"
                             style={{ height: `${height}%`, minHeight: '4px' }}
                             title={`${trend.date}: $${trend.cost.toFixed(2)}`}
                           />

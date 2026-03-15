@@ -133,7 +133,7 @@ export const IncidentsTab: React.FC<IncidentsTabProps> = ({
       <EACard>
         <EACardHeader>
           <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-teal-400" />
+            <Clock className="h-5 w-5 text-[var(--ea-primary)]" />
             <h2 className="text-lg font-semibold text-white">Investigation Queue</h2>
           </div>
         </EACardHeader>

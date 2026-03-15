@@ -279,7 +279,7 @@ const EncounterAuditTimeline: React.FC = () => {
                   onChange={e => setEncounterId(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') loadEncounter(); }}
                   placeholder="Enter encounter ID (UUID)..."
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
                 />
               </div>
             </div>
@@ -365,7 +365,7 @@ const EncounterAuditTimeline: React.FC = () => {
               <select
                 value={sourceFilter}
                 onChange={e => setSourceFilter(e.target.value as SourceFilter)}
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
                 aria-label="Filter by source"
               >
                 <option value="all">All Sources</option>
@@ -379,7 +379,7 @@ const EncounterAuditTimeline: React.FC = () => {
               <select
                 value={severityFilter}
                 onChange={e => setSeverityFilter(e.target.value as SeverityFilter)}
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
                 aria-label="Filter by severity"
               >
                 <option value="all">All Severities</option>
@@ -394,7 +394,7 @@ const EncounterAuditTimeline: React.FC = () => {
             <div className="p-4">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <RefreshCw className="w-5 h-5 animate-spin text-blue-600 mr-3" />
+                  <RefreshCw className="w-5 h-5 animate-spin text-[var(--ea-primary)] mr-3" />
                   <span className="text-gray-600">Loading audit trail...</span>
                 </div>
               ) : filteredTimeline.length === 0 ? (

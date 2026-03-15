@@ -58,7 +58,7 @@ export const ConnectionsTab: React.FC<ConnectionsTabProps> = ({
                   {conn.lastSync ? new Date(conn.lastSync).toLocaleString() : 'Never'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  <button onClick={() => onTest(conn.id)} className="text-blue-600 hover:text-blue-900">Test</button>
+                  <button onClick={() => onTest(conn.id)} className="text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]">Test</button>
                   <button onClick={() => onSelect(conn)} className="text-green-600 hover:text-green-900">Manage</button>
                   <button onClick={() => onDelete(conn.id)} className="text-red-600 hover:text-red-900">Delete</button>
                 </td>

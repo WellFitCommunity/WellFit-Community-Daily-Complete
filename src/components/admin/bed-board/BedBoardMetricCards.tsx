@@ -27,7 +27,7 @@ export const BedBoardMetricCards: React.FC<BedBoardMetricCardsProps> = ({
             <p className="text-sm text-slate-400">Total Beds</p>
             <p className="text-2xl font-bold text-white">{totalBeds}</p>
           </div>
-          <BedIcon className="w-8 h-8 text-teal-400 opacity-50" />
+          <BedIcon className="w-8 h-8 text-[var(--ea-primary)] opacity-50" />
         </div>
       </EACardContent>
     </EACard>
@@ -45,7 +45,7 @@ export const BedBoardMetricCards: React.FC<BedBoardMetricCardsProps> = ({
         </div>
         <div className="mt-2 w-full bg-slate-700 rounded-full h-2">
           <div
-            className={`h-2 rounded-full ${overallOccupancy >= 90 ? 'bg-red-500' : 'bg-teal-500'}`}
+            className={`h-2 rounded-full ${overallOccupancy >= 90 ? 'bg-red-500' : 'bg-[var(--ea-primary)]'}`}
             style={{ width: `${Math.min(overallOccupancy, 100)}%` }}
           />
         </div>

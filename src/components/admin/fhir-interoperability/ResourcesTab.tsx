@@ -241,7 +241,7 @@ export const ResourcesTab: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleEdit(selectedResource)}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition min-h-[44px]"
+              className="flex items-center gap-2 px-3 py-2 bg-[var(--ea-primary)]/10 text-[var(--ea-primary)] rounded-lg hover:bg-[var(--ea-primary)]/20 transition min-h-[44px]"
             >
               <Edit2 className="w-4 h-4" /> Edit
             </button>
@@ -273,12 +273,12 @@ export const ResourcesTab: React.FC = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+            <FileText className="w-5 h-5 text-[var(--ea-primary)]" />
             FHIR Resources
           </h3>
           <button
             onClick={() => setViewMode('create')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition min-h-[44px]"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] transition min-h-[44px]"
           >
             <Plus className="w-4 h-4" />
             Create Resource
@@ -403,7 +403,7 @@ export const ResourcesTab: React.FC = () => {
                       <div className="flex items-center gap-2 justify-end">
                         <button
                           onClick={() => handleViewDetail(entry)}
-                          className="p-2 text-gray-400 hover:text-blue-600 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          className="p-2 text-gray-400 hover:text-[var(--ea-primary)] transition min-h-[44px] min-w-[44px] flex items-center justify-center"
                           aria-label={`View ${entry.resourceType} ${entry.id}`}
                         >
                           <Eye className="w-4 h-4" />

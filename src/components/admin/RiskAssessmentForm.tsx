@@ -491,7 +491,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
               value={formData.assessment_notes || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, assessment_notes: e.target.value }))}
               rows={4}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
               placeholder="Document your clinical observations, concerns, and rationale for risk scores..."
             />
           </div>
@@ -630,7 +630,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
                 type="date"
                 value={formData.next_assessment_due || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, next_assessment_due: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
               />
             </div>
 
@@ -639,7 +639,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
               <select
                 value={formData.review_frequency || 'monthly'}
                 onChange={(e) => setFormData(prev => ({ ...prev, review_frequency: e.target.value as 'weekly' | 'biweekly' | 'monthly' | 'quarterly' }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
               >
                 <option value="weekly">Weekly</option>
                 <option value="biweekly">Bi-weekly</option>
@@ -667,7 +667,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              className="flex-1 bg-[var(--ea-primary)] hover:bg-[var(--ea-primary-hover)] text-[var(--ea-text-on-primary)]"
             >
               {loading ? 'Saving...' : (existingAssessment ? 'Update Assessment' : 'Save Assessment')}
             </Button>

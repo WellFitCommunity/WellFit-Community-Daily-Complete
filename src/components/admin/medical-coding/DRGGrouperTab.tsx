@@ -94,7 +94,7 @@ export const DRGGrouperTab: React.FC = () => {
         <button
           onClick={() => setMode('run')}
           className={`px-4 py-2 rounded-md text-sm font-medium ${
-            mode === 'run' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            mode === 'run' ? 'bg-[var(--ea-primary)] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
           <Brain className="w-4 h-4 inline mr-1" /> Run Grouper
@@ -102,7 +102,7 @@ export const DRGGrouperTab: React.FC = () => {
         <button
           onClick={() => setMode('lookup')}
           className={`px-4 py-2 rounded-md text-sm font-medium ${
-            mode === 'lookup' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            mode === 'lookup' ? 'bg-[var(--ea-primary)] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
           <Search className="w-4 h-4 inline mr-1" /> Lookup Result
@@ -186,7 +186,7 @@ export const DRGGrouperTab: React.FC = () => {
           <button
             onClick={mode === 'run' ? handleRun : handleLookup}
             disabled={loading}
-            className="flex items-center gap-2 bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50"
           >
             {mode === 'run' ? <Brain className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             {loading ? 'Processing...' : mode === 'run' ? 'Run DRG Grouper' : 'Lookup Result'}

@@ -199,7 +199,7 @@ export const TenantComplianceReport: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary)]"></div>
       </div>
     );
   }
@@ -212,7 +212,7 @@ export const TenantComplianceReport: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-blue-600" />
+          <Shield className="w-8 h-8 text-[var(--ea-primary)]" />
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Compliance Dashboard</h2>
             <p className="text-sm text-gray-600">HIPAA and security compliance status for your facility</p>
@@ -220,7 +220,7 @@ export const TenantComplianceReport: React.FC = () => {
         </div>
         <button
           onClick={downloadComplianceReport}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)]"
         >
           <Download className="w-4 h-4" />
           Download Report
@@ -309,7 +309,7 @@ export const TenantComplianceReport: React.FC = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+            <FileText className="w-5 h-5 text-[var(--ea-primary)]" />
             Recent Compliance Events
           </h3>
           <p className="text-sm text-gray-600 mt-1">Latest security and administrative actions</p>

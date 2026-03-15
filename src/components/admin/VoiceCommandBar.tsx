@@ -86,7 +86,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
         <div className="absolute bottom-full right-0 mb-2 w-72 max-h-80 overflow-y-auto bg-slate-800 rounded-lg shadow-xl border border-slate-600 p-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-white font-semibold text-sm flex items-center gap-2">
-              <Volume2 className="w-4 h-4 text-teal-400" />
+              <Volume2 className="w-4 h-4 text-[var(--ea-primary)]" />
               Voice Commands
             </h3>
             <button
@@ -103,7 +103,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
                 key={i}
                 className="flex items-center justify-between text-xs py-1 border-b border-slate-700 last:border-0"
               >
-                <span className="text-teal-300">"{cmd.phrase}"</span>
+                <span className="text-[var(--ea-primary)]">"{cmd.phrase}"</span>
                 <span className="text-slate-400 text-xs">{cmd.displayName}</span>
               </div>
             ))}
@@ -114,7 +114,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
       {/* Main Command Interface - Compact when not listening */}
       <div className={`bg-slate-800 rounded-full shadow-lg border transition-all duration-300 ${
         state.isListening
-          ? 'border-teal-500 ring-2 ring-teal-500/30 rounded-xl p-3'
+          ? 'border-[var(--ea-primary)] ring-2 ring-[var(--ea-primary)]/30 rounded-xl p-3'
           : 'border-slate-600 p-1'
       }`}>
         {/* Expanded Content - Only when listening */}
@@ -138,13 +138,13 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
 
             {/* Matched Command Feedback */}
             {state.matchedCommand && (
-              <div className="bg-teal-500/20 border border-teal-500 rounded-lg p-2 mb-2">
+              <div className="bg-[var(--ea-primary)]/20 border border-[var(--ea-primary)] rounded-lg p-2 mb-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-teal-300 text-xs">Executing:</p>
+                    <p className="text-[var(--ea-primary)] text-xs">Executing:</p>
                     <p className="text-white text-sm font-medium">{state.matchedCommand.displayName}</p>
                   </div>
-                  <div className="text-teal-400 text-xs">{state.confidence.toFixed(0)}%</div>
+                  <div className="text-[var(--ea-primary)] text-xs">{state.confidence.toFixed(0)}%</div>
                 </div>
               </div>
             )}
@@ -181,7 +181,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
             className={`rounded-full transition-all ${
               state.isListening
                 ? 'p-3 bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50'
-                : 'p-2 bg-teal-600 text-white hover:bg-teal-500 shadow-md'
+                : 'p-2 bg-[var(--ea-primary)] text-white hover:bg-[var(--ea-primary-hover)] shadow-md'
             }`}
             title={state.isListening ? 'Stop listening (Esc)' : 'Voice command (Ctrl+Shift+V)'}
           >
@@ -197,7 +197,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
             <button
               onClick={() => setShowHelp(!showHelp)}
               className={`p-2 rounded-full transition-colors ${
-                showHelp ? 'text-teal-400 bg-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                showHelp ? 'text-[var(--ea-primary)] bg-[var(--ea-primary)]/20' : 'text-slate-400 hover:text-white hover:bg-slate-700'
               }`}
               title="Show voice commands"
             >

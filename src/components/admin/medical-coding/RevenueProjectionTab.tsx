@@ -127,7 +127,7 @@ export const RevenueProjectionTab: React.FC = () => {
             key={key}
             onClick={() => setActiveSection(key)}
             className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium ${
-              activeSection === key ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              activeSection === key ? 'bg-[var(--ea-primary)] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             <Icon className="w-4 h-4" /> {label}
@@ -220,7 +220,7 @@ export const RevenueProjectionTab: React.FC = () => {
               : handleOptimization
             }
             disabled={loading}
-            className="flex items-center gap-2 bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50"
           >
             {loading ? 'Processing...' : activeSection === 'projection' ? 'Calculate' : activeSection === 'validation' ? 'Validate' : 'Optimize'}
           </button>
@@ -338,7 +338,7 @@ export const RevenueProjectionTab: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-gray-600">{finding.description}</p>
-                  <p className="text-blue-600 mt-1">{finding.suggested_action}</p>
+                  <p className="text-[var(--ea-primary)] mt-1">{finding.suggested_action}</p>
                   {finding.estimated_impact !== null && (
                     <p className="text-xs text-green-600 mt-1">Impact: {formatCurrency(finding.estimated_impact)}</p>
                   )}

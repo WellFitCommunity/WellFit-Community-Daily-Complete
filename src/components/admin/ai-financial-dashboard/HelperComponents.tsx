@@ -45,7 +45,7 @@ export const ProgressBar: React.FC<{
   value: number;
   max: number;
   color?: string;
-}> = ({ label, value, max, color = 'bg-teal-500' }) => {
+}> = ({ label, value, max, color = 'bg-[var(--ea-primary)]' }) => {
   const percentage = max > 0 ? (value / max) * 100 : 0;
 
   return (

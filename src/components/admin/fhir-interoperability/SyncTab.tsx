@@ -52,7 +52,7 @@ export const SyncTab: React.FC<SyncTabProps> = ({
               onClick={() => handleAutoSyncChange(option.value)}
               className={`px-4 py-3 rounded-lg border-2 transition text-left ${
                 autoSyncFrequency === option.value
-                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  ? 'border-[var(--ea-primary)] bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
@@ -76,7 +76,7 @@ export const SyncTab: React.FC<SyncTabProps> = ({
           <button
             onClick={() => onSync(connection.id, 'pull')}
             disabled={syncing}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             Pull from FHIR

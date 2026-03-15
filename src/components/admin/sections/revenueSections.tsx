@@ -173,7 +173,7 @@ export const getRevenueSections = (): DashboardSection[] => [
     title: 'Documentation Gap Indicator',
     subtitle: 'Proactive alerts showing what to document to qualify for higher E/M levels before billing',
     icon: '\uD83D\uDCDD',
-    headerColor: 'text-teal-800',
+    headerColor: 'text-[var(--ea-primary)]',
     component: <Suspense fallback={<SectionLoadingFallback />}><DocumentationGapDashboard /></Suspense>,
     category: 'revenue',
     priority: 'high',

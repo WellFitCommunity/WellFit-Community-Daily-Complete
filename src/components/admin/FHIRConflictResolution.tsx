@@ -440,7 +440,7 @@ export const FHIRConflictResolution: React.FC = () => {
               onClick={() => setFilter('unresolved')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === 'unresolved'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -450,7 +450,7 @@ export const FHIRConflictResolution: React.FC = () => {
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === 'all'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

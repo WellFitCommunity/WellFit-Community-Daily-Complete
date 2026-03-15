@@ -195,7 +195,7 @@ export const TimeClockAdmin: React.FC = () => {
     return (
       <EAPageLayout title="Time Clock Management">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--ea-primary)]" />
         </div>
       </EAPageLayout>
     );
@@ -294,7 +294,7 @@ export const TimeClockAdmin: React.FC = () => {
                     onClick={() => setDateFilter(filter)}
                     className={`px-3 py-1 text-sm rounded-md transition-colors ${
                       dateFilter === filter
-                        ? 'bg-teal-500 text-white'
+                        ? 'bg-[var(--ea-primary)] text-white'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -309,7 +309,7 @@ export const TimeClockAdmin: React.FC = () => {
                   onClick={() => setViewMode('all')}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${
                     viewMode === 'all'
-                      ? 'bg-teal-500 text-white'
+                      ? 'bg-[var(--ea-primary)] text-white'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -319,7 +319,7 @@ export const TimeClockAdmin: React.FC = () => {
                   onClick={() => setViewMode('team')}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${
                     viewMode === 'team'
-                      ? 'bg-teal-500 text-white'
+                      ? 'bg-[var(--ea-primary)] text-white'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -382,7 +382,7 @@ export const TimeClockAdmin: React.FC = () => {
                           {entry.clock_out_time ? (
                             formatTime(entry.clock_out_time)
                           ) : (
-                            <span className="text-teal-400">Active</span>
+                            <span className="text-[var(--ea-primary)]">Active</span>
                           )}
                         </td>
                         <td className="py-3 text-white font-medium">
@@ -396,7 +396,7 @@ export const TimeClockAdmin: React.FC = () => {
                             <span
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
                                 entry.was_on_time
-                                  ? 'bg-teal-500/20 text-teal-300'
+                                  ? 'bg-[var(--ea-primary)]/20 text-[var(--ea-primary)]'
                                   : 'bg-amber-500/20 text-amber-300'
                               }`}
                             >

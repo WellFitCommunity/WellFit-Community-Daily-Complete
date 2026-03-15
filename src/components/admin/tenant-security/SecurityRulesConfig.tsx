@@ -144,7 +144,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
               <button
                 onClick={() => { setEditingRule({ ...rule }); setValidationError(''); }}
                 disabled={saving}
-                className="px-2 py-1 text-xs text-blue-600 hover:text-blue-700"
+                className="px-2 py-1 text-xs text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]"
               >
                 Edit
               </button>

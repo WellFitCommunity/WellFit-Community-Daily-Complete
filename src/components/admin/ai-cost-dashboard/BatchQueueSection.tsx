@@ -34,7 +34,7 @@ export const BatchQueueSection: React.FC<BatchQueueSectionProps> = ({ queueStats
             <div className="text-sm text-slate-400">Queued</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-teal-400">
+            <div className="text-2xl font-bold text-[var(--ea-primary)]">
               {batchStats?.processingCount ?? 0}
             </div>
             <div className="text-sm text-slate-400">Processing</div>

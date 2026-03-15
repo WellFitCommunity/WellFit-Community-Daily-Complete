@@ -53,7 +53,7 @@ export const BedBoardForecastsTab: React.FC<BedBoardForecastsTabProps> = ({
                     </p>
                   </div>
                   {forecast.confidence_level && (
-                    <span className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded-sm text-sm">
+                    <span className="px-2 py-1 bg-[var(--ea-primary)]/20 text-[var(--ea-primary)] rounded-sm text-sm">
                       {Math.round((forecast.confidence_level ?? 0) * 100)}% confidence
                     </span>
                   )}
@@ -101,7 +101,7 @@ export const BedBoardForecastsTab: React.FC<BedBoardForecastsTabProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-teal-400" />
+            <Sparkles className="w-5 h-5 text-[var(--ea-primary)]" />
             AI-Powered Capacity Optimization
           </h2>
           <p className="text-sm text-slate-400 mt-1">
@@ -122,7 +122,7 @@ export const BedBoardForecastsTab: React.FC<BedBoardForecastsTabProps> = ({
       {!aiReport && !loadingAiReport && (
         <EACard>
           <EACardContent className="p-12 text-center">
-            <Sparkles className="w-16 h-16 text-teal-400/30 mx-auto mb-4" />
+            <Sparkles className="w-16 h-16 text-[var(--ea-primary)]/30 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">AI Optimization Ready</h3>
             <p className="text-slate-400 max-w-md mx-auto">
               Click &quot;Generate AI Report&quot; to analyze current bed utilization and receive
@@ -135,7 +135,7 @@ export const BedBoardForecastsTab: React.FC<BedBoardForecastsTabProps> = ({
       {loadingAiReport && (
         <EACard>
           <EACardContent className="p-12 text-center">
-            <div className="animate-spin w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
+            <div className="animate-spin w-12 h-12 border-4 border-[var(--ea-primary)] border-t-transparent rounded-full mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">Analyzing Capacity Data...</h3>
             <p className="text-slate-400">
               Claude Sonnet is analyzing bed utilization patterns and generating recommendations

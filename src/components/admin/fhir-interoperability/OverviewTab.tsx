@@ -40,7 +40,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <p className="text-gray-600 text-sm">Active Connections</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{activeConnections}</p>
             </div>
-            <Database className="w-12 h-12 text-blue-600 opacity-20" />
+            <Database className="w-12 h-12 text-[var(--ea-primary)] opacity-20" />
           </div>
         </div>
 
@@ -94,7 +94,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <button
             onClick={onSyncAllActive}
             disabled={syncingAll || activeConnections === 0}
-            className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 bg-[var(--ea-primary)]/10 text-[var(--ea-primary)] rounded-lg hover:bg-[var(--ea-primary)]/20 transition flex items-center gap-2 disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${syncingAll ? 'animate-spin' : ''}`} />
             {syncingAll ? 'Syncing...' : 'Sync All Active'}

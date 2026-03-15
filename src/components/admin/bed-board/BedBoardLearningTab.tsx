@@ -40,7 +40,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-slate-800 rounded-lg text-center">
                 <p className="text-sm text-slate-400">Accuracy</p>
-                <p className="text-3xl font-bold text-teal-400">
+                <p className="text-3xl font-bold text-[var(--ea-primary)]">
                   {accuracy.accuracy_percentage.toFixed(1)}%
                 </p>
               </div>
@@ -92,7 +92,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
             <select
               value={feedbackUnit}
               onChange={(e) => onSetFeedbackUnit(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-[var(--ea-primary)]"
             >
               <option value="">Select Unit</option>
               {units.map((unit) => (
@@ -107,7 +107,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
               type="date"
               value={feedbackDate}
               onChange={(e) => onSetFeedbackDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-[var(--ea-primary)]"
             />
           </div>
 
@@ -120,7 +120,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
               value={actualCensus}
               onChange={(e) => onSetActualCensus(e.target.value)}
               placeholder="Enter actual patient count"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[var(--ea-primary)]"
             />
           </div>
 
@@ -131,7 +131,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
               onChange={(e) => onSetFeedbackNotes(e.target.value)}
               placeholder="Any factors that affected census (e.g., staff shortage, unexpected admissions)"
               rows={3}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 resize-none"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[var(--ea-primary)] resize-none"
             />
           </div>
 
@@ -160,8 +160,8 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
             { step: '3', title: 'Continuous Improvement', desc: 'Your feedback helps refine predictions specific to your hospital' },
           ].map(({ step, title, desc }) => (
             <div key={step} className="p-4 bg-slate-800 rounded-lg">
-              <div className="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-teal-400 font-bold">{step}</span>
+              <div className="w-10 h-10 bg-[var(--ea-primary)]/20 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-[var(--ea-primary)] font-bold">{step}</span>
               </div>
               <h4 className="font-medium text-white mb-1">{title}</h4>
               <p className="text-sm text-slate-400">{desc}</p>

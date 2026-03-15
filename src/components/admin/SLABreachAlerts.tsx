@@ -57,7 +57,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
   routine: { label: 'Routine', color: 'bg-gray-200 text-gray-700' },
   scheduled: { label: 'Scheduled', color: 'bg-blue-200 text-blue-700' },
   preop: { label: 'Pre-Op', color: 'bg-indigo-200 text-indigo-700' },
-  callback: { label: 'Callback', color: 'bg-teal-200 text-teal-700' },
+  callback: { label: 'Callback', color: 'bg-[var(--ea-primary)]/20 text-[var(--ea-primary)]' },
 };
 
 function formatOverdue(minutes: number): string {
@@ -287,7 +287,7 @@ export const SLABreachAlerts: React.FC = () => {
               onClick={() => setFilterType(type)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 filterType === type
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >

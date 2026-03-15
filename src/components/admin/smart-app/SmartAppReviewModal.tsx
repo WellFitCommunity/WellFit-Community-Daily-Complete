@@ -136,7 +136,7 @@ export const SmartAppReviewModal: React.FC<SmartAppReviewModalProps> = ({
             <textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
               placeholder="Reason for rejection..."
               rows={2}
             />

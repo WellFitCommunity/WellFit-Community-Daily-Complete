@@ -170,7 +170,7 @@ const MedicalCodeSearch: React.FC<MedicalCodeSearchProps> = ({
             onClick={() => handleTabChange(tab.id)}
             className={`flex-1 py-2 text-sm font-medium transition-colors min-h-[44px] ${
               activeTab === tab.id
-                ? 'border-b-2 border-blue-600 text-blue-700 bg-blue-50'
+                ? 'border-b-2 border-[var(--ea-primary)] text-[var(--ea-primary)] bg-blue-50'
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
             aria-selected={activeTab === tab.id}
@@ -190,7 +190,7 @@ const MedicalCodeSearch: React.FC<MedicalCodeSearchProps> = ({
             value={query}
             onChange={e => handleQueryChange(e.target.value)}
             placeholder={`Search ${activeTab.toUpperCase()} codes...`}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
             aria-label={`Search ${activeTab.toUpperCase()} codes`}
             role="searchbox"
           />
@@ -223,7 +223,7 @@ const MedicalCodeSearch: React.FC<MedicalCodeSearchProps> = ({
                     role="option"
                     aria-selected={isSelected}
                   >
-                    {isSelected && <CheckCircle className="w-3.5 h-3.5 text-blue-600 mt-0.5 flex-shrink-0" />}
+                    {isSelected && <CheckCircle className="w-3.5 h-3.5 text-[var(--ea-primary)] mt-0.5 flex-shrink-0" />}
                     <span>
                       <span className="font-mono font-medium text-gray-900">{code}</span>
                       {' — '}

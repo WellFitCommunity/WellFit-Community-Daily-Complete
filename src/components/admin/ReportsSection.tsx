@@ -102,7 +102,7 @@ const StatCard: React.FC<{
   return (
     <div
       className={`bg-white border rounded-lg p-4 transition-all duration-200 ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:border-blue-300' : ''
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-[var(--ea-primary-hover)]' : ''
       } ${isPlaceholder ? 'opacity-60' : ''}`}
       onClick={onClick}
     >

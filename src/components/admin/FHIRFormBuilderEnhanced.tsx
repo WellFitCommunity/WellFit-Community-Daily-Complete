@@ -234,7 +234,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
           onClick={() => setViewMode('builder')}
           className={`px-4 py-2 font-medium text-sm border-b-2 ${
             viewMode === 'builder'
-              ? 'border-blue-500 text-blue-600'
+              ? 'border-[var(--ea-primary)] text-[var(--ea-primary)]'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -244,7 +244,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
           onClick={() => setViewMode('library')}
           className={`px-4 py-2 font-medium text-sm border-b-2 ${
             viewMode === 'library'
-              ? 'border-blue-500 text-blue-600'
+              ? 'border-[var(--ea-primary)] text-[var(--ea-primary)]'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -273,7 +273,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
                     disabled={isGenerating}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-blue-600">{template.name}</div>
+                      <div className="font-medium text-[var(--ea-primary)]">{template.name}</div>
                       <Badge className={getCategoryColor(template.category)}>
                         {template.category.replace('_', ' ')}
                       </Badge>
@@ -305,7 +305,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
               <Button
                 onClick={() => generateForm()}
                 disabled={isGenerating || !naturalLanguageInput.trim()}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[var(--ea-primary)] hover:bg-[var(--ea-primary-hover)]"
               >
                 {isGenerating ? 'Generating...' : '🚀 Generate FHIR Form'}
               </Button>
@@ -368,13 +368,13 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setPreviewMode('form')}
-                  className={`px-3 py-1 text-sm ${previewMode === 'form' ? 'bg-blue-100 text-blue-700' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm ${previewMode === 'form' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
                 >
                   📝 Form Preview
                 </button>
                 <button
                   onClick={() => setPreviewMode('json')}
-                  className={`px-3 py-1 text-sm border-l border-gray-300 ${previewMode === 'json' ? 'bg-blue-100 text-blue-700' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm border-l border-gray-300 ${previewMode === 'json' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
                 >
                   📋 FHIR JSON
                 </button>

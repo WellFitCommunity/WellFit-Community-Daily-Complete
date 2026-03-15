@@ -43,7 +43,7 @@ export function getMcpSections(): DashboardSection[] {
       title: 'MCP Chain Orchestration',
       subtitle: 'Manage multi-server pipelines, monitor chain runs, and approve clinical gates',
       icon: '\u26D3',
-      headerColor: 'text-teal-800',
+      headerColor: 'text-[var(--ea-primary)]',
       component: <Suspense fallback={<SectionLoadingFallback />}><MCPChainManagementPanel /></Suspense>,
       category: 'admin',
       priority: 'high',

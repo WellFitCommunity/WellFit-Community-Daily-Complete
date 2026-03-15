@@ -192,7 +192,7 @@ const SOC2ComplianceDashboard: React.FC = () => {
               <span>SOC2 Monitoring Active</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-teal-500" />
+              <div className="w-2 h-2 rounded-full bg-[var(--ea-primary)]" />
               <span>Audit Logging Enabled</span>
             </div>
           </div>

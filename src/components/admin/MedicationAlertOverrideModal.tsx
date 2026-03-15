@@ -213,7 +213,7 @@ export const MedicationAlertOverrideModal: React.FC<MedicationAlertOverrideModal
             <select
               value={overrideReason}
               onChange={(e) => setOverrideReason(e.target.value as OverrideReason)}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary)] focus:outline-hidden"
               required
             >
               {Object.entries(REASON_LABELS).map(([value, label]) => (
@@ -234,7 +234,7 @@ export const MedicationAlertOverrideModal: React.FC<MedicationAlertOverrideModal
               onChange={(e) => setExplanation(e.target.value)}
               placeholder="Provide detailed clinical justification for overriding this alert (minimum 20 characters)"
               rows={4}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden resize-none"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary)] focus:outline-hidden resize-none"
               required
               minLength={MIN_EXPLANATION_LENGTH}
             />
@@ -255,7 +255,7 @@ export const MedicationAlertOverrideModal: React.FC<MedicationAlertOverrideModal
               value={providerSignature}
               onChange={(e) => setProviderSignature(e.target.value)}
               placeholder="Type your full name to sign"
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary)] focus:outline-hidden"
               required
             />
             <div className="text-xs text-gray-600 mt-1">

@@ -394,7 +394,7 @@ const PatientEngagementDashboard: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div>{formatDate(patient.last_check_in)}</div>
                       {patient.last_self_report && (
-                        <div className="text-xs text-blue-600 mt-1">
+                        <div className="text-xs text-[var(--ea-primary)] mt-1">
                           Report: {formatDate(patient.last_self_report)}
                         </div>
                       )}

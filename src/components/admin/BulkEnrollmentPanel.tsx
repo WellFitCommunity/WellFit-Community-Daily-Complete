@@ -652,7 +652,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                  className="bg-[var(--ea-primary)] h-3 rounded-full transition-all duration-300"
                   style={{ width: `${(enrollmentJob.processedRecords / enrollmentJob.totalRecords) * 100}%` }}
                 />
               </div>

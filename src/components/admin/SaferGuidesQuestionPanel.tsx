@@ -40,7 +40,7 @@ const SaferGuidesQuestionPanel: React.FC<SaferGuidesQuestionPanelProps> = ({
       <div className="mb-6">
         <button
           onClick={onBack}
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
+          className="flex items-center text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] mb-4"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Back to All Guides
@@ -71,7 +71,7 @@ const SaferGuidesQuestionPanel: React.FC<SaferGuidesQuestionPanelProps> = ({
         {/* Progress bar */}
         <div className="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-blue-500 transition-all duration-300"
+            className="h-full bg-[var(--ea-primary)] transition-all duration-300"
             style={{ width: `${(guide.answeredQuestions / guide.totalQuestions) * 100}%` }}
           />
         </div>

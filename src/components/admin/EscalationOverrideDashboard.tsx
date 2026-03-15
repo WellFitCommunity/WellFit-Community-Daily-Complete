@@ -369,7 +369,7 @@ export const EscalationOverrideDashboard: React.FC<EscalationOverrideDashboardPr
           <StatCard label="Overrides" value={stats.total_overrides} icon={ShieldAlert} color="bg-amber-500" />
           <StatCard label="Appeals" value={stats.total_appeals} icon={TrendingUp} color="bg-blue-500" />
           <StatCard label="Justified" value={stats.justified_overrides} icon={CheckCircle} color="bg-green-500" />
-          <StatCard label="Supported Appeals" value={stats.supported_appeals} icon={CheckCircle} color="bg-teal-500" />
+          <StatCard label="Supported Appeals" value={stats.supported_appeals} icon={CheckCircle} color="bg-[var(--ea-primary)]" />
           <StatCard label="High Risk" value={stats.high_risk_overrides} icon={AlertCircle} color="bg-red-500" />
           <StatCard label="Systematic Issues" value={stats.systematic_issues} icon={Brain} color="bg-purple-500" />
         </div>

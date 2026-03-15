@@ -229,7 +229,7 @@ const PaperFormUploader: React.FC = () => {
       <div
         className={`border-4 border-dashed rounded-xl p-8 text-center transition-colors ${
           isDragging
-            ? 'border-blue-600 bg-blue-50'
+            ? 'border-[var(--ea-primary)] bg-[var(--ea-primary)]/5'
             : 'border-gray-300 hover:border-gray-400 bg-gray-50'
         }`}
         onDragOver={handleDragOver}
@@ -238,8 +238,8 @@ const PaperFormUploader: React.FC = () => {
       >
         <div className="flex flex-col items-center gap-4">
           <div className="flex gap-4">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-              <Camera className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 bg-[var(--ea-primary)]/10 rounded-full flex items-center justify-center">
+              <Camera className="w-8 h-8 text-[var(--ea-primary)]" />
             </div>
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
               <Upload className="w-8 h-8 text-green-600" />
@@ -258,7 +258,7 @@ const PaperFormUploader: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={handleCameraClick}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors"
             >
               <Camera className="w-5 h-5" />
               Take Photo

@@ -95,7 +95,7 @@ export const SmartAppCard: React.FC<SmartAppCardProps> = ({
                   href={app.client_uri}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-teal-600 hover:text-teal-700"
+                  className="flex items-center gap-1 text-[var(--ea-primary)] hover:text-[var(--ea-primary)]"
                 >
                   <ExternalLink className="w-3 h-3" />
                   Website
@@ -137,7 +137,7 @@ export const SmartAppCard: React.FC<SmartAppCardProps> = ({
           )}
           <button
             onClick={() => onEdit(app)}
-            className="p-2 text-gray-400 hover:text-blue-600"
+            className="p-2 text-gray-400 hover:text-[var(--ea-primary)]"
             title="Edit"
           >
             <Edit2 className="w-4 h-4" />

@@ -92,7 +92,7 @@ export const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({ on
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex-1 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)]"
             >
               Create
             </button>

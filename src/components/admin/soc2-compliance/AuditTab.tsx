@@ -79,7 +79,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
       <EACard>
         <EACardHeader>
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-teal-400" />
+            <CheckCircle2 className="h-5 w-5 text-[var(--ea-primary)]" />
             <h2 className="text-lg font-semibold text-white">SOC2 Control Status</h2>
           </div>
         </EACardHeader>
@@ -133,7 +133,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
       <EACard>
         <EACardHeader>
           <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-teal-400" />
+            <Activity className="h-5 w-5 text-[var(--ea-primary)]" />
             <h2 className="text-lg font-semibold text-white">Audit Event Summary (Last 30 Days)</h2>
           </div>
         </EACardHeader>
@@ -198,7 +198,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
         <EACardHeader>
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-teal-400" />
+              <Lock className="h-5 w-5 text-[var(--ea-primary)]" />
               <h2 className="text-lg font-semibold text-white">PHI Access Audit Trail</h2>
             </div>
             <div className="flex gap-2">
@@ -207,7 +207,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
                   key={level}
                   onClick={() => setFilterRiskLevel(level)}
                   className={`px-3 py-1 text-xs rounded ${
-                    filterRiskLevel === level ? 'bg-teal-600 text-white' : 'bg-slate-700 text-slate-300'
+                    filterRiskLevel === level ? 'bg-[var(--ea-primary)] text-white' : 'bg-slate-700 text-slate-300'
                   }`}
                 >
                   {level === 'ALL' ? 'All' : level}

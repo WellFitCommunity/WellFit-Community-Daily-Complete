@@ -334,7 +334,7 @@ describe('SmartAppManagementPanel', () => {
     // Verify the modal has a teal submit button (which routes through the edge function)
     const allButtons = screen.getAllByRole('button');
     const submitButton = allButtons.find(
-      (btn) => btn.textContent === 'Register App' && btn.classList.contains('bg-teal-600'),
+      (btn) => btn.textContent === 'Register App' && btn.classList.contains('bg-[var(--ea-primary)]'),
     );
     expect(submitButton).toBeDefined();
     expect(submitButton).not.toBeDisabled();

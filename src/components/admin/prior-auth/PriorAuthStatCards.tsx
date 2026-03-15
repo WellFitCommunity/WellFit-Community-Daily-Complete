@@ -37,7 +37,7 @@ export const PriorAuthStatCards: React.FC<PriorAuthStatCardsProps> = ({ stats })
     <StatCard
       label="Total Submitted"
       value={stats.total_submitted}
-      icon={<FileText className="w-6 h-6 text-blue-600" />}
+      icon={<FileText className="w-6 h-6 text-[var(--ea-primary)]" />}
       color="bg-blue-50 border-blue-200"
     />
     <StatCard

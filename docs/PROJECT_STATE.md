@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-15 (Tenant Branding: P0-P7 top-level DONE)
-**Last Session:** Migrated 57 dashboard files from hardcoded hex colors to tenant-aware CSS custom properties via `useDashboardTheme()` hook. P2 high-impact, P3 compliance, P4 revenue, P5 clinical, P6 MCP/AI, P7 admin panels — all top-level dashboards complete. ~113 sub-component files remain.
+**Last Updated:** 2026-03-15 (ChatGPT Audit Gaps: 9/9 COMPLETE, migrations pushed)
+**Last Session:** Verified ChatGPT Audit Gap Closure tracker — all 9 deliverables confirmed in codebase (5 migrations, 3 services, 1 shared edge fn helper, 1 test suite, CI governance job, 3 edge functions wired). All migrations already pushed to remote DB. PROJECT_STATE updated to reflect completion.
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,313+ tests, 0 lint warnings, 0 errors in changed files
 
@@ -407,6 +407,8 @@ Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one
 | Chain 6 Medical Coding Processor | (PROJECT_STATE inline) | 3 sessions | 2026-03-03 |
 | Cultural Competency MCP | `cultural-competency-mcp-tracker.md` | 3 sessions | 2026-03-03 |
 | Compass Riley — Ambient Learning | `compass-riley-ambient-learning-tracker.md` | 4 sessions | 2026-03-01 |
+| ChatGPT Audit Gap Closure | `chatgpt-audit-gaps-tracker.md` | 3 sessions | 2026-03-12 |
+| Claude-in-Claude Triage Intelligence | `claude-in-claude-triage-tracker.md` | 1 session (27 items) | 2026-03-15 |
 
 ### RECENTLY COMPLETED
 
@@ -441,7 +443,7 @@ Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one
 
 ---
 
-## ChatGPT Audit Gap Closure (2026-03-12) — IN PROGRESS
+## ChatGPT Audit Gap Closure (2026-03-12) — COMPLETE
 
 **Tracker:** `docs/trackers/chatgpt-audit-gaps-tracker.md`
 **Audit Report:** `docs/audits/CHATGPT_ARCHITECTURE_AUDIT_2026-03-12.md`
@@ -452,12 +454,12 @@ Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one
 
 | Session | Items | Status | Focus |
 |---------|-------|--------|-------|
-| S1: Quick Wins | 2 | 0/2 | Full-text search → GlobalSearchBar wiring + governance scripts → CI |
-| S2: Decision Chain | 4 | 0/4 | `ai_decision_chain` table, service, edge function wiring, auditor view |
-| S3: Synonym + Notes | 3 | 0/3 | Medical synonym dictionary, search expansion, clinical notes search |
-| **Total** | **9** | **0/9** | |
+| S1: Quick Wins | 2 | **2/2 ✅** | Full-text search → GlobalSearchBar wiring + governance scripts → CI |
+| S2: Decision Chain | 4 | **4/4 ✅** | `ai_decision_chain` table, service, edge function wiring, auditor view |
+| S3: Synonym + Notes | 3 | **3/3 ✅** | Medical synonym dictionary, search expansion, clinical notes search |
+| **Total** | **9** | **9/9 ✅** | |
 
-**Estimated remaining:** ~20-25 hours across 3 sessions
+**All migrations pushed to remote database.** Deferred items: D-1 (EMS handoff) and D-2 (burnout bridge) awaiting business decisions.
 
 ---
 

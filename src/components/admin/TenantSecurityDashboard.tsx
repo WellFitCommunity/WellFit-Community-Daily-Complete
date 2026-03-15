@@ -96,8 +96,8 @@ export const TenantSecurityDashboard: React.FC = () => {
         label: 'Active Sessions',
         value: activeSessions,
         icon: Users,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50',
+        color: 'text-[var(--ea-primary)]',
+        bgColor: 'bg-[var(--ea-primary)]/5',
       },
       {
         label: 'PHI Access (recent)',
@@ -225,7 +225,7 @@ export const TenantSecurityDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary)]"></div>
       </div>
     );
   }

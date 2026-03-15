@@ -129,13 +129,13 @@ describe('HospitalPatientEnrollment', () => {
     expect(screen.getByText('Bulk Test Data')).toBeInTheDocument();
   });
 
-  it('highlights the active mode button with blue styling', async () => {
+  it('highlights the active mode button with brand styling', async () => {
     await renderComponent();
     const singleBtn = screen.getByText('Single Patient').closest('button') as HTMLButtonElement;
-    expect(singleBtn.className).toContain('bg-blue-600');
+    expect(singleBtn.className).toContain('bg-[var(--ea-primary)]');
 
     const bulkBtn = screen.getByText('Bulk Test Data').closest('button') as HTMLButtonElement;
-    expect(bulkBtn.className).not.toContain('bg-blue-600');
+    expect(bulkBtn.className).not.toContain('bg-[var(--ea-primary)]');
   });
 
   it('switches from single mode to bulk mode when Bulk Test Data is clicked', async () => {

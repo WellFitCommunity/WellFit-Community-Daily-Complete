@@ -273,7 +273,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
       <div className="flex items-start justify-between mb-6">
         <div>
           <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-blue-600" />
+            <Shield className="w-8 h-8 text-[var(--ea-primary)]" />
             <h1 className="text-2xl font-bold text-slate-900">SAFER Guides Self-Assessment</h1>
           </div>
           <p className="text-slate-500 mt-1">
@@ -323,7 +323,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
             <div className="flex-1">
               <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 transition-all duration-500"
+                  className="h-full bg-[var(--ea-primary)] transition-all duration-500"
                   style={{
                     width: `${((assessment?.guides.filter(g => g.status === 'complete').length || 0) / 9) * 100}%`
                   }}
@@ -362,7 +362,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
         {assessment?.guides.map(guide => (
           <Card
             key={guide.guideNumber}
-            className={`cursor-pointer transition-all hover:shadow-md hover:border-blue-300 ${
+            className={`cursor-pointer transition-all hover:shadow-md hover:border-[var(--ea-primary-hover)] ${
               guide.status === 'complete' ? 'border-green-200 bg-green-50/30' : 'border-slate-200'
             }`}
             onClick={() => loadGuideQuestions(guide)}
@@ -379,7 +379,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
               <div className="mb-3">
                 <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-300 ${guide.status === 'complete' ? 'bg-green-500' : 'bg-blue-500'}`}
+                    className={`h-full transition-all duration-300 ${guide.status === 'complete' ? 'bg-green-500' : 'bg-[var(--ea-primary)]'}`}
                     style={{ width: `${(guide.answeredQuestions / guide.totalQuestions) * 100}%` }}
                   />
                 </div>
@@ -398,7 +398,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
                   {guide.naCount > 0 && <span className="text-slate-500">{guide.naCount} N/A</span>}
                 </div>
               )}
-              <div className="flex items-center justify-end mt-3 text-blue-600">
+              <div className="flex items-center justify-end mt-3 text-[var(--ea-primary)]">
                 <span className="text-sm font-medium">
                   {guide.status === 'not_started' ? 'Start' : guide.status === 'complete' ? 'Review' : 'Continue'}
                 </span>
@@ -424,7 +424,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
               href="https://www.healthit.gov/topic/safety/safer-guides"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline mt-2 inline-block"
+              className="text-[var(--ea-primary)] hover:underline mt-2 inline-block"
             >
               Learn more at HealthIT.gov
             </a>

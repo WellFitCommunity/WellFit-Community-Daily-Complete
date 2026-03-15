@@ -72,7 +72,7 @@ export function CorrectionModal({ claim, onSubmit, onClose }: {
             </label>
             <textarea
               id="correction-note"
-              className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
               rows={3}
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -182,7 +182,7 @@ export function ChainModal({ chain, onClose }: {
             {chain.map((entry, idx) => (
               <div
                 key={entry.claim_id}
-                className={`border rounded-md p-3 ${entry.is_current ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}`}
+                className={`border rounded-md p-3 ${entry.is_current ? 'border-[var(--ea-primary)] bg-blue-50' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-900">
@@ -197,7 +197,7 @@ export function ChainModal({ chain, onClose }: {
                   {entry.is_current && (
                     <>
                       <span className="mx-2">&middot;</span>
-                      <span className="font-medium text-blue-600">Current</span>
+                      <span className="font-medium text-[var(--ea-primary)]">Current</span>
                     </>
                   )}
                 </div>

@@ -40,13 +40,13 @@ export const PatientMedicationTab: React.FC<PatientMedicationTabProps> = ({
             placeholder="Search patients..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
           />
         </div>
         <select
           value={filterRisk}
           onChange={(e) => onFilterChange(e.target.value)}
-          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
         >
           <option value="all">All Risk Levels</option>
           <option value="CRITICAL">Critical</option>
@@ -73,7 +73,7 @@ export const PatientMedicationTab: React.FC<PatientMedicationTabProps> = ({
                   onClick={() => onPatientSelect(patient)}
                   className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                     selectedPatient?.patientId === patient.patientId
-                      ? 'border-blue-500 bg-blue-50'
+                      ? 'border-[var(--ea-primary)] bg-[var(--ea-primary)]/10'
                       : 'hover:bg-gray-50'
                   }`}
                 >

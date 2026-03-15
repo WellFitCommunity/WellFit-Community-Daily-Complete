@@ -154,7 +154,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
         type={type}
         value={(editedData[field] as string) || ''}
         onChange={(e) => handleFieldChange(field, e.target.value)}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)] ${
           isFieldUncertain(field) ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
         }`}
       />
@@ -180,7 +180,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
       <select
         value={(editedData[field] as string) || ''}
         onChange={(e) => handleFieldChange(field, e.target.value)}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)] ${
           isFieldUncertain(field) ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
         }`}
       >
@@ -218,7 +218,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
             {getConfidenceBadge(editedData.confidence)}
             <button
               onClick={() => setShowImage(!showImage)}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] font-medium"
             >
               {showImage ? 'Hide' : 'Show'} Original Form
             </button>
@@ -248,7 +248,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
         <div className="p-6 space-y-8">
           {/* Section 1: Demographics */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b-2 border-[var(--ea-primary)]">
               Patient Demographics
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -327,7 +327,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
 
           {/* Section 5: Insurance */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b-2 border-teal-600">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b-2 border-[var(--ea-primary)]">
               Insurance Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -353,7 +353,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
                   value={editedData.clinicalNotes || ''}
                   onChange={(e) => handleFieldChange('clinicalNotes', e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
                 />
               </div>
               <div>
@@ -369,7 +369,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
                       e.target.value.split(',').map((a) => a.trim()).filter(Boolean)
                     )
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
                   placeholder="e.g., Penicillin, Latex, Shellfish"
                 />
               </div>
@@ -379,7 +379,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
                     type="checkbox"
                     checked={editedData.nkda || false}
                     onChange={(e) => handleFieldChange('nkda', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
+                    className="w-4 h-4 text-[var(--ea-primary)] border-gray-300 rounded-sm focus:ring-[var(--ea-primary)]"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     No Known Drug Allergies (NKDA)
@@ -402,7 +402,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
             <button
               onClick={handleEnroll}
               disabled={isEnrolling || !editedData.firstName || !editedData.lastName}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-3 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isEnrolling ? (
                 <>

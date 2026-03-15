@@ -151,7 +151,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
 
         <button
           onClick={handleNewInvite}
-          className="w-full px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100"
+          className="w-full px-4 py-2 text-sm font-medium text-[var(--ea-primary)] bg-[var(--ea-primary)]/10 border border-[var(--ea-primary)]/30 rounded-md hover:bg-[var(--ea-primary)]/20"
         >
           Invite Another User
         </button>
@@ -175,7 +175,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
             type="text"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
             disabled={saving}
           />
         </div>
@@ -188,7 +188,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
             type="text"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
             disabled={saving}
           />
         </div>
@@ -206,7 +206,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="user@facility.org"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
             disabled={saving}
           />
         </div>
@@ -220,7 +220,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+15551234567"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
             disabled={saving}
           />
         </div>
@@ -235,7 +235,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
           id="invite-role"
           value={roleCode}
           onChange={(e) => setRoleCode(e.target.value ? Number(e.target.value) : '')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
           disabled={saving}
         >
           <option value="">Select a role...</option>
@@ -271,7 +271,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
                 disabled={saving}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
                   delivery === opt.value
-                    ? 'bg-blue-50 border-blue-400 text-blue-700'
+                    ? 'bg-[var(--ea-primary)]/10 border-[var(--ea-primary)] text-[var(--ea-primary)]'
                     : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -292,7 +292,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
       <button
         type="submit"
         disabled={saving}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--ea-primary)] text-white text-sm font-medium rounded-md hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 transition-colors"
       >
         <UserPlus className="w-4 h-4" />
         {saving ? 'Creating User...' : 'Create User & Generate Credentials'}

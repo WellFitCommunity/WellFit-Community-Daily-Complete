@@ -351,7 +351,7 @@ const ExportCheckIns: React.FC = () => {
           {isFiltered && (
             <button
               onClick={resetFilters}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
+              className="text-sm text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] underline"
             >
               Clear all filters
             </button>
@@ -423,7 +423,7 @@ const ExportCheckIns: React.FC = () => {
                 type="date"
                 value={dateRange.startDate}
                 onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
                 max={dateRange.endDate || undefined}
               />
             </div>
@@ -436,7 +436,7 @@ const ExportCheckIns: React.FC = () => {
                 type="date"
                 value={dateRange.endDate}
                 onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
                 min={dateRange.startDate || undefined}
                 max={new Date().toISOString().split('T')[0]}
               />

@@ -166,7 +166,7 @@ export const TenantAuditLogs: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary)]"></div>
       </div>
     );
   }
@@ -176,7 +176,7 @@ export const TenantAuditLogs: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <FileText className="w-8 h-8 text-blue-600" />
+          <FileText className="w-8 h-8 text-[var(--ea-primary)]" />
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Audit Logs</h2>
             <p className="text-sm text-gray-600">Comprehensive activity tracking for your facility</p>
@@ -185,7 +185,7 @@ export const TenantAuditLogs: React.FC = () => {
         <button
           onClick={exportLogs}
           disabled={logs.length === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="w-4 h-4" />
           Export CSV
@@ -203,7 +203,7 @@ export const TenantAuditLogs: React.FC = () => {
               placeholder="Search user or message..."
               value={filter.searchTerm}
               onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
             />
           </div>
 
@@ -211,7 +211,7 @@ export const TenantAuditLogs: React.FC = () => {
           <select
             value={filter.category}
             onChange={(e) => setFilter({ ...filter, category: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
           >
             <option value="all">All Categories</option>
             <option value="PHI_ACCESS">PHI Access</option>
@@ -225,7 +225,7 @@ export const TenantAuditLogs: React.FC = () => {
           <select
             value={filter.severity}
             onChange={(e) => setFilter({ ...filter, severity: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
           >
             <option value="all">All Severities</option>
             <option value="info">Info</option>
@@ -238,7 +238,7 @@ export const TenantAuditLogs: React.FC = () => {
           <select
             value={filter.dateRange}
             onChange={(e) => setFilter({ ...filter, dateRange: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
           >
             <option value="1d">Last 24 hours</option>
             <option value="7d">Last 7 days</option>
