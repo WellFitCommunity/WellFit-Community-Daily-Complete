@@ -37,6 +37,8 @@ jobs:
       - name: Run TypeScript type check
         id: typecheck
         run: npm run typecheck
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
 
       - name: Report to summary
         if: always()

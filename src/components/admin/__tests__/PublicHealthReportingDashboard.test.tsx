@@ -273,8 +273,8 @@ describe('PublicHealthReportingDashboard - Filters', () => {
         .toBeGreaterThan(initialCallCount);
     });
 
-    // Verify the button style changes (active state has bg-blue-600)
-    expect(syndromicButton).toHaveClass('bg-blue-600');
+    // Verify the button style changes (active state uses tenant branding primary color)
+    expect(syndromicButton.className).toContain('bg-[var(--ea-primary');
   });
 
   it('status filter dropdown changes selection', async () => {

@@ -150,13 +150,12 @@ describe('AdminSettingsPanel — theme buttons', () => {
     await renderAndWait();
 
     const darkBtn = screen.getByRole('button', { name: /dark/i });
-    expect(darkBtn.className).toContain('border-blue-500');
-    expect(darkBtn.className).toContain('bg-blue-50');
-    expect(darkBtn.className).toContain('text-blue-700');
+    expect(darkBtn.className).toContain('border-[var(--ea-primary');
+    expect(darkBtn.className).toContain('text-[var(--ea-primary');
 
     // Light should NOT have active styling
     const lightBtn = screen.getByRole('button', { name: /light/i });
-    expect(lightBtn.className).not.toContain('border-blue-500');
+    expect(lightBtn.className).not.toContain('border-[var(--ea-primary');
   });
 });
 
@@ -452,11 +451,11 @@ describe('AdminSettingsPanel — theme interaction', () => {
     fireEvent.click(darkBtn);
 
     await waitFor(() => {
-      expect(darkBtn.className).toContain('border-blue-500');
+      expect(darkBtn.className).toContain('border-[var(--ea-primary');
     });
 
     const lightBtn = screen.getByRole('button', { name: /light/i });
-    expect(lightBtn.className).not.toContain('border-blue-500');
+    expect(lightBtn.className).not.toContain('border-[var(--ea-primary');
   });
 });
 
@@ -614,7 +613,7 @@ describe('AdminSettingsPanel — reset to defaults', () => {
 
     // Theme should revert to light (active styling)
     const lightBtn = screen.getByRole('button', { name: /light/i });
-    expect(lightBtn.className).toContain('border-blue-500');
+    expect(lightBtn.className).toContain('border-[var(--ea-primary');
   });
 
   it('does not reset settings when user cancels confirm dialog', async () => {
@@ -641,7 +640,7 @@ describe('AdminSettingsPanel — loads with error gracefully', () => {
 
     // Default theme is light — should be active
     const lightBtn = screen.getByRole('button', { name: /light/i });
-    expect(lightBtn.className).toContain('border-blue-500');
+    expect(lightBtn.className).toContain('border-[var(--ea-primary');
   });
 });
 

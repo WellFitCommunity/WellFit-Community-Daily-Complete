@@ -265,6 +265,9 @@ export const SmartBackButton = React.lazy(() => import('../components/ui/SmartBa
 // COMPONENT MAP (for dynamic route rendering)
 // ═══════════════════════════════════════════════════════════════════════════════
 // Component registry — pages rendered without explicit props (data from routes/context)
+// Component map: registry of lazy-loaded components that accept NO required props.
+// Components with required props (PatientAvatarPage, PatientChartNavigator, etc.)
+// are exported individually above — they require explicit prop passing from parent routes.
 export const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType<Record<string, unknown>>>> = {
   // Public
   WelcomePage,
@@ -365,10 +368,8 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   GuardianApprovalsList,
   GuardianApprovalForm,
 
-  // Patient Avatar
-  PatientAvatarPage,
+  // Patient Avatar (PatientAvatarPage and PatientChartNavigator require explicit props — exported individually above)
   NurseCensusBoard,
-  PatientChartNavigator,
 
   // Clinical
   NursePanel,
@@ -383,7 +384,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   RpmDashboard,
   CompassRileyPage,
   NeuroSuiteDashboard,
-  MemoryClinicDashboard,
+  // MemoryClinicDashboard requires explicit props — exported individually above
   MentalHealthDashboard,
   PhysicalTherapyDashboard,
   CareCoordinationDashboard,
@@ -392,8 +393,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   HealthcareIntegrationsDashboard,
   FrequentFlyerDashboard,
   DischargedPatientDashboard,
-  SpecialistDashboard,
-  FieldVisitWorkflow,
+  // SpecialistDashboard and FieldVisitWorkflow require explicit props — exported individually above
   MedicineCabinet,
   WearableDashboard,
   CommunityMoments,
@@ -422,7 +422,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   ShiftHandoffDashboard,
   BedManagementPanel,
   AdminTransferLogs,
-  ReceivingDashboard,
+  // ReceivingDashboard requires explicit props — exported individually above
   HospitalTransferPortal,
   StaffWellnessDashboard,
   LawEnforcementLandingPage,
@@ -431,5 +431,5 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   // EMS
   EMSPage,
   EMSMetricsDashboard,
-  CoordinatedResponseDashboard,
+  // CoordinatedResponseDashboard requires explicit props — exported individually above
 };

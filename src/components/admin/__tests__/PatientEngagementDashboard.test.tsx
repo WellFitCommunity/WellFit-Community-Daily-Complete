@@ -266,11 +266,11 @@ describe('PatientEngagementDashboard', () => {
     it('shows total patients count of 4', async () => {
       await renderDashboard();
       const grid = getSummaryGrid();
-      // Total Patients is the first card (border-blue-500)
-      const blueCard = grid.querySelector('[class*="border-blue-500"]') as HTMLElement;
-      expect(blueCard).not.toBeNull();
-      expect(within(blueCard).getByText('Total Patients')).toBeInTheDocument();
-      expect(within(blueCard).getByText('4')).toBeInTheDocument();
+      // Total Patients is the first card (branded primary border)
+      const primaryCard = grid.querySelector('[class*="border-[var(--ea-primary"]') as HTMLElement;
+      expect(primaryCard).not.toBeNull();
+      expect(within(primaryCard).getByText('Total Patients')).toBeInTheDocument();
+      expect(within(primaryCard).getByText('4')).toBeInTheDocument();
     });
 
     it('shows high engagement count of 1', async () => {
@@ -830,9 +830,9 @@ describe('PatientEngagementDashboard', () => {
       expect(screen.getByText('No patients match the current filter')).toBeInTheDocument();
       // Summary stats should show 0 in the Total Patients card
       const grid = getSummaryGrid();
-      const blueCard = grid.querySelector('[class*="border-blue-500"]') as HTMLElement;
-      expect(blueCard).not.toBeNull();
-      expect(within(blueCard).getByText('0')).toBeInTheDocument();
+      const primaryCard = grid.querySelector('[class*="border-[var(--ea-primary"]') as HTMLElement;
+      expect(primaryCard).not.toBeNull();
+      expect(within(primaryCard).getByText('0')).toBeInTheDocument();
     });
   });
 });

@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ServiceResult } from '../../_base';
+import type { ServiceResult, ServiceFailure } from '../../_base';
 import { EscalationOverrideService } from '../escalationOverrideService';
 import type { OverrideJustification, AppealAnalysis } from '../escalationOverrideService';
 
@@ -54,7 +54,7 @@ function assertSuccess<T>(result: ServiceResult<T>): asserts result is { success
   if (!result.success) throw new Error(`Expected success but got failure: ${result.error?.message}`);
 }
 
-function assertFailure(result: ServiceResult<unknown>): asserts result is { success: false; data: null; error: { code: string; message: string } } {
+function assertFailure(result: ServiceResult<unknown>): asserts result is ServiceFailure {
   expect(result.success).toBe(false);
   if (result.success) throw new Error('Expected failure but got success');
 }
