@@ -298,8 +298,8 @@ export const SystemAdminDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center bg-slate-800/50 backdrop-blur-xs rounded-xl p-6 border border-slate-700">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-[#00857a]/20 rounded-lg">
-            <Settings className="h-8 w-8 text-[#00857a]" />
+          <div className="p-3 bg-[var(--ea-primary,#00857a)]/20 rounded-lg">
+            <Settings className="h-8 w-8 text-[var(--ea-primary,#00857a)]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">System Administration</h1>
@@ -335,12 +335,12 @@ export const SystemAdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Users */}
           <EACard>
-            <EACardHeader icon={<Users className="h-5 w-5 text-[#00857a]" />}>
+            <EACardHeader icon={<Users className="h-5 w-5 text-[var(--ea-primary,#00857a)]" />}>
               <span className="text-sm font-medium text-slate-400">Total Users</span>
             </EACardHeader>
             <EACardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-[#33bfb7]">{metrics.total_users}</div>
+                <div className="text-3xl font-bold text-[var(--ea-primary,#33bfb7)]">{metrics.total_users}</div>
                 <span className="text-3xl">👥</span>
               </div>
               <p className="text-xs text-slate-500 mt-1">Registered accounts</p>
@@ -349,12 +349,12 @@ export const SystemAdminDashboard: React.FC = () => {
 
           {/* Active Sessions */}
           <EACard>
-            <EACardHeader icon={<Activity className="h-5 w-5 text-[#00857a]" />}>
+            <EACardHeader icon={<Activity className="h-5 w-5 text-[var(--ea-primary,#00857a)]" />}>
               <span className="text-sm font-medium text-slate-400">Active Sessions</span>
             </EACardHeader>
             <EACardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-[#33bfb7]">{metrics.active_sessions}</div>
+                <div className="text-3xl font-bold text-[var(--ea-primary,#33bfb7)]">{metrics.active_sessions}</div>
                 <span className="text-3xl">🔌</span>
               </div>
               <p className="text-xs text-slate-500 mt-1">Last 24 hours</p>
@@ -363,7 +363,7 @@ export const SystemAdminDashboard: React.FC = () => {
 
           {/* Average Response Time */}
           <EACard>
-            <EACardHeader icon={<Clock className="h-5 w-5 text-[#00857a]" />}>
+            <EACardHeader icon={<Clock className="h-5 w-5 text-[var(--ea-primary,#00857a)]" />}>
               <span className="text-sm font-medium text-slate-400">Avg Response Time</span>
             </EACardHeader>
             <EACardContent>
@@ -371,7 +371,7 @@ export const SystemAdminDashboard: React.FC = () => {
                 <div className={`text-3xl font-bold ${
                   metrics.avg_response_time_ms > 3000 ? 'text-red-400' :
                   metrics.avg_response_time_ms > 1000 ? 'text-amber-400' :
-                  'text-[#33bfb7]'
+                  'text-[var(--ea-primary,#33bfb7)]'
                 }`}>
                   {formatDuration(metrics.avg_response_time_ms)}
                 </div>
@@ -391,7 +391,7 @@ export const SystemAdminDashboard: React.FC = () => {
                 <div className={`text-3xl font-bold ${
                   metrics.error_rate_24h > 100 ? 'text-red-400' :
                   metrics.error_rate_24h > 50 ? 'text-amber-400' :
-                  'text-[#33bfb7]'
+                  'text-[var(--ea-primary,#33bfb7)]'
                 }`}>
                   {metrics.error_rate_24h}
                 </div>
@@ -403,12 +403,12 @@ export const SystemAdminDashboard: React.FC = () => {
 
           {/* API Calls */}
           <EACard>
-            <EACardHeader icon={<Activity className="h-5 w-5 text-[#00857a]" />}>
+            <EACardHeader icon={<Activity className="h-5 w-5 text-[var(--ea-primary,#00857a)]" />}>
               <span className="text-sm font-medium text-slate-400">API Calls</span>
             </EACardHeader>
             <EACardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-[#33bfb7]">{metrics.api_calls_24h}</div>
+                <div className="text-3xl font-bold text-[var(--ea-primary,#33bfb7)]">{metrics.api_calls_24h}</div>
                 <span className="text-3xl">📡</span>
               </div>
               <p className="text-xs text-slate-500 mt-1">Last 24 hours</p>
@@ -417,12 +417,12 @@ export const SystemAdminDashboard: React.FC = () => {
 
           {/* System Uptime */}
           <EACard>
-            <EACardHeader icon={<Clock className="h-5 w-5 text-[#00857a]" />}>
+            <EACardHeader icon={<Clock className="h-5 w-5 text-[var(--ea-primary,#00857a)]" />}>
               <span className="text-sm font-medium text-slate-400">System Uptime</span>
             </EACardHeader>
             <EACardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-[#33bfb7]">{metrics.uptime_percentage}%</div>
+                <div className="text-3xl font-bold text-[var(--ea-primary,#33bfb7)]">{metrics.uptime_percentage}%</div>
                 <span className="text-3xl">⏱️</span>
               </div>
               <p className="text-xs text-slate-500 mt-1">30-day average</p>
@@ -431,12 +431,12 @@ export const SystemAdminDashboard: React.FC = () => {
 
           {/* Database Size */}
           <EACard>
-            <EACardHeader icon={<Database className="h-5 w-5 text-[#00857a]" />}>
+            <EACardHeader icon={<Database className="h-5 w-5 text-[var(--ea-primary,#00857a)]" />}>
               <span className="text-sm font-medium text-slate-400">Database Size</span>
             </EACardHeader>
             <EACardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-[#33bfb7]">
+                <div className="text-3xl font-bold text-[var(--ea-primary,#33bfb7)]">
                   {metrics.database_size_mb > 0 ? formatBytes(metrics.database_size_mb * 1024 * 1024) : 'N/A'}
                 </div>
                 <span className="text-3xl">💾</span>
@@ -452,7 +452,7 @@ export const SystemAdminDashboard: React.FC = () => {
             </EACardHeader>
             <EACardContent>
               <div className="flex items-center justify-between">
-                <div className={`text-3xl font-bold ${metrics.pending_migrations > 0 ? 'text-amber-400' : 'text-[#33bfb7]'}`}>
+                <div className={`text-3xl font-bold ${metrics.pending_migrations > 0 ? 'text-amber-400' : 'text-[var(--ea-primary,#33bfb7)]'}`}>
                   {metrics.pending_migrations}
                 </div>
                 <span className="text-3xl">🔄</span>
@@ -468,7 +468,7 @@ export const SystemAdminDashboard: React.FC = () => {
 
       {/* Active User Sessions */}
       <EACard>
-        <EACardHeader icon={<Activity className="h-5 w-5 text-[#00857a]" />}>
+        <EACardHeader icon={<Activity className="h-5 w-5 text-[var(--ea-primary,#00857a)]" />}>
           <h3 className="text-lg font-semibold text-white">Active User Sessions</h3>
         </EACardHeader>
         <EACardContent>
@@ -539,7 +539,7 @@ export const SystemAdminDashboard: React.FC = () => {
       {/* System Health Recommendations */}
       {metrics && (
         <EACard>
-          <EACardHeader icon={<CheckCircle className="h-5 w-5 text-[#00857a]" />}>
+          <EACardHeader icon={<CheckCircle className="h-5 w-5 text-[var(--ea-primary,#00857a)]" />}>
             <h3 className="text-lg font-semibold text-white">System Health Recommendations</h3>
           </EACardHeader>
           <EACardContent className="space-y-3">

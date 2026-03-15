@@ -39,6 +39,7 @@ import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 import { SearchResult } from '../../contexts/VoiceActionContext';
 import { auditLogger } from '../../services/auditLogger';
 import { usePresence } from '../../hooks/usePresence';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { ActivityFeed, useActivityBroadcast } from '../collaboration';
 import {
   BedBoardHeader,
@@ -68,6 +69,8 @@ import type {
 
 const BedManagementPanel: React.FC = () => {
   const navigate = useNavigate();
+  // Hook injects CSS custom properties on :root for tenant branding
+  useDashboardTheme();
 
   // Core state
   const [loading, setLoading] = useState(true);
@@ -139,9 +142,9 @@ const BedManagementPanel: React.FC = () => {
       const bedElement = document.getElementById(`bed-${matchingBed.bed_id}`);
       if (bedElement) {
         bedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        bedElement.classList.add('ring-2', 'ring-teal-500', 'ring-offset-2');
+        bedElement.classList.add('ring-2', 'ring-[var(--ea-primary,#00857a)]', 'ring-offset-2');
         setTimeout(() => {
-          bedElement.classList.remove('ring-2', 'ring-teal-500', 'ring-offset-2');
+          bedElement.classList.remove('ring-2', 'ring-[var(--ea-primary,#00857a)]', 'ring-offset-2');
         }, 3000);
       }
     }
@@ -505,7 +508,7 @@ const BedManagementPanel: React.FC = () => {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === tab.id ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'
+              activeTab === tab.id ? 'bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#fff)]' : 'text-slate-400 hover:text-white hover:bg-slate-700'
             }`}
             title={tab.description}
           >

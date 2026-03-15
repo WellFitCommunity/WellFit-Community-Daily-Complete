@@ -31,6 +31,7 @@ import {
   EAButton,
   EAAlert,
 } from '../envision-atlus';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   auditAnalyticsService,
   type AuditLogEntry,
@@ -67,6 +68,8 @@ const SEVERITY_CONFIG: Record<AuditSeverity, { label: string; color: string }> =
 // =============================================================================
 
 export const AuditAnalyticsDashboard: React.FC = () => {
+  // Inject tenant branding CSS vars (--ea-primary, --ea-secondary) on :root
+  useDashboardTheme();
   const [stats, setStats] = useState<AuditStats | null>(null);
   const [searchResults, setSearchResults] = useState<AuditLogEntry[]>([]);
   const [totalResults, setTotalResults] = useState(0);
@@ -178,7 +181,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
   if (loading && !stats) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
+        <RefreshCw className="w-8 h-8 animate-spin text-[var(--ea-primary,#00857a)]" />
         <span className="ml-3 text-gray-500">Loading audit analytics...</span>
       </div>
     );
@@ -190,7 +193,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <Shield className="w-8 h-8 text-blue-600" />
+            <Shield className="w-8 h-8 text-[var(--ea-primary,#00857a)]" />
             Audit Analytics
           </h1>
           <p className="text-gray-500 mt-1">
@@ -229,7 +232,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
                   </div>
                   <div className="text-xs text-gray-400">Last 30 days</div>
                 </div>
-                <FileText className="w-10 h-10 text-blue-500" />
+                <FileText className="w-10 h-10 text-[var(--ea-primary,#00857a)]" />
               </div>
             </EACardContent>
           </EACard>
@@ -335,7 +338,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search event types, details..."
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
                 onKeyDown={(e) => e.key === 'Enter' && searchLogs()}
               />
             </div>

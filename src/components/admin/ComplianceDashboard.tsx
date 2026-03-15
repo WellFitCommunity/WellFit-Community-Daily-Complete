@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 // Optimized imports for tree-shaking (saves ~12KB)
 import Shield from 'lucide-react/dist/esm/icons/shield';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
@@ -40,6 +41,7 @@ interface VulnerabilitySum {
 }
 
 const ComplianceDashboard: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const [backupCompliance, setBackupCompliance] = useState<BackupCompliance | null>(null);
   const [drillCompliance, setDrillCompliance] = useState<DrillCompliance | null>(null);
   const [vulnerabilities, setVulnerabilities] = useState<VulnerabilitySum | null>(null);
@@ -115,7 +117,7 @@ const ComplianceDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900">
         <div className="text-center">
-          <Activity className="w-12 h-12 text-[#00857a] animate-spin mx-auto mb-4" />
+          <Activity className="w-12 h-12 text-[var(--ea-primary,#00857a)] animate-spin mx-auto mb-4" />
           <p className="text-slate-400">Loading compliance data...</p>
         </div>
       </div>
@@ -216,7 +218,7 @@ const ComplianceDashboard: React.FC = () => {
         {backupCompliance && (
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
             <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
-              <Shield className="w-5 h-5 mr-2 text-[#00857a]" />
+              <Shield className="w-5 h-5 mr-2 text-[var(--ea-primary,#00857a)]" />
               Backup & Recovery Details
             </h3>
 
@@ -264,7 +266,7 @@ const ComplianceDashboard: React.FC = () => {
         {drillCompliance && (
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
             <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
-              <Activity className="w-5 h-5 mr-2 text-[#00857a]" />
+              <Activity className="w-5 h-5 mr-2 text-[var(--ea-primary,#00857a)]" />
               Disaster Recovery Drills
             </h3>
 
@@ -336,7 +338,7 @@ const ComplianceDashboard: React.FC = () => {
         {vulnerabilities && (
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-6 lg:col-span-2">
             <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
-              <AlertTriangle className="w-5 h-5 mr-2 text-[#00857a]" />
+              <AlertTriangle className="w-5 h-5 mr-2 text-[var(--ea-primary,#00857a)]" />
               Security Vulnerability Summary
             </h3>
 
@@ -359,11 +361,11 @@ const ComplianceDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-[#00857a]/10 border border-[#00857a]/30 rounded-sm">
+            <div className="mt-6 p-4 bg-[var(--ea-primary,#00857a)]/10 border border-[var(--ea-primary,#00857a)]/30 rounded-sm">
               <div className="flex items-start">
-                <FileText className="w-5 h-5 text-[#00857a] mr-3 mt-0.5 shrink-0" />
+                <FileText className="w-5 h-5 text-[var(--ea-primary,#00857a)] mr-3 mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-[#33bfb7] mb-1">Penetration Testing Schedule</h4>
+                  <h4 className="font-semibold text-[var(--ea-primary,#00857a)] mb-1">Penetration Testing Schedule</h4>
                   <ul className="text-sm text-slate-300 space-y-1">
                     <li>• Daily: Automated security scans</li>
                     <li>• Weekly: Comprehensive DAST scans</li>
@@ -381,7 +383,7 @@ const ComplianceDashboard: React.FC = () => {
       <div className="mt-8 flex flex-wrap gap-4">
         <button
           onClick={fetchComplianceData}
-          className="px-6 py-3 bg-[#00857a] text-white rounded-lg hover:bg-[#006d64] transition flex items-center"
+          className={`px-6 py-3 rounded-lg transition flex items-center ${theme.buttonPrimary}`}
         >
           <TrendingUp className="w-5 h-5 mr-2" />
           Refresh Data
@@ -409,7 +411,7 @@ const ComplianceDashboard: React.FC = () => {
       {/* Compliance Footer */}
       <div className="mt-8 p-4 bg-slate-800 border border-slate-700 rounded-lg">
         <div className="flex items-start">
-          <Shield className="w-5 h-5 text-[#00857a] mr-3 mt-0.5 shrink-0" />
+          <Shield className="w-5 h-5 text-[var(--ea-primary,#00857a)] mr-3 mt-0.5 shrink-0" />
           <div className="text-sm text-slate-400">
             <p className="font-semibold mb-1 text-slate-300">Compliance Standards</p>
             <p>This dashboard monitors compliance with HIPAA Security Rule (§164.308), SOC2 Trust Service Criteria (CC7.1), and industry best practices for healthcare data protection.</p>

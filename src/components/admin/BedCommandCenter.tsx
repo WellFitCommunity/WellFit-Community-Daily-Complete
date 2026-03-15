@@ -10,6 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useBedCommandCenter } from '../../hooks/useBedCommandCenter';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import {
   getAlertLevelColor,
   getAlertLevelLabel,
@@ -24,6 +25,7 @@ import type { CapacityAlertLevel, FacilityCapacitySnapshot } from '../../types/h
 // ============================================================================
 
 export const BedCommandCenter: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const [tenantId, setTenantId] = useState<string>('');
 
   // Fetch user's profile to get tenant_id
@@ -102,7 +104,7 @@ export const BedCommandCenter: React.FC = () => {
         <button
           onClick={refresh}
           disabled={isLoading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+          className={`px-4 py-2 rounded-lg disabled:opacity-50 flex items-center gap-2 ${theme.buttonPrimary}`}
         >
           {isLoading ? (
             <span className="animate-spin">⟳</span>
@@ -202,7 +204,7 @@ export const BedCommandCenter: React.FC = () => {
                   </div>
                   <button
                     onClick={() => acknowledgeAlert(alert.id)}
-                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                    className={`px-3 py-1 text-sm rounded ${theme.buttonPrimary}`}
                   >
                     Acknowledge
                   </button>

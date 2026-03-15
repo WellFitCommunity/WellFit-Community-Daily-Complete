@@ -5,8 +5,10 @@
 import React, { useState, useEffect } from 'react';
 import { getGuardianAgent } from '../../services/guardian-agent/GuardianAgent';
 import { AgentState, DetectedIssue, HealingResult, AgentStatistics, AgentHealth } from '../../services/guardian-agent/types';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 export const GuardianAgentDashboard: React.FC = () => {
+  const { theme } = useDashboardTheme();
   const [agentState, setAgentState] = useState<AgentState | null>(null);
   const [statistics, setStatistics] = useState<AgentStatistics | null>(null);
   const [health, setHealth] = useState<AgentHealth | null>(null);
@@ -32,13 +34,13 @@ export const GuardianAgentDashboard: React.FC = () => {
   if (!agentState || !statistics || !health) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--ea-primary,#00857a)]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-6">
+    <div className={`${theme.pageBg} text-white p-6`}>
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -102,7 +104,8 @@ export const GuardianAgentDashboard: React.FC = () => {
         <StatusCard
           title="Avg Time to Detect"
           value={`${statistics.agentMetrics.avgTimeToDetect.toFixed(0)}ms`}
-          color="blue"
+          color="teal"
+          useBrandColor
         />
         <StatusCard
           title="Avg Time to Heal"
@@ -262,14 +265,20 @@ const MetricCard: React.FC<{
   </div>
 );
 
-const StatusCard: React.FC<{ title: string; value: string; color: string }> = ({
+const StatusCard: React.FC<{ title: string; value: string; color: string; useBrandColor?: boolean }> = ({
   title,
   value,
-  color
+  color,
+  useBrandColor
 }) => (
   <div className="bg-gray-800 rounded-lg p-6 shadow-xl">
     <div className="text-gray-400 text-sm mb-2">{title}</div>
-    <div className={`text-2xl font-bold text-${color}-400`}>{value}</div>
+    <div
+      className={`text-2xl font-bold ${useBrandColor ? '' : `text-${color}-400`}`}
+      style={useBrandColor ? { color: 'var(--ea-primary, #00857a)' } : undefined}
+    >
+      {value}
+    </div>
   </div>
 );
 
@@ -305,7 +314,7 @@ const IssueCard: React.FC<{ issue: DetectedIssue }> = ({ issue }) => {
 };
 
 const HealingCard: React.FC<{ action: { strategy: string; description: string; steps: unknown[]; expectedOutcome: string } }> = ({ action }) => (
-  <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-sm">
+  <div className="bg-[var(--ea-primary,#00857a)]/10 border-l-4 border-[var(--ea-primary,#00857a)] p-4 rounded-sm">
     <div className="flex items-center space-x-2 mb-2">
       <div className="animate-spin">⚙️</div>
       <span className="font-semibold">{action.strategy.replace(/_/g, ' ')}</span>
@@ -360,7 +369,7 @@ const HealingResultCard: React.FC<{ result: HealingResult }> = ({ result }) => (
 );
 
 const KnowledgeCard: React.FC<{ knowledge: { pattern: string; successRate: number; effectiveness: number; timesEncountered: number } }> = ({ knowledge }) => (
-  <div className="bg-purple-900/20 border border-purple-500/30 p-4 rounded-sm">
+  <div className="bg-[var(--ea-secondary,#FF6B35)]/10 border border-[var(--ea-secondary,#FF6B35)]/30 p-4 rounded-sm">
     <div className="text-sm font-semibold mb-2 truncate">{knowledge.pattern}</div>
     <div className="space-y-1 text-xs text-gray-400">
       <div className="flex justify-between">
@@ -405,7 +414,7 @@ const getModeColor = (mode: string): string => {
   const colors: Record<string, string> = {
     monitor: 'green',
     diagnostic: 'yellow',
-    healing: 'blue',
+    healing: 'teal',
     learning: 'purple',
     standby: 'gray'
   };
