@@ -200,7 +200,7 @@ function DismissModal({ opportunity, onClose, onDismiss }: {
           id="dismiss-reason"
           value={reason}
           onChange={e => setReason(e.target.value)}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
+          className="w-full rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] text-sm"
           rows={3}
           placeholder="Provider reviewed and determined this HCC has been captured elsewhere or does not apply because..."
         />
@@ -314,7 +314,7 @@ const HCCOpportunityDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="HCC Opportunity Dashboard">
       {/* Revenue Impact Alert */}
       {(stats?.total_annual_impact ?? 0) > REVENUE_ALERT_THRESHOLD && (
         <EAAlert variant="critical">
@@ -380,7 +380,7 @@ const HCCOpportunityDashboard: React.FC = () => {
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value as TypeFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by opportunity type"
             >
               <option value="all">All Types</option>
@@ -392,7 +392,7 @@ const HCCOpportunityDashboard: React.FC = () => {
             <select
               value={String(confidenceFilter)}
               onChange={e => setConfidenceFilter(parseFloat(e.target.value))}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by confidence"
             >
               <option value="0.50">50%+ Confidence</option>
@@ -406,7 +406,7 @@ const HCCOpportunityDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search ICD-10 or HCC..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-52"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] w-52"
               aria-label="Search codes"
             />
           </div>

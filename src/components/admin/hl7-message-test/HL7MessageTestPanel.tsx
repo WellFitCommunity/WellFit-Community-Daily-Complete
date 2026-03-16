@@ -168,7 +168,7 @@ export const HL7MessageTestPanel: React.FC = () => {
   // =====================================================
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="HL7 X12 Message Lab">
       {/* Header */}
       <EACard>
         <EACardHeader icon={<FileText className="h-5 w-5 text-[#00857a]" />}>
@@ -258,7 +258,7 @@ export const HL7MessageTestPanel: React.FC = () => {
               ? 'Paste HL7 v2.x message here (MSH|^~\\&|...)'
               : 'Paste X12 837P content here (ISA*00*...)'
             }
-            className="w-full h-48 bg-slate-900 text-slate-200 font-mono text-xs p-4 rounded-lg border border-slate-700 focus:border-[#00857a] focus:outline-none resize-y"
+            className="w-full h-48 bg-slate-900 text-slate-200 font-mono text-xs p-4 rounded-lg border border-slate-700 focus-visible:border-[#00857a] focus-visible:outline-none resize-y"
             spellCheck={false}
           />
 

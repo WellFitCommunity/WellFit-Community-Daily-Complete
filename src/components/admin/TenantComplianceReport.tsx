@@ -208,7 +208,7 @@ export const TenantComplianceReport: React.FC = () => {
                       complianceScore >= 70 ? 'text-yellow-600' : 'text-red-600';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Tenant Compliance Report">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -220,7 +220,7 @@ export const TenantComplianceReport: React.FC = () => {
         </div>
         <button
           onClick={downloadComplianceReport}
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)]"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           <Download className="w-4 h-4" />
           Download Report

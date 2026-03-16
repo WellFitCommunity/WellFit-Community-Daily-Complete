@@ -76,7 +76,7 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="text-xs border border-gray-300 rounded px-2 py-1"
+            className="text-xs border border-gray-300 rounded px-2 py-1 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <option value="active">Active</option>
             <option value="resolved">Resolved</option>
@@ -85,7 +85,7 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="p-1 text-gray-400 hover:text-gray-600"
+            className="p-1 text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             title="Refresh alerts"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -140,14 +140,14 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => onAcknowledge(alert.id)}
-                      className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100"
+                      className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       title="Acknowledge alert"
                     >
                       Acknowledge
                     </button>
                     <button
                       onClick={() => onResolve(alert.id)}
-                      className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 rounded hover:bg-green-100"
+                      className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 rounded hover:bg-green-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       title="Resolve alert"
                     >
                       Resolve
@@ -157,7 +157,7 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
                 {alert.status === 'acknowledged' && (
                   <button
                     onClick={() => onResolve(alert.id)}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-50 rounded hover:bg-green-100 shrink-0"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-50 rounded hover:bg-green-100 shrink-0 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     title="Resolve alert"
                   >
                     <CheckCircle className="w-3 h-3" /> Resolve

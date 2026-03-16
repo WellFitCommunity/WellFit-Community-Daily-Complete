@@ -204,12 +204,12 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
   }
 
   return (
-    <div className={className}>
+    <div className={className} aria-label="Performance Monitoring Dashboard" aria-live="polite">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Performance Monitoring</h2>
         <button
           onClick={loadMonitoringData}
-          className="inline-flex items-center px-3 py-2 text-sm font-medium text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006b62)] hover:bg-[var(--ea-primary,#00857a)]/5 rounded-md transition-colors"
+          className="inline-flex items-center px-3 py-2 text-sm font-medium text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006b62)] hover:bg-[var(--ea-primary,#00857a)]/5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -317,7 +317,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
 
         {metrics.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200" aria-label="Performance metrics">
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

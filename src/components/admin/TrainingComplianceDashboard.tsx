@@ -157,7 +157,7 @@ const TrainingComplianceDashboard: React.FC = () => {
           <p className="text-red-600 text-sm mt-1">{error}</p>
           <button
             onClick={loadData}
-            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 text-base font-medium"
+            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 text-base font-medium"
             aria-label="Retry loading training data"
           >
             Retry
@@ -168,7 +168,7 @@ const TrainingComplianceDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Training Compliance Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -178,7 +178,7 @@ const TrainingComplianceDashboard: React.FC = () => {
         <button
           onClick={loadData}
           disabled={loading}
-          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
+          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
           aria-label="Refresh training data"
         >
           Refresh
@@ -233,7 +233,7 @@ const TrainingComplianceDashboard: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               onClick={() => setComplianceFilter('all')}
-              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 complianceFilter === 'all' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
               }`}
               aria-pressed={complianceFilter === 'all'}
@@ -245,7 +245,7 @@ const TrainingComplianceDashboard: React.FC = () => {
 
             <button
               onClick={() => setComplianceFilter('current')}
-              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 complianceFilter === 'current' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
               }`}
               aria-pressed={complianceFilter === 'current'}
@@ -259,7 +259,7 @@ const TrainingComplianceDashboard: React.FC = () => {
 
             <button
               onClick={() => setComplianceFilter('overdue')}
-              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 complianceFilter === 'overdue' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
               }`}
               aria-pressed={complianceFilter === 'overdue'}
@@ -273,7 +273,7 @@ const TrainingComplianceDashboard: React.FC = () => {
 
             <button
               onClick={() => setComplianceFilter('expiring')}
-              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+              className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 complianceFilter === 'expiring' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
               }`}
               aria-pressed={complianceFilter === 'expiring'}
@@ -295,7 +295,7 @@ const TrainingComplianceDashboard: React.FC = () => {
               id="course-filter"
               value={courseFilter}
               onChange={e => setCourseFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2 text-base focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] min-h-[44px]"
+              className="border border-gray-300 rounded-lg p-2 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] min-h-[44px]"
               aria-label="Filter training records by course"
             >
               <option value="all">All Courses</option>

@@ -74,7 +74,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ refreshTrigger }
     <div className="bg-white rounded-lg shadow-xs border">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 min-h-[44px]"
+        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
       >
         <div className="flex items-center space-x-2">
           <BarChart3 size={18} className="text-indigo-600" />

@@ -163,7 +163,7 @@ export const ConsolidatedAlertPanel: React.FC<ConsolidatedAlertPanelProps> = ({
   }
 
   return (
-    <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+    <div className="border border-slate-200 rounded-lg bg-white overflow-hidden" aria-label="Consolidated Alert Panel">
       {/* Header */}
       <div className="p-4 border-b border-slate-100">
         <div className="flex items-center justify-between mb-2">
@@ -203,7 +203,7 @@ export const ConsolidatedAlertPanel: React.FC<ConsolidatedAlertPanelProps> = ({
         <div className="border-t border-slate-100">
           <button
             onClick={() => toggleSection('causes')}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <span className="text-sm font-medium text-slate-700">
               Root Causes ({data.root_causes.length})
@@ -229,7 +229,7 @@ export const ConsolidatedAlertPanel: React.FC<ConsolidatedAlertPanelProps> = ({
         <div className="border-t border-slate-100">
           <button
             onClick={() => toggleSection('dispositions')}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <span className="text-sm font-medium text-slate-700">
               Individual Alerts ({data.alert_dispositions.length})
@@ -255,7 +255,7 @@ export const ConsolidatedAlertPanel: React.FC<ConsolidatedAlertPanelProps> = ({
         <div className="p-4 border-t border-slate-100 bg-slate-50">
           <button
             onClick={onAcknowledge}
-            className="w-full min-h-[44px] bg-[var(--ea-primary)] text-white rounded-lg font-medium hover:bg-[var(--ea-primary-hover)] transition-colors"
+            className="w-full min-h-[44px] bg-[var(--ea-primary)] text-white rounded-lg font-medium hover:bg-[var(--ea-primary-hover)] transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             Acknowledge & Continue
           </button>

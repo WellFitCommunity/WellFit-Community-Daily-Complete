@@ -22,7 +22,7 @@ export const BedDetailModal: React.FC<BedDetailModalProps> = ({
           <h3 className="text-lg font-semibold text-white">Bed {bed.bed_label}</h3>
           <button
             onClick={() => { onClose(); onSetEditing(false); }}
-            className="text-slate-400 hover:text-white"
+            className="text-slate-400 hover:text-white focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <XCircle className="w-5 h-5" />
           </button>

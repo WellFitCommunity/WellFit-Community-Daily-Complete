@@ -42,14 +42,14 @@ export const PriorAuthList: React.FC<PriorAuthListProps> = ({
   onAppeal,
   onExportFHIR,
 }) => (
-  <div className="bg-white rounded-xl border">
+  <div className="bg-white rounded-xl border" aria-label="Prior Authorization List">
     {/* Filter bar */}
     <div className="flex items-center gap-2 p-4 border-b overflow-x-auto">
       {FILTER_OPTIONS.map(opt => (
         <button
           key={opt.value}
           onClick={() => onFilterChange(opt.value)}
-          className={`px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
+          className={`px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === opt.value
               ? 'bg-indigo-100 text-indigo-700'
               : 'text-gray-600 hover:bg-gray-100'
@@ -69,7 +69,7 @@ export const PriorAuthList: React.FC<PriorAuthListProps> = ({
       </div>
     ) : (
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" aria-label="Prior authorizations">
           <thead>
             <tr className="bg-gray-50 text-left">
               <th className="px-4 py-3 font-medium text-gray-600">Auth #</th>
@@ -99,7 +99,7 @@ export const PriorAuthList: React.FC<PriorAuthListProps> = ({
                     {auth.status === 'draft' && (
                       <button
                         onClick={() => onSubmit(auth.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-[var(--ea-primary)] rounded hover:bg-[var(--ea-primary-hover)] min-h-[32px]"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-[var(--ea-primary)] rounded hover:bg-[var(--ea-primary-hover)] min-h-[32px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         title="Submit to payer"
                       >
                         <Send className="w-3.5 h-3.5" /> Submit
@@ -108,7 +108,7 @@ export const PriorAuthList: React.FC<PriorAuthListProps> = ({
                     {['draft', 'submitted', 'pending_review'].includes(auth.status) && (
                       <button
                         onClick={() => onCancel(auth.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100 min-h-[32px]"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100 min-h-[32px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         title="Cancel request"
                       >
                         <XCircle className="w-3.5 h-3.5" /> Cancel
@@ -117,7 +117,7 @@ export const PriorAuthList: React.FC<PriorAuthListProps> = ({
                     {['submitted', 'pending_review'].includes(auth.status) && onRecordDecision && (
                       <button
                         onClick={() => onRecordDecision(auth.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded hover:bg-emerald-100 min-h-[32px]"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded hover:bg-emerald-100 min-h-[32px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         title="Record payer decision"
                       >
                         <ClipboardCheck className="w-3.5 h-3.5" /> Decision
@@ -126,7 +126,7 @@ export const PriorAuthList: React.FC<PriorAuthListProps> = ({
                     {auth.status === 'denied' && onAppeal && (
                       <button
                         onClick={() => onAppeal(auth.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded hover:bg-amber-100 min-h-[32px]"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded hover:bg-amber-100 min-h-[32px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         title="File appeal"
                       >
                         <AlertTriangle className="w-3.5 h-3.5" /> Appeal

@@ -230,7 +230,7 @@ const BillingQueueDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Billing Queue Dashboard">
       {/* Alert Banner */}
       {awaitingCount > 0 && (
         <EAAlert variant="warning">
@@ -349,7 +349,7 @@ const BillingQueueDashboard: React.FC = () => {
             <select
               value={filter}
               onChange={e => setFilter(e.target.value as QueueFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All</option>
@@ -367,7 +367,7 @@ const BillingQueueDashboard: React.FC = () => {
                 value={patientSearch}
                 onChange={e => setPatientSearch(e.target.value)}
                 placeholder="Search patient..."
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-44 pl-7"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] w-44 pl-7"
                 aria-label="Search by patient name"
               />
             </div>

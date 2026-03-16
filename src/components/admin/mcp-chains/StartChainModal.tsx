@@ -73,6 +73,7 @@ export const StartChainModal: React.FC<StartChainModalProps> = ({
     <div
       className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
       data-testid="start-chain-modal"
+      aria-label="Start Chain Modal"
     >
       <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 w-full max-w-md mx-4">
         <h2 className="text-lg font-semibold text-white mb-1">Start Chain</h2>
@@ -100,7 +101,7 @@ export const StartChainModal: React.FC<StartChainModalProps> = ({
                   <input
                     id={`chain-input-${field}`}
                     type="text"
-                    className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-[#00857a] focus:outline-none"
+                    className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus-visible:border-[#00857a] focus-visible:outline-none"
                     placeholder={field}
                     value={fieldValues[field] || ''}
                     onChange={(e) => handleFieldChange(field, e.target.value)}

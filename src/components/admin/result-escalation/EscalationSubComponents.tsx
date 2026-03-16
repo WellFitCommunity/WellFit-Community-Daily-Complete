@@ -98,7 +98,7 @@ export function ResolveModal({ escalation, onClose, onResolve }: {
           value={notes}
           onChange={e => setNotes(e.target.value)}
           rows={3}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
+          className="w-full rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] text-sm"
           placeholder="Describe the clinical resolution..."
         />
 

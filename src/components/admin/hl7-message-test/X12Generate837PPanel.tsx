@@ -53,7 +53,7 @@ const Field: React.FC<{
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       required={required}
-      className="w-full bg-slate-900 text-slate-200 text-sm px-3 py-2 rounded-md border border-slate-700 focus:border-[#00857a] focus:outline-none"
+      className="w-full bg-slate-900 text-slate-200 text-sm px-3 py-2 rounded-md border border-slate-700 focus-visible:border-[#00857a] focus-visible:outline-none"
     />
   </div>
 );
@@ -241,7 +241,7 @@ export const X12Generate837PPanel: React.FC = () => {
   // =====================================================
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="X12 837P Claim Generator">
       {/* Subscriber Section */}
       <EACard>
         <EACardHeader icon={<FileText className="h-4 w-4 text-slate-400" />}>
@@ -259,7 +259,7 @@ export const X12Generate837PPanel: React.FC = () => {
                 id="gen-sub-gender"
                 value={subGender}
                 onChange={e => setSubGender(e.target.value as 'M' | 'F' | 'U')}
-                className="w-full bg-slate-900 text-slate-200 text-sm px-3 py-2 rounded-md border border-slate-700 focus:border-[#00857a] focus:outline-none"
+                className="w-full bg-slate-900 text-slate-200 text-sm px-3 py-2 rounded-md border border-slate-700 focus-visible:border-[#00857a] focus-visible:outline-none"
               >
                 <option value="M">Male</option>
                 <option value="F">Female</option>
@@ -303,7 +303,7 @@ export const X12Generate837PPanel: React.FC = () => {
             id="gen-claim-type"
             value={claimType}
             onChange={e => setClaimType(e.target.value as 'professional' | 'institutional')}
-            className="w-full bg-slate-900 text-slate-200 text-sm px-3 py-2 rounded-md border border-slate-700 focus:border-[#00857a] focus:outline-none"
+            className="w-full bg-slate-900 text-slate-200 text-sm px-3 py-2 rounded-md border border-slate-700 focus-visible:border-[#00857a] focus-visible:outline-none"
           >
             <option value="professional">Professional</option>
             <option value="institutional">Institutional</option>
@@ -344,7 +344,7 @@ export const X12Generate837PPanel: React.FC = () => {
                     id={`gen-dx-type-${idx}`}
                     value={d.type}
                     onChange={e => updateDiagnosis(idx, 'type', e.target.value)}
-                    className="w-full bg-slate-900 text-slate-200 text-sm px-3 py-2 rounded-md border border-slate-700 focus:border-[#00857a] focus:outline-none"
+                    className="w-full bg-slate-900 text-slate-200 text-sm px-3 py-2 rounded-md border border-slate-700 focus-visible:border-[#00857a] focus-visible:outline-none"
                   >
                     <option value="principal">Principal</option>
                     <option value="admitting">Admitting</option>

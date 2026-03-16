@@ -54,7 +54,7 @@ export const PendingInvitationsTable: React.FC<PendingInvitationsTableProps> = (
         <p className="text-sm">No pending registrations</p>
         <button
           onClick={onRefresh}
-          className="mt-2 text-xs text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]"
+          className="mt-2 text-xs text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           Refresh
         </button>
@@ -63,7 +63,7 @@ export const PendingInvitationsTable: React.FC<PendingInvitationsTableProps> = (
   }
 
   return (
-    <div>
+    <div aria-label="Pending Invitations">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm text-gray-600">
           {invitations.length} pending registration{invitations.length !== 1 ? 's' : ''}
@@ -71,14 +71,14 @@ export const PendingInvitationsTable: React.FC<PendingInvitationsTableProps> = (
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="flex items-center gap-1 text-xs text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]"
+          className="flex items-center gap-1 text-xs text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           <RefreshCw className="w-3 h-3" /> Refresh
         </button>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" aria-label="Pending Registrations">
           <thead>
             <tr className="bg-gray-50 text-left">
               <th className="px-3 py-2 font-medium text-gray-600">Name</th>
@@ -134,13 +134,13 @@ export const PendingInvitationsTable: React.FC<PendingInvitationsTableProps> = (
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleDelete(inv.id)}
-                          className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700"
+                          className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         >
                           Confirm
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
+                          className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         >
                           Cancel
                         </button>
@@ -149,7 +149,7 @@ export const PendingInvitationsTable: React.FC<PendingInvitationsTableProps> = (
                       <button
                         onClick={() => setConfirmDeleteId(inv.id)}
                         title="Delete pending registration"
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        className="p-1 text-gray-400 hover:text-red-600 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

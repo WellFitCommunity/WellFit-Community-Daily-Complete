@@ -208,7 +208,7 @@ const AIModelCardsDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="AI Model Cards Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -304,7 +304,7 @@ const AIModelCardsDashboard: React.FC = () => {
                         key={model.id}
                         type="button"
                         onClick={() => setSelectedModel(model)}
-                        className={`w-full text-left p-4 rounded-lg border transition-colors ${
+                        className={`w-full text-left p-4 rounded-lg border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                           selectedModel?.id === model.id
                             ? 'border-indigo-500 bg-indigo-50'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -436,7 +436,7 @@ const AIModelCardsDashboard: React.FC = () => {
               <p className="text-gray-500 text-center py-8">No AI skills registered.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200" aria-label="AI skill registry">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>

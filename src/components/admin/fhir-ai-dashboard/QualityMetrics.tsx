@@ -12,7 +12,7 @@ const QualityMetrics: React.FC<QualityMetricsProps> = ({ qualityMetrics }) => {
   if (!qualityMetrics) return <div>Loading quality metrics...</div>;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6" aria-label="Quality Metrics">
       <Card>
         <CardHeader>
           <CardTitle>FHIR Compliance</CardTitle>

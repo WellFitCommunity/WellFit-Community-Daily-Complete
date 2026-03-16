@@ -151,7 +151,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6" aria-label="FHIR Interoperability Hub">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
@@ -167,7 +167,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] transition"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <Plus className="w-5 h-5" />
               New Connection
@@ -186,7 +186,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 font-medium transition ${
+                  className={`flex items-center gap-2 px-6 py-4 font-medium transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                     activeTab === tab.id
                       ? 'text-[var(--ea-primary)] border-b-2 border-[var(--ea-primary)]'
                       : 'text-gray-600 hover:text-gray-900'

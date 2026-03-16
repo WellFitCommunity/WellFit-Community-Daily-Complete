@@ -70,7 +70,7 @@ export const LearningIndicator: React.FC<LearningIndicatorProps> = ({
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 space-y-3">
+    <div className="fixed bottom-6 right-6 z-50 space-y-3" aria-label="Learning Indicator">
       {/* Learning Progress Badge */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
@@ -231,7 +231,7 @@ export const SmartSuggestionCard: React.FC<SmartSuggestionCardProps> = ({
         <div className="flex-1">
           <p className="text-sm text-gray-800 font-medium">{suggestion}</p>
           {actionLabel && (
-            <button className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+            <button className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">
               {actionLabel} →
             </button>
           )}
@@ -294,7 +294,7 @@ export const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
               <p className="text-lg opacity-90">{milestone}</p>
               <button
                 onClick={onClose}
-                className="mt-4 px-6 py-2 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-colors"
+                className="mt-4 px-6 py-2 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 Awesome!
               </button>

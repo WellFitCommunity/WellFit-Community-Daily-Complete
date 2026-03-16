@@ -33,11 +33,11 @@ This tracker targets **functional correctness and clinical accuracy** — the th
 | Severity | Items | Fixed | Remaining |
 |----------|-------|-------|-----------|
 | P0 — Broken | 5 | 5 | 0 |
-| P1 — Clinical Risk | 9 | 8 | 1 (P1-6 adversarial testing) |
+| P1 — Clinical Risk | 9 | 9 | 0 |
 | P2 — Integration Gap | 4 | 4 | 0 |
 | P3 — Data Gap | 4 | 3 | 1 (P3-3 clearinghouse blocked on sandbox creds) |
 | P4 — Polish | 4 | 3 | 1 (P4-4 Akima clinical review) |
-| **Total** | **26** | **23** | **3** |
+| **Total** | **26** | **24** | **2** |
 
 ---
 
@@ -548,7 +548,7 @@ These four items were identified during the "do NOT" constraint brainstorming se
 
 ### P1-6: Adversarial Constraint Testing — Prove Guardrails Work
 
-**Status:** NOT STARTED
+**Status:** ✅ FIXED (2026-03-15) — 64 adversarial constraint tests + 85 prompt injection tests
 **Affects:** ALL clinical AI edge functions with "do NOT" constraints
 **Est:** 12 hours
 **Dependency:** P1-5 must be complete (constraints wired into all functions)

@@ -29,7 +29,7 @@ export const BedBoardHeader: React.FC<BedBoardHeaderProps> = ({
     {/* Voice Command Feedback (ATLUS: Intuitive Technology) */}
     {isVoiceListening && (
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-3 px-4 py-3 bg-slate-800 border border-[var(--ea-primary)] rounded-lg shadow-lg">
+        <div className="flex items-center gap-3 px-4 py-3 bg-slate-800 border border-[var(--ea-primary)] rounded-lg shadow-lg" aria-live="polite">
           <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
           <span className="text-white font-medium">
             {voiceTranscript || 'Listening... Try "Mark bed 205A ready"'}
@@ -40,7 +40,7 @@ export const BedBoardHeader: React.FC<BedBoardHeaderProps> = ({
     )}
 
     {/* Header */}
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between" aria-label="Bed Board Header">
       <div className="flex items-center gap-4">
         <div>
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
@@ -57,7 +57,7 @@ export const BedBoardHeader: React.FC<BedBoardHeaderProps> = ({
         {voiceSupported && (
           <button
             onClick={onToggleVoice}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
               isVoiceListening
                 ? 'bg-red-500 text-white animate-pulse'
                 : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'

@@ -203,7 +203,7 @@ export const TenantAuditLogs: React.FC = () => {
               placeholder="Search user or message..."
               value={filter.searchTerm}
               onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
             />
           </div>
 
@@ -211,7 +211,7 @@ export const TenantAuditLogs: React.FC = () => {
           <select
             value={filter.category}
             onChange={(e) => setFilter({ ...filter, category: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
           >
             <option value="all">All Categories</option>
             <option value="PHI_ACCESS">PHI Access</option>
@@ -225,7 +225,7 @@ export const TenantAuditLogs: React.FC = () => {
           <select
             value={filter.severity}
             onChange={(e) => setFilter({ ...filter, severity: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
           >
             <option value="all">All Severities</option>
             <option value="info">Info</option>
@@ -238,7 +238,7 @@ export const TenantAuditLogs: React.FC = () => {
           <select
             value={filter.dateRange}
             onChange={(e) => setFilter({ ...filter, dateRange: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
           >
             <option value="1d">Last 24 hours</option>
             <option value="7d">Last 7 days</option>

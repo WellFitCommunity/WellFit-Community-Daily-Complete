@@ -199,7 +199,7 @@ const SmartAppManagementPanel: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="SMART App Management Panel">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -245,14 +245,14 @@ const SmartAppManagementPanel: React.FC = () => {
             placeholder="Search apps..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-transparent"
           />
         </div>
 
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           <option value="all">All Statuses</option>
           <option value="pending">Pending</option>
@@ -265,7 +265,7 @@ const SmartAppManagementPanel: React.FC = () => {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           <option value="all">All Types</option>
           <option value="patient">Patient Apps</option>

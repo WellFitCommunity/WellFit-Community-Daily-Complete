@@ -241,13 +241,13 @@ export const ResourcesTab: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleEdit(selectedResource)}
-              className="flex items-center gap-2 px-3 py-2 bg-[var(--ea-primary)]/10 text-[var(--ea-primary)] rounded-lg hover:bg-[var(--ea-primary)]/20 transition min-h-[44px]"
+              className="flex items-center gap-2 px-3 py-2 bg-[var(--ea-primary)]/10 text-[var(--ea-primary)] rounded-lg hover:bg-[var(--ea-primary)]/20 transition min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <Edit2 className="w-4 h-4" /> Edit
             </button>
             <button
               onClick={() => { setViewMode('search'); setSelectedResource(null); }}
-              className="px-3 py-2 text-gray-600 hover:text-gray-900 transition min-h-[44px]"
+              className="px-3 py-2 text-gray-600 hover:text-gray-900 transition min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               Back
             </button>
@@ -261,7 +261,7 @@ export const ResourcesTab: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="FHIR Resources">
       {/* Success Message */}
       {saveSuccess && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800" role="status">
@@ -278,7 +278,7 @@ export const ResourcesTab: React.FC = () => {
           </h3>
           <button
             onClick={() => setViewMode('create')}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] transition min-h-[44px]"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] transition min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <Plus className="w-4 h-4" />
             Create Resource
@@ -294,7 +294,7 @@ export const ResourcesTab: React.FC = () => {
               id="search-resource-type"
               value={filters.resourceType}
               onChange={(e) => setFilters(prev => ({ ...prev, resourceType: e.target.value }))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               {SEARCHABLE_TYPES.map(type => (
                 <option key={type} value={type}>{type}</option>
@@ -311,7 +311,7 @@ export const ResourcesTab: React.FC = () => {
               value={filters.patientId}
               onChange={(e) => setFilters(prev => ({ ...prev, patientId: e.target.value }))}
               placeholder="Filter by patient"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           <div>
@@ -324,7 +324,7 @@ export const ResourcesTab: React.FC = () => {
               value={filters.status}
               onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
               placeholder="e.g. active"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           <div>
@@ -336,14 +336,14 @@ export const ResourcesTab: React.FC = () => {
               type="date"
               value={filters.dateFrom}
               onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           <div className="flex items-end">
             <button
               onClick={handleSearch}
               disabled={searching}
-              className="flex items-center gap-2 w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition disabled:opacity-50 min-h-[44px] justify-center"
+              className="flex items-center gap-2 w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition disabled:opacity-50 min-h-[44px] justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               {searching ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -370,7 +370,7 @@ export const ResourcesTab: React.FC = () => {
             <p className="text-sm text-gray-600">{results.length} resources found</p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" aria-label="FHIR resource search results">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">ID</th>
@@ -403,14 +403,14 @@ export const ResourcesTab: React.FC = () => {
                       <div className="flex items-center gap-2 justify-end">
                         <button
                           onClick={() => handleViewDetail(entry)}
-                          className="p-2 text-gray-400 hover:text-[var(--ea-primary)] transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          className="p-2 text-gray-400 hover:text-[var(--ea-primary)] transition min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           aria-label={`View ${entry.resourceType} ${entry.id}`}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleEdit(entry)}
-                          className="p-2 text-gray-400 hover:text-green-600 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          className="p-2 text-gray-400 hover:text-green-600 transition min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           aria-label={`Edit ${entry.resourceType} ${entry.id}`}
                         >
                           <Edit2 className="w-4 h-4" />

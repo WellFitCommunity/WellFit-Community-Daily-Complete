@@ -268,7 +268,7 @@ const SaferGuidesAssessment: React.FC<SaferGuidesAssessmentProps> = ({ className
   // =====================================================
 
   return (
-    <div className={`p-6 ${className}`}>
+    <div className={`p-6 ${className}`} aria-label="SAFER Guides Self-Assessment">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>

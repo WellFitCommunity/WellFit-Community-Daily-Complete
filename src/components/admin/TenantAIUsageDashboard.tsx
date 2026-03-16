@@ -218,7 +218,7 @@ const TenantAIUsageDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadAIUsage}
-          className="mt-4 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] px-4 py-2 rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors shadow-xs"
+          className="mt-4 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] px-4 py-2 rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           Retry
         </button>
@@ -227,7 +227,7 @@ const TenantAIUsageDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Tenant AI Usage Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -242,7 +242,7 @@ const TenantAIUsageDashboard: React.FC = () => {
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                   timeRange === range
                     ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -255,7 +255,7 @@ const TenantAIUsageDashboard: React.FC = () => {
           <button
             onClick={loadAIUsage}
             disabled={loading}
-            className="bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] px-4 py-2 rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs"
+            className="bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] px-4 py-2 rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh

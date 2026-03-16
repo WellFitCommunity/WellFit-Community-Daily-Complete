@@ -180,7 +180,7 @@ const BAATrackingDashboard: React.FC = () => {
           <p className="text-red-600 text-sm mt-1">{error}</p>
           <button
             onClick={loadData}
-            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 text-base font-medium"
+            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 text-base font-medium"
             aria-label="Retry loading BAA data"
           >
             Retry
@@ -191,7 +191,7 @@ const BAATrackingDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Business Associate Agreement Tracking Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -203,7 +203,7 @@ const BAATrackingDashboard: React.FC = () => {
         <button
           onClick={loadData}
           disabled={loading}
-          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
+          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
           aria-label="Refresh BAA data"
         >
           Refresh
@@ -252,7 +252,7 @@ const BAATrackingDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <button
           onClick={() => setStatusFilter('all')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === 'all' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'all'}
@@ -264,7 +264,7 @@ const BAATrackingDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('active')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === 'active' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'active'}
@@ -276,7 +276,7 @@ const BAATrackingDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('expiring')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === 'expiring' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'expiring'}
@@ -288,7 +288,7 @@ const BAATrackingDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('expired')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === 'expired' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'expired'}

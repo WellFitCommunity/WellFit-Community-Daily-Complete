@@ -542,7 +542,7 @@ const ApiKeyManager: React.FC = () => {
     <>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      <div className="p-6 bg-white shadow-lg rounded-lg">
+      <div className="p-6 bg-white shadow-lg rounded-lg" aria-label="API Key Manager" aria-live="polite">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-900">API Key Manager</h2>
           <div className="flex items-center space-x-2">
@@ -613,7 +613,7 @@ const ApiKeyManager: React.FC = () => {
                 value={newOrgName}
                 onChange={e => setNewOrgName(e.target.value)}
                 placeholder="Enter organization name"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
                 disabled={loading}
                 maxLength={100}
                 pattern="[a-zA-Z0-9\s\-_.]+"
@@ -624,7 +624,7 @@ const ApiKeyManager: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || !newOrgName.trim()}
-                className="px-6 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus:ring-2 focus:ring-[var(--ea-primary)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                className="px-6 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
               >
                 {loading ? (
                   <>
@@ -691,7 +691,7 @@ const ApiKeyManager: React.FC = () => {
               placeholder="Search by organization or key ID..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
             />
           </div>
 
@@ -703,7 +703,7 @@ const ApiKeyManager: React.FC = () => {
               id="filter"
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value as 'all' | 'active' | 'inactive')}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+              className="border border-gray-300 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
             >
               <option value="all">All Keys</option>
               <option value="active">Active Only</option>
@@ -715,7 +715,7 @@ const ApiKeyManager: React.FC = () => {
             <button
               onClick={exportToCsv}
               disabled={loading || filteredAndSortedKeys.length === 0}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
             >
               <span>📊</span>
               <span>Export Excel</span>
@@ -765,7 +765,7 @@ const ApiKeyManager: React.FC = () => {
         {/* API Keys Table */}
         {filteredAndSortedKeys.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full table-auto border-collapse border border-gray-300">
+            <table className="w-full table-auto border-collapse border border-gray-300" aria-label="API Keys">
               <thead className="bg-gray-50">
                 <tr>
                   <th

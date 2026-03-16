@@ -169,7 +169,7 @@ const ResultEscalationDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Result Escalation Dashboard">
       {/* Critical Alert Banner */}
       {(metrics?.critical_count ?? 0) > 0 && (
         <EAAlert variant="critical">
@@ -251,7 +251,7 @@ const ResultEscalationDashboard: React.FC = () => {
                 <select
                   value={severityFilter}
                   onChange={e => setSeverityFilter(e.target.value as SeverityFilter)}
-                  className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+                  className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
                   aria-label="Filter by severity"
                 >
                   <option value="all">All Severities</option>
@@ -263,7 +263,7 @@ const ResultEscalationDashboard: React.FC = () => {
                 <select
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                  className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+                  className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
                   aria-label="Filter by status"
                 >
                   <option value="all">All Statuses</option>

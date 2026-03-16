@@ -15,7 +15,7 @@ interface ServiceStatusPanelProps {
 
 const ServiceStatusPanel: React.FC<ServiceStatusPanelProps> = ({ serviceStatus, spendingSummary }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4" aria-label="Service Status" aria-live="polite">
       {/* Service Health */}
       <div className={`border rounded-lg p-4 ${
         serviceStatus?.isHealthy ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'

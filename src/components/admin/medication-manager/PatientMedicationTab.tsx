@@ -30,7 +30,7 @@ export const PatientMedicationTab: React.FC<PatientMedicationTabProps> = ({
   onPatientSelect,
 }) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Patient Medications">
       {/* Search and Filter */}
       <div className="flex gap-4">
         <div className="relative flex-1">
@@ -40,13 +40,13 @@ export const PatientMedicationTab: React.FC<PatientMedicationTabProps> = ({
             placeholder="Search patients..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
           />
         </div>
         <select
           value={filterRisk}
           onChange={(e) => onFilterChange(e.target.value)}
-          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+          className="px-4 py-2 border rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
         >
           <option value="all">All Risk Levels</option>
           <option value="CRITICAL">Critical</option>

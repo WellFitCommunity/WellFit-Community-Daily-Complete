@@ -135,7 +135,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
 
   return (
     <ErrorBoundary>
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="max-w-7xl mx-auto p-6 space-y-6" aria-label="FHIR Data Mapper">
       <Card>
         <CardHeader>
           <CardTitle>🔄 Intelligent FHIR Data Mapping Agent</CardTitle>
@@ -152,7 +152,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                   <label className="font-medium">Source Data Type:</label>
                   <select
                     {...register('sourceType', { required: 'Source type is required' })}
-                    className="p-2 border border-gray-300 rounded-sm"
+                    className="p-2 border border-gray-300 rounded-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                   >
                     <option value="JSON">JSON</option>
                     <option value="CSV">CSV</option>
@@ -197,7 +197,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                     minLength: { value: 10, message: 'Source data must be at least 10 characters' }
                   })}
                   placeholder={`Paste your ${watchedSourceType} data here...`}
-                  className="w-full h-64 p-3 border border-gray-300 rounded-lg font-mono text-sm resize-none"
+                  className="w-full h-64 p-3 border border-gray-300 rounded-lg font-mono text-sm resize-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 />
                 {formErrors.sourceData && (
                   <span className="text-red-500 text-sm">{formErrors.sourceData.message}</span>
@@ -211,7 +211,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                   <button
                     key={type}
                     onClick={() => loadSampleData(type)}
-                    className="w-full text-left p-3 border border-gray-200 rounded-sm hover:bg-gray-50"
+                    className="w-full text-left p-3 border border-gray-200 rounded-sm hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                   >
                     <div className="font-medium">{type}</div>
                     <div className="text-xs text-gray-500 truncate">
@@ -320,19 +320,19 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('rules')}
-                  className={`px-3 py-1 text-sm ${viewMode === 'rules' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${viewMode === 'rules' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
                 >
                   📋 Mapping Rules
                 </button>
                 <button
                   onClick={() => setViewMode('preview')}
-                  className={`px-3 py-1 text-sm border-l border-gray-300 ${viewMode === 'preview' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm border-l border-gray-300 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${viewMode === 'preview' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
                 >
                   👁️ FHIR Preview
                 </button>
                 <button
                   onClick={() => setViewMode('code')}
-                  className={`px-3 py-1 text-sm border-l border-gray-300 ${viewMode === 'code' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm border-l border-gray-300 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${viewMode === 'code' ? 'bg-[var(--ea-primary,#00857a)]/10 text-[var(--ea-primary,#00857a)]' : 'bg-white'}`}
                 >
                   💻 WellFit Integration Code
                 </button>
@@ -374,7 +374,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
               <div className="space-y-4">
                 <h3 className="font-medium">Mapping Rules ({state.generatedMapping?.mappingRules?.length ?? 0})</h3>
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-300">
+                  <table className="w-full border-collapse border border-gray-300" aria-label="FHIR mapping rules">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="border border-gray-300 px-4 py-2 text-left">Source Field</th>

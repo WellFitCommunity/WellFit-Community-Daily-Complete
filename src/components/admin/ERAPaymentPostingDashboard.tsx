@@ -95,7 +95,7 @@ function MatchableClaimsModal({ claims, onPost, onClose }: {
           <h3 className="text-lg font-semibold text-gray-900">
             Select Claim for Payment Posting
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" type="button" aria-label="Close">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]" type="button" aria-label="Close">
             &times;
           </button>
         </div>
@@ -219,7 +219,7 @@ const ERAPaymentPostingDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="ERA Payment Posting Dashboard">
       {/* Alert Banner */}
       {unpostedCount > 0 && (
         <EAAlert variant="warning">

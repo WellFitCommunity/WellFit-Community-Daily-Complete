@@ -115,7 +115,7 @@ const MCPChainCostPanel: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Chain Execution Costs">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ const MCPChainCostPanel: React.FC = () => {
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition min-h-[44px] ${
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 timeRange === range
                   ? 'bg-green-100 text-green-800'
                   : 'text-gray-600 hover:bg-gray-100'
@@ -139,7 +139,7 @@ const MCPChainCostPanel: React.FC = () => {
           <button
             onClick={loadRuns}
             disabled={loading}
-            className="p-2 text-gray-400 hover:text-gray-600 transition min-h-[44px] min-w-[44px]"
+            className="p-2 text-gray-400 hover:text-gray-600 transition min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             aria-label="Refresh"
           >
             <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
@@ -198,7 +198,7 @@ const MCPChainCostPanel: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="w-full">
+          <table className="w-full" aria-label="Chain Runs">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="text-left px-6 py-3 text-sm font-medium text-gray-700 w-8"></th>
@@ -251,7 +251,7 @@ const MCPChainCostPanel: React.FC = () => {
                         <div className="space-y-2">
                           <h4 className="text-sm font-semibold text-gray-700 mb-3">Step Breakdown</h4>
                           <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full text-sm" aria-label="Step Breakdown">
                               <thead>
                                 <tr className="text-left text-xs text-gray-500">
                                   <th className="pb-2 pr-4">#</th>

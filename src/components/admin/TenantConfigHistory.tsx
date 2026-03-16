@@ -194,7 +194,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
   const uniqueTables = Array.from(new Set(changes.map((c) => c.configTable)));
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-6 ${className}`} aria-label="Configuration Change History">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -204,13 +204,13 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
         <div className="flex gap-2">
           <button
             onClick={() => handleExport('csv')}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             Export CSV
           </button>
           <button
             onClick={() => handleExport('json')}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             Export JSON
           </button>
@@ -287,12 +287,12 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search changes..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
                 <button
                   onClick={handleSearch}
-                  className="px-3 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-md text-sm"
+                  className="px-3 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-md text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 >
                   Search
                 </button>
@@ -310,7 +310,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                   setSelectedTable(e.target.value);
                   setPage(0);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="">All Tables</option>
                 {uniqueTables.map((table) => (
@@ -332,7 +332,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                   setSelectedAction(e.target.value);
                   setPage(0);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="">All Actions</option>
                 <option value="INSERT">Insert</option>
@@ -353,7 +353,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                   setDateFrom(e.target.value);
                   setPage(0);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
             </div>
 
@@ -369,7 +369,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                   setDateTo(e.target.value);
                   setPage(0);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
             </div>
           </div>
@@ -407,7 +407,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200" aria-label="Configuration Changes">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -462,7 +462,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                         <td className="px-4 py-3 text-sm">
                           <button
                             onClick={() => setSelectedChange(change)}
-                            className="text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)]"
+                            className="text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           >
                             View Details
                           </button>
@@ -484,14 +484,14 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                     <button
                       onClick={() => setPage((p) => Math.max(0, p - 1))}
                       disabled={page === 0}
-                      className="px-3 py-1 border rounded disabled:opacity-50"
+                      className="px-3 py-1 border rounded disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     >
                       Previous
                     </button>
                     <button
                       onClick={() => setPage((p) => p + 1)}
                       disabled={(page + 1) * pageSize >= totalCount}
-                      className="px-3 py-1 border rounded disabled:opacity-50"
+                      className="px-3 py-1 border rounded disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     >
                       Next
                     </button>
@@ -512,7 +512,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
                 <h3 className="text-lg font-semibold">Change Details</h3>
                 <button
                   onClick={() => setSelectedChange(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -610,7 +610,7 @@ export const TenantConfigHistory: React.FC<TenantConfigHistoryProps> = ({
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => setSelectedChange(null)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 >
                   Close
                 </button>

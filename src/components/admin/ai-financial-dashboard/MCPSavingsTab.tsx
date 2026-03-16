@@ -73,7 +73,7 @@ const MCPSavingsTab: React.FC<MCPSavingsTabProps> = ({
           </EACard>
 
           {/* Efficiency Metrics */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4" aria-label="MCP Efficiency Metrics">
             <EACard>
               <EACardContent className="py-6">
                 <div className="flex items-center justify-between mb-3">

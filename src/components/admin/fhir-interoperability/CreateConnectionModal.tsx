@@ -31,8 +31,8 @@ export const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({ on
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" aria-label="Create FHIR Connection">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" role="dialog" aria-modal="true">
         <h2 className="text-2xl font-bold mb-4">Create FHIR Connection</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -42,7 +42,7 @@ export const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({ on
               type="text"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               required
             />
           </div>
@@ -53,7 +53,7 @@ export const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({ on
               type="url"
               value={formData.fhirServerUrl}
               onChange={e => setFormData({ ...formData, fhirServerUrl: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               required
             />
           </div>
@@ -63,7 +63,7 @@ export const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({ on
               id="conn-ehr"
               value={formData.ehrSystem}
               onChange={e => setFormData({ ...formData, ehrSystem: e.target.value as EHRSystem })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <option value="EPIC">Epic</option>
               <option value="CERNER">Cerner</option>
@@ -78,7 +78,7 @@ export const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({ on
               type="text"
               value={formData.clientId}
               onChange={e => setFormData({ ...formData, clientId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               required
             />
           </div>
@@ -86,13 +86,13 @@ export const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({ on
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)]"
+              className="flex-1 px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               Create
             </button>

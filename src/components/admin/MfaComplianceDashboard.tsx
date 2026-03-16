@@ -145,7 +145,7 @@ const MfaComplianceDashboard: React.FC = () => {
   const overallPct = totalUsers > 0 ? Math.round((totalCompliant / totalUsers) * 100) : 100;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="MFA Compliance Dashboard">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SummaryCard
@@ -202,7 +202,7 @@ const MfaComplianceDashboard: React.FC = () => {
           <div className="p-8 text-center text-gray-500">Loading compliance data...</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label="MFA compliance by role">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="text-left px-4 py-3 font-medium text-gray-700">Role</th>
@@ -297,7 +297,7 @@ const MfaComplianceDashboard: React.FC = () => {
                 value={exemptionReason}
                 onChange={(e) => setExemptionReason(e.target.value)}
                 placeholder="e.g., Shared workstation, hardware limitation..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 rows={3}
               />
             </div>

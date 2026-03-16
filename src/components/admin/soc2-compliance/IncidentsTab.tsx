@@ -60,7 +60,7 @@ export const IncidentsTab: React.FC<IncidentsTabProps> = ({
   formatHoursSince,
 }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="SOC2 Incident Response">
       {/* Incident Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
@@ -101,7 +101,7 @@ export const IncidentsTab: React.FC<IncidentsTabProps> = ({
               <select
                 value={filterSeverity}
                 onChange={(e) => setFilterSeverity(e.target.value as FilterSeverity)}
-                className="px-3 py-1 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white"
+                className="px-3 py-1 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="ALL">All</option>
                 <option value="CRITICAL">Critical</option>
@@ -115,7 +115,7 @@ export const IncidentsTab: React.FC<IncidentsTabProps> = ({
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-                className="px-3 py-1 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white"
+                className="px-3 py-1 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="ALL">All</option>
                 <option value="OPEN">Open</option>
@@ -142,7 +142,7 @@ export const IncidentsTab: React.FC<IncidentsTabProps> = ({
             <div className="text-center py-8 text-slate-500">No incidents matching filters</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
+              <table className="min-w-full" aria-label="Incident investigation queue">
                 <thead className="bg-slate-800">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Priority</th>
@@ -255,7 +255,7 @@ const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
             </div>
             <button
               onClick={() => setSelectedIncident(null)}
-              className="text-slate-400 hover:text-white text-2xl leading-none"
+              className="text-slate-400 hover:text-white text-2xl leading-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               ×
             </button>
@@ -328,7 +328,7 @@ const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
               <textarea
                 value={resolution}
                 onChange={(e) => setResolution(e.target.value)}
-                className="mt-1 w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white"
+                className="mt-1 w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 rows={4}
                 placeholder="Describe the investigation findings and resolution..."
               />

@@ -56,7 +56,7 @@ const RevenueImpactTab: React.FC<RevenueImpactTabProps> = ({
   return (
     <EATabsContent value="revenue" className="space-y-6">
       {/* Key Revenue Metrics */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-4" aria-label="Revenue Impact Key Metrics">
         <EAMetricCard
           label="Monthly Revenue Potential"
           value={formatCurrency(revenueSummary.totalMonthlyPotential)}

@@ -61,7 +61,7 @@ export const DrugInteractionsTab: React.FC<DrugInteractionsTabProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Drug Interactions">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

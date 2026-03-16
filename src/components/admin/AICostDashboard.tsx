@@ -78,7 +78,7 @@ const AICostDashboard: React.FC = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6">
+    <div className="min-h-screen bg-slate-900 p-6" aria-label="AI Cost Dashboard" aria-live="polite">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -89,7 +89,7 @@ const AICostDashboard: React.FC = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d')}
-            className="bg-slate-800 text-white border border-slate-700 rounded-lg px-3 py-2"
+            className="bg-slate-800 text-white border border-slate-700 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -100,13 +100,13 @@ const AICostDashboard: React.FC = () => {
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded-sm border-slate-600"
+              className="rounded-sm border-slate-600 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
             Auto-refresh
           </label>
           <button
             onClick={loadMetrics}
-            className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
+            className={`px-4 py-2 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
           >
             Refresh
           </button>

@@ -20,7 +20,7 @@ interface ModelUsageSectionProps {
 
 export const ModelUsageSection: React.FC<ModelUsageSectionProps> = ({ modelDistribution }) => {
   return (
-    <EACard>
+    <EACard aria-label="Model Usage">
       <EACardHeader>
         <h2 className="text-lg font-semibold text-white">Model Usage</h2>
       </EACardHeader>

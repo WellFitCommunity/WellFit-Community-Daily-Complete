@@ -87,7 +87,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200" aria-label="Security Alert Rules Configuration">
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Settings className="w-5 h-5 text-indigo-600" />
@@ -179,7 +179,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
                 value={editingRule.name}
                 onChange={(e) => setEditingRule({ ...editingRule, name: e.target.value })}
                 placeholder="e.g., PHI Access Burst"
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus-visible:ring-2 focus-visible:ring-indigo-500"
                 disabled={saving}
               />
             </div>
@@ -189,7 +189,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
                 id="rule-severity"
                 value={editingRule.severity}
                 onChange={(e) => setEditingRule({ ...editingRule, severity: e.target.value as SecurityRule['severity'] })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus-visible:ring-2 focus-visible:ring-indigo-500"
                 disabled={saving}
               >
                 {SEVERITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -204,7 +204,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
                 id="rule-metric"
                 value={editingRule.metric}
                 onChange={(e) => setEditingRule({ ...editingRule, metric: e.target.value as SecurityRule['metric'] })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus-visible:ring-2 focus-visible:ring-indigo-500"
                 disabled={saving}
               >
                 {METRIC_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -216,7 +216,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
                 id="rule-operator"
                 value={editingRule.operator}
                 onChange={(e) => setEditingRule({ ...editingRule, operator: e.target.value as SecurityRule['operator'] })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus-visible:ring-2 focus-visible:ring-indigo-500"
                 disabled={saving}
               >
                 {OPERATOR_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -230,7 +230,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
                 min={1}
                 value={editingRule.threshold}
                 onChange={(e) => setEditingRule({ ...editingRule, threshold: Number(e.target.value) })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus-visible:ring-2 focus-visible:ring-indigo-500"
                 disabled={saving}
               />
             </div>
@@ -247,7 +247,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
               max={1440}
               value={editingRule.time_window_minutes}
               onChange={(e) => setEditingRule({ ...editingRule, time_window_minutes: Number(e.target.value) })}
-              className="w-32 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+              className="w-32 px-2 py-1.5 text-sm border border-gray-300 rounded focus-visible:ring-2 focus-visible:ring-indigo-500"
               disabled={saving}
             />
           </div>
@@ -262,7 +262,7 @@ export const SecurityRulesConfig: React.FC<SecurityRulesConfigProps> = ({
               value={editingRule.description}
               onChange={(e) => setEditingRule({ ...editingRule, description: e.target.value })}
               placeholder="Optional description of what this rule detects"
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus-visible:ring-2 focus-visible:ring-indigo-500"
               disabled={saving}
             />
           </div>

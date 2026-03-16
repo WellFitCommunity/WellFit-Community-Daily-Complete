@@ -245,7 +245,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
   };
 
   return (
-    <Card className="max-w-4xl mx-auto">
+    <Card className="max-w-4xl mx-auto" aria-label="Risk Assessment Form">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>
@@ -491,7 +491,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
               value={formData.assessment_notes || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, assessment_notes: e.target.value }))}
               rows={4}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               placeholder="Document your clinical observations, concerns, and rationale for risk scores..."
             />
           </div>
@@ -630,7 +630,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
                 type="date"
                 value={formData.next_assessment_due || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, next_assessment_due: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+                className="w-full p-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
               />
             </div>
 
@@ -639,7 +639,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
               <select
                 value={formData.review_frequency || 'monthly'}
                 onChange={(e) => setFormData(prev => ({ ...prev, review_frequency: e.target.value as 'weekly' | 'biweekly' | 'monthly' | 'quarterly' }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+                className="w-full p-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
               >
                 <option value="weekly">Weekly</option>
                 <option value="biweekly">Bi-weekly</option>

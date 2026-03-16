@@ -172,7 +172,7 @@ function ActionModal({ task, mode, onConfirm, onClose }: {
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Notes about task completion..."
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               rows={3}
               aria-label="Completion notes"
             />
@@ -315,7 +315,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
   const escalatedCount = metrics?.escalated ?? 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Provider Task Queue Dashboard">
       {/* Alert Banner */}
       {(overdueCount > 0 || escalatedCount > 0) && (
         <EAAlert variant="critical">
@@ -384,7 +384,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
             <select
               value={priorityFilter}
               onChange={e => setPriorityFilter(e.target.value as PriorityFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by priority"
             >
               <option value="all">All Priorities</option>
@@ -396,7 +396,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value as TypeFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by task type"
             >
               <option value="all">All Types</option>
@@ -410,7 +410,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All Statuses</option>
@@ -423,7 +423,7 @@ const ProviderTaskQueueDashboard: React.FC = () => {
             <select
               value={assignFilter}
               onChange={e => setAssignFilter(e.target.value as AssignFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by assignment"
             >
               <option value="all">All Tasks</option>

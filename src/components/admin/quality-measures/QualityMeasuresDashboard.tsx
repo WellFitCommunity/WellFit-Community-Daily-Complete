@@ -210,7 +210,7 @@ export const QualityMeasuresDashboard: React.FC<QualityMeasuresDashboardProps> =
   }
 
   return (
-    <div className={`bg-slate-900 rounded-lg ${className}`}>
+    <div className={`bg-slate-900 rounded-lg ${className}`} aria-label="Quality Measures Dashboard" aria-live="polite">
       {/* Header */}
       <div className="p-6 border-b border-slate-700">
         <div className="flex items-center justify-between">
@@ -233,7 +233,7 @@ export const QualityMeasuresDashboard: React.FC<QualityMeasuresDashboardProps> =
                   const period = REPORTING_PERIODS.find(p => p.label === e.target.value);
                   if (period) setSelectedPeriod(period);
                 }}
-                className="bg-slate-800 text-white border border-slate-600 rounded px-3 py-2 focus:outline-none focus:border-cyan-500"
+                className="bg-slate-800 text-white border border-slate-600 rounded px-3 py-2 focus-visible:outline-none focus-visible:border-cyan-500"
               >
                 {REPORTING_PERIODS.map(period => (
                   <option key={period.label} value={period.label}>

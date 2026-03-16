@@ -115,7 +115,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadExecutiveData}
-          className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
+          className={`px-4 py-2 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
         >
           Refresh
         </button>

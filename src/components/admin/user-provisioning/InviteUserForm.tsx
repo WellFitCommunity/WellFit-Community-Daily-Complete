@@ -163,7 +163,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
   const publicRoles = roles.filter(r => r.level === 'public');
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" aria-label="Invite User Form">
       {/* Name fields */}
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -175,7 +175,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
             type="text"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
             disabled={saving}
           />
         </div>
@@ -188,7 +188,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
             type="text"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
             disabled={saving}
           />
         </div>
@@ -206,7 +206,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="user@facility.org"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
             disabled={saving}
           />
         </div>
@@ -220,7 +220,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+15551234567"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
             disabled={saving}
           />
         </div>
@@ -235,7 +235,7 @@ export const InviteUserForm: React.FC<InviteUserFormProps> = ({
           id="invite-role"
           value={roleCode}
           onChange={(e) => setRoleCode(e.target.value ? Number(e.target.value) : '')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
           disabled={saving}
         >
           <option value="">Select a role...</option>

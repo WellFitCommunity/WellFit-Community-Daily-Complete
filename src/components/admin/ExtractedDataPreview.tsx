@@ -154,7 +154,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
         type={type}
         value={(editedData[field] as string) || ''}
         onChange={(e) => handleFieldChange(field, e.target.value)}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)] ${
+        className={`w-full px-3 py-2 border rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)] ${
           isFieldUncertain(field) ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
         }`}
       />
@@ -180,7 +180,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
       <select
         value={(editedData[field] as string) || ''}
         onChange={(e) => handleFieldChange(field, e.target.value)}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)] ${
+        className={`w-full px-3 py-2 border rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)] ${
           isFieldUncertain(field) ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'
         }`}
       >
@@ -195,7 +195,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto" role="dialog" aria-label="Extracted Data Preview">
       <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
@@ -353,7 +353,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
                   value={editedData.clinicalNotes || ''}
                   onChange={(e) => handleFieldChange('clinicalNotes', e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
                 />
               </div>
               <div>
@@ -369,7 +369,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
                       e.target.value.split(',').map((a) => a.trim()).filter(Boolean)
                     )
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
                   placeholder="e.g., Penicillin, Latex, Shellfish"
                 />
               </div>
@@ -379,7 +379,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
                     type="checkbox"
                     checked={editedData.nkda || false}
                     onChange={(e) => handleFieldChange('nkda', e.target.checked)}
-                    className="w-4 h-4 text-[var(--ea-primary)] border-gray-300 rounded-sm focus:ring-[var(--ea-primary)]"
+                    className="w-4 h-4 text-[var(--ea-primary)] border-gray-300 rounded-sm focus-visible:ring-[var(--ea-primary)]"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     No Known Drug Allergies (NKDA)

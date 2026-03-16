@@ -50,7 +50,7 @@ export const PriorAuthAppealModal: React.FC<PriorAuthAppealModalProps> = ({
   }, [priorAuthId, appealType, reason, clinicalRationale, onSubmit]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-label="File prior authorization appeal">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -75,7 +75,7 @@ export const PriorAuthAppealModal: React.FC<PriorAuthAppealModalProps> = ({
               id="appeal-type"
               value={appealType}
               onChange={e => setAppealType(e.target.value as AppealType)}
-              className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+              className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
               required
             >
               <option value="first_level">First Level</option>
@@ -95,7 +95,7 @@ export const PriorAuthAppealModal: React.FC<PriorAuthAppealModalProps> = ({
               onChange={e => setReason(e.target.value)}
               rows={2}
               required
-              className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+              className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
               placeholder="Why is this authorization medically necessary..."
             />
           </div>
@@ -111,7 +111,7 @@ export const PriorAuthAppealModal: React.FC<PriorAuthAppealModalProps> = ({
               onChange={e => setClinicalRationale(e.target.value)}
               rows={4}
               required
-              className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+              className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
               placeholder="Clinical evidence supporting the medical necessity of the requested service..."
             />
           </div>

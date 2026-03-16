@@ -263,7 +263,7 @@ const ProviderAssignmentDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Provider Assignment Dashboard">
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard label="Active Encounters" value={totalCount} variant="default" />
@@ -313,7 +313,7 @@ const ProviderAssignmentDashboard: React.FC = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All Statuses</option>
@@ -327,7 +327,7 @@ const ProviderAssignmentDashboard: React.FC = () => {
                 type="checkbox"
                 checked={needsProviderOnly}
                 onChange={e => setNeedsProviderOnly(e.target.checked)}
-                className="rounded border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+                className="rounded border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
               Needs provider only
             </label>

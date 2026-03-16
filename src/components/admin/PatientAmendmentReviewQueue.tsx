@@ -217,7 +217,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
           <p className="text-red-600 text-sm mt-1">{error}</p>
           <button
             onClick={loadRequests}
-            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 text-base font-medium"
+            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 text-base font-medium"
             aria-label="Retry loading amendment requests"
           >
             Retry
@@ -228,7 +228,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Patient Amendment Review Queue">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -238,7 +238,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
         <button
           onClick={loadRequests}
           disabled={loading}
-          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary)] text-base font-medium disabled:opacity-50"
+          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] text-base font-medium disabled:opacity-50"
           aria-label="Refresh amendment requests"
         >
           Refresh
@@ -299,13 +299,13 @@ const PatientAmendmentReviewQueue: React.FC = () => {
               value={denialReason}
               onChange={e => setDenialReason(e.target.value)}
               rows={4}
-              className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full border border-gray-300 rounded-lg p-3 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               placeholder="Provide the clinical basis for denying this amendment..."
             />
             <div className="flex gap-3 justify-end mt-4">
               <button
                 onClick={() => { setReviewAction(null); setDenialReason(''); }}
-                className="min-h-[44px] min-w-[44px] px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 text-base font-medium"
+                className="min-h-[44px] min-w-[44px] px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 text-base font-medium"
                 aria-label="Cancel denial"
               >
                 Cancel
@@ -313,7 +313,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
               <button
                 onClick={handleDeny}
                 disabled={!denialReason.trim() || processingId !== null}
-                className="min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 text-base font-medium disabled:opacity-50"
+                className="min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 text-base font-medium disabled:opacity-50"
                 aria-label="Confirm denial"
               >
                 {processingId ? 'Processing...' : 'Confirm Denial'}
@@ -393,7 +393,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
                   <button
                     onClick={() => handleAccept(request.id)}
                     disabled={processingId === request.id}
-                    className="min-h-[44px] min-w-[44px] px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-base font-medium disabled:opacity-50"
+                    className="min-h-[44px] min-w-[44px] px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 text-base font-medium disabled:opacity-50"
                     aria-label={`Accept amendment request: ${request.record_description}`}
                   >
                     {processingId === request.id ? 'Processing...' : 'Accept'}
@@ -401,7 +401,7 @@ const PatientAmendmentReviewQueue: React.FC = () => {
                   <button
                     onClick={() => setReviewAction({ requestId: request.id, type: 'deny' })}
                     disabled={processingId === request.id}
-                    className="min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 text-base font-medium disabled:opacity-50"
+                    className="min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 text-base font-medium disabled:opacity-50"
                     aria-label={`Deny amendment request: ${request.record_description}`}
                   >
                     Deny

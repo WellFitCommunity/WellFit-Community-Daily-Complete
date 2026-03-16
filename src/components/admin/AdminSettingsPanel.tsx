@@ -244,7 +244,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6" aria-label="Admin Settings Panel">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <div className="flex items-center justify-between">
@@ -307,7 +307,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.display.compactMode}
                 onChange={(e) => updateSetting('display', 'compactMode', e.target.checked)}
-                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
               <span className="ml-2 text-sm text-gray-700">Compact mode</span>
             </label>
@@ -317,7 +317,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.display.showAdvancedMetrics}
                 onChange={(e) => updateSetting('display', 'showAdvancedMetrics', e.target.checked)}
-                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
               <span className="ml-2 text-sm text-gray-700">Show advanced metrics</span>
             </label>
@@ -328,7 +328,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
             <select
               value={settings.display.defaultDashboardView}
               onChange={(e) => updateSetting('display', 'defaultDashboardView', e.target.value)}
-              className="block w-full border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="block w-full border-gray-300 rounded-md focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
             >
               <option value="overview">Overview</option>
               <option value="patients">Patients</option>
@@ -354,7 +354,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.email}
               onChange={(e) => updateSetting('notifications', 'email', e.target.checked)}
-              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </label>
 
@@ -367,7 +367,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.browser}
               onChange={(e) => updateSetting('notifications', 'browser', e.target.checked)}
-              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </label>
 
@@ -380,7 +380,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.emergencyAlerts}
               onChange={(e) => updateSetting('notifications', 'emergencyAlerts', e.target.checked)}
-              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
               disabled
             />
           </label>
@@ -401,7 +401,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
             <select
               value={settings.security.sessionTimeout}
               onChange={(e) => updateSetting('security', 'sessionTimeout', parseInt(e.target.value))}
-              className="block w-full border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="block w-full border-gray-300 rounded-md focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
             >
               <option value={15}>15 minutes</option>
               <option value={30}>30 minutes</option>
@@ -419,7 +419,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.security.requirePinForSensitive}
               onChange={(e) => updateSetting('security', 'requirePinForSensitive', e.target.checked)}
-              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+              className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </label>
 
@@ -459,7 +459,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.system.enableBetaFeatures}
                 onChange={(e) => updateSetting('system', 'enableBetaFeatures', e.target.checked)}
-                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+                className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
             </label>
           </div>

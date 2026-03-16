@@ -21,7 +21,7 @@ interface BatchQueueSectionProps {
 
 export const BatchQueueSection: React.FC<BatchQueueSectionProps> = ({ queueStats, batchStats }) => {
   return (
-    <EACard>
+    <EACard aria-label="Batch Queue">
       <EACardHeader>
         <h2 className="text-lg font-semibold text-white">Batch Queue</h2>
       </EACardHeader>

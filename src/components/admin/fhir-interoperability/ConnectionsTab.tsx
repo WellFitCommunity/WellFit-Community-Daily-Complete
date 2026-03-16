@@ -24,9 +24,9 @@ export const ConnectionsTab: React.FC<ConnectionsTabProps> = ({
   if (loading) return <div className="text-center py-12">Loading...</div>;
 
   return (
-    <div className="bg-white rounded-lg shadow-xs border border-gray-200">
+    <div className="bg-white rounded-lg shadow-xs border border-gray-200" aria-label="FHIR Connections">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full" aria-label="FHIR connections list">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
@@ -58,9 +58,9 @@ export const ConnectionsTab: React.FC<ConnectionsTabProps> = ({
                   {conn.lastSync ? new Date(conn.lastSync).toLocaleString() : 'Never'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  <button onClick={() => onTest(conn.id)} className="text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]">Test</button>
-                  <button onClick={() => onSelect(conn)} className="text-green-600 hover:text-green-900">Manage</button>
-                  <button onClick={() => onDelete(conn.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                  <button onClick={() => onTest(conn.id)} className="text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">Test</button>
+                  <button onClick={() => onSelect(conn)} className="text-green-600 hover:text-green-900 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">Manage</button>
+                  <button onClick={() => onDelete(conn.id)} className="text-red-600 hover:text-red-900 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">Delete</button>
                 </td>
               </tr>
             ))}

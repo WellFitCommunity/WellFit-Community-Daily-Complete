@@ -195,7 +195,7 @@ const MCPServerHealthPanel: React.FC = () => {
     'healthy';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="MCP Server Health Monitor" aria-live="polite">
       {/* Summary Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-700 bg-slate-800/50 p-4">
         <div className="flex items-center gap-4">

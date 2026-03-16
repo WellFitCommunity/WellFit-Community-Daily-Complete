@@ -48,6 +48,7 @@ export const SmartAppCard: React.FC<SmartAppCardProps> = ({
       className={`bg-white border rounded-lg p-4 ${
         app.status === 'revoked' ? 'opacity-60' : ''
       }`}
+      aria-label={`SMART App: ${app.client_name}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
@@ -112,7 +113,7 @@ export const SmartAppCard: React.FC<SmartAppCardProps> = ({
           {app.status === 'pending' && (
             <button
               onClick={() => onReview(app)}
-              className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
+              className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               Review
             </button>
@@ -120,7 +121,7 @@ export const SmartAppCard: React.FC<SmartAppCardProps> = ({
           {app.status === 'approved' && (
             <button
               onClick={() => onSuspend(app)}
-              className="p-2 text-gray-400 hover:text-orange-600"
+              className="p-2 text-gray-400 hover:text-orange-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               title="Suspend"
             >
               <Ban className="w-4 h-4" />
@@ -129,7 +130,7 @@ export const SmartAppCard: React.FC<SmartAppCardProps> = ({
           {app.status === 'suspended' && (
             <button
               onClick={() => onReactivate(app)}
-              className="p-2 text-gray-400 hover:text-green-600"
+              className="p-2 text-gray-400 hover:text-green-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               title="Reactivate"
             >
               <Play className="w-4 h-4" />
@@ -137,7 +138,7 @@ export const SmartAppCard: React.FC<SmartAppCardProps> = ({
           )}
           <button
             onClick={() => onEdit(app)}
-            className="p-2 text-gray-400 hover:text-[var(--ea-primary)]"
+            className="p-2 text-gray-400 hover:text-[var(--ea-primary)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             title="Edit"
           >
             <Edit2 className="w-4 h-4" />
@@ -145,7 +146,7 @@ export const SmartAppCard: React.FC<SmartAppCardProps> = ({
           {app.status !== 'revoked' && (
             <button
               onClick={() => onRevoke(app)}
-              className="p-2 text-gray-400 hover:text-red-600"
+              className="p-2 text-gray-400 hover:text-red-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               title="Revoke"
             >
               <Trash2 className="w-4 h-4" />

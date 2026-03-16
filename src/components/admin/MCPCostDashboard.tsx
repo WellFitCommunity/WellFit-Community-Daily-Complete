@@ -105,7 +105,7 @@ export const MCPCostDashboard: React.FC = () => {
     totalPotentialCost > 0 ? (metrics.total_saved / totalPotentialCost) * 100 : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="MCP Cost Savings Dashboard">
       {/* Hero Stats */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

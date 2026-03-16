@@ -163,7 +163,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
           <p className="text-red-600 text-sm mt-1">{error}</p>
           <button
             onClick={loadData}
-            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 text-base font-medium"
+            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 text-base font-medium"
             aria-label="Retry loading disclosure data"
           >
             Retry
@@ -174,7 +174,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Disclosure Accounting Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -186,7 +186,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
         <button
           onClick={loadData}
           disabled={loading}
-          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
+          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
           aria-label="Refresh disclosure data"
         >
           Refresh
@@ -212,7 +212,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="min-h-[44px] w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+              className="min-h-[44px] w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           <div className="flex-1">
@@ -224,7 +224,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="min-h-[44px] w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+              className="min-h-[44px] w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
         </div>
@@ -257,7 +257,7 @@ const DisclosureAccountingDashboard: React.FC = () => {
         </div>
       ) : (
         <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200" aria-label="PHI disclosures">
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-gray-700">

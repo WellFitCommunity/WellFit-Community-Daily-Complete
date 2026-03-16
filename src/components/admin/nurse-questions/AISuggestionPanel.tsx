@@ -161,7 +161,7 @@ Format your response as a clear, professional message that can be sent to the pa
     <div className="mb-4">
       <button
         onClick={handleToggle}
-        className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition min-h-[44px]"
+        className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
       >
         <Brain size={16} />
         <span>{showAiHelp ? 'Hide AI Assistant' : 'Get AI Response Suggestions'}</span>
@@ -208,7 +208,7 @@ Format your response as a clear, professional message that can be sent to the pa
 
               <button
                 onClick={() => onUseSuggestion(aiSuggestion)}
-                className="text-xs px-3 py-2 bg-purple-200 text-purple-800 rounded-sm hover:bg-purple-300 min-h-[44px]"
+                className="text-xs px-3 py-2 bg-purple-200 text-purple-800 rounded-sm hover:bg-purple-300 min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 Use This Response
               </button>

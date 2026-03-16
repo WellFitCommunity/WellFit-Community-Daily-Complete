@@ -21,7 +21,7 @@ export const QualityExportPanel: React.FC<QualityExportPanelProps> = ({
       <button
         onClick={() => onExport('QRDA_III')}
         disabled={isExporting}
-        className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white px-4 py-2 rounded transition-colors"
+        className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white px-4 py-2 rounded transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
       >
         {isExporting && exportType === 'QRDA_III' ? (
           <RefreshCw className="w-4 h-4 animate-spin" />
@@ -33,7 +33,7 @@ export const QualityExportPanel: React.FC<QualityExportPanelProps> = ({
       <button
         onClick={() => onExport('QRDA_I')}
         disabled={isExporting}
-        className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white px-4 py-2 rounded transition-colors"
+        className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white px-4 py-2 rounded transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
       >
         {isExporting && exportType === 'QRDA_I' ? (
           <RefreshCw className="w-4 h-4 animate-spin" />

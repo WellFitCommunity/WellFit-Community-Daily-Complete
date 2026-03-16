@@ -63,7 +63,7 @@ export const PriorAuthDecisionModal: React.FC<PriorAuthDecisionModalProps> = ({
   const showApprovalFields = decisionType === 'approved' || decisionType === 'partial_approval';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-label="Record payer authorization outcome">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-bold text-gray-900">Record Payer Decision</h3>
@@ -85,7 +85,7 @@ export const PriorAuthDecisionModal: React.FC<PriorAuthDecisionModalProps> = ({
               id="decision-type"
               value={decisionType}
               onChange={e => setDecisionType(e.target.value as DecisionType)}
-              className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+              className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
               required
             >
               <option value="approved">Approved</option>
@@ -107,7 +107,7 @@ export const PriorAuthDecisionModal: React.FC<PriorAuthDecisionModalProps> = ({
                   type="text"
                   value={authNumber}
                   onChange={e => setAuthNumber(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
                   placeholder="AUTH-12345"
                 />
               </div>
@@ -121,7 +121,7 @@ export const PriorAuthDecisionModal: React.FC<PriorAuthDecisionModalProps> = ({
                     type="date"
                     value={effectiveDate}
                     onChange={e => setEffectiveDate(e.target.value)}
-                    className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
                   />
                 </div>
                 <div>
@@ -133,7 +133,7 @@ export const PriorAuthDecisionModal: React.FC<PriorAuthDecisionModalProps> = ({
                     type="date"
                     value={expirationDate}
                     onChange={e => setExpirationDate(e.target.value)}
-                    className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
                   />
                 </div>
               </div>
@@ -152,7 +152,7 @@ export const PriorAuthDecisionModal: React.FC<PriorAuthDecisionModalProps> = ({
                   value={denialReason}
                   onChange={e => setDenialReason(e.target.value)}
                   rows={2}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
                   placeholder="Reason for denial..."
                 />
               </div>
@@ -165,7 +165,7 @@ export const PriorAuthDecisionModal: React.FC<PriorAuthDecisionModalProps> = ({
                   type="text"
                   value={denialCodes}
                   onChange={e => setDenialCodes(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
                   placeholder="CO-16, CO-50 (comma-separated)"
                 />
               </div>
@@ -182,7 +182,7 @@ export const PriorAuthDecisionModal: React.FC<PriorAuthDecisionModalProps> = ({
               value={notes}
               onChange={e => setNotes(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+              className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
               placeholder="Additional notes..."
             />
           </div>

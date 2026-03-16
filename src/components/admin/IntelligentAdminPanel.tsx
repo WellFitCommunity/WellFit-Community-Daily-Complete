@@ -234,7 +234,7 @@ const IntelligentAdminPanel: React.FC = () => {
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
       <PinnedSectionsProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50" aria-label="Intelligent Admin Panel">
         <AdminHeader title="🎯 Mission Control" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {/* MFA Grace Period Warning */}
@@ -274,7 +274,7 @@ const IntelligentAdminPanel: React.FC = () => {
               <h2 className="text-white text-xl font-bold">Quick Actions</h2>
               <button
                 onClick={() => setShowWhatsNew(true)}
-                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <span>✨</span>
                 <span>What's New</span>
@@ -283,28 +283,28 @@ const IntelligentAdminPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <button
                 onClick={() => navigate('/admin/enroll-senior')}
-                className="bg-white text-emerald-700 px-6 py-4 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-emerald-700 px-6 py-4 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <span className="mr-2 text-2xl">➕</span>
                 Enroll Senior
               </button>
               <button
                 onClick={() => navigate('/admin/bulk-enroll')}
-                className="bg-white text-blue-700 px-6 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-blue-700 px-6 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <span className="mr-2 text-2xl">👥</span>
                 Bulk Enroll
               </button>
               <button
                 onClick={() => navigate('/admin/bulk-export')}
-                className="bg-white text-indigo-700 px-6 py-4 rounded-lg font-semibold hover:bg-indigo-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-indigo-700 px-6 py-4 rounded-lg font-semibold hover:bg-indigo-50 transition-colors shadow-md flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <span className="mr-2 text-2xl">📤</span>
                 Bulk Export
               </button>
               <button
                 onClick={() => navigate('/admin/photo-approval')}
-                className="bg-white text-yellow-700 px-6 py-4 rounded-lg font-semibold hover:bg-yellow-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-yellow-700 px-6 py-4 rounded-lg font-semibold hover:bg-yellow-50 transition-colors shadow-md flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <span className="mr-2 text-2xl">📸</span>
                 Approve Photos

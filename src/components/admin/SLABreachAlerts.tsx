@@ -172,7 +172,7 @@ export const SLABreachAlerts: React.FC = () => {
   const unacknowledgedBreaches = breachedOrders.filter(o => !o.sla_acknowledged_at).length;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6" aria-label="SLA Breach Alerts Dashboard" aria-live="polite">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -285,7 +285,7 @@ export const SLABreachAlerts: React.FC = () => {
             <button
               key={type}
               onClick={() => setFilterType(type)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 filterType === type
                   ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

@@ -158,7 +158,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadIncidents}
-          className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
+          className={`px-4 py-2 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
         >
           Refresh
         </button>
@@ -234,7 +234,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
               <select
                 value={filterSeverity}
                 onChange={(e) => setFilterSeverity(e.target.value as typeof filterSeverity)}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="ALL">All</option>
                 <option value="CRITICAL">Critical</option>
@@ -248,7 +248,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="ALL">All</option>
                 <option value="OPEN">Open</option>
@@ -333,14 +333,14 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
                         {!incident.investigated ? (
                           <button
                             onClick={() => setSelectedIncident(incident)}
-                            className={`px-3 py-1 rounded-sm ${theme.buttonPrimary}`}
+                            className={`px-3 py-1 rounded-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
                           >
                             Investigate
                           </button>
                         ) : (
                           <button
                             onClick={() => setSelectedIncident(incident)}
-                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300"
+                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           >
                             View
                           </button>
@@ -369,7 +369,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setSelectedIncident(null)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                  className="text-gray-500 hover:text-gray-700 text-2xl leading-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 >
                   ×
                 </button>
@@ -445,7 +445,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
                   <textarea
                     value={resolution}
                     onChange={(e) => setResolution(e.target.value)}
-                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     rows={4}
                     placeholder="Describe the investigation findings and resolution..."
                   />
@@ -453,13 +453,13 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
                     <button
                       onClick={handleResolveIncident}
                       disabled={submittingResolution || !resolution.trim()}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     >
                       {submittingResolution ? 'Resolving...' : 'Mark as Resolved'}
                     </button>
                     <button
                       onClick={() => setSelectedIncident(null)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     >
                       Cancel
                     </button>

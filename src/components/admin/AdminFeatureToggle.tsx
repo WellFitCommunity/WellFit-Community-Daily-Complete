@@ -119,23 +119,23 @@ const AdminFeatureToggle: React.FC<Props> = ({
       ${sizeClasses[size]} 
       rounded-lg font-semibold 
       transition-all duration-200 
-      focus:outline-hidden focus:ring-2 focus:ring-offset-2
+      focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2
       disabled:cursor-not-allowed disabled:opacity-50
     `.trim().replace(/\s+/g, ' ');
 
     if (variant === 'minimal') {
       return `${baseClasses} ${
         isFeatured
-          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300'
-          : 'bg-blue-50 text-blue-700 hover:bg-blue-100 focus:ring-blue-300'
+          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus-visible:ring-gray-300'
+          : 'bg-blue-50 text-blue-700 hover:bg-blue-100 focus-visible:ring-blue-300'
       }`;
     }
 
     // Default variant
     return `${baseClasses} ${
       isFeatured
-        ? 'bg-[#8cc63f] text-white hover:bg-[#7db335] focus:ring-[#8cc63f] shadow-xs'
-        : 'bg-white text-[#003865] border border-[#003865] hover:bg-[#8cc63f] hover:text-white hover:border-[#8cc63f] focus:ring-[#003865] shadow-xs'
+        ? 'bg-[#8cc63f] text-white hover:bg-[#7db335] focus-visible:ring-[#8cc63f] shadow-xs'
+        : 'bg-white text-[#003865] border border-[#003865] hover:bg-[#8cc63f] hover:text-white hover:border-[#8cc63f] focus-visible:ring-[#003865] shadow-xs'
     }`;
   };
 
@@ -176,7 +176,7 @@ const AdminFeatureToggle: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center" aria-label="Feature Toggle">
       <button
         type="button"
         onClick={flip}

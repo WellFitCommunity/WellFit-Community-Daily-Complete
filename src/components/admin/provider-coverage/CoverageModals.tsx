@@ -127,7 +127,7 @@ export function AddCoverageModal({ onClose, onCreated }: {
             <input
               type="text" value={absentProviderId} onChange={e => setAbsentProviderId(e.target.value)}
               placeholder="UUID of absent provider"
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               aria-label="Absent provider ID"
             />
           </div>
@@ -136,7 +136,7 @@ export function AddCoverageModal({ onClose, onCreated }: {
             <input
               type="text" value={coverageProviderId} onChange={e => setCoverageProviderId(e.target.value)}
               placeholder="UUID of covering provider"
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               aria-label="Coverage provider ID"
             />
           </div>
@@ -145,7 +145,7 @@ export function AddCoverageModal({ onClose, onCreated }: {
               <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
               <input
                 type="datetime-local" value={effectiveStart} onChange={e => setEffectiveStart(e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
                 aria-label="Effective start"
               />
             </div>
@@ -153,7 +153,7 @@ export function AddCoverageModal({ onClose, onCreated }: {
               <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
               <input
                 type="datetime-local" value={effectiveEnd} onChange={e => setEffectiveEnd(e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
                 aria-label="Effective end"
               />
             </div>
@@ -163,7 +163,7 @@ export function AddCoverageModal({ onClose, onCreated }: {
               <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
               <select
                 value={coverageReason} onChange={e => setCoverageReason(e.target.value as CoverageReason)}
-                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
                 aria-label="Coverage reason"
               >
                 <option value="vacation">Vacation</option>
@@ -179,7 +179,7 @@ export function AddCoverageModal({ onClose, onCreated }: {
               <label className="block text-sm font-medium text-gray-700 mb-1">Priority (1-3)</label>
               <select
                 value={priority} onChange={e => setPriority(Number(e.target.value))}
-                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
                 aria-label="Coverage priority"
               >
                 <option value={1}>1 (Primary)</option>
@@ -191,7 +191,7 @@ export function AddCoverageModal({ onClose, onCreated }: {
           <div className="flex items-center gap-2">
             <input
               type="checkbox" id="auto-route" checked={autoRoute} onChange={e => setAutoRoute(e.target.checked)}
-              className="rounded border-gray-300 text-[var(--ea-primary)] focus:ring-[var(--ea-primary)]"
+              className="rounded border-gray-300 text-[var(--ea-primary)] focus-visible:ring-[var(--ea-primary)]"
             />
             <label htmlFor="auto-route" className="text-sm text-gray-700">Automatically route tasks to coverage provider</label>
           </div>
@@ -200,7 +200,7 @@ export function AddCoverageModal({ onClose, onCreated }: {
             <textarea
               value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="Additional notes..."
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               rows={2}
               aria-label="Notes"
             />

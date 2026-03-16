@@ -115,7 +115,7 @@ const ClaudeTestWidget: React.FC = () => {
   };
 
   return (
-    <Card className="max-w-2xl">
+    <Card className="max-w-2xl" aria-label="Claude AI Service Test">
       <CardHeader>
         <CardTitle>🤖 Claude AI Service Test</CardTitle>
       </CardHeader>

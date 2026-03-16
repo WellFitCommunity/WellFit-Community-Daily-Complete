@@ -14,7 +14,7 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({ riskMatrix }) => {
   const total = Object.values(quadrants).reduce((sum: number, count: number) => sum + count, 0);
 
   return (
-    <div className="grid grid-cols-2 gap-4 p-4">
+    <div className="grid grid-cols-2 gap-4 p-4" aria-label="Patient Risk Matrix">
       <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4 text-center">
         <h4 className="font-semibold text-red-800">High Risk, Low Adherence</h4>
         <div className="text-2xl font-bold text-red-600">{quadrants.highRiskLowAdherence}</div>

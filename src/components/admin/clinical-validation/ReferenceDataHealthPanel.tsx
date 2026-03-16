@@ -63,7 +63,7 @@ export const ReferenceDataHealthPanel: React.FC<ReferenceDataHealthPanelProps> =
   const criticalCount = sources.filter((s) => s.status === 'critical' || s.status === 'stale').length;
 
   return (
-    <EACard variant={criticalCount > 0 ? 'highlight' : 'default'}>
+    <EACard variant={criticalCount > 0 ? 'highlight' : 'default'} aria-label="Reference Data Health Panel">
       <EACardHeader>
         <div className="flex items-center justify-between w-full">
           <h3 className="text-lg font-bold text-white">

@@ -31,7 +31,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const errorConnections = connections.filter(c => c.status === 'error').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="FHIR Overview">
       {/* Connection Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
@@ -94,12 +94,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <button
             onClick={onSyncAllActive}
             disabled={syncingAll || activeConnections === 0}
-            className="px-4 py-2 bg-[var(--ea-primary)]/10 text-[var(--ea-primary)] rounded-lg hover:bg-[var(--ea-primary)]/20 transition flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 bg-[var(--ea-primary)]/10 text-[var(--ea-primary)] rounded-lg hover:bg-[var(--ea-primary)]/20 transition flex items-center gap-2 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <RefreshCw className={`w-4 h-4 ${syncingAll ? 'animate-spin' : ''}`} />
             {syncingAll ? 'Syncing...' : 'Sync All Active'}
           </button>
-          <button className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition flex items-center gap-2">
+          <button className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">
             <Check className="w-4 h-4" />
             Test All Connections
           </button>

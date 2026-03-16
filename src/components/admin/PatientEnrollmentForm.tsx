@@ -24,12 +24,12 @@ const PatientEnrollmentForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto" aria-label="Patient Enrollment Form">
       {/* Print Button - Hidden when printing */}
       <div className="print:hidden mb-6 flex justify-end">
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)]"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           <Printer className="w-5 h-5" />
           Print Form

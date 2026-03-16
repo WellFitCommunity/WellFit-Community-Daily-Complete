@@ -240,7 +240,7 @@ const MPIReviewQueue: React.FC<MPIReviewQueueProps> = ({ tenantId }) => {
     });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="MPI Review Queue">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -300,7 +300,7 @@ const MPIReviewQueue: React.FC<MPIReviewQueueProps> = ({ tenantId }) => {
                 placeholder="Search by patient name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               />
             </div>
 
@@ -309,7 +309,7 @@ const MPIReviewQueue: React.FC<MPIReviewQueueProps> = ({ tenantId }) => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-                className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)]"
+                className="border rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
               >
                 <option value="all">All Statuses</option>
                 <option value="pending">Pending</option>
@@ -322,7 +322,7 @@ const MPIReviewQueue: React.FC<MPIReviewQueueProps> = ({ tenantId }) => {
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value as MPIPriority | 'all')}
-              className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="border rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             >
               <option value="all">All Priorities</option>
               <option value="urgent">Urgent</option>
@@ -334,7 +334,7 @@ const MPIReviewQueue: React.FC<MPIReviewQueueProps> = ({ tenantId }) => {
             <select
               value={sortField}
               onChange={(e) => setSortField(e.target.value as SortField)}
-              className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="border rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             >
               <option value="score">Sort by Score</option>
               <option value="priority">Sort by Priority</option>

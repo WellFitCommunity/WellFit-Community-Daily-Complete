@@ -508,7 +508,7 @@ const UsersList: React.FC = () => {
     <>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       
-      <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 space-y-6" aria-label="Registered Users List">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
           <div>
@@ -582,7 +582,7 @@ const UsersList: React.FC = () => {
               placeholder="Search by name, phone, or user ID..."
               value={rawSearch}
               onChange={(e) => setRawSearch(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
             />
           </div>
 
@@ -594,7 +594,7 @@ const UsersList: React.FC = () => {
               id="filter"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'inactive' | 'emergency')}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+              className="border border-gray-300 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
             >
               <option value="all">All Users</option>
               <option value="active">Active (7 days)</option>
@@ -616,7 +616,7 @@ const UsersList: React.FC = () => {
                   setSortField(field as SortField);
                   setSortDirection(direction as SortDirection);
                 }}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="border border-gray-300 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               >
                 <option value="first_name-asc">Name A-Z</option>
                 <option value="first_name-desc">Name Z-A</option>
@@ -694,10 +694,10 @@ const UsersList: React.FC = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300">
+                <table className="w-full border-collapse border border-gray-300" aria-label="Users">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th 
+                      <th
                         className="border border-gray-300 px-4 py-3 text-left cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('first_name')}
                       >

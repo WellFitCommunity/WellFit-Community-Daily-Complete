@@ -26,7 +26,7 @@ export const SecurityTab: React.FC<SecurityTabProps> = ({
   formatTimeAgo,
 }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="SOC2 Security Events">
       {/* Security Metrics Grid */}
       {securityMetrics && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -98,7 +98,7 @@ export const SecurityTab: React.FC<SecurityTabProps> = ({
             <div className="text-center py-8 text-slate-500">No security events recorded</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
+              <table className="min-w-full" aria-label="Recent security events">
                 <thead className="bg-slate-800">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Time</th>

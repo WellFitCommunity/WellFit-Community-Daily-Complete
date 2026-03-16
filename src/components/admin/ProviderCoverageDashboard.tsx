@@ -226,7 +226,7 @@ const ProviderCoverageDashboard: React.FC = () => {
   const unassignedCount = metrics?.unassigned_absences ?? 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Provider Coverage Dashboard">
       {unassignedCount > 0 && (
         <EAAlert variant="critical">
           <div className="flex items-center gap-2">
@@ -278,7 +278,7 @@ const ProviderCoverageDashboard: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b bg-gray-50">
               <Filter className="w-4 h-4 text-gray-400" />
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]" aria-label="Filter by status">
+                className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]" aria-label="Filter by status">
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
                 <option value="upcoming">Upcoming</option>
@@ -286,7 +286,7 @@ const ProviderCoverageDashboard: React.FC = () => {
                 <option value="cancelled">Cancelled</option>
               </select>
               <select value={reasonFilter} onChange={e => setReasonFilter(e.target.value as CoverageReason | 'all')}
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]" aria-label="Filter by reason">
+                className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]" aria-label="Filter by reason">
                 <option value="all">All Reasons</option>
                 <option value="vacation">Vacation</option>
                 <option value="pto">PTO</option>
@@ -350,7 +350,7 @@ const ProviderCoverageDashboard: React.FC = () => {
           <EACardHeader icon={<Calendar className="w-5 h-5" />}
             action={<div className="flex items-center gap-3">
               <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]" aria-label="Schedule date" />
+                className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]" aria-label="Schedule date" />
               <EAButton variant="ghost" size="sm" onClick={fetchData}>
                 <RefreshCw className="w-4 h-4 mr-1" />Refresh
               </EAButton>

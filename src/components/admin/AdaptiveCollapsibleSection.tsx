@@ -131,10 +131,10 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
   };
 
   return (
-    <section className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-xl">
+    <section className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-xl" aria-label={title}>
       <button
         onClick={handleToggle}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors border-b border-gray-200"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors border-b border-gray-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         aria-expanded={isOpen}
         aria-controls={`section-${sectionId}`}
       >
@@ -161,7 +161,7 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
               e.stopPropagation();
               togglePin(sectionId);
             }}
-            className={`p-1.5 rounded-lg transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
               pinned
                 ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                 : 'text-gray-300 hover:bg-gray-100 hover:text-amber-500'

@@ -282,7 +282,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               <button
                 ref={closeButtonRef}
                 onClick={() => handleClose(false)}
-                className="text-white hover:text-gray-200 transition-colors focus:outline-hidden focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--ea-primary)] rounded-lg p-1"
+                className="text-white hover:text-gray-200 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ea-primary)] rounded-lg p-1"
                 aria-label="Close what's new modal"
                 type="button"
               >
@@ -382,7 +382,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               </div>
               <button
                 onClick={() => handleClose(false)}
-                className="px-6 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary)] focus:ring-offset-2 transition-colors font-medium"
+                className="px-6 py-2 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:ring-offset-2 transition-colors font-medium"
                 type="button"
               >
                 Got it!
@@ -396,7 +396,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                   type="checkbox"
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="w-4 h-4 text-[var(--ea-primary)] border-gray-300 rounded-sm focus:ring-[var(--ea-primary)] focus:ring-2 cursor-pointer"
+                  className="w-4 h-4 text-[var(--ea-primary)] border-gray-300 rounded-sm focus-visible:ring-[var(--ea-primary)] focus-visible:ring-2 cursor-pointer"
                   aria-label="Don't show What's New automatically anymore"
                 />
                 <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800">
@@ -406,7 +406,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               {dontShowAgain && (
                 <button
                   onClick={() => handleClose(true)}
-                  className="px-4 py-1 text-sm bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300 focus:outline-hidden focus:ring-2 focus:ring-gray-400 transition-colors"
+                  className="px-4 py-1 text-sm bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-gray-400 transition-colors"
                   type="button"
                   aria-label="Confirm don't show again and close"
                 >

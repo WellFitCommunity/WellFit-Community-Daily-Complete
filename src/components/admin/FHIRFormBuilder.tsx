@@ -228,7 +228,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-6" aria-label="FHIR Questionnaire Builder">
       <Card>
         <CardHeader>
           <CardTitle>🧠 AI-Powered FHIR Questionnaire Builder</CardTitle>
@@ -245,7 +245,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
                 <button
                   key={index}
                   onClick={() => generateForm(template.prompt)}
-                  className="text-left p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  className="text-left p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                   disabled={isGenerating}
                 >
                   <div className="font-medium text-[var(--ea-primary)]">{template.name}</div>
@@ -262,7 +262,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
               value={naturalLanguageInput}
               onChange={(e) => setNaturalLanguageInput(e.target.value)}
               placeholder="Example: Create a pain assessment form with questions about pain location, intensity (0-10 scale), quality (sharp, dull, burning), triggers, and current treatments. Include conditional questions for patients rating pain above 7."
-              className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none"
+              className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               disabled={isGenerating}
             />
           </div>
@@ -307,13 +307,13 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setPreviewMode('form')}
-                  className={`px-3 py-1 text-sm ${previewMode === 'form' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${previewMode === 'form' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
                 >
                   📝 Form Preview
                 </button>
                 <button
                   onClick={() => setPreviewMode('json')}
-                  className={`px-3 py-1 text-sm border-l border-gray-300 ${previewMode === 'json' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm border-l border-gray-300 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${previewMode === 'json' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
                 >
                   📋 FHIR JSON
                 </button>

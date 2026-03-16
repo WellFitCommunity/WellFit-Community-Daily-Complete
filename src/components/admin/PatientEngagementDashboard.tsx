@@ -168,7 +168,7 @@ const PatientEngagementDashboard: React.FC = () => {
   const data = paginatedData();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Patient Engagement Dashboard">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Patient Engagement Dashboard</h2>
@@ -217,7 +217,7 @@ const PatientEngagementDashboard: React.FC = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'engagement_score' | 'last_activity')}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="px-3 py-2 border border-gray-300 rounded-md focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
             >
               <option value="engagement_score">Engagement Score</option>
               <option value="last_activity">Last Activity</option>
@@ -228,7 +228,7 @@ const PatientEngagementDashboard: React.FC = () => {
             <select
               value={filterLevel}
               onChange={(e) => setFilterLevel(e.target.value as 'all' | 'high' | 'medium' | 'low' | 'critical')}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="px-3 py-2 border border-gray-300 rounded-md focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
             >
               <option value="all">All Patients</option>
               <option value="high">High Engagement (Low Risk)</option>
@@ -245,7 +245,7 @@ const PatientEngagementDashboard: React.FC = () => {
                 setItemsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="px-3 py-2 border border-gray-300 rounded-md focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -274,7 +274,7 @@ const PatientEngagementDashboard: React.FC = () => {
       {/* Engagement Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200" aria-label="Patient engagement scores and risk levels">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

@@ -160,7 +160,7 @@ function AcknowledgeModal({ result, onConfirm, onClose }: {
           <select
             value={ackType}
             onChange={e => setAckType(e.target.value as AcknowledgmentType)}
-            className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+            className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
             aria-label="Acknowledgment type"
           >
             {(Object.entries(ACK_TYPE_LABELS)).map(([key, label]) => (
@@ -177,7 +177,7 @@ function AcknowledgeModal({ result, onConfirm, onClose }: {
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Clinical notes about this result..."
-            className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+            className="w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
             rows={3}
             aria-label="Acknowledgment notes"
           />
@@ -313,7 +313,7 @@ const UnacknowledgedResultsDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Unacknowledged Results Dashboard">
       {/* Critical Alert Banner */}
       {(metrics?.critical_count ?? 0) > 0 && (
         <EAAlert variant="critical">
@@ -379,7 +379,7 @@ const UnacknowledgedResultsDashboard: React.FC = () => {
             <select
               value={priorityFilter}
               onChange={e => setPriorityFilter(e.target.value as PriorityFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by priority"
             >
               <option value="all">All Priorities</option>
@@ -392,7 +392,7 @@ const UnacknowledgedResultsDashboard: React.FC = () => {
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value as CategoryFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by category"
             >
               <option value="all">All Categories</option>
@@ -403,7 +403,7 @@ const UnacknowledgedResultsDashboard: React.FC = () => {
             <select
               value={agingFilter}
               onChange={e => setAgingFilter(e.target.value as AgingFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by aging status"
             >
               <option value="all">All Aging</option>

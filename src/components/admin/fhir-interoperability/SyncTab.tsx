@@ -35,7 +35,7 @@ export const SyncTab: React.FC<SyncTabProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="FHIR Sync Status">
       {/* Auto-Sync Configuration */}
       <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">Auto-Sync Configuration</h2>
@@ -50,7 +50,7 @@ export const SyncTab: React.FC<SyncTabProps> = ({
             <button
               key={option.value}
               onClick={() => handleAutoSyncChange(option.value)}
-              className={`px-4 py-3 rounded-lg border-2 transition text-left ${
+              className={`px-4 py-3 rounded-lg border-2 transition text-left focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 autoSyncFrequency === option.value
                   ? 'border-[var(--ea-primary)] bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]'
                   : 'border-gray-200 hover:border-gray-300'
@@ -76,7 +76,7 @@ export const SyncTab: React.FC<SyncTabProps> = ({
           <button
             onClick={() => onSync(connection.id, 'pull')}
             disabled={syncing}
-            className="px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-[var(--ea-primary)] text-white rounded-lg hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             Pull from FHIR
@@ -84,7 +84,7 @@ export const SyncTab: React.FC<SyncTabProps> = ({
           <button
             onClick={() => onSync(connection.id, 'push')}
             disabled={syncing}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             Push to FHIR
@@ -92,7 +92,7 @@ export const SyncTab: React.FC<SyncTabProps> = ({
           <button
             onClick={() => onSync(connection.id, 'bidirectional')}
             disabled={syncing}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             Bi-directional Sync

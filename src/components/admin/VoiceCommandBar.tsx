@@ -80,7 +80,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
   }
 
   return (
-    <div className={`fixed bottom-4 right-4 z-40 ${className}`}>
+    <div className={`fixed bottom-4 right-4 z-40 ${className}`} aria-label="Voice Command Bar">
       {/* Help Panel - Only show when actively listening */}
       {showHelp && state.isListening && (
         <div className="absolute bottom-full right-0 mb-2 w-72 max-h-80 overflow-y-auto bg-slate-800 rounded-lg shadow-xl border border-slate-600 p-3">
@@ -91,7 +91,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
             </h3>
             <button
               onClick={() => setShowHelp(false)}
-              className="text-slate-400 hover:text-white"
+              className="text-slate-400 hover:text-white focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <X className="w-4 h-4" />
             </button>
@@ -178,7 +178,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
           {/* Microphone Button */}
           <button
             onClick={handleMicClick}
-            className={`rounded-full transition-all ${
+            className={`rounded-full transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
               state.isListening
                 ? 'p-3 bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50'
                 : 'p-2 bg-[var(--ea-primary)] text-white hover:bg-[var(--ea-primary-hover)] shadow-md'

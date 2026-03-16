@@ -59,10 +59,10 @@ export const CategoryCollapsibleGroup: React.FC<CategoryCollapsibleGroupProps> =
   };
 
   return (
-    <div className="bg-linear-to-r from-gray-50 to-gray-100 rounded-2xl shadow-md border-2 border-gray-200 overflow-hidden mb-6">
+    <div className="bg-linear-to-r from-gray-50 to-gray-100 rounded-2xl shadow-md border-2 border-gray-200 overflow-hidden mb-6" aria-label={title}>
       <button
         onClick={handleToggle}
-        className="w-full px-6 py-5 flex items-center justify-between hover:bg-white/50 transition-all duration-200"
+        className="w-full px-6 py-5 flex items-center justify-between hover:bg-white/50 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         aria-expanded={isOpen}
         aria-controls={`category-${categoryId}`}
       >

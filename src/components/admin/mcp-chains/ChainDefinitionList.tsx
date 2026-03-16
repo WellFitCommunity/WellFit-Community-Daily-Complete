@@ -52,7 +52,7 @@ export const ChainDefinitionList: React.FC<ChainDefinitionListProps> = ({
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2" data-testid="chain-definition-list">
+    <div className="grid gap-4 md:grid-cols-2" data-testid="chain-definition-list" aria-label="Chain Definitions">
       {chains.map((chain) => (
         <div
           key={chain.id}

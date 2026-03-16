@@ -218,7 +218,7 @@ const HospitalPatientEnrollment: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Hospital Patient Enrollment">
       {/* Header */}
       <div className="bg-linear-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white border-4 border-blue-800">
         <div className="flex items-center justify-between mb-2">
@@ -283,7 +283,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 required
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
 
@@ -297,7 +297,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 required
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
 
@@ -311,7 +311,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 required
                 value={formData.dob}
                 onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
 
@@ -320,7 +320,7 @@ const HospitalPatientEnrollment: React.FC = () => {
               <select
                 value={formData.gender}
                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               >
                 <option value="">Select...</option>
                 <option value="Male">Male</option>
@@ -337,7 +337,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 value={formData.roomNumber}
                 onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
                 placeholder="e.g., 101"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
 
@@ -348,7 +348,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 value={formData.mrn}
                 onChange={(e) => setFormData({ ...formData, mrn: e.target.value })}
                 placeholder="e.g., MRN12345"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
 
@@ -360,7 +360,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+1234567890"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
 
@@ -370,7 +370,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
 
@@ -380,7 +380,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 type="text"
                 value={formData.emergencyContactName}
                 onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
 
@@ -390,7 +390,7 @@ const HospitalPatientEnrollment: React.FC = () => {
                 type="tel"
                 value={formData.caregiverPhone}
                 onChange={(e) => setFormData({ ...formData, caregiverPhone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
               />
             </div>
           </div>
@@ -403,7 +403,7 @@ const HospitalPatientEnrollment: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, enrollmentNotes: e.target.value })}
               rows={3}
               placeholder="e.g., ICU admission, post-surgery monitoring..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
             />
           </div>
 
@@ -504,7 +504,7 @@ const HospitalPatientEnrollment: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" aria-label="Hospital Patients">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Room</th>

@@ -273,7 +273,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
   const totalCharges = claimLines.reduce((sum, line) => sum + (line.charge_amount * line.units), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Superbill Review Panel">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -398,7 +398,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
                     <div className="text-sm text-gray-500 py-2">No service lines found</div>
                   ) : (
                     <div className="border rounded-lg overflow-hidden">
-                      <table className="w-full text-sm">
+                      <table className="w-full text-sm" aria-label="Superbill service lines">
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="text-left px-3 py-2">Code</th>
@@ -474,7 +474,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
                         value={signature}
                         onChange={(e) => setSignature(e.target.value)}
                         placeholder="Type your full name"
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                       />
                     </div>
 
@@ -488,7 +488,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
                         onChange={(e) => setApprovalNotes(e.target.value)}
                         placeholder="Any notes for this approval..."
                         rows={2}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden resize-none"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden resize-none"
                       />
                     </div>
 
@@ -527,7 +527,7 @@ const SuperbillReviewPanel: React.FC<SuperbillReviewPanelProps> = ({ tenantId: _
                         onChange={(e) => setRejectionReason(e.target.value)}
                         placeholder="Explain what needs to be corrected (minimum 10 characters)"
                         rows={3}
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:outline-hidden resize-none"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-red-500 focus-visible:outline-hidden resize-none"
                         minLength={10}
                       />
                       <div className="text-xs text-gray-500 mt-1">

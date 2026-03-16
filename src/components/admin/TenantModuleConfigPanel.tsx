@@ -273,7 +273,7 @@ export function TenantModuleConfigPanel() {
   const enabledCount = allModules.filter(m => getModuleValue(m) && isModuleEntitled(m)).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Tenant Module Configuration">
       {/* Header */}
       <EACard>
         <EACardHeader icon={<Settings className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />}>
@@ -346,7 +346,7 @@ export function TenantModuleConfigPanel() {
           <EACard key={category} className="overflow-hidden">
             <button
               onClick={() => toggleCategory(category)}
-              className="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 transition-colors text-left border-b border-slate-700"
+              className="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 transition-colors text-left border-b border-slate-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <div className="flex items-center gap-3">
                 <Settings className="w-5 h-5 text-[var(--ea-primary,#00857a)]" />

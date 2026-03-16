@@ -22,7 +22,7 @@ const urgencyColors = {
 
 const QuickActionCard: React.FC<QuickActionCardProps> = ({ title, description, action, urgency, onClick }) => {
   return (
-    <Card className={`cursor-pointer transition-all hover:shadow-md ${urgencyColors[urgency]}`} onClick={onClick}>
+    <Card className={`cursor-pointer transition-all hover:shadow-md ${urgencyColors[urgency]}`} onClick={onClick} aria-label={`${title} - ${urgency} urgency`}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>

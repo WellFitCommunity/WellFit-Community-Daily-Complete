@@ -35,12 +35,12 @@ const SaferGuidesQuestionPanel: React.FC<SaferGuidesQuestionPanelProps> = ({
   onResponseChange,
 }) => {
   return (
-    <div>
+    <div aria-label="SAFER Guides Question Panel">
       {/* Header */}
       <div className="mb-6">
         <button
           onClick={onBack}
-          className="flex items-center text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] mb-4"
+          className="flex items-center text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] mb-4 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Back to All Guides
@@ -141,7 +141,7 @@ const SaferGuidesQuestionPanel: React.FC<SaferGuidesQuestionPanelProps> = ({
                         disabled={isSaving}
                         className={`
                           px-4 py-2 rounded-lg border-2 font-medium transition-all
-                          min-w-[80px] text-center
+                          min-w-[80px] text-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]
                           ${colors[value]}
                           ${isSaving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                         `}

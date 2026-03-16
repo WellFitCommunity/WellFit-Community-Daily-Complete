@@ -27,7 +27,7 @@ const PredictiveAlerts: React.FC<PredictiveAlertsProps> = ({ alerts }) => {
   }
 
   return (
-    <Card>
+    <Card aria-label="Predictive Alerts">
       <CardHeader>
         <CardTitle>Predictive Alerts</CardTitle>
       </CardHeader>

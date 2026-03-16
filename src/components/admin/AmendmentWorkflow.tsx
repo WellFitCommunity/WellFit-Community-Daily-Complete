@@ -292,7 +292,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
                 <textarea
                   value={originalContent}
                   onChange={(e) => setOriginalContent(e.target.value)}
-                  className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                  className="w-full border rounded-lg p-3 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                   rows={3}
                   placeholder="Enter the original text that needs correction..."
                 />
@@ -308,7 +308,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
                 type="text"
                 value={fieldAmended}
                 onChange={(e) => setFieldAmended(e.target.value)}
-                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                className="w-full border rounded-lg p-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 placeholder="e.g., Assessment, Plan, Medications"
               />
             </div>
@@ -321,7 +321,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
               <textarea
                 value={amendmentContent}
                 onChange={(e) => setAmendmentContent(e.target.value)}
-                className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                className="w-full border rounded-lg p-3 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 rows={4}
                 placeholder="Enter the amendment text..."
                 required
@@ -336,7 +336,7 @@ export const AmendmentWorkflow: React.FC<AmendmentWorkflowProps> = ({
               <textarea
                 value={amendmentReason}
                 onChange={(e) => setAmendmentReason(e.target.value)}
-                className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                className="w-full border rounded-lg p-3 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 rows={2}
                 placeholder="Explain why this amendment is necessary..."
                 required

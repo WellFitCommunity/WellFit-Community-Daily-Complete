@@ -93,7 +93,7 @@ export const MfaGracePeriodBanner: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/admin-mfa-setup')}
-          className={`${btnColor} text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 min-h-[44px] min-w-[44px] text-base`}
+          className={`${btnColor} text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 min-h-[44px] min-w-[44px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]`}
         >
           Set Up Now
           <ArrowRight className="w-4 h-4" />
@@ -101,7 +101,7 @@ export const MfaGracePeriodBanner: React.FC = () => {
         <button
           type="button"
           onClick={handleDismiss}
-          className={`${textColor} opacity-60 hover:opacity-100 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center`}
+          className={`${textColor} opacity-60 hover:opacity-100 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]`}
           title="Dismiss for this session"
         >
           <X className="w-5 h-5" />

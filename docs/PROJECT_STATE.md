@@ -137,12 +137,12 @@
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
 | P0 Broken | 5 | 5/5 | ALL DONE |
-| P1 Clinical Risk | 9 | 6/9 | FHIR refs, X12 validation, HL7 depth, AI constraints, prompt injection, CMS freshness — DONE. Remaining: P1-1 (DRG table, needs Akima), P1-6 (adversarial testing), P1-8 (NOW part of Validation Hooks priority above) |
+| P1 Clinical Risk | 9 | 9/9 | ALL DONE — DRG table, adversarial testing (64+85 tests), validation hooks all complete |
 | P2 Integration Gap | 4 | 4/4 | ALL DONE |
-| P3 Data Gap | 4 | 0/4 | CMS coverage, medical codes, clearinghouse, taxonomy |
-| P4 Polish | 4 | 0/4 | Auth tokens, FHIR search, conformance, clinical review |
+| P3 Data Gap | 4 | 3/4 | CMS coverage ✅, medical codes ✅, taxonomy ✅. Remaining: P3-3 clearinghouse (BLOCKED on sandbox credentials) |
+| P4 Polish | 4 | 3/4 | Auth tokens ✅, FHIR search ✅, conformance ✅. Remaining: P4-4 Akima clinical review (not code work) |
 
-**Estimated remaining:** ~55 hours across 5-7 sessions (reduced — P1-8 absorbed into Validation Hooks)
+**Remaining:** 2 items — P3-3 (clearinghouse, blocked on credentials expected week of 2026-03-16) + P4-4 (Akima review)
 
 **Note:** P1-8 (post-output validation) has been expanded into the Clinical Validation Hooks architecture above. It is no longer a standalone tracker item — it's the foundation of the full validation system including dashboard + PDF export.
 

@@ -137,7 +137,7 @@ export const ClinicalContentReviewPanel: React.FC = () => {
   };
 
   return (
-    <EACard>
+    <EACard aria-label="Clinical Content Review Panel">
       <EACardContent>
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-white">Clinical Content Review</h3>
@@ -169,7 +169,7 @@ export const ClinicalContentReviewPanel: React.FC = () => {
               <button
                 onClick={item.exportAction}
                 disabled={item.exporting || item.id === 'validation-hooks'}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 {item.exportLabel}
               </button>

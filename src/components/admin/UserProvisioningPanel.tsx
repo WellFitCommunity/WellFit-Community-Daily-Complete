@@ -86,14 +86,14 @@ export const UserProvisioningPanel: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="User Provisioning">
       {/* Tab navigation */}
       <div className="flex border-b border-gray-200">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => { setActiveTab(tab.id); setError(null); }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
               activeTab === tab.id
                 ? 'border-[var(--ea-primary)] text-[var(--ea-primary)]'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'

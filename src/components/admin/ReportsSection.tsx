@@ -592,7 +592,7 @@ const ReportsSection: React.FC = () => {
               <button
                 onClick={exportEngagementSummaryCsv}
                 disabled={!!exporting}
-                className="w-full px-4 py-2 bg-[#003865] text-white font-medium rounded-lg hover:bg-[#002347] focus:ring-2 focus:ring-[#003865] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-4 py-2 bg-[#003865] text-white font-medium rounded-lg hover:bg-[#002347] focus-visible:ring-2 focus-visible:ring-[#003865] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {exporting === 'summary' ? (
                   <div className="flex items-center justify-center space-x-2">
@@ -616,7 +616,7 @@ const ReportsSection: React.FC = () => {
               <button
                 onClick={exportSelfReportsCsv}
                 disabled={!!exporting}
-                className="w-full px-4 py-2 bg-[#8cc63f] text-white font-medium rounded-lg hover:bg-[#7db335] focus:ring-2 focus:ring-[#8cc63f] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-4 py-2 bg-[#8cc63f] text-white font-medium rounded-lg hover:bg-[#7db335] focus-visible:ring-2 focus-visible:ring-[#8cc63f] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {exporting === 'self' ? (
                   <div className="flex items-center justify-center space-x-2">
@@ -640,7 +640,7 @@ const ReportsSection: React.FC = () => {
               <button
                 onClick={exportDetailedAnalytics}
                 disabled={!!exporting}
-                className="w-full px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {exporting === 'detailed' ? (
                   <div className="flex items-center justify-center space-x-2">

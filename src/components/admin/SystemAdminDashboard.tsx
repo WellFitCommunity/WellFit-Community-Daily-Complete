@@ -294,7 +294,7 @@ export const SystemAdminDashboard: React.FC = () => {
   const healthStatus = getHealthStatus();
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8 space-y-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8 space-y-6" aria-label="System Administration Dashboard" aria-live="polite">
       {/* Header */}
       <div className="flex justify-between items-center bg-slate-800/50 backdrop-blur-xs rounded-xl p-6 border border-slate-700">
         <div className="flex items-center gap-4">
@@ -478,7 +478,7 @@ export const SystemAdminDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
+              <table className="min-w-full" aria-label="Active user sessions">
                 <thead>
                   <tr className="border-b border-slate-700">
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">

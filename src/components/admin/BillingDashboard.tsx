@@ -89,7 +89,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
   }
 
   return (
-    <div className={className}>
+    <div className={className} aria-label="Billing Dashboard" aria-live="polite">
       {/* Billing Overview Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white border border-slate-200 hover:border-[var(--ea-primary,#00857a)] rounded-lg p-4 shadow-lg transition-all">
@@ -159,7 +159,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
             </h3>
             <button
               onClick={handleRefresh}
-              className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all shadow-sm hover:shadow-md ${theme.buttonPrimary}`}
+              className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all shadow-sm hover:shadow-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
             >
               <RefreshCw className="w-4 h-4 mr-1.5" />
               Refresh
@@ -248,7 +248,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
             Quick Actions
           </h3>
           <div className="space-y-3">
-            <button className="w-full text-left px-4 py-3 bg-[var(--ea-primary,#00857a)]/5 hover:bg-[var(--ea-primary,#00857a)] hover:text-[var(--ea-text-on-primary,#ffffff)] rounded-lg transition-all border border-slate-200 hover:border-[var(--ea-primary,#00857a)] group">
+            <button className="w-full text-left px-4 py-3 bg-[var(--ea-primary,#00857a)]/5 hover:bg-[var(--ea-primary,#00857a)] hover:text-[var(--ea-text-on-primary,#ffffff)] rounded-lg transition-all border border-slate-200 hover:border-[var(--ea-primary,#00857a)] group focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">
               <div className="flex items-center">
                 <span className="mr-3 text-xl" aria-hidden="true">➕</span>
                 <div>
@@ -258,7 +258,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
               </div>
             </button>
 
-            <button className="w-full text-left px-4 py-3 bg-[var(--ea-secondary,#FF6B35)]/5 hover:bg-[var(--ea-secondary,#FF6B35)] hover:text-white rounded-lg transition-all border border-slate-200 hover:border-[var(--ea-secondary,#FF6B35)] group">
+            <button className="w-full text-left px-4 py-3 bg-[var(--ea-secondary,#FF6B35)]/5 hover:bg-[var(--ea-secondary,#FF6B35)] hover:text-white rounded-lg transition-all border border-slate-200 hover:border-[var(--ea-secondary,#FF6B35)] group focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">
               <div className="flex items-center">
                 <span className="mr-3 text-xl" aria-hidden="true">🔄</span>
                 <div>
@@ -268,7 +268,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
               </div>
             </button>
 
-            <button className="w-full text-left px-4 py-3 bg-[var(--ea-primary-hover,#006d64)]/5 hover:bg-[var(--ea-primary-hover,#006d64)] hover:text-[var(--ea-text-on-primary,#ffffff)] rounded-lg transition-all border border-slate-200 hover:border-[var(--ea-primary-hover,#006d64)] group">
+            <button className="w-full text-left px-4 py-3 bg-[var(--ea-primary-hover,#006d64)]/5 hover:bg-[var(--ea-primary-hover,#006d64)] hover:text-[var(--ea-text-on-primary,#ffffff)] rounded-lg transition-all border border-slate-200 hover:border-[var(--ea-primary-hover,#006d64)] group focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">
               <div className="flex items-center">
                 <span className="mr-3 text-xl" aria-hidden="true">📊</span>
                 <div>

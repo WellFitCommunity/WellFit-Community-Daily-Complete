@@ -15,7 +15,7 @@ interface ClaudeUsageSectionProps {
 
 const ClaudeUsageSection: React.FC<ClaudeUsageSectionProps> = ({ claudeMetrics }) => {
   return (
-    <div>
+    <div aria-label="Claude AI Usage">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Claude AI Usage</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

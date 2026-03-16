@@ -115,7 +115,7 @@ export const RevenueProjectionTab: React.FC = () => {
   }, [encounterId, serviceDate]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Revenue Projection and Validation">
       {/* Section Toggle */}
       <div className="flex gap-2 flex-wrap">
         {[
@@ -126,7 +126,7 @@ export const RevenueProjectionTab: React.FC = () => {
           <button
             key={key}
             onClick={() => setActiveSection(key)}
-            className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium ${
+            className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
               activeSection === key ? 'bg-[var(--ea-primary)] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -148,7 +148,7 @@ export const RevenueProjectionTab: React.FC = () => {
               value={encounterId}
               onChange={(e) => setEncounterId(e.target.value)}
               placeholder="UUID"
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           {activeSection === 'projection' && (
@@ -161,7 +161,7 @@ export const RevenueProjectionTab: React.FC = () => {
                   id="rev-payer"
                   value={payerType}
                   onChange={(e) => setPayerType(e.target.value as PayerTypeOption)}
-                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 >
                   {PAYER_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -178,7 +178,7 @@ export const RevenueProjectionTab: React.FC = () => {
                   value={drgCode}
                   onChange={(e) => setDrgCode(e.target.value)}
                   placeholder="e.g. 470"
-                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 />
               </div>
               <div>
@@ -192,7 +192,7 @@ export const RevenueProjectionTab: React.FC = () => {
                   onChange={(e) => setDrgWeight(e.target.value)}
                   placeholder="e.g. 1.9050"
                   step="0.0001"
-                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 />
               </div>
             </>
@@ -207,7 +207,7 @@ export const RevenueProjectionTab: React.FC = () => {
                 type="date"
                 value={serviceDate}
                 onChange={(e) => setServiceDate(e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+                className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
             </div>
           )}
@@ -220,7 +220,7 @@ export const RevenueProjectionTab: React.FC = () => {
               : handleOptimization
             }
             disabled={loading}
-            className="flex items-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50"
+            className="flex items-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             {loading ? 'Processing...' : activeSection === 'projection' ? 'Calculate' : activeSection === 'validation' ? 'Validate' : 'Optimize'}
           </button>

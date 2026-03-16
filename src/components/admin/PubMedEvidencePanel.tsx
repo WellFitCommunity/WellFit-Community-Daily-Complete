@@ -67,7 +67,7 @@ const ArticleCard: React.FC<{
       <button
         onClick={() => onViewAbstract(article.pmid)}
         disabled={loadingAbstract}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5 rounded hover:bg-[var(--ea-primary,#00857a)]/10 transition min-h-[32px]"
+        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5 rounded hover:bg-[var(--ea-primary,#00857a)]/10 transition min-h-[32px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
       >
         {loadingAbstract ? (
           <Loader2 className="w-3 h-3 animate-spin" />
@@ -104,7 +104,7 @@ const AbstractDisplay: React.FC<{
       <h4 className="text-sm font-bold text-[var(--ea-primary,#00857a)]">{abstract.title}</h4>
       <button
         onClick={onClose}
-        className="p-1 text-gray-400 hover:text-gray-700 transition min-h-[32px] min-w-[32px] flex items-center justify-center"
+        className="p-1 text-gray-400 hover:text-gray-700 transition min-h-[32px] min-w-[32px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
       >
         <X className="w-4 h-4" />
       </button>
@@ -166,12 +166,12 @@ export const PubMedEvidencePanel: React.FC<PubMedEvidencePanelProps> = ({
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-gray-200 rounded-lg overflow-hidden" aria-label="PubMed Evidence Panel">
       {/* Header (always visible) */}
       <button
         type="button"
         onClick={handleToggle}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition text-left"
+        className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition text-left focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
       >
         {isOpen ? (
           <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
@@ -202,7 +202,7 @@ export const PubMedEvidencePanel: React.FC<PubMedEvidencePanelProps> = ({
               type="button"
               onClick={handleSearch}
               disabled={status === 'searching' || !condition.trim()}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[var(--ea-primary,#00857a)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] disabled:bg-[var(--ea-primary,#00857a)]/30 disabled:cursor-not-allowed transition min-h-[44px]"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[var(--ea-primary,#00857a)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] disabled:bg-[var(--ea-primary,#00857a)]/30 disabled:cursor-not-allowed transition min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               {status === 'searching' ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -215,7 +215,7 @@ export const PubMedEvidencePanel: React.FC<PubMedEvidencePanelProps> = ({
               <button
                 type="button"
                 onClick={handleClearAbstract}
-                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition min-h-[44px]"
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 Clear
               </button>

@@ -40,7 +40,7 @@ export const GuardianAgentDashboard: React.FC = () => {
   }
 
   return (
-    <div className={`${theme.pageBg} text-white p-6`}>
+    <div className={`${theme.pageBg} text-white p-6`} aria-label="Guardian Agent Dashboard" aria-live="polite">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -58,7 +58,7 @@ export const GuardianAgentDashboard: React.FC = () => {
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="w-4 h-4"
+                className="w-4 h-4 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
               <span className="text-sm">Auto-refresh</span>
             </label>

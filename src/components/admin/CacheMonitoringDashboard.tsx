@@ -87,7 +87,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6" aria-label="Cache and Connection Monitoring Dashboard" aria-live="polite">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Cache & Connection Monitoring</h1>
@@ -164,7 +164,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
           <p className="text-gray-500 text-center py-8">No cache data available</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200" aria-label="Cache statistics by namespace">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -222,7 +222,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
           <h2 className="text-xl font-bold text-gray-900 mb-4">Real-time Subscription Health</h2>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200" aria-label="Real-time subscription health">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -285,7 +285,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
       <div className="flex justify-end">
         <button
           onClick={loadMetrics}
-          className={`px-6 py-2 ${theme.buttonPrimary} rounded-lg transition-colors`}
+          className={`px-6 py-2 ${theme.buttonPrimary} rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]`}
         >
           Refresh Metrics
         </button>

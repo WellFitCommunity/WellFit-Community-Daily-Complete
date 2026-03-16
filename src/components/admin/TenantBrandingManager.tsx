@@ -165,7 +165,7 @@ const TenantBrandingManager: React.FC = () => {
   const gradientPreview = generateGradient(primaryColor, secondaryColor);
 
   return (
-    <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
+    <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700" aria-label="Tenant Branding Manager">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
           Tenant Branding Manager
@@ -183,7 +183,7 @@ const TenantBrandingManager: React.FC = () => {
         <select
           value={selectedTenantId || ''}
           onChange={(e) => setSelectedTenantId(e.target.value)}
-          className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+          className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white focus-visible:ring-2 focus-visible:ring-[#00857a] focus-visible:border-transparent"
           disabled={loading}
         >
           {tenants.map((tenant) => (
@@ -243,7 +243,7 @@ const TenantBrandingManager: React.FC = () => {
               value={appName}
               onChange={(e) => setAppName(e.target.value)}
               placeholder="WellFit Houston"
-              className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white focus-visible:ring-2 focus-visible:ring-[#00857a] focus-visible:border-transparent"
             />
           </div>
 

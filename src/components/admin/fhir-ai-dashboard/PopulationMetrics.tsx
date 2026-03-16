@@ -15,7 +15,7 @@ const PopulationMetrics: React.FC<PopulationMetricsProps> = ({ overview }) => {
     Math.round((overview.activePatients / overview.totalPatients) * 100) : 0;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-label="Population Health Metrics">
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-gray-600">Total Patients</CardTitle>

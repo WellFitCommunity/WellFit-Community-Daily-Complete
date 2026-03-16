@@ -467,7 +467,7 @@ const PatientMergeWizard: React.FC = () => {
   const deprecatedPatient = survivingPatientId === patientAId ? patientB : patientA;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6" aria-label="Patient Merge Wizard">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -541,7 +541,7 @@ const PatientMergeWizard: React.FC = () => {
               </p>
 
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200" aria-label="Patient record comparison">
                   <thead>
                     <tr>
                       <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-500">
@@ -690,7 +690,7 @@ const PatientMergeWizard: React.FC = () => {
                   <textarea
                     value={mergeReason}
                     onChange={(e) => setMergeReason(e.target.value)}
-                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[var(--ea-primary)]"
+                    className="w-full border rounded-lg p-3 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
                     rows={3}
                     placeholder="Enter the reason for this merge..."
                   />

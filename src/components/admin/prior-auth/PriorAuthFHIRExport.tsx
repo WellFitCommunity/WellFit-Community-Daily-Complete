@@ -56,13 +56,13 @@ export const PriorAuthFHIRExport: React.FC<PriorAuthFHIRExportProps> = ({
   }, [fhirData]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-label="FHIR Claim export">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-bold text-gray-900">FHIR Claim Export</h3>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-700 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-2 text-gray-400 hover:text-gray-700 transition min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -78,7 +78,7 @@ export const PriorAuthFHIRExport: React.FC<PriorAuthFHIRExportProps> = ({
               <button
                 onClick={handleExport}
                 disabled={loading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition min-h-[44px]"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -105,7 +105,7 @@ export const PriorAuthFHIRExport: React.FC<PriorAuthFHIRExportProps> = ({
                 </span>
                 <button
                   onClick={handleCopy}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition min-h-[32px]"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition min-h-[32px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 >
                   <Copy className="w-3 h-3" />
                   {copied ? 'Copied!' : 'Copy JSON'}

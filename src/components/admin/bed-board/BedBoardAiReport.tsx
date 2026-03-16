@@ -15,7 +15,7 @@ import { EACard, EACardHeader, EACardContent } from '../../envision-atlus';
 import type { BedBoardAiReportProps } from './BedBoard.types';
 
 export const BedBoardAiReport: React.FC<BedBoardAiReportProps> = ({ aiReport }) => (
-  <div className="space-y-6 mt-6">
+  <div className="space-y-6 mt-6" aria-label="AI Optimization Report">
     {/* Score Cards */}
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <EACard>
@@ -194,7 +194,7 @@ export const BedBoardAiReport: React.FC<BedBoardAiReportProps> = ({ aiReport }) 
         </EACardHeader>
         <EACardContent className="p-4">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label="Unit-by-Unit Analysis">
               <thead>
                 <tr className="text-left text-slate-400 border-b border-slate-700">
                   <th className="pb-3 pr-4">Unit</th>
@@ -269,7 +269,7 @@ export const BedBoardAiReport: React.FC<BedBoardAiReportProps> = ({ aiReport }) 
         </EACardHeader>
         <EACardContent className="p-4">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label="AI Discharge Recommendations">
               <thead>
                 <tr className="text-left text-slate-400 border-b border-slate-700">
                   <th className="pb-3 pr-4">Patient</th>

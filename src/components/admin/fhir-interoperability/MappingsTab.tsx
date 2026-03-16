@@ -16,13 +16,13 @@ export const MappingsTab: React.FC<MappingsTabProps> = ({ connection, mappings, 
   if (loading) return <div className="text-center py-12">Loading...</div>;
 
   return (
-    <div className="bg-white rounded-lg shadow-xs border border-gray-200">
+    <div className="bg-white rounded-lg shadow-xs border border-gray-200" aria-label="Patient Mappings">
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-xl font-bold">Patient Mappings for {connection.name}</h2>
         <p className="text-gray-600 mt-1">{mappings.length} patients mapped</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full" aria-label="Patient mappings list">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Community User</th>

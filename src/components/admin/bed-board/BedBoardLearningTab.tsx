@@ -28,7 +28,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
   onSetFeedbackNotes,
   onSubmitFeedback,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-label="Bed Board Learning">
     {/* Accuracy Dashboard */}
     <EACard>
       <EACardHeader icon={<Target className="w-5 h-5" />}>
@@ -92,7 +92,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
             <select
               value={feedbackUnit}
               onChange={(e) => onSetFeedbackUnit(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             >
               <option value="">Select Unit</option>
               {units.map((unit) => (
@@ -107,7 +107,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
               type="date"
               value={feedbackDate}
               onChange={(e) => onSetFeedbackDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             />
           </div>
 
@@ -120,7 +120,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
               value={actualCensus}
               onChange={(e) => onSetActualCensus(e.target.value)}
               placeholder="Enter actual patient count"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             />
           </div>
 
@@ -131,7 +131,7 @@ export const BedBoardLearningTab: React.FC<BedBoardLearningTabProps> = ({
               onChange={(e) => onSetFeedbackNotes(e.target.value)}
               placeholder="Any factors that affected census (e.g., staff shortage, unexpected admissions)"
               rows={3}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[var(--ea-primary)] resize-none"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] resize-none"
             />
           </div>
 

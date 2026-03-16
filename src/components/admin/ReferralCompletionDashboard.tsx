@@ -188,7 +188,7 @@ const ReferralCompletionDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Referral Completion Dashboard">
       {/* Alert Banner for overdue referrals */}
       {(stats?.total_overdue ?? 0) > 0 && (
         <EAAlert variant="critical">
@@ -256,7 +256,7 @@ const ReferralCompletionDashboard: React.FC = () => {
             <select
               value={completionFilter}
               onChange={e => setCompletionFilter(e.target.value as CompletionFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by completion status"
             >
               <option value="all">All Statuses</option>
@@ -270,7 +270,7 @@ const ReferralCompletionDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search org or patient..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-48"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] w-48"
               aria-label="Search referrals"
             />
           </div>

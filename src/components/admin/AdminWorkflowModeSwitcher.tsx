@@ -158,7 +158,7 @@ export const AdminWorkflowModeSwitcher: React.FC<AdminWorkflowModeSwitcherProps>
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-200">
+    <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-200" aria-label="Admin Workflow Mode Switcher">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-indigo-600" />

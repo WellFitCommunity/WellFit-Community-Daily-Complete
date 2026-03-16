@@ -270,7 +270,7 @@ const ReferralAgingDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Referral Aging Dashboard">
       {/* Alert Banner for 14+ day referrals */}
       {(stats?.bucket_14_plus ?? 0) > 0 && (
         <EAAlert variant="critical">
@@ -320,7 +320,7 @@ const ReferralAgingDashboard: React.FC = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All Statuses</option>
@@ -332,7 +332,7 @@ const ReferralAgingDashboard: React.FC = () => {
             <select
               value={agingFilter}
               onChange={e => setAgingFilter(e.target.value as AgingBucket)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by aging bucket"
             >
               <option value="all">All Aging</option>
@@ -346,7 +346,7 @@ const ReferralAgingDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search org or phone..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-48"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] w-48"
               aria-label="Search referrals"
             />
           </div>

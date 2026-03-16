@@ -68,7 +68,7 @@ export const PayerRulesTab: React.FC = () => {
   }, [payerType, fiscalYear, stateCode]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Payer Reimbursement Rules">
       {/* Search Form */}
       <div className="bg-gray-50 rounded-lg p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -80,7 +80,7 @@ export const PayerRulesTab: React.FC = () => {
               id="payer-type"
               value={payerType}
               onChange={(e) => setPayerType(e.target.value as PayerTypeOption)}
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               {PAYER_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -98,7 +98,7 @@ export const PayerRulesTab: React.FC = () => {
               onChange={(e) => setFiscalYear(Number(e.target.value))}
               min={2020}
               max={2030}
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           <div>
@@ -112,14 +112,14 @@ export const PayerRulesTab: React.FC = () => {
               onChange={(e) => setStateCode(e.target.value.toUpperCase())}
               placeholder="e.g. TX"
               maxLength={2}
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           <div className="flex items-end">
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <Search className="w-4 h-4" />
               {loading ? 'Searching...' : 'Search Rules'}
@@ -141,7 +141,7 @@ export const PayerRulesTab: React.FC = () => {
         <div>
           <p className="text-sm text-gray-500 mb-2">{total} rule(s) found</p>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm" aria-label="Payer Rules">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-3 py-2 text-left font-medium text-gray-500">Rule Type</th>

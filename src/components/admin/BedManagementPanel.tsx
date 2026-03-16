@@ -454,7 +454,7 @@ const BedManagementPanel: React.FC = () => {
   // ============================================================================
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Bed Management" aria-live="polite">
       {/* Affirmation Toast */}
       {affirmationToast && (
         <EAAffirmationToast
@@ -507,7 +507,7 @@ const BedManagementPanel: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
               activeTab === tab.id ? 'bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#fff)]' : 'text-slate-400 hover:text-white hover:bg-slate-700'
             }`}
             title={tab.description}

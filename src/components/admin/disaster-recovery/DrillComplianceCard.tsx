@@ -140,7 +140,7 @@ export const DrillComplianceCard: React.FC<DrillComplianceCardProps> = ({
             {/* History Toggle */}
             <button
               onClick={() => setShowDrillHistory(!showDrillHistory)}
-              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-800"
+              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-800 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               {showDrillHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               {showDrillHistory ? 'Hide' : 'Show'} Recent Drills
@@ -149,7 +149,7 @@ export const DrillComplianceCard: React.FC<DrillComplianceCardProps> = ({
             {/* Drill History Table */}
             {showDrillHistory && recentDrills.length > 0 && (
               <div className="border rounded overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" aria-label="Recovery drill history">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-3 py-2 text-left">Date</th>

@@ -220,7 +220,7 @@ export const FHIRResourceForm: React.FC<FHIRResourceFormProps> = ({
   }, [formData, resourceType, onSave, validateRequired]);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-6" aria-label="FHIR Resource Form">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">
           {mode === 'create' ? 'Create FHIR Resource' : `Edit ${resourceType} ${resourceId || ''}`}
@@ -244,7 +244,7 @@ export const FHIRResourceForm: React.FC<FHIRResourceFormProps> = ({
             id="resource-type-select"
             value={resourceType}
             onChange={(e) => handleResourceTypeChange(e.target.value as FHIRResourceType)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
           >
             {SUPPORTED_RESOURCE_TYPES.map(type => (
               <option key={type} value={type}>{type}</option>
@@ -266,7 +266,7 @@ export const FHIRResourceForm: React.FC<FHIRResourceFormProps> = ({
                 id={`field-${field.key}`}
                 value={formData[field.key] || ''}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               >
                 <option value="">Select...</option>
                 {field.options.map(opt => (
@@ -280,7 +280,7 @@ export const FHIRResourceForm: React.FC<FHIRResourceFormProps> = ({
                 value={formData[field.key] || ''}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               />
             )}
           </div>

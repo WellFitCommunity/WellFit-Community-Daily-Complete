@@ -79,7 +79,7 @@ export const DRGGrouperTab: React.FC = () => {
   }, [encounterId]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="DRG Grouper">
       {/* Advisory Banner */}
       <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm">
         <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -93,7 +93,7 @@ export const DRGGrouperTab: React.FC = () => {
       <div className="flex gap-2">
         <button
           onClick={() => setMode('run')}
-          className={`px-4 py-2 rounded-md text-sm font-medium ${
+          className={`px-4 py-2 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             mode === 'run' ? 'bg-[var(--ea-primary)] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -101,7 +101,7 @@ export const DRGGrouperTab: React.FC = () => {
         </button>
         <button
           onClick={() => setMode('lookup')}
-          className={`px-4 py-2 rounded-md text-sm font-medium ${
+          className={`px-4 py-2 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             mode === 'lookup' ? 'bg-[var(--ea-primary)] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -122,7 +122,7 @@ export const DRGGrouperTab: React.FC = () => {
               value={encounterId}
               onChange={(e) => setEncounterId(e.target.value)}
               placeholder="UUID"
-              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+              className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
           </div>
           {mode === 'run' && (
@@ -137,7 +137,7 @@ export const DRGGrouperTab: React.FC = () => {
                   value={patientId}
                   onChange={(e) => setPatientId(e.target.value)}
                   placeholder="UUID"
-                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 />
               </div>
               <div>
@@ -150,7 +150,7 @@ export const DRGGrouperTab: React.FC = () => {
                   value={principalDx}
                   onChange={(e) => setPrincipalDx(e.target.value)}
                   placeholder="e.g. J18.9"
-                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 />
               </div>
               <div>
@@ -163,7 +163,7 @@ export const DRGGrouperTab: React.FC = () => {
                   value={additionalDx}
                   onChange={(e) => setAdditionalDx(e.target.value)}
                   placeholder="e.g. E11.9, I10"
-                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 />
               </div>
               <div className="md:col-span-2">
@@ -176,7 +176,7 @@ export const DRGGrouperTab: React.FC = () => {
                   value={procedures}
                   onChange={(e) => setProcedures(e.target.value)}
                   placeholder="e.g. 0BJ08ZZ, 5A1D70Z"
-                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"
+                  className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 />
               </div>
             </>
@@ -186,7 +186,7 @@ export const DRGGrouperTab: React.FC = () => {
           <button
             onClick={mode === 'run' ? handleRun : handleLookup}
             disabled={loading}
-            className="flex items-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50"
+            className="flex items-center gap-2 bg-[var(--ea-primary)] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[var(--ea-primary-hover)] disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             {mode === 'run' ? <Brain className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             {loading ? 'Processing...' : mode === 'run' ? 'Run DRG Grouper' : 'Lookup Result'}

@@ -121,7 +121,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
   return (
     <>
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow-xs border p-4 mb-6">
+      <div className="bg-white rounded-lg shadow-xs border p-4 mb-6" aria-label="Question Filters">
         <div className="flex flex-wrap gap-4 items-center">
           <button
             onClick={loadQueue}
@@ -144,7 +144,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
               placeholder="Search questions or patient names..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             />
           </div>
 
@@ -153,7 +153,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             <select
               value={filterStatus}
               onChange={(e) => onFilterStatusChange(e.target.value as FilterStatus)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -167,7 +167,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             <select
               value={filterUrgency}
               onChange={(e) => onFilterUrgencyChange(e.target.value as FilterUrgency)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             >
               <option value="all">All Priority</option>
               <option value="high">High Priority</option>
@@ -183,7 +183,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
       </div>
 
       {/* Questions List */}
-      <div className="bg-white rounded-lg shadow-xs border">
+      <div className="bg-white rounded-lg shadow-xs border" aria-label="Patient Questions List">
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">Patient Questions</h2>
         </div>

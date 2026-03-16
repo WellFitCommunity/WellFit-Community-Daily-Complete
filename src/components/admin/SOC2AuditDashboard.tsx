@@ -188,7 +188,7 @@ export const SOC2AuditDashboard: React.FC = () => {
         </div>
         <button
           onClick={loadAuditData}
-          className={`px-4 py-2 rounded-lg transition-colors ${theme.buttonPrimary}`}
+          className={`px-4 py-2 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
         >
           Refresh
         </button>
@@ -379,7 +379,7 @@ export const SOC2AuditDashboard: React.FC = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setFilterRiskLevel('ALL')}
-                className={`px-3 py-1 text-xs rounded ${
+                className={`px-3 py-1 text-xs rounded focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                   filterRiskLevel === 'ALL' ? `${theme.buttonPrimary}` : 'bg-gray-200 text-gray-700'
                 }`}
               >
@@ -387,7 +387,7 @@ export const SOC2AuditDashboard: React.FC = () => {
               </button>
               <button
                 onClick={() => setFilterRiskLevel('HIGH')}
-                className={`px-3 py-1 text-xs rounded ${
+                className={`px-3 py-1 text-xs rounded focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                   filterRiskLevel === 'HIGH' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'
                 }`}
               >
@@ -395,7 +395,7 @@ export const SOC2AuditDashboard: React.FC = () => {
               </button>
               <button
                 onClick={() => setFilterRiskLevel('MEDIUM')}
-                className={`px-3 py-1 text-xs rounded ${
+                className={`px-3 py-1 text-xs rounded focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                   filterRiskLevel === 'MEDIUM' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'
                 }`}
               >
@@ -403,7 +403,7 @@ export const SOC2AuditDashboard: React.FC = () => {
               </button>
               <button
                 onClick={() => setFilterRiskLevel('LOW')}
-                className={`px-3 py-1 text-xs rounded ${
+                className={`px-3 py-1 text-xs rounded focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                   filterRiskLevel === 'LOW' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
                 }`}
               >

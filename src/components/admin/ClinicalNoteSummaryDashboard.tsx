@@ -192,7 +192,7 @@ const ClinicalNoteSummaryDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Clinical Note Summary Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -270,7 +270,7 @@ const ClinicalNoteSummaryDashboard: React.FC = () => {
                         key={note.id}
                         type="button"
                         onClick={() => setSelectedNote(note)}
-                        className={`w-full text-left p-4 rounded-lg border transition-colors ${
+                        className={`w-full text-left p-4 rounded-lg border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                           selectedNote?.id === note.id
                             ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/5'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -371,7 +371,7 @@ const ClinicalNoteSummaryDashboard: React.FC = () => {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200" aria-label="AI progress note syntheses">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>

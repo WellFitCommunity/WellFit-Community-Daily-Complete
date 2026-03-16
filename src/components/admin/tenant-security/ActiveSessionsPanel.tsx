@@ -43,7 +43,7 @@ export const ActiveSessionsPanel: React.FC<ActiveSessionsPanelProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200" aria-label="Active Sessions Panel">
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-[var(--ea-primary)]" />
@@ -53,7 +53,7 @@ export const ActiveSessionsPanel: React.FC<ActiveSessionsPanelProps> = ({
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="p-1 text-gray-400 hover:text-gray-600"
+          className="p-1 text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           title="Refresh sessions"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -72,7 +72,7 @@ export const ActiveSessionsPanel: React.FC<ActiveSessionsPanelProps> = ({
             <p className="text-sm">No session data available</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" aria-label="User sessions">
             <thead>
               <tr className="bg-gray-50 text-left">
                 <th className="px-3 py-2 font-medium text-gray-600">User</th>
@@ -102,13 +102,13 @@ export const ActiveSessionsPanel: React.FC<ActiveSessionsPanelProps> = ({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleForceLogout(session.user_id)}
-                          className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700"
+                          className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         >
                           Confirm
                         </button>
                         <button
                           onClick={() => setConfirmLogoutId(null)}
-                          className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
+                          className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         >
                           Cancel
                         </button>
@@ -116,7 +116,7 @@ export const ActiveSessionsPanel: React.FC<ActiveSessionsPanelProps> = ({
                     ) : (
                       <button
                         onClick={() => setConfirmLogoutId(session.user_id)}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        className="p-1 text-gray-400 hover:text-red-600 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         title="Force logout"
                       >
                         <LogOut className="w-4 h-4" />

@@ -65,7 +65,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
   };
 
   return (
-    <div className="space-y-3" data-testid="chain-step-editor">
+    <div className="space-y-3" data-testid="chain-step-editor" aria-label="Chain Step Editor">
       {/* Row 1: Key + Display Name */}
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -76,7 +76,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             value={draft.step_key}
             onChange={(e) => update('step_key', e.target.value)}
             placeholder="e.g. validate_codes"
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-key-input"
           />
         </div>
@@ -88,7 +88,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             value={draft.display_name}
             onChange={(e) => update('display_name', e.target.value)}
             placeholder="e.g. Validate Billing Codes"
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-display-name-input"
           />
         </div>
@@ -102,7 +102,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             id="step-server"
             value={draft.mcp_server}
             onChange={(e) => update('mcp_server', e.target.value)}
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-server-select"
           >
             <option value="">Select server...</option>
@@ -119,7 +119,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             value={draft.tool_name}
             onChange={(e) => update('tool_name', e.target.value)}
             placeholder="e.g. validate_billing_codes"
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-tool-input"
           />
         </div>
@@ -136,7 +136,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             onChange={(e) => update('timeout_ms', parseInt(e.target.value, 10) || 30000)}
             min={1000}
             max={300000}
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-timeout-input"
           />
         </div>
@@ -149,7 +149,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             onChange={(e) => update('max_retries', parseInt(e.target.value, 10) || 0)}
             min={0}
             max={5}
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-retries-input"
           />
         </div>
@@ -196,7 +196,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             value={draft.approval_role ?? ''}
             onChange={(e) => update('approval_role', e.target.value || null)}
             placeholder="e.g. physician, billing_admin"
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-approval-role-input"
           />
         </div>
@@ -211,7 +211,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             value={draft.condition_expression ?? ''}
             onChange={(e) => update('condition_expression', e.target.value || null)}
             placeholder="e.g. $.steps.check_prior_auth.prior_auth_required == true"
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-condition-input"
           />
         </div>
@@ -226,7 +226,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             value={draft.placeholder_message ?? ''}
             onChange={(e) => update('placeholder_message', e.target.value || null)}
             placeholder="e.g. Clearinghouse integration pending"
-            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="step-placeholder-msg-input"
           />
         </div>
@@ -244,7 +244,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
                 <code className="text-blue-400">{value}</code>
                 <button
                   onClick={() => removeMapping(key)}
-                  className="text-red-400 hover:text-red-300 ml-1"
+                  className="text-red-400 hover:text-red-300 ml-1 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                   aria-label={`Remove mapping ${key}`}
                 >
                   &times;
@@ -259,7 +259,7 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             value={mappingKey}
             onChange={(e) => setMappingKey(e.target.value)}
             placeholder="param_name"
-            className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white"
+            className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="mapping-key-input"
           />
           <input
@@ -267,12 +267,12 @@ export const ChainStepEditor: React.FC<ChainStepEditorProps> = ({
             value={mappingValue}
             onChange={(e) => setMappingValue(e.target.value)}
             placeholder="$.input.patient_id"
-            className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white"
+            className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="mapping-value-input"
           />
           <button
             onClick={addMapping}
-            className="px-2 py-1 text-xs bg-slate-700 text-white rounded hover:bg-slate-600"
+            className="px-2 py-1 text-xs bg-slate-700 text-white rounded hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             data-testid="add-mapping-btn"
           >
             Add

@@ -16,7 +16,7 @@ const CostInsightsPanel: React.FC<CostInsightsPanelProps> = ({ insights }) => {
   if (insights.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" aria-label="Cost Optimization Insights">
       {insights.map((insight, index) => (
         <div
           key={index}

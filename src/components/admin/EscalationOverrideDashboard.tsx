@@ -120,7 +120,7 @@ function OverrideRow({ record, isExpanded, onToggle }: {
     <div className="border border-slate-200 rounded-lg mb-2 overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-colors text-left"
+        className="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
       >
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {isExpanded ? (
@@ -344,7 +344,7 @@ export const EscalationOverrideDashboard: React.FC<EscalationOverrideDashboardPr
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Escalation Override Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

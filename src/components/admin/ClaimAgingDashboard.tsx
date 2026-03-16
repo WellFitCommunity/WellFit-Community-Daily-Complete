@@ -264,7 +264,7 @@ const ClaimAgingDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Claim Aging Dashboard">
       {/* Alert Banner for 90+ day claims */}
       {(stats?.bucket_90_plus ?? 0) > 0 && (
         <EAAlert variant="critical">
@@ -326,7 +326,7 @@ const ClaimAgingDashboard: React.FC = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as ClaimStatusFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by status"
             >
               <option value="all">All Statuses</option>
@@ -343,7 +343,7 @@ const ClaimAgingDashboard: React.FC = () => {
                 value={payerSearch}
                 onChange={e => setPayerSearch(e.target.value)}
                 placeholder="Search payer..."
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-40 pl-7"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] w-40 pl-7"
                 aria-label="Search by payer"
               />
             </div>
@@ -355,7 +355,7 @@ const ClaimAgingDashboard: React.FC = () => {
                 value={controlSearch}
                 onChange={e => setControlSearch(e.target.value)}
                 placeholder="Search control #..."
-                className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-44 pl-7"
+                className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] w-44 pl-7"
                 aria-label="Search by control number"
               />
             </div>

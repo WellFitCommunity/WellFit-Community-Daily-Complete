@@ -96,7 +96,7 @@ export const RoleAssignmentModal: React.FC<RoleAssignmentModalProps> = ({
               id="role-select"
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as StaffRole | '')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               disabled={saving}
             >
               <option value="">Select a role...</option>
@@ -122,7 +122,7 @@ export const RoleAssignmentModal: React.FC<RoleAssignmentModalProps> = ({
               id="dept-select"
               value={selectedDept || ''}
               onChange={(e) => setSelectedDept((e.target.value || null) as Department)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               disabled={saving}
             >
               {DEPARTMENTS.map(opt => (
@@ -144,7 +144,7 @@ export const RoleAssignmentModal: React.FC<RoleAssignmentModalProps> = ({
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g., New hire onboarding, role promotion, department transfer..."
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)] resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)] resize-none"
               disabled={saving}
             />
             <p className="text-xs text-gray-400 mt-1">

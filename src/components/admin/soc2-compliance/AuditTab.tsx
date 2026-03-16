@@ -47,7 +47,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
   formatTimeAgo,
 }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="SOC2 Audit and Compliance">
       {/* Compliance Score */}
       <EACard className="bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-blue-500/30">
         <EACardContent className="py-8">
@@ -88,7 +88,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
             <div className="text-center py-8 text-slate-500">No compliance data available</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
+              <table className="min-w-full" aria-label="SOC2 control status">
                 <thead className="bg-slate-800">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">
@@ -142,7 +142,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
             <div className="text-center py-8 text-slate-500">No audit statistics available</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
+              <table className="min-w-full" aria-label="Audit event summary">
                 <thead className="bg-slate-800">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Category</th>
@@ -206,7 +206,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
                 <button
                   key={level}
                   onClick={() => setFilterRiskLevel(level)}
-                  className={`px-3 py-1 text-xs rounded ${
+                  className={`px-3 py-1 text-xs rounded focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                     filterRiskLevel === level ? 'bg-[var(--ea-primary)] text-white' : 'bg-slate-700 text-slate-300'
                   }`}
                 >
@@ -221,7 +221,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({
             <div className="text-center py-8 text-slate-500">No PHI access events recorded</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
+              <table className="min-w-full" aria-label="PHI access audit trail">
                 <thead className="bg-slate-800">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Timestamp</th>

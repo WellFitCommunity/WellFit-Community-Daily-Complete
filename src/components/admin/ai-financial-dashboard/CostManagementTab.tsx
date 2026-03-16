@@ -50,7 +50,7 @@ const CostManagementTab: React.FC<CostManagementTabProps> = ({
   return (
     <EATabsContent value="costs" className="space-y-6">
       {/* Key Metrics */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-4" aria-label="Cost Management Key Metrics">
         <MetricCard
           label="Total API Calls"
           value={(costMetrics?.totalCalls ?? 0).toLocaleString()}

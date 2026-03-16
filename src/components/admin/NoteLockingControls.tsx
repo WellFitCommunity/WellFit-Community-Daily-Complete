@@ -150,7 +150,7 @@ export const NoteLockingControls: React.FC<NoteLockingControlsProps> = ({
         ) : (
           <button
             onClick={() => setShowConfirm(true)}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-[var(--ea-primary,#00857a)] hover:bg-[var(--ea-primary,#00857a)]/5 px-2 py-1 rounded transition-colors"
+            className="flex items-center gap-1.5 text-gray-600 hover:text-[var(--ea-primary,#00857a)] hover:bg-[var(--ea-primary,#00857a)]/5 px-2 py-1 rounded transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <Unlock className="w-4 h-4" />
             <span className="text-xs">Lock</span>
@@ -164,7 +164,7 @@ export const NoteLockingControls: React.FC<NoteLockingControlsProps> = ({
   }
 
   return (
-    <EACard className="border-2 border-dashed">
+    <EACard className="border-2 border-dashed" aria-label="Note Locking Controls">
       <EACardContent className="p-4">
         {/* Error Alert */}
         {error && (

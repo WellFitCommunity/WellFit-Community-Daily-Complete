@@ -31,7 +31,7 @@ const PinnedSectionCard: React.FC<PinnedSectionCardProps> = ({ section, onUnpin 
     <section className="bg-white rounded-xl shadow-lg border-2 border-amber-200 overflow-hidden transition-all duration-200 hover:shadow-xl">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-amber-50/50 transition-colors border-b border-amber-100"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-amber-50/50 transition-colors border-b border-amber-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         aria-expanded={isExpanded}
       >
         <div className="flex items-center flex-1">
@@ -55,7 +55,7 @@ const PinnedSectionCard: React.FC<PinnedSectionCardProps> = ({ section, onUnpin 
               e.stopPropagation();
               onUnpin();
             }}
-            className="p-1.5 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             title="Unpin this section"
             aria-label={`Unpin ${section.title}`}
           >
@@ -97,7 +97,7 @@ const PinnedDashboardsBar: React.FC = () => {
   if (isLoading || pinnedSections.length === 0) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Pinned Dashboards Bar">
       <div className="flex items-center gap-2">
         <Pin className="w-5 h-5 text-amber-600" />
         <h3 className="text-lg font-bold text-gray-900">Pinned Dashboards</h3>

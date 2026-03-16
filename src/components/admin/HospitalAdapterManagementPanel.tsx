@@ -242,7 +242,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Hospital Adapter Management">
       {/* Header */}
       <div className="bg-linear-to-r from-[var(--ea-primary,#00857a)] to-[var(--ea-primary-hover,#006d64)] rounded-xl p-6 text-[var(--ea-text-on-primary,#ffffff)]">
         <div className="flex items-center justify-between">
@@ -283,7 +283,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
             value={autoDetectUrl}
             onChange={(e) => setAutoDetectUrl(e.target.value)}
             placeholder="https://fhir.hospital.org/api/FHIR/R4"
-            className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+            className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
           />
           <button
             onClick={handleAutoDetect}
@@ -455,7 +455,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                   value={configForm.endpoint}
                   onChange={(e) => setConfigForm({ ...configForm, endpoint: e.target.value })}
                   placeholder="https://fhir.hospital.org/api/FHIR/R4"
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                 />
               </div>
 
@@ -467,7 +467,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                 <select
                   value={configForm.authType}
                   onChange={(e) => setConfigForm({ ...configForm, authType: e.target.value as AdapterConfig['authType'] })}
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                 >
                   <option value="oauth2">OAuth 2.0</option>
                   <option value="api-key">API Key</option>
@@ -488,7 +488,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                     value={configForm.apiKey || ''}
                     onChange={(e) => setConfigForm({ ...configForm, apiKey: e.target.value })}
                     placeholder="Enter API key"
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                   />
                 </div>
               )}
@@ -504,7 +504,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                       value={configForm.clientId || ''}
                       onChange={(e) => setConfigForm({ ...configForm, clientId: e.target.value })}
                       placeholder="Enter client ID"
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                     />
                   </div>
                   <div>
@@ -516,7 +516,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                       value={configForm.clientSecret || ''}
                       onChange={(e) => setConfigForm({ ...configForm, clientSecret: e.target.value })}
                       placeholder="Enter client secret"
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                     />
                   </div>
                 </>
@@ -533,7 +533,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                       value={configForm.username || ''}
                       onChange={(e) => setConfigForm({ ...configForm, username: e.target.value })}
                       placeholder="Enter username"
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                     />
                   </div>
                   <div>
@@ -545,7 +545,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                       value={configForm.password || ''}
                       onChange={(e) => setConfigForm({ ...configForm, password: e.target.value })}
                       placeholder="Enter password"
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                     />
                   </div>
                 </>
@@ -561,7 +561,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
                   value={configForm.syncSchedule}
                   onChange={(e) => setConfigForm({ ...configForm, syncSchedule: e.target.value })}
                   placeholder="0 */6 * * *"
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary,#00857a)] focus:outline-hidden"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary,#00857a)] focus-visible:outline-hidden"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Default: Every 6 hours (0 */6 * * *)

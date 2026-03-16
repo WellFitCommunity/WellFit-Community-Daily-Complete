@@ -345,7 +345,7 @@ const ExportCheckIns: React.FC = () => {
     <>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      <div className="bg-white border rounded-lg shadow-xs p-6">
+      <div className="bg-white border rounded-lg shadow-xs p-6" aria-label="Export Check-In Data">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Export Check-In Data</h2>
           {isFiltered && (
@@ -423,7 +423,7 @@ const ExportCheckIns: React.FC = () => {
                 type="date"
                 value={dateRange.startDate}
                 onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
                 max={dateRange.endDate || undefined}
               />
             </div>
@@ -436,7 +436,7 @@ const ExportCheckIns: React.FC = () => {
                 type="date"
                 value={dateRange.endDate}
                 onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-transparent"
                 min={dateRange.startDate || undefined}
                 max={new Date().toISOString().split('T')[0]}
               />
@@ -470,7 +470,7 @@ const ExportCheckIns: React.FC = () => {
           <button
             onClick={handleExport}
             disabled={loading}
-            className="inline-flex items-center px-6 py-3 bg-wellfit-green text-white font-medium rounded-lg shadow-sm hover:bg-wellfit-blue focus:ring-2 focus:ring-wellfit-green focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="inline-flex items-center px-6 py-3 bg-wellfit-green text-white font-medium rounded-lg shadow-sm hover:bg-wellfit-blue focus-visible:ring-2 focus-visible:ring-wellfit-green focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             aria-label={`Export check-in data as ${exportFormat.toUpperCase()}`}
           >
             {loading ? (

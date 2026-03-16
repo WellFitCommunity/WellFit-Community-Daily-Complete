@@ -313,7 +313,7 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
   const unassignedProviders = availableProviders.filter(p => !assignedProviderIds.has(p.id));
 
   return (
-    <EACard>
+    <EACard aria-label="Encounter Provider Panel">
       <EACardHeader icon={<Users className="w-5 h-5" />} action={
         <div className="flex items-center gap-2">
           <EAButton variant="ghost" size="sm" onClick={handleShowAudit}>
@@ -403,7 +403,7 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
                     value={removeReason}
                     onChange={e => setRemoveReason(e.target.value)}
                     placeholder="Why is this provider being removed?"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-red-500 focus:border-red-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-red-500 focus-visible:border-red-500"
                   />
                 </label>
                 <div className="flex gap-2 mt-3">
@@ -444,7 +444,7 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
                 <select
                   value={selectedProviderId}
                   onChange={e => setSelectedProviderId(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
                 >
                   <option value="">Select a provider...</option>
                   {unassignedProviders.map(p => (
@@ -462,7 +462,7 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
                 <select
                   value={selectedRole}
                   onChange={e => setSelectedRole(e.target.value as EncounterProviderRole)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
                 >
                   {ENCOUNTER_PROVIDER_ROLES.map(role => (
                     <option key={role} value={role}>
@@ -484,7 +484,7 @@ export const EncounterProviderPanel: React.FC<EncounterProviderPanelProps> = ({
                   value={assignNotes}
                   onChange={e => setAssignNotes(e.target.value)}
                   placeholder="Assignment notes..."
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
                 />
               </label>
 

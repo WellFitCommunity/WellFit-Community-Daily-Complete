@@ -222,7 +222,7 @@ export const ResponsePanel: React.FC<ResponsePanelProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-xs border">
+    <div className="bg-white rounded-lg shadow-xs border" aria-label="Question Response Panel">
       <div className="p-4">
         {/* Header */}
         <div className="border-b pb-4 mb-4">
@@ -330,7 +330,7 @@ export const ResponsePanel: React.FC<ResponsePanelProps> = ({
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
               rows={6}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="w-full p-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
               placeholder="Type your response to the patient here... (autosaves every 3 seconds)"
             />
           </div>
@@ -343,7 +343,7 @@ export const ResponsePanel: React.FC<ResponsePanelProps> = ({
               value={nurseNotes}
               onChange={(e) => setNurseNotes(e.target.value)}
               rows={3}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="w-full p-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
               placeholder="Add notes for other care team members..."
             />
           </div>

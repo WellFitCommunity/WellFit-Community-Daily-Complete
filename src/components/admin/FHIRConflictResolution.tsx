@@ -421,7 +421,7 @@ export const FHIRConflictResolution: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto" aria-label="FHIR Conflict Resolution">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -438,7 +438,7 @@ export const FHIRConflictResolution: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={() => setFilter('unresolved')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 filter === 'unresolved'
                   ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -448,7 +448,7 @@ export const FHIRConflictResolution: React.FC = () => {
             </button>
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 filter === 'all'
                   ? 'bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)]'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -460,7 +460,7 @@ export const FHIRConflictResolution: React.FC = () => {
           <button
             onClick={fetchConflicts}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -603,7 +603,7 @@ export const FHIRConflictResolution: React.FC = () => {
                           )
                         }
                         disabled={resolving}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       >
                         <span className="font-medium text-blue-900">Use FHIR Server Data</span>
                         <Database className="w-5 h-5 text-blue-600" />
@@ -617,7 +617,7 @@ export const FHIRConflictResolution: React.FC = () => {
                           )
                         }
                         disabled={resolving}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       >
                         <span className="font-medium text-green-900">
                           Keep Community Data
@@ -633,7 +633,7 @@ export const FHIRConflictResolution: React.FC = () => {
                           )
                         }
                         disabled={resolving}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       >
                         <span className="font-medium text-purple-900">Merge Both</span>
                         <GitMerge className="w-5 h-5 text-purple-600" />
@@ -647,7 +647,7 @@ export const FHIRConflictResolution: React.FC = () => {
                           )
                         }
                         disabled={resolving}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       >
                         <span className="font-medium text-gray-900">
                           Mark as Manual

@@ -250,13 +250,14 @@ export const ChainDefinitionEditor: React.FC<ChainDefinitionEditorProps> = ({
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       data-testid="chain-definition-editor"
+      aria-label="Chain Definition Editor"
     >
       <div className="bg-slate-800 rounded-xl border border-slate-700 w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-white">
             {isEditMode ? 'Edit Chain Definition' : 'Create Chain Definition'}
           </h2>
-          <button onClick={onCancel} className="text-slate-400 hover:text-white text-2xl">&times;</button>
+          <button onClick={onCancel} className="text-slate-400 hover:text-white text-2xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">&times;</button>
         </div>
 
         {error && <EAAlert variant="warning" title="Validation Error">{error}</EAAlert>}
@@ -273,7 +274,7 @@ export const ChainDefinitionEditor: React.FC<ChainDefinitionEditorProps> = ({
               onChange={(e) => setChainKey(e.target.value)}
               disabled={isEditMode}
               placeholder="e.g. claims_pipeline"
-              className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white disabled:opacity-50"
+              className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               data-testid="chain-key-input"
             />
           </div>
@@ -285,7 +286,7 @@ export const ChainDefinitionEditor: React.FC<ChainDefinitionEditorProps> = ({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="e.g. Claims Processing Pipeline"
-              className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+              className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               data-testid="chain-display-name-input"
             />
           </div>
@@ -297,7 +298,7 @@ export const ChainDefinitionEditor: React.FC<ChainDefinitionEditorProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What does this chain do?"
               rows={2}
-              className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+              className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               data-testid="chain-description-input"
             />
           </div>
@@ -347,7 +348,7 @@ export const ChainDefinitionEditor: React.FC<ChainDefinitionEditorProps> = ({
                         <button
                           onClick={() => moveStep(index, 'up')}
                           disabled={index === 0}
-                          className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
+                          className="p-1 text-slate-400 hover:text-white disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           aria-label="Move step up"
                         >
                           &#x25B2;
@@ -355,21 +356,21 @@ export const ChainDefinitionEditor: React.FC<ChainDefinitionEditorProps> = ({
                         <button
                           onClick={() => moveStep(index, 'down')}
                           disabled={index === steps.length - 1}
-                          className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
+                          className="p-1 text-slate-400 hover:text-white disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           aria-label="Move step down"
                         >
                           &#x25BC;
                         </button>
                         <button
                           onClick={() => setEditingStepIndex(index)}
-                          className="px-2 py-1 text-sm text-slate-300 hover:text-white"
+                          className="px-2 py-1 text-sm text-slate-300 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           data-testid={`edit-step-${index}`}
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => removeStep(index)}
-                          className="px-2 py-1 text-sm text-red-400 hover:text-red-300"
+                          className="px-2 py-1 text-sm text-red-400 hover:text-red-300 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           data-testid={`remove-step-${index}`}
                         >
                           Remove

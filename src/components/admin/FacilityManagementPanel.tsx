@@ -304,7 +304,7 @@ const FacilityManagementPanel: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Facility Management">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -341,7 +341,7 @@ const FacilityManagementPanel: React.FC = () => {
             placeholder="Search facilities..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-transparent"
           />
         </div>
         <label className="flex items-center gap-2 text-sm text-gray-600">
@@ -349,7 +349,7 @@ const FacilityManagementPanel: React.FC = () => {
             type="checkbox"
             checked={showInactive}
             onChange={(e) => setShowInactive(e.target.checked)}
-            className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+            className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
           />
           Show inactive
         </label>
@@ -507,7 +507,7 @@ const FacilityManagementPanel: React.FC = () => {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     placeholder="Houston Methodist Sugar Land"
                   />
                 </div>
@@ -520,7 +520,7 @@ const FacilityManagementPanel: React.FC = () => {
                     type="text"
                     value={formData.facility_code}
                     onChange={(e) => setFormData({ ...formData, facility_code: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     placeholder="METH-SL"
                   />
                 </div>
@@ -534,7 +534,7 @@ const FacilityManagementPanel: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, facility_type: e.target.value as FacilityType })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                   >
                     <option value="hospital">Hospital</option>
                     <option value="clinic">Clinic</option>
@@ -558,7 +558,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.address_line1}
                       onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Street Address"
                     />
                   </div>
@@ -567,7 +567,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.address_line2}
                       onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Suite, Floor, etc."
                     />
                   </div>
@@ -576,7 +576,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="City"
                     />
                   </div>
@@ -585,7 +585,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="State"
                       maxLength={2}
                     />
@@ -593,7 +593,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.zip_code}
                       onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="ZIP"
                     />
                   </div>
@@ -609,7 +609,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Phone"
                     />
                   </div>
@@ -618,7 +618,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="tel"
                       value={formData.fax}
                       onChange={(e) => setFormData({ ...formData, fax: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Fax"
                     />
                   </div>
@@ -627,7 +627,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="Email"
                     />
                   </div>
@@ -644,7 +644,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.npi}
                       onChange={(e) => setFormData({ ...formData, npi: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="10-digit NPI"
                       maxLength={10}
                     />
@@ -655,7 +655,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="text"
                       value={formData.tax_id}
                       onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       placeholder="XX-XXXXXXX"
                     />
                   </div>
@@ -666,7 +666,7 @@ const FacilityManagementPanel: React.FC = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, place_of_service_code: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     >
                       <option value="11">11 - Office</option>
                       <option value="21">21 - Inpatient Hospital</option>
@@ -689,7 +689,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="checkbox"
                       checked={formData.is_primary}
                       onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-                      className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus:ring-[var(--ea-primary,#00857a)]"
+                      className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
                     />
                     <span className="text-sm text-gray-700">Primary facility</span>
                   </label>
@@ -699,7 +699,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="number"
                       value={formData.bed_count}
                       onChange={(e) => setFormData({ ...formData, bed_count: e.target.value })}
-                      className="w-20 px-2 py-1 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                      className="w-20 px-2 py-1 border border-gray-300 rounded-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       min="0"
                     />
                   </div>

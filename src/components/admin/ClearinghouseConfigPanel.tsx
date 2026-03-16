@@ -155,7 +155,7 @@ export function ClearinghouseConfigPanel() {
   const defaults = getProviderDefaults(config.provider);
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6" aria-label="Clearinghouse Configuration Panel">
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         {/* Header */}
         <div className="mb-6">
@@ -179,7 +179,7 @@ export function ClearinghouseConfigPanel() {
               const defaults = getProviderDefaults(provider);
               setConfig({ ...config, provider, apiUrl: defaults.apiUrl });
             }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <option value="waystar">Waystar (Most Popular)</option>
             <option value="change_healthcare">Change Healthcare (Largest Network)</option>
@@ -200,7 +200,7 @@ export function ClearinghouseConfigPanel() {
             value={config.apiUrl}
             onChange={(e) => setConfig({ ...config, apiUrl: e.target.value })}
             placeholder="https://api.waystar.com/v1"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           />
           <p className="text-xs text-gray-500 mt-1">
             Production API endpoint (not sandbox)
@@ -217,7 +217,7 @@ export function ClearinghouseConfigPanel() {
             value={config.clientId}
             onChange={(e) => setConfig({ ...config, clientId: e.target.value })}
             placeholder="abc123-your-org-id"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           />
           <p className="text-xs text-gray-500 mt-1">
             Provided by your clearinghouse account rep
@@ -235,7 +235,7 @@ export function ClearinghouseConfigPanel() {
               value={config.clientSecret}
               onChange={(e) => setConfig({ ...config, clientSecret: e.target.value })}
               placeholder="sk_live_xyz789..."
-              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             />
             <button
               onClick={() => setShowSecret(!showSecret)}
@@ -259,7 +259,7 @@ export function ClearinghouseConfigPanel() {
             value={config.submitterId}
             onChange={(e) => setConfig({ ...config, submitterId: e.target.value })}
             placeholder="1234567890"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           />
           <p className="text-xs text-gray-500 mt-1">
             Your organization's NPI or clearinghouse-assigned submitter ID

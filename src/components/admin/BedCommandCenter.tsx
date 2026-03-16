@@ -82,7 +82,7 @@ export const BedCommandCenter: React.FC = () => {
         <p className="text-red-700">Error loading command center: {error}</p>
         <button
           onClick={refresh}
-          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           Retry
         </button>
@@ -91,7 +91,7 @@ export const BedCommandCenter: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Bed Command Center" aria-live="polite">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -104,7 +104,7 @@ export const BedCommandCenter: React.FC = () => {
         <button
           onClick={refresh}
           disabled={isLoading}
-          className={`px-4 py-2 rounded-lg disabled:opacity-50 flex items-center gap-2 ${theme.buttonPrimary}`}
+          className={`px-4 py-2 rounded-lg disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
         >
           {isLoading ? (
             <span className="animate-spin">⟳</span>
@@ -204,7 +204,7 @@ export const BedCommandCenter: React.FC = () => {
                   </div>
                   <button
                     onClick={() => acknowledgeAlert(alert.id)}
-                    className={`px-3 py-1 text-sm rounded ${theme.buttonPrimary}`}
+                    className={`px-3 py-1 text-sm rounded focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
                   >
                     Acknowledge
                   </button>
@@ -223,7 +223,7 @@ export const BedCommandCenter: React.FC = () => {
               Filtered by: {getAlertLevelLabel(currentFilters.alertLevel)}
               <button
                 onClick={() => filterByAlertLevel(null)}
-                className="ml-2 text-[var(--ea-primary)] hover:underline"
+                className="ml-2 text-[var(--ea-primary)] hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 Clear
               </button>
@@ -317,7 +317,7 @@ const AlertStatusCard: React.FC<AlertStatusCardProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`rounded-lg border p-4 text-left transition-all ${
+      className={`rounded-lg border p-4 text-left transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
         active ? 'ring-2 ring-[var(--ea-primary)]' : ''
       } ${getAlertLevelColor(level)}`}
     >
@@ -406,7 +406,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, onToggle
             e.stopPropagation();
             onToggleDivert(!facility.divert_status);
           }}
-          className={`px-3 py-1 rounded text-xs font-medium ${
+          className={`px-3 py-1 rounded text-xs font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             facility.divert_status
               ? 'bg-green-600 text-white hover:bg-green-700'
               : 'bg-red-600 text-white hover:bg-red-700'
@@ -440,7 +440,7 @@ const FacilityDetailModal: React.FC<FacilityDetailModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="text-gray-400 hover:text-gray-600 text-2xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             ×
           </button>
@@ -458,7 +458,7 @@ const FacilityDetailModal: React.FC<FacilityDetailModalProps> = ({
               </div>
               <button
                 onClick={() => onToggleDivert(!facility.divert_status)}
-                className={`px-4 py-2 rounded font-medium ${
+                className={`px-4 py-2 rounded font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                   facility.divert_status
                     ? 'bg-green-600 text-white hover:bg-green-700'
                     : 'bg-red-600 text-white hover:bg-red-700'

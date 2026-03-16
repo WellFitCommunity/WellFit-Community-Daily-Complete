@@ -455,12 +455,12 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-6" aria-label="Bulk Patient Enrollment">
       <ToastContainer />
       {/* Back Button */}
       <button
         onClick={() => navigate('/admin')}
-        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[var(--ea-primary,#00857a)] transition-colors"
+        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] transition-colors"
       >
         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -551,7 +551,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
               </div>
 
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200" aria-label="Enrollment Preview">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Row</th>
@@ -661,7 +661,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
 
           {/* Results Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200" aria-label="Enrollment Results">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Row</th>

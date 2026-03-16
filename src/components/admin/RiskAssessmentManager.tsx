@@ -168,7 +168,7 @@ const RiskAssessmentManager: React.FC = () => {
   const selectedPatientData = patients.find(p => p.user_id === selectedPatient);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Risk Assessment Manager">
       {/* Success message */}
       {successMessage && (
         <Alert className="bg-green-50 border-green-200">
@@ -364,7 +364,7 @@ const RiskAssessmentManager: React.FC = () => {
                         setSelectedPatient(patient.user_id);
                         setEditingAssessment(null);
                       }}
-                      className={`p-4 border rounded-lg text-left hover:bg-gray-50 transition-colors ${
+                      className={`p-4 border rounded-lg text-left hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                         selectedPatient === patient.user_id ? 'border-[var(--ea-primary)] bg-[var(--ea-primary)]/5' : 'border-gray-200'
                       }`}
                     >

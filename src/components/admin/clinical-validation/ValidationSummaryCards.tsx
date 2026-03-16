@@ -24,7 +24,7 @@ export const ValidationSummaryCards: React.FC<ValidationSummaryCardsProps> = ({ 
         : 'normal' as const;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" aria-label="Validation Summary Cards">
       <EAMetricCard
         label="Codes Validated"
         value={summary.totalCodesChecked.toLocaleString()}

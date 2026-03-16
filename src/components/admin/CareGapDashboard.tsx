@@ -218,7 +218,7 @@ const CareGapDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Care Gap Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -285,7 +285,7 @@ const CareGapDashboard: React.FC = () => {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200" aria-label="Recent care gaps">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
@@ -334,7 +334,7 @@ const CareGapDashboard: React.FC = () => {
               <p className="text-gray-500 text-center py-8">No patients with open care gaps.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200" aria-label="Patients with open care gaps">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>

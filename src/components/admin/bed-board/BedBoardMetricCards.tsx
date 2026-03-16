@@ -19,7 +19,7 @@ export const BedBoardMetricCards: React.FC<BedBoardMetricCardsProps> = ({
   pendingClean,
   overallOccupancy,
 }) => (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-label="Bed Board Metrics" aria-live="polite">
     <EACard>
       <EACardContent className="p-4">
         <div className="flex items-center justify-between">

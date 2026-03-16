@@ -134,7 +134,7 @@ const NurseQuestionManager: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto" aria-label="Nurse Question Manager">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Patient Questions - Nurse Dashboard
@@ -158,14 +158,14 @@ const NurseQuestionManager: React.FC = () => {
           </span>
           <button
             onClick={() => setNewQuestionAlert(false)}
-            className="text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] text-sm min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-live="polite">
         <div>
           <QuestionList
             questions={questions}

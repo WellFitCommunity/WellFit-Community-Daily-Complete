@@ -203,7 +203,7 @@ const ClaimResubmissionDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Claim Resubmission Dashboard">
       {/* Alert Banner — past appeal deadline */}
       {stats && stats.past_appeal_deadline > 0 && (
         <EAAlert variant="critical">
@@ -252,7 +252,7 @@ const ClaimResubmissionDashboard: React.FC = () => {
           {/* Filter Bar */}
           <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b bg-gray-50">
             <select
-              className="border rounded-md px-3 py-1.5 text-sm bg-white"
+              className="border rounded-md px-3 py-1.5 text-sm bg-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               value={statusFilter}
               onChange={(e) => handleFilterChange(e.target.value as ResubmissionStatusFilter)}
               aria-label="Filter by status"
@@ -265,7 +265,7 @@ const ClaimResubmissionDashboard: React.FC = () => {
               <Search className="w-4 h-4 absolute left-2.5 top-2 text-gray-400" />
               <input
                 type="text"
-                className="w-full border rounded-md pl-8 pr-3 py-1.5 text-sm"
+                className="w-full border rounded-md pl-8 pr-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 placeholder="Search payer or control #..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}

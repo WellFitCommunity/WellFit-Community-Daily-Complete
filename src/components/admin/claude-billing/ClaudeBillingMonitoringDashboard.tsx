@@ -53,7 +53,7 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Claude and Billing Monitoring Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -66,7 +66,7 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as DateRange)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+            className="px-3 py-2 border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>

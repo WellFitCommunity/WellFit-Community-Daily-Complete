@@ -19,7 +19,7 @@ interface CostTrendsSectionProps {
 
 export const CostTrendsSection: React.FC<CostTrendsSectionProps> = ({ costTrends }) => {
   return (
-    <EACard>
+    <EACard aria-label="Cost Trends">
       <EACardHeader>
         <h2 className="text-lg font-semibold text-white">Cost Trends</h2>
       </EACardHeader>

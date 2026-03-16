@@ -16,7 +16,7 @@ const AIPatientList: React.FC<AIPatientListProps> = ({ patients, onPatientSelect
   }
 
   return (
-    <Card>
+    <Card aria-label="AI Patient List">
       <CardHeader>
         <CardTitle>High-Priority Patients</CardTitle>
       </CardHeader>

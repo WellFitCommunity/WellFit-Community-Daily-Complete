@@ -12,7 +12,7 @@
 
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
-| P0 — Tonight | 1 | 0/1 | Adversarial testing (Maria + Akima + Claude) |
+| P0 — Tonight | 1 | 1/1 | ~~Adversarial testing~~ (85 prompt injection + 64 constraint tests) |
 | P1 — Chain Infrastructure | 3 | 3/3 | ~~Retry logic~~, ~~chains 2-5~~, ~~end-to-end verification~~ |
 | P2 — Tool Wiring (Revenue) | 3 | 1/3 | ~~Medical coding client~~, clearinghouse activation (BLOCKED), rejection/stats tools |
 | P3 — Tool Wiring (Clinical) | 3 | 3/3 | ~~FHIR CRUD~~, ~~prior auth queue~~, ~~edge function tools~~ |
@@ -20,7 +20,7 @@
 | P5 — Observability | 2 | 2/2 | ~~Unified cost dashboard~~, ~~cultural competency browser client~~ (pre-existing) |
 | P6 — Security Polish | 2 | 2/2 | ~~Medical coding tenant_id fix~~, ~~structured AI output~~ (both pre-existing) |
 | P7 — Drift Guard Wiring | 1 | 1/1 | ~~Wire conversationDriftGuard into 6 AI edge functions~~ |
-| **Total** | **19** | **0/19** | |
+| **Total** | **19** | **17/19** | Remaining: P2-2 + P2-3 (clearinghouse BLOCKED on sandbox credentials) |
 
 **Estimated effort:** ~58-68 hours across 7-8 sessions
 

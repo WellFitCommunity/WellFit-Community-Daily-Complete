@@ -204,7 +204,7 @@ const PaperFormUploader: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Paper Form Uploader">
       {/* Instructions */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start gap-3">
@@ -258,14 +258,14 @@ const PaperFormUploader: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={handleCameraClick}
-              className="flex items-center gap-2 px-6 py-3 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-[var(--ea-primary)] text-[var(--ea-text-on-primary)] rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <Camera className="w-5 h-5" />
               Take Photo
             </button>
             <button
               onClick={handleUploadClick}
-              className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <Upload className="w-5 h-5" />
               Upload File

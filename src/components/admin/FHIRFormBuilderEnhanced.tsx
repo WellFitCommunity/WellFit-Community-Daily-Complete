@@ -227,12 +227,12 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6" aria-label="Enhanced FHIR Questionnaire Builder">
       {/* Navigation Tabs */}
       <div className="flex border-b border-gray-200">
         <button
           onClick={() => setViewMode('builder')}
-          className={`px-4 py-2 font-medium text-sm border-b-2 ${
+          className={`px-4 py-2 font-medium text-sm border-b-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             viewMode === 'builder'
               ? 'border-[var(--ea-primary)] text-[var(--ea-primary)]'
               : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -242,7 +242,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
         </button>
         <button
           onClick={() => setViewMode('library')}
-          className={`px-4 py-2 font-medium text-sm border-b-2 ${
+          className={`px-4 py-2 font-medium text-sm border-b-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             viewMode === 'library'
               ? 'border-[var(--ea-primary)] text-[var(--ea-primary)]'
               : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -269,7 +269,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
                   <button
                     key={template.id}
                     onClick={() => loadTemplate(template)}
-                    className="text-left p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    className="text-left p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     disabled={isGenerating}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -296,7 +296,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
                 value={naturalLanguageInput}
                 onChange={(e) => setNaturalLanguageInput(e.target.value)}
                 placeholder="Example: Create a pain assessment form with questions about pain location, intensity (0-10 scale), quality (sharp, dull, burning), triggers, and current treatments. Include conditional questions for patients rating pain above 7."
-                className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none"
+                className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 disabled={isGenerating}
               />
             </div>
@@ -368,13 +368,13 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setPreviewMode('form')}
-                  className={`px-3 py-1 text-sm ${previewMode === 'form' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${previewMode === 'form' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
                 >
                   📝 Form Preview
                 </button>
                 <button
                   onClick={() => setPreviewMode('json')}
-                  className={`px-3 py-1 text-sm border-l border-gray-300 ${previewMode === 'json' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
+                  className={`px-3 py-1 text-sm border-l border-gray-300 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${previewMode === 'json' ? 'bg-[var(--ea-primary)]/10 text-[var(--ea-primary)]' : 'bg-white'}`}
                 >
                   📋 FHIR JSON
                 </button>

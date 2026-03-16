@@ -81,7 +81,7 @@ export const SmartAppReviewModal: React.FC<SmartAppReviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-label={`Review SMART App: ${app.client_name}`}>
       <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -136,7 +136,7 @@ export const SmartAppReviewModal: React.FC<SmartAppReviewModalProps> = ({
             <textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
               placeholder="Reason for rejection..."
               rows={2}
             />

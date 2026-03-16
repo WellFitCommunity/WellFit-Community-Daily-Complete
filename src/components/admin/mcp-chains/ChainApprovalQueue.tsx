@@ -30,7 +30,7 @@ export const ChainApprovalQueue: React.FC<ChainApprovalQueueProps> = ({
   }
 
   return (
-    <div className="space-y-4" data-testid="approval-queue">
+    <div className="space-y-4" data-testid="approval-queue" aria-label="Chain Approval Queue">
       <div className="text-sm text-slate-400 mb-2">
         {awaitingRuns.length} chain{awaitingRuns.length !== 1 ? 's' : ''}{' '}
         {RUN_STATUS_LABEL.awaiting_approval.toLowerCase()}

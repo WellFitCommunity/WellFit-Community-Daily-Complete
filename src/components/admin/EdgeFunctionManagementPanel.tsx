@@ -181,7 +181,7 @@ const EdgeFunctionManagementPanel: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Edge Function Management">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -250,7 +250,7 @@ const EdgeFunctionManagementPanel: React.FC = () => {
               No functions found for this category
             </div>
           ) : (
-            <table className="w-full">
+            <table className="w-full" aria-label="Edge Functions">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Function</th>
@@ -337,7 +337,7 @@ const EdgeFunctionManagementPanel: React.FC = () => {
               value={payload}
               onChange={(e) => setPayload(e.target.value)}
               rows={6}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500"
               placeholder='{"key": "value"}'
             />
           </div>

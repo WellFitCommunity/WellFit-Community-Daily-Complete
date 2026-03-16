@@ -28,7 +28,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
   const totalRecordsProcessed = statsValues.reduce((sum: number, stats: SyncStats) => sum + (stats.recordsSynced || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="FHIR Analytics">
       {/* Compliance Overview */}
       <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">FHIR Compliance Overview</h2>
@@ -85,7 +85,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
       <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">Connection Performance</h2>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" aria-label="Connection performance statistics">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Connection</th>

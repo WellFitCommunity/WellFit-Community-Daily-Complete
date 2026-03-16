@@ -150,7 +150,7 @@ export const BackupVerificationCard: React.FC<BackupVerificationCardProps> = ({
             {/* History Toggle */}
             <button
               onClick={() => setShowBackupHistory(!showBackupHistory)}
-              className="flex items-center gap-2 text-sm text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)]"
+              className="flex items-center gap-2 text-sm text-[var(--ea-primary)] hover:text-[var(--ea-primary-hover)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               {showBackupHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               {showBackupHistory ? 'Hide' : 'Show'} Recent History
@@ -159,7 +159,7 @@ export const BackupVerificationCard: React.FC<BackupVerificationCardProps> = ({
             {/* History Table */}
             {showBackupHistory && recentBackups.length > 0 && (
               <div className="border rounded overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" aria-label="Backup verification history">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-3 py-2 text-left">Time</th>

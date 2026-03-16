@@ -204,7 +204,7 @@ const BreachNotificationDashboard: React.FC = () => {
           <p className="text-red-600 text-sm mt-1">{error}</p>
           <button
             onClick={loadIncidents}
-            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 text-base font-medium"
+            className="mt-3 min-h-[44px] min-w-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 text-base font-medium"
             aria-label="Retry loading breach incidents"
           >
             Retry
@@ -215,7 +215,7 @@ const BreachNotificationDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Breach Notification Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -225,7 +225,7 @@ const BreachNotificationDashboard: React.FC = () => {
         <button
           onClick={loadIncidents}
           disabled={loading}
-          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
+          className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
           aria-label="Refresh breach incidents"
         >
           Refresh
@@ -243,7 +243,7 @@ const BreachNotificationDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <button
           onClick={() => setStatusFilter('all')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === 'all' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'all'}
@@ -255,7 +255,7 @@ const BreachNotificationDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('open')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === 'open' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'open'}
@@ -267,7 +267,7 @@ const BreachNotificationDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('notification')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === 'notification' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'notification'}
@@ -279,7 +279,7 @@ const BreachNotificationDashboard: React.FC = () => {
 
         <button
           onClick={() => setStatusFilter('resolved')}
-          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] ${
+          className={`p-4 rounded-lg border-2 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
             statusFilter === 'resolved' ? 'border-[var(--ea-primary,#00857a)] bg-[var(--ea-primary,#00857a)]/10' : 'border-gray-200 bg-white'
           }`}
           aria-pressed={statusFilter === 'resolved'}
@@ -312,7 +312,7 @@ const BreachNotificationDashboard: React.FC = () => {
                   value={resolutionNotes}
                   onChange={e => setResolutionNotes(e.target.value)}
                   rows={3}
-                  className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+                  className="w-full border border-gray-300 rounded-lg p-3 text-base focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
                   placeholder="Describe how this incident was resolved..."
                 />
               </div>
@@ -320,7 +320,7 @@ const BreachNotificationDashboard: React.FC = () => {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => { setStatusChangeTarget(null); setResolutionNotes(''); }}
-                className="min-h-[44px] min-w-[44px] px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 text-base font-medium"
+                className="min-h-[44px] min-w-[44px] px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 text-base font-medium"
                 aria-label="Cancel status update"
               >
                 Cancel
@@ -328,7 +328,7 @@ const BreachNotificationDashboard: React.FC = () => {
               <button
                 onClick={handleStatusUpdate}
                 disabled={updatingId !== null}
-                className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
+                className={`min-h-[44px] min-w-[44px] px-4 py-2 ${theme.buttonPrimary} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] text-base font-medium disabled:opacity-50`}
                 aria-label="Confirm status update"
               >
                 {updatingId ? 'Updating...' : 'Confirm'}
@@ -392,7 +392,7 @@ const BreachNotificationDashboard: React.FC = () => {
                         <button
                           onClick={() => setStatusChangeTarget({ id: incident.id, status: 'investigating' })}
                           disabled={updatingId === incident.id}
-                          className={`min-h-[44px] min-w-[44px] px-3 py-2 ${theme.buttonPrimary} rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-primary,#00857a)] text-sm font-medium disabled:opacity-50`}
+                          className={`min-h-[44px] min-w-[44px] px-3 py-2 ${theme.buttonPrimary} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] text-sm font-medium disabled:opacity-50`}
                           aria-label={`Start investigation for ${incident.title}`}
                         >
                           Investigate
@@ -402,7 +402,7 @@ const BreachNotificationDashboard: React.FC = () => {
                         <button
                           onClick={() => setStatusChangeTarget({ id: incident.id, status: 'risk_assessment' })}
                           disabled={updatingId === incident.id}
-                          className="min-h-[44px] min-w-[44px] px-3 py-2 bg-[var(--ea-secondary,#FF6B35)] hover:opacity-90 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ea-secondary,#FF6B35)] text-sm font-medium disabled:opacity-50"
+                          className="min-h-[44px] min-w-[44px] px-3 py-2 bg-[var(--ea-secondary,#FF6B35)] hover:opacity-90 text-white rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ea-secondary,#FF6B35)] text-sm font-medium disabled:opacity-50"
                           aria-label={`Move to risk assessment for ${incident.title}`}
                         >
                           Risk Assess
@@ -412,7 +412,7 @@ const BreachNotificationDashboard: React.FC = () => {
                         <button
                           onClick={() => setStatusChangeTarget({ id: incident.id, status: 'notification_in_progress' })}
                           disabled={updatingId === incident.id || incident.status === 'notification_in_progress'}
-                          className="min-h-[44px] min-w-[44px] px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium disabled:opacity-50"
+                          className="min-h-[44px] min-w-[44px] px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 text-sm font-medium disabled:opacity-50"
                           aria-label={`Begin notifications for ${incident.title}`}
                         >
                           Begin Notify
@@ -421,7 +421,7 @@ const BreachNotificationDashboard: React.FC = () => {
                       <button
                         onClick={() => setStatusChangeTarget({ id: incident.id, status: 'resolved' })}
                         disabled={updatingId === incident.id}
-                        className="min-h-[44px] min-w-[44px] px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium disabled:opacity-50"
+                        className="min-h-[44px] min-w-[44px] px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 text-sm font-medium disabled:opacity-50"
                         aria-label={`Resolve incident ${incident.title}`}
                       >
                         Resolve

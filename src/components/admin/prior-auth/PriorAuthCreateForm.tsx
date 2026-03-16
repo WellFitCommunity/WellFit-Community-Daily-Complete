@@ -63,7 +63,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
   }, [form.diagnosis_codes]);
 
   return (
-    <form onSubmit={onSubmit} className="bg-white rounded-xl border p-6 space-y-5">
+    <form onSubmit={onSubmit} className="bg-white rounded-xl border p-6 space-y-5" aria-label="New Prior Authorization Request">
       <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
         <Plus className="w-5 h-5 text-indigo-600" /> New Prior Authorization Request
       </h3>
@@ -74,7 +74,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
             id="pa-patient-id"
             type="text" required value={form.patient_id}
             onChange={e => updateField('patient_id', e.target.value)}
-            className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+            className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
             placeholder="Patient UUID"
           />
         </div>
@@ -84,7 +84,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
             id="pa-payer-id"
             type="text" required value={form.payer_id}
             onChange={e => updateField('payer_id', e.target.value)}
-            className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+            className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
             placeholder="Payer identifier"
           />
         </div>
@@ -94,7 +94,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
             id="pa-payer-name"
             type="text" value={form.payer_name}
             onChange={e => updateField('payer_name', e.target.value)}
-            className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+            className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
             placeholder="e.g. Blue Cross Blue Shield"
           />
         </div>
@@ -104,7 +104,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
             id="pa-date-of-service"
             type="date" value={form.date_of_service}
             onChange={e => updateField('date_of_service', e.target.value)}
-            className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+            className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
           />
         </div>
         <div>
@@ -113,7 +113,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
             id="pa-service-codes"
             type="text" required value={form.service_codes}
             onChange={e => updateField('service_codes', e.target.value)}
-            className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+            className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
             placeholder="99213, 99214 (comma-separated)"
           />
         </div>
@@ -123,7 +123,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
             id="pa-diagnosis-codes"
             type="text" required value={form.diagnosis_codes}
             onChange={e => updateField('diagnosis_codes', e.target.value)}
-            className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+            className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
             placeholder="E11.9, I50.9 (comma-separated)"
           />
         </div>
@@ -133,7 +133,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
             id="pa-urgency"
             value={form.urgency}
             onChange={e => updateField('urgency', e.target.value)}
-            className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+            className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
           >
             <option value="routine">Routine (7 days)</option>
             <option value="urgent">Urgent (72 hours)</option>
@@ -166,7 +166,7 @@ export const PriorAuthCreateForm: React.FC<PriorAuthCreateFormProps> = ({
           value={form.clinical_notes}
           onChange={e => updateField('clinical_notes', e.target.value)}
           rows={3}
-          className="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base p-2.5 border"
+          className="w-full rounded-lg border-gray-300 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500 text-base p-2.5 border"
           placeholder="Clinical justification for the requested services..."
         />
       </div>

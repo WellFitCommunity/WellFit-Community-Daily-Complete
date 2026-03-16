@@ -115,7 +115,7 @@ export function RecordCompletionModal({ referral, onSubmit, onClose }: {
             <input
               id="specialist-name"
               type="text"
-              className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full border rounded-md p-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               value={specialistName}
               onChange={(e) => setSpecialistName(e.target.value)}
               placeholder="Dr. Smith"
@@ -129,7 +129,7 @@ export function RecordCompletionModal({ referral, onSubmit, onClose }: {
             <input
               id="completion-date"
               type="date"
-              className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full border rounded-md p-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               value={completionDate}
               onChange={(e) => setCompletionDate(e.target.value)}
               max={today}
@@ -142,7 +142,7 @@ export function RecordCompletionModal({ referral, onSubmit, onClose }: {
             </label>
             <textarea
               id="specialist-report"
-              className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full border rounded-md p-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               rows={3}
               value={report}
               onChange={(e) => setReport(e.target.value)}
@@ -156,7 +156,7 @@ export function RecordCompletionModal({ referral, onSubmit, onClose }: {
             </label>
             <textarea
               id="specialist-recommendations"
-              className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full border rounded-md p-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               rows={2}
               value={recommendations}
               onChange={(e) => setRecommendations(e.target.value)}

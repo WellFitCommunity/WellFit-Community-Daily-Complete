@@ -342,7 +342,7 @@ const PaperFormScanner: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Paper Form Scanner">
       {/* Instructions */}
       <div className="bg-[var(--ea-primary,#00857a)]/5 border border-[var(--ea-primary,#00857a)]/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
@@ -368,7 +368,7 @@ const PaperFormScanner: React.FC = () => {
       <div className="flex gap-4">
         <button
           onClick={() => setShowPrintableForm(!showPrintableForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           <Printer className="w-5 h-5" />
           {showPrintableForm ? 'Hide' : 'Show'} Printable Form
@@ -413,14 +413,14 @@ const PaperFormScanner: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={handleCameraClick}
-              className="flex items-center gap-2 px-6 py-3 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <Camera className="w-5 h-5" />
               Take Photo
             </button>
             <button
               onClick={handleUploadClick}
-              className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             >
               <Upload className="w-5 h-5" />
               Upload File
@@ -501,7 +501,7 @@ const PaperFormScanner: React.FC = () => {
                       </div>
                       <button
                         onClick={() => setSelectedForm(form)}
-                        className="mt-3 w-full px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] text-sm font-medium"
+                        className="mt-3 w-full px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] rounded-lg hover:bg-[var(--ea-primary-hover,#006d64)] text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       >
                         Review & Enroll
                       </button>

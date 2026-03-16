@@ -219,7 +219,7 @@ function DismissModal({ gap, onClose, onDismiss }: {
           id="dismiss-reason"
           value={reason}
           onChange={e => setReason(e.target.value)}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] text-sm"
+          className="w-full rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] text-sm"
           rows={3}
           placeholder="Provider reviewed and determined the current documentation level is appropriate because..."
         />
@@ -349,7 +349,7 @@ const DocumentationGapDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Documentation Gap Dashboard">
       {/* Revenue Opportunity Alert */}
       {(stats?.total_revenue_opportunity ?? 0) > REVENUE_ALERT_THRESHOLD && (
         <EAAlert variant="critical">
@@ -415,7 +415,7 @@ const DocumentationGapDashboard: React.FC = () => {
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value as CategoryFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by category"
             >
               <option value="all">All Categories</option>
@@ -428,7 +428,7 @@ const DocumentationGapDashboard: React.FC = () => {
             <select
               value={priorityFilter}
               onChange={e => setPriorityFilter(e.target.value as PriorityFilter)}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by priority"
             >
               <option value="all">All Priorities</option>
@@ -440,7 +440,7 @@ const DocumentationGapDashboard: React.FC = () => {
             <select
               value={String(confidenceThreshold)}
               onChange={e => setConfidenceThreshold(parseFloat(e.target.value))}
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)]"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)]"
               aria-label="Filter by confidence threshold"
             >
               <option value="0.50">50%+ Confidence</option>
@@ -454,7 +454,7 @@ const DocumentationGapDashboard: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search codes..."
-              className="text-sm rounded-md border-gray-300 shadow-sm focus:ring-[var(--ea-primary,#00857a)] focus:border-[var(--ea-primary,#00857a)] w-48"
+              className="text-sm rounded-md border-gray-300 shadow-sm focus-visible:ring-[var(--ea-primary,#00857a)] focus-visible:border-[var(--ea-primary,#00857a)] w-48"
               aria-label="Search codes"
             />
           </div>

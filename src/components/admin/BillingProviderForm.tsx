@@ -197,7 +197,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div>
+    <div aria-label="Billing Provider Form">
       {/* Provider List Toggle */}
       <div className="mb-6">
         <button
@@ -209,7 +209,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
         </button>
         {showProviderList && existingProviders.length > 0 && (
           <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200" aria-label="Registered billing providers">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">NPI</th>
@@ -250,7 +250,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
                 value={formData.npi || ''}
                 onChange={(e) => handleNPIChange(e.target.value)}
                 placeholder="Enter 10-digit NPI"
-                className={`w-full px-4 py-3 text-lg font-mono border-2 rounded-lg focus:outline-none transition-all ${statusColors[npiValidation.status]}`}
+                className={`w-full px-4 py-3 text-lg font-mono border-2 rounded-lg focus-visible:outline-none transition-all ${statusColors[npiValidation.status]}`}
                 aria-describedby="npi-status"
               />
               {formData.npi && formData.npi.length === 10 && (
@@ -351,7 +351,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
               type="text"
               value={formData.organization_name || ''}
               onChange={(e) => handleFieldChange('organization_name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1BA39C] focus:border-[#1BA39C]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#1BA39C] focus-visible:border-[#1BA39C]"
             />
           </div>
           <div>
@@ -362,7 +362,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
               value={formData.taxonomy_code || ''}
               onChange={(e) => handleFieldChange('taxonomy_code', e.target.value)}
               placeholder="e.g. 207R00000X"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1BA39C] focus:border-[#1BA39C] font-mono"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#1BA39C] focus-visible:border-[#1BA39C] font-mono"
             />
           </div>
           <div>
@@ -373,7 +373,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
               value={formData.ein || ''}
               onChange={(e) => handleFieldChange('ein', e.target.value)}
               placeholder="XX-XXXXXXX"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1BA39C] focus:border-[#1BA39C] font-mono"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#1BA39C] focus-visible:border-[#1BA39C] font-mono"
             />
           </div>
           <div>
@@ -383,7 +383,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
               type="tel"
               value={formData.contact_phone || ''}
               onChange={(e) => handleFieldChange('contact_phone', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1BA39C] focus:border-[#1BA39C]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#1BA39C] focus-visible:border-[#1BA39C]"
             />
           </div>
         </div>
@@ -397,7 +397,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
               type="text"
               value={formData.address_line1 || ''}
               onChange={(e) => handleFieldChange('address_line1', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1BA39C] focus:border-[#1BA39C]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#1BA39C] focus-visible:border-[#1BA39C]"
             />
           </div>
           <div>
@@ -407,7 +407,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
               type="text"
               value={formData.city || ''}
               onChange={(e) => handleFieldChange('city', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1BA39C] focus:border-[#1BA39C]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#1BA39C] focus-visible:border-[#1BA39C]"
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -419,7 +419,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
                 maxLength={2}
                 value={formData.state || ''}
                 onChange={(e) => handleFieldChange('state', e.target.value.toUpperCase())}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1BA39C] focus:border-[#1BA39C] uppercase"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#1BA39C] focus-visible:border-[#1BA39C] uppercase"
               />
             </div>
             <div>
@@ -430,7 +430,7 @@ const BillingProviderForm: React.FC<BillingProviderFormProps> = ({
                 maxLength={10}
                 value={formData.zip || ''}
                 onChange={(e) => handleFieldChange('zip', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1BA39C] focus:border-[#1BA39C]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#1BA39C] focus-visible:border-[#1BA39C]"
               />
             </div>
           </div>

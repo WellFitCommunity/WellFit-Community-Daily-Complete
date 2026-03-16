@@ -52,7 +52,7 @@ export const PlatformKPIPanel: React.FC<PlatformKPIPanelProps> = ({
             <span className="text-xs text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded">via MCP Analytics</span>
             <button
               onClick={refreshKPIs}
-              className="text-slate-400 hover:text-white transition p-1"
+              className="text-slate-400 hover:text-white transition p-1 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               aria-label="Refresh platform KPIs"
             >
               <RefreshCw className={`h-4 w-4 ${kpisLoading ? 'animate-spin' : ''}`} />

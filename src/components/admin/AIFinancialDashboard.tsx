@@ -334,7 +334,7 @@ const AIFinancialDashboard: React.FC = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6">
+    <div className="min-h-screen bg-slate-900 p-6" aria-label="AI Financial Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -345,7 +345,7 @@ const AIFinancialDashboard: React.FC = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d')}
-            className="bg-slate-800 text-white border border-slate-700 rounded-lg px-3 py-2"
+            className="bg-slate-800 text-white border border-slate-700 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>

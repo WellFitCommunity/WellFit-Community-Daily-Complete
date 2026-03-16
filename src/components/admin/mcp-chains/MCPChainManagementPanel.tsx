@@ -183,7 +183,7 @@ const MCPChainManagementPanel: React.FC = () => {
   // --------------------------------------------------------
 
   return (
-    <div data-testid="mcp-chain-management-panel">
+    <div data-testid="mcp-chain-management-panel" aria-label="MCP Chain Orchestration Management">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -234,7 +234,7 @@ const MCPChainManagementPanel: React.FC = () => {
             {TABS.map((tab) => (
               <button
                 key={tab}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                   activeTab === tab
                     ? 'text-[#00857a] border-b-2 border-[#00857a]'
                     : 'text-slate-400 hover:text-slate-200'
@@ -253,6 +253,7 @@ const MCPChainManagementPanel: React.FC = () => {
           </div>
 
           {/* Tab content */}
+          <div aria-live="polite">
           {activeTab === 'overview' && (
             <ChainDefinitionList
               chains={chains}
@@ -272,6 +273,7 @@ const MCPChainManagementPanel: React.FC = () => {
               onApprovalAction={handleApprovalAction}
             />
           )}
+          </div>
         </>
       )}
 

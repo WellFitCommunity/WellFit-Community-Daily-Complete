@@ -25,7 +25,7 @@ export const BedDischargeModal: React.FC<BedDischargeModalProps> = ({
   const selectedDisp = DISCHARGE_DISPOSITIONS.find((d) => d.value === dischargeDisposition);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-label="Discharge Patient">
       <div className="bg-slate-900 rounded-xl shadow-xl max-w-lg w-full mx-4 border border-slate-700">
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center justify-between">
@@ -58,7 +58,7 @@ export const BedDischargeModal: React.FC<BedDischargeModalProps> = ({
             <select
               value={dischargeDisposition}
               onChange={(e) => onSetDisposition(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-[var(--ea-primary)]"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)]"
             >
               <option value="">Select disposition...</option>
               {DISCHARGE_DISPOSITIONS.map((opt) => (

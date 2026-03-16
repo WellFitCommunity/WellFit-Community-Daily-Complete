@@ -146,7 +146,7 @@ export const MedicationAlertOverrideModal: React.FC<MedicationAlertOverrideModal
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-xs" role="dialog" aria-modal="true" aria-label="Medication Alert Override">
       <div className="bg-white rounded-xl shadow-2xl p-8 max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         {/* Severity-colored warning header */}
         <div className={`${severity.bg} border-2 ${severity.border} rounded-lg p-4 mb-6`}>
@@ -213,7 +213,7 @@ export const MedicationAlertOverrideModal: React.FC<MedicationAlertOverrideModal
             <select
               value={overrideReason}
               onChange={(e) => setOverrideReason(e.target.value as OverrideReason)}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary)] focus:outline-hidden"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary)] focus-visible:outline-hidden"
               required
             >
               {Object.entries(REASON_LABELS).map(([value, label]) => (
@@ -234,7 +234,7 @@ export const MedicationAlertOverrideModal: React.FC<MedicationAlertOverrideModal
               onChange={(e) => setExplanation(e.target.value)}
               placeholder="Provide detailed clinical justification for overriding this alert (minimum 20 characters)"
               rows={4}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary)] focus:outline-hidden resize-none"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary)] focus-visible:outline-hidden resize-none"
               required
               minLength={MIN_EXPLANATION_LENGTH}
             />
@@ -255,7 +255,7 @@ export const MedicationAlertOverrideModal: React.FC<MedicationAlertOverrideModal
               value={providerSignature}
               onChange={(e) => setProviderSignature(e.target.value)}
               placeholder="Type your full name to sign"
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[var(--ea-primary)] focus:outline-hidden"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-visible:border-[var(--ea-primary)] focus-visible:outline-hidden"
               required
             />
             <div className="text-xs text-gray-600 mt-1">

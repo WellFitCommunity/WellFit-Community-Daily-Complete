@@ -274,7 +274,7 @@ const WorkflowWizardModal: React.FC<WorkflowWizardModalProps> = ({ workflow, onC
               <p className="text-sm text-gray-500">{workflow.description}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]" aria-label="Close">
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
@@ -329,7 +329,7 @@ const WorkflowWizardModal: React.FC<WorkflowWizardModalProps> = ({ workflow, onC
                   </div>
                   <button
                     onClick={() => handleNavigate(step)}
-                    className="flex-shrink-0 px-3 py-1.5 bg-[var(--ea-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors flex items-center gap-1"
+                    className="flex-shrink-0 px-3 py-1.5 bg-[var(--ea-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--ea-primary-hover)] transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                   >
                     {step.actionLabel}
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -344,7 +344,7 @@ const WorkflowWizardModal: React.FC<WorkflowWizardModalProps> = ({ workflow, onC
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <button
             onClick={resetProgress}
-            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 transition-colors"
+            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <RotateCcw className="w-4 h-4" />
             Reset Progress
@@ -374,7 +374,7 @@ const ClinicalWorkflowWizard: React.FC<ClinicalWorkflowWizardProps> = ({ userRol
 
   return (
     <>
-      <div className="bg-linear-to-r from-[var(--ea-primary)]/5 to-cyan-50 rounded-xl border-2 border-[var(--ea-primary)]/20 p-6">
+      <div className="bg-linear-to-r from-[var(--ea-primary)]/5 to-cyan-50 rounded-xl border-2 border-[var(--ea-primary)]/20 p-6" aria-label="Clinical Workflow Wizard">
         <div className="flex items-center gap-2 mb-4">
           <Play className="w-5 h-5 text-[var(--ea-primary)]" />
           <h3 className="text-lg font-bold text-[var(--ea-primary)]">Clinical Workflows</h3>
@@ -391,7 +391,7 @@ const ClinicalWorkflowWizard: React.FC<ClinicalWorkflowWizardProps> = ({ userRol
               <button
                 key={workflow.id}
                 onClick={() => setActiveWorkflow(workflow)}
-                className="bg-white rounded-xl p-4 text-left shadow-sm border border-[var(--ea-primary)]/10 hover:border-[var(--ea-primary)]/30 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl p-4 text-left shadow-sm border border-[var(--ea-primary)]/10 hover:border-[var(--ea-primary)]/30 hover:shadow-md transition-all group focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <span className="text-2xl">{workflow.icon}</span>
                 <h4 className="font-semibold text-gray-900 mt-2 group-hover:text-[var(--ea-primary)] transition-colors">

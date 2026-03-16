@@ -200,6 +200,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   return (
     <>
       <header
+        aria-label="Admin Header"
         className="text-white shadow-xl border-b"
         style={{
           background: branding?.gradient || 'linear-gradient(to right, #003865, #8cc63f)',
@@ -265,7 +266,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
               {/* Dark Mode Toggle (Desktop) */}
               <button
                 onClick={toggleDarkMode}
-                className="hidden sm:flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                className="hidden sm:flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -275,7 +276,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
               <div className="relative hidden sm:block">
                 <button
                   onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-                  className="inline-flex items-center px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors"
+                  className="inline-flex items-center px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   <span className="hidden md:inline">Settings</span>
@@ -344,7 +345,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                           setShowSettingsDropdown(false);
                           logoutAdmin();
                         }}
-                        className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center transition-colors"
+                        className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       >
                         <LogOut className="h-4 w-4 mr-3" />
                         Logout
@@ -357,7 +358,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                className="lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg bg-white/10 hover:bg-white/20 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
@@ -429,7 +430,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                   setShowMobileMenu(false);
                   logoutAdmin();
                 }}
-                className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm text-red-300 bg-red-500/10 hover:bg-red-500/20"
+                className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm text-red-300 bg-red-500/10 hover:bg-red-500/20 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <LogOut className="h-4 w-4 mr-3" />
                 Logout

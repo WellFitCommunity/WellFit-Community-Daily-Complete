@@ -250,7 +250,7 @@ export const TimeClockAdmin: React.FC = () => {
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6" aria-label="Time Clock Management">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <EAMetricCard
@@ -292,7 +292,7 @@ export const TimeClockAdmin: React.FC = () => {
                   <button
                     key={filter}
                     onClick={() => setDateFilter(filter)}
-                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    className={`px-3 py-1 text-sm rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                       dateFilter === filter
                         ? 'bg-[var(--ea-primary)] text-white'
                         : 'text-slate-400 hover:text-white'
@@ -307,7 +307,7 @@ export const TimeClockAdmin: React.FC = () => {
               <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
                 <button
                   onClick={() => setViewMode('all')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                     viewMode === 'all'
                       ? 'bg-[var(--ea-primary)] text-white'
                       : 'text-slate-400 hover:text-white'
@@ -317,7 +317,7 @@ export const TimeClockAdmin: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setViewMode('team')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                     viewMode === 'team'
                       ? 'bg-[var(--ea-primary)] text-white'
                       : 'text-slate-400 hover:text-white'
@@ -355,7 +355,7 @@ export const TimeClockAdmin: React.FC = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full" aria-label="Time Clock Entries">
                   <thead>
                     <tr className="text-left text-sm text-slate-400 border-b border-slate-700">
                       <th className="pb-3 font-medium">Employee</th>

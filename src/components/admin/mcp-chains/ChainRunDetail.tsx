@@ -117,7 +117,7 @@ export const ChainRunDetail: React.FC<ChainRunDetailProps> = ({
   const canCancel = run.status === 'running' || run.status === 'awaiting_approval' || run.status === 'pending';
 
   return (
-    <div className="border border-slate-700 rounded-lg p-4 bg-slate-800/30" data-testid="run-detail">
+    <div className="border border-slate-700 rounded-lg p-4 bg-slate-800/30" data-testid="run-detail" aria-label="Chain Run Detail">
       {/* Run header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -160,7 +160,7 @@ export const ChainRunDetail: React.FC<ChainRunDetailProps> = ({
               data-testid={`step-${step.step_key}`}
             >
               <button
-                className="w-full flex items-center justify-between p-3 text-left hover:bg-slate-700/20"
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-slate-700/20 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 onClick={() => toggleStep(step.id)}
                 data-testid={`toggle-step-${step.step_key}`}
               >
@@ -223,7 +223,7 @@ export const ChainRunDetail: React.FC<ChainRunDetailProps> = ({
                   {isAwaiting && (
                     <div className="border-t border-slate-700 pt-3 space-y-2" data-testid={`approval-form-${step.step_key}`}>
                       <textarea
-                        className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-slate-300 placeholder-slate-600"
+                        className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-slate-300 placeholder-slate-600 focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                         placeholder="Approval notes (optional)"
                         rows={2}
                         value={approvalNotes[step.id] || ''}

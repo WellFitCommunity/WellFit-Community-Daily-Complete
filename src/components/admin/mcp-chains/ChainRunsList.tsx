@@ -35,7 +35,7 @@ export const ChainRunsList: React.FC<ChainRunsListProps> = ({
   }
 
   return (
-    <div className="space-y-1" data-testid="chain-runs-list">
+    <div className="space-y-1" data-testid="chain-runs-list" aria-label="Chain Runs List">
       {/* Header */}
       <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs text-slate-500 font-medium border-b border-slate-700">
         <div className="col-span-3">Chain</div>
@@ -51,7 +51,7 @@ export const ChainRunsList: React.FC<ChainRunsListProps> = ({
         return (
           <div key={run.id} data-testid={`run-row-${run.id}`}>
             <button
-              className="grid grid-cols-12 gap-2 px-3 py-3 w-full text-left hover:bg-slate-700/20 rounded transition-colors"
+              className="grid grid-cols-12 gap-2 px-3 py-3 w-full text-left hover:bg-slate-700/20 rounded transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               onClick={() => setExpandedRunId(isExpanded ? null : run.id)}
               data-testid={`toggle-run-${run.id}`}
             >

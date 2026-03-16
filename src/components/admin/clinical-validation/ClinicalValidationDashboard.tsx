@@ -131,7 +131,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Clinical Validation Dashboard">
       {/* Header with filters */}
       <EACard>
         <EACardContent>
@@ -145,7 +145,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
                 id="validation-date-range"
                 value={filters.dateRange}
                 onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-                className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white min-h-[44px]"
+                className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white min-h-[44px] focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="7d">Last 7 days</option>
                 <option value="30d">Last 30 days</option>
@@ -162,7 +162,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
                 id="validation-source"
                 value={filters.sourceFunction ?? ''}
                 onChange={(e) => handleFilterChange('sourceFunction', e.target.value || null)}
-                className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white min-h-[44px]"
+                className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white min-h-[44px] focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="">All Functions</option>
                 {SOURCE_FUNCTIONS.map((f) => (
@@ -180,7 +180,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
                 id="validation-system"
                 value={filters.codeSystem ?? ''}
                 onChange={(e) => handleFilterChange('codeSystem', e.target.value || null)}
-                className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white min-h-[44px]"
+                className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white min-h-[44px] focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="">All Systems</option>
                 {CODE_SYSTEMS.map((s) => (
@@ -198,7 +198,7 @@ export const ClinicalValidationDashboard: React.FC = () => {
                 id="validation-reason"
                 value={filters.reason ?? ''}
                 onChange={(e) => handleFilterChange('reason', e.target.value || null)}
-                className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white min-h-[44px]"
+                className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white min-h-[44px] focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 <option value="">All Reasons</option>
                 {REJECTION_REASONS.map((r) => (
@@ -212,20 +212,20 @@ export const ClinicalValidationDashboard: React.FC = () => {
               <button
                 onClick={handleExportReport}
                 disabled={!summary}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 Export Report PDF
               </button>
               <button
                 onClick={handleExportDRG}
                 disabled={exporting}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 {exporting ? 'Exporting...' : 'Export DRG Table'}
               </button>
               <button
                 onClick={refresh}
-                className="bg-[var(--ea-primary)] hover:bg-[var(--ea-primary-hover)] text-white px-4 py-2 rounded text-sm font-medium min-h-[44px]"
+                className="bg-[var(--ea-primary)] hover:bg-[var(--ea-primary-hover)] text-white px-4 py-2 rounded text-sm font-medium min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
               >
                 Refresh
               </button>

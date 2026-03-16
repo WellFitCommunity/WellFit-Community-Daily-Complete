@@ -160,7 +160,7 @@ const MedicalCodeSearch: React.FC<MedicalCodeSearchProps> = ({
   }, [activeTab, onCodeSelect]);
 
   return (
-    <div className="border border-gray-200 rounded-lg bg-white" data-testid="medical-code-search">
+    <div className="border border-gray-200 rounded-lg bg-white" data-testid="medical-code-search" aria-label="Medical Code Search">
       {/* Tab Row */}
       <div className="flex border-b border-gray-200">
         {TABS.map(tab => (
@@ -190,7 +190,7 @@ const MedicalCodeSearch: React.FC<MedicalCodeSearchProps> = ({
             value={query}
             onChange={e => handleQueryChange(e.target.value)}
             placeholder={`Search ${activeTab.toUpperCase()} codes...`}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
             aria-label={`Search ${activeTab.toUpperCase()} codes`}
             role="searchbox"
           />

@@ -126,7 +126,7 @@ export const StaffRoleTable: React.FC<StaffTableProps> = ({
                 <div className="flex items-center justify-end gap-1">
                   <button
                     onClick={() => onAssignRole(user)}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100 transition-colors"
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                     title="Assign or change role"
                   >
                     <UserCog className="w-3 h-3" />
@@ -135,7 +135,7 @@ export const StaffRoleTable: React.FC<StaffTableProps> = ({
                   {user.role && (
                     <button
                       onClick={() => onRevokeRole(user)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                       title="Revoke role"
                     >
                       <ShieldOff className="w-3 h-3" />

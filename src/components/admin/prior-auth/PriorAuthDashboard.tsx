@@ -199,7 +199,7 @@ const PriorAuthDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="Prior Authorization Center">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -212,13 +212,13 @@ const PriorAuthDashboard: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={loadData}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border rounded-lg hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border rounded-lg hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
           <button
             onClick={() => setViewMode(viewMode === 'list' ? 'create' : 'list')}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             {viewMode === 'list' ? <><Plus className="w-4 h-4" /> New Request</> : 'Back to List'}
           </button>
@@ -230,7 +230,7 @@ const PriorAuthDashboard: React.FC = () => {
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-center gap-2">
           <XCircle className="w-5 h-5 text-red-500 shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
-          <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700 text-sm font-medium">Dismiss</button>
+          <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700 text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">Dismiss</button>
         </div>
       )}
 

@@ -72,7 +72,7 @@ export function CorrectionModal({ claim, onSubmit, onClose }: {
             </label>
             <textarea
               id="correction-note"
-              className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-[var(--ea-primary)] focus:border-[var(--ea-primary)]"
+              className="w-full border rounded-md p-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary)] focus-visible:border-[var(--ea-primary)]"
               rows={3}
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -136,7 +136,7 @@ export function VoidModal({ claim, onSubmit, onClose }: {
             </label>
             <textarea
               id="void-reason"
-              className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full border rounded-md p-2 text-sm focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:border-red-500"
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}

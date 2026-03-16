@@ -188,7 +188,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6" aria-label="Audit Analytics Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -338,7 +338,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search event types, details..."
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--ea-primary,#00857a)]"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                 onKeyDown={(e) => e.key === 'Enter' && searchLogs()}
               />
             </div>

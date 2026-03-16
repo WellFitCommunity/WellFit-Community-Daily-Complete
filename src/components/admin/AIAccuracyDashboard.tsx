@@ -229,7 +229,7 @@ export default function AIAccuracyDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" aria-label="AI Accuracy Dashboard">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -403,7 +403,7 @@ export default function AIAccuracyDashboard() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" aria-label="A/B test experiments">
                   <thead>
                     <tr className="text-left text-slate-400 border-b border-slate-700">
                       <th className="pb-3 pr-4">Experiment</th>
@@ -482,7 +482,7 @@ export default function AIAccuracyDashboard() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" aria-label="Prompt version history">
                   <thead>
                     <tr className="text-left text-slate-400 border-b border-slate-700">
                       <th className="pb-3 pr-4">Skill</th>

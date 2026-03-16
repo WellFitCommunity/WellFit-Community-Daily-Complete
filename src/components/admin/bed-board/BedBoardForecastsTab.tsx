@@ -21,7 +21,7 @@ export const BedBoardForecastsTab: React.FC<BedBoardForecastsTabProps> = ({
   aiError,
   onGenerateAiReport,
 }) => (
-  <div className="space-y-4">
+  <div className="space-y-4" aria-label="Bed Board Forecasts">
     {/* Forecast Cards */}
     <EACard>
       <EACardHeader icon={<TrendingUp className="w-5 h-5" />}>

@@ -197,7 +197,7 @@ const PublicHealthReportingDashboard: React.FC = () => {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" aria-label="Public Health Reporting Dashboard">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Public Health Reporting</h2>
@@ -210,7 +210,7 @@ const PublicHealthReportingDashboard: React.FC = () => {
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
           {error}
-          <button onClick={() => setError(null)} className="ml-3 underline">Dismiss</button>
+          <button onClick={() => setError(null)} className="ml-3 underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]">Dismiss</button>
         </div>
       )}
 
@@ -230,7 +230,7 @@ const PublicHealthReportingDashboard: React.FC = () => {
             <button
               key={t}
               onClick={() => setTypeFilter(t)}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 typeFilter === t
                   ? 'bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)]'
                   : 'bg-white text-slate-600 hover:bg-slate-50'
@@ -245,7 +245,7 @@ const PublicHealthReportingDashboard: React.FC = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+          className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           aria-label="Filter by status"
         >
           <option value="all">All Statuses</option>
@@ -258,9 +258,9 @@ const PublicHealthReportingDashboard: React.FC = () => {
       </div>
 
       {/* Transmission Table */}
-      <div className="border border-slate-200 rounded-lg overflow-hidden">
+      <div className="border border-slate-200 rounded-lg overflow-hidden" aria-live="polite">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
+          <table className="min-w-full divide-y divide-slate-200" aria-label="Public health transmissions">
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Timestamp</th>
@@ -313,7 +313,7 @@ const PublicHealthReportingDashboard: React.FC = () => {
                           <button
                             onClick={() => handleRetry(tx)}
                             disabled={isRetrying === tx.id}
-                            className="text-sm font-medium text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] disabled:opacity-50"
+                            className="text-sm font-medium text-[var(--ea-primary,#00857a)] hover:text-[var(--ea-primary-hover,#006d64)] disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
                           >
                             {isRetrying === tx.id ? 'Retrying...' : 'Retry'}
                           </button>

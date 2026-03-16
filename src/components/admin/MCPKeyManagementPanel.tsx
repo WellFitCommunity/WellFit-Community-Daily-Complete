@@ -127,7 +127,7 @@ const CreateKeyForm: React.FC<CreateKeyFormProps> = ({ onCreated, onCancel }) =>
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g. Claude Desktop Integration"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
             required
             maxLength={255}
           />
@@ -137,7 +137,7 @@ const CreateKeyForm: React.FC<CreateKeyFormProps> = ({ onCreated, onCancel }) =>
           <select
             value={expiresIn}
             onChange={e => setExpiresIn(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             <option value="30">30 days</option>
             <option value="90">90 days</option>
@@ -155,7 +155,7 @@ const CreateKeyForm: React.FC<CreateKeyFormProps> = ({ onCreated, onCancel }) =>
           value={description}
           onChange={e => setDescription(e.target.value)}
           placeholder="Optional description"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           maxLength={500}
         />
       </div>
@@ -168,7 +168,7 @@ const CreateKeyForm: React.FC<CreateKeyFormProps> = ({ onCreated, onCancel }) =>
               key={scope}
               type="button"
               onClick={() => toggleScope(scope)}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${
                 selectedScopes.includes(scope)
                   ? 'bg-[var(--ea-primary,#00857a)]/10 border-[var(--ea-primary,#00857a)] text-[var(--ea-primary,#00857a)]'
                   : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
@@ -184,14 +184,14 @@ const CreateKeyForm: React.FC<CreateKeyFormProps> = ({ onCreated, onCancel }) =>
         <button
           type="submit"
           disabled={submitting || !name.trim() || selectedScopes.length === 0}
-          className="px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] text-sm font-medium rounded-md hover:bg-[var(--ea-primary-hover,#006d64)] disabled:opacity-50 min-h-[44px]"
+          className="px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] text-sm font-medium rounded-md hover:bg-[var(--ea-primary-hover,#006d64)] disabled:opacity-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           {submitting ? 'Creating...' : 'Create Key'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 min-h-[44px]"
+          className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           Cancel
         </button>
@@ -412,7 +412,7 @@ const MCPKeyManagementPanel: React.FC = () => {
   const expiringCount = keys.filter(k => k.status === 'expiring_soon').length;
 
   return (
-    <div>
+    <div aria-label="MCP Key Management">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -427,7 +427,7 @@ const MCPKeyManagementPanel: React.FC = () => {
         {!showCreate && (
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] text-sm font-medium rounded-md hover:bg-[var(--ea-primary-hover,#006d64)] min-h-[44px]"
+            className="px-4 py-2 bg-[var(--ea-primary,#00857a)] text-[var(--ea-text-on-primary,#ffffff)] text-sm font-medium rounded-md hover:bg-[var(--ea-primary-hover,#006d64)] min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
           >
             Create Key
           </button>
@@ -488,7 +488,7 @@ const MCPKeyManagementPanel: React.FC = () => {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left" aria-label="MCP API Keys">
             <thead>
               <tr className="border-b border-gray-200 text-xs font-medium text-gray-500 uppercase">
                 <th className="px-4 py-3">Key</th>

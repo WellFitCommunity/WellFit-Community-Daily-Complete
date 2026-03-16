@@ -317,7 +317,7 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
                 type="date"
                 value={dateRange.start}
                 onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus-visible:ring-2 focus-visible:ring-[#00857a] focus-visible:border-transparent"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -326,7 +326,7 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
                 type="date"
                 value={dateRange.end}
                 onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus-visible:ring-2 focus-visible:ring-[#00857a] focus-visible:border-transparent"
               />
             </div>
 
@@ -336,7 +336,7 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
               <select
                 value={selectedPosition}
                 onChange={(e) => setSelectedPosition(e.target.value)}
-                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus-visible:ring-2 focus-visible:ring-[#00857a] focus-visible:border-transparent"
               >
                 <option value="">All Positions</option>
                 {Object.entries(POSITION_TYPE_LABELS).map(([value, label]) => (

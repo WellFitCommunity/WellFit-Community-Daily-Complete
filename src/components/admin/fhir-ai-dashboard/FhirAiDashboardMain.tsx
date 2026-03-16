@@ -242,7 +242,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label="AI-Enhanced FHIR Dashboard" aria-live="polite">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -373,7 +373,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
                             : alertConfig.notificationMethods.filter(m => m !== method.value);
                           setAlertConfig(prev => ({ ...prev, notificationMethods: methods }));
                         }}
-                        className="w-4 h-4 text-[var(--ea-primary)] border-gray-300 rounded-sm focus:ring-[var(--ea-primary)]"
+                        className="w-4 h-4 text-[var(--ea-primary)] border-gray-300 rounded-sm focus-visible:ring-[var(--ea-primary)]"
                       />
                       <span className="text-lg">{method.icon}</span>
                       <span className="text-sm font-medium text-gray-900">{method.label}</span>

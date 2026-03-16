@@ -383,26 +383,26 @@ const ComplianceDashboard: React.FC = () => {
       <div className="mt-8 flex flex-wrap gap-4">
         <button
           onClick={fetchComplianceData}
-          className={`px-6 py-3 rounded-lg transition flex items-center ${theme.buttonPrimary}`}
+          className={`px-6 py-3 rounded-lg transition flex items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)] ${theme.buttonPrimary}`}
         >
           <TrendingUp className="w-5 h-5 mr-2" />
           Refresh Data
         </button>
         <button
           onClick={() => window.location.href = '/admin/backup-logs'}
-          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition"
+          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           View Backup Logs
         </button>
         <button
           onClick={() => window.location.href = '/admin/drill-reports'}
-          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition"
+          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           View Drill Reports
         </button>
         <button
           onClick={() => window.location.href = '/admin/vulnerabilities'}
-          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition"
+          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ea-primary,#00857a)]"
         >
           Manage Vulnerabilities
         </button>
