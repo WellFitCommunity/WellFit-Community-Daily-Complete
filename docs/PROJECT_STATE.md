@@ -10,7 +10,48 @@
 
 ---
 
-## Claude-in-Claude Triage Intelligence (2026-03-15) — NEW
+## NurseOS Intelligent Panel Completion (2026-03-16) — NEW
+
+**Tracker:** `docs/trackers/nurseos-completion-tracker.md`
+
+**What:** Close all engineering gaps in NurseOS Emotional Resilience Hub — the burnout prevention platform for nurses (Clarity = community, Shield = hospital). Clinical domain modeling is strong (real MBI assessment, evidence-based content, 988 crisis integration). Engineering discipline was not applied: zero tests, no routes, no ServiceResult pattern, 3 god files, incomplete audit logging, no AI integration.
+
+**Why:** NurseOS is 4,044 lines of clinically accurate code that no nurse can access (routes not wired) and no auditor can verify (no tests). Fixing this transforms it from a hidden prototype into a demoable, deployable product.
+
+| Priority | Items | Status | Focus |
+|----------|-------|--------|-------|
+| P0 Critical Blockers | 5 | **0/5** | Routes, critical tests (MBI scoring!), remove alert() |
+| P1 ServiceResult Migration | 7 | **0/7** | 18 functions → ServiceResult, fix 15 empty error paths |
+| P2 God File Decomposition | 3 | **0/3** | Service (704→split), Library (670→extract), Types (700→split) |
+| P3 Remaining Tests | 6 | **0/6** | ResilienceLibrary, ResourceLibrary, Celebration, Language, utils, RLS |
+| P4 AI Integration | 4 | **0/4** | Burnout advisor skill, module recommendations, triage wiring |
+| **Total** | **25** | **0/25** | |
+
+**Estimated:** ~24-30 hours across 3-4 sessions
+
+---
+
+## MCP Infrastructure Repair (2026-03-16) — NEW
+
+**Tracker:** `docs/trackers/mcp-infrastructure-repair-tracker.md`
+
+**What:** Close the 20% production readiness gap across 15 MCP servers — test coverage (40% → 100%), input validation consistency, audit logging for successful operations, and minor fixes (auth, rate limiting, health checks, handler extraction).
+
+**Why:** The MCP infrastructure is architecturally sound (tiered security, shared modules, healthcare validation) but has gaps that would surface during SOC2/HIPAA audit: 9 untested servers, 10 servers missing success audit logs, and one Tier 2 server with no identity tracking.
+
+| Priority | Items | Status | Focus |
+|----------|-------|--------|-------|
+| P1 Test Coverage | 9 | **0/9** | Test suites for all untested MCP servers |
+| P2 Validation Consistency | 7 | **0/7** | Declarative VALIDATION registries for remaining servers |
+| P3 Audit Logging | 3 | **0/3** | Success operation logging for HIPAA |
+| P4 Minor Fixes | 5 | **0/5** | Auth, rate limits, health checks, handler extraction |
+| **Total** | **24** | **0/24** | |
+
+**Estimated:** ~20-24 hours across 3 sessions
+
+---
+
+## Claude-in-Claude Triage Intelligence (2026-03-15)
 
 **Tracker:** `docs/trackers/claude-in-claude-triage-tracker.md`
 
