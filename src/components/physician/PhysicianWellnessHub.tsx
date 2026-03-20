@@ -57,7 +57,7 @@ export const PhysicianWellnessHub: React.FC = () => {
       ]);
 
       setStats(dashboardStats);
-      setRecentCheckins(checkins);
+      setRecentCheckins(checkins.success ? checkins.data : []);
     } catch (err: unknown) {
 
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');

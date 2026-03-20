@@ -339,7 +339,7 @@ describe('BurnoutAssessmentForm', () => {
       expect(callArgs.questionnaire_responses).toHaveLength(22);
 
       // Each response should have question, score, and dimension
-      for (const response of callArgs.questionnaire_responses) {
+      for (const response of callArgs.questionnaire_responses ?? []) {
         expect(response).toHaveProperty('question');
         expect(response).toHaveProperty('score');
         expect(response).toHaveProperty('dimension');

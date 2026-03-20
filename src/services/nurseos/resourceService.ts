@@ -43,10 +43,11 @@ export async function getResources(filters?: {
     }
 
     let filteredData = data || [];
-    if (filters?.userRole) {
+    const roleFilter = filters?.userRole;
+    if (roleFilter) {
       filteredData = filteredData.filter((resource) => {
         const targetAudience = (resource as ResilienceResource).target_audience || [];
-        return targetAudience.includes('all') || targetAudience.includes(filters.userRole);
+        return targetAudience.includes('all') || targetAudience.includes(roleFilter);
       });
     }
 
