@@ -9,6 +9,7 @@
  * - CareEscalationScorerService (clinical escalation: 5 levels)
  * - MissedCheckInEscalationService (welfare escalation: 5 levels)
  * - ResultEscalationService (lab severity: 4 levels)
+ * - NurseOSAdvisorService (provider burnout: 4 levels) — P4-4
  *
  * Returns normalized signals with a unified escalation enum that the
  * meta-triage MCP tool can reason about.
@@ -36,6 +37,7 @@ import type {
   EscalationLogEntry,
   EscalationSeverity,
 } from '../resultEscalationService';
+import { NurseOSAdvisorService } from './nurseosAdvisorService';
 
 // ============================================================================
 // Types — Unified Signal Format
@@ -259,6 +261,22 @@ export const TriageSignalAggregationService = {
         });
       }
 
+      // Provider burnout signal (P4-4: NurseOS triage integration)
+      // If the assessor (provider) has burnout data, include it as a signal.
+      // This allows meta-triage to reason about provider wellness alongside patient risk.
+      try {
+        const burnoutSignal = await this.fetchProviderBurnoutSignal(assessorId);
+        if (burnoutSignal) {
+          signals.push(burnoutSignal);
+        }
+      } catch {
+        // Provider burnout data is supplementary — don't block triage on failure
+        await auditLogger.warn('TRIAGE_PROVIDER_BURNOUT_UNAVAILABLE', {
+          assessorId,
+          reason: 'Failed to fetch provider burnout data',
+        });
+      }
+
       if (signals.length === 0) {
         return failure(
           'NO_SIGNALS',
@@ -411,5 +429,65 @@ export const TriageSignalAggregationService = {
     }
 
     return success({ aggregation, resolution });
+  },
+
+  /**
+   * Fetch provider burnout data and build a triage signal.
+   * Returns null if no burnout assessment exists (provider hasn't been assessed).
+   *
+   * P4-4: NurseOS triage integration — provider wellness as a triage factor.
+   */
+  async fetchProviderBurnoutSignal(
+    providerId: string
+  ): Promise<TriageSignal | null> {
+    // Get latest burnout assessment
+    const { data: assessment } = await supabase
+      .from('provider_burnout_assessments')
+      .select('emotional_exhaustion_score, depersonalization_score, personal_accomplishment_score, composite_burnout_score, risk_level')
+      .eq('practitioner_id', providerId)
+      .order('assessment_date', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!assessment || !assessment.risk_level) {
+      return null; // No assessment — no signal to contribute
+    }
+
+    // Get stress trend from recent check-ins
+    const { data: checkins } = await supabase
+      .from('provider_daily_checkins')
+      .select('stress_level, checkin_date')
+      .eq('practitioner_id', providerId)
+      .order('checkin_date', { ascending: false })
+      .limit(7);
+
+    let stressTrend: 'increasing' | 'stable' | 'decreasing' = 'stable';
+    let consecutiveHighDays = 0;
+
+    if (checkins && checkins.length >= 3) {
+      const stressValues = checkins.map(c => Number(c.stress_level ?? 0));
+      const firstHalf = stressValues.slice(Math.floor(stressValues.length / 2));
+      const secondHalf = stressValues.slice(0, Math.floor(stressValues.length / 2));
+      const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+      const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+      if (secondAvg > firstAvg + 0.5) stressTrend = 'increasing';
+      else if (secondAvg < firstAvg - 0.5) stressTrend = 'decreasing';
+
+      // Count consecutive high-stress days (stress ≥ 7)
+      for (const val of stressValues) {
+        if (val >= 7) consecutiveHighDays++;
+        else break;
+      }
+    }
+
+    return NurseOSAdvisorService.buildBurnoutSignal({
+      risk_level: assessment.risk_level as 'low' | 'moderate' | 'high' | 'critical',
+      composite_score: Number(assessment.composite_burnout_score ?? 0),
+      emotional_exhaustion_score: Number(assessment.emotional_exhaustion_score),
+      depersonalization_score: Number(assessment.depersonalization_score),
+      personal_accomplishment_score: Number(assessment.personal_accomplishment_score),
+      stress_trend: stressTrend,
+      consecutive_high_stress_days: consecutiveHighDays,
+    });
   },
 };

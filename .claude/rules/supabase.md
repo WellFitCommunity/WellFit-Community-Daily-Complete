@@ -14,6 +14,12 @@ npx supabase db push
 
 # Verify it succeeded (check for errors in output)
 # Then test that the new schema works
+
+# Login early - takes 30-60 seconds
+npx supabase login
+
+# Link to project (if not already linked)
+npx supabase link --project-ref xkybsjnvuohpqpbkikyn
 ```
 
 | Do This | Not This |
@@ -263,6 +269,17 @@ serve(async (req) => {
 | `handleOptions(req)` for preflight | Manually building OPTIONS response |
 | Add tenant domains to `ALLOWED_ORIGINS` env var | Wildcards or `WHITE_LABEL_MODE=true` |
 
+**Why wildcards are forbidden:**
+- Wildcards fail GitHub security scans
+- Wildcards violate HIPAA § 164.312(e)(1) transmission security
+- Wildcards enable clickjacking and data exfiltration attacks
+
+**To add a new tenant domain:**
+1. Add domain to `ALLOWED_ORIGINS` in Supabase secrets (comma-separated)
+2. Redeploy edge functions: `npx supabase functions deploy --no-verify-jwt`
+
+**DO NOT** enable `WHITE_LABEL_MODE` unless explicitly approved by Maria for dynamic tenant onboarding.
+
 ---
 
 ## 8. Auth Session Security — Server vs Client
@@ -369,6 +386,159 @@ const channel = supabase
 return () => {
   supabase.removeChannel(channel);
 };
+```
+
+---
+
+## 13. Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase JWT anon key (required for auth) |
+| `VITE_HCAPTCHA_SITE_KEY` | hCaptcha site key for bot protection |
+| `VITE_ANTHROPIC_API_KEY` | Claude AI API key |
+
+---
+
+## 14. Supabase Key Migration (December 2025)
+
+**Database:** Fully migrated to **PostgreSQL 17** via Supabase.
+
+**Key Naming Convention (Current):**
+
+| Key Name | Format | Usage |
+|----------|--------|-------|
+| `SB_PUBLISHABLE_API_KEY` | `sb_publishable_*` | New publishable key format |
+| `SB_SECRET_KEY` | `sb_secret_*` | New secret key format (server-side only) |
+| `SB_SERVICE_ROLE_KEY` | JWT (`eyJhbGci...`) | Legacy service role key (Supabase default name) |
+| `SB_ANON_KEY` | JWT (`eyJhbGci...`) | Legacy JWT anon key |
+| `SUPABASE_ANON_KEY` | JWT (`eyJhbGci...`) | Legacy JWT anon key (alias) |
+| `SUPABASE_SERVICE_ROLE_KEY` | JWT | Legacy service role key (alias) |
+
+**IMPORTANT - Key Format Compatibility:**
+- **Client-side auth REQUIRES the JWT format** (`VITE_SUPABASE_ANON_KEY` or `SB_ANON_KEY`)
+- The new `sb_publishable_*` format is NOT yet supported by Supabase JS client for authentication
+- Edge Functions should prefer `SB_ANON_KEY` (JWT) for user token validation
+- Service role operations use `SB_SECRET_KEY` (new format works)
+- Legacy JWT keys remain functional until fully deprecated by Supabase
+
+**Order of Preference in Edge Functions:**
+```typescript
+// For user-context operations:
+getEnv("SB_ANON_KEY", "SUPABASE_ANON_KEY", "SB_PUBLISHABLE_API_KEY")
+
+// For service role operations (MUST include SB_SERVICE_ROLE_KEY):
+getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY")
+```
+
+---
+
+## 15. JWT Standards
+
+### JWT Fundamentals (Supabase)
+
+**Structure:** `<header>.<payload>.<signature>` (Base64-URL encoded JSON)
+
+**Key Claims in Supabase JWTs:**
+| Claim | Description |
+|-------|-------------|
+| `iss` | Issuer URL (e.g., `https://project_id.supabase.co/auth/v1`) |
+| `exp` | Expiration timestamp (after which token is invalid) |
+| `sub` | Subject - the unique user ID |
+| `role` | Postgres role for RLS (`authenticated`, `anon`, etc.) |
+
+**Verification Methods:**
+1. **Supabase Auth JWTs**: Use `supabase.auth.getClaims()` or JWKS endpoint
+2. **Legacy/Custom JWTs (HS256)**: Verify via Auth server: `GET /auth/v1/user`
+3. **JWKS Endpoint**: `https://project-id.supabase.co/auth/v1/.well-known/jwks.json` (cached 10 min)
+
+**Security Considerations:**
+- Shared secrets (HS256) are **NOT recommended** for HIPAA/SOC2/PCI-DSS compliance
+- Prefer asymmetric keys (RSA, EC) for production
+- Wait **20+ minutes** after rotating signing keys (due to 10 min edge cache)
+- Never implement JWT verification manually - use established libraries (`jose`, etc.)
+
+**Client Library Usage (Custom JWTs):**
+```typescript
+// DON'T: Set custom Authorization headers
+// DO: Use accessToken option
+const supabase = createClient(url, key, {
+  accessToken: async () => '<your JWT here>'
+});
+```
+
+### JWT Signing Keys System
+
+**Two Systems (Legacy vs New):**
+| System | Type | Recommendation |
+|--------|------|----------------|
+| Legacy JWT Secret | Shared secret (HS256) | **NOT recommended** - hard to rotate, signs anon/service_role |
+| Signing Keys | Asymmetric (ES256/RS256) | **Recommended** - zero-downtime rotation, HIPAA compliant |
+| Signing Keys | Shared secret (HS256) | Available but not recommended |
+
+**CRITICAL: `anon` and `service_role` ARE JWTs** signed by the legacy JWT secret. Revoking the legacy secret requires disabling these keys first.
+
+**Algorithm Recommendations:**
+| Algorithm | JWT `alg` | Notes |
+|-----------|-----------|-------|
+| NIST P-256 (EC) | ES256 | **Recommended** - fast, short signatures, good for cookies |
+| RSA 2048 | RS256 | Widely supported but slower |
+| Ed25519 | EdDSA | Coming soon |
+| HMAC | HS256 | **Avoid** - compliance issues, can't revoke without downtime |
+
+**Key Lifecycle:** `standby` → `in use` → `previously used` → `revoked` → `delete`
+
+**Timing Constraints:**
+- **5 minutes**: Wait between key state changes
+- **10 min edge cache + 10 min client cache = 20 min total propagation**
+- **Wait `access_token_expiry + 15 min`** before revoking old key (prevents user signouts)
+
+**Key Rotation (Zero-Downtime):**
+1. Create standby key (asymmetric preferred)
+2. Wait for JWKS cache propagation (~20 min)
+3. Rotate keys (Auth starts using new key)
+4. Wait `access_token_expiry + 15 min`
+5. Revoke old key
+
+**Minting Custom JWTs:**
+```bash
+# Generate a signing key
+supabase gen signing-key --algorithm ES256
+
+# Generate a bearer token
+supabase gen bearer-jwt --role authenticated --sub <user-uuid>
+```
+
+**Custom JWT Required Headers:**
+```json
+{ "alg": "ES256", "kid": "<key-id-from-import>", "typ": "JWT" }
+```
+
+**Custom JWT Required Claims:**
+```json
+{ "sub": "<user-uuid>", "role": "authenticated", "exp": <timestamp> }
+```
+
+**Security Notes:**
+- Private keys **cannot be extracted** from Supabase (security feature)
+- To use your own key: generate locally, import to Supabase
+- Separate `apikey` header still required (publishable/secret) - JWT alone won't work
+
+---
+
+## 16. Common Issues
+
+### Supabase Timing
+**Wait at least 60 seconds** after deploying edge functions or running migrations before testing.
+
+### Null-Safe Number Formatting
+```typescript
+// Safe - handles null values
+{(metrics.total_saved ?? 0).toFixed(2)}
+
+// Safe division - prevents divide by zero
+{(((numerator ?? 0) / (denominator || 1)) * 100).toFixed(0)}%
 ```
 
 ---

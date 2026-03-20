@@ -111,7 +111,7 @@ describe('PhysicianWellnessHub', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetDashboardStats.mockResolvedValue(sampleStats);
-    mockGetMyCheckins.mockResolvedValue(sampleCheckins);
+    mockGetMyCheckins.mockResolvedValue({ success: true, data: sampleCheckins });
   });
 
   describe('Loading State', () => {
