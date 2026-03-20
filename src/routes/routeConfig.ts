@@ -519,6 +519,14 @@ export const clinicalRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'nurse', 'physician', 'nurse_practitioner', 'care_coordinator', 'clinical_staff', 'clinical_supervisor'],
     category: 'clinical',
   },
+  // NurseOS — Emotional Resilience Hub (burnout prevention for nurses)
+  {
+    path: '/nurse-wellness',
+    component: 'ResilienceHubDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor', 'department_head'],
+    category: 'clinical',
+  },
   // Nurse Census Board
   {
     path: '/nurse-census',

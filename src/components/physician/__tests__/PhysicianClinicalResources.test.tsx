@@ -92,8 +92,8 @@ const sampleResources: ResilienceResource[] = [
 describe('PhysicianClinicalResources', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetResources.mockResolvedValue(sampleResources);
-    mockTrackResourceView.mockResolvedValue(undefined);
+    mockGetResources.mockResolvedValue({ success: true, data: sampleResources, error: null });
+    mockTrackResourceView.mockResolvedValue({ success: true, data: undefined, error: null });
   });
 
   describe('Loading State', () => {
@@ -326,7 +326,7 @@ describe('PhysicianClinicalResources', () => {
 
   describe('Empty State', () => {
     it('should show empty state when no resources exist', async () => {
-      mockGetResources.mockResolvedValue([]);
+      mockGetResources.mockResolvedValue({ success: true, data: [], error: null });
 
       render(<PhysicianClinicalResources />);
 
@@ -336,7 +336,7 @@ describe('PhysicianClinicalResources', () => {
     });
 
     it('should show appropriate message in empty state', async () => {
-      mockGetResources.mockResolvedValue([]);
+      mockGetResources.mockResolvedValue({ success: true, data: [], error: null });
 
       render(<PhysicianClinicalResources />);
 

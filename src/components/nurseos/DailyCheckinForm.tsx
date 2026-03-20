@@ -61,8 +61,9 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
     setSuccessMessage(null);
     setIsSubmitting(true);
 
-    try {
-      await submitDailyCheckin(formData);
+    const result = await submitDailyCheckin(formData);
+
+    if (result.success) {
       setSuccessMessage('✅ Check-in saved! Thanks for taking care of yourself.');
 
       // Call success callback after short delay
@@ -70,12 +71,11 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
         if (onSuccess) onSuccess();
         if (onClose) onClose();
       }, 1500);
-    } catch (err: unknown) {
-
-      setError(err instanceof Error ? err.message : 'Failed to save check-in. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      setError(result.error.message);
     }
+
+    setIsSubmitting(false);
   };
 
   // Get stress level emoji

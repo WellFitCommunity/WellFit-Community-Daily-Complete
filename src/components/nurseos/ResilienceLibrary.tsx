@@ -47,13 +47,13 @@ export const ResilienceLibrary: React.FC<ResilienceLibraryProps> = ({ onClose })
       setLoading(true);
       setError(null);
 
-      const [modulesData, completionsData] = await Promise.all([
+      const [modulesResult, completionsResult] = await Promise.all([
         getActiveModules(),
-        getMyCompletions().catch(() => []),
+        getMyCompletions(),
       ]);
 
-      setModules(modulesData);
-      setCompletions(completionsData);
+      setModules(modulesResult.success ? modulesResult.data : []);
+      setCompletions(completionsResult.success ? completionsResult.data : []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load modules');
     } finally {
@@ -96,46 +96,45 @@ export const ResilienceLibrary: React.FC<ResilienceLibraryProps> = ({ onClose })
 
   // Handle start module
   const handleStartModule = async (module: ResilienceTrainingModule) => {
-    try {
-      await trackModuleStart(module.id);
-      setIsViewing(true);
-      setStartTime(new Date());
-      // Refresh completions
-      const updated = await getMyCompletions();
-      setCompletions(updated);
-    } catch {
-
-      alert('Failed to start module. Please try again.');
+    const startResult = await trackModuleStart(module.id);
+    if (!startResult.success) {
+      setError('Failed to start module. Please try again.');
+      return;
     }
+    setIsViewing(true);
+    setStartTime(new Date());
+    // Refresh completions
+    const updated = await getMyCompletions();
+    setCompletions(updated.success ? updated.data : completions);
   };
 
   // Handle complete module
   const handleCompleteModule = async (helpful: boolean) => {
     if (!selectedModule || !startTime) return;
 
-    try {
-      const timeSpent = Math.round((Date.now() - startTime.getTime()) / 60000); // minutes
-      await trackModuleCompletion(selectedModule.id, timeSpent, helpful);
+    const timeSpent = Math.round((Date.now() - startTime.getTime()) / 60000); // minutes
+    const completeResult = await trackModuleCompletion(selectedModule.id, timeSpent, helpful);
 
-      // Refresh completions
-      const updated = await getMyCompletions();
-      setCompletions(updated);
-
-      // Show celebration modal
-      setCelebrationData({
-        moduleName: selectedModule.title,
-        wasHelpful: helpful,
-      });
-      setShowCelebration(true);
-
-      // Close viewer
-      setIsViewing(false);
-      setSelectedModule(null);
-      setStartTime(null);
-    } catch {
-
-      alert('Failed to record completion. Please try again.');
+    if (!completeResult.success) {
+      setError('Failed to record completion. Please try again.');
+      return;
     }
+
+    // Refresh completions
+    const updated = await getMyCompletions();
+    setCompletions(updated.success ? updated.data : completions);
+
+    // Show celebration modal
+    setCelebrationData({
+      moduleName: selectedModule.title,
+      wasHelpful: helpful,
+    });
+    setShowCelebration(true);
+
+    // Close viewer
+    setIsViewing(false);
+    setSelectedModule(null);
+    setStartTime(null);
   };
 
   // Category display names

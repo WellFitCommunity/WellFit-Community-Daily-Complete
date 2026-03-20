@@ -169,6 +169,9 @@ export const PatientAvatarPage = React.lazy(() =>
   import('../components/patient-avatar/PatientAvatarPage').then(m => ({ default: m.PatientAvatarPage }))
 );
 
+// NurseOS — Emotional Resilience Hub
+export const ResilienceHubDashboard = React.lazy(() => import('../components/nurseos/ResilienceHubDashboard'));
+
 // Nurse Census Board
 export const NurseCensusBoard = React.lazy(() =>
   import('../components/nurse/NurseCensusBoard').then(m => ({ default: m.NurseCensusBoard }))
@@ -367,6 +370,9 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   EnterpriseMigrationDashboard,
   GuardianApprovalsList,
   GuardianApprovalForm,
+
+  // NurseOS
+  ResilienceHubDashboard,
 
   // Patient Avatar (PatientAvatarPage and PatientChartNavigator require explicit props — exported individually above)
   NurseCensusBoard,

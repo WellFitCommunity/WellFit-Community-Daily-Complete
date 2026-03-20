@@ -38,10 +38,13 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose, userR
         filters.userRole = userRole;
       }
 
-      const data = await getResources(filters);
-      setResources(data);
+      const result = await getResources(filters);
+      if (result.success) {
+        setResources(result.data);
+      } else {
+        setError(result.error.message);
+      }
     } catch (err: unknown) {
-
       setError(err instanceof Error ? err.message : 'Failed to load resources');
     } finally {
       setLoading(false);
@@ -54,12 +57,8 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose, userR
 
   // Handle resource click
   const handleResourceClick = async (resource: ResilienceResource) => {
-    // Track view
-    try {
-      await trackResourceView(resource.id);
-    } catch (err: unknown) {
-
-    }
+    // Track view (fire-and-forget, non-blocking)
+    trackResourceView(resource.id);
 
     // Open URL if exists
     if (resource.url) {

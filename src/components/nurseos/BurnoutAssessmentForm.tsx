@@ -228,22 +228,21 @@ export const BurnoutAssessmentForm: React.FC<BurnoutAssessmentFormProps> = ({
     setLoading(true);
     setError(null);
 
-    try {
-      const scores = calculateScores();
-      await submitBurnoutAssessment({
-        ...scores,
-        questionnaire_responses: questions.map((q) => ({
-          question: q.text,
-          score: responses[q.id],
-          dimension: q.dimension,
-        })),
-        assessment_type: 'MBI-HSS',
-      });
+    const scores = calculateScores();
+    const result = await submitBurnoutAssessment({
+      ...scores,
+      questionnaire_responses: questions.map((q) => ({
+        question: q.text,
+        score: responses[q.id],
+        dimension: q.dimension,
+      })),
+      assessment_type: 'MBI-HSS',
+    });
 
+    if (result.success) {
       onSuccess();
-    } catch (err: unknown) {
-
-      setError(err instanceof Error ? err.message : 'Failed to submit assessment');
+    } else {
+      setError(result.error.message);
       setLoading(false);
     }
   };

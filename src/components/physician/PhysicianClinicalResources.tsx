@@ -132,7 +132,8 @@ const PhysicianClinicalResources: React.FC = () => {
     try {
       setLoading(true);
       // Fetch resources with target_audience containing 'physician'
-      const data = await ResilienceHubService.getResources();
+      const result = await ResilienceHubService.getResources();
+      const data = result.success ? result.data : [];
 
       // Filter for physician-specific resources
       const physicianResources = data.filter(r =>

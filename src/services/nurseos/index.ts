@@ -1,53 +1,52 @@
 // ============================================================================
-// NurseOS Resilience Hub Service — Barrel Re-export
+// NurseOS Services — Barrel Export
 // ============================================================================
-// This file re-exports from decomposed modules in src/services/nurseos/.
-// All imports from this file continue to work — zero breaking changes.
+// Re-exports all NurseOS service functions from decomposed modules.
+// The original resilienceHubService.ts (704 lines) was split into:
+//   checkinService.ts, assessmentService.ts, trainingService.ts,
+//   supportCircleService.ts, resourceService.ts, dashboardService.ts
 // ============================================================================
 
+// Check-ins
 export {
-  // Check-ins
   submitDailyCheckin,
   getMyCheckins,
   hasCheckedInToday,
   getStressTrend,
   getCheckinStreak,
+} from './checkinService';
 
-  // Burnout assessments
+// Burnout assessments
+export {
   submitBurnoutAssessment,
   getMyAssessments,
   getLatestBurnoutRisk,
   checkInterventionNeeded,
+} from './assessmentService';
 
-  // Training modules
+// Training modules
+export {
   getActiveModules,
   trackModuleStart,
   trackModuleCompletion,
   getMyCompletions,
+} from './trainingService';
 
-  // Resources
+// Resources
+export {
   getResources,
   trackResourceView,
+} from './resourceService';
 
-  // Support circles
+// Support circles
+export {
   getMyCircles,
   getCircleReflections,
   postReflection,
   markReflectionHelpful,
+} from './supportCircleService';
 
-  // Dashboard
+// Dashboard
+export {
   getDashboardStats,
-} from './nurseos';
-
-// Legacy service object export — used by PhysicianClinicalResources, WellnessCommandCenter
-import {
-  getResources,
-  trackResourceView,
-  getDashboardStats,
-} from './nurseos';
-
-export const ResilienceHubService = {
-  getResources,
-  trackResourceView,
-  getDashboardStats,
-};
+} from './dashboardService';

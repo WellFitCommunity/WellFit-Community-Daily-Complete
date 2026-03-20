@@ -34,6 +34,7 @@ export const ResilienceHubDashboard: React.FC = () => {
   const [showModuleLibrary, setShowModuleLibrary] = useState(false);
   const [showBurnoutAssessment, setShowBurnoutAssessment] = useState(false);
   const [showResourceLibrary, setShowResourceLibrary] = useState(false);
+  const [comingSoonMessage, setComingSoonMessage] = useState<string | null>(null);
 
   // Load dashboard data
   const loadDashboardData = useCallback(async () => {
@@ -41,7 +42,7 @@ export const ResilienceHubDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const [dashboardStats, checkins] = await Promise.all([
+      const [dashboardStats, checkinsResult] = await Promise.all([
         getDashboardStats(),
         getMyCheckins(
           new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
@@ -50,9 +51,8 @@ export const ResilienceHubDashboard: React.FC = () => {
       ]);
 
       setStats(dashboardStats);
-      setRecentCheckins(checkins);
+      setRecentCheckins(checkinsResult.success ? checkinsResult.data : []);
     } catch (err: unknown) {
-
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);
@@ -267,6 +267,13 @@ export const ResilienceHubDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Coming Soon Toast */}
+      {comingSoonMessage && (
+        <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-700 text-sm font-medium">
+          {comingSoonMessage}
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="bg-gray-50 rounded-lg p-4 mb-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-3">{t.quickActions.title}</h3>
@@ -290,7 +297,10 @@ export const ResilienceHubDashboard: React.FC = () => {
           </button>
 
           <button
-            onClick={() => alert('Coming Soon: 30-day wellness trends with interactive charts')}
+            onClick={() => {
+              setComingSoonMessage('Coming Soon: 30-day wellness trends with interactive charts');
+              setTimeout(() => setComingSoonMessage(null), 3000);
+            }}
             className="px-4 py-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
           >
             <div className="text-2xl mb-1">📊</div>
