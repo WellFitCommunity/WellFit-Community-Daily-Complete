@@ -18,6 +18,12 @@ import type {
   ProviderTrainingCompletion,
 } from '../../types/nurseos';
 import { CelebrationModal } from './CelebrationModal';
+import {
+  BoxBreathingExercise,
+  MicroBreakRoutine,
+  BoundariesArticleContent,
+  CommunicationScriptsContent,
+} from './interactive';
 
 interface ResilienceLibraryProps {
   onClose: () => void;
@@ -487,181 +493,6 @@ export const ResilienceLibrary: React.FC<ResilienceLibraryProps> = ({ onClose })
           }}
         />
       )}
-    </div>
-  );
-};
-
-// ============================================================================
-// INTERACTIVE CONTENT COMPONENTS
-// ============================================================================
-
-const BoxBreathingExercise: React.FC = () => {
-  const [phase, setPhase] = useState<'inhale' | 'hold1' | 'exhale' | 'hold2'>('inhale');
-  const [count, setCount] = useState(4);
-  const [isRunning, setIsRunning] = useState(false);
-
-  useEffect(() => {
-    if (!isRunning) return;
-
-    const timer = setInterval(() => {
-      setCount((prev) => {
-        if (prev <= 1) {
-          // Move to next phase
-          setPhase((currentPhase) => {
-            switch (currentPhase) {
-              case 'inhale':
-                return 'hold1';
-              case 'hold1':
-                return 'exhale';
-              case 'exhale':
-                return 'hold2';
-              case 'hold2':
-                return 'inhale';
-              default:
-                return 'inhale';
-            }
-          });
-          return 4;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isRunning]);
-
-  const phaseText = {
-    inhale: 'Breathe In',
-    hold1: 'Hold',
-    exhale: 'Breathe Out',
-    hold2: 'Hold',
-  };
-
-  return (
-    <div className="text-center">
-      <div className="mb-6">
-        <div className="w-48 h-48 mx-auto rounded-full bg-blue-100 flex items-center justify-center mb-4 transition-all duration-1000"
-          style={{
-            transform: phase === 'inhale' || phase === 'hold1' ? 'scale(1.2)' : 'scale(1)',
-            backgroundColor: phase === 'inhale' ? '#DBEAFE' : phase === 'exhale' ? '#FEF3C7' : '#E5E7EB',
-          }}
-        >
-          <div className="text-center">
-            <div className="text-4xl font-bold text-gray-800 mb-2">{count}</div>
-            <div className="text-lg text-gray-600">{phaseText[phase]}</div>
-          </div>
-        </div>
-      </div>
-
-      <button
-        onClick={() => setIsRunning(!isRunning)}
-        className={`px-6 py-3 rounded-lg font-medium ${
-          isRunning
-            ? 'bg-red-600 hover:bg-red-700 text-white'
-            : 'bg-blue-600 hover:bg-blue-700 text-white'
-        }`}
-      >
-        {isRunning ? 'Stop' : 'Start Exercise'}
-      </button>
-
-      <div className="mt-4 text-sm text-gray-600">
-        <p>Follow the circle: Inhale for 4, Hold for 4, Exhale for 4, Hold for 4</p>
-        <p className="mt-2">Used by Navy SEALs to reduce stress in high-pressure situations.</p>
-      </div>
-    </div>
-  );
-};
-
-const MicroBreakRoutine: React.FC = () => {
-  const exercises = [
-    { name: 'Neck Rolls', duration: '30 seconds', instruction: 'Slowly roll your head in circles, 3 times each direction' },
-    { name: 'Shoulder Shrugs', duration: '30 seconds', instruction: 'Raise shoulders to ears, hold 3 seconds, release. Repeat 5 times.' },
-    { name: 'Hand Massage', duration: '1 minute', instruction: 'Massage each hand, focusing on thumb and palm pressure points' },
-    { name: 'Deep Breaths', duration: '1 minute', instruction: 'Take 5 deep belly breaths, exhaling slowly' },
-  ];
-
-  return (
-    <div>
-      <p className="text-gray-700 mb-4">
-        These quick exercises can be done between patients or during short breaks. Research shows micro-breaks reduce fatigue and improve focus.
-      </p>
-      <div className="space-y-4">
-        {exercises.map((exercise, idx) => (
-          <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="flex items-start justify-between mb-2">
-              <h4 className="font-semibold text-gray-800">{idx + 1}. {exercise.name}</h4>
-              <span className="text-sm text-blue-600 font-medium">{exercise.duration}</span>
-            </div>
-            <p className="text-sm text-gray-600">{exercise.instruction}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const BoundariesArticleContent: React.FC = () => {
-  return (
-    <div className="space-y-4 text-gray-700">
-      <h4 className="font-semibold text-lg">5 Scripts for Setting Boundaries</h4>
-
-      <div className="space-y-3">
-        <div>
-          <p className="font-medium">1. When asked to take on extra patients:</p>
-          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200 italic">
-            "I appreciate you thinking of me, but I'm at capacity right now. Taking on more would compromise the quality of care I can provide. Can we discuss redistributing the panel?"
-          </p>
-        </div>
-
-        <div>
-          <p className="font-medium">2. When interrupted during documentation time:</p>
-          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200 italic">
-            "I need to finish this documentation to avoid errors. Can I connect with you in 15 minutes?"
-          </p>
-        </div>
-
-        <div>
-          <p className="font-medium">3. When asked to work on your day off:</p>
-          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200 italic">
-            "I'm unavailable that day. I need my scheduled time off to recharge and provide my best care. Let's look at other coverage options."
-          </p>
-        </div>
-      </div>
-
-      <p className="text-sm">
-        <strong>Remember:</strong> Setting boundaries isn't selfish—it's essential for preventing burnout and maintaining quality patient care.
-      </p>
-    </div>
-  );
-};
-
-const CommunicationScriptsContent: React.FC = () => {
-  return (
-    <div className="space-y-4 text-gray-700">
-      <h4 className="font-semibold text-lg">Difficult Conversation Templates</h4>
-
-      <div className="space-y-3">
-        <div>
-          <p className="font-medium text-red-700">Reporting Unsafe Staffing:</p>
-          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200">
-            "I need to document a safety concern. Our current nurse-to-patient ratio is [X:Y], which exceeds safe limits. This creates risk for both patients and staff. What steps can we take to address this immediately?"
-          </p>
-        </div>
-
-        <div>
-          <p className="font-medium text-orange-700">Addressing Lateral Violence:</p>
-          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200">
-            "When you [specific behavior], I felt [emotion]. I value our working relationship and would appreciate if we could [desired outcome]. Can we talk about this?"
-          </p>
-        </div>
-
-        <div>
-          <p className="font-medium text-blue-700">Requesting Support:</p>
-          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200">
-            "I'm managing a challenging patient situation and could use a second opinion. Do you have 5 minutes to help me think through this?"
-          </p>
-        </div>
-      </div>
     </div>
   );
 };
