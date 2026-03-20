@@ -108,12 +108,12 @@ export const NurseOSAdvisorService = {
           error instanceof Error ? error : new Error(String(error)),
           { providerId }
         );
-        return failure('AI_ERROR', `Burnout analysis failed: ${error.message}`);
+        return failure('AI_SERVICE_ERROR', `Burnout analysis failed: ${error.message}`);
       }
 
       const response = data as EdgeFunctionResponse<BurnoutAdvisorResponse>;
       if (!response.success || !response.data) {
-        return failure('AI_EMPTY', 'Burnout advisor returned empty result');
+        return failure('OPERATION_FAILED', 'Burnout advisor returned empty result');
       }
 
       await auditLogger.info('NURSEOS_BURNOUT_ANALYSIS_COMPLETE', {
@@ -160,12 +160,12 @@ export const NurseOSAdvisorService = {
           error instanceof Error ? error : new Error(String(error)),
           { providerId }
         );
-        return failure('AI_ERROR', `Module recommendations failed: ${error.message}`);
+        return failure('AI_SERVICE_ERROR', `Module recommendations failed: ${error.message}`);
       }
 
       const response = data as EdgeFunctionResponse<ModuleRecommendationResponse>;
       if (!response.success || !response.data) {
-        return failure('AI_EMPTY', 'Module recommendations returned empty result');
+        return failure('OPERATION_FAILED', 'Module recommendations returned empty result');
       }
 
       await auditLogger.info('NURSEOS_MODULE_RECS_COMPLETE', {
@@ -211,12 +211,12 @@ export const NurseOSAdvisorService = {
           error instanceof Error ? error : new Error(String(error)),
           { providerId }
         );
-        return failure('AI_ERROR', `Stress narrative failed: ${error.message}`);
+        return failure('AI_SERVICE_ERROR', `Stress narrative failed: ${error.message}`);
       }
 
       const response = data as EdgeFunctionResponse<StressNarrativeResponse>;
       if (!response.success || !response.data) {
-        return failure('AI_EMPTY', 'Stress narrative returned empty result');
+        return failure('OPERATION_FAILED', 'Stress narrative returned empty result');
       }
 
       await auditLogger.info('NURSEOS_STRESS_NARRATIVE_COMPLETE', {
