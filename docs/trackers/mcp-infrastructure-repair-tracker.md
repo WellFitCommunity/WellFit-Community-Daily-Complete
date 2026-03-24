@@ -13,7 +13,7 @@
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Test Coverage | 6/15 servers (40%) | 15/15 (100%) |
+| Test Coverage | 15/15 servers (100%) ✅ | 15/15 (100%) |
 | Declarative Input Validation | 4/15 servers | 11/15 (Tier 1 exempt) |
 | Audit Logging (success ops) | 5/15 servers | 15/15 |
 | Rate Limit Consistency | 14/15 | 15/15 |
@@ -28,17 +28,17 @@ Missing test suites for 9 servers. Prioritized by blast radius (orchestrators an
 
 | # | Item | Server | Tools | Risk Level | Est. Hours | Status |
 |---|------|--------|-------|------------|-----------|--------|
-| P1-1 | Edge functions orchestrator tests | `mcp-edge-functions-server` | 13 | High (orchestrates SMS, email, push, billing) | 3 | ⬜ Todo |
-| P1-2 | Chain orchestrator tests | `mcp-chain-orchestrator` | 5 REST | High (clinical workflow chains) | 2 | ⬜ Todo |
-| P1-3 | DRG grouper tests | `mcp-drg-grouper-server` | 6 | High (revenue calculations) | 2 | ⬜ Todo |
-| P1-4 | Medical coding tests | `mcp-medical-coding-server` | 10 | Medium (billing codes) | 2 | ⬜ Todo |
-| P1-5 | NPI registry tests | `mcp-npi-registry-server` | 9 | Medium (external API proxy) | 1.5 | ⬜ Todo |
-| P1-6 | CMS coverage tests | `mcp-cms-coverage-server` | 9 | Medium (coverage lookups) | 1.5 | ⬜ Todo |
-| P1-7 | PubMed server tests | `mcp-pubmed-server` | 7 | Low (reference data) | 1 | ⬜ Todo |
-| P1-8 | Postgres server tests | `mcp-postgres-server` | 6 | Medium (direct DB queries) | 1.5 | ⬜ Todo |
-| P1-9 | Cultural competency tests | `mcp-cultural-competency-server` | 8 | Low (reference data) | 1 | ⬜ Todo |
+| P1-1 | Edge functions orchestrator tests | `mcp-edge-functions-server` | 13 | High (orchestrates SMS, email, push, billing) | 3 | ✅ Done (41 steps) |
+| P1-2 | Chain orchestrator tests | `mcp-chain-orchestrator` | 5 REST | High (clinical workflow chains) | 2 | ✅ Done (35 steps) |
+| P1-3 | DRG grouper tests | `mcp-drg-grouper-server` | 6 | High (revenue calculations) | 2 | ✅ Done (33 steps) |
+| P1-4 | Medical coding tests | `mcp-medical-coding-server` | 10 | Medium (billing codes) | 2 | ✅ Done (27 steps) |
+| P1-5 | NPI registry tests | `mcp-npi-registry-server` | 9 | Medium (external API proxy) | 1.5 | ✅ Done (42 steps) |
+| P1-6 | CMS coverage tests | `mcp-cms-coverage-server` | 9 | Medium (coverage lookups) | 1.5 | ✅ Done (48 steps) |
+| P1-7 | PubMed server tests | `mcp-pubmed-server` | 7 | Low (reference data) | 1 | ✅ Done (41 steps) |
+| P1-8 | Postgres server tests | `mcp-postgres-server` | 6 | Medium (direct DB queries) | 1.5 | ✅ Done (41 steps) |
+| P1-9 | Cultural competency tests | `mcp-cultural-competency-server` | 8 | Low (reference data) | 1 | ✅ Done (88 steps) |
 
-**P1 subtotal:** ~16 hours across 2 sessions
+**P1 subtotal:** ~16 hours across 2 sessions → **Completed in 1 session (2026-03-24), ~396 test steps total**
 
 ---
 
@@ -90,11 +90,10 @@ Add `logMCPAudit()` for successful operations to servers that currently only log
 
 ## Session Plan
 
-| Session | Priorities | Focus | Est. Hours |
-|---------|-----------|-------|-----------|
-| Session 1 | P1-1 through P1-4 | High-risk server tests (orchestrators + revenue) | 8-9 |
-| Session 2 | P1-5 through P1-9 | Remaining server tests | 6-7 |
-| Session 3 | P2, P3, P4 | Validation, audit logging, minor fixes | 8-10 |
+| Session | Priorities | Focus | Est. Hours | Status |
+|---------|-----------|-------|-----------|--------|
+| Session 1 | P1-1 through P1-9 | All 9 MCP server test suites (~396 steps) | 8-9 | ✅ Done (2026-03-24) |
+| Session 2 | P2, P3, P4 | Validation, audit logging, minor fixes | 8-10 | ⬜ Next |
 
 ---
 

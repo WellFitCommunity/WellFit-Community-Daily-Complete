@@ -3,35 +3,55 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-20 (NurseOS P0-P3 DONE, CI type errors fixed)
-**Last Session:** NurseOS Completion — P0 (routes, 110 critical tests, alert removal), P1 (18 functions → ServiceResult, 15 auditLogger calls added), P2 (3 god files decomposed: service 704→7 modules, library 669→500, types 700→6 modules), P3 (34 more tests for ResourceLibrary/CelebrationModal/LanguageSwitcher). Fixed 3 CI type errors from ServiceResult migration. Also created AI_PYTHON_MISTAKES.md + AI_JAVASCRIPT_MISTAKES.md governance docs for coding class.
+**Last Updated:** 2026-03-24 (MCP P1 test coverage complete — 9 servers, ~396 test steps + security scan fix)
+**Last Session:** Wrote test suites for all 9 untested MCP servers (edge-functions, chain-orchestrator, drg-grouper, medical-coding, npi-registry, cms-coverage, pubmed, postgres, cultural-competency). Fixed GitHub security scan failure by resolving jspdf (critical) and flatted (high) vulnerabilities via npm audit fix.
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,554+ tests (571+ suites), 0 lint warnings, 0 typecheck errors project-wide
+**Codebase Health:** 11,575+ tests (572+ suites), 0 lint warnings, 0 typecheck errors project-wide
 
 ---
 
-## NurseOS Intelligent Panel Completion (2026-03-16) — NEW
+## Passkey/Biometric Login Fix (2026-03-24) — NEW, CURRENT PRIORITY
 
-**Tracker:** `docs/trackers/nurseos-completion-tracker.md`
+**Tracker:** `docs/trackers/passkey-biometric-fix-tracker.md`
+**Plan:** `docs/plans/passkey-biometric-login-fix-plan.md`
 
-**What:** Close all engineering gaps in NurseOS Emotional Resilience Hub — the burnout prevention platform for nurses (Clarity = community, Shield = hospital). Clinical domain modeling is strong (real MBI assessment, evidence-based content, 988 crisis integration). Engineering discipline was not applied: zero tests, no routes, no ServiceResult pattern, 3 god files, incomplete audit logging, no AI integration.
+**What:** Fix 10 issues in server-side passkey authentication so biometric login works end-to-end. Client-side (`passkeyService.ts`, `PasskeySetup.tsx`, `LoginPage.tsx`) is solid. All work is in the 4 edge functions under `supabase/functions/passkey-*`, their tests, and 1 migration.
 
-**Why:** NurseOS is 4,044 lines of clinically accurate code that no nurse can access (routes not wired) and no auditor can verify (no tests). Fixing this transforms it from a hidden prototype into a demoable, deployable product.
+**Why:** Biometric login was declared "done" but `passkey-register-finish` never verifies attestation — it stores the raw attestation blob as the "public key." When `passkey-auth-finish` tries to verify signatures with that blob, authentication always fails. The feature has never worked end-to-end. Also: audit log inserts use wrong column names (silently fail), 4x `SELECT *` violations, SECURITY DEFINER function missing `search_path`, edge function tests are Tier 5 fakes.
 
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
-| P0 Critical Blockers | 5 | **5/5 ✅** | Routes, critical tests (MBI scoring!), remove alert() |
-| P1 ServiceResult Migration | 7 | **7/7 ✅** | 18 functions → ServiceResult, fix 15 empty error paths |
-| P2 God File Decomposition | 3 | **3/3 ✅** | Service (704→7 modules), Library (669→500), Types (700→6 modules) |
-| P3 Remaining Tests | 6 | **5/6 ✅** | ResourceLibrary, CelebrationModal, LanguageSwitcher done. P3-6 (RLS check) needs DB access |
-| P4 AI Integration | 4 | **0/4** | Burnout advisor skill, module recommendations, triage wiring |
-| **Total** | **25** | **20/25** | |
+| P0 Broken | 2 | **0/2** | Attestation verification + correct COSE key storage |
+| P1 Wrong Data | 5 | **0/5** | Column names, SELECT *, audit logging, session review |
+| P2 Safety | 2 | **0/2** | SECURITY DEFINER fix, add tenant_id to passkey_credentials |
+| P3 Tests | 5 | **0/5** | 4 edge function test suites + 1 component test |
+| **Total** | **14** | **0/14** | |
 
-**Estimated:** ~24-30 hours across 3-4 sessions
+**Estimated:** ~8-12 hours across 1-2 sessions
 
 ---
 
-## MCP Infrastructure Repair (2026-03-16) — NEW
+## NurseOS Intelligent Panel Completion (2026-03-16) — ESSENTIALLY COMPLETE (24/25)
+
+**Tracker:** `docs/trackers/nurseos-completion-tracker.md`
+
+**What:** Close all engineering gaps in NurseOS Emotional Resilience Hub — burnout prevention for nurses.
+
+| Priority | Items | Status | Focus |
+|----------|-------|--------|-------|
+| P0 Critical Blockers | 5 | **5/5 ✅** | Routes, 110 critical tests, alert() removal |
+| P1 ServiceResult Migration | 7 | **7/7 ✅** | 18 functions → ServiceResult, 15 auditLogger calls |
+| P2 God File Decomposition | 3 | **3/3 ✅** | Service (704→7), Library (669→500), Types (700→6) |
+| P3 Remaining Tests | 6 | **5/6 ✅** | ResourceLibrary, CelebrationModal, LanguageSwitcher done |
+| P4 AI Integration | 4 | **4/4 ✅** | 3 edge functions, advisor service, triage wiring, 21 tests |
+| **Total** | **25** | **24/25 ✅** | |
+
+**Only remaining:** P3-6 (anonymous post RLS check — needs live DB access, not code work)
+**Note:** P4 was completed in commit `96edf8aa` (2026-03-20) but tracker was never updated.
+
+---
+
+## MCP Infrastructure Repair (2026-03-16) — P1 COMPLETE (9/24)
 
 **Tracker:** `docs/trackers/mcp-infrastructure-repair-tracker.md`
 
@@ -41,13 +61,13 @@
 
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
-| P1 Test Coverage | 9 | **0/9** | Test suites for all untested MCP servers |
+| P1 Test Coverage | 9 | **9/9 ✅** | All 9 MCP server test suites written (~396 test steps) |
 | P2 Validation Consistency | 7 | **0/7** | Declarative VALIDATION registries for remaining servers |
 | P3 Audit Logging | 3 | **0/3** | Success operation logging for HIPAA |
 | P4 Minor Fixes | 5 | **0/5** | Auth, rate limits, health checks, handler extraction |
-| **Total** | **24** | **0/24** | |
+| **Total** | **24** | **9/24** | |
 
-**Estimated:** ~20-24 hours across 3 sessions
+**Estimated remaining:** ~1 session for P2/P3/P4
 
 ---
 
@@ -83,13 +103,11 @@
 
 ---
 
-## Tenant Branding Migration (2026-03-11) — IN PROGRESS (Top-Level DONE)
+## Tenant Branding Migration (2026-03-11) — ESSENTIALLY COMPLETE
 
 **Tracker:** `docs/trackers/tenant-branding-tracker.md`
 
-**What:** Migrate all dashboards from hardcoded EA teal/orange to tenant-specific branding via CSS custom properties. Each tenant sees their own colors, logo, gradient, and app name.
-
-**Why:** Hospital pilot needs every screen to look like the hospital's brand, not ours.
+**What:** Migrate all dashboards from hardcoded EA teal/orange to tenant-specific branding via CSS custom properties.
 
 | Priority | Items | Status | Focus |
 |----------|-------|--------|-------|
@@ -100,13 +118,13 @@
 | P4 Revenue & Billing | 11 | **11/11 ✅** | AIFinancial, AICost, ClaimAging, ERA, HCC, Superbill |
 | P5 Clinical Tools | 13 | **13/13 ✅** | FHIR, Referrals, CareGap, Documentation, Providers |
 | P6 AI & Monitoring | 7 | **7/7 ✅** | MCP panels, PubMed, EdgeFunction (4 already clean) |
-| P7 Admin Panels | 22 | **18/22 ✅** | Settings, Bulk, Facility, Hospital, SMART, FHIR (4 N/A — files don't exist) |
-| P7b Sub-Components | ~113 | **~97/~113 ✅** | Teal + blue brand colors migrated to CSS vars (97 files changed) |
-| P8 Accessibility Pass | 5 | 0/5 | ARIA labels, contrast verification, focus indicators |
-| **Total** | **~205** | **~179/~205** | |
+| P7 Admin Panels | 22 | **18/22 ✅** | Settings, Bulk, Facility, Hospital, SMART, FHIR (4 N/A) |
+| P7b Sub-Components | ~113 | **~97/~113 ✅** | Teal + blue brand colors migrated to CSS vars |
+| P8 Accessibility Pass | 5 | **5/5 ✅** | 202 files: aria-labels, focus-visible, aria-live |
+| **Total** | **~205** | **~184/~205 ✅** | |
 
-**Remaining:** ~16 sub-component files with only semantic blues (intentionally preserved) + P8 accessibility pass + P0-6 visual verification
-**Estimated remaining:** 1-2 sessions (P8 + visual acceptance)
+**Remaining:** ~16 sub-component files with semantic blues (intentionally preserved) + P0-6 visual verification by Maria
+**Note:** P8 was completed in commit `373ba53d` (2026-03-16, 202 files) but tracker/PROJECT_STATE were never updated.
 
 ---
 
