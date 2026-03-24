@@ -46,6 +46,7 @@ import {
   validationErrorResponse
 } from "../_shared/mcpInputValidator.ts";
 import type { ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
 
@@ -320,6 +321,20 @@ serve(async (req) => {
 
         // Dispatch to handler
         const result = await handleToolCall(name, securedArgs);
+        const executionTimeMs = Date.now() - startTime;
+
+        // P3-2: Success audit logging
+        await logMCPAudit(sb, logger, {
+          serverName: SERVER_CONFIG.name,
+          toolName: name,
+          requestId,
+          userId: caller.userId,
+          tenantId: resolvedTenant || undefined,
+          authMethod: "jwt",
+          success: true,
+          executionTimeMs,
+          metadata: { role: caller.role }
+        });
 
         // Determine provenance based on tool type
         const aiTools = ['run_drg_grouper', 'optimize_daily_revenue'];
@@ -337,7 +352,7 @@ serve(async (req) => {
             }],
             metadata: {
               tool: name,
-              executionTimeMs: Date.now() - startTime,
+              executionTimeMs,
               requestId,
               caller: {
                 userId: caller.userId,

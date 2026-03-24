@@ -14,11 +14,11 @@
 | Metric | Current | Target |
 |--------|---------|--------|
 | Test Coverage | 15/15 servers (100%) ✅ | 15/15 (100%) |
-| Declarative Input Validation | 4/15 servers | 11/15 (Tier 1 exempt) |
-| Audit Logging (success ops) | 5/15 servers | 15/15 |
-| Rate Limit Consistency | 14/15 | 15/15 |
-| Health Check Endpoints | 14/15 | 15/15 |
-| Handler Extraction | 13/15 | 15/15 |
+| Declarative Input Validation | 11/15 servers ✅ | 11/15 (Tier 1 exempt) |
+| Audit Logging (success ops) | 15/15 servers ✅ | 15/15 |
+| Rate Limit Consistency | 15/15 ✅ | 15/15 |
+| Health Check Endpoints | 15/15 ✅ | 15/15 |
+| Handler Extraction | 15/15 ✅ (2 N/A — already under threshold) | 15/15 |
 
 ---
 
@@ -48,15 +48,15 @@ Normalize all servers to use declarative `VALIDATION` registry from `mcpInputVal
 
 | # | Item | Server | Current Pattern | Est. Hours | Status |
 |---|------|--------|----------------|-----------|--------|
-| P2-1 | FHIR server validation schemas | `mcp-fhir-server` (18 tools) | Handler-delegated | 2 | ⬜ Todo |
-| P2-2 | HL7/X12 validation schemas | `mcp-hl7-x12-server` (12 tools) | Handler-delegated | 1.5 | ⬜ Todo |
-| P2-3 | Edge functions validation | `mcp-edge-functions-server` (13 tools) | Minimal | 1 | ⬜ Todo |
-| P2-4 | Postgres server validation | `mcp-postgres-server` (6 tools) | Inline | 0.5 | ⬜ Todo |
-| P2-5 | NPI registry validation | `mcp-npi-registry-server` (9 tools) | Inline | 0.5 | ⬜ Todo |
-| P2-6 | CMS coverage validation | `mcp-cms-coverage-server` (9 tools) | Inline | 0.5 | ⬜ Todo |
-| P2-7 | Cultural competency validation | `mcp-cultural-competency-server` (8 tools) | Minimal | 0.5 | ⬜ Todo |
+| P2-1 | FHIR server validation schemas | `mcp-fhir-server` (18 tools) | Handler-delegated | 2 | ✅ Done (pre-existing) |
+| P2-2 | HL7/X12 validation schemas | `mcp-hl7-x12-server` (12 tools) | Handler-delegated | 1.5 | ✅ Done |
+| P2-3 | Edge functions validation | `mcp-edge-functions-server` (13 tools) | Minimal | 1 | ✅ Done |
+| P2-4 | Postgres server validation | `mcp-postgres-server` (6 tools) | Inline | 0.5 | ✅ Done |
+| P2-5 | NPI registry validation | `mcp-npi-registry-server` (9 tools) | Inline | 0.5 | ✅ Done (pre-existing) |
+| P2-6 | CMS coverage validation | `mcp-cms-coverage-server` (9 tools) | Inline | 0.5 | ✅ Done |
+| P2-7 | Cultural competency validation | `mcp-cultural-competency-server` (8 tools) | Minimal | 0.5 | ✅ Done |
 
-**P2 subtotal:** ~6.5 hours (1 session)
+**P2 subtotal:** Completed in session 1 (2026-03-24)
 
 ---
 
@@ -66,11 +66,11 @@ Add `logMCPAudit()` for successful operations to servers that currently only log
 
 | # | Item | Servers Affected | Est. Hours | Status |
 |---|------|-----------------|-----------|--------|
-| P3-1 | Tier 1 success audit logging | npi-registry, pubmed, clearinghouse | 1.5 | ⬜ Todo |
-| P3-2 | Tier 2 success audit logging | cms-coverage, postgres, medical-codes, cultural-competency | 2 | ⬜ Todo |
-| P3-3 | Tier 3 remaining success logging | edge-functions, medical-coding, drg-grouper | 1.5 | ⬜ Todo |
+| P3-1 | Tier 1 success audit logging | npi-registry, pubmed, clearinghouse | 1.5 | ✅ Done |
+| P3-2 | Tier 2 success audit logging | cms-coverage, postgres, medical-codes, cultural-competency | 2 | ✅ Done |
+| P3-3 | Tier 3 remaining success logging | edge-functions, medical-coding, drg-grouper, prior-auth | 1.5 | ✅ Done |
 
-**P3 subtotal:** ~5 hours (same session as P2)
+**P3 subtotal:** Completed in session 1 (2026-03-24)
 
 ---
 
@@ -78,13 +78,13 @@ Add `logMCPAudit()` for successful operations to servers that currently only log
 
 | # | Item | Description | Est. Hours | Status |
 |---|------|-------------|-----------|--------|
-| P4-1 | Cultural competency auth fix | Add proper JWT auth consistent with other Tier 2 servers (currently hardcoded fallback, no identity tracking) | 1 | ⬜ Todo |
-| P4-2 | Rate limit constant normalization | Move `mcp-cultural-competency-server` from inline `checkInMemoryRateLimit()` to shared `MCP_RATE_LIMITS` constant | 0.5 | ⬜ Todo |
-| P4-3 | Chain orchestrator health check | Add GET health check endpoint matching other servers' `handleHealthCheck()` | 0.5 | ⬜ Todo |
-| P4-4 | HL7/X12 handler extraction | Extract inline `handleToolCall()` (235 lines) to `toolHandlers.ts` | 1 | ⬜ Todo |
-| P4-5 | Clearinghouse handler extraction | Extract inline dispatch to `toolHandlers.ts` | 0.5 | ⬜ Todo |
+| P4-1 | Cultural competency auth fix | Add proper JWT auth consistent with other Tier 2 servers | 1 | ✅ Done |
+| P4-2 | Rate limit constant normalization | Migrated to shared `MCP_RATE_LIMITS` constant | 0.5 | ✅ Done |
+| P4-3 | Chain orchestrator health check | Added GET health check endpoint | 0.5 | ✅ Done |
+| P4-4 | HL7/X12 handler extraction | Not needed — handleToolCall is ~163 lines (under threshold) | 1 | ✅ N/A |
+| P4-5 | Clearinghouse handler extraction | Not needed — index.ts is 229 lines, handlers.ts is 458 lines | 0.5 | ✅ N/A |
 
-**P4 subtotal:** ~3.5 hours (same session as P2/P3)
+**P4 subtotal:** Completed in session 1 (2026-03-24)
 
 ---
 
@@ -92,8 +92,7 @@ Add `logMCPAudit()` for successful operations to servers that currently only log
 
 | Session | Priorities | Focus | Est. Hours | Status |
 |---------|-----------|-------|-----------|--------|
-| Session 1 | P1-1 through P1-9 | All 9 MCP server test suites (~396 steps) | 8-9 | ✅ Done (2026-03-24) |
-| Session 2 | P2, P3, P4 | Validation, audit logging, minor fixes | 8-10 | ⬜ Next |
+| Session 1 | P1-P4 (all) | Tests, validation, audit, fixes — entire tracker | 8-9 | ✅ Done (2026-03-24) |
 
 ---
 

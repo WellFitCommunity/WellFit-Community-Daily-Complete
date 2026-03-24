@@ -25,6 +25,7 @@ import {
   PING_TOOL
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import {
   searchPubmed,
   getArticleSummary,
@@ -258,6 +259,18 @@ serve(async (req) => {
         const response = await handleToolCallRequest(name, args || {});
         const responseBody = await response.text();
         const result = JSON.parse(responseBody);
+        const executionTimeMs = Date.now() - startTime;
+
+        // P3-1: Success audit logging
+        if (initResult.supabase) {
+          await logMCPAudit(initResult.supabase, logger, {
+            serverName: SERVER_CONFIG.name,
+            toolName: name,
+            success: true,
+            executionTimeMs,
+            metadata: { argsKeys: Object.keys(args || {}) }
+          });
+        }
 
         return new Response(JSON.stringify({
           jsonrpc: "2.0",
@@ -265,7 +278,7 @@ serve(async (req) => {
             ...result,
             metadata: {
               tool: name,
-              executionTimeMs: Date.now() - startTime
+              executionTimeMs
             }
           },
           id

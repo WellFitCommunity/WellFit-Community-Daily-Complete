@@ -24,6 +24,8 @@ import {
 } from '../_shared/mcpServerBase.ts';
 import { getRequestId } from '../_shared/mcpAuthGate.ts';
 
+import { logMCPAudit } from '../_shared/mcpAudit.ts';
+
 // Module imports
 import type { ClaimSubmission, ClaimStatusRequest, EligibilityRequest, PriorAuthRequest } from './types.ts';
 import { TOOLS } from './tools.ts';
@@ -166,6 +168,18 @@ serve(async (req: Request) => {
       }
 
       const result = await handleToolCall(toolName, toolArgs || {});
+      const executionTimeMs = Date.now() - startTime;
+
+      // P3-1: Success audit logging
+      if (initResult.supabase) {
+        await logMCPAudit(initResult.supabase, logger, {
+          serverName: SERVER_CONFIG.name,
+          toolName,
+          success: true,
+          executionTimeMs,
+          metadata: { argsKeys: Object.keys(toolArgs || {}) }
+        });
+      }
 
       return new Response(
         JSON.stringify({
@@ -174,7 +188,7 @@ serve(async (req: Request) => {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
             metadata: {
               tool: toolName,
-              executionTimeMs: Date.now() - startTime
+              executionTimeMs
             }
           },
           id

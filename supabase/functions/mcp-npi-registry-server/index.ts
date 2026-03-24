@@ -22,6 +22,7 @@ import {
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
 import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
 
@@ -159,6 +160,18 @@ serve(async (req) => {
         }
 
         const result = await handleToolCall(name, args || {});
+        const executionTimeMs = Date.now() - startTime;
+
+        // P3-1: Success audit logging
+        if (initResult.supabase) {
+          await logMCPAudit(initResult.supabase, logger, {
+            serverName: SERVER_CONFIG.name,
+            toolName: name,
+            success: true,
+            executionTimeMs,
+            metadata: { argsKeys: Object.keys(args || {}) }
+          });
+        }
 
         return new Response(JSON.stringify({
           jsonrpc: "2.0",
@@ -166,7 +179,7 @@ serve(async (req) => {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             metadata: {
               tool: name,
-              executionTimeMs: Date.now() - startTime
+              executionTimeMs
             }
           },
           id

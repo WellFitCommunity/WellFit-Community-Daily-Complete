@@ -41,6 +41,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+
+  // P4-3: Health check endpoint (GET)
+  if (req.method === "GET") {
+    return new Response(
+      JSON.stringify({
+        status: "healthy",
+        server: "mcp-chain-orchestrator",
+        version: "1.0.0",
+        timestamp: new Date().toISOString(),
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   const requestId = crypto.randomUUID();
 
   // S2-2: In-memory rate limiting (DoS protection)

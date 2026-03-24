@@ -31,6 +31,7 @@ import {
 } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
 import { checkMCPRateLimit, checkPersistentRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 
 // Module imports
 import type { ClaimData, PriorAuthRequestData } from './types.ts';
@@ -64,6 +65,51 @@ if (!initResult.supabase) {
 
 // Non-null after guard
 const sb = initResult.supabase;
+
+// =====================================================
+// P2-2: Declarative input validation schemas
+// =====================================================
+
+const VALIDATION: ToolSchemaRegistry = {
+  parse_hl7: {
+    message: { type: 'string', required: true, minLength: 3 },
+    strip_mllp: { type: 'boolean' },
+  },
+  hl7_to_fhir: {
+    message: { type: 'string', required: true, minLength: 3 },
+  },
+  generate_hl7_ack: {
+    original_message: { type: 'string', required: true, minLength: 3 },
+    ack_code: { type: 'enum', required: true, values: ['AA', 'AE', 'AR'] as const },
+    error_message: { type: 'string' },
+  },
+  validate_hl7: {
+    message: { type: 'string', required: true, minLength: 3 },
+    message_type: { type: 'string' },
+  },
+  generate_837p: {
+    encounter_id: { type: 'uuid' },
+    claim_data: { type: 'object', maxSize: 131072 },
+  },
+  validate_x12: {
+    x12_content: { type: 'string', required: true, minLength: 3 },
+  },
+  parse_x12: {
+    x12_content: { type: 'string', required: true, minLength: 3 },
+  },
+  x12_to_fhir: {
+    x12_content: { type: 'string', required: true, minLength: 3 },
+  },
+  generate_278_request: {
+    request_data: { type: 'object', required: true, maxSize: 131072 },
+  },
+  parse_278_response: {
+    x12_content: { type: 'string', required: true, minLength: 3 },
+  },
+  validate_278: {
+    x12_content: { type: 'string', required: true, minLength: 3 },
+  },
+};
 
 // =====================================================
 // Tool Handler — dispatches to module functions
@@ -341,6 +387,12 @@ serve(async (req: Request) => {
         role: caller.role,
         tenantId: caller.tenantId
       });
+
+      // P2-2: Validate tool arguments before dispatch
+      const validationErrors = validateForTool(toolName, toolArgs, VALIDATION);
+      if (validationErrors && validationErrors.length > 0) {
+        return validationErrorResponse(validationErrors, id, corsHeaders);
+      }
 
       const result = await handleToolCall(toolName, toolArgs, caller);
       const executionTimeMs = Date.now() - startTime;

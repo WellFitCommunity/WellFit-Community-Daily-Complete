@@ -25,6 +25,7 @@ import {
 import { getRequestId, createUnauthorizedResponse } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
 import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
 
@@ -191,6 +192,17 @@ serve(async (req: Request) => {
       );
 
       const executionTimeMs = Date.now() - startTime;
+
+      // P3-2: Success audit logging
+      await logMCPAudit(sb, logger, {
+        serverName: SERVER_CONFIG.name,
+        toolName,
+        requestId,
+        userId: caller?.userId,
+        success: true,
+        executionTimeMs,
+        metadata: { codesReturned }
+      });
 
       return new Response(JSON.stringify({
         jsonrpc: "2.0",

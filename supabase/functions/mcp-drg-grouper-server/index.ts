@@ -46,6 +46,7 @@ import {
   validationErrorResponse
 } from "../_shared/mcpInputValidator.ts";
 import type { ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import { TOOLS } from "./tools.ts";
 import { createDRGGrouperHandlers } from "./drgGrouperHandlers.ts";
 import { createRevenueHandlers } from "./revenueHandlers.ts";
@@ -290,6 +291,21 @@ serve(async (req) => {
             });
         }
 
+        const executionTimeMs = Date.now() - startTime;
+
+        // P3-2: Success audit logging
+        await logMCPAudit(sb, logger, {
+          serverName: SERVER_CONFIG.name,
+          toolName: name,
+          requestId,
+          userId: caller.userId,
+          tenantId: resolvedTenant || undefined,
+          authMethod: "jwt",
+          success: true,
+          executionTimeMs,
+          metadata: { role: caller.role }
+        });
+
         // AI tools require clinical review flagging
         const aiTools = ['run_drg_grouper', 'flag_revenue_risk'];
         const safetyFlags: Array<'ai_generated' | 'requires_clinical_review'> =
@@ -306,7 +322,7 @@ serve(async (req) => {
             }],
             metadata: {
               tool: name,
-              executionTimeMs: Date.now() - startTime,
+              executionTimeMs,
               requestId,
               caller: {
                 userId: caller.userId,

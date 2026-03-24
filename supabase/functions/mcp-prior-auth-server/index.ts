@@ -32,6 +32,7 @@ import {
 } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity, resolveTenantId } from "../_shared/mcpIdentity.ts";
 import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
 
@@ -261,6 +262,20 @@ serve(async (req) => {
         }
 
         const result = await handleToolCall(name, securedArgs);
+        const executionTimeMs = Date.now() - startTime;
+
+        // P3-2: Success audit logging
+        await logMCPAudit(sb, logger, {
+          serverName: SERVER_CONFIG.name,
+          toolName: name,
+          requestId,
+          userId: caller.userId,
+          tenantId: resolvedTenant || undefined,
+          authMethod: "jwt",
+          success: true,
+          executionTimeMs,
+          metadata: { role: caller.role }
+        });
 
         return new Response(JSON.stringify({
           jsonrpc: "2.0",
@@ -268,7 +283,7 @@ serve(async (req) => {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             metadata: {
               tool: name,
-              executionTimeMs: Date.now() - startTime,
+              executionTimeMs,
               requestId,
               caller: {
                 userId: caller.userId,

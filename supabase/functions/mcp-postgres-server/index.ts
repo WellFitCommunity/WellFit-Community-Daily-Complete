@@ -24,8 +24,26 @@ import {
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity, resolveTenantId } from "../_shared/mcpIdentity.ts";
+import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
+
+// P2-4: Declarative input validation schemas
+const VALIDATION: ToolSchemaRegistry = {
+  execute_query: {
+    query_name: { type: 'string', required: true },
+    tenant_id: { type: 'uuid' },
+  },
+  list_queries: {},
+  get_table_schema: {
+    table_name: { type: 'string', required: true },
+    tenant_id: { type: 'uuid' },
+  },
+  get_row_count: {
+    table_name: { type: 'string', required: true },
+    tenant_id: { type: 'uuid' },
+  },
+};
 
 // Initialize as Tier 2 (user_scoped) - uses anon key with RLS
 const SERVER_CONFIG = {
@@ -102,6 +120,12 @@ serve(async (req: Request) => {
 
       if (!TOOLS[toolName as keyof typeof TOOLS]) {
         throw new Error(`Unknown tool: ${toolName}`);
+      }
+
+      // P2-4: Declarative input validation
+      const validationErrors = validateForTool(toolName, toolArgs, VALIDATION);
+      if (validationErrors && validationErrors.length > 0) {
+        return validationErrorResponse(validationErrors, id, corsHeaders);
       }
 
       // Per-request client for RLS (P0-1 security fix)

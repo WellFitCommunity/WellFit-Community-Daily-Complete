@@ -29,8 +29,30 @@ import {
   CallerIdentity
 } from "../_shared/mcpAuthGate.ts";
 import { extractCallerIdentity, resolveTenantId } from "../_shared/mcpIdentity.ts";
+import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
+
+// =====================================================
+// P2-3: Declarative input validation schemas
+// =====================================================
+const VALIDATION: ToolSchemaRegistry = {
+  invoke_function: {
+    function_name: { type: 'string', required: true },
+    payload: { type: 'object' },
+    timeout: { type: 'number', min: 1000, max: 120000 }
+  },
+  list_functions: {
+    category: { type: 'enum', values: ['analytics', 'reports', 'workflow', 'integration', 'utility'] }
+  },
+  get_function_info: {
+    function_name: { type: 'string', required: true }
+  },
+  batch_invoke: {
+    invocations: { type: 'array', required: true, minItems: 1, maxItems: 20 },
+    stop_on_error: { type: 'boolean' }
+  }
+};
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -161,6 +183,12 @@ serve(async (req: Request) => {
         logger,
         requestId
       );
+
+      // P2-3: Declarative input validation
+      const validationErrors = validateForTool(toolName, toolArgs as Record<string, unknown> | undefined, VALIDATION);
+      if (validationErrors && validationErrors.length > 0) {
+        return validationErrorResponse(validationErrors, id, corsHeaders);
+      }
 
       logger.info("EDGE_FUNCTIONS_TOOL_CALL", {
         requestId,

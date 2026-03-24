@@ -23,8 +23,47 @@ import {
   type MCPInitResult,
 } from "../_shared/mcpServerBase.ts";
 import { getRequestId } from "../_shared/mcpAuthGate.ts";
+import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
+
+// P2-6: Declarative input validation schemas
+const VALIDATION: ToolSchemaRegistry = {
+  search_lcd: {
+    query: { type: 'string', required: true },
+    state: { type: 'state' },
+    status: { type: 'enum', values: ['active', 'future', 'retired'] },
+    limit: { type: 'number', min: 1, max: 100, integer: true },
+  },
+  search_ncd: {
+    query: { type: 'string', required: true },
+    status: { type: 'enum', values: ['active', 'future', 'retired'] },
+    limit: { type: 'number', min: 1, max: 100, integer: true },
+  },
+  get_lcd_details: {
+    lcd_id: { type: 'string', required: true },
+  },
+  get_ncd_details: {
+    ncd_id: { type: 'string', required: true },
+  },
+  get_coverage_requirements: {
+    code: { type: 'string', required: true },
+    code_type: { type: 'enum', values: ['cpt', 'hcpcs', 'icd10'] },
+    state: { type: 'state' },
+  },
+  check_prior_auth_required: {
+    cpt_code: { type: 'string', required: true },
+    state: { type: 'state' },
+  },
+  get_mac_contractors: {
+    state: { type: 'state', required: true },
+  },
+  get_coverage_articles: {
+    code: { type: 'string', required: true },
+    article_type: { type: 'enum', values: ['billing', 'coding', 'utilization', 'all'] },
+  },
+};
 
 // Initialize as Tier 2 (user_scoped) — queries real CMS database tables
 // Falls back to hardcoded data if DB unavailable
@@ -103,6 +142,12 @@ serve(async (req) => {
 
         logger.info("CMS Coverage tool call", { tool: name, hasDB: sb !== null });
 
+        // P2-6: Declarative input validation
+        const validationErrors = validateForTool(name, args, VALIDATION);
+        if (validationErrors && validationErrors.length > 0) {
+          return validationErrorResponse(validationErrors, id, corsHeaders);
+        }
+
         // Handle ping tool
         if (name === "ping") {
           const pingResult = handlePing(SERVER_CONFIG, { supabase: sb, logger, canRateLimit });
@@ -118,6 +163,19 @@ serve(async (req) => {
         }
 
         const result = await handleToolCall(name, args || {});
+        const executionTimeMs = Date.now() - startTime;
+
+        // P3-2: Success audit logging
+        if (sb) {
+          await logMCPAudit(sb, logger, {
+            serverName: SERVER_CONFIG.name,
+            toolName: name,
+            requestId,
+            success: true,
+            executionTimeMs,
+            metadata: { tool: name },
+          });
+        }
 
         return new Response(JSON.stringify({
           jsonrpc: "2.0",
@@ -125,7 +183,7 @@ serve(async (req) => {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             metadata: {
               tool: name,
-              executionTimeMs: Date.now() - startTime
+              executionTimeMs
             }
           },
           id

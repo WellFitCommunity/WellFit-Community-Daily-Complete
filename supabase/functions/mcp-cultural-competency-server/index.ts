@@ -7,12 +7,12 @@
 //
 // TIER 2 (user_scoped): Authenticated reference data
 // Auth: JWT validation for authenticated users
-// Rate: 30 req/min (reference data, not high-frequency)
+// Rate: 100 req/min via MCP_RATE_LIMITS.cultural_competency
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { getRequestIdentifier } from "../_shared/mcpRateLimiter.ts";
+import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import {
   initMCPServer,
   createInitializeResponse,
@@ -20,12 +20,47 @@ import {
   createErrorResponse,
   handlePing,
   handleHealthCheck,
-  checkInMemoryRateLimit,
   type MCPInitResult,
 } from "../_shared/mcpServerBase.ts";
-import { getRequestId } from "../_shared/mcpAuthGate.ts";
+import { getRequestId, createUnauthorizedResponse } from "../_shared/mcpAuthGate.ts";
+import { extractCallerIdentity } from "../_shared/mcpIdentity.ts";
+import { validateForTool, validationErrorResponse, type ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
+import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import { TOOLS } from "./tools.ts";
 import { createToolHandlers } from "./toolHandlers.ts";
+
+// P2-7: Declarative input validation schemas
+const POPULATION_VALUES = [
+  "veterans", "unhoused", "latino", "black_aa",
+  "isolated_elderly", "indigenous", "immigrant_refugee", "lgbtq_elderly",
+] as const;
+
+const VALIDATION: ToolSchemaRegistry = {
+  get_cultural_context: {
+    population: { type: 'enum', required: true, values: [...POPULATION_VALUES] },
+  },
+  get_communication_guidance: {
+    population: { type: 'enum', required: true, values: [...POPULATION_VALUES] },
+    context: { type: 'enum', values: ['clinical', 'emergency', 'discharge', 'medication', 'end_of_life'] },
+  },
+  get_clinical_considerations: {
+    population: { type: 'enum', required: true, values: [...POPULATION_VALUES] },
+    conditions: { type: 'array', itemType: 'string' },
+  },
+  get_barriers_to_care: {
+    population: { type: 'enum', required: true, values: [...POPULATION_VALUES] },
+  },
+  get_sdoh_codes: {
+    population: { type: 'enum', required: true, values: [...POPULATION_VALUES] },
+  },
+  check_drug_interaction_cultural: {
+    population: { type: 'enum', required: true, values: [...POPULATION_VALUES] },
+    medications: { type: 'array', required: true, minItems: 1, itemType: 'string' },
+  },
+  get_trust_building_guidance: {
+    population: { type: 'enum', required: true, values: [...POPULATION_VALUES] },
+  },
+};
 
 // Initialize as user_scoped tier (profiles now in database)
 // Falls back to hardcoded profiles if DB unavailable
@@ -60,28 +95,11 @@ serve(async (req) => {
   }
 
   try {
-    // Rate limiting: 30 req/min for reference data
+    // P4-2: Use shared rate limit config
     const identifier = getRequestIdentifier(req);
-    const rateLimitResult = checkInMemoryRateLimit(identifier, 30, 60000);
-
+    const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.cultural_competency);
     if (!rateLimitResult.allowed) {
-      return new Response(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: { code: -32000, message: "Rate limit exceeded" },
-          id: null,
-        }),
-        {
-          status: 429,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-            "Retry-After": String(
-              Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)
-            ),
-          },
-        }
-      );
+      return createRateLimitResponse(rateLimitResult, MCP_RATE_LIMITS.cultural_competency, corsHeaders);
     }
 
     const body = await req.json();
@@ -112,7 +130,7 @@ serve(async (req) => {
 
         logger.info("Cultural competency tool call", { tool: name });
 
-        // Handle ping tool
+        // Handle ping tool (no auth required)
         if (name === "ping") {
           const pingResult = handlePing(SERVER_CONFIG, {
             supabase: null,
@@ -123,22 +141,50 @@ serve(async (req) => {
             JSON.stringify({
               jsonrpc: "2.0",
               result: {
-                content: [
-                  {
-                    type: "text",
-                    text: JSON.stringify(pingResult, null, 2),
-                  },
-                ],
+                content: [{ type: "text", text: JSON.stringify(pingResult, null, 2) }],
               },
               id,
             }),
-            {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
+        // P4-1: Auth gate — require valid authenticated JWT
+        const caller = await extractCallerIdentity(req, {
+          serverName: SERVER_CONFIG.name,
+          toolName: name,
+          logger,
+        });
+
+        if (!caller) {
+          return createUnauthorizedResponse(
+            "Authentication required. Provide a valid Bearer token.",
+            requestId,
+            corsHeaders
+          );
+        }
+
+        // P2-7: Validate tool arguments before dispatch
+        const validationErrors = validateForTool(name, args, VALIDATION);
+        if (validationErrors && validationErrors.length > 0) {
+          return validationErrorResponse(validationErrors, id, corsHeaders);
+        }
+
         const result = await handleToolCall(name, args || {});
+        const executionTimeMs = Date.now() - startTime;
+
+        // P3-2: Success audit logging
+        if (sb) {
+          await logMCPAudit(sb, logger, {
+            serverName: SERVER_CONFIG.name,
+            toolName: name,
+            requestId,
+            userId: caller.userId,
+            success: true,
+            executionTimeMs,
+            metadata: { tool: name, population: (args || {}).population },
+          });
+        }
 
         return new Response(
           JSON.stringify({
@@ -149,7 +195,7 @@ serve(async (req) => {
               ],
               metadata: {
                 tool: name,
-                executionTimeMs: Date.now() - startTime,
+                executionTimeMs,
                 provenance: {
                   dataSource: sb ? "database_with_fallback" : "reference_data",
                   safetyFlags: ["reference_only"],
@@ -158,9 +204,7 @@ serve(async (req) => {
             },
             id,
           }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
