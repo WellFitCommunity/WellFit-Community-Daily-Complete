@@ -267,6 +267,105 @@ Zero errors means the system built to control AI works better than the systems m
 
 ---
 
+## The Two Biggest Differentiators in the System
+
+### The Smart Migration Engine — Data DNA Fingerprinting
+
+**Location:** `src/services/migration-engine/`
+
+Hospitals stay on bad EHR systems because migration is terrifying and expensive. Nordic, Tegria, and Accenture Health charge $300–$500/hour for consultants who manually map fields in spreadsheets. A typical Epic-to-new-system migration costs $200K–$500K in consulting alone.
+
+This system solves that problem with four components that work together:
+
+**1. PatternDetector** — Detects 40+ healthcare-specific data patterns in column values. LOINC lab codes, ICD-10 diagnosis codes, CPT procedure codes, NDC drug codes, SNOMED CT clinical codes, RxNorm medication IDs, NPI provider numbers (with Luhn checksum validation). Clinical codes are checked first, generic text patterns last. The system knows the difference between a diagnosis code and a phone number.
+
+**2. DataDNAGenerator — The Fingerprinting Engine** — Creates a unique structural signature for any dataset. Each column gets a DNA profile (detected patterns, confidence score, null percentage, unique percentage, sample values). The entire dataset gets a 40-dimensional signature vector and a structure hash. Identical datasets get identical hashes for instant lookup. The system computes cosine similarity between any two datasets — if Hospital B's Epic export scores above 0.7 similarity to Hospital A's Epic export, the learned mappings transfer automatically.
+
+**3. MappingIntelligence — The Learning Brain** — Three-tier suggestion engine:
+- **Tier 1 (highest priority):** Learned mappings from previous successful migrations, with confidence scores based on success/failure ratios. Organization-specific learnings preferred, org-agnostic as fallback.
+- **Tier 2:** Pattern matching against the target schema — Levenshtein distance on names, synonym matching, pattern compatibility scoring.
+- **Tier 3 (fallback):** Claude AI consulted only when confidence drops below 0.5. Responses cached by (sourceSystem, normalizedName, primaryPattern) to minimize cost. AI confidence capped to prevent over-certainty.
+
+**4. IntelligentMigrationService — The Orchestrator** — Generates DNA fingerprint → finds similar past migrations → generates mapping suggestions → executes migration in batches → validates values (NPI Luhn, email format, date format) → learns from results. When a user corrects a mapping, the system decreases confidence in the original and learns the correction. Next migration, the correction has priority.
+
+**Source system auto-detection:** Recognizes Epic (`ser_` prefix), Cerner (`prsnl_`), Meditech (`mt_`), Athena (`ath_`), and Allscripts (`touchworks`) from column naming conventions before the user says anything.
+
+**The compounding effect:** The first Epic migration requires human review. The second is 85%+ automatic. The tenth is nearly free. Every correction makes the system smarter. Every migration builds institutional knowledge that transfers to the next hospital.
+
+**Self-correction feedback loop:** User corrects a suggestion → system decreases confidence on original → learns the correction → next migration prioritizes the corrected mapping. The system gets smarter with every use. This is institutional knowledge capture, not just automation.
+
+**400+ tests.** Patent specification drafted. This is a standalone product that hospitals would pay for independent of the EHR.
+
+**What it means for sales:** "How do we get our data into your system?" is the #1 objection. The answer is: the migration engine fingerprints your data, matches it against every previous migration from your EHR vendor, and applies learned mappings automatically. Weeks instead of months. And it gets better every time.
+
+---
+
+### The DRG Grouper — Revenue Intelligence Engine
+
+**Location:** `supabase/functions/mcp-drg-grouper-server/`
+
+DRG (Diagnosis Related Group) assignment is how hospitals get paid by Medicare. Get the DRG wrong, and the hospital leaves thousands on the table per admission. Get it right, and revenue increases without treating a single additional patient.
+
+3M (now Solventum) and Optum360 charge hospitals $50K–$200K/year for DRG grouper software built in the 1990s. Those systems don't have AI-powered revenue optimization, don't suggest missing codes with dollar impact, and don't learn from corrections. This one does all three.
+
+**The 3-Pass Grouping Algorithm:**
+- **Pass 1 (Base DRG):** Principal diagnosis only → assigns base DRG code, weight, and Major Diagnostic Category
+- **Pass 2 (+CC):** Identifies secondary diagnoses marked as Complications/Comorbidities → upgrades DRG if applicable
+- **Pass 3 (+MCC):** Identifies secondary diagnoses marked as Major Complications/Comorbidities → upgrades again if applicable
+- **Final selection:** Picks the highest valid DRG weight across all three passes
+
+This is exactly how human medical coders think — but they do it manually and miss things. The system does all three passes in one call and picks the optimal result.
+
+**6 Tools in the Ensemble:**
+
+| Tool | Purpose | AI? |
+|------|---------|-----|
+| `run_drg_grouper` | 3-pass MS-DRG assignment from encounter documentation | Yes (Claude Sonnet) |
+| `get_drg_result` | Fetch existing DRG result for an encounter | No |
+| `estimate_reimbursement` | DRG weight × base rate × wage index = expected payment | No |
+| `validate_coding` | Rule-based charge completeness check (lab, imaging, pharmacy) | No |
+| `flag_revenue_risk` | AI identifies missing codes, upgrade opportunities, documentation gaps | Yes (Claude Sonnet) |
+| `get_payer_rules` | Medicare/Medicaid/commercial rates by payer type, fiscal year, state | No |
+
+**The Revenue Optimization Tool (`flag_revenue_risk`) is the killer feature.** It doesn't just assign a DRG — it tells you what you're missing:
+- "Clinical notes mention fever 3 times but R50.9 isn't coded — that's $450 in potential uplift"
+- "E10.9 could be upgraded to E10.22 based on documentation — that's $1,250"
+- Missing codes, upgrade opportunities, documentation gaps, modifier suggestions — each with a dollar impact and confidence score
+
+A CFO can read that output and understand it.
+
+**Reimbursement calculation uses real payment mechanics:**
+- Operating payment = base rate × DRG weight × wage index
+- Plus capital payment
+- Plus payer-specific rules for Medicare, Medicaid, commercial, TRICARE, and workers' comp
+- Wage index adjustments by geographic region
+- COLA (Cost of Living Adjustment)
+
+**Advisory only — never auto-bills.** Every AI suggestion is flagged `ai_generated` + `requires_clinical_review`. The system never auto-codes, never auto-files claims. This is the difference between a product hospitals will adopt and a product their compliance officers will reject. OIG (Office of Inspector General) is actively investigating AI-assisted upcoding. This system is built to be defensible from day one.
+
+**The validation loop closes the circle.** Results pass through `clinicalOutputValidator`. Rejected codes go to `validation_learning_loop`. The system learns which codes get rejected by human reviewers and stops suggesting them. Continuous improvement with a paper trail.
+
+**Reference data:** 760 MS-DRG codes from CMS FY2025 v42.0 (public domain), seeded in `ms_drg_reference` table with code, description, MDC, relative weight, mean LOS, and CC/MCC flags.
+
+**The math for a hospital:** If the DRG grouper identifies $2,500 in missed revenue per admission, and a hospital has 10,000 admissions per year, that's $25 million in potential uplift. Even capturing 10% of that is $2.5 million — paying for the entire platform many times over.
+
+**What it means for sales:** "How does this make us money?" is the question every hospital CFO asks. The DRG grouper answers it with specific dollar amounts, per admission, with confidence scores and audit trails. CIOs care about technology. CFOs care about revenue. This feature speaks CFO.
+
+---
+
+## Why These Two Features Together Change the Conversation
+
+Most health tech startups can't answer the two hardest questions a hospital will ask:
+
+1. **"How do we get our data into your system?"** — The Smart Migration Engine.
+2. **"How does this make us money?"** — The DRG Grouper.
+
+The migration engine removes the switching cost objection. The DRG grouper provides immediate, quantifiable ROI. When you can get both the CIO and the CFO nodding in the same room, that's when deals happen.
+
+These aren't features. They're the two things that make this a business, not just a platform.
+
+---
+
 > *"The hard part is already in the code."*
 >
 > — Code audit, March 24, 2026
