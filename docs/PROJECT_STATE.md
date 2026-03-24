@@ -10,6 +10,24 @@
 
 ---
 
+## Live Integration Testing (2026-03-24) — NOT STARTED (0/22)
+
+**Tracker:** `docs/trackers/live-integration-testing-tracker.md`
+
+**What:** Extend test coverage from mocked unit tests to live Supabase integration tests. Foundation already exists — `supabase/functions/__tests__/mcp-integration.test.ts` calls live endpoints. 112 edge function test files exist with logic validation. This tracker adds real HTTP calls against deployed functions with synthetic data that creates, verifies, and cleans up.
+
+| Track | Items | Status | Focus |
+|-------|-------|--------|-------|
+| T1 Infrastructure | 4 | **0/4** | Test tenant, data factory, runner script, CI |
+| T2 Critical Paths | 7 | **0/7** | create-checkin, login, RLS, FHIR R4, caregiver PIN |
+| T3 Expand Coverage | 6 | **0/6** | Clinical AI, meds, messaging, SMART, billing |
+| T4 Convert Existing | 4 | **0/4** | Add live calls to fhir-r4, login, bed-mgmt, guardian |
+| **Total** | **22** | **0/22** | |
+
+**Estimated effort:** ~16 hours across 2-3 sessions
+
+---
+
 ## Passkey/Biometric Login Fix (2026-03-24) — CODE COMPLETE (14/14)
 
 **Tracker:** `docs/trackers/passkey-biometric-fix-tracker.md`
