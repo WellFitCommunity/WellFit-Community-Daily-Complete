@@ -3,7 +3,8 @@
 > **Goal:** Every dashboard renders with the tenant's own branding — colors, logo, gradient, app name — not hardcoded EA teal/orange or raw Tailwind slate.
 
 **Created:** 2026-03-11
-**Status:** P0-P7 Top-Level DONE — Sub-components + P8 remaining
+**Status:** P0-P8 DONE — Only visual verification + ~16 semantic blue files remaining
+**Last Updated:** 2026-03-24 (P8 status corrected from git — commit `373ba53d`)
 **Estimated Effort:** 5-6 sessions (session 3 of ~5)
 
 ---
@@ -229,11 +230,11 @@ SOC2, HIPAA, and clinical workflow dashboards.
 
 | # | Item | Status |
 |---|------|--------|
-| P8-1 | Add ARIA labels to 29 dashboards missing them | Not Started |
-| P8-2 | Verify all tables have `role="table"`, `aria-label` | Not Started |
-| P8-3 | Verify all interactive elements have focus indicators | Not Started |
-| P8-4 | Verify color contrast meets WCAG AA (4.5:1) with tenant colors | Not Started |
-| P8-5 | Add `aria-live` regions for real-time data updates | Not Started |
+| P8-1 | Add ARIA labels to 29 dashboards missing them | ✅ Done (commit `373ba53d`, ~160 containers) |
+| P8-2 | Verify all tables have `role="table"`, `aria-label` | ✅ Done (commit `373ba53d`, ~40 tables) |
+| P8-3 | Verify all interactive elements have focus indicators | ✅ Done (commit `373ba53d`, 77→focus-visible + 88 new) |
+| P8-4 | Verify color contrast meets WCAG AA (4.5:1) with tenant colors | ✅ Done (commit `373ba53d`) |
+| P8-5 | Add `aria-live` regions for real-time data updates | ✅ Done (commit `373ba53d`, ~14 dashboards) |
 
 **Deliverable:** All dashboards WCAG AA compliant with tenant branding.
 
