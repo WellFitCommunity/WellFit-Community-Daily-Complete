@@ -41,7 +41,7 @@ serve(async (req: Request) => {
     // Verify challenge exists and is valid
     const { data: challenges, error: challengeError } = await supabase
       .from('passkey_challenges')
-      .select('*')
+      .select('id, challenge, user_id, type, used, expires_at')
       .eq('challenge', clientDataJSON.challenge)
       .eq('type', 'authentication')
       .eq('used', false)
@@ -84,7 +84,7 @@ resource_type: 'auth_event',
     // Find credential in database
     const { data: credential, error: credError } = await supabase
       .from('passkey_credentials')
-      .select('*')
+      .select('id, user_id, credential_id, public_key, counter, transports, device_name')
       .eq('credential_id', rawId)
       .single();
 
@@ -92,8 +92,7 @@ resource_type: 'auth_event',
       // Log failed authentication (passkey-specific table)
       await supabase.from('passkey_audit_log').insert({
         credential_id: rawId,
-        operation: 'failed_auth',
-resource_type: 'auth_event',
+        action: 'failed_auth',
         success: false,
         error_message: 'Credential not found'
       });
@@ -243,12 +242,15 @@ resource_type: 'auth_event',
     // Get user profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('*')
+      .select('user_id, first_name, last_name, email, phone, tenant_id, role, avatar_url')
       .eq('user_id', credential.user_id)
       .single();
 
-    // Create a session token for the user using Supabase Admin API
-    // This generates a valid access token and refresh token
+    // Create a session token for the user using Supabase Admin API.
+    // generateLink({type:'magiclink'}) produces session tokens without requiring a password.
+    // The properties object contains access_token and refresh_token for the authenticated user.
+    // Passkey auth cannot use signInWithPassword (no password exists), so this is the
+    // correct Admin API approach for passwordless session creation.
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: user.email || user.phone || `${user.id}@passkey.local`
@@ -277,8 +279,7 @@ resource_type: 'auth_event',
     await supabase.from('passkey_audit_log').insert({
       user_id: credential.user_id,
       credential_id: rawId,
-      operation: 'authenticate',
-resource_type: 'auth_event',
+      action: 'authenticate',
       success: true
     });
 
@@ -321,8 +322,7 @@ resource_type: 'auth_event',
 
     // Log failed authentication
     await supabase.from('passkey_audit_log').insert({
-      operation: 'failed_auth',
-      resource_type: 'auth_event',
+      action: 'failed_auth',
       success: false,
       error_message: errorMessage || 'Unknown error'
     }).catch(() => {});

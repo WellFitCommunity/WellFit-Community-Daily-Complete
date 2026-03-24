@@ -40,6 +40,11 @@ serve(async (req: Request) => {
   if (req.method !== "POST")
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
 
+  // Extract client IP for audit logging
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                   req.headers.get('cf-connecting-ip') ||
+                   req.headers.get('x-real-ip') || null;
+
   try {
     // Get user from auth header
     const authHeader = req.headers.get("Authorization") || "";
@@ -73,6 +78,27 @@ serve(async (req: Request) => {
 
     if (challengeError) {
       logger.error('Failed to store challenge', { error: challengeError.message, code: challengeError.code });
+
+      // HIPAA AUDIT LOGGING: Log failed registration start
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'PASSKEY_REGISTER_START_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: user.id,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'PASSKEY_REGISTER_START',
+          resource_type: 'auth_event',
+          success: false,
+          error_code: challengeError.code || 'CHALLENGE_ERROR',
+          error_message: challengeError.message,
+          metadata: { user_id: user.id }
+        });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error('Audit log insertion failed', { error: errorMessage });
+      }
+
       return new Response(JSON.stringify({ error: 'Failed to create challenge' }), { status: 500, headers: corsHeaders });
     }
 
@@ -105,6 +131,24 @@ serve(async (req: Request) => {
       timeout: 60000,
       attestation: "none" as const
     };
+
+    // HIPAA AUDIT LOGGING: Log successful registration start
+    try {
+      await supabase.from('audit_logs').insert({
+        event_type: 'PASSKEY_REGISTER_START_SUCCESS',
+        event_category: 'AUTHENTICATION',
+        actor_user_id: user.id,
+        actor_ip_address: clientIp,
+        actor_user_agent: req.headers.get('user-agent'),
+        operation: 'PASSKEY_REGISTER_START',
+        resource_type: 'auth_event',
+        success: true,
+        metadata: { user_id: user.id }
+      });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      logger.error('Audit log insertion failed', { error: errorMessage });
+    }
 
     return new Response(JSON.stringify(options), { status: 200, headers: corsHeaders });
 
