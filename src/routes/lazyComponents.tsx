@@ -147,6 +147,11 @@ export const AdminToolsDashboard = React.lazy(() =>
   import('../components/admin-tools/AdminToolsDashboard').then(m => ({ default: m.AdminToolsDashboard }))
 );
 
+// Dashboard Hub
+export const DashboardHub = React.lazy(() =>
+  import('../components/dashboard-hub/DashboardHub').then(m => ({ default: m.DashboardHub }))
+);
+
 // Consolidated Dashboards (H3 Remediation)
 export const AIFinancialDashboard = React.lazy(() => import('../components/admin/AIFinancialDashboard'));
 export const SOC2ComplianceDashboard = React.lazy(() => import('../components/admin/SOC2ComplianceDashboard'));
@@ -388,6 +393,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   SystemAdminSuiteDashboard,
   ClinicalQualityDashboard,
   AdminToolsDashboard,
+  DashboardHub,
   PriorAuthDashboard,
   BillingDashboard,
   BillingReviewDashboard,

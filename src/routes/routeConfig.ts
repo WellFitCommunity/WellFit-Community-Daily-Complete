@@ -133,6 +133,8 @@ export const caregiverRoutes: RouteConfig[] = [
 // ADMIN ROUTES (requires admin auth + roles)
 // ─────────────────────────────────────────────────────────────────────────────
 export const adminRoutes: RouteConfig[] = [
+  // Dashboard Hub — front door to all dashboard suites
+  { path: '/hub', component: 'DashboardHub', auth: 'admin', category: 'admin' },
   // Core Admin
   { path: '/admin', component: 'AdminPanel', auth: 'admin', category: 'admin' },
   { path: '/admin-profile-editor', component: 'AdminProfileEditorPage', auth: 'admin', category: 'admin' },

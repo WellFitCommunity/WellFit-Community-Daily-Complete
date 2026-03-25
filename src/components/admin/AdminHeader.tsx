@@ -35,6 +35,7 @@ import {
   Pill,
   BedDouble,
   UserCheck,
+  LayoutGrid,
 } from 'lucide-react';
 
 interface AdminHeaderProps {
@@ -148,11 +149,17 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     // Admin / super_admin / all other roles — default behavior
     return [
       {
+        label: 'Hub',
+        path: '/hub',
+        icon: LayoutGrid,
+        show: true,
+        accent: true,
+      },
+      {
         label: branding?.appName || 'Community',
         path: '/dashboard',
         icon: Home,
         show: true,
-        accent: true,
       },
       {
         label: 'Readmission Prevention',
