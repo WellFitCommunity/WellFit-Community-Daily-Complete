@@ -96,6 +96,9 @@ export const TemplateMaker = React.lazy(() =>
 );
 
 // Billing & Finance
+export const BillingSuiteDashboard = React.lazy(() =>
+  import('../components/billing/BillingSuiteDashboard').then(m => ({ default: m.BillingSuiteDashboard }))
+);
 export const PriorAuthDashboard = React.lazy(() => import('../components/admin/PriorAuthDashboard'));
 export const BillingDashboard = React.lazy(() => import('../components/admin/BillingDashboard'));
 export const BillingReviewDashboard = React.lazy(() =>
@@ -108,6 +111,26 @@ export const AIModelCardsDashboard = React.lazy(() => import('../components/admi
 export const AICostDashboard = React.lazy(() => import('../components/admin/AICostDashboard'));
 export const RevenueDashboard = React.lazy(() => import('../components/atlas/RevenueDashboard'));
 export const AIRevenueDashboard = React.lazy(() => import('../components/ai/AIRevenueDashboard'));
+
+// Security & Compliance Suite
+export const SecurityComplianceDashboard = React.lazy(() =>
+  import('../components/security/SecurityComplianceDashboard').then(m => ({ default: m.SecurityComplianceDashboard }))
+);
+
+// Care Operations Suite
+export const CareOperationsDashboard = React.lazy(() =>
+  import('../components/care-ops/CareOperationsDashboard').then(m => ({ default: m.CareOperationsDashboard }))
+);
+
+// Interoperability Suite
+export const InteroperabilityDashboard = React.lazy(() =>
+  import('../components/interop/InteroperabilityDashboard').then(m => ({ default: m.InteroperabilityDashboard }))
+);
+
+// MCP Management Suite
+export const MCPManagementDashboard = React.lazy(() =>
+  import('../components/mcp-suite/MCPManagementDashboard').then(m => ({ default: m.MCPManagementDashboard }))
+);
 
 // Consolidated Dashboards (H3 Remediation)
 export const AIFinancialDashboard = React.lazy(() => import('../components/admin/AIFinancialDashboard'));
@@ -342,6 +365,11 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   PhotoApprovalPage,
   ApiKeyManager,
   ReportsPrintPage,
+  BillingSuiteDashboard,
+  SecurityComplianceDashboard,
+  CareOperationsDashboard,
+  InteroperabilityDashboard,
+  MCPManagementDashboard,
   PriorAuthDashboard,
   BillingDashboard,
   BillingReviewDashboard,

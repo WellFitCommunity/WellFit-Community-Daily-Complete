@@ -167,6 +167,14 @@ export const adminRoutes: RouteConfig[] = [
     category: 'admin',
     wrapper: 'billingWrapper',
   },
+  // Billing Suite — tabbed revenue cycle management hub
+  {
+    path: '/billing-suite',
+    component: 'BillingSuiteDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'billing_specialist', 'finance'],
+    category: 'admin',
+  },
   {
     path: '/admin/api-keys',
     component: 'ApiKeyManager',
@@ -242,6 +250,38 @@ export const adminRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'billing_specialist'],
     category: 'admin',
     featureFlag: 'billingReview',
+  },
+  // Security & Compliance Suite — tabbed HIPAA/SOC2 management hub
+  {
+    path: '/security-compliance',
+    component: 'SecurityComplianceDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin'],
+    category: 'admin',
+  },
+  // Care Operations Suite — provider workflows, tasks, results, referrals
+  {
+    path: '/care-operations',
+    component: 'CareOperationsDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager', 'nurse_practitioner'],
+    category: 'admin',
+  },
+  // Interoperability Suite — FHIR, HL7, data mapping
+  {
+    path: '/interoperability',
+    component: 'InteroperabilityDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin'],
+    category: 'admin',
+  },
+  // MCP Management Suite — server health, keys, chains, edge functions
+  {
+    path: '/mcp-management',
+    component: 'MCPManagementDashboard',
+    auth: 'superAdmin',
+    roles: ['super_admin'],
+    category: 'superAdmin',
   },
   // Prior Authorization Center (CMS-0057-F)
   {
