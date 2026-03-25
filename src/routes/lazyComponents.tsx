@@ -132,6 +132,21 @@ export const MCPManagementDashboard = React.lazy(() =>
   import('../components/mcp-suite/MCPManagementDashboard').then(m => ({ default: m.MCPManagementDashboard }))
 );
 
+// System Admin Suite
+export const SystemAdminSuiteDashboard = React.lazy(() =>
+  import('../components/system-admin/SystemAdminSuiteDashboard').then(m => ({ default: m.SystemAdminSuiteDashboard }))
+);
+
+// Clinical Quality Suite
+export const ClinicalQualityDashboard = React.lazy(() =>
+  import('../components/clinical-quality/ClinicalQualityDashboard').then(m => ({ default: m.ClinicalQualityDashboard }))
+);
+
+// Admin Tools Suite
+export const AdminToolsDashboard = React.lazy(() =>
+  import('../components/admin-tools/AdminToolsDashboard').then(m => ({ default: m.AdminToolsDashboard }))
+);
+
 // Consolidated Dashboards (H3 Remediation)
 export const AIFinancialDashboard = React.lazy(() => import('../components/admin/AIFinancialDashboard'));
 export const SOC2ComplianceDashboard = React.lazy(() => import('../components/admin/SOC2ComplianceDashboard'));
@@ -370,6 +385,9 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   CareOperationsDashboard,
   InteroperabilityDashboard,
   MCPManagementDashboard,
+  SystemAdminSuiteDashboard,
+  ClinicalQualityDashboard,
+  AdminToolsDashboard,
   PriorAuthDashboard,
   BillingDashboard,
   BillingReviewDashboard,

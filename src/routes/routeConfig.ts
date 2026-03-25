@@ -283,6 +283,30 @@ export const adminRoutes: RouteConfig[] = [
     roles: ['super_admin'],
     category: 'superAdmin',
   },
+  // System Admin Suite — users, roles, facilities, modules, clearinghouse
+  {
+    path: '/system-admin',
+    component: 'SystemAdminSuiteDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin'],
+    category: 'admin',
+  },
+  // Clinical Quality Suite — quality measures, validation, public health
+  {
+    path: '/clinical-quality',
+    component: 'ClinicalQualityDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'],
+    category: 'admin',
+  },
+  // Admin Tools Suite — engagement, enrollment, export, paper forms, alerts
+  {
+    path: '/admin-tools',
+    component: 'AdminToolsDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin'],
+    category: 'admin',
+  },
   // Prior Authorization Center (CMS-0057-F)
   {
     path: '/admin/prior-auth',
