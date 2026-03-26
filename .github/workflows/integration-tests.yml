@@ -1,0 +1,44 @@
+# .github/workflows/integration-tests.yml
+name: Integration Tests (Live Supabase)
+
+on:
+  # Run on push to main — but only when edge functions or test files change
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/migrations/**'
+      - 'scripts/test-integration.sh'
+  # Manual trigger for on-demand testing
+  workflow_dispatch:
+
+env:
+  DENO_VERSION: '1.40'
+
+jobs:
+  integration-tests:
+    name: Live Edge Function Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+
+      - name: Run integration tests
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SB_SERVICE_ROLE_KEY }}
+        run: |
+          chmod +x scripts/test-integration.sh
+          ./scripts/test-integration.sh all
+
+      - name: Summary
+        if: always()
+        run: echo "Integration tests completed. Check logs above for results."
