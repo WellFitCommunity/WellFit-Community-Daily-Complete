@@ -3,14 +3,61 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-24 (Passkey/Biometric Login Fix complete — 14/14 items, all code work done)
-**Last Session:** Fixed all 10 passkey issues: attestation verification with SimpleWebAuthn v10, COSE key storage, audit log column names, SELECT * elimination, SECURITY DEFINER search_path, tenant_id on passkey_credentials, HIPAA audit logging for registration. Wrote 81 new tests (59 edge function + 22 component).
+**Last Updated:** 2026-03-26 (Alert system activated, MCP servers verified, integration testing T1+T2 complete)
+**Last Session:** Big session — activated the missed check-in alert system (4 missing DB objects + 4 pg_cron jobs), verified caregiver portal is fully deployed (ready for browser test), fixed DashboardHub type error, built integration test infrastructure (T1+T2), and verified all 15 MCP servers (12 green, 1 needs repair, 2 excluded).
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,597 tests (573 suites), 0 lint warnings, 0 typecheck errors project-wide
+**Codebase Health:** 11,597 tests (573 suites), 0 lint warnings, 0 typecheck errors in changed files (3 pre-existing project-wide)
 
 ---
 
-## Live Integration Testing (2026-03-24) — NOT STARTED (0/22)
+## What Happened This Session (2026-03-26)
+
+### Completed
+1. **Missed Check-In Alert System — ACTIVATED** (was broken, now live)
+   - Root cause: Edge functions were deployed but the DB objects they depend on never existed
+   - Created: `user_consecutive_missed_days` materialized view, `refresh_consecutive_missed_days()` function, `consecutive_missed_checkins_log` table, `inactivity_reminder_log` table, `latest_checkin` view alias
+   - Added 4 pg_cron jobs (DST-safe dual scheduling): send-checkin-reminders (9 AM CT), send-consecutive-missed-alerts (10 AM CT), notify-stale-checkins (11 AM CT)
+   - 61 users with 3+ missed days will start receiving alerts
+   - Migration: `20260326100000_alert_system_missing_objects.sql` (applied)
+
+2. **Caregiver Portal — VERIFIED DEPLOYED** (ready for Maria's browser test)
+   - All 3 tables exist with RLS: `caregiver_pins`, `caregiver_access_log`, `caregiver_view_grants`
+   - 4 RPC functions live: `create_caregiver_session`, `validate_caregiver_session`, `end_caregiver_session`, `get_my_access_history`
+   - `hash-pin` + `ai-caregiver-briefing` edge functions ACTIVE
+   - Test routes: `/set-caregiver-pin`, `/caregiver-access`, `/senior-view/:id`
+
+3. **DashboardHub Type Error — FIXED**
+   - Changed `icon: React.ElementType` → `React.ComponentType<{ className?: string }>` at line 44
+
+4. **Integration Testing — T1 + T2 COMPLETE (11/22)**
+   - T1-1: TEST-0001 tenant created in live Supabase ✅
+   - T1-2: Synthetic data factory (`helpers/data-factory.ts`) ✅
+   - T1-3: Test runner script (`scripts/test-integration.sh`) ✅
+   - T1-4: CI workflow (`.github/workflows/integration-tests.yml`) ✅
+   - T2: 16/16 critical path tests passing (create-checkin, login, RLS, FHIR, hash-pin, envision-login, alert system) ✅
+
+5. **MCP Server Verification — 12/15 GREEN**
+   - Fixed: NPI validation (valid Luhn NPI `1234567893`), admin auth (X-MCP-KEY header, not deprecated JWT service role)
+   - Generated integration test MCP key with admin scope (registered in `mcp_keys` table)
+   - Key lesson: Maria corrected me — `sb_secret_*` IS the correct new key format, JWT service role keys are deprecated. Admin MCP servers use `X-MCP-KEY` header for machine-to-machine auth.
+
+### Action Items for Maria
+- **FCM_SERVER_KEY**: Not in any env file. Get from Firebase Console > Cloud Messaging > Server Key. Set with `npx supabase secrets set FCM_SERVER_KEY=AAAA...`. Without it, push notifications (Day 3 alerts) won't send. SMS (Day 5) and email (Day 7) will work.
+- **Caregiver browser test**: When ready, test `/set-caregiver-pin` → `/caregiver-access`
+
+---
+
+## mcp-medical-coding-server Repair — NOT STARTED
+
+**Priority:** P2 — Server #13 of 15, crashes on startup (HTTP 500 WORKER_ERROR)
+**Root cause:** Bundle is 1.166MB (largest MCP server). Imports `npm:@anthropic-ai/sdk@0.39.0` in two handler files (`drgGrouperHandlers.ts`, `revenueOptimizerHandlers.ts`). The SDK import causes a startup crash before any request logic runs.
+**Missing tables:** `encounter_charges`, `charge_aggregation_snapshots`, `revenue_optimization_suggestions` (need migrations)
+**Fix approach:** Lazy-load the Anthropic SDK (dynamic import only when AI tools are called, not at boot), and create missing tables.
+**Estimated effort:** ~1 hour
+
+---
+
+## Live Integration Testing (2026-03-24) — IN PROGRESS (11/22)
 
 **Tracker:** `docs/trackers/live-integration-testing-tracker.md`
 
@@ -18,13 +65,13 @@
 
 | Track | Items | Status | Focus |
 |-------|-------|--------|-------|
-| T1 Infrastructure | 4 | **0/4** | Test tenant, data factory, runner script, CI |
-| T2 Critical Paths | 7 | **0/7** | create-checkin, login, RLS, FHIR R4, caregiver PIN |
+| T1 Infrastructure | 4 | **4/4 ✅** | Test tenant, data factory, runner script, CI |
+| T2 Critical Paths | 7 | **7/7 ✅** | create-checkin, login, RLS, FHIR R4, caregiver PIN |
 | T3 Expand Coverage | 6 | **0/6** | Clinical AI, meds, messaging, SMART, billing |
 | T4 Convert Existing | 4 | **0/4** | Add live calls to fhir-r4, login, bed-mgmt, guardian |
-| **Total** | **22** | **0/22** | |
+| **Total** | **22** | **11/22** | |
 
-**Estimated effort:** ~16 hours across 2-3 sessions
+**Estimated remaining:** ~8 hours across 1-2 sessions
 
 ---
 
