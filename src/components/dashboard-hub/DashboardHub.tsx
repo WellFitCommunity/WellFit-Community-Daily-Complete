@@ -41,7 +41,7 @@ interface HubCard {
   title: string;
   description: string;
   path: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   category: 'suites' | 'clinical' | 'workflows';
   roles?: string[];
