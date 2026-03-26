@@ -14,10 +14,8 @@
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("VITE_SUPABASE_URL") || "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("VITE_SUPABASE_ANON_KEY") || "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SB_SERVICE_ROLE_KEY") ||
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
-  "";
+// MCP admin key for Tier C (admin) servers — uses X-MCP-KEY header, NOT Bearer token
+const MCP_ADMIN_KEY = Deno.env.get("MCP_ADMIN_KEY") || "";
 
 // Default tenant for testing
 const TEST_TENANT_ID = "2b902657-6a20-4435-a78a-576f397517ca";
@@ -42,24 +40,30 @@ interface MCPResponse {
 
 /**
  * Helper to call MCP server with JSON-RPC protocol
- * @param authKey - Optional auth key override (default: anon key)
+ * @param mcpKey - Optional MCP key for admin servers (sent as X-MCP-KEY header)
  */
 async function callMCPServer(
   serverName: string,
   method: string,
   params?: Record<string, unknown>,
-  authKey?: string
+  mcpKey?: string
 ): Promise<MCPResponse> {
   const url = `${SUPABASE_URL}/functions/v1/${serverName}`;
-  const key = authKey || SUPABASE_ANON_KEY;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    "apikey": SUPABASE_ANON_KEY
+  };
+
+  // Admin servers authenticate via X-MCP-KEY header (not Bearer token)
+  if (mcpKey) {
+    headers["X-MCP-KEY"] = mcpKey;
+  }
 
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${key}`,
-      "apikey": SUPABASE_ANON_KEY
-    },
+    headers,
     body: JSON.stringify({
       jsonrpc: "2.0",
       method,
@@ -109,16 +113,16 @@ async function testMCPInitialize(serverName: string): Promise<boolean> {
  */
 async function testMCPToolsList(serverName: string): Promise<boolean> {
   try {
-    // Admin servers need service role key for tools/list
+    // Admin servers need MCP key via X-MCP-KEY header
     const isAdmin = ADMIN_SERVERS.has(serverName);
-    const authKey = isAdmin ? SUPABASE_SERVICE_ROLE_KEY : undefined;
+    const mcpKey = isAdmin ? MCP_ADMIN_KEY : undefined;
 
-    if (isAdmin && !SUPABASE_SERVICE_ROLE_KEY) {
-      console.log(`  [SKIP] ${serverName} tools/list: No service role key — admin server requires it`);
+    if (isAdmin && !MCP_ADMIN_KEY) {
+      console.log(`  [SKIP] ${serverName} tools/list: No MCP_ADMIN_KEY — set in .env.local`);
       return true; // Skip, not fail
     }
 
-    const response = await callMCPServer(serverName, "tools/list", undefined, authKey);
+    const response = await callMCPServer(serverName, "tools/list", undefined, mcpKey);
 
     if (response.error) {
       console.error(`  [FAIL] ${serverName} tools/list: ${response.error.message}`);
@@ -152,12 +156,12 @@ async function testMCPToolCall(
   args: Record<string, unknown>
 ): Promise<boolean> {
   try {
-    // Admin servers need service role key
-    const authKey = ADMIN_SERVERS.has(serverName) ? SUPABASE_SERVICE_ROLE_KEY : undefined;
+    // Admin servers need MCP key via X-MCP-KEY header
+    const mcpKey = ADMIN_SERVERS.has(serverName) ? MCP_ADMIN_KEY : undefined;
     const response = await callMCPServer(serverName, "tools/call", {
       name: toolName,
       arguments: args
-    }, authKey);
+    }, mcpKey);
 
     if (response.error) {
       const msg = response.error.message;
@@ -330,11 +334,9 @@ Deno.test({
     await t.step("MCP Protocol: Admin servers respond to tools/list (requires JWT service role)", async () => {
       console.log("\n--- MCP Tools List Tests (Admin — Tier 3) ---");
 
-      // Admin servers require JWT service role key (eyJ... format, not sb_secret_*)
-      const hasJwtServiceKey = SUPABASE_SERVICE_ROLE_KEY.startsWith("eyJ");
-      if (!hasJwtServiceKey) {
-        console.log("  [SKIP] No JWT service role key — admin servers require eyJ... format key");
-        console.log("  Add SB_SERVICE_ROLE_KEY=eyJ... to .env.local (from Supabase Dashboard > Settings > API)");
+      // Admin servers authenticate via X-MCP-KEY header
+      if (!MCP_ADMIN_KEY) {
+        console.log("  [SKIP] No MCP_ADMIN_KEY — set in .env.local for admin server testing");
         return;
       }
 
@@ -363,8 +365,8 @@ Deno.test({
     await t.step("Prior Auth Server: Tool calls work without runtime errors", async () => {
       console.log("\n--- Prior Auth Server Tool Tests ---");
 
-      if (!SUPABASE_SERVICE_ROLE_KEY) {
-        console.log("  [SKIP] No service role key — prior-auth-server requires admin auth");
+      if (!MCP_ADMIN_KEY) {
+        console.log("  [SKIP] No MCP_ADMIN_KEY — prior-auth-server requires X-MCP-KEY auth");
         return;
       }
 
@@ -377,7 +379,7 @@ Deno.test({
           hours_threshold: 24
         }),
         testMCPToolCall("mcp-prior-auth-server", "check_prior_auth_required", {
-          patient_id: "test-patient",
+          patient_id: "00000000-0000-0000-0000-000000000001",  // Synthetic UUID
           service_codes: ["99213"],
           date_of_service: new Date().toISOString().split("T")[0],
           tenant_id: TEST_TENANT_ID
@@ -478,8 +480,8 @@ Deno.test({
     await t.step("Claude Server: Basic tool call works without runtime errors", async () => {
       console.log("\n--- Claude Server Tool Tests ---");
 
-      if (!SUPABASE_SERVICE_ROLE_KEY) {
-        console.log("  [SKIP] No service role key — claude-server requires admin auth");
+      if (!MCP_ADMIN_KEY) {
+        console.log("  [SKIP] No MCP_ADMIN_KEY — claude-server requires X-MCP-KEY auth");
         return;
       }
 

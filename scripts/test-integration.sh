@@ -50,6 +50,9 @@ if [[ -z "${SUPABASE_URL:-}" ]] && [[ -f "$PROJECT_ROOT/.env.local" ]]; then
     if [[ "$key" == "SB_SERVICE_ROLE_KEY" && -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
       export SUPABASE_SERVICE_ROLE_KEY="$value"
     fi
+    if [[ "$key" == "MCP_ADMIN_KEY" && -z "${MCP_ADMIN_KEY:-}" ]]; then
+      export MCP_ADMIN_KEY="$value"
+    fi
   done < "$PROJECT_ROOT/.env.local"
   set +a
 fi
@@ -73,6 +76,7 @@ echo "🧪 Integration Test Runner"
 echo "   Supabase URL: ${SUPABASE_URL:0:40}..."
 echo "   Anon Key:     ${SUPABASE_ANON_KEY:0:20}..."
 echo "   Service Role: ${SUPABASE_SERVICE_ROLE_KEY:+SET}${SUPABASE_SERVICE_ROLE_KEY:-NOT SET}"
+echo "   MCP Admin:    ${MCP_ADMIN_KEY:+SET}${MCP_ADMIN_KEY:-NOT SET}"
 echo ""
 
 # Determine which tests to run
