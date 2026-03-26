@@ -1,8 +1,8 @@
 // Types for the AI-Enhanced FHIR Dashboard
 
 export interface DashboardProps {
-  supabaseUrl: string;
-  supabaseKey: string;
+  supabaseUrl?: string;
+  supabaseKey?: string;
 }
 
 // Population Dashboard Types

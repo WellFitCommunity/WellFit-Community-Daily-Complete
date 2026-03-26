@@ -5,7 +5,7 @@
 import type { MeasureDefinition, AggregateResult } from '../../../services/qualityMeasures/ecqmCalculationService';
 
 export interface QualityMeasuresDashboardProps {
-  tenantId: string;
+  tenantId?: string;
   className?: string;
 }
 

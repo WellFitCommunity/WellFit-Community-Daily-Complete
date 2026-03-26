@@ -51,8 +51,8 @@ export interface ConsolidatedAlertData {
 }
 
 interface ConsolidatedAlertPanelProps {
-  data: ConsolidatedAlertData | null;
-  patientId: string;
+  data?: ConsolidatedAlertData | null;
+  patientId?: string;
   isLoading?: boolean;
   onAcknowledge?: () => void;
 }
@@ -132,8 +132,8 @@ function DispositionRow({ disposition }: { disposition: AlertDisposition }) {
 // ============================================================================
 
 export const ConsolidatedAlertPanel: React.FC<ConsolidatedAlertPanelProps> = ({
-  data,
-  patientId,
+  data = null,
+  patientId = '',
   isLoading,
   onAcknowledge,
 }) => {

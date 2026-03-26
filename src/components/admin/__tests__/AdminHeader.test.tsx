@@ -66,6 +66,11 @@ vi.mock('lucide-react', () => {
     X: createIcon('X'),
     Heart: createIcon('Heart'),
     Smartphone: createIcon('Smartphone'),
+    Brain: createIcon('Brain'),
+    Pill: createIcon('Pill'),
+    BedDouble: createIcon('BedDouble'),
+    UserCheck: createIcon('UserCheck'),
+    LayoutGrid: createIcon('LayoutGrid'),
   };
 });
 

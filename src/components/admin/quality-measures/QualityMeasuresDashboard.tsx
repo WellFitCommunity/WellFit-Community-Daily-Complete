@@ -45,7 +45,7 @@ const TABS: TabConfig[] = [
 ];
 
 export const QualityMeasuresDashboard: React.FC<QualityMeasuresDashboardProps> = ({
-  tenantId,
+  tenantId = '',
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('ecqm');
