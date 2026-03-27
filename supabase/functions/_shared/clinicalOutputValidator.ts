@@ -532,12 +532,17 @@ export async function recordCodeFeedback(
 // --- FHIR Code System Validation (Phase 2-2) ---
 // Extracted to fhirCodeSystemValidator.ts for 600-line limit.
 // Re-exported here for backward compatibility.
+// Import locally first so default export can reference them.
 
-export {
-  validateFhirCodeSystems,
-  validateUCUMUnit,
-  validateDateConsistency,
+import {
+  validateFhirCodeSystems as _validateFhirCodeSystems,
+  validateUCUMUnit as _validateUCUMUnit,
+  validateDateConsistency as _validateDateConsistency,
 } from "./fhirCodeSystemValidator.ts";
+
+export const validateFhirCodeSystems = _validateFhirCodeSystems;
+export const validateUCUMUnit = _validateUCUMUnit;
+export const validateDateConsistency = _validateDateConsistency;
 
 export type {
   FhirCodedElement,

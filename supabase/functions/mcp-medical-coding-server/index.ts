@@ -12,6 +12,12 @@
 //
 // Advisory only — never auto-files charges or codes.
 // All suggestions require human review and confirmation.
+//
+// Architecture note: toolHandlers is lazy-loaded on first
+// request because the combined MCP infra + clinical validation
+// + handler modules exceed Deno's boot-time evaluation limit
+// when loaded synchronously. This is the standard pattern for
+// larger edge functions.
 // =====================================================
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -48,7 +54,6 @@ import {
 import type { ToolSchemaRegistry } from "../_shared/mcpInputValidator.ts";
 import { logMCPAudit } from "../_shared/mcpAudit.ts";
 import { TOOLS } from "./tools.ts";
-import { createToolHandlers } from "./toolHandlers.ts";
 
 // Server configuration — Tier 3 (admin)
 const SERVER_CONFIG = {
@@ -164,7 +169,19 @@ if (!initResult.supabase) {
 }
 
 const sb = initResult.supabase;
-const { handleToolCall } = createToolHandlers(sb, logger);
+
+// Lazy-load tool handlers on first request to avoid boot-time crash.
+// The combined MCP infra + clinical validation + handler modules exceed
+// Deno's synchronous module evaluation budget at ~248KB.
+let _handleToolCall: ((name: string, args: Record<string, unknown>) => Promise<unknown>) | null = null;
+
+async function getToolHandler() {
+  if (!_handleToolCall) {
+    const { createToolHandlers } = await import("./toolHandlers.ts");
+    _handleToolCall = createToolHandlers(sb, logger).handleToolCall;
+  }
+  return _handleToolCall;
+}
 
 // =====================================================
 // MCP JSON-RPC Server
@@ -319,7 +336,8 @@ serve(async (req) => {
           return validationErrorResponse(validationErrors, id, corsHeaders);
         }
 
-        // Dispatch to handler
+        // Dispatch to handler (lazy-loaded)
+        const handleToolCall = await getToolHandler();
         const result = await handleToolCall(name, securedArgs);
         const executionTimeMs = Date.now() - startTime;
 

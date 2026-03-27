@@ -478,13 +478,20 @@ npm test                           # Run tests
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
+| `/session-start` | Read PROJECT_STATE, report status | Every new session |
 | `/ship` | Verify, commit, and push | After completing implementation |
 | `/plan` | Structured implementation plan | Before starting a new feature |
+| `/deploy-edge` | Deploy edge function(s) with health check | After edge function changes |
 | `/security-scan` | HIPAA compliance check | Before commits, demos, audits |
 | `/demo-ready` | Hospital pilot demo validation | Before customer demos |
+| `/clinical-validate` | AI code validation hooks health | After clinical AI changes |
+| `/fhir-check` | FHIR interop health check | Before demos, after FHIR changes |
+| `/god-check` | 600-line file limit scan | Before commits, during refactoring |
+| `/audit-check` | Audit logging compliance | Before audits, compliance reviews |
 | `/cost-check` | AI cost analysis | Monthly review, budget planning |
 | `/test-runner` | Smart test execution | During development, before commits |
 | `/pre-commit` | Pre-commit validation | Before every commit |
+| `/onboard-tenant` | New organization onboarding | When a new org signs up |
 
 ---
 

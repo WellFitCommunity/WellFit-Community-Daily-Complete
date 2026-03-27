@@ -14,7 +14,6 @@
 // =====================================================
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
 import type { MCPLogger, DRGGroupingResult } from "./types.ts";
 import { SONNET_MODEL, calculateModelCost } from "../_shared/models.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
@@ -264,8 +263,6 @@ export function createDRGGrouperHandlers(
       };
     }
 
-    const anthropic = new Anthropic({ apiKey });
-
     const prompt = buildDRGGrouperPrompt({
       notes: clinicalText,
       existingDiagnoses: allDiagnoses,
@@ -283,19 +280,39 @@ export function createDRGGrouperHandlers(
       model: SONNET_MODEL
     });
 
-    const aiResponse = await anthropic.messages.create({
-      model: SONNET_MODEL,
-      max_tokens: 3000,
-      messages: [{ role: "user", content: prompt }],
-      tools: [DRG_ANALYSIS_TOOL],
-      tool_choice: { type: "tool", name: "submit_drg_analysis" }
+    // Direct fetch to Claude API (no SDK — avoids 1.1MB bundle that crashes the worker)
+    const aiHttpResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: SONNET_MODEL,
+        max_tokens: 3000,
+        messages: [{ role: "user", content: prompt }],
+        tools: [DRG_ANALYSIS_TOOL],
+        tool_choice: { type: "tool", name: "submit_drg_analysis" }
+      }),
     });
+
+    if (!aiHttpResponse.ok) {
+      const errText = await aiHttpResponse.text();
+      logger.error('DRG_GROUPER_API_FAILED', { encounterId, status: aiHttpResponse.status, error: errText });
+      return { error: `Claude API error (${aiHttpResponse.status})`, drg_result: null };
+    }
+
+    const aiResponse = await aiHttpResponse.json() as {
+      content: Array<{ type: string; input?: unknown; text?: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
 
     const responseTimeMs = Date.now() - startTime;
 
     // --- 3. Extract structured response from tool use ---
     const toolBlock = aiResponse.content.find(
-      (block: { type: string }) => block.type === "tool_use"
+      (block) => block.type === "tool_use"
     ) as { type: "tool_use"; input: unknown } | undefined;
 
     let analysis: DRGAnalysisResponse;
@@ -304,9 +321,9 @@ export function createDRGGrouperHandlers(
     } else {
       // Fallback: try parsing text content as JSON
       const textBlock = aiResponse.content.find(
-        (block: { type: string }) => block.type === "text"
-      ) as { type: "text"; text: string } | undefined;
-      const responseText = textBlock?.text ?? "";
+        (block) => block.type === "text"
+      );
+      const responseText = (textBlock?.text as string) ?? "";
       try {
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error("No JSON found in AI response");

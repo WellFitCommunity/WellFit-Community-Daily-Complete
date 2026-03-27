@@ -36,10 +36,10 @@ The MCP integration test already proves the live-test pattern works. This tracke
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 1-1 | Create `TEST-0001` tenant in Supabase | TODO | Dedicated test tenant, invisible to demo tenant `WF-0001` |
-| 1-2 | Create test helper: synthetic data factory | TODO | Insert/cleanup functions for patients, check-ins, etc. |
-| 1-3 | Create test runner script for integration tests | TODO | `scripts/test-integration.sh` — runs Deno tests against live Supabase |
-| 1-4 | Add CI workflow for integration tests | TODO | Separate from unit tests (slower, needs secrets) |
+| 1-1 | Create `TEST-0001` tenant in Supabase | ✅ Done | Dedicated test tenant, isolated via RLS |
+| 1-2 | Create test helper: synthetic data factory | ✅ Done | `helpers/data-factory.ts` — LIFO cleanup queue |
+| 1-3 | Create test runner script for integration tests | ✅ Done | `scripts/test-integration.sh` — critical/expanded/convert/mcp/all |
+| 1-4 | Add CI workflow for integration tests | ✅ Done | `.github/workflows/integration-tests.yml` |
 
 ---
 
@@ -47,13 +47,13 @@ The MCP integration test already proves the live-test pattern works. This tracke
 
 | # | Edge Function / Flow | What It Validates | Status |
 |---|---------------------|-------------------|--------|
-| 2-1 | `create-checkin` | Real check-in insert → verify row exists → cleanup | TODO |
-| 2-2 | `login` | Real auth flow → token returned → session valid | TODO |
-| 2-3 | RLS tenant isolation | Insert as tenant A → query as tenant B → must return empty | TODO |
-| 2-4 | `fhir-r4` | Real FHIR Patient read → valid Bundle response | TODO |
-| 2-5 | `fhir-r4` metadata | Capability statement from live endpoint | TODO |
-| 2-6 | Caregiver PIN access | Grant PIN → verify access → expire → verify blocked | TODO |
-| 2-7 | `envision-login` | Admin auth flow → TOTP setup → session valid | TODO |
+| 2-1 | `create-checkin` | Real check-in insert → verify row exists → cleanup | ✅ Done |
+| 2-2 | `login` | Real auth flow → token returned → session valid | ✅ Done |
+| 2-3 | RLS tenant isolation | Insert as tenant A → query as tenant B → must return empty | ✅ Done |
+| 2-4 | `fhir-r4` | Real FHIR Patient read → valid Bundle response | ✅ Done |
+| 2-5 | `fhir-r4` metadata | Capability statement from live endpoint | ✅ Done |
+| 2-6 | Caregiver PIN access | Grant PIN → verify access → expire → verify blocked | ✅ Done |
+| 2-7 | `envision-login` | Admin auth flow → TOTP setup → session valid | ✅ Done |
 
 ---
 
@@ -61,12 +61,12 @@ The MCP integration test already proves the live-test pattern works. This tracke
 
 | # | Category | Functions | Status |
 |---|----------|-----------|--------|
-| 3-1 | Clinical AI | `ai-readmission-predictor`, `ai-fall-risk-predictor`, `ai-care-plan-generator` | TODO |
-| 3-2 | Medications | `check-drug-interactions`, `ai-medication-reconciliation` | TODO |
-| 3-3 | Messaging | `send-sms`, `send-email` (verify accepted, not necessarily delivered) | TODO |
-| 3-4 | SMART on FHIR | `smart-authorize`, `smart-token` | TODO |
-| 3-5 | Public Health | `immunization-registry-submit`, `syndromic-surveillance-submit` | TODO |
-| 3-6 | Billing | `generate-837p`, `ai-billing-suggester` | TODO |
+| 3-1 | Clinical AI | `ai-readmission-predictor`, `ai-fall-risk-predictor`, `ai-care-plan-generator` | ✅ Done (5 tests) |
+| 3-2 | Medications | `check-drug-interactions`, `ai-medication-reconciliation` | ✅ Done (3 tests) |
+| 3-3 | Messaging | `send-sms`, `send-email` (verify accepted, not necessarily delivered) | ✅ Done (4 tests) |
+| 3-4 | SMART on FHIR | `smart-authorize`, `smart-token` | ✅ Done (4 tests) |
+| 3-5 | Public Health | `immunization-registry-submit`, `syndromic-surveillance-submit` | ✅ Done (4 tests) |
+| 3-6 | Billing | `generate-837p`, `ai-billing-suggester` | ✅ Done (4 tests) |
 
 ---
 
@@ -74,20 +74,39 @@ The MCP integration test already proves the live-test pattern works. This tracke
 
 | # | Test File | Current Tests | Live Tests Needed | Status |
 |---|-----------|---------------|-------------------|--------|
-| 4-1 | `fhir-r4/__tests__/index.test.ts` | 25+ logic steps | Add live endpoint calls alongside | TODO |
-| 4-2 | `login/__tests__/index.test.ts` | Logic validation | Add real auth round-trip | TODO |
-| 4-3 | `bed-management/__tests__/index.test.ts` | Logic validation | Add real bed query | TODO |
-| 4-4 | `guardian-agent/__tests__/index.test.ts` | Logic validation | Add real monitoring check | TODO |
+| 4-1 | `fhir-r4/__tests__/index.test.ts` | 25+ logic steps | 4 live tests in `convert-to-live-integration.test.ts` | ✅ Done |
+| 4-2 | `login/__tests__/index.test.ts` | Logic validation | 4 live tests in `convert-to-live-integration.test.ts` | ✅ Done |
+| 4-3 | `bed-management/__tests__/index.test.ts` | Logic validation | 5 live tests in `convert-to-live-integration.test.ts` | ✅ Done |
+| 4-4 | `guardian-agent/__tests__/index.test.ts` | Logic validation | 4 live tests in `convert-to-live-integration.test.ts` | ✅ Done |
 
 ---
 
 ## Success Criteria
 
-- [ ] `TEST-0001` tenant exists and is isolated from demo data
-- [ ] `scripts/test-integration.sh` runs all live tests and reports pass/fail
-- [ ] Track 2 (7 critical paths) all pass against live Supabase
-- [ ] Tests create their own data and clean up — no residue in database
-- [ ] CI runs integration tests on push (separate job from unit tests)
+- [x] `TEST-0001` tenant exists and is isolated from demo data
+- [x] `scripts/test-integration.sh` runs all live tests and reports pass/fail
+- [x] Track 2 (7 critical paths) all pass against live Supabase
+- [x] Tests create their own data and clean up — no residue in database
+- [x] CI runs integration tests on push (separate job from unit tests)
+- [x] Track 3 (6 categories, 24 tests) all pass against live Supabase
+- [x] Track 4 (4 functions, 17 tests) all pass against live Supabase
+
+## Completion Summary (2026-03-27)
+
+| Track | Tests | Status |
+|-------|-------|--------|
+| T1 Infrastructure | 4 items | ✅ Complete |
+| T2 Critical Paths | 16 tests | ✅ Complete |
+| T3 Expanded Coverage | 24 tests | ✅ Complete |
+| T4 Convert to Live | 17 tests | ✅ Complete |
+| MCP Integration | 8 steps | ✅ Complete (pre-existing) |
+| **Total** | **22/22 items, 65 live tests** | **✅ TRACKER COMPLETE** |
+
+**Files created this session:**
+- `supabase/functions/__tests__/expanded-coverage-integration.test.ts` (T3: 24 tests)
+- `supabase/functions/__tests__/convert-to-live-integration.test.ts` (T4: 17 tests)
+
+**Test runner updated:** `scripts/test-integration.sh` now supports `critical`, `expanded`, `convert`, `mcp`, `all`
 
 ---
 

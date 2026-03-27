@@ -98,6 +98,6 @@ Registration stores wrong data → authentication always fails. These two must b
 
 ## Remaining Action Items (Not Code)
 
-1. **Run `npx supabase db push`** to apply migration `20260324100000_fix_passkey_security_and_tenant_id.sql`
-2. **Deploy edge functions** after migration: `npx supabase functions deploy passkey-register-start passkey-register-finish passkey-auth-start passkey-auth-finish --no-verify-jwt`
-3. **End-to-end test** biometric login in browser after deploy
+1. ~~**Run `npx supabase db push`**~~ ✅ Applied 2026-03-27
+2. ~~**Deploy edge functions**~~ ✅ Deployed 2026-03-27 (all 4 responding: register-start/finish return 401 without auth, auth-start/finish return proper error without user context)
+3. **End-to-end test** biometric login in browser — **Maria's action item**

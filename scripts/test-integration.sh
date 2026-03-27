@@ -92,6 +92,14 @@ case "$FILTER" in
     echo "🎯 Running MCP Server Integration Tests"
     TEST_FILES="$TEST_DIR/mcp-integration.test.ts"
     ;;
+  expanded)
+    echo "🎯 Running Track 3: Expanded Coverage Tests"
+    TEST_FILES="$TEST_DIR/expanded-coverage-integration.test.ts"
+    ;;
+  convert)
+    echo "🎯 Running Track 4: Convert-to-Live Tests"
+    TEST_FILES="$TEST_DIR/convert-to-live-integration.test.ts"
+    ;;
   all)
     echo "🎯 Running ALL integration tests"
     TEST_FILES="$TEST_DIR/*-integration.test.ts $TEST_DIR/mcp-integration.test.ts"

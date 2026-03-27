@@ -3,14 +3,43 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-26 (Alert system activated, MCP servers verified, integration testing T1+T2 complete)
-**Last Session:** Big session — activated the missed check-in alert system (4 missing DB objects + 4 pg_cron jobs), verified caregiver portal is fully deployed (ready for browser test), fixed DashboardHub type error, built integration test infrastructure (T1+T2), and verified all 15 MCP servers (12 green, 1 needs repair, 2 excluded).
+**Last Updated:** 2026-03-27 (Integration testing COMPLETE 22/22, passkey deployed, key migration noted)
+**Last Session:** Completed live integration testing tracker (T3+T4: 41 new tests, all passing). Deployed 4 passkey edge functions + verified migration applied. Maria confirmed sb_publishable key is now primary (JWT anon key deprecated).
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,597 tests (573 suites), 0 lint warnings, 0 typecheck errors in changed files (3 pre-existing project-wide)
+**Codebase Health:** 11,699 tests (582 suites), 0 lint warnings, 0 typecheck errors in changed files, 65 live integration tests passing
 
 ---
 
-## What Happened This Session (2026-03-26)
+## What Happened This Session (2026-03-27)
+
+### Completed
+1. **Live Integration Testing — COMPLETE (22/22)**
+   - T3 Expanded Coverage: 24 tests across 6 categories (clinical AI, meds, messaging, SMART, public health, billing)
+   - T4 Convert to Live: 17 tests for fhir-r4, login, bed-management, guardian-agent
+   - Full suite: 65 live tests + 8 MCP steps, all passing
+   - New files: `expanded-coverage-integration.test.ts`, `convert-to-live-integration.test.ts`
+   - Test runner updated with `expanded` and `convert` shortcuts
+
+2. **Passkey/Biometric Login — DEPLOYED**
+   - Migration `20260324100000_fix_passkey_security_and_tenant_id.sql` confirmed applied
+   - 4 edge functions deployed: passkey-register-start, passkey-register-finish, passkey-auth-start, passkey-auth-finish
+   - All responding correctly (proper validation errors, no crashes)
+   - Remaining: Maria's browser test
+
+3. **Key Migration Update**
+   - Maria confirmed: `sb_publishable_*` is now primary key format
+   - JWT anon key is deprecated
+   - Saved to memory for future sessions
+
+4. **System Assessment — Code-Level Audit**
+   - Full report: `docs/SYSTEM_ASSESSMENT_2026-03-27.md`
+   - Gap tracker: `docs/trackers/system-gaps-tracker.md` (13 items: 3 P0, 4 P1, 6 P2)
+   - BLE/RPM assessment included — 5 device types production-ready (BP, glucose, SpO2, scale, thermometer), 3 wearable adapters real (Fitbit, Withings, iHealth), 4 stubbed
+   - Key finding: wearable DB migrations are in `_ARCHIVE_SKIPPED/` — tables don't exist yet
+
+---
+
+## What Happened Previous Session (2026-03-26)
 
 ### Completed
 1. **Missed Check-In Alert System — ACTIVATED** (was broken, now live)
@@ -47,31 +76,32 @@
 
 ---
 
-## mcp-medical-coding-server Repair — NOT STARTED
+## mcp-medical-coding-server Repair — COMPLETE ✅
 
-**Priority:** P2 — Server #13 of 15, crashes on startup (HTTP 500 WORKER_ERROR)
-**Root cause:** Bundle is 1.166MB (largest MCP server). Imports `npm:@anthropic-ai/sdk@0.39.0` in two handler files (`drgGrouperHandlers.ts`, `revenueOptimizerHandlers.ts`). The SDK import causes a startup crash before any request logic runs.
-**Missing tables:** `encounter_charges`, `charge_aggregation_snapshots`, `revenue_optimization_suggestions` (need migrations)
-**Fix approach:** Lazy-load the Anthropic SDK (dynamic import only when AI tools are called, not at boot), and create missing tables.
-**Estimated effort:** ~1 hour
+**Priority:** P2 — Server #13 of 15, was crashing on startup (HTTP 500 WORKER_ERROR)
+**Root causes (two issues):**
+1. Top-level `import Anthropic from "npm:@anthropic-ai/sdk@0.39.0"` added 1.1MB to the bundle. **Fix:** Replaced with direct `fetch()` to `api.anthropic.com` (same pattern as 36 other AI edge functions). Bundle dropped from 1.166MB to 248KB.
+2. Combined MCP infrastructure + clinical validation + handler modules exceeded Deno's synchronous boot-time evaluation limit at ~248KB. **Fix:** Lazy-load `toolHandlers.ts` via `await import()` on first request. MCP protocol layer loads at boot (fast), handler modules load on first tool call (deferred).
+3. `clinicalOutputValidator.ts` used `export { X } from` re-exports in a default export object literal, causing `validateFhirCodeSystems is not defined` at runtime. **Fix:** Import locally first, then re-export via `export const`.
+**Deployed:** 2026-03-26, version 7. Health check 200 OK, tools/list returns all 11 tools.
+**Tables:** All 3 tables (`payer_rules`, `daily_charge_snapshots`, `drg_grouping_results`) already exist.
+**MCP status: 13/15 GREEN** (was 12/15)
 
 ---
 
-## Live Integration Testing (2026-03-24) — IN PROGRESS (11/22)
+## Live Integration Testing (2026-03-24) — COMPLETE (22/22) ✅
 
 **Tracker:** `docs/trackers/live-integration-testing-tracker.md`
 
-**What:** Extend test coverage from mocked unit tests to live Supabase integration tests. Foundation already exists — `supabase/functions/__tests__/mcp-integration.test.ts` calls live endpoints. 112 edge function test files exist with logic validation. This tracker adds real HTTP calls against deployed functions with synthetic data that creates, verifies, and cleans up.
+**What:** Extend test coverage from mocked unit tests to live Supabase integration tests. 65 live tests across 5 files, all passing.
 
 | Track | Items | Status | Focus |
 |-------|-------|--------|-------|
 | T1 Infrastructure | 4 | **4/4 ✅** | Test tenant, data factory, runner script, CI |
 | T2 Critical Paths | 7 | **7/7 ✅** | create-checkin, login, RLS, FHIR R4, caregiver PIN |
-| T3 Expand Coverage | 6 | **0/6** | Clinical AI, meds, messaging, SMART, billing |
-| T4 Convert Existing | 4 | **0/4** | Add live calls to fhir-r4, login, bed-mgmt, guardian |
-| **Total** | **22** | **11/22** | |
-
-**Estimated remaining:** ~8 hours across 1-2 sessions
+| T3 Expand Coverage | 6 | **6/6 ✅** | Clinical AI, meds, messaging, SMART, billing (24 tests) |
+| T4 Convert Existing | 4 | **4/4 ✅** | fhir-r4, login, bed-mgmt, guardian (17 tests) |
+| **Total** | **22** | **22/22 ✅** | |
 
 ---
 
@@ -470,7 +500,7 @@ Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one
 | Migration pushed | 2026-03-04 |
 | Functions deployed | 7 MCP servers redeployed 2026-03-04 |
 
-## Skills Overhaul — Partial (2026-03-03) — IN PROGRESS
+## Skills Overhaul (2026-03-03 + 2026-03-26) — COMPLETE ✅
 
 > Commit `dd69bdf7` — 3 of 10 new skills built/rewritten.
 
@@ -486,9 +516,10 @@ Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one
 - WelcomeHeader, Footer, GlobalHeader now use `useBranding()` context instead of hardcoded values
 - AppHeader admin route exclusion: replaced stale 54-route hardcoded list with dynamic derivation from `routeConfig.ts`
 
-**Remaining skills (7 of 10 not yet built):**
-- `/pilot-prep`, `/session-start`, `/fhir-check`, `/clinical-validate`, `/deploy-edge`, `/god-check`, `/audit-check`
-- Nice-to-have: `/ai-report`, `/health`
+**Remaining skills: COMPLETE (14/14 active)**
+- Session 2 (2026-03-26): Built `/session-start`, `/fhir-check`, `/clinical-validate`, `/deploy-edge`, `/god-check`, `/audit-check`
+- Dropped `/pilot-prep` (redundant with `/demo-ready`)
+- Nice-to-have deferred: `/ai-report`, `/health`
 
 ## Chain 6 Medical Coding Processor (2026-03-03) — COMPLETE
 
@@ -554,10 +585,35 @@ Replaced the shared MCP key (`mcp_deb87fb957ded...`) with 13 scoped keys — one
 | ChatGPT Audit Gap Closure | `chatgpt-audit-gaps-tracker.md` | 3 sessions | 2026-03-12 |
 | Claude-in-Claude Triage Intelligence | `claude-in-claude-triage-tracker.md` | 1 session (27 items) | 2026-03-15 |
 
+### ACTIVE — System Gaps (from 2026-03-27 assessment)
+
+| Priority | Items | Hours | Focus |
+|----------|-------|-------|-------|
+| P0 Critical | 3 | ~7 | Push auth, AI crashes, CORS |
+| P1 High | 4 | ~20 | DB types, wearable tables, BLE sync, Garmin |
+| P2 Medium | 6 | ~78+ | Samsung, Amazfit, webhooks, RPM billing, iOS app, load testing |
+
+**Tracker:** `docs/trackers/system-gaps-tracker.md`
+**Assessment:** `docs/SYSTEM_ASSESSMENT_2026-03-27.md`
+
+### ACTIVE — BLE / RPM / Wearable Devices (from 2026-03-27 assessment)
+
+| Priority | Items | Hours | Focus |
+|----------|-------|-------|-------|
+| P0 Database | 4 | ~10 | Apply wearable migrations, create sync endpoint, wire BLE + adapters |
+| P1 OAuth | 3 | ~18 | Garmin OAuth 1.0a, Samsung, Amazfit |
+| P2 Clinical | 6 | ~48 | Webhooks, threshold alerts, RPM billing, FHIR vitals, provider dashboard |
+| P3 Native | 2 | ~70+ | iOS HealthKit app, Android Health Connect |
+
+**Tracker:** `docs/trackers/ble-rpm-wearable-tracker.md`
+**Current BLE status:** 5 device types production-ready (BP, glucose, SpO2, scale, thermometer). 3 wearable adapters real (Fitbit, Withings, iHealth). DB tables defined but not applied.
+**Critical blocker:** Wearable migrations in `_ARCHIVE_SKIPPED/` — data has nowhere to persist.
+
 ### RECENTLY COMPLETED
 
 | Feature | Tracker | Completed |
 |---------|---------|-----------|
+| Live Integration Testing | `live-integration-testing-tracker.md` | 2026-03-27 — 22/22 items, 65 live tests |
 | Skills Overhaul (partial: 3/10) | (PROJECT_STATE inline) | 2026-03-03 — `/onboard-tenant` NEW, `/demo-ready` + `/security-scan` rewritten |
 
 ### DEFERRED POLISH (low priority, do when convenient)

@@ -2,7 +2,7 @@
 
 [![CI/CD](https://github.com/WellFitCommunity/WellFit-Community-Daily-Complete/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/WellFitCommunity/WellFit-Community-Daily-Complete/actions/workflows/ci-cd.yml)
 [![Security Scan](https://github.com/WellFitCommunity/WellFit-Community-Daily-Complete/actions/workflows/security-scan.yml/badge.svg)](https://github.com/WellFitCommunity/WellFit-Community-Daily-Complete/actions/workflows/security-scan.yml)
-[![Tests](https://img.shields.io/badge/tests-7%2C490%20passed-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-11%2C597%20passed-brightgreen)]()
 [![License](https://img.shields.io/badge/license-Proprietary-blue)]()
 [![HIPAA](https://img.shields.io/badge/HIPAA-compliant-green)]()
 [![TypeScript](https://img.shields.io/badge/any%20types-0-brightgreen)]()
@@ -43,9 +43,10 @@ Both products can be deployed independently or together under a single multi-ten
               +--------------------+--------------------+
               |                    |                    |
     +---------+------+  +---------+------+  +---------+------+
-    | PostgreSQL 17  |  |  10 MCP Servers |  |  Claude AI     |
+    | PostgreSQL 17  |  |  15 MCP Servers |  |  Claude AI     |
     | (RLS per tenant)|  | FHIR, HL7, NPI |  | 40+ AI Skills  |
-    +----------------+  | CMS, Claims    |  +----------------+
+    +----------------+  | CMS, Claims,   |  +----------------+
+                        | Billing, Codes |
                         +----------------+
 ```
 
@@ -75,7 +76,7 @@ Both products can be deployed independently or together under a single multi-ten
 
 | Metric | Value |
 |--------|-------|
-| Tests | 7,490 across 306 suites |
+| Tests | 11,699 across 582 suites |
 | Pass rate | 100% |
 | `any` types | 0 (eliminated 1,400+ in Jan 2026) |
 | Lint warnings | 0 (eliminated 1,671 in Jan 2026) |
@@ -93,18 +94,25 @@ Both products can be deployed independently or together under a single multi-ten
 - Meal planning, activities, social engagement
 - Emergency alerts with offline support
 - Physical therapy and neuro suite modules
-- Caregiver access with PIN-based authentication
+- Caregiver portal with PIN-based authentication
+- My Health Hub (21st Century Cures Act patient access)
+- Missed check-in alert system (SMS, email, push escalation)
+- Dashboard Hub with 8 consolidated dashboard suites
+- Passkey/biometric login support
 
 ### Envision Atlus (Clinical)
 - FHIR R4 interoperability (Epic integration ready)
 - Patient Avatar visualization system
 - SHIELD welfare check dispatch (law enforcement integration)
-- Readmission risk prediction
+- Readmission risk prediction with AI confidence calibration
 - Care coordination and referral management
-- Shift handoff system
+- Shift handoff system with AI narrative synthesis
 - Dental health module with CDT billing
-- NurseOS burnout prevention
-- 40+ AI-powered clinical services
+- NurseOS burnout prevention (Emotional Resilience Hub)
+- Compass Riley ambient learning & physician intuition engine
+- Clinical validation hooks (AI-hallucinated code detection)
+- 15 MCP servers (FHIR, HL7/X12, NPI, CMS, Prior Auth, Clearinghouse, Medical Codes)
+- 40+ AI-powered clinical services with structured output
 
 ---
 
@@ -178,7 +186,7 @@ npm run dev        # Start Vite dev server (localhost:5173)
 npm run build      # Production build
 npm run lint       # Run ESLint
 npm run typecheck  # Run TypeScript type checking
-npm test           # Run Vitest (7,490 tests)
+npm test           # Run Vitest (11,699 tests)
 ```
 
 ### Supabase
