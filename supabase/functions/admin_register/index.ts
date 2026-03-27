@@ -83,7 +83,7 @@ serve(async (req: Request) => {
       const { data: userInfo } = await supabase.auth.getUser(bearer);
       const callerId = userInfo?.user?.id;
       if (callerId) {
-        const { data: prof } = await supabase.from("profiles").select("role_code").eq("id", callerId).maybeSingle();
+        const { data: prof } = await supabase.from("profiles").select("role_code").eq("user_id", callerId).maybeSingle();  // A-9 fix
         if (prof?.role_code && ELEVATED.has(prof.role_code)) isAdminSession = true;
       }
     }

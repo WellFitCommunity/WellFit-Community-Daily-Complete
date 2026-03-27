@@ -116,12 +116,12 @@ Please reach out and ensure they’re okay.
     <p>— The WellFit Community Team</p>
   `;
 
-  // ✅ underscore name to match folder (supabase/functions/send_email/)
-  const { error } = await supabase.functions.invoke("send_email", {
+  // A-10 fix: function directory is send-email (dash), not send_email (underscore)
+  const { error } = await supabase.functions.invoke("send-email", {
     body: { to, subject, text, html },
   });
 
-  if (error) throw new Error(`send_email function failed: ${error.message}`);
+  if (error) throw new Error(`send-email function failed: ${error.message}`);
 }
 
 serve(async (req) => {

@@ -95,7 +95,7 @@ serve(async (req) => {
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("first_name, last_name, caregiver_email, caregiver_phone")
-      .eq("id", patient_id)
+      .eq("user_id", patient_id)  // A-9 fix: profiles PK is user_id, not id
       .single();
 
     const patientName = profile
@@ -147,7 +147,7 @@ serve(async (req) => {
     for (const member of careTeamMembers) {
       if (member.email) {
         try {
-          await supabaseAdmin.functions.invoke("send_email", {
+          await supabaseAdmin.functions.invoke("send-email", {  // A-10 fix: directory is send-email (dash)
             body: {
               to: member.email,
               subject: alertSubject,

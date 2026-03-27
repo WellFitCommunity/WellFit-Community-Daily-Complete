@@ -202,7 +202,7 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('full_name, first_name, last_name, caregiver_email, phone_number, emergency_contact_name')
-      .eq('id', user_id)
+      .eq('user_id', user_id)  // A-9 fix: profiles PK is user_id, not id
       .single();
 
     if (profileError || !profile) {

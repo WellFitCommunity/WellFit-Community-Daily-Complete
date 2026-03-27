@@ -10,7 +10,7 @@ export default async function handler(req: Request): Promise<Response> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
 
   if (req.method === 'GET') {
-    // If your table is named "check_ins", change "check_ins" -> "check_ins" below.
+    // Table name: check_ins (with underscore)
     const out = await sbAsUser<any[]>(
       req,
       headers,
@@ -26,7 +26,7 @@ export default async function handler(req: Request): Promise<Response> {
     const out = await sbAsUser<any[]>(
       req,
       headers,
-      `/rest/v1/checkins`,
+      `/rest/v1/check_ins`,  // A-12 fix: table is check_ins (with underscore)
       {
         method: 'POST',
         headers: { Prefer: 'return=representation' },

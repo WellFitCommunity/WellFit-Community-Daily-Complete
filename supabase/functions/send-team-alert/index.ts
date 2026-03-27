@@ -52,7 +52,7 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('first_name, last_name, caregiver_email, caregiver_phone')
-      .eq('id', user_id)
+      .eq('user_id', user_id)  // A-9 fix: profiles PK is user_id, not id
       .single()
 
     if (profileError) {
@@ -100,7 +100,7 @@ Please check on this user as soon as possible.
     logger.info('Sending team alert emails', { recipients, userName });
     for (const recipient of recipients) {
       try {
-        await supabaseClient.functions.invoke('send_email', {
+        await supabaseClient.functions.invoke('send-email', {  // A-10 fix: directory is send-email (dash)
           body: {
             to: recipient,
             subject: emailSubject,

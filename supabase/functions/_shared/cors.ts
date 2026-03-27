@@ -41,17 +41,22 @@ if (DEV_ALLOW_LOCAL) {
 }
 const ALLOWED_ORIGINS: string[] = Array.from(allowedSet);
 
-/** GitHub Codespaces pattern for dynamic environment URLs */
-const CODESPACES_PATTERN = /^https:\/\/[a-z0-9-]+\.app\.github\.dev$/;
-
-/** Vercel deployment pattern for dynamic preview/production URLs */
-const VERCEL_PATTERN = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
-
 /**
- * WHITE-LABEL MODE: REMOVED - Security violation per CLAUDE.md.
- * Use ALLOWED_ORIGINS env var to configure tenant domains explicitly.
- * Add new tenant domains to ALLOWED_ORIGINS as they onboard.
+ * A-11 fix: Removed broad wildcard patterns for *.vercel.app and *.github.dev.
+ * These allowed ANY deployment on those platforms to call our API.
+ *
+ * To allow a specific Codespaces or Vercel URL, add it to ALLOWED_ORIGINS env var.
+ * Example: ALLOWED_ORIGINS=https://wellfitcommunity.live,https://my-preview-abc123.vercel.app
+ *
+ * DEV_ALLOW_CODESPACES=true enables Codespaces pattern matching (dev only).
+ * DEV_ALLOW_VERCEL=true enables Vercel pattern matching (dev only).
  */
+const DEV_ALLOW_CODESPACES: boolean =
+  (getEnv("DEV_ALLOW_CODESPACES") || "false").toLowerCase() === "true";
+const DEV_ALLOW_VERCEL: boolean =
+  (getEnv("DEV_ALLOW_VERCEL") || "false").toLowerCase() === "true";
+const CODESPACES_PATTERN = /^https:\/\/[a-z0-9-]+\.app\.github\.dev$/;
+const VERCEL_PATTERN = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
 
 /** Options for CORS header generation */
 export interface CorsOptions {
@@ -139,13 +144,11 @@ export function cors(
       const isLocal =
         (u.hostname === "localhost" || u.hostname === "127.0.0.1") && u.port === "3100";
 
-      // Check for GitHub Codespaces URLs (dynamic preview URLs)
-      const isCodespaces = CODESPACES_PATTERN.test(normalized);
+      // A-11 fix: Codespaces/Vercel patterns only allowed when explicitly enabled via env var
+      const isCodespaces = DEV_ALLOW_CODESPACES && CODESPACES_PATTERN.test(normalized);
+      const isVercel = DEV_ALLOW_VERCEL && VERCEL_PATTERN.test(normalized);
 
-      // Check for Vercel deployment URLs (preview and production)
-      const isVercel = VERCEL_PATTERN.test(normalized);
-
-      // Allow origin if: explicitly listed, local dev, Codespaces, or Vercel
+      // Allow origin if: explicitly listed in ALLOWED_ORIGINS, local dev, or dev-mode platform
       if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces || isVercel) {
         headers["Access-Control-Allow-Origin"] = normalized;
         headers["Access-Control-Allow-Credentials"] = "true";

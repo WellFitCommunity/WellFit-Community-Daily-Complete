@@ -103,9 +103,10 @@ class KeyManager {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    // Check for environment-provided keys (Vite client-side)
-    // SECURITY: Private keys should only be used server-side in production
-    const envPrivateKey = import.meta.env.VITE_GUARDIAN_JWT_PRIVATE_KEY;
+    // A-15 fix: Private keys must NEVER be in VITE_ env vars (ships to browser).
+    // Guardian JWT signing should happen server-side in the guardian-agent edge function.
+    // Public key can remain browser-side for verification only.
+    const envPrivateKey = '';  // Removed: was VITE_GUARDIAN_JWT_PRIVATE_KEY
     const envPublicKey = import.meta.env.VITE_GUARDIAN_JWT_PUBLIC_KEY;
 
     if (envPrivateKey && envPublicKey) {

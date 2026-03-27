@@ -93,7 +93,7 @@ export class PostAcuteTransferService {
         return { success: false, error: 'User not authenticated' };
       }
 
-      const { data: userProfile } = await supabase.from('profiles').select('facility_name, phone').eq('id', user.id).single();
+      const { data: userProfile } = await supabase.from('profiles').select('facility_name, phone').eq('user_id', user.id).single();  // A-9 fix
 
       const sendingFacility = userProfile?.facility_name || 'Hospital';
 
