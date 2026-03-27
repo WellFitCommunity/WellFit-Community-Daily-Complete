@@ -23,6 +23,7 @@ import type {
   WearableVitalData,
   WearableActivityData,
 } from '../UniversalWearableRegistry';
+import { auditLogger } from '../../../services/auditLogger';
 
 interface AmazfitConfig extends WearableAdapterConfig {
   // Amazfit/Zepp specific config
@@ -274,7 +275,11 @@ export class AmazfitAdapter implements WearableAdapter {
           }
         }
       } catch (error: unknown) {
-        
+        await auditLogger.error(
+          'AMAZFIT_HEART_RATE_FETCH_FAILED',
+          error instanceof Error ? error : new Error(String(error)),
+          { userId: params.userId }
+        );
       }
     }
 
@@ -303,7 +308,11 @@ export class AmazfitAdapter implements WearableAdapter {
           }
         }
       } catch (error: unknown) {
-        
+        await auditLogger.error(
+          'AMAZFIT_SPO2_FETCH_FAILED',
+          error instanceof Error ? error : new Error(String(error)),
+          { userId: params.userId }
+        );
       }
     }
 

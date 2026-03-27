@@ -30,18 +30,25 @@
 
 ---
 
-## P2 — Medium (Post-Pilot Polish)
+## P2 — Next Up
 
 | # | Gap | Description | Est. Hours | Status |
 |---|-----|-------------|-----------|--------|
-| G-8 | Samsung Health adapter stub | Returns empty data arrays. Needs OAuth + API integration. | 6 | TODO |
-| G-9 | Amazfit adapter stub | Returns empty data arrays. Needs Zepp Cloud API integration. | 4 | TODO |
+| G-8 | Samsung Health error handling | Adapter is implemented but needs auditLogger, retry logic, rate limiting (matches Fitbit pattern) | 2 | TODO |
+| G-9 | Amazfit error handling | Adapter is implemented but has empty catch blocks in fetchVitals(), needs auditLogger, retry logic | 2 | TODO |
 | G-10 | No wearable webhook listeners | Fitbit/Withings/Garmin can push real-time vital changes but no endpoint receives them | 8 | TODO |
 | G-11 | RPM billing not wired to claims | CPT 99453-99458 types defined, `rpm_enrollments` schema exists, but not connected to `generate-837p` or claims pipeline | 12 | TODO |
-| G-12 | Apple HealthKit needs iOS app | Adapter reads from synced records, but no iOS companion app exists to push HealthKit data | 40+ | TODO |
 | G-13 | No load/stress testing | Integration tests prove correctness (65 passing), not performance under concurrent load | 8 | TODO |
 
-**P2 subtotal:** ~78+ hours
+**P2 subtotal:** ~38 hours
+
+---
+
+## Deferred — Requires iOS Platform
+
+| # | Gap | Description | Est. Hours | Status |
+|---|-----|-------------|-----------|--------|
+| G-12 | Apple HealthKit needs iOS app | Adapter reads from synced records, but no iOS companion app exists to push HealthKit data | 40+ | DEFERRED (requires native iOS app) |
 
 ---
 
@@ -51,12 +58,11 @@
 |----------|-------|-------|-------|
 | P0 Critical | 3 | ~7 | Security + stability (push auth, AI crashes, CORS) |
 | P1 High | 4 | ~20 | Data infrastructure (DB types, wearable tables, BLE sync, Garmin) |
-| P2 Medium | 6 | ~78+ | Market coverage + billing + performance |
+| P2 Next Up | 5 | ~38 | RPM billing, webhooks, adapters, load testing |
+| Deferred | 1 | ~40+ | iOS app (different platform) |
 | **Total** | **13** | **~105+** | |
 
-**P0 + P1 = ~27 hours (3-4 sessions).** These should be completed before any hospital pilot demo.
-
-P2 items are post-pilot work that expand device coverage and billing capability.
+**P0 + P1 COMPLETE.** Now executing P2.
 
 ---
 
