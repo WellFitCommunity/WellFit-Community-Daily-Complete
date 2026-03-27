@@ -238,16 +238,21 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, histo
   }
 
   return (
-    <div className="bg-linear-to-br from-blue-50 to-green-50 border-2 border-blue-200 rounded-2xl p-5 mt-6 shadow-lg">
+    <div className="bg-white border-2 border-[#003865] rounded-2xl p-5 mt-6 shadow-lg">
+      {/* AI Badge + Header */}
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-bold text-blue-800 flex items-center">
-          <span className="text-2xl mr-2">🤖</span>
-          Your Health Insights
-        </h3>
+        <div>
+          <div className="inline-flex items-center gap-1.5 bg-[#003865] text-white text-sm font-semibold px-3 py-1 rounded-full mb-2">
+            <span>🤖</span> AI-Assisted Insights
+          </div>
+          <h3 className="text-xl font-bold text-[#003865] flex items-center">
+            Your Health Insights
+          </h3>
+        </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-blue-600 hover:text-blue-800 text-2xl p-1 hover:bg-blue-100 rounded-full transition-colors"
+            className="text-gray-500 hover:text-gray-800 text-2xl p-1 hover:bg-gray-100 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Close health insights"
           >
             ×
@@ -257,19 +262,21 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, histo
 
       {isLoading ? (
         <div className="flex items-center space-x-3 py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-          <span className="text-blue-700 text-lg">Looking at your health data...</span>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003865]"></div>
+          <span className="text-[#003865] text-lg font-medium">Looking at your health data...</span>
         </div>
       ) : (
         <>
-          <p className="text-gray-800 text-base mb-4 leading-relaxed bg-white/50 rounded-lg p-3">
-            {insights}
-          </p>
+          <div className="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
+            <p className="text-gray-900 text-lg leading-relaxed">
+              {insights}
+            </p>
+          </div>
 
           {/* Health Trends from Historical Data */}
           {trends.length > 0 && (
             <div className="mb-4">
-              <h4 className="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+              <h4 className="text-lg font-semibold text-[#003865] mb-3 flex items-center">
                 <span className="text-2xl mr-2">📊</span>
                 Your Health Trends
               </h4>
@@ -277,12 +284,12 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, histo
                 {trends.map((trend) => (
                   <div
                     key={trend.metric}
-                    className="bg-white/60 rounded-lg p-3 border border-blue-100 flex items-center gap-3"
+                    className="bg-gray-50 rounded-lg p-3 border border-gray-200 flex items-center gap-3"
                   >
                     <span className="text-2xl">{DIRECTION_ICONS[trend.direction]}</span>
                     <div className="min-w-0">
-                      <div className="text-sm font-semibold text-gray-800 truncate">{trend.label}</div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-base font-semibold text-gray-900 truncate">{trend.label}</div>
+                      <div className="text-sm text-gray-700">
                         {trend.current !== null && <span>Now: {Math.round(trend.current)}</span>}
                         {trend.avg7d !== null && (
                           <span className="ml-2">7d avg: {Math.round(trend.avg7d)}</span>
@@ -297,7 +304,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, histo
 
           {suggestions.length > 0 && (
             <div className="mt-4">
-              <h4 className="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+              <h4 className="text-lg font-semibold text-[#003865] mb-3 flex items-center">
                 <span className="text-2xl mr-2">💡</span>
                 Things that might help you today:
               </h4>
@@ -305,7 +312,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, histo
                 {suggestions.map((suggestion, index) => (
                   <li
                     key={suggestion.id || index}
-                    className="flex items-start bg-linear-to-r from-blue-50 to-green-50 rounded-xl p-4 border border-blue-100 shadow-xs hover:shadow-md transition-shadow"
+                    className="flex items-start bg-gray-50 rounded-xl p-4 border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                   >
                     <span className="text-3xl mr-3 shrink-0">
                       {suggestion.type === 'breathing' && '🌬️'}
@@ -318,7 +325,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, histo
                       {suggestion.type === 'creative' && '🎨'}
                       {!suggestion.type && '💫'}
                     </span>
-                    <span className="text-gray-800 text-base leading-relaxed">
+                    <span className="text-gray-900 text-lg leading-relaxed">
                       {suggestion.text}
                     </span>
                   </li>
@@ -327,8 +334,8 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, histo
             </div>
           )}
 
-          <div className="mt-4 pt-3 border-t border-blue-200">
-            <p className="text-sm text-gray-600 flex items-center">
+          <div className="mt-4 pt-3 border-t border-gray-300">
+            <p className="text-base text-gray-700 flex items-center">
               <span className="mr-2">ℹ️</span>
               These are helpful tips, not medical advice. Talk to your doctor about any health concerns.
             </p>
