@@ -50,9 +50,8 @@ export function validateCriticalEnvironment(): ValidationResult {
     warnings.push('⚠️ VITE_HCAPTCHA_SITE_KEY is not set - bot protection disabled');
   }
 
-  if (!import.meta.env.VITE_ANTHROPIC_API_KEY && isProduction) {
-    warnings.push('⚠️ VITE_ANTHROPIC_API_KEY is not set - Claude AI features disabled');
-  }
+  // A-4: VITE_ANTHROPIC_API_KEY intentionally removed — API keys must not ship to browser.
+  // AI services route through edge functions (claude-chat) which hold the key server-side.
 
   // ============================================================================
   // PRODUCTION-SPECIFIC CHECKS

@@ -164,12 +164,12 @@ class EmergencyAccessIntelligenceService {
   private supabase: ReturnType<typeof createClient>;
 
   constructor() {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY environment variable is required');
-    }
+    // A-4 fix: VITE_ANTHROPIC_API_KEY removed from browser bundle (security risk).
+    // This service should be migrated to use claude-chat edge function.
+    // For now, initialize with empty key — methods will fail gracefully.
+    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
 
-    this.anthropic = new Anthropic({ apiKey });
+    this.anthropic = new Anthropic({ apiKey: apiKey || 'not-configured' });
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;

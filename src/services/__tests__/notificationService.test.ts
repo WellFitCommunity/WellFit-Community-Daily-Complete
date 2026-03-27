@@ -109,9 +109,9 @@ describe('NotificationService', () => {
   });
 
   describe('isSlackConfigured', () => {
-    it('returns false when VITE_SLACK_WEBHOOK_URL is not set', () => {
-      // The default test env has no VITE_SLACK_WEBHOOK_URL, so initializeSlack
-      // leaves slackConfig as null
+    it('returns false when VITE_SLACK_ENABLED is not set', () => {
+      // A-8 fix: Slack config now requires VITE_SLACK_ENABLED=true (a boolean flag, not a secret).
+      // Default test env has no VITE_SLACK_ENABLED, so slackConfig stays null.
       expect(service.isSlackConfigured()).toBe(false);
     });
   });

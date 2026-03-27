@@ -95,30 +95,40 @@ export class FitbitAdapter implements WearableAdapter {
       throw new Error('Fitbit requires OAuth2 authentication');
     }
 
-    if (!config.clientId || !config.clientSecret) {
-      throw new Error('Fitbit OAuth2 requires clientId and clientSecret');
+    if (!config.clientId) {
+      throw new Error('Fitbit OAuth2 requires clientId');
+    }
+
+    // A-7 fix: clientSecret must NOT be used in browser code.
+    // OAuth token exchange and refresh are handled server-side via fitbit-webhook edge function.
+    // Browser only needs clientId for PKCE authorization flow.
+    if (config.clientSecret) {
+      throw new Error(
+        'Security: clientSecret must not be passed to browser adapter. ' +
+        'Use server-side OAuth token exchange via fitbit-oauth edge function.'
+      );
     }
 
     this.status = 'connected';
   }
 
   async disconnect(): Promise<void> {
-    // Revoke tokens
-    if (this.accessToken && this.config?.clientId && this.config?.clientSecret) {
+    // A-7 fix: Token revocation must go through server-side edge function
+    // (requires client secret which browser must not have)
+    if (this.accessToken) {
       try {
-        const authHeader = 'Basic ' + btoa(`${this.config.clientId}:${this.config.clientSecret}`);
-
-        await fetch(`${this.FITBIT_AUTH_BASE}/revoke`, {
-          method: 'POST',
-          headers: {
-            'Authorization': authHeader,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            token: this.accessToken,
-          }),
-        });
-      } catch (error: unknown) {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        if (supabaseUrl) {
+          await fetch(`${supabaseUrl}/functions/v1/fitbit-webhook`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'revoke_token',
+              access_token: this.accessToken,
+            }),
+          });
+        }
+      } catch (_error: unknown) {
         // Token revocation failed - connection will still be terminated
       }
     }
@@ -189,22 +199,24 @@ export class FitbitAdapter implements WearableAdapter {
   }
 
   async handleOAuthCallback(code: string): Promise<{ accessToken: string; refreshToken?: string }> {
-    if (!this.config?.clientId || !this.config?.clientSecret) {
+    if (!this.config?.clientId) {
       throw new Error('OAuth credentials not configured');
     }
 
-    const authHeader = 'Basic ' + btoa(`${this.config.clientId}:${this.config.clientSecret}`);
+    // A-7 fix: Token exchange MUST go through server-side edge function.
+    // The client secret lives on the server, never in the browser.
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) {
+      throw new Error('VITE_SUPABASE_URL not configured');
+    }
 
-    const response = await fetch(`${this.FITBIT_AUTH_BASE}/token`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/fitbit-webhook`, {
       method: 'POST',
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: this.config.clientId,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'token_exchange',
         code,
-        grant_type: 'authorization_code',
+        client_id: this.config.clientId,
         redirect_uri: this.config.redirectUri || '',
       }),
     });
@@ -214,13 +226,19 @@ export class FitbitAdapter implements WearableAdapter {
       throw new Error(`OAuth token exchange failed: ${response.statusText} - ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as {
+      access_token: string;
+      refresh_token?: string;
+      user_id?: string;
+      expires_in?: number;
+    };
     this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token;
-    this.userId = data.user_id;
+    this.refreshToken = data.refresh_token || '';
+    this.userId = data.user_id || '';
 
-    // Fitbit tokens expire in seconds
-    this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
+    if (data.expires_in) {
+      this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
+    }
 
     return {
       accessToken: data.access_token,
@@ -229,20 +247,17 @@ export class FitbitAdapter implements WearableAdapter {
   }
 
   async refreshAccessToken(refreshToken: string): Promise<string> {
-    if (!this.config?.clientId || !this.config?.clientSecret) {
-      throw new Error('OAuth credentials not configured');
+    // A-7 fix: Token refresh MUST go through server-side edge function.
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) {
+      throw new Error('VITE_SUPABASE_URL not configured');
     }
 
-    const authHeader = 'Basic ' + btoa(`${this.config.clientId}:${this.config.clientSecret}`);
-
-    const response = await fetch(`${this.FITBIT_AUTH_BASE}/token`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/fitbit-webhook`, {
       method: 'POST',
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'refresh_token',
         refresh_token: refreshToken,
       }),
     });
@@ -251,12 +266,16 @@ export class FitbitAdapter implements WearableAdapter {
       throw new Error(`Token refresh failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as {
+      access_token: string;
+      refresh_token?: string;
+      expires_in?: number;
+    };
     this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token;
-    this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
-
-    
+    this.refreshToken = data.refresh_token || '';
+    if (data.expires_in) {
+      this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
+    }
 
     return data.access_token;
   }

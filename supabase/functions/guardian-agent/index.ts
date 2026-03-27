@@ -159,19 +159,18 @@ async function resolveTenantId(supabase: SupabaseClient, req: Request): Promise<
     if (!authHeader?.startsWith('Bearer ')) return null;
 
     const token = authHeader.replace('Bearer ', '');
-    // Decode JWT payload to get user id (sub claim)
-    const payloadBase64 = token.split('.')[1];
-    if (!payloadBase64) return null;
 
-    const payload = JSON.parse(atob(payloadBase64));
-    const userId = payload.sub;
-    if (!userId) return null;
+    // A-6 fix: Verify JWT through Supabase auth instead of decoding with atob()
+    // atob() only parses the payload — it does NOT verify the signature,
+    // meaning an attacker could craft a fake JWT with any user ID.
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return null;
 
-    // Look up tenant_id from profiles
+    // Look up tenant_id from profiles using verified user ID
     const { data: profile } = await supabase
       .from('profiles')
       .select('tenant_id')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .single();
 
     return profile?.tenant_id || null;
@@ -304,10 +303,10 @@ async function runMonitoringChecks(supabase: SupabaseClient, tenantId: string): 
 async function sendAlertEmail(_supabase: SupabaseClient, alerts: SecurityAlert[]) {
   try {
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@wellfitcommunity.org';
-    const SUPABASE_URL = SUPABASE_URL;
-    const SUPABASE_SERVICE_ROLE_KEY = SB_SECRET_KEY;
+    // A-5 fix: Use imported SUPABASE_URL and SB_SECRET_KEY directly — no shadowing
+    const serviceRoleKey = SB_SECRET_KEY;
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!SUPABASE_URL || !serviceRoleKey) {
       logger.error("Cannot send email: Missing Supabase credentials", {});
       return;
     }
@@ -332,18 +331,17 @@ View full details in your Guardian Security Panel
 This is an automated alert from Guardian monitoring system.
 `;
 
-    // Call send-email function
+    // Call send-email function (using service role key as Bearer — recognized by A-2 auth fix)
     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'apikey': SUPABASE_SERVICE_ROLE_KEY
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey
       },
       body: JSON.stringify({
-        to: adminEmail,
-        subject: `🚨 Guardian Alert: ${criticalCount + highCount} Critical/High Issues Detected`,
-        text: emailBody,
+        to: [{ email: adminEmail, name: 'System Admin' }],
+        subject: `Guardian Alert: ${criticalCount + highCount} Critical/High Issues Detected`,
         html: emailBody.replace(/\n/g, '<br>')
       })
     });

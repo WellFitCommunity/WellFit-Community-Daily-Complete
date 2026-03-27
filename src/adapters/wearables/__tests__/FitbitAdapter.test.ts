@@ -14,10 +14,10 @@ describe('FitbitAdapter', () => {
 
   beforeEach(() => {
     adapter = new FitbitAdapter();
+    // A-7 fix: clientSecret removed from browser adapter — OAuth goes server-side
     mockConfig = {
       authType: 'oauth2',
       clientId: 'test-client-id',
-      clientSecret: 'test-client-secret',
       redirectUri: 'http://localhost:3000/callback',
       scopes: ['activity', 'heartrate', 'sleep'],
     };

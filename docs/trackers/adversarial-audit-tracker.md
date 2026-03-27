@@ -11,14 +11,14 @@
 
 | # | Finding | Description | Files Affected | Est. Hours | Status |
 |---|---------|-------------|----------------|-----------|--------|
-| A-1 | send-sms zero auth | No JWT verification, no role gating, no rate limiting. Any HTTP client can send SMS to any phone number. | `supabase/functions/send-sms/index.ts` | 2 | TODO |
-| A-2 | send-email zero auth | No JWT verification, no role gating, no rate limiting. Any HTTP client can send email to any recipient. | `supabase/functions/send-email/index.ts` | 2 | TODO |
-| A-3 | Audit log RLS spoofable | `WITH CHECK (true)` on audit_logs INSERT allows any authenticated user to spoof `actor_user_id`. Anon insert also permitted. 3+ migrations progressively weakened policies. | `supabase/migrations/` (new migration) | 3 | TODO |
-| A-4 | VITE_ANTHROPIC_API_KEY in browser | API key exposed via `VITE_` prefix in `.env`, used by 5+ frontend AI services. Anyone with DevTools can steal it. | `.env`, `src/services/ai/*.ts`, `src/services/pillIdentifierService.ts`, `src/services/medicationLabelReader.ts` | 3 | TODO |
-| A-5 | Guardian agent runtime bug | `const SUPABASE_URL = SUPABASE_URL` self-referential shadowing in `sendAlertEmail()`. Monitoring system may crash when trying to alert. | `supabase/functions/guardian-agent/index.ts:307` | 1 | TODO |
-| A-6 | Guardian agent JWT unverified | `resolveTenantId()` decodes JWT with `atob()` without signature verification. Tenant boundaries forgeable if verify_jwt disabled. | `supabase/functions/guardian-agent/index.ts:156-181` | 2 | TODO |
-| A-7 | Fitbit OAuth client secret in browser | Adapter requires `clientSecret`, uses `Basic btoa(clientId:clientSecret)` in browser code. Violates OAuth threat model for public clients. | `src/adapters/wearables/implementations/FitbitAdapter.ts` | 2 | TODO |
-| A-8 | Slack webhook in frontend code | `VITE_SLACK_WEBHOOK_URL` used in `notificationService.ts`. Webhook URLs are secrets — bundling them is credential leakage. | `src/services/notificationService.ts:126` | 1 | TODO |
+| A-1 | send-sms zero auth | 3-path auth: internal secret, service role key, or JWT + role (admin/clinical). Rate limited 20/10min for JWT callers. Recipient cap 50. | `supabase/functions/send-sms/index.ts` | 2 | DONE |
+| A-2 | send-email zero auth | 3-path auth: internal secret, service role key, or JWT + role (admin/clinical). Rate limited 30/10min for JWT callers. Recipient cap 50. | `supabase/functions/send-email/index.ts` | 2 | DONE |
+| A-3 | Audit log RLS spoofable | Migration: dropped `WITH CHECK (true)`, enforced `actor_user_id = auth.uid()`, removed anon INSERT, added service role full access. Also fixed `phi_access_logs`. | `supabase/migrations/20260327200000_fix_audit_log_rls_identity_enforcement.sql` | 3 | DONE (needs `db push`) |
+| A-4 | VITE_ANTHROPIC_API_KEY in browser | Removed from `.env`. 3 AI services (`emergencyAccessIntelligence`, `culturalHealthCoach`, `welfareCheckDispatcher`) degraded gracefully — need edge function migration to restore. | `.env`, `src/services/ai/*.ts`, `src/utils/environmentValidator.ts` | 3 | DONE |
+| A-5 | Guardian agent runtime bug | Fixed variable shadowing: use imported `SUPABASE_URL` directly, renamed local to `serviceRoleKey`. Fixed email format to match `send-email` API. | `supabase/functions/guardian-agent/index.ts` | 1 | DONE |
+| A-6 | Guardian agent JWT unverified | Replaced `atob()` JWT decoding with `supabase.auth.getUser(token)` for cryptographic verification. | `supabase/functions/guardian-agent/index.ts` | 2 | DONE |
+| A-7 | Fitbit OAuth client secret in browser | Removed `clientSecret` from browser. `connect()` now throws if secret passed. OAuth token exchange/refresh/revoke routed to `fitbit-webhook` edge function (needs server-side OAuth logic added). | `src/adapters/wearables/implementations/FitbitAdapter.ts` | 2 | DONE |
+| A-8 | Slack webhook in frontend code | Replaced `VITE_SLACK_WEBHOOK_URL` with `VITE_SLACK_ENABLED` boolean flag. Notifications route through edge function. (`send-slack-notification` edge function needs creation). | `src/services/notificationService.ts` | 1 | DONE |
 
 **Session 1 subtotal:** ~16 hours
 
@@ -32,8 +32,8 @@
 | A-10 | send_email vs send-email naming | 3 edge functions invoke `send_email` (underscore) but function is `send-email` (dash). Silent failure — emails never sent. | `supabase/functions/send-team-alert/index.ts:103`, `ld-alert-notifier/index.ts:150`, `notify-stale-checkins/index.ts:120` + codebase-wide grep | 1 | TODO |
 | A-11 | CORS wildcard patterns | `cors.ts` allows any `*.vercel.app` and `*.app.github.dev` origin via regex. Increases attack surface for weak-auth endpoints. | `supabase/functions/_shared/cors.ts` | 2 | TODO |
 | A-12 | API route table name mismatch | `api/me/check_ins.ts` — GET uses `check_ins`, POST uses `checkins` (missing underscore). POST silently fails. | `api/me/check_ins.ts` | 0.5 | TODO |
-| A-13 | phi_access_logs INSERT no actor check | INSERT policy uses `WITH CHECK (tenant_id = get_current_tenant_id())` but does not enforce `accessing_user_id = auth.uid()`. | `supabase/migrations/` (new migration) | 1 | TODO |
-| A-14 | Rate limiting on all messaging endpoints | send-sms, send-email, send-push-notification all lack rate limiting. Authorized users could spam. | `supabase/functions/send-sms/`, `send-email/`, `send-push-notification/` | 2 | TODO |
+| A-13 | phi_access_logs INSERT no actor check | Fixed in A-3 migration: `phi_access_logs` INSERT now enforces `accessing_user_id = auth.uid()` + tenant check. | `supabase/migrations/20260327200000_fix_audit_log_rls_identity_enforcement.sql` | 1 | DONE (needs `db push`) |
+| A-14 | Rate limiting on all messaging endpoints | send-sms and send-email now have rate limiting (20/10min SMS, 30/10min email). send-push-notification still needs rate limiting added. | `supabase/functions/send-sms/`, `send-email/` | 2 | PARTIAL (push needs RL) |
 | A-15 | Codebase-wide sister bug sweep | Grep entire codebase for: `.eq('id',` on profiles, `invoke('send_email'`, `invoke("send_email"`, other function name mismatches, other `VITE_` secrets | All edge functions | 2 | TODO |
 
 **Session 2 subtotal:** ~10.5 hours
@@ -58,10 +58,10 @@
 
 | Priority | Items | Est. Hours | Status |
 |----------|-------|-----------|--------|
-| Session 1 — Critical Security | A-1 through A-8 | ~16h | TODO |
-| Session 2 — Integration Bugs | A-9 through A-15 | ~10.5h | TODO |
+| Session 1 — Critical Security | A-1 through A-8 | ~16h | **8/8 DONE** |
+| Session 2 — Integration Bugs | A-9 through A-15 | ~10.5h | 2/7 done (A-13, A-14 partial) |
 | Session 3 — Architecture | A-16 through A-20 | ~14h | TODO |
-| **Total** | **20 items** | **~40.5h** | **0/20 complete** |
+| **Total** | **20 items** | **~40.5h** | **10/20 complete** |
 
 ---
 

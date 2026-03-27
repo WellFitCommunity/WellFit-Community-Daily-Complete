@@ -120,16 +120,20 @@ export class NotificationService {
   }
 
   /**
-   * Initialize Slack configuration from environment
+   * Initialize Slack configuration
+   * A-8 fix: Slack webhook URL is a secret and must NOT be in VITE_ env vars.
+   * Slack notifications now route through a server-side edge function that holds the webhook.
+   * VITE_SLACK_ENABLED is a boolean flag (not a secret) — safe for browser.
    */
   private initializeSlack(): void {
-    const webhookUrl = import.meta.env.VITE_SLACK_WEBHOOK_URL;
-    if (webhookUrl) {
+    const slackEnabled = import.meta.env.VITE_SLACK_ENABLED === 'true';
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (slackEnabled && supabaseUrl) {
       this.slackConfig = {
-        webhookUrl,
-        defaultChannel: import.meta.env.VITE_SLACK_DEFAULT_CHANNEL || '#notifications',
-        username: import.meta.env.VITE_SLACK_BOT_NAME || 'WellFit Bot',
-        iconEmoji: import.meta.env.VITE_SLACK_BOT_EMOJI || ':hospital:',
+        webhookUrl: `${supabaseUrl}/functions/v1/send-slack-notification`,
+        defaultChannel: '#notifications',
+        username: 'WellFit Bot',
+        iconEmoji: ':hospital:',
       };
     }
   }
