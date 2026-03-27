@@ -230,27 +230,33 @@ ALTER TABLE public.wearable_fall_detections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wearable_gait_analysis ENABLE ROW LEVEL SECURITY;
 
 -- User owns their own wearable data (tenant-scoped)
+DROP POLICY IF EXISTS "wearable_connections_user" ON public.wearable_connections;
 CREATE POLICY "wearable_connections_user" ON public.wearable_connections
     FOR ALL USING (user_id = auth.uid() AND tenant_id = get_current_tenant_id())
     WITH CHECK (user_id = auth.uid() AND tenant_id = get_current_tenant_id());
 
+DROP POLICY IF EXISTS "wearable_vitals_user" ON public.wearable_vital_signs;
 CREATE POLICY "wearable_vitals_user" ON public.wearable_vital_signs
     FOR ALL USING (user_id = auth.uid() AND tenant_id = get_current_tenant_id())
     WITH CHECK (user_id = auth.uid() AND tenant_id = get_current_tenant_id());
 
+DROP POLICY IF EXISTS "wearable_activity_user" ON public.wearable_activity_data;
 CREATE POLICY "wearable_activity_user" ON public.wearable_activity_data
     FOR ALL USING (user_id = auth.uid() AND tenant_id = get_current_tenant_id())
     WITH CHECK (user_id = auth.uid() AND tenant_id = get_current_tenant_id());
 
+DROP POLICY IF EXISTS "wearable_falls_user" ON public.wearable_fall_detections;
 CREATE POLICY "wearable_falls_user" ON public.wearable_fall_detections
     FOR ALL USING (user_id = auth.uid() AND tenant_id = get_current_tenant_id())
     WITH CHECK (user_id = auth.uid() AND tenant_id = get_current_tenant_id());
 
+DROP POLICY IF EXISTS "wearable_gait_user" ON public.wearable_gait_analysis;
 CREATE POLICY "wearable_gait_user" ON public.wearable_gait_analysis
     FOR ALL USING (user_id = auth.uid() AND tenant_id = get_current_tenant_id())
     WITH CHECK (user_id = auth.uid() AND tenant_id = get_current_tenant_id());
 
 -- Clinicians can READ wearable data for patients in their tenant
+DROP POLICY IF EXISTS "wearable_connections_clinician_read" ON public.wearable_connections;
 CREATE POLICY "wearable_connections_clinician_read" ON public.wearable_connections
     FOR SELECT USING (
         tenant_id = get_current_tenant_id()
@@ -262,6 +268,7 @@ CREATE POLICY "wearable_connections_clinician_read" ON public.wearable_connectio
         )
     );
 
+DROP POLICY IF EXISTS "wearable_vitals_clinician_read" ON public.wearable_vital_signs;
 CREATE POLICY "wearable_vitals_clinician_read" ON public.wearable_vital_signs
     FOR SELECT USING (
         tenant_id = get_current_tenant_id()
@@ -273,6 +280,7 @@ CREATE POLICY "wearable_vitals_clinician_read" ON public.wearable_vital_signs
         )
     );
 
+DROP POLICY IF EXISTS "wearable_activity_clinician_read" ON public.wearable_activity_data;
 CREATE POLICY "wearable_activity_clinician_read" ON public.wearable_activity_data
     FOR SELECT USING (
         tenant_id = get_current_tenant_id()
@@ -284,6 +292,7 @@ CREATE POLICY "wearable_activity_clinician_read" ON public.wearable_activity_dat
         )
     );
 
+DROP POLICY IF EXISTS "wearable_falls_clinician_read" ON public.wearable_fall_detections;
 CREATE POLICY "wearable_falls_clinician_read" ON public.wearable_fall_detections
     FOR SELECT USING (
         tenant_id = get_current_tenant_id()
@@ -295,6 +304,7 @@ CREATE POLICY "wearable_falls_clinician_read" ON public.wearable_fall_detections
         )
     );
 
+DROP POLICY IF EXISTS "wearable_gait_clinician_read" ON public.wearable_gait_analysis;
 CREATE POLICY "wearable_gait_clinician_read" ON public.wearable_gait_analysis
     FOR SELECT USING (
         tenant_id = get_current_tenant_id()
