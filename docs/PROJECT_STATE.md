@@ -3,10 +3,39 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-27 (System gaps tracker COMPLETE — 12/13 gaps closed)
-**Last Session:** Closed ALL system gaps except G-12 (iOS app). RPM billing pipeline wired to claims, wearable webhooks for Fitbit/Withings/Garmin, adapter error handling, k6 load testing scripts.
+**Last Updated:** 2026-03-27 (Adversarial audit received — remediation tracker created)
+**Last Session:** Adversarial codebase audit (ChatGPT) revealed 20 findings: 8 critical security, 7 high integration bugs, 5 medium architecture issues. Tracker created. Remediation starting.
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,726 tests (583 suites), 0 lint warnings, 0 typecheck errors in changed files
+
+---
+
+## CURRENT PRIORITY — Adversarial Audit Remediation
+
+**Tracker:** `docs/trackers/adversarial-audit-tracker.md`
+**Status:** 0/20 items complete
+**Estimated:** ~40.5 hours across 3 sessions
+
+### Session Plan
+
+| Session | Focus | Items | Hours |
+|---------|-------|-------|-------|
+| **1 (NOW)** | Critical security — messaging auth, audit log RLS, client secrets, guardian-agent | A-1 through A-8 | ~16h |
+| **2** | Integration bugs — profiles.user_id, function naming, CORS, API route, sister bug sweep | A-9 through A-15 | ~10.5h |
+| **3** | Architecture hardening — edge TS strictness, server-side rate limiting, scalability, FHIR validation | A-16 through A-20 | ~14h |
+
+### Critical Findings Summary
+
+| # | Finding | Severity |
+|---|---------|----------|
+| A-1/A-2 | `send-sms` and `send-email` have ZERO authentication | CRITICAL |
+| A-3 | Audit log RLS allows `actor_user_id` spoofing + anon insert | CRITICAL |
+| A-4 | `VITE_ANTHROPIC_API_KEY` exposed in browser bundle | CRITICAL |
+| A-5/A-6 | Guardian agent: shadowing bug + unverified JWT | CRITICAL |
+| A-7 | Fitbit OAuth client secret in browser code | CRITICAL |
+| A-9 | `profiles.id` vs `profiles.user_id` — 3 broken edge functions | HIGH |
+| A-10 | `send_email` vs `send-email` — 3 broken invocations | HIGH |
+| A-11 | CORS allows any *.vercel.app and *.github.dev | HIGH |
 
 ---
 
