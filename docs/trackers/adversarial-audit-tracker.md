@@ -28,13 +28,13 @@
 
 | # | Finding | Description | Files Affected | Est. Hours | Status |
 |---|---------|-------------|----------------|-----------|--------|
-| A-9 | profiles.id vs profiles.user_id | 3 edge functions query `profiles` with `.eq('id', user_id)` — wrong column. Silent failures in emergency/alert workflows. Migration comment acknowledges this was fixed before. | `supabase/functions/send-team-alert/index.ts:55`, `emergency-alert-dispatch/index.ts:205`, `ld-alert-notifier/index.ts:98` + codebase-wide grep | 2 | TODO |
-| A-10 | send_email vs send-email naming | 3 edge functions invoke `send_email` (underscore) but function is `send-email` (dash). Silent failure — emails never sent. | `supabase/functions/send-team-alert/index.ts:103`, `ld-alert-notifier/index.ts:150`, `notify-stale-checkins/index.ts:120` + codebase-wide grep | 1 | TODO |
-| A-11 | CORS wildcard patterns | `cors.ts` allows any `*.vercel.app` and `*.app.github.dev` origin via regex. Increases attack surface for weak-auth endpoints. | `supabase/functions/_shared/cors.ts` | 2 | TODO |
-| A-12 | API route table name mismatch | `api/me/check_ins.ts` — GET uses `check_ins`, POST uses `checkins` (missing underscore). POST silently fails. | `api/me/check_ins.ts` | 0.5 | TODO |
+| A-9 | profiles.id vs profiles.user_id | Fixed 5 instances (3 known + admin_register + postAcuteTransferService) + 1 doc comment. Regression grep: 0 remaining. | 5 edge functions + 1 service + 1 doc | 2 | DONE |
+| A-10 | send_email vs send-email naming | Fixed 3 instances. Regression grep: 0 remaining underscore invocations. | send-team-alert, ld-alert-notifier, notify-stale-checkins | 1 | DONE |
+| A-11 | CORS wildcard patterns | Codespaces/Vercel patterns now require DEV_ALLOW_CODESPACES/DEV_ALLOW_VERCEL env vars. Production: ALLOWED_ORIGINS only. | `supabase/functions/_shared/cors.ts` | 2 | DONE |
+| A-12 | API route table name mismatch | Fixed POST path: `checkins` → `check_ins`. | `api/me/check_ins.ts` | 0.5 | DONE |
 | A-13 | phi_access_logs INSERT no actor check | Fixed in A-3 migration: `phi_access_logs` INSERT now enforces `accessing_user_id = auth.uid()` + tenant check. | `supabase/migrations/20260327200000_fix_audit_log_rls_identity_enforcement.sql` | 1 | DONE (needs `db push`) |
 | A-14 | Rate limiting on all messaging endpoints | send-sms and send-email now have rate limiting (20/10min SMS, 30/10min email). send-push-notification still needs rate limiting added. | `supabase/functions/send-sms/`, `send-email/` | 2 | PARTIAL (push needs RL) |
-| A-15 | Codebase-wide sister bug sweep | Grep entire codebase for: `.eq('id',` on profiles, `invoke('send_email'`, `invoke("send_email"`, other function name mismatches, other `VITE_` secrets | All edge functions | 2 | TODO |
+| A-15 | Codebase-wide sister bug sweep | Complete: 0 remaining profiles.id bugs, 0 underscore invocations, removed VITE_GUARDIAN_JWT_PRIVATE_KEY from browser. VITE_WEATHER_API_KEY noted (low risk). | All edge functions + src/ | 2 | DONE |
 
 **Session 2 subtotal:** ~10.5 hours
 
@@ -59,9 +59,9 @@
 | Priority | Items | Est. Hours | Status |
 |----------|-------|-----------|--------|
 | Session 1 — Critical Security | A-1 through A-8 | ~16h | **8/8 DONE** |
-| Session 2 — Integration Bugs | A-9 through A-15 | ~10.5h | 2/7 done (A-13, A-14 partial) |
+| Session 2 — Integration Bugs | A-9 through A-15 | ~10.5h | **7/7 DONE** (A-14 partial: push needs RL) |
 | Session 3 — Architecture | A-16 through A-20 | ~14h | TODO |
-| **Total** | **20 items** | **~40.5h** | **10/20 complete** |
+| **Total** | **20 items** | **~40.5h** | **17/20 complete** |
 
 ---
 
