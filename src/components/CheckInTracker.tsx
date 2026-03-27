@@ -7,8 +7,9 @@ import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import { ArrowLeft } from 'lucide-react';
 import HealthInsightsWidget from './HealthInsightsWidget';
+import { WellnessSuggestions } from './wellness/WellnessSuggestions';
 import { offlineStorage, isOnline } from '../utils/offlineStorage';
-import { CheckInFormBody, CheckInModals, CheckInHistory } from './check-in';
+import { CheckInFormBody, CheckInModals } from './check-in';
 import {
   ENABLE_LOCAL_HISTORY,
   STORAGE_KEY,
@@ -59,6 +60,8 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
   const [infoMessage, setInfoMessage] = useState<Toast>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPulseOximeter, setShowPulseOximeter] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [submittedMood, setSubmittedMood] = useState('');
 
   const feedbackRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<WebSpeechRecognitionInstance | null>(null);
@@ -325,6 +328,10 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
         });
       }
 
+      // Track submitted mood for post-submit wellness suggestions
+      setSubmittedMood(mood || label);
+      setHasSubmitted(true);
+
       // Clear detailed fields after full form submission
       if (!isQuickButton) {
         setMood('');
@@ -436,24 +443,41 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
           />
         </div>
 
-        {/* Health Insights Widget */}
-        <div className="mt-8">
-          <HealthInsightsWidget
-            healthData={{
-              mood,
-              bp_systolic: bpSystolic ? parseInt(bpSystolic) : null,
-              bp_diastolic: bpDiastolic ? parseInt(bpDiastolic) : null,
-              blood_sugar: glucose ? parseInt(glucose) : null,
-              blood_oxygen: pulseOximeter ? parseInt(pulseOximeter) : null,
-              weight: weight ? parseFloat(weight) : null,
-              symptoms,
-              physical_activity: physicalActivity,
-            }}
-          />
-        </div>
+        {/* Post-Submission: Insights + Wellness Suggestions */}
+        {hasSubmitted && (
+          <div className="mt-8 space-y-6">
+            {/* Health Insights Widget — only after submitting */}
+            <HealthInsightsWidget
+              healthData={{
+                mood: submittedMood,
+                bp_systolic: bpSystolic ? parseInt(bpSystolic) : null,
+                bp_diastolic: bpDiastolic ? parseInt(bpDiastolic) : null,
+                blood_sugar: glucose ? parseInt(glucose) : null,
+                blood_oxygen: pulseOximeter ? parseInt(pulseOximeter) : null,
+                weight: weight ? parseFloat(weight) : null,
+                symptoms,
+                physical_activity: physicalActivity,
+              }}
+            />
 
-        {/* History */}
-        <CheckInHistory history={history} branding={branding} />
+            {/* Wellness Suggestions — shows when mood is down */}
+            <WellnessSuggestions
+              mood={submittedMood}
+              onClose={() => setHasSubmitted(false)}
+            />
+
+            {/* View History Link */}
+            <div className="text-center">
+              <button
+                onClick={() => navigate('/check-in-history')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-lg font-semibold text-white shadow-md hover:shadow-lg transition-all"
+                style={{ backgroundColor: branding.primaryColor || '#003865' }}
+              >
+                📋 View Your Check-In History
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals */}

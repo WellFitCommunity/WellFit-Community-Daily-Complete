@@ -45,6 +45,7 @@ export const VitalCapturePage = React.lazy(() => import('../pages/VitalCapturePa
 export const QuestionsPage = React.lazy(() => import('../pages/QuestionsPage'));
 export const EnhancedQuestionsPage = React.lazy(() => import('../pages/EnhancedQuestionsPage'));
 export const CheckInPage = React.lazy(() => import('../pages/CheckInPage'));
+export const CheckInHistoryPage = React.lazy(() => import('../pages/CheckInHistoryPage'));
 export const WordFindPage = React.lazy(() => import('../pages/WordFindPage'));
 export const MemoryLaneTriviaPage = React.lazy(() => import('../pages/MemoryLaneTriviaPage'));
 export const MealDetailPage = React.lazy(() => import('../pages/MealDetailPage'));
@@ -347,6 +348,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   QuestionsPage,
   EnhancedQuestionsPage,
   CheckInPage,
+  CheckInHistoryPage,
   WordFindPage,
   MemoryLaneTriviaPage,
   MealDetailPage,

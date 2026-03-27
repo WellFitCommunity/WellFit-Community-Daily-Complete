@@ -81,6 +81,7 @@ export const protectedRoutes: RouteConfig[] = [
   { path: '/questions', component: 'QuestionsPage', auth: 'user', category: 'protected' },
   { path: '/ask-nurse', component: 'EnhancedQuestionsPage', auth: 'user', category: 'protected' },
   { path: '/check-in', component: 'CheckInPage', auth: 'user', category: 'protected' },
+  { path: '/check-in-history', component: 'CheckInHistoryPage', auth: 'user', category: 'protected' },
   { path: '/word-find', component: 'WordFindPage', auth: 'user', category: 'protected' },
   { path: '/memory-lane-trivia', component: 'MemoryLaneTriviaPage', auth: 'user', category: 'protected' },
   { path: '/community', component: 'CommunityMoments', auth: 'user', category: 'protected' },

@@ -159,10 +159,10 @@ export const WellnessSuggestions: React.FC<WellnessSuggestionsProps> = ({
                   window.location.href = suggestion.actionUrl;
                 }
               }}
-              className={`p-4 rounded-lg text-left transition-all duration-200 hover:scale-102 hover:shadow-md ${
+              className={`p-4 rounded-lg text-left transition-all duration-200 hover:scale-102 hover:shadow-md border-2 ${
                 selectedSuggestion === suggestion.id
-                  ? 'bg-[#8cc63f] text-white shadow-md'
-                  : 'bg-white hover:bg-green-50 text-gray-800'
+                  ? 'bg-[#8cc63f] text-white shadow-md border-[#7ab635]'
+                  : 'bg-white hover:bg-green-50 text-gray-800 border-gray-200 shadow-sm'
               }`}
               aria-label={suggestion.title}
             >
@@ -175,14 +175,18 @@ export const WellnessSuggestions: React.FC<WellnessSuggestionsProps> = ({
                   {suggestion.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-lg mb-1">{suggestion.title}</h4>
+                  <h4 className={`font-semibold text-lg mb-1 ${
+                    selectedSuggestion === suggestion.id ? 'text-white' : 'text-[#003865]'
+                  }`}>{suggestion.title}</h4>
                   <p className={`text-sm leading-relaxed ${
                     selectedSuggestion === suggestion.id ? 'text-white/90' : 'text-gray-600'
                   }`}>
                     {suggestion.description}
                   </p>
                   {suggestion.action && (
-                    <div className="mt-2 flex items-center gap-1 text-sm font-medium">
+                    <div className={`mt-2 flex items-center gap-1 text-sm font-medium ${
+                      selectedSuggestion === suggestion.id ? 'text-white' : 'text-[#003865]'
+                    }`}>
                       <span>{suggestion.action}</span>
                       <ChevronRight className="w-4 h-4" />
                     </div>
