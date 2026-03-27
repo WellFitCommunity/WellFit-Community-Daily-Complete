@@ -143,6 +143,15 @@ This codebase eliminated 1,400+ `any` violations and 1,671 total lint warnings i
 | Writing service code before confirming migration was pushed | Run `npx supabase db push` immediately after creating migration | AI sees the migration *file* as proof the column exists — but the real database doesn't have it until pushed |
 | Writing tests that mirror implementation instead of specifying behavior | Deletion Test: would it fail if component logic was removed? | AI writes code and test simultaneously, unconsciously shaping the test to pass what it just wrote (confirmation bias) |
 | Losing early-session decisions after 50+ tool calls | Summarize at compaction: what's done, what's next, constraints established | Context window compression drops early decisions — AI may re-introduce patterns it already fixed or forget constraints from message #3 |
+| Fixing a bug in one file but not grepping for sisters | Codebase-wide grep on EVERY fix (see `adversarial-audit-lessons.md`) | AI fixes the file it's looking at but doesn't search for the same bug in 50 other files — bug "fixed" but still broken in 3 places |
+| Shipping edge functions with zero auth | Every edge function MUST have JWT + role + tenant check | AI writes the business logic first and "plans to add auth later" — then forgets or declares it done |
+| Putting API keys in `VITE_*` env vars | `VITE_` = browser-visible; secrets go in edge functions only | AI sees `VITE_` as "config" without understanding it ships to every browser |
+| `WITH CHECK (true)` on audit/security tables | Identity columns must enforce `auth.uid()` | AI makes RLS "work" by making it permissive — passing tests but destroying security |
+| Querying `profiles.id` instead of `profiles.user_id` | `profiles` PK is `user_id` — see rule 8 in `adversarial-audit-lessons.md` | AI assumes `id` is the primary key because that's the convention in most tables |
+| `functions.invoke('send_email')` when directory is `send-email` | Invocation names = directory names (dashes, not underscores) | AI guesses the name instead of checking `ls supabase/functions/` |
+| Decoding JWT with `atob()` instead of verifying | ALWAYS use `supabase.auth.getUser(token)` in edge functions | AI sees decoding as "reading" the token — doesn't understand verification vs parsing |
+| Shadowing imported variables (`const X = X`) | Use imports directly or rename local variables | AI creates "local copies" of imports out of habit — creates confusion and potential TDZ bugs |
+| Grading own work without codebase-wide audit | Run adversarial audit with different AI before demos/pilots | AI has confirmation bias — sees what it intended to write, not what's actually there across 500+ files |
 
 **The STOP AND ASK protocol is the highest-value rule.** Most AI mistakes stem from continuing when uncertain rather than asking.
 
@@ -297,6 +306,7 @@ The following detailed standards are auto-loaded from `.claude/rules/`. Each is 
 | **`visual-acceptance.md`** | No visual work is "done" until Maria sees it rendered |
 | **`implementation-discipline.md`** | Plan internally, time estimates, pre-push checks, test timing |
 | **`component-library.md`** | EA design system component reference (read before using EA components) |
+| **`adversarial-audit-lessons.md`** | Codebase-wide grep rule, edge function auth checklist, VITE_ secrets ban, RLS identity enforcement, profiles.user_id, function naming, JWT verification, regression prevention |
 
 ---
 

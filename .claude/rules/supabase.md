@@ -240,6 +240,26 @@ Anon key:     SB_ANON_KEY -> SUPABASE_ANON_KEY -> SB_PUBLISHABLE_API_KEY
 
 **JWT format keys are required for auth operations.** The new `sb_publishable_*` / `sb_secret_*` format is NOT fully supported by Supabase JS client yet.
 
+### Edge Function Auth — MANDATORY (Adversarial Audit Rule)
+
+**Every edge function MUST authenticate and authorize callers.** No exceptions. This rule exists because `send-sms` and `send-email` shipped with zero auth — any HTTP client could send messages to any recipient.
+
+**Before declaring ANY edge function done, verify:**
+
+| Check | Required? | How |
+|-------|-----------|-----|
+| JWT verification | YES — all functions | `supabase.auth.getUser(token)` |
+| Role gating | YES — for functions that mutate or send | Check `user_roles` or `profiles.role_id` |
+| Tenant isolation | YES — for multi-tenant data | Scope all queries to caller's `tenant_id` |
+| Rate limiting | YES — for expensive operations (AI, messaging) | Import `_shared/rateLimiter.ts` |
+| Input validation | YES — all functions | Zod schema or manual checks |
+
+**Functions that send external messages (SMS, email, push) are HIGH RISK** and require admin/clinical role gating + recipient validation + rate limiting + audit logging.
+
+**Querying `profiles` table:** The column is `user_id`, NOT `id`. This bug has been introduced and fixed multiple times. Always `.eq('user_id', userId)`.
+
+**Invoking other functions:** Names use dashes, not underscores. Check `ls supabase/functions/` before writing `functions.invoke()`.
+
 ---
 
 ## 7. Edge Function CORS — Use the Shared Module
