@@ -9,9 +9,9 @@
 
 | # | Gap | Description | Est. Hours | Status |
 |---|-----|-------------|-----------|--------|
-| G-1 | Push notification auth gap | `send-push-notification` edge function has no JWT/auth validation — any caller can send messages to patients | 2 | TODO |
-| G-2 | AI functions crash on empty input | `ai-readmission-predictor`, `ai-fall-risk-predictor`, `ai-medication-reconciliation` return WORKER_ERROR instead of 400 validation error | 4 | TODO |
-| G-3 | Drug interaction CORS on auth error | `check-drug-interactions` doesn't include CORS headers on 401 response — browser gets opaque CORS failure | 1 | TODO |
+| G-1 | Push notification auth gap | `send-push-notification` edge function has no JWT/auth validation — any caller can send messages to patients | 2 | ✅ DONE |
+| G-2 | AI functions crash on empty input | `ai-readmission-predictor`, `ai-fall-risk-predictor`, `ai-medication-reconciliation` return WORKER_ERROR instead of 400 validation error | 4 | ✅ DONE |
+| G-3 | Drug interaction CORS on auth error | `check-drug-interactions` doesn't include CORS headers on 401 response — browser gets opaque CORS failure | 1 | ✅ DONE |
 
 **P0 subtotal:** ~7 hours
 
@@ -21,9 +21,9 @@
 
 | # | Gap | Description | Est. Hours | Status |
 |---|-----|-------------|-----------|--------|
-| G-4 | No generated database types | 603 tables with manual TypeScript interfaces — should auto-generate from schema | 4 | TODO |
-| G-5 | Wearable DB migrations skipped | `wearable_vital_signs`, `wearable_connections`, `wearable_activity_data`, `wearable_fall_detections`, `wearable_gait_analysis` defined but in `_ARCHIVE_SKIPPED/` — not applied | 2 | TODO |
-| G-6 | BLE offline->cloud sync gap | Offline reading queue captures BLE vitals (500 item buffer) but no edge function exists to persist them to `wearable_vital_signs` | 6 | TODO |
+| G-4 | No generated database types | 603 tables with manual TypeScript interfaces — should auto-generate from schema | 4 | ✅ DONE (pre-existing: `npm run db:types` + 62K-line `database.generated.ts`) |
+| G-5 | Wearable DB migrations skipped | `wearable_vital_signs`, `wearable_connections`, `wearable_activity_data`, `wearable_fall_detections`, `wearable_gait_analysis` defined but in `_ARCHIVE_SKIPPED/` — not applied | 2 | ✅ DONE |
+| G-6 | BLE offline->cloud sync gap | Offline reading queue captures BLE vitals (500 item buffer) but no edge function exists to persist them to `wearable_vital_signs` | 6 | ✅ DONE |
 | G-7 | Garmin OAuth 1.0a not implemented | Adapter skeleton exists, `getAuthorizationUrl()` throws. Needs HMAC-SHA1 signing. Second most popular wearable ecosystem. | 8 | TODO |
 
 **P1 subtotal:** ~20 hours

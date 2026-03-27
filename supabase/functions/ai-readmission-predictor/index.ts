@@ -111,6 +111,15 @@ serve(async (req) => {
 
     const isSuperAdmin = !!superAdminData;
 
+    let requestBody: Record<string, unknown>;
+    try {
+      requestBody = await req.json();
+    } catch (_parseErr: unknown) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or empty request body — expected JSON with patientId and dischargeDate' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const {
       patientId,
       tenantId,
@@ -120,7 +129,7 @@ serve(async (req) => {
       primaryDiagnosisCode,
       primaryDiagnosisDescription,
       populationHints,
-    } = await req.json();
+    } = requestBody;
 
     // =========================================================================
     // AUTHORIZATION - Verify tenant access

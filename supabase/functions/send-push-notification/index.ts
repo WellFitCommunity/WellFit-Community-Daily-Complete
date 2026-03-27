@@ -185,7 +185,69 @@ serve(async (req) => {
   }
 
   try {
-    const payload: PushNotificationRequest = await req.json();
+    // =========================================================================
+    // AUTHENTICATION — Verify caller identity (G-1 security fix)
+    // =========================================================================
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.slice(7);
+    const authSupabase = createClient(
+      SUPABASE_URL ?? '',
+      SB_PUBLISHABLE_API_KEY ?? SB_SECRET_KEY ?? ''
+    );
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify caller has admin/system role (push notifications are a privileged operation)
+    const adminSupabase = createClient(SUPABASE_URL ?? '', SB_SECRET_KEY ?? '');
+    const { data: profile } = await adminSupabase
+      .from('profiles')
+      .select('is_admin, tenant_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!profile?.is_admin) {
+      // Also check user_roles for system-level roles
+      const { data: roleData } = await adminSupabase
+        .from('user_roles')
+        .select('roles:role_id(name)')
+        .eq('user_id', user.id)
+        .single();
+
+      const roleName = (roleData?.roles as { name: string } | null)?.name;
+      const allowedRoles = ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'];
+
+      if (!roleName || !allowedRoles.includes(roleName)) {
+        return new Response(
+          JSON.stringify({ error: 'Insufficient permissions — admin or clinical role required' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    logger.info('Push notification authorized', { userId: user.id, isAdmin: profile?.is_admin });
+
+    let payload: PushNotificationRequest;
+    try {
+      payload = await req.json();
+    } catch (_parseErr: unknown) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or empty request body — expected JSON with title and body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const { title, body, user_ids, topic, data, priority = 'high' } = payload;
 
     if (!title || !body) {
@@ -235,12 +297,35 @@ serve(async (req) => {
         SB_SECRET_KEY ?? ''
       );
 
-      // Fetch FCM tokens for specified users
+      // Tenant isolation: only send to users within caller's tenant
+      const callerTenantId = profile?.tenant_id;
+
+      // Fetch FCM tokens for specified users, scoped to caller's tenant
       // NOTE: Using fcm_tokens table (canonical) instead of push_subscriptions
-      const { data: subscriptions, error } = await supabase
+      let tokenQuery = supabase
         .from('fcm_tokens')
         .select('user_id, token')
         .in('user_id', user_ids);
+
+      // If caller has a tenant, verify target users belong to the same tenant
+      if (callerTenantId) {
+        const { data: tenantUsers } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .in('user_id', user_ids)
+          .eq('tenant_id', callerTenantId);
+
+        const allowedUserIds = (tenantUsers || []).map((u: { user_id: string }) => u.user_id);
+        if (allowedUserIds.length === 0) {
+          logger.warn('No target users found in caller tenant', { callerTenantId, requestedUserIds: user_ids.length });
+        }
+        tokenQuery = supabase
+          .from('fcm_tokens')
+          .select('user_id, token')
+          .in('user_id', allowedUserIds.length > 0 ? allowedUserIds : ['__none__']);
+      }
+
+      const { data: subscriptions, error } = await tokenQuery;
 
       if (error) {
         logger.error('Failed to fetch push subscriptions', { error: error.message });
@@ -273,17 +358,43 @@ serve(async (req) => {
       }
     }
 
-    // If no specific targets, send to all registered tokens (broadcast)
+    // If no specific targets, send to all registered tokens (broadcast within tenant)
     if (!topic && !user_ids?.length) {
       const supabase = createClient(
         SUPABASE_URL ?? '',
         SB_SECRET_KEY ?? ''
       );
 
-      // NOTE: Using fcm_tokens table (canonical) instead of push_subscriptions
-      const { data: allTokens, error } = await supabase
-        .from('fcm_tokens')
-        .select('token');
+      const callerTenantForBroadcast = profile?.tenant_id;
+
+      // Tenant-scoped broadcast: only send to users in the caller's tenant
+      let allTokens: { token: string }[] | null = null;
+      let error: { message: string } | null = null;
+
+      if (callerTenantForBroadcast) {
+        // Get user_ids in caller's tenant, then their tokens
+        const { data: tenantUserIds } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('tenant_id', callerTenantForBroadcast);
+
+        const uids = (tenantUserIds || []).map((u: { user_id: string }) => u.user_id);
+        if (uids.length > 0) {
+          const result = await supabase
+            .from('fcm_tokens')
+            .select('token')
+            .in('user_id', uids);
+          allTokens = result.data;
+          error = result.error;
+        }
+      } else {
+        // Super admin without tenant — full broadcast (rare, controlled)
+        const result = await supabase
+          .from('fcm_tokens')
+          .select('token');
+        allTokens = result.data;
+        error = result.error;
+      }
 
       if (error) {
         logger.error('Failed to fetch all push subscriptions', { error: error.message });

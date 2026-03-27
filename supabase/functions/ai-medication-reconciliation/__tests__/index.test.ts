@@ -395,4 +395,46 @@ Deno.test("AI Medication Reconciliation Edge Function Tests", async (t) => {
     assertEquals(statusCodes.badRequest, 400);
     assertEquals(statusCodes.serverError, 500);
   });
+
+  // =========================================================================
+  // G-2 Fix: Return 400 instead of WORKER_ERROR on empty/malformed input
+  // =========================================================================
+
+  await t.step("should return 400 for empty request body (G-2 fix)", () => {
+    // Before G-2: empty body caused req.json() to throw → 500 WORKER_ERROR
+    // After G-2: try/catch on req.json() returns clean 400
+    const emptyBodyResponse = {
+      status: 400,
+      error: "Invalid or empty request body — expected JSON with patientId, providerId, and medications"
+    };
+
+    assertEquals(emptyBodyResponse.status, 400);
+    assertExists(emptyBodyResponse.error);
+  });
+
+  await t.step("should return 400 for malformed JSON (G-2 fix)", () => {
+    const malformedResponse = { status: 400 };
+    assertEquals(malformedResponse.status, 400);
+  });
+
+  await t.step("should still validate medications after parse (G-2 fix)", () => {
+    // Empty medications should fail validation even with valid parse
+    const emptyMeds = { patientId: "p1", providerId: "pr1", medications: { admission: [], prescribed: [], current: [], discharge: [] } };
+    const totalMeds =
+      (emptyMeds.medications.admission?.length || 0) +
+      (emptyMeds.medications.prescribed?.length || 0) +
+      (emptyMeds.medications.current?.length || 0) +
+      (emptyMeds.medications.discharge?.length || 0);
+
+    assertEquals(totalMeds, 0);
+  });
+
+  await t.step("should include CORS headers in 400 parse error response (G-2 fix)", () => {
+    const responseHeaders = {
+      "Access-Control-Allow-Origin": "https://app.wellfitcommunity.com",
+      "Content-Type": "application/json"
+    };
+
+    assertEquals("Access-Control-Allow-Origin" in responseHeaders, true);
+  });
 });

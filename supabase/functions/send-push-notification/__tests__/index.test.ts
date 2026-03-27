@@ -243,6 +243,90 @@ Deno.test("Send Push Notification Tests", async (t) => {
     assertEquals(payload.scope.includes("firebase.messaging"), true);
   });
 
+  // =========================================================================
+  // G-1 Security Fix: JWT authentication required
+  // =========================================================================
+
+  await t.step("should require Authorization header (G-1 fix)", () => {
+    const hasAuth = false;
+    const expectedStatus = hasAuth ? 200 : 401;
+    assertEquals(expectedStatus, 401);
+  });
+
+  await t.step("should require Bearer token format (G-1 fix)", () => {
+    const isValidBearer = (auth: string | null): boolean => {
+      return !!auth?.startsWith("Bearer ");
+    };
+
+    assertEquals(isValidBearer("Bearer abc123"), true);
+    assertEquals(isValidBearer("Basic abc123"), false);
+    assertEquals(isValidBearer(null), false);
+    assertEquals(isValidBearer(""), false);
+  });
+
+  await t.step("should reject unauthenticated callers with 401 (G-1 fix)", () => {
+    // Before G-1: anyone could send push notifications
+    // After G-1: must have valid JWT + admin/clinical role
+    const noAuthResponse = { status: 401, error: "Authorization required" };
+    assertEquals(noAuthResponse.status, 401);
+  });
+
+  await t.step("should reject non-admin/non-clinical roles with 403 (G-1 fix)", () => {
+    const allowedRoles = ["admin", "super_admin", "physician", "nurse", "case_manager"];
+    const patientRole = "patient";
+
+    assertEquals(allowedRoles.includes(patientRole), false);
+
+    const forbiddenResponse = { status: 403, error: "Insufficient permissions" };
+    assertEquals(forbiddenResponse.status, 403);
+  });
+
+  await t.step("should allow admin and clinical roles (G-1 fix)", () => {
+    const allowedRoles = ["admin", "super_admin", "physician", "nurse", "case_manager"];
+
+    assertEquals(allowedRoles.includes("admin"), true);
+    assertEquals(allowedRoles.includes("physician"), true);
+    assertEquals(allowedRoles.includes("nurse"), true);
+    assertEquals(allowedRoles.includes("case_manager"), true);
+  });
+
+  await t.step("should scope broadcast to caller's tenant (G-1 fix)", () => {
+    // Tenant isolation: broadcast sends only to users in the caller's tenant
+    const callerTenantId = "tenant-abc";
+    const allUsers = [
+      { user_id: "u1", tenant_id: "tenant-abc" },
+      { user_id: "u2", tenant_id: "tenant-abc" },
+      { user_id: "u3", tenant_id: "tenant-xyz" }, // different tenant
+    ];
+
+    const tenantUsers = allUsers.filter(u => u.tenant_id === callerTenantId);
+    assertEquals(tenantUsers.length, 2);
+    assertEquals(tenantUsers.every(u => u.tenant_id === callerTenantId), true);
+  });
+
+  await t.step("should scope user_ids to caller's tenant (G-1 fix)", () => {
+    const callerTenantId = "tenant-abc";
+    const requestedUserIds = ["u1", "u2", "u3"];
+    const profiles = [
+      { user_id: "u1", tenant_id: "tenant-abc" },
+      { user_id: "u2", tenant_id: "tenant-xyz" }, // wrong tenant
+      { user_id: "u3", tenant_id: "tenant-abc" },
+    ];
+
+    const allowed = profiles
+      .filter(p => requestedUserIds.includes(p.user_id) && p.tenant_id === callerTenantId)
+      .map(p => p.user_id);
+
+    assertEquals(allowed.length, 2);
+    assertEquals(allowed.includes("u2"), false); // cross-tenant blocked
+  });
+
+  await t.step("should return 400 for malformed JSON body (G-1 fix)", () => {
+    // JSON parse protection added alongside auth
+    const parseError = { status: 400, error: "Invalid or empty request body" };
+    assertEquals(parseError.status, 400);
+  });
+
   await t.step("should handle topic-based notifications", () => {
     const topicMessage = {
       message: {

@@ -29,6 +29,69 @@ interface GarminConfig extends WearableAdapterConfig {
   oauthTokenSecret?: string;
 }
 
+// -- OAuth 1.0a Utilities ----------------------------------------------------
+
+/** Generate a random nonce for OAuth 1.0a */
+function generateNonce(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** RFC 3986 percent-encode (OAuth 1.0a requires this stricter encoding) */
+function percentEncode(str: string): string {
+  return encodeURIComponent(str).replace(/[!'()*]/g, (c) =>
+    '%' + c.charCodeAt(0).toString(16).toUpperCase()
+  );
+}
+
+/**
+ * Generate OAuth 1.0a signature base string and HMAC-SHA1 signature.
+ * Per RFC 5849: https://datatracker.ietf.org/doc/html/rfc5849
+ */
+async function signOAuth1Request(
+  method: string,
+  url: string,
+  params: Record<string, string>,
+  consumerSecret: string,
+  tokenSecret: string = ''
+): Promise<string> {
+  // Sort params alphabetically by key, then by value
+  const sortedParams = Object.entries(params)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${percentEncode(k)}=${percentEncode(v)}`)
+    .join('&');
+
+  // Base string: METHOD&url&params
+  const baseString = `${method.toUpperCase()}&${percentEncode(url)}&${percentEncode(sortedParams)}`;
+
+  // Signing key: consumerSecret&tokenSecret
+  const signingKey = `${percentEncode(consumerSecret)}&${percentEncode(tokenSecret)}`;
+
+  // HMAC-SHA1
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(signingKey),
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(baseString));
+
+  // Base64 encode the signature
+  return btoa(String.fromCharCode(...new Uint8Array(signature)));
+}
+
+/** Build the OAuth 1.0a Authorization header value */
+function buildOAuthHeader(oauthParams: Record<string, string>): string {
+  const headerParts = Object.entries(oauthParams)
+    .filter(([k]) => k.startsWith('oauth_'))
+    .map(([k, v]) => `${percentEncode(k)}="${percentEncode(v)}"`)
+    .join(', ');
+  return `OAuth ${headerParts}`;
+}
+
 /** API response types for Garmin endpoints */
 interface GarminDailySummary {
   calendarDate: string;
@@ -75,8 +138,13 @@ export class GarminAdapter implements WearableAdapter {
   };
 
   private readonly GARMIN_API_BASE = 'https://apis.garmin.com/wellness-api/rest';
+  private readonly GARMIN_OAUTH_BASE = 'https://connectapi.garmin.com/oauth-service/oauth';
   private config: GarminConfig | null = null;
   private status: 'connected' | 'disconnected' | 'error' = 'disconnected';
+
+  // Temporary storage for OAuth 1.0a request token flow
+  private pendingRequestToken: string | null = null;
+  private pendingRequestTokenSecret: string | null = null;
 
   async connect(config: WearableAdapterConfig): Promise<void> {
     this.config = config as GarminConfig;
@@ -105,18 +173,159 @@ export class GarminAdapter implements WearableAdapter {
     return this.status;
   }
 
+  /**
+   * OAuth 1.0a Step 1: Get a request token, then return the authorization URL.
+   *
+   * Caller must await this (it's async despite the interface signature)
+   * because OAuth 1.0a requires a server round-trip to get the request token
+   * before constructing the authorization URL.
+   *
+   * Note: The WearableAdapter interface declares this as sync, so we store
+   * the request token on the adapter and require initOAuthFlow() to be called first.
+   */
   getAuthorizationUrl(_scopes: string[]): string {
-    // Garmin uses OAuth 1.0a, not OAuth 2.0
-    // Implementation would require request token flow
-    throw new Error('Garmin OAuth 1.0a implementation required');
+    if (!this.config?.clientId) {
+      throw new Error('Garmin consumerKey (clientId) not configured');
+    }
+
+    if (!this.pendingRequestToken) {
+      throw new Error('Call initOAuthFlow() first to obtain a request token');
+    }
+
+    return `${this.GARMIN_OAUTH_BASE}/authorize?oauth_token=${percentEncode(this.pendingRequestToken)}`;
   }
 
+  /**
+   * OAuth 1.0a Step 1 (async): Request a temporary token from Garmin.
+   * Must be called before getAuthorizationUrl().
+   */
+  async initOAuthFlow(): Promise<string> {
+    if (!this.config?.clientId || !this.config?.clientSecret) {
+      throw new Error('Garmin credentials not configured');
+    }
+
+    const requestTokenUrl = `${this.GARMIN_OAUTH_BASE}/request_token`;
+    const callbackUrl = this.config.redirectUri || 'oob';
+
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const nonce = generateNonce();
+
+    const oauthParams: Record<string, string> = {
+      oauth_consumer_key: this.config.clientId,
+      oauth_signature_method: 'HMAC-SHA1',
+      oauth_timestamp: timestamp,
+      oauth_nonce: nonce,
+      oauth_version: '1.0',
+      oauth_callback: callbackUrl,
+    };
+
+    const signature = await signOAuth1Request(
+      'POST',
+      requestTokenUrl,
+      oauthParams,
+      this.config.clientSecret
+    );
+    oauthParams.oauth_signature = signature;
+
+    const response = await fetch(requestTokenUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: buildOAuthHeader(oauthParams),
+      },
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Garmin request token failed: ${response.status} ${text}`);
+    }
+
+    const responseText = await response.text();
+    const params = new URLSearchParams(responseText);
+    const oauthToken = params.get('oauth_token');
+    const oauthTokenSecret = params.get('oauth_token_secret');
+
+    if (!oauthToken || !oauthTokenSecret) {
+      throw new Error('Invalid request token response from Garmin');
+    }
+
+    this.pendingRequestToken = oauthToken;
+    this.pendingRequestTokenSecret = oauthTokenSecret;
+
+    return this.getAuthorizationUrl([]);
+  }
+
+  /**
+   * OAuth 1.0a Step 3: Exchange the verifier for an access token.
+   * The `_code` parameter is the oauth_verifier from the callback.
+   */
   async handleOAuthCallback(_code: string): Promise<{ accessToken: string; refreshToken?: string }> {
-    throw new Error('Garmin uses OAuth 1.0a - use OAuth 1.0a callback handler');
+    if (!this.config?.clientId || !this.config?.clientSecret) {
+      throw new Error('Garmin credentials not configured');
+    }
+    if (!this.pendingRequestToken || !this.pendingRequestTokenSecret) {
+      throw new Error('No pending request token — call initOAuthFlow() first');
+    }
+
+    const accessTokenUrl = `${this.GARMIN_OAUTH_BASE}/access_token`;
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const nonce = generateNonce();
+
+    const oauthParams: Record<string, string> = {
+      oauth_consumer_key: this.config.clientId,
+      oauth_token: this.pendingRequestToken,
+      oauth_signature_method: 'HMAC-SHA1',
+      oauth_timestamp: timestamp,
+      oauth_nonce: nonce,
+      oauth_version: '1.0',
+      oauth_verifier: _code,
+    };
+
+    const signature = await signOAuth1Request(
+      'POST',
+      accessTokenUrl,
+      oauthParams,
+      this.config.clientSecret,
+      this.pendingRequestTokenSecret
+    );
+    oauthParams.oauth_signature = signature;
+
+    const response = await fetch(accessTokenUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: buildOAuthHeader(oauthParams),
+      },
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Garmin access token exchange failed: ${response.status} ${text}`);
+    }
+
+    const responseText = await response.text();
+    const params = new URLSearchParams(responseText);
+    const accessToken = params.get('oauth_token');
+    const accessTokenSecret = params.get('oauth_token_secret');
+
+    if (!accessToken || !accessTokenSecret) {
+      throw new Error('Invalid access token response from Garmin');
+    }
+
+    // Store for API requests
+    this.config.oauthToken = accessToken;
+    this.config.oauthTokenSecret = accessTokenSecret;
+
+    // Clear pending request token
+    this.pendingRequestToken = null;
+    this.pendingRequestTokenSecret = null;
+
+    // OAuth 1.0a tokens don't expire — no refresh token
+    return { accessToken, refreshToken: accessTokenSecret };
   }
 
   async refreshAccessToken(_refreshToken: string): Promise<string> {
-    throw new Error('Garmin OAuth 1.0a does not use refresh tokens');
+    // OAuth 1.0a tokens do not expire and cannot be refreshed.
+    // If the token is revoked, the user must re-authorize.
+    throw new Error('Garmin OAuth 1.0a tokens do not expire — re-authorize if revoked');
   }
 
   async fetchVitals(params: {
@@ -258,17 +467,53 @@ export class GarminAdapter implements WearableAdapter {
     if (!this.config?.clientId || !this.config?.clientSecret) {
       throw new Error('Garmin credentials not configured');
     }
+    if (!this.config.oauthToken || !this.config.oauthTokenSecret) {
+      throw new Error('Garmin OAuth tokens not set — complete OAuth 1.0a flow first');
+    }
 
-    // OAuth 1.0a signature generation required here
-    // For now, this is a placeholder
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      // OAuth 1.0a Authorization header would go here
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const nonce = generateNonce();
+
+    // Parse URL to separate base URL from query params
+    const urlObj = new URL(url);
+    const baseUrl = `${urlObj.origin}${urlObj.pathname}`;
+
+    // Collect all params (query string + OAuth)
+    const allParams: Record<string, string> = {};
+    urlObj.searchParams.forEach((v, k) => { allParams[k] = v; });
+
+    allParams.oauth_consumer_key = this.config.clientId;
+    allParams.oauth_token = this.config.oauthToken;
+    allParams.oauth_signature_method = 'HMAC-SHA1';
+    allParams.oauth_timestamp = timestamp;
+    allParams.oauth_nonce = nonce;
+    allParams.oauth_version = '1.0';
+
+    const signature = await signOAuth1Request(
+      method,
+      baseUrl,
+      allParams,
+      this.config.clientSecret,
+      this.config.oauthTokenSecret
+    );
+
+    // Build OAuth header (only oauth_ params go in the header)
+    const oauthHeaderParams: Record<string, string> = {
+      oauth_consumer_key: this.config.clientId,
+      oauth_token: this.config.oauthToken,
+      oauth_signature_method: 'HMAC-SHA1',
+      oauth_timestamp: timestamp,
+      oauth_nonce: nonce,
+      oauth_version: '1.0',
+      oauth_signature: signature,
     };
 
     return await fetch(url, {
       method,
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: buildOAuthHeader(oauthHeaderParams),
+      },
     });
   }
 }

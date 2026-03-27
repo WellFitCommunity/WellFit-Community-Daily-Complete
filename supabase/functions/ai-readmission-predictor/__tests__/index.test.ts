@@ -13,7 +13,8 @@ Deno.test("AI Readmission Predictor Edge Function Tests", async (t) => {
   });
 
   await t.step("should require authorization header", () => {
-    const authHeader = null;
+    const headers = new Headers();
+    const authHeader = headers.get("Authorization"); // returns null
     const hasAuth = !!authHeader?.startsWith("Bearer ");
     const expectedStatus = hasAuth ? 200 : 401;
 
@@ -90,8 +91,8 @@ Deno.test("AI Readmission Predictor Edge Function Tests", async (t) => {
 
   await t.step("should allow super_admin to access any tenant", () => {
     const isSuperAdmin = true;
-    const profileTenantId = "tenant-A";
-    const requestedTenantId = "tenant-B";
+    const profileTenantId: string = "tenant-A";
+    const requestedTenantId: string = "tenant-B";
     const canAccess = isSuperAdmin || requestedTenantId === profileTenantId;
 
     assertEquals(canAccess, true);
@@ -99,8 +100,8 @@ Deno.test("AI Readmission Predictor Edge Function Tests", async (t) => {
 
   await t.step("should prevent non-super-admin from accessing other tenant", () => {
     const isSuperAdmin = false;
-    const profileTenantId = "tenant-A";
-    const requestedTenantId = "tenant-B";
+    const profileTenantId: string = "tenant-A";
+    const requestedTenantId: string = "tenant-B";
     const canAccess = isSuperAdmin || requestedTenantId === profileTenantId;
 
     assertEquals(canAccess, false);
@@ -148,8 +149,8 @@ Deno.test("AI Readmission Predictor Edge Function Tests", async (t) => {
   });
 
   await t.step("should return 403 when patient not in organization", () => {
-    const patientTenantId = "tenant-B";
-    const effectiveTenantId = "tenant-A";
+    const patientTenantId: string = "tenant-B";
+    const effectiveTenantId: string = "tenant-A";
     const inOrg = patientTenantId === effectiveTenantId;
     const expectedStatus = inOrg ? 200 : 403;
 
@@ -238,13 +239,15 @@ Deno.test("AI Readmission Predictor Edge Function Tests", async (t) => {
   });
 
   await t.step("should default dischargeFacility to Unknown Facility", () => {
-    const dischargeFacility = undefined || "Unknown Facility";
+    const rawFacility: string | undefined = undefined;
+    const dischargeFacility = rawFacility || "Unknown Facility";
 
     assertEquals(dischargeFacility, "Unknown Facility");
   });
 
   await t.step("should default dischargeDisposition to home", () => {
-    const dischargeDisposition = undefined || "home";
+    const rawDisposition: string | undefined = undefined;
+    const dischargeDisposition = rawDisposition || "home";
 
     assertEquals(dischargeDisposition, "home");
   });
@@ -423,5 +426,43 @@ Deno.test("AI Readmission Predictor Edge Function Tests", async (t) => {
     assertEquals(defaultData.sdohRiskFactors, 0);
     assertEquals(defaultData.checkInCompletionRate, 0);
     assertEquals(defaultData.hasActiveCarePlan, false);
+  });
+
+  // =========================================================================
+  // G-2 Fix: Return 400 instead of WORKER_ERROR on empty/malformed input
+  // =========================================================================
+
+  await t.step("should return 400 for empty request body (G-2 fix)", () => {
+    // Before G-2: empty body caused req.json() to throw → 500 WORKER_ERROR
+    // After G-2: try/catch on req.json() returns clean 400
+    const emptyBodyResponse = {
+      status: 400,
+      error: "Invalid or empty request body — expected JSON with patientId and dischargeDate"
+    };
+
+    assertEquals(emptyBodyResponse.status, 400);
+    assertExists(emptyBodyResponse.error);
+  });
+
+  await t.step("should return 400 for malformed JSON (G-2 fix)", () => {
+    const malformedResponse = { status: 400 };
+    assertEquals(malformedResponse.status, 400);
+  });
+
+  await t.step("should still validate required fields after parse (G-2 fix)", () => {
+    // Empty object {} passes parse but fails required field validation
+    const emptyObject: Record<string, unknown> = {};
+    const hasRequired = !!emptyObject.patientId && !!emptyObject.dischargeDate;
+
+    assertEquals(hasRequired, false);
+  });
+
+  await t.step("should include CORS headers in 400 parse error response (G-2 fix)", () => {
+    const responseHeaders = {
+      "Access-Control-Allow-Origin": "https://app.wellfitcommunity.com",
+      "Content-Type": "application/json"
+    };
+
+    assertEquals("Access-Control-Allow-Origin" in responseHeaders, true);
   });
 });

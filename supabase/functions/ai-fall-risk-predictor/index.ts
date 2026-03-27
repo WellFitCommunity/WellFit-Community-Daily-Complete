@@ -199,7 +199,15 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
-    const body: FallRiskRequest = await req.json();
+    let body: FallRiskRequest;
+    try {
+      body = await req.json();
+    } catch (_parseErr: unknown) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or empty request body — expected JSON with patientId and assessorId" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const {
       patientId,
       assessorId,

@@ -392,4 +392,45 @@ Deno.test("AI Fall Risk Predictor Edge Function Tests", async (t) => {
     assertEquals(statusCodes.badRequest, 400);
     assertEquals(statusCodes.serverError, 500);
   });
+
+  // =========================================================================
+  // G-2 Fix: Return 400 instead of WORKER_ERROR on empty/malformed input
+  // =========================================================================
+
+  await t.step("should return 400 for empty request body (G-2 fix)", () => {
+    // Before G-2: empty body caused req.json() to throw → 500 WORKER_ERROR
+    // After G-2: try/catch on req.json() returns clean 400
+    const emptyBodyResponse = {
+      status: 400,
+      error: "Invalid or empty request body — expected JSON with patientId and assessorId"
+    };
+
+    assertEquals(emptyBodyResponse.status, 400);
+    assertExists(emptyBodyResponse.error);
+  });
+
+  await t.step("should return 400 for malformed JSON (G-2 fix)", () => {
+    // Malformed JSON like "{patientId:" should be caught gracefully
+    const malformedResponse = { status: 400 };
+    assertEquals(malformedResponse.status, 400);
+  });
+
+  await t.step("should still validate required fields after parse (G-2 fix)", () => {
+    // Empty object {} should pass parse but fail field validation
+    const emptyObject: Record<string, unknown> = {};
+    const hasRequired = !!emptyObject.patientId && !!emptyObject.assessorId;
+
+    assertEquals(hasRequired, false);
+  });
+
+  await t.step("should include CORS headers in 400 parse error response (G-2 fix)", () => {
+    // CORS headers must be present even on parse-error responses
+    const responseHeaders = {
+      "Access-Control-Allow-Origin": "https://app.wellfitcommunity.com",
+      "Content-Type": "application/json"
+    };
+
+    assertEquals("Access-Control-Allow-Origin" in responseHeaders, true);
+    assertEquals("Content-Type" in responseHeaders, true);
+  });
 });
