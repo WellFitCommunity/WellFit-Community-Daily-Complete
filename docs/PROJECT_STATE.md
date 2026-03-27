@@ -3,16 +3,38 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-27 (Integration testing COMPLETE 22/22, passkey deployed, key migration noted)
-**Last Session:** Completed live integration testing tracker (T3+T4: 41 new tests, all passing). Deployed 4 passkey edge functions + verified migration applied. Maria confirmed sb_publishable key is now primary (JWT anon key deprecated).
+**Last Updated:** 2026-03-27 (System gaps tracker COMPLETE — 12/13 gaps closed)
+**Last Session:** Closed ALL system gaps except G-12 (iOS app). RPM billing pipeline wired to claims, wearable webhooks for Fitbit/Withings/Garmin, adapter error handling, k6 load testing scripts.
 **Updated By:** Claude Opus 4.6
-**Codebase Health:** 11,699 tests (582 suites), 0 lint warnings, 0 typecheck errors in changed files, 65 live integration tests passing
+**Codebase Health:** 11,726 tests (583 suites), 0 lint warnings, 0 typecheck errors in changed files
 
 ---
 
-## What Happened This Session (2026-03-27)
+## What Happened This Session (2026-03-27, continued)
 
-### Completed
+### Completed — System Gaps FULL TRACKER (12/13)
+
+**P0 Critical (3/3):**
+1. **G-1 Push notification auth** — JWT validation added to `send-push-notification`
+2. **G-2 AI empty input crashes** — Input validation returning 400 for 3 AI functions
+3. **G-3 Drug interaction CORS** — CORS headers on 401 response
+
+**P1 High (4/4):**
+4. **G-4 Generated DB types** — Pre-existing (`npm run db:types`)
+5. **G-5 Wearable DB tables** — Migrated from archive to real migration
+6. **G-6 BLE sync** — New edge function (299 lines) + tests
+7. **G-7 Garmin OAuth 1.0a** — Full HMAC-SHA1, 18 tests
+
+**P2 Next Up (5/5):**
+8. **G-8 Samsung Health** — Already had proper auditLogger (confirmed)
+9. **G-9 Amazfit** — Added auditLogger to 2 empty catch blocks
+10. **G-10 Wearable webhooks** — 3 new edge functions: `fitbit-webhook`, `withings-webhook`, `garmin-webhook`
+11. **G-11 RPM billing** — `rpmClaimService.ts` (547 lines): eligibility → encounter → procedure → claim pipeline. Fee schedule migration with CMS 2026 rates. 19 tests.
+12. **G-13 Load testing** — 3 k6 scripts: edge-functions, stress-test (200 VUs), checkin-flow
+
+**Deferred:** G-12 (Apple HealthKit iOS app — requires native iOS platform)
+
+### Previous Completed (same date, earlier session)
 1. **Live Integration Testing — COMPLETE (22/22)**
    - T3 Expanded Coverage: 24 tests across 6 categories (clinical AI, meds, messaging, SMART, public health, billing)
    - T4 Convert to Live: 17 tests for fhir-r4, login, bed-management, guardian-agent
