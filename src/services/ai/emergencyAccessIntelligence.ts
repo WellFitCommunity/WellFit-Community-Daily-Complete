@@ -23,8 +23,8 @@
  * All access is logged and must comply with HIPAA emergency access provisions.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import { createClient } from '@supabase/supabase-js';
+import { claudeEdgeService } from '../claudeEdgeService';
+import { supabase } from '../../lib/supabaseClient';
 import { mcpOptimizer } from '../mcp/mcp-cost-optimizer';
 
 // ============================================================================
@@ -160,24 +160,11 @@ class EmergencyIntelValidator {
 // ============================================================================
 
 class EmergencyAccessIntelligenceService {
-  private anthropic: Anthropic;
-  private supabase: ReturnType<typeof createClient>;
+  private supabaseClient = supabase;
 
   constructor() {
-    // A-4 fix: VITE_ANTHROPIC_API_KEY removed from browser bundle (security risk).
-    // This service should be migrated to use claude-chat edge function.
-    // For now, initialize with empty key — methods will fail gracefully.
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-
-    this.anthropic = new Anthropic({ apiKey: apiKey || 'not-configured' });
-
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing');
-    }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    // A-4 fix: AI calls routed through claude-chat edge function (server-side API key).
+    // Uses shared supabase client for database operations.
   }
 
   /**
@@ -195,7 +182,7 @@ class EmergencyAccessIntelligenceService {
     const validityDays = request.validityDays || 7;
 
     // Check if skill is enabled
-    const { data: config } = await this.supabase
+    const { data: config } = await this.supabaseClient
       .from('ai_skill_config')
       .select('emergency_intel_enabled, emergency_intel_briefing_validity_days')
       .eq('tenant_id', request.tenantId)
@@ -206,7 +193,7 @@ class EmergencyAccessIntelligenceService {
     }
 
     // Get all seniors enrolled in emergency access program
-    const { data: seniors } = await this.supabase
+    const { data: seniors } = await this.supabaseClient
       .from('profiles')
       .select('user_id, first_name, last_name, email, phone, address, city, state, zip_code')
       .eq('tenant_id', request.tenantId)
@@ -233,7 +220,7 @@ class EmergencyAccessIntelligenceService {
         );
 
         // Check if briefing already exists
-        const { data: existing } = await this.supabase
+        const { data: existing } = await this.supabaseClient
           .from('emergency_response_briefings')
           .select('id')
           .eq('tenant_id', request.tenantId)
@@ -243,7 +230,7 @@ class EmergencyAccessIntelligenceService {
 
         if (existing) {
           // Update existing
-          await this.supabase
+          await this.supabaseClient
             .from('emergency_response_briefings')
             .update({
               executive_summary: briefing.executiveSummary,
@@ -260,7 +247,7 @@ class EmergencyAccessIntelligenceService {
           updated++;
         } else {
           // Create new
-          await this.supabase
+          await this.supabaseClient
             .from('emergency_response_briefings')
             .insert({
               tenant_id: request.tenantId,
@@ -304,7 +291,7 @@ class EmergencyAccessIntelligenceService {
     const accessReason = EmergencyIntelValidator.sanitizeText(request.accessReason, 500);
 
     // Retrieve pre-generated briefing
-    const { data: briefing, error: _error } = await this.supabase
+    const { data: briefing, error: _error } = await this.supabaseClient
       .from('emergency_response_briefings')
       .select('id, senior_id, generated_at, valid_until, executive_summary, medical_intelligence, access_information, emergency_contacts, officer_safety_notes, special_needs')
       .eq('tenant_id', request.tenantId)
@@ -319,7 +306,7 @@ class EmergencyAccessIntelligenceService {
     }
 
     // Log access for HIPAA audit trail
-    await this.supabase
+    await this.supabaseClient
       .from('emergency_briefing_access_log')
       .insert({
         tenant_id: request.tenantId,
@@ -359,7 +346,7 @@ class EmergencyAccessIntelligenceService {
     EmergencyIntelValidator.validateDate(startDate, 'startDate');
     EmergencyIntelValidator.validateDate(endDate, 'endDate');
 
-    const { data, error } = await this.supabase
+    const { data, error } = await this.supabaseClient
       .from('emergency_briefing_analytics')
       .select('tenant_id, access_date, total_accesses, unique_briefings_accessed, emergency_calls, welfare_checks, responses_dispatched, avg_response_minutes')
       .eq('tenant_id', tenantId)
@@ -385,7 +372,7 @@ class EmergencyAccessIntelligenceService {
     EmergencyIntelValidator.validateDate(startDate, 'startDate');
     EmergencyIntelValidator.validateDate(endDate, 'endDate');
 
-    let query = this.supabase
+    let query = this.supabaseClient
       .from('emergency_briefing_access_log')
       .select('id, tenant_id, briefing_id, accessed_at, accessed_by_agency, accessed_by_badge, access_reason, call_id, caller_relationship, reported_emergency_type, response_dispatched, response_arrival_time, response_outcome, created_at')
       .eq('tenant_id', tenantId)
@@ -442,21 +429,21 @@ class EmergencyAccessIntelligenceService {
     recentCheckins: unknown[];
   }> {
     // Get user profile
-    const { data: user } = await this.supabase
+    const { data: user } = await this.supabaseClient
       .from('profiles')
       .select('first_name, last_name, email, phone, address, city, state, zip_code, dob, gender')
       .eq('user_id', seniorId)
       .single();
 
     // Get emergency contacts
-    const { data: contacts } = await this.supabase
+    const { data: contacts } = await this.supabaseClient
       .from('emergency_contacts')
       .select('name, relationship, phone_number, priority, has_key, estimated_response_time')
       .eq('senior_id', seniorId)
       .order('priority', { ascending: true });
 
     // Get SDOH indicators (medical intelligence)
-    const { data: sdoh } = await this.supabase
+    const { data: sdoh } = await this.supabaseClient
       .from('passive_sdoh_detections')
       .select('sdoh_category, risk_level')
       .eq('patient_id', seniorId)
@@ -464,7 +451,7 @@ class EmergencyAccessIntelligenceService {
       .gte('detected_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
 
     // Get recent check-ins for mobility/cognitive assessment
-    const { data: checkins } = await this.supabase
+    const { data: checkins } = await this.supabaseClient
       .from('check_ins')
       .select('created_at, emotional_state, heart_rate, bp_systolic, bp_diastolic, glucose_mg_dl, pulse_oximeter, notes, is_emergency')
       .eq('user_id', seniorId)
@@ -554,8 +541,8 @@ Recent Check-ins: ${seniorData.recentCheckins.length} in last 30 days
 Provide complete emergency response briefing.`;
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: 'claude-haiku-4-5-20250929', // Fast and cost-efficient
+      const response = await claudeEdgeService.chat({
+        model: 'claude-haiku-4-5-20250929',
         max_tokens: 2048,
         temperature: 0.1,
         system: systemPrompt,

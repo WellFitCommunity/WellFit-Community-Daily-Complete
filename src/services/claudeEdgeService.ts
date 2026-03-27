@@ -15,6 +15,7 @@ export interface ClaudeChatRequest {
   model?: string;
   max_tokens?: number;
   system?: string;
+  temperature?: number;
 }
 
 export interface ClaudeChatResponse {

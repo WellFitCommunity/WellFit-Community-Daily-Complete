@@ -40,7 +40,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { messages, model, max_tokens, system } = await req.json();
+    const { messages, model, max_tokens, system, temperature } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -68,6 +68,7 @@ serve(async (req) => {
       max_tokens: max_tokens || 4000,
       system: system || undefined,
       messages: messages,
+      ...(temperature !== undefined ? { temperature } : {}),
     });
 
     const responseTime = Date.now() - startTime;

@@ -10,7 +10,21 @@ import { createLogger } from "../_shared/auditLogger.ts";
 
 const logger = createLogger("fitbit-webhook");
 
+// Fitbit OAuth credentials (server-side only — never expose to browser)
+const FITBIT_CLIENT_ID = Deno.env.get("FITBIT_CLIENT_ID") || "";
+const FITBIT_CLIENT_SECRET = Deno.env.get("FITBIT_CLIENT_SECRET") || "";
+const FITBIT_AUTH_BASE = "https://api.fitbit.com/oauth2";
+
 // ── Types ────────────────────────────────────────────────────────────────────
+
+interface OAuthActionRequest {
+  action: 'token_exchange' | 'refresh_token' | 'revoke_token';
+  code?: string;
+  client_id?: string;
+  redirect_uri?: string;
+  refresh_token?: string;
+  access_token?: string;
+}
 
 interface FitbitNotification {
   collectionType: string; // 'activities', 'body', 'foods', 'sleep', 'userRevokedAccess'
@@ -52,6 +66,132 @@ const COLLECTION_TO_VITAL_TYPE: Record<string, string> = {
   sleep: "heart_rate",
 };
 
+// ── OAuth Token Operations (A-7 fix: server-side only) ─────────────────────
+
+async function handleOAuthAction(
+  action: OAuthActionRequest,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
+
+  if (!FITBIT_CLIENT_ID || !FITBIT_CLIENT_SECRET) {
+    return new Response(
+      JSON.stringify({ error: "Fitbit OAuth not configured on server" }),
+      { status: 503, headers: jsonHeaders }
+    );
+  }
+
+  const authHeader = "Basic " + btoa(`${FITBIT_CLIENT_ID}:${FITBIT_CLIENT_SECRET}`);
+
+  switch (action.action) {
+    case "token_exchange": {
+      if (!action.code) {
+        return new Response(
+          JSON.stringify({ error: "Authorization code required" }),
+          { status: 400, headers: jsonHeaders }
+        );
+      }
+
+      const response = await fetch(`${FITBIT_AUTH_BASE}/token`, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          client_id: action.client_id || FITBIT_CLIENT_ID,
+          code: action.code,
+          grant_type: "authorization_code",
+          redirect_uri: action.redirect_uri || "",
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        logger.error("Fitbit token exchange failed", { status: response.status, error });
+        return new Response(
+          JSON.stringify({ error: "Token exchange failed", details: error }),
+          { status: response.status, headers: jsonHeaders }
+        );
+      }
+
+      const data = await response.json();
+      logger.info("Fitbit token exchange successful", { userId: data.user_id });
+      return new Response(JSON.stringify(data), { status: 200, headers: jsonHeaders });
+    }
+
+    case "refresh_token": {
+      if (!action.refresh_token) {
+        return new Response(
+          JSON.stringify({ error: "Refresh token required" }),
+          { status: 400, headers: jsonHeaders }
+        );
+      }
+
+      const response = await fetch(`${FITBIT_AUTH_BASE}/token`, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          grant_type: "refresh_token",
+          refresh_token: action.refresh_token,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        logger.error("Fitbit token refresh failed", { status: response.status, error });
+        return new Response(
+          JSON.stringify({ error: "Token refresh failed", details: error }),
+          { status: response.status, headers: jsonHeaders }
+        );
+      }
+
+      const data = await response.json();
+      logger.info("Fitbit token refreshed", { userId: data.user_id });
+      return new Response(JSON.stringify(data), { status: 200, headers: jsonHeaders });
+    }
+
+    case "revoke_token": {
+      if (!action.access_token) {
+        return new Response(
+          JSON.stringify({ error: "Access token required" }),
+          { status: 400, headers: jsonHeaders }
+        );
+      }
+
+      const response = await fetch(`${FITBIT_AUTH_BASE}/revoke`, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ token: action.access_token }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        logger.error("Fitbit token revocation failed", { status: response.status, error });
+        return new Response(
+          JSON.stringify({ error: "Token revocation failed", details: error }),
+          { status: response.status, headers: jsonHeaders }
+        );
+      }
+
+      logger.info("Fitbit token revoked");
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: jsonHeaders });
+    }
+
+    default:
+      return new Response(
+        JSON.stringify({ error: `Unknown action: ${action.action}` }),
+        { status: 400, headers: jsonHeaders }
+      );
+  }
+}
+
 // ── Main Handler ─────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -72,7 +212,16 @@ serve(async (req: Request) => {
   }
 
   try {
-    const notifications = (await req.json()) as FitbitNotification[];
+    // Peek at body to determine if this is an OAuth action or a webhook notification
+    const body = await req.json();
+
+    // OAuth action requests have an "action" field
+    if (body && typeof body === "object" && "action" in body) {
+      return handleOAuthAction(body as OAuthActionRequest, corsHeaders);
+    }
+
+    // Otherwise, treat as Fitbit webhook notification array
+    const notifications = (Array.isArray(body) ? body : [body]) as FitbitNotification[];
 
     if (!Array.isArray(notifications) || notifications.length === 0) {
       return new Response(JSON.stringify({ error: "Empty notification array" }), {

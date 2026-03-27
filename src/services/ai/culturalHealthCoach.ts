@@ -17,8 +17,8 @@
  * Cache hit rate: 60-80% for common health content
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import { createClient } from '@supabase/supabase-js';
+import { claudeEdgeService } from '../claudeEdgeService';
+import { supabase } from '../../lib/supabaseClient';
 import { mcpOptimizer } from '../mcp/mcp-cost-optimizer';
 
 // ============================================================================
@@ -146,23 +146,11 @@ class CulturalCoachValidator {
 // ============================================================================
 
 class CulturalHealthCoachService {
-  private anthropic: Anthropic;
-  private supabase: ReturnType<typeof createClient>;
+  private supabase;
 
   constructor() {
-    // A-4 fix: VITE_ANTHROPIC_API_KEY removed from browser bundle (security risk).
-    // This service should be migrated to use claude-chat edge function.
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-
-    this.anthropic = new Anthropic({ apiKey: apiKey || 'not-configured' });
-
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing');
-    }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    // A-4 fix: AI calls routed through claude-chat edge function (server-side API key).
+    this.supabase = supabase;
   }
 
   /**
@@ -461,10 +449,10 @@ class CulturalHealthCoachService {
     const userPrompt = this.buildUserPrompt(sourceText, includeCulturalAdaptation);
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: 'claude-haiku-4-5-20250929', // Cost-efficient for translations
+      const response = await claudeEdgeService.chat({
+        model: 'claude-haiku-4-5-20250929',
         max_tokens: 2048,
-        temperature: 0.3, // Lower temperature for consistency
+        temperature: 0.3,
         system: systemPrompt,
         messages: [
           {
