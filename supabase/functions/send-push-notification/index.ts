@@ -15,6 +15,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/auditLogger.ts'
+import { checkRateLimit } from '../_shared/rateLimiter.ts'
+
+const FCM_BATCH_SIZE = 500; // FCM supports up to 500 tokens per multicast
 
 interface PushNotificationRequest {
   title: string;
@@ -167,6 +170,50 @@ async function sendFCMMessage(
   return { success: true, messageId: data.name };
 }
 
+/**
+ * Send FCM messages in batches of FCM_BATCH_SIZE concurrently.
+ * Prevents timeout from O(N) sequential sends (A-18 scalability fix).
+ */
+async function sendBatch(
+  accessToken: string,
+  projectId: string,
+  tokens: string[],
+  notification: { title: string; body: string },
+  data: Record<string, string> | undefined,
+  priority: string
+): Promise<Array<{ token: string; success: boolean; error?: string }>> {
+  const results: Array<{ token: string; success: boolean; error?: string }> = [];
+
+  for (let i = 0; i < tokens.length; i += FCM_BATCH_SIZE) {
+    const batch = tokens.slice(i, i + FCM_BATCH_SIZE);
+    const batchResults = await Promise.allSettled(
+      batch.map(async (token) => {
+        const message: FCMMessage = {
+          message: {
+            token,
+            notification,
+            data,
+            android: { priority },
+            webpush: { headers: { Urgency: priority } }
+          }
+        };
+        const result = await sendFCMMessage(accessToken, projectId, message);
+        return { token: token.slice(0, 10) + '...', ...result };
+      })
+    );
+
+    for (const r of batchResults) {
+      if (r.status === 'fulfilled') {
+        results.push(r.value);
+      } else {
+        results.push({ token: '???', success: false, error: String(r.reason) });
+      }
+    }
+  }
+
+  return results;
+}
+
 serve(async (req) => {
   const logger = createLogger('send-push-notification', req);
 
@@ -238,6 +285,33 @@ serve(async (req) => {
     }
 
     logger.info('Push notification authorized', { userId: user.id, isAdmin: profile?.is_admin });
+
+    // =========================================================================
+    // RATE LIMITING — 20 push requests per 10 minutes per user (A-14)
+    // =========================================================================
+    const rateResult = await checkRateLimit(user.id, {
+      maxAttempts: 20,
+      windowSeconds: 600,
+      keyPrefix: 'push'
+    });
+
+    if (!rateResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: 'Rate limit exceeded',
+          message: `Too many push notification requests. Retry in ${rateResult.retryAfter} seconds.`,
+          retryAfter: rateResult.retryAfter
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateResult.retryAfter || 600)
+          }
+        }
+      );
+    }
 
     let payload: PushNotificationRequest;
     try {
@@ -330,30 +404,17 @@ serve(async (req) => {
       if (error) {
         logger.error('Failed to fetch push subscriptions', { error: error.message });
       } else if (subscriptions?.length) {
-        for (const sub of subscriptions) {
-          const message: FCMMessage = {
-            message: {
-              token: sub.token,
-              notification: { title, body },
-              data,
-              android: { priority },
-              webpush: { headers: { Urgency: priority } }
-            }
-          };
+        const tokens = subscriptions.map((s: { token: string }) => s.token);
+        const batchResults = await sendBatch(accessToken, projectId, tokens, { title, body }, data, priority);
+        results.push(...batchResults);
 
-          const result = await sendFCMMessage(accessToken, projectId, message);
-          results.push({ token: sub.token.slice(0, 10) + '...', ...result });
-
-          if (!result.success) {
-            logger.warn('Failed to send to token', {
-              userId: sub.user_id,
-              error: result.error
-            });
-          }
+        const failed = batchResults.filter(r => !r.success);
+        if (failed.length > 0) {
+          logger.warn('Some push sends failed', { failedCount: failed.length });
         }
         logger.info('Sent user-targeted notifications', {
           attempted: subscriptions.length,
-          succeeded: results.filter(r => r.success).length
+          succeeded: batchResults.filter(r => r.success).length
         });
       }
     }
@@ -399,23 +460,12 @@ serve(async (req) => {
       if (error) {
         logger.error('Failed to fetch all push subscriptions', { error: error.message });
       } else if (allTokens?.length) {
-        for (const sub of allTokens) {
-          const message: FCMMessage = {
-            message: {
-              token: sub.token,
-              notification: { title, body },
-              data,
-              android: { priority },
-              webpush: { headers: { Urgency: priority } }
-            }
-          };
-
-          const result = await sendFCMMessage(accessToken, projectId, message);
-          results.push({ token: sub.token.slice(0, 10) + '...', ...result });
-        }
+        const tokens = allTokens.map((s: { token: string }) => s.token);
+        const batchResults = await sendBatch(accessToken, projectId, tokens, { title, body }, data, priority);
+        results.push(...batchResults);
         logger.info('Broadcast notification sent', {
           attempted: allTokens.length,
-          succeeded: results.filter(r => r.success).length
+          succeeded: batchResults.filter(r => r.success).length
         });
       }
     }

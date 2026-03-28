@@ -1,39 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
-import { cors } from "../_shared/cors.ts"
+import { createUserClient } from '../_shared/supabaseClient.ts'
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts"
 import { createLogger } from '../_shared/auditLogger.ts'
-import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import {
+  buildPatientResource,
+  buildCheckInObservations,
+  buildMobileVitalObservations,
+  buildEmergencyReports,
+  buildMovementObservations,
+  buildRiskAssessments
+} from './resourceBuilders.ts'
 
-// Logger interface for typed logging
-interface Logger {
-  debug: (message: string, data?: Record<string, unknown>) => void;
-  info: (message: string, data?: Record<string, unknown>) => void;
-  warn: (message: string, data?: Record<string, unknown>) => void;
-  error: (message: string, data?: Record<string, unknown>) => void;
-  phi: (message: string, data?: Record<string, unknown>) => void;
-}
-
-// Strict CORS policy matching other functions
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100"
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin || "null",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Credentials": "true",
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-  };
-}
+// Maximum resources per query to prevent memory exhaustion
+const PAGE_SIZE = 500;
 
 interface FHIRExportRequest {
   patient_id?: string
@@ -42,17 +21,17 @@ interface FHIRExportRequest {
   include_mobile_data?: boolean
   include_ai_assessments?: boolean
   format?: 'bundle' | 'individual'
+  page?: number // 0-indexed page number
 }
 
 serve(async (req) => {
   const logger = createLogger('enhanced-fhir-export', req);
-  const origin = req.headers.get("origin");
-  const corsHeaders = getCorsHeaders(origin);
 
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleOptions(req);
   }
 
+  const { headers: corsHeaders } = corsFromRequest(req);
   const startTime = Date.now();
 
   try {
@@ -69,64 +48,211 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
     if (authError || !user) {
-      logger.security('Unauthorized FHIR export attempt', { error: authError?.message });
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    if (req.method === 'POST') {
-      const exportRequest: FHIRExportRequest = await req.json()
-
-      // Check if user has permission to export data
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('role_code')
-        .eq('user_id', user.id)
-        .single()
-
-      const isAdmin = profile?.role_code && [1, 2, 3, 12].includes(profile.role_code)
-      const patientId = exportRequest.patient_id || user.id
-
-      // Users can only export their own data unless they're admin
-      if (!isAdmin && patientId !== user.id) {
-        logger.security('Unauthorized FHIR export attempt', {
-          userId: user.id,
-          requestedPatientId: patientId,
-          isAdmin
-        });
-        return new Response(
-          JSON.stringify({ error: 'Insufficient permissions' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      const startDate = exportRequest.start_date || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-      const endDate = exportRequest.end_date || new Date().toISOString()
-
-      logger.phi('FHIR export initiated', {
-        userId: user.id,
-        patientId,
-        isAdmin,
-        startDate,
-        endDate,
-        includeMobileData: exportRequest.include_mobile_data !== false,
-        includeAIAssessments: exportRequest.include_ai_assessments !== false
-      });
-
-      // Generate comprehensive FHIR bundle
-      const fhirBundle = await generateEnhancedFHIRBundle(
-        supabaseClient,
-        patientId,
-        startDate,
-        endDate,
-        exportRequest.include_mobile_data !== false,
-        exportRequest.include_ai_assessments !== false,
-        logger
+    if (req.method !== 'POST') {
+      return new Response(
+        JSON.stringify({ error: 'Method not allowed' }),
+        { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
 
-      // Cache the bundle
+    const exportRequest: FHIRExportRequest = await req.json()
+
+    // Check permissions — users can only export own data unless admin
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role_code, tenant_id')
+      .eq('user_id', user.id)
+      .single()
+
+    const isAdmin = profile?.role_code && [1, 2, 3, 12].includes(profile.role_code)
+    const patientId = exportRequest.patient_id || user.id
+
+    if (!isAdmin && patientId !== user.id) {
+      logger.warn('Unauthorized FHIR export attempt', {
+        userId: user.id,
+        requestedPatientId: patientId
+      });
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const startDate = exportRequest.start_date || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const endDate = exportRequest.end_date || new Date().toISOString()
+    const page = Math.max(0, exportRequest.page || 0);
+    const offset = page * PAGE_SIZE;
+
+    logger.info('FHIR export initiated', {
+      userId: user.id,
+      patientId,
+      isAdmin,
+      startDate,
+      endDate,
+      page,
+      includeMobileData: exportRequest.include_mobile_data !== false,
+      includeAIAssessments: exportRequest.include_ai_assessments !== false
+    });
+
+    // =========================================================================
+    // Data fetching — specific columns, paginated, parallel
+    // =========================================================================
+    const includeMobile = exportRequest.include_mobile_data !== false;
+    const includeAI = exportRequest.include_ai_assessments !== false;
+
+    // Fetch profile (always needed, no pagination)
+    const profilePromise = supabaseClient
+      .from('profiles')
+      .select('first_name, last_name, phone, email, dob, address')
+      .eq('user_id', patientId)
+      .single();
+
+    // Fetch check-ins with pagination
+    const checkInsPromise = supabaseClient
+      .from('check_ins')
+      .select('id, created_at, heart_rate, pulse_oximeter, bp_systolic, bp_diastolic, mood')
+      .eq('user_id', patientId)
+      .gte('created_at', startDate)
+      .lte('created_at', endDate)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    // Mobile vitals (conditional, paginated)
+    const mobileVitalsPromise = includeMobile
+      ? supabaseClient
+          .from('mobile_vitals')
+          .select('id, measurement_type, measured_at, value_primary, unit, measurement_method, confidence_score, measurement_quality')
+          .eq('patient_id', patientId)
+          .gte('measured_at', startDate)
+          .lte('measured_at', endDate)
+          .order('measured_at', { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1)
+      : Promise.resolve({ data: null, error: null });
+
+    // Emergency incidents (conditional, paginated)
+    const emergencyPromise = includeMobile
+      ? supabaseClient
+          .from('mobile_emergency_incidents')
+          .select('id, triggered_at, incident_type, severity, auto_detected, incident_resolved')
+          .eq('patient_id', patientId)
+          .gte('triggered_at', startDate)
+          .lte('triggered_at', endDate)
+          .order('triggered_at', { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1)
+      : Promise.resolve({ data: null, error: null });
+
+    // Movement patterns (conditional, paginated)
+    const movementPromise = includeMobile
+      ? supabaseClient
+          .from('movement_patterns')
+          .select('id, date_tracked, total_distance_meters, active_time_minutes')
+          .eq('patient_id', patientId)
+          .gte('date_tracked', startDate.split('T')[0])
+          .lte('date_tracked', endDate.split('T')[0])
+          .order('date_tracked', { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1)
+      : Promise.resolve({ data: null, error: null });
+
+    // AI risk assessments (conditional, paginated)
+    const aiPromise = includeAI
+      ? supabaseClient
+          .from('ai_risk_assessments')
+          .select('id, assessed_at, risk_level, risk_score, risk_factors, recommendations')
+          .eq('patient_id', patientId)
+          .gte('assessed_at', startDate)
+          .lte('assessed_at', endDate)
+          .order('assessed_at', { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1)
+      : Promise.resolve({ data: null, error: null });
+
+    // Execute all queries in parallel
+    const [
+      { data: patientProfile },
+      { data: checkIns },
+      { data: mobileVitals },
+      { data: emergencyIncidents },
+      { data: movementPatterns },
+      { data: riskAssessments }
+    ] = await Promise.all([
+      profilePromise,
+      checkInsPromise,
+      mobileVitalsPromise,
+      emergencyPromise,
+      movementPromise,
+      aiPromise
+    ]);
+
+    logger.debug('FHIR data fetched', {
+      patientId,
+      checkInsCount: checkIns?.length || 0,
+      mobileVitalsCount: mobileVitals?.length || 0,
+      emergencyIncidentsCount: emergencyIncidents?.length || 0,
+      movementPatternsCount: movementPatterns?.length || 0,
+      riskAssessmentsCount: riskAssessments?.length || 0
+    });
+
+    // =========================================================================
+    // Build validated FHIR resources
+    // =========================================================================
+    const entries: Array<{ fullUrl: string; resource: Record<string, unknown> }> = [];
+
+    // Patient resource (page 0 only)
+    if (page === 0 && patientProfile) {
+      entries.push(buildPatientResource(patientId, patientProfile));
+    }
+
+    // Check-in observations
+    if (checkIns?.length) {
+      entries.push(...buildCheckInObservations(patientId, checkIns));
+    }
+
+    // Mobile data
+    if (includeMobile) {
+      if (mobileVitals?.length) {
+        entries.push(...buildMobileVitalObservations(patientId, mobileVitals));
+      }
+      if (emergencyIncidents?.length) {
+        entries.push(...buildEmergencyReports(patientId, emergencyIncidents));
+      }
+      if (movementPatterns?.length) {
+        entries.push(...buildMovementObservations(patientId, movementPatterns));
+      }
+    }
+
+    // AI assessments
+    if (includeAI && riskAssessments?.length) {
+      entries.push(...buildRiskAssessments(patientId, riskAssessments));
+    }
+
+    // Determine if there are more pages
+    const hasMore = [checkIns, mobileVitals, emergencyIncidents, movementPatterns, riskAssessments]
+      .some(arr => arr?.length === PAGE_SIZE);
+
+    // Build FHIR Bundle
+    const bundleId = `bundle-${patientId}-${Date.now()}`;
+    const fhirBundle = {
+      resourceType: 'Bundle',
+      id: bundleId,
+      type: 'collection',
+      timestamp: new Date().toISOString(),
+      total: entries.length,
+      entry: entries,
+      // Pagination links (FHIR-style)
+      link: [
+        { relation: 'self', url: `?page=${page}` },
+        ...(hasMore ? [{ relation: 'next', url: `?page=${page + 1}` }] : []),
+        ...(page > 0 ? [{ relation: 'previous', url: `?page=${page - 1}` }] : [])
+      ]
+    };
+
+    // Cache the bundle (page 0 only — full export)
+    if (page === 0) {
       const { error: cacheError } = await supabaseClient
         .from('fhir_bundles')
         .insert({
@@ -135,38 +261,33 @@ serve(async (req) => {
           bundle_data: fhirBundle,
           validation_status: 'VALID',
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        })
+        });
 
       if (cacheError) {
         logger.warn('Failed to cache FHIR bundle', { error: cacheError.message });
       }
-
-      const processingTime = Date.now() - startTime;
-      logger.info('FHIR export completed successfully', {
-        userId: user.id,
-        patientId,
-        resourceCount: fhirBundle.total,
-        processingTimeMs: processingTime
-      });
-
-      return new Response(
-        JSON.stringify(fhirBundle),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/fhir+json' } }
-      )
     }
 
-    logger.warn('Method not allowed', { method: req.method });
+    const processingTime = Date.now() - startTime;
+    logger.info('FHIR export completed', {
+      userId: user.id,
+      patientId,
+      resourceCount: entries.length,
+      page,
+      hasMore,
+      processingTimeMs: processingTime
+    });
+
     return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify(fhirBundle),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/fhir+json' } }
     )
 
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
-    const processingTime = Date.now() - startTime;
     logger.error('FHIR export error', {
       error: errorMessage,
-      processingTimeMs: processingTime
+      processingTimeMs: Date.now() - startTime
     });
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
@@ -174,539 +295,3 @@ serve(async (req) => {
     )
   }
 })
-
-async function generateEnhancedFHIRBundle(
-  supabaseClient: SupabaseClient,
-  patientId: string,
-  startDate: string,
-  endDate: string,
-  includeMobileData: boolean,
-  includeAIAssessments: boolean,
-  logger: Logger
-) {
-  const bundleId = `bundle-${patientId}-${Date.now()}`
-  const entries = []
-
-  // Batch all initial data fetching in parallel
-  const baseQueries = [
-    () => supabaseClient.from('profiles').select('*').eq('user_id', patientId).single(),
-    () => supabaseClient.from('check_ins').select('*').eq('user_id', patientId).gte('created_at', startDate).lte('created_at', endDate)
-  ];
-
-  // Add mobile data queries if requested
-  if (includeMobileData) {
-    baseQueries.push(
-      () => supabaseClient.from('mobile_vitals').select('*').eq('patient_id', patientId).gte('measured_at', startDate).lte('measured_at', endDate),
-      () => supabaseClient.from('mobile_emergency_incidents').select('*').eq('patient_id', patientId).gte('triggered_at', startDate).lte('triggered_at', endDate),
-      () => supabaseClient.from('movement_patterns').select('*').eq('patient_id', patientId).gte('date_tracked', startDate.split('T')[0]).lte('date_tracked', endDate.split('T')[0])
-    );
-  } else {
-    baseQueries.push(
-      () => Promise.resolve({ data: null }),
-      () => Promise.resolve({ data: null }),
-      () => Promise.resolve({ data: null })
-    );
-  }
-
-  // Add AI assessments query if requested
-  if (includeAIAssessments) {
-    baseQueries.push(
-      () => supabaseClient.from('ai_risk_assessments').select('*').eq('patient_id', patientId).gte('assessed_at', startDate).lte('assessed_at', endDate)
-    );
-  } else {
-    baseQueries.push(() => Promise.resolve({ data: null }));
-  }
-
-  const [
-    { data: patientProfile },
-    { data: checkIns },
-    { data: mobileVitals },
-    { data: emergencyIncidents },
-    { data: movementPatterns },
-    { data: riskAssessments }
-  ] = await batchQueries(baseQueries);
-
-  logger.debug('FHIR data fetched', {
-    patientId,
-    checkInsCount: checkIns?.length || 0,
-    mobileVitalsCount: mobileVitals?.length || 0,
-    emergencyIncidentsCount: emergencyIncidents?.length || 0,
-    movementPatternsCount: movementPatterns?.length || 0,
-    riskAssessmentsCount: riskAssessments?.length || 0
-  });
-
-  // 1. Patient Resource
-  if (patientProfile) {
-    entries.push({
-      fullUrl: `Patient/${patientId}`,
-      resource: {
-        resourceType: 'Patient',
-        id: patientId,
-        identifier: [
-          {
-            system: 'http://wellfitcommunity.org/patient-id',
-            value: patientId
-          }
-        ],
-        name: [
-          {
-            use: 'official',
-            family: patientProfile.last_name,
-            given: [patientProfile.first_name]
-          }
-        ],
-        telecom: [
-          {
-            system: 'phone',
-            value: patientProfile.phone,
-            use: 'mobile'
-          },
-          {
-            system: 'email',
-            value: patientProfile.email,
-            use: 'home'
-          }
-        ],
-        birthDate: patientProfile.dob,
-        address: [
-          {
-            use: 'home',
-            text: patientProfile.address
-          }
-        ]
-      }
-    })
-  }
-
-  // 2. Web App Check-ins as Observations
-  for (const checkIn of checkIns || []) {
-    // Heart Rate Observation
-    if (checkIn.heart_rate) {
-      entries.push({
-        fullUrl: `Observation/web-hr-${checkIn.id}`,
-        resource: {
-          resourceType: 'Observation',
-          id: `web-hr-${checkIn.id}`,
-          status: 'final',
-          category: [
-            {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/observation-category',
-                  code: 'vital-signs',
-                  display: 'Vital Signs'
-                }
-              ]
-            }
-          ],
-          code: {
-            coding: [
-              {
-                system: 'http://loinc.org',
-                code: '8867-4',
-                display: 'Heart rate'
-              }
-            ]
-          },
-          subject: {
-            reference: `Patient/${patientId}`
-          },
-          effectiveDateTime: checkIn.created_at,
-          valueQuantity: {
-            value: checkIn.heart_rate,
-            unit: 'beats/min',
-            system: 'http://unitsofmeasure.org',
-            code: '/min'
-          },
-          device: {
-            display: 'WellFit Community Web App - Manual Entry'
-          }
-        }
-      })
-    }
-
-    // Pulse Oximetry Observation
-    if (checkIn.pulse_oximeter) {
-      entries.push({
-        fullUrl: `Observation/web-spo2-${checkIn.id}`,
-        resource: {
-          resourceType: 'Observation',
-          id: `web-spo2-${checkIn.id}`,
-          status: 'final',
-          category: [
-            {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/observation-category',
-                  code: 'vital-signs',
-                  display: 'Vital Signs'
-                }
-              ]
-            }
-          ],
-          code: {
-            coding: [
-              {
-                system: 'http://loinc.org',
-                code: '2708-6',
-                display: 'Oxygen saturation in Arterial blood'
-              }
-            ]
-          },
-          subject: {
-            reference: `Patient/${patientId}`
-          },
-          effectiveDateTime: checkIn.created_at,
-          valueQuantity: {
-            value: checkIn.pulse_oximeter,
-            unit: '%',
-            system: 'http://unitsofmeasure.org',
-            code: '%'
-          },
-          device: {
-            display: 'WellFit Community Web App - Manual Entry'
-          }
-        }
-      })
-    }
-
-    // Blood Pressure Observation
-    if (checkIn.bp_systolic && checkIn.bp_diastolic) {
-      entries.push({
-        fullUrl: `Observation/web-bp-${checkIn.id}`,
-        resource: {
-          resourceType: 'Observation',
-          id: `web-bp-${checkIn.id}`,
-          status: 'final',
-          category: [
-            {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/observation-category',
-                  code: 'vital-signs',
-                  display: 'Vital Signs'
-                }
-              ]
-            }
-          ],
-          code: {
-            coding: [
-              {
-                system: 'http://loinc.org',
-                code: '85354-9',
-                display: 'Blood pressure panel with all children optional'
-              }
-            ]
-          },
-          subject: {
-            reference: `Patient/${patientId}`
-          },
-          effectiveDateTime: checkIn.created_at,
-          component: [
-            {
-              code: {
-                coding: [
-                  {
-                    system: 'http://loinc.org',
-                    code: '8480-6',
-                    display: 'Systolic blood pressure'
-                  }
-                ]
-              },
-              valueQuantity: {
-                value: checkIn.bp_systolic,
-                unit: 'mmHg',
-                system: 'http://unitsofmeasure.org',
-                code: 'mm[Hg]'
-              }
-            },
-            {
-              code: {
-                coding: [
-                  {
-                    system: 'http://loinc.org',
-                    code: '8462-4',
-                    display: 'Diastolic blood pressure'
-                  }
-                ]
-              },
-              valueQuantity: {
-                value: checkIn.bp_diastolic,
-                unit: 'mmHg',
-                system: 'http://unitsofmeasure.org',
-                code: 'mm[Hg]'
-              }
-            }
-          ],
-          device: {
-            display: 'WellFit Community Web App - Manual Entry'
-          }
-        }
-      })
-    }
-
-    // Mood and Activity Level as Observations
-    if (checkIn.mood) {
-      entries.push({
-        fullUrl: `Observation/web-mood-${checkIn.id}`,
-        resource: {
-          resourceType: 'Observation',
-          id: `web-mood-${checkIn.id}`,
-          status: 'final',
-          category: [
-            {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/observation-category',
-                  code: 'survey',
-                  display: 'Survey'
-                }
-              ]
-            }
-          ],
-          code: {
-            coding: [
-              {
-                system: 'http://wellfitcommunity.org/fhir/codes',
-                code: 'mood-assessment',
-                display: 'Mood Assessment'
-              }
-            ]
-          },
-          subject: {
-            reference: `Patient/${patientId}`
-          },
-          effectiveDateTime: checkIn.created_at,
-          valueString: checkIn.mood,
-          device: {
-            display: 'WellFit Community Web App'
-          }
-        }
-      })
-    }
-  }
-
-  // 3. Mobile App Data (already fetched in batch)
-  if (includeMobileData && mobileVitals) {
-    for (const vital of mobileVitals) {
-      entries.push({
-        fullUrl: `Observation/mobile-${vital.measurement_type}-${vital.id}`,
-        resource: {
-          resourceType: 'Observation',
-          id: `mobile-${vital.measurement_type}-${vital.id}`,
-          status: 'final',
-          category: [
-            {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/observation-category',
-                  code: 'vital-signs',
-                  display: 'Vital Signs'
-                }
-              ]
-            }
-          ],
-          code: {
-            coding: [
-              {
-                system: 'http://loinc.org',
-                code: vital.measurement_type === 'heart_rate' ? '8867-4' :
-                      vital.measurement_type === 'spo2' ? '2708-6' : '33747-0',
-                display: vital.measurement_type === 'heart_rate' ? 'Heart rate' :
-                        vital.measurement_type === 'spo2' ? 'Oxygen saturation' : 'General observation'
-              }
-            ]
-          },
-          subject: {
-            reference: `Patient/${patientId}`
-          },
-          effectiveDateTime: vital.measured_at,
-          valueQuantity: {
-            value: vital.value_primary,
-            unit: vital.unit,
-            system: 'http://unitsofmeasure.org'
-          },
-          device: {
-            display: `Mobile Companion App - ${vital.measurement_method || 'Camera PPG'}`
-          },
-          extension: [
-            {
-              url: 'http://wellfitcommunity.org/fhir/confidence-score',
-              valueInteger: vital.confidence_score
-            },
-            {
-              url: 'http://wellfitcommunity.org/fhir/measurement-quality',
-              valueString: vital.measurement_quality
-            }
-          ]
-        }
-      })
-    }
-
-    // Emergency Incidents as DiagnosticReports (already fetched)
-    for (const incident of emergencyIncidents || []) {
-      entries.push({
-        fullUrl: `DiagnosticReport/emergency-${incident.id}`,
-        resource: {
-          resourceType: 'DiagnosticReport',
-          id: `emergency-${incident.id}`,
-          status: incident.incident_resolved ? 'final' : 'preliminary',
-          category: [
-            {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/v2-0074',
-                  code: 'OTH',
-                  display: 'Other'
-                }
-              ]
-            }
-          ],
-          code: {
-            coding: [
-              {
-                system: 'http://wellfitcommunity.org/fhir/codes',
-                code: 'emergency-incident',
-                display: 'Emergency Incident'
-              }
-            ]
-          },
-          subject: {
-            reference: `Patient/${patientId}`
-          },
-          effectiveDateTime: incident.triggered_at,
-          conclusion: `${incident.incident_type} - Severity: ${incident.severity}${incident.auto_detected ? ' (Auto-detected)' : ' (Manual trigger)'}`,
-          conclusionCode: [
-            {
-              coding: [
-                {
-                  system: 'http://wellfitcommunity.org/fhir/incident-types',
-                  code: incident.incident_type,
-                  display: incident.incident_type.replace(/_/g, ' ')
-                }
-              ]
-            }
-          ]
-        }
-      })
-    }
-
-    // Location Data as Observations (daily summaries, already fetched)
-    for (const pattern of movementPatterns || []) {
-      entries.push({
-        fullUrl: `Observation/movement-${pattern.id}`,
-        resource: {
-          resourceType: 'Observation',
-          id: `movement-${pattern.id}`,
-          status: 'final',
-          category: [
-            {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/observation-category',
-                  code: 'activity',
-                  display: 'Activity'
-                }
-              ]
-            }
-          ],
-          code: {
-            coding: [
-              {
-                system: 'http://wellfitcommunity.org/fhir/codes',
-                code: 'daily-activity-summary',
-                display: 'Daily Activity Summary'
-              }
-            ]
-          },
-          subject: {
-            reference: `Patient/${patientId}`
-          },
-          effectiveDate: pattern.date_tracked,
-          component: [
-            {
-              code: {
-                coding: [
-                  {
-                    system: 'http://wellfitcommunity.org/fhir/codes',
-                    code: 'total-distance',
-                    display: 'Total Distance Traveled'
-                  }
-                ]
-              },
-              valueQuantity: {
-                value: pattern.total_distance_meters,
-                unit: 'meters',
-                system: 'http://unitsofmeasure.org',
-                code: 'm'
-              }
-            },
-            {
-              code: {
-                coding: [
-                  {
-                    system: 'http://wellfitcommunity.org/fhir/codes',
-                    code: 'active-time',
-                    display: 'Active Time'
-                  }
-                ]
-              },
-              valueQuantity: {
-                value: pattern.active_time_minutes,
-                unit: 'minutes',
-                system: 'http://unitsofmeasure.org',
-                code: 'min'
-              }
-            }
-          ]
-        }
-      })
-    }
-  }
-
-  // 4. AI Risk Assessments (already fetched in batch)
-  if (includeAIAssessments && riskAssessments) {
-    for (const assessment of riskAssessments) {
-      entries.push({
-        fullUrl: `RiskAssessment/ai-${assessment.id}`,
-        resource: {
-          resourceType: 'RiskAssessment',
-          id: `ai-${assessment.id}`,
-          status: 'final',
-          subject: {
-            reference: `Patient/${patientId}`
-          },
-          occurrenceDateTime: assessment.assessed_at,
-          prediction: [
-            {
-              outcome: {
-                coding: [
-                  {
-                    system: 'http://wellfitcommunity.org/fhir/risk-levels',
-                    code: assessment.risk_level,
-                    display: assessment.risk_level
-                  }
-                ]
-              },
-              probabilityDecimal: assessment.risk_score / 100,
-              rationale: assessment.risk_factors?.join(', ')
-            }
-          ],
-          note: assessment.recommendations?.map(rec => ({
-            text: rec
-          }))
-        }
-      })
-    }
-  }
-
-  // Build final bundle
-  return {
-    resourceType: 'Bundle',
-    id: bundleId,
-    type: 'collection',
-    timestamp: new Date().toISOString(),
-    total: entries.length,
-    entry: entries
-  }
-}

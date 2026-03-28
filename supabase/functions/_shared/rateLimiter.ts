@@ -37,13 +37,12 @@ export async function checkRateLimit(
   const key = `${config.keyPrefix}:${identifier}`;
 
   try {
-    // Count attempts in current window
-    const { data: attempts, error: countError } = await supabaseAdmin
+    // Count attempts in current window using SQL COUNT (not SELECT all rows)
+    const { count, error: countError } = await supabaseAdmin
       .from('rate_limit_attempts')
-      .select('id, attempted_at')
+      .select('*', { count: 'exact', head: true })
       .eq('identifier', key)
-      .gte('attempted_at', windowStart.toISOString())
-      .order('attempted_at', { ascending: false });
+      .gte('attempted_at', windowStart.toISOString());
 
     if (countError) {
       logger.error("Rate limit check error", { error: countError.message });
@@ -55,24 +54,34 @@ export async function checkRateLimit(
       };
     }
 
-    const attemptCount = attempts?.length || 0;
+    const attemptCount = count ?? 0;
     const remaining = Math.max(0, config.maxAttempts - attemptCount);
 
-    // Find oldest attempt to calculate reset time
-    const oldestAttempt = attempts && attempts.length > 0
-      ? new Date(attempts[attempts.length - 1].attempted_at)
-      : now;
-    const resetAt = new Date(oldestAttempt.getTime() + (config.windowSeconds * 1000));
+    // Reset time is end of current window from now
+    const resetAt = new Date(now.getTime() + (config.windowSeconds * 1000));
 
     if (attemptCount >= config.maxAttempts) {
-      // Rate limit exceeded
-      const retryAfter = Math.ceil((resetAt.getTime() - now.getTime()) / 1000);
+      // Rate limit exceeded — get oldest attempt to calculate accurate retry time
+      const { data: oldest } = await supabaseAdmin
+        .from('rate_limit_attempts')
+        .select('attempted_at')
+        .eq('identifier', key)
+        .gte('attempted_at', windowStart.toISOString())
+        .order('attempted_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      const oldestTime = oldest
+        ? new Date(oldest.attempted_at)
+        : windowStart;
+      const accurateResetAt = new Date(oldestTime.getTime() + (config.windowSeconds * 1000));
+      const retryAfter = Math.ceil((accurateResetAt.getTime() - now.getTime()) / 1000);
 
       return {
         allowed: false,
         remaining: 0,
-        resetAt,
-        retryAfter
+        resetAt: accurateResetAt,
+        retryAfter: Math.max(1, retryAfter)
       };
     }
 

@@ -48,7 +48,9 @@ export async function requireRole(userId: string, allowed: string[] = ["admin","
     .maybeSingle();
 
   if (error) throw new Response(JSON.stringify({ error: "Role lookup failed" }), { status: 500 });
-  const roleName = data?.roles?.name ?? null;
+  // Supabase join returns object for single FK, but TS types it as array — handle both
+  const roles = data?.roles as { id: string; name: string } | { id: string; name: string }[] | null;
+  const roleName = Array.isArray(roles) ? roles[0]?.name : roles?.name ?? null;
   if (!roleName || !allowed.includes(roleName)) {
     throw new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
   }
