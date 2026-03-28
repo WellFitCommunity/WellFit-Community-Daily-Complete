@@ -11,8 +11,7 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_REGISTER_URL?: string;
   readonly VITE_SUPABASE_FUNCTIONS_URL?: string;
 
-  // Claude AI
-  readonly VITE_ANTHROPIC_API_KEY?: string;
+  // Claude AI (ANTHROPIC_API_KEY is server-side only — see claude-chat edge function)
   readonly VITE_CLAUDE_DEFAULT_MODEL?: string;
   readonly VITE_CLAUDE_ADMIN_MODEL?: string;
   readonly VITE_CLAUDE_MAX_TOKENS?: string;

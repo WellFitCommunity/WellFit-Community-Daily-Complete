@@ -550,7 +550,7 @@ Return your response as JSON:
 // ============================================================================
 
 // Lazy initialization to prevent errors on module import
-// This service requires VITE_ANTHROPIC_API_KEY which should only be used server-side
+// This service requires ANTHROPIC_API_KEY (server-side only, via claude-chat edge function)
 let _instance: CulturalHealthCoachService | null = null;
 
 export function getCulturalHealthCoach(): CulturalHealthCoachService {

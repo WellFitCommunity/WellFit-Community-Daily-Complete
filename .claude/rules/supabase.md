@@ -417,7 +417,7 @@ return () => {
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase JWT anon key (required for auth) |
 | `VITE_HCAPTCHA_SITE_KEY` | hCaptcha site key for bot protection |
-| `VITE_ANTHROPIC_API_KEY` | Claude AI API key |
+| `ANTHROPIC_API_KEY` | Claude AI API key (server-side only — set in Supabase secrets) |
 
 ---
 

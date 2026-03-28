@@ -1,8 +1,11 @@
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { requireUser, requireRole, supabaseAdmin } from "../_shared/auth.ts";
 import { createLogger } from '../_shared/auditLogger.ts'
+
+/** Roles authorized to send team alerts */
+const ALERT_ALLOWED_ROLES = ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'];
 
 interface TeamAlertRequest {
   alert_type: string;
@@ -23,19 +26,30 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
-    // Get the authorization header from the request
-    const authHeader = req.headers.get('Authorization')
+    // 1. Require authenticated user (JWT verification)
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const supabaseClient = createClient(
-      SUPABASE_URL ?? '',
-      SB_PUBLISHABLE_API_KEY ?? '',
-      {
-        global: {
-          headers: authHeader ? { Authorization: authHeader } : {},
-        },
-      }
-    )
+    // 2. Require clinical/admin role
+    try {
+      await requireRole(user.id, ALERT_ALLOWED_ROLES);
+    } catch (roleResponse: unknown) {
+      if (roleResponse instanceof Response) return roleResponse;
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
+    // 3. Parse and validate input
     const { alert_type, description, user_id, priority = 'medium' } = await req.json() as TeamAlertRequest
 
     if (!alert_type || !description || !user_id) {
@@ -46,13 +60,49 @@ serve(async (req) => {
       )
     }
 
-    logger.security('Team alert initiated', { alert_type, user_id, priority });
+    // 4. Tenant isolation — caller can only alert users in their own tenant
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .single();
 
-    // Get user profile
-    const { data: profile, error: profileError } = await supabaseClient
+    const callerTenantId = callerProfile?.tenant_id;
+
+    if (callerTenantId) {
+      const { data: targetProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user_id)
+        .single();
+
+      if (targetProfile?.tenant_id !== callerTenantId) {
+        logger.security('Cross-tenant alert attempt blocked', {
+          caller: user.id,
+          target: user_id,
+          callerTenant: callerTenantId,
+          targetTenant: targetProfile?.tenant_id,
+        });
+        return new Response(
+          JSON.stringify({ error: 'Cannot send alerts to users outside your organization' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    logger.security('Team alert initiated', {
+      caller: user.id,
+      alert_type,
+      user_id,
+      priority,
+      tenant_id: callerTenantId,
+    });
+
+    // Get target user profile
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('first_name, last_name, caregiver_email, caregiver_phone')
-      .eq('user_id', user_id)  // A-9 fix: profiles PK is user_id, not id
+      .eq('user_id', user_id)
       .single()
 
     if (profileError) {
@@ -64,7 +114,7 @@ serve(async (req) => {
       : 'Unknown User'
 
     // Log the alert to alerts table
-    const { error: alertError } = await supabaseClient
+    const { error: alertError } = await supabaseAdmin
       .from('alerts')
       .insert({
         user_id,
@@ -85,7 +135,7 @@ serve(async (req) => {
       recipients.push(profile.caregiver_email)
     }
 
-    const emailSubject = `🚨 WellFit Alert: ${userName} - ${alert_type}`
+    const emailSubject = `WellFit Alert: ${userName} - ${alert_type}`
     const emailBody = `
 Alert Type: ${alert_type}
 User: ${userName}
@@ -96,11 +146,11 @@ Timestamp: ${new Date().toISOString()}
 Please check on this user as soon as possible.
 `
 
-    // Send emails to all recipients
+    // Send emails to all recipients using admin client (has service role for invoke)
     logger.info('Sending team alert emails', { recipients, userName });
     for (const recipient of recipients) {
       try {
-        await supabaseClient.functions.invoke('send-email', {  // A-10 fix: directory is send-email (dash)
+        await supabaseAdmin.functions.invoke('send-email', {
           body: {
             to: recipient,
             subject: emailSubject,
@@ -121,7 +171,7 @@ Please check on this user as soon as possible.
     // Send push notification for all alerts (especially high priority)
     logger.info('Sending push notification for team alert', { priority });
     try {
-      await supabaseClient.functions.invoke('send-push-notification', {
+      await supabaseAdmin.functions.invoke('send-push-notification', {
         body: {
           title: `WellFit Alert: ${userName}`,
           body: `${alert_type} - ${description}`,
@@ -146,7 +196,7 @@ Please check on this user as soon as possible.
         caregiverPhone: profile.caregiver_phone
       });
       try {
-        await supabaseClient.functions.invoke('send-appointment-reminder', {
+        await supabaseAdmin.functions.invoke('send-appointment-reminder', {
           body: {
             phone: profile.caregiver_phone,
             message: `WellFit ALERT: ${userName} - ${alert_type}. ${description}. Please check immediately.`

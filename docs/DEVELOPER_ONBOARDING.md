@@ -70,7 +70,7 @@ VITE_HCAPTCHA_SITE_KEY=<hcaptcha-site-key>
 ### Optional (for full functionality)
 
 ```env
-VITE_ANTHROPIC_API_KEY=<claude-api-key>
+# ANTHROPIC_API_KEY — server-side only (set in Supabase secrets, NOT as VITE_ var)
 VITE_FIREBASE_API_KEY=<firebase-key>
 VITE_FIREBASE_VAPID_KEY=<firebase-vapid-key>
 ```

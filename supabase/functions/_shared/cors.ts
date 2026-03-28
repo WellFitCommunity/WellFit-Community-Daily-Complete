@@ -201,6 +201,27 @@ export function withCors(
 }
 
 /**
+ * Reject requests from disallowed origins (non-browser callers bypass CORS entirely).
+ * Use this ONLY when you want to restrict to browser-based allowed origins AND
+ * the endpoint has its own auth layer. CORS alone is not access control.
+ *
+ * Returns null if origin is allowed (or absent — non-browser), or a 403 Response.
+ */
+export function rejectDisallowedOrigin(
+  request: Request,
+  options: CorsOptions = {}
+): Response | null {
+  const origin = request.headers.get("origin");
+  if (!origin) return null; // No origin = non-browser caller; auth layer handles this
+  const { headers, allowed } = corsFromRequest(request, options);
+  if (allowed) return null;
+  return new Response(
+    JSON.stringify({ error: "Origin not allowed" }),
+    { status: 403, headers: { ...headers, "Content-Type": "application/json" } }
+  );
+}
+
+/**
  * Legacy backwards-compatible export for edge functions that import `corsHeaders` directly.
  *
  * IMPORTANT: This static export cannot validate the request origin dynamically.

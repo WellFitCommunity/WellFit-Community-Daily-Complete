@@ -88,6 +88,37 @@ jobs:
           fi
 
   # ============================================
+  # Job 1c: Deno Edge Function Type Check
+  # ============================================
+  deno-typecheck:
+    name: Deno Edge Function Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v1.x
+
+      - name: Run Deno type check on high-risk edge functions
+        id: deno_typecheck
+        run: bash scripts/deno-typecheck.sh
+
+      - name: Report to summary
+        if: always()
+        run: |
+          echo "## 🦕 Deno Edge Function Type Check" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.deno_typecheck.outcome }}" == "success" ]; then
+            echo "✅ Deno type check passed — high-risk edge functions are type-safe" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Deno type check failed — edge function type errors must be fixed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ============================================
   # Job 2: Linting
   # ============================================
   lint:

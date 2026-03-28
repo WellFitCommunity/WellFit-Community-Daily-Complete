@@ -1,11 +1,10 @@
 // Export Status Edge Function
-// Returns status of a bulk export job
+// Returns status of a bulk export job (auth-gated, user can only see their own jobs)
 
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { createLogger } from '../_shared/auditLogger.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { requireUser, supabaseAdmin } from '../_shared/auth.ts';
 
 interface StatusRequest {
   jobId: string;
@@ -22,23 +21,23 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
-    // Create Supabase client with service role
-    const supabaseAdmin = createClient(
-      SUPABASE_URL ?? '',
-      SB_SECRET_KEY ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    // 1. Require authenticated user
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Parse request body
+    // 2. Parse request body
     const body: StatusRequest = await req.json();
     const { jobId } = body;
 
-    // Validate required fields
+    // 3. Validate required fields
     if (!jobId) {
       return new Response(
         JSON.stringify({ error: 'Missing required field: jobId' }),
@@ -46,10 +45,10 @@ serve(async (req) => {
       );
     }
 
-    // Get job status from database
+    // 4. Get job status — scoped to requesting user (cannot see other users' exports)
     const { data: job, error } = await supabaseAdmin
       .from('export_jobs')
-      .select('*')
+      .select('id, status, progress, total_records, processed_records, download_url, error_message, started_at, completed_at, expires_at, created_by')
       .eq('id', jobId)
       .single();
 
@@ -60,7 +59,20 @@ serve(async (req) => {
       );
     }
 
-    // Return job status
+    // 5. Verify the job belongs to the requesting user
+    if (job.created_by && job.created_by !== user.id) {
+      logger.security('Unauthorized export status access attempt', {
+        caller: user.id,
+        jobId,
+        jobOwner: job.created_by,
+      });
+      return new Response(
+        JSON.stringify({ error: 'Export job not found', jobId }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 6. Return job status
     return new Response(
       JSON.stringify({
         jobId: job.id,
@@ -81,7 +93,7 @@ serve(async (req) => {
     const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error('Error in export-status function', { error: errorMessage });
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: errorMessage }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

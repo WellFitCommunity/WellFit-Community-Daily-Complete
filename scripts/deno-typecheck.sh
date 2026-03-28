@@ -36,6 +36,8 @@ HIGH_RISK=(
   generate-837p
   ai-readmission-predictor
   ai-soap-note-generator
+  send-team-alert
+  export-status
   bed-management
   fitbit-webhook
 )

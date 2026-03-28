@@ -153,7 +153,7 @@ Create a `.env` file in the project root (local development only; use Vercel set
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_HCAPTCHA_SITE_KEY=your_hcaptcha_site_key
-VITE_ANTHROPIC_API_KEY=your_claude_ai_api_key
+# ANTHROPIC_API_KEY — server-side only (set in Supabase secrets, NOT as VITE_ var)
 
 # Server-Side (Edge Functions)
 SB_PUBLISHABLE_API_KEY=sb_publishable_*

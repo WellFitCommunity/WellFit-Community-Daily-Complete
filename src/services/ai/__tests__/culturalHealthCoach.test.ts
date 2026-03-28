@@ -48,7 +48,7 @@ vi.mock('../../mcp/mcp-cost-optimizer', () => ({
 vi.stubGlobal('import', {
   meta: {
     env: {
-      VITE_ANTHROPIC_API_KEY: 'test-api-key',
+      VITE_CLAUDE_DEFAULT_MODEL: 'claude-haiku-4-5-20250929',
       VITE_SUPABASE_URL: 'https://test.supabase.co',
       VITE_SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key',
     },
