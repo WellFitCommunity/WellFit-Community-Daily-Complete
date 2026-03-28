@@ -3,10 +3,102 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-28 (Adversarial audit ALL 3 SESSIONS COMPLETE — 20/20 items done)
-**Last Session:** Architecture hardening (A-16–A-20): Deno strict config, Claude rate/budget enforcement, push notification batching, rate limiter perf fix, FHIR pagination + validation. Also fixed CI typecheck failure (rpmClaimService).
+**Last Updated:** 2026-03-28
+**Last Session:** Feature catalog (60 features) + ONC certification gap audit (13 items) + MCP chain completion audit (9 items) + both trackers created
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,726 tests (583 suites), 0 lint warnings, 0 typecheck errors in changed files
+
+---
+
+## CURRENT PRIORITY — ONC 170.315 Certification Gap Closure (0/13)
+
+**Tracker:** `docs/trackers/onc-certification-tracker.md`
+**Status:** 0/13 items complete — tracker created, ready for autonomous execution
+**Estimated total:** ~57 hours across 3-4 sessions
+**ACB:** Drummond Group (Austin) recommended — $70-130K budget
+
+### What's Already Certified-Ready (27+ criteria)
+All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3), (f)(1-2), (f)(4-5), (f)(7), (g)(4), (g)(6-10), SAFER (9/9), USCDI v3 (18/18), EPCS, (a)(4), (a)(6-8) — **no work needed, code complete.**
+
+### Session Plan
+
+| Session | Focus | Items | Hours | Status |
+|---------|-------|-------|-------|--------|
+| **1** | CPOE forms (meds, lab, imaging) + demographics (race/ethnicity) + implantable device list | ONC-1 through ONC-5 | ~32 | **NEXT** |
+| **2** | CDS integration into CPOE + formulary activation + family health history + break-the-glass + data integrity | ONC-6 through ONC-10 | ~19 | PENDING |
+| **3** | WCAG AA accessibility audit + Surescripts prep + ONC compliance matrix document | ONC-11 through ONC-13 | ~10 | PENDING |
+
+### Tier 1 Blockers (Session 1)
+- **ONC-1:** (a)(1) Medication order entry form — `MedicationRequestService` backend ready, UI needed
+- **ONC-2:** (a)(2) Lab order entry form — new FHIR `ServiceRequest` service + UI
+- **ONC-3:** (a)(3) Imaging order entry form — extends `ServiceRequest` for imaging category
+- **ONC-4:** (a)(5) Race & ethnicity columns on `profiles` — migration + type update + form fields
+- **ONC-5:** (a)(14) Implantable device list — FHIR `Device` + `DeviceUseStatement` + UI
+
+### Tier 2 (Session 2)
+- **ONC-6:** (a)(9) Wire CDS (guideline matcher + contraindication detector) into CPOE as blocking alerts
+- **ONC-7:** (a)(10) Activate `formulary_cache` table in medication ordering workflow
+- **ONC-8:** (a)(12) Structured family health history — FHIR `FamilyMemberHistory`
+- **ONC-9:** (d)(6) Break-the-glass emergency access with time-limited override + supervisor notification
+- **ONC-10:** (d)(7)/(d)(8) SHA-256 integrity hashes on exported records
+
+### Tier 3 (Session 3)
+- **ONC-11:** (g)(5) WCAG AA audit — Lighthouse/axe-core across all routes
+- **ONC-12:** (b)(3) Surescripts enrollment — BLOCKED on external vendor (3-6 month timeline)
+- **ONC-13:** Formal ONC compliance evidence matrix for Drummond Group
+
+---
+
+## SECONDARY PRIORITY — MCP Chain Completion: Final Gaps (0/9)
+
+**Tracker:** `docs/trackers/mcp-chain-completion-tracker.md`
+**Status:** 0/9 items complete — 15 of 16 MCP servers are real end-to-end. 61 of 73 prior tracker items done (84%).
+**Estimated total:** ~41 hours buildable + ~8-12h blocked on vendor
+**Prior work:** 6 trackers (compliance, infrastructure, production-readiness, blind-spots, completion, hardening) — 61 items already resolved
+
+### What's Already Done
+- ✅ 15/16 MCP servers are real end-to-end (DB queries, external APIs, real logic)
+- ✅ Chain orchestrator built with DB state machine, approval gates, retry logic
+- ✅ Chains 1-6 defined in database with 29 integration tests
+- ✅ Per-request auth binding, input validation, audit logging on all servers
+- ✅ 85 prompt injection tests + 64 clinical constraint tests passing
+- ✅ mcp-server-compliance-tracker: 23/23 DONE
+- ✅ mcp-infrastructure-repair-tracker: 26/26 DONE
+
+### Session Plan
+
+| Session | Focus | Items | Hours | Status |
+|---------|-------|-------|-------|--------|
+| **1** | Security hardening — claude-chat relay, claude-personalization injection guard, live adversarial testing | MCP-1 through MCP-3 | ~15 | NEXT (after ONC Session 1) |
+| **2** | Revenue — RPM billing, wearable vitals dashboard, home vitals → FHIR conversion | MCP-4 through MCP-6 | ~26 | PENDING |
+| **—** | Clearinghouse activation (when vendor creds arrive) | MCP-7 | ~8-12 | BLOCKED |
+
+### Remaining Items
+- **MCP-1:** `claude-chat` relay — no input sanitization, no safety prompt (HIGH risk, 4h)
+- **MCP-2:** `claude-personalization` — regex-only PHI redaction, no drift guard (MEDIUM risk, 3h)
+- **MCP-3:** Live adversarial testing — 40 attack prompts against hardened functions (8h)
+- **MCP-4:** RPM billing infrastructure — CPT 99453-99458 enrollment + time tracking (12h)
+- **MCP-5:** Wearable vitals → clinician dashboard — trend charts + threshold alerts (8h)
+- **MCP-6:** Home vitals → FHIR Observation conversion — LOINC mapping + provenance (6h)
+- **MCP-7:** Clearinghouse external API — BLOCKED on Waystar/Change Healthcare creds (8-12h)
+- **MCP-8:** Cultural competency clinical review — waiting on Akima (0h code)
+- **MCP-9:** Tool utilization gap (76/140 unwired) — ACCEPTED, deferred by design
+
+---
+
+## What Happened This Session (2026-03-28)
+
+### Completed — Feature Catalog + ONC Audit + MCP Audit (no code changes)
+1. **Feature Catalog (Master):** `docs/FEATURE_CATALOG.md` — 60 features documented from source code analysis across all three systems (Community, Clinical, Shared Spine). Each feature includes primary function, system importance, uniqueness assessment, and latent benefits.
+2. **Feature Catalog (Investor):** `docs/FEATURE_CATALOG_INVESTOR.md` — 40-feature condensed version organized by investment thesis: revenue-generating, technical moat, clinical differentiation, compliance readiness, and market expansion.
+3. **ONC Certification Gap Audit:** Full code audit against all 170.315 criteria (a) through (g). Found 27+ criteria already certified-ready. Identified 13 gaps (5 Tier 1 blockers, 5 Tier 2, 3 Tier 3).
+4. **ONC Tracker Created:** `docs/trackers/onc-certification-tracker.md` — 13 items across 3 sessions with regression checks and timeline.
+5. **MCP Chain Completion Audit:** Audited all 16 MCP servers against 6 prior trackers (73 total items). Found 15/16 servers are real end-to-end. 61/73 prior items resolved. Identified 9 remaining gaps (3 security, 4 revenue/clinical, 1 blocked, 1 clinical review).
+6. **MCP Tracker Created:** `docs/trackers/mcp-chain-completion-tracker.md` — 9 items across 2 sessions with regression checks.
+7. **Cultural Competency MCP Assessed:** Confirmed originality — not a lookup table but a population-aware clinical reasoning layer with evidence-based profiles, drug-remedy interaction checking, AI confidence recalibration, and anti-stereotyping guardrails.
+
+### No Code Changes This Session
+This was a documentation and audit session. No source code was modified. No verification checkpoint needed.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **A Curriculum for Getting the Best Out of AI Coding Assistants**
 
-> Created by Maria Torres, AI System Director — Envision Virtual Edge Group LLC
+> Created by Maria LeBlanc, AI System Director — Envision Virtual Edge Group LLC
 > Built from 9 months of real-world AI development, 2,100+ sessions, 1,989 commits, and $645 total development cost.
 > This curriculum is based on building a HIPAA-compliant, multi-tenant healthcare platform using AI tools with zero coding background.
 
