@@ -3,8 +3,7 @@ import React from 'react';
 
 export const EnvironmentDebug: React.FC = () => {
   const envVars = {
-    'VITE_ANTHROPIC_API_KEY': import.meta.env.VITE_ANTHROPIC_API_KEY ?
-      `${import.meta.env.VITE_ANTHROPIC_API_KEY.substring(0, 7)}...` : 'NOT SET',
+    'ANTHROPIC_API_KEY': 'Server-side only (claude-chat edge function)',
     'NODE_ENV': import.meta.env.MODE,
     'VITE_SUPABASE_URL': import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET',
     'VITE_SB_ANON_KEY': import.meta.env.VITE_SB_ANON_KEY ? 'SET' : 'NOT SET',
