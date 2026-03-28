@@ -143,7 +143,8 @@ export class PillIdentifierService {
   private apiKey: string | null = null;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY || null;
+    // A-4: API key removed from browser — this service needs edge function migration
+    this.apiKey = apiKey || null;
 
     if (this.apiKey) {
       const key = this.apiKey; // Capture for closure

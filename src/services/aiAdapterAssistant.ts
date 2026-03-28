@@ -5,9 +5,8 @@ import { getErrorMessage } from '../lib/getErrorMessage';
 import { loadAnthropicSDK } from './anthropicLoader';
 import { HAIKU_MODEL } from '../constants/aiModels';
 
-// Vite uses VITE_ prefix for environment variables
-// Access via import.meta.env
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
+// A-4: API key removed from browser — AI calls route through claude-chat edge function
+const ANTHROPIC_API_KEY: string | undefined = undefined;
 
 interface AdapterAssistantResponse {
   message: string;

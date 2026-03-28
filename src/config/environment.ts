@@ -3,8 +3,7 @@ import { z } from 'zod';
 
 // Environment validation schema
 const envSchema = z.object({
-  // Anthropic API Configuration - make optional to prevent crashes
-  VITE_ANTHROPIC_API_KEY: z.string().optional(),
+  // A-4: VITE_ANTHROPIC_API_KEY removed — API keys must never have VITE_ prefix
 
   // Claude Model Configuration - Intelligent routing: Haiku 4.5 for UI, Sonnet 4.5 for revenue
   VITE_CLAUDE_DEFAULT_MODEL: z.string().default("claude-haiku-4-5-20250929"), // Fast UI/personalization
@@ -24,7 +23,6 @@ const envSchema = z.object({
 function parseEnvironment() {
   try {
     return envSchema.parse({
-      VITE_ANTHROPIC_API_KEY: import.meta.env.VITE_ANTHROPIC_API_KEY || '',
       VITE_CLAUDE_DEFAULT_MODEL: import.meta.env.VITE_CLAUDE_DEFAULT_MODEL,
       VITE_CLAUDE_ADMIN_MODEL: import.meta.env.VITE_CLAUDE_ADMIN_MODEL,
       VITE_CLAUDE_MAX_TOKENS: import.meta.env.VITE_CLAUDE_MAX_TOKENS,
