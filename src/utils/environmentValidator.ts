@@ -38,8 +38,8 @@ export function validateCriticalEnvironment(): ValidationResult {
     errors.push('CRITICAL: VITE_SUPABASE_URL is not set - database connection will fail');
   }
 
-  if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
-    errors.push('CRITICAL: VITE_SUPABASE_ANON_KEY is not set - authentication will fail');
+  if (!import.meta.env.VITE_SB_PUBLISHABLE_API_KEY && !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    errors.push('CRITICAL: Neither VITE_SB_PUBLISHABLE_API_KEY nor VITE_SUPABASE_ANON_KEY is set - authentication will fail');
   }
 
   // ============================================================================

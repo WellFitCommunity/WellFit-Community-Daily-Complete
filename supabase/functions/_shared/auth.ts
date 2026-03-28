@@ -6,7 +6,7 @@ import { corsFromRequest, handleOptions } from "./cors.ts";
 
 // ---- ENV ----
 const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")  ?? "";
-const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SB_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const INTERNAL_SECRET = Deno.env.get("INTERNAL_SECRET") ?? ""; // for internal-only handlers
 
 // Admin client (bypasses RLS)

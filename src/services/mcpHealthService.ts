@@ -60,7 +60,7 @@ function getSupabaseFunctionsUrl(): string {
 
 async function getServiceRoleHeaders(): Promise<Record<string, string>> {
   const session = await supabase.auth.getSession();
-  const token = session.data.session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  const token = session.data.session?.access_token || import.meta.env.VITE_SB_PUBLISHABLE_API_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
   return {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',

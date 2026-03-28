@@ -379,7 +379,7 @@ class ClaudeService {
     system?: string
   ): Promise<EdgeFunctionResponse> {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const anonKey = import.meta.env.VITE_SB_PUBLISHABLE_API_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !anonKey) {
       throw new ClaudeServiceError(

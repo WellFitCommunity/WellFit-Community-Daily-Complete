@@ -29,7 +29,7 @@ function getEnv(name: string, ...fallbacks: string[]): string {
 }
 
 const supabaseUrl = getEnv("SB_URL", "SUPABASE_URL");
-const supabaseServiceKey = getEnv("SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SB_SECRET_KEY");
+const supabaseServiceKey = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 // Hash a string using SHA-256 (for client secret)
 async function sha256(input: string): Promise<string> {

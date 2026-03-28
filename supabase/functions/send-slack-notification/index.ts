@@ -45,7 +45,7 @@ serve(async (req) => {
     await requireRole(user.id, SLACK_ALLOWED_ROLES);
   } catch (_resp: unknown) {
     // Also accept service role key for internal calls
-    const serviceRoleKey = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const serviceRoleKey = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SB_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const authHeader = req.headers.get("Authorization") ?? "";
     const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
 

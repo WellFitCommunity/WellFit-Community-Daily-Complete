@@ -415,7 +415,8 @@ return () => {
 | Variable | Purpose |
 |----------|---------|
 | `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase JWT anon key (required for auth) |
+| `VITE_SB_PUBLISHABLE_API_KEY` | Supabase publishable key (preferred, new format) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase JWT anon key (legacy fallback) |
 | `VITE_HCAPTCHA_SITE_KEY` | hCaptcha site key for bot protection |
 | `ANTHROPIC_API_KEY` | Claude AI API key (server-side only — set in Supabase secrets) |
 
@@ -436,20 +437,22 @@ return () => {
 | `SUPABASE_ANON_KEY` | JWT (`eyJhbGci...`) | Legacy JWT anon key (alias) |
 | `SUPABASE_SERVICE_ROLE_KEY` | JWT | Legacy service role key (alias) |
 
-**IMPORTANT - Key Format Compatibility:**
-- **Client-side auth REQUIRES the JWT format** (`VITE_SUPABASE_ANON_KEY` or `SB_ANON_KEY`)
-- The new `sb_publishable_*` format is NOT yet supported by Supabase JS client for authentication
-- Edge Functions should prefer `SB_ANON_KEY` (JWT) for user token validation
-- Service role operations use `SB_SECRET_KEY` (new format works)
-- Legacy JWT keys remain functional until fully deprecated by Supabase
+**IMPORTANT - Key Format & Fallback Order (updated March 2026):**
+- **New `sb_publishable_*` / `sb_secret_*` format keys are PRIMARY** — preferred for all operations
+- Legacy JWT keys (`eyJhbGci...`) are retained as **fallback only** for resilience
+- Legacy keys are deprecated by Supabase and losing privileges — do not rely on them as primary
+- Both new and legacy keys are deployed in env, Supabase secrets, and Vercel
 
-**Order of Preference in Edge Functions:**
+**Order of Preference (new keys FIRST, legacy as fallback):**
 ```typescript
-// For user-context operations:
-getEnv("SB_ANON_KEY", "SUPABASE_ANON_KEY", "SB_PUBLISHABLE_API_KEY")
+// For user-context / anon operations:
+getEnv("SB_PUBLISHABLE_API_KEY", "SB_ANON_KEY", "SUPABASE_ANON_KEY")
 
-// For service role operations (MUST include SB_SERVICE_ROLE_KEY):
+// For service role operations:
 getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY")
+
+// Frontend (Vite):
+import.meta.env.VITE_SB_PUBLISHABLE_API_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
 ```
 
 ---

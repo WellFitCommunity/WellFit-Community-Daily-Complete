@@ -312,7 +312,7 @@ export const getAllSections = (): DashboardSection[] => [
     subtitle: 'Real-time patient insights and clinical decision support',
     icon: '\uD83E\uDDE0',
     headerColor: 'text-purple-800',
-    component: <Suspense fallback={<SectionLoadingFallback />}><FhirAiDashboard supabaseUrl={import.meta.env.VITE_SUPABASE_URL || ''} supabaseKey={import.meta.env.VITE_SUPABASE_ANON_KEY || ''} /></Suspense>,
+    component: <Suspense fallback={<SectionLoadingFallback />}><FhirAiDashboard supabaseUrl={import.meta.env.VITE_SUPABASE_URL || ''} supabaseKey={import.meta.env.VITE_SB_PUBLISHABLE_API_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || ''} /></Suspense>,
     category: 'clinical',
     priority: 'medium',
   },

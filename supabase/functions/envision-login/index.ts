@@ -73,7 +73,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     "SB_SERVICE_ROLE_KEY",
     "SUPABASE_SERVICE_ROLE_KEY"
   );
-  const SUPABASE_ANON_KEY = getEnv("SB_ANON_KEY", "SUPABASE_ANON_KEY", "SB_PUBLISHABLE_API_KEY");
+  const SUPABASE_ANON_KEY = getEnv("SB_PUBLISHABLE_API_KEY", "SB_ANON_KEY", "SUPABASE_ANON_KEY");
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     logger.error("Missing Supabase environment variables");

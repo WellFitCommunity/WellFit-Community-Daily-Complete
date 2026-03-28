@@ -19,7 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Create anonymous Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseAnonKey = import.meta.env.VITE_SB_PUBLISHABLE_API_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const anonSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const SESSION_STORAGE_KEY = 'caregiver_session';

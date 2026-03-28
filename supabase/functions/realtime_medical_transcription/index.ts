@@ -220,7 +220,7 @@ serve(async (req: Request) => {
                       // Session 4: Evidence retrieval — fire-and-forget PubMed search
                       const triggers = detectEvidenceTriggers(deidentify(fullTranscript, logger), updatedState, evidenceRateLimiter);
                       if (triggers.shouldSearch) {
-                        const svcKey = Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SECRET_KEY') || '';
+                        const svcKey = Deno.env.get('SB_SECRET_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
                         searchPubMedEvidence(triggers.queries, SB_URL!, svcKey).then(results => {
                           evidenceRateLimiter = updateRateLimiter(evidenceRateLimiter, results.length);
                           if (results.some(r => r.citations.length > 0)) {

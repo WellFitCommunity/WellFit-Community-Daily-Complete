@@ -28,7 +28,7 @@ function getEnv(name: string, ...fallbacks: string[]): string {
 }
 
 const supabaseUrl = getEnv("SB_URL", "SUPABASE_URL");
-const supabaseServiceKey = getEnv("SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SB_SECRET_KEY");
+const supabaseServiceKey = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 // Token expiration times
 const ACCESS_TOKEN_TTL = 3600; // 1 hour in seconds

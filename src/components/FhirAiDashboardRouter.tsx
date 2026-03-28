@@ -26,7 +26,7 @@ interface UserRole {
 
 const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
   supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '',
-  supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+  supabaseKey = import.meta.env.VITE_SB_PUBLISHABLE_API_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '',
   forceMode
 }) => {
   const { user } = useAuth();

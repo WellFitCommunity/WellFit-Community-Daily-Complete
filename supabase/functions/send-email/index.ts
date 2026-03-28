@@ -49,7 +49,7 @@ serve(async (req) => {
   //   2. Service role key as Bearer token (supabase.functions.invoke from other edge functions)
   //   3. User JWT + role check (browser/client calls)
   // =========================================================================
-  const serviceRoleKey = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const serviceRoleKey = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SB_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   let callerUserId = 'system';
   let callerTenantId: string | null = null;
   let authMethod = 'unknown';

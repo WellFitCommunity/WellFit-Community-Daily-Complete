@@ -13,11 +13,11 @@ export const SB_URL = pick(
   import.meta.env.VITE_SUPABASE_URL
 );
 
-// Supabase JS client requires JWT anon key for auth - sb_publishable_* format not yet supported
+// New publishable key format first, legacy JWT anon keys as fallback
 export const SB_PUBLISHABLE_API_KEY = pick(
-  import.meta.env.VITE_SUPABASE_ANON_KEY,
+  import.meta.env.VITE_SB_PUBLISHABLE_API_KEY,
   import.meta.env.VITE_SB_ANON_KEY,
-  import.meta.env.VITE_SB_PUBLISHABLE_API_KEY
+  import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
 // Aliases for backward compatibility

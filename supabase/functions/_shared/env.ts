@@ -23,17 +23,15 @@ export const SUPABASE_URL: string =
   envGet("SUPABASE_URL") || envGet("SB_URL");
 
 // Service role key - ADMIN access (bypasses RLS)
-// Fallback chain: JWT service role key FIRST (required for createClient RPC calls)
-// → new sb_secret_* format (works for some operations but NOT for Supabase JS client auth)
-// The Supabase JS client requires JWT format for auth. SB_SECRET_KEY (sb_secret_*) breaks RPC calls.
+// Fallback chain: new sb_secret_* format FIRST → legacy JWT keys as fallback
+// Legacy keys retained for resilience if Supabase has issues with new format.
 export const SB_SECRET_KEY: string =
-  envGet("SB_SERVICE_ROLE_KEY") || envGet("SUPABASE_SERVICE_ROLE_KEY") || envGet("SB_SECRET_KEY");
+  envGet("SB_SECRET_KEY") || envGet("SB_SERVICE_ROLE_KEY") || envGet("SUPABASE_SERVICE_ROLE_KEY");
 
 // Anon key - USER access (respects RLS)
-// Fallback chain: JWT anon keys (required for auth) → new sb_publishable_* format
-// JWT format is required until Supabase SDK fully supports new publishable keys
+// Fallback chain: new sb_publishable_* format FIRST → legacy JWT keys as fallback
 export const SB_ANON_KEY: string =
-  envGet("SB_ANON_KEY") || envGet("SUPABASE_ANON_KEY") || envGet("SB_PUBLISHABLE_API_KEY");
+  envGet("SB_PUBLISHABLE_API_KEY") || envGet("SB_ANON_KEY") || envGet("SUPABASE_ANON_KEY");
 
 // Alias for backward compatibility
 export const SB_PUBLISHABLE_API_KEY: string = SB_ANON_KEY;

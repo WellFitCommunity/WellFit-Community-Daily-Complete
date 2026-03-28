@@ -66,7 +66,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Create Supabase client with user's token to get their identity
     // Prefer SB_ANON_KEY (JWT format) which works with Supabase auth
-    const supabaseUser = createClient(SUPABASE_URL, getEnv("SB_ANON_KEY", "SUPABASE_ANON_KEY", "SB_PUBLISHABLE_API_KEY"), {
+    const supabaseUser = createClient(SUPABASE_URL, getEnv("SB_PUBLISHABLE_API_KEY", "SB_ANON_KEY", "SUPABASE_ANON_KEY"), {
       auth: { autoRefreshToken: false, persistSession: false },
       global: { headers: { Authorization: `Bearer ${accessToken}` } }
     });
