@@ -16,6 +16,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { HAIKU_MODEL } from "../_shared/models.ts";
@@ -129,6 +130,18 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
+    // Auth gate — require valid JWT
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body: ProgressNoteRequest = await req.json();
     const {
       patientId,

@@ -24,6 +24,7 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 
 import { SONNET_MODEL } from "../_shared/models.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -100,6 +101,18 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
+    // Auth gate — require valid JWT
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body: ContraindicationRequest = await req.json();
     const {
       patientId,

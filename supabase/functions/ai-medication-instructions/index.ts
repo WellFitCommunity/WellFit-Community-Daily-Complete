@@ -21,6 +21,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
 import { CONDENSED_DRIFT_GUARD } from "../_shared/conversationDriftGuard.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const getEnv = (...keys: string[]): string => {
   for (const k of keys) {
@@ -101,6 +102,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Auth gate — require valid JWT
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const startTime = Date.now();
     const body: RequestBody = await req.json();
 

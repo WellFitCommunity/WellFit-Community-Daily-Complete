@@ -31,6 +31,7 @@ import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
 import { recordDecisionLink } from "../_shared/decisionChain.ts";
 import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
 import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -199,6 +200,18 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
+    // Auth gate — require valid JWT
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let body: FallRiskRequest;
     try {
       body = await req.json();

@@ -30,6 +30,7 @@ import {
 import { identifyBarriers } from './barriers.ts';
 import { generateInterventions } from './interventions.ts';
 import { enhanceWithAI } from './aiEnhancement.ts';
+import { requireUser } from "../_shared/auth.ts";
 
 // ============================================================================
 // Helpers
@@ -124,6 +125,18 @@ serve(async (req) => {
   const logger = createLogger('ai-medication-adherence-predictor', req);
 
   try {
+    // Auth gate — require valid JWT
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { patientId, assessorId, medications, tenantId } = await req.json() as AdherenceRequest;
 
     if (!patientId || !assessorId) {

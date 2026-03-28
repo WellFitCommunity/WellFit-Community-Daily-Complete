@@ -22,6 +22,7 @@ import { SONNET_MODEL } from '../_shared/models.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
+import { requireUser } from "../_shared/auth.ts";
 
 // ============================================================================
 // Types
@@ -532,6 +533,18 @@ serve(async (req) => {
   const logger = createLogger('ai-fhir-semantic-mapper', req);
 
   try {
+    // Auth gate — require valid JWT
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const request = await req.json() as MappingRequest;
 
     if (!request.requesterId || !request.sourceData || !request.targetVersion) {

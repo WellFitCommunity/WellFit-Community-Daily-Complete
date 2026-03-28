@@ -12,6 +12,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { createAdminClient } from "../_shared/supabaseClient.ts";
 import { HAIKU_MODEL, calculateModelCost } from "../_shared/models.ts";
@@ -56,6 +57,18 @@ serve(async (req: Request) => {
   const logger = createLogger("ai-nurseos-stress-narrative", req);
 
   try {
+    // Auth gate — require valid JWT
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (!ANTHROPIC_API_KEY) {
       logger.error("ANTHROPIC_API_KEY not configured");
       return new Response(

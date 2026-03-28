@@ -21,6 +21,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { SONNET_MODEL } from '../_shared/models.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { requireUser } from "../_shared/auth.ts";
 import { createLogger } from '../_shared/auditLogger.ts';
 
 // ============================================================================
@@ -450,6 +451,18 @@ serve(async (req) => {
   const logger = createLogger('ai-provider-assistant', req);
 
   try {
+    // Auth gate — require valid JWT
+    let user;
+    try {
+      user = await requireUser(req);
+    } catch (authResponse: unknown) {
+      if (authResponse instanceof Response) return authResponse;
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const request = await req.json() as AssistantRequest;
 
     if (!request.query || !request.providerId || !request.providerContext) {
