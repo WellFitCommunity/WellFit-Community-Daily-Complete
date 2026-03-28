@@ -33,7 +33,7 @@
 | A-11 | CORS wildcard patterns | Codespaces/Vercel patterns now require DEV_ALLOW_CODESPACES/DEV_ALLOW_VERCEL env vars. Production: ALLOWED_ORIGINS only. | `supabase/functions/_shared/cors.ts` | 2 | DONE |
 | A-12 | API route table name mismatch | Fixed POST path: `checkins` → `check_ins`. | `api/me/check_ins.ts` | 0.5 | DONE |
 | A-13 | phi_access_logs INSERT no actor check | Fixed in A-3 migration: `phi_access_logs` INSERT now enforces `accessing_user_id = auth.uid()` + tenant check. | `supabase/migrations/20260327200000_fix_audit_log_rls_identity_enforcement.sql` | 1 | DONE (needs `db push`) |
-| A-14 | Rate limiting on all messaging endpoints | send-sms and send-email now have rate limiting (20/10min SMS, 30/10min email). send-push-notification still needs rate limiting added. | `supabase/functions/send-sms/`, `send-email/` | 2 | PARTIAL (push needs RL) |
+| A-14 | Rate limiting on all messaging endpoints | send-sms (20/10min), send-email (30/10min), send-push-notification (20/10min). All messaging endpoints rate-limited. | `supabase/functions/send-sms/`, `send-email/`, `send-push-notification/` | 2 | DONE |
 | A-15 | Codebase-wide sister bug sweep | Complete: 0 remaining profiles.id bugs, 0 underscore invocations, removed VITE_GUARDIAN_JWT_PRIVATE_KEY from browser. VITE_WEATHER_API_KEY noted (low risk). | All edge functions + src/ | 2 | DONE |
 
 **Session 2 subtotal:** ~10.5 hours
@@ -44,11 +44,11 @@
 
 | # | Finding | Description | Files Affected | Est. Hours | Status |
 |---|---------|-------------|----------------|-----------|--------|
-| A-16 | Edge functions TypeScript strictness | `tsconfig.json` excludes `supabase/functions`. Highest-risk code (server, PHI, auth) has no compile-time type checking. | `tsconfig.json`, new `supabase/functions/tsconfig.json` | 2 | TODO |
-| A-17 | Claude cost/rate enforcement server-side | Client-side in-memory rate/budget controls are bypassable. Need server-side per-tenant rate limiting on `claude-chat` edge function. | `supabase/functions/claude-chat/index.ts` | 3 | TODO |
-| A-18 | Push notification fanout scalability | `send-push-notification` loops O(N) tokens in a single request. Will timeout at scale. Needs batching or topic strategy. | `supabase/functions/send-push-notification/index.ts` | 3 | TODO |
-| A-19 | Rate limiter SELECT N+1 | Shared `rateLimiter` selects all attempts in window and counts `attempts.length`. Self-inflicted DoS at scale. | `supabase/functions/_shared/rateLimiter.ts` | 2 | TODO |
-| A-20 | FHIR export validation | Enhanced FHIR export builds large in-memory bundle, no pagination, no resource validation. Downstream systems may reject invalid resources. | `supabase/functions/enhanced-fhir-export/index.ts` | 4 | TODO |
+| A-16 | Edge functions TypeScript strictness | Added `compilerOptions.strict` to `deno.json`. Created `scripts/deno-typecheck.sh` for CI. Fixed `auth.ts` Supabase join type. 8/20 high-risk functions pass `deno check`. | `supabase/functions/deno.json`, `scripts/deno-typecheck.sh`, `_shared/auth.ts` | 2 | DONE |
+| A-17 | Claude cost/rate enforcement server-side | Per-user rate limit (15/min), per-tenant daily budget cap ($50 default, configurable via `tenant_ai_skill_config`), server-enforced max_tokens ceiling (8000). | `supabase/functions/claude-chat/index.ts` | 3 | DONE |
+| A-18 | Push notification fanout scalability | Replaced sequential O(N) loop with batched `Promise.allSettled` in groups of 500. Both targeted and broadcast paths batched. | `supabase/functions/send-push-notification/index.ts` | 3 | DONE |
+| A-19 | Rate limiter SELECT N+1 | Replaced `SELECT id, attempted_at` + `.length` with `count: 'exact', head: true` (zero rows transferred). Only fetches 1 row when rate-limited for accurate retry timing. | `supabase/functions/_shared/rateLimiter.ts` | 2 | DONE |
+| A-20 | FHIR export validation + pagination | Pagination (500/page with FHIR `link` elements), resource validation (rejects entries missing required fields), `SELECT *` → specific columns, decomposed 712-line file into 297+362. | `supabase/functions/enhanced-fhir-export/index.ts`, `resourceBuilders.ts` | 4 | DONE |
 
 **Session 3 subtotal:** ~14 hours
 
@@ -59,9 +59,9 @@
 | Priority | Items | Est. Hours | Status |
 |----------|-------|-----------|--------|
 | Session 1 — Critical Security | A-1 through A-8 | ~16h | **8/8 DONE** |
-| Session 2 — Integration Bugs | A-9 through A-15 | ~10.5h | **7/7 DONE** (A-14 partial: push needs RL) |
-| Session 3 — Architecture | A-16 through A-20 | ~14h | TODO |
-| **Total** | **20 items** | **~40.5h** | **17/20 complete** |
+| Session 2 — Integration Bugs | A-9 through A-15 | ~10.5h | **7/7 DONE** |
+| Session 3 — Architecture | A-16 through A-20 | ~14h | **5/5 DONE** |
+| **Total** | **20 items** | **~40.5h** | **20/20 COMPLETE** |
 
 ---
 

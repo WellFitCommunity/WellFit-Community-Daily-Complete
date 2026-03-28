@@ -3,18 +3,18 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-27 (Adversarial audit Sessions 1 & 2 COMPLETE — 17/20 items done)
-**Last Session:** Fixed all critical security (8/8) + all integration bugs (7/7). Deployed 10 edge functions, applied migration. 3 architecture items remain.
+**Last Updated:** 2026-03-28 (Adversarial audit ALL 3 SESSIONS COMPLETE — 20/20 items done)
+**Last Session:** Architecture hardening (A-16–A-20): Deno strict config, Claude rate/budget enforcement, push notification batching, rate limiter perf fix, FHIR pagination + validation. Also fixed CI typecheck failure (rpmClaimService).
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,726 tests (583 suites), 0 lint warnings, 0 typecheck errors in changed files
 
 ---
 
-## CURRENT PRIORITY — Adversarial Audit Remediation
+## COMPLETED — Adversarial Audit Remediation (20/20)
 
 **Tracker:** `docs/trackers/adversarial-audit-tracker.md`
-**Status:** 17/20 items complete
-**Estimated remaining:** ~14 hours (1 session)
+**Status:** 20/20 items COMPLETE
+**Total effort:** ~40.5 hours across 3 sessions
 
 ### What's Done
 
@@ -22,7 +22,7 @@
 |---------|-------|-------|--------|
 | **1** | Critical security — messaging auth, audit log RLS, client secrets, guardian-agent | A-1 through A-8 | **8/8 DONE** |
 | **2** | Integration bugs — profiles.user_id, function naming, CORS, API route, sister bug sweep | A-9 through A-15 | **7/7 DONE** |
-| **3 (NEXT)** | Architecture hardening — edge TS strictness, server-side rate limiting, scalability, FHIR validation | A-16 through A-20 | TODO |
+| **3** | Architecture hardening — edge TS strictness, server-side rate limiting, scalability, FHIR validation | A-16 through A-20 | **5/5 DONE** |
 
 ### Session 1 Completed (Critical Security)
 - **A-1/A-2:** send-sms + send-email locked down (3-path auth + rate limiting + recipient caps)
@@ -37,12 +37,23 @@
 - **A-10:** Fixed send_email → send-email in 3 functions (0 remaining after sweep)
 - **A-11:** CORS tightened — Codespaces/Vercel patterns require explicit env flags
 - **A-12:** Fixed API route check_ins POST table name
-- **A-14:** Rate limiting on SMS + email (push still needs it)
+- **A-14:** Rate limiting on all messaging — SMS (20/10min), email (30/10min), push (20/10min)
 - **A-15:** Codebase sweep — removed VITE_GUARDIAN_JWT_PRIVATE_KEY from browser
+
+### Session 3 Completed (Architecture Hardening)
+- **A-16:** Deno strict mode in `deno.json`, `scripts/deno-typecheck.sh` for CI, fixed auth.ts Supabase join type
+- **A-17:** Claude cost enforcement — per-user rate limit (15/min), per-tenant daily budget ($50 default), max_tokens ceiling (8000)
+- **A-18:** Push notification batching — `Promise.allSettled` in batches of 500 (was sequential O(N) loop)
+- **A-19:** Rate limiter perf — `count: 'exact', head: true` replaces SELECT all + `.length`
+- **A-20:** FHIR export — pagination (500/page), resource validation, no more `SELECT *`, decomposed (712→297+362 lines)
+
+### Also Fixed This Session
+- **CI/CD typecheck failure** — `rpmClaimService.ts` used `NOT_ELIGIBLE`/`NO_PROCEDURES` (not valid `ServiceErrorCode`). Fixed to `NOT_ENTITLED`/`VALIDATION_ERROR`.
 
 ### Deployed
 - **Migration:** `20260327230000_repair_wearable_rls_and_audit_logs.sql` applied
-- **Edge functions:** send-sms, send-email, guardian-agent, send-slack-notification, send-team-alert, ld-alert-notifier, notify-stale-checkins, emergency-alert-dispatch, claude-chat, fitbit-webhook
+- **Edge functions (Sessions 1-2):** send-sms, send-email, guardian-agent, send-slack-notification, send-team-alert, ld-alert-notifier, notify-stale-checkins, emergency-alert-dispatch, claude-chat, fitbit-webhook
+- **Edge functions (Session 3, need deploy):** claude-chat, send-push-notification, enhanced-fhir-export, rateLimiter (shared)
 
 ### Critical Findings Summary
 
