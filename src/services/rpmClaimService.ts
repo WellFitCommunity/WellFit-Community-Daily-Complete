@@ -245,7 +245,7 @@ async function generateRpmClaim(
     // Must be eligible for at least one CPT code
     if (!eligibility.is_eligible_99454 && !eligibility.is_eligible_99457) {
       return failure(
-        'NOT_ELIGIBLE',
+        'NOT_ENTITLED',
         `Enrollment ${enrollmentId} not eligible: ${eligibility.transmission_days} transmission days, ${eligibility.monitoring_minutes} monitoring minutes`
       );
     }
@@ -282,7 +282,7 @@ async function generateRpmClaim(
     );
 
     if (procedures.length === 0) {
-      return failure('NO_PROCEDURES', 'No billable RPM procedures for this period');
+      return failure('VALIDATION_ERROR', 'No billable RPM procedures for this period');
     }
 
     // 6. Create encounter

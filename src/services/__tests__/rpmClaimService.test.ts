@@ -195,7 +195,7 @@ describe('rpmClaimService', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('NOT_ELIGIBLE');
+        expect(result.error.code).toBe('NOT_ENTITLED');
       }
     });
 
