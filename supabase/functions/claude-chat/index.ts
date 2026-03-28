@@ -32,8 +32,16 @@ serve(async (req) => {
       throw new Error("ANTHROPIC_API_KEY not configured in Supabase secrets");
     }
 
-    // Verify user authentication
-    const supabaseClient = createUserClient(req.headers.get("Authorization"));
+    // Verify user authentication — check header before creating client
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Authorization required" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseClient = createUserClient(authHeader);
 
     const {
       data: { user },
