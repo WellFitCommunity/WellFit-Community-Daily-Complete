@@ -167,7 +167,7 @@ async function gatherCaregiverContext(
     const { data: profile } = await supabase
       .from("profiles")
       .select("first_name")
-      .eq("id", patientId)
+      .eq("user_id", patientId)
       .single();
 
     if (profile?.first_name) {

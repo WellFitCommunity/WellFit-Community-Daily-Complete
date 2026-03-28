@@ -236,7 +236,7 @@ async function gatherPatientContext(
     const { data: profile } = await supabase
       .from("profiles")
       .select("date_of_birth, gender, pregnancy_status")
-      .eq("id", patientId)
+      .eq("user_id", patientId)
       .single();
 
     if (profile) {
