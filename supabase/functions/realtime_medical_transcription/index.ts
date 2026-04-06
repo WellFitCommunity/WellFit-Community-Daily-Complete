@@ -34,8 +34,6 @@ import { fetchTenantSensitivity, runAndSendReasoning } from './reasoningIntegrat
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-// Fallback API keys for resilience
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SB_URL = Deno.env.get("SB_URL") ?? SUPABASE_URL;
 const SB_SECRET_KEY =
   Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY;
@@ -45,7 +43,6 @@ if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SB_URL || !SB_SECRET_KEY) {
   initLogger.error("Missing required env vars", {
     hasDeepgram: !!DEEPGRAM_API_KEY,
     hasAnthropic: !!ANTHROPIC_API_KEY,
-    hasOpenAI: !!OPENAI_API_KEY,
     hasSbUrl: !!SB_URL,
     hasSbSecret: !!SB_SECRET_KEY
   });

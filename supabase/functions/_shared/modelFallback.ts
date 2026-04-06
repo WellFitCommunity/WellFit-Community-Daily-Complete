@@ -2,13 +2,13 @@
 // Model Fallback Service
 // ============================================================================
 // Provides resilient AI model access with automatic fallback when primary
-// models are unavailable. Supports Claude (primary) and OpenAI (fallback).
+// models are unavailable. Claude-only — Sonnet (primary) → Haiku (fallback).
 //
 // HIPAA Compliance: All PHI must be de-identified before calling these models.
 // ============================================================================
 
 import { createLogger } from './auditLogger.ts';
-import { HAIKU_MODEL, SONNET_MODEL } from './models.ts';
+import { HAIKU_MODEL, SONNET_MODEL, OPUS_MODEL } from './models.ts';
 
 const logger = createLogger('model-fallback');
 
@@ -17,7 +17,7 @@ const logger = createLogger('model-fallback');
 // ============================================================================
 
 export interface ModelConfig {
-  provider: 'anthropic' | 'openai';
+  provider: 'anthropic';
   model: string;
   apiKey: string;
   endpoint: string;
@@ -54,52 +54,41 @@ export interface FallbackConfig {
 }
 
 // ============================================================================
-// MODEL CONFIGURATIONS
+// MODEL CONFIGURATIONS — Claude only
 // ============================================================================
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || '';
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || '';
 
 const MODEL_CONFIGS: ModelConfig[] = [
-  // Primary: Claude Sonnet 4.5 (best for medical coding)
+  // Primary: Claude Opus (complex clinical reasoning, multi-step decisions)
+  {
+    provider: 'anthropic',
+    model: OPUS_MODEL,
+    apiKey: ANTHROPIC_API_KEY,
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    maxTokens: 4096,
+    costPerInputToken: 15.0 / 1_000_000,
+    costPerOutputToken: 75.0 / 1_000_000,
+  },
+  // Fallback 1: Claude Sonnet (accurate, cost-effective)
   {
     provider: 'anthropic',
     model: SONNET_MODEL,
     apiKey: ANTHROPIC_API_KEY,
     endpoint: 'https://api.anthropic.com/v1/messages',
     maxTokens: 4096,
-    costPerInputToken: 0.003 / 1000,
-    costPerOutputToken: 0.015 / 1000,
+    costPerInputToken: 3.0 / 1_000_000,
+    costPerOutputToken: 15.0 / 1_000_000,
   },
-  // Fallback 1: Claude Haiku (faster, cheaper)
+  // Fallback 2: Claude Haiku (fast, cheapest — last resort)
   {
     provider: 'anthropic',
     model: HAIKU_MODEL,
     apiKey: ANTHROPIC_API_KEY,
     endpoint: 'https://api.anthropic.com/v1/messages',
     maxTokens: 4096,
-    costPerInputToken: 0.001 / 1000,
-    costPerOutputToken: 0.005 / 1000,
-  },
-  // Fallback 2: OpenAI GPT-4o (different provider for true redundancy)
-  {
-    provider: 'openai',
-    model: 'gpt-4o',
-    apiKey: OPENAI_API_KEY,
-    endpoint: 'https://api.openai.com/v1/chat/completions',
-    maxTokens: 4096,
-    costPerInputToken: 0.005 / 1000,
-    costPerOutputToken: 0.015 / 1000,
-  },
-  // Fallback 3: OpenAI GPT-4o-mini (last resort, cheaper)
-  {
-    provider: 'openai',
-    model: 'gpt-4o-mini',
-    apiKey: OPENAI_API_KEY,
-    endpoint: 'https://api.openai.com/v1/chat/completions',
-    maxTokens: 4096,
-    costPerInputToken: 0.00015 / 1000,
-    costPerOutputToken: 0.0006 / 1000,
+    costPerInputToken: 0.8 / 1_000_000,
+    costPerOutputToken: 4.0 / 1_000_000,
   },
 ];
 
@@ -129,7 +118,7 @@ export async function callModelWithFallback(
   const availableModels = MODEL_CONFIGS.filter(m => m.apiKey && m.apiKey.length > 0);
 
   if (availableModels.length === 0) {
-    throw new Error('No AI models configured with valid API keys');
+    throw new Error('No AI models configured — ANTHROPIC_API_KEY is required');
   }
 
   let lastError: Error | null = null;
@@ -152,7 +141,7 @@ export async function callModelWithFallback(
           isFallback: i > 0
         });
 
-        const response = await callModel(modelConfig, request, finalConfig.timeoutMs);
+        const response = await callAnthropic(modelConfig, request, finalConfig.timeoutMs);
 
         logger.info('Model call successful', {
           provider: modelConfig.provider,
@@ -198,9 +187,9 @@ export async function callModelWithFallback(
 }
 
 /**
- * Call a specific model
+ * Call Anthropic Claude API
  */
-async function callModel(
+async function callAnthropic(
   config: ModelConfig,
   request: ModelRequest,
   timeoutMs: number
@@ -209,135 +198,57 @@ async function callModel(
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    if (config.provider === 'anthropic') {
-      return await callAnthropic(config, request, controller.signal);
-    } else if (config.provider === 'openai') {
-      return await callOpenAI(config, request, controller.signal);
-    } else {
-      throw new Error(`Unsupported provider: ${config.provider}`);
+    const messages = [
+      { role: 'user', content: request.prompt }
+    ];
+
+    const body: Record<string, unknown> = {
+      model: config.model,
+      max_tokens: request.maxTokens || config.maxTokens,
+      messages,
+    };
+
+    if (request.systemPrompt) {
+      body.system = request.systemPrompt;
     }
+
+    if (request.temperature !== undefined) {
+      body.temperature = request.temperature;
+    }
+
+    const response = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': config.apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Anthropic API error ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    const inputTokens = data.usage?.input_tokens || 0;
+    const outputTokens = data.usage?.output_tokens || 0;
+    const text = data.content?.[0]?.text || '';
+
+    return {
+      text,
+      model: config.model,
+      provider: config.provider,
+      inputTokens,
+      outputTokens,
+      cost: (inputTokens * config.costPerInputToken) + (outputTokens * config.costPerOutputToken),
+    };
   } finally {
     clearTimeout(timeoutId);
   }
-}
-
-/**
- * Call Anthropic Claude API
- */
-async function callAnthropic(
-  config: ModelConfig,
-  request: ModelRequest,
-  signal: AbortSignal
-): Promise<Omit<ModelResponse, 'wasFallback' | 'attemptedModels' | 'responseTimeMs'>> {
-  const messages = [
-    { role: 'user', content: request.prompt }
-  ];
-
-  const body: Record<string, unknown> = {
-    model: config.model,
-    max_tokens: request.maxTokens || config.maxTokens,
-    messages,
-  };
-
-  if (request.systemPrompt) {
-    body.system = request.systemPrompt;
-  }
-
-  if (request.temperature !== undefined) {
-    body.temperature = request.temperature;
-  }
-
-  const response = await fetch(config.endpoint, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': config.apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Anthropic API error ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-
-  const inputTokens = data.usage?.input_tokens || 0;
-  const outputTokens = data.usage?.output_tokens || 0;
-  const text = data.content?.[0]?.text || '';
-
-  return {
-    text,
-    model: config.model,
-    provider: config.provider,
-    inputTokens,
-    outputTokens,
-    cost: (inputTokens * config.costPerInputToken) + (outputTokens * config.costPerOutputToken),
-  };
-}
-
-/**
- * Call OpenAI API
- */
-async function callOpenAI(
-  config: ModelConfig,
-  request: ModelRequest,
-  signal: AbortSignal
-): Promise<Omit<ModelResponse, 'wasFallback' | 'attemptedModels' | 'responseTimeMs'>> {
-  const messages: Array<{ role: string; content: string }> = [];
-
-  if (request.systemPrompt) {
-    messages.push({ role: 'system', content: request.systemPrompt });
-  }
-
-  messages.push({ role: 'user', content: request.prompt });
-
-  const body: Record<string, unknown> = {
-    model: config.model,
-    max_tokens: request.maxTokens || config.maxTokens,
-    messages,
-  };
-
-  if (request.temperature !== undefined) {
-    body.temperature = request.temperature;
-  }
-
-  if (request.jsonMode) {
-    body.response_format = { type: 'json_object' };
-  }
-
-  const response = await fetch(config.endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenAI API error ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-
-  const inputTokens = data.usage?.prompt_tokens || 0;
-  const outputTokens = data.usage?.completion_tokens || 0;
-  const text = data.choices?.[0]?.message?.content || '';
-
-  return {
-    text,
-    model: config.model,
-    provider: config.provider,
-    inputTokens,
-    outputTokens,
-    cost: (inputTokens * config.costPerInputToken) + (outputTokens * config.costPerOutputToken),
-  };
 }
 
 // ============================================================================
@@ -372,11 +283,10 @@ export async function checkModelHealth(): Promise<ModelHealth[]> {
     const startTime = Date.now();
 
     try {
-      // Simple health check with minimal tokens
-      await callModel(
+      await callAnthropic(
         config,
         { prompt: 'Say "ok"', maxTokens: 5 },
-        5000 // 5 second timeout for health check
+        5000
       );
 
       results.push({
@@ -428,13 +338,11 @@ function sleep(ms: number): Promise<void> {
  * Extract JSON from model response (handles markdown code blocks)
  */
 export function extractJSON(text: string): unknown {
-  // Remove markdown code blocks if present
   let cleaned = text
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/g, '')
     .trim();
 
-  // Try to find JSON object or array
   const jsonMatch = cleaned.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
   if (jsonMatch) {
     cleaned = jsonMatch[0];
