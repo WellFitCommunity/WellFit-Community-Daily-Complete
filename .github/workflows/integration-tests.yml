@@ -1,8 +1,22 @@
 # .github/workflows/integration-tests.yml
+# ============================================================
+# MANUAL ONLY — requires live Supabase secrets configured in
+# GitHub repo settings before running.
+#
+# TODO: Revisit this workflow when ready to add secrets:
+#   - SB_URL (Supabase project URL)
+#   - SB_PUBLISHABLE_API_KEY (new format key — NOT the legacy JWT anon key)
+#   - SB_SECRET_KEY (new format key — NOT the legacy JWT service role key)
+#   - MCP_ADMIN_KEY
+#
+# NOTE: SB_PUBLISHABLE_API_KEY and SB_SECRET_KEY are DIFFERENT KEYS
+# from the legacy SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY.
+# They have different formats (sb_publishable_* / sb_secret_*) and
+# different privilege scopes. Do NOT substitute one for the other.
+# ============================================================
 name: Integration Tests (Live Supabase)
 
 on:
-  # Manual trigger only — integration tests hit live Supabase and require secrets
   workflow_dispatch:
 
 env:
@@ -25,7 +39,7 @@ jobs:
 
       - name: Run integration tests
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SB_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SB_PUBLISHABLE_API_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SB_SECRET_KEY }}
           MCP_ADMIN_KEY: ${{ secrets.MCP_ADMIN_KEY }}
