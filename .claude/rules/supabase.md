@@ -219,7 +219,7 @@ const admin = createAdminClient();
 ```typescript
 // ALSO ACCEPTABLE: Use shared env from _shared/env.ts
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 
 const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 ```
@@ -228,17 +228,25 @@ const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 |---------|----------|
 | `import { createAdminClient } from "../_shared/supabaseClient.ts"` | `Deno.env.get("SUPABASE_URL")` scattered everywhere |
 | `import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts"` | Inline `Deno.env.get()` with no fallback chain |
+| `import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno"` | `import { createClient } from "jsr:@supabase/supabase-js@2"` (causes transitive npm:openai resolution failure) |
 | User client for user-facing queries | Admin client for everything (bypasses RLS) |
 | Admin client only for system/audit operations | Admin client for user data queries |
 
 ### Key Fallback Chain (from `_shared/env.ts`)
 
+**New format keys are PRIMARY. Legacy JWT keys are FALLBACK ONLY.**
+
 ```
-Service role: SB_SERVICE_ROLE_KEY -> SUPABASE_SERVICE_ROLE_KEY -> SB_SECRET_KEY
-Anon key:     SB_ANON_KEY -> SUPABASE_ANON_KEY -> SB_PUBLISHABLE_API_KEY
+Publishable: SB_PUBLISHABLE_API_KEY -> SB_ANON_KEY -> SUPABASE_ANON_KEY
+Secret:      SB_SECRET_KEY -> SB_SERVICE_ROLE_KEY -> SUPABASE_SERVICE_ROLE_KEY
 ```
 
-**JWT format keys are required for auth operations.** The new `sb_publishable_*` / `sb_secret_*` format is NOT fully supported by Supabase JS client yet.
+**CRITICAL: These are DIFFERENT KEYS, not just different names.**
+- `SB_PUBLISHABLE_API_KEY` (`sb_publishable_*` format) is a **different key** from `SUPABASE_ANON_KEY` (JWT `eyJhbGci...` format)
+- `SB_SECRET_KEY` (`sb_secret_*` format) is a **different key** from `SUPABASE_SERVICE_ROLE_KEY` (JWT format)
+- They have different formats, different privilege scopes, and different behavior
+- Legacy JWT keys are deprecated by Supabase and losing privileges — do NOT treat them as interchangeable
+- The fallback chain exists for resilience during migration, not because the keys are equivalent
 
 ### Edge Function Auth — MANDATORY (Adversarial Audit Rule)
 
@@ -369,6 +377,25 @@ Edge functions run in **Deno**, not Node.js. Different rules apply:
 | No `process.env` | Use `Deno.env.get()` or shared `env.ts` |
 | No `require()` | Deno uses ES modules only |
 | `serve()` from `Deno.serve` or `https://deno.land/std/http/server.ts` | Edge function entry point |
+| **Never use `jsr:@supabase/supabase-js@2`** | Causes transitive `npm:openai` resolution failure in `deno check` |
+| **Never use `npm:` specifiers** (e.g., `npm:@anthropic-ai/sdk`) | Requires `node_modules` setup; use `https://esm.sh/` URL imports instead |
+| **Never use `jsr:@supabase/functions-js/edge-runtime.d.ts`** | Same transitive dependency issue; not needed with `esm.sh` imports |
+| Use `https://esm.sh/@supabase/supabase-js@2?target=deno` | Correct import for Supabase client in edge functions |
+| Use `https://esm.sh/@anthropic-ai/sdk@VERSION?target=deno` | Correct import for Anthropic SDK in edge functions |
+
+**Import pattern (April 2026 standard):**
+```typescript
+// ✅ CORRECT — esm.sh with deno target
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
+
+// ❌ WRONG — jsr: causes transitive npm:openai resolution failure
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
+// ❌ WRONG — npm: requires node_modules setup
+import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
+```
 
 ---
 
@@ -412,48 +439,76 @@ return () => {
 
 ## 13. Environment Variables
 
-| Variable | Purpose |
-|----------|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SB_PUBLISHABLE_API_KEY` | Supabase publishable key (preferred, new format) |
-| `VITE_SUPABASE_ANON_KEY` | Supabase JWT anon key (legacy fallback) |
-| `VITE_HCAPTCHA_SITE_KEY` | hCaptcha site key for bot protection |
-| `ANTHROPIC_API_KEY` | Claude AI API key (server-side only — set in Supabase secrets) |
+### Frontend (Vite — browser-visible)
+
+| Variable | Purpose | Status |
+|----------|---------|--------|
+| `VITE_SB_URL` | Supabase project URL | **PRIMARY** |
+| `VITE_SB_PUBLISHABLE_API_KEY` | Supabase publishable key (`sb_publishable_*` format) | **PRIMARY** |
+| `VITE_SUPABASE_URL` | Supabase project URL | Legacy fallback |
+| `VITE_SUPABASE_ANON_KEY` | Supabase JWT anon key (`eyJhbGci...` format) | Legacy fallback — DIFFERENT KEY |
+| `VITE_HCAPTCHA_SITE_KEY` | hCaptcha site key for bot protection | Active |
+
+### Edge Functions / Server-Side (NOT browser-visible)
+
+| Variable | Purpose | Status |
+|----------|---------|--------|
+| `SB_URL` | Supabase project URL | **PRIMARY** |
+| `SB_PUBLISHABLE_API_KEY` | Publishable key (`sb_publishable_*` format) | **PRIMARY** |
+| `SB_SECRET_KEY` | Secret key (`sb_secret_*` format) | **PRIMARY** |
+| `SUPABASE_URL` | Supabase project URL | Legacy fallback |
+| `SUPABASE_ANON_KEY` | JWT anon key (`eyJhbGci...`) | Legacy fallback — DIFFERENT KEY |
+| `SUPABASE_SERVICE_ROLE_KEY` | JWT service role key | Legacy fallback — DIFFERENT KEY |
+| `ANTHROPIC_API_KEY` | Claude AI API key (Supabase secrets only) | Active |
+
+**Rule:** Always use `SB_*` names in new code. Never introduce `SUPABASE_*` names.
 
 ---
 
-## 14. Supabase Key Migration (December 2025)
+## 14. Supabase Key Migration (December 2025, updated April 2026)
 
 **Database:** Fully migrated to **PostgreSQL 17** via Supabase.
 
-**Key Naming Convention (Current):**
+### These Are DIFFERENT KEYS — Not Just Different Names
 
-| Key Name | Format | Usage |
-|----------|--------|-------|
-| `SB_PUBLISHABLE_API_KEY` | `sb_publishable_*` | New publishable key format |
-| `SB_SECRET_KEY` | `sb_secret_*` | New secret key format (server-side only) |
-| `SB_SERVICE_ROLE_KEY` | JWT (`eyJhbGci...`) | Legacy service role key (Supabase default name) |
-| `SB_ANON_KEY` | JWT (`eyJhbGci...`) | Legacy JWT anon key |
-| `SUPABASE_ANON_KEY` | JWT (`eyJhbGci...`) | Legacy JWT anon key (alias) |
-| `SUPABASE_SERVICE_ROLE_KEY` | JWT | Legacy service role key (alias) |
+Supabase introduced a new key format in late 2025. The new keys are **completely different credentials** with different formats, different privilege scopes, and different behavior. They are NOT aliases for the same key.
 
-**IMPORTANT - Key Format & Fallback Order (updated March 2026):**
-- **New `sb_publishable_*` / `sb_secret_*` format keys are PRIMARY** — preferred for all operations
-- Legacy JWT keys (`eyJhbGci...`) are retained as **fallback only** for resilience
-- Legacy keys are deprecated by Supabase and losing privileges — do not rely on them as primary
-- Both new and legacy keys are deployed in env, Supabase secrets, and Vercel
+| Key | Format | Type | Status |
+|-----|--------|------|--------|
+| `SB_PUBLISHABLE_API_KEY` | `sb_publishable_*` | New publishable key | **PRIMARY** |
+| `SB_SECRET_KEY` | `sb_secret_*` | New secret key (server-side only) | **PRIMARY** |
+| `SB_ANON_KEY` / `SUPABASE_ANON_KEY` | JWT (`eyJhbGci...`) | Legacy anon key | **DEPRECATED — fallback only** |
+| `SB_SERVICE_ROLE_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | JWT (`eyJhbGci...`) | Legacy service role key | **DEPRECATED — fallback only** |
 
-**Order of Preference (new keys FIRST, legacy as fallback):**
+**Why this matters:**
+- Legacy JWT keys are being deprecated by Supabase and are losing privileges over time
+- The new `sb_publishable_*` key is NOT equivalent to the JWT anon key — different scopes
+- The new `sb_secret_*` key is NOT equivalent to the JWT service role key — different scopes
+- Substituting one for the other WILL cause auth failures
+- New code MUST use `SB_*` names, never `SUPABASE_*`
+
+### Fallback Order (new keys FIRST, legacy as resilience only)
+
 ```typescript
-// For user-context / anon operations:
+// For user-context / publishable operations:
 getEnv("SB_PUBLISHABLE_API_KEY", "SB_ANON_KEY", "SUPABASE_ANON_KEY")
 
-// For service role operations:
+// For service role / secret operations:
 getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY")
 
 // Frontend (Vite):
 import.meta.env.VITE_SB_PUBLISHABLE_API_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+
+// URL:
+import.meta.env.VITE_SB_URL || import.meta.env.VITE_SUPABASE_URL
 ```
+
+### CI/CD and GitHub Secrets
+
+When configuring secrets in GitHub, Vercel, or any deployment platform, use the new names:
+- `SB_URL` (not `SUPABASE_URL`)
+- `SB_PUBLISHABLE_API_KEY` (not `SUPABASE_ANON_KEY` — it's a different key)
+- `SB_SECRET_KEY` (not `SUPABASE_SERVICE_ROLE_KEY` — it's a different key)
 
 ---
 
