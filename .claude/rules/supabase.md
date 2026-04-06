@@ -383,19 +383,30 @@ Edge functions run in **Deno**, not Node.js. Different rules apply:
 | Use `https://esm.sh/@supabase/supabase-js@2?target=deno` | Correct import for Supabase client in edge functions |
 | Use `https://esm.sh/@anthropic-ai/sdk@VERSION?target=deno` | Correct import for Anthropic SDK in edge functions |
 
+**Why `jsr:` and `npm:` are banned (April 2026):**
+
+The `jsr:@supabase/functions-js` package declares `npm:openai@^4.52.5` as a transitive type dependency. When Deno tries to resolve this during `deno check`, it fails because there's no `node_modules` directory and no `nodeModulesDir` config. This caused 12 edge functions to fail type checking. The `npm:` specifier for Anthropic SDK has the same problem. The fix was a codebase-wide replacement of ALL `jsr:` and `npm:` imports with `esm.sh` URL imports (42 files).
+
 **Import pattern (April 2026 standard):**
 ```typescript
 // ✅ CORRECT — esm.sh with deno target
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 
-// ❌ WRONG — jsr: causes transitive npm:openai resolution failure
+// ❌ WRONG — jsr: pulls in npm:openai as transitive type dependency, breaks deno check
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-// ❌ WRONG — npm: requires node_modules setup
+// ❌ WRONG — npm: requires node_modules setup that edge functions don't have
 import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
+
+// ❌ WRONG — npm:openai is NEVER directly imported, but jsr:@supabase/functions-js
+// pulls it in as a transitive dependency. This is why jsr: imports are banned.
 ```
+
+**If you see `Could not find a matching package for 'npm:openai'` in deno check output:**
+The cause is a `jsr:@supabase/supabase-js` or `jsr:@supabase/functions-js` import somewhere.
+Run: `grep -r "jsr:@supabase" supabase/functions/ --include="*.ts"` and replace with `esm.sh`.
 
 ---
 
