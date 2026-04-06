@@ -2,14 +2,7 @@
 name: Integration Tests (Live Supabase)
 
 on:
-  # Run on push to main — but only when edge functions or test files change
-  push:
-    branches: [main]
-    paths:
-      - 'supabase/functions/**'
-      - 'supabase/migrations/**'
-      - 'scripts/test-integration.sh'
-  # Manual trigger for on-demand testing
+  # Manual trigger only — integration tests hit live Supabase and require secrets
   workflow_dispatch:
 
 env:
@@ -32,9 +25,9 @@ jobs:
 
       - name: Run integration tests
         env:
-          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SB_SERVICE_ROLE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SB_PUBLISHABLE_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SB_SECRET_KEY }}
           MCP_ADMIN_KEY: ${{ secrets.MCP_ADMIN_KEY }}
         run: |
           chmod +x scripts/test-integration.sh
