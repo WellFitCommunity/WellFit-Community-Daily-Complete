@@ -37,7 +37,10 @@ interface ProcedureRecord {
 
 interface EncounterData {
   id: string;
+  patient_id?: string;
+  payer_id?: string;
   patient?: PatientInfo;
+  provider?: ProviderData;
   procedures?: ProcedureRecord[];
   diagnoses?: DiagnosisRecord[];
   date_of_service?: string;
@@ -147,6 +150,10 @@ async function getEncounterData(encounterId: string) {
 
   if (error || !data) throw new Error(`Encounter ${encounterId} not found: ${error?.message || ""}`);
 
+  // Supabase joins return arrays — extract first element for single-record relations
+  const patientArr = data.patient as unknown as Record<string, unknown>[];
+  const providerArr = data.provider as unknown as Record<string, unknown>[];
+
   return {
     id: data.id,
     patient_id: data.patient_id,
@@ -154,10 +161,10 @@ async function getEncounterData(encounterId: string) {
     claim_frequency_code: data.claim_frequency_code ?? "1",
     subscriber_relation_code: data.subscriber_relation_code ?? "18",
     payer_id: data.payer_id,
-    patient: data.patient ?? {},
-    provider: data.provider ?? { id: "" },
-    procedures: data.procedures ?? [],
-    diagnoses: data.diagnoses ?? [],
+    patient: (patientArr?.[0] ?? {}) as PatientInfo,
+    provider: (providerArr?.[0] ?? { id: "" }) as ProviderData,
+    procedures: (data.procedures ?? []) as ProcedureRecord[],
+    diagnoses: (data.diagnoses ?? []) as DiagnosisRecord[],
   };
 }
 

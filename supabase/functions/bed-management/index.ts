@@ -12,8 +12,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
@@ -296,14 +295,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
           assigned_by: user.id
         });
 
-        // Audit log
+        // Audit log (best-effort, don't block response)
         await supabase.from('audit_logs').insert({
           user_id: user.id,
           action: 'BED_ASSIGNED',
           resource_type: 'bed_assignment',
           resource_id: data,
           metadata: { patient_id, bed_id, expected_los_days }
-        }).catch(() => {});
+        }).then(() => {}, () => {});
 
         return new Response(
           JSON.stringify({
@@ -355,14 +354,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
           discharged_by: user.id
         });
 
-        // Audit log
+        // Audit log (best-effort, don't block response)
         await supabase.from('audit_logs').insert({
           user_id: user.id,
           action: 'PATIENT_DISCHARGED',
           resource_type: 'bed_assignment',
           resource_id: patient_id,
           metadata: { disposition }
-        }).catch(() => {});
+        }).then(() => {}, () => {});
 
         return new Response(
           JSON.stringify({

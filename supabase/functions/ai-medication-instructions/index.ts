@@ -15,8 +15,7 @@
  * Copyright 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";

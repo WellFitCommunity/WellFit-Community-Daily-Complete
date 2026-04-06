@@ -1,6 +1,7 @@
 {
   "imports": {
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.57.2?target=deno",
+    "@anthropic-ai/sdk": "https://esm.sh/@anthropic-ai/sdk@0.20.9?target=deno",
     "std/http/server.ts": "https://deno.land/std@0.183.0/http/server.ts",
     "zod": "https://esm.sh/zod@3.23.8?target=deno"
   }

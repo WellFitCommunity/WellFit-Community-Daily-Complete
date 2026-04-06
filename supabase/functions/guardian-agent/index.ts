@@ -7,7 +7,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
 import { createLogger } from "../_shared/auditLogger.ts";
-import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const logger = createLogger("guardian-agent");
 
@@ -185,33 +185,33 @@ async function runMonitoringChecks(supabase: SupabaseClient, tenantId: string): 
   // Batch all monitoring queries in parallel for better performance
   const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
 
-  const [
-    { data: failedLogins },
-    { data: dbErrors },
-    { data: phiAccess },
-    { data: slowQueries }
-  ] = await batchQueries([
-    () => supabase
+  const [failedLoginsResult, dbErrorsResult, phiAccessResult, slowQueriesResult] = await Promise.all([
+    supabase
       .from('audit_logs')
       .select('*')
       .eq('event_type', 'login_failed')
       .eq('tenant_id', tenantId)
       .gte('created_at', oneHourAgo)
       .limit(10),
-    () => supabase
+    supabase
       .from('system_errors')
       .select('*')
       .eq('tenant_id', tenantId)
       .gte('created_at', oneHourAgo)
       .limit(10),
-    () => supabase
+    supabase
       .from('phi_access_logs')
       .select('*')
       .eq('tenant_id', tenantId)
       .gte('accessed_at', oneHourAgo),
-    () => supabase
+    supabase
       .rpc('get_slow_queries', { threshold_ms: 1000 })
   ]);
+
+  const failedLogins = failedLoginsResult.data;
+  const dbErrors = dbErrorsResult.data;
+  const phiAccess = phiAccessResult.data;
+  const slowQueries = slowQueriesResult.data;
 
   // Check 1: Failed login attempts
   if (failedLogins && failedLogins.length > 5) {

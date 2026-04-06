@@ -2,7 +2,7 @@
 // Secure server-side Claude API integration with per-tenant rate/budget enforcement
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createUserClient, createAdminClient } from '../_shared/supabaseClient.ts';
-import Anthropic from "npm:@anthropic-ai/sdk@0.20.9";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.20.9?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from '../_shared/auditLogger.ts';
 import { SONNET_MODEL } from '../_shared/models.ts';

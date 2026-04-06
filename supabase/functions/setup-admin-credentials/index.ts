@@ -7,8 +7,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { hashPassword, hashPin } from "../_shared/crypto.ts";
 import { createLogger } from "../_shared/auditLogger.ts";

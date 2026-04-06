@@ -14,13 +14,12 @@
  * Copyright (c) 2026 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { checkReferenceDataFreshness } from "../_shared/referenceDataFreshness.ts";
 
-import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 
 const logger = createLogger("health-monitor");
 

@@ -12,7 +12,6 @@
  * Copyright (c) 2026 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 

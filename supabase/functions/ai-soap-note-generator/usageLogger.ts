@@ -4,7 +4,7 @@
  * Logs usage for cost tracking in claude_usage_logs table.
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 
@@ -12,7 +12,7 @@ import { SONNET_MODEL } from "../_shared/models.ts";
  * Log usage for cost tracking
  */
 export async function logUsage(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   encounterId: string,
   tenantId: string | undefined,
   responseTimeMs: number,

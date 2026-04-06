@@ -91,7 +91,7 @@ export function createSupabaseClient(
 
   return createClient(supabaseUrl, supabaseKey, {
     db: {
-      schema: options.schema || 'public',
+      schema: (options.schema || 'public') as "public",
     },
     global: {
       headers,

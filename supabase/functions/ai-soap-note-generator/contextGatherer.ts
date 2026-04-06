@@ -5,7 +5,7 @@
  * for SOAP note generation.
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/auditLogger.ts";
 import type {
   EncounterContext,
@@ -19,7 +19,7 @@ import type {
  * Gather comprehensive encounter context for SOAP note generation
  */
 export async function gatherEncounterContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   encounterId: string,
   patientId: string | undefined,
   includeTranscript: boolean,
@@ -39,14 +39,24 @@ export async function gatherEncounterContext(
 
   try {
     // Get encounter details
-    const { data: encounter } = await supabase
+    interface EncounterRow {
+      id: string;
+      patient_id: string | null;
+      chief_complaint: string | null;
+      encounter_type: string | null;
+      start_time: string | null;
+      end_time: string | null;
+    }
+    const { data: encounterRaw } = await supabase
       .from("encounters")
       .select("id, patient_id, chief_complaint, encounter_type, start_time, end_time")
       .eq("id", encounterId)
       .single();
 
+    const encounter = encounterRaw as unknown as EncounterRow | null;
+
     if (encounter) {
-      context.chiefComplaint = encounter.chief_complaint;
+      context.chiefComplaint = encounter.chief_complaint ?? undefined;
       context.visitType = encounter.encounter_type || "general";
 
       if (encounter.start_time && encounter.end_time) {
@@ -73,7 +83,7 @@ export async function gatherEncounterContext(
  * Gather patient-specific clinical data (vitals, diagnoses, meds, allergies, history, transcript)
  */
 async function gatherPatientData(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   patientId: string,
   encounterId: string,
   includeTranscript: boolean,
@@ -87,7 +97,16 @@ async function gatherPatientData(
     .gte("effective_datetime", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
     .order("effective_datetime", { ascending: false });
 
-  if (vitalsData) {
+  // Cast vitals data at system boundary — fhir_observations has JSONB columns
+  interface VitalObservation {
+    code: { coding?: { code?: string }[] } | null;
+    value_quantity_value: number | null;
+    value_quantity_unit: string | null;
+    effective_datetime: string | null;
+  }
+  const typedVitals = (vitalsData ?? []) as unknown as VitalObservation[];
+
+  if (typedVitals.length > 0) {
     const vitalCodeMap: Record<string, string> = {
       "8310-5": "temperature",
       "8480-6": "blood_pressure_systolic",
@@ -100,8 +119,9 @@ async function gatherPatientData(
       "8302-2": "height",
     };
 
-    for (const obs of vitalsData) {
+    for (const obs of typedVitals) {
       const code = obs.code?.coding?.[0]?.code;
+      if (!code) continue;
       const vitalName = vitalCodeMap[code];
       if (vitalName && obs.value_quantity_value != null) {
         context.vitals[vitalName] = {
@@ -175,13 +195,15 @@ async function gatherPatientData(
 
   // Get transcript if requested
   if (includeTranscript) {
-    const { data: transcriptData } = await supabase
+    const { data: transcriptRaw } = await supabase
       .from("medical_transcripts")
       .select("transcript_text")
       .eq("encounter_id", encounterId)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
+
+    const transcriptData = transcriptRaw as unknown as { transcript_text: string | null } | null;
 
     if (transcriptData?.transcript_text) {
       // Limit transcript length to avoid token overflow

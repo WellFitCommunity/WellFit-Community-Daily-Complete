@@ -1,7 +1,6 @@
 // supabase/functions/verify-hcaptcha/index.ts
 // Deno Edge Function: strict CORS + hCaptcha + create user + insert profile (US-only, E.164 locked: +1XXXXXXXXXX)
 
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { SB_URL, SB_SECRET_KEY, HCAPTCHA_SECRET } from "../_shared/env.ts";

@@ -8,7 +8,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";

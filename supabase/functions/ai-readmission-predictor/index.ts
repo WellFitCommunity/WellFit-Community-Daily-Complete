@@ -15,10 +15,9 @@ import { createLogger } from '../_shared/auditLogger.ts';
 import { fetchCulturalContext, formatCulturalContextCompact } from '../_shared/culturalCompetencyClient.ts';
 import { recordDecisionLink } from '../_shared/decisionChain.ts';
 
-const SUPABASE_URL = SUPABASE_URL!;
 const SERVICE_KEY = SB_SECRET_KEY!;
 
-const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
+const supabase = createClient(SUPABASE_URL!, SERVICE_KEY, {
   auth: { persistSession: false }
 });
 
@@ -89,10 +88,10 @@ serve(async (req) => {
     }
 
     // Check if user has clinical/admin role (readmission predictor requires elevated access)
-    const typedProfile = profile as ProfileWithRole;
+    const typedProfile = profile as unknown as ProfileWithRole;
     const roleName = typedProfile.roles?.name;
     const allowedRoles = ['admin', 'super_admin', 'physician', 'nurse', 'case_manager', 'social_worker', 'discharge_planner'];
-    const hasAccess = profile.is_admin || allowedRoles.includes(roleName);
+    const hasAccess = profile.is_admin || (roleName ? allowedRoles.includes(roleName) : false);
 
     if (!hasAccess) {
       return new Response(
@@ -120,16 +119,14 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    const {
-      patientId,
-      tenantId,
-      dischargeDate,
-      dischargeFacility,
-      dischargeDisposition,
-      primaryDiagnosisCode,
-      primaryDiagnosisDescription,
-      populationHints,
-    } = requestBody;
+    const patientId = requestBody.patientId as string | undefined;
+    const tenantId = requestBody.tenantId as string | undefined;
+    const dischargeDate = requestBody.dischargeDate as string | undefined;
+    const dischargeFacility = requestBody.dischargeFacility as string | undefined;
+    const dischargeDisposition = requestBody.dischargeDisposition as string | undefined;
+    const primaryDiagnosisCode = requestBody.primaryDiagnosisCode as string | undefined;
+    const primaryDiagnosisDescription = requestBody.primaryDiagnosisDescription as string | undefined;
+    const populationHints = requestBody.populationHints as Record<string, unknown> | undefined;
 
     // =========================================================================
     // AUTHORIZATION - Verify tenant access
@@ -229,7 +226,7 @@ serve(async (req) => {
       .maybeSingle();
 
     const reasoningInput: ReasoningEncounterInput = {
-      chiefComplaint: primaryDiagnosisDescription || 'Discharge readmission risk assessment',
+      chiefComplaint: primaryDiagnosisDescription ?? 'Discharge readmission risk assessment',
       diagnoses: primaryDiagnosisCode ? [{
         condition: primaryDiagnosisDescription || primaryDiagnosisCode,
         icd10: primaryDiagnosisCode,

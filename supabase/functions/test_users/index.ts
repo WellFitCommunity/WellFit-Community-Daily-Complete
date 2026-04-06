@@ -2,7 +2,6 @@
 // Deno Edge Function (v2 runtime). Strict, no placeholders.
 
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type PostgrestError } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";

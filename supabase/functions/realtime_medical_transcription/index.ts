@@ -13,7 +13,6 @@
 //   wss://<project>.supabase.co/functions/v1/realtime-medical-transcription?access_token=<JWT>
 
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createAdminClient } from '../_shared/supabaseClient.ts';
 import { createLogger } from '../_shared/auditLogger.ts';

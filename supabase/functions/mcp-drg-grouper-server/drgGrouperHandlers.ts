@@ -14,7 +14,7 @@
 // =====================================================
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Anthropic from "npm:@anthropic-ai/sdk@0.39.0";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 import type { MCPLogger, DRGGroupingResult } from "./types.ts";
 import { SONNET_MODEL, calculateModelCost } from "../_shared/models.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";

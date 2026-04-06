@@ -57,7 +57,7 @@ const RegisterSchema = RegisterBase.refine(
 
 // ---------- HELPERS ----------
 // CORS headers are now set per-request in the serve handler
-let currentCorsHeaders: Headers = new Headers();
+let currentCorsHeaders: Record<string, string> = {};
 
 function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), { status, headers: currentCorsHeaders });

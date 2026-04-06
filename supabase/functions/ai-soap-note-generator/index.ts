@@ -51,6 +51,9 @@ serve(async (req) => {
       populationHints,
     } = body;
 
+    // Initialize Supabase client (needed for auth + style lookup before context gathering)
+    const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
+
     // Session 3 (3.5): If no style was passed by the client, fetch from DB using the request JWT
     let resolvedStyle: PhysicianStyleHint | undefined = physicianStyle;
     if (!resolvedStyle) {
@@ -96,9 +99,6 @@ serve(async (req) => {
       logger.error("ANTHROPIC_API_KEY not configured");
       throw new Error("AI service not configured");
     }
-
-    // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
     // Gather encounter context
     const context = await gatherEncounterContext(
@@ -154,8 +154,8 @@ serve(async (req) => {
 
     // Attach validation flags to the SOAP note code suggestions
     if (validationResult.flaggedOutput) {
-      (soapNote as Record<string, unknown>)._codeValidation = validationResult.flaggedOutput._validationSummary;
-      (soapNote as Record<string, unknown>)._rejectedCodes = validationResult.rejectedCodes;
+      (soapNote as unknown as Record<string, unknown>)._codeValidation = validationResult.flaggedOutput._validationSummary;
+      (soapNote as unknown as Record<string, unknown>)._rejectedCodes = validationResult.rejectedCodes;
     }
 
     // Log PHI access for HIPAA compliance

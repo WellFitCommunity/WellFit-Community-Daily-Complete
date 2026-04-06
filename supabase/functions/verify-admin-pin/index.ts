@@ -1,5 +1,5 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { z } from "https://esm.sh/zod@3.23.8?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { verifyPin, generateSecureToken, isClientHashedPin } from "../_shared/crypto.ts";

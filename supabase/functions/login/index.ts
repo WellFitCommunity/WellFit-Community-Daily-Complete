@@ -1,5 +1,3 @@
-/// <reference types="jsr:@supabase/functions-js/edge-runtime" />
-
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
@@ -101,7 +99,7 @@ serve(async (req: Request) => {
               attempt_count: count,
               time_window_minutes: TIME_WINDOW_MINUTES,
               max_allowed: MAX_REQUESTS,
-              requires_investigation: count >= MAX_REQUESTS * 2
+              requires_investigation: (count ?? 0) >= MAX_REQUESTS * 2
             }
           });
         } catch (logError) {

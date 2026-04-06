@@ -273,7 +273,7 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .single();
 
-      const roleName = (roleData?.roles as { name: string } | null)?.name;
+      const roleName = (roleData?.roles as unknown as { name: string } | null)?.name;
       const allowedRoles = ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'];
 
       if (!roleName || !allowedRoles.includes(roleName)) {
