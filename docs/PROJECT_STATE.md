@@ -49,6 +49,39 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 
 ---
 
+## URGENT — Guardian Agent Gap Closure (0/9)
+
+**Tracker:** `docs/trackers/guardian-system-tracker.md`
+**Status:** 0/9 items complete — system is 70% built but critical orchestration gaps prevent functioning
+**Estimated total:** ~24 hours across 2 sessions
+**Risk:** HIGH — security alerts are not being delivered to SOC team
+
+**Critical gaps (fix immediately):**
+- **GRD-1:** `security-alert-processor` cron job is **commented out** — multi-channel notifications never send
+- **GRD-2:** Nothing calls `createTicket()` — approval workflow is disconnected
+- **GRD-3:** Browser-side Guardian only starts in production mode — dev/staging unmonitored
+- **GRD-4:** Guardian API scan action returns placeholder, not real results
+- **GRD-5:** No end-to-end notification test exists
+
+**What works:** Monitoring cron (5-min), alert creation, direct email for critical/high, approval form UI, all RLS policies, audit logging, Guardian Eyes recording storage.
+**What doesn't:** Slack/SMS/PagerDuty delivery, ticket auto-creation, browser monitoring in non-prod, Eyes→approval link, PR service (dead code), flow config table (missing).
+
+---
+
+## BACKLOG — Patient Avatar Improvements (0/6)
+
+**Tracker:** `docs/trackers/avatar-improvement-tracker.md`
+**Status:** 0/6 items complete — system is production-ready (A- grade) with minor gaps
+**Estimated total:** ~32 hours across 2 sessions
+
+**Key items:**
+- **AVT-1:** Clinical data sync — markers don't reflect FHIR conditions/allergies/meds (patient safety)
+- **AVT-2:** Marker search/filter — 15+ markers becomes unusable
+- **AVT-3:** Export to PDF for nursing handoff
+- **AVT-4-6:** Bulk import, history timeline UI, 3D marker persistence
+
+---
+
 ## SECONDARY PRIORITY — MCP Chain Completion: Final Gaps (2/9)
 
 **Tracker:** `docs/trackers/mcp-chain-completion-tracker.md`
