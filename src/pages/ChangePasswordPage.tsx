@@ -119,7 +119,7 @@ if (q.type === 'recovery' && q.code) {
       const { error: dbErr } = await supabase
         .from('profiles')
         .update({ force_password_change: false })
-        .eq('id', uid);
+        .eq('user_id', uid);
       if (dbErr) throw dbErr;
 
       // 3) Notify & route forward

@@ -50,7 +50,7 @@ export const TenantAssignmentService = {
       const { data: profileData } = await supabase
         .from('profiles')
         .select('first_name, last_name')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       // Get all tenants the user has access to
@@ -229,7 +229,7 @@ export const TenantAssignmentService = {
       const { data: profileData } = await supabase
         .from('profiles')
         .select('tenant_id')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .eq('tenant_id', tenantId)
         .single();
 

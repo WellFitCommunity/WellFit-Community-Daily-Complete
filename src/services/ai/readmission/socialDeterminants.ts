@@ -240,7 +240,7 @@ export async function extractSocialDeterminants(
   const { data: profile } = await supabase
     .from('profiles')
     .select('address_city, address_state, address_zip')
-    .eq('id', patientId)
+    .eq('user_id', patientId)
     .single();
 
   // Determine rural status with RUCA-based classification

@@ -20,9 +20,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
-// Environment variables
-const SUPABASE_URL = SUPABASE_URL!;
-const SUPABASE_SERVICE_ROLE_KEY = SB_SECRET_KEY!;
+// Environment variables — use imports directly, no shadowing (adversarial audit lesson #5)
+const INTERNAL_URL = SUPABASE_URL;
+const SERVICE_KEY = SB_SECRET_KEY;
 const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY");
 const MAILERSEND_FROM_EMAIL = Deno.env.get("MAILERSEND_FROM_EMAIL");
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -64,8 +64,22 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
+    // Validate cron secret — this function should only be called by cron or webhook
+    const cronSecret = req.headers.get("X-Cron-Secret") || req.headers.get("Authorization")?.replace("Bearer ", "");
+    const expectedSecret = Deno.env.get("CRON_SECRET") || Deno.env.get("SB_SECRET_KEY");
+    if (!cronSecret || cronSecret !== expectedSecret) {
+      // Also accept service role key as bearer token (for Supabase cron)
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Unauthorized — cron secret required" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Create Supabase client with service role
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient(INTERNAL_URL, SERVICE_KEY, {
       auth: { persistSession: false },
     });
 

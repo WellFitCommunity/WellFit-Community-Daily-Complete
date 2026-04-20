@@ -95,7 +95,7 @@ export class PatientOutreachService {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('phone, first_name')
-        .eq('id', patientId)
+        .eq('user_id', patientId)
         .single();
 
       if (profileError) throw profileError;
@@ -428,7 +428,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
           const { data: profile } = await supabase
             .from('profiles')
             .select('phone, first_name')
-            .eq('id', patientId)
+            .eq('user_id', patientId)
             .single();
 
           if (!profile?.phone) {

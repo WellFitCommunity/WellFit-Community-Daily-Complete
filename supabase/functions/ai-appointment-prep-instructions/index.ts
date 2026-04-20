@@ -200,7 +200,7 @@ async function enrichPatientContext(
       const { data: profile } = await supabase
         .from("profiles")
         .select("date_of_birth")
-        .eq("id", patientId)
+        .eq("user_id", patientId)
         .single();
 
       if (profile?.date_of_birth) {

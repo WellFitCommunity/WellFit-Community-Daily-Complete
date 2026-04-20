@@ -78,7 +78,7 @@ async function getPcpAssignment(patientId: string): Promise<PcpResult> {
   const { data } = await supabase
     .from('profiles')
     .select('primary_care_provider_id')
-    .eq('id', patientId)
+    .eq('user_id', patientId)
     .single();
 
   return {

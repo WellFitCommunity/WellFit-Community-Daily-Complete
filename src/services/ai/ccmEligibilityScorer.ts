@@ -385,7 +385,7 @@ export class CCMEligibilityScorer {
       const { data: profile } = await supabase
         .from('profiles')
         .select('chronic_conditions')
-        .eq('id', context.patientId)
+        .eq('user_id', context.patientId)
         .single();
 
       if (profile && (profile as ProfileRow).chronic_conditions) {

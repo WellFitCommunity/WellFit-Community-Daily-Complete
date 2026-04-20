@@ -633,7 +633,7 @@ export class DentalHealthService {
       const { data: profile } = await supabase
         .from('profiles')
         .select('first_name, last_name')
-        .eq('id', targetPatientId)
+        .eq('user_id', targetPatientId)
         .single();
 
       // Get latest assessment

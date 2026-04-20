@@ -99,7 +99,7 @@ export const nextRouteForUserResult = withServiceWrapper(
     const { data, error } = await supabase
       .from('profiles')
       .select('force_password_change, consent, demographics_complete, role, role_code')
-      .eq('id', uid)
+      .eq('user_id', uid)
       .single();
 
     if (error || !data) return '/login';

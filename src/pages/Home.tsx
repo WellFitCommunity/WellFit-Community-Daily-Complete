@@ -25,7 +25,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from('profiles')
         .select('first_name, last_name, role')
-        .eq('id', session.user.id)        // ✅ use id, not user_id
+        .eq('user_id', session.user.id)
         .maybeSingle();
       if (!error) setProfile(data ?? {});
       setLoading(false);

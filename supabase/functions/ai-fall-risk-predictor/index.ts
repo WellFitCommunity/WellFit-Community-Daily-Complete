@@ -426,7 +426,7 @@ async function gatherPatientData(
     const { data: profile } = await supabase
       .from("profiles")
       .select("dob, gender")
-      .eq("id", patientId)
+      .eq("user_id", patientId)
       .single();
 
     if (profile?.dob) {

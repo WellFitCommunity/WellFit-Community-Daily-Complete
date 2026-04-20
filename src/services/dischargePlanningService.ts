@@ -240,8 +240,8 @@ export class DischargePlanningService {
       // Get patient profile (used for AI discharge recommendations)
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, date_of_birth')
-        .eq('id', patientId)
+        .select('user_id, date_of_birth')
+        .eq('user_id', patientId)
         .single();
 
       // Get encounter details (used for AI discharge recommendations)

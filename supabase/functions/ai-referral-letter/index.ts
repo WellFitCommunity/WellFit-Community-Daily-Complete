@@ -253,7 +253,7 @@ async function gatherReferralContext(
     const { data: patientProfile } = await supabase
       .from("profiles")
       .select("first_name, date_of_birth")
-      .eq("id", patientId)
+      .eq("user_id", patientId)
       .single();
 
     if (patientProfile?.first_name) {
@@ -267,7 +267,7 @@ async function gatherReferralContext(
     const { data: providerProfile } = await supabase
       .from("profiles")
       .select("first_name, last_name, credentials, npi_number")
-      .eq("id", referringProviderId)
+      .eq("user_id", referringProviderId)
       .single();
 
     if (providerProfile) {

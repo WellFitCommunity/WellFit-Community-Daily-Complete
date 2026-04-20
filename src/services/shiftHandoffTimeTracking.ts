@@ -28,7 +28,7 @@ export async function recordHandoffTimeSavings(
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('tenant_id')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (profileError) {

@@ -271,7 +271,7 @@ async function gatherEscalationContext(
     const { data: profile } = await supabase
       .from("profiles")
       .select("first_name, date_of_birth, emergency_contact_name, emergency_contact_phone, lives_alone")
-      .eq("id", patientId)
+      .eq("user_id", patientId)
       .single();
 
     if (profile) {

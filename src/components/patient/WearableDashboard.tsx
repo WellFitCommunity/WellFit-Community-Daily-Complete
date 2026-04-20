@@ -191,7 +191,7 @@ export const WearableDashboard: React.FC = () => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('caregiver_phone, caregiver_first_name, first_name, last_name')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single();
 
       // Send SMS to caregiver if phone is available

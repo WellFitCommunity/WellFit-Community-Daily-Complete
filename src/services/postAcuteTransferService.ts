@@ -60,8 +60,8 @@ export class PostAcuteTransferService {
       // Get patient profile
       const { data: patient, error: patientError } = await supabase
         .from('profiles')
-        .select('id, full_name, date_of_birth, mrn, gender, facility_name, phone')
-        .eq('id', request.patient_id)
+        .select('user_id, full_name, date_of_birth, mrn, gender, facility_name, phone')
+        .eq('user_id', request.patient_id)
         .single();
 
       if (patientError || !patient) {

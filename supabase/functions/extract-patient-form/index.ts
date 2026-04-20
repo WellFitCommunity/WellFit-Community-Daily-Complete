@@ -80,6 +80,43 @@ serve(async (req) => {
 
   const { headers: corsHeaders } = corsFromRequest(req);
 
+  // 1. Require Bearer token
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Missing authorization" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // 2. Verify user identity
+  const token = authHeader.replace("Bearer ", "");
+  const { createUserClient, createAdminClient } = await import("../_shared/supabaseClient.ts");
+  const supabase = createUserClient(authHeader);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Invalid token" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // 3. Check role — only admin/clinical staff can extract patient forms (PHI)
+  const adminClient = createAdminClient();
+  const { data: callerProfile } = await adminClient
+    .from("profiles")
+    .select("tenant_id, role_id")
+    .eq("user_id", user.id)
+    .single();
+
+  const allowedRoles = [1, 2, 3]; // super_admin, admin, clinical
+  if (!callerProfile || !allowedRoles.includes(callerProfile.role_id)) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Insufficient permissions — clinical role required" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     // Get request body
     const { image, mimeType } = await req.json();

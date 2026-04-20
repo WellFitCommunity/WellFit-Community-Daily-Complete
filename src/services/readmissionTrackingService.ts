@@ -265,8 +265,8 @@ export class ReadmissionTrackingService {
       // Get patient profile for context
       await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', readmission.patient_id)
+        .select('user_id')
+        .eq('user_id', readmission.patient_id)
         .single();
 
       const context: ClaudeRequestContext = {

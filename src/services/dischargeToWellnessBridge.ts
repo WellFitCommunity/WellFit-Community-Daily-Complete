@@ -53,8 +53,8 @@ export class DischargeToWellnessBridgeService {
       // Get patient profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, phone, email')
-        .eq('id', patient_id)
+        .select('user_id, first_name, last_name, phone, email')
+        .eq('user_id', patient_id)
         .single();
 
       if (profileError) throw new Error(`Patient not found: ${profileError.message}`);
@@ -694,7 +694,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
       const { data: profile } = await supabase
         .from('profiles')
         .select('phone, first_name, email')
-        .eq('id', patientId)
+        .eq('user_id', patientId)
         .single();
 
       if (!profile) return;

@@ -439,7 +439,7 @@ export async function calculatePatientReadmissionRisk(
       supabase
         .from('profiles')
         .select('date_of_birth')
-        .eq('id', patientId)
+        .eq('user_id', patientId)
         .single(),
       supabase
         .from('readmission_risk_predictions')

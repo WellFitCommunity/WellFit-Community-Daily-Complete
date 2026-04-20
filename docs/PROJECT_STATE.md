@@ -3,8 +3,8 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-03-28
-**Last Session:** Feature catalog (60 features) + ONC certification gap audit (13 items) + MCP chain completion audit (9 items) + both trackers created
+**Last Updated:** 2026-04-20
+**Last Session:** Adversarial audit + auto-repair — 4 critical findings fixed, 34 profiles.user_id regressions swept, 3 edge functions hardened
 **Updated By:** Claude Opus 4.6
 **Codebase Health:** 11,726 tests (583 suites), 0 lint warnings, 0 typecheck errors in changed files
 
@@ -49,12 +49,12 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 
 ---
 
-## SECONDARY PRIORITY — MCP Chain Completion: Final Gaps (0/9)
+## SECONDARY PRIORITY — MCP Chain Completion: Final Gaps (2/9)
 
 **Tracker:** `docs/trackers/mcp-chain-completion-tracker.md`
-**Status:** 0/9 items complete — 15 of 16 MCP servers are real end-to-end. 61 of 73 prior tracker items done (84%).
-**Estimated total:** ~41 hours buildable + ~8-12h blocked on vendor
-**Prior work:** 6 trackers (compliance, infrastructure, production-readiness, blind-spots, completion, hardening) — 61 items already resolved
+**Status:** 2/9 items complete — 15 of 16 MCP servers are real end-to-end. 63 of 73 prior tracker items done (86%).
+**Estimated total:** ~34 hours buildable + ~8-12h blocked on vendor
+**Prior work:** 6 trackers (compliance, infrastructure, production-readiness, blind-spots, completion, hardening) — 63 items already resolved
 
 ### What's Already Done
 - ✅ 15/16 MCP servers are real end-to-end (DB queries, external APIs, real logic)
@@ -64,19 +64,23 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 - ✅ 85 prompt injection tests + 64 clinical constraint tests passing
 - ✅ mcp-server-compliance-tracker: 23/23 DONE
 - ✅ mcp-infrastructure-repair-tracker: 26/26 DONE
+- ✅ **MCP-1:** `claude-chat` hardened — input sanitization + safety prompt (commit 7d267332)
+- ✅ **MCP-2:** `claude-personalization` hardened — injection guard + drift protection (commit 7d267332)
+- ✅ OpenAI references removed — Claude-only fallback chain (commit 7f0f329d)
 
 ### Session Plan
 
 | Session | Focus | Items | Hours | Status |
 |---------|-------|-------|-------|--------|
-| **1** | Security hardening — claude-chat relay, claude-personalization injection guard, live adversarial testing | MCP-1 through MCP-3 | ~15 | NEXT (after ONC Session 1) |
+| ~~**1**~~ | ~~Security hardening — claude-chat relay, claude-personalization injection guard~~ | ~~MCP-1, MCP-2~~ | ~~7~~ | **DONE** (commit 7d267332) |
+| **1** | Live adversarial testing — 40 attack prompts against hardened functions | MCP-3 | ~8 | **NEXT** |
 | **2** | Revenue — RPM billing, wearable vitals dashboard, home vitals → FHIR conversion | MCP-4 through MCP-6 | ~26 | PENDING |
 | **—** | Clearinghouse activation (when vendor creds arrive) | MCP-7 | ~8-12 | BLOCKED |
 
 ### Remaining Items
-- **MCP-1:** `claude-chat` relay — no input sanitization, no safety prompt (HIGH risk, 4h)
-- **MCP-2:** `claude-personalization` — regex-only PHI redaction, no drift guard (MEDIUM risk, 3h)
-- **MCP-3:** Live adversarial testing — 40 attack prompts against hardened functions (8h)
+- ~~**MCP-1:** `claude-chat` relay — DONE (commit 7d267332)~~
+- ~~**MCP-2:** `claude-personalization` — DONE (commit 7d267332)~~
+- **MCP-3:** Live adversarial testing — 40 attack prompts against hardened functions (8h) — **NEXT**
 - **MCP-4:** RPM billing infrastructure — CPT 99453-99458 enrollment + time tracking (12h)
 - **MCP-5:** Wearable vitals → clinician dashboard — trend charts + threshold alerts (8h)
 - **MCP-6:** Home vitals → FHIR Observation conversion — LOINC mapping + provenance (6h)
@@ -86,7 +90,57 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 
 ---
 
-## What Happened This Session (2026-03-28)
+## What Happened This Session (2026-04-20)
+
+### Completed — Adversarial Audit + Auto-Repair
+
+**Full report:** `docs/security-audits/ADVERSARIAL_AUDIT_2026-04-20.md`
+
+**Approach:** Launched an adversarial reviewing agent to scan all 169 edge functions and 780K+ lines of source code for security gaps, regressions, and rule violations. Agent found issues; lead agent applied surgical fixes.
+
+#### CRITICAL Fixes (4/4)
+
+1. **C-1: `update-profile-note` — zero auth + profiles.id bug.** Complete rewrite: added JWT verification, role gating (admin/clinical only), tenant isolation, input validation, and fixed `.eq("id")` to `.eq("user_id")`. Before: any anonymous HTTP client could write to any patient's profile notes across all tenants.
+
+2. **C-2: profiles.user_id regression — 34 occurrences in 27 files.** The A-9 fix from March 2026 only covered 5 files. Codebase-wide grep found 34 remaining instances across 9 edge functions and 18 frontend services. All fixed. `Home.tsx` had a comment `// ✅ use id, not user_id` actively enshrining the bug — removed.
+
+3. **C-3: `extract-patient-form` — zero auth on PHI extraction.** Added JWT verification + clinical role gating. Before: any HTTP client could submit patient form images and extract SSN, DOB, names, insurance info with no authentication.
+
+4. **C-4: `security-alert-processor` — variable shadowing + no auth.** Fixed `const SUPABASE_URL = SUPABASE_URL!` self-shadowing. Added cron secret validation. Before: any HTTP client could trigger Twilio/MailerSend/PagerDuty messages.
+
+#### HIGH — Remaining (Require Maria's Decision)
+
+- **H-1/H-2:** `vital-threshold-monitor` and `nurse-question-auto-escalate` have no caller auth (cron-triggered but externally callable). Need cron secret strategy decision.
+- **H-3:** 28+ files exceed 600-line god file limit. Multi-session decomposition effort.
+
+#### Also Completed
+
+- **15 takeaways** from full CLAUDE.md/rules/PROJECT_STATE review
+- **Knowledge gap closure** on ONC ACB testing mechanics, Surescripts enrollment process, RPM billing CPT 99453-99458 codes
+- **MCP tracker updated** — MCP-1 and MCP-2 marked DONE, MCP-3 now NEXT
+
+#### Clean Categories (No Issues Found)
+
+- 0 `any` type violations, 0 `console.log` in production, 0 CORS wildcards, 0 function name mismatches, all views have `security_invoker`
+
+### Verification
+
+```
+✅ typecheck (scoped): 0 errors in 18 changed files
+✅ lint: 0 errors, 0 warnings
+✅ tests: 11,726 passed, 0 failed (583 suites)
+```
+
+### Regression Check (run in future sessions)
+
+```bash
+grep -rn "from.*profiles.*\.eq.*['\"]id['\"]" supabase/functions/ src/ --include="*.ts" --include="*.tsx" | grep -v node_modules | grep -v __tests__
+# Expected: 0 results
+```
+
+---
+
+## What Happened Previous Session (2026-03-28)
 
 ### Completed — Feature Catalog + ONC Audit + MCP Audit (no code changes)
 1. **Feature Catalog (Master):** `docs/FEATURE_CATALOG.md` — 60 features documented from source code analysis across all three systems (Community, Clinical, Shared Spine). Each feature includes primary function, system importance, uniqueness assessment, and latent benefits.
