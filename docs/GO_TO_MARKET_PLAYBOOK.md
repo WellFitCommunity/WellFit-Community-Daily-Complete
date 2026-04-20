@@ -17,10 +17,12 @@
 7. [Move 4: SBIR/STTR Grants](#move-4-sbirsttr-grants)
 8. [Move 5: Publish the Story](#move-5-publish-the-story)
 9. [Move 6: Conferences & Pitch Competitions](#move-6-conferences--pitch-competitions)
-10. [The Numbers (For Every Pitch)](#the-numbers-for-every-pitch)
-11. [Who Pitches What](#who-pitches-what)
-12. [Timeline — 90-Day Sprint](#timeline--90-day-sprint)
-13. [What NOT to Do](#what-not-to-do)
+10. [The Cross-Model Adversarial Loop](#the-cross-model-adversarial-loop)
+11. [The FHIR/HL7 Story — What People Said Was Impossible](#the-fhirhl7-story--what-people-said-was-impossible)
+12. [The Numbers (For Every Pitch)](#the-numbers-for-every-pitch)
+13. [Who Pitches What](#who-pitches-what)
+14. [Timeline — 90-Day Sprint](#timeline--90-day-sprint)
+15. [What NOT to Do](#what-not-to-do)
 
 ---
 
@@ -510,6 +512,139 @@ We documented the entire methodology. Happy to share.
 
 ---
 
+## The Cross-Model Adversarial Loop
+
+**This is your quality assurance methodology. It's why the codebase has zero lint warnings, zero `any` types, and zero CORS wildcards across 170K+ lines. Lead with this when talking to technical audiences.**
+
+### How It Works
+
+```
+Claude Code builds the code
+        |
+        v
+ChatGPT reviews the code (adversarial audit)
+        |
+        v
+Maria filters findings (domain expertise decides what matters)
+        |
+        v
+Claude Code fixes what ChatGPT found
+        |
+        v
+Repeat
+```
+
+### Why It Works
+
+Claude and ChatGPT have **different blind spots** — not different capabilities, different blind spots. They were trained on different data, with different RLHF, different safety tuning. The bugs Claude misses are not the same bugs ChatGPT misses.
+
+- **ChatGPT is better at finding things that are wrong.** It's a strong critic. It catches patterns, inconsistencies, things that "feel off."
+- **Claude is better at fixing things correctly.** It understands the codebase, follows the governance rules, respects the architecture, and makes surgical changes.
+- **Maria is the filter.** Neither model has the domain expertise to know whether a finding matters clinically. The human provides judgment.
+
+This is the same principle cybersecurity firms use with red teams — you don't ask the people who built the vault to test the vault.
+
+### Real Results
+
+| Metric | Before Cross-AI Auditing | After |
+|--------|--------------------------|-------|
+| `any` type violations | 1,400+ | 0 |
+| Lint warnings | 1,671 | 0 |
+| Edge functions with zero auth | 5+ critical | 0 critical |
+| profiles.user_id regressions | 34 (discovered 2026-04-20) | 0 |
+
+### Why This Matters for the Pitch
+
+**To Anthropic:**
+> "Your mid-tier model (Sonnet) built most of this platform. Combined with cross-model adversarial auditing — where ChatGPT finds bugs and Claude fixes them — we achieve enterprise-quality output at mid-tier cost. Our governance methodology makes Sonnet enterprise-grade."
+
+**To technical audiences:**
+> "No single AI should trust its own output. We use cross-model adversarial testing — different AI finds the problem, our AI fixes the problem, our domain expertise validates the fix. That's why we have zero lint warnings across 170K lines."
+
+**To investors:**
+> "The quality isn't from expensive AI. It's from the methodology. Most of this was built with the mid-tier model. The governance system — not the model tier — produces enterprise-quality output. That means anyone with domain expertise can replicate this."
+
+### The Model Progression
+
+The platform was built across four model generations, proving the methodology is model-agnostic:
+
+| Model | Era | What Was Built |
+|-------|-----|---------------|
+| Claude Opus 4.0 | Early 2025 | Initial scaffolding, core architecture |
+| Claude 4.1 | Mid 2025 | Database schema, early services |
+| Claude Sonnet 4.5 | Late 2025 | **Bulk of the platform** — FHIR, HL7, MCP servers, test suite |
+| Claude Sonnet/Opus 4.6 | Early 2026 | Hardening, adversarial audits, ONC prep |
+
+**Key point:** The governance system (CLAUDE.md, hooks, trackers) survived every model transition. Rules written for Opus 4.0 still apply to Opus 4.6. The methodology is the constant. The model is the variable.
+
+---
+
+## The FHIR/HL7 Story — What People Said Was Impossible
+
+**People said:** "There's no way you can build FHIR." "You have to have HL7 backwards compatibility." "That takes a team of engineers who specialize in healthcare interoperability."
+
+**What actually happened:** Claude scaffolded the entire interoperability layer when Maria asked.
+
+### What We Have
+
+**8,645 lines** of FHIR/HL7/X12 interoperability code in edge functions. **5,394 lines** of frontend FHIR services. **122 database migrations** referencing FHIR/HL7 tables.
+
+#### FHIR R4 (Modern Standard)
+
+| Component | What It Does |
+|-----------|-------------|
+| 18 FHIR resource types mapped | Patient, MedicationRequest, Condition, Procedure, Observation, Immunization, CarePlan, CareTeam, Practitioner, Encounter, DocumentReference, AllergyIntolerance, Goal, Location, Organization, Medication, DiagnosticReport, PractitionerRole |
+| 21 individual resource services | Full CRUD per resource type, plus specialty modules (cardiology, dental, oncology, labor & delivery) |
+| Conformance statement | `fhir-metadata` — tells other systems what we support (required by FHIR spec) |
+| SMART on FHIR OAuth2 | 5 edge functions: authorize, token, revoke, register-app, configuration |
+| Bulk export | Paginated, validated, no `SELECT *` |
+| C-CDA export | Consolidated Clinical Document Architecture — required by ONC |
+| AI semantic mapper | `ai-fhir-semantic-mapper` — uses Claude to map non-standard data to FHIR |
+| Patient summary aggregation | Cross-resource patient context with care team resolution |
+
+#### HL7 v2.x (Legacy Standard — Backwards Compatibility)
+
+| Component | What It Does |
+|-----------|-------------|
+| HL7 parser | Parses pipe-delimited HL7 v2.x messages (ADT, ORU, ORM) |
+| HL7 validator | Validates message structure against expected types |
+| HL7 to FHIR converter | Transforms legacy HL7 → modern FHIR R4 |
+| HL7 ACK generator | Generates acknowledgment responses (AA, AE, AR) |
+| HL7 receiver | Edge function that accepts inbound HL7 messages |
+
+#### X12 EDI (Claims & Prior Auth)
+
+| Component | What It Does |
+|-----------|-------------|
+| X12 837P generator | Professional claims in EDI format |
+| X12 278 generator | Prior authorization requests |
+| X12 278 parser | Prior authorization responses |
+| X12 parser | General X12 transaction parsing |
+| X12 validator | Transaction validation |
+| X12 to FHIR converter | EDI → FHIR transformation |
+
+### What This Replaces
+
+| Product/Service | Annual License Cost | We Built It For |
+|----------------|--------------------|-----------------| 
+| Mirth Connect / NextGen Connect | $50-200K/year | $0 (built-in) |
+| Rhapsody Integration Engine | $200-500K/year | $0 (built-in) |
+| Health Gorilla FHIR API | $100-300K/year | $0 (built-in) |
+| 3M CodeFinder (coding/DRG) | $500K+/year | $0 (MCP server) |
+| Surescripts integration | $150-400K/year | In progress (ONC-12) |
+
+### Why This Matters
+
+**For hospital buyers:** "We don't replace Epic. We speak Epic's language. We accept HL7 messages from your systems, transform them into FHIR, and give your AI tools standardized data to work with. No integration project. No middleware vendor. It's built in."
+
+**For ONC certification:** FHIR R4 support is required for multiple ONC criteria. We already have it. That's why 27+ criteria are certified-ready before we even started the gap closure work.
+
+**For investors:** "Healthcare interoperability is a $200K-500K/year line item for every hospital. We eliminated it. That's not a feature — it's a cost structure advantage that makes us competitive at any price point."
+
+**For Anthropic:** "Claude didn't just write application code. It scaffolded a complete FHIR R4 + HL7 v2.x + X12 interoperability layer — the same infrastructure that health IT companies raise $10-50M to build. When Maria asked, Claude built it."
+
+---
+
 ## The Numbers (For Every Pitch)
 
 Memorize these. Use them in every conversation.
@@ -529,6 +664,14 @@ Memorize these. Use them in every conversation.
 | MCP servers | 16 (96+ tools) |
 | Database tables | 248 |
 | AI clinical skills | 40+ |
+| FHIR resource types | 18 (full CRUD) |
+| FHIR resource services | 21 (+ specialty modules) |
+| HL7/X12 interoperability | Bidirectional (v2.x, 837P, 278, C-CDA) |
+| FHIR/HL7 code (edge functions) | 8,645 lines |
+| FHIR/HL7 code (frontend services) | 5,394 lines |
+| Database migrations (FHIR/HL7) | 122 files |
+| SMART on FHIR OAuth | 5 edge functions |
+| Primary model used | Sonnet (mid-tier) — not the most expensive model |
 | Sessions with Claude Code | 2,100+ |
 
 ### Market Numbers
