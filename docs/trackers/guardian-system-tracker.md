@@ -259,9 +259,48 @@ bash scripts/typecheck-changed.sh && npm run lint && npm test
 
 ---
 
+## Notification Channel Strategy (Confirmed 2026-04-20)
+
+Maria confirmed the notification infrastructure status and strategy:
+
+### Channel Status
+
+| Channel | Provider | Status | Purpose |
+|---------|----------|--------|---------|
+| **Email** | MailerSend | Configured | Critical/high alerts, formal audit trail |
+| **SMS** | Twilio | Configured | Urgent — system down, data breach |
+| **Slack** | Slack Webhooks | Not yet connected (Maria can connect) | Team awareness, non-urgent alerts, discussion |
+| **Internal (in-app)** | `security_notifications` table | Working | Real-time for clinicians already on dashboard |
+| **PagerDuty (external)** | ~~events.pagerduty.com~~ | **DISABLE** | Was never external PagerDuty SaaS — was internal UI-only system |
+
+### Strategy
+
+1. **Enable the cron (GRD-1):** MailerSend + Twilio start working immediately
+2. **Add Slack:** When Maria provides webhook URL — one Supabase secret to set (`SLACK_SECURITY_WEBHOOK_URL`)
+3. **Keep internal notifications:** `security_notifications` table powers in-app alerts on dashboard — already functional
+4. **Disable external PagerDuty API call:** Graceful no-op in `security-alert-processor` — the code calls `events.pagerduty.com` but Maria's PagerDuty was purely an in-app UI system, not the SaaS product. Replace with internal notification insert.
+
+### Why Four Channels
+
+| Scenario | Who Needs to Know | Channel |
+|----------|-------------------|---------|
+| Maria is at church, critical alert fires | Maria + Akima | SMS (Twilio) + Email (MailerSend) |
+| Clinician is on monitoring dashboard | Clinician | Internal (in-app popup) |
+| Team needs awareness of non-urgent issue | Everyone | Slack channel |
+| Audit trail / compliance record | Auditors | Email (permanent record) |
+
+### Implementation Notes for GRD-1
+
+When enabling the security-alert-processor cron:
+- MailerSend: use existing `MAILERSEND_API_KEY` secret — already configured
+- Twilio: use existing `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` — already configured
+- Slack: skip until `SLACK_SECURITY_WEBHOOK_URL` is set (code should gracefully skip if env var missing)
+- PagerDuty: replace external API call with `security_notifications` table insert (internal delivery)
+
+---
+
 ## Questions for Maria Before Starting
 
-1. **GRD-1:** Do you have MailerSend, Twilio, Slack webhook, and PagerDuty integration keys configured in Supabase secrets? If not, which channels should we prioritize?
-2. **GRD-3:** Should browser-side Guardian run in development mode, or only staging + production?
-3. **GRD-8:** What's your vision for the PR service? Auto-fix via GitHub PR, or remove dead code?
-4. **General:** Who is the SOC team? Is it Maria + Akima, or is there a dedicated security contact?
+1. **GRD-3:** Should browser-side Guardian run in development mode, or only staging + production?
+2. **GRD-8:** What's your vision for the PR service? Auto-fix via GitHub PR, or remove dead code?
+3. **General:** Who is the SOC team? Is it Maria + Akima, or is there a dedicated security contact?
