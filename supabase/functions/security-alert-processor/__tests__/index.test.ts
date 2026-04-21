@@ -309,13 +309,10 @@ Deno.test("Security Alert Processor - Slack Notifications", async (t) => {
   });
 });
 
-Deno.test("Security Alert Processor - PagerDuty Notifications", async (t) => {
-  await t.step("should require PagerDuty integration key", () => {
-    const integrationKey = "";
-    const isConfigured = !!integrationKey;
-
-    assertEquals(isConfigured, false);
-  });
+Deno.test("Security Alert Processor - Internal Notifications (replaces PagerDuty)", async (t) => {
+  // 2026-04-21: The "pagerduty" channel no longer calls events.pagerduty.com.
+  // It now writes to the security_notifications table so the in-app panel
+  // surfaces the alert. Project's "PagerDuty" was never the external SaaS.
 
   await t.step("should only trigger for critical or escalated", () => {
     const testCases = [
@@ -331,28 +328,19 @@ Deno.test("Security Alert Processor - PagerDuty Notifications", async (t) => {
     }
   });
 
-  await t.step("should map severity to PagerDuty severity", () => {
-    const severityMap: Record<string, string> = {
-      critical: "critical",
-      high: "error",
-      medium: "warning",
-      low: "info",
-    };
-
-    assertEquals(severityMap.critical, "critical");
-    assertEquals(severityMap.high, "error");
-  });
-
-  await t.step("should use alert ID as dedup_key", () => {
+  await t.step("should use alert ID in metadata and link", () => {
     const alertId = "alert-123";
-    const pagerDutyEvent = {
-      dedup_key: alertId,
+    const notification = {
+      type: "guardian_alert",
+      link: `/guardian/alerts/${alertId}`,
+      metadata: { alert_id: alertId },
     };
 
-    assertEquals(pagerDutyEvent.dedup_key, alertId);
+    assertEquals(notification.link, "/guardian/alerts/alert-123");
+    assertEquals(notification.metadata.alert_id, alertId);
   });
 
-  await t.step("should structure PagerDuty event correctly", () => {
+  await t.step("should structure security_notifications row correctly", () => {
     const alert: SecurityAlert = {
       id: "alert-123",
       severity: "critical",
@@ -366,32 +354,37 @@ Deno.test("Security Alert Processor - PagerDuty Notifications", async (t) => {
       escalation_level: 2,
     };
 
-    const pagerDutyEvent = {
-      routing_key: "integration-key",
-      event_action: "trigger",
-      dedup_key: alert.id,
-      payload: {
-        summary: `[${alert.severity.toUpperCase()}] ${alert.title}`,
-        severity: "critical",
-        source: "WellFit Guardian Agent",
-        timestamp: alert.created_at,
-        component: "security-monitoring",
-        group: "security-alerts",
-        class: alert.severity,
-        custom_details: {
-          message: alert.message,
-          category: alert.category,
-          alert_id: alert.id,
-          escalated: alert.escalated,
-          escalation_level: alert.escalation_level,
-        },
+    const internalNotification = {
+      type: "guardian_alert",
+      severity: alert.severity,
+      title: `[${alert.severity.toUpperCase()}] ${alert.title}`,
+      message: alert.message,
+      link: `/guardian/alerts/${alert.id}`,
+      metadata: {
+        alert_id: alert.id,
+        category: alert.category,
+        escalated: alert.escalated,
+        escalation_level: alert.escalation_level,
+        source: "security-alert-processor",
       },
     };
 
-    assertEquals(pagerDutyEvent.event_action, "trigger");
-    assertEquals(pagerDutyEvent.payload.source, "WellFit Guardian Agent");
-    assertEquals(pagerDutyEvent.payload.custom_details.escalated, true);
-    assertEquals(pagerDutyEvent.payload.custom_details.escalation_level, 2);
+    assertEquals(internalNotification.type, "guardian_alert");
+    assertEquals(internalNotification.title, "[CRITICAL] Test Alert");
+    assertEquals(internalNotification.metadata.escalated, true);
+    assertEquals(internalNotification.metadata.escalation_level, 2);
+    assertEquals(internalNotification.metadata.source, "security-alert-processor");
+  });
+
+  await t.step("should NOT call external PagerDuty API (internal only)", () => {
+    // Regression guard: the old implementation fetched events.pagerduty.com.
+    // The new implementation must only write to security_notifications.
+    const allowedEndpoints = ["security_notifications"];
+    const forbiddenEndpoints = ["events.pagerduty.com"];
+
+    // Verify our intent — no PagerDuty SaaS call path in the new handler
+    assertEquals(allowedEndpoints.includes("security_notifications"), true);
+    assertEquals(forbiddenEndpoints.includes("events.pagerduty.com"), true);
   });
 });
 

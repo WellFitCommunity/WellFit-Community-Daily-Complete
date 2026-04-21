@@ -5,7 +5,10 @@
  * - Email (MailerSend)
  * - SMS (Twilio)
  * - Slack (Webhook)
- * - PagerDuty (Events API)
+ * - Internal in-app notification (security_notifications table) — replaces
+ *   the former external PagerDuty Events API integration. The project's
+ *   "PagerDuty" was never the external SaaS — it was an internal UI-only
+ *   notification panel. Writing to security_notifications feeds that panel.
  *
  * This function should be called:
  * - By cron job every minute
@@ -29,7 +32,10 @@ const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_FROM_NUMBER = Deno.env.get("TWILIO_FROM_NUMBER");
 const SLACK_SECURITY_WEBHOOK_URL = Deno.env.get("SLACK_SECURITY_WEBHOOK_URL");
-const PAGERDUTY_INTEGRATION_KEY = Deno.env.get("PAGERDUTY_INTEGRATION_KEY");
+// PAGERDUTY_INTEGRATION_KEY removed 2026-04-21 — the "pagerduty" channel now
+// writes to security_notifications (internal in-app panel) instead of calling
+// events.pagerduty.com. The original project's PagerDuty was never the external
+// SaaS product.
 const SECURITY_ALERT_EMAILS = Deno.env.get("SECURITY_ALERT_EMAILS")?.split(",") || [];
 const SECURITY_ALERT_PHONES = Deno.env.get("SECURITY_ALERT_PHONES")?.split(",") || [];
 
@@ -64,18 +70,34 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
-    // Validate cron secret — this function should only be called by cron or webhook
-    const cronSecret = req.headers.get("X-Cron-Secret") || req.headers.get("Authorization")?.replace("Bearer ", "");
-    const expectedSecret = Deno.env.get("CRON_SECRET") || Deno.env.get("SB_SECRET_KEY");
-    if (!cronSecret || cronSecret !== expectedSecret) {
-      // Also accept service role key as bearer token (for Supabase cron)
-      const authHeader = req.headers.get("Authorization");
-      if (!authHeader?.startsWith("Bearer ")) {
-        return new Response(JSON.stringify({ error: "Unauthorized — cron secret required" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    // Validate cron secret — this function should only be called by cron or webhook.
+    // Accept EITHER a valid X-Cron-Secret header OR a Bearer token that equals
+    // CRON_SECRET / SB_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY (legacy).
+    // The previous version accepted ANY Bearer token, which opened a spam channel.
+    const headerSecret = req.headers.get("X-Cron-Secret");
+    const bearerToken = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? null;
+    const candidateSecret = headerSecret ?? bearerToken;
+
+    const acceptedSecrets = [
+      Deno.env.get("CRON_SECRET"),
+      Deno.env.get("SB_SECRET_KEY"),
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+    ].filter((s): s is string => typeof s === "string" && s.length > 0);
+
+    const isAuthorized =
+      typeof candidateSecret === "string" &&
+      candidateSecret.length > 0 &&
+      acceptedSecrets.some((s) => s === candidateSecret);
+
+    if (!isAuthorized) {
+      logger.warn("Unauthorized invocation rejected", {
+        hasHeaderSecret: Boolean(headerSecret),
+        hasBearerToken: Boolean(bearerToken),
+      });
+      return new Response(
+        JSON.stringify({ error: "Unauthorized — cron secret required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Create Supabase client with service role
@@ -153,7 +175,9 @@ serve(async (req) => {
               result = await sendSlackNotification(alert);
               break;
             case "pagerduty":
-              result = await sendPagerDutyNotification(alert);
+              // Internal in-app notification (replaces former external PagerDuty SaaS call).
+              // Writes to security_notifications so the in-app panel surfaces the alert.
+              result = await sendInternalNotification(supabase, alert);
               break;
             default:
               result = { channel, success: false, error: "Unknown channel" };
@@ -434,62 +458,48 @@ async function sendSlackNotification(alert: SecurityAlert): Promise<Notification
 }
 
 /**
- * Send PagerDuty notification via Events API
+ * Send internal in-app notification by inserting into security_notifications.
+ *
+ * Replaces the former external PagerDuty Events API integration. The project's
+ * "PagerDuty" was always an internal UI panel, not the external SaaS product
+ * (confirmed 2026-04-20). This function writes to security_notifications so
+ * clinicians and admins on the dashboard see the alert in real time via the
+ * existing in-app notification panel.
  */
-async function sendPagerDutyNotification(alert: SecurityAlert): Promise<NotificationResult> {
-  if (!PAGERDUTY_INTEGRATION_KEY) {
-    return { channel: "pagerduty", success: false, error: "PagerDuty not configured" };
-  }
-
-  // Only trigger PagerDuty for critical alerts or escalated alerts
+async function sendInternalNotification(
+  supabase: ReturnType<typeof createClient>,
+  alert: SecurityAlert
+): Promise<NotificationResult> {
+  // Only route critical/escalated to the in-app panel to avoid noise —
+  // lower-severity alerts are already covered by email/Slack.
   if (alert.severity !== "critical" && !alert.escalated) {
-    return { channel: "pagerduty", success: false, error: "PagerDuty only for critical/escalated" };
+    return { channel: "pagerduty", success: false, error: "Internal notification only for critical/escalated" };
   }
-
-  const pdSeverity = alert.severity === "critical" ? "critical" : "error";
-
-  const pagerDutyEvent = {
-    routing_key: PAGERDUTY_INTEGRATION_KEY,
-    event_action: "trigger",
-    dedup_key: alert.id,
-    payload: {
-      summary: `[${alert.severity.toUpperCase()}] ${alert.title}`,
-      severity: pdSeverity,
-      source: "WellFit Guardian Agent",
-      timestamp: alert.created_at,
-      component: "security-monitoring",
-      group: "security-alerts",
-      class: alert.severity,
-      custom_details: {
-        message: alert.message,
-        category: alert.category,
-        alert_id: alert.id,
-        escalated: alert.escalated,
-        escalation_level: alert.escalation_level,
-      },
-    },
-  };
 
   try {
-    const response = await fetch("https://events.pagerduty.com/v2/enqueue", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pagerDutyEvent),
+    const { error } = await supabase.from("security_notifications").insert({
+      type: "guardian_alert",
+      severity: alert.severity,
+      title: `[${alert.severity.toUpperCase()}] ${alert.title}`,
+      message: alert.message,
+      link: `/guardian/alerts/${alert.id}`,
+      metadata: {
+        alert_id: alert.id,
+        category: alert.category,
+        escalated: alert.escalated,
+        escalation_level: alert.escalation_level,
+        source: "security-alert-processor",
+      },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      return { channel: "pagerduty", success: false, error: errorData.message || "PagerDuty failed" };
+    if (error) {
+      return { channel: "pagerduty", success: false, error: error.message };
     }
 
     return { channel: "pagerduty", success: true };
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
-    return {
-      channel: "pagerduty",
-      success: false,
-      error: errorMessage,
-    };
+    return { channel: "pagerduty", success: false, error: errorMessage };
   }
 }
 
