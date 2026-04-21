@@ -2,9 +2,9 @@
 
 > **Priority:** HIGH — System is 70% complete but critical orchestration gaps prevent it from functioning as designed
 > **Created:** 2026-04-20
-> **Current Status:** 0/9 items complete
+> **Current Status:** 5/9 items complete (GRD-1 through GRD-5 shipped 2026-04-21)
 > **Estimated total:** ~24 hours across 2 sessions
-> **Honest Assessment:** The pieces are built but not connected. Detection works. Notification doesn't.
+> **Honest Assessment:** Session 1 complete — cron wired, tickets wired, dev/staging monitored, scan returns real data, E2E test guards regressions.
 
 ---
 
@@ -75,7 +75,7 @@ Guardian Agent (5-min cron)
 
 | Session | Focus | Items | Hours | Status |
 |---------|-------|-------|-------|--------|
-| **1** | Critical fixes — cron job, ticket creation, browser start, notification flow | GRD-1 through GRD-5 | ~14 | PENDING |
+| **1** | Critical fixes — cron job, ticket creation, browser start, notification flow | GRD-1 through GRD-5 | ~14 | **DONE** (2026-04-21, commits 44ef6789, ce654114, aa3ff030) |
 | **2** | Integration — Eyes→approval, flow config, PR service decision, E2E test | GRD-6 through GRD-9 | ~10 | PENDING |
 
 ---

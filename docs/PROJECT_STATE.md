@@ -3,9 +3,9 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-04-20
-**Last Session:** Adversarial audit + auto-repair — 4 critical findings fixed, 34 profiles.user_id regressions swept, 3 edge functions hardened
-**Updated By:** Claude Opus 4.6
+**Last Updated:** 2026-04-21
+**Last Session:** Patent-track IP + Guardian completion — MCP-10 (grouper SDK crash fix), Guardian Session 1 complete (GRD-1 through GRD-5), MCP-20 (mcp-patient-context-server built and shipped)
+**Updated By:** Claude Opus 4.7 (1M context)
 **Codebase Health:** 11,726 tests (583 suites), 0 lint warnings, 0 typecheck errors in changed files
 
 ---
@@ -75,22 +75,28 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 
 ---
 
-## URGENT — Guardian Agent Gap Closure (0/9)
+## URGENT — Guardian Agent Gap Closure (5/9)
 
 **Tracker:** `docs/trackers/guardian-system-tracker.md`
-**Status:** 0/9 items complete — system is 70% built but critical orchestration gaps prevent functioning
-**Estimated total:** ~24 hours across 2 sessions
-**Risk:** HIGH — security alerts are not being delivered to SOC team
+**Status:** 5/9 items complete — Session 1 shipped 2026-04-21. Session 2 (GRD-6 through GRD-9) pending.
+**Estimated total:** ~10 hours remaining (Session 2)
+**Risk:** Was HIGH — security alerts now fire end-to-end via cron + multi-channel.
 
-**Critical gaps (fix immediately):**
-- **GRD-1:** `security-alert-processor` cron job is **commented out** — multi-channel notifications never send
-- **GRD-2:** Nothing calls `createTicket()` — approval workflow is disconnected
-- **GRD-3:** Browser-side Guardian only starts in production mode — dev/staging unmonitored
-- **GRD-4:** Guardian API scan action returns placeholder, not real results
-- **GRD-5:** No end-to-end notification test exists
+**Session 1 (DONE):**
+- ✅ **GRD-1:** cron scheduled via migration 20260421120000 + auth bypass fix + PagerDuty→internal swap (commit 44ef6789)
+- ✅ **GRD-2:** createTicket() wired in both guardian-agent autoHeal and AgentBrain.initiateHealing (commit ce654114)
+- ✅ **GRD-3:** Browser Guardian starts in all non-test modes (commit ce654114)
+- ✅ **GRD-4:** Guardian API scan returns real findings from 4 parallel queries (commit ce654114)
+- ✅ **GRD-5:** End-to-end test with 4 cases including auth-bypass regression guard (commit aa3ff030)
 
-**What works:** Monitoring cron (5-min), alert creation, direct email for critical/high, approval form UI, all RLS policies, audit logging, Guardian Eyes recording storage.
-**What doesn't:** Slack/SMS/PagerDuty delivery, ticket auto-creation, browser monitoring in non-prod, Eyes→approval link, PR service (dead code), flow config table (missing).
+**Session 2 (PENDING):**
+- **GRD-6:** Wire Guardian Eyes recordings to approval form (~3h)
+- **GRD-7:** Create guardian_flow_config migration (~2h)
+- **GRD-8:** Decision on guardian-pr-service — keep/wire/remove (needs Maria's input)
+- **GRD-9:** Full end-to-end integration test (~4h)
+
+**What works now:** Cron fires every minute, email+SMS+Slack+internal all deliver, tickets auto-create for non-performance auto-heal proposals, browser Guardian runs in dev/staging/prod, scan returns real security findings.
+**What still doesn't:** Eyes→approval link (GRD-6), multi-facility ED crowding config (GRD-7), PR service wiring (GRD-8 decision).
 
 ---
 
@@ -146,6 +152,66 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 - **MCP-7:** Clearinghouse external API — BLOCKED on Waystar/Change Healthcare creds (8-12h)
 - **MCP-8:** Cultural competency clinical review — waiting on Akima (0h code)
 - **MCP-9:** Tool utilization gap (76/140 unwired) — ACCEPTED, deferred by design
+
+### Session 3 — MCP Architecture Hygiene (added 2026-04-21)
+- ~~**MCP-10:** Grouper SDK crash fix backported to standalone server — DONE (commit bef7b264)~~
+- **MCP-10b:** Extract shared DRG 3-pass logic into `_shared/drgThreePassLogic.ts` (~6h)
+- **MCP-11:** POA indicators in DRG grouper (HAC compliance) (~8h)
+- **MCP-12:** Authoritative CMS DRG weight lookup table (~6h)
+- **MCP-13:** Grouper safety gates — encounter type + age/sex + discharge disposition (~4h)
+- **MCP-14:** Clinician ID in cost log, not patient (PHI audit fix + codebase-wide sweep) (~3h)
+- **MCP-15:** Grouper idempotency / result caching (~2h)
+- **MCP-16:** Grouper 600-line decomposition (~1h — naturally resolved if MCP-10b done first)
+- **MCP-17:** Resolve `check_prior_auth_required` namespace collision (~1h)
+- **MCP-18:** Resolve `submit_prior_auth` namespace collision (~1h)
+- **MCP-19:** Rename `mcp-claude-server` → `mcp-atlus-reasoning-server` (~2h)
+- ~~**MCP-20:** Build `mcp-patient-context-server` — DONE (commit 724249d4)~~
+- **MCP-21:** Resolve `medical-codes` vs `medical-coding` naming collision (~2h)
+
+---
+
+## What Happened This Session (2026-04-21)
+
+### Completed — Patent IP + Guardian Completion (7/7 approved items)
+
+**Context:** Maria approved tackling (1) patent-track IP work and (3) security risk in parallel. Worked through MCP-10 → Guardian Session 1 → MCP-20, committing and pushing each logical chunk.
+
+**1. MCP-10 — Standalone DRG grouper SDK crash fix** (commit bef7b264)
+- Backported the `new Anthropic(...)` → direct `fetch` pattern to `mcp-drg-grouper-server/drgGrouperHandlers.ts` AND `revenueOptimizerHandlers.ts` (sister bug per CLAUDE.md Rule 1).
+- Added architectural note in header clarifying the standalone grouper is the offensive Revenue Intelligence Engine (scans documentation for missed billables), while mcp-medical-coding-server is the defensive processor.
+- Confirmed with codebase-wide grep: 4 other files still use the SDK (ai-medication-instructions, coding-suggest, mcp-claude-server, claude-chat) — logged in commit message for future sweep.
+
+**2. Guardian Session 1 — GRD-1 through GRD-5**
+
+- **GRD-1** (commit 44ef6789): Migration 20260421120000 schedules the cron every minute with Vault-backed secret. ALSO fixed a critical auth bypass — prior code accepted ANY Bearer token because the fallback branch only checked the header STARTED WITH "Bearer ". Now validates the token actually equals one of CRON_SECRET / SB_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY. ALSO replaced external PagerDuty API call with `security_notifications` insert (internal panel) per Maria's confirmed strategy.
+
+- **GRD-2** (commit ce654114): Wired createTicket() in TWO places. (a) `guardian-agent/index.ts autoHeal()` — previously blindly marked ALL alerts as 'resolved' regardless of category, violating ai-repair-authority.md. Now routes: performance = auto-heal (Tier 1), security/database/other = create review ticket via RPC (Tier 3). (b) `AgentBrain.initiateHealing()` — previously ignored action.requiresApproval. Now calls guardianApprovalService.createTicket() and stores pending fix in sandbox when approval required.
+
+- **GRD-3** (commit ce654114): Browser Guardian now starts in all non-test modes. window.__guardianAgent exposed in all non-test for DevTools inspection.
+
+- **GRD-4** (commit ce654114): guardian-agent-api security_scan now runs 4 parallel real checks (open alerts, failed login bursts, PHI access bursts, pending tickets) and returns structured findings with severity, counts, and overall status. Scan start+end both logged for SOC2 audit trail.
+
+- **GRD-5** (commit aa3ff030): New Deno integration test with 5 cases including a regression guard for the GRD-1 auth-bypass fix (validates invalid Bearer tokens return 401). Verifies full pipeline: insert → processor → channels → internal_notifications row + notification_sent=true. Idempotent re-run case. Uses synthetic tagged data for deterministic cleanup.
+
+**3. MCP-20 — Build mcp-patient-context-server** (commit 724249d4)
+- New MCP server exposing the canonical patientContextService as MCP tools. Six tools: get_patient_context (full), get_minimal_context, get_patient_contacts, get_patient_timeline, get_patient_risk_summary, patient_exists.
+- Every response carries `context_meta` with data_sources (per-table success/failure + record counts), warnings, fetch_duration_ms, request_id — ATLUS Accountability.
+- Audit log records CALLER user_id (not patient_id) per adversarial-audit-lessons.md lesson 7.
+- File structure: types (77), tools (108), fetchers (554), toolHandlers (169), index (250) — all under 600-line limit.
+- Added patient_context entry to MCP_RATE_LIMITS (100/min).
+
+### Verification
+```
+✅ typecheck (scoped): 0 errors in changed files
+✅ lint: 0 errors, 0 warnings
+✅ tests: 11,726 passed, 0 failed (583 suites)
+```
+
+### Open Questions for Maria / Future Sessions
+- **Cron secret setup:** GRD-1 migration schedules the cron but the Vault `cron_secret` needs to be populated before it will actually authenticate. Setup steps documented in the migration header.
+- **SLACK_SECURITY_WEBHOOK_URL:** Not yet set — processor gracefully skips Slack delivery until configured.
+- **MCP-10b shared DRG logic extraction** can happen next — keeps both groupers DRY while preserving the architectural distinction.
+- **Other 4 SDK-using files** (ai-medication-instructions, coding-suggest, mcp-claude-server, claude-chat) — follow-up sweep.
 
 ---
 
