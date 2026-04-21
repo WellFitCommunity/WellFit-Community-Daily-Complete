@@ -49,6 +49,32 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 
 ---
 
+## NEW — SOC 2 Readiness: Policy & Evidence Gap Closure (0/14)
+
+**Tracker:** `docs/trackers/soc2-readiness-tracker.md`
+**Status:** 0/14 items — 8 policy templates **drafted** (Phase 1) and ready for Maria + Akima review/signature; 6 evidence items pending (Phase 2/3)
+**Estimated total:** ~32 hours across 3-4 sessions
+**Note:** We are NOT declaring SOC 2 compliance. SOC 2 requires an independent AICPA-certified auditor. This tracker prepares us for that engagement.
+
+**Technical alignment:** ~80% (code + controls strong). **Paper alignment:** ~20% (policies, vendor evidence, pen test). This tracker closes the paper gap.
+
+**Phase 1 — Policies (drafted 2026-04-21):**
+- 8 policies in `docs/compliance/soc2-policies/` (ISP-001, ACP-002, IRP-003, BCP-004, DCR-005, CMP-006, VRM-007, AUP-008)
+- Each cross-references actual controls (CLAUDE.md, rules/, migrations, edge functions)
+- Requires Maria + Akima signature before being official
+
+**Phase 2 — Evidence (pending):**
+- Vendor SOC 2 reports + BAAs/DPAs (Supabase, Anthropic, MailerSend, Twilio, Vercel)
+- Security training records
+- Quarterly access review (first entry)
+- DR tabletop exercise (first run)
+
+**Phase 3 — External validation (pending):**
+- Third-party pen test ($8-15K, not internal adversarial audit)
+- SOC 2 evidence matrix (AICPA TSP 100 criterion → live artifact crosswalk)
+
+---
+
 ## URGENT — Guardian Agent Gap Closure (0/9)
 
 **Tracker:** `docs/trackers/guardian-system-tracker.md`
