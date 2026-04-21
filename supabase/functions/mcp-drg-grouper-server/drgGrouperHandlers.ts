@@ -1,6 +1,16 @@
 // =====================================================
-// MCP Medical Coding Server — DRG Grouper Handlers
-// Chain 6c: AI-Powered MS-DRG Assignment
+// MCP DRG Grouper Server — DRG Grouper Handlers
+// Standalone Revenue Intelligence Engine
+//
+// ARCHITECTURAL ROLE: This server is the offensive revenue intelligence
+// layer — it scans clinical documentation for billables that were missed,
+// upgrade opportunities, documentation gaps, and modifier suggestions.
+// It answers: "what revenue are we leaving on the table?"
+//
+// PEER: mcp-medical-coding-server is the defensive code processor.
+// It operates on codes already entered and answers: "is what we have
+// clean and projected correctly?" The two servers share the 3-pass
+// DRG algorithm but serve opposite directions of flow.
 //
 // 3-Pass DRG Grouping:
 //   Pass 1: Base DRG from principal diagnosis
@@ -11,10 +21,14 @@
 // Uses Claude Sonnet for clinical-grade ICD-10 extraction
 // from encounter documentation. Advisory only — never
 // auto-assigns codes. All suggestions require human review.
+//
+// NOTE on AI client: Uses direct fetch to Claude API rather than the
+// Anthropic SDK — the SDK pulls in a 1.1MB bundle that crashes the
+// Deno worker at boot. Same pattern is used across all other AI edge
+// functions in this project.
 // =====================================================
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 import type { MCPLogger, DRGGroupingResult } from "./types.ts";
 import { SONNET_MODEL, calculateModelCost } from "../_shared/models.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
@@ -264,8 +278,6 @@ export function createDRGGrouperHandlers(
       };
     }
 
-    const anthropic = new Anthropic({ apiKey });
-
     const prompt = buildDRGGrouperPrompt({
       notes: clinicalText,
       existingDiagnoses: allDiagnoses,
@@ -283,19 +295,39 @@ export function createDRGGrouperHandlers(
       model: SONNET_MODEL
     });
 
-    const aiResponse = await anthropic.messages.create({
-      model: SONNET_MODEL,
-      max_tokens: 3000,
-      messages: [{ role: "user", content: prompt }],
-      tools: [DRG_ANALYSIS_TOOL],
-      tool_choice: { type: "tool", name: "submit_drg_analysis" }
+    // Direct fetch to Claude API (no SDK — avoids 1.1MB bundle that crashes the worker)
+    const aiHttpResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: SONNET_MODEL,
+        max_tokens: 3000,
+        messages: [{ role: "user", content: prompt }],
+        tools: [DRG_ANALYSIS_TOOL],
+        tool_choice: { type: "tool", name: "submit_drg_analysis" }
+      }),
     });
+
+    if (!aiHttpResponse.ok) {
+      const errText = await aiHttpResponse.text();
+      logger.error('DRG_GROUPER_API_FAILED', { encounterId, status: aiHttpResponse.status, error: errText });
+      return { error: `Claude API error (${aiHttpResponse.status})`, drg_result: null };
+    }
+
+    const aiResponse = await aiHttpResponse.json() as {
+      content: Array<{ type: string; input?: unknown; text?: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
 
     const responseTimeMs = Date.now() - startTime;
 
     // --- 3. Extract structured response from tool use ---
     const toolBlock = aiResponse.content.find(
-      (block: { type: string }) => block.type === "tool_use"
+      (block) => block.type === "tool_use"
     ) as { type: "tool_use"; input: unknown } | undefined;
 
     let analysis: DRGAnalysisResponse;
@@ -304,9 +336,9 @@ export function createDRGGrouperHandlers(
     } else {
       // Fallback: try parsing text content as JSON
       const textBlock = aiResponse.content.find(
-        (block: { type: string }) => block.type === "text"
-      ) as { type: "text"; text: string } | undefined;
-      const responseText = textBlock?.text ?? "";
+        (block) => block.type === "text"
+      );
+      const responseText = (textBlock?.text as string) ?? "";
       try {
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error("No JSON found in AI response");
