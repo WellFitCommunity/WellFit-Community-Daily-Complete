@@ -23,6 +23,8 @@ import { AuditLogger } from './AuditLogger';
 import { SafetyValidator, RateLimiter, SandboxEnvironment } from './SafetyConstraints';
 import { GuardianAlertService } from './GuardianAlertService';
 import { aiSystemRecorder } from './AISystemRecorder';
+import { getGuardianApprovalService } from '../guardianApprovalService';
+import { supabase } from '../../lib/supabaseClient';
 
 export class AgentBrain {
   private state: AgentState;
@@ -263,6 +265,75 @@ export class AgentBrain {
     const safetyCheck = SafetyValidator.canExecuteAutonomously(action, issue);
     if (!safetyCheck.allowed) {
       await this.auditLogger.logBlockedAction(issue, action, safetyCheck.reason);
+      this.sandbox.storePendingFix(action.id, action, issue);
+      this.state.mode = 'monitor';
+      return;
+    }
+
+    // ✅ GRD-2: Actions flagged requiresApproval must NOT be auto-executed.
+    // Create a review ticket, log the proposal, and stop. A human reviewer
+    // will approve or reject via the Guardian Approval UI; the approved
+    // action is then re-executed separately.
+    if (action.requiresApproval) {
+      const approvalService = getGuardianApprovalService(supabase);
+      const ticketResult = await approvalService.createTicket({
+        issue_id: issue.id,
+        issue_category: issue.signature.category,
+        issue_severity: issue.severity,
+        issue_description: issue.signature.description,
+        affected_component: issue.context?.component,
+        affected_resources: issue.affectedResources,
+        stack_trace: issue.stackTrace,
+        detection_context: {
+          component: issue.context?.component,
+          filePath: issue.context?.filePath,
+          lineNumber: issue.context?.lineNumber,
+          userId: issue.context?.userId,
+          sessionId: issue.context?.sessionId,
+          apiEndpoint: issue.context?.apiEndpoint,
+          databaseQuery: issue.context?.databaseQuery,
+          environmentState: {
+            ...(issue.context?.environmentState ?? {}),
+            source: 'AgentBrain.initiateHealing',
+            signature_id: issue.signature.id,
+            detected_at: issue.timestamp instanceof Date
+              ? issue.timestamp.toISOString()
+              : new Date().toISOString()
+          },
+          recentActions: issue.context?.recentActions
+        },
+        action_id: action.id,
+        healing_strategy: strategy,
+        healing_description: action.description,
+        healing_steps: action.steps,
+        rollback_plan: action.rollbackPlan,
+        expected_outcome: action.expectedOutcome,
+        sandbox_tested: false,
+        sandbox_results: {
+          passed: false,
+          tests_run: 0,
+          tests_passed: 0,
+          tests_failed: 0,
+          execution_time_ms: 0
+        },
+        sandbox_passed: undefined
+      });
+
+      if (!ticketResult.success) {
+        await this.auditLogger.logBlockedAction(
+          issue,
+          action,
+          `Failed to create approval ticket: ${ticketResult.error.message}`
+        );
+      } else {
+        await this.auditLogger.logBlockedAction(
+          issue,
+          action,
+          `Approval required — ticket ${ticketResult.data} created for human review`
+        );
+      }
+
+      // Stash the pending fix so it can be re-applied after approval
       this.sandbox.storePendingFix(action.id, action, issue);
       this.state.mode = 'monitor';
       return;

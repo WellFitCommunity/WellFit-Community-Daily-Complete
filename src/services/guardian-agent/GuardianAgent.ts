@@ -261,13 +261,19 @@ export class GuardianAgent {
 export const getGuardianAgent = (config?: Partial<AgentConfig>) =>
   GuardianAgent.getInstance(config);
 
-// Auto-start in production
-if (import.meta.env.MODE === 'production') {
+// Auto-start in all non-test environments. GRD-3: previously this was gated
+// behind MODE === 'production', leaving development and staging unmonitored.
+// Dev/staging must also run Guardian so bugs, security events, and perf
+// regressions are caught before they reach production.
+// `start()` is idempotent on the singleton — App.tsx also calls it, but the
+// module-level call ensures monitoring begins even if App.tsx is not mounted
+// (e.g., in service workers, worker threads, or isolated test harnesses that
+// import services without rendering App).
+if (import.meta.env.MODE !== 'test' && typeof window !== 'undefined') {
   const agent = GuardianAgent.getInstance();
   agent.start();
 
-  // Expose to window for debugging (only in dev tools)
-  if (typeof window !== 'undefined') {
-    (window as Window & { __guardianAgent?: GuardianAgent }).__guardianAgent = agent;
-  }
+  // Expose to window for debugging in all non-test environments so developers
+  // can inspect agent state via DevTools during dev/staging triage.
+  (window as Window & { __guardianAgent?: GuardianAgent }).__guardianAgent = agent;
 }

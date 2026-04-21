@@ -104,14 +104,25 @@ Deno.serve(async (req) => {
 
 /**
  * Handle security scan request
+ *
+ * GRD-4: This handler previously returned an empty placeholder `findings: []`.
+ * It now runs a real scan by querying recent security signals across four
+ * categories: open security alerts, failed login bursts, PHI access bursts,
+ * and unresolved tickets. All queries are user-scoped through RLS (the
+ * supabase client is constructed with the caller's JWT in the wrapper).
  */
 async function handleSecurityScan(
   supabase: SupabaseClient,
   userId: string
 ): Promise<GuardianResponse> {
+  const scanId = crypto.randomUUID();
+  const scanStartedAt = new Date();
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
   try {
-    // Log security scan event
-    const { error } = await supabase
+    // Log scan initiation for audit trail
+    const { error: auditError } = await supabase
       .from('audit_logs')
       .insert({
         event_type: 'SECURITY_SCAN_INITIATED',
@@ -119,22 +130,132 @@ async function handleSecurityScan(
         actor_user_id: userId,
         success: true,
         metadata: {
+          scan_id: scanId,
           scan_type: 'manual',
-          timestamp: new Date().toISOString()
+          timestamp: scanStartedAt.toISOString()
         }
       });
 
-    if (error) throw error;
+    if (auditError) throw auditError;
 
-    // Return scan results (placeholder - expand based on your needs)
+    // Run the four scan checks in parallel
+    const [
+      openAlertsResult,
+      failedLoginsResult,
+      phiBurstsResult,
+      pendingTicketsResult
+    ] = await Promise.all([
+      supabase
+        .from('security_alerts')
+        .select('id, severity, category, title, created_at', { count: 'exact' })
+        .in('status', ['pending', 'awaiting_approval'])
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabase
+        .from('login_attempts')
+        .select('id, ip_address, created_at', { count: 'exact' })
+        .eq('success', false)
+        .gte('created_at', fifteenMinutesAgo),
+      supabase
+        .from('phi_access_logs')
+        .select('id, accessing_user_id, records_accessed, accessed_at', { count: 'exact' })
+        .gte('accessed_at', fiveMinutesAgo)
+        .gt('records_accessed', 50),
+      supabase
+        .from('guardian_review_tickets')
+        .select('id, status, issue_severity, created_at', { count: 'exact' })
+        .eq('status', 'pending')
+    ]);
+
+    const findings: Array<{
+      check: string;
+      severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+      count: number;
+      details: string;
+    }> = [];
+
+    const openAlertsCount = openAlertsResult.count ?? openAlertsResult.data?.length ?? 0;
+    if (openAlertsCount > 0) {
+      const critical = (openAlertsResult.data ?? []).filter(
+        (a) => (a as { severity?: string }).severity === 'critical'
+      ).length;
+      findings.push({
+        check: 'open_security_alerts',
+        severity: critical > 0 ? 'critical' : openAlertsCount > 10 ? 'high' : 'medium',
+        count: openAlertsCount,
+        details: `${openAlertsCount} open alerts (${critical} critical)`
+      });
+    }
+
+    const failedLoginsCount = failedLoginsResult.count ?? 0;
+    if (failedLoginsCount > 10) {
+      findings.push({
+        check: 'failed_login_burst',
+        severity: failedLoginsCount > 50 ? 'critical' : failedLoginsCount > 25 ? 'high' : 'medium',
+        count: failedLoginsCount,
+        details: `${failedLoginsCount} failed login attempts in the last 15 minutes`
+      });
+    }
+
+    const phiBurstCount = phiBurstsResult.count ?? phiBurstsResult.data?.length ?? 0;
+    if (phiBurstCount > 0) {
+      findings.push({
+        check: 'phi_access_burst',
+        severity: 'high',
+        count: phiBurstCount,
+        details: `${phiBurstCount} PHI access events with >50 records in the last 5 minutes`
+      });
+    }
+
+    const pendingTicketsCount = pendingTicketsResult.count ?? pendingTicketsResult.data?.length ?? 0;
+    if (pendingTicketsCount > 0) {
+      findings.push({
+        check: 'pending_review_tickets',
+        severity: pendingTicketsCount > 5 ? 'high' : 'medium',
+        count: pendingTicketsCount,
+        details: `${pendingTicketsCount} Guardian review tickets awaiting human approval`
+      });
+    }
+
+    // Overall status from worst finding
+    const severityRank: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+    const worstSeverity = findings.reduce<string>(
+      (acc, f) => (severityRank[f.severity] > (severityRank[acc] ?? 0) ? f.severity : acc),
+      'info'
+    );
+
+    const status = findings.length === 0
+      ? 'clean'
+      : worstSeverity === 'critical' ? 'critical' : worstSeverity === 'high' ? 'attention_required' : 'advisory';
+
+    const scanDurationMs = Date.now() - scanStartedAt.getTime();
+
+    // Log completion
+    await supabase.from('audit_logs').insert({
+      event_type: 'SECURITY_SCAN_COMPLETED',
+      event_category: 'SECURITY_EVENT',
+      actor_user_id: userId,
+      success: true,
+      metadata: {
+        scan_id: scanId,
+        scan_duration_ms: scanDurationMs,
+        finding_count: findings.length,
+        status,
+        worst_severity: worstSeverity
+      }
+    });
+
     return {
       success: true,
       data: {
-        scanId: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-        status: 'completed',
-        findings: [],
-        summary: 'System scan completed successfully'
+        scanId,
+        timestamp: scanStartedAt.toISOString(),
+        status,
+        findings,
+        summary: findings.length === 0
+          ? 'No security issues detected.'
+          : `${findings.length} finding(s) detected — worst severity: ${worstSeverity}`,
+        duration_ms: scanDurationMs
       }
     };
   } catch (err: unknown) {
