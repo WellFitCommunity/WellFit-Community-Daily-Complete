@@ -129,6 +129,15 @@ export const MCP_RATE_LIMITS = {
     maxRequests: 100,
     windowMs: 60 * 1000,
     keyPrefix: 'mcp:cultural'
+  },
+
+  // Patient Context MCP - generous limits (canonical cross-system read path;
+  // many AI tools invoke this mid-reasoning, so tight limits would bottleneck
+  // the whole platform). PHI access — each call is audit-logged.
+  patient_context: {
+    maxRequests: 100,
+    windowMs: 60 * 1000,
+    keyPrefix: 'mcp:patient_context'
   }
 };
 
