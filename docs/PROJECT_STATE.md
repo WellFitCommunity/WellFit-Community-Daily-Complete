@@ -49,6 +49,43 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 
 ---
 
+## NEW — PILOT DRIVEN — Nephrology Vertical + Acumen Epic Connect Integration (0/13)
+
+**Tracker:** `docs/trackers/nephrology-module-tracker.md`
+**Status:** 0/13 sessions — greenfield build, customer pilot identified
+**Estimated total:** ~52-60 hours across 13 sessions
+**Pilot driver:** Nephrology clinic on Acumen Epic Connect — established internal sponsor at the clinic
+**Target timeline:** 6-8 weeks to first physician encounter scribed end-to-end (1 month possible if BAA + Fresenius FHIR provisioning move fast)
+
+### Why This Matters
+- First real customer pilot — beats horizontal "any specialty" pitch with concrete vertical + concrete clinic
+- Acumen = Epic underneath → existing `EpicFHIRAdapter.ts` (645 lines), `fhirBulkExportService.ts` (466 lines), full SMART on FHIR auth flow are already built
+- Cures Act + ONC Information Blocking Rule = clinic owns its data, no Fresenius approval needed beyond enabling FHIR client
+- Nephrology data density (dialysis = ~150 visits/year/patient, dense labs, KDIGO guidelines) is where Compass Riley's longitudinal reasoning shines
+- Strengthens Anthropic pitch: real pilot + real vertical = case study story
+
+### Critical Path (External Gates)
+1. **BAA executed with clinic** — 1-3 weeks
+2. **Fresenius enables Epic FHIR client** — 1-4 weeks (most likely bottleneck — clinic IT files ticket)
+3. **OAuth credentials provisioned + first FHIR pull** — 1-2 weeks
+4. **First physician encounter scribed + DocumentReference written back** — 1-2 weeks
+
+### Build Sequence (Internal)
+| Phase | Sessions | What |
+|-------|----------|------|
+| Phase 1: Data Entry Forms | 1-6 | CKD registry, HD treatment + adequacy, vascular access, anemia + CKD-MBD, PD + transplant, office dashboard |
+| Phase 2: Edge Functions | 7-8 | Core CRUD + alert dispatch (10 alert types: hyperkalemia, AKI, access infection, missed treatment, under-dialysis, etc.) |
+| Phase 3: AI Services | 9-10 | CKD progression predictor, AKI risk, dialysis adequacy advisor, ESA dosing optimizer, patient summary |
+| Phase 4: Acumen Integration + Advanced | 11-13 | **Session 11 = pilot go-live gate** (bi-directional FHIR sync), KDIGO content for `guidelineReferenceEngine`, ESRD billing (CPT 90935-90999), transplant workflow |
+
+### MVP for pilot demo
+Phases 1-2 + Session 11 = 9 sessions. Vertical and Acumen integration progress in parallel; Session 11 sequenced ahead of AI Phase 3 because go-live depends on data flowing.
+
+### Open Questions for Maria's Meeting Today (2026-04-27)
+See tracker for the 6 questions to bring to the clinic stakeholder conversation.
+
+---
+
 ## NEW — SOC 2 Readiness: Policy & Evidence Gap Closure (0/14)
 
 **Tracker:** `docs/trackers/soc2-readiness-tracker.md`
