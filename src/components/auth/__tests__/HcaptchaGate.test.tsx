@@ -45,7 +45,9 @@ describe('HcaptchaGate', () => {
   const mockOnVerified = vi.fn();
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    // resetAllMocks (not clearAllMocks) so per-test mockRejectedValue
+    // overrides from earlier tests don't leak into later tests.
+    vi.resetAllMocks();
     mockOnVerified.mockResolvedValue(undefined);
     mockExecute.mockResolvedValue('test-token');
     mockVerifyHcaptchaToken.mockResolvedValue(undefined);

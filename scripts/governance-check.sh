@@ -237,6 +237,7 @@ WLM_MATCHES=$(
   | grep -v 'dist/' \
   | grep -v '\.md:' \
   | grep -v 'governance-check\.sh' \
+  | grep -v '\.claude/hooks/' \
   || true
 )
 WLM_COUNT=0

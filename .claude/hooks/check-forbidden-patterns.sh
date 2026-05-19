@@ -22,9 +22,11 @@ case "$FILE_PATH" in
   *__tests__*|*.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx) IS_TEST=true ;;
 esac
 
-# Skip the hook script itself + governance docs
+# Skip the hook script itself + governance docs + scanner scripts that
+# define these patterns as their own subject matter.
 case "$FILE_PATH" in
   *.claude/hooks/*|*CLAUDE.md|*.claude/rules/*) exit 0 ;;
+  */scripts/governance-check.sh|*/scripts/deno-typecheck.sh) exit 0 ;;
 esac
 
 VIOLATIONS=""
