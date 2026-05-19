@@ -8,7 +8,9 @@
 set -euo pipefail
 
 FUNCTIONS_DIR="supabase/functions"
-DENO_CONFIG="$FUNCTIONS_DIR/deno.json"
+# Absolute path: Deno 2.x resolves --config relative to the file being checked,
+# not the CWD, so a relative path would silently fail on every function.
+DENO_CONFIG="$(realpath "$FUNCTIONS_DIR/deno.json")"
 
 # Ensure deno is available
 if ! command -v deno &>/dev/null; then
@@ -67,10 +69,11 @@ CHECKED=0
 
 for target in "${TARGETS[@]}"; do
   fn_name=$(basename "$(dirname "$target")")
-  if deno check --config "$DENO_CONFIG" "$target" 2>/dev/null; then
+  if output=$(deno check --config "$DENO_CONFIG" "$target" 2>&1); then
     CHECKED=$((CHECKED + 1))
   else
     echo "  ❌ $fn_name has type errors"
+    echo "$output" | sed 's/^/      /'
     ERRORS=$((ERRORS + 1))
     CHECKED=$((CHECKED + 1))
   fi

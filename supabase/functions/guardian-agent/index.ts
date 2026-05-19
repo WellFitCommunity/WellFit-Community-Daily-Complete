@@ -567,6 +567,4 @@ async function autoHeal(supabase: SupabaseClient, alertId: string, tenantId: str
   })
 
   return { healed: false, ticket_created: true, ticket_id: ticketId, healing_strategy: healingStrategy }
-
-  return { alertId, tenantId, healingAction, success: true }
 }
