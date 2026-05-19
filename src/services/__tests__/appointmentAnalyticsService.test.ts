@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { PostgrestError } from '@supabase/supabase-js';
 import { AppointmentAnalyticsService } from '../appointmentAnalyticsService';
 
 // Mock Supabase client
@@ -24,6 +25,7 @@ vi.mock('../auditLogger', () => ({
 // Helper to create success response
 function mockSuccess<T>(data: T) {
   return {
+    success: true as const,
     data,
     error: null,
     count: null,
@@ -34,15 +36,19 @@ function mockSuccess<T>(data: T) {
 
 // Helper to create error response
 function mockError(message: string, code = '500') {
+  // PostgrestError is a class extending Error; tests mock the shape rather
+  // than constructing the real class, so cast at this boundary.
+  const error = {
+    message,
+    code,
+    details: '',
+    hint: '',
+    name: 'PostgrestError',
+  } as unknown as PostgrestError;
   return {
+    success: false as const,
     data: null,
-    error: {
-      message,
-      code,
-      details: '',
-      hint: '',
-      name: 'PostgrestError',
-    },
+    error,
     count: null,
     status: 500,
     statusText: 'Internal Server Error',

@@ -363,10 +363,13 @@ export class OfflineDataSync {
         // Remove IndexedDB-specific fields
         const { synced: _synced, timestamp: _timestamp, offline_captured: _offline_captured, ...cleanData } = item;
 
-        // Upsert to Supabase
+        // Upsert to Supabase. `tableName` is a runtime string, so the row
+        // type cannot be inferred — cast at this transport boundary so the
+        // Postgrest 2.106 RejectExcessProperties check doesn't trip on the
+        // visits|assessments|alerts union.
         const { error } = await supabase
           .from(tableName)
-          .upsert(cleanData, { onConflict: 'id' });
+          .upsert(cleanData as Record<string, unknown>, { onConflict: 'id' });
 
         if (error) {
 
