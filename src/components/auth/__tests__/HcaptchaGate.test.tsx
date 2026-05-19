@@ -45,9 +45,7 @@ describe('HcaptchaGate', () => {
   const mockOnVerified = vi.fn();
 
   beforeEach(() => {
-    // resetAllMocks (not clearAllMocks) so per-test mockRejectedValue
-    // overrides from earlier tests don't leak into later tests.
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     mockOnVerified.mockResolvedValue(undefined);
     mockExecute.mockResolvedValue('test-token');
     mockVerifyHcaptchaToken.mockResolvedValue(undefined);
@@ -190,14 +188,7 @@ describe('HcaptchaGate', () => {
         expect(screen.getByText('Invalid token')).toBeInTheDocument();
       });
 
-      // Wait one more tick so the rejected verifyHcaptchaToken settles
-      // before checking that onVerified was never reached. Without this,
-      // CI can race: the error text renders (from setError in catch) but
-      // the assertion fires before the microtask queue confirms no
-      // onVerified call happened.
-      await waitFor(() => {
-        expect(mockOnVerified).not.toHaveBeenCalled();
-      });
+      expect(mockOnVerified).not.toHaveBeenCalled();
     });
 
     it('should clear error on next submit attempt', async () => {
