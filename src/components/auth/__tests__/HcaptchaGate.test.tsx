@@ -190,7 +190,14 @@ describe('HcaptchaGate', () => {
         expect(screen.getByText('Invalid token')).toBeInTheDocument();
       });
 
-      expect(mockOnVerified).not.toHaveBeenCalled();
+      // Wait one more tick so the rejected verifyHcaptchaToken settles
+      // before checking that onVerified was never reached. Without this,
+      // CI can race: the error text renders (from setError in catch) but
+      // the assertion fires before the microtask queue confirms no
+      // onVerified call happened.
+      await waitFor(() => {
+        expect(mockOnVerified).not.toHaveBeenCalled();
+      });
     });
 
     it('should clear error on next submit attempt', async () => {
