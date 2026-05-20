@@ -106,6 +106,14 @@ serve(async (req: Request) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  // Resolve userId immediately after auth so downstream setup (tenant
+  // sensitivity fetch in Session 2 V2 reasoning integration) can use it
+  // without a Temporal Dead Zone crash. Prior layout declared `userId`
+  // after `fetchTenantSensitivity(... userId ...)` was called, which
+  // throws ReferenceError at runtime — broken since 2026-03-01 commit
+  // c45290df8 until fixed 2026-05-20.
+  const userId = userData.user.id;
+
   // Parse and validate scribe mode from query parameters
   const VALID_SCRIBE_MODES = ['smartscribe', 'compass-riley', 'consultation'] as const;
   type ScribeMode = typeof VALID_SCRIBE_MODES[number];
@@ -128,7 +136,6 @@ serve(async (req: Request) => {
 
   const { socket, response } = Deno.upgradeWebSocket(req);
 
-  const userId = userData.user.id;
   logger.info('WebSocket connection established', { userId, scribeMode });
 
   // 3) Relay: browser <-> Deepgram
