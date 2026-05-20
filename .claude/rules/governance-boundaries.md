@@ -377,20 +377,29 @@ This is the **one authorized cross-system read path**. It aggregates patient dat
 
 ### S9. MCP Servers
 
-All MCP servers are Shared Spine infrastructure (Tier 3 — service role required):
+All MCP servers are Shared Spine infrastructure. Tier annotations: T1 = external API only, T2 = user_scoped (JWT), T3 = admin (service role).
 
-| Server | Purpose |
-|--------|---------|
-| `mcp-fhir-server` | FHIR CRUD operations |
-| `mcp-hl7-x12-server` | HL7/X12 transformation |
-| `mcp-prior-auth-server` | Prior authorization workflow |
-| `mcp-clearinghouse-server` | Clearinghouse integration |
-| `mcp-cms-coverage-server` | CMS LCD/NCD lookups |
-| `mcp-npi-registry-server` | NPI validation |
-| `mcp-postgres-server` | Direct DB access |
-| `mcp-claude-server` | Claude API proxy |
-| `mcp-medical-codes-server` | Medical code lookups |
-| `mcp-edge-functions-server` | Edge function orchestration |
+This table is the single source of truth — `scripts/governance-drift-check.sh` parses it. To add or remove a server, edit this table.
+
+| Server | Tier | Purpose |
+|--------|------|---------|
+| `mcp-fhir-server` | T3 | FHIR CRUD operations |
+| `mcp-hl7-x12-server` | T3 | HL7/X12 transformation |
+| `mcp-prior-auth-server` | T3 | Prior authorization workflow |
+| `mcp-clearinghouse-server` | T3 | Clearinghouse integration |
+| `mcp-cms-coverage-server` | T3 | CMS LCD/NCD lookups |
+| `mcp-npi-registry-server` | T3 | NPI validation |
+| `mcp-postgres-server` | T3 | Direct DB access |
+| `mcp-claude-server` | T3 | Claude API proxy |
+| `mcp-medical-codes-server` | T3 | Medical code lookups |
+| `mcp-medical-coding-server` | T3 | Per-day encounter ledger + DRG grouping (Chain 6) |
+| `mcp-edge-functions-server` | T3 | Edge function orchestration |
+| `mcp-chain-orchestrator` | T3 | Multi-step MCP chain workflows (start, resume, approve, cancel) |
+| `mcp-drg-grouper-server` | T3 | Standalone AI-powered MS-DRG assignment (advisory only) |
+| `mcp-patient-context-server` | T2 | Canonical cross-system patient data path (Shared Spine S5) |
+| `mcp-cultural-competency-server` | T2 | Culturally-informed clinical context (8 population profiles, SDOH) |
+| `mcp-community-engagement-server` | T2 | Community wellness tools (greetings, suggestions, check-in questions) |
+| `mcp-pubmed-server` | T1 | Biomedical literature search via NCBI PubMed E-utilities |
 
 ### S10. Shared Edge Functions
 

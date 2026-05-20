@@ -69,8 +69,7 @@ jobs:
       - name: Run governance drift detection
         id: drift
         if: always()
-        run: bash scripts/governance-drift-check.sh
-        continue-on-error: true
+        run: bash scripts/governance-drift-check.sh --skip-tests
 
       - name: Report to summary
         if: always()
@@ -84,7 +83,7 @@ jobs:
           if [ "${{ steps.drift.outcome }}" == "success" ]; then
             echo "✅ Governance drift check passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Governance drift detected (non-blocking) — docs may need updating" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Governance drift detected — new god files, missing MCPs, or undocumented MCPs" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ============================================

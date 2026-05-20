@@ -111,22 +111,21 @@ describe('HcaptchaGate', () => {
 
   describe('Loading State', () => {
     it('should show loading text while submitting', async () => {
-      // Make verification slow
-      mockVerifyHcaptchaToken.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 100))
-      );
+      // Never-resolving promise keeps the component in the submitting state
+      // for the duration of the assertion. Using setTimeout here leaks: the
+      // timer fires ~100ms later, completing handleSubmit and calling
+      // mockOnVerified during a later test — racing the "not.toHaveBeenCalled"
+      // assertion at line ~191 in CI.
+      mockVerifyHcaptchaToken.mockImplementation(() => new Promise<void>(() => {}));
 
       render(<HcaptchaGate onVerified={mockOnVerified} />);
       fireEvent.click(screen.getByRole('button'));
 
-      // Should show loading state
       expect(screen.getByRole('button')).toHaveTextContent(/verifying/i);
     });
 
     it('should disable button while submitting', async () => {
-      mockVerifyHcaptchaToken.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 100))
-      );
+      mockVerifyHcaptchaToken.mockImplementation(() => new Promise<void>(() => {}));
 
       render(<HcaptchaGate onVerified={mockOnVerified} />);
       fireEvent.click(screen.getByRole('button'));

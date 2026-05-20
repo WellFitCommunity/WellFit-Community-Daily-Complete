@@ -21,33 +21,50 @@ for arg in "$@"; do
   esac
 done
 
-# --- Documented baselines from governance-boundaries.md and CLAUDE.md ---
+# --- Drift detection configuration ---
+# Numeric scale baselines come from CLAUDE.md "Current Status" and the scale
+# table at the bottom of governance-boundaries.md. They are informational —
+# drift past DRIFT_THRESHOLD only emits a warning line, never fails the build.
 DOC_COMMUNITY_COMPONENTS=15
 DOC_ADMIN_COMPONENTS=71
 DOC_EDGE_FUNCTIONS=144
 DOC_SERVICES=503
-DOC_TESTS=10893
+DOC_TESTS=11554
 DOC_AI_EDGE_SKILLS=28
 DOC_TABLES=248
-DOC_MCP_SERVERS=11
 GOD_FILE_LIMIT=600
 DRIFT_THRESHOLD=10  # percent
 STALE_DAYS=90
 
-# Documented MCP servers (from governance-boundaries.md S9)
-DOCUMENTED_MCP_SERVERS=(
-  mcp-claude-server
-  mcp-fhir-server
-  mcp-hl7-x12-server
-  mcp-prior-auth-server
-  mcp-clearinghouse-server
-  mcp-cms-coverage-server
-  mcp-npi-registry-server
-  mcp-postgres-server
-  mcp-medical-codes-server
-  mcp-edge-functions-server
-  mcp-medical-coding-server
-)
+GOVERNANCE_DOC="$REPO_ROOT/.claude/rules/governance-boundaries.md"
+GOD_FILE_BASELINE="$REPO_ROOT/scripts/god-file-baseline.txt"
+
+# Parse the MCP server list from governance-boundaries.md S9 (single source
+# of truth). The table rows look like: "| `mcp-foo-server` | T2 | ... |".
+# Anything between backticks in the S9 table is taken as a server name.
+parse_documented_mcp_servers() {
+  awk '
+    /^### S9\. MCP Servers/ { in_s9 = 1; next }
+    /^### S10\./           { in_s9 = 0 }
+    in_s9 && /^\| `mcp-/ {
+      match($0, /`mcp-[a-z0-9-]+`/)
+      if (RSTART > 0) {
+        name = substr($0, RSTART + 1, RLENGTH - 2)
+        print name
+      }
+    }
+  ' "$GOVERNANCE_DOC"
+}
+
+readarray -t DOCUMENTED_MCP_SERVERS < <(parse_documented_mcp_servers)
+DOC_MCP_SERVERS=${#DOCUMENTED_MCP_SERVERS[@]}
+
+if [ "$DOC_MCP_SERVERS" -eq 0 ]; then
+  echo "ERROR: Failed to parse MCP server list from $GOVERNANCE_DOC S9 section." >&2
+  echo "       Verify that section heading '### S9. MCP Servers' is present" >&2
+  echo "       and that the table rows use the format: | \`mcp-name\` | tier | purpose |" >&2
+  exit 2
+fi
 
 # --- Utility functions ---
 
@@ -134,6 +151,8 @@ echo ""
 
 # ============================================================
 # [3/7] God Files (>600 lines)
+# Pre-existing files in scripts/god-file-baseline.txt are warnings.
+# Only NEW files over the limit fail the build.
 # ============================================================
 echo "[3/7] God Files (>${GOD_FILE_LIMIT} lines)"
 
@@ -142,19 +161,32 @@ while IFS= read -r line; do
   god_files+=("$line")
 done < <(find "$REPO_ROOT/src" \( -name '*.ts' -o -name '*.tsx' \) \
   ! -path '*/__tests__/*' ! -path '*/node_modules/*' \
-  -exec awk -v limit="$GOD_FILE_LIMIT" -v root="$REPO_ROOT" \
+  ! -name '*.test.*' ! -name '*.spec.*' \
+  ! -name '*.generated.*' ! -name '*.d.ts' \
+  -exec awk -v limit="$GOD_FILE_LIMIT" \
   'END { if (NR > limit) printf "%s %d\n", FILENAME, NR }' {} \; 2>/dev/null)
+
+new_god_files=0
+baselined_god_files=0
+for gf in "${god_files[@]}"; do
+  filepath=$(echo "$gf" | awk '{print $1}')
+  linecount=$(echo "$gf" | awk '{print $2}')
+  relative="${filepath#"$REPO_ROOT/"}"
+
+  if [ -f "$GOD_FILE_BASELINE" ] && grep -qxF "$relative" "$GOD_FILE_BASELINE"; then
+    baselined_god_files=$(( baselined_god_files + 1 ))
+  else
+    new_god_files=$(( new_god_files + 1 ))
+    echo "    NEW: ${relative}: ${linecount} lines"
+  fi
+done
 
 if [ ${#god_files[@]} -eq 0 ]; then
   echo "  [PASS] No violations found"
+elif [ "$new_god_files" -eq 0 ]; then
+  echo "  [PASS] 0 new, ${baselined_god_files} pre-existing (see ${GOD_FILE_BASELINE#"$REPO_ROOT/"})"
 else
-  echo "  [FAIL] ${#god_files[@]} file(s) over ${GOD_FILE_LIMIT} lines:"
-  for gf in "${god_files[@]}"; do
-    filepath=$(echo "$gf" | awk '{print $1}')
-    linecount=$(echo "$gf" | awk '{print $2}')
-    relative="${filepath#"$REPO_ROOT/"}"
-    echo "    ${relative}: ${linecount} lines"
-  done
+  echo "  [FAIL] ${new_god_files} new file(s) over ${GOD_FILE_LIMIT} lines (${baselined_god_files} pre-existing baselined)"
   EXIT_CODE=1
 fi
 
@@ -239,10 +271,12 @@ else
 fi
 
 if [ ${#undocumented_mcp[@]} -gt 0 ]; then
-  echo "  Undocumented MCP servers (${#undocumented_mcp[@]} not in governance-boundaries.md):"
+  echo "  Undocumented MCP servers (${#undocumented_mcp[@]} not in governance-boundaries.md S9):"
   for u in "${undocumented_mcp[@]}"; do
     echo "    + ${u}"
   done
+  echo "  Fix: add a row to the S9 table in .claude/rules/governance-boundaries.md"
+  EXIT_CODE=1
 fi
 
 echo ""
@@ -276,7 +310,7 @@ echo "====================================="
 if [ "$EXIT_CODE" -eq 0 ]; then
   echo "Result: PASS — no critical drift detected"
 else
-  echo "Result: FAIL — critical issues found (god files or missing MCP servers)"
+  echo "Result: FAIL — critical drift (new god files, missing MCP servers, or undocumented MCP servers)"
 fi
 
 exit "$EXIT_CODE"
