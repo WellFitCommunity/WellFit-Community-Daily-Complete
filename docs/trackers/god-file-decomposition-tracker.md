@@ -68,6 +68,15 @@ These are the biggest offenders. Each one's decomposition unblocks several small
 | 9 | `src/services/mcp/mcpHL7X12Client.ts` | 1017 | MCP client | TODO |
 | 10 | `src/services/mpiMatchingService.ts` | 1010 | MPI | TODO |
 
+### Frontend god files (separately tracked — components, not services)
+
+The src/ count above is service-heavy. Largest frontend god file deserves its own callout because it's tied to a pitch asset:
+
+| # | File | Lines | Notes | Status |
+|---|------|-------|-------|--------|
+| F1 | `src/components/migration/EnterpriseMigrationDashboard.tsx` | 931 | Operator UI for the Intelligent Migration Engine (patent-pending IP). Largest single component file. Decompose into: panel-per-feature (lineage, snapshot, retry, workflow, quality, dedup) + shared types + barrel re-export. | TODO |
+| F2 | `src/services/guardian-agent/AISystemRecorder.ts` | 667 | rrweb-based DOM recorder for Guardian Eyes. Decompose into: recorder lifecycle, snapshot batching, storage upload, security event filtering, performance metric collection — each with own tests. | TODO |
+
 ---
 
 ## Priority Tier 2 — Top 10 Largest Edge Functions

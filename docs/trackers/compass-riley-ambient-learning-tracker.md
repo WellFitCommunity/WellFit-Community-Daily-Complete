@@ -75,9 +75,9 @@
 | Session | Focus | Deliverables | Status |
 |---------|-------|-------------|--------|
 | 1 | Wire Disconnected Features | Connect all dead code, fire `update-voice-profile`, render learning progress, activate milestone celebrations | **DONE** (2026-03-01) |
-| 2 | Clinical Style Profiler | Observe SOAP note edits, build physician style profile, specialty-aware terminology | **IN PROGRESS** — code complete, needs migrations + tests |
-| 3 | Intuitive Adaptation Engine | Auto-calibrating assistance, proactive correction suggestions, dictation cadence | TODO |
-| 4 | Testing & Verification | Behavioral tests, learning progression scenarios, edge cases | TODO |
+| 2 | Clinical Style Profiler | Observe SOAP note edits, build physician style profile, specialty-aware terminology | **DONE** (verified 2026-05-20 — migrations 20260302000000/000001 applied to remote, services invoked from `useSmartScribe.ts`, `PhysicianStyleProfile` rendered in `RealTimeSmartScribe.tsx`, 24 behavioral tests across `soapNoteEditObserver.test.ts` + `physicianStyleProfiler.test.ts`) |
+| 3 | Intuitive Adaptation Engine | Auto-calibrating assistance, proactive correction suggestions, dictation cadence | **75% — 3.1 remains** (3.2/3.3/3.4 verified DONE 2026-05-20) |
+| 4 | Testing & Verification | Behavioral tests, learning progression scenarios, edge cases | **PARTIAL** — `voiceLearningLifecycle.test.ts` + `ambientLearningSession3.test.ts` exist with behavioral coverage; per-session test plan from 4.1-4.7 not fully realized |
 
 ---
 
@@ -124,11 +124,29 @@
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 3.1 | Auto-calibrating assistance — if physician's style profile shows consistent verbosity preference, suggest or auto-adjust assistance level after 10+ sessions (with one-time confirmation) | `useScribePreferences.ts`, `physicianStyleProfiler.ts` | TODO |
-| 3.2 | Proactive correction suggestions — if same transcription error appears 3+ times without manual correction, surface a "Did Riley hear this wrong?" prompt | `audioProcessor.ts`, new: `proactiveCorrectionDetector.ts` | TODO |
-| 3.3 | Session pattern learning — track average encounter duration per physician, use to optimize when to trigger mid-encounter analysis vs end-of-encounter | `useSmartScribe.ts`, `physician_style_profiles` table | TODO |
-| 3.4 | Dictation cadence awareness — detect speaking speed and pause patterns to improve transcript segmentation (metadata only — no audio storage) | `audioProcessor.ts` | TODO |
-| 3.5 | Adaptive SOAP note generation — pass physician style profile to SOAP note edge function so generated notes match physician's preferred structure/verbosity from the start | `ai-soap-note-generator` edge function, `reasoningIntegration.ts` | TODO |
+| 3.1 | Auto-calibrating assistance — if physician's style profile shows consistent verbosity preference, suggest or auto-adjust assistance level after 10+ sessions (with one-time confirmation) | `useScribePreferences.ts`, `physicianStyleProfiler.ts` | **TODO — ONLY REMAINING SESSION 3 ITEM** |
+| 3.2 | Proactive correction suggestions — if same transcription error appears 3+ times without manual correction, surface a "Did Riley hear this wrong?" prompt | `audioProcessor.ts`, `proactiveCorrectionDetector.ts` (96 lines) | **DONE** (verified 2026-05-20 — `createProactiveCorrectionDetector` imported at `audioProcessor.ts:9`) |
+| 3.3 | Session pattern learning — track average encounter duration per physician, use to optimize when to trigger mid-encounter analysis vs end-of-encounter | `useSessionPatternLearning.ts` (106 lines) | **DONE** (verified 2026-05-20) |
+| 3.4 | Dictation cadence awareness — detect speaking speed and pause patterns to improve transcript segmentation (metadata only — no audio storage) | `audioProcessor.ts:170-264` | **DONE** (verified 2026-05-20 — `onCadenceUpdate(wpm, pausePattern)` callback with `'fast' \| 'normal' \| 'deliberate'` classification) |
+| 3.5 | Adaptive SOAP note generation — pass physician style profile to SOAP note edge function so generated notes match physician's preferred structure/verbosity from the start | `ai-soap-note-generator` edge function, `reasoningIntegration.ts` | TODO (status not yet verified) |
+
+### Session 3.1 — Detailed Scope (the only remaining Session 3 item)
+
+**Goal:** After a physician has 10+ sessions with a measured verbosity preference, Riley one-time-prompts them: "I've noticed you write concise notes — should I match that style by default?" If accepted, `provider_scribe_preferences.assistance_level` auto-updates to match. The physician can always change it back manually.
+
+**Files to touch:**
+- `src/services/physicianStyleProfiler.ts` — add `suggestAssistanceLevel()` that returns `null | { current, recommended, confidence }` based on profile maturity
+- `src/components/smart/hooks/useScribePreferences.ts` — call the suggestion fn on mount, hold the recommendation in state
+- `src/components/smart/AssistanceLevelControl.tsx` (or new modal) — render the one-time prompt, store `suggestion_dismissed_at` so it doesn't nag
+- New table column on `provider_scribe_preferences`: `last_auto_suggestion_at TIMESTAMPTZ` to enforce one-time-per-suggestion
+
+**Acceptance:**
+- After 10 sessions with verbosity score > +15 or < -15, prompt fires exactly once
+- Accepting the prompt mutates `assistance_level` and logs an audit row to `ai_transparency_log` with `skill_key='ambient_learning_calibration'`
+- Declining stores `last_auto_suggestion_at` so prompt won't fire again for 30 days
+- Tests: prompt fires at threshold, doesn't fire below, doesn't re-fire after dismissal, audit row written on accept
+
+**Estimate:** 2-3 hours (one session)
 
 ---
 
