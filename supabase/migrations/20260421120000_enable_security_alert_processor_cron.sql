@@ -63,24 +63,31 @@ SELECT cron.schedule(
   $$
 );
 
--- Record the operational change in audit_logs so SOC/ops has a trail
+-- Record the operational change in audit_logs so SOC/ops has a trail.
+-- Live schema uses event_type / event_category / operation / success / metadata
+-- (no severity/message columns — those were never added). The severity and
+-- message info is preserved inside metadata so downstream readers can recover it.
 INSERT INTO public.audit_logs (
   event_type,
-  severity,
-  message,
+  event_category,
+  operation,
+  success,
   metadata
 )
 VALUES (
   'CRON_JOB_ENABLED',
-  'INFO',
-  'security-alert-processor cron scheduled (every minute)',
+  'SYSTEM_EVENT',
+  'schedule_cron',
+  true,
   jsonb_build_object(
     'tracker', 'GRD-1',
     'migration', '20260421120000_enable_security_alert_processor_cron',
     'schedule', '* * * * *',
     'purpose', 'Multi-channel security alert notification (email/SMS/Slack/internal)',
     'auth_method', 'bearer_token_from_vault',
-    'cron_job', 'security-alert-processor'
+    'cron_job', 'security-alert-processor',
+    'severity', 'INFO',
+    'message', 'security-alert-processor cron scheduled (every minute)'
   )
 );
 

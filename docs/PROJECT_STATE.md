@@ -252,6 +252,16 @@ For full priority detail, open the tracker referenced in each "## CURRENT PRIORI
 
 ---
 
+## Known False Positives / Accepted Warnings
+
+These are advisor/linter findings we have deliberately accepted as non-issues. Do not re-investigate or attempt to "fix" them in future sessions unless explicitly requested.
+
+| Finding | Source | Reason accepted | Date | Action |
+|---|---|---|---|---|
+| `RLS Disabled in Public — public.spatial_ref_sys` | Supabase security advisor lint 0011 | PostGIS extension reference table (~8,500 static SRID rows like WGS84). Owned by `postgres` superuser; neither CLI migrations nor the Dashboard SQL Editor have ALTER privileges. Zero PHI. Affects every Supabase project with PostGIS — documented limitation. Migration `20260520005000_enable_rls_spatial_ref_sys.sql` attempted both via CLI and SQL Editor, both failed with `must be owner of table spatial_ref_sys`. Migration file removed. | 2026-05-20 | Dismissed in Supabase Dashboard → Advisors → Security |
+
+---
+
 ## History Archive
 
 Prior session logs, completed initiatives, and historical progress notes have been moved to:

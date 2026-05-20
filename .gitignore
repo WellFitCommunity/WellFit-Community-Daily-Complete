@@ -93,3 +93,4 @@ private/
 
 # Auto-generated database types (regenerate with: npm run db:types)
 src/types/database.generated.ts
+.vercel
