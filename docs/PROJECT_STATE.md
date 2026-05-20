@@ -230,6 +230,37 @@ For full priority detail, open the tracker referenced in each "## CURRENT PRIORI
 | Cardiology Module | `docs/trackers/cardiology-module-tracker.md` | Foundation BUILT, Phase 1 next (12-13 sessions total) |
 | Clinical Revenue Build | `docs/CLINICAL_REVENUE_BUILD_TRACKER.md` | Phase 1: 88%, Phase 2: 89% |
 | Test Coverage Scale | `docs/TEST_COVERAGE_SCALE_TRACKER.md` | Stale (Feb 4) — needs refresh |
+| **God File Decomposition** | `docs/trackers/god-file-decomposition-tracker.md` | **NEW (2026-05-20): 163 src/ + 21 edge function files >600 lines. Incremental, not a sprint.** |
+
+---
+
+## Weekly Housekeeping Checklist (NOT automated — run manually every Monday)
+
+The session on 2026-05-20 surfaced multiple silent-drift issues (Vercel unbuilt 65 days, GitHub App credential stale, 14 orphaned Vercel env vars, drift script lying under continue-on-error, 114 undeployed edge functions). None of these were caught by existing scheduled jobs — they were found by manual dashboard inspection. The current cron coverage is:
+
+- GitHub Actions hourly: `cleanup-pending-registrations` (DB cleanup only)
+- GitHub Actions Monday 2 AM UTC: `security-scan` (code lint only — doesn't check infra)
+- Supabase pg_cron: Guardian monitoring, billing, security retention, security-alert-processor (DB-internal only)
+- Vercel crons: **none configured**
+
+Until a real infra-health cron exists, this is a manual list. Run every Monday:
+
+| # | Check | How | Pass criteria |
+|---|-------|-----|---------------|
+| 1 | Vercel deploy freshness | https://vercel.com/maria-leblancs-projects/well-fit-community-daily-complete/deployments | Latest deploy within the past week |
+| 2 | Vercel env vars "needs attention" | https://vercel.com/maria-leblancs-projects/well-fit-community-daily-complete/settings/environment-variables | No yellow/red indicator on any var |
+| 3 | GitHub App still connected to Vercel | https://github.com/settings/installations | Vercel listed with WellFit-Community-Daily-Complete in access |
+| 4 | Supabase security advisor | https://supabase.com/dashboard/project/xkybsjnvuohpqpbkikyn/advisors/security | Only the documented false positives remain (see Known False Positives section) |
+| 5 | Supabase performance advisor | Same dashboard, performance tab | No new ERROR-level findings |
+| 6 | Edge function deploy drift | `git diff --name-only $(git log --format=%H --before="1 week ago" \| head -1)..HEAD -- supabase/functions/ \| head` | Recently touched functions are deployed (compare to `supabase functions list`) |
+| 7 | CI/CD pipeline last run | `gh run list --limit 5` | Most recent on `main` is green |
+| 8 | Governance scripts honest | `bash scripts/governance-check.sh && bash scripts/governance-drift-check.sh --skip-tests` | Both exit 0 |
+| 9 | Migration drift | `npx supabase db push --dry-run` | "Remote database is up to date" |
+| 10 | God file baseline drift | `bash scripts/governance-drift-check.sh --skip-tests 2>&1 \| grep god` | Pre-existing count not growing |
+
+**Time budget: 15-20 minutes if everything is healthy. Up to a few hours when something has drifted (like 2026-05-20).**
+
+The right long-term fix is to automate items 1-9 as a Sunday-night GitHub Action that emails Maria a report. Until that exists, this manual list is the safety net.
 
 ---
 
