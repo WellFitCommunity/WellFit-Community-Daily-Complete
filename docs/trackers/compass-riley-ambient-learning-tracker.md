@@ -76,8 +76,8 @@
 |---------|-------|-------------|--------|
 | 1 | Wire Disconnected Features | Connect all dead code, fire `update-voice-profile`, render learning progress, activate milestone celebrations | **DONE** (2026-03-01) |
 | 2 | Clinical Style Profiler | Observe SOAP note edits, build physician style profile, specialty-aware terminology | **DONE** (verified 2026-05-20 — migrations 20260302000000/000001 applied to remote, services invoked from `useSmartScribe.ts`, `PhysicianStyleProfile` rendered in `RealTimeSmartScribe.tsx`, 24 behavioral tests across `soapNoteEditObserver.test.ts` + `physicianStyleProfiler.test.ts`) |
-| 3 | Intuitive Adaptation Engine | Auto-calibrating assistance, proactive correction suggestions, dictation cadence | **75% — 3.1 remains** (3.2/3.3/3.4 verified DONE 2026-05-20) |
-| 4 | Testing & Verification | Behavioral tests, learning progression scenarios, edge cases | **PARTIAL** — `voiceLearningLifecycle.test.ts` + `ambientLearningSession3.test.ts` exist with behavioral coverage; per-session test plan from 4.1-4.7 not fully realized |
+| 3 | Intuitive Adaptation Engine | Auto-calibrating assistance, proactive correction suggestions, dictation cadence | **~95% — re-verified 2026-05-20.** 3.1 logic+tests DONE (`computeAutoCalibration` in `useScribePreferences.ts:90+`, wired in `useSmartScribe.ts:221`, 7 tests in `ambientLearningSession3.test.ts`); UI accept flow / audit log on accept / cooldown NOT verified. 3.2/3.3/3.4/3.5 fully DONE. |
+| 4 | Testing & Verification | Behavioral tests, learning progression scenarios, edge cases | **~60% — 4/7 explicitly DONE.** 4.1 lifecycle (`voiceLearningLifecycle.test.ts`), 4.3 profiler (`physicianStyleProfiler.test.ts`), 4.4 specialty-aware (one test in lifecycle), 4.5 auto-calibration (`ambientLearningSession3.test.ts`). Missing: 4.2 maturity progression boundaries, 4.6 edge cases (new physician / specialty switch / profile reset). 4.7 verification checkpoint trivial. |
 
 ---
 
@@ -124,29 +124,29 @@
 
 | # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 3.1 | Auto-calibrating assistance — if physician's style profile shows consistent verbosity preference, suggest or auto-adjust assistance level after 10+ sessions (with one-time confirmation) | `useScribePreferences.ts`, `physicianStyleProfiler.ts` | **TODO — ONLY REMAINING SESSION 3 ITEM** |
+| 3.1 | Auto-calibrating assistance — if physician's style profile shows consistent verbosity preference, suggest or auto-adjust assistance level after 10+ sessions (with one-time confirmation) | `useScribePreferences.ts:90+` (`computeAutoCalibration`), `useSmartScribe.ts:221` (useEffect wiring) | **MOSTLY DONE** (re-verified 2026-05-20) — calibration logic + 7 behavioral tests in `ambientLearningSession3.test.ts`. Remaining: UI accept flow + audit log on accept + 30-day cooldown after dismissal. ~2 hours. |
 | 3.2 | Proactive correction suggestions — if same transcription error appears 3+ times without manual correction, surface a "Did Riley hear this wrong?" prompt | `audioProcessor.ts`, `proactiveCorrectionDetector.ts` (96 lines) | **DONE** (verified 2026-05-20 — `createProactiveCorrectionDetector` imported at `audioProcessor.ts:9`) |
 | 3.3 | Session pattern learning — track average encounter duration per physician, use to optimize when to trigger mid-encounter analysis vs end-of-encounter | `useSessionPatternLearning.ts` (106 lines) | **DONE** (verified 2026-05-20) |
 | 3.4 | Dictation cadence awareness — detect speaking speed and pause patterns to improve transcript segmentation (metadata only — no audio storage) | `audioProcessor.ts:170-264` | **DONE** (verified 2026-05-20 — `onCadenceUpdate(wpm, pausePattern)` callback with `'fast' \| 'normal' \| 'deliberate'` classification) |
-| 3.5 | Adaptive SOAP note generation — pass physician style profile to SOAP note edge function so generated notes match physician's preferred structure/verbosity from the start | `ai-soap-note-generator` edge function, `reasoningIntegration.ts` | TODO (status not yet verified) |
+| 3.5 | Adaptive SOAP note generation — pass physician style profile to SOAP note edge function so generated notes match physician's preferred structure/verbosity from the start | `ai-soap-note-generator/index.ts:60-87` (style fetch), `promptBuilder.ts:97-128` (style instructions in prompt) | **DONE** (re-verified 2026-05-20 — SOAP generator queries `physician_style_profiles` table, builds verbosity/specialty/terminology/word-count instructions into the Claude prompt. **This closes the learning loop.**) |
 
-### Session 3.1 — Detailed Scope (the only remaining Session 3 item)
+### Session 3.1 — Remaining scope (UI + audit + cooldown only)
 
-**Goal:** After a physician has 10+ sessions with a measured verbosity preference, Riley one-time-prompts them: "I've noticed you write concise notes — should I match that style by default?" If accepted, `provider_scribe_preferences.assistance_level` auto-updates to match. The physician can always change it back manually.
+The computational core is built and tested. What remains is the human-facing layer:
 
 **Files to touch:**
-- `src/services/physicianStyleProfiler.ts` — add `suggestAssistanceLevel()` that returns `null | { current, recommended, confidence }` based on profile maturity
-- `src/components/smart/hooks/useScribePreferences.ts` — call the suggestion fn on mount, hold the recommendation in state
-- `src/components/smart/AssistanceLevelControl.tsx` (or new modal) — render the one-time prompt, store `suggestion_dismissed_at` so it doesn't nag
-- New table column on `provider_scribe_preferences`: `last_auto_suggestion_at TIMESTAMPTZ` to enforce one-time-per-suggestion
+- `src/components/smart/AssistanceLevelControl.tsx` (or new modal) — render the one-time accept/dismiss prompt when `autoCalibrationHint` is non-null
+- `src/services/ai/aiTransparencyService.ts` — add `skill_key='ambient_learning_calibration'` audit entry on accept
+- New table column on `provider_scribe_preferences`: `last_auto_suggestion_at TIMESTAMPTZ` to enforce 30-day cooldown after dismissal
+- Migration to add the column + RLS preserved
 
 **Acceptance:**
-- After 10 sessions with verbosity score > +15 or < -15, prompt fires exactly once
-- Accepting the prompt mutates `assistance_level` and logs an audit row to `ai_transparency_log` with `skill_key='ambient_learning_calibration'`
-- Declining stores `last_auto_suggestion_at` so prompt won't fire again for 30 days
-- Tests: prompt fires at threshold, doesn't fire below, doesn't re-fire after dismissal, audit row written on accept
+- When `autoCalibrationHint` is non-null AND `last_auto_suggestion_at` is null or > 30 days ago, the UI surfaces the prompt
+- Accepting mutates `assistance_level` AND writes an `ai_transparency_log` row with `skill_key='ambient_learning_calibration'` AND sets `last_auto_suggestion_at = now()`
+- Declining sets `last_auto_suggestion_at = now()` and stores the dismissed level
+- Tests: prompt fires at threshold, doesn't fire below, doesn't re-fire within 30 days of dismissal, audit row written on accept
 
-**Estimate:** 2-3 hours (one session)
+**Estimate:** 2 hours (one half-session)
 
 ---
 
