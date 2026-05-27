@@ -188,20 +188,20 @@ async function runMonitoringChecks(supabase: SupabaseClient, tenantId: string): 
   const [failedLoginsResult, dbErrorsResult, phiAccessResult, slowQueriesResult] = await Promise.all([
     supabase
       .from('audit_logs')
-      .select('*')
+      .select('id, ip_address, created_at')
       .eq('event_type', 'login_failed')
       .eq('tenant_id', tenantId)
       .gte('created_at', oneHourAgo)
       .limit(10),
     supabase
       .from('system_errors')
-      .select('*')
+      .select('id, error_type, created_at')
       .eq('tenant_id', tenantId)
       .gte('created_at', oneHourAgo)
       .limit(10),
     supabase
       .from('phi_access_logs')
-      .select('*')
+      .select('id, user_id, records_accessed, accessed_at')
       .eq('tenant_id', tenantId)
       .gte('accessed_at', oneHourAgo),
     supabase
@@ -255,7 +255,7 @@ async function runMonitoringChecks(supabase: SupabaseClient, tenantId: string): 
         message: 'Detected potentially unauthorized PHI access',
         metadata: {
           user_count: unusualAccess.length,
-          max_records_accessed: Math.max(...unusualAccess.map((a) => a.records_accessed)),
+          max_records_accessed: unusualAccess.reduce((max, a) => Math.max(max, a.records_accessed), 0),
           // NO PHI: only aggregate counts
         }
       })
@@ -311,25 +311,33 @@ async function sendAlertEmail(_supabase: SupabaseClient, alerts: SecurityAlert[]
       return;
     }
 
-    // Build alert summary
+    // Escape any HTML-significant characters before interpolation. alert.title,
+    // alert.message, alert.category, and alert.severity can carry values derived
+    // from monitoring data (error_type strings, query metadata, etc.), so they
+    // must never be inlined into the email body raw.
+    const escapeHtml = (s: string): string =>
+      s.replace(/&/g, '&amp;')
+       .replace(/</g, '&lt;')
+       .replace(/>/g, '&gt;')
+       .replace(/"/g, '&quot;')
+       .replace(/'/g, '&#39;');
+
     const alertSummary = alerts.map(alert =>
-      `🚨 ${alert.severity.toUpperCase()}: ${alert.title}\n   ${alert.message}\n   Category: ${alert.category}`
-    ).join('\n\n');
+      `🚨 ${escapeHtml(alert.severity.toUpperCase())}: ${escapeHtml(alert.title)}<br>` +
+      `   ${escapeHtml(alert.message)}<br>` +
+      `   Category: ${escapeHtml(alert.category)}`
+    ).join('<br><br>');
 
     const criticalCount = alerts.filter(a => a.severity === 'critical').length;
     const highCount = alerts.filter(a => a.severity === 'high').length;
 
-    const emailBody = `
-Guardian Alert System - ${criticalCount} Critical, ${highCount} High Priority Alerts
-
-${alertSummary}
-
----
-Detected at: ${new Date().toISOString()}
-View full details in your Guardian Security Panel
-
-This is an automated alert from Guardian monitoring system.
-`;
+    const emailBody =
+      `Guardian Alert System - ${criticalCount} Critical, ${highCount} High Priority Alerts<br><br>` +
+      `${alertSummary}<br><br>` +
+      `---<br>` +
+      `Detected at: ${new Date().toISOString()}<br>` +
+      `View full details in your Guardian Security Panel<br><br>` +
+      `This is an automated alert from Guardian monitoring system.`;
 
     // Call send-email function (using service role key as Bearer — recognized by A-2 auth fix)
     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
@@ -342,7 +350,7 @@ This is an automated alert from Guardian monitoring system.
       body: JSON.stringify({
         to: [{ email: adminEmail, name: 'System Admin' }],
         subject: `Guardian Alert: ${criticalCount + highCount} Critical/High Issues Detected`,
-        html: emailBody.replace(/\n/g, '<br>')
+        html: emailBody
       })
     });
 
