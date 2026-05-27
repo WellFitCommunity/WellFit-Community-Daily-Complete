@@ -616,7 +616,64 @@ supabase gen bearer-jwt --role authenticated --sub <user-uuid>
 
 ---
 
-## 16. Common Issues
+## 17. PHI Encryption Architecture — TWO KEYS, NEVER CONFLATE
+
+**This codebase runs two products (WellFit + Envision Atlus) with SEPARATE PHI encryption keys from SEPARATE key stores.** Confusing the two breaks clinical data encryption and is a HIPAA exposure. This is the #1 footgun in the encryption layer.
+
+### The two keys
+
+| Product | Key store | Variable name | Format |
+|---|---|---|---|
+| **WellFit (community)** | Supabase **Secrets** | `PHI_ENCRYPTION_KEY` (read in edge fns via `Deno.env.get('PHI_ENCRYPTION_KEY')`; persists into Postgres setting `app.settings.PHI_ENCRYPTION_KEY` for SQL contexts) | Plain string |
+| **Envision Atlus (clinical)** | Supabase **Vault** | `app.encryption_key` (read in SQL via `vault.decrypted_secrets`; persists into Postgres setting `app.phi_encryption_key` for SQL contexts) | Plain string |
+
+### How the encrypt_phi_text RPC selects which key
+
+```sql
+key_to_use := COALESCE(
+  encryption_key,                              -- 1. caller-provided arg (WellFit edge fn passes this)
+  current_setting('app.phi_encryption_key', true), -- 2. session-level setting (Envision Atlus Vault-derived)
+  'PHI-ENCRYPT-2025-WELLFIT-SECURE-KEY-V1'     -- 3. WellFit community fallback (LAST resort)
+);
+```
+
+The `use_clinical_key` parameter (where it exists in callers) controls which path: `true` lets the RPC fall through to priority 2 (Vault), `false` makes the caller pass the WellFit Secrets key as priority 1.
+
+### Which path is which caller
+
+| Caller | Uses which key? | How |
+|---|---|---|
+| `supabase/functions/phi-encrypt/index.ts` (edge fn) | **WellFit Secrets** | Reads `Deno.env.get('PHI_ENCRYPTION_KEY')` and passes it explicitly as the `encryption_key` arg → priority 1 in COALESCE |
+| `src/services/handoffService.ts` `encryptPHI()` / `decryptPHI()` | **Envision Atlus Vault** | Calls the RPC with `encryption_key: null` → priority 1 misses, falls through to priority 2 (Vault-derived session setting) |
+| `supabase/functions/get-risk-assessments/index.ts` | **WellFit Secrets** | Reads `Deno.env.get('PHI_ENCRYPTION_KEY')` directly |
+| `src/services/chwService.ts` (via `phiEncryptionClient.ts`) | **WellFit Secrets** | Calls the phi-encrypt edge function |
+
+### What NOT to do
+
+| Don't | Do |
+|---|---|
+| Assume "the PHI key" is singular | Always ask "which product's PHI?" before touching encryption code |
+| Move the Vault key into env vars or vice versa | The split is deliberate — different scopes, different rotation cadences, different threat models |
+| Pass an explicit `encryption_key` arg from a clinical caller (Atlus) | Pass `encryption_key: null` so the RPC uses the Vault key via `current_setting` |
+| Pass `encryption_key: null` from a community caller (WellFit) | Explicitly pass `Deno.env.get('PHI_ENCRYPTION_KEY')` |
+| Forget to set the Vault secret on a new Atlus environment | Without it, the RPC falls through to priority 3 (WellFit fallback) — Atlus data encrypts with the WRONG key |
+
+### Verification
+
+To confirm both keys are configured in any environment:
+
+1. **WellFit Secrets:** `supabase secrets list | grep PHI_ENCRYPTION_KEY` (CLI) OR Supabase Dashboard → Project Settings → Edge Functions → Secrets.
+2. **Envision Atlus Vault:** `SELECT name FROM vault.secrets WHERE name = 'app.encryption_key';` via MCP `execute_sql`. (Vault contents are never readable; only the presence of the secret is.)
+
+Tests documenting this architecture live in `src/services/__tests__/phiEncryption.test.ts` (Key Management describe block, lines ~260-279).
+
+### Migration history
+
+The current `encrypt_phi_text` function lives in migration `20251115180000_create_phi_encryption_functions.sql` and was later fixed for hardcoded-key fallback by `20251120000000_fix_hardcoded_phi_encryption_key.sql`. If the encrypt/decrypt behavior changes, those are the canonical files.
+
+---
+
+## 18. Common Issues
 
 ### Supabase Timing
 **Wait at least 60 seconds** after deploying edge functions or running migrations before testing.
