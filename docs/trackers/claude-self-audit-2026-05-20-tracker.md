@@ -181,7 +181,7 @@ grep -n "JSON.parse(cleaned)\|text.replace" supabase/functions/realtime_medical_
 
 | # | Item | Description | Files | Hours | Status |
 |---|------|-------------|-------|-------|--------|
-| API-3a | **(CRITICAL)** Fix `api_keys` RLS `WITH CHECK` gap | Live DB query confirms policy `api_keys_tenant` has `USING (tenant_id = get_current_tenant_id() AND is_tenant_admin())` but no `WITH CHECK`. Today an admin in tenant A can INSERT a row with `tenant_id = tenant B`. Empty table → moot now, but blocks any partner onboarding. Migration: `DROP POLICY ... CREATE POLICY ... FOR ALL USING (...) WITH CHECK (tenant_id = get_current_tenant_id() AND is_tenant_admin())`. | NEW migration | 0.5 | TODO |
+| API-3a | **(CRITICAL)** Fix `api_keys` RLS `WITH CHECK` gap | **Done:** applied via Supabase MCP `apply_migration` 2026-05-27, version `20260527124543`. Policy `api_keys_tenant` now has `WITH CHECK` matching `USING` (both = `(tenant_id = get_current_tenant_id() AND is_tenant_admin())`). Cross-tenant INSERT/UPDATE now blocked at RLS. Verified post-apply with `pg_policies` query. Also resolved a separate migration timestamp drift (5 prior migrations had local timestamps that didn't match remote `schema_migrations`); renamed to match. `npx supabase db push --dry-run` now reports "Remote database is up to date." | `supabase/migrations/20260527124543_fix_api_keys_rls_with_check.sql` | 0.5 (actual ~1.5h incl. drift fix) | **DONE** |
 | API-3b | Add tracking columns to `api_keys` | Migration: `ALTER TABLE api_keys ADD COLUMN last_used_at timestamptz, ADD COLUMN use_count bigint NOT NULL DEFAULT 0, ADD COLUMN key_prefix text, ADD COLUMN revocation_reason text`. Index `(last_used_at DESC NULLS LAST)`. | NEW migration | 0.5 | TODO |
 | API-3c | New `api_key_audit_log` table | Mirror `mcp_key_audit_log` shape but as its OWN table — separate audit lifecycle, retention, RLS, partner-readable when needed. Columns: `id`, `api_key_id` (FK ON DELETE CASCADE), `tenant_id`, `validated_at`, `outcome` (success/invalid/revoked/expired/scope_denied), `ip_address inet`, `user_agent text`, `caller_function text`. RLS: tenant-scoped admin SELECT; INSERT only via SECURITY DEFINER RPC. Index `(api_key_id, validated_at DESC)`. | NEW migration | 1 | TODO |
 | API-3d | New `validate_api_key(p_key_prefix, p_key_hash, p_required_scope)` RPC | Mirror `validate_mcp_key`. SECURITY DEFINER + `SET search_path = public`. Steps: find by prefix+hash, check `revoked_at IS NULL`, check `expires_at > now()` (when API-3h lands), check scope (when API-3j lands), UPDATE `use_count + last_used_at`, INSERT `api_key_audit_log` row, return scopes + tenant_id + key_id. Returns NULL or raises EXCEPTION on failure. | NEW migration | 1.5 | TODO |
@@ -227,8 +227,8 @@ grep -n "JSON.parse(cleaned)\|text.replace" supabase/functions/realtime_medical_
 | Session 4 — Feature High Priority | B-2, B-3, T-2, T-3, AI-2, AI-3, SH-1 | ~10.75h | **0/7 TODO** |
 | Session 5 — Polish + MCP Hardening | M-1, M-2, M-3, M-4, B-4, B-5, B-6, T-4, T-5, AI-4, SH-3, SH-4 | ~13.75h | **0/12 TODO** |
 | Session 6 wave 1 — Compass Riley + Guardian + ApiKeyManager | CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6 | ~12h | **9/9 DONE** |
-| Session 6 wave 2 — API-3 external channel hardening | API-3a..API-3l (Session A + B) | ~14h | **0/12 TODO** (plan landed; Maria-approved) |
-| **Total** | **55 items** | **~75h** | **31/55** |
+| Session 6 wave 2 — API-3 external channel hardening | API-3a..API-3l (Session A + B) | ~14h | **1/12 DONE** (API-3a applied + drift fix) |
+| **Total** | **55 items** | **~75h** | **32/55** |
 
 ---
 
