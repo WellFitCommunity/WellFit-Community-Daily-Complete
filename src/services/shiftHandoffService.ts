@@ -277,12 +277,28 @@ export async function getNurseBypassCount(): Promise<number> {
   return (data as number) ?? 0;
 }
 
+/**
+ * Log an emergency bypass of the shift handoff workflow.
+ *
+ * DRIFT-2-FIX + SH-3 + SH-4 (2026-05-27): the underlying RPC was dropped
+ * by migration 20251209110000 (the feature has been broken in production
+ * since Dec 2025). Rebuilt in migration 20260527025413_handoff_emergency_bypasses
+ * with stronger guarantees:
+ *
+ *   - SH-3: patient names are looked up server-side from `profiles` via
+ *     the supplied id array. Clients no longer pass names over the wire —
+ *     PHI minimization.
+ *   - SH-4: client IP is captured server-side from request headers. Clients
+ *     no longer claim an IP.
+ *   - The RPC writes into `handoff_emergency_bypasses` (new dedicated
+ *     table, separate from the section-overrides use of
+ *     `shift_handoff_overrides`).
+ */
 export async function logEmergencyBypass(
   shiftDate: string,
   shiftType: ShiftType,
   pendingCount: number,
   pendingPatientIds: string[],
-  pendingPatientNames: string[],
   overrideReason: string,
   overrideExplanation: string,
   nurseSignature: string
@@ -298,12 +314,10 @@ export async function logEmergencyBypass(
     p_shift_type: shiftType,
     p_pending_count: pendingCount,
     p_pending_patient_ids: pendingPatientIds,
-    p_pending_patient_names: pendingPatientNames,
     p_override_reason: overrideReason,
     p_override_explanation: overrideExplanation,
     p_nurse_signature: nurseSignature,
-    p_ip_address: null,
-    p_user_agent: navigator.userAgent,
+    p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
   });
 
   if (error) {

@@ -363,10 +363,11 @@ export const ShiftHandoffDashboard: React.FC = () => {
   // Emergency bypass
   const handleBypass = async (bypassData: BypassFormData) => {
     const pendingPatients = handoffSummary.filter(p => !p.nurse_reviewed);
+    // SH-3: patient names are looked up server-side by log_handoff_override
+    // from the supplied ID array. We no longer send names over the wire.
     const result = await ShiftHandoffService.logEmergencyBypass(
       new Date().toISOString().split('T')[0], shiftType, pendingPatients.length,
       pendingPatients.map(p => p.patient_id),
-      pendingPatients.map(p => `${p.room_number ? `Room ${p.room_number}` : 'No Room'} - ${p.patient_name}`),
       bypassData.override_reason, bypassData.override_explanation, bypassData.nurse_signature
     );
     setShowBypassModal(false);
