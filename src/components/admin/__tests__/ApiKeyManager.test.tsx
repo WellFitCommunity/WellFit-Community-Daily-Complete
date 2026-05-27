@@ -57,6 +57,10 @@ import ApiKeyManager from '../ApiKeyManager';
 // TEST DATA
 // ============================================================================
 
+// Post-API-3b: api_keys carries 4 tracking columns populated by the
+// validate_api_key RPC (use_count, last_used_at, key_prefix, revocation_reason).
+// Tests use mid-range values so the high-usage revoke guard (>1000) does NOT
+// trigger by default — the dedicated revoke tests override as needed.
 const MOCK_API_KEYS_RAW = [
   {
     id: 'key-001',
@@ -65,6 +69,10 @@ const MOCK_API_KEYS_RAW = [
     created_by: 'user-001',
     created_at: '2026-02-20T10:00:00Z',
     revoked_at: null,
+    last_used_at: '2026-02-25T08:30:00Z',
+    use_count: 42,
+    key_prefix: 'ak_alpha',
+    revocation_reason: null,
   },
   {
     id: 'key-002',
@@ -73,6 +81,10 @@ const MOCK_API_KEYS_RAW = [
     created_by: 'user-002',
     created_at: '2026-02-19T10:00:00Z',
     revoked_at: '2026-02-21T10:00:00Z',
+    last_used_at: '2026-02-20T15:45:00Z',
+    use_count: 7,
+    key_prefix: 'ak_beta',
+    revocation_reason: 'Partner offboarded',
   },
   {
     id: 'key-003',
@@ -81,6 +93,10 @@ const MOCK_API_KEYS_RAW = [
     created_by: 'user-003',
     created_at: '2026-02-18T10:00:00Z',
     revoked_at: null,
+    last_used_at: null,
+    use_count: 0,
+    key_prefix: 'ak_gamma',
+    revocation_reason: null,
   },
 ];
 
@@ -187,7 +203,10 @@ describe('ApiKeyManager', () => {
   it('displays total usage count', async () => {
     await renderLoaded();
     const usageCard = screen.getByText('Total Usage').parentElement;
-    expect(usageCard).toHaveTextContent('0');
+    // Post-API-3f: HeaderStats sums real `usage_count` (= `use_count` from
+    // the validate_api_key RPC). Mock fixtures use 42 + 7 + 0 = 49.
+    // Previously this asserted '0' because the UI hardcoded usage_count = 0.
+    expect(usageCard).toHaveTextContent('49');
   });
 
   it('displays recently used count', async () => {
