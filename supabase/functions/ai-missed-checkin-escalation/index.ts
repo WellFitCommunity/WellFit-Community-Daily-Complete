@@ -13,13 +13,13 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { HAIKU_MODEL } from "../_shared/models.ts";
 import { recordDecisionLink } from "../_shared/decisionChain.ts";
-import { requireUser } from "../_shared/auth.ts";
+import { requireUser, requirePatientAccess } from "../_shared/auth.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -132,6 +132,25 @@ serve(async (req) => {
         JSON.stringify({ error: "Missing required field: patientId" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // AI-1-SWEEP fix: confirm caller is allowed to escalate for this patientId.
+    // Legitimate callers are clinical/admin staff or the patient themselves.
+    // Service-role cron callers bypass requireUser entirely (they hit this
+    // function with service_role JWT, which auth.getUser resolves with a
+    // service-role identity — that case isn't reached here because
+    // requireUser would have thrown earlier on a service-role JWT).
+    try {
+      await requirePatientAccess(user.id, patientId);
+    } catch (authzResponse: unknown) {
+      if (authzResponse instanceof Response) {
+        logger.security("AI_MISSED_CHECKIN_ESCALATION_AUTHZ_DENIED", {
+          callerUserId: user.id,
+          requestedPatientId: patientId,
+        });
+        return authzResponse;
+      }
+      throw authzResponse;
     }
 
     if (!ANTHROPIC_API_KEY) {

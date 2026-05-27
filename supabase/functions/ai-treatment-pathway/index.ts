@@ -23,9 +23,9 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { requireUser } from "../_shared/auth.ts";
+import { requireUser, requirePatientAccess } from "../_shared/auth.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
@@ -243,6 +243,20 @@ serve(async (req) => {
         JSON.stringify({ error: "Missing required field: condition" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // AI-1-SWEEP fix: confirm caller is allowed to query this patientId.
+    try {
+      await requirePatientAccess(user.id, patientId);
+    } catch (authzResponse: unknown) {
+      if (authzResponse instanceof Response) {
+        logger.security("AI_TREATMENT_PATHWAY_AUTHZ_DENIED", {
+          callerUserId: user.id,
+          requestedPatientId: patientId,
+        });
+        return authzResponse;
+      }
+      throw authzResponse;
     }
 
     if (!ANTHROPIC_API_KEY) {

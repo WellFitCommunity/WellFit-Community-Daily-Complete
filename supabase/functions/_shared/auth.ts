@@ -64,3 +64,61 @@ export function requireInternal(req: Request) {
     throw new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } });
   }
 }
+
+/**
+ * AI-1 authorization gate.
+ *
+ * Confirms the authenticated caller is allowed to access `patientId`'s data.
+ * Allow conditions:
+ *   1. caller is the patient (self-access via auth.users.id === patientId)
+ *   2. caller has a role in `clinicalRoles` (default: admin/super_admin/
+ *      physician/nurse/care_manager/case_manager — matches the
+ *      send-team-alert and ai-nurseos-burnout-advisor convention)
+ *
+ * Conservative by design: a clinician must hold one of the allowed roles
+ * globally, not "be on the patient's care team." The care-team check is a
+ * legitimate follow-up tightening once the schema confirms `care_team_members`
+ * is consistently populated. Until then this CLOSES the AI-1 PHI hole.
+ *
+ * Throws a Response (401/403) on rejection so callers can re-throw.
+ * Returns the caller's role name on success.
+ */
+export async function requirePatientAccess(
+  callerUserId: string,
+  patientId: string,
+  clinicalRoles: string[] = [
+    "admin",
+    "super_admin",
+    "physician",
+    "nurse",
+    "case_manager",
+    "care_manager",
+  ],
+): Promise<string> {
+  // Self-access — patient querying their own data.
+  if (callerUserId === patientId) {
+    return "self";
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("role_id, roles:role_id ( id, name )")
+    .eq("user_id", callerUserId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Response(JSON.stringify({ error: "Authorization lookup failed" }), { status: 500 });
+  }
+
+  const roles = data?.roles as { id: string; name: string } | { id: string; name: string }[] | null;
+  const roleName = Array.isArray(roles) ? roles[0]?.name : roles?.name ?? null;
+
+  if (!roleName || !clinicalRoles.includes(roleName)) {
+    throw new Response(
+      JSON.stringify({ error: "Forbidden: not authorized to access this patient" }),
+      { status: 403 },
+    );
+  }
+
+  return roleName;
+}

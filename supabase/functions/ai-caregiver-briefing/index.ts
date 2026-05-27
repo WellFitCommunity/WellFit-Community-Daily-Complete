@@ -13,12 +13,12 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { HAIKU_MODEL } from "../_shared/models.ts";
-import { requireUser } from "../_shared/auth.ts";
+import { requireUser, requirePatientAccess } from "../_shared/auth.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -89,6 +89,25 @@ serve(async (req) => {
         JSON.stringify({ error: "Missing required fields: patientId, caregiverId" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // AI-1-SWEEP fix: confirm caller is allowed to query this patientId.
+    // Caregivers in this schema authenticate via PIN flow (caregiver_access_log,
+    // not auth.users), so the JWT caller here is a patient (self-access) or a
+    // staff member orchestrating caregiver communications. caregiverId itself
+    // is a patient_caregivers.id reference and is NOT used for authorization.
+    try {
+      await requirePatientAccess(user.id, patientId);
+    } catch (authzResponse: unknown) {
+      if (authzResponse instanceof Response) {
+        logger.security("AI_CAREGIVER_BRIEFING_AUTHZ_DENIED", {
+          callerUserId: user.id,
+          requestedPatientId: patientId,
+          requestedCaregiverId: caregiverId,
+        });
+        return authzResponse;
+      }
+      throw authzResponse;
     }
 
     if (!ANTHROPIC_API_KEY) {

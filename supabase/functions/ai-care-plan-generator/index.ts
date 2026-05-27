@@ -18,7 +18,7 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
@@ -40,7 +40,7 @@ import {
 import { logUsage } from "./usageLogging.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
-import { requireUser } from "../_shared/auth.ts";
+import { requireUser, requirePatientAccess } from "../_shared/auth.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -103,6 +103,20 @@ serve(async (req) => {
           },
         }
       );
+    }
+
+    // AI-1-SWEEP fix: confirm caller is allowed to query this patientId.
+    try {
+      await requirePatientAccess(user.id, patientId);
+    } catch (authzResponse: unknown) {
+      if (authzResponse instanceof Response) {
+        logger.security("AI_CARE_PLAN_GENERATOR_AUTHZ_DENIED", {
+          callerUserId: user.id,
+          requestedPatientId: patientId,
+        });
+        return authzResponse;
+      }
+      throw authzResponse;
     }
 
     if (!ANTHROPIC_API_KEY) {
