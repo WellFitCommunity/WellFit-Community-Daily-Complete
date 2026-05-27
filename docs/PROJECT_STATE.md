@@ -3,10 +3,33 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-05-27
-**Last Session:** Claude self-audit remediation Sessions 1–4 landed in commit `2abe1ff2` (PHI key hardening, 3 webhook signature gates, AI Burnout Advisor authz + 2 sister fixes, SH-1 RPC ownership migration applied to live DB, CI gates for VITE_* secrets + 600-line god files, weather-proxy edge function, Template Maker tenant fix). Session 5 (polish + MCP hardening) in progress.
+**Last Updated:** 2026-05-27 (end-of-day)
+**Last Session:** Self-audit Session 6 wave 1 complete (9 items: CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6). API-3 reclassified after live-DB research surfaced that `api_keys` is the intentional external-partner channel (not orphan drift). API-3a applied (cross-tenant RLS WITH CHECK fix) + migration timestamp drift resolved. 9 commits landed locally, NOT yet pushed to origin. **Next session picks up at API-3b** (tracking columns on api_keys).
 **Updated By:** Claude Opus 4.7 (1M context)
-**Codebase Health:** 11,726+ tests, 0 lint warnings, 0 typecheck errors in changed files, 0 `console.log` in production; two new CI gates active (file-size, VITE_*-secret pattern)
+**Codebase Health:** 11,726+ tests, 0 lint warnings, 0 typecheck errors in changed files, 0 `console.log` in production; THREE CI gates now active (file-size, VITE_*-secret pattern, shadow-import TDZ). `npx supabase db push --dry-run` reports "Remote database is up to date."
+
+---
+
+## NEXT SESSION — START HERE
+
+**Pick up at API-3b** in `docs/trackers/claude-self-audit-2026-05-20-tracker.md` (the "API-3 Plan — External API Channel Hardening" section).
+
+**Status snapshot:**
+- API-3 plan landed in commit `d8386f94` (12 items split across Session A + Session B)
+- API-3a DONE in commit `9154e321` (RLS WITH CHECK fix applied to live DB; drift resolved)
+- API-3b through API-3g remain in Session A — these can run autonomously since the plan is Maria-approved
+- API-3h through API-3l are Session B and BLOCK on Maria's scope vocabulary + expiration policy decisions (open questions are in the tracker)
+
+**Recommended first action of next session:**
+1. Read `CLAUDE.md` + `.claude/rules/supabase.md` §17 (two PHI keys, never conflate)
+2. Read `docs/trackers/claude-self-audit-2026-05-20-tracker.md` — find "Session A" table
+3. Start API-3b (add tracking columns `last_used_at`, `use_count`, `key_prefix`, `revocation_reason` to api_keys)
+4. Continue sequentially: API-3c (audit log table) → API-3d (validate_api_key RPC) → API-3e (edge fn wrapper) → API-3f (UI) → API-3g (tests)
+
+**Important context for next session:**
+- 9 commits this session are LOCAL ONLY. Maria did NOT push to origin — confirm with her before pushing.
+- `api_keys` table is empty in production (0 rows) — schema changes are non-destructive
+- The 5 self-audit sister bugs surfaced this session need to land at some point: G-3-SISTER-1/2 (HTML interpolation in send-team-alert + ld-alert-notifier), CR-2-SISTER-1..4 (JSON regex stripping in 4 other files)
 
 **Headline finding (still true):** MCP server infrastructure is the strongest layer in the codebase by a wide margin — order-of-magnitude lower defect density than application features. **Lead the Anthropic pitch with the MCP architecture story, not the feature list.** See [project_mcp_protocol_governance.md](../memory/project_mcp_protocol_governance.md).
 
@@ -17,12 +40,12 @@
 
 ---
 
-## CURRENT PRIORITY — Claude Self-Audit Remediation (22/44+ DONE, Session 5 in progress)
+## CURRENT PRIORITY — Claude Self-Audit Remediation (32/55 DONE)
 
 **Tracker:** `docs/trackers/claude-self-audit-2026-05-20-tracker.md`
-**Status:** 22 tracker items DONE in commit `2abe1ff2`; Session 5 (12 items) in progress; T-2 deferred (god-file decomp).
-**Newly filed in Session 1–4:** CRIT-1, CRIT-2, AI-1-SISTER-1, AI-1-SISTER-2, AI-1-SWEEP, DRIFT-1, UI-MISSING-ROUTES-1, RPC-SEARCH-PATH-1
-**Live DB migrations applied via MCP:** `bulk_nurse_review_handoff_risks_rpc` (SH-1).
+**Status:** Sessions 1-5 complete (22 items). Session 6 wave 1 complete (9 items: CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6). Session 6 wave 2 = API-3 plan (12 items, 1 done = API-3a). Total 32/55.
+**Newly filed during 2026-05-27 session:** CRIT-1, CRIT-2, AI-1-SISTER-1, AI-1-SISTER-2, AI-1-SWEEP, DRIFT-1, UI-MISSING-ROUTES-1, RPC-SEARCH-PATH-1, G-3-SISTER-1, G-3-SISTER-2, CR-2-SISTER-1, CR-2-SISTER-2, CR-2-SISTER-3, CR-2-SISTER-4
+**Live DB migrations applied via MCP this session:** `bulk_nurse_review_handoff_risks_rpc` (SH-1), `burnout_thresholds_tenant_config` (B-6), `documentation_templates_richer_fields` (T-4), `fix_mcp_audit_logs_rls` (M-4), `handoff_emergency_bypasses_rebuild` (SH-3/4 + DRIFT-2), `fix_api_keys_rls_with_check` (API-3a).
 
 ### Session 1 — Critical Security: PHI Key + Webhooks (~13h, 5 items)
 - **S-PHI-1** — Move PHI master key out of browser; build `phi-crypto` edge function
