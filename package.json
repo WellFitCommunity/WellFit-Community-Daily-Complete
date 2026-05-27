@@ -118,7 +118,10 @@
     "tar": "^7.5.6",
     "minimatch": ">=10.2.3",
     "rollup": ">=4.59.0",
-    "protobufjs": ">=7.5.5"
+    "protobufjs": ">=7.5.5",
+    "js-cookie": "^3.0.7",
+    "tmp": "^0.2.6",
+    "uuid": "^11.1.1"
   },
   "scripts": {
     "dev": "vite",
