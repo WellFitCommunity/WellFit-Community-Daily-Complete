@@ -37,8 +37,8 @@ export function useToasts(): UseToastsResult {
 
 /**
  * Transform raw `api_keys` rows into the `ApiKey` shape consumed by the UI.
- * The computed fields (`active`, `org_name`, etc.) compensate for the legacy
- * column names in the database.
+ * `usage_count` / `last_used` are aliased onto the real tracking columns
+ * (`use_count` / `last_used_at`, populated by the validate_api_key RPC).
  */
 function transformRows(rows: ApiKeyRow[] | null): ApiKey[] {
   return (rows ?? []).map((key) => ({
@@ -46,8 +46,8 @@ function transformRows(rows: ApiKeyRow[] | null): ApiKey[] {
     org_name: key.label,
     api_key_hash: key.key_hash,
     active: !key.revoked_at,
-    usage_count: 0, // Not tracked in current schema
-    last_used: null, // Not tracked in current schema
+    usage_count: key.use_count,
+    last_used: key.last_used_at,
     user_id: key.created_by,
   }));
 }
@@ -86,7 +86,9 @@ export function useApiKeys({ addToast }: UseApiKeysOptions): UseApiKeysResult {
       try {
         const { data, error: supabaseError } = await supabase
           .from('api_keys')
-          .select('id, label, key_hash, created_by, created_at, revoked_at')
+          .select(
+            'id, label, key_hash, created_by, created_at, revoked_at, last_used_at, use_count, key_prefix, revocation_reason',
+          )
           .order('created_at', { ascending: false });
 
         if (supabaseError) {

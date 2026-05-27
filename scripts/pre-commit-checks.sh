@@ -278,13 +278,42 @@ if [ -n "$STAGED_MIG" ]; then
 
   # ---------------------------------------------------------------------------
   # 16. WITH CHECK (true) on audit/security tables — spoofable identity
+  #
+  # Exemption: per adversarial-audit-lessons #4, a policy scoped TO service_role
+  # may use WITH CHECK (true) because service_role bypasses RLS anyway and the
+  # `TO service_role` clause itself blocks authenticated/anon from using it.
+  # We detect this per-policy-block (CREATE POLICY ... ;) so a service_role
+  # INSERT policy in the same file as a user-facing policy doesn't accidentally
+  # mask a real violation.
   # ---------------------------------------------------------------------------
   local_audit_check_true=""
   for f in $STAGED_MIG; do
     [ ! -f "$f" ] && continue
-    # Look for: a policy block that references *_log/*_audit table AND has WITH CHECK (true)
+    # Only inspect files that touch an audit/security table
     if grep -lE 'ON\s+public\.(audit_logs|phi_access_logs|admin_audit_log|.*_audit_log|.*_log)\b' "$f" >/dev/null 2>&1; then
-      hits=$(grep -nE 'WITH\s+CHECK\s*\(\s*true\s*\)' "$f" 2>/dev/null)
+      hits=$(awk '
+        BEGIN { in_block=0; check_true_line=0; to_service_role=0; block_text="" }
+        /CREATE[[:space:]]+POLICY/ {
+          in_block=1; check_true_line=0; to_service_role=0; block_text=$0
+          next
+        }
+        in_block {
+          block_text = block_text "\n" $0
+          if ($0 ~ /WITH[[:space:]]+CHECK[[:space:]]*\([[:space:]]*true[[:space:]]*\)/) {
+            check_true_line = NR
+          }
+          if ($0 ~ /^[[:space:]]*TO[[:space:]]+service_role([[:space:],]|$)/) {
+            to_service_role = 1
+          }
+          # End of policy block: a line ending with ;
+          if ($0 ~ /;[[:space:]]*$/) {
+            if (check_true_line > 0 && to_service_role == 0) {
+              print check_true_line ":  WITH CHECK (true);"
+            }
+            in_block=0; check_true_line=0; to_service_role=0; block_text=""
+          }
+        }
+      ' "$f")
       if [ -n "$hits" ]; then
         local_audit_check_true="${local_audit_check_true}${f}:\n${hits}\n"
       fi

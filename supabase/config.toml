@@ -85,3 +85,9 @@ verify_jwt = false
 
 [functions.mcp-prior-auth-server]
 verify_jwt = false
+
+# External partner API key validation. Callers present a partner-issued
+# Bearer key (not a Supabase JWT), so platform JWT verification is bypassed
+# in favor of the function's own SHA-256 hash + validate_api_key RPC check.
+[functions.validate-api-key]
+verify_jwt = false

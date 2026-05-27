@@ -226,6 +226,8 @@ export async function exportKeysToCsv(
       'Last Used': formatDate(key.last_used),
       Created: formatDate(key.created_at),
       'Created By': key.created_by || 'System',
+      'Key Prefix': key.key_prefix ?? '',
+      'Revocation Reason': key.revocation_reason ?? '',
     }));
 
     const headers = Object.keys(exportData[0] || {});
