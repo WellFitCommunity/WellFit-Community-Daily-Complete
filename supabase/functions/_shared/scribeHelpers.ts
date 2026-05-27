@@ -8,6 +8,82 @@ import type { EncounterState } from './encounterStateManager.ts';
 import { CONDENSED_GROUNDING_RULES, NURSE_SCOPE_GUARD } from './clinicalGroundingRules.ts';
 import { CONDENSED_DRIFT_GUARD } from './conversationDriftGuard.ts';
 
+// ============================================================================
+// Structured Output Schema (CLAUDE.md Rule #16 — CR-2)
+//
+// Forces Claude to return JSON matching TranscriptionAnalysis via the Anthropic
+// tool_choice pattern. Used by realtime_medical_transcription. All
+// TranscriptionAnalysis fields are optional so the tool schema is required-
+// empty; the model populates whatever applies.
+// ============================================================================
+export const TRANSCRIPTION_ANALYSIS_TOOL = {
+  name: "submit_transcription_analysis",
+  description: "Submit the structured medical transcription analysis result, including suggested billing codes, SOAP note components, grounding flags, and encounter state updates.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      conversational_note: { type: "string" as const },
+      suggestedCodes: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          properties: {
+            code: { type: "string" as const },
+            type: { type: "string" as const },
+            description: { type: "string" as const },
+            reimbursement: { type: "number" as const },
+            confidence: { type: "number" as const },
+            reasoning: { type: "string" as const },
+            transcriptEvidence: { type: "string" as const },
+            missingDocumentation: { type: "string" as const },
+          },
+          required: ["code"],
+        },
+      },
+      totalRevenueIncrease: { type: "number" as const },
+      complianceRisk: {
+        type: "string" as const,
+        enum: ["low", "medium", "high"],
+      },
+      conversational_suggestions: {
+        type: "array" as const,
+        items: { type: "string" as const },
+      },
+      soapNote: {
+        type: "object" as const,
+        properties: {
+          subjective: { type: "string" as const },
+          objective: { type: "string" as const },
+          assessment: { type: "string" as const },
+          plan: { type: "string" as const },
+          hpi: { type: "string" as const },
+          ros: { type: "string" as const },
+        },
+      },
+      groundingFlags: {
+        type: "object" as const,
+        properties: {
+          statedCount: { type: "integer" as const },
+          inferredCount: { type: "integer" as const },
+          gapCount: { type: "integer" as const },
+          gaps: {
+            type: "array" as const,
+            items: { type: "string" as const },
+          },
+        },
+      },
+      // encounterStateUpdate is intentionally loose — EncounterState is a deep
+      // structure that evolves with new clinical signal types. Keeping it as a
+      // free-form object preserves forward-compat without re-deploying the tool
+      // schema every time EncounterState grows a field.
+      encounterStateUpdate: {
+        type: "object" as const,
+        additionalProperties: true,
+      },
+    },
+  },
+};
+
 /** Parsed transcription analysis response from Claude */
 export interface TranscriptionAnalysis {
   conversational_note?: string;

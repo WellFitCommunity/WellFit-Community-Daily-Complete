@@ -26,7 +26,7 @@ import { matchTreatmentPathways } from '../_shared/treatmentPathwayReference.ts'
 import { runConsultationAnalysis } from '../_shared/consultationAnalyzer.ts';
 import { runConsultPrepAnalysis } from '../_shared/peerConsultAnalyzer.ts';
 import type { ConsultationResponse } from '../_shared/consultationPromptGenerators.ts';
-import { logClaudeAudit, serializeEncounterStateForClient, buildNurseFallbackPrompt, buildPhysicianFallbackPrompt } from '../_shared/scribeHelpers.ts';
+import { logClaudeAudit, serializeEncounterStateForClient, buildNurseFallbackPrompt, buildPhysicianFallbackPrompt, TRANSCRIPTION_ANALYSIS_TOOL } from '../_shared/scribeHelpers.ts';
 import type { AuditLogger, TranscriptionAnalysis } from '../_shared/scribeHelpers.ts';
 import { resolveMode } from '../_shared/compass-riley/modeRouter.ts';
 import { fetchTenantSensitivity, runAndSendReasoning } from './reasoningIntegration.ts';
@@ -346,7 +346,11 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
         messages: [{
           role: "user",
           content: conversationalPrompt
-        }]
+        }],
+        // CLAUDE.md Rule #16 — structured output via forced tool_use.
+        // Replaces text + ```json regex stripping + JSON.parse pipeline.
+        tools: [TRANSCRIPTION_ANALYSIS_TOOL],
+        tool_choice: { type: "tool", name: "submit_transcription_analysis" },
       })
     });
 
@@ -373,22 +377,29 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
     const outputCost = (outputTokens * 0.015) / 1000;
     const totalCost = inputCost + outputCost;
 
-    const text: string = data?.content?.[0]?.text ?? "";
-    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    // Extract structured response from the tool_use block. When tool_choice
+    // forces a specific tool, Claude returns a single content block of type
+    // "tool_use" with the parsed JSON in .input — no text, no regex, no
+    // JSON.parse needed.
+    const toolBlock = (data?.content ?? []).find(
+      (b: { type?: string }) => b?.type === "tool_use"
+    ) as { type: "tool_use"; input?: unknown } | undefined;
 
-    let parsed: TranscriptionAnalysis;
-    try { parsed = JSON.parse(cleaned) as TranscriptionAnalysis; }
-    catch (e) {
-      logger.error("Claude JSON parse failed", { error: e instanceof Error ? e.message : String(e), responsePreview: cleaned.slice(0, 400) });
+    if (!toolBlock || !toolBlock.input) {
+      const blockTypes = (data?.content ?? []).map((b: { type?: string }) => b?.type);
+      logger.error("Claude did not return tool_use block", { blockTypes, userId });
 
       await logClaudeAudit(supabaseClient, logger, {
         requestId, userId, inputTokens, outputTokens, cost: totalCost,
         responseTimeMs: responseTime, success: false,
-        errorCode: 'JSON_PARSE_ERROR', errorMessage: e.message,
+        errorCode: 'NO_TOOL_USE_BLOCK',
+        errorMessage: `Expected tool_use block, got: ${blockTypes.join(",")}`,
         transcriptLength: rawTranscript.length
       });
       return null;
     }
+
+    const parsed = toolBlock.input as TranscriptionAnalysis;
 
     await logClaudeAudit(supabaseClient, logger, {
       requestId, userId, inputTokens, outputTokens, cost: totalCost,
