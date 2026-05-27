@@ -274,10 +274,20 @@ export const BurnoutAssessmentForm: React.FC<BurnoutAssessmentFormProps> = ({
             </p>
           </div>
 
-          <div className="bg-green-50 border-l-4 border-green-500 p-4">
+          <div className="bg-green-50 border-l-4 border-green-500 p-4 space-y-2">
             <p className="text-sm text-green-800">
               <strong>Privacy:</strong> Your responses are confidential. Only you and administrators
-              (for intervention purposes) can see your individual results.
+              (for intervention purposes) can see your individual results. All access is tenant-scoped
+              and audit-logged.
+            </p>
+            <p className="text-sm text-green-800">
+              <strong>AI processing:</strong> When you request personalized recommendations from the
+              wellness advisor, your MBI scores and recent daily check-in signals (e.g. stress level,
+              energy level, &quot;felt overwhelmed&quot; / &quot;unsafe staffing&quot; flags) are sent
+              to Anthropic&apos;s Claude API as input for an AI-generated advisory response. Your name
+              and identifiers are not sent. Anthropic does not retain this data for training. If you
+              prefer not to have AI analysis applied to your assessment, you can decline the advisor
+              prompt and use the chart view directly.
             </p>
           </div>
 

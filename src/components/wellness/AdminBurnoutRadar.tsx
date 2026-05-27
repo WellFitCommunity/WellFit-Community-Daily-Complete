@@ -5,16 +5,19 @@
 // Design: Anonymous aggregates, trend alerts, suggested actions
 // ============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../../services/auditLogger';
+import {
+  type BurnoutThresholds,
+  DEFAULT_BURNOUT_THRESHOLDS,
+  isBurnoutThresholds,
+} from './burnoutThresholds';
 
-interface AdminBurnoutRadarProps {
-  organizationId?: string;
-  departmentFilter?: string;
-  roleFilter?: string;
-}
+const REFRESH_INTERVAL_MS = 60_000;
+
+type AdminBurnoutRadarProps = Record<string, never>;
 
 interface TeamWellnessStats {
   totalStaff: number;
@@ -45,18 +48,20 @@ interface WellnessAlert {
   suggestion: string;
 }
 
-export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
-  organizationId: _organizationId,
-  departmentFilter: _departmentFilter,
-  roleFilter: _roleFilter,
-}) => {
+export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<TeamWellnessStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'7' | '30'>('7');
   const [showDetails, setShowDetails] = useState(false);
+  const [thresholds, setThresholds] = useState<BurnoutThresholds>(DEFAULT_BURNOUT_THRESHOLDS);
+  // Prevents concurrent loadStats runs from the polling interval colliding
+  // with timeframe-triggered reloads or with each other on slow networks.
+  const loadInFlightRef = useRef(false);
 
   const loadStats = useCallback(async () => {
+    if (loadInFlightRef.current) return;
+    loadInFlightRef.current = true;
     try {
       const now = new Date();
       const daysAgo = parseInt(timeframe);
@@ -91,6 +96,42 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
         .from('provider_support_circle_members')
         .select('user_id')
         .eq('is_active', true);
+
+      // Fetch tenant-configurable burnout thresholds. Falls back to defaults
+      // if the user has no profile/tenant, the column is missing, or the
+      // value is NULL/malformed.
+      let resolvedThresholds: BurnoutThresholds = DEFAULT_BURNOUT_THRESHOLDS;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profile?.tenant_id) {
+            const { data: configRow } = await supabase
+              .from('tenant_module_config')
+              .select('burnout_thresholds')
+              .eq('tenant_id', profile.tenant_id)
+              .maybeSingle();
+
+            const raw: unknown = configRow?.burnout_thresholds;
+            if (isBurnoutThresholds(raw)) {
+              resolvedThresholds = { ...DEFAULT_BURNOUT_THRESHOLDS, ...raw };
+            }
+          }
+        }
+      } catch (thresholdErr: unknown) {
+        // Resilience: every failure here falls back to defaults; do not block
+        // the dashboard from rendering. Logged for observability.
+        auditLogger.error(
+          'ADMIN_BURNOUT_RADAR_THRESHOLDS_FETCH_FAILED',
+          thresholdErr instanceof Error ? thresholdErr : new Error('Threshold fetch failed')
+        );
+      }
+      setThresholds(resolvedThresholds);
 
       const totalStaff = practitioners?.length || 0;
       const uniqueCheckinUsers = new Set(checkins?.map(c => c.user_id) || []);
@@ -167,7 +208,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
       if (stressTrend === 'worsening') {
         alerts.push({
           type: 'stress_rising',
-          severity: avgStress > 7 ? 'critical' : 'warning',
+          severity: avgStress > resolvedThresholds.stress_high ? 'critical' : 'warning',
           message: `Team stress is trending up (${avgStress.toFixed(1)} avg)`,
           suggestion: 'Consider scheduling a team debrief or wellness activity',
         });
@@ -220,6 +261,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
       auditLogger.error('ADMIN_BURNOUT_RADAR_LOAD_FAILED', error instanceof Error ? error : new Error('Load failed'));
     } finally {
       setLoading(false);
+      loadInFlightRef.current = false;
     }
   }, [timeframe]);
 
@@ -227,19 +269,37 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
     loadStats();
   }, [loadStats]);
 
-  // Get overall risk color
+  // Auto-refresh: poll every 60s to keep the dashboard from going stale on
+  // long-running views. loadStats internally guards against concurrent runs
+  // via loadInFlightRef.
+  useEffect(() => {
+    const id = setInterval(() => {
+      loadStats();
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [loadStats]);
+
+  // Get overall risk color. The HIGH ALERT band uses tenant-configurable
+  // thresholds (stress_high, high_risk_percent_alert). The MODERATE and
+  // MONITOR bands are derived from the HIGH ALERT thresholds so a tenant
+  // only needs to configure the alert ceiling.
   const getOverallRiskStyle = () => {
     if (!stats) return { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Unknown' };
 
     const highRiskPercent = ((stats.riskDistribution.high + stats.riskDistribution.critical) / (stats.totalStaff || 1)) * 100;
+    const stressHigh = thresholds.stress_high;
+    const highRiskAlert = thresholds.high_risk_percent_alert;
+    const stressModerate = stressHigh - 1;
+    const stressMonitor = stressHigh - 2;
+    const highRiskModerate = highRiskAlert / 2;
 
-    if (highRiskPercent > 30 || stats.avgStress7Days > 7) {
+    if (highRiskPercent > highRiskAlert || stats.avgStress7Days > stressHigh) {
       return { bg: 'bg-red-100 border-red-300', text: 'text-red-700', label: 'HIGH ALERT' };
     }
-    if (highRiskPercent > 15 || stats.avgStress7Days > 6) {
+    if (highRiskPercent > highRiskModerate || stats.avgStress7Days > stressModerate) {
       return { bg: 'bg-orange-100 border-orange-300', text: 'text-orange-700', label: 'MODERATE' };
     }
-    if (stats.avgStress7Days > 5) {
+    if (stats.avgStress7Days > stressMonitor) {
       return { bg: 'bg-yellow-100 border-yellow-300', text: 'text-yellow-700', label: 'MONITOR' };
     }
     return { bg: 'bg-green-100 border-green-300', text: 'text-green-700', label: 'HEALTHY' };

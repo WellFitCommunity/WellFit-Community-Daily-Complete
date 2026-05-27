@@ -129,6 +129,10 @@ export function createInitializeResponse(
   return {
     jsonrpc: "2.0",
     result: {
+      // Current MCP spec version per https://modelcontextprotocol.io/specification
+      // (schema at github.com/modelcontextprotocol/specification/tree/main/schema/2025-11-25).
+      // Verified 2026-05-27 (Claude self-audit M-2). If the spec advances and we
+      // upgrade, bump this string and verify our tool/capability shapes still match.
       protocolVersion: "2025-11-25",
       serverInfo: {
         name: config.name,

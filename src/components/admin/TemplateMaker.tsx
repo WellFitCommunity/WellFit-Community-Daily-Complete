@@ -82,10 +82,15 @@ interface TemplateField {
   name: string;
   type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'boolean';
   label: string;
-  placeholder?: string;
-  options?: string[]; // For select type
+  placeholder?: string | null;
+  options?: string[] | null; // For select type
   required?: boolean;
 }
+
+// JSONB shape: v1 = {name: type} (legacy, lossy). v2 = TemplateField[] (full).
+// Migration 20260527023442_documentation_templates_richer_fields normalizes
+// rows to v2; readers still tolerate v1 for resilience.
+type FieldsBlock = TemplateField[] | Record<string, string> | null | undefined;
 
 interface Template {
   id: string;
@@ -95,19 +100,45 @@ interface Template {
   description: string;
   template_type: string;
   content_template: string;
-  required_fields: Record<string, string>;
-  optional_fields: Record<string, string>;
+  required_fields: FieldsBlock;
+  optional_fields: FieldsBlock;
   output_format: string;
   ai_model: string;
   ai_assisted: boolean;
   is_active: boolean;
   is_shared: boolean;
   version: number;
+  field_schema_version?: number;
   created_by: string;
   tenant_id: string;
   created_at: string;
   updated_at: string;
 }
+
+// T-5: snake_case identifier, max 63 chars (Postgres identifier limit).
+const FIELD_NAME_REGEX = /^[a-z][a-z0-9_]{0,62}$/;
+
+const validateFieldName = (
+  name: string,
+  index: number,
+  isRequired: boolean,
+  requiredFields: TemplateField[],
+  optionalFields: TemplateField[]
+): string | null => {
+  const trimmed = name.trim();
+  if (!trimmed) return 'Field name is required';
+  if (!FIELD_NAME_REGEX.test(trimmed)) {
+    return 'Use snake_case: start with a-z, then a-z, 0-9, or _ (max 63 chars)';
+  }
+  const dupInRequired = requiredFields.some(
+    (f, i) => f.name.trim() === trimmed && !(isRequired && i === index)
+  );
+  const dupInOptional = optionalFields.some(
+    (f, i) => f.name.trim() === trimmed && !(!isRequired && i === index)
+  );
+  if (dupInRequired || dupInOptional) return 'Field name must be unique within this template';
+  return null;
+};
 
 interface TemplateMakerProps {
   /** Filter to specific role (optional) */
@@ -153,7 +184,7 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
     try {
       let query = supabase
         .from('documentation_templates')
-        .select('id, role, category, template_name, description, template_type, content_template, required_fields, optional_fields, output_format, ai_model, ai_assisted, is_active, is_shared, version, created_by, tenant_id, created_at, updated_at')
+        .select('id, role, category, template_name, description, template_type, content_template, required_fields, optional_fields, output_format, ai_model, ai_assisted, is_active, is_shared, version, field_schema_version, created_by, tenant_id, created_at, updated_at')
         .is('deleted_at', null)
         .order('updated_at', { ascending: false });
 
@@ -195,22 +226,44 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
     return matchesSearch && matchesRole;
   });
 
-  // Convert fields object to array for editor
-  const fieldsToArray = (fields: Record<string, string>): TemplateField[] => {
+  // T-4: Hydrate persisted JSONB (v1 or v2 shape) into the editor's array form.
+  const fieldsToArray = (fields: FieldsBlock, isRequiredBlock: boolean): TemplateField[] => {
+    if (!fields) return [];
+    if (Array.isArray(fields)) {
+      return fields.map((f) => ({
+        name: typeof f.name === 'string' ? f.name : '',
+        type: (f.type ?? 'text') as TemplateField['type'],
+        label: typeof f.label === 'string' && f.label.length > 0 ? f.label : (f.name ?? ''),
+        placeholder: f.placeholder ?? null,
+        options: Array.isArray(f.options) ? f.options : null,
+        required: typeof f.required === 'boolean' ? f.required : isRequiredBlock,
+      }));
+    }
+    // Legacy v1 fallback: {name: type}
     return Object.entries(fields).map(([name, type]) => ({
       name,
       type: type as TemplateField['type'],
-      label: name.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+      label: name,
+      placeholder: null,
+      options: null,
+      required: isRequiredBlock,
     }));
   };
 
-  // Convert fields array to object for saving
-  const fieldsToObject = (fields: TemplateField[]): Record<string, string> => {
-    return fields.reduce((acc, field) => {
-      acc[field.name] = field.type;
-      return acc;
-    }, {} as Record<string, string>);
-  };
+  const countFields = (fields: FieldsBlock): number =>
+    !fields ? 0 : Array.isArray(fields) ? fields.length : Object.keys(fields).length;
+
+  // T-4: Serialize the editor's TemplateField[] into the v2 JSONB shape,
+  // preserving label, placeholder, options, required.
+  const fieldsToArrayForSave = (fields: TemplateField[]): TemplateField[] =>
+    fields.map((f) => ({
+      name: f.name.trim(),
+      type: f.type,
+      label: f.label?.trim() || f.name.trim(),
+      placeholder: f.placeholder ?? null,
+      options: Array.isArray(f.options) ? f.options : null,
+      required: f.required ?? false,
+    }));
 
   // Start creating new template
   const handleNewTemplate = () => {
@@ -235,8 +288,8 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
   // Start editing existing template
   const handleEditTemplate = (template: Template) => {
     setEditingTemplate(template);
-    setRequiredFields(fieldsToArray(template.required_fields || {}));
-    setOptionalFields(fieldsToArray(template.optional_fields || {}));
+    setRequiredFields(fieldsToArray(template.required_fields, true));
+    setOptionalFields(fieldsToArray(template.optional_fields, false));
     setIsEditing(true);
   };
 
@@ -305,6 +358,19 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
       setError('Template content is required');
       return;
     }
+    // T-5: Block save if any field name fails validation or collides.
+    const findError = (list: TemplateField[], isReq: boolean): string | null => {
+      for (let i = 0; i < list.length; i++) {
+        const msg = validateFieldName(list[i].name, i, isReq, requiredFields, optionalFields);
+        if (msg) return `Field "${list[i].label || list[i].name || '(unnamed)'}": ${msg}`;
+      }
+      return null;
+    };
+    const fieldErr = findError(requiredFields, true) || findError(optionalFields, false);
+    if (fieldErr) {
+      setError(fieldErr);
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -346,8 +412,9 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
         template_name: editingTemplate.template_name.trim(),
         description: editingTemplate.description?.trim() || null,
         content_template: editingTemplate.content_template.trim(),
-        required_fields: fieldsToObject(requiredFields),
-        optional_fields: fieldsToObject(optionalFields),
+        required_fields: fieldsToArrayForSave(requiredFields),
+        optional_fields: fieldsToArrayForSave(optionalFields),
+        field_schema_version: 2,
         output_format: editingTemplate.output_format || 'narrative',
         ai_assisted: editingTemplate.ai_assisted ?? false,
         ai_model: editingTemplate.ai_model || 'balanced',
@@ -445,8 +512,8 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
       id: undefined,
       template_name: `${template.template_name} (Copy)`,
     });
-    setRequiredFields(fieldsToArray(template.required_fields || {}));
-    setOptionalFields(fieldsToArray(template.optional_fields || {}));
+    setRequiredFields(fieldsToArray(template.required_fields, true));
+    setOptionalFields(fieldsToArray(template.optional_fields, false));
     setIsEditing(true);
   };
 
@@ -474,48 +541,69 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
     }
   }, [error]);
 
-  // Render field builder row
-  const renderFieldRow = (field: TemplateField, index: number, isRequired: boolean) => (
-    <div key={index} className="flex gap-2 items-start p-3 bg-slate-700/50 rounded-lg">
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <input
-          type="text"
-          placeholder="Field Label"
-          value={field.label}
-          onChange={(e) => handleUpdateField(index, { label: e.target.value }, isRequired)}
-          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-sm text-white placeholder-slate-400 text-sm"
-        />
-        <input
-          type="text"
-          placeholder="field_name"
-          value={field.name}
-          onChange={(e) => handleUpdateField(index, { name: e.target.value }, isRequired)}
-          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-sm text-white placeholder-slate-400 text-sm font-mono"
-        />
-        <select
-          value={field.type}
-          onChange={(e) =>
-            handleUpdateField(index, { type: e.target.value as TemplateField['type'] }, isRequired)
-          }
-          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-sm text-white text-sm"
+  // T-5: Per-row inline validation. Suppress error on freshly added (empty) rows.
+  const renderFieldRow = (field: TemplateField, index: number, isRequired: boolean) => {
+    const nameError = validateFieldName(field.name, index, isRequired, requiredFields, optionalFields);
+    const showError = field.name.length > 0 && nameError !== null;
+    const errId = `field-name-error-${isRequired ? 'r' : 'o'}-${index}`;
+    return (
+      <div key={index} className="flex gap-2 items-start p-3 bg-slate-700/50 rounded-lg">
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input
+            type="text"
+            placeholder="Field Label"
+            value={field.label}
+            onChange={(e) => handleUpdateField(index, { label: e.target.value }, isRequired)}
+            className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-sm text-white placeholder-slate-400 text-sm"
+          />
+          <div>
+            <input
+              type="text"
+              placeholder="field_name"
+              value={field.name}
+              onChange={(e) => handleUpdateField(index, { name: e.target.value }, isRequired)}
+              aria-invalid={showError}
+              aria-describedby={showError ? errId : undefined}
+              className={`w-full px-3 py-2 bg-slate-600 border rounded-sm text-white placeholder-slate-400 text-sm font-mono ${showError ? 'border-red-500' : 'border-slate-500'}`}
+            />
+            {showError && (
+              <p id={errId} className="mt-1 text-xs text-red-400">{nameError}</p>
+            )}
+          </div>
+          <select
+            value={field.type}
+            onChange={(e) =>
+              handleUpdateField(index, { type: e.target.value as TemplateField['type'] }, isRequired)
+            }
+            className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-sm text-white text-sm"
+          >
+            <option value="text">Text</option>
+            <option value="textarea">Text Area</option>
+            <option value="number">Number</option>
+            <option value="date">Date</option>
+            <option value="select">Dropdown</option>
+            <option value="boolean">Yes/No</option>
+          </select>
+        </div>
+        <button
+          onClick={() => handleRemoveField(index, isRequired)}
+          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-sm"
+          title="Remove field"
         >
-          <option value="text">Text</option>
-          <option value="textarea">Text Area</option>
-          <option value="number">Number</option>
-          <option value="date">Date</option>
-          <option value="select">Dropdown</option>
-          <option value="boolean">Yes/No</option>
-        </select>
+          <X size={16} />
+        </button>
       </div>
-      <button
-        onClick={() => handleRemoveField(index, isRequired)}
-        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-sm"
-        title="Remove field"
-      >
-        <X size={16} />
-      </button>
-    </div>
-  );
+    );
+  };
+
+  // T-5: Form-level gate — disables Save Template if any field name is empty or invalid.
+  const hasAnyFieldValidationError = (): boolean =>
+    requiredFields.some(
+      (f, i) => validateFieldName(f.name, i, true, requiredFields, optionalFields) !== null
+    ) ||
+    optionalFields.some(
+      (f, i) => validateFieldName(f.name, i, false, requiredFields, optionalFields) !== null
+    );
 
   return (
     <div className={compact ? 'space-y-4' : 'space-y-6'}>
@@ -854,7 +942,11 @@ Notes:
               <EAButton variant="ghost" onClick={handleCancelEdit} disabled={saving}>
                 Cancel
               </EAButton>
-              <EAButton variant="primary" onClick={handleSaveTemplate} disabled={saving}>
+              <EAButton
+                variant="primary"
+                onClick={handleSaveTemplate}
+                disabled={saving || hasAnyFieldValidationError()}
+              >
                 {saving ? (
                   <>
                     <span className="animate-spin mr-2">...</span>
@@ -976,7 +1068,7 @@ Notes:
                         {TEMPLATE_CATEGORIES.find((c) => c.value === template.category)?.label || template.category}
                       </span>
                       <span>
-                        {Object.keys(template.required_fields || {}).length} required fields
+                        {countFields(template.required_fields)} required fields
                       </span>
                       <span>v{template.version}</span>
                     </div>

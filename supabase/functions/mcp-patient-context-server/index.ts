@@ -21,6 +21,8 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import {
   checkMCPRateLimit,
+  checkPersistentRateLimit,
+  getCallerRateLimitId,
   getRequestIdentifier,
   createRateLimitResponse,
   MCP_RATE_LIMITS,
@@ -170,6 +172,19 @@ serve(async (req) => {
             requestId,
             corsHeaders
           );
+        }
+
+        // Post-auth persistent rate limit (cross-instance via Supabase RPC).
+        // Pre-auth in-memory check above protects against IP-based DoS; this
+        // identity-based check enforces the user/key quota across all edge
+        // function instances. See .claude/rules/supabase.md (adversarial audit).
+        const identityRateResult = await checkPersistentRateLimit(
+          sb,
+          getCallerRateLimitId(caller),
+          RATE_LIMIT
+        );
+        if (!identityRateResult.allowed) {
+          return createRateLimitResponse(identityRateResult, RATE_LIMIT, corsHeaders);
         }
 
         const validationErrors = validateForTool(name, args, VALIDATION);
