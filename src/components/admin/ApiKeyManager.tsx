@@ -92,6 +92,23 @@ const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }
   );
 };
 
+// Strict ISO 8601 — prevents `Date.parse("2024 Healthcare Inc.")` from
+// sorting as a timestamp. Only treats values that LOOK like timestamps
+// (date or datetime, with or without timezone) as comparable dates.
+const ISO_8601 = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
+// Safer comparator casting (optional but robust).
+const toComparable = (v: unknown): string | number | null => {
+  if (v == null) return null;
+  if (typeof v === 'string' && ISO_8601.test(v)) {
+    const parsed = Date.parse(v);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  if (typeof v === 'string') return v.toLowerCase();
+  if (typeof v === 'number') return v;
+  return null;
+};
+
 const ApiKeyManager: React.FC = () => {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [newOrgName, setNewOrgName] = useState('');
@@ -109,7 +126,7 @@ const ApiKeyManager: React.FC = () => {
   const orgNameInputRef = useRef<HTMLInputElement>(null);
 
   const addToast = useCallback((type: ToastData['type'], message: string) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = Math.random().toString(36).substring(2, 11);
     setToasts(prev => [...prev, { id, type, message }]);
   }, []);
 
@@ -431,14 +448,7 @@ const ApiKeyManager: React.FC = () => {
     }
   };
 
-  // Safer comparator casting (optional but robust)
-  const toComparable = (v: unknown): string | number | null => {
-    if (v == null) return null;
-    if (typeof v === 'string' && !isNaN(Date.parse(v))) return Date.parse(v);
-    if (typeof v === 'string') return v.toLowerCase();
-    if (typeof v === 'number') return v;
-    return null;
-  };
+    // toComparable is hoisted outside the component (see top of file).
 
   // Filtering and sorting logic
   const filteredAndSortedKeys = React.useMemo(() => {
