@@ -99,6 +99,14 @@ describe('PatientAdmissionForm', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // clearAllMocks() does NOT reset mockImplementation. The "should show
+    // loading state during submission" test installs a slow-resolving
+    // implementation that leaves a dangling Promise; if it resolves AFTER
+    // the next test's beforeEach, it calls onSuccess on the (shared)
+    // mockOnSuccess fn and contaminates assertions like
+    // "should not call onSuccess when submission fails". Reset the default
+    // impl here so every test starts with a fast resolve.
+    vi.mocked(admitPatient).mockImplementation(() => Promise.resolve('admission-123'));
   });
 
   describe('Rendering', () => {
@@ -423,8 +431,14 @@ describe('PatientAdmissionForm', () => {
     });
 
     it('should show loading state during submission', async () => {
+      // Manually-controlled promise so we can assert the loading state THEN
+      // settle the promise before the test ends. Using `setTimeout(...,100)`
+      // here previously left a dangling timer that resolved INTO the next
+      // test's render, called the shared mockOnSuccess prop closure, and
+      // broke "should not call onSuccess when submission fails".
+      let resolveAdmit!: (id: string) => void;
       vi.mocked(admitPatient).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve('admission-123'), 100))
+        () => new Promise<string>((resolve) => { resolveAdmit = resolve; })
       );
 
       render(
@@ -447,8 +461,15 @@ describe('PatientAdmissionForm', () => {
       const submitButton = screen.getByRole('button', { name: /Admit Patient/i });
       await userEvent.click(submitButton);
 
-      // Should show loading text
+      // Should show loading text WHILE admitPatient is still pending.
       expect(screen.getByText('Admitting...')).toBeInTheDocument();
+
+      // Settle the promise so onSuccess fires inside this test and the
+      // mockOnSuccess call attributes to THIS test, not a sibling.
+      resolveAdmit('admission-123');
+      await waitFor(() => {
+        expect(mockOnSuccess).toHaveBeenCalled();
+      });
     });
   });
 

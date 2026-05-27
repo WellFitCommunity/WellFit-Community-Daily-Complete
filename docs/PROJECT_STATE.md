@@ -4,35 +4,41 @@
 > **Update this file LAST at the end of every session.**
 
 **Last Updated:** 2026-05-28
-**Last Session:** Self-audit Session 6 wave 2 — API-3b through API-3f landed in commit `80ad2c08` (3 new migrations + ApiKeyManager UI live-data wiring + validate-api-key edge fn rewritten as thin RPC wrapper + `verify_jwt = false` in config.toml). Also patched `scripts/pre-commit-checks.sh` rule #16 to recognize the `TO service_role` exemption from `.claude/rules/adversarial-audit-lessons.md` #4 (was false-positiving on the legitimate `api_key_audit_log` INSERT policy). All commits from 2026-05-27 + 2026-05-28 are pushed to origin/main. **Next session picks up at API-3g** (tests).
+**Last Session:** Self-audit Session 6 wave 2 closed **Session A of the API-3 plan** AND swept HTML-escape sister bugs. Five commits this round: `80ad2c08` (API-3b–f migrations + UI + edge fn), `b62c8750` (API-3g Vitest 7 new + 36 fixed + Deno 7 pure / 2 gated), `968610b3` (TS2554 mock-arity green-up), `b98d3169` (G-3-SISTER-1/2 + newly-found SISTER-3 in `emergency-alert-dispatch`), `1d3bd28b` (3 HIGH npm advisories closed via overrides: js-cookie@^3.0.7, tmp@^0.2.6, uuid@^11.1.1). Also patched `scripts/pre-commit-checks.sh` rule #16 to recognize the `TO service_role` exemption from `.claude/rules/adversarial-audit-lessons.md` #4, and patched `scripts/governance-check.sh` to exempt `pre-commit-checks.sh` from its WHITE_LABEL_MODE self-collision scan. All pushed to origin/main.
 **Updated By:** Claude Opus 4.7 (1M context)
-**Codebase Health:** 11,726+ tests, 0 lint warnings, 0 typecheck errors in changed files, 0 `console.log` in production; THREE CI gates active (file-size, VITE_*-secret pattern, shadow-import TDZ) + pre-commit gate (17 AI-fingerprint rules, service_role exemption added 2026-05-28). `npx supabase db push --dry-run` reports "Remote database is up to date."
+**Codebase Health:** 11,769+ tests (7 new Vitest + 7 new Deno passing; previously-failing 36-test ApiKeyManager file in CI fixed and now green), 0 lint warnings, 0 typecheck errors project-wide (full tsc), 0 `console.log` in production. CI gates active: file-size, VITE_*-secret pattern, shadow-import TDZ, governance-boundary, secret-scan, pre-commit (17 AI-fingerprint rules with the `TO service_role` exemption added 2026-05-28). `npx audit-ci --high` passes locally (6 moderate vulns remain inside `@vercel/*` dev-only build tooling — accepted). `npx supabase db push --dry-run` reports "Remote database is up to date."
 
 ---
 
 ## NEXT SESSION — START HERE
 
-**Pick up at API-3g** in `docs/trackers/claude-self-audit-2026-05-20-tracker.md` (the "API-3 Plan — External API Channel Hardening" section).
+**Session A of the API-3 plan is COMPLETE.** Pick up at one of the candidates below.
 
-**Status snapshot:**
-- API-3 plan landed in commit `d8386f94` (12 items split across Session A + Session B)
-- API-3a DONE in commit `9154e321` (RLS WITH CHECK fix applied to live DB; drift resolved)
-- **API-3b through API-3f DONE in commit `80ad2c08`** (2026-05-28) — tracking columns, audit log table, validate_api_key RPC, edge fn wrapper, UI live-data wiring all landed
-- **API-3g remains** in Session A — Vitest + Deno integration tests; ~2h, autonomous (plan is Maria-approved)
-- API-3h through API-3l are Session B and BLOCK on Maria's scope vocabulary + expiration policy decisions (open questions are in the tracker)
+**Status snapshot (self-audit tracker — `docs/trackers/claude-self-audit-2026-05-20-tracker.md`):**
+- Sessions 1–5 complete (22 items)
+- Session 6 wave 1 complete (9 items: CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6)
+- **Session 6 wave 2 (API-3 Session A) COMPLETE: API-3a through API-3g (7 items)** — `api_keys` is at feature parity with `mcp_keys`, validation RPC is live, UI wired, tests in place
+- **Session 6 wave 3 (sister bugs) COMPLETE: G-3-SISTER-1, G-3-SISTER-2, G-3-SISTER-3** — all use the escapeHtml fragment-builder pattern from the original G-3 fix (SISTER-3 in `emergency-alert-dispatch` was newly discovered by widening the Rule #1 grep)
+- **Total: 41/55 DONE**
 
-**Recommended first action of next session:**
-1. Read `CLAUDE.md` + `.claude/rules/supabase.md` §17 (two PHI keys, never conflate)
-2. Read `docs/trackers/claude-self-audit-2026-05-20-tracker.md` — find API-3g row
-3. Write API-3g tests:
-   - Vitest: `src/components/admin/ApiKeyManager/__tests__/` — assert UI renders real `use_count`/`last_used_at` (not hardcoded zeros), high-usage revoke confirmation fires at the live threshold
-   - Deno integration: `supabase/functions/validate-api-key/__tests__/` — insert key, call RPC, assert audit row written + `use_count` incremented + RLS prevents cross-tenant write
+**Recommended first action of next session — pick one:**
+
+1. **API-3 Session B (Maria's scope decisions needed first)** — API-3h–l: scopes JSONB column + expires_at + scope-aware validation + generate-api-key RPC + UI scope/expiration selectors. ~5h once unblocked. Open questions in the tracker:
+   - **Scope vocabulary** — probable starter: `fhir.read.own_patients`, `webhook.subscribe`, `referral.write`. Confirm against actual partner use case.
+   - **Expiration default** — 90 days or 1 year from `created_at`?
+
+2. **AI-1-SWEEP** — 6 third-degree candidates of the AI-1 cross-user PHI access bug (filed 2026-05-27). ~2h codebase-wide grep + per-file auth check.
+
+3. **CR-2-SISTER-1..4** — Rule #16 JSON regex stripping in `_shared/modelFallback.ts`, `_shared/peerConsultAnalyzer.ts`, `_shared/consultationAnalyzer.ts`, `mcp-claude-server/triageTools.ts`. LOW priority — defer until each file is next touched, or batch in ~1h.
+
+4. **Pivot to a fresh tracker:** Guardian Agent Session 2 (GRD-6/7/8/9, ~10h), MCP-3 adversarial testing (~8h), or ONC Session 1 (~32h).
 
 **Important context for next session:**
-- Origin/main is fully synced as of 2026-05-28 (no unpushed local commits)
+- Origin/main is fully synced as of 2026-05-28 (no unpushed local commits as of this write)
 - `api_keys` table is empty in production (0 rows) — schema changes were non-destructive
-- The 5 self-audit sister bugs surfaced 2026-05-27 still need to land at some point: G-3-SISTER-1/2 (HTML interpolation in send-team-alert + ld-alert-notifier), CR-2-SISTER-1..4 (JSON regex stripping in 4 other files)
+- Three HIGH-severity npm advisories closed via `package.json` `overrides` (js-cookie@^3.0.7, tmp@^0.2.6, uuid@^11.1.1) — parents NOT downgraded; codebase only uses `useWindowSize` from `react-use`, no js-cookie coupling
 - Pre-commit gate now correctly exempts `TO service_role` policies from the audit-table `WITH CHECK (true)` rule — per-block awk parse, won't mask a real violation if a user-facing policy in the same file also uses `WITH CHECK (true)`
+- The older 36-test file at `src/components/admin/__tests__/ApiKeyManager.test.tsx` had been silently failing CI since the API-2 decomposition commit (5032cf08, 2026-05-27) — fixed in API-3g commit by adding the 4 tracking columns to the mock rows and updating the "total usage" assertion from `'0'` to `'49'`
 
 **Headline finding (still true):** MCP server infrastructure is the strongest layer in the codebase by a wide margin — order-of-magnitude lower defect density than application features. **Lead the Anthropic pitch with the MCP architecture story, not the feature list.** See [project_mcp_protocol_governance.md](../memory/project_mcp_protocol_governance.md).
 
@@ -43,11 +49,11 @@
 
 ---
 
-## CURRENT PRIORITY — Claude Self-Audit Remediation (37/55 DONE)
+## CURRENT PRIORITY — Claude Self-Audit Remediation (41/55 DONE)
 
 **Tracker:** `docs/trackers/claude-self-audit-2026-05-20-tracker.md`
-**Status:** Sessions 1-5 complete (22 items). Session 6 wave 1 complete (9 items: CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6). Session 6 wave 2 = API-3 plan (12 items, 6 done = API-3a + API-3b + API-3c + API-3d + API-3e + API-3f). Total 37/55. **Next: API-3g (tests, ~2h).**
-**Newly filed during 2026-05-27 session:** CRIT-1, CRIT-2, AI-1-SISTER-1, AI-1-SISTER-2, AI-1-SWEEP, DRIFT-1, UI-MISSING-ROUTES-1, RPC-SEARCH-PATH-1, G-3-SISTER-1, G-3-SISTER-2, CR-2-SISTER-1, CR-2-SISTER-2, CR-2-SISTER-3, CR-2-SISTER-4
+**Status:** Sessions 1-5 complete (22 items). Session 6 wave 1 complete (9 items: CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6). Session 6 wave 2 = **API-3 Session A complete** (7 items: API-3a–g). Session 6 wave 3 = **3 sister bugs complete** (G-3-SISTER-1/2/3). Total **41/55**. **Next: pick from Session B (blocked on Maria), AI-1-SWEEP, CR-2-SISTER-1..4, or pivot trackers — see "NEXT SESSION" above.**
+**Newly filed during 2026-05-27 / 2026-05-28 sessions:** CRIT-1, CRIT-2, AI-1-SISTER-1, AI-1-SISTER-2, AI-1-SWEEP, DRIFT-1, UI-MISSING-ROUTES-1, RPC-SEARCH-PATH-1, G-3-SISTER-3 (caught by widened Rule #1 grep), CR-2-SISTER-1, CR-2-SISTER-2, CR-2-SISTER-3, CR-2-SISTER-4
 **Live DB migrations applied via MCP across these sessions:** `bulk_nurse_review_handoff_risks_rpc` (SH-1), `burnout_thresholds_tenant_config` (B-6), `documentation_templates_richer_fields` (T-4), `fix_mcp_audit_logs_rls` (M-4), `handoff_emergency_bypasses_rebuild` (SH-3/4 + DRIFT-2), `fix_api_keys_rls_with_check` (API-3a), `add_api_keys_tracking_columns` (API-3b), `create_api_key_audit_log` (API-3c), `create_validate_api_key_rpc` (API-3d).
 
 ### Session 1 — Critical Security: PHI Key + Webhooks (~13h, 5 items)
