@@ -1,5 +1,5 @@
 // supabase/functions/test-users/index.ts
-import { SUPABASE_URL as IMPORTED_SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -7,16 +7,12 @@ import { createLogger } from "../_shared/auditLogger.ts";
 
 const logger = createLogger("test-users");
 
-// ─── ENV ───────────────────────────────────────────────────────────
-const SUPABASE_URL = IMPORTED_SUPABASE_URL ?? "";
-const SUPABASE_SECRET_KEY =
-  Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY ?? "";
-
-if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+// Env vars resolved via _shared/env.ts (new sb_* names with legacy JWT fallbacks).
+if (!SUPABASE_URL || !SB_SECRET_KEY) {
   throw new Error("Missing SUPABASE_URL or SB_SECRET_KEY");
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
+const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY, { auth: { persistSession: false } });
 
 // ─── Helper: get caller + roles (supports both Bearer token and X-Admin-Token) ─────────────────────────────────────
 async function getCaller(req: Request) {

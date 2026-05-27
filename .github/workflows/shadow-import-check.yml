@@ -1,0 +1,55 @@
+# .github/workflows/shadow-import-check.yml
+# Enforces adversarial-audit-lessons Rule 5: no shadow-import TDZ self-references.
+#
+# Detects the pattern: `const FOO = Deno.env.get("FOO") ?? FOO;` in edge
+# functions. This is the same class of bug as the 80-day Compass Riley V2
+# TDZ outage — when env is missing the ?? fallback resolves to its own
+# uninitialized const binding and throws ReferenceError at module load.
+name: Shadow Import Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  shadow-import-check:
+    name: Shadow Import / TDZ Gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run shadow-import check
+        run: bash scripts/check-shadow-imports.sh
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "## Shadow Import Check: PASS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No \`const FOO = Deno.env.get(\"FOO\") ?? FOO\` patterns detected." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Shadow Import Check: FAIL" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Shadow-import TDZ self-reference detected in an edge function." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Why this matters:** when the env var is missing, the \`??\` fallback" >> $GITHUB_STEP_SUMMARY
+            echo "resolves to the const's own uninitialized binding and throws" >> $GITHUB_STEP_SUMMARY
+            echo "\`ReferenceError\` at module load. This caused the 80-day Compass Riley" >> $GITHUB_STEP_SUMMARY
+            echo "V2 TDZ outage (commit b57f2406)." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**How to fix:**" >> $GITHUB_STEP_SUMMARY
+            echo "1. \`supabase/functions/_shared/env.ts\` already handles the" >> $GITHUB_STEP_SUMMARY
+            echo "   new-key/legacy-key fallback chain." >> $GITHUB_STEP_SUMMARY
+            echo "2. Drop the redundant local const and use the imported identifier." >> $GITHUB_STEP_SUMMARY
+            echo "3. If you need a renamed local, rename at import:" >> $GITHUB_STEP_SUMMARY
+            echo "   \`import { SB_SECRET_KEY as MY_LOCAL } from '../_shared/env.ts'\`." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "See \`.claude/rules/adversarial-audit-lessons.md\` Rule 5." >> $GITHUB_STEP_SUMMARY
+          fi

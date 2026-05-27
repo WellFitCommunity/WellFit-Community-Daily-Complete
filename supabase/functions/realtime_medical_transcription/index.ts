@@ -34,16 +34,14 @@ import { fetchTenantSensitivity, runAndSendReasoning } from './reasoningIntegrat
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-const SB_URL = Deno.env.get("SB_URL") ?? SUPABASE_URL;
-const SB_SECRET_KEY =
-  Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY;
+// SUPABASE_URL and SB_SECRET_KEY come from _shared/env.ts (full fallback chain).
 
 const initLogger = createLogger('realtime_medical_transcription');
-if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SB_URL || !SB_SECRET_KEY) {
+if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SUPABASE_URL || !SB_SECRET_KEY) {
   initLogger.error("Missing required env vars", {
     hasDeepgram: !!DEEPGRAM_API_KEY,
     hasAnthropic: !!ANTHROPIC_API_KEY,
-    hasSbUrl: !!SB_URL,
+    hasSbUrl: !!SUPABASE_URL,
     hasSbSecret: !!SB_SECRET_KEY
   });
 }
@@ -223,8 +221,7 @@ serve(async (req: Request) => {
                       // Session 4: Evidence retrieval — fire-and-forget PubMed search
                       const triggers = detectEvidenceTriggers(deidentify(fullTranscript, logger), updatedState, evidenceRateLimiter);
                       if (triggers.shouldSearch) {
-                        const svcKey = Deno.env.get('SB_SECRET_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-                        searchPubMedEvidence(triggers.queries, SB_URL!, svcKey).then(results => {
+                        searchPubMedEvidence(triggers.queries, SUPABASE_URL, SB_SECRET_KEY).then(results => {
                           evidenceRateLimiter = updateRateLimiter(evidenceRateLimiter, results.length);
                           if (results.some(r => r.citations.length > 0)) {
                             safeSend(socket, { type: 'evidence_citations', results, display: formatCitationsForDisplay(results) });

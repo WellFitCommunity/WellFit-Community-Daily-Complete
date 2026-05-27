@@ -7,11 +7,7 @@ import { createLogger } from "../_shared/auditLogger.ts";
 
 const logger = createLogger("generate-api-key");
 
-// ---- Env (supports Postgres 17 names w/ fallbacks) -------------------------
-const SB_PUBLISHABLE_API_KEY =
-  Deno.env.get("SB_PUBLISHABLE_API_KEY") ?? SB_PUBLISHABLE_API_KEY;
-const SB_SECRET_KEY =
-  Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY;
+// Env vars resolved via _shared/env.ts (new sb_* names with legacy JWT fallbacks).
 
 async function checkUserRole(supabaseClient: SupabaseClient, requiredRoles: string[]): Promise<boolean> {
   const { data: { user }, error: userErr } = await supabaseClient.auth.getUser();

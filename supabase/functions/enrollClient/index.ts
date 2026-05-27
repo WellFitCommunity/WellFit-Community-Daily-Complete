@@ -1,5 +1,5 @@
 // supabase/functions/enrollClient/index.ts
-import { SUPABASE_URL as IMPORTED_SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { z } from "https://esm.sh/zod@3.21.4";
@@ -8,18 +8,12 @@ import { createLogger } from "../_shared/auditLogger.ts";
 
 const logger = createLogger("enrollClient");
 
-// ─── ENV (new names with legacy fallbacks) ───────────────────────────────────
-const SUPABASE_URL = IMPORTED_SUPABASE_URL ?? "";
-const SUPABASE_SECRET_KEY =
-  Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY ?? "";
-const SUPABASE_PUBLISHABLE_API_KEY =
-  Deno.env.get("SB_PUBLISHABLE_API_KEY") ?? SB_PUBLISHABLE_API_KEY ?? "";
-
-if (!SUPABASE_URL || !SUPABASE_SECRET_KEY || !SUPABASE_PUBLISHABLE_API_KEY) {
+// Env vars resolved via _shared/env.ts (new sb_* names with legacy JWT fallbacks).
+if (!SUPABASE_URL || !SB_SECRET_KEY || !SB_PUBLISHABLE_API_KEY) {
   throw new Error("Missing SUPABASE_URL, SB_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY, or SB_PUBLISHABLE_API_KEY/SUPABASE_ANON_KEY");
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
+const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY, { auth: { persistSession: false } });
 
 // ─── Input schema ────────────────────────────────────────────────────────────
 // UPDATED: 2025-10-03 - Added fields from EnrollSeniorPage.tsx
