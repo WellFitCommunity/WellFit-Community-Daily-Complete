@@ -6,6 +6,7 @@
 // ============================================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../../services/auditLogger';
 
@@ -49,6 +50,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
   departmentFilter: _departmentFilter,
   roleFilter: _roleFilter,
 }) => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<TeamWellnessStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'7' | '30'>('7');
@@ -229,7 +231,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
   const getOverallRiskStyle = () => {
     if (!stats) return { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Unknown' };
 
-    const highRiskPercent = ((stats.riskDistribution.high + stats.riskDistribution.critical) / stats.totalStaff) * 100;
+    const highRiskPercent = ((stats.riskDistribution.high + stats.riskDistribution.critical) / (stats.totalStaff || 1)) * 100;
 
     if (highRiskPercent > 30 || stats.avgStress7Days > 7) {
       return { bg: 'bg-red-100 border-red-300', text: 'text-red-700', label: 'HIGH ALERT' };
@@ -496,13 +498,13 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
         {/* Actions */}
         <div className="mt-6 flex gap-3">
           <button
-            onClick={() => window.location.href = '/admin/team-huddle'}
+            onClick={() => navigate('/admin/team-huddle')}
             className="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition-all"
           >
             Schedule Team Huddle
           </button>
           <button
-            onClick={() => window.location.href = '/admin/wellness-report'}
+            onClick={() => navigate('/admin/wellness-report')}
             className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 transition-all"
           >
             Export Report

@@ -310,6 +310,35 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
     setError(null);
 
     try {
+      // T-1: Resolve caller's tenant_id BEFORE the insert. Without this,
+      // newly created templates land with tenant_id=NULL and are invisible
+      // to non-super-admin users via the tenant RLS policy.
+      let tenantId: string | null = editingTemplate.tenant_id ?? null;
+      if (!tenantId && user?.id) {
+        const { data: profileRow, error: profileErr } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profileErr || !profileRow?.tenant_id) {
+          await auditLogger.warn('TEMPLATE_TENANT_RESOLUTION_FAILED', {
+            userId: user.id,
+            error: profileErr?.message ?? 'no tenant_id on profile',
+          });
+          setError('Could not resolve your organization. Contact support.');
+          setSaving(false);
+          return;
+        }
+        tenantId = profileRow.tenant_id as string;
+      }
+
+      if (!tenantId) {
+        setError('Cannot create template — no organization context available.');
+        setSaving(false);
+        return;
+      }
+
       const templateData = {
         role: editingTemplate.role,
         category: editingTemplate.category || 'general',
@@ -325,6 +354,7 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
         is_active: editingTemplate.is_active ?? true,
         is_shared: editingTemplate.is_shared ?? false,
         created_by: user?.id,
+        tenant_id: tenantId,
       };
 
       if (editingTemplate.id) {

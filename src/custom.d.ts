@@ -22,9 +22,6 @@ declare namespace NodeJS {
     VITE_HCAPTCHA_SITE_KEY: string;
     HCAPTCHA_SECRET_KEY?: string;
 
-    // Weather API
-    VITE_WEATHER_API_KEY: string;
-
     // MailerSend
     MAILERSEND_API_KEY?: string;
     MAILERSEND_SMTP_USERNAME?: string;

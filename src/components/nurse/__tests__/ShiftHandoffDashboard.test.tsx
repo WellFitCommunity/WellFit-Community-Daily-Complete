@@ -142,7 +142,11 @@ vi.mock('../../../services/shiftHandoffService', () => ({
     acknowledgeAIShiftSummary: mockAcknowledgeFn,
     updateAISummaryNotes: mockUpdateNotesFn,
     nurseReviewHandoffRisk: vi.fn().mockResolvedValue(undefined),
-    bulkConfirmAutoScores: vi.fn().mockResolvedValue(undefined),
+    bulkConfirmAutoScores: vi.fn().mockResolvedValue({
+      confirmedCount: 0,
+      deniedIds: [],
+      denyReasons: {},
+    }),
     refreshAllAutoScores: vi.fn().mockResolvedValue(undefined),
     recordHandoffTimeSavings: vi.fn().mockResolvedValue({
       time_saved_minutes: 20,

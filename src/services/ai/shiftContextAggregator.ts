@@ -323,17 +323,42 @@ export const ShiftContextAggregator = {
    * Aggregate all shift context and call the MCP narrative tool.
    *
    * Full pipeline:
-   * 1. Fetch patients on the unit
-   * 2. Fetch events, alerts, and care plan changes in parallel
-   * 3. Call synthesize-handoff-narrative MCP tool
+   * 1. Resolve the tenant from the authenticated session (NOT from the caller — SH-2)
+   * 2. Fetch patients on the unit
+   * 3. Fetch events, alerts, and care plan changes in parallel
+   * 4. Call synthesize-handoff-narrative MCP tool
    */
   async aggregateAndSynthesize(
     unitId: string,
-    tenantId: string,
     shiftType: ShiftType,
     shiftDate?: Date
   ): Promise<ServiceResult<HandoffNarrativeResult>> {
     try {
+      // SH-2: tenant comes from the authenticated session, never from the
+      // caller. Identity wins; if the caller supplied a tenantId in the past
+      // and the policy mismatch fires, it would have been a cross-tenant
+      // PHI access via Claude.
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData?.user) {
+        return failure('UNAUTHORIZED', 'No authenticated session');
+      }
+
+      const { data: profileRow, error: profileErr } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', userData.user.id)
+        .maybeSingle();
+
+      if (profileErr || !profileRow?.tenant_id) {
+        await auditLogger.warn('SHIFT_CONTEXT_TENANT_RESOLUTION_FAILED', {
+          userId: userData.user.id,
+          error: profileErr?.message ?? 'no tenant_id on profile',
+        });
+        return failure('FORBIDDEN', 'Could not resolve tenant from session');
+      }
+
+      const tenantId = profileRow.tenant_id as string;
+
       const { start, end } = getShiftWindow(shiftType, shiftDate ?? new Date());
 
       await auditLogger.info('SHIFT_CONTEXT_AGGREGATION_START', {

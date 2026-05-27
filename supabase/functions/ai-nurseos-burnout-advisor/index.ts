@@ -17,6 +17,7 @@ import { createAdminClient } from "../_shared/supabaseClient.ts";
 import { SONNET_MODEL, calculateModelCost } from "../_shared/models.ts";
 import { recordDecisionLink } from "../_shared/decisionChain.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { checkPersistentRateLimit, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -47,6 +48,78 @@ interface InterventionRecommendation {
   rationale: string;
   priority: "high" | "medium" | "low";
 }
+
+// ============================================================================
+// Structured Output Schema (CLAUDE.md Rule #16)
+//
+// Forces Claude to return JSON matching BurnoutAdvisorResponse via the
+// Anthropic tool_choice pattern. Guarantees structure without regex parsing.
+// ============================================================================
+
+const BURNOUT_ADVISOR_TOOL = {
+  name: "submit_burnout_advice",
+  description: "Submit the structured burnout advisor analysis result",
+  input_schema: {
+    type: "object" as const,
+    required: [
+      "risk_summary",
+      "risk_level",
+      "primary_concern",
+      "intervention_recommendations",
+      "self_care_suggestions",
+      "escalation_needed",
+      "escalation_reason",
+      "confidence",
+    ],
+    properties: {
+      risk_summary: {
+        type: "string" as const,
+        description: "2-3 sentence plain-language summary of burnout status",
+      },
+      risk_level: {
+        type: "string" as const,
+        enum: ["low", "moderate", "high", "critical"],
+      },
+      primary_concern: {
+        type: "string" as const,
+        description: "Single most important concern to address",
+      },
+      intervention_recommendations: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          required: ["type", "action", "rationale", "priority"],
+          properties: {
+            type: {
+              type: "string" as const,
+              enum: ["immediate", "short_term", "long_term"],
+            },
+            action: { type: "string" as const },
+            rationale: { type: "string" as const },
+            priority: {
+              type: "string" as const,
+              enum: ["high", "medium", "low"],
+            },
+          },
+        },
+      },
+      self_care_suggestions: {
+        type: "array" as const,
+        items: { type: "string" as const },
+        description: "3-5 specific, actionable self-care activities",
+      },
+      escalation_needed: { type: "boolean" as const },
+      escalation_reason: {
+        type: ["string", "null"] as unknown as "string",
+        description: "Reason for escalation, or null if not needed",
+      },
+      confidence: {
+        type: "number" as const,
+        description: "Confidence score 0.0 to 1.0",
+      },
+    },
+  },
+};
 
 // ============================================================================
 // Main Handler
@@ -81,6 +154,44 @@ serve(async (req: Request) => {
       );
     }
 
+    const supabase = createAdminClient();
+
+    // Resolve caller's profile (tenant + role) for authorization.
+    // NOTE: profiles uses user_id, NOT id (adversarial-audit-lessons.md Rule 8)
+    const { data: callerProfile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("user_id, tenant_id, role_id, roles:role_id ( id, name )")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (profileErr || !callerProfile) {
+      logger.error("NURSEOS_BURNOUT_ADVISOR_PROFILE_LOOKUP_FAILED", {
+        userId: user.id,
+        error: profileErr?.message ?? "no profile",
+      });
+      return new Response(
+        JSON.stringify({ error: "Caller profile not found" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Supabase join returns object for single FK, but TS types it as array — handle both
+    const rolesRaw = callerProfile.roles as
+      | { id: string; name: string }
+      | { id: string; name: string }[]
+      | null;
+    const roleName = Array.isArray(rolesRaw) ? rolesRaw[0]?.name ?? null : rolesRaw?.name ?? null;
+
+    // Resolve caller's own practitioner_id (if they are a practitioner) for self-access check.
+    // profiles does NOT have practitioner_id — the link lives on fhir_practitioners.user_id.
+    const { data: callerPractitioner } = await supabase
+      .from("fhir_practitioners")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const callerPractitionerId: string | null = callerPractitioner?.id ?? null;
+
     const body: AdvisorRequest = await req.json();
     const { providerId, assessmentId } = body;
 
@@ -91,9 +202,156 @@ serve(async (req: Request) => {
       );
     }
 
-    logger.info("NURSEOS_BURNOUT_ADVISOR_START", { providerId, assessmentId });
+    // ========================================================================
+    // AUTHORIZATION GATE
+    // Per HIPAA § 164.502 (minimum necessary) and § 164.312 (access control):
+    //   - Self-access: always allowed
+    //   - Admin/care_manager/super_admin/department_head: allowed but audit-logged
+    //   - Otherwise: 403
+    // Also enforce tenant isolation (unless super_admin).
+    // ========================================================================
+    const ADMIN_ROLES = ["admin", "care_manager", "super_admin", "department_head"];
+    const isSelfAccess = callerPractitionerId !== null && callerPractitionerId === providerId;
+    const isAdminAccess = !isSelfAccess && roleName !== null && ADMIN_ROLES.includes(roleName);
 
-    const supabase = createAdminClient();
+    if (!isSelfAccess && !isAdminAccess) {
+      logger.warn("NURSEOS_BURNOUT_ADVISOR_FORBIDDEN", {
+        callerUserId: user.id,
+        callerRole: roleName,
+        targetProviderId: providerId,
+      });
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden — cannot access another provider's burnout data",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Tenant isolation — target practitioner must share caller's tenant
+    // (super_admin bypass for cross-tenant operations).
+    if (!isSelfAccess && roleName !== "super_admin") {
+      const { data: targetPractitioner, error: targetErr } = await supabase
+        .from("fhir_practitioners")
+        .select("user_id")
+        .eq("id", providerId)
+        .maybeSingle();
+
+      if (targetErr || !targetPractitioner?.user_id) {
+        logger.warn("NURSEOS_BURNOUT_ADVISOR_TARGET_NOT_FOUND", {
+          targetProviderId: providerId,
+          error: targetErr?.message,
+        });
+        return new Response(
+          JSON.stringify({ error: "Target provider not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: targetProfile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", targetPractitioner.user_id)
+        .maybeSingle();
+
+      const targetTenantId = targetProfile?.tenant_id ?? null;
+      if (!targetTenantId || targetTenantId !== callerProfile.tenant_id) {
+        // Audit the cross-tenant block before refusing
+        try {
+          await supabase.from("audit_logs").insert({
+            event_type: "BURNOUT_ADVISOR_CROSS_TENANT_BLOCKED",
+            event_category: "PHI_ACCESS",
+            actor_user_id: user.id,
+            actor_ip_address:
+              req.headers.get("x-forwarded-for") ||
+              req.headers.get("cf-connecting-ip"),
+            actor_user_agent: req.headers.get("user-agent"),
+            operation: "NURSEOS_BURNOUT_ADVISOR",
+            resource_type: "provider_burnout_assessment",
+            success: false,
+            metadata: {
+              target_practitioner_id: providerId,
+              caller_role: roleName,
+              caller_tenant_id: callerProfile.tenant_id,
+              target_tenant_id: targetTenantId,
+              assessment_id: assessmentId ?? null,
+            },
+          });
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          logger.error("BURNOUT_ADVISOR_CROSS_TENANT_AUDIT_FAILED", { error: errorMessage });
+        }
+
+        return new Response(
+          JSON.stringify({
+            error: "Forbidden — cannot access another provider's burnout data",
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Audit log admin cross-provider access (HIPAA traceability for PHI access).
+    if (isAdminAccess) {
+      try {
+        await supabase.from("audit_logs").insert({
+          event_type: "BURNOUT_ADVISOR_ADMIN_ACCESS",
+          event_category: "PHI_ACCESS",
+          actor_user_id: user.id,
+          actor_ip_address:
+            req.headers.get("x-forwarded-for") ||
+            req.headers.get("cf-connecting-ip"),
+          actor_user_agent: req.headers.get("user-agent"),
+          operation: "NURSEOS_BURNOUT_ADVISOR",
+          resource_type: "provider_burnout_assessment",
+          success: true,
+          metadata: {
+            target_practitioner_id: providerId,
+            caller_role: roleName,
+            assessment_id: assessmentId ?? null,
+            caller_tenant_id: callerProfile.tenant_id,
+          },
+        });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error("BURNOUT_ADVISOR_ADMIN_AUDIT_FAILED", { error: errorMessage });
+      }
+    }
+
+    // ========================================================================
+    // RATE LIMIT (persistent, post-auth)
+    // Per-user identity limit to prevent abuse of expensive Claude calls.
+    // Uses MCP_RATE_LIMITS.claude (15 req/min) — appropriate for AI workloads.
+    // ========================================================================
+    const rateLimit = await checkPersistentRateLimit(
+      supabase,
+      user.id,
+      MCP_RATE_LIMITS.claude
+    );
+    if (!rateLimit.allowed) {
+      logger.warn("NURSEOS_BURNOUT_ADVISOR_RATE_LIMITED", {
+        userId: user.id,
+        retryAfterMs: rateLimit.retryAfterMs,
+      });
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded" }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(Math.ceil((rateLimit.retryAfterMs ?? 1000) / 1000)),
+          },
+        }
+      );
+    }
+
+    logger.info("NURSEOS_BURNOUT_ADVISOR_START", {
+      providerId,
+      assessmentId,
+      accessType: isSelfAccess ? "self" : "admin",
+      callerRole: roleName,
+    });
 
     // Fetch provider data in parallel
     const [assessmentResult, checkinsResult, completionsResult] = await Promise.all([
@@ -138,7 +396,7 @@ serve(async (req: Request) => {
     // Build prompt
     const prompt = buildAdvisorPrompt(assessment, checkins, completions);
 
-    // Call Claude
+    // Call Claude with structured output (tool_choice pattern — CLAUDE.md Rule #16)
     const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -150,7 +408,9 @@ serve(async (req: Request) => {
         model: SONNET_MODEL,
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
-        system: "You are a clinical burnout prevention advisor for healthcare workers. Respond ONLY with valid JSON matching the specified schema. Base recommendations on evidence-based burnout prevention strategies (MBI framework, NIOSH Total Worker Health). Never minimize burnout symptoms. Always recommend professional help for critical risk levels.",
+        system: "You are a clinical burnout prevention advisor for healthcare workers. Submit your analysis by calling the submit_burnout_advice tool. Base recommendations on evidence-based burnout prevention strategies (MBI framework, NIOSH Total Worker Health). Never minimize burnout symptoms. Always recommend professional help for critical risk levels.",
+        tools: [BURNOUT_ADVISOR_TOOL],
+        tool_choice: { type: "tool", name: "submit_burnout_advice" },
       }),
     });
 
@@ -163,27 +423,28 @@ serve(async (req: Request) => {
       );
     }
 
-    const aiResult = await aiResponse.json();
-    const content = aiResult.content?.[0]?.text;
-    if (!content) {
-      logger.error("NURSEOS_BURNOUT_ADVISOR_EMPTY_RESPONSE", { providerId });
+    const aiResult = await aiResponse.json() as {
+      content: Array<{ type: string; input?: unknown; text?: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
+
+    // Extract structured response from tool_use block
+    const toolBlock = aiResult.content?.find(
+      (block) => block.type === "tool_use"
+    ) as { type: "tool_use"; input: unknown } | undefined;
+
+    if (!toolBlock || !toolBlock.input) {
+      logger.error("NURSEOS_BURNOUT_ADVISOR_NO_TOOL_USE", {
+        providerId,
+        blockTypes: aiResult.content?.map((b) => b.type) ?? [],
+      });
       return new Response(
-        JSON.stringify({ error: "AI returned empty response" }),
+        JSON.stringify({ error: "AI did not return structured output" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Parse structured response
-    let advisorResponse: BurnoutAdvisorResponse;
-    try {
-      advisorResponse = JSON.parse(content) as BurnoutAdvisorResponse;
-    } catch {
-      logger.error("NURSEOS_BURNOUT_ADVISOR_PARSE_ERROR", { providerId, rawContent: content.substring(0, 200) });
-      return new Response(
-        JSON.stringify({ error: "Failed to parse AI response" }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const advisorResponse = toolBlock.input as unknown as BurnoutAdvisorResponse;
 
     // Calculate cost
     const inputTokens = aiResult.usage?.input_tokens ?? 0;
@@ -282,24 +543,8 @@ function buildAdvisorPrompt(
 ## Training Completions (Recent)
   ${completions.length > 0 ? completions.map(c => `Module ${(c as Record<string, unknown>).module_id} completed ${(c as Record<string, unknown>).completed_at}`).join("\n  ") : "No modules completed yet"}
 
-## Response Schema (respond with ONLY this JSON, no other text):
-{
-  "risk_summary": "2-3 sentence plain-language summary of burnout status",
-  "risk_level": "low|moderate|high|critical",
-  "primary_concern": "single most important concern to address",
-  "intervention_recommendations": [
-    {
-      "type": "immediate|short_term|long_term",
-      "action": "specific actionable recommendation",
-      "rationale": "why this helps based on their data",
-      "priority": "high|medium|low"
-    }
-  ],
-  "self_care_suggestions": ["3-5 specific, actionable self-care activities"],
-  "escalation_needed": true/false,
-  "escalation_reason": "reason or null",
-  "confidence": 0.0-1.0
-}
+## Output
+Call the submit_burnout_advice tool with your structured analysis. The tool schema enforces the required fields and value enums.
 
 RULES:
 - For critical risk: ALWAYS set escalation_needed=true and recommend EAP referral

@@ -1,12 +1,26 @@
-// src/components/WeatherWidget.tsx
-import { useState, useEffect } from 'react';
+// src/components/dashboard/WeatherWidget.tsx
+//
+// Weather display for the dashboard. Calls the `weather-proxy` edge function
+// which holds the WeatherAPI.com key server-side — the key is never shipped
+// to the browser (S-OBS-1, see docs/trackers/claude-self-audit-2026-05-20-tracker.md).
 
-const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabaseClient';
 
 interface WeatherData {
   temp_f: number;
   condition: string;
   location: string;
+}
+
+interface WeatherApiResponse {
+  current?: {
+    temp_f?: number;
+    condition?: { text?: string };
+  };
+  location?: {
+    name?: string;
+  };
 }
 
 const WeatherWidget: React.FC = () => {
@@ -24,7 +38,6 @@ const WeatherWidget: React.FC = () => {
       setError('Geolocation not supported');
       return;
     }
-    // Auto-request location - browser will show permission dialog
     navigator.geolocation.getCurrentPosition(
       pos => {
         const { latitude, longitude } = pos.coords;
@@ -34,21 +47,34 @@ const WeatherWidget: React.FC = () => {
         setError('Location access denied');
       }
     );
-     
   }, [useManual, city]);
 
-  const fetchWeather = (q: string) => {
-    fetch(`https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${q}&aqi=no`)
-      .then(res => res.json())
-      .then(data => {
-        setWeather({
-          temp_f: data.current.temp_f,
-          condition: data.current.condition.text,
-          location: data.location.name,
-        });
-        setError(null);
-      })
-      .catch(() => setError('Failed to fetch weather'));
+  const fetchWeather = async (q: string) => {
+    try {
+      const { data, error: invokeErr } = await supabase.functions.invoke<WeatherApiResponse>(
+        'weather-proxy',
+        { body: { q } }
+      );
+
+      if (invokeErr) {
+        setError('Failed to fetch weather');
+        return;
+      }
+
+      if (!data?.current?.temp_f || !data?.location?.name) {
+        setError('Weather data unavailable');
+        return;
+      }
+
+      setWeather({
+        temp_f: data.current.temp_f,
+        condition: data.current.condition?.text ?? '',
+        location: data.location.name,
+      });
+      setError(null);
+    } catch {
+      setError('Failed to fetch weather');
+    }
   };
 
   const handleManual = () => {

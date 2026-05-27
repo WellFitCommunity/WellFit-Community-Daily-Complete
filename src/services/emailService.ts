@@ -1,16 +1,21 @@
 /**
- * Email Service - MailerSend Integration
- * Centralized email sending for the application
+ * Email Service — server-side via `send-email` edge function.
  *
- * Features:
- * - MailerSend API integration
- * - Template support
- * - Bulk email support
- * - Retry logic with exponential backoff
- * - Audit logging for all emails
+ * Previously this service called the MailerSend API directly with
+ * VITE_MAILERSEND_API_KEY exposed in the browser bundle (CRIT-2).
+ * The API key has been rotated; this client now routes through the
+ * existing `send-email` edge function which holds the secret server-side
+ * and enforces JWT + role auth + rate limiting.
+ *
+ * The rich EmailOptions interface (attachments, cc/bcc, templateId,
+ * scheduledAt) is preserved for type compatibility, but the underlying
+ * edge function only supports `{to, subject, html, priority}`. Unsupported
+ * fields log a warning and are dropped. Callers needing advanced features
+ * should extend the edge function rather than reach into MailerSend directly.
  */
 
 import { auditLogger } from './auditLogger';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Email recipient
@@ -52,6 +57,8 @@ export interface EmailOptions {
   tags?: string[];
   /** Send at specific time (ISO 8601) */
   scheduledAt?: string;
+  /** Priority forwarded to send-email edge function */
+  priority?: 'normal' | 'high' | 'urgent';
 }
 
 /**
@@ -65,183 +72,130 @@ export interface EmailResult {
 }
 
 /**
- * MailerSend API response
+ * Body shape accepted by the `send-email` edge function.
+ * Defined here so the client and server stay in sync.
  */
-interface MailerSendResponse {
+interface SendEmailEdgeBody {
+  to: { email: string; name: string }[];
+  subject: string;
+  html: string;
+  priority?: 'normal' | 'high' | 'urgent';
+}
+
+interface SendEmailEdgeResponse {
+  success?: boolean;
   message_id?: string;
-  errors?: Array<{ field: string; message: string }>;
+  error?: string;
 }
 
 /**
- * Email Service Configuration
- */
-interface EmailServiceConfig {
-  apiKey: string;
-  defaultFromEmail: string;
-  defaultFromName: string;
-  baseUrl?: string;
-}
-
-/**
- * Email Service - MailerSend Implementation
+ * Email Service — routes all sends through the `send-email` edge function.
  */
 export class EmailService {
-  private config: EmailServiceConfig;
-  private readonly baseUrl: string;
-  private readonly maxRetries = 3;
-  private readonly retryDelayMs = 1000;
-
-  constructor(config?: Partial<EmailServiceConfig>) {
-    this.config = {
-      apiKey: config?.apiKey || import.meta.env.VITE_MAILERSEND_API_KEY || '',
-      defaultFromEmail: config?.defaultFromEmail || import.meta.env.VITE_MAILERSEND_FROM_EMAIL || 'noreply@wellfit.community',
-      defaultFromName: config?.defaultFromName || import.meta.env.VITE_MAILERSEND_FROM_NAME || 'WellFit Community',
-      baseUrl: config?.baseUrl,
-    };
-    this.baseUrl = this.config.baseUrl || 'https://api.mailersend.com/v1';
-  }
-
   /**
-   * Check if email service is configured
+   * Email is configured at the edge layer. The browser does not see the
+   * MailerSend secret. If the edge function is misconfigured, calls will
+   * fail at send time (audit-logged).
    */
   isConfigured(): boolean {
-    return !!this.config.apiKey;
+    return true;
   }
 
   /**
-   * Send a single email
+   * Send a single email.
+   * Calls the `send-email` edge function which enforces auth, role, rate
+   * limit, and holds the MailerSend secret server-side.
    */
   async send(options: EmailOptions): Promise<EmailResult> {
-    if (!this.isConfigured()) {
-      await auditLogger.warn('EMAIL_NOT_CONFIGURED', {
-        to: this.getRecipientEmails(options.to),
+    const recipients = this.normalizeRecipients(options.to);
+    if (recipients.length === 0) {
+      await auditLogger.warn('EMAIL_NO_RECIPIENTS', { subject: options.subject });
+      return { success: false, error: 'No recipients' };
+    }
+
+    // The edge function only supports html — render a minimal wrapper if
+    // only `text` was provided so we don't silently drop the message.
+    const html = options.html ?? (options.text ? this.textToHtml(options.text) : undefined);
+    if (!html) {
+      return { success: false, error: 'Either html or text is required' };
+    }
+
+    // Warn (do not fail) on advanced options the edge function does not yet
+    // support. Callers who need these features should extend send-email.
+    const unsupported = this.collectUnsupportedFields(options);
+    if (unsupported.length > 0) {
+      await auditLogger.warn('EMAIL_UNSUPPORTED_FIELDS_DROPPED', {
         subject: options.subject,
+        fields: unsupported,
       });
-      return {
-        success: false,
-        error: 'Email service not configured. Set VITE_MAILERSEND_API_KEY.',
-      };
     }
 
-    const payload = this.buildPayload(options);
-
-    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-      try {
-        const response = await fetch(`${this.baseUrl}/email`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.config.apiKey}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok || response.status === 202) {
-          const data = await response.json().catch(() => ({})) as MailerSendResponse;
-
-          await auditLogger.info('EMAIL_SENT', {
-            to: this.getRecipientEmails(options.to),
-            subject: options.subject,
-            messageId: data.message_id,
-            templateId: options.templateId,
-          });
-
-          return {
-            success: true,
-            messageId: data.message_id,
-            statusCode: response.status,
-          };
-        }
-
-        // Handle rate limiting
-        if (response.status === 429) {
-          const retryAfter = parseInt(response.headers.get('Retry-After') || '60', 10);
-          await auditLogger.warn('EMAIL_RATE_LIMITED', {
-            retryAfter,
-            attempt,
-          });
-
-          if (attempt < this.maxRetries) {
-            await this.delay(retryAfter * 1000);
-            continue;
-          }
-        }
-
-        // Handle other errors
-        const errorData = await response.json().catch(() => ({})) as MailerSendResponse;
-        const errorMessage = errorData.errors?.map(e => e.message).join(', ') || response.statusText;
-
-        await auditLogger.error('EMAIL_SEND_FAILED', `Failed to send email: ${errorMessage}`, {
-          to: this.getRecipientEmails(options.to),
-          subject: options.subject,
-          statusCode: response.status,
-          attempt,
-        });
-
-        if (attempt < this.maxRetries && response.status >= 500) {
-          await this.delay(this.retryDelayMs * Math.pow(2, attempt - 1));
-          continue;
-        }
-
-        return {
-          success: false,
-          error: errorMessage,
-          statusCode: response.status,
-        };
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-
-        await auditLogger.error('EMAIL_SEND_ERROR', errorMessage, {
-          to: this.getRecipientEmails(options.to),
-          subject: options.subject,
-          attempt,
-        });
-
-        if (attempt < this.maxRetries) {
-          await this.delay(this.retryDelayMs * Math.pow(2, attempt - 1));
-          continue;
-        }
-
-        return {
-          success: false,
-          error: errorMessage,
-        };
-      }
-    }
-
-    return {
-      success: false,
-      error: 'Max retries exceeded',
+    const body: SendEmailEdgeBody = {
+      to: recipients,
+      subject: options.subject,
+      html,
+      ...(options.priority ? { priority: options.priority } : {}),
     };
+
+    try {
+      const { data, error } = await supabase.functions.invoke<SendEmailEdgeResponse>(
+        'send-email',
+        { body }
+      );
+
+      if (error) {
+        await auditLogger.error('EMAIL_SEND_FAILED', error.message, {
+          to: recipients.map(r => r.email),
+          subject: options.subject,
+        });
+        return { success: false, error: error.message };
+      }
+
+      if (data?.success === false) {
+        await auditLogger.error('EMAIL_SEND_REJECTED', data.error ?? 'unknown', {
+          to: recipients.map(r => r.email),
+          subject: options.subject,
+        });
+        return { success: false, error: data.error };
+      }
+
+      await auditLogger.info('EMAIL_SENT', {
+        to: recipients.map(r => r.email),
+        subject: options.subject,
+        messageId: data?.message_id,
+      });
+
+      return { success: true, messageId: data?.message_id };
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      await auditLogger.error(
+        'EMAIL_SEND_ERROR',
+        err instanceof Error ? err : new Error(errorMessage),
+        { to: recipients.map(r => r.email), subject: options.subject }
+      );
+      return { success: false, error: errorMessage };
+    }
   }
 
   /**
-   * Send bulk emails (up to 500 per request)
+   * Send bulk emails. Calls send() in parallel batches; the edge function's
+   * rate limiter (30 emails per 10 minutes per user) is the upper bound.
    */
   async sendBulk(emails: EmailOptions[]): Promise<EmailResult[]> {
-    if (!this.isConfigured()) {
-      return emails.map(() => ({
-        success: false,
-        error: 'Email service not configured',
-      }));
-    }
-
-    // MailerSend bulk endpoint accepts up to 500 emails
+    const batchSize = 25;
     const results: EmailResult[] = [];
-    const batchSize = 500;
-
     for (let i = 0; i < emails.length; i += batchSize) {
       const batch = emails.slice(i, i + batchSize);
       const batchResults = await Promise.all(batch.map(email => this.send(email)));
       results.push(...batchResults);
     }
-
     return results;
   }
 
   /**
-   * Send email using a template
+   * Send email using a template. The edge function does not natively support
+   * MailerSend template IDs yet — the templateId is forwarded as metadata in
+   * the warning log; the actual body must be provided as html/text.
    */
   async sendTemplate(
     templateId: string,
@@ -251,16 +205,13 @@ export class EmailService {
   ): Promise<EmailResult> {
     return this.send({
       to,
-      subject: options?.subject || '', // Subject can be in template
+      subject: options?.subject || '',
       templateId,
       templateVariables: variables,
       ...options,
     });
   }
 
-  /**
-   * Common email templates
-   */
   async sendWelcomeEmail(to: EmailRecipient, userName: string): Promise<EmailResult> {
     return this.send({
       to,
@@ -346,85 +297,42 @@ export class EmailService {
         </div>
       `,
       tags: ['alert', alert.severity],
+      priority: alert.severity === 'critical' ? 'urgent' : alert.severity === 'high' ? 'high' : 'normal',
     });
   }
 
-  // Private helper methods
+  // ── Private helpers ────────────────────────────────────────────────
 
-  private buildPayload(options: EmailOptions): Record<string, unknown> {
-    const recipients = Array.isArray(options.to) ? options.to : [options.to];
-
-    const payload: Record<string, unknown> = {
-      from: {
-        email: options.from?.email || this.config.defaultFromEmail,
-        name: options.from?.name || this.config.defaultFromName,
-      },
-      to: recipients.map(r => ({
-        email: r.email,
-        name: r.name,
-      })),
-      subject: options.subject,
-    };
-
-    if (options.html) {
-      payload.html = options.html;
-    }
-
-    if (options.text) {
-      payload.text = options.text;
-    }
-
-    if (options.templateId) {
-      payload.template_id = options.templateId;
-      if (options.templateVariables) {
-        payload.personalization = recipients.map(r => ({
-          email: r.email,
-          data: options.templateVariables,
-        }));
-      }
-    }
-
-    if (options.replyTo) {
-      payload.reply_to = {
-        email: options.replyTo.email,
-        name: options.replyTo.name,
-      };
-    }
-
-    if (options.cc?.length) {
-      payload.cc = options.cc.map(r => ({ email: r.email, name: r.name }));
-    }
-
-    if (options.bcc?.length) {
-      payload.bcc = options.bcc.map(r => ({ email: r.email, name: r.name }));
-    }
-
-    if (options.attachments?.length) {
-      payload.attachments = options.attachments.map(a => ({
-        filename: a.filename,
-        content: a.content,
-        type: a.type,
-      }));
-    }
-
-    if (options.tags?.length) {
-      payload.tags = options.tags;
-    }
-
-    if (options.scheduledAt) {
-      payload.send_at = options.scheduledAt;
-    }
-
-    return payload;
+  private normalizeRecipients(to: EmailRecipient | EmailRecipient[]): { email: string; name: string }[] {
+    const list = Array.isArray(to) ? to : [to];
+    return list
+      .filter(r => !!r?.email)
+      .map(r => ({ email: r.email, name: r.name ?? '' }));
   }
 
-  private getRecipientEmails(to: EmailRecipient | EmailRecipient[]): string[] {
-    const recipients = Array.isArray(to) ? to : [to];
-    return recipients.map(r => r.email);
+  private textToHtml(text: string): string {
+    // Escape HTML special chars + convert newlines to <br>
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/\n/g, '<br>');
+    return `<div style="font-family:sans-serif;white-space:pre-wrap">${escaped}</div>`;
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  private collectUnsupportedFields(options: EmailOptions): string[] {
+    const dropped: string[] = [];
+    if (options.attachments?.length) dropped.push('attachments');
+    if (options.cc?.length) dropped.push('cc');
+    if (options.bcc?.length) dropped.push('bcc');
+    if (options.replyTo) dropped.push('replyTo');
+    if (options.scheduledAt) dropped.push('scheduledAt');
+    if (options.tags?.length) dropped.push('tags');
+    if (options.templateId) dropped.push('templateId');
+    if (options.from) dropped.push('from'); // edge fn uses MAILERSEND_FROM_EMAIL
+    return dropped;
   }
 }
 

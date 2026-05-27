@@ -77,6 +77,44 @@ serve(async (req: Request) => {
       );
     }
 
+    const supabase = createAdminClient();
+
+    // Resolve caller's profile (tenant + role) for authorization.
+    // NOTE: profiles uses user_id, NOT id (adversarial-audit-lessons.md Rule 8)
+    const { data: callerProfile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("user_id, tenant_id, role_id, roles:role_id ( id, name )")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (profileErr || !callerProfile) {
+      logger.error("NURSEOS_STRESS_NARRATIVE_PROFILE_LOOKUP_FAILED", {
+        userId: user.id,
+        error: profileErr?.message ?? "no profile",
+      });
+      return new Response(
+        JSON.stringify({ error: "Caller profile not found" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Supabase join returns object for single FK, but TS types it as array — handle both
+    const rolesRaw = callerProfile.roles as
+      | { id: string; name: string }
+      | { id: string; name: string }[]
+      | null;
+    const roleName = Array.isArray(rolesRaw) ? rolesRaw[0]?.name ?? null : rolesRaw?.name ?? null;
+
+    // Resolve caller's own practitioner_id (if they are a practitioner) for self-access check.
+    // profiles does NOT have practitioner_id — the link lives on fhir_practitioners.user_id.
+    const { data: callerPractitioner } = await supabase
+      .from("fhir_practitioners")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const callerPractitionerId: string | null = callerPractitioner?.id ?? null;
+
     const body: NarrativeRequest = await req.json();
     const { providerId, period = "7d" } = body;
 
@@ -87,9 +125,129 @@ serve(async (req: Request) => {
       );
     }
 
-    logger.info("NURSEOS_STRESS_NARRATIVE_START", { providerId, period });
+    // ========================================================================
+    // AUTHORIZATION GATE
+    // Per HIPAA § 164.502 (minimum necessary) and § 164.312 (access control):
+    //   - Self-access: always allowed
+    //   - Admin/care_manager/super_admin/department_head: allowed but audit-logged
+    //   - Otherwise: 403
+    // Also enforce tenant isolation (unless super_admin).
+    // ========================================================================
+    const ADMIN_ROLES = ["admin", "care_manager", "super_admin", "department_head"];
+    const isSelfAccess = callerPractitionerId !== null && callerPractitionerId === providerId;
+    const isAdminAccess = !isSelfAccess && roleName !== null && ADMIN_ROLES.includes(roleName);
 
-    const supabase = createAdminClient();
+    if (!isSelfAccess && !isAdminAccess) {
+      logger.warn("NURSEOS_STRESS_NARRATIVE_FORBIDDEN", {
+        callerUserId: user.id,
+        callerRole: roleName,
+        targetProviderId: providerId,
+      });
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden — cannot access another provider's data",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Tenant isolation — target practitioner must share caller's tenant
+    // (super_admin bypass for cross-tenant operations).
+    if (!isSelfAccess && roleName !== "super_admin") {
+      const { data: targetPractitioner, error: targetErr } = await supabase
+        .from("fhir_practitioners")
+        .select("user_id")
+        .eq("id", providerId)
+        .maybeSingle();
+
+      if (targetErr || !targetPractitioner?.user_id) {
+        logger.warn("NURSEOS_STRESS_NARRATIVE_TARGET_NOT_FOUND", {
+          targetProviderId: providerId,
+          error: targetErr?.message,
+        });
+        return new Response(
+          JSON.stringify({ error: "Target provider not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: targetProfile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", targetPractitioner.user_id)
+        .maybeSingle();
+
+      const targetTenantId = targetProfile?.tenant_id ?? null;
+      if (!targetTenantId || targetTenantId !== callerProfile.tenant_id) {
+        // Audit the cross-tenant block before refusing
+        try {
+          await supabase.from("audit_logs").insert({
+            event_type: "STRESS_NARRATIVE_CROSS_TENANT_BLOCKED",
+            event_category: "PHI_ACCESS",
+            actor_user_id: user.id,
+            actor_ip_address:
+              req.headers.get("x-forwarded-for") ||
+              req.headers.get("cf-connecting-ip"),
+            actor_user_agent: req.headers.get("user-agent"),
+            operation: "NURSEOS_STRESS_NARRATIVE",
+            resource_type: "provider_stress_narrative",
+            success: false,
+            metadata: {
+              target_practitioner_id: providerId,
+              caller_role: roleName,
+              caller_tenant_id: callerProfile.tenant_id,
+              target_tenant_id: targetTenantId,
+              period,
+            },
+          });
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          logger.error("STRESS_NARRATIVE_CROSS_TENANT_AUDIT_FAILED", { error: errorMessage });
+        }
+
+        return new Response(
+          JSON.stringify({
+            error: "Forbidden — cannot access another provider's data",
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Audit log admin cross-provider access (HIPAA traceability for PHI access).
+    if (isAdminAccess) {
+      try {
+        await supabase.from("audit_logs").insert({
+          event_type: "STRESS_NARRATIVE_ADMIN_ACCESS",
+          event_category: "PHI_ACCESS",
+          actor_user_id: user.id,
+          actor_ip_address:
+            req.headers.get("x-forwarded-for") ||
+            req.headers.get("cf-connecting-ip"),
+          actor_user_agent: req.headers.get("user-agent"),
+          operation: "NURSEOS_STRESS_NARRATIVE",
+          resource_type: "provider_stress_narrative",
+          success: true,
+          metadata: {
+            target_practitioner_id: providerId,
+            caller_role: roleName,
+            caller_tenant_id: callerProfile.tenant_id,
+            period,
+          },
+        });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error("STRESS_NARRATIVE_ADMIN_AUDIT_FAILED", { error: errorMessage });
+      }
+    }
+
+    logger.info("NURSEOS_STRESS_NARRATIVE_START", {
+      providerId,
+      period,
+      accessType: isSelfAccess ? "self" : "admin",
+      callerRole: roleName,
+    });
+
     const limit = period === "30d" ? 30 : 7;
 
     const { data: checkins, error: checkinsError } = await supabase

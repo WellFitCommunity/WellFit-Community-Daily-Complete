@@ -114,10 +114,6 @@ const CONFIG = {
   MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB
   ALLOWED_MIME_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
 
-  // NIH Pillbox API (optional - requires signup at http://pillbox.nlm.nih.gov/signup.html)
-  PILLBOX_API_ENDPOINT: 'https://rximage.nlm.nih.gov/api/rximage/1/rxnav',
-  PILLBOX_API_KEY: import.meta.env.VITE_PILLBOX_API_KEY,
-
   // Match thresholds
   HIGH_CONFIDENCE_THRESHOLD: 0.85,
   MODERATE_CONFIDENCE_THRESHOLD: 0.70,
@@ -255,26 +251,11 @@ export class PillIdentifierService {
       const content = response.content[0];
       if (content.type === 'text') {
         const identification = this.parseAIResponse(content.text);
-
-        // Optionally enhance with Pillbox API if available
-        let enhancedIdentification = identification;
         const apiSources = ['claude_vision'];
-
-        if (identification.characteristics.imprint && CONFIG.PILLBOX_API_KEY) {
-          try {
-            const pillboxData = await this.queryPillboxAPI(identification.characteristics);
-            if (pillboxData) {
-              enhancedIdentification = this.mergeIdentifications(identification, pillboxData);
-              apiSources.push('nih_pillbox');
-            }
-          } catch (error: unknown) {
-            // Pillbox API query failed, using AI-only results
-          }
-        }
 
         return {
           success: true,
-          identification: enhancedIdentification,
+          identification,
           processingTimeMs: Date.now() - startTime,
           modelUsed: CONFIG.MODEL,
           apiSources
@@ -407,91 +388,6 @@ Now analyze the pill image and return the JSON:`;
         warnings: ['Unable to analyze pill image properly']
       };
     }
-  }
-
-  /**
-   * Query NIH Pillbox API for additional validation
-   * (Requires API key from http://pillbox.nlm.nih.gov/signup.html)
-   */
-  private async queryPillboxAPI(characteristics: PillCharacteristics): Promise<Partial<PillIdentification> | null> {
-    if (!CONFIG.PILLBOX_API_KEY) {
-      return null;
-    }
-
-    try {
-      // Build query parameters based on characteristics
-      const params = new URLSearchParams();
-
-      if (characteristics.imprint) {
-        params.append('name', characteristics.imprint);
-      }
-
-      if (characteristics.shape) {
-        params.append('shape', characteristics.shape);
-      }
-
-      if (typeof characteristics.color === 'string') {
-        params.append('color', characteristics.color);
-      } else if (Array.isArray(characteristics.color) && characteristics.color.length > 0) {
-        params.append('color', characteristics.color[0]);
-      }
-
-      // Note: Actual Pillbox API endpoint and parameters may vary
-      // This is a placeholder implementation
-      const response = await fetch(
-        `${CONFIG.PILLBOX_API_ENDPOINT}?${params.toString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${CONFIG.PILLBOX_API_KEY}`,
-            'Accept': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Pillbox API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Parse Pillbox response and return standardized format
-      // Note: Actual response structure depends on Pillbox API documentation
-      if (data && data.results && data.results.length > 0) {
-        const topResult = data.results[0];
-        return {
-          medicationName: topResult.name,
-          genericName: topResult.generic_name,
-          ndcCode: topResult.ndc,
-          rxcui: topResult.rxcui,
-          strength: topResult.strength
-        };
-      }
-
-      return null;
-
-    } catch (error: unknown) {
-      return null;
-    }
-  }
-
-  /**
-   * Merge AI and Pillbox API results
-   */
-  private mergeIdentifications(
-    aiResult: PillIdentification,
-    pillboxResult: Partial<PillIdentification>
-  ): PillIdentification {
-    return {
-      ...aiResult,
-      medicationName: pillboxResult.medicationName || aiResult.medicationName,
-      genericName: pillboxResult.genericName || aiResult.genericName,
-      ndcCode: pillboxResult.ndcCode || aiResult.ndcCode,
-      rxcui: pillboxResult.rxcui || aiResult.rxcui,
-      strength: pillboxResult.strength || aiResult.strength,
-      identificationMethod: 'hybrid',
-      confidence: Math.min(1.0, aiResult.confidence + 0.1), // Boost confidence when validated by API
-      identificationNotes: `${aiResult.identificationNotes || ''}\nValidated against NIH Pillbox database.`
-    };
   }
 
   /**

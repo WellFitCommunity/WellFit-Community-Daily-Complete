@@ -16,7 +16,6 @@ interface ImportMetaEnv {
   readonly VITE_CLAUDE_ADMIN_MODEL?: string;
   readonly VITE_CLAUDE_MAX_TOKENS?: string;
   readonly VITE_CLAUDE_TIMEOUT?: string;
-  readonly VITE_PILLBOX_API_KEY?: string;
 
   // Firebase
   readonly VITE_FIREBASE_API_KEY?: string;
@@ -30,7 +29,6 @@ interface ImportMetaEnv {
 
   // External Services
   readonly VITE_HCAPTCHA_SITE_KEY?: string;
-  readonly VITE_WEATHER_API_KEY?: string;
   readonly VITE_TWILIO_ENABLED?: string;
 
   // App Configuration
@@ -42,7 +40,6 @@ interface ImportMetaEnv {
   readonly VITE_COMPASS_DEMO?: string;
   readonly VITE_MEALS_SOURCE?: string;
   readonly VITE_HIPAA_LOGGING_ENABLED?: string;
-  readonly VITE_PHI_ENCRYPTION_KEY?: string;
 
   // Session/Timeout
   readonly VITE_INACTIVITY_TIMEOUT_MS?: string;

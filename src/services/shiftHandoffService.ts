@@ -90,31 +90,72 @@ export async function nurseReviewHandoffRisk(
   return data as boolean;
 }
 
+/** Per-id result returned by the bulk_nurse_review_handoff_risks RPC */
+interface BulkNurseReviewRow {
+  updated_id: string;
+  denied_reason: string | null;
+}
+
+/** Aggregated result surfaced to callers of bulkConfirmAutoScores */
+export interface BulkConfirmResult {
+  /** Number of risk scores successfully marked nurse-reviewed */
+  confirmedCount: number;
+  /** IDs the server refused to confirm (e.g., not assigned to caller's unit) */
+  deniedIds: string[];
+  /** Optional per-id deny reason map for UI surfacing */
+  denyReasons: Record<string, string>;
+}
+
+/**
+ * Bulk-confirm shift handoff auto-scores.
+ *
+ * SH-1 (2026-05): The previous implementation did a direct UPDATE with
+ * client-supplied IDs, which RLS only filtered by tenant — letting a nurse
+ * confirm scores for patients on units they don't own. This now calls the
+ * server-side `bulk_nurse_review_handoff_risks` RPC, which verifies each
+ * patient is currently bed-assigned in the caller's tenant before applying
+ * the review. Denied IDs are returned so the UI can surface partial failure.
+ */
 export async function bulkConfirmAutoScores(
   riskScoreIds: string[]
-): Promise<number> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
+): Promise<BulkConfirmResult> {
+  if (riskScoreIds.length === 0) {
+    return { confirmedCount: 0, deniedIds: [], denyReasons: {} };
+  }
 
-  const { count, error } = await supabase
-    .from('shift_handoff_risk_scores')
-    .update({
-      nurse_reviewed: true,
-      nurse_id: user.id,
-      nurse_reviewed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .in('id', riskScoreIds);
+  const { data, error } = await supabase.rpc('bulk_nurse_review_handoff_risks', {
+    p_ids: riskScoreIds,
+  });
 
   if (error) {
     await auditLogger.error('BULK_CONFIRM_FAILED', new Error(error.message), {
-      riskScoreIds,
+      submittedCount: riskScoreIds.length,
       errorCode: error.code,
     });
     throw new Error(`Failed to bulk confirm: ${error.message}`);
   }
 
-  return count || 0;
+  const rows = (data ?? []) as BulkNurseReviewRow[];
+  const deniedIds: string[] = [];
+  const denyReasons: Record<string, string> = {};
+  let confirmedCount = 0;
+
+  for (const row of rows) {
+    if (row.denied_reason === null) {
+      confirmedCount += 1;
+    } else {
+      deniedIds.push(row.updated_id);
+      denyReasons[row.updated_id] = row.denied_reason;
+    }
+  }
+
+  await auditLogger.info('BULK_CONFIRM_HANDOFF_COMPLETED', {
+    submittedCount: riskScoreIds.length,
+    confirmedCount,
+    deniedCount: deniedIds.length,
+  });
+
+  return { confirmedCount, deniedIds, denyReasons };
 }
 
 // ============================================================================
@@ -443,18 +484,18 @@ export type { HandoffNarrativeResult };
  * patients on a unit, then sends to the synthesize-handoff-narrative MCP tool
  * for Claude meta-reasoning about what matters most for the incoming shift.
  *
- * This extends the existing AI summary with deeper cross-patient reasoning.
+ * SH-2 (2026-05): Tenant is resolved server-side from the authenticated
+ * session inside ShiftContextAggregator — callers no longer pass a tenantId
+ * that could be spoofed across tenants.
  */
 export async function generateHandoffNarrative(
   unitId: string,
-  tenantId: string,
   shiftType: ShiftType = 'day',
   shiftDate?: Date
 ): Promise<HandoffNarrativeResult | null> {
   try {
     const result = await ShiftContextAggregator.aggregateAndSynthesize(
       unitId,
-      tenantId,
       shiftType as 'day' | 'evening' | 'night',
       shiftDate
     );

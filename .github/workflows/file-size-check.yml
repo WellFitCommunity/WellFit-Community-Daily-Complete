@@ -1,0 +1,44 @@
+# .github/workflows/file-size-check.yml
+# Enforces CLAUDE.md Commandment #12: 600-line max per file (.ts/.tsx).
+# Scans src/ AND supabase/functions/. Fails on NEW god files (not in baseline).
+name: File Size Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  file-size-check:
+    name: 600-Line File Size Gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run file size check
+        run: bash scripts/check-file-sizes.sh
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "## File Size Check: PASS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No NEW god files (> 600 lines) detected." >> $GITHUB_STEP_SUMMARY
+            echo "Pre-existing baselined files are tracked in:" >> $GITHUB_STEP_SUMMARY
+            echo "- \`scripts/god-file-baseline.txt\` (src/)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`scripts/god-file-baseline-functions.txt\` (supabase/functions/)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## File Size Check: FAIL" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "One or more NEW files exceed the 600-line limit." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Required action:** Decompose the file into smaller modules." >> $GITHUB_STEP_SUMMARY
+            echo "Adding new files to the baseline is not permitted without explicit approval." >> $GITHUB_STEP_SUMMARY
+            echo "See CLAUDE.md Commandment #12 and docs/trackers/god-file-decomposition-tracker.md" >> $GITHUB_STEP_SUMMARY
+          fi

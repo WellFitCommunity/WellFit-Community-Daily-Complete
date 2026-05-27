@@ -24,9 +24,10 @@ import type { HandoffNarrativeResult } from '../shiftContextAggregator';
 // Mocks
 // ============================================================================
 
-const { mockTableData, mockInvoke } = vi.hoisted(() => ({
+const { mockTableData, mockInvoke, mockGetUser } = vi.hoisted(() => ({
   mockTableData: new Map<string, { data: unknown; error: unknown }>(),
   mockInvoke: vi.fn(),
+  mockGetUser: vi.fn(),
 }));
 
 // Chain builder for supabase query mocking — every method returns itself
@@ -44,6 +45,7 @@ function createChainMock(returnValue: { data: unknown; error: unknown }) {
   chain.order = vi.fn().mockReturnValue(chain);
   chain.limit = vi.fn().mockReturnValue(chain);
   chain.single = vi.fn().mockReturnValue(chain);
+  chain.maybeSingle = vi.fn().mockReturnValue(chain);
   return chain;
 }
 
@@ -55,6 +57,9 @@ vi.mock('../../../lib/supabaseClient', () => ({
     },
     functions: {
       invoke: mockInvoke,
+    },
+    auth: {
+      getUser: () => mockGetUser(),
     },
   },
 }));
@@ -101,6 +106,20 @@ describe('ShiftContextAggregator', () => {
     vi.clearAllMocks();
     mockTableData.clear();
     mockInvoke.mockReset();
+
+    // SH-2: tenant is now resolved from the authenticated session inside
+    // aggregateAndSynthesize. Default mock returns a healthy session with a
+    // profile that resolves to 'tenant-test-001' (matching the legacy
+    // hardcoded value tests previously passed in).
+    mockGetUser.mockReset();
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'test-user-id' } },
+      error: null,
+    });
+    mockTableData.set('profiles', {
+      data: { tenant_id: 'tenant-test-001' },
+      error: null,
+    });
   });
 
   describe('aggregateAndSynthesize', () => {
@@ -163,7 +182,7 @@ describe('ShiftContextAggregator', () => {
       mockInvoke.mockResolvedValue(createMcpNarrativeResponse(narrativeResult));
 
       const result = await ShiftContextAggregator.aggregateAndSynthesize(
-        'unit-3a', 'tenant-test-001', 'day', new Date('2026-03-15')
+        'unit-3a', 'day', new Date('2026-03-15')
       );
 
       assertSuccess(result);
@@ -186,7 +205,7 @@ describe('ShiftContextAggregator', () => {
       mockTableData.set('bed_assignments', { data: [], error: null });
 
       const result = await ShiftContextAggregator.aggregateAndSynthesize(
-        'unit-empty', 'tenant-test-001', 'night'
+        'unit-empty', 'night'
       );
 
       assertSuccess(result);
@@ -199,7 +218,7 @@ describe('ShiftContextAggregator', () => {
       mockTableData.set('bed_assignments', { data: null, error: { message: 'Connection lost' } });
 
       const result = await ShiftContextAggregator.aggregateAndSynthesize(
-        'unit-broken', 'tenant-test-001', 'day'
+        'unit-broken', 'day'
       );
 
       assertFailure(result);
@@ -234,7 +253,7 @@ describe('ShiftContextAggregator', () => {
       mockInvoke.mockResolvedValue(createMcpNarrativeResponse(narrativeResult));
 
       const result = await ShiftContextAggregator.aggregateAndSynthesize(
-        'unit-partial', 'tenant-test-001', 'evening', new Date('2026-03-15')
+        'unit-partial', 'evening', new Date('2026-03-15')
       );
 
       assertSuccess(result);
@@ -252,11 +271,54 @@ describe('ShiftContextAggregator', () => {
       mockInvoke.mockResolvedValue({ data: null, error: { message: 'Claude unavailable' } });
 
       const result = await ShiftContextAggregator.aggregateAndSynthesize(
-        'unit-mcp-fail', 'tenant-test-001', 'day'
+        'unit-mcp-fail', 'day'
       );
 
       assertFailure(result);
       expect(result.error.code).toBe('META_TRIAGE_FAILED');
+    });
+
+    // SH-2: tenant comes from authenticated session, not caller.
+    describe('SH-2 tenant resolution from session', () => {
+      it('returns UNAUTHORIZED when no session is present', async () => {
+        mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+
+        const result = await ShiftContextAggregator.aggregateAndSynthesize('unit-3a', 'day');
+
+        assertFailure(result);
+        expect(result.error.code).toBe('UNAUTHORIZED');
+      });
+
+      it('returns FORBIDDEN when caller has no tenant on profile', async () => {
+        mockTableData.set('profiles', { data: { tenant_id: null }, error: null });
+
+        const result = await ShiftContextAggregator.aggregateAndSynthesize('unit-3a', 'day');
+
+        assertFailure(result);
+        expect(result.error.code).toBe('FORBIDDEN');
+      });
+
+      it('forwards the session-resolved tenant to the MCP narrative tool', async () => {
+        // Default mockGetUser returns tenant-test-001 (set in beforeEach).
+        mockTableData.set('bed_assignments', {
+          data: [{ patient_id: 'patient-x' }],
+          error: null,
+        });
+        mockInvoke.mockResolvedValue(createMcpNarrativeResponse({
+          narrative: 'OK',
+          critical_items: [],
+          resolved_since_last_shift: [],
+          watch_items: [],
+          shift_summary_stats: { total_events: 0, critical_events: 0, patients_with_changes: 0, pending_actions_count: 0 },
+        }));
+
+        await ShiftContextAggregator.aggregateAndSynthesize('unit-3a', 'day');
+
+        const lastCall = mockInvoke.mock.calls[0]?.[1] as
+          | { body?: { params?: { arguments?: { tenant_id?: string } } } }
+          | undefined;
+        expect(lastCall?.body?.params?.arguments?.tenant_id).toBe('tenant-test-001');
+      });
     });
   });
 });
