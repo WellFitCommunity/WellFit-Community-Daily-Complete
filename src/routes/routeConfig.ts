@@ -358,6 +358,22 @@ export const adminRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin'],
     category: 'admin',
   },
+  // Team Wellness — Huddle (closes UI-MISSING-ROUTES-1)
+  {
+    path: '/admin/team-huddle',
+    component: 'TeamHuddlePage',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor', 'department_head'],
+    category: 'admin',
+  },
+  // Team Wellness — Report Export (closes UI-MISSING-ROUTES-1)
+  {
+    path: '/admin/wellness-report',
+    component: 'WellnessReportPage',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor', 'department_head'],
+    category: 'admin',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
