@@ -3,10 +3,89 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-04-21
-**Last Session:** Patent-track IP + Guardian completion — MCP-10 (grouper SDK crash fix), Guardian Session 1 complete (GRD-1 through GRD-5), MCP-20 (mcp-patient-context-server built and shipped)
+**Last Updated:** 2026-05-27
+**Last Session:** Claude self-audit remediation Sessions 1–4 landed in commit `2abe1ff2` (PHI key hardening, 3 webhook signature gates, AI Burnout Advisor authz + 2 sister fixes, SH-1 RPC ownership migration applied to live DB, CI gates for VITE_* secrets + 600-line god files, weather-proxy edge function, Template Maker tenant fix). Session 5 (polish + MCP hardening) in progress.
 **Updated By:** Claude Opus 4.7 (1M context)
-**Codebase Health:** 11,726 tests (583 suites), 0 lint warnings, 0 typecheck errors in changed files
+**Codebase Health:** 11,726+ tests, 0 lint warnings, 0 typecheck errors in changed files, 0 `console.log` in production; two new CI gates active (file-size, VITE_*-secret pattern)
+
+**Headline finding (still true):** MCP server infrastructure is the strongest layer in the codebase by a wide margin — order-of-magnitude lower defect density than application features. **Lead the Anthropic pitch with the MCP architecture story, not the feature list.** See [project_mcp_protocol_governance.md](../memory/project_mcp_protocol_governance.md).
+
+**Session 1–4 surface findings worth surfacing:**
+- 2 new CRITICAL exposures were caught by the gate we built this session (CRIT-1 Anthropic key in .env files; CRIT-2 MailerSend key in browser bundle via emailService) — both now closed.
+- 2 sister bugs of AI-1 cross-user PHI access were found by Rule 1 grep and fixed (`ai-nurseos-stress-narrative`, `ai-nurseos-module-recommendations`). 6 more third-degree candidates filed for sweep next session (AI-1-SWEEP).
+- B-1 verified: live RLS on `provider_burnout_assessments` is already correctly scoped — repo migration files don't reflect that. Source-of-truth drift filed as DRIFT-1.
+
+---
+
+## CURRENT PRIORITY — Claude Self-Audit Remediation (22/44+ DONE, Session 5 in progress)
+
+**Tracker:** `docs/trackers/claude-self-audit-2026-05-20-tracker.md`
+**Status:** 22 tracker items DONE in commit `2abe1ff2`; Session 5 (12 items) in progress; T-2 deferred (god-file decomp).
+**Newly filed in Session 1–4:** CRIT-1, CRIT-2, AI-1-SISTER-1, AI-1-SISTER-2, AI-1-SWEEP, DRIFT-1, UI-MISSING-ROUTES-1, RPC-SEARCH-PATH-1
+**Live DB migrations applied via MCP:** `bulk_nurse_review_handoff_risks_rpc` (SH-1).
+
+### Session 1 — Critical Security: PHI Key + Webhooks (~13h, 5 items)
+- **S-PHI-1** — Move PHI master key out of browser; build `phi-crypto` edge function
+- **S-PHI-2** — Migrate all callers from direct crypto to edge function via new `phiCryptoService.ts`
+- **S-WH-1** — Withings webhook HMAC-SHA256 signature verification
+- **S-WH-2** — Garmin webhook OAuth signature verification
+- **S-WH-3** — Codebase-wide sister-bug sweep for other unauthed webhooks
+
+### Session 2 — Perimeter + CI Enforcement (~5h, 6 items)
+- **S-OBS-1** — Triage `VITE_PILLBOX_API_KEY` / `VITE_WEATHER_API_KEY` (proxy if real secrets)
+- **S-CI-1** — CI gate enforcing 600-line file limit (makes god-file tracker mechanically enforceable)
+- **S-CI-2** — CI gate blocking new `VITE_*` secret-name patterns
+- **S-HK-1** — Delete junk files from repo root
+- **S-HK-2** — Verify `nodemailer` not bundled into browser
+- **S-HK-3** — Document legacy JWT key cutover plan
+
+### Session 3 — Feature Critical Bugs (~6.5h, 4 items)
+- **T-1** — Template Maker insert omits `tenant_id` (CRITICAL — templates may be invisible)
+- **AI-1** — AI Burnout Advisor allows cross-user data access (CRITICAL — auth without authorization)
+- **SH-2** — Shift Handoff narrative accepts caller-supplied `tenantId` (cross-tenant via Claude)
+- **B-1** — Verify `provider_burnout_assessments` tenant RLS policy (possible privacy regression)
+
+### Session 4 — Feature High Priority (~10.75h, 7 items)
+- **B-2** — AdminBurnoutRadar divide-by-zero (NaN cascade)
+- **B-3** — AdminBurnoutRadar `window.location.href` SPA-killer
+- **T-2** — Template Maker 988-line god file decomposition
+- **T-3** — Verify template renderer is XSS-safe
+- **AI-2** — AI Burnout Advisor — add Anthropic structured-output schema (CLAUDE.md Rule #16)
+- **AI-3** — AI Burnout Advisor — add rate limiting (cost amplification protection)
+- **SH-1** — Shift Handoff `bulkConfirmAutoScores` needs server-side ownership RPC
+
+### Session 5 — Polish + MCP Hardening (~13.75h, 12 items)
+- **M-1** — Audit MCP servers for in-memory vs persistent rate-limiter usage
+- **M-2** — Verify MCP `protocolVersion` string is current
+- **M-3** — Audit log triple-failure alerting
+- **M-4** — Verify RLS on `mcp_audit_logs` and `mcp_key_audit_log`
+- Plus B-4 through B-6, T-4, T-5, AI-4, SH-3, SH-4 (feature polish)
+
+### Session 6 — Compass Riley + Guardian + ApiKeyManager (~14.35h, 10 items)
+- **CR-1** — Codebase-wide shadow-import sweep (7+ edge functions) + CI gate
+- **CR-2** — Compass Riley structured-output migration
+- **CR-7** — V2 reasoning + WS auth integration test (TDZ bug went 80 days undetected because no test covered this path)
+- **G-1** — Guardian `SELECT *` cleanup on monitoring queries
+- **G-3** — Guardian HTML email body escape
+- **G-4** — Guardian `Math.max(...arr)` stack overflow risk
+- **API-2** — ApiKeyManager god-file decomposition (940 lines)
+- **API-3** — ApiKeyManager fake usage_count/last_used — implement tracking OR remove
+- **API-5, API-6** — ApiKeyManager polish (deprecated substr, aggressive Date.parse)
+
+### Acceptance Criteria (Session 1 — all must return 0)
+```bash
+grep -rn "VITE_PHI_ENCRYPTION_KEY" src --include="*.ts" --include="*.tsx" | wc -l
+grep -rn "crypto.subtle.encrypt\|crypto.subtle.decrypt" src --include="*.ts" --include="*.tsx" | grep -v "__tests__\|.test." | wc -l
+```
+
+### Acceptance Criteria (Session 3 — verify first, then fix)
+```sql
+-- T-1: any templates with NULL tenant?
+SELECT COUNT(*) FROM documentation_templates WHERE tenant_id IS NULL;
+
+-- B-1: does the tenant policy enforce a role check?
+SELECT qual FROM pg_policies WHERE tablename = 'provider_burnout_assessments' AND policyname = 'provider_burnout_assessments_tenant';
+```
 
 ---
 
