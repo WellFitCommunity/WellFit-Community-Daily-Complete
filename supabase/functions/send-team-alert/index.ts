@@ -146,6 +146,27 @@ Timestamp: ${new Date().toISOString()}
 Please check on this user as soon as possible.
 `
 
+    // G-3-SISTER-1: alert_type, description, and priority are caller-supplied;
+    // userName carries DB-stored profile fields that may legitimately include
+    // markup characters. Build the HTML body from escaped fragments instead
+    // of replacing \n on the raw interpolated string. Mirrors the G-3 fix in
+    // guardian-agent/index.ts.
+    const escapeHtml = (s: string): string =>
+      s.replace(/&/g, '&amp;')
+       .replace(/</g, '&lt;')
+       .replace(/>/g, '&gt;')
+       .replace(/"/g, '&quot;')
+       .replace(/'/g, '&#39;');
+
+    const timestamp = new Date().toISOString();
+    const emailBodyHtml =
+      `Alert Type: ${escapeHtml(alert_type)}<br>` +
+      `User: ${escapeHtml(userName)}<br>` +
+      `Priority: ${escapeHtml(String(priority))}<br>` +
+      `Description: ${escapeHtml(description)}<br>` +
+      `Timestamp: ${escapeHtml(timestamp)}<br><br>` +
+      `Please check on this user as soon as possible.`;
+
     // Send emails to all recipients using admin client (has service role for invoke)
     logger.info('Sending team alert emails', { recipients, userName });
     for (const recipient of recipients) {
@@ -155,7 +176,7 @@ Please check on this user as soon as possible.
             to: recipient,
             subject: emailSubject,
             text: emailBody,
-            html: emailBody.replace(/\n/g, '<br>')
+            html: emailBodyHtml
           }
         })
         logger.info('Team alert email sent successfully', { recipient });

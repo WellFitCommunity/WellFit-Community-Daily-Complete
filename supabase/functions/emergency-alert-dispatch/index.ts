@@ -58,7 +58,8 @@ function formatEmergencyEmailContent(
   location?: string
 ): { subject: string; htmlBody: string; textBody: string } {
   const subject = `🚨 WellFit Emergency Alert: ${userName}`;
-  
+
+  // Plain-text body — safe to interpolate raw values.
   let bodyContent = `
 An emergency alert has been triggered by ${userName}.
 
@@ -76,9 +77,34 @@ User ID: ${userId}`;
 
   bodyContent += `\n\nPlease check on them immediately.`;
 
+  // G-3-SISTER-3: userName (PHI), alertType/userId/location/additionalNotes
+  // (all caller-supplied) flow into the HTML email body. Build the HTML from
+  // escaped fragments rather than .replace(/\n/g, '<br>') on the raw string.
+  // Emergency-alert path is life-critical — same fix shape as G-3 / G-3-SISTER-1/2.
+  const escapeHtml = (s: string): string =>
+    s.replace(/&/g, '&amp;')
+     .replace(/</g, '&lt;')
+     .replace(/>/g, '&gt;')
+     .replace(/"/g, '&quot;')
+     .replace(/'/g, '&#39;');
+
+  const timestampReadable = new Date(timestamp).toLocaleString();
+  let htmlBody =
+    `An emergency alert has been triggered by ${escapeHtml(userName)}.<br><br>` +
+    `Alert Type: ${escapeHtml(alertType)}<br>` +
+    `Timestamp: ${escapeHtml(timestampReadable)}<br>` +
+    `User ID: ${escapeHtml(userId)}`;
+  if (location) {
+    htmlBody += `<br>Location: ${escapeHtml(location)}`;
+  }
+  if (additionalNotes) {
+    htmlBody += `<br>Additional Notes: ${escapeHtml(additionalNotes)}`;
+  }
+  htmlBody += `<br><br>Please check on them immediately.`;
+
   return {
     subject,
-    htmlBody: bodyContent.replace(/\n/g, '<br>'),
+    htmlBody,
     textBody: bodyContent
   };
 }

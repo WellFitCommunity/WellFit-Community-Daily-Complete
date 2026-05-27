@@ -140,8 +140,29 @@ serve(async (req) => {
 
     let notificationsSent = 0;
     const severityLabel = severity === "critical" ? "CRITICAL" : "HIGH";
-    const alertSubject = `L&D ${severityLabel} Alert: ${patientName} - ${alert_type.replace(/_/g, " ")}`;
-    const alertBody = `${severityLabel} L&D Alert\nPatient: ${patientName}\nAlert: ${alert_type.replace(/_/g, " ")}\nDetails: ${message}\nTime: ${new Date().toISOString()}\n\nImmediate attention required.`;
+    const alertTypeReadable = alert_type.replace(/_/g, " ");
+    const alertSubject = `L&D ${severityLabel} Alert: ${patientName} - ${alertTypeReadable}`;
+    const alertBody = `${severityLabel} L&D Alert\nPatient: ${patientName}\nAlert: ${alertTypeReadable}\nDetails: ${message}\nTime: ${new Date().toISOString()}\n\nImmediate attention required.`;
+
+    // G-3-SISTER-2: patientName (PHI) and message (caller-supplied) flow into
+    // the HTML email body. Build the HTML from escaped fragments rather than
+    // replacing \n on the raw interpolated string. Mirrors the G-3 fix in
+    // guardian-agent/index.ts.
+    const escapeHtml = (s: string): string =>
+      s.replace(/&/g, "&amp;")
+       .replace(/</g, "&lt;")
+       .replace(/>/g, "&gt;")
+       .replace(/"/g, "&quot;")
+       .replace(/'/g, "&#39;");
+
+    const alertTimestamp = new Date().toISOString();
+    const alertBodyHtml =
+      `${escapeHtml(severityLabel)} L&amp;D Alert<br>` +
+      `Patient: ${escapeHtml(patientName)}<br>` +
+      `Alert: ${escapeHtml(alertTypeReadable)}<br>` +
+      `Details: ${escapeHtml(message)}<br>` +
+      `Time: ${escapeHtml(alertTimestamp)}<br><br>` +
+      `Immediate attention required.`;
 
     // Send email to care team members
     for (const member of careTeamMembers) {
@@ -152,7 +173,7 @@ serve(async (req) => {
               to: member.email,
               subject: alertSubject,
               text: alertBody,
-              html: alertBody.replace(/\n/g, "<br>"),
+              html: alertBodyHtml,
             },
           });
           notificationsSent++;
