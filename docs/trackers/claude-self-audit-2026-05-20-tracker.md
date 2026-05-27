@@ -147,22 +147,73 @@ SELECT qual FROM pg_policies WHERE tablename = 'provider_burnout_assessments' AN
 |---|---------|-------------|----------------|-----------|--------|
 | CR-1 | Variable shadowing of imports — codebase-wide sweep | Pattern `const X = Deno.env.get("X") ?? X;` where `X` is also imported violates `adversarial-audit-lessons.md` Rule #5. **Done:** swept all 347 edge function `.ts` files. Fixed 6 files (`realtime_medical_transcription`, `generate-api-key`, `admin_start_session`, `admin_end_session`, `test-users`, `enrollClient`) — dropped local re-lookups, use imports from `_shared/env.ts` directly. `_shared/cors.ts:76` was a false positive (CSP string, not a shadow). Added CI gate `scripts/check-shadow-imports.sh` + `.github/workflows/shadow-import-check.yml` enforcing the pattern via perl multi-line regex. Full-codebase sweep returns 0 matches. | 6 edge functions + 1 CI gate + 1 workflow | 2 | **DONE** |
 | CR-2 | Compass Riley JSON regex stripping | **Done:** migrated to Anthropic `tool_choice` forced tool_use pattern (canonical Anthropic structured-output API; `response_format: json_schema` is OpenAI syntax). New `TRANSCRIPTION_ANALYSIS_TOOL` schema lives in `_shared/scribeHelpers.ts` (covers all 7 fields of `TranscriptionAnalysis` including loose `encounterStateUpdate` for forward-compat). Parse path now extracts `data.content[].find(b => b.type === "tool_use").input` — no more text + regex + JSON.parse. Schema extracted to shared module to keep `realtime_medical_transcription/index.ts` under 600 lines (584 final). Rule-1 grep surfaced 4 sister bugs (see CR-2-SISTER-1 through -4 below). | `supabase/functions/realtime_medical_transcription/index.ts:412-481` + `supabase/functions/_shared/scribeHelpers.ts:13-83` | 1.5 | **DONE** |
-| CR-7 | Compass Riley test gap — V2 reasoning + WebSocket auth path | The TDZ bug went 80 days undetected because no test exercised the WS auth flow with V2 reasoning enabled. **Fix:** add an integration test that opens a WS, authenticates with a valid token, requests `?mode=compass-riley&reasoning_mode=chain`, and confirms the connection establishes without runtime errors. | NEW `supabase/functions/realtime_medical_transcription/__tests__/v2-reasoning-auth.test.ts` or similar | 2 | TODO |
+| CR-7 | Compass Riley test gap — V2 reasoning + WebSocket auth path | **Done:** added `v2-reasoning-auth.test.ts` (298 lines) that imports the module (catches module-load TDZ at import time), exercises 401/426 auth negatives, and confirms `mode=compass-riley&reasoning_mode=chain` reaches both `admin.auth.getUser` AND `admin.from('profiles')` — both happen before the WS upgrade, so if the userId-before-init TDZ regresses neither is reached. Refactor (11+/3-) extracted `serve(async (req) => {...})` into `export async function handleRequest(req, opts: { adminClient? })` so tests can inject a mock client; production behavior is byte-equivalent. File at 592/600 lines. Deno is not installed in this codespace so the test was written + reviewed but not executed locally; it follows the same pattern as `garmin-webhook/__tests__/index.test.ts` which runs cleanly in CI. | `supabase/functions/realtime_medical_transcription/index.ts` + new `supabase/functions/realtime_medical_transcription/__tests__/v2-reasoning-auth.test.ts` | 2 | **DONE** |
 | G-1 | Guardian — `SELECT *` on 3 monitoring queries | **Done:** replaced with explicit columns — `audit_logs(id, ip_address, created_at)`, `system_errors(id, error_type, created_at)`, `phi_access_logs(id, user_id, records_accessed, accessed_at)`. | `supabase/functions/guardian-agent/index.ts:188-209` | 0.5 | **DONE** |
 | G-3 | Guardian — HTML email body not escaped | **Done:** added `escapeHtml` helper, all `alert.title`/`alert.message`/`alert.category`/`alert.severity` interpolations now go through it. `send-email` only accepts an `html` field (no `text`-only path), so HTML-escape was the correct fix. Codebase-wide grep found 2 sister bugs filed as G-3-SISTER-1/2 below. | `supabase/functions/guardian-agent/index.ts:314-348` | 0.5 | **DONE** |
 | G-4 | Guardian — `Math.max(...arr)` stack overflow risk | **Done:** replaced `Math.max(...unusualAccess.map(...))` with `unusualAccess.reduce((max, a) => Math.max(max, a.records_accessed), 0)`. | `supabase/functions/guardian-agent/index.ts:258` | 0.25 | **DONE** |
-| API-2 | ApiKeyManager 940-line god file | Decompose into `ApiKeyManager/index.tsx` (orchestrator), `KeyList.tsx`, `GenerateKeyForm.tsx`, `KeyDisplayModal.tsx`, `ClipboardUtils.ts`, `ToastContainer.tsx`, `hooks.ts`. Mirrors the T-2 pattern. The S-CI-1 file-size gate will force this. | `src/components/admin/ApiKeyManager.tsx` (940 lines) | 4 | TODO |
-| API-3 | ApiKeyManager — fake usage_count/last_used | Lines 156-158: UI displays `usage_count: 0, last_used: null` because schema doesn't track these. The "high-usage revoke confirmation" at line 298 NEVER triggers (usage_count always 0). **Two options: (a) Implement tracking** — add `api_key_uses` table with FK to `api_keys`, increment in `validate_mcp_key` RPC and other validation paths, or **(b) Remove columns** from the UI. Recommend (a) since the security control at line 298 is meaningful. | `src/components/admin/ApiKeyManager.tsx:156-158, 298` + new migration | 3 | TODO |
+| API-2 | ApiKeyManager 940-line god file | **Done:** decomposed into `ApiKeyManager/` directory of 11 focused modules (index 212, types 50, sortUtils 85, ClipboardUtils 101, ToastContainer 66, hooks 154, handlers 253, HeaderStats 108, GenerateKeyForm 103, KeyDisplayModal 71, KeyList 356). All imports resolve via standard module resolution — no consumer changes. 36/36 existing tests pass without modification. `god-file-baseline.txt` entry removed. | `src/components/admin/ApiKeyManager/` (replaces single 950-line file) | 4 | **DONE** |
+| API-3 | ApiKeyManager — fake usage_count/last_used | **RESEARCH COMPLETE — original framing was wrong.** Live DB verification: `api_keys` is 0 rows; `mcp_keys` is 34 rows with tracking already live via `validate_mcp_key` RPC. The two tables are NOT redundant — they serve different audiences by Maria's design (mcp_keys = internal MCP servers, api_keys = external partner channel). The fix is NOT "add tracking to an orphan table"; it's "bring api_keys to feature parity with mcp_keys so it's safe to onboard the first external partner." Decomposed into Session A + Session B below (12-16h estimated). Maria confirmed direction 2026-05-27: yes external partners, take the time to build it right, RPC validation pattern matches mcp_keys, separate audit log. | See API-3a..API-3l below | (split) | **PLAN** |
 | API-5 | Deprecated `String.prototype.substr` | **Done:** `substr(2, 9)` → `substring(2, 11)` at line 112. | `src/components/admin/ApiKeyManager.tsx:112` | 0.1 | **DONE** |
 | API-6 | Date.parse aggressive sort | **Done:** added strict ISO 8601 regex gate (`/^\d{4}-\d{2}-\d{2}(T...)?$/`) before invoking `Date.parse`. Org names like `"2024 Healthcare Inc."` now stay strings — no false timestamp sort. Hoisted `ISO_8601` + `toComparable` outside the component to keep `useMemo` deps stable. 36/36 component tests still pass. | `src/components/admin/ApiKeyManager.tsx:95-110` | 0.5 | **DONE** |
 
-**Session 6 subtotal:** ~14.35 hours
+**Session 6 subtotal:** ~14.35 hours estimated; Session 6 wave 1 complete (CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6 = 9/10 done). API-3 reclassified as a 2-session plan below.
 
 **Session 6 acceptance criteria:**
 ```bash
 # CR-1: shadow pattern eliminated from edge functions
 grep -rEnB1 "^\s*\?\? ([A-Z_]+)\s*;?\s*$" supabase/functions --include="*.ts" | grep -B1 "const " | wc -l   # expect 0
+# CR-2: no JSON regex stripping in realtime function
+grep -n "JSON.parse(cleaned)\|text.replace" supabase/functions/realtime_medical_transcription/index.ts   # expect 0
 ```
+
+---
+
+## API-3 Plan — External API Channel Hardening (2 sessions, ~14h)
+
+> **Context (2026-05-27 conversation between Maria + Claude):** The original tracker entry framed API-3 as "implement usage tracking on api_keys." Live DB verification (per CLAUDE.md Rule #18) showed that framing was wrong — tracking is already implemented on `mcp_keys`. The two tables serve different audiences by design:
+>
+> - **`mcp_keys`** — internal MCP servers (Atlus chains, clearinghouse, FHIR, etc.). Built second. Full feature set: scopes, expiration, usage tracking, audit log, prefixed identification.
+> - **`api_keys`** — external partner/integration channel. Built first when feature set was less understood. Currently weaker: no scopes, no expiration, no tracking, no key prefix, no audit log. RLS missing `WITH CHECK` (cross-tenant write gap).
+>
+> Maria has a near-term external client pilot possibility. The api_keys design must be brought up to mcp_keys parity (or better, since external = higher risk surface) BEFORE the first partner onboards. Maria's direction: take the time to build it right, RPC validation pattern matches mcp_keys, separate `api_key_audit_log` (do NOT share with `mcp_key_audit_log`).
+
+### Session A — Critical Path (must land before first partner onboards) ~8h
+
+| # | Item | Description | Files | Hours | Status |
+|---|------|-------------|-------|-------|--------|
+| API-3a | **(CRITICAL)** Fix `api_keys` RLS `WITH CHECK` gap | Live DB query confirms policy `api_keys_tenant` has `USING (tenant_id = get_current_tenant_id() AND is_tenant_admin())` but no `WITH CHECK`. Today an admin in tenant A can INSERT a row with `tenant_id = tenant B`. Empty table → moot now, but blocks any partner onboarding. Migration: `DROP POLICY ... CREATE POLICY ... FOR ALL USING (...) WITH CHECK (tenant_id = get_current_tenant_id() AND is_tenant_admin())`. | NEW migration | 0.5 | TODO |
+| API-3b | Add tracking columns to `api_keys` | Migration: `ALTER TABLE api_keys ADD COLUMN last_used_at timestamptz, ADD COLUMN use_count bigint NOT NULL DEFAULT 0, ADD COLUMN key_prefix text, ADD COLUMN revocation_reason text`. Index `(last_used_at DESC NULLS LAST)`. | NEW migration | 0.5 | TODO |
+| API-3c | New `api_key_audit_log` table | Mirror `mcp_key_audit_log` shape but as its OWN table — separate audit lifecycle, retention, RLS, partner-readable when needed. Columns: `id`, `api_key_id` (FK ON DELETE CASCADE), `tenant_id`, `validated_at`, `outcome` (success/invalid/revoked/expired/scope_denied), `ip_address inet`, `user_agent text`, `caller_function text`. RLS: tenant-scoped admin SELECT; INSERT only via SECURITY DEFINER RPC. Index `(api_key_id, validated_at DESC)`. | NEW migration | 1 | TODO |
+| API-3d | New `validate_api_key(p_key_prefix, p_key_hash, p_required_scope)` RPC | Mirror `validate_mcp_key`. SECURITY DEFINER + `SET search_path = public`. Steps: find by prefix+hash, check `revoked_at IS NULL`, check `expires_at > now()` (when API-3h lands), check scope (when API-3j lands), UPDATE `use_count + last_used_at`, INSERT `api_key_audit_log` row, return scopes + tenant_id + key_id. Returns NULL or raises EXCEPTION on failure. | NEW migration | 1.5 | TODO |
+| API-3e | Replace `validate-api-key` edge function with thin RPC wrapper | Edge function becomes a passthrough that calls `validate_api_key` RPC. Preserves existing HTTP surface for callers, gains all tracking + audit + future scope/expiration checks. | `supabase/functions/validate-api-key/index.ts` | 1 | TODO |
+| API-3f | Update ApiKeyManager UI to read live tracking | Switch `.from('api_keys').select(...)` to include `last_used_at, use_count, key_prefix, revocation_reason`. Remove the hardcoded `usage_count: 0, last_used: null` mapping. Confirm "high-usage revoke confirmation" guard fires when `use_count > 1000`. Update CSV export to use real values. | `src/components/admin/ApiKeyManager/hooks.ts`, `handlers.ts`, `KeyList.tsx`, `types.ts` | 1.5 | TODO |
+| API-3g | Tests | Vitest: ApiKeyManager renders real usage values; high-usage confirmation fires. Deno: `validate_api_key` RPC integration test (insert key, call RPC, assert audit row written + use_count incremented + RLS prevents cross-tenant write). | NEW tests | 2 | TODO |
+
+### Session B — Hardening + Polish ~6h
+
+| # | Item | Description | Files | Hours | Status |
+|---|------|-------------|-------|-------|--------|
+| API-3h | Add `scopes JSONB` + `expires_at` constraints to `api_keys` | Migration: `ADD COLUMN scopes JSONB NOT NULL DEFAULT '[]'::jsonb`, `ADD COLUMN expires_at timestamptz NOT NULL` (decide default — 90d or 1y from `created_at`). Add CHECK constraint on scopes enum vocabulary (TBD with Maria — partner-specific scope set). | NEW migration | 1.5 | BLOCKED ON Maria scope/expiration decisions |
+| API-3i | Update `generate-api-key` to require scopes + expiration | Edge function requires `scopes: string[]` and `expires_at: timestamp` in request body. Validates scopes against CHECK enum. Generates `key_prefix` (8 chars, partner-identifiable). | `supabase/functions/generate-api-key/index.ts` | 1 | BLOCKED ON API-3h |
+| API-3j | Add scope-checking to `validate_api_key` RPC | Caller passes `p_required_scope`; RPC returns NULL if scope ∉ key.scopes OR if `now() > expires_at`. Audit log records outcome (`scope_denied` or `expired`). | Migration alteration of API-3d RPC | 1 | BLOCKED ON API-3h |
+| API-3k | Convert `generate-api-key` edge function to RPC | Mirror the `create_mcp_key` RPC pattern. Edge function becomes thin wrapper. | NEW migration + `supabase/functions/generate-api-key/index.ts` | 1.5 | TODO |
+| API-3l | UI: scope selection + expiration setting + key prefix display | `GenerateKeyForm.tsx` — multi-select for scopes (from a hardcoded vocabulary), date picker for expiration. `KeyList.tsx` — show `key_prefix`, show `expires_at` with "expires in N days" badge, color when ≤7d. | `src/components/admin/ApiKeyManager/*` | 1 | BLOCKED ON API-3h |
+
+### Open product questions (block Session B)
+
+1. **Scope vocabulary** — what can an external partner do? Probable starting set: `fhir.read.own_patients`, `webhook.subscribe`, `referral.write`. Maria to confirm with potential client's use case before API-3h.
+2. **Default expiration** — 90 days? 1 year? Industry standard is "as short as practical" — partners can rotate. 90d errs on the safe side.
+3. **Self-service rotation** — can a partner rotate their own key, or admin-only? (Affects whether we need a partner-facing portal at all.)
+4. **Partner-readable audit log** — does the partner need to see `api_key_audit_log` rows for their own key? (Affects RLS — second policy needed.)
+
+### Acceptance criteria for the full API-3 plan
+
+- `api_keys.tenant_id` cannot be cross-tenant written (RLS WITH CHECK fix verified)
+- Every successful `validate_api_key` call increments `use_count`, sets `last_used_at`, writes an audit row
+- ApiKeyManager UI displays real usage numbers; high-usage confirmation guard fires when actually high-usage
+- Test coverage: unit + integration for the RPC, RLS test for cross-tenant write rejection
+- No NULL `expires_at` rows can exist after Session B
+- Scope check fires deterministically — keys with scope X cannot use scope Y
 
 ---
 
@@ -175,8 +226,9 @@ grep -rEnB1 "^\s*\?\? ([A-Z_]+)\s*;?\s*$" supabase/functions --include="*.ts" | 
 | Session 3 — Feature Critical Bugs | T-1, AI-1, SH-2, B-1 | ~6.5h | **0/4 TODO** |
 | Session 4 — Feature High Priority | B-2, B-3, T-2, T-3, AI-2, AI-3, SH-1 | ~10.75h | **0/7 TODO** |
 | Session 5 — Polish + MCP Hardening | M-1, M-2, M-3, M-4, B-4, B-5, B-6, T-4, T-5, AI-4, SH-3, SH-4 | ~13.75h | **0/12 TODO** |
-| Session 6 — Compass Riley + Guardian + ApiKeyManager | CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-3, API-5, API-6 | ~14.35h | **0/10 TODO** |
-| **Total** | **44 items** | **~63h** | **0/44** |
+| Session 6 wave 1 — Compass Riley + Guardian + ApiKeyManager | CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6 | ~12h | **9/9 DONE** |
+| Session 6 wave 2 — API-3 external channel hardening | API-3a..API-3l (Session A + B) | ~14h | **0/12 TODO** (plan landed; Maria-approved) |
+| **Total** | **55 items** | **~75h** | **31/55** |
 
 ---
 
