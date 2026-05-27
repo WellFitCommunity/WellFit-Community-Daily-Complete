@@ -27,6 +27,8 @@ esac
 case "$FILE_PATH" in
   *.claude/hooks/*|*CLAUDE.md|*.claude/rules/*) exit 0 ;;
   */scripts/governance-check.sh|*/scripts/deno-typecheck.sh) exit 0 ;;
+  */scripts/check-shadow-imports.sh|*/scripts/check-vite-secrets.sh|*/scripts/check-file-sizes.sh) exit 0 ;;
+  */scripts/pre-commit-checks.sh) exit 0 ;;
 esac
 
 VIOLATIONS=""
