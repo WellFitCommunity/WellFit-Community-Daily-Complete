@@ -1,5 +1,4 @@
 src/adapters/implementations/EpicFHIRAdapter.ts
-src/components/admin/ApiKeyManager.tsx
 src/components/admin/BedManagementPanel.tsx
 src/components/admin/BulkEnrollmentPanel.tsx
 src/components/admin/FHIRConflictResolution.tsx
