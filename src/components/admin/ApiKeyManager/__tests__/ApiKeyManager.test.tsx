@@ -28,10 +28,10 @@ import { revokeKey } from '../handlers';
 // ============================================================================
 
 const mockOrder = vi.fn();
-const mockSelect = vi.fn(() => ({ order: mockOrder }));
+const mockSelect = vi.fn((_cols?: string) => ({ order: mockOrder }));
 const mockEq = vi.fn();
-const mockUpdate = vi.fn(() => ({ eq: mockEq }));
-const mockFrom = vi.fn(() => ({ select: mockSelect, update: mockUpdate }));
+const mockUpdate = vi.fn((_payload?: unknown) => ({ eq: mockEq }));
+const mockFrom = vi.fn((_table?: string) => ({ select: mockSelect, update: mockUpdate }));
 
 vi.mock('../../../../lib/supabaseClient', () => ({
   supabase: {
