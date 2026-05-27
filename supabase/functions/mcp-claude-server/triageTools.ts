@@ -35,6 +35,12 @@ import type {
   HandoffNarrativeInput,
   HandoffNarrativeOutput,
 } from "./types.ts";
+import {
+  ESCALATION_CONFLICT_TOOL,
+  ALERT_CONSOLIDATION_TOOL,
+  CONFIDENCE_CALIBRATION_TOOL,
+  HANDOFF_NARRATIVE_TOOL,
+} from "./triageTools.schemas.ts";
 
 // Pinned model for all triage tools — Sonnet for accuracy-critical clinical reasoning
 const TRIAGE_MODEL = "claude-sonnet-4-5-20250929";
@@ -62,9 +68,7 @@ export async function handleEscalationConflict(
 
 You receive signals from different AI skills (fall risk predictor, readmission predictor, care escalation scorer, etc.) that may disagree about a patient's escalation level. Your job is to reason about which signals to trust, assign trust weights, and produce a single resolved escalation decision.
 
-${constraints}
-
-IMPORTANT: Respond ONLY with valid JSON matching the required output schema. No markdown, no explanation outside the JSON.`;
+${constraints}`;
 
   const userPrompt = `Resolve the following escalation conflict for patient ${args.patient_id}:
 
@@ -74,20 +78,7 @@ Conflicting signals (${args.signals.length} total):
 ${JSON.stringify(args.signals, null, 2)}
 
 ${args.patient_demographics ? `Patient demographics (de-identified):
-${JSON.stringify(args.patient_demographics, null, 2)}` : "No demographic context available."}
-
-Respond with JSON matching this exact schema:
-{
-  "resolved_level": "none|monitor|notify|escalate|emergency",
-  "confidence": 0.0-1.0,
-  "urgency": "routine|elevated|urgent|critical",
-  "reasoning": "string explaining the resolution",
-  "trust_weights": [{"skill_key": "string", "weight": 0.0-1.0, "reasoning": "string", "data_reliability": "high|moderate|low|unknown"}],
-  "conflict_detected": true/false,
-  "conflict_summary": "string or null",
-  "recommended_actions": ["string"],
-  "requires_review": true/false
-}`;
+${JSON.stringify(args.patient_demographics, null, 2)}` : "No demographic context available."}`;
 
   const response = await anthropic.messages.create({
     model: TRIAGE_MODEL,
@@ -100,11 +91,18 @@ Respond with JSON matching this exact schema:
         cache_control: { type: "ephemeral" },
       },
     ],
+    // CR-2-SISTER-4: structured output via forced tool_use — replaces
+    // free-text + ```json fence stripping in parseJsonResponse.
+    tools: [ESCALATION_CONFLICT_TOOL],
+    tool_choice: { type: "tool", name: "submit_escalation_resolution" },
   });
 
-  const content = response.content[0];
-  const rawText = content.type === "text" ? content.text : "";
-  const output = parseJsonResponse<EscalationConflictOutput>(rawText, logger, "evaluate-escalation-conflict");
+  const output = extractToolUseInput<EscalationConflictOutput>(
+    response,
+    "submit_escalation_resolution",
+    logger,
+    "evaluate-escalation-conflict",
+  );
 
   // P0-4: Record decision chain link
   await recordDecisionLink({
@@ -152,24 +150,11 @@ export async function handleAlertConsolidation(
 
 You reduce alert fatigue by identifying root causes shared across multiple alerts, while NEVER suppressing genuine clinical concerns. Original alerts are always preserved — your consolidation adds a reasoning layer on top.
 
-${constraints}
-
-IMPORTANT: Respond ONLY with valid JSON matching the required output schema. No markdown, no explanation outside the JSON.`;
+${constraints}`;
 
   const userPrompt = `Consolidate the following ${args.alerts.length} alerts for patient ${args.patient_id} (collected within ${args.collection_window}):
 
-${JSON.stringify(args.alerts, null, 2)}
-
-Respond with JSON matching this exact schema:
-{
-  "consolidated_severity": "none|monitor|notify|escalate|emergency",
-  "actionable_summary": "string readable by busy clinician in <15 seconds",
-  "root_causes": [{"description": "string", "related_alert_ids": ["string"], "confidence": 0.0-1.0, "recommended_intervention": "string"}],
-  "alert_dispositions": [{"alert_id": "string", "disposition": "consolidated|standalone|suppressed|elevated", "reasoning": "string", "root_cause_index": number|null}],
-  "total_alerts": ${args.alerts.length},
-  "consolidated_count": number,
-  "requires_review": true/false
-}`;
+${JSON.stringify(args.alerts, null, 2)}`;
 
   const response = await anthropic.messages.create({
     model: TRIAGE_MODEL,
@@ -182,11 +167,17 @@ Respond with JSON matching this exact schema:
         cache_control: { type: "ephemeral" },
       },
     ],
+    // CR-2-SISTER-4: structured output via forced tool_use.
+    tools: [ALERT_CONSOLIDATION_TOOL],
+    tool_choice: { type: "tool", name: "submit_alert_consolidation" },
   });
 
-  const content = response.content[0];
-  const rawText = content.type === "text" ? content.text : "";
-  const output = parseJsonResponse<AlertConsolidationOutput>(rawText, logger, "consolidate-alerts");
+  const output = extractToolUseInput<AlertConsolidationOutput>(
+    response,
+    "submit_alert_consolidation",
+    logger,
+    "consolidate-alerts",
+  );
 
   // P0-4: Record decision chain link
   await recordDecisionLink({
@@ -203,8 +194,12 @@ Respond with JSON matching this exact schema:
     skill_key: "meta_triage_alert_consolidation",
     decision_type: "escalation",
     decision_summary: `Consolidated ${args.alerts.length} alerts → ${output.root_causes.length} root causes, severity: ${output.consolidated_severity}`,
+    // G-4-style: avoid Math.min(...arr) — stack-overflow risk on large arrays.
     confidence_score: output.root_causes.length > 0
-      ? Math.min(...output.root_causes.map((r) => r.confidence))
+      ? output.root_causes.reduce(
+          (acc, r) => Math.min(acc, r.confidence),
+          Number.POSITIVE_INFINITY,
+        )
       : undefined,
     authority_tier: 2,
     action_taken: output.actionable_summary,
@@ -234,9 +229,7 @@ export async function handleConfidenceCalibration(
 
 When a readmission predictor says 92% risk but cultural/SDOH factors weren't properly weighted for this population, you adjust the score and explain why. You also identify what additional data would improve confidence.
 
-${constraints}
-
-IMPORTANT: Respond ONLY with valid JSON matching the required output schema. No markdown, no explanation outside the JSON.`;
+${constraints}`;
 
   const userPrompt = `Calibrate the following risk score for patient ${args.patient_id}:
 
@@ -248,20 +241,7 @@ Risk factors (${args.factors.length} total):
 ${JSON.stringify(args.factors, null, 2)}
 
 ${args.population_context ? `Population context:
-${JSON.stringify(args.population_context, null, 2)}` : "No population context available — note this limitation in your calibration."}
-
-Respond with JSON matching this exact schema:
-{
-  "calibrated_score": 0-100,
-  "calibrated_confidence": 0.0-1.0,
-  "adjustment_direction": "increased|decreased|unchanged",
-  "score_delta": number,
-  "adjustment_reasoning": "string",
-  "factor_reliability": [{"factor_name": "string", "reliability": "high|moderate|low|unknown", "adjusted_weight": 0.0-1.0, "adjustment_reasoning": "string"}],
-  "recommended_action": "string",
-  "needs_additional_data": true/false,
-  "additional_data_suggestions": ["string"]
-}`;
+${JSON.stringify(args.population_context, null, 2)}` : "No population context available — note this limitation in your calibration."}`;
 
   const response = await anthropic.messages.create({
     model: TRIAGE_MODEL,
@@ -274,11 +254,17 @@ Respond with JSON matching this exact schema:
         cache_control: { type: "ephemeral" },
       },
     ],
+    // CR-2-SISTER-4: structured output via forced tool_use.
+    tools: [CONFIDENCE_CALIBRATION_TOOL],
+    tool_choice: { type: "tool", name: "submit_confidence_calibration" },
   });
 
-  const content = response.content[0];
-  const rawText = content.type === "text" ? content.text : "";
-  const output = parseJsonResponse<ConfidenceCalibrationOutput>(rawText, logger, "calibrate-confidence");
+  const output = extractToolUseInput<ConfidenceCalibrationOutput>(
+    response,
+    "submit_confidence_calibration",
+    logger,
+    "calibrate-confidence",
+  );
 
   // P0-4: Record decision chain link
   await recordDecisionLink({
@@ -325,9 +311,7 @@ export async function handleHandoffNarrative(
 
 You write for busy nurses and clinicians receiving handoff. Lead with critical items, then resolved items (good news), then watch items. Be concise, clinical, and actionable.
 
-${constraints}
-
-IMPORTANT: Respond ONLY with valid JSON matching the required output schema. No markdown, no explanation outside the JSON.`;
+${constraints}`;
 
   const userPrompt = `Synthesize handoff narrative for unit ${args.unit_id}:
 
@@ -341,17 +325,7 @@ Care plan changes (${args.care_plan_changes.length}):
 ${JSON.stringify(args.care_plan_changes, null, 2)}
 
 Pending actions (${args.pending_actions.length}):
-${JSON.stringify(args.pending_actions, null, 2)}
-
-Respond with JSON matching this exact schema:
-{
-  "narrative": "string (max 500 words)",
-  "critical_items": [{"patient_id": "string", "description": "string", "reasoning": "string", "urgency": "routine|elevated|urgent|critical", "recommended_action": "string"}],
-  "resolved_since_last_shift": ["string"],
-  "watch_items": ["string"],
-  "unit_status": "stable|busy|high_acuity|critical",
-  "incoming_complexity": "light|moderate|heavy"
-}`;
+${JSON.stringify(args.pending_actions, null, 2)}`;
 
   const response = await anthropic.messages.create({
     model: TRIAGE_MODEL,
@@ -364,11 +338,17 @@ Respond with JSON matching this exact schema:
         cache_control: { type: "ephemeral" },
       },
     ],
+    // CR-2-SISTER-4: structured output via forced tool_use.
+    tools: [HANDOFF_NARRATIVE_TOOL],
+    tool_choice: { type: "tool", name: "submit_handoff_narrative" },
   });
 
-  const content = response.content[0];
-  const rawText = content.type === "text" ? content.text : "";
-  const output = parseJsonResponse<HandoffNarrativeOutput>(rawText, logger, "synthesize-handoff-narrative");
+  const output = extractToolUseInput<HandoffNarrativeOutput>(
+    response,
+    "submit_handoff_narrative",
+    logger,
+    "synthesize-handoff-narrative",
+  );
 
   // P0-4: Record decision chain link
   await recordDecisionLink({
@@ -403,48 +383,63 @@ Respond with JSON matching this exact schema:
 }
 
 // ============================================================================
-// JSON Response Parser — P0-3 Structured Output Enforcement
+// Tool-Use Block Extractor — CR-2-SISTER-4 Structured Output via tool_choice
 // ============================================================================
 
+/** Minimal shape of an Anthropic messages.create response we care about. */
+interface AnthropicResponseLike {
+  content: Array<
+    | { type: "tool_use"; name?: string; input?: unknown }
+    | { type: "text"; text: string }
+    | { type: string }
+  >;
+}
+
 /**
- * Parse and validate a JSON response from Claude.
- * Handles common issues: markdown code fences, trailing text, etc.
- * Throws if the response is not valid JSON.
+ * Extract the structured `input` object from the tool_use content block of an
+ * Anthropic response. Replaces the previous text + ```json regex + JSON.parse
+ * pipeline now that all four triage tools force a specific tool via
+ * `tool_choice`. Throws on the (impossible-in-practice) case where Claude does
+ * not return a matching tool_use block, so callers see a clear failure instead
+ * of an `undefined`.
  */
-function parseJsonResponse<T>(
-  rawText: string,
+function extractToolUseInput<T>(
+  response: AnthropicResponseLike,
+  expectedToolName: string,
   logger: EdgeFunctionLogger,
-  toolName: string
+  toolLabel: string,
 ): T {
-  let cleaned = rawText.trim();
+  const block = response.content.find(
+    (b): b is { type: "tool_use"; name?: string; input?: unknown } =>
+      b.type === "tool_use",
+  );
 
-  // Strip markdown code fences if present
-  if (cleaned.startsWith("```json")) {
-    cleaned = cleaned.slice(7);
-  } else if (cleaned.startsWith("```")) {
-    cleaned = cleaned.slice(3);
-  }
-  if (cleaned.endsWith("```")) {
-    cleaned = cleaned.slice(0, -3);
-  }
-  cleaned = cleaned.trim();
-
-  try {
-    return JSON.parse(cleaned) as T;
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    logger.error("Failed to parse structured JSON from Claude", {
-      tool: toolName,
-      error: errorMsg,
-      rawLength: rawText.length,
-      rawPreview: rawText.slice(0, 200),
+  if (!block || block.input === undefined || block.input === null) {
+    const blockTypes = response.content.map((b) => b.type);
+    logger.error("Claude did not return tool_use block", {
+      tool: toolLabel,
+      expected: expectedToolName,
+      blockTypes,
     });
     throw new Error(
-      `Triage tool ${toolName} failed: Claude returned non-JSON response. ` +
-      `This is a structured output requirement — free-text is not accepted. ` +
-      `Error: ${errorMsg}`
+      `Triage tool ${toolLabel} failed: expected tool_use block named ` +
+        `"${expectedToolName}", got: ${blockTypes.join(",") || "(empty)"}`,
     );
   }
+
+  if (block.name && block.name !== expectedToolName) {
+    logger.error("Claude returned wrong tool", {
+      tool: toolLabel,
+      expected: expectedToolName,
+      got: block.name,
+    });
+    throw new Error(
+      `Triage tool ${toolLabel} failed: expected tool "${expectedToolName}", ` +
+        `Claude used "${block.name}"`,
+    );
+  }
+
+  return block.input as T;
 }
 
 // ============================================================================

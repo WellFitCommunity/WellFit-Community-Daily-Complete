@@ -224,6 +224,7 @@
     "https://esm.sh/@supabase/storage-js@2.93.3/denonext/storage-js.mjs": "a4067dd96e98b2d522dfc677f448e2724b1f00eb74875703fd1f4846587a6017",
     "https://esm.sh/@supabase/supabase-js@2.101.1/deno/supabase-js.mjs": "b04a22e10ec64efb2be86221e7ba69678b36ece164a8b49ef02cca11320c8c09",
     "https://esm.sh/@supabase/supabase-js@2.101.1?target=deno": "7801fb4942e73388c89b5f4891b0bd04be3ebfc37b8958c80d8d6239d7ccd86c",
+    "https://esm.sh/@supabase/supabase-js@2.45.4": "1108d69216995335d057dbd15907caaf514a4d1ef082f097050573b9d589a57c",
     "https://esm.sh/@supabase/supabase-js@2.93.3": "7b7e42b1c60d8d90561c876ea63fdfefafedc8b4102481f09f413ce2026981a3",
     "https://esm.sh/@supabase/supabase-js@2.93.3/denonext/supabase-js.mjs": "a0a30118608e6d6d98ea31b610fc85bacea11c2afc93a672fc58329a47fb65b9",
     "https://esm.sh/iceberg-js@0.8.1/deno/iceberg-js.mjs": "d839d81a2e3966500ca2cdd0c1cb458e9608bacfc91f7bb67a69b2e878dcdb4f",
@@ -345,7 +346,10 @@
         "tar": "^7.5.6",
         "minimatch": ">=10.2.3",
         "rollup": ">=4.59.0",
-        "protobufjs": ">=7.5.5"
+        "protobufjs": ">=7.5.5",
+        "js-cookie": "^3.0.7",
+        "tmp": "^0.2.6",
+        "uuid": "^11.1.1"
       }
     }
   }
