@@ -81,7 +81,13 @@ function safeSend(ws: WebSocket, payload: unknown) {
   try { ws.send(JSON.stringify(payload)); } catch { /* socket closed */ }
 }
 
-serve(async (req: Request) => {
+// Options for `handleRequest`. Tests inject a mock admin client so the
+// WS auth + V2 reasoning integration path (TDZ bug fixed in b57f2406)
+// is exercisable without a real Supabase auth round-trip. Production
+// `serve(handleRequest)` calls it with no opts → createAdminClient().
+export interface HandleRequestOptions { adminClient?: SupabaseClient }
+
+export async function handleRequest(req: Request, opts: HandleRequestOptions = {}): Promise<Response> {
   const logger = createLogger('realtime_medical_transcription', req);
 
   // 1) Require WS upgrade
@@ -97,7 +103,7 @@ serve(async (req: Request) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const admin = createAdminClient();
+  const admin = opts.adminClient ?? createAdminClient();
   const { data: userData, error: userErr } = await admin.auth.getUser(access_token);
   if (userErr || !userData?.user) {
     logger.security('WebSocket authentication failed', { error: userErr?.message });
@@ -286,7 +292,9 @@ serve(async (req: Request) => {
   socket.onclose  = () => { try { deepgramWs?.close(); } catch {} };
 
   return response;
-});
+}
+
+serve(handleRequest);
 
 // 4) Periodic coding analysis (de-identified) - WITH CONVERSATIONAL AI + PROGRESSIVE REASONING + DRIFT GUARD
 async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: SupabaseClient, logger: AuditLogger, currentEncounterState: EncounterState, nurseMode = false): Promise<EncounterState | null> {
