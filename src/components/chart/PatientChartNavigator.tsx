@@ -87,6 +87,7 @@ interface OverviewTabProps {
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
+  const navigate = useNavigate();
   const cards: { tab: ChartTab; icon: string; title: string; description: string; color: string }[] = [
     { tab: 'medications', icon: '💊', title: 'Medications', description: 'E-prescribing, reconciliation & adherence', color: 'border-green-500/30 hover:border-green-500' },
     { tab: 'care-plans', icon: '🗂️', title: 'Care Plans', description: 'Treatment protocols & coordination', color: 'border-purple-500/30 hover:border-purple-500' },
@@ -94,6 +95,27 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
     { tab: 'immunizations', icon: '💉', title: 'Immunizations', description: 'CVX vaccination records & schedule', color: 'border-pink-500/30 hover:border-pink-500' },
     { tab: 'avatar', icon: '🧍', title: 'Body Map', description: 'Clinical markers & device tracking', color: 'border-teal-500/30 hover:border-teal-500' },
   ];
+
+  // ONC 170.315(a)(1)–(2) CPOE entry points. New-order buttons live in the
+  // patient chart because that's where the provider already has patient
+  // context — no separate "pick patient" step. Routes accept :patientId
+  // directly so the order resolves to this patient.
+  const orderActions: { route: string; icon: string; title: string; description: string }[] = patient
+    ? [
+        {
+          route: `/admin/cpoe/medication/${patient.id}`,
+          icon: '💊',
+          title: 'New medication order',
+          description: 'Place a medication order for this patient (CPOE).',
+        },
+        {
+          route: `/admin/cpoe/lab/${patient.id}`,
+          icon: '🧪',
+          title: 'New lab order',
+          description: 'Order a laboratory test or panel for this patient.',
+        },
+      ]
+    : [];
 
   return (
     <div className="p-6">
@@ -115,6 +137,29 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
           </button>
         ))}
       </div>
+
+      {orderActions.length > 0 && (
+        <>
+          <h3 className="text-base font-semibold text-white mt-8 mb-1">Place a new order</h3>
+          <p className="text-sm text-slate-400 mb-4">
+            CPOE entry — orders are persisted as FHIR resources and audit-logged.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {orderActions.map((action) => (
+              <button
+                key={action.route}
+                type="button"
+                onClick={() => navigate(action.route)}
+                className="p-5 rounded-lg bg-slate-800/50 border border-amber-500/30 hover:border-amber-500 text-left transition-all hover:bg-slate-800"
+              >
+                <div className="text-3xl mb-3">{action.icon}</div>
+                <h4 className="font-semibold text-white text-base">{action.title}</h4>
+                <p className="text-sm text-slate-400 mt-1">{action.description}</p>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };

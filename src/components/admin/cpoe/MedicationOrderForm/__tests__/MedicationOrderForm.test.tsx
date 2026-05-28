@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MedicationOrderForm } from '../index';
 import { MedicationRequestService } from '../../../../../services/fhir/MedicationRequestService';
+import { useOrderingProvider } from '../../../../../hooks/useOrderingProvider';
 
 vi.mock('../../../../../services/fhir/MedicationRequestService', () => ({
   MedicationRequestService: {
@@ -16,7 +17,27 @@ vi.mock('../../../../../services/fhir/MedicationRequestService', () => ({
   },
 }));
 
+vi.mock('../../../../../hooks/useOrderingProvider', () => ({
+  useOrderingProvider: vi.fn(),
+}));
+
 const mockedCreate = vi.mocked(MedicationRequestService.create);
+const mockedProvider = vi.mocked(useOrderingProvider);
+
+const TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
+const REQUESTER_USER_ID = '11111111-1111-1111-1111-111111111111';
+const PRACTITIONER_ID = '22222222-2222-2222-2222-222222222222';
+
+function setProviderReady() {
+  mockedProvider.mockReturnValue({
+    loading: false,
+    error: null,
+    tenant_id: TENANT_ID,
+    user_id: REQUESTER_USER_ID,
+    display_name: 'Dr. Test Provider',
+    practitioner_id: PRACTITIONER_ID,
+  });
+}
 
 const PATIENT_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -40,6 +61,7 @@ function fillRequiredFields() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockedCreate.mockReset();
+  setProviderReady();
   mockedCreate.mockResolvedValue({
     success: true,
     data: {
@@ -130,6 +152,20 @@ describe('MedicationOrderForm — ONC (a)(1) CPOE behavior', () => {
       expect(arg.authored_on).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
 
+    it('passes tenant_id and requester identity from useOrderingProvider — RLS + audit hard requirement', async () => {
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fillRequiredFields();
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
+      const arg = mockedCreate.mock.calls[0][0];
+      // Without tenant_id the INSERT RLS policy on fhir_medication_requests rejects.
+      expect(arg.tenant_id).toBe(TENANT_ID);
+      // Requester identity preserves provider attribution on the order.
+      expect(arg.requester_id).toBe(REQUESTER_USER_ID);
+      expect(arg.requester_display).toBe('Dr. Test Provider');
+      expect(arg.requester_practitioner_id).toBe(PRACTITIONER_ID);
+    });
+
     it('passes encounterId through to the request when provided', async () => {
       render(<MedicationOrderForm patientId={PATIENT_ID} encounterId="enc-abc" />);
       fillRequiredFields();
@@ -144,6 +180,40 @@ describe('MedicationOrderForm — ONC (a)(1) CPOE behavior', () => {
       fillRequiredFields();
       fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
       await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith('mr-123'));
+    });
+  });
+
+  describe('ordering-provider gating', () => {
+    it('disables submit and shows status banner while the provider is loading', () => {
+      mockedProvider.mockReturnValue({
+        loading: true,
+        error: null,
+        tenant_id: null,
+        user_id: null,
+        display_name: null,
+        practitioner_id: null,
+      });
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      const submit = screen.getByRole('button', { name: /loading/i });
+      expect(submit).toBeDisabled();
+    });
+
+    it('blocks submit + shows the provider error when tenant resolution fails', async () => {
+      mockedProvider.mockReturnValue({
+        loading: false,
+        error: 'Your profile is not assigned to a tenant. Contact your administrator.',
+        tenant_id: null,
+        user_id: REQUESTER_USER_ID,
+        display_name: null,
+        practitioner_id: null,
+      });
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      expect(
+        screen.getByText(/profile is not assigned to a tenant/i)
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /submit order/i })).toBeDisabled();
+      // Even if user somehow forced submit, the service must not be called.
+      expect(mockedCreate).not.toHaveBeenCalled();
     });
   });
 

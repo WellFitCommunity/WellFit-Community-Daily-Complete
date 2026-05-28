@@ -10,6 +10,7 @@
 import React, { useCallback, useState } from 'react';
 import { ServiceRequestService } from '../../../../services/fhir/ServiceRequestService';
 import { auditLogger } from '../../../../services/auditLogger';
+import { useOrderingProvider } from '../../../../hooks/useOrderingProvider';
 import {
   ORDER_PRIORITIES,
   SPECIMEN_TYPES,
@@ -46,6 +47,8 @@ export const LabOrderForm: React.FC<LabOrderFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<LabOrderSubmitError | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const provider = useOrderingProvider();
 
   const setField = useCallback(
     <K extends keyof LabOrderFormData>(field: K, value: LabOrderFormData[K]) => {
@@ -87,6 +90,15 @@ export const LabOrderForm: React.FC<LabOrderFormProps> = ({
         return;
       }
 
+      if (!provider.tenant_id || !provider.user_id) {
+        setSubmitError({
+          message:
+            provider.error ??
+            'Cannot place order — ordering-provider identity is not loaded yet. Try again in a moment.',
+        });
+        return;
+      }
+
       const request: CreateServiceRequest = {
         patient_id: patientId,
         status: 'active',
@@ -103,6 +115,10 @@ export const LabOrderForm: React.FC<LabOrderFormProps> = ({
         note: formData.note.trim() || undefined,
         authored_on: new Date().toISOString(),
         encounter_id: encounterId,
+        tenant_id: provider.tenant_id,
+        requester_id: provider.user_id,
+        requester_display: provider.display_name ?? undefined,
+        requester_practitioner_id: provider.practitioner_id ?? undefined,
       };
 
       setSubmitting(true);
@@ -128,7 +144,7 @@ export const LabOrderForm: React.FC<LabOrderFormProps> = ({
         setSubmitting(false);
       }
     },
-    [formData, patientId, encounterId, onSubmitted]
+    [formData, patientId, encounterId, onSubmitted, provider]
   );
 
   return (
@@ -293,6 +309,14 @@ export const LabOrderForm: React.FC<LabOrderFormProps> = ({
         />
       </div>
 
+      {/* Provider identity error */}
+      {!provider.loading && provider.error && !submitError && (
+        <div role="status" className="p-4 rounded-lg border bg-yellow-50 border-yellow-300 text-yellow-900">
+          <p className="font-medium">Ordering provider not loaded</p>
+          <p className="text-sm mt-1">{provider.error}</p>
+        </div>
+      )}
+
       {/* Submit error */}
       {submitError && (
         <div role="alert" className="p-4 rounded-lg border bg-yellow-50 border-yellow-300 text-yellow-900">
@@ -304,10 +328,10 @@ export const LabOrderForm: React.FC<LabOrderFormProps> = ({
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || provider.loading || !provider.tenant_id}
           className="min-h-[44px] px-6 text-lg font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? 'Submitting…' : 'Submit Order'}
+          {submitting ? 'Submitting…' : provider.loading ? 'Loading…' : 'Submit Order'}
         </button>
         {onCancel && (
           <button

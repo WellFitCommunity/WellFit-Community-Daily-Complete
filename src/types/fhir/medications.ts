@@ -91,6 +91,14 @@ export interface MedicationRequest extends FHIRResource {
   reported_reference_id?: string;
   encounter_id?: string;
   insurance_id?: string;
+
+  /**
+   * Tenant scope for RLS. Required on INSERT — the
+   * fhir_medication_requests INSERT policy is
+   * `WITH CHECK (tenant_id = get_current_tenant_id())`, so a NULL here
+   * triggers a 403. The CPOE form resolves this via useOrderingProvider.
+   */
+  tenant_id?: string;
 }
 
 export interface CreateMedicationRequest extends Partial<MedicationRequest> {
