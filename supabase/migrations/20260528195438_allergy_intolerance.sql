@@ -146,12 +146,3 @@ $$;
 
 COMMIT;
 
--- migrate:down
-BEGIN;
-
-DROP FUNCTION IF EXISTS public.check_medication_allergy(UUID, TEXT);
-DROP FUNCTION IF EXISTS public.get_active_allergies(UUID);
-DROP FUNCTION IF EXISTS public.update_allergy_updated_at();
-DROP TABLE IF EXISTS public.allergy_intolerances CASCADE;
-
-COMMIT;

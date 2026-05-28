@@ -98,3 +98,6 @@ private/
 # Auto-generated database types (regenerate with: npm run db:types)
 src/types/database.generated.ts
 .vercel
+
+# Claude harness runtime lock
+.claude/scheduled_tasks.lock

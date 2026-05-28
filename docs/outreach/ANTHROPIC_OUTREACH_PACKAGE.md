@@ -34,7 +34,7 @@ Everything in this document is grounded in specific files, git commits, or verif
 >
 > I'm writing because what my co-founder and I built with Claude Code is probably more interesting to Anthropic than it's been to the healthcare buyers we've been trying to reach.
 >
-> **Short version:** Two non-engineers — I'm a behavioral-science pastor, my co-founder Akima is a CCM nurse with 23+ years of clinical experience — used Claude Code to build a HIPAA-grade, dual-product healthcare platform in nine months for roughly **$645 in Anthropic credits**. No engineering staff. No outside dev hires.
+> **Short version:** Two non-engineers — I'm a behavioral-science pastor, my co-founder Akima is a CCM nurse with 23+ years of clinical experience — used Claude Code to build a HIPAA-grade, dual-product healthcare platform in nine months for roughly **$1500 in Anthropic credits**. No engineering staff. No outside dev hires.
 >
 > **Concrete metrics as of today (all verifiable in git):**
 > - 11,726 tests across 583 suites — 100% passing, 0 skipped
