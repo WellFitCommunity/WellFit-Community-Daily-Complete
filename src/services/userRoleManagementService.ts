@@ -167,10 +167,33 @@ export const userRoleManagementService = {
       const previousRole = currentProfile?.role || 'none';
       const roleCode = ROLE_TO_CODE[new_role] ?? null;
 
-      // Update profiles table (primary user record)
+      // Resolve role_id from the canonical roles table. This is the column the
+      // database RLS policies enforce on (profiles.role_id -> roles.id), so it
+      // MUST be kept in sync — previously this service updated role/role_code
+      // but left role_id stale, so a role change silently did not change the
+      // user's RLS-enforced access.
+      const { data: roleRow, error: roleLookupErr } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', new_role)
+        .maybeSingle();
+
+      if (roleLookupErr || !roleRow) {
+        await auditLogger.error('ROLE_ASSIGN_ROLE_ID_LOOKUP_FAILED',
+          roleLookupErr ? new Error(roleLookupErr.message) : new Error(`No roles row for "${new_role}"`),
+          { user_id, new_role }
+        ).catch(() => {});
+        return failure('OPERATION_FAILED', `Role "${ROLE_DISPLAY_NAMES[new_role]}" is not registered in the roles table — cannot assign`);
+      }
+      const roleId = roleRow.id as number;
+
+      // Update profiles table (primary user record). role_id is the
+      // RLS-enforced column; role + role_code are kept in sync for the
+      // app-layer authority resolver (roleAuthority.ts).
       const updatePayload: Record<string, unknown> = {
         role: new_role,
         role_code: roleCode,
+        role_id: roleId,
       };
       if (department !== undefined) {
         updatePayload.department = department;
@@ -189,11 +212,12 @@ export const userRoleManagementService = {
         return failure('DATABASE_ERROR', 'Failed to update user profile');
       }
 
-      // Upsert user_roles table (authoritative role source)
+      // Upsert user_roles table (authoritative role source for the app-layer
+      // resolver). Keep both role (text) and role_id in sync with profiles.
       const { error: roleErr } = await supabase
         .from('user_roles')
         .upsert(
-          { user_id, role: new_role },
+          { user_id, role: new_role, role_id: roleId },
           { onConflict: 'user_id' }
         );
 
