@@ -1,18 +1,35 @@
 // src/pages/DemographicsPage/steps/BasicDemographicsStep.tsx
 import React from 'react';
 import { StepProps } from '../types';
+import {
+  OMB_RACE_PRIMARY,
+  OMB_RACE_LABELS,
+  OMB_ETHNICITY_LABELS,
+  type OmbRaceCategory,
+} from '../../../constants/omb-demographics';
 
 export const BasicDemographicsStep: React.FC<StepProps> = ({ formData, onInputChange }) => {
+  const toggleRace = (code: OmbRaceCategory) => {
+    const current = formData.race_omb;
+    const next = current.includes(code)
+      ? current.filter((c) => c !== code)
+      : [...current, code];
+    onInputChange('race_omb', next);
+  };
+
+  const declineRace = formData.race_omb.includes('asked-declined');
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
 
       {/* Date of Birth */}
       <div>
-        <label className="block text-lg font-medium text-gray-700 mb-2">
+        <label htmlFor="demographics-dob" className="block text-lg font-medium text-gray-700 mb-2">
           Date of Birth
         </label>
         <input
+          id="demographics-dob"
           type="date"
           value={formData.dob}
           onChange={(e) => onInputChange('dob', e.target.value)}
@@ -24,10 +41,11 @@ export const BasicDemographicsStep: React.FC<StepProps> = ({ formData, onInputCh
 
       {/* Gender */}
       <div>
-        <label className="block text-lg font-medium text-gray-700 mb-2">
+        <label htmlFor="demographics-gender" className="block text-lg font-medium text-gray-700 mb-2">
           How do you identify your gender?
         </label>
         <select
+          id="demographics-gender"
           value={formData.gender}
           onChange={(e) => onInputChange('gender', e.target.value)}
           className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
@@ -40,26 +58,67 @@ export const BasicDemographicsStep: React.FC<StepProps> = ({ formData, onInputCh
         </select>
       </div>
 
-      {/* Ethnicity */}
+      {/* Race — OMB 1997 multi-select per ONC 170.315(a)(5) / USCDI v3 */}
+      <fieldset className="border border-gray-200 rounded-lg p-4">
+        <legend className="text-lg font-medium text-gray-700 px-2">
+          What is your race? (Select all that apply)
+        </legend>
+        <p className="text-sm text-gray-500 mb-3">You may choose more than one.</p>
+        <div className="space-y-2">
+          {OMB_RACE_PRIMARY.map((code) => {
+            const inputId = `demographics-race-${code}`;
+            return (
+              <div key={code} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id={inputId}
+                  checked={formData.race_omb.includes(code)}
+                  disabled={declineRace}
+                  onChange={() => toggleRace(code)}
+                  className="w-5 h-5 text-green-600 border-gray-300 rounded-sm focus:ring-green-500"
+                />
+                <label htmlFor={inputId} className="text-base text-gray-700">
+                  {OMB_RACE_LABELS[code]}
+                </label>
+              </div>
+            );
+          })}
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mt-2 border-t border-gray-200">
+            <input
+              type="checkbox"
+              id="demographics-race-decline"
+              checked={declineRace}
+              onChange={() => {
+                onInputChange('race_omb', declineRace ? [] : ['asked-declined']);
+              }}
+              className="w-5 h-5 text-gray-600 border-gray-300 rounded-sm focus:ring-gray-500"
+            />
+            <label htmlFor="demographics-race-decline" className="text-base text-gray-700">
+              Prefer not to say
+            </label>
+          </div>
+        </div>
+      </fieldset>
+
+      {/* Ethnicity — OMB 1997 single per ONC 170.315(a)(5) / USCDI v3 */}
       <div>
-        <label className="block text-lg font-medium text-gray-700 mb-2">
-          What is your ethnic background?
+        <label htmlFor="demographics-ethnicity-omb" className="block text-lg font-medium text-gray-700 mb-2">
+          Are you Hispanic or Latino?
         </label>
+        <p className="text-sm text-gray-500 mb-2">
+          Hispanic/Latino is asked separately from race, per federal health
+          reporting standards.
+        </p>
         <select
-          value={formData.ethnicity}
-          onChange={(e) => onInputChange('ethnicity', e.target.value)}
+          id="demographics-ethnicity-omb"
+          value={formData.ethnicity_omb}
+          onChange={(e) => onInputChange('ethnicity_omb', e.target.value)}
           className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
         >
           <option value="">Please select</option>
-          <option value="white">White</option>
-          <option value="black">Black or African American</option>
-          <option value="hispanic">Hispanic or Latino</option>
-          <option value="asian">Asian</option>
-          <option value="native-american">Native American</option>
-          <option value="pacific-islander">Pacific Islander</option>
-          <option value="mixed">Mixed race</option>
-          <option value="other">Other</option>
-          <option value="prefer-not-to-say">Prefer not to say</option>
+          <option value="hispanic-or-latino">{OMB_ETHNICITY_LABELS['hispanic-or-latino']}</option>
+          <option value="not-hispanic-or-latino">{OMB_ETHNICITY_LABELS['not-hispanic-or-latino']}</option>
+          <option value="asked-declined">{OMB_ETHNICITY_LABELS['asked-declined']}</option>
         </select>
       </div>
 

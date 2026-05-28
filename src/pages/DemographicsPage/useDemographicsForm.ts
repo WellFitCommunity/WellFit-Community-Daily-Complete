@@ -70,7 +70,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
       try {
         const { data, error: profileError } = await supabase
           .from('profiles')
-          .select('role, role_slug, role_code, demographics_complete, demographics_step, first_name, last_name, phone, dob, address, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, gender, ethnicity, marital_status, living_situation, education_level, income_range, insurance_type, preferred_language, requires_interpreter, veteran_status, health_conditions, medications, mobility_level, hearing_status, vision_status, has_smartphone, has_internet, tech_comfort_level, transportation_access, food_security, social_support')
+          .select('role, role_slug, role_code, demographics_complete, demographics_step, first_name, last_name, phone, dob, address, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, gender, ethnicity, ethnicity_omb, race_omb_categories, marital_status, living_situation, education_level, income_range, insurance_type, preferred_language, requires_interpreter, veteran_status, health_conditions, medications, mobility_level, hearing_status, vision_status, has_smartphone, has_internet, tech_comfort_level, transportation_access, food_security, social_support')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -118,6 +118,8 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
             emergency_contact_phone: seniorData.emergency_contact_phone || data.emergency_contact_phone || '',
             emergency_contact_relationship: seniorData.emergency_contact_relationship || data.emergency_contact_relationship || '',
             gender: data.gender || '',
+            race_omb: data.race_omb_categories || [],
+            ethnicity_omb: data.ethnicity_omb || '',
             ethnicity: data.ethnicity || '',
             marital_status: seniorData.marital_status || data.marital_status || '',
             living_situation: seniorData.living_situation || data.living_situation || '',
@@ -204,6 +206,10 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
         .update({
           gender: formData.gender,
           ethnicity: formData.ethnicity,
+          // ONC 170.315(a)(5) — empty array / empty string must persist as NULL
+          // because the CHECK constraints reject empty arrays and unmatched strings.
+          race_omb_categories: formData.race_omb.length > 0 ? formData.race_omb : null,
+          ethnicity_omb: formData.ethnicity_omb || null,
           demographics_step: currentStep,
           demographics_complete: false,
           onboarded: true // Allow dashboard access; demographics_step tracks resume point
@@ -275,6 +281,8 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
         .update({
           gender: formData.gender,
           ethnicity: formData.ethnicity,
+          race_omb_categories: formData.race_omb.length > 0 ? formData.race_omb : null,
+          ethnicity_omb: formData.ethnicity_omb || null,
           demographics_complete: true,
           onboarded: true, // AuthGate checks this column for routing
           demographics_step: null

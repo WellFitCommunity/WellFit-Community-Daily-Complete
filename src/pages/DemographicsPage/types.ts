@@ -12,7 +12,28 @@ export interface DemographicsData {
 
   // Actual Demographics for Seniors
   gender: string;
+
+  /**
+   * ONC USCDI v3 Race — OMB 1997 minimum categories (multi-valued).
+   * See src/constants/omb-demographics.ts for the allowed code list.
+   * Stored in profiles.race_omb_categories (text[]).
+   */
+  race_omb: string[];
+
+  /**
+   * ONC USCDI v3 Ethnicity — OMB 1997 (hispanic-or-latino /
+   * not-hispanic-or-latino) plus nullFlavor values.
+   * See src/constants/omb-demographics.ts. Stored in profiles.ethnicity_omb.
+   */
+  ethnicity_omb: string;
+
+  /**
+   * Legacy single-string ethnicity, retained for HL7/CDA emitter
+   * back-compat until those callers are migrated to ethnicity_omb.
+   * New code should read race_omb / ethnicity_omb instead.
+   */
   ethnicity: string;
+
   marital_status: string;
   living_situation: string;
   education_level: string;
@@ -59,6 +80,8 @@ export const INITIAL_FORM_DATA: DemographicsData = {
   address: '',
   pin: '',
   gender: '',
+  race_omb: [],
+  ethnicity_omb: '',
   ethnicity: '',
   marital_status: '',
   living_situation: '',

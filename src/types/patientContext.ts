@@ -98,6 +98,23 @@ export interface PatientDemographics {
   /** Preferred language (ISO 639-1 code) */
   preferred_language: string | null;
 
+  /**
+   * ONC USCDI v3 Race — OMB 1997 minimum categories (multi-valued).
+   * See {@link OMB_RACE_CATEGORIES} for the allowed code list. Multi-value
+   * because a person can identify as two or more races. Authoritative
+   * source for ONC 170.315(a)(5). The legacy single-string `race` column
+   * on `profiles` is retained for HL7/CDA emitter back-compat.
+   */
+  race_omb_categories: string[] | null;
+
+  /**
+   * ONC USCDI v3 Ethnicity — OMB 1997 (hispanic-or-latino /
+   * not-hispanic-or-latino) plus nullFlavor values.
+   * See {@link OMB_ETHNICITY_VALUES}. Authoritative source for ONC
+   * 170.315(a)(5).
+   */
+  ethnicity_omb: string | null;
+
   /** Enrollment type: app (community) or hospital */
   enrollment_type: EnrollmentType | null;
 
