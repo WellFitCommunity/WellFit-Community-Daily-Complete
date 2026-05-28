@@ -243,6 +243,14 @@ export async function withQueryMetrics<T>(
  * Batch multiple database operations for better performance
  * Uses Promise.all() to parallelize independent queries
  *
+ * Accepts `PromiseLike<T>` rather than `Promise<T>` because Supabase
+ * query builders (PostgrestFilterBuilder / PostgrestBuilder) are
+ * thenables — they satisfy `.then(...)` but not the full Promise
+ * interface (no `.catch`, `.finally`, `[Symbol.toStringTag]`). Without
+ * this widening, every `() => supabase.from(...).select(...)` closure
+ * fails Deno type-check with TS2739. Promise.all() accepts thenables
+ * at runtime, so this is a typing fix only — no behavior change.
+ *
  * @example
  * const [patient, medications, labs] = await batchQueries([
  *   () => supabase.from('patients').select('*').eq('id', patientId).single(),
@@ -250,15 +258,22 @@ export async function withQueryMetrics<T>(
  *   () => supabase.from('lab_results').select('*').eq('patient_id', patientId)
  * ]);
  */
-export async function batchQueries<T extends readonly unknown[] | []>(
-  queries: readonly (() => Promise<T[number]>)[]
-): Promise<T> {
-  return Promise.all(queries.map(q => q())) as Promise<T>;
+export async function batchQueries<
+  Q extends readonly (() => PromiseLike<unknown>)[],
+>(
+  queries: Q,
+): Promise<{ -readonly [K in keyof Q]: Awaited<ReturnType<Q[K]>> }> {
+  return Promise.all(queries.map(q => q())) as Promise<
+    { -readonly [K in keyof Q]: Awaited<ReturnType<Q[K]>> }
+  >;
 }
 
 /**
  * Execute queries sequentially (when order matters)
  * Use this when queries depend on previous results
+ *
+ * Same `PromiseLike` rationale as `batchQueries` above — Supabase query
+ * builders are thenables, not Promises.
  *
  * @example
  * const results = await sequentialQueries([
@@ -271,9 +286,11 @@ export async function batchQueries<T extends readonly unknown[] | []>(
  *   }
  * ]);
  */
-export async function sequentialQueries<T extends readonly unknown[] | []>(
-  queries: readonly ((prev?: unknown) => Promise<T[number]>)[]
-): Promise<T> {
+export async function sequentialQueries<
+  Q extends readonly ((prev?: unknown) => PromiseLike<unknown>)[],
+>(
+  queries: Q,
+): Promise<{ -readonly [K in keyof Q]: Awaited<ReturnType<Q[K]>> }> {
   const results: unknown[] = [];
 
   for (const query of queries) {
@@ -281,7 +298,7 @@ export async function sequentialQueries<T extends readonly unknown[] | []>(
     results.push(result);
   }
 
-  return results as T;
+  return results as { -readonly [K in keyof Q]: Awaited<ReturnType<Q[K]>> };
 }
 
 export default {

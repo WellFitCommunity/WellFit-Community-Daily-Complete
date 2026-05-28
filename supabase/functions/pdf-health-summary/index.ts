@@ -174,7 +174,16 @@ serve(async (req) => {
 
     const userId = user.id;
 
-    // Fetch ALL USCDI data in parallel for performance
+    // Fetch ALL USCDI data in parallel for performance.
+    //
+    // Cast at this DB→app boundary because the Supabase generated types
+    // for explicit-column SELECTs widen each row's fields to `any` and
+    // collapse the per-query tuple into a union, which doesn't satisfy
+    // our hand-written Profile/Medication/etc. interfaces. The runtime
+    // shape is correct (we explicitly enumerate columns per interface
+    // below); this cast trades the unstable inference for our authoritative
+    // interface definitions. Allowed by `.claude/rules/typescript.md` —
+    // casts at system boundaries (DB/API/edge) only.
     const [
       { data: profile },
       { data: medications },
@@ -189,46 +198,71 @@ serve(async (req) => {
       { data: diagnosticReports },
       { data: checkIns }
     ] = await batchQueries([
-      // Demographics
-      () => supabase.from('profiles').select('*').eq('user_id', userId).single(),
-      // Medications
-      () => supabase.from('medications').select('*').eq('user_id', userId).eq('status', 'active').order('medication_name'),
-      // Allergies
-      () => supabase.from('allergy_intolerances').select('*').eq('user_id', userId).order('allergen_name'),
-      // Conditions
-      () => supabase.from('fhir_conditions').select('*').eq('patient_id', userId).order('recorded_date', { ascending: false }),
-      // Procedures
-      () => supabase.from('fhir_procedures').select('*').eq('patient_id', userId).order('performed_datetime', { ascending: false }).limit(20),
-      // Immunizations
-      () => supabase.from('fhir_immunizations').select('*').eq('patient_id', userId).order('occurrence_datetime', { ascending: false }),
-      // Observations (vitals)
-      () => supabase.from('fhir_observations').select('*').eq('patient_id', userId).order('effective_datetime', { ascending: false }).limit(50),
-      // Lab Results
-      () => supabase.from('lab_results').select('*').eq('patient_mrn', userId).order('extracted_at', { ascending: false }).limit(30),
-      // Care Plans
-      () => supabase.from('fhir_care_plans').select('*').eq('patient_id', userId).in('status', ['active', 'draft']),
-      // Clinical Notes
-      () => supabase.from('clinical_notes').select('*').eq('author_id', userId).order('created_at', { ascending: false }).limit(10),
-      // Diagnostic Reports
-      () => supabase.from('fhir_diagnostic_reports').select('*').eq('patient_id', userId).order('issued', { ascending: false }).limit(20),
-      // Check-ins (vitals from app)
-      () => supabase.from('check_ins').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(30)
+      // Demographics — matches Profile interface above
+      () => supabase.from('profiles')
+        .select('user_id, first_name, last_name, dob, phone, email')
+        .eq('user_id', userId).single(),
+      // Medications — matches Medication interface above
+      () => supabase.from('medications')
+        .select('id, user_id, medication_name, dosage, strength, frequency, instructions, prescribed_by, purpose, status')
+        .eq('user_id', userId).eq('status', 'active').order('medication_name'),
+      // Allergies — matches Allergy interface above
+      () => supabase.from('allergy_intolerances')
+        .select('id, user_id, allergen_name, allergen_type, reaction_description, criticality, severity')
+        .eq('user_id', userId).order('allergen_name'),
+      // Conditions — matches Condition interface above
+      () => supabase.from('fhir_conditions')
+        .select('id, patient_id, code, code_display, clinical_status, severity_code, onset_datetime, recorded_date, note')
+        .eq('patient_id', userId).order('recorded_date', { ascending: false }),
+      // Procedures — matches Procedure interface above
+      () => supabase.from('fhir_procedures')
+        .select('id, patient_id, code_display, performed_datetime, status')
+        .eq('patient_id', userId).order('performed_datetime', { ascending: false }).limit(20),
+      // Immunizations — matches Immunization interface above
+      () => supabase.from('fhir_immunizations')
+        .select('id, patient_id, vaccine_display, occurrence_datetime, status')
+        .eq('patient_id', userId).order('occurrence_datetime', { ascending: false }),
+      // Observations (vitals) — matches Observation interface above
+      () => supabase.from('fhir_observations')
+        .select('id, patient_id, code, code_display, category, value_quantity, value_string, value_unit, effective_datetime, reference_range_low, reference_range_high')
+        .eq('patient_id', userId).order('effective_datetime', { ascending: false }).limit(50),
+      // Lab Results — matches LabResult interface above
+      () => supabase.from('lab_results')
+        .select('id, patient_mrn, test_name, value, unit, reference_range, abnormal, extracted_at')
+        .eq('patient_mrn', userId).order('extracted_at', { ascending: false }).limit(30),
+      // Care Plans — matches CarePlan interface above
+      () => supabase.from('fhir_care_plans')
+        .select('id, patient_id, title, description, status, period_start')
+        .eq('patient_id', userId).in('status', ['active', 'draft']),
+      // Clinical Notes — matches ClinicalNote interface above
+      () => supabase.from('clinical_notes')
+        .select('id, author_id, content, created_at')
+        .eq('author_id', userId).order('created_at', { ascending: false }).limit(10),
+      // Diagnostic Reports — matches DiagnosticReport interface above
+      () => supabase.from('fhir_diagnostic_reports')
+        .select('id, patient_id, code_display, category, issued, effective_datetime, status')
+        .eq('patient_id', userId).order('issued', { ascending: false }).limit(20),
+      // Check-ins (vitals from app) — matches CheckIn interface above
+      () => supabase.from('check_ins')
+        .select('id, user_id, heart_rate, bp_systolic, bp_diastolic, pulse_oximeter, glucose_mg_dl, created_at')
+        .eq('user_id', userId).order('created_at', { ascending: false }).limit(30)
     ]);
 
-    // Generate HTML document
+    // Generate HTML document — cast at the DB→app boundary, see comment
+    // above the batchQueries call for why.
     const html = generateHealthSummaryHTML({
-      profile,
-      medications: medications || [],
-      allergies: allergies || [],
-      conditions: conditions || [],
-      procedures: procedures || [],
-      immunizations: immunizations || [],
-      observations: observations || [],
-      labResults: labResults || [],
-      carePlans: carePlans || [],
-      clinicalNotes: clinicalNotes || [],
-      diagnosticReports: diagnosticReports || [],
-      checkIns: checkIns || [],
+      profile: (profile ?? null) as unknown as Profile | null,
+      medications: (medications ?? []) as unknown as Medication[],
+      allergies: (allergies ?? []) as unknown as Allergy[],
+      conditions: (conditions ?? []) as unknown as Condition[],
+      procedures: (procedures ?? []) as unknown as Procedure[],
+      immunizations: (immunizations ?? []) as unknown as Immunization[],
+      observations: (observations ?? []) as unknown as Observation[],
+      labResults: (labResults ?? []) as unknown as LabResult[],
+      carePlans: (carePlans ?? []) as unknown as CarePlan[],
+      clinicalNotes: (clinicalNotes ?? []) as unknown as ClinicalNote[],
+      diagnosticReports: (diagnosticReports ?? []) as unknown as DiagnosticReport[],
+      checkIns: (checkIns ?? []) as unknown as CheckIn[],
       generatedAt: new Date().toISOString()
     });
 
@@ -702,20 +736,25 @@ function generateVitalsSection(observations: Observation[], checkIns: CheckIn[])
   // Get most recent vitals from either source
   const recentVitals: Record<string, VitalReading> = {};
 
-  // From FHIR observations
+  // From FHIR observations — skip readings missing a value OR timestamp;
+  // a vital without either can't be displayed truthfully on a clinical PDF.
   for (const obs of observations) {
     const code = obs.code;
-    if (code && !recentVitals[code]) {
+    const value = obs.value_quantity ?? obs.value_string;
+    if (code && value != null && obs.effective_datetime && !recentVitals[code]) {
       recentVitals[code] = {
-        value: obs.value_quantity || obs.value_string,
+        value,
         unit: obs.value_unit || '',
-        date: obs.effective_datetime
+        date: obs.effective_datetime,
       };
     }
   }
 
-  // From check-ins
+  // From check-ins — `created_at` is NOT NULL in the schema but Supabase's
+  // generated types mark it nullable. Guard explicitly so a malformed row
+  // never produces a VitalReading without a timestamp.
   for (const ci of checkIns) {
+    if (!ci.created_at) continue;
     if (ci.heart_rate && !recentVitals['heart_rate']) {
       recentVitals['heart_rate'] = { value: ci.heart_rate, unit: 'bpm', date: ci.created_at };
     }

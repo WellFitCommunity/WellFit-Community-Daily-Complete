@@ -3,10 +3,10 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-05-28 (end-of-day, second session)
-**Last Session:** **ONC Tier 1 Session 1 — 5 of 5 items now ACTUALLY DONE end-to-end. Tier 1 is COMPLETE.** This second session of 2026-05-28 closed ONC-3 (Imaging CPOE) and ONC-5 (Implantable Devices). ONC-3 reused the existing `fhir_service_requests` table with `category=['imaging']` + the imaging columns (body_site/laterality/contrast_required) already shipped on the lab migration — just needed a form, page wrapper, route, tests, and a 3rd "New imaging order" card on PatientChartNavigator. ONC-5 added net-new schema (`fhir_devices` + `fhir_device_use_statements`) applied via Supabase MCP per Rule #18, with RLS in parallel to fhir_service_requests (INSERT WITH CHECK tenant_id, UPDATE with BOTH USING + WITH CHECK). Two FHIR services (DeviceService + DeviceUseStatementService), a decomposed UI panel (orchestrator + AddDeviceForm + DeviceListView + types), a page wrapper, plus a "Patient records" section on PatientChartNavigator with the "Implanted devices" card. Live-DB round-trips verified for both: imaging order persisted with all FHIR fields (Chest body site, left laterality, contrast required, tenant_id, requester identity); device + DUS pair persisted with full UDI (HRF + DI), manufacturer/model/serial/lot, implant date, source practitioner — CASCADE delete on Device cleaned up the DUS. Both test rows removed after verification.
+**Last Updated:** 2026-05-28 (end-of-day, third session)
+**Last Session:** **Tier 2 Session A — ONC-6 + ONC-7 + partial ONC-10 landed (`a117d999`); 18 Deno type errors in batchQueries/sequentialQueries fully repaired + 6 latent VitalReading bugs surfaced and fixed in pdf-health-summary; new CLAUDE.md AI Mistakes row added for "verify target column set before designing payload writer" (the `ndc_code`-on-MedicationRequest near-miss).** Tier 2 (Session 2 in the ONC tracker) is now 3 of 5 done. ONC-10 SHA-256 integrity helper lives in `_shared/integrityHash.ts` with 11 Deno tests (FIPS 180-2 reference vectors green) and is wired into `enhanced-fhir-export` only — `bulk-export` and `ccda-export` wiring deferred because both are 800+ line god files with pre-existing `SELECT *` violations that the pre-commit gate refuses to let me touch them lightly. ONC-7 ships `FormularyService` + 5 seeded test formulary rows + `NDC` field on MedicationOrderForm with color-coded status banner. ONC-6 ships `InteractionAlertModal` + `useMedicationOrderSubmit` hook (extracted to keep the form under the 600-line cap) + `CDS_INTERACTION_OVERRIDE` audit log entry on every override. 6 new behavioral tests cover the CDS modal flow including the required-override-reason for contraindicated severities.
 **Updated By:** Claude Opus 4.7 (1M context)
-**Codebase Health:** 11,830+ tests passing (50 prior + 18 ImagingOrderForm + 16 ImplantableDevicesPanel/AddDeviceForm this end-of-day session), 0 lint warnings, 0 typecheck errors project-wide (scoped script reports 0 in 19 changed files / 0 project-wide), 0 `console.log` in production. CI gates active: file-size, VITE_*-secret pattern, shadow-import TDZ, governance-boundary, secret-scan, pre-commit (17 AI-fingerprint rules). 5 migrations applied via Supabase MCP this day (lab + lab-RLS-fix + 3 prior + create_fhir_devices for ONC-5). Largest new file: AddDeviceForm.tsx at 493 lines (under the 600-line god-file cap).
+**Codebase Health:** 11,880+ tests passing (~50 added this session: 11 Deno integrity + 12 FormularyService + 6 CDS modal flow + 21 prior). 0 lint warnings. 0 typecheck errors project-wide (scoped script). **Deno typecheck now CLEAN on the 5 reviewed export functions** (was 18 errors before the `batchQueries` signature fix — `PromiseLike<T>` widening + tuple-inferring generic via `{ -readonly [K in keyof Q]: Awaited<ReturnType<Q[K]>> }`). CI gates active: file-size, VITE_*-secret pattern, shadow-import TDZ, governance-boundary, secret-scan, pre-commit (17 AI-fingerprint rules — caught my SELECT * indirect violation this session). 7 migrations applied via Supabase MCP this day (5 prior + add_export_integrity_columns + seed_formulary_test_data). Largest new file: AddDeviceForm.tsx at 493 lines.
 
 ---
 
@@ -14,13 +14,25 @@
 
 > **🚨 Read CLAUDE.md Commandment #21 first.** "DONE MEANS DONE" is the second-highest-value rule in this codebase as of 2026-05-28. The scoped workflow MUST work end-to-end for a real user — compiles + tests pass + persists + reachable + audited — before calling a task done. Filing a defect as a "follow-up" = not done. The new rule is enforced because ONC-1 and ONC-2 were initially declared "done" while neither could submit (RLS rejected the payload) and neither had nav links. Maria caught it. Don't re-do that mistake.
 
-### ONC Certification — Tier 1 Session 1 — 5 of 5 DONE ✅ Tier 1 complete
+### ONC Certification — Tier 1 ✅ 5/5 + Tier 2 Session A: 3 of 5 done
 
-- **ONC-4** (a)(5) Race & Ethnicity — DONE end-to-end. Form persists, reachable via existing demographics flow. `bff477f6`.
-- **ONC-1** (a)(1) Medication CPOE — DONE end-to-end. `71be44c4` + defect-fix `a25e0c71`.
-- **ONC-2** (a)(2) Lab CPOE — DONE end-to-end. `40cfec3f` + defect-fix `a25e0c71`.
-- **ONC-3** (a)(3) Imaging CPOE — DONE end-to-end (this session). Form persists FHIR ServiceRequest with `category=['imaging']`, body_site (SNOMED), laterality, contrast_required. Reachable via PatientChartNavigator → 3rd "New imaging order" card. 18 behavioral tests. Live-DB round-trip verified (Chest/left/contrast all persisted with tenant_id + requester identity).
-- **ONC-5** (a)(14) Implantable Device List — DONE end-to-end (this session). New `fhir_devices` + `fhir_device_use_statements` migration applied via Supabase MCP. DeviceService + DeviceUseStatementService. Decomposed UI: ImplantableDevicesPanel (orchestrator) + AddDeviceForm + DeviceListView + types. New "Patient records" section on PatientChartNavigator routes to `/admin/devices/:patientId`. 16 behavioral tests (12 form + 4 panel). Live-DB round-trip verified (Device with full UDI + DUS with implant context, CASCADE delete confirmed).
+**Tier 1 (Session 1) — COMPLETE:**
+- **ONC-4** (a)(5) Race & Ethnicity — DONE. `bff477f6`.
+- **ONC-1** (a)(1) Medication CPOE — DONE. `71be44c4` + `a25e0c71`.
+- **ONC-2** (a)(2) Lab CPOE — DONE. `40cfec3f` + `a25e0c71`.
+- **ONC-3** (a)(3) Imaging CPOE — DONE. `894b6aea`.
+- **ONC-5** (a)(14) Implantable Device List — DONE. `894b6aea`.
+
+**Tier 2 (Session 2) — 3 of 5 done this session (`a117d999`):**
+- **ONC-6** (a)(9) CDS interaction alerts — DONE for MedicationOrderForm. `InteractionAlertModal` + `useMedicationOrderSubmit` hook orchestrates validate → CDS check → modal → persist. Contraindicated severities require typed override reason; HIGH allows one-click override. `CDS_INTERACTION_OVERRIDE` audit log entry fires AFTER successful persist with override reason + blocking severities. CDS-endpoint soft-fail (a 503 must not block care). 6 behavioral tests.
+- **ONC-7** (a)(10) Drug formulary check — DONE. `FormularyService.lookupByNdc()` + `summarizeFormulary()` maps DB CHECK constraint values to UI levels (preferred/covered/non_formulary/unknown). NDC field on MedicationOrderForm with color-coded status banner. NDC is captured for lookup ONLY — NOT persisted on FHIR MedicationRequest (no `ndc_code` column on `fhir_medication_requests`, verified via information_schema). 5 test formulary rows seeded under non-routable `TEST-FORMULARY` BIN (Lisinopril/Metformin/Atorvastatin preferred, Eliquis prior_auth, Humira step_therapy). 12 service tests + 5 form tests.
+- **ONC-10** (d)(7)/(d)(8) Data integrity — DONE for `enhanced-fhir-export`. New shared helper `_shared/integrityHash.ts` (FIPS-correct SHA-256, 11 Deno tests). Sets RFC 3230 `Digest: sha-256=<base64>` header + `X-Integrity-Algorithm: SHA-256`. Migration `20260528130000` adds `sha256_hex` + `integrity_algorithm` columns to `export_jobs` for when bulk-export wiring lands.
+- **ONC-10 PARTIAL — deferred wiring:** `bulk-export/index.ts` (868 lines, 4× SELECT *) and `ccda-export/index.ts` (836 lines, 6× SELECT *) both god files with pre-existing violations the pre-commit gate refuses to let pass on any touched file. Fixing is decompose-grade work that belongs on the god-file tracker, not bundled into ONC. `_shared/integrityHash.ts` is ready; both files just need the call inserted once the SELECT * is fixed.
+- **ONC-8** (a)(12) FHIR FamilyMemberHistory — TODO (~6h). Same shape as ONC-5: new fhir_family_member_history table + service + decomposed UI panel + page + route + chart nav card.
+- **ONC-9** (d)(6) Break-the-glass — TODO (~4h). New emergency_access_log table + emergencyAccessService + BreakTheGlassModal. Time-limited override + supervisor notification via send-email + audit-logged on every grant + revoke.
+
+**Deno typing-debt cleanup (this session):**
+- `_shared/supabaseClient.ts`: `batchQueries` and `sequentialQueries` rewritten to use a tuple-inferring generic (`Q extends readonly (() => PromiseLike<unknown>)[]` returning `{ -readonly [K in keyof Q]: Awaited<ReturnType<Q[K]>> }`). `PromiseLike` widening lets PostgrestFilterBuilder thenables satisfy the parameter type without breaking Promise.all at runtime. Cleared all 18 Deno errors and revealed 6 latent `string | undefined` bugs in `pdf-health-summary/index.ts` (VitalReading.date set from possibly-undefined Supabase fields) — those are now guarded by skipping incomplete vital readings rather than rendering bad data.
 
 ### Session A of the API-3 plan COMPLETE — earlier in the same session
 
@@ -37,15 +49,17 @@ AI-1-SWEEP and CR-2-SISTER-1..4 also closed (commits `721640fb` + `f6b48729`, bo
 
 **Recommended first action of next session — pick one:**
 
-1. **ONC Tier 2 (Session 2)** — now unblocked: ONC-6 wire CDS (guideline matcher + contraindication detector) into CPOE as blocking alerts, ONC-7 activate `formulary_cache` in medication ordering, ONC-8 structured family health history (FHIR `FamilyMemberHistory`), ONC-9 break-the-glass emergency access, ONC-10 SHA-256 integrity hashes on exports. ~19h. **Highest leverage** — Tier 1 done means Drummond Group has the core CPOE story; Tier 2 adds the CDS/safety surfaces.
+1. **Finish Tier 2 — ONC-8 + ONC-9 (~10h)** — both are net-new tables + services + UI on the scale of ONC-5. ONC-8 (FamilyMemberHistory) is the larger one but mechanical given the ONC-5 template. ONC-9 (break-the-glass) is smaller but more security-sensitive. Doing both in one session fully closes Tier 2 minus the deferred bulk/ccda integrity wiring.
 
-2. **API-3 Session B (Maria's scope decisions needed first)** — API-3h–l: scopes JSONB column + expires_at + scope-aware validation + generate-api-key RPC + UI scope/expiration selectors. ~5h once unblocked. Open questions in the tracker:
+2. **Wire ONC-10 integrity into bulk-export + ccda-export** — requires first fixing 10 SELECT * violations across those two god files (which is a forced excerpt of the god-file decomposition tracker). The integrity-hash helper is already done and tested — only ~30 lines per file remain once SELECT * is replaced with explicit column lists.
+
+3. **API-3 Session B (Maria's scope decisions needed first)** — API-3h–l: scopes JSONB column + expires_at + scope-aware validation + generate-api-key RPC + UI scope/expiration selectors. ~5h once unblocked. Open questions in the tracker:
    - **Scope vocabulary** — probable starter: `fhir.read.own_patients`, `webhook.subscribe`, `referral.write`. Confirm against actual partner use case.
    - **Expiration default** — 90 days or 1 year from `created_at`?
 
-3. **Sweep the remaining `?target=deno` SDK drift** — AI-1-SWEEP's commit message notes 103 other edge functions still import `https://esm.sh/@supabase/supabase-js@2` without `?target=deno`, resolving to a different version than the canonical one (per supabase.md §10). No security implication; hygiene only. ~1–2h.
+4. **Sweep the remaining `?target=deno` SDK drift** — AI-1-SWEEP's commit message notes 103 other edge functions still import `https://esm.sh/@supabase/supabase-js@2` without `?target=deno`. No security implication; hygiene only. ~1–2h.
 
-4. **Pivot to a fresh tracker:** Guardian Agent Session 2 (GRD-6/7/8/9, ~10h), MCP-3 adversarial testing (~8h), Nephrology pilot Phase 1 sessions (~6 sessions to MVP).
+5. **Pivot to a fresh tracker:** Guardian Agent Session 2 (GRD-6/7/8/9, ~10h), MCP-3 adversarial testing (~8h), Nephrology pilot Phase 1 sessions.
 
 **Important context for next session:**
 - Origin/main is fully synced as of 2026-05-28 (no unpushed local commits as of this write)
@@ -135,11 +149,11 @@ SELECT qual FROM pg_policies WHERE tablename = 'provider_burnout_assessments' AN
 
 ---
 
-## CURRENT PRIORITY — ONC 170.315 Certification Gap Closure (5/13)
+## CURRENT PRIORITY — ONC 170.315 Certification Gap Closure (8/13)
 
 **Tracker:** `docs/trackers/onc-certification-tracker.md`
-**Status:** **5/13 ACTUALLY DONE end-to-end** (ONC-1, ONC-2, ONC-3, ONC-4, ONC-5 — see definition of "done" per CLAUDE.md Commandment #21). **Tier 1 Session 1 COMPLETE — all 5 items done.**
-**Estimated total:** ~57 hours across 3-4 sessions (~28h remaining — Tier 2 + Tier 3)
+**Status:** **8/13 ACTUALLY DONE end-to-end** (Tier 1: ONC-1, ONC-2, ONC-3, ONC-4, ONC-5; Tier 2 Session A: ONC-6, ONC-7, ONC-10 for the FHIR Bundle path). **Tier 2 Session A landed `a117d999`.** Remaining: ONC-8, ONC-9 (~10h), ONC-10 wiring for bulk + ccda (blocked on SELECT * decomp), ONC-11 + ONC-13 (Tier 3, ~10h), ONC-12 (Surescripts, vendor-blocked).
+**Estimated total:** ~57 hours across 3-4 sessions (~18h remaining of buildable work + Tier 3 polish)
 **ACB:** Drummond Group (Austin) recommended — $70-130K budget
 
 ### What's Already Certified-Ready (27+ criteria)
@@ -150,7 +164,7 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 | Session | Focus | Items | Hours | Status |
 |---------|-------|-------|-------|--------|
 | **1** | CPOE forms (meds, lab, imaging) + demographics (race/ethnicity) + implantable device list | ONC-1 through ONC-5 | ~32 | **5 of 5 DONE ✅** |
-| **2** | CDS integration into CPOE + formulary activation + family health history + break-the-glass + data integrity | ONC-6 through ONC-10 | ~19 | NEXT |
+| **2** | CDS integration into CPOE + formulary activation + family health history + break-the-glass + data integrity | ONC-6 through ONC-10 | ~19 | **3 of 5 DONE** (ONC-6, ONC-7, ONC-10 for FHIR Bundle) |
 | **3** | WCAG AA accessibility audit + Surescripts prep + ONC compliance matrix document | ONC-11 through ONC-13 | ~10 | PENDING |
 
 ### Tier 1 Blockers (Session 1) — actual end-to-end status — COMPLETE
@@ -161,12 +175,13 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 - ✅ **ONC-3** (a)(3) Imaging CPOE — DONE end-to-end (this session). Persists to `fhir_service_requests` with `category=['imaging']`. Modality (DICOM), body site (SNOMED), laterality, contrast. `ImagingOrderForm` mirrors lab form pattern. Route `/admin/cpoe/imaging/:patientId`. 3rd card on PatientChartNavigator. 18 behavioral tests. Live-DB round-trip verified.
 - ✅ **ONC-5** (a)(14) Implantable Device List — DONE end-to-end (this session). Migration `20260528120000_create_fhir_devices.sql` applied via Supabase MCP. New tables `fhir_devices` + `fhir_device_use_statements` with RLS (INSERT WITH CHECK tenant_id, UPDATE both USING + WITH CHECK). `DeviceService` + `DeviceUseStatementService`. Decomposed UI: `ImplantableDevicesPanel` (orchestrator) + `AddDeviceForm` + `DeviceListView`. Route `/admin/devices/:patientId`. New "Patient records" section on PatientChartNavigator. 16 behavioral tests. Live-DB round-trip verified (Device + DUS pair with CASCADE delete).
 
-### Tier 2 (Session 2)
-- **ONC-6:** (a)(9) Wire CDS (guideline matcher + contraindication detector) into CPOE as blocking alerts
-- **ONC-7:** (a)(10) Activate `formulary_cache` table in medication ordering workflow
-- **ONC-8:** (a)(12) Structured family health history — FHIR `FamilyMemberHistory`
-- **ONC-9:** (d)(6) Break-the-glass emergency access with time-limited override + supervisor notification
-- **ONC-10:** (d)(7)/(d)(8) SHA-256 integrity hashes on exported records
+### Tier 2 (Session 2) — actual end-to-end status
+
+- ✅ **ONC-6** (a)(9) CDS interaction alerts — DONE for MedicationOrderForm. `InteractionAlertModal` + `useMedicationOrderSubmit` hook gate the submit pipeline on drug-interaction severity. Contraindicated requires typed override reason; HIGH allows one-click override. Audit log entry `CDS_INTERACTION_OVERRIDE` after persist. CDS-endpoint soft-fail (a 503 must not block care). 6 behavioral tests. Commit `a117d999`.
+- ✅ **ONC-7** (a)(10) Drug formulary check — DONE. `FormularyService.lookupByNdc()` + `summarizeFormulary()`. NDC field on MedicationOrderForm with color-coded status banner (preferred/covered/non_formulary/unknown). 5 test formulary rows seeded under `TEST-FORMULARY` BIN. 17 tests. Commit `a117d999`.
+- ⬜ **ONC-8** (a)(12) Family health history — TODO (~6h). Same shape as ONC-5: new `fhir_family_member_history` table + `FamilyMemberHistoryService` + decomposed UI panel + page wrapper + route + chart nav card.
+- ⬜ **ONC-9** (d)(6) Break-the-glass emergency access — TODO (~4h). New `emergency_access_log` table + `emergencyAccessService` + `BreakTheGlassModal`. Time-limited override + supervisor notify via `send-email` + audit-logged on every grant + revoke.
+- ⚠️ **ONC-10** (d)(7)/(d)(8) SHA-256 integrity hashes on exports — DONE for `enhanced-fhir-export`; PARTIAL for bulk + ccda (helper ready, wiring blocked on SELECT * decomp). Helper in `_shared/integrityHash.ts` (11 Deno tests). RFC 3230 `Digest` header set. Migration `20260528130000` adds `sha256_hex` + `integrity_algorithm` columns to `export_jobs`. Commit `a117d999`.
 
 ### Tier 3 (Session 3)
 - **ONC-11:** (g)(5) WCAG AA audit — Lighthouse/axe-core across all routes
