@@ -66,6 +66,7 @@ jobs:
             grep -v "unitsofmeasure\.org" | grep -v "wellfitcommunity\.org" | \
             grep -v "wellfit-community\.com" | grep -v "wellfit.*\.com" | \
             grep -v "www\.w3\.org" | grep -v "ama-assn\.org" | grep -v "ada\.org" | \
+            grep -v "dicom\.nema\.org" | \
             grep -v "www\.nlm\.nih\.gov" | grep -v "pillbox\.nlm\.nih\.gov" | grep -v "rxnorm" | grep -v "nucc\.org" | \
             grep -v "example\.com" | grep -v "example\.org" | grep -v "smarthealthit\.org" | grep -v "xmlns=" | grep -v "cvx" | \
             grep -v "\.md:" | grep -v "\.html:" | grep -v "\.svg:" | \
