@@ -9,6 +9,10 @@
  * mount EnvisionAuthProvider in AppProviders and migrate RequireSuperAdmin to use
  * useEnvisionAuth() instead of direct localStorage access.
  *
+ * orphan-keep: Future-use scaffolding for the planned Envision standalone portal.
+ * Backend (envision_sessions table + 5 envision-* edge functions) is live and
+ * actively maintained. Do not delete — see RequireSuperAdmin.tsx for the contract.
+ *
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 

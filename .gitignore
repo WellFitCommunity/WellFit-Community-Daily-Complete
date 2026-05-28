@@ -44,6 +44,9 @@ build/
 *package-lock*.backup
 *package-lock*.old
 
+# Python bytecode (scripts/ tooling)
+__pycache__/
+*.pyc
 
 # supabase generated/temporary files
 supabase/.temp/

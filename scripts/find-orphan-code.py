@@ -54,6 +54,23 @@ def is_entry(path: Path) -> bool:
     return any(p.search(s) for p in ENTRY_PATTERNS)
 
 
+# Files containing this marker are intentionally NOT-YET-IMPORTED scaffolding
+# for a planned feature (e.g., EnvisionAuthContext for the standalone Envision
+# portal). They should be treated as future-use code, not dead code.
+ORPHAN_KEEP_RE = re.compile(r"orphan-keep\s*:", re.IGNORECASE)
+
+
+def has_orphan_keep_marker(path: Path) -> bool:
+    """Check if file contains an `// orphan-keep: <reason>` marker."""
+    try:
+        # Only need to scan the head of the file — markers always live near
+        # the top in the leading docblock or in a one-line comment.
+        text = path.read_text()[:4096]
+    except (OSError, UnicodeDecodeError):
+        return False
+    return bool(ORPHAN_KEEP_RE.search(text))
+
+
 def collect_files(root: Path) -> list[Path]:
     out: list[Path] = []
     for dirpath, _, files in os.walk(root):
@@ -165,12 +182,16 @@ def main() -> int:
                 imported.add(resolved)
 
     orphans: list[Path] = []
+    kept: list[Path] = []
     for f in all_files:
         if is_entry(f):
             continue
         # Compare resolved absolute paths so symlinks/case differences match.
         if f.resolve() not in imported:
-            orphans.append(f)
+            if has_orphan_keep_marker(f):
+                kept.append(f)
+            else:
+                orphans.append(f)
 
     orphans.sort()
 
@@ -211,6 +232,10 @@ def main() -> int:
         print(f"Total candidates:      {len(orphans)}")
         print(f"HIGH-confidence:       {len(confirmed)}")
         print(f"LOW-confidence:        {len(suspect)}")
+        if kept:
+            print(f"Allow-listed (kept):   {len(kept)} (have // orphan-keep: marker)")
+            for k in kept:
+                print(f"    {k.relative_to(REPO)}")
     else:
         by_dir: dict[str, list[Path]] = {}
         for o in orphans:
@@ -226,6 +251,8 @@ def main() -> int:
                 print(f"  {rel}")
         print(f"\n{'=' * 60}")
         print(f"Total orphan candidates: {len(orphans)}")
+        if kept:
+            print(f"Allow-listed (skipped):  {len(kept)} (have // orphan-keep: marker)")
     print(f"Scanned: {len(all_files)} .ts/.tsx files")
     print()
     print("Reminder: these are CANDIDATES. Verify each manually before")
