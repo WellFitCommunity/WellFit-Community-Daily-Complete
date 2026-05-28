@@ -47,14 +47,19 @@ AI-1-SWEEP and CR-2-SISTER-1..4 also closed (commits `721640fb` + `f6b48729`, bo
 - **Session 6 wave 5 (AI-1-SWEEP) COMPLETE: 5 cross-user PHI exposures closed** in `ai-contraindication-detector`, `ai-caregiver-briefing`, `ai-missed-checkin-escalation`, `ai-treatment-pathway`, `ai-care-plan-generator` — all gated through new `requirePatientAccess()` helper in `_shared/auth.ts`
 - **Total: 50/55 DONE**
 
-**Recommended ROADMAP (in priority order — Maria confirmed 2026-05-28):**
+**ROADMAP — TWO ACTIVE PRIORITIES RIGHT NOW (Maria confirmed 2026-05-28):**
 
-**Phase 1 — Finish ONC Tier 2 (~10h, next session):**
-- **ONC-8 + ONC-9** — net-new tables + services + UI on the scale of ONC-5. ONC-8 (FamilyMemberHistory) is the larger one but mechanical given the ONC-5 template. ONC-9 (break-the-glass) is smaller but more security-sensitive. Doing both in one session fully closes Tier 2 minus the deferred bulk/ccda integrity wiring.
+> Only two things are active: **finish ONC, then finish Guardian.** Everything else (god-file decomposition, API-3 Session B, Nephrology, SOC 2, MCP Chain, Avatar) is BACKLOG until both land.
 
-**Phase 2 — God-file decomposition (CONFIRMED post-ONC priority):**
+**Priority 1 — Finish ONC Tier 2 (~10h):**
+- **ONC-8 + ONC-9** — net-new tables + services + UI on the scale of ONC-5. ONC-8 (FamilyMemberHistory) is the larger one but mechanical given the ONC-5 template. ONC-9 (break-the-glass) is smaller but more security-sensitive. Doing both in one session fully closes Tier 2 minus the deferred bulk/ccda integrity wiring. Full detail in the **PRIORITY 1 — ONC** section below.
 
-Maria confirmed this 2026-05-28 as the next major focus after ONC Tier 2 lands. Concrete data point from the ONC Tier 2 Session A commit (`a117d999`): `bulk-export/index.ts` (868 lines) and `ccda-export/index.ts` (836 lines) BOTH blocked finishing ONC-10 because the pre-commit gate refuses to let any touched god file ship with pre-existing SELECT * violations. Until they're decomposed, any feature work that needs to touch them stalls.
+**Priority 2 — Finish Guardian Agent Session 2 (GRD-6 through GRD-9, ~10h):**
+- GRD-6 Eyes→approval wiring, GRD-7 `guardian_flow_config` migration, GRD-8 guardian-pr-service keep/wire/remove decision (needs Maria), GRD-9 full end-to-end integration test. Full detail in the **PRIORITY 2 — Guardian** section below.
+
+**BACKLOG — God-file decomposition (was the prior #2; superseded by Guardian per Maria 2026-05-28):**
+
+Still the next major refactor focus once the two priorities land. Concrete data point from the ONC Tier 2 Session A commit (`a117d999`): `bulk-export/index.ts` (868 lines) and `ccda-export/index.ts` (836 lines) BOTH blocked finishing ONC-10 because the pre-commit gate refuses to let any touched god file ship with pre-existing SELECT * violations. Until they're decomposed, any feature work that needs to touch them stalls.
 
 Pattern (already established in this codebase — today's `useMedicationOrderSubmit` extraction did exactly this):
 ```
@@ -74,7 +79,7 @@ External callers still `import { ComponentName } from '.../ComponentName'` — t
 
 Tracker: `docs/trackers/god-file-decomposition-tracker.md` (163 src/ + 21 edge function files >600 lines, per the snapshot in the Active Tracker Index below).
 
-**Phase 3+ — other open trackers (deprioritized below god files per Maria's confirmation):**
+**Also in BACKLOG — other open trackers (all below the two active priorities):**
 
 1. **API-3 Session B** (Maria's scope decisions needed first) — API-3h–l: scopes JSONB column + expires_at + scope-aware validation + generate-api-key RPC + UI scope/expiration selectors. ~5h once unblocked. Open questions in the tracker:
    - **Scope vocabulary** — probable starter: `fhir.read.own_patients`, `webhook.subscribe`, `referral.write`. Confirm against actual partner use case.
@@ -100,7 +105,7 @@ Tracker: `docs/trackers/god-file-decomposition-tracker.md` (163 src/ + 21 edge f
 
 ---
 
-## CURRENT PRIORITY — Claude Self-Audit Remediation (50/55 DONE)
+## BACKLOG — Claude Self-Audit Remediation (50/55 DONE)
 
 **Tracker:** `docs/trackers/claude-self-audit-2026-05-20-tracker.md`
 **Status:** Sessions 1-5 complete (22 items). Session 6 wave 1 complete (9 items: CR-1, CR-2, CR-7, G-1, G-3, G-4, API-2, API-5, API-6). Session 6 wave 2 = **API-3 Session A complete** (7 items: API-3a–g). Session 6 wave 3 = **3 G-3 sister bugs complete** (G-3-SISTER-1/2/3). Session 6 wave 4 = **4 CR-2 sister bugs complete** (CR-2-SISTER-1/2/3/4, commit `f6b48729`). Session 6 wave 5 = **AI-1-SWEEP complete** (5 functions, commit `721640fb`). Total **50/55**. **Next: API-3 Session B (blocked on Maria's scope/expiration call), `?target=deno` SDK-drift hygiene sweep, or pivot trackers — see "NEXT SESSION" above.**
@@ -172,7 +177,7 @@ SELECT qual FROM pg_policies WHERE tablename = 'provider_burnout_assessments' AN
 
 ---
 
-## CURRENT PRIORITY — ONC 170.315 Certification Gap Closure (8/13)
+## PRIORITY 1 — ONC 170.315 Certification Gap Closure (8/13)
 
 **Tracker:** `docs/trackers/onc-certification-tracker.md`
 **Status:** **8/13 ACTUALLY DONE end-to-end** (Tier 1: ONC-1, ONC-2, ONC-3, ONC-4, ONC-5; Tier 2 Session A: ONC-6, ONC-7, ONC-10 for the FHIR Bundle path). **Tier 2 Session A landed `a117d999`.** Remaining: ONC-8, ONC-9 (~10h), ONC-10 wiring for bulk + ccda (blocked on SELECT * decomp), ONC-11 + ONC-13 (Tier 3, ~10h), ONC-12 (Surescripts, vendor-blocked).
@@ -213,7 +218,7 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 
 ---
 
-## NEW — PILOT DRIVEN — Nephrology Vertical + Acumen Epic Connect Integration (0/13)
+## BACKLOG — PILOT DRIVEN — Nephrology Vertical + Acumen Epic Connect Integration (0/13)
 
 **Tracker:** `docs/trackers/nephrology-module-tracker.md`
 **Status:** 0/13 sessions — greenfield build, customer pilot identified
@@ -250,7 +255,7 @@ See tracker for the 6 questions to bring to the clinic stakeholder conversation.
 
 ---
 
-## NEW — SOC 2 Readiness: Policy & Evidence Gap Closure (0/14)
+## BACKLOG — SOC 2 Readiness: Policy & Evidence Gap Closure (0/14)
 
 **Tracker:** `docs/trackers/soc2-readiness-tracker.md`
 **Status:** 0/14 items — 8 policy templates **drafted** (Phase 1) and ready for Maria + Akima review/signature; 6 evidence items pending (Phase 2/3)
@@ -276,7 +281,7 @@ See tracker for the 6 questions to bring to the clinic stakeholder conversation.
 
 ---
 
-## URGENT — Guardian Agent Gap Closure (5/9)
+## PRIORITY 2 — Guardian Agent Gap Closure (5/9)
 
 **Tracker:** `docs/trackers/guardian-system-tracker.md`
 **Status:** 5/9 items complete — Session 1 shipped 2026-04-21. Session 2 (GRD-6 through GRD-9) pending.
@@ -315,7 +320,7 @@ See tracker for the 6 questions to bring to the clinic stakeholder conversation.
 
 ---
 
-## SECONDARY PRIORITY — MCP Chain Completion: Final Gaps (2/9)
+## BACKLOG — MCP Chain Completion: Final Gaps (2/9)
 
 **Tracker:** `docs/trackers/mcp-chain-completion-tracker.md`
 **Status:** 2/9 items complete — 15 of 16 MCP servers are real end-to-end. 63 of 73 prior tracker items done (86%).
