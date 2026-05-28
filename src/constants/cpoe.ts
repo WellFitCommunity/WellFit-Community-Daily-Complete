@@ -89,6 +89,32 @@ export const FREQUENCY_PRESETS: readonly FrequencyPreset[] = [
 ] as const;
 
 // =============================================================================
+// SPECIMEN TYPES (for lab orders — ONC 170.315(a)(2))
+// =============================================================================
+
+export interface SpecimenType {
+  /** Display label shown in the form */
+  label: string;
+  /** SNOMED CT specimen-type code (HL7 OID 2.16.840.1.113883.6.96) */
+  code: string;
+}
+
+export const SPECIMEN_TYPES: readonly SpecimenType[] = [
+  { label: 'Blood (venous)', code: '122555007' },
+  { label: 'Blood (capillary / fingerstick)', code: '122554006' },
+  { label: 'Urine (random)', code: '122575003' },
+  { label: 'Urine (24-hour)', code: '276833005' },
+  { label: 'Saliva', code: '258629007' },
+  { label: 'Stool', code: '119339001' },
+  { label: 'Sputum', code: '119334006' },
+  { label: 'Nasopharyngeal swab', code: '258500001' },
+  { label: 'Throat swab', code: '258529004' },
+  { label: 'Cerebrospinal fluid', code: '258450006' },
+  { label: 'Tissue biopsy', code: '119376003' },
+  { label: 'Other / not applicable', code: 'other' },
+] as const;
+
+// =============================================================================
 // ORDER PRIORITY (FHIR R4 RequestPriority value set)
 // =============================================================================
 
