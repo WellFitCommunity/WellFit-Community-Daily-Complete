@@ -47,17 +47,40 @@ AI-1-SWEEP and CR-2-SISTER-1..4 also closed (commits `721640fb` + `f6b48729`, bo
 - **Session 6 wave 5 (AI-1-SWEEP) COMPLETE: 5 cross-user PHI exposures closed** in `ai-contraindication-detector`, `ai-caregiver-briefing`, `ai-missed-checkin-escalation`, `ai-treatment-pathway`, `ai-care-plan-generator` — all gated through new `requirePatientAccess()` helper in `_shared/auth.ts`
 - **Total: 50/55 DONE**
 
-**Recommended first action of next session — pick one:**
+**Recommended ROADMAP (in priority order — Maria confirmed 2026-05-28):**
 
-1. **Finish Tier 2 — ONC-8 + ONC-9 (~10h)** — both are net-new tables + services + UI on the scale of ONC-5. ONC-8 (FamilyMemberHistory) is the larger one but mechanical given the ONC-5 template. ONC-9 (break-the-glass) is smaller but more security-sensitive. Doing both in one session fully closes Tier 2 minus the deferred bulk/ccda integrity wiring.
+**Phase 1 — Finish ONC Tier 2 (~10h, next session):**
+- **ONC-8 + ONC-9** — net-new tables + services + UI on the scale of ONC-5. ONC-8 (FamilyMemberHistory) is the larger one but mechanical given the ONC-5 template. ONC-9 (break-the-glass) is smaller but more security-sensitive. Doing both in one session fully closes Tier 2 minus the deferred bulk/ccda integrity wiring.
 
-2. **Wire ONC-10 integrity into bulk-export + ccda-export** — requires first fixing 10 SELECT * violations across those two god files (which is a forced excerpt of the god-file decomposition tracker). The integrity-hash helper is already done and tested — only ~30 lines per file remain once SELECT * is replaced with explicit column lists.
+**Phase 2 — God-file decomposition (CONFIRMED post-ONC priority):**
 
-3. **API-3 Session B (Maria's scope decisions needed first)** — API-3h–l: scopes JSONB column + expires_at + scope-aware validation + generate-api-key RPC + UI scope/expiration selectors. ~5h once unblocked. Open questions in the tracker:
+Maria confirmed this 2026-05-28 as the next major focus after ONC Tier 2 lands. Concrete data point from the ONC Tier 2 Session A commit (`a117d999`): `bulk-export/index.ts` (868 lines) and `ccda-export/index.ts` (836 lines) BOTH blocked finishing ONC-10 because the pre-commit gate refuses to let any touched god file ship with pre-existing SELECT * violations. Until they're decomposed, any feature work that needs to touch them stalls.
+
+Pattern (already established in this codebase — today's `useMedicationOrderSubmit` extraction did exactly this):
+```
+ComponentName/
+  index.tsx                 ← orchestrator (barrel re-export)
+  ComponentName.types.ts    ← shared types
+  SubComponent.tsx          ← extracted concerns
+  useComponentLogic.ts      ← extracted state/logic hook
+  __tests__/                 ← tests
+```
+External callers still `import { ComponentName } from '.../ComponentName'` — the barrel `index.tsx` makes the decomposition invisible to consumers.
+
+**Suggested prioritization** (different from the tracker's listed order, based on actively-observed blockage — not theoretical):
+1. **`bulk-export/index.ts` + `ccda-export/index.ts`** — already blocked ONC-10 wiring. Decomposing these UNBLOCKS the deferred integrity work AND removes 10 SELECT * violations each. ~6-8h total.
+2. **`EnterpriseMigrationDashboard.tsx`** (931 lines, F1 priority on tracker) — biggest single file; patent-tied IP, deserves clean structure. Not actively blocking but the tracker has it as F1.
+3. **The other ~161 files** — incremental, lowest priority first if no active features touch them.
+
+Tracker: `docs/trackers/god-file-decomposition-tracker.md` (163 src/ + 21 edge function files >600 lines, per the snapshot in the Active Tracker Index below).
+
+**Phase 3+ — other open trackers (deprioritized below god files per Maria's confirmation):**
+
+1. **API-3 Session B** (Maria's scope decisions needed first) — API-3h–l: scopes JSONB column + expires_at + scope-aware validation + generate-api-key RPC + UI scope/expiration selectors. ~5h once unblocked. Open questions in the tracker:
    - **Scope vocabulary** — probable starter: `fhir.read.own_patients`, `webhook.subscribe`, `referral.write`. Confirm against actual partner use case.
    - **Expiration default** — 90 days or 1 year from `created_at`?
 
-4. **Sweep the remaining `?target=deno` SDK drift** — AI-1-SWEEP's commit message notes 103 other edge functions still import `https://esm.sh/@supabase/supabase-js@2` without `?target=deno`. No security implication; hygiene only. ~1–2h.
+2. **Sweep the remaining `?target=deno` SDK drift** — AI-1-SWEEP's commit message notes 103 other edge functions still import `https://esm.sh/@supabase/supabase-js@2` without `?target=deno`. No security implication; hygiene only. ~1–2h.
 
 5. **Pivot to a fresh tracker:** Guardian Agent Session 2 (GRD-6/7/8/9, ~10h), MCP-3 adversarial testing (~8h), Nephrology pilot Phase 1 sessions.
 
