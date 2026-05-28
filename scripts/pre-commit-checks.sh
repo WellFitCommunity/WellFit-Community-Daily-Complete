@@ -210,12 +210,39 @@ if [ -n "$STAGED_SRC" ]; then
     "Specify explicit columns. Wildcards waste bandwidth and may expose PHI."
 
   # ---------------------------------------------------------------------------
-  # 12. functions.invoke with underscores — directory names use dashes
+  # 12. functions.invoke with underscores — directory names usually use dashes,
+  # but some legitimately use underscores (admin_end_session, admin_register,
+  # admin_set_pin, admin_start_session). Only flag if the invoked function
+  # directory does NOT exist — i.e. the underscored name is a typo, not a
+  # real underscore-named function. Same pattern as rule #16's
+  # `TO service_role` exemption: verify against reality, don't blanket-block.
   # ---------------------------------------------------------------------------
-  report_violations "$STAGED_SRC" \
-    "functions\.invoke\s*\(\s*['\"][a-z]+_[a-z_]+['\"]" \
-    "functions.invoke with underscores (adversarial-audit-lessons #7)" \
-    "Edge function names use DASHES (send-email, not send_email). Check ls supabase/functions/."
+  if [ -n "$STAGED_SRC" ]; then
+    invoke_hits=$(echo "$STAGED_SRC" | xargs grep -nE "functions\.invoke\s*\(\s*['\"][a-z]+_[a-z_]+['\"]" 2>/dev/null \
+      | grep -vE '^[^:]+:[0-9]+:\s*//' \
+      | grep -vE '^[^:]+:[0-9]+:\s*\*' \
+      | grep -vE '^[^:]+:[0-9]+:\s*#')
+    real_violations=""
+    while IFS= read -r line; do
+      [ -z "$line" ] && continue
+      # Extract the function name from inside the quotes
+      fn_name=$(echo "$line" | grep -oE "functions\.invoke\s*\(\s*['\"][a-z]+_[a-z_]+['\"]" | grep -oE "['\"][a-z]+_[a-z_]+['\"]" | tr -d "'\"" | head -1)
+      [ -z "$fn_name" ] && continue
+      # Real violation only if the function directory does NOT exist
+      if [ ! -d "supabase/functions/$fn_name" ]; then
+        real_violations="${real_violations}${line}
+"
+      fi
+    done <<< "$invoke_hits"
+    if [ -n "$real_violations" ]; then
+      REPORT="${REPORT}
+❌ functions.invoke with underscores (adversarial-audit-lessons #7)
+   Edge function names use DASHES (send-email, not send_email). Check ls supabase/functions/.
+$(echo "$real_violations" | grep -v '^$' | head -10 | sed 's/^/     /')
+"
+      FAIL=1
+    fi
+  fi
 
   # ---------------------------------------------------------------------------
   # 13. Shadow import TDZ pattern (CR-1) — const X = ... ?? X
