@@ -9,6 +9,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MedicationOrderForm } from '../index';
 import { MedicationRequestService } from '../../../../../services/fhir/MedicationRequestService';
+import { FormularyService } from '../../../../../services/formularyService';
+import { checkDrugInteractions } from '../../../../../services/drugInteractionService';
 import { useOrderingProvider } from '../../../../../hooks/useOrderingProvider';
 
 vi.mock('../../../../../services/fhir/MedicationRequestService', () => ({
@@ -17,12 +19,28 @@ vi.mock('../../../../../services/fhir/MedicationRequestService', () => ({
   },
 }));
 
+vi.mock('../../../../../services/formularyService', async () => {
+  const actual = await vi.importActual<typeof import('../../../../../services/formularyService')>(
+    '../../../../../services/formularyService'
+  );
+  return {
+    ...actual,
+    FormularyService: { lookupByNdc: vi.fn() },
+  };
+});
+
+vi.mock('../../../../../services/drugInteractionService', () => ({
+  checkDrugInteractions: vi.fn(),
+}));
+
 vi.mock('../../../../../hooks/useOrderingProvider', () => ({
   useOrderingProvider: vi.fn(),
 }));
 
 const mockedCreate = vi.mocked(MedicationRequestService.create);
 const mockedProvider = vi.mocked(useOrderingProvider);
+const mockedFormulary = vi.mocked(FormularyService.lookupByNdc);
+const mockedInteractions = vi.mocked(checkDrugInteractions);
 
 const TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
 const REQUESTER_USER_ID = '11111111-1111-1111-1111-111111111111';
@@ -61,6 +79,22 @@ function fillRequiredFields() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockedCreate.mockReset();
+  mockedFormulary.mockReset();
+  mockedInteractions.mockReset();
+  // Default: no formulary call expected unless the test sets an NDC + blurs.
+  // Resolve to null so any accidental call doesn't blow up the test.
+  mockedFormulary.mockResolvedValue({ success: true, data: null, error: null });
+  // Default: no interactions returned. Tests that exercise the CDS modal
+  // override this with a high/contraindicated interaction.
+  mockedInteractions.mockResolvedValue({
+    has_interactions: false,
+    interactions: [],
+    checked_against: [],
+    medication_name: '',
+    medication_rxcui: '',
+    total_active_medications: 0,
+    cache_hit: false,
+  });
   setProviderReady();
   mockedCreate.mockResolvedValue({
     success: true,
@@ -279,6 +313,236 @@ describe('MedicationOrderForm — ONC (a)(1) CPOE behavior', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
       await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
       expect(mockedCreate.mock.calls[0][0].priority).toBe('stat');
+    });
+  });
+
+  describe('ONC (a)(10) — Formulary check', () => {
+    it('does NOT call the formulary service when no NDC is entered', async () => {
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fillRequiredFields();
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
+      expect(mockedFormulary).not.toHaveBeenCalled();
+    });
+
+    it('looks up the formulary on NDC blur and renders a preferred-tier status panel', async () => {
+      mockedFormulary.mockResolvedValueOnce({
+        success: true,
+        data: {
+          id: 'f1',
+          bin_number: '610014',
+          ndc_code: '00071-0156-23',
+          drug_name: 'Lipitor 10mg',
+          formulary_status: 'preferred',
+          tier: 1,
+          copay_amount: 5,
+          coinsurance_percent: null,
+          requires_prior_auth: false,
+          requires_step_therapy: false,
+          quantity_limit: null,
+          quantity_limit_days: null,
+          preferred_alternatives: [],
+          expires_at: '2027-01-01T00:00:00.000Z',
+          is_valid: true,
+        },
+        error: null,
+      });
+
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      const ndc = screen.getByLabelText(/national drug code/i);
+      fireEvent.change(ndc, { target: { value: '00071-0156-23' } });
+      fireEvent.blur(ndc);
+
+      // Status panel should render with the preferred-tier copy
+      const status = await screen.findByLabelText(/formulary status/i);
+      expect(status).toHaveTextContent(/tier 1.*preferred/i);
+      expect(status).toHaveTextContent(/copay.*\$5/i);
+      expect(mockedFormulary).toHaveBeenCalledWith('00071-0156-23');
+    });
+
+    it('surfaces "Formulary status not available" when the NDC isn\'t in the cache', async () => {
+      mockedFormulary.mockResolvedValueOnce({ success: true, data: null, error: null });
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      const ndc = screen.getByLabelText(/national drug code/i);
+      fireEvent.change(ndc, { target: { value: '99999-9999-99' } });
+      fireEvent.blur(ndc);
+
+      const status = await screen.findByLabelText(/formulary status/i);
+      expect(status).toHaveTextContent(/formulary status not available/i);
+    });
+
+    it('keeps the NDC on the form (for formulary lookup) but does NOT persist it on the FHIR MedicationRequest — fhir_medication_requests has no ndc_code column', async () => {
+      mockedFormulary.mockResolvedValueOnce({ success: true, data: null, error: null });
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fireEvent.change(screen.getByLabelText(/national drug code/i), {
+        target: { value: '00071-0156-23' },
+      });
+      fillRequiredFields();
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
+      // medication_code stays as the canonical FHIR code (RxNorm by default);
+      // NDC is intentionally not on the payload.
+      expect('ndc_code' in mockedCreate.mock.calls[0][0]).toBe(false);
+    });
+
+    it('does not block submit even when formulary lookup is unknown — prescriber may override', async () => {
+      mockedFormulary.mockResolvedValueOnce({ success: true, data: null, error: null });
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fireEvent.change(screen.getByLabelText(/national drug code/i), {
+        target: { value: '99999-9999-99' },
+      });
+      fireEvent.blur(screen.getByLabelText(/national drug code/i));
+      // Wait for the status panel before submitting so we know the lookup ran
+      await screen.findByLabelText(/formulary status/i);
+      fillRequiredFields();
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
+    });
+  });
+
+  describe('ONC (a)(9) — CDS interaction alert gating', () => {
+    function setRxNorm(code: string) {
+      const details = screen.getByText(/rxnorm code/i);
+      // The RxNorm input lives in the same details block — query the input by id
+      const input = document.getElementById('cpoe-med-code') as HTMLInputElement;
+      expect(input).toBeTruthy();
+      expect(details).toBeTruthy();
+      fireEvent.change(input, { target: { value: code } });
+    }
+
+    it('does NOT call checkDrugInteractions when no RxNorm code is provided', async () => {
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fillRequiredFields();
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
+      expect(mockedInteractions).not.toHaveBeenCalled();
+    });
+
+    it('calls checkDrugInteractions when RxNorm is provided + proceeds when no interactions', async () => {
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fillRequiredFields();
+      setRxNorm('314076');
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+      await waitFor(() => expect(mockedInteractions).toHaveBeenCalledTimes(1));
+      expect(mockedInteractions).toHaveBeenCalledWith(
+        '314076',
+        PATIENT_ID,
+        'Lisinopril 10 mg tablet'
+      );
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
+      // Modal should NOT be open
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('opens the alert modal and BLOCKS create when a HIGH-severity interaction returns', async () => {
+      mockedInteractions.mockResolvedValueOnce({
+        has_interactions: true,
+        interactions: [
+          {
+            severity: 'high',
+            interacting_medication: 'Spironolactone',
+            description: 'Risk of hyperkalemia with potassium-sparing diuretic',
+            management: 'Monitor serum potassium weekly',
+            source: 'rxnorm',
+          },
+        ],
+        checked_against: ['Spironolactone'],
+        medication_name: 'Lisinopril 10 mg tablet',
+        medication_rxcui: '314076',
+        total_active_medications: 1,
+        cache_hit: false,
+      });
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fillRequiredFields();
+      setRxNorm('314076');
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog).toHaveTextContent(/spironolactone/i);
+      expect(dialog).toHaveTextContent(/hyperkalemia/i);
+      // create() must NOT have been called yet
+      expect(mockedCreate).not.toHaveBeenCalled();
+    });
+
+    it('requires an override reason for CONTRAINDICATED severities and blocks acknowledgment without one', async () => {
+      mockedInteractions.mockResolvedValueOnce({
+        has_interactions: true,
+        interactions: [
+          {
+            severity: 'contraindicated',
+            interacting_medication: 'Sildenafil',
+            description: 'Nitrate + PDE5 inhibitor — life-threatening hypotension',
+            source: 'rxnorm',
+          },
+        ],
+        checked_against: ['Sildenafil'],
+        medication_name: 'Nitroglycerin',
+        medication_rxcui: '4917',
+        total_active_medications: 1,
+        cache_hit: false,
+      });
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fillRequiredFields();
+      setRxNorm('4917');
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+
+      // Wait for the modal to open before attempting to acknowledge
+      await screen.findByRole('dialog');
+      // Acknowledge with no reason — should surface the required-reason error
+      fireEvent.click(screen.getByRole('button', { name: /override and continue/i }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(/override reason is required/i);
+      expect(mockedCreate).not.toHaveBeenCalled();
+
+      // Now provide a reason and acknowledge
+      fireEvent.change(screen.getByLabelText(/override reason/i), {
+        target: { value: 'Patient discontinued sildenafil 7 days ago — confirmed verbally.' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /override and continue/i }));
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
+
+      // The override reason is prepended to the FHIR note for traceability
+      const noteArg = mockedCreate.mock.calls[0][0].note ?? '';
+      expect(noteArg).toMatch(/CDS override.*sildenafil/i);
+    });
+
+    it('soft-fails (allows submit) when checkDrugInteractions throws — CDS outage must not block care', async () => {
+      mockedInteractions.mockRejectedValueOnce(new Error('CDS endpoint 503'));
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fillRequiredFields();
+      setRxNorm('314076');
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalled());
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('cancel from the modal does not create the order', async () => {
+      mockedInteractions.mockResolvedValueOnce({
+        has_interactions: true,
+        interactions: [
+          {
+            severity: 'high',
+            interacting_medication: 'Warfarin',
+            description: 'Bleeding risk',
+            source: 'rxnorm',
+          },
+        ],
+        checked_against: ['Warfarin'],
+        medication_name: 'Aspirin',
+        medication_rxcui: '1191',
+        total_active_medications: 1,
+        cache_hit: false,
+      });
+      render(<MedicationOrderForm patientId={PATIENT_ID} />);
+      fillRequiredFields();
+      setRxNorm('1191');
+      fireEvent.click(screen.getByRole('button', { name: /submit order/i }));
+      // Wait for the modal to open before clicking Cancel
+      await screen.findByRole('dialog');
+      fireEvent.click(screen.getByRole('button', { name: /cancel order/i }));
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+      expect(mockedCreate).not.toHaveBeenCalled();
     });
   });
 });

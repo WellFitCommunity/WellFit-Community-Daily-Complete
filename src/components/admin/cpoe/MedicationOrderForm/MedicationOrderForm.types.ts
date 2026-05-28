@@ -15,6 +15,10 @@ export interface MedicationOrderFormData {
   /** Code system — defaults to RxNorm OID; can be overridden if free-text */
   medication_code_system: string;
 
+  /** National Drug Code (11-digit FDA NDC). Optional — when provided
+   *  enables ONC 170.315(a)(10) formulary lookup. */
+  ndc_code: string;
+
   /** Display name (drug + strength + form, e.g. "Lisinopril 10 mg tablet") */
   medication_display: string;
 
@@ -49,6 +53,7 @@ export interface MedicationOrderFormData {
 export const INITIAL_FORM_DATA: MedicationOrderFormData = {
   medication_code: '',
   medication_code_system: 'http://www.nlm.nih.gov/research/umls/rxnorm',
+  ndc_code: '',
   medication_display: '',
   dose_quantity: '',
   dose_unit: '',

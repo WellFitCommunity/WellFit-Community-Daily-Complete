@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createUserClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts"
 import { createLogger } from '../_shared/auditLogger.ts'
+import { responseIntegrity } from '../_shared/integrityHash.ts'
 import {
   buildPatientResource,
   buildCheckInObservations,
@@ -278,9 +279,29 @@ serve(async (req) => {
       processingTimeMs: processingTime
     });
 
+    // ONC 170.315(d)(7)/(d)(8) — Data integrity. The recipient can verify
+    // by recomputing SHA-256 on the response body and comparing to the
+    // Digest header (RFC 3230). The integrity_hash field is also embedded
+    // in Bundle.meta.extension for clients that prefer body-level data.
+    const responseBody = JSON.stringify(fhirBundle);
+    const { integrity, headers: integrityHeaders } = await responseIntegrity(responseBody);
+    logger.info('FHIR export integrity computed', {
+      userId: user.id,
+      patientId,
+      algorithm: integrity.algorithm,
+      sha256_hex_prefix: integrity.hex.slice(0, 8),
+      bytes: responseBody.length,
+    });
+
     return new Response(
-      JSON.stringify(fhirBundle),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/fhir+json' } }
+      responseBody,
+      {
+        headers: {
+          ...corsHeaders,
+          ...integrityHeaders,
+          'Content-Type': 'application/fhir+json',
+        },
+      }
     )
 
   } catch (err: unknown) {

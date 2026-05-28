@@ -15,22 +15,25 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { MedicationRequestService } from '../../../../services/fhir/MedicationRequestService';
-import { auditLogger } from '../../../../services/auditLogger';
+import {
+  FormularyService,
+  summarizeFormulary,
+  type FormularyStatusSummary,
+} from '../../../../services/formularyService';
 import { useOrderingProvider } from '../../../../hooks/useOrderingProvider';
+import { InteractionAlertModal } from '../InteractionAlertModal';
 import {
   DOSAGE_UNITS,
   FREQUENCY_PRESETS,
   ORDER_PRIORITIES,
   ROUTES_OF_ADMINISTRATION,
 } from '../../../../constants/cpoe';
-import type { CreateMedicationRequest } from '../../../../types/fhir/medications';
 import {
   INITIAL_FORM_DATA,
   type MedicationOrderFormData,
   type MedicationOrderFormProps,
-  type MedicationOrderSubmitError,
 } from './MedicationOrderForm.types';
+import { useMedicationOrderSubmit } from './useMedicationOrderSubmit';
 
 function buildDosageText(data: MedicationOrderFormData): string {
   const preset = FREQUENCY_PRESETS.find((p) => p.label === data.frequency_preset);
@@ -73,12 +76,35 @@ export const MedicationOrderForm: React.FC<MedicationOrderFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<MedicationOrderFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitError, setSubmitError] = useState<MedicationOrderSubmitError | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+
+  // ONC 170.315(a)(10) — formulary status surface
+  const [formularyStatus, setFormularyStatus] = useState<FormularyStatusSummary | null>(null);
+  const [formularyChecking, setFormularyChecking] = useState(false);
 
   const provider = useOrderingProvider();
 
   const dosagePreview = useMemo(() => buildDosageText(formData), [formData]);
+
+  // ONC 170.315(a)(1) + (a)(9) — submit pipeline (validate → CDS gate → persist)
+  const {
+    submitting,
+    cdsChecking,
+    cdsAlerts,
+    submitError,
+    handleSubmit,
+    handleCdsAcknowledge,
+    handleCdsCancel,
+    resetSubmitError,
+  } = useMedicationOrderSubmit({
+    formData,
+    patientId,
+    encounterId,
+    provider,
+    dosagePreview,
+    validate,
+    onSubmitted,
+    setErrors,
+  });
 
   const setField = useCallback(
     <K extends keyof MedicationOrderFormData>(field: K, value: MedicationOrderFormData[K]) => {
@@ -89,10 +115,32 @@ export const MedicationOrderForm: React.FC<MedicationOrderFormProps> = ({
         delete next[field];
         return next;
       });
-      setSubmitError(null);
+      resetSubmitError();
     },
-    []
+    [resetSubmitError]
   );
+
+  // ONC 170.315(a)(10) — formulary lookup on NDC blur. Reset status when NDC
+  // is cleared. Lookup failures degrade gracefully (we just don't show a panel).
+  const handleFormularyCheck = useCallback(async (ndc: string) => {
+    const trimmed = ndc.trim();
+    if (!trimmed) {
+      setFormularyStatus(null);
+      return;
+    }
+    setFormularyChecking(true);
+    try {
+      const result = await FormularyService.lookupByNdc(trimmed);
+      if (result.success) {
+        setFormularyStatus(summarizeFormulary(result.data ?? null));
+      } else {
+        // Surface unknown so the provider knows coverage couldn't be verified
+        setFormularyStatus(summarizeFormulary(null));
+      }
+    } finally {
+      setFormularyChecking(false);
+    }
+  }, []);
 
   const handleRouteChange = useCallback(
     (code: string) => {
@@ -110,85 +158,6 @@ export const MedicationOrderForm: React.FC<MedicationOrderFormProps> = ({
       });
     },
     []
-  );
-
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      setSubmitError(null);
-
-      const validationErrors = validate(formData);
-      if (Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors);
-        return;
-      }
-
-      if (!provider.tenant_id || !provider.user_id) {
-        setSubmitError({
-          message:
-            provider.error ??
-            'Cannot place order — ordering-provider identity is not loaded yet. Try again in a moment.',
-          isAllergyAlert: false,
-        });
-        return;
-      }
-
-      const preset = FREQUENCY_PRESETS.find((p) => p.label === formData.frequency_preset);
-      const request: CreateMedicationRequest = {
-        patient_id: patientId,
-        status: 'active',
-        intent: 'order',
-        medication_code: formData.medication_code || formData.medication_display,
-        medication_code_system: formData.medication_code_system,
-        medication_display: formData.medication_display.trim(),
-        dosage_text: dosagePreview,
-        dosage_dose_quantity: Number(formData.dose_quantity),
-        dosage_dose_unit: formData.dose_unit,
-        dosage_route_code: formData.route_code,
-        dosage_route_display: formData.route_display,
-        dosage_route: formData.route_display,
-        dosage_timing_frequency: preset?.frequency,
-        dosage_timing_period: preset?.period,
-        dosage_timing_period_unit: preset?.periodUnit,
-        dosage_patient_instruction: formData.patient_instruction.trim() || undefined,
-        reason_code: [formData.indication.trim()],
-        priority: formData.priority,
-        note: formData.note.trim() || undefined,
-        authored_on: new Date().toISOString(),
-        encounter_id: encounterId,
-        tenant_id: provider.tenant_id,
-        requester_id: provider.user_id,
-        requester_display: provider.display_name ?? undefined,
-        requester_practitioner_id: provider.practitioner_id ?? undefined,
-      };
-
-      setSubmitting(true);
-      try {
-        const result = await MedicationRequestService.create(request);
-        if (!result.success || !result.data) {
-          const message = result.error || 'Could not create the medication order.';
-          setSubmitError({
-            message,
-            isAllergyAlert: message.toUpperCase().startsWith('ALLERGY ALERT'),
-          });
-          return;
-        }
-        onSubmitted?.(result.data.id ?? '');
-      } catch (err: unknown) {
-        await auditLogger.error(
-          'MEDICATION_ORDER_FORM_SUBMIT_FAILED',
-          err instanceof Error ? err : new Error(String(err)),
-          { patientId, medication: formData.medication_display }
-        );
-        setSubmitError({
-          message: 'An unexpected error occurred. Please try again.',
-          isAllergyAlert: false,
-        });
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [formData, patientId, encounterId, dosagePreview, onSubmitted, provider]
   );
 
   return (
@@ -226,7 +195,59 @@ export const MedicationOrderForm: React.FC<MedicationOrderFormProps> = ({
             className="mt-2 w-full p-2 text-base border border-gray-300 rounded-lg"
           />
         </details>
+        <details className="mt-2">
+          <summary className="text-sm text-gray-600 cursor-pointer">
+            NDC code (enables formulary check)
+          </summary>
+          <label htmlFor="cpoe-med-ndc" className="sr-only">
+            National Drug Code
+          </label>
+          <input
+            id="cpoe-med-ndc"
+            type="text"
+            value={formData.ndc_code}
+            onChange={(e) => setField('ndc_code', e.target.value)}
+            onBlur={(e) => void handleFormularyCheck(e.target.value)}
+            placeholder="e.g., 00071-0156-23"
+            className="mt-2 w-full p-2 text-base border border-gray-300 rounded-lg"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            ONC 170.315(a)(10) — when an NDC is provided we look up tier, copay,
+            prior-auth status against the formulary cache before submit.
+          </p>
+        </details>
       </div>
+
+      {/* Formulary status — ONC 170.315(a)(10) */}
+      {formularyChecking && (
+        <p role="status" className="text-sm text-gray-600">
+          Checking formulary status…
+        </p>
+      )}
+      {formularyStatus && !formularyChecking && (
+        <div
+          role="status"
+          aria-label="Formulary status"
+          className={`p-4 rounded-lg border ${
+            formularyStatus.level === 'preferred'
+              ? 'bg-green-50 border-green-300 text-green-900'
+              : formularyStatus.level === 'covered'
+                ? 'bg-blue-50 border-blue-300 text-blue-900'
+                : formularyStatus.level === 'non_formulary'
+                  ? 'bg-orange-50 border-orange-300 text-orange-900'
+                  : 'bg-yellow-50 border-yellow-300 text-yellow-900'
+          }`}
+        >
+          <p className="font-medium">Formulary: {formularyStatus.label}</p>
+          <p className="text-sm mt-1">{formularyStatus.detail}</p>
+          {formularyStatus.preferredAlternatives.length > 0 && (
+            <p className="text-sm mt-2">
+              <strong>Preferred alternatives:</strong>{' '}
+              {formularyStatus.preferredAlternatives.join(', ')}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Dose */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -442,10 +463,16 @@ export const MedicationOrderForm: React.FC<MedicationOrderFormProps> = ({
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button
           type="submit"
-          disabled={submitting || provider.loading || !provider.tenant_id}
+          disabled={submitting || cdsChecking || provider.loading || !provider.tenant_id}
           className="min-h-[44px] px-6 text-lg font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? 'Submitting…' : provider.loading ? 'Loading…' : 'Submit Order'}
+          {submitting
+            ? 'Submitting…'
+            : cdsChecking
+              ? 'Checking interactions…'
+              : provider.loading
+                ? 'Loading…'
+                : 'Submit Order'}
         </button>
         {onCancel && (
           <button
@@ -458,6 +485,15 @@ export const MedicationOrderForm: React.FC<MedicationOrderFormProps> = ({
           </button>
         )}
       </div>
+
+      {/* ONC 170.315(a)(9) — CDS blocking-alert modal */}
+      {cdsAlerts && cdsAlerts.length > 0 && (
+        <InteractionAlertModal
+          interactions={cdsAlerts}
+          onAcknowledge={handleCdsAcknowledge}
+          onCancel={handleCdsCancel}
+        />
+      )}
     </form>
   );
 };
