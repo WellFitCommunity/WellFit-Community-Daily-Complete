@@ -96,7 +96,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
     { tab: 'avatar', icon: '🧍', title: 'Body Map', description: 'Clinical markers & device tracking', color: 'border-teal-500/30 hover:border-teal-500' },
   ];
 
-  // ONC 170.315(a)(1)–(2) CPOE entry points. New-order buttons live in the
+  // ONC 170.315(a)(1)–(3) CPOE entry points. New-order buttons live in the
   // patient chart because that's where the provider already has patient
   // context — no separate "pick patient" step. Routes accept :patientId
   // directly so the order resolves to this patient.
@@ -113,6 +113,25 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
           icon: '🧪',
           title: 'New lab order',
           description: 'Order a laboratory test or panel for this patient.',
+        },
+        {
+          route: `/admin/cpoe/imaging/${patient.id}`,
+          icon: '🩻',
+          title: 'New imaging order',
+          description: 'Order an X-ray, CT, MRI, ultrasound, or other imaging study.',
+        },
+      ]
+    : [];
+
+  // ONC 170.315(a)(14) — Implantable Device List. Separate from CPOE because
+  // it's a record-management view (list + add), not a one-shot order.
+  const recordActions: { route: string; icon: string; title: string; description: string }[] = patient
+    ? [
+        {
+          route: `/admin/devices/${patient.id}`,
+          icon: '📟',
+          title: 'Implanted devices',
+          description: 'View and record implantable devices (UDI, manufacturer, implant context).',
         },
       ]
     : [];
@@ -151,6 +170,29 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
                 type="button"
                 onClick={() => navigate(action.route)}
                 className="p-5 rounded-lg bg-slate-800/50 border border-amber-500/30 hover:border-amber-500 text-left transition-all hover:bg-slate-800"
+              >
+                <div className="text-3xl mb-3">{action.icon}</div>
+                <h4 className="font-semibold text-white text-base">{action.title}</h4>
+                <p className="text-sm text-slate-400 mt-1">{action.description}</p>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {recordActions.length > 0 && (
+        <>
+          <h3 className="text-base font-semibold text-white mt-8 mb-1">Patient records</h3>
+          <p className="text-sm text-slate-400 mb-4">
+            FHIR resource collections — view and add structured clinical data.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {recordActions.map((action) => (
+              <button
+                key={action.route}
+                type="button"
+                onClick={() => navigate(action.route)}
+                className="p-5 rounded-lg bg-slate-800/50 border border-cyan-500/30 hover:border-cyan-500 text-left transition-all hover:bg-slate-800"
               >
                 <div className="text-3xl mb-3">{action.icon}</div>
                 <h4 className="font-semibold text-white text-base">{action.title}</h4>

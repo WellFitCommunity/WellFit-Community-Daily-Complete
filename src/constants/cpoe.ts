@@ -132,3 +132,88 @@ export const ORDER_PRIORITIES: readonly PriorityOption[] = [
   { value: 'asap', label: 'ASAP', description: 'Very high priority — fill immediately' },
   { value: 'stat', label: 'STAT', description: 'Highest priority — emergency, fill now' },
 ] as const;
+
+// =============================================================================
+// IMAGING MODALITIES (DICOM CID 29 — for imaging orders — ONC 170.315(a)(3))
+// =============================================================================
+
+export interface ImagingModality {
+  /** Display label shown in the form */
+  label: string;
+  /** DICOM modality code (HL7 OID 1.2.840.10008.2.16.4) */
+  code: string;
+  /** Human-readable DICOM display */
+  display: string;
+}
+
+export const IMAGING_MODALITIES: readonly ImagingModality[] = [
+  { label: 'X-Ray (Radiography)', code: 'DX', display: 'Digital Radiography' },
+  { label: 'Computed Tomography (CT)', code: 'CT', display: 'Computed Tomography' },
+  { label: 'Magnetic Resonance (MRI)', code: 'MR', display: 'Magnetic Resonance' },
+  { label: 'Ultrasound (US)', code: 'US', display: 'Ultrasound' },
+  { label: 'Mammography', code: 'MG', display: 'Mammography' },
+  { label: 'Nuclear Medicine', code: 'NM', display: 'Nuclear Medicine' },
+  { label: 'Positron Emission Tomography (PET)', code: 'PT', display: 'Positron Emission Tomography' },
+  { label: 'Fluoroscopy', code: 'RF', display: 'Radio Fluoroscopy' },
+  { label: 'Bone Density (DXA)', code: 'BMD', display: 'Bone Mineral Densitometry' },
+  { label: 'Angiography', code: 'XA', display: 'X-Ray Angiography' },
+] as const;
+
+// =============================================================================
+// BODY SITES (SNOMED CT BodyStructure subset — for imaging — ONC 170.315(a)(3))
+// =============================================================================
+
+export interface BodySite {
+  /** Display label shown in the form */
+  label: string;
+  /** SNOMED CT BodyStructure code (HL7 OID 2.16.840.1.113883.6.96) */
+  code: string;
+}
+
+export const BODY_SITES: readonly BodySite[] = [
+  { label: 'Head', code: '69536005' },
+  { label: 'Neck', code: '45048000' },
+  { label: 'Chest', code: '51185008' },
+  { label: 'Abdomen', code: '113345001' },
+  { label: 'Pelvis', code: '12921003' },
+  { label: 'Cervical spine', code: '122494005' },
+  { label: 'Thoracic spine', code: '122495006' },
+  { label: 'Lumbar spine', code: '122496007' },
+  { label: 'Shoulder', code: '16982005' },
+  { label: 'Upper arm', code: '40983000' },
+  { label: 'Elbow', code: '127949000' },
+  { label: 'Forearm', code: '14975008' },
+  { label: 'Wrist', code: '8205005' },
+  { label: 'Hand', code: '85562004' },
+  { label: 'Hip', code: '29836001' },
+  { label: 'Thigh / femur', code: '68367000' },
+  { label: 'Knee', code: '72696002' },
+  { label: 'Lower leg / tibia', code: '30021000' },
+  { label: 'Ankle', code: '344001' },
+  { label: 'Foot', code: '56459004' },
+  { label: 'Whole body', code: '38266002' },
+  { label: 'Other (specify in notes)', code: 'other' },
+] as const;
+
+// =============================================================================
+// LATERALITY (for imaging — ONC 170.315(a)(3))
+// =============================================================================
+
+/**
+ * Form-level laterality. `'na'` maps to undefined on the persisted
+ * ServiceRequest (body_site_laterality is nullable). The other three
+ * values match ServiceRequestLaterality on the FHIR type.
+ */
+export type FormLaterality = 'na' | 'left' | 'right' | 'bilateral';
+
+export interface LateralityOption {
+  value: FormLaterality;
+  label: string;
+}
+
+export const LATERALITY_OPTIONS: readonly LateralityOption[] = [
+  { value: 'na', label: 'Not applicable' },
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+  { value: 'bilateral', label: 'Bilateral' },
+] as const;

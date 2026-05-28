@@ -3,10 +3,10 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-05-28 (late session)
-**Last Session:** **ONC Tier 1 Session 1 — 3 of 5 items now ACTUALLY DONE end-to-end.** Earlier in the session: ONC-4 (race/ethnicity, `bff477f6`), ONC-1 (Medication CPOE, `71be44c4`), ONC-2 (Lab CPOE, `40cfec3f`). Maria pushed back on declaring those done — CPOE forms shipped without `tenant_id` (RLS would 403 every submit), without any UI nav links (routes were dead URLs), and without `requester_*` identity (FHIR provider attribution lost). Defect-fix commit (about to land) adds: shared `useOrderingProvider` hook → both forms set `tenant_id`/`requester_id`/`requester_display`/`requester_practitioner_id`; "Place a new order" cards added to PatientChartNavigator's overview tab; submit disabled while provider loads; "no tenant" surface error. Plus 5 new hook tests + 4 new form gating tests. **NEW CLAUDE.md Commandment #21: "DONE MEANS DONE"** — work is only complete when the scoped workflow runs end-to-end for a real user (compiles + tests pass + persists + reachable + audited). Filed as a follow-up = not done.
+**Last Updated:** 2026-05-28 (end-of-day, second session)
+**Last Session:** **ONC Tier 1 Session 1 — 5 of 5 items now ACTUALLY DONE end-to-end. Tier 1 is COMPLETE.** This second session of 2026-05-28 closed ONC-3 (Imaging CPOE) and ONC-5 (Implantable Devices). ONC-3 reused the existing `fhir_service_requests` table with `category=['imaging']` + the imaging columns (body_site/laterality/contrast_required) already shipped on the lab migration — just needed a form, page wrapper, route, tests, and a 3rd "New imaging order" card on PatientChartNavigator. ONC-5 added net-new schema (`fhir_devices` + `fhir_device_use_statements`) applied via Supabase MCP per Rule #18, with RLS in parallel to fhir_service_requests (INSERT WITH CHECK tenant_id, UPDATE with BOTH USING + WITH CHECK). Two FHIR services (DeviceService + DeviceUseStatementService), a decomposed UI panel (orchestrator + AddDeviceForm + DeviceListView + types), a page wrapper, plus a "Patient records" section on PatientChartNavigator with the "Implanted devices" card. Live-DB round-trips verified for both: imaging order persisted with all FHIR fields (Chest body site, left laterality, contrast required, tenant_id, requester identity); device + DUS pair persisted with full UDI (HRF + DI), manufacturer/model/serial/lot, implant date, source practitioner — CASCADE delete on Device cleaned up the DUS. Both test rows removed after verification.
 **Updated By:** Claude Opus 4.7 (1M context)
-**Codebase Health:** 11,800+ tests passing (50 new this session across ONC-1/2/4 + useOrderingProvider hook), 0 lint warnings, 0 typecheck errors project-wide (full tsc, ran twice on this session per the new feedback memory about canonical type additions), 0 `console.log` in production. CI gates active: file-size, VITE_*-secret pattern, shadow-import TDZ, governance-boundary, secret-scan, pre-commit (17 AI-fingerprint rules — caught the cross-tenant UPDATE policy hole on ONC-2 this session, that's the second real defect the gate has saved). `npx supabase db push --dry-run` reports "Remote database is up to date" (4 migrations applied this session via Supabase MCP).
+**Codebase Health:** 11,830+ tests passing (50 prior + 18 ImagingOrderForm + 16 ImplantableDevicesPanel/AddDeviceForm this end-of-day session), 0 lint warnings, 0 typecheck errors project-wide (scoped script reports 0 in 19 changed files / 0 project-wide), 0 `console.log` in production. CI gates active: file-size, VITE_*-secret pattern, shadow-import TDZ, governance-boundary, secret-scan, pre-commit (17 AI-fingerprint rules). 5 migrations applied via Supabase MCP this day (lab + lab-RLS-fix + 3 prior + create_fhir_devices for ONC-5). Largest new file: AddDeviceForm.tsx at 493 lines (under the 600-line god-file cap).
 
 ---
 
@@ -14,13 +14,13 @@
 
 > **🚨 Read CLAUDE.md Commandment #21 first.** "DONE MEANS DONE" is the second-highest-value rule in this codebase as of 2026-05-28. The scoped workflow MUST work end-to-end for a real user — compiles + tests pass + persists + reachable + audited — before calling a task done. Filing a defect as a "follow-up" = not done. The new rule is enforced because ONC-1 and ONC-2 were initially declared "done" while neither could submit (RLS rejected the payload) and neither had nav links. Maria caught it. Don't re-do that mistake.
 
-### ONC Certification — Tier 1 Session 1 — 3 of 5 actually DONE
+### ONC Certification — Tier 1 Session 1 — 5 of 5 DONE ✅ Tier 1 complete
 
 - **ONC-4** (a)(5) Race & Ethnicity — DONE end-to-end. Form persists, reachable via existing demographics flow. `bff477f6`.
-- **ONC-1** (a)(1) Medication CPOE — DONE end-to-end (after defect-fix commit). Persists with `tenant_id` + `requester_*` populated, reachable via PatientChartNavigator → "Place a new order" cards. `71be44c4` (initial) + defect-fix commit.
-- **ONC-2** (a)(2) Lab CPOE — DONE end-to-end (after defect-fix commit). Same as ONC-1. `40cfec3f` (initial) + defect-fix commit.
-- **ONC-3** (a)(3) Imaging CPOE — TODO. Should be fast (~3h) — `fhir_service_requests` table + `ServiceRequestService` + `useOrderingProvider` are all in place. Form mirrors `LabOrderForm` with category=`['imaging']`, swaps specimen fields for body_site + laterality + contrast_required (the columns already exist on the table).
-- **ONC-5** (a)(14) Implantable Device List — TODO. ~6h. New FHIR Device + DeviceUseStatement service + UI. No existing schema in live DB — `find_tables: fhir_devices` returned empty when checked.
+- **ONC-1** (a)(1) Medication CPOE — DONE end-to-end. `71be44c4` + defect-fix `a25e0c71`.
+- **ONC-2** (a)(2) Lab CPOE — DONE end-to-end. `40cfec3f` + defect-fix `a25e0c71`.
+- **ONC-3** (a)(3) Imaging CPOE — DONE end-to-end (this session). Form persists FHIR ServiceRequest with `category=['imaging']`, body_site (SNOMED), laterality, contrast_required. Reachable via PatientChartNavigator → 3rd "New imaging order" card. 18 behavioral tests. Live-DB round-trip verified (Chest/left/contrast all persisted with tenant_id + requester identity).
+- **ONC-5** (a)(14) Implantable Device List — DONE end-to-end (this session). New `fhir_devices` + `fhir_device_use_statements` migration applied via Supabase MCP. DeviceService + DeviceUseStatementService. Decomposed UI: ImplantableDevicesPanel (orchestrator) + AddDeviceForm + DeviceListView + types. New "Patient records" section on PatientChartNavigator routes to `/admin/devices/:patientId`. 16 behavioral tests (12 form + 4 panel). Live-DB round-trip verified (Device with full UDI + DUS with implant context, CASCADE delete confirmed).
 
 ### Session A of the API-3 plan COMPLETE — earlier in the same session
 
@@ -37,13 +37,15 @@ AI-1-SWEEP and CR-2-SISTER-1..4 also closed (commits `721640fb` + `f6b48729`, bo
 
 **Recommended first action of next session — pick one:**
 
-1. **API-3 Session B (Maria's scope decisions needed first)** — API-3h–l: scopes JSONB column + expires_at + scope-aware validation + generate-api-key RPC + UI scope/expiration selectors. ~5h once unblocked. Open questions in the tracker:
+1. **ONC Tier 2 (Session 2)** — now unblocked: ONC-6 wire CDS (guideline matcher + contraindication detector) into CPOE as blocking alerts, ONC-7 activate `formulary_cache` in medication ordering, ONC-8 structured family health history (FHIR `FamilyMemberHistory`), ONC-9 break-the-glass emergency access, ONC-10 SHA-256 integrity hashes on exports. ~19h. **Highest leverage** — Tier 1 done means Drummond Group has the core CPOE story; Tier 2 adds the CDS/safety surfaces.
+
+2. **API-3 Session B (Maria's scope decisions needed first)** — API-3h–l: scopes JSONB column + expires_at + scope-aware validation + generate-api-key RPC + UI scope/expiration selectors. ~5h once unblocked. Open questions in the tracker:
    - **Scope vocabulary** — probable starter: `fhir.read.own_patients`, `webhook.subscribe`, `referral.write`. Confirm against actual partner use case.
    - **Expiration default** — 90 days or 1 year from `created_at`?
 
-2. **Sweep the remaining `?target=deno` SDK drift** — AI-1-SWEEP's commit message notes 103 other edge functions still import `https://esm.sh/@supabase/supabase-js@2` without `?target=deno`, resolving to a different version than the canonical one (per supabase.md §10). No security implication; hygiene only. ~1–2h.
+3. **Sweep the remaining `?target=deno` SDK drift** — AI-1-SWEEP's commit message notes 103 other edge functions still import `https://esm.sh/@supabase/supabase-js@2` without `?target=deno`, resolving to a different version than the canonical one (per supabase.md §10). No security implication; hygiene only. ~1–2h.
 
-3. **Pivot to a fresh tracker:** Guardian Agent Session 2 (GRD-6/7/8/9, ~10h), MCP-3 adversarial testing (~8h), or ONC Session 1 (~32h). ONC Session 1 is the highest-leverage 32h on the board — directly unblocks Drummond Group conversation.
+4. **Pivot to a fresh tracker:** Guardian Agent Session 2 (GRD-6/7/8/9, ~10h), MCP-3 adversarial testing (~8h), Nephrology pilot Phase 1 sessions (~6 sessions to MVP).
 
 **Important context for next session:**
 - Origin/main is fully synced as of 2026-05-28 (no unpushed local commits as of this write)
@@ -133,11 +135,11 @@ SELECT qual FROM pg_policies WHERE tablename = 'provider_burnout_assessments' AN
 
 ---
 
-## CURRENT PRIORITY — ONC 170.315 Certification Gap Closure (3/13)
+## CURRENT PRIORITY — ONC 170.315 Certification Gap Closure (5/13)
 
 **Tracker:** `docs/trackers/onc-certification-tracker.md`
-**Status:** **3/13 ACTUALLY DONE end-to-end** (ONC-4, ONC-1, ONC-2 — see definition of "done" per CLAUDE.md Commandment #21). Tier 1 Session 1 progress: 3 of 5 done.
-**Estimated total:** ~57 hours across 3-4 sessions (~46h remaining)
+**Status:** **5/13 ACTUALLY DONE end-to-end** (ONC-1, ONC-2, ONC-3, ONC-4, ONC-5 — see definition of "done" per CLAUDE.md Commandment #21). **Tier 1 Session 1 COMPLETE — all 5 items done.**
+**Estimated total:** ~57 hours across 3-4 sessions (~28h remaining — Tier 2 + Tier 3)
 **ACB:** Drummond Group (Austin) recommended — $70-130K budget
 
 ### What's Already Certified-Ready (27+ criteria)
@@ -147,17 +149,17 @@ All (b)(1-2), (b)(6-7), (b)(10), (c)(1-3), (d)(1-5), (d)(9), (d)(12-13), (e)(1-3
 
 | Session | Focus | Items | Hours | Status |
 |---------|-------|-------|-------|--------|
-| **1** | CPOE forms (meds, lab, imaging) + demographics (race/ethnicity) + implantable device list | ONC-1 through ONC-5 | ~32 | **3 of 5 DONE** |
-| **2** | CDS integration into CPOE + formulary activation + family health history + break-the-glass + data integrity | ONC-6 through ONC-10 | ~19 | PENDING |
+| **1** | CPOE forms (meds, lab, imaging) + demographics (race/ethnicity) + implantable device list | ONC-1 through ONC-5 | ~32 | **5 of 5 DONE ✅** |
+| **2** | CDS integration into CPOE + formulary activation + family health history + break-the-glass + data integrity | ONC-6 through ONC-10 | ~19 | NEXT |
 | **3** | WCAG AA accessibility audit + Surescripts prep + ONC compliance matrix document | ONC-11 through ONC-13 | ~10 | PENDING |
 
-### Tier 1 Blockers (Session 1) — actual end-to-end status
+### Tier 1 Blockers (Session 1) — actual end-to-end status — COMPLETE
 
-- ✅ **ONC-4** (a)(5) Race & Ethnicity — DONE. Migration `20260528094350` applied. OMB 1997 multi-race + Hispanic/Latino ethnicity captured via `BasicDemographicsStep.tsx`. Persists to `profiles.race_omb_categories` + `profiles.ethnicity_omb`. Reachable via existing `/demographics` flow. Audit-logged via existing path. 29 tests behavioral, all green. Commit `bff477f6`.
-- ✅ **ONC-1** (a)(1) Medication CPOE — DONE end-to-end (after defect-fix commit). Persists to `fhir_medication_requests` with `tenant_id` + `requester_id` + `requester_display` + `requester_practitioner_id` populated via `useOrderingProvider` hook. Reachable from `PatientChartNavigator` overview → "New medication order" card. Server-side allergy check via `MedicationRequestService.create` blocks unsafe orders. Audit-logged on every read/write. Commits `71be44c4` + defect-fix (this commit).
-- ✅ **ONC-2** (a)(2) Lab CPOE — DONE end-to-end (after defect-fix commit). Persists to `fhir_service_requests` with `category=['laboratory']`. Same `useOrderingProvider` integration. Reachable from `PatientChartNavigator` → "New lab order" card. Migration `20260528102906` + RLS fix `20260528104213` (cross-tenant UPDATE hole caught by pre-commit rule #16). Commits `40cfec3f` + defect-fix.
-- ⬜ **ONC-3** (a)(3) Imaging CPOE — TODO. ~3h estimated. `fhir_service_requests` table has the imaging columns already (`body_site`, `body_site_laterality`, `contrast_required`). `ServiceRequestService` reusable. Just need an `ImagingOrderForm` with category=`['imaging']` and an `/admin/cpoe/imaging/:patientId` route + a 3rd card on PatientChartNavigator.
-- ⬜ **ONC-5** (a)(14) Implantable Device List — TODO. ~6h estimated. **Verified live DB: no `fhir_devices` or `fhir_device_use_statements` tables exist.** Need migration + FHIR Device + DeviceUseStatement services + list/edit UI.
+- ✅ **ONC-4** (a)(5) Race & Ethnicity — DONE. Migration `20260528094350` applied. OMB 1997 multi-race + Hispanic/Latino ethnicity captured via `BasicDemographicsStep.tsx`. Persists to `profiles.race_omb_categories` + `profiles.ethnicity_omb`. Reachable via existing `/demographics` flow. Audit-logged. 29 tests behavioral, all green. Commit `bff477f6`.
+- ✅ **ONC-1** (a)(1) Medication CPOE — DONE end-to-end. Persists to `fhir_medication_requests` with `tenant_id` + `requester_*` populated via `useOrderingProvider`. Reachable from `PatientChartNavigator` → "New medication order" card. Server-side allergy check. Commits `71be44c4` + `a25e0c71`.
+- ✅ **ONC-2** (a)(2) Lab CPOE — DONE end-to-end. Persists to `fhir_service_requests` with `category=['laboratory']`. Same `useOrderingProvider`. Reachable from `PatientChartNavigator` → "New lab order" card. Migration `20260528102906` + RLS fix `20260528104213`. Commits `40cfec3f` + `a25e0c71`.
+- ✅ **ONC-3** (a)(3) Imaging CPOE — DONE end-to-end (this session). Persists to `fhir_service_requests` with `category=['imaging']`. Modality (DICOM), body site (SNOMED), laterality, contrast. `ImagingOrderForm` mirrors lab form pattern. Route `/admin/cpoe/imaging/:patientId`. 3rd card on PatientChartNavigator. 18 behavioral tests. Live-DB round-trip verified.
+- ✅ **ONC-5** (a)(14) Implantable Device List — DONE end-to-end (this session). Migration `20260528120000_create_fhir_devices.sql` applied via Supabase MCP. New tables `fhir_devices` + `fhir_device_use_statements` with RLS (INSERT WITH CHECK tenant_id, UPDATE both USING + WITH CHECK). `DeviceService` + `DeviceUseStatementService`. Decomposed UI: `ImplantableDevicesPanel` (orchestrator) + `AddDeviceForm` + `DeviceListView`. Route `/admin/devices/:patientId`. New "Patient records" section on PatientChartNavigator. 16 behavioral tests. Live-DB round-trip verified (Device + DUS pair with CASCADE delete).
 
 ### Tier 2 (Session 2)
 - **ONC-6:** (a)(9) Wire CDS (guideline matcher + contraindication detector) into CPOE as blocking alerts

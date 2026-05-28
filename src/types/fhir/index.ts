@@ -12,4 +12,5 @@ export * from './providers';
 export * from './documents';
 export * from './medications';
 export * from './orders';
+export * from './devices';
 export * from './advanced';

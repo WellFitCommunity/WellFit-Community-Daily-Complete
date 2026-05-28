@@ -496,6 +496,22 @@ export const clinicalRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'physician', 'doctor', 'nurse_practitioner', 'physician_assistant'],
     category: 'clinical',
   },
+  // ONC 170.315(a)(3) — CPOE Imaging Order Entry
+  {
+    path: '/admin/cpoe/imaging/:patientId',
+    component: 'ImagingOrderPage',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'doctor', 'nurse_practitioner', 'physician_assistant'],
+    category: 'clinical',
+  },
+  // ONC 170.315(a)(14) — Implantable Device List
+  {
+    path: '/admin/devices/:patientId',
+    component: 'ImplantableDevicesPage',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'doctor', 'nurse', 'nurse_practitioner', 'physician_assistant'],
+    category: 'clinical',
+  },
   // Compass Riley (AI Scribe)
   {
     path: '/compass-riley',
