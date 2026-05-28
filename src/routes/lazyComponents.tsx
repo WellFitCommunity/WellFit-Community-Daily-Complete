@@ -96,6 +96,9 @@ export const TemplateMaker = React.lazy(() =>
   import('../components/admin/TemplateMaker').then(m => ({ default: m.TemplateMaker }))
 );
 
+// ONC 170.315(a)(1)–(3) — CPOE order entry forms
+export const MedicationOrderPage = React.lazy(() => import('../pages/admin/MedicationOrderPage'));
+
 // Billing & Finance
 export const BillingSuiteDashboard = React.lazy(() =>
   import('../components/billing/BillingSuiteDashboard').then(m => ({ default: m.BillingSuiteDashboard }))
@@ -391,6 +394,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   PhotoApprovalPage,
   ApiKeyManager,
   ReportsPrintPage,
+  MedicationOrderPage,
   BillingSuiteDashboard,
   SecurityComplianceDashboard,
   CareOperationsDashboard,

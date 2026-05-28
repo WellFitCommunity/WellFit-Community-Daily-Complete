@@ -28,6 +28,8 @@ export async function fetchDemographics(
         gender,
         phone,
         preferred_language,
+        race_omb_categories,
+        ethnicity_omb,
         enrollment_type,
         tenant_id,
         mrn
@@ -59,6 +61,8 @@ export async function fetchDemographics(
       gender: row.gender,
       phone: row.phone,
       preferred_language: row.preferred_language,
+      race_omb_categories: row.race_omb_categories ?? null,
+      ethnicity_omb: row.ethnicity_omb ?? null,
       enrollment_type: row.enrollment_type,
       tenant_id: row.tenant_id,
       mrn: row.mrn,

@@ -23,6 +23,10 @@ export interface ProfileRow {
   gender: string | null;
   phone: string | null;
   preferred_language: string | null;
+  /** ONC 170.315(a)(5) — USCDI v3 race (OMB 1997 multi-value) */
+  race_omb_categories: string[] | null;
+  /** ONC 170.315(a)(5) — USCDI v3 ethnicity (OMB 1997 single-value) */
+  ethnicity_omb: string | null;
   enrollment_type: 'app' | 'hospital' | null;
   tenant_id: string | null;
   mrn: string | null;

@@ -480,6 +480,14 @@ export const clinicalRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'nurse', 'physician', 'doctor', 'pharmacist', 'nurse_practitioner'],
     category: 'clinical',
   },
+  // ONC 170.315(a)(1) — CPOE Medication Order Entry
+  {
+    path: '/admin/cpoe/medication/:patientId',
+    component: 'MedicationOrderPage',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'doctor', 'nurse_practitioner', 'physician_assistant'],
+    category: 'clinical',
+  },
   // Compass Riley (AI Scribe)
   {
     path: '/compass-riley',
