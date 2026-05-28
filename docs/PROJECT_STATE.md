@@ -431,10 +431,12 @@ The right long-term fix is to automate items 1-9 as a Sunday-night GitHub Action
 
 ## Codebase Health Snapshot
 
+> **This table is the single source of truth for codebase-health counts.** CLAUDE.md and other docs link here rather than restating numbers — update them in one place only. Counts are the last *recorded* values (from the dated session), not a fresh full-suite run.
+
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Tests | 10,951 passed, 0 failed | 2026-03-04 |
-| Test Suites | 541 | 2026-03-04 |
+| Tests | 11,880+ passed, 0 failed | 2026-05-28 |
+| Test Suites | 571+ | 2026-05-28 |
 | Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-03-04 |
 | Lint | 0 errors, 0 warnings | 2026-03-04 |
 | God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) — MCP servers all under 600 | 2026-02-27 |

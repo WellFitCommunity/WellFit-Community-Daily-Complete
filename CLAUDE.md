@@ -330,8 +330,8 @@ The following detailed standards are auto-loaded from `.claude/rules/`. Each is 
 ### Test Baseline
 | Metric | Current |
 |--------|---------|
-| Total Tests | 11,554+ (all behavioral — quality audit complete) |
-| Test Suites | 571+ |
+| Total Tests | See `docs/PROJECT_STATE.md` → Codebase Health Snapshot (single source of truth) |
+| Test Suites | See `docs/PROJECT_STATE.md` → Codebase Health Snapshot |
 | Pass Rate Required | 100% |
 
 ### Test Quality Standard - THE DELETION TEST
@@ -590,4 +590,4 @@ VITE_FEATURE_NEURO_SUITE=true
 - **UI**: Envision Atlus design system migration in progress
 - **Build**: Vite + React 19 (migrated December 2025)
 - **CSS**: Tailwind CSS 4.1.18 (migrated December 2025)
-- **Tests**: 11,554+ tests across 571+ suites (100% pass rate, 0 skipped)
+- **Tests**: 100% pass rate, 0 skipped — current counts in `docs/PROJECT_STATE.md` → Codebase Health Snapshot (single source of truth)
