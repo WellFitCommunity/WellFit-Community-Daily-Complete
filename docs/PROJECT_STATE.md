@@ -303,8 +303,8 @@ See tracker for the 6 questions to bring to the clinic stakeholder conversation.
 **Session 2 (IN PROGRESS — 2026-05-29):**
 - ✅ **GRD-6:** DONE + live-proven + visually accepted. Eyes recordings now link to tickets via `security_alert_id` (`create_guardian_review_ticket` writes a correlated recording; migration `20260529160000`). New `getAlertRecordings` + `GuardianEyesRecordingViewer`. **🚨 Found + fixed a CRITICAL pre-existing bug: the RPC that creates every Guardian ticket was dead at the DB layer** (`alert_type='guardian_approval_required'` violated a CHECK constraint → 0 tickets ever created). Fixed by migration `20260529170000`. The whole approval workflow is now functional.
 - ✅ **GRD-7:** DONE (verified) — `guardian_flow_config` already exists live (migration `20251211230000`); engine reads it + falls back gracefully. April tracker was stale. Nothing to build.
-- 🔨 **GRD-8:** Maria chose MANUAL path (no GitHub credential) + REMOVE the dead `gh`-CLI auto-PR code. Scope: fix misleading "Auto-Apply" labels + delete `guardian-pr-service`/`GitService`/`approveAndCreatePR`. In progress.
-- ⬜ **GRD-9:** Full end-to-end integration test (~4h) — last item.
+- ✅ **GRD-8:** DONE (manual path). Deleted the dead `gh`-CLI auto-PR code (`guardian-pr-service` edge fn + `GitService` + `approveAndCreatePR` — never runnable server-side, 0 callers). Fixed misleading "Auto-Apply" labels to match reality (Guardian surfaces the healing plan; Maria creates the PR herself). Scoped typecheck 0, lint 0, 61 guardian tests green.
+- ⬜ **GRD-9:** Full end-to-end integration test (~4h) — LAST Guardian item. Next session.
 
 **What works now:** Cron fires every minute, email+SMS+Slack+internal all deliver, tickets auto-create for non-performance auto-heal proposals, browser Guardian runs in dev/staging/prod, scan returns real security findings.
 **What still doesn't:** Eyes→approval link (GRD-6), multi-facility ED crowding config (GRD-7), PR service wiring (GRD-8 decision).

@@ -313,7 +313,7 @@ describe('GuardianApprovalForm', () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByText(/approve & auto-apply/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^approve$/i })).toBeInTheDocument();
       });
       // Reject button is rendered
       expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
@@ -325,7 +325,7 @@ describe('GuardianApprovalForm', () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByText(/approve & auto-apply/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^approve$/i })).toBeInTheDocument();
       });
 
       // Fill in notes but not checkboxes
@@ -333,7 +333,7 @@ describe('GuardianApprovalForm', () => {
       await userEvent.type(notesTextarea, 'Looks good');
 
       // Try to approve
-      await userEvent.click(screen.getByText(/approve & auto-apply/i));
+      await userEvent.click(screen.getByRole('button', { name: /^approve$/i }));
 
       await waitFor(() => {
         expect(screen.getByText(/you must check all review checkboxes to approve/i)).toBeInTheDocument();

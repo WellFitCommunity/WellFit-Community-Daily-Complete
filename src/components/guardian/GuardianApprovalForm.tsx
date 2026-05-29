@@ -119,7 +119,7 @@ export const GuardianApprovalForm: React.FC = () => {
         message: 'Ticket approved via form',
         ticket_id: ticketId,
       });
-      navigate('/guardian/approvals', { state: { message: 'Ticket approved. Fix will be auto-applied.' } });
+      navigate('/guardian/approvals', { state: { message: 'Ticket approved. Create the pull request from the proposed fix.' } });
     } else {
       setError(result.error?.message || 'Failed to approve ticket');
     }
@@ -146,7 +146,7 @@ export const GuardianApprovalForm: React.FC = () => {
         message: 'Ticket rejected via form',
         ticket_id: ticketId,
       });
-      navigate('/guardian/approvals', { state: { message: 'Ticket rejected. Fix will not be applied.' } });
+      navigate('/guardian/approvals', { state: { message: 'Ticket rejected. No change will be made.' } });
     } else {
       setError(result.error?.message || 'Failed to reject ticket');
     }
@@ -500,7 +500,7 @@ export const GuardianApprovalForm: React.FC = () => {
                         disabled={submitting}
                         className="flex-1"
                       >
-                        {submitting ? 'Processing...' : 'Approve & Auto-Apply'}
+                        {submitting ? 'Processing...' : 'Approve'}
                       </EAButton>
                       <EAButton
                         variant="secondary"
