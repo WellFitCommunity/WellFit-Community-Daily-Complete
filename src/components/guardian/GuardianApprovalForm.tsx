@@ -19,6 +19,7 @@ import { useSupabaseClient } from '../../contexts/AuthContext';
 import { getGuardianApprovalService } from '../../services/guardianApprovalService';
 import {
   GuardianReviewTicket,
+  GuardianEyesRecording,
   ApprovalFormData,
   TICKET_STATUS_CONFIG,
   HEALING_STRATEGY_CONFIG,
@@ -26,6 +27,7 @@ import {
 import { EACard, EACardHeader, EACardContent } from '../envision-atlus/EACard';
 import { EAButton } from '../envision-atlus/EAButton';
 import { EABadge } from '../envision-atlus/EABadge';
+import { GuardianEyesRecordingViewer } from './GuardianEyesRecordingViewer';
 import { auditLogger } from '../../services/auditLogger';
 
 // ============================================================================
@@ -43,6 +45,10 @@ export const GuardianApprovalForm: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Guardian Eyes recording (GRD-6) — linked to the ticket via session id.
+  const [recordings, setRecordings] = useState<GuardianEyesRecording[]>([]);
+  const [recordingsLoading, setRecordingsLoading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<ApprovalFormData>({
@@ -65,6 +71,19 @@ export const GuardianApprovalForm: React.FC = () => {
         // Mark as in_review when opened
         if (result.data.status === 'pending') {
           await service.markInReview(ticketId);
+        }
+
+        // Load the Guardian Eyes recording correlated to this ticket's alert
+        // (GRD-6). Failures are non-fatal — the reviewer can still act on the
+        // ticket without the recording.
+        const alertId = result.data.security_alert_id;
+        if (alertId) {
+          setRecordingsLoading(true);
+          const recResult = await service.getAlertRecordings(alertId);
+          if (recResult.success) {
+            setRecordings(recResult.data);
+          }
+          setRecordingsLoading(false);
         }
       } else {
         setError(result.error?.message || 'Failed to load ticket');
@@ -264,6 +283,9 @@ export const GuardianApprovalForm: React.FC = () => {
                 </div>
               </EACardContent>
             </EACard>
+
+            {/* Guardian Eyes Recording (GRD-6) */}
+            <GuardianEyesRecordingViewer recordings={recordings} loading={recordingsLoading} />
 
             {/* Sandbox Test Results */}
             {ticket.sandbox_tested && (

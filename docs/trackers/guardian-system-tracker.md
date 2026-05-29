@@ -2,9 +2,11 @@
 
 > **Priority:** HIGH — System is 70% complete but critical orchestration gaps prevent it from functioning as designed
 > **Created:** 2026-04-20
-> **Current Status:** 5/9 items complete (GRD-1 through GRD-5 shipped 2026-04-21)
+> **Current Status:** 7/9 items complete (GRD-1–5 shipped 2026-04-21; GRD-6 + GRD-7 closed 2026-05-29). GRD-8 in progress (manual path), GRD-9 pending.
 > **Estimated total:** ~24 hours across 2 sessions
-> **Honest Assessment:** Session 1 complete — cron wired, tickets wired, dev/staging monitored, scan returns real data, E2E test guards regressions.
+> **Honest Assessment:** Session 1 complete. Session 2 (2026-05-29): GRD-6 built properly + live-proven; GRD-7 verified already done. **CRITICAL pre-existing bug found + fixed during GRD-6 live proof — see note below.**
+
+> **🚨 CRITICAL FIX (2026-05-29):** `create_guardian_review_ticket()` — the RPC that creates EVERY Guardian review ticket — always raised a CHECK violation because it inserted `security_alerts.alert_type='guardian_approval_required'`, a value the `security_alerts_alert_type_check` constraint never allowed. **No review ticket could ever be created in production** (guardian_review_tickets had 0 rows, consistent with this). The entire approval workflow was dead at the DB layer. Fixed by migration `20260529170000` (widened the constraint allowlist). Discovered only because GRD-6's live proof drove the real RPC instead of a mock.
 
 ---
 
@@ -207,6 +209,8 @@ agent.start();
 
 **Estimated:** ~3 hours
 
+**✅ DONE (2026-05-29) — built properly + live-proven.** Linkage is `ticket.security_alert_id → guardian_eyes_recordings.security_alert_id` (NOT session_id; the tracker's assumed `session_recording_id`/`url` columns on security_alerts never existed). `create_guardian_review_ticket()` now atomically writes a correlated "detection snapshot" recording stamped with the alert id (migration `20260529160000`). New `getAlertRecordings(security_alert_id)` service method + `GuardianEyesRecordingViewer` (event timeline) wired into `GuardianApprovalForm`. Live proof: drove the real RPC as super_admin → ticket c19e2eff → alert 58250393 → recording 4b56ddb7 linked; fetch-by-alert returned it. Visually accepted by Maria 2026-05-29. **No mock tests — verified via live DB round-trip + visual acceptance (Maria's directive).**
+
 ---
 
 ### GRD-7: Create guardian_flow_config Migration (MEDIUM)
@@ -216,6 +220,8 @@ agent.start();
 **Fix:** Create the migration with the schema the service expects.
 
 **Estimated:** ~2 hours (migration + seed default config per existing tenants)
+
+**✅ DONE (verified 2026-05-29) — the April tracker was stale.** `guardian_flow_config` ALREADY EXISTS in the live DB (migration `20251211230000_guardian_flow_and_avs.sql`) with the exact columns `guardianFlowEngine.getConfig()` reads (yellow/orange/red_threshold, boarding_hours_threshold, auto_surge_enabled, default_diversion_policy, historical_window_hours, facility_id, is_active). The engine falls back to DEFAULT_CONFIG gracefully when no rows match. No seeding needed — per-tenant custom thresholds are a future admin-UI feature, not a Session 2 blocker. Nothing to build.
 
 ---
 
@@ -229,6 +235,8 @@ agent.start();
 - **Option C:** Keep as-is, document as "future feature." No code change.
 
 **Estimated:** 0h (decision) or 8h (Option A)
+
+**DECISION (Maria 2026-05-29): MANUAL path + REMOVE the dead code.** The auto-PR path was never runnable — it shells out to the `gh` CLI via `GitService.checkGitHubCLI()`, but the Guardian PR path executes in a Supabase edge function / browser where no shell or `gh` exists. Rather than wire a server-side GitHub App/PAT credential, Maria chose: Guardian surfaces the proposed fix (healing plan) in the approval form, and she creates the PR herself from the GitHub mobile app / web. **Manual GRD-8 scope:** (1) fix the misleading "Approve & Auto-Apply" button + "Fix will be auto-applied" toast (nothing auto-applies — `approve_guardian_ticket` only marks the ticket approved); (2) DELETE the dead `gh`-CLI auto-PR code (`guardian-pr-service` edge fn + `GitService` + `GuardianAlertService.approveAndCreatePR`). There is no stored code diff — the "fix" is a structured healing plan the form already displays. **Status: in progress 2026-05-29.**
 
 ---
 

@@ -63,6 +63,27 @@ export interface DetectionContext {
   recentActions?: string[];
 }
 
+/**
+ * A single Guardian Eyes recording event (row of guardian_eyes_recordings).
+ * Recordings are event snapshots — not video — captured by the browser-side
+ * AISystemRecorder and linked to a review ticket via detection_context.sessionId.
+ */
+export interface GuardianEyesRecording {
+  id: string;
+  timestamp: string;
+  type: string;
+  component: string | null;
+  action: string | null;
+  severity: string | null;
+  metadata: Record<string, unknown> | null;
+  state_before: Record<string, unknown> | null;
+  state_after: Record<string, unknown> | null;
+  /** jsonb column — usually a string, but defensively typed as unknown. */
+  ai_analysis: unknown;
+  security_alert_id: string | null;
+  recorded_at: string;
+}
+
 export interface ApplicationResult {
   success: boolean;
   steps_completed: number;

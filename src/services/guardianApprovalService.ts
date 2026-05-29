@@ -24,6 +24,7 @@ import {
   RejectionFormData,
   ApprovalResult,
   CreateTicketParams,
+  GuardianEyesRecording,
 } from '../types/guardianApproval';
 import type { TicketStatus as _TicketStatus } from '../types/guardianApproval';
 
@@ -144,6 +145,42 @@ export class GuardianApprovalService {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       auditLogger.error('GUARDIAN_GET_TICKET_EXCEPTION', message, { ticketId });
+      return failure('UNKNOWN_ERROR', message, err);
+    }
+  }
+
+  /**
+   * Fetch the Guardian Eyes recordings correlated to a review ticket, ordered
+   * chronologically. The deterministic link is security_alert_id: every ticket
+   * is created (by create_guardian_review_ticket) alongside a security_alerts
+   * row, and the detection-snapshot recording is stamped with that same
+   * security_alert_id (GRD-6). RLS on guardian_eyes_recordings restricts reads
+   * to admin / super_admin / security_admin roles.
+   *
+   * Returns an empty list when the ticket has no linked alert.
+   */
+  async getAlertRecordings(securityAlertId: string | null | undefined): Promise<ServiceResult<GuardianEyesRecording[]>> {
+    try {
+      if (!securityAlertId) {
+        return success([]);
+      }
+
+      const { data, error } = await this.supabase
+        .from('guardian_eyes_recordings')
+        .select('id, timestamp, type, component, action, severity, metadata, state_before, state_after, ai_analysis, security_alert_id, recorded_at')
+        .eq('security_alert_id', securityAlertId)
+        .order('timestamp', { ascending: true })
+        .limit(200);
+
+      if (error) {
+        auditLogger.error('GUARDIAN_GET_RECORDINGS_ERROR', error.message, { securityAlertId });
+        return failure('DATABASE_ERROR', error.message, error);
+      }
+
+      return success((data || []) as GuardianEyesRecording[]);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('GUARDIAN_GET_RECORDINGS_EXCEPTION', message, { securityAlertId });
       return failure('UNKNOWN_ERROR', message, err);
     }
   }
