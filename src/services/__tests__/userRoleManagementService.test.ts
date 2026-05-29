@@ -1,34 +1,32 @@
 /**
- * userRoleManagementService.assignRole — role_id synchronization
+ * userRoleManagementService.assignRole — admin_assign_role RPC wiring
  *
- * Regression guard for the pre-go-live role-reconciliation fix (2026-05-28):
- * assignRole must resolve role_id from the canonical `roles` table and write
- * it to profiles.role_id (the column the database RLS policies enforce on).
- * Previously it updated only role + role_code, leaving role_id stale, so a
- * role change silently failed to change the user's RLS-enforced access.
+ * Regression guard for the pre-go-live role-assignment fix (2026-05-29):
+ * assignRole must delegate to the admin_assign_role SECURITY DEFINER RPC, NOT
+ * do a direct profiles UPDATE. The profiles UPDATE RLS policy is own-row only
+ * (user_id = auth.uid()), so an admin updating ANOTHER user's row silently
+ * affects zero rows — the role change appeared to succeed but did nothing.
+ * The RPC is the authoritative admin write path (resolves role_id, enforces
+ * authority/tenant/no-self-assign server-side, syncs user_roles via trigger).
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   state: {
-    rolesLookup: { data: { id: 99 } as { id: number } | null, error: null as null | { message: string } },
-    capturedProfileUpdate: null as Record<string, unknown> | null,
-    capturedUserRolesUpsert: null as Record<string, unknown> | null,
+    rpcResult: { error: null as null | { message: string; code?: string } },
+    capturedRpc: null as { name: string; params: Record<string, unknown> } | null,
     profilesSelectCall: 0,
   },
 }));
 
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
+    rpc: (name: string, params: Record<string, unknown>) => {
+      h.state.capturedRpc = { name, params };
+      return Promise.resolve(h.state.rpcResult);
+    },
     from: (table: string) => {
-      if (table === 'roles') {
-        return {
-          select: () => ({
-            eq: () => ({ maybeSingle: () => Promise.resolve(h.state.rolesLookup) }),
-          }),
-        };
-      }
       if (table === 'profiles') {
         return {
           select: () => ({
@@ -36,11 +34,13 @@ vi.mock('../../lib/supabaseClient', () => ({
               maybeSingle: () => {
                 h.state.profilesSelectCall++;
                 if (h.state.profilesSelectCall === 1) {
+                  // current role (for audit trail)
                   return Promise.resolve({
                     data: { role: 'nurse', role_code: 3, first_name: 'Test', last_name: 'User' },
                     error: null,
                   });
                 }
+                // re-fetch after assignment
                 return Promise.resolve({
                   data: {
                     user_id: 'u1', first_name: 'Test', last_name: 'User', email: 't@example.com',
@@ -52,18 +52,6 @@ vi.mock('../../lib/supabaseClient', () => ({
               },
             }),
           }),
-          update: (payload: Record<string, unknown>) => {
-            h.state.capturedProfileUpdate = payload;
-            return { eq: () => Promise.resolve({ error: null }) };
-          },
-        };
-      }
-      if (table === 'user_roles') {
-        return {
-          upsert: (payload: Record<string, unknown>) => {
-            h.state.capturedUserRolesUpsert = payload;
-            return Promise.resolve({ error: null });
-          },
         };
       }
       return {};
@@ -78,14 +66,13 @@ vi.mock('../auditLogger', () => ({
 import { userRoleManagementService } from '../userRoleManagementService';
 
 beforeEach(() => {
-  h.state.rolesLookup = { data: { id: 99 }, error: null };
-  h.state.capturedProfileUpdate = null;
-  h.state.capturedUserRolesUpsert = null;
+  h.state.rpcResult = { error: null };
+  h.state.capturedRpc = null;
   h.state.profilesSelectCall = 0;
 });
 
-describe('userRoleManagementService.assignRole — role_id sync', () => {
-  it('writes role_id resolved from the roles table into the profiles update (the RLS-enforced column)', async () => {
+describe('userRoleManagementService.assignRole — admin_assign_role RPC wiring', () => {
+  it('delegates to the admin_assign_role RPC with the target user, role name, and role code', async () => {
     const result = await userRoleManagementService.assignRole(
       { user_id: 'u1', new_role: 'department_head', reason: 'promotion' },
       'super_admin',
@@ -93,16 +80,16 @@ describe('userRoleManagementService.assignRole — role_id sync', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(h.state.capturedProfileUpdate).not.toBeNull();
-    // The fix: role_id (not just role/role_code) is written, resolved from roles.id
-    expect(h.state.capturedProfileUpdate?.role_id).toBe(99);
-    expect(h.state.capturedProfileUpdate?.role).toBe('department_head');
-    // user_roles is kept in sync with the same role_id
-    expect(h.state.capturedUserRolesUpsert?.role_id).toBe(99);
+    // The fix: assignment goes through the RPC, not a (silently no-op) direct UPDATE.
+    expect(h.state.capturedRpc?.name).toBe('admin_assign_role');
+    expect(h.state.capturedRpc?.params.p_target_user_id).toBe('u1');
+    expect(h.state.capturedRpc?.params.p_role_name).toBe('department_head');
+    // role_code is resolved from ROLE_TO_CODE and passed through.
+    expect(h.state.capturedRpc?.params).toHaveProperty('p_role_code');
   });
 
-  it('refuses to assign (and writes nothing) when the role has no row in the roles table', async () => {
-    h.state.rolesLookup = { data: null, error: null };
+  it('returns a mapped failure (not success) when the RPC rejects the assignment', async () => {
+    h.state.rpcResult = { error: { message: 'CROSS_TENANT_DENIED: cannot assign roles outside your tenant' } };
 
     const result = await userRoleManagementService.assignRole(
       { user_id: 'u1', new_role: 'department_head', reason: 'promotion' },
@@ -111,7 +98,32 @@ describe('userRoleManagementService.assignRole — role_id sync', () => {
     );
 
     expect(result.success).toBe(false);
-    // Critical: we must NOT write a stale/garbage role_id — the profile update never runs
-    expect(h.state.capturedProfileUpdate).toBeNull();
+    if (!result.success) {
+      expect(result.error.message).toBe('You cannot assign roles to users outside your organization.');
+    }
+  });
+
+  it('blocks assigning a role outside the admin hierarchy WITHOUT calling the RPC', async () => {
+    // A nurse cannot assign super_admin; the pre-flight guard must short-circuit.
+    const result = await userRoleManagementService.assignRole(
+      { user_id: 'u1', new_role: 'super_admin', reason: 'attempted escalation' },
+      'nurse',
+      'admin-1'
+    );
+
+    expect(result.success).toBe(false);
+    // Critical: the RPC must never be reached for an out-of-scope assignment.
+    expect(h.state.capturedRpc).toBeNull();
+  });
+
+  it('refuses self-assignment WITHOUT calling the RPC', async () => {
+    const result = await userRoleManagementService.assignRole(
+      { user_id: 'admin-1', new_role: 'department_head', reason: 'self promotion' },
+      'super_admin',
+      'admin-1'
+    );
+
+    expect(result.success).toBe(false);
+    expect(h.state.capturedRpc).toBeNull();
   });
 });

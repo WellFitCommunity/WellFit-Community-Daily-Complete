@@ -60,6 +60,25 @@ const SYNONYM_ROLES: StaffRole[] = ['doctor', 'chw', 'pt'];
 // Non-staff roles excluded from management
 const NON_STAFF_ROLES: string[] = ['patient', 'senior', 'volunteer', 'caregiver', 'staff'];
 
+/**
+ * Map admin_assign_role RPC exception messages to user-facing text.
+ * The RPC RAISEs prefixed codes (e.g. "FORBIDDEN: ..."); surface a friendly
+ * message without leaking internal detail. Order matters — check the more
+ * specific super_admin message before the generic FORBIDDEN prefix.
+ */
+function mapAdminAssignRoleError(message: string): string {
+  const m = message || '';
+  if (m.includes('CANNOT_SELF_ASSIGN')) return 'You cannot change your own role assignment.';
+  if (m.includes('only super_admin')) return 'Only a super admin can assign admin roles.';
+  if (m.includes('FORBIDDEN')) return 'You do not have permission to assign this role.';
+  if (m.includes('CROSS_TENANT_DENIED')) return 'You cannot assign roles to users outside your organization.';
+  if (m.includes('UNKNOWN_ROLE')) return 'That role is not registered and cannot be assigned.';
+  if (m.includes('TARGET_NOT_FOUND')) return 'The selected user could not be found.';
+  if (m.includes('NO_TENANT')) return 'Your account is not linked to an organization.';
+  if (m.includes('NOT_AUTHENTICATED')) return 'Your session has expired — please sign in again.';
+  return 'Failed to assign role.';
+}
+
 // ============================================================================
 // Service
 // ============================================================================
@@ -167,66 +186,28 @@ export const userRoleManagementService = {
       const previousRole = currentProfile?.role || 'none';
       const roleCode = ROLE_TO_CODE[new_role] ?? null;
 
-      // Resolve role_id from the canonical roles table. This is the column the
-      // database RLS policies enforce on (profiles.role_id -> roles.id), so it
-      // MUST be kept in sync — previously this service updated role/role_code
-      // but left role_id stale, so a role change silently did not change the
-      // user's RLS-enforced access.
-      const { data: roleRow, error: roleLookupErr } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('name', new_role)
-        .maybeSingle();
+      // Assign via the admin_assign_role RPC. A direct profiles UPDATE cannot
+      // work here: the profiles UPDATE RLS policy is own-row only
+      // (user_id = auth.uid()), so an admin updating ANOTHER user's row
+      // silently affects zero rows. admin_assign_role is the SECURITY DEFINER
+      // admin write path — it re-verifies admin/super_admin authority,
+      // same-tenant, and no-self-assign on the server, resolves role_id from
+      // the canonical roles table, writes role_id/role/role_code, and the
+      // trg_sync_user_roles trigger mirrors the change into user_roles.
+      // role_id is the column the database RLS policies enforce on.
+      const { error: rpcError } = await supabase.rpc('admin_assign_role', {
+        p_target_user_id: user_id,
+        p_role_name: new_role,
+        p_role_code: roleCode,
+        p_department: department ?? null,
+      });
 
-      if (roleLookupErr || !roleRow) {
-        await auditLogger.error('ROLE_ASSIGN_ROLE_ID_LOOKUP_FAILED',
-          roleLookupErr ? new Error(roleLookupErr.message) : new Error(`No roles row for "${new_role}"`),
-          { user_id, new_role }
+      if (rpcError) {
+        await auditLogger.error('ROLE_ASSIGN_RPC_FAILED',
+          new Error(rpcError.message),
+          { user_id, new_role, code: rpcError.code }
         ).catch(() => {});
-        return failure('OPERATION_FAILED', `Role "${ROLE_DISPLAY_NAMES[new_role]}" is not registered in the roles table — cannot assign`);
-      }
-      const roleId = roleRow.id as number;
-
-      // Update profiles table (primary user record). role_id is the
-      // RLS-enforced column; role + role_code are kept in sync for the
-      // app-layer authority resolver (roleAuthority.ts).
-      const updatePayload: Record<string, unknown> = {
-        role: new_role,
-        role_code: roleCode,
-        role_id: roleId,
-      };
-      if (department !== undefined) {
-        updatePayload.department = department;
-      }
-
-      const { error: profileErr } = await supabase
-        .from('profiles')
-        .update(updatePayload)
-        .eq('user_id', user_id);
-
-      if (profileErr) {
-        await auditLogger.error('ROLE_ASSIGN_PROFILE_UPDATE_FAILED',
-          new Error(profileErr.message),
-          { user_id, new_role, code: profileErr.code }
-        ).catch(() => {});
-        return failure('DATABASE_ERROR', 'Failed to update user profile');
-      }
-
-      // Upsert user_roles table (authoritative role source for the app-layer
-      // resolver). Keep both role (text) and role_id in sync with profiles.
-      const { error: roleErr } = await supabase
-        .from('user_roles')
-        .upsert(
-          { user_id, role: new_role, role_id: roleId },
-          { onConflict: 'user_id' }
-        );
-
-      if (roleErr) {
-        // Log but don't fail — profiles update is the critical path
-        await auditLogger.error('ROLE_ASSIGN_USER_ROLES_UPSERT_FAILED',
-          new Error(roleErr.message),
-          { user_id, new_role, code: roleErr.code }
-        ).catch(() => {});
+        return failure('OPERATION_FAILED', mapAdminAssignRoleError(rpcError.message));
       }
 
       // Audit log the role change
