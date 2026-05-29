@@ -2,7 +2,9 @@
 
 > **Priority:** HIGH — System is 70% complete but critical orchestration gaps prevent it from functioning as designed
 > **Created:** 2026-04-20
-> **Current Status:** 8/9 items complete (GRD-1–5 shipped 2026-04-21; GRD-6 + GRD-7 + GRD-8 closed 2026-05-29). Only GRD-9 (full E2E integration test) remains.
+> **Current Status:** ✅ 9/9 COMPLETE (GRD-1–5 shipped 2026-04-21; GRD-6/7/8/9 closed 2026-05-29).
+
+> **🚨 SECOND CRITICAL FIX (2026-05-29, GRD-9):** building the lifecycle test surfaced that `approve_guardian_ticket` AND `reject_guardian_ticket` did NOT EXIST in the live DB — defined in 20251204140000, then DROPPED by 20251209110000_drop_broken_functions.sql (they call the also-dropped `log_audit_event`) and never recreated. So approving/rejecting a ticket failed at runtime. Restored both by migration `20260529180000` (audit now via the app layer; `SET search_path` added). Combined with the create-ticket constraint fix, the Guardian approval workflow is now functional end-to-end for the first time.
 > **Estimated total:** ~24 hours across 2 sessions
 > **Honest Assessment:** Session 1 complete. Session 2 (2026-05-29): GRD-6 built properly + live-proven; GRD-7 verified already done. **CRITICAL pre-existing bug found + fixed during GRD-6 live proof — see note below.**
 
@@ -247,6 +249,8 @@ agent.start();
 **Fix:** Create integration test that simulates the full lifecycle.
 
 **Estimated:** ~4 hours
+
+**✅ DONE (2026-05-29) — live, no mocks.** `supabase/functions/__tests__/guardian-ticket-lifecycle-e2e.test.ts` drives the real RPCs against the live DB as a real super_admin (minted via admin generateLink + verifyOtp — the project enforces hCaptcha on password sign-in). 4 cases, all green: (1) security gate — service role / non-super_admin is denied ticket creation; (2) full happy path — create → assert security_alert_id populated → assert correlated guardian_eyes_recording (GRD-6) → approve → assert ticket 'approved' + alert 'resolved'; (3) approve denied when a checkbox is unchecked (anti-rubber-stamp); (4) reject → ticket 'rejected' + alert 'false_positive'. Self-cleaning (auth user, profile, user_roles, ticket, alert, recording). Run: `set -a; . ./.env; set +a; ~/.deno/bin/deno test --allow-net --allow-env supabase/functions/__tests__/guardian-ticket-lifecycle-e2e.test.ts`. This test is the permanent regression guard for all three breakages fixed today (create constraint, dropped approve/reject RPCs, recording link).
 
 ---
 

@@ -286,12 +286,12 @@ See tracker for the 6 questions to bring to the clinic stakeholder conversation.
 
 ---
 
-## PRIORITY 2 — Guardian Agent Gap Closure (5/9)
+## PRIORITY 2 — Guardian Agent Gap Closure (9/9) ✅ COMPLETE
 
 **Tracker:** `docs/trackers/guardian-system-tracker.md`
-**Status:** 5/9 items complete — Session 1 shipped 2026-04-21. Session 2 (GRD-6 through GRD-9) pending.
-**Estimated total:** ~10 hours remaining (Session 2)
-**Risk:** Was HIGH — security alerts now fire end-to-end via cron + multi-channel.
+**Status:** ✅ 9/9 — Session 1 shipped 2026-04-21; Session 2 (GRD-6/7/8/9) closed 2026-05-29. Two DB-layer bugs that made the approval workflow non-functional were found + fixed during Session 2 (create-ticket CHECK constraint; dropped approve/reject RPCs).
+**Estimated total:** DONE.
+**Risk:** Resolved — alerts fire end-to-end via cron + multi-channel, AND the review/approval lifecycle now works end-to-end (proven by the live GRD-9 test).
 
 **Session 1 (DONE):**
 - ✅ **GRD-1:** cron scheduled via migration 20260421120000 + auth bypass fix + PagerDuty→internal swap (commit 44ef6789)
@@ -304,7 +304,9 @@ See tracker for the 6 questions to bring to the clinic stakeholder conversation.
 - ✅ **GRD-6:** DONE + live-proven + visually accepted. Eyes recordings now link to tickets via `security_alert_id` (`create_guardian_review_ticket` writes a correlated recording; migration `20260529160000`). New `getAlertRecordings` + `GuardianEyesRecordingViewer`. **🚨 Found + fixed a CRITICAL pre-existing bug: the RPC that creates every Guardian ticket was dead at the DB layer** (`alert_type='guardian_approval_required'` violated a CHECK constraint → 0 tickets ever created). Fixed by migration `20260529170000`. The whole approval workflow is now functional.
 - ✅ **GRD-7:** DONE (verified) — `guardian_flow_config` already exists live (migration `20251211230000`); engine reads it + falls back gracefully. April tracker was stale. Nothing to build.
 - ✅ **GRD-8:** DONE (manual path). Deleted the dead `gh`-CLI auto-PR code (`guardian-pr-service` edge fn + `GitService` + `approveAndCreatePR` — never runnable server-side, 0 callers). Fixed misleading "Auto-Apply" labels to match reality (Guardian surfaces the healing plan; Maria creates the PR herself). Scoped typecheck 0, lint 0, 61 guardian tests green.
-- ⬜ **GRD-9:** Full end-to-end integration test (~4h) — LAST Guardian item. Next session.
+- ✅ **GRD-9:** DONE — live lifecycle e2e test (`guardian-ticket-lifecycle-e2e.test.ts`), 4/4 passing, no mocks (real super_admin via generateLink+verifyOtp, real RPCs, real state transitions, self-cleaning). **🚨 SECOND CRITICAL FIX found building it: `approve_guardian_ticket` + `reject_guardian_ticket` didn't exist in the live DB** (dropped by `20251209110000` via the dead `log_audit_event` dep, never recreated) → approve/reject failed at runtime. Restored by migration `20260529180000`. **Guardian approval workflow is now functional end-to-end for the first time.**
+
+**✅ GUARDIAN SESSION 2 COMPLETE (9/9). Guardian tracker fully closed.** Both active priorities (ONC Tier 2 + Guardian) are now done. Next: pick from BACKLOG (god-file decomposition, API-3 Session B, MCP-3 adversarial testing, Nephrology, SOC 2) or a fresh priority from Maria.
 
 **What works now:** Cron fires every minute, email+SMS+Slack+internal all deliver, tickets auto-create for non-performance auto-heal proposals, browser Guardian runs in dev/staging/prod, scan returns real security findings.
 **What still doesn't:** Eyes→approval link (GRD-6), multi-facility ED crowding config (GRD-7), PR service wiring (GRD-8 decision).
