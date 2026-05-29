@@ -94,6 +94,31 @@ export const emergencyAccessService = {
         expiresAt: row.expires_at,
       }).catch(() => {});
 
+      // Dispatch the supervisor notification (ONC (d)(6)) server-side. The
+      // notify-emergency-access edge function resolves tenant-admin emails
+      // (never exposed to the browser), sends them, and flips
+      // supervisors_notified. Non-fatal: the access is already recorded, so a
+      // notification failure must NOT undo or fail the grant.
+      try {
+        const { error: notifyError } = await supabase.functions.invoke(
+          'notify-emergency-access',
+          { body: { access_id: row.access_id } }
+        );
+        if (notifyError) {
+          await auditLogger.error(
+            'EMERGENCY_ACCESS_NOTIFY_FAILED',
+            new Error(notifyError.message),
+            { accessId: row.access_id }
+          ).catch(() => {});
+        }
+      } catch (notifyErr: unknown) {
+        await auditLogger.error(
+          'EMERGENCY_ACCESS_NOTIFY_EXCEPTION',
+          notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)),
+          { accessId: row.access_id }
+        ).catch(() => {});
+      }
+
       return success({
         accessId: row.access_id,
         accessingUserName: row.accessing_user_name,

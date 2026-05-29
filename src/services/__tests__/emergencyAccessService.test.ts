@@ -16,6 +16,7 @@ const h = vi.hoisted(() => ({
   state: {
     rpcCalls: [] as Array<{ fn: string; args: Record<string, unknown> }>,
     rpcResult: { data: null as unknown, error: null as null | { message: string } },
+    invokeCalls: [] as Array<{ fn: string; body: Record<string, unknown> }>,
   },
 }));
 
@@ -24,6 +25,12 @@ vi.mock('../../lib/supabaseClient', () => ({
     rpc: (fn: string, args: Record<string, unknown>) => {
       h.state.rpcCalls.push({ fn, args });
       return Promise.resolve(h.state.rpcResult);
+    },
+    functions: {
+      invoke: (fn: string, opts: { body: Record<string, unknown> }) => {
+        h.state.invokeCalls.push({ fn, body: opts.body });
+        return Promise.resolve({ data: null, error: null });
+      },
     },
   },
 }));
@@ -37,6 +44,7 @@ import { emergencyAccessService } from '../emergencyAccessService';
 beforeEach(() => {
   h.state.rpcCalls = [];
   h.state.rpcResult = { data: null, error: null };
+  h.state.invokeCalls = [];
 });
 
 describe('emergencyAccessService.grantAccess', () => {
@@ -78,12 +86,21 @@ describe('emergencyAccessService.grantAccess', () => {
       expect(result.data.expiresAt).toBe('2026-05-28T01:00:00Z');
       expect(result.data.shouldNotifySupervisor).toBe(true);
     }
+    // ONC (d)(6): a successful grant dispatches the supervisor notification.
+    const notify = h.state.invokeCalls.find((c) => c.fn === 'notify-emergency-access');
+    expect(notify?.body.access_id).toBe('acc-1');
   });
 
   it('returns failure when the RPC errors', async () => {
     h.state.rpcResult = { data: null, error: { message: 'NOT_AUTHORIZED' } };
     const result = await emergencyAccessService.grantAccess({ patientId: 'p1', reason: 'test' });
     expect(result.success).toBe(false);
+  });
+
+  it('does not dispatch a notification when the reason is empty (no grant occurs)', async () => {
+    const result = await emergencyAccessService.grantAccess({ patientId: 'p1', reason: '  ' });
+    expect(result.success).toBe(false);
+    expect(h.state.invokeCalls).toHaveLength(0);
   });
 });
 
