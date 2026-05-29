@@ -44,7 +44,10 @@ interface SecurityAlert {
   severity: "critical" | "high" | "medium" | "low";
   category: string;
   title: string;
-  message: string;
+  // Live security_alerts column is `description` (there is no `message`
+  // column). The prior `message` field was always undefined at runtime, which
+  // null-violated security_notifications.message and emptied email/SMS bodies.
+  description: string | null;
   metadata: Record<string, unknown>;
   status: string;
   created_at: string;
@@ -121,7 +124,8 @@ serve(async (req) => {
     // Fetch pending alerts that haven't been notified
     let query = supabase
       .from("security_alerts")
-      .select("*")
+      // Explicit columns (§9) — the fields SecurityAlert / the senders read.
+      .select("id, severity, category, title, description, metadata, status, created_at, affected_user_id, escalated, escalation_level")
       .eq("notification_sent", false)
       .in("severity", ["critical", "high"]) // Only notify on critical/high
       .order("created_at", { ascending: true })
@@ -294,7 +298,7 @@ async function sendEmailNotification(alert: SecurityAlert): Promise<Notification
         </div>
         <div class="field">
           <div class="label">Description</div>
-          <div>${alert.message}</div>
+          <div>${alert.description ?? alert.title}</div>
         </div>
         <div class="field">
           <div class="label">Category</div>
@@ -332,7 +336,7 @@ async function sendEmailNotification(alert: SecurityAlert): Promise<Notification
         to: SECURITY_ALERT_EMAILS.map((email) => ({ email, name: "Security Team" })),
         subject: `[${alert.severity.toUpperCase()}] Security Alert: ${alert.title}`,
         html: htmlContent,
-        text: `${alert.severity.toUpperCase()} Security Alert: ${alert.title}\n\n${alert.message}`,
+        text: `${alert.severity.toUpperCase()} Security Alert: ${alert.title}\n\n${alert.description ?? alert.title}`,
         tags: [alert.severity, "security-alert"],
       }),
     });
@@ -421,7 +425,7 @@ async function sendSlackNotification(alert: SecurityAlert): Promise<Notification
       {
         color: severityColors[alert.severity],
         title: `${alert.escalated ? "[ESCALATED] " : ""}${alert.title}`,
-        text: alert.message,
+        text: alert.description ?? alert.title,
         fields: [
           { title: "Severity", value: alert.severity.toUpperCase(), short: true },
           { title: "Category", value: alert.category, short: true },
@@ -481,7 +485,7 @@ async function sendInternalNotification(
       type: "guardian_alert",
       severity: alert.severity,
       title: `[${alert.severity.toUpperCase()}] ${alert.title}`,
-      message: alert.message,
+      message: alert.description ?? alert.title,
       link: `/guardian/alerts/${alert.id}`,
       metadata: {
         alert_id: alert.id,

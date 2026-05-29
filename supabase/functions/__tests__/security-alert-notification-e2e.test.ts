@@ -20,6 +20,7 @@
 
 import {
   SUPABASE_URL,
+  SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY,
   TEST_TENANT_ID,
   assert,
@@ -61,9 +62,13 @@ async function insertTestAlert(severity: "critical" | "high"): Promise<InsertedA
       tenant_id: TEST_TENANT_ID,
       severity,
       category: "security",
+      // alert_type must match security_alerts_alert_type_check.
+      alert_type: "brute_force_attack",
       title: `[E2E TEST] ${severity} alert for GRD-5 verification`,
-      message: "Synthetic test alert — safe to ignore. Created by grd5-e2e-test.",
-      status: "pending",
+      // Live column is `description` (not `message`); status enum is
+      // new/investigating/resolved/false_positive/escalated (not 'pending').
+      description: "Synthetic test alert — safe to ignore. Created by grd5-e2e-test.",
+      status: "new",
       notification_sent: false,
       escalated: severity === "critical",
       escalation_level: severity === "critical" ? 2 : 0,
@@ -74,8 +79,11 @@ async function insertTestAlert(severity: "critical" | "high"): Promise<InsertedA
     },
   });
 
-  assert(response.ok, `Failed to insert test alert: ${response.status} ${await response.text()}`);
-  const data = (await response.json()) as InsertedAlert[];
+  // Read the body once — using `await response.text()` in the assert message
+  // AND `response.json()` double-consumes it ("Body already consumed").
+  const text = await response.text();
+  assert(response.ok, `Failed to insert test alert: ${response.status} ${text}`);
+  const data = JSON.parse(text) as InsertedAlert[];
   return data[0];
 }
 
@@ -109,11 +117,18 @@ async function cleanupTestAlerts(): Promise<void> {
 }
 
 async function triggerProcessor(alertId: string): Promise<{ status: number; body: unknown }> {
+  // The platform verify_jwt gateway requires a JWT in Authorization — the new
+  // sb_secret_* key is NOT a JWT and is rejected (401 INVALID_JWT_FORMAT). Use
+  // the anon JWT to clear the gateway, and pass the actual cron credential in
+  // X-Cron-Secret, which the function validates against CRON_SECRET /
+  // SB_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY.
   const response = await fetch(`${SUPABASE_URL}/functions/v1/security-alert-processor`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "X-Cron-Secret": SUPABASE_SERVICE_ROLE_KEY,
     },
     body: JSON.stringify({ alert_id: alertId }),
   });
@@ -166,7 +181,7 @@ Deno.test("GRD-5: critical alert triggers full notification pipeline", async () 
 
   // 1. Insert a critical test alert
   const alert = await insertTestAlert("critical");
-  assert(alert.id, "Alert should be inserted with an id");
+  assert(Boolean(alert.id), "Alert should be inserted with an id");
   assert(
     alert.notification_sent === false,
     "New alert should start with notification_sent=false"
