@@ -13,6 +13,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { usePatientContext } from '../../contexts/PatientContext';
 import { auditLogger } from '../../services/auditLogger';
+import { BreakTheGlassModal } from '../admin/BreakTheGlassModal';
 
 // Lazy-load tab content components (they're large)
 const MedicationRequestManager = lazy(() =>
@@ -88,6 +89,7 @@ interface OverviewTabProps {
 
 const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
   const navigate = useNavigate();
+  const [breakGlassOpen, setBreakGlassOpen] = useState(false);
   const cards: { tab: ChartTab; icon: string; title: string; description: string; color: string }[] = [
     { tab: 'medications', icon: '💊', title: 'Medications', description: 'E-prescribing, reconciliation & adherence', color: 'border-green-500/30 hover:border-green-500' },
     { tab: 'care-plans', icon: '🗂️', title: 'Care Plans', description: 'Treatment protocols & coordination', color: 'border-purple-500/30 hover:border-purple-500' },
@@ -147,7 +149,26 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
       <h2 className="text-lg font-semibold text-white mb-1">
         Patient Chart {patient ? `— ${patient.lastName}, ${patient.firstName}` : ''}
       </h2>
-      <p className="text-sm text-slate-400 mb-6">Select a section to view clinical data</p>
+      <p className="text-sm text-slate-400 mb-4">Select a section to view clinical data</p>
+
+      {patient && (
+        <>
+          <button
+            type="button"
+            onClick={() => setBreakGlassOpen(true)}
+            className="mb-6 inline-flex items-center gap-2 min-h-[44px] px-4 text-sm font-semibold bg-red-600/90 text-white rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400"
+          >
+            <span aria-hidden="true">🚨</span>
+            Break the glass — emergency access
+          </button>
+          <BreakTheGlassModal
+            patientId={patient.id}
+            patientLabel={`${patient.lastName}, ${patient.firstName}`}
+            isOpen={breakGlassOpen}
+            onClose={() => setBreakGlassOpen(false)}
+          />
+        </>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cards.map((card) => (
