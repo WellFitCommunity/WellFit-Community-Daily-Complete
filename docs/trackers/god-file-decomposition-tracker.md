@@ -1,6 +1,6 @@
 # God File Decomposition Tracker
 
-> **Last Updated:** 2026-05-20
+> **Last Updated:** 2026-05-29 (bulk-export decomposed — see row 4)
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 > **Estimated Effort:** ~40–60 hours across 15–20 sessions (spread over months — not a sprint)
@@ -88,9 +88,9 @@ The governance script does not scan these. They are production server code and e
 | 1 | `supabase/functions/ai-treatment-pathway/index.ts` | 990 | TODO |
 | 2 | `supabase/functions/ai-progress-note-synthesizer/index.ts` | 962 | TODO |
 | 3 | `supabase/functions/ai-infection-risk-predictor/index.ts` | 958 | TODO |
-| 4 | `supabase/functions/bulk-export/index.ts` | 868 | TODO |
+| 4 | `supabase/functions/bulk-export/index.ts` | ~~868~~ → 175 | **DONE** (`ad1d4c0a`, 2026-05-29) — 6 modules all <600 + `_shared/exportColumns.ts`; repaired export_jobs drift + ONC-10 integrity |
 | 5 | `supabase/functions/ai-missed-checkin-escalation/index.ts` | 848 | TODO |
-| 6 | `supabase/functions/ccda-export/index.ts` | 836 | TODO |
+| 6 | `supabase/functions/ccda-export/index.ts` | 836 | **NEXT** — ONC-10 ccda path. Verify live schema first (bulk-export had hidden drift). |
 | 7 | `supabase/functions/ai-fall-risk-predictor/index.ts` | 807 | TODO |
 | 8 | `supabase/functions/ai-care-escalation-scorer/index.ts` | 793 | TODO |
 | 9 | `supabase/functions/pdf-health-summary/index.ts` | 776 | TODO |
