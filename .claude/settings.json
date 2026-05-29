@@ -12,6 +12,15 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "mcp__claude_ai_Supabase__apply_migration",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'BLOCKED: Do NOT apply migrations via the Supabase MCP server. apply_migration records the registry version as the wall-clock apply time, NOT the filename timestamp, which drifts local files from the remote registry and breaks db push (caused the 135000 vs 212807 drift). Apply migrations with: npx supabase db push (it records version = filename timestamp). MCP is fine for execute_sql / list_* / advisors.' >&2; exit 2"
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {
