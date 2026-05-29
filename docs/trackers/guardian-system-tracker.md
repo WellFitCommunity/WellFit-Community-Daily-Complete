@@ -2,7 +2,7 @@
 
 > **Priority:** HIGH — System is 70% complete but critical orchestration gaps prevent it from functioning as designed
 > **Created:** 2026-04-20
-> **Current Status:** 7/9 items complete (GRD-1–5 shipped 2026-04-21; GRD-6 + GRD-7 closed 2026-05-29). GRD-8 in progress (manual path), GRD-9 pending.
+> **Current Status:** 8/9 items complete (GRD-1–5 shipped 2026-04-21; GRD-6 + GRD-7 + GRD-8 closed 2026-05-29). Only GRD-9 (full E2E integration test) remains.
 > **Estimated total:** ~24 hours across 2 sessions
 > **Honest Assessment:** Session 1 complete. Session 2 (2026-05-29): GRD-6 built properly + live-proven; GRD-7 verified already done. **CRITICAL pre-existing bug found + fixed during GRD-6 live proof — see note below.**
 
