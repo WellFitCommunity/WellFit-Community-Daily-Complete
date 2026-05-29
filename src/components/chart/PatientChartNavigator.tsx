@@ -133,6 +133,12 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ patient, onTabChange }) => {
           title: 'Implanted devices',
           description: 'View and record implantable devices (UDI, manufacturer, implant context).',
         },
+        {
+          route: `/admin/family-history/${patient.id}`,
+          icon: '🧬',
+          title: 'Family health history',
+          description: 'View and record family member conditions with age at onset (FHIR).',
+        },
       ]
     : [];
 

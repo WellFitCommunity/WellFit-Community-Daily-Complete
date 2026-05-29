@@ -13,4 +13,5 @@ export * from './documents';
 export * from './medications';
 export * from './orders';
 export * from './devices';
+export * from './familyHistory';
 export * from './advanced';

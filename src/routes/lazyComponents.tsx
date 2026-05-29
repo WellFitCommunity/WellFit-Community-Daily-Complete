@@ -104,6 +104,9 @@ export const ImagingOrderPage = React.lazy(() => import('../pages/admin/ImagingO
 // ONC 170.315(a)(14) — Implantable Device List
 export const ImplantableDevicesPage = React.lazy(() => import('../pages/admin/ImplantableDevicesPage'));
 
+// ONC 170.315(a)(12) — Family Health History
+export const FamilyHistoryPage = React.lazy(() => import('../pages/admin/FamilyHistoryPage'));
+
 // Billing & Finance
 export const BillingSuiteDashboard = React.lazy(() =>
   import('../components/billing/BillingSuiteDashboard').then(m => ({ default: m.BillingSuiteDashboard }))
@@ -403,6 +406,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   LabOrderPage,
   ImagingOrderPage,
   ImplantableDevicesPage,
+  FamilyHistoryPage,
   BillingSuiteDashboard,
   SecurityComplianceDashboard,
   CareOperationsDashboard,

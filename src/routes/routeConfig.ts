@@ -512,6 +512,14 @@ export const clinicalRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'physician', 'doctor', 'nurse', 'nurse_practitioner', 'physician_assistant'],
     category: 'clinical',
   },
+  // ONC 170.315(a)(12) — Family Health History
+  {
+    path: '/admin/family-history/:patientId',
+    component: 'FamilyHistoryPage',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'doctor', 'nurse', 'nurse_practitioner', 'physician_assistant'],
+    category: 'clinical',
+  },
   // Compass Riley (AI Scribe)
   {
     path: '/compass-riley',
