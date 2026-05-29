@@ -230,26 +230,30 @@ Deno.test("C-CDA Export Edge Function Tests", async (t) => {
   });
 
   await t.step("should structure vital signs observation correctly", () => {
+    // Column names match the live fhir_observations schema (verified
+    // 2026-05-29): value_quantity_value / value_quantity_unit.
     const vitalSign = {
       code: "8480-6",
       code_display: "Systolic blood pressure",
-      value_quantity: 120,
-      value_unit: "mmHg",
+      value_quantity_value: 120,
+      value_quantity_unit: "mmHg",
       effective_datetime: "2026-01-17T08:00:00Z"
     };
 
     assertExists(vitalSign.code);
-    assertExists(vitalSign.value_quantity);
-    assertExists(vitalSign.value_unit);
+    assertExists(vitalSign.value_quantity_value);
+    assertExists(vitalSign.value_quantity_unit);
   });
 
   await t.step("should structure lab result correctly", () => {
+    // Column names match the live lab_results schema (verified 2026-05-29):
+    // result_date (there is no extracted_at column).
     const labResult = {
       test_name: "Glucose",
       value: 95,
       unit: "mg/dL",
       reference_range: "70-100 mg/dL",
-      extracted_at: "2026-01-15T10:00:00Z"
+      result_date: "2026-01-15T10:00:00Z"
     };
 
     assertExists(labResult.test_name);
