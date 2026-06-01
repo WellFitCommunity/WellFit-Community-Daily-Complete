@@ -11,6 +11,13 @@ import type {
   FacilityData,
 } from './types';
 import { CODE_SYSTEMS, MDRO_TYPES } from './constants';
+import {
+  generateDocumentId,
+  formatHL7DateTime,
+  formatHL7Date,
+  formatDisplayDate,
+  escapeXml,
+} from '../cda/formatters';
 
 /**
  * Generate NHSN CDA document for Antimicrobial Use reporting
@@ -336,34 +343,9 @@ export function generateARDocument(options: {
 // =====================================================
 // HELPER FUNCTIONS
 // =====================================================
-
-function generateDocumentId(): string {
-  return `2.16.840.1.113883.4.6.${Date.now()}.${Math.random().toString(36).substring(2, 8)}`;
-}
-
-function formatHL7DateTime(date: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
-}
-
-function formatHL7Date(dateStr: string): string {
-  const date = new Date(dateStr);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
-}
-
-function formatDisplayDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
+// generateDocumentId / formatHL7DateTime / formatHL7Date / formatDisplayDate /
+// escapeXml now live in ../cda/formatters (RF-7 dedup). The grouping helpers
+// below are domain-specific and stay here.
 
 function groupByClass(records: AntimicrobialUsageRecord[]): Record<string, AntimicrobialUsageRecord[]> {
   return records.reduce((acc, record) => {

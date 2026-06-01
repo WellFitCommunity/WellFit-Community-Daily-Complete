@@ -13,6 +13,17 @@ import type {
   FacilityData,
 } from './types';
 import { EICR_TEMPLATE_IDS, CODE_SYSTEMS, getCodeSystemOid } from './constants';
+import {
+  generateDocumentId,
+  formatHL7DateTime,
+  formatHL7Date,
+  formatDisplayDate,
+  escapeXml,
+} from '../cda/formatters';
+
+// Re-exported so callers that imported generateDocumentId from this module
+// (e.g. ecr/operations.ts) keep working after the RF-7 dedup.
+export { generateDocumentId };
 
 /**
  * Generate eICR CDA document
@@ -452,35 +463,10 @@ function generateReportabilityResponseSection(): string {
 // =====================================================
 // HELPER FUNCTIONS
 // =====================================================
-
-export function generateDocumentId(): string {
-  return `2.16.840.1.113883.4.6.${Date.now()}.${Math.random().toString(36).substring(2, 8)}`;
-}
+// generateDocumentId / formatHL7DateTime / formatHL7Date / formatDisplayDate /
+// escapeXml now live in ../cda/formatters (RF-7 dedup). generateSetId is
+// eICR-specific and stays here.
 
 function generateSetId(): string {
   return `2.16.840.1.113883.4.6.SET.${Date.now()}`;
-}
-
-function formatHL7DateTime(date: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
-}
-
-function formatHL7Date(dateStr: string): string {
-  const date = new Date(dateStr);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
-}
-
-function formatDisplayDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }
