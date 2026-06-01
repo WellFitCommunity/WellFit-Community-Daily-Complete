@@ -103,6 +103,10 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Edge-function SDK hygiene (version + type-check coverage)
+        id: sdk_hygiene
+        run: bash scripts/check-edge-sdk-hygiene.sh
+
       - name: Run Deno type check on high-risk edge functions
         id: deno_typecheck
         run: bash scripts/deno-typecheck.sh

@@ -18,7 +18,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 import { checkMCPRateLimit, checkPersistentRateLimit, getRequestIdentifier, getCallerRateLimitId, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 import {
   initMCPServer,
@@ -297,7 +297,7 @@ serve(async (req: Request) => {
           serverName: "mcp-claude-server",
           toolName,
           userId: caller.userId,
-          tenantId: caller.tenantId,
+          tenantId: caller.tenantId ?? undefined,
           authMethod: "jwt",
           executionTimeMs: responseTimeMs,
           success: true,
@@ -375,7 +375,7 @@ serve(async (req: Request) => {
         serverName: "mcp-claude-server",
         toolName,
         userId: caller.userId,
-        tenantId: caller.tenantId,
+        tenantId: caller.tenantId ?? undefined,
         authMethod: "jwt",
         executionTimeMs: responseTimeMs,
         success: true,

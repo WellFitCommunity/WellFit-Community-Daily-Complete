@@ -42,6 +42,10 @@ HIGH_RISK=(
   export-status
   bed-management
   fitbit-webhook
+  # Anthropic-SDK importers — MUST stay covered (enforced by check-edge-sdk-hygiene.sh).
+  coding-suggest
+  mcp-claude-server
+  ai-medication-instructions
 )
 
 if [[ "${1:-}" == "--all" ]]; then

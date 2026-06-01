@@ -4,7 +4,7 @@
 // MCP-1 hardening (2026-04-11): adds safety prompt + sanitizeClinicalInput + strictDeidentify.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createUserClient, createAdminClient } from '../_shared/supabaseClient.ts';
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.20.9?target=deno";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from '../_shared/auditLogger.ts';
 import { SONNET_MODEL } from '../_shared/models.ts';
@@ -320,12 +320,12 @@ serve(async (req) => {
     // Call Claude API with hardened system prompt + sanitized messages.
     //
     // `tools` / `tool_choice` are forwarded for structured output (forced tool_use).
-    // The pinned SDK (0.20.9) predates `tools` on the stable Messages params type, but
-    // these are spread in as optional extras — spreads bypass excess-property checks,
-    // and at runtime the SDK serializes the body as-is, so the fields reach the
-    // /v1/messages endpoint (which supports tools regardless of SDK typing). The inline
+    // They are spread in as optional extras (only when the caller supplies them) rather
+    // than declared on the literal, so the call is unchanged when absent. The inline
     // object literal is kept (vs. a pre-built cast object) so overload resolution still
-    // picks the non-streaming Message return type. sanitizeMessages preserves the
+    // picks the non-streaming Message return type (response.usage/.content stay typed).
+    // SDK pinned to 0.39.0 across all Anthropic-SDK edge functions — see
+    // docs/trackers/edge-sdk-hygiene-tracker.md. sanitizeMessages preserves the
     // role/content shape Anthropic accepts.
     const response = await anthropic.messages.create({
       model: modelUsed,

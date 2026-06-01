@@ -16,7 +16,7 @@
  * Copyright © 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.
  */
 
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 import { recordDecisionLink } from "../_shared/decisionChain.ts";
 import type { EdgeFunctionLogger } from "../_shared/auditLogger.ts";
 import {

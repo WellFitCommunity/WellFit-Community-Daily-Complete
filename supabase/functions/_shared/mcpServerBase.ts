@@ -358,7 +358,7 @@ export interface MCPProvenance {
   /** AI confidence score (0-1), only present for AI-generated results */
   confidenceScore?: number;
   /** Clinical safety flags for results that touch clinical guidance */
-  safetyFlags?: Array<'ai_generated' | 'requires_clinical_review' | 'experimental' | 'reference_only'>;
+  safetyFlags?: Array<'ai_generated' | 'requires_clinical_review' | 'experimental' | 'reference_only' | 'meta_triage'>;
   /** Cache status */
   cacheHit?: boolean;
 }

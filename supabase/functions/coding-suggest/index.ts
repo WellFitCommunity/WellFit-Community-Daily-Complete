@@ -8,7 +8,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1?target=deno";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
@@ -68,7 +68,7 @@ const redact = (s: string): string =>
     .replace(/\b(19|20)\d{2}[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])\b/g, "[DATE]");
 
 function ageBandFromDOB(dob?: string | null): string | null {
-  if (!truthy(dob)) return null;
+  if (dob == null || !truthy(dob)) return null;
   const d = new Date(dob);
   if (Number.isNaN(d.getTime())) return null;
   const age = Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000));

@@ -14,7 +14,7 @@
  * shape drift between the two MUST be reconciled in both files (no silent skew).
  */
 
-import type Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1";
+import type Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno";
 type Tool = Anthropic.Messages.Tool;
 
 // ---------------------------------------------------------------------------
