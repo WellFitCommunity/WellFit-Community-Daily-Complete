@@ -81,7 +81,7 @@ export class DiagnosticReportService {
    * Get lab reports
    *
    * Returns laboratory test results (chemistry, hematology, microbiology, etc.)
-   * Filtered by category = 'LAB'
+   * Filtered by category containing 'laboratory'
    *
    * @param patientId - FHIR Patient resource ID
    * @param daysBack - Number of days to look back (default: 90)
@@ -92,11 +92,18 @@ export class DiagnosticReportService {
     daysBack: number = 90
   ): Promise<FHIRApiResponse<DiagnosticReport[]>> {
     try {
+      // Direct query (the get_lab_reports RPC does not exist in the live DB).
+      // category is a text[] array; laboratory reports carry the FHIR 'laboratory' value
+      // (consistent with ObservationService). Lookback on the clinical study date.
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - daysBack);
       const { data, error } = await supabase
-        .rpc('get_lab_reports', {
-          patient_id_param: patientId,
-          days_back: daysBack,
-        });
+        .from('fhir_diagnostic_reports')
+        .select(REPORT_COLUMNS)
+        .eq('patient_id', patientId)
+        .contains('category', ['laboratory'])
+        .gte('effective_datetime', cutoff.toISOString())
+        .order('issued', { ascending: false });
 
       if (error) throw error;
       return { success: true, data: data || [] };
@@ -112,7 +119,7 @@ export class DiagnosticReportService {
    * Get imaging reports
    *
    * Returns radiology and imaging study reports (X-ray, CT, MRI, ultrasound, etc.)
-   * Filtered by category = 'RAD'
+   * Filtered by category containing 'imaging'
    *
    * @param patientId - FHIR Patient resource ID
    * @param daysBack - Number of days to look back (default: 365)
@@ -123,11 +130,18 @@ export class DiagnosticReportService {
     daysBack: number = 365
   ): Promise<FHIRApiResponse<DiagnosticReport[]>> {
     try {
+      // Direct query (the get_imaging_reports RPC does not exist in the live DB).
+      // category is a text[] array; imaging reports carry the FHIR 'imaging' value
+      // (consistent with ObservationService). Lookback on the clinical study date.
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - daysBack);
       const { data, error } = await supabase
-        .rpc('get_imaging_reports', {
-          patient_id_param: patientId,
-          days_back: daysBack,
-        });
+        .from('fhir_diagnostic_reports')
+        .select(REPORT_COLUMNS)
+        .eq('patient_id', patientId)
+        .contains('category', ['imaging'])
+        .gte('effective_datetime', cutoff.toISOString())
+        .order('issued', { ascending: false });
 
       if (error) throw error;
       return { success: true, data: data || [] };
