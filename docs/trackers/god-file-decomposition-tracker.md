@@ -1,6 +1,6 @@
 # God File Decomposition Tracker
 
-> **Last Updated:** 2026-06-01 (Tier 1 #4 `antimicrobialSurveillanceService.ts` 1147→78; #3 `hospitalWorkforceService.ts` 1217→151; #2 `healthcareIntegrationsService.ts` 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29; bulk-export earlier — see row 4 of the edge-function table)
+> **Last Updated:** 2026-06-01 (Tier 1 #1–#5 DONE: #5 `epcsService.ts` 1134→94; #4 `antimicrobialSurveillanceService.ts` 1147→78; #3 `hospitalWorkforceService.ts` 1217→151; #2 `healthcareIntegrationsService.ts` 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29)
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 > **Estimated Effort:** ~40–60 hours across 15–20 sessions (spread over months — not a sprint)
@@ -61,7 +61,7 @@ These are the biggest offenders. Each one's decomposition unblocks several small
 | 2 | `src/services/healthcareIntegrationsService.ts` | ~~1258~~ → 93 | Integration | **DONE** (2026-06-01) — 4 domain modules in `healthcare-integrations/` (lab, pharmacy, imaging, insurance), each service class + its DB mappers, all <600 (largest 320); facade re-exports preserve all import paths; 9 new behavioral tests (snake→camel mapping + facade wiring) |
 | 3 | `src/services/hospitalWorkforceService.ts` | ~~1217~~ → 151 | Workforce | **DONE** (2026-06-01) — 6 modules in `hospital-workforce/` (referenceData, organizations, staff, credentials, relationships, migration) + shared helper, all <600 (largest 341); main file re-exports every named fn + the aggregate object, import paths unchanged; 10 new behavioral tests (24 total with existing pure-logic file) |
 | 4 | `src/services/publicHealth/antimicrobialSurveillanceService.ts` | ~~1147~~ → 78 | Public health | **DONE** (2026-06-01) — 4 modules in `antimicrobial-surveillance/` (types, constants, cdaDocuments, operations), all <600 (largest 451); main file re-exports all named fns + types + the aggregate object, import paths unchanged; existing 16-test suite green through the re-export path |
-| 5 | `src/services/epcsService.ts` | 1134 | EPCS | TODO |
+| 5 | `src/services/epcsService.ts` | ~~1134~~ → 94 | EPCS | **DONE** (2026-06-01) — 7 modules in `epcs/` (types, helpers, providerRegistration, prescriptions, twoFactor, audit, stats), all <600 (largest 438); main file re-exports all named fns + types + the aggregate object, import paths unchanged; existing 15-test suite green through the re-export path |
 | 6 | `src/services/publicHealth/ecrService.ts` | 1119 | Public health | TODO |
 | 7 | `src/services/claudeService.ts` | 1100 | AI core | TODO |
 | 8 | `src/services/fhirInteroperabilityIntegrator.ts` | 1081 | FHIR | TODO |
