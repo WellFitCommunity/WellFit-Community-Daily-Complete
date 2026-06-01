@@ -2,7 +2,7 @@
 
 > **Method:** 4 parallel adversarial AI reviewers (medication safety, risk scoring, FHIR mapping, CQM calc), each instructed to hunt for patient-safety/correctness defects and cite file:line. Lead agent (Claude Opus 4.8) then **independently verified the top CRITICALs against the live DB + actual code** before recording. This is the cross-AI adversarial methodology applied to the clinical layer.
 > **Verdict:** Real, serious, located, and fixable defects — concentrated in (a) schema drift on 4 older FHIR services, (b) fail-open / fail-unsafe defaults in AI scoring + drug-interaction logic, (c) a structurally incomplete CQM engine. NOT architecture rot. **Clinical layer is NOT pilot-ready until the CRITICALs are fixed.**
-> **Status of fixes:** NONE applied yet — findings only. Prioritize with Maria before remediation.
+> **Remediation status (2026-06-01):** Tier-0 **4 of 5 fixed + pushed** — AV-1 (`d416f221`, incl. live migration `20260601231319`), AV-4 + AV-5 (`d416f221`), AV-3 (`23c364a9`). Each lead-verified with a live DB round-trip + scoped typecheck/lint. **AV-2 (fhir_medications table missing) BLOCKED on Maria** (create table vs repoint). **DiagnosticReportService** is the verified sister of AV-1/AV-3 (same `category_code`/`category_display` drift) — next mechanical fix. The ~25 lower-severity findings below are not yet started.
 
 ---
 
