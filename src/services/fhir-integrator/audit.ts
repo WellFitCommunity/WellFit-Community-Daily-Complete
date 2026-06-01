@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../auditLogger';
 import type { UnknownRecord } from './types';
 
 // SOC 2: Audit logging helper
@@ -18,7 +19,13 @@ export async function logAuditEvent(eventType: string, metadata: UnknownRecord):
       created_at: new Date().toISOString()
     });
   } catch (err: unknown) {
-
+    // RF-5: a dropped audit write must itself be audited (don't fail the main
+    // op, but don't swallow silently — SOC 2). Route to the app auditLogger sink.
+    await auditLogger.error(
+      'FHIR_AUDIT_WRITE_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { eventType }
+    );
   }
 }
 
@@ -32,6 +39,11 @@ export async function logSecurityEvent(eventType: string, metadata: UnknownRecor
       created_at: new Date().toISOString()
     });
   } catch (err: unknown) {
-
+    // RF-5: see logAuditEvent — surface a dropped security-event write.
+    await auditLogger.error(
+      'FHIR_SECURITY_EVENT_WRITE_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { eventType }
+    );
   }
 }

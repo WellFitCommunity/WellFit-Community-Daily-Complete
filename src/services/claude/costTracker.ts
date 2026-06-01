@@ -5,6 +5,7 @@
  */
 
 import { ClaudeModel, CostInfo } from '../../types/claude';
+import { auditLogger } from '../auditLogger';
 
 export class CostTracker {
   private dailySpend: Map<string, number> = new Map();
@@ -51,7 +52,14 @@ export class CostTracker {
     const percentUsed = (currentSpend / this.monthlyLimit) * 100;
 
     if (percentUsed >= 80) {
-      // Budget alert logged via auditLogger
+      // Fire-and-forget budget warning (RF-3): previously this block was empty
+      // with a comment claiming it logged — it did nothing. Now it actually emits.
+      void auditLogger.warn('CLAUDE_BUDGET_ALERT', {
+        userId,
+        monthlySpend: Number(currentSpend.toFixed(2)),
+        monthlyLimit: this.monthlyLimit,
+        percentUsed: Number(percentUsed.toFixed(1)),
+      });
     }
   }
 

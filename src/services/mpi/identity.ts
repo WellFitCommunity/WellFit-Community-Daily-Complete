@@ -143,7 +143,11 @@ export async function findPotentialMatches(
       }
     }
 
-    if (criteria.dateOfBirth) {
+    // RF-6: dateOfBirth and mrn are interpolated into a PostgREST .or() filter
+    // string. Validate before use so a comma / PostgREST meta-char can't alter
+    // or break the filter structure (filter-structure injection). Skip the
+    // blocking condition if the input doesn't pass.
+    if (criteria.dateOfBirth && /^\d{4}-\d{2}-\d{2}$/.test(criteria.dateOfBirth)) {
       blockingConditions.push(`date_of_birth.eq.${criteria.dateOfBirth}`);
     }
 
@@ -154,7 +158,7 @@ export async function findPotentialMatches(
       }
     }
 
-    if (criteria.mrn) {
+    if (criteria.mrn && /^[A-Za-z0-9._-]+$/.test(criteria.mrn)) {
       blockingConditions.push(`mrn.eq.${criteria.mrn}`);
     }
 

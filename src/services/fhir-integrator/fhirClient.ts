@@ -5,6 +5,7 @@
  * Behavior unchanged — moved verbatim from private methods (no `this` used).
  */
 
+import { auditLogger } from '../auditLogger';
 import type {
   UnknownRecord,
   FHIRBundleEntry,
@@ -44,6 +45,12 @@ export async function fetchPatientDataFromFHIR(
     `${fhirServerUrl}/Observation?patient=${patientId}&date=ge${dateParam}`,
     { headers }
   );
+  // RF-4: a non-OK sub-resource response must not look identical to "no data".
+  // We keep the graceful empty fallback (don't fail the whole import on one
+  // sub-resource) but log the gap so a server error is observable.
+  if (!observationsResponse.ok) {
+    await auditLogger.warn('FHIR_SUBRESOURCE_FETCH_FAILED', { resource: 'Observation', status: observationsResponse.status, patientId });
+  }
   const observationsJson = observationsResponse.ok ? ((await observationsResponse.json()) as UnknownRecord) : { entry: [] };
   const observations = (observationsJson.entry as unknown as FHIRBundleEntry[]) || [];
 
@@ -52,6 +59,9 @@ export async function fetchPatientDataFromFHIR(
     `${fhirServerUrl}/Immunization?patient=${patientId}`,
     { headers }
   );
+  if (!immunizationsResponse.ok) {
+    await auditLogger.warn('FHIR_SUBRESOURCE_FETCH_FAILED', { resource: 'Immunization', status: immunizationsResponse.status, patientId });
+  }
   const immunizationsJson = immunizationsResponse.ok ? ((await immunizationsResponse.json()) as UnknownRecord) : { entry: [] };
   const immunizations = (immunizationsJson.entry as unknown as FHIRBundleEntry[]) || [];
 
@@ -60,6 +70,9 @@ export async function fetchPatientDataFromFHIR(
     `${fhirServerUrl}/CarePlan?patient=${patientId}&status=active,on-hold`,
     { headers }
   );
+  if (!carePlansResponse.ok) {
+    await auditLogger.warn('FHIR_SUBRESOURCE_FETCH_FAILED', { resource: 'CarePlan', status: carePlansResponse.status, patientId });
+  }
   const carePlansJson = carePlansResponse.ok ? ((await carePlansResponse.json()) as UnknownRecord) : { entry: [] };
   const carePlans = (carePlansJson.entry as unknown as FHIRBundleEntry[]) || [];
 
