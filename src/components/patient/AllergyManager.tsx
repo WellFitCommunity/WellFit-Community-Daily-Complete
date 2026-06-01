@@ -57,7 +57,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
 
     const allergyData = {
       ...formData,
-      patient_id: userId,
+      // The table identity column is user_id (NOT patient_id — that column does not exist).
       user_id: userId,
       recorded_date: new Date().toISOString().split('T')[0],
     };

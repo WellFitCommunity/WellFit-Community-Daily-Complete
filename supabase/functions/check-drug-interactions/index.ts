@@ -160,7 +160,7 @@ serve(async (req) => {
       // Check cache (bidirectional)
       const { data: cached, error: cacheError } = await supabase
         .from("drug_interaction_cache")
-        .select("*")
+        .select("has_interaction, severity, interaction_description")
         .or(
           `and(drug_a_rxcui.eq.${medication_rxcui},drug_b_rxcui.eq.${activeRxcui}),and(drug_a_rxcui.eq.${activeRxcui},drug_b_rxcui.eq.${medication_rxcui})`
         )
@@ -267,7 +267,11 @@ serve(async (req) => {
       interactions_found: interactions.length,
       highest_severity: interactions.length > 0
         ? interactions.reduce((max, i) => {
-            const severityOrder = { high: 3, moderate: 2, low: 1, "n/a": 0 };
+            // contraindicated is the MOST dangerous class and MUST rank highest.
+            // Omitting it (the prior bug) made it fall through `|| 0` and rank lowest,
+            // so a lone contraindicated pair logged as "n/a". Severity strings are
+            // lowercased upstream (see severity.toLowerCase()).
+            const severityOrder = { contraindicated: 4, high: 3, moderate: 2, low: 1, "n/a": 0 };
             return (severityOrder[i.severity as keyof typeof severityOrder] || 0) >
                    (severityOrder[max as keyof typeof severityOrder] || 0)
               ? i.severity

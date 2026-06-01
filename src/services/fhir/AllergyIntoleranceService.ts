@@ -21,8 +21,8 @@ export const AllergyIntoleranceService = {
 
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
-      .eq('patient_id', patientId)
+      .select('id, patient_id:user_id, allergen_type, allergen_name, allergen_code, allergen_code_system, type, clinical_status, verification_status, criticality, severity, reaction_manifestation, reaction_description, onset_date, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
+      .eq('user_id', patientId)
       .order('criticality', { ascending: false, nullsFirst: false })
       .order('allergen_name');
 
@@ -59,8 +59,8 @@ export const AllergyIntoleranceService = {
 
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
-      .eq('patient_id', patientId)
+      .select('id, patient_id:user_id, allergen_type, allergen_name, allergen_code, allergen_code_system, type, clinical_status, verification_status, criticality, severity, reaction_manifestation, reaction_description, onset_date, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
+      .eq('user_id', patientId)
       .eq('allergen_type', allergenType)
       .eq('clinical_status', 'active')
       .order('criticality', { ascending: false, nullsFirst: false });
@@ -79,8 +79,8 @@ export const AllergyIntoleranceService = {
 
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
-      .eq('patient_id', patientId)
+      .select('id, patient_id:user_id, allergen_type, allergen_name, allergen_code, allergen_code_system, type, clinical_status, verification_status, criticality, severity, reaction_manifestation, reaction_description, onset_date, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
+      .eq('user_id', patientId)
       .eq('clinical_status', 'active')
       .eq('criticality', 'high')
       .order('allergen_name');
@@ -110,10 +110,16 @@ export const AllergyIntoleranceService = {
 
   // Create new allergy
   async create(allergy: Record<string, unknown>) {
+    // Normalize identity to the real column: the table PK is `user_id`, not `patient_id`.
+    // Accept either from callers, strip the non-existent `patient_id` so the INSERT does
+    // not fail on an unknown column.
+    const { patient_id, ...rest } = allergy;
+    const userId = (allergy.user_id ?? patient_id) as string | undefined;
+    const payload = { ...rest, ...(userId ? { user_id: userId } : {}) };
+
     // HIPAA §164.312(b): Log PHI write
-    const patientId = allergy.patient_id as string | undefined;
-    if (patientId) {
-      await auditLogger.phi('ALLERGY_CREATE', patientId, {
+    if (userId) {
+      await auditLogger.phi('ALLERGY_CREATE', userId, {
         resourceType: 'AllergyIntolerance',
         operation: 'create',
         allergenName: allergy.allergen_name as string | undefined,
@@ -122,8 +128,8 @@ export const AllergyIntoleranceService = {
 
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .insert([allergy])
-      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
+      .insert([payload])
+      .select('id, patient_id:user_id, allergen_type, allergen_name, allergen_code, allergen_code_system, type, clinical_status, verification_status, criticality, severity, reaction_manifestation, reaction_description, onset_date, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -132,11 +138,13 @@ export const AllergyIntoleranceService = {
 
   // Update allergy
   async update(id: string, updates: Record<string, unknown>) {
+    // Drop the non-existent `patient_id` key so the UPDATE doesn't fail on an unknown column.
+    const { patient_id: _ignored, ...cleanUpdates } = updates;
     const { data, error } = await supabase
       .from('allergy_intolerances')
-      .update(updates)
+      .update(cleanUpdates)
       .eq('id', id)
-      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
+      .select('id, patient_id:user_id, allergen_type, allergen_name, allergen_code, allergen_code_system, type, clinical_status, verification_status, criticality, severity, reaction_manifestation, reaction_description, onset_date, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -152,7 +160,7 @@ export const AllergyIntoleranceService = {
         clinical_status: 'inactive'
       })
       .eq('id', id)
-      .select('id, patient_id, allergen_type, allergen_name, allergen_code, allergen_code_system, clinical_status, verification_status, criticality, severity, reaction_description, type, category, reaction, onset_datetime, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
+      .select('id, patient_id:user_id, allergen_type, allergen_name, allergen_code, allergen_code_system, type, clinical_status, verification_status, criticality, severity, reaction_manifestation, reaction_description, onset_date, last_occurrence_date, recorded_by, recorded_date, notes, created_at, updated_at')
       .single();
 
     if (error) throw error;

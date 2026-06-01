@@ -426,7 +426,7 @@ async function analyzeAndScore(
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      return buildAssessmentFromAI(assessmentId, patientContext, assessorId, context, parsed);
+      return buildAssessmentFromAI(assessmentId, patientContext, assessorId, context, parsed, ruleBasedScore);
     }
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
@@ -723,25 +723,53 @@ function buildAssessment(
   };
 }
 
+// Severity ordering — the AI may RAISE escalation but must never lower it below the
+// objective rule-based floor. Higher index = more severe.
+const ESCALATION_CATEGORY_ORDER: ReadonlyArray<EscalationScore["escalationCategory"]> = [
+  "none", "monitor", "notify", "escalate", "emergency",
+];
+
+function maxEscalationCategory(
+  a: EscalationScore["escalationCategory"],
+  b: EscalationScore["escalationCategory"],
+): EscalationScore["escalationCategory"] {
+  return ESCALATION_CATEGORY_ORDER.indexOf(a) >= ESCALATION_CATEGORY_ORDER.indexOf(b) ? a : b;
+}
+
 function buildAssessmentFromAI(
   assessmentId: string,
   context: PatientContext,
   assessorId: string,
   assessmentContext: string,
-  aiResponse: Record<string, unknown>
+  aiResponse: Record<string, unknown>,
+  ruleBasedScore: RuleBasedResult
 ): EscalationScore {
+  // FAIL-SAFE: a malformed/empty AI response must not downgrade a patient the rule
+  // engine already flagged. Floor the AI values at the objective rule-based result,
+  // and keep the rule-based factors (objective vital/lab triggers) rather than dropping
+  // them. The AI can only ADD severity/nuance on top of the deterministic floor.
+  const aiScoreRaw = aiResponse.overallEscalationScore;
+  const aiScore = typeof aiScoreRaw === "number" && Number.isFinite(aiScoreRaw)
+    ? aiScoreRaw
+    : ruleBasedScore.score;
+  const aiCategory = ESCALATION_CATEGORY_ORDER.includes(
+    aiResponse.escalationCategory as EscalationScore["escalationCategory"],
+  )
+    ? (aiResponse.escalationCategory as EscalationScore["escalationCategory"])
+    : ruleBasedScore.escalationCategory;
+
   return {
     assessmentId,
     patientId: context.patientId,
     assessorId,
     assessmentDate: new Date().toISOString(),
     context: assessmentContext,
-    overallEscalationScore: (aiResponse.overallEscalationScore as number) || 0,
+    overallEscalationScore: Math.max(aiScore, ruleBasedScore.score),
     confidenceLevel: (aiResponse.confidenceLevel as number) || 0.7,
-    escalationCategory: (aiResponse.escalationCategory as EscalationScore["escalationCategory"]) || "none",
+    escalationCategory: maxEscalationCategory(aiCategory, ruleBasedScore.escalationCategory),
     urgencyLevel: (aiResponse.urgencyLevel as EscalationScore["urgencyLevel"]) || "routine",
     clinicalIndicators: (aiResponse.clinicalIndicators as ClinicalIndicator[]) || [],
-    escalationFactors: [],
+    escalationFactors: ruleBasedScore.factors,
     protectiveFactors: [],
     overallTrend: (aiResponse.overallTrend as EscalationScore["overallTrend"]) || "stable",
     trendConfidence: (aiResponse.trendConfidence as number) || 0.7,
