@@ -42,14 +42,19 @@ export async function verifyTwoFactorAuth(
       });
     }
 
-    // In production, call actual TFA provider API here
-    // For now, simulate validation (token must be 6+ digits)
-    if (!/^\d{6,8}$/.test(token)) {
-      return success({ valid: false, reason: 'Invalid token format' });
-    }
-
-    // Simulate successful verification
-    return success({ valid: true });
+    // DEA 21 CFR 1311.120 requires REAL two-factor verification — the TOTP code
+    // must be checked against the prescriber's enrolled secret, which lives
+    // server-side (verifying it here would mean shipping the secret to the
+    // browser). That secret check is NOT YET WIRED for EPCS, so this control
+    // FAILS CLOSED: it never returns valid until a server-side verifier
+    // (e.g. an `epcs-verify-tfa` edge function calling `verifyTotpCode`) and
+    // EPCS TOTP enrollment are in place. No simulated/auto-approve path exists.
+    // Tracked: docs/trackers/god-file-refactor-findings-tracker.md (RF-1).
+    void token;
+    return success({
+      valid: false,
+      reason: 'EPCS two-factor verification is not yet wired to a server-side TOTP verifier; controlled-substance signing is disabled until then',
+    });
   } catch (err: unknown) {
     await auditLogger.error(
       'EPCS_TFA_VERIFICATION_FAILED',

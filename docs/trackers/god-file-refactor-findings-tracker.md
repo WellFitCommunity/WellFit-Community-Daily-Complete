@@ -25,9 +25,12 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 - **File:** `src/services/epcs/twoFactor.ts:48-52`
 - **What:** `verifyTwoFactorAuth` returns `{ valid: true }` for **any** token matching `/^\d{6,8}$/`. The comment says "in production, this would call the actual 2FA provider," but nothing prevents the simulated path from running in production. For a DEA EPCS signing control (21 CFR 1311.120) this is a stub masquerading as a security control.
 - **Blast radius:** LOW today — `EPCSService` / `signPrescription` are **not wired to any live UI or hook** (only tests import the service). So failing closed will not break a real user flow.
-- **Fix (interim, defensible):** Fail closed in production. Gate the simulated branch behind an explicit dev flag (`import.meta.env.MODE !== 'production'` AND `VITE_EPCS_SIMULATE_TFA === 'true'`); in production return `{ valid: false, reason: 'TFA provider not configured' }`. Shipping auto-approve fake 2FA is strictly worse than failing closed.
-- **Fix (full, deferred — needs Maria/vendor):** Integrate a real TFA provider (RSA/Symantec/Duo) or route signing through a server-side edge function that performs real verification. Product/vendor decision.
-- **Acceptance:** in `production` mode the function never returns `valid:true` from the simulated path; a unit test asserts production fail-closed; dev/test behavior unchanged.
+- **Fix DONE (interim, 2026-06-01):** Removed the simulation entirely. `verifyTwoFactorAuth` now **fails closed unconditionally** — always returns `{ valid: false, reason: '...not yet wired...' }`. No simulated/auto-approve path exists in any mode. (Maria's call: no simulation, real validation or nothing.)
+- **Fix (full — REAL verification, needs Maria go-ahead):** Real TOTP verification must run server-side (the prescriber's secret can't be in the browser). The machinery already exists: `verifyTotpCode(secret, code)` in `supabase/functions/_shared/crypto.ts`, secrets in `mfa_enrollment.totp_secret` (and `super_admin_users.totp_secret`), pattern in `envision-totp-verify`. Build:
+  1. New edge function `epcs-verify-tfa` (Tier-3 "ask first"): authenticate caller, look up the prescriber's enrolled TOTP secret, run `verifyTotpCode`, audit, return valid/invalid. Rate-limited.
+  2. Browser `verifyTwoFactorAuth` invokes that edge function instead of failing closed.
+  - **Two decisions only Maria can make:** (a) which identity store holds the EPCS prescriber's TOTP secret — `epcs_provider_registrations.provider_id` is a bare UUID with no FK; is it `auth.users.id` with `mfa_enrollment`, or a separate EPCS enrollment? (b) do EPCS prescribers enroll via the existing MFA flow or a dedicated EPCS enrollment?
+- **Acceptance (full):** signing a Schedule II Rx requires a valid live TOTP code verified server-side against the prescriber's enrolled secret; wrong/expired codes are rejected; every attempt audited.
 
 ### RF-2 — `getEPCSStats` signedCount operator-precedence bug
 - **File:** `src/services/epcs/stats.ts:58`
