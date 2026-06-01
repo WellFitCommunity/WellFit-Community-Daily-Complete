@@ -4,7 +4,7 @@
 // MCP-1 hardening (2026-04-11): adds safety prompt + sanitizeClinicalInput + strictDeidentify.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createUserClient, createAdminClient } from '../_shared/supabaseClient.ts';
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.20.9?target=deno";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from '../_shared/auditLogger.ts';
 import { SONNET_MODEL } from '../_shared/models.ts';
