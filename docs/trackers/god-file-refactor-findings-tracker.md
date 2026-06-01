@@ -86,7 +86,7 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 - **File:** `src/services/claude/formatters.ts:156` (`analysis.match(/(LOW|MODERATE|HIGH|CRITICAL)/i)`)
 - **What:** clinical risk level + risk factors + recommendations are extracted from free-text LLM output via regex + bullet heuristics. Brittle; exactly the pattern Rule #16 (structured AI output) exists to eliminate.
 - **LIVE PATH — confirmed used (2026-06-01):** `analyzeRiskAssessment` is called from `src/components/admin/RiskAssessmentForm.tsx:219`. A clinician using that form sees a risk level that was regex-scraped from prose (defaults to 'MODERATE' on a parse miss). This is NOT dead code — it matters.
-- **Status: SCHEDULED (own scoped session), not a tail-of-session bolt-on.** Engineering opinion: a rushed migration risks a half-done structured-output path on a clinical surface. Do it properly:
+- **Status: CODE COMPLETE + TESTED (2026-06-01, commit `3fddcd67`) — DEPLOY PENDING.** Migrated to forced tool_use (`RISK_ASSESSMENT_TOOL` + `parseStructuredRiskAssessment`); `claude-chat` edge fn forwards `tools`/`tool_choice` (additive); gated call core extracted to `claude/callEngine.ts` (kept claudeService < 600). On an unparseable/missing payload `analyzeRiskAssessment` now returns `lowConfidence:true` (manual review) — **no silent MODERATE default.** 44 tests green (6 new deletion-tests on the validator). **One step left: redeploy `claude-chat`** (`npx supabase functions deploy claude-chat`) — until then the new client path **fails safe** to low-confidence (the old deployed fn ignores `tools` → no tool_use block → null → low-confidence fallback). Live "valid code → structured result" verification needs an authenticated admin on RiskAssessmentForm. Prior design notes below retained for reference:
   1. Confirm whether `claude-chat` edge fn supports a JSON response schema (`response_format`) — if not, that's the first sub-task.
   2. Define the risk schema: `{ risk_level: enum(LOW|MODERATE|HIGH|CRITICAL), factors: string[], recommendations: string[], clinical_notes: string }`.
   3. Migrate `analyzeRiskAssessment` to consume structured fields; keep a safe fallback if the model returns malformed output (don't silently default to MODERATE — surface low-confidence).
@@ -110,9 +110,9 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 5. **RF-5** ✅ DONE — FHIR audit swallow → audited (`f4218e86`)
 6. **RF-6** ✅ DONE — MPI filter input validation (`f4218e86`)
 7. **RF-7** ✅ DONE — CDA formatter dedup → `publicHealth/cda/formatters.ts` (`589a70b6`)
-8. **RF-8** — SCHEDULED (own scoped session). Structured AI output for `parseRiskAnalysis`; **confirmed live** (RiskAssessmentForm). Not a tail-of-session bolt-on — see RF-8 entry for the sub-tasks.
+8. **RF-8** — ✅ CODE COMPLETE + TESTED (`3fddcd67`); **deploy of `claude-chat` pending** (fail-safe until then). Structured tool_use output replaces the regex scraper on the live RiskAssessmentForm path.
 9. **RF-9** — ✅ ACCEPTED / WON'T-FIX. Lazy singletons: high churn, ~zero benefit; declined by engineering judgment.
 
-**Final disposition (every finding has a decision):** RF-2/3/4/5/6/7 fixed · RF-1 interim fixed (fail-closed), full verifier PARKED (EPCS unused) · RF-8 SCHEDULED (live clinical path — own session) · RF-9 ACCEPTED/won't-fix. The only finding still warranting code work is **RF-8**.
+**Final disposition (every finding has a decision):** RF-2/3/4/5/6/7 fixed · RF-1 interim fixed (fail-closed), full verifier PARKED (EPCS unused) · RF-8 code complete + tested, `claude-chat` deploy pending (fail-safe meanwhile) · RF-9 ACCEPTED/won't-fix. All 9 findings now resolved or dispositioned; the only open action is the `claude-chat` redeploy for RF-8.
 
 Each fix verified: scoped typecheck + lint + affected test suite.
