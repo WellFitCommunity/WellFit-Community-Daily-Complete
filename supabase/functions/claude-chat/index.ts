@@ -4,7 +4,7 @@
 // MCP-1 hardening (2026-04-11): adds safety prompt + sanitizeClinicalInput + strictDeidentify.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createUserClient, createAdminClient } from '../_shared/supabaseClient.ts';
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.63.1?target=deno";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.20.9?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from '../_shared/auditLogger.ts';
 import { SONNET_MODEL } from '../_shared/models.ts';
@@ -318,22 +318,24 @@ serve(async (req) => {
     const enforcedMaxTokens = Math.min(max_tokens || 4000, MAX_TOKENS_CEILING);
 
     // Call Claude API with hardened system prompt + sanitized messages.
-    // The cast to the SDK's expected MessageParam[] type is at the SDK boundary —
-    // sanitizeMessages preserves the role/content shape Anthropic accepts.
+    //
+    // `tools` / `tool_choice` are forwarded for structured output (forced tool_use).
+    // The pinned SDK (0.20.9) predates `tools` on the stable Messages params type, but
+    // these are spread in as optional extras — spreads bypass excess-property checks,
+    // and at runtime the SDK serializes the body as-is, so the fields reach the
+    // /v1/messages endpoint (which supports tools regardless of SDK typing). The inline
+    // object literal is kept (vs. a pre-built cast object) so overload resolution still
+    // picks the non-streaming Message return type. sanitizeMessages preserves the
+    // role/content shape Anthropic accepts.
     const response = await anthropic.messages.create({
       model: modelUsed,
       max_tokens: enforcedMaxTokens,
       system: finalSystem,
       messages: sanitizedMessages as unknown as Parameters<typeof anthropic.messages.create>[0]['messages'],
       ...(temperature !== undefined ? { temperature } : {}),
-      // Optional structured-output passthrough (forced tool_use). Only forwarded
-      // when the caller supplies them; otherwise the call is unchanged.
-      ...(Array.isArray(tools) && tools.length > 0
-        ? { tools: tools as unknown as Parameters<typeof anthropic.messages.create>[0]['tools'] }
-        : {}),
-      ...(tool_choice
-        ? { tool_choice: tool_choice as unknown as Parameters<typeof anthropic.messages.create>[0]['tool_choice'] }
-        : {}),
+      // Only forwarded when the caller supplies them; otherwise the call is unchanged.
+      ...(Array.isArray(tools) && tools.length > 0 ? { tools } : {}),
+      ...(tool_choice ? { tool_choice } : {}),
     });
 
     const responseTime = Date.now() - startTime;
