@@ -11,11 +11,11 @@
 |--------|------:|----------------------|
 | 600–799 lines | 129 | Easiest — extract one cohesive sub-module |
 | 800–999 lines | 40 | Service + 2–3 helper modules |
-| 1000–1499 lines | 10 | Real architectural decomposition |
+| 1000–1499 lines | 9 | Real architectural decomposition |
 | 1500+ lines | 0 | (none) |
-| **TOTAL** | **179** | — |
+| **TOTAL** | **178** | — |
 
-By surface: **160** in `src/` · **19** in `supabase/functions/`. (Was 181/162 before `readmissionRiskPredictor.ts` + `healthcareIntegrationsService.ts` were decomposed.)
+By surface: **159** in `src/` · **19** in `supabase/functions/`. (Was 181/162 before `readmissionRiskPredictor.ts`, `healthcareIntegrationsService.ts`, and `hospitalWorkforceService.ts` were decomposed.)
 
 **Already decomposed (2026-05-29, no longer in this list):** `bulk-export/index.ts` (868→175), `ccda-export/index.ts` (836→6 modules), `src/services/ai/readmissionRiskPredictor.ts` (1340→487, 5 modules in `readmission-predictor/`).
 
@@ -31,7 +31,7 @@ By surface: **160** in `src/` · **19** in `supabase/functions/`. (Was 181/162 b
 |--:|------:|:----:|:-------:|------|
 | ~~1~~ | ~~1340~~ | ✅ | src | ~~`src/services/ai/readmissionRiskPredictor.ts`~~ — DONE 2026-05-29 (→487, 5 modules) |
 | ~~2~~ | ~~1258~~ | ✅ | src | ~~`src/services/healthcareIntegrationsService.ts`~~ — DONE 2026-06-01 (→93, 4 domain modules) |
-| 3 | 1217 | 🔴 | src | `src/services/hospitalWorkforceService.ts` |
+| ~~3~~ | ~~1217~~ | ✅ | src | ~~`src/services/hospitalWorkforceService.ts`~~ — DONE 2026-06-01 (→151, 6 modules) |
 | 4 | 1147 | 🔴 | src | `src/services/publicHealth/antimicrobialSurveillanceService.ts` |
 | 5 | 1134 | 🔴 | src | `src/services/epcsService.ts` |
 | 6 | 1119 | 🔴 | src | `src/services/publicHealth/ecrService.ts` |
