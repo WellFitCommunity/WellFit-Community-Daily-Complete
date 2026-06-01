@@ -1,6 +1,6 @@
 # God File Decomposition Tracker
 
-> **Last Updated:** 2026-06-01 (Tier 1 #1–#6 DONE: #6 `ecrService.ts` 1119→65; #5 `epcsService.ts` 1134→94; #4 `antimicrobialSurveillanceService.ts` 1147→78; #3 `hospitalWorkforceService.ts` 1217→151; #2 `healthcareIntegrationsService.ts` 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29)
+> **Last Updated:** 2026-06-01 (Tier 1 #1–#7 DONE: #7 `claudeService.ts` 1100→558; #6 `ecrService.ts` 1119→65; #5 `epcsService.ts` 1134→94; #4 `antimicrobialSurveillanceService.ts` 1147→78; #3 `hospitalWorkforceService.ts` 1217→151; #2 `healthcareIntegrationsService.ts` 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29)
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 > **Estimated Effort:** ~40–60 hours across 15–20 sessions (spread over months — not a sprint)
@@ -63,7 +63,7 @@ These are the biggest offenders. Each one's decomposition unblocks several small
 | 4 | `src/services/publicHealth/antimicrobialSurveillanceService.ts` | ~~1147~~ → 78 | Public health | **DONE** (2026-06-01) — 4 modules in `antimicrobial-surveillance/` (types, constants, cdaDocuments, operations), all <600 (largest 451); main file re-exports all named fns + types + the aggregate object, import paths unchanged; existing 16-test suite green through the re-export path |
 | 5 | `src/services/epcsService.ts` | ~~1134~~ → 94 | EPCS | **DONE** (2026-06-01) — 7 modules in `epcs/` (types, helpers, providerRegistration, prescriptions, twoFactor, audit, stats), all <600 (largest 438); main file re-exports all named fns + types + the aggregate object, import paths unchanged; existing 15-test suite green through the re-export path |
 | 6 | `src/services/publicHealth/ecrService.ts` | ~~1119~~ → 65 | Public health | **DONE** (2026-06-01) — 4 modules in `ecr/` (types, constants, eicrDocument, operations), all <600 (largest 486); main file re-exports public types + generateEICRDocument + 7 ops + aggregate object, import paths unchanged; existing 7-test suite green through the re-export path |
-| 7 | `src/services/claudeService.ts` | 1100 | AI core | TODO |
+| 7 | `src/services/claudeService.ts` | ~~1100~~ → 558 | AI core | **DONE** (2026-06-01) — singleton class + API kept identical; extracted 7 modules to `claude/` (errors, rateLimiter, costTracker, circuitBreaker, transport, prompts, formatters), all <600; pure private methods (prompt builders, formatters, callEdgeFunction) became free functions, `this.X` rewired to imports; errors + types re-exported so all 18 importers unchanged; existing 38-test suite green |
 | 8 | `src/services/fhirInteroperabilityIntegrator.ts` | 1081 | FHIR | TODO |
 | 9 | `src/services/mcp/mcpHL7X12Client.ts` | 1017 | MCP client | TODO |
 | 10 | `src/services/mpiMatchingService.ts` | 1010 | MPI | TODO |
