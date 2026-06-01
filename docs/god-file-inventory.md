@@ -11,11 +11,11 @@
 |--------|------:|----------------------|
 | 600–799 lines | 129 | Easiest — extract one cohesive sub-module |
 | 800–999 lines | 40 | Service + 2–3 helper modules |
-| 1000–1499 lines | 5 | Real architectural decomposition |
+| 1000–1499 lines | 4 | Real architectural decomposition |
 | 1500+ lines | 0 | (none) |
-| **TOTAL** | **174** | — |
+| **TOTAL** | **173** | — |
 
-By surface: **155** in `src/` · **19** in `supabase/functions/`. (Was 181/162 before 7 Tier-1 services — `readmissionRiskPredictor.ts`, `healthcareIntegrationsService.ts`, `hospitalWorkforceService.ts`, `antimicrobialSurveillanceService.ts`, `epcsService.ts`, `ecrService.ts`, `claudeService.ts` — were decomposed.)
+By surface: **154** in `src/` · **19** in `supabase/functions/`. (Was 181/162 before 8 Tier-1 services — `readmissionRiskPredictor.ts`, `healthcareIntegrationsService.ts`, `hospitalWorkforceService.ts`, `antimicrobialSurveillanceService.ts`, `epcsService.ts`, `ecrService.ts`, `claudeService.ts`, `fhirInteroperabilityIntegrator.ts` — were decomposed.)
 
 **Already decomposed (2026-05-29, no longer in this list):** `bulk-export/index.ts` (868→175), `ccda-export/index.ts` (836→6 modules), `src/services/ai/readmissionRiskPredictor.ts` (1340→487, 5 modules in `readmission-predictor/`).
 
@@ -37,7 +37,7 @@ By surface: **155** in `src/` · **19** in `supabase/functions/`. (Was 181/162 b
 | ~~6~~ | ~~1119~~ | ✅ | src | ~~`src/services/publicHealth/ecrService.ts`~~ — DONE 2026-06-01 (→65, 4 modules) |
 | 7 | 1110 | 🔴 | src | `src/components/admin/TemplateMaker.tsx` |
 | ~~8~~ | ~~1100~~ | ✅ | src | ~~`src/services/claudeService.ts`~~ — DONE 2026-06-01 (→558, 7 modules) |
-| 9 | 1081 | 🔴 | src | `src/services/fhirInteroperabilityIntegrator.ts` |
+| ~~9~~ | ~~1081~~ | ✅ | src | ~~`src/services/fhirInteroperabilityIntegrator.ts`~~ — DONE 2026-06-01 (→512, 5 modules) |
 | 10 | 1017 | 🔴 | src | `src/services/mcp/mcpHL7X12Client.ts` |
 | 11 | 1010 | 🔴 | src | `src/services/mpiMatchingService.ts` |
 | 12 | 1004 | 🔴 | edge | `supabase/functions/ai-treatment-pathway/index.ts` |
