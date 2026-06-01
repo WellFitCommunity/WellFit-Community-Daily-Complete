@@ -11,11 +11,11 @@
 |--------|------:|----------------------|
 | 600–799 lines | 129 | Easiest — extract one cohesive sub-module |
 | 800–999 lines | 40 | Service + 2–3 helper modules |
-| 1000–1499 lines | 7 | Real architectural decomposition |
+| 1000–1499 lines | 6 | Real architectural decomposition |
 | 1500+ lines | 0 | (none) |
-| **TOTAL** | **176** | — |
+| **TOTAL** | **175** | — |
 
-By surface: **157** in `src/` · **19** in `supabase/functions/`. (Was 181/162 before 5 Tier-1 services — `readmissionRiskPredictor.ts`, `healthcareIntegrationsService.ts`, `hospitalWorkforceService.ts`, `antimicrobialSurveillanceService.ts`, `epcsService.ts` — were decomposed.)
+By surface: **156** in `src/` · **19** in `supabase/functions/`. (Was 181/162 before 6 Tier-1 services — `readmissionRiskPredictor.ts`, `healthcareIntegrationsService.ts`, `hospitalWorkforceService.ts`, `antimicrobialSurveillanceService.ts`, `epcsService.ts`, `ecrService.ts` — were decomposed.)
 
 **Already decomposed (2026-05-29, no longer in this list):** `bulk-export/index.ts` (868→175), `ccda-export/index.ts` (836→6 modules), `src/services/ai/readmissionRiskPredictor.ts` (1340→487, 5 modules in `readmission-predictor/`).
 
@@ -34,7 +34,7 @@ By surface: **157** in `src/` · **19** in `supabase/functions/`. (Was 181/162 b
 | ~~3~~ | ~~1217~~ | ✅ | src | ~~`src/services/hospitalWorkforceService.ts`~~ — DONE 2026-06-01 (→151, 6 modules) |
 | ~~4~~ | ~~1147~~ | ✅ | src | ~~`src/services/publicHealth/antimicrobialSurveillanceService.ts`~~ — DONE 2026-06-01 (→78, 4 modules) |
 | ~~5~~ | ~~1134~~ | ✅ | src | ~~`src/services/epcsService.ts`~~ — DONE 2026-06-01 (→94, 7 modules) |
-| 6 | 1119 | 🔴 | src | `src/services/publicHealth/ecrService.ts` |
+| ~~6~~ | ~~1119~~ | ✅ | src | ~~`src/services/publicHealth/ecrService.ts`~~ — DONE 2026-06-01 (→65, 4 modules) |
 | 7 | 1110 | 🔴 | src | `src/components/admin/TemplateMaker.tsx` |
 | 8 | 1100 | 🔴 | src | `src/services/claudeService.ts` |
 | 9 | 1081 | 🔴 | src | `src/services/fhirInteroperabilityIntegrator.ts` |
