@@ -26,11 +26,17 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 - **What:** `verifyTwoFactorAuth` returns `{ valid: true }` for **any** token matching `/^\d{6,8}$/`. The comment says "in production, this would call the actual 2FA provider," but nothing prevents the simulated path from running in production. For a DEA EPCS signing control (21 CFR 1311.120) this is a stub masquerading as a security control.
 - **Blast radius:** LOW today — `EPCSService` / `signPrescription` are **not wired to any live UI or hook** (only tests import the service). So failing closed will not break a real user flow.
 - **Fix DONE (interim, 2026-06-01):** Removed the simulation entirely. `verifyTwoFactorAuth` now **fails closed unconditionally** — always returns `{ valid: false, reason: '...not yet wired...' }`. No simulated/auto-approve path exists in any mode. (Maria's call: no simulation, real validation or nothing.)
-- **Fix (full — REAL verification, needs Maria go-ahead):** Real TOTP verification must run server-side (the prescriber's secret can't be in the browser). The machinery already exists: `verifyTotpCode(secret, code)` in `supabase/functions/_shared/crypto.ts`, secrets in `mfa_enrollment.totp_secret` (and `super_admin_users.totp_secret`), pattern in `envision-totp-verify`. Build:
-  1. New edge function `epcs-verify-tfa` (Tier-3 "ask first"): authenticate caller, look up the prescriber's enrolled TOTP secret, run `verifyTotpCode`, audit, return valid/invalid. Rate-limited.
-  2. Browser `verifyTwoFactorAuth` invokes that edge function instead of failing closed.
-  - **Two decisions only Maria can make:** (a) which identity store holds the EPCS prescriber's TOTP secret — `epcs_provider_registrations.provider_id` is a bare UUID with no FK; is it `auth.users.id` with `mfa_enrollment`, or a separate EPCS enrollment? (b) do EPCS prescribers enroll via the existing MFA flow or a dedicated EPCS enrollment?
-- **Acceptance (full):** signing a Schedule II Rx requires a valid live TOTP code verified server-side against the prescriber's enrolled secret; wrong/expired codes are rejected; every attempt audited.
+- **Full verifier — PARKED 2026-06-01 (Maria: EPCS roadmap need is unconfirmed).** The dangerous part (auto-approve) is already gone; **fail-closed is the correct resting state for an unused, DEA-regulated feature.** Do NOT build/deploy the server-side verifier until there's a confirmed product need (a pilot that actually e-prescribes Schedule II–V drugs + intent to pursue ONC (b)(3) / DEA EPCS certification). An `epcs-verify-tfa` edge function was drafted during this session and **deleted uncommitted** (no point shipping an undeployed verifier for a feature with zero usage).
+
+  **Live-DB facts confirmed via MCP (2026-06-01, project `xkybsjnvuohpqpbkikyn`):** `epcs_provider_registrations` has **0 rows**; **no app code creates registrations** (not wired to any UI); `mfa_enrollment` (3 rows, 0 with active TOTP) is the per-user TOTP store, keyed `user_id → auth.users(id)`, secret stored as **plaintext base32** in `totp_secret`.
+
+  **Design captured for when EPCS goes live (so it needn't be re-investigated):**
+  1. New edge function `epcs-verify-tfa` (Tier-3 "ask first" + deploy): JWT-verify the caller (`createUserClient` + `getUser`); **derive the prescriber from `auth.uid()`, never trust a body-supplied id**; require an ACTIVE `epcs_provider_registrations` row where `provider_id = auth.uid()`; only `tfa_method='soft_token'` is verifiable (hard_token/biometric fail closed); read `mfa_enrollment.totp_secret` (admin client) for that user and require `mfa_enabled && mfa_method='totp'`; verify with `verifyTotpCode(secret, code)` from `_shared/crypto.ts` (same path `admin-totp-verify` / `envision-totp-verify` use); rate-limit 5/5min (`checkRateLimit`); audit every attempt to `audit_logs` (`EPCS_TFA_VERIFIED` / `EPCS_TFA_FAILED`); on success update `mfa_enrollment.last_verified`.
+  2. Browser `src/services/epcs/twoFactor.ts#verifyTwoFactorAuth` invokes that edge function instead of failing closed (passes only `{ code }`; identity comes from the JWT).
+  3. **Identity decision (resolved by evidence):** `provider_id` = `auth.users.id`, verify against `mfa_enrollment` — it's the general per-user TOTP store; safe-by-construction (no enrollment → fail closed, never approve).
+  4. **Testing constraint:** a full "valid code → valid:true" live round-trip needs a real authenticated test prescriber — can't seed one (inserting `auth.users` via SQL is Tier-4 forbidden; can't mint a JWT for an arbitrary user). Prove instead via a Deno unit test (`verifyTotpCode` with a generated live code → true; wrong → false) + live `unauth → 401` on the deployed function.
+  5. **Out of code scope:** real DEA EPCS also requires NIST IAL2 identity proofing + a third-party EPCS certification audit — product/compliance work beyond this fix.
+- **Acceptance (when built):** signing a Schedule II Rx requires a valid live TOTP code verified server-side against the prescriber's enrolled secret; wrong/expired codes rejected; every attempt audited.
 
 ### RF-2 — `getEPCSStats` signedCount operator-precedence bug
 - **File:** `src/services/epcs/stats.ts:58`
@@ -93,7 +99,7 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 ## Execution order / status (2026-06-01)
 
 1. **RF-2** ✅ DONE — `fix(epcs): getEPCSStats precedence` (`e0064b18`)
-2. **RF-1** ✅ interim DONE — EPCS 2FA now fails closed, no simulation (`8055942d`). **Full fix (real `epcs-verify-tfa` edge function) APPROVED by Maria but BLOCKED:** Supabase MCP allowlist lacks WellFit (`xkybsjnvuohpqpbkikyn`) — can't confirm `provider_id` semantics or live-test. Maria adding WellFit to MCP, then: confirm provider_id→mfa_enrollment live, build edge fn (`verifyTotpCode` against `mfa_enrollment.totp_secret`), wire browser call, deploy, live-verify with a real TOTP code.
+2. **RF-1** ✅ interim DONE — EPCS 2FA now fails closed, no simulation (`8055942d`). **Full verifier PARKED 2026-06-01** — Maria: EPCS product need unconfirmed (0 registrations, not wired, not on roadmap). Fail-closed is the correct resting state; full design captured in the RF-1 entry above for if/when EPCS goes live. No build, no deploy.
 3. **RF-3** ✅ DONE — budget alert no-op → real `auditLogger.warn` (`f4218e86`)
 4. **RF-4** ✅ DONE — FHIR sub-resource silent drop → warn (`f4218e86`)
 5. **RF-5** ✅ DONE — FHIR audit swallow → audited (`f4218e86`)
@@ -102,6 +108,6 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 8. **RF-8** — DEFERRED (feature: structured AI output for parseRiskAnalysis; needs `claude-chat` edge fn schema support + Maria).
 9. **RF-9** — DEFERRED (low value: lazy singleton init; accept-or-defer).
 
-**Open:** RF-1 full (real EPCS TOTP verifier) — pending WellFit added to Supabase MCP allowlist. RF-8, RF-9 — deferred.
+**Open:** RF-1 full (real EPCS TOTP verifier) — PARKED until EPCS has a confirmed product need; full design captured above. RF-8 (structured AI output), RF-9 (lazy singletons) — deferred.
 
 Each fix verified: scoped typecheck + lint + affected test suite.
