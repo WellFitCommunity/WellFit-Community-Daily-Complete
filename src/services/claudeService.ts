@@ -7,8 +7,10 @@
 //   - costTracker.ts   budget enforcement + cost estimation
 //   - circuitBreaker.ts API-resilience circuit breaker
 //   - transport.ts     callEdgeFunction (claude-chat proxy) + EdgeFunctionResponse
+//   - callEngine.ts    gated request core (rate limit/budget/circuit) + text & structured calls
 //   - prompts.ts       prompt builders
-//   - formatters.ts    prompt-context formatters + risk-analysis parser
+//   - formatters.ts    prompt-context formatters
+//   - riskAssessmentTool.ts  RF-8 structured-output tool + validator
 // This file keeps the ClaudeService singleton + its public API unchanged; the
 // error classes and Claude types are re-exported below so import paths are stable.
 import { auditLogger } from './auditLogger';
@@ -23,12 +25,13 @@ import {
   ServiceStatus,
   CostInfo
 } from '../types/claude';
-import { modelSelector, createModelCriteria } from '../utils/claudeModelSelection';
+import { createModelCriteria } from '../utils/claudeModelSelection';
 import { ClaudeServiceError, ClaudeInitializationError } from './claude/errors';
 import { RateLimiter } from './claude/rateLimiter';
 import { CostTracker } from './claude/costTracker';
 import { CircuitBreaker } from './claude/circuitBreaker';
 import { callEdgeFunction } from './claude/transport';
+import { ClaudeCallEngine } from './claude/callEngine';
 import {
   createSeniorHealthPrompt,
   createMedicalAnalyticsPrompt,
@@ -42,8 +45,8 @@ import {
   formatAssessmentForClaude,
   formatClinicalContextForClaude,
   formatUserContextForClaude,
-  parseRiskAnalysis,
 } from './claude/formatters';
+import { RISK_ASSESSMENT_TOOL, parseStructuredRiskAssessment } from './claude/riskAssessmentTool';
 
 // Re-export error classes (public surface preserved)
 export { ClaudeServiceError, ClaudeInitializationError } from './claude/errors';
@@ -54,6 +57,7 @@ class ClaudeService {
   private rateLimiter: RateLimiter;
   private costTracker: CostTracker;
   private circuitBreaker: CircuitBreaker;
+  private engine: ClaudeCallEngine;
   private isInitialized = false;
   private lastHealthCheck?: Date;
   private defaultModel: ClaudeModel = ClaudeModel.SONNET_3_5; // Using latest model
@@ -62,6 +66,14 @@ class ClaudeService {
     this.rateLimiter = new RateLimiter();
     this.costTracker = new CostTracker();
     this.circuitBreaker = new CircuitBreaker();
+    // The call engine owns the gated request path (rate limit / budget / circuit
+    // breaker). It re-checks init live via the callback so resetService() works.
+    this.engine = new ClaudeCallEngine(
+      this.rateLimiter,
+      this.costTracker,
+      this.circuitBreaker,
+      () => this.ensureInitialized()
+    );
   }
 
   public static getInstance(): ClaudeService {
@@ -192,7 +204,7 @@ class ClaudeService {
     const prompt = createSeniorHealthPrompt(question, context.healthContext);
     const criteria = createModelCriteria(context.userRole, RequestType.HEALTH_QUESTION, question);
 
-    return this.generateResponse(prompt, {
+    return this.engine.generateResponse(prompt, {
       ...context,
       requestType: RequestType.HEALTH_QUESTION
     }, criteria);
@@ -209,7 +221,7 @@ class ClaudeService {
     const prompt = createMedicalAnalyticsPrompt(analysisRequest, healthData);
     const criteria = createModelCriteria(context.userRole, RequestType.ANALYTICS, analysisRequest);
 
-    return this.generateResponse(prompt, {
+    return this.engine.generateResponse(prompt, {
       ...context,
       requestType: RequestType.ANALYTICS
     }, criteria);
@@ -226,7 +238,7 @@ class ClaudeService {
     const prompt = createFHIRAnalysisPrompt(fhirData, analysisType);
     const criteria = createModelCriteria(context.userRole, RequestType.FHIR_ANALYSIS, JSON.stringify(fhirData));
 
-    return this.generateResponse(prompt, {
+    return this.engine.generateResponse(prompt, {
       ...context,
       requestType: RequestType.FHIR_ANALYSIS
     }, criteria);
@@ -295,13 +307,15 @@ class ClaudeService {
     riskFactors: string[];
     recommendations: string[];
     clinicalNotes: string;
+    lowConfidence?: boolean;
   }> {
     if (!this.isAvailable()) {
       return {
         suggestedRiskLevel: 'MODERATE',
         riskFactors: ['Assessment needs manual review'],
         recommendations: ['Manual clinical evaluation required'],
-        clinicalNotes: 'AI analysis unavailable - please conduct manual assessment'
+        clinicalNotes: 'AI analysis unavailable - please conduct manual assessment',
+        lowConfidence: true
       };
     }
 
@@ -317,8 +331,25 @@ class ClaudeService {
       const prompt = createRiskAssessmentPrompt(formatAssessmentForClaude(assessmentData));
       const criteria = createModelCriteria(context.userRole, RequestType.RISK_ASSESSMENT, prompt);
 
-      const response = await this.generateResponse(prompt, context, criteria);
-      return parseRiskAnalysis(response.content);
+      // RF-8: structured output via forced tool_use instead of regex-scraping
+      // risk level / factors out of free-text prose.
+      const toolInput = await this.engine.generateStructuredResponse(prompt, context, criteria, RISK_ASSESSMENT_TOOL);
+      const parsed = parseStructuredRiskAssessment(toolInput);
+
+      if (parsed) {
+        return parsed;
+      }
+
+      // Structured payload missing/invalid — surface LOW CONFIDENCE for manual
+      // review rather than silently asserting a (possibly wrong) risk level.
+      auditLogger.warn('CLAUDE_RISK_ASSESSMENT_UNPARSEABLE', { requestId: context.requestId });
+      return {
+        suggestedRiskLevel: 'MODERATE',
+        riskFactors: ['AI returned an unparseable risk assessment — manual clinical review required'],
+        recommendations: ['Manual clinical evaluation required'],
+        clinicalNotes: 'Structured risk assessment could not be parsed; flagged for manual review.',
+        lowConfidence: true
+      };
 
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Risk assessment analysis failed';
@@ -327,7 +358,8 @@ class ClaudeService {
         suggestedRiskLevel: 'MODERATE',
         riskFactors: ['AI analysis failed'],
         recommendations: ['Manual clinical review required'],
-        clinicalNotes: 'Automated analysis unavailable - please review manually'
+        clinicalNotes: 'Automated analysis unavailable - please review manually',
+        lowConfidence: true
       };
     }
   }
@@ -351,7 +383,7 @@ class ClaudeService {
       );
       const criteria = createModelCriteria(context.userRole, RequestType.CLINICAL_NOTES, prompt);
 
-      const response = await this.generateResponse(prompt, context, criteria);
+      const response = await this.engine.generateResponse(prompt, context, criteria);
       return response.content;
 
     } catch (err: unknown) {
@@ -381,7 +413,7 @@ class ClaudeService {
       );
       const criteria = createModelCriteria(context.userRole, RequestType.HEALTH_INSIGHTS, prompt);
 
-      const response = await this.generateResponse(prompt, context, criteria);
+      const response = await this.engine.generateResponse(prompt, context, criteria);
       const suggestions = response.content.split('\n').filter(line => line.trim()).slice(0, 5);
 
       return suggestions.length > 0 ? suggestions :
@@ -391,101 +423,6 @@ class ClaudeService {
       const errorMessage = err instanceof Error ? err.message : 'Health suggestions generation failed';
       auditLogger.error('Failed to generate health suggestions', errorMessage);
       return ["Keep up your daily check-ins!", "Stay hydrated throughout the day.", "Take a short walk if you feel up to it."];
-    }
-  }
-
-  /**
-   * Main response generation method with comprehensive error handling
-   */
-  private async generateResponse(
-    prompt: string,
-    context: ClaudeRequestContext,
-    criteria: { userRole: UserRole; requestType: RequestType; complexity: 'simple' | 'moderate' | 'complex' }
-  ): Promise<ClaudeResponse> {
-    this.ensureInitialized();
-
-    // Rate limiting check
-    if (!this.rateLimiter.canMakeRequest(context.userId)) {
-      const resetTime = this.rateLimiter.getResetTime(context.userId);
-      throw new ClaudeServiceError(
-        `Rate limit exceeded. Please try again after ${resetTime.toLocaleTimeString()}.`,
-        'RATE_LIMIT_EXCEEDED',
-        429,
-        undefined,
-        context.requestId
-      );
-    }
-
-    // Select appropriate model
-    const model = modelSelector.selectModel({
-      ...criteria,
-      budgetTier: 'standard'
-    });
-
-    const maxTokens = criteria.complexity === 'simple' ? 1000 :
-                     criteria.complexity === 'moderate' ? 2000 : 4000;
-
-    // Cost estimation and budget check
-    const estimatedCost = this.costTracker.estimateCost(model, prompt, maxTokens);
-
-    if (!this.costTracker.canAffordRequest(context.userId, estimatedCost)) {
-      const costInfo = this.costTracker.getCostInfo(context.userId);
-      throw new ClaudeServiceError(
-        `Budget limit reached. Monthly spend: $${costInfo.monthlySpend.toFixed(2)}/$${(costInfo.monthlySpend + costInfo.remainingBudget).toFixed(2)}`,
-        'BUDGET_EXCEEDED',
-        402,
-        undefined,
-        context.requestId
-      );
-    }
-
-    const startTime = Date.now();
-
-    try {
-      const response = await this.circuitBreaker.execute(async () => {
-        return await callEdgeFunction(
-          [{ role: 'user', content: prompt }],
-          model,
-          maxTokens
-        );
-      });
-
-      const responseTime = Date.now() - startTime;
-      const actualCost = this.costTracker.calculateCost(
-        model,
-        response.usage.input_tokens,
-        response.usage.output_tokens
-      );
-
-      // Record spending
-      this.costTracker.recordSpending(context.userId, actualCost);
-
-      // Request completion logged via auditLogger
-
-      const responseContent = response.content[0]?.type === 'text' ? response.content[0].text : '';
-
-      return {
-        content: responseContent || '',
-        model,
-        tokenUsage: {
-          inputTokens: response.usage.input_tokens,
-          outputTokens: response.usage.output_tokens
-        },
-        cost: actualCost,
-        responseTime,
-        requestId: context.requestId
-      };
-
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'API request failed';
-      auditLogger.error('Failed to generate Claude API response', errorMessage, { requestId: context.requestId });
-      throw new ClaudeServiceError(
-        'Failed to generate response from Claude API',
-        'API_REQUEST_FAILED',
-        500,
-        err,
-        context.requestId
-      );
     }
   }
 

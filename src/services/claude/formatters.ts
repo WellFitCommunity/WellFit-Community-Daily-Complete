@@ -139,50 +139,6 @@ export function formatClinicalContextForClaude(patientData: Record<string, unkno
   return parts.length > 0 ? parts.join('. ') : 'Limited patient context available';
 }
 
-export function parseRiskAnalysis(analysis: string): {
-  suggestedRiskLevel: string;
-  riskFactors: string[];
-  recommendations: string[];
-  clinicalNotes: string;
-} {
-  const lines = analysis.split('\n').filter(line => line.trim());
-
-  let suggestedRiskLevel = 'MODERATE';
-  const riskFactors: string[] = [];
-  const recommendations: string[] = [];
-  const clinicalNotes = analysis;
-
-  // Extract risk level
-  const riskMatch = analysis.match(/(LOW|MODERATE|HIGH|CRITICAL)/i);
-  if (riskMatch) {
-    suggestedRiskLevel = riskMatch[1].toUpperCase();
-  }
-
-  // Extract bullet points as risk factors and recommendations
-  lines.forEach(line => {
-    const cleanLine = line.trim();
-    if (cleanLine.match(/^[-*•]\s*.{5,}/)) {
-      const content = cleanLine.replace(/^[-*•]\s*/, '');
-      if (content.toLowerCase().includes('risk') || content.toLowerCase().includes('concern')) {
-        riskFactors.push(content);
-      } else if (content.toLowerCase().includes('recommend') || content.toLowerCase().includes('suggest')) {
-        recommendations.push(content);
-      }
-    }
-  });
-
-  // Fallbacks
-  if (riskFactors.length === 0) {
-    riskFactors.push('Assessment requires clinical review');
-  }
-  if (recommendations.length === 0) {
-    recommendations.push('Continue regular monitoring and follow-up');
-  }
-
-  return {
-    suggestedRiskLevel,
-    riskFactors: riskFactors.slice(0, 5),
-    recommendations: recommendations.slice(0, 5),
-    clinicalNotes: clinicalNotes.substring(0, 500)
-  };
-}
+// NOTE: the former `parseRiskAnalysis` regex scraper was removed in RF-8 — risk
+// assessment now uses structured tool_use output (see ./riskAssessmentTool.ts +
+// claudeService.analyzeRiskAssessment).

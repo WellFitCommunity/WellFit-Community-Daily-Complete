@@ -257,8 +257,10 @@ serve(async (req) => {
       }
     }
 
-    // Parse request body
-    const { messages, model, max_tokens, system, temperature } = await req.json();
+    // Parse request body. `tools` / `tool_choice` are optional and forwarded to
+    // Anthropic for structured output via forced tool_use (Rule #16). Backward-
+    // compatible: callers that omit them get plain text responses as before.
+    const { messages, model, max_tokens, system, temperature, tools, tool_choice } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -324,6 +326,14 @@ serve(async (req) => {
       system: finalSystem,
       messages: sanitizedMessages as unknown as Parameters<typeof anthropic.messages.create>[0]['messages'],
       ...(temperature !== undefined ? { temperature } : {}),
+      // Optional structured-output passthrough (forced tool_use). Only forwarded
+      // when the caller supplies them; otherwise the call is unchanged.
+      ...(Array.isArray(tools) && tools.length > 0
+        ? { tools: tools as unknown as Parameters<typeof anthropic.messages.create>[0]['tools'] }
+        : {}),
+      ...(tool_choice
+        ? { tool_choice: tool_choice as unknown as Parameters<typeof anthropic.messages.create>[0]['tool_choice'] }
+        : {}),
     });
 
     const responseTime = Date.now() - startTime;
