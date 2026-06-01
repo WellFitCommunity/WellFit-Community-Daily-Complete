@@ -1,6 +1,6 @@
 # God File Decomposition Tracker
 
-> **Last Updated:** 2026-05-29 (bulk-export decomposed — see row 4)
+> **Last Updated:** 2026-05-29 (Tier 1 #1 `readmissionRiskPredictor.ts` decomposed 1340→487; bulk-export earlier — see row 4)
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 > **Estimated Effort:** ~40–60 hours across 15–20 sessions (spread over months — not a sprint)
@@ -57,7 +57,7 @@ These are the biggest offenders. Each one's decomposition unblocks several small
 
 | # | File | Lines | Domain | Status |
 |---|------|-------|--------|--------|
-| 1 | `src/services/ai/readmissionRiskPredictor.ts` | 1340 | AI clinical | TODO |
+| 1 | `src/services/ai/readmissionRiskPredictor.ts` | ~~1340~~ → 487 | AI clinical | **DONE** (2026-05-29) — 5 modules in `readmission-predictor/` (types, plainLanguageExplainer, dischargeValidator, predictionPrompt, patientDataGatherer) all <600; barrel re-exports preserve all import paths; 171 tests green incl. 45 byte-identical golden tests |
 | 2 | `src/services/healthcareIntegrationsService.ts` | 1258 | Integration | TODO |
 | 3 | `src/services/hospitalWorkforceService.ts` | 1217 | Workforce | TODO |
 | 4 | `src/services/publicHealth/antimicrobialSurveillanceService.ts` | 1147 | Public health | TODO |

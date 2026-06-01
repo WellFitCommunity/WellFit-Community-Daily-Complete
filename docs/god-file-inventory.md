@@ -11,13 +11,13 @@
 |--------|------:|----------------------|
 | 600–799 lines | 129 | Easiest — extract one cohesive sub-module |
 | 800–999 lines | 40 | Service + 2–3 helper modules |
-| 1000–1499 lines | 12 | Real architectural decomposition |
+| 1000–1499 lines | 11 | Real architectural decomposition |
 | 1500+ lines | 0 | (none) |
-| **TOTAL** | **181** | — |
+| **TOTAL** | **180** | — |
 
-By surface: **162** in `src/` · **19** in `supabase/functions/`.
+By surface: **161** in `src/` · **19** in `supabase/functions/`. (Was 181/162 before `readmissionRiskPredictor.ts` was decomposed 2026-05-29.)
 
-**Already decomposed (2026-05-29, no longer in this list):** `bulk-export/index.ts` (868→175), `ccda-export/index.ts` (836→6 modules).
+**Already decomposed (2026-05-29, no longer in this list):** `bulk-export/index.ts` (868→175), `ccda-export/index.ts` (836→6 modules), `src/services/ai/readmissionRiskPredictor.ts` (1340→487, 5 modules in `readmission-predictor/`).
 
 ## Priority guide
 
@@ -29,7 +29,7 @@ By surface: **162** in `src/` · **19** in `supabase/functions/`.
 
 | # | Lines | Tier | Surface | File |
 |--:|------:|:----:|:-------:|------|
-| 1 | 1340 | 🔴 | src | `src/services/ai/readmissionRiskPredictor.ts` |
+| ~~1~~ | ~~1340~~ | ✅ | src | ~~`src/services/ai/readmissionRiskPredictor.ts`~~ — DONE 2026-05-29 (→487, 5 modules) |
 | 2 | 1258 | 🔴 | src | `src/services/healthcareIntegrationsService.ts` |
 | 3 | 1217 | 🔴 | src | `src/services/hospitalWorkforceService.ts` |
 | 4 | 1147 | 🔴 | src | `src/services/publicHealth/antimicrobialSurveillanceService.ts` |
