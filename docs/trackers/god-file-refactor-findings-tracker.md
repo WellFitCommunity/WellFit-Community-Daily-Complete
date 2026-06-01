@@ -90,15 +90,18 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 
 ---
 
-## Execution order
+## Execution order / status (2026-06-01)
 
-1. **RF-2** (stats bug — trivial, mechanical) ✅ start
-2. **RF-1** (EPCS 2FA fail-closed — defensible interim)
-3. **RF-3** (budget alert no-op → real warn)
-4. **RF-4** (FHIR silent drop → warn)
-5. **RF-5** (FHIR audit swallow → audited)
-6. **RF-6** (MPI filter validation)
-7. **RF-7** (CDA formatter dedup)
-8. **RF-8, RF-9** — DEFERRED (need Maria / feature work). Left documented above.
+1. **RF-2** ✅ DONE — `fix(epcs): getEPCSStats precedence` (`e0064b18`)
+2. **RF-1** ✅ interim DONE — EPCS 2FA now fails closed, no simulation (`8055942d`). **Full fix (real `epcs-verify-tfa` edge function) APPROVED by Maria but BLOCKED:** Supabase MCP allowlist lacks WellFit (`xkybsjnvuohpqpbkikyn`) — can't confirm `provider_id` semantics or live-test. Maria adding WellFit to MCP, then: confirm provider_id→mfa_enrollment live, build edge fn (`verifyTotpCode` against `mfa_enrollment.totp_secret`), wire browser call, deploy, live-verify with a real TOTP code.
+3. **RF-3** ✅ DONE — budget alert no-op → real `auditLogger.warn` (`f4218e86`)
+4. **RF-4** ✅ DONE — FHIR sub-resource silent drop → warn (`f4218e86`)
+5. **RF-5** ✅ DONE — FHIR audit swallow → audited (`f4218e86`)
+6. **RF-6** ✅ DONE — MPI filter input validation (`f4218e86`)
+7. **RF-7** ✅ DONE — CDA formatter dedup → `publicHealth/cda/formatters.ts` (`589a70b6`)
+8. **RF-8** — DEFERRED (feature: structured AI output for parseRiskAnalysis; needs `claude-chat` edge fn schema support + Maria).
+9. **RF-9** — DEFERRED (low value: lazy singleton init; accept-or-defer).
 
-Each fix: scoped typecheck + lint + the affected test suite, committed individually.
+**Open:** RF-1 full (real EPCS TOTP verifier) — pending WellFit added to Supabase MCP allowlist. RF-8, RF-9 — deferred.
+
+Each fix verified: scoped typecheck + lint + affected test suite.
