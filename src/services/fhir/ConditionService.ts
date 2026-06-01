@@ -35,7 +35,7 @@ export class ConditionService {
 
       const { data, error } = await supabase
         .from('fhir_conditions')
-        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, category_code, category_display, category_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, code_code, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
+        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
         .eq('patient_id', patientId)
         .order('recorded_date', { ascending: false });
 
@@ -163,7 +163,7 @@ export class ConditionService {
       const { data, error } = await supabase
         .from('fhir_conditions')
         .insert([fhirCondition])
-        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, category_code, category_display, category_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, code_code, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
+        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -191,11 +191,20 @@ export class ConditionService {
    */
   static async update(id: string, updates: Partial<Condition>): Promise<FHIRApiResponse<Condition>> {
     try {
+      // Drop convenience fields that are not real fhir_conditions columns (AV-3) so the
+      // UPDATE does not fail on unknown columns.
+      const {
+        category_code: _cc,
+        category_display: _cd,
+        category_system: _cs,
+        code_code: _kc,
+        ...cleanUpdates
+      } = updates;
       const { data, error } = await supabase
         .from('fhir_conditions')
-        .update(updates)
+        .update(cleanUpdates)
         .eq('id', id)
-        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, category_code, category_display, category_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, code_code, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
+        .select('id, fhir_id, patient_id, encounter_id, clinical_status, verification_status, category, category_coding_system, severity_code, severity_display, severity_system, code_system, code, code_display, code_text, body_site_code, body_site_display, body_site_system, onset_datetime, onset_string, abatement_datetime, abatement_string, recorded_date, recorder_id, recorder_display, asserter_id, asserter_display, note, is_primary, rank, created_at, updated_at')
         .single();
 
       if (error) throw error;

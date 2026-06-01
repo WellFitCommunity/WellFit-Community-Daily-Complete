@@ -60,7 +60,7 @@ export function normalizeCondition(condition: Condition): Condition {
 export function toFHIRCondition(condition: Partial<Condition>): Partial<Condition> {
   const normalized = { ...condition };
 
-  // Ensure FHIR array fields are populated
+  // Ensure FHIR array fields are populated from the legacy convenience fields
   if (normalized.category_code && !normalized.category) {
     normalized.category = [normalized.category_code];
   }
@@ -68,5 +68,16 @@ export function toFHIRCondition(condition: Partial<Condition>): Partial<Conditio
     normalized.code = normalized.code_code;
   }
 
-  return normalized;
+  // Drop the convenience fields that are NOT real columns on fhir_conditions
+  // (category_code/category_display/category_system/code_code) so the DB write does not
+  // fail on unknown columns. The real columns (category, category_coding_system, code)
+  // are what persist. See docs/trackers/clinical-logic-adversarial-audit-2026-06-01.md (AV-3).
+  const {
+    category_code: _cc,
+    category_display: _cd,
+    category_system: _cs,
+    code_code: _kc,
+    ...dbSafe
+  } = normalized;
+  return dbSafe;
 }
