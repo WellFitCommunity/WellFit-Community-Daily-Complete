@@ -15,6 +15,12 @@ import type {
   FHIRApiResponse,
 } from '../../types/fhir';
 
+// Explicit column list for fhir_diagnostic_reports (§9 — no SELECT *). Verified against
+// the live schema 2026-06-01; excludes the phantom category_code/category_display that
+// caused the AV-3-sister read failures.
+const REPORT_COLUMNS =
+  'id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, result_observation_ids, conclusion, conclusion_code, conclusion_code_display, presented_form_url, presented_form_title, report_priority, created_at, updated_at';
+
 export class DiagnosticReportService {
   /**
    * Get all diagnostic reports for a patient
@@ -25,7 +31,7 @@ export class DiagnosticReportService {
     try {
       const { data, error } = await supabase
         .from('fhir_diagnostic_reports')
-        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, result_observation_ids, conclusion, conclusion_code, conclusion_code_display, presented_form_url, presented_form_title, report_priority, created_at, updated_at')
+        .select(REPORT_COLUMNS)
         .eq('patient_id', patientId)
         .order('issued', { ascending: false });
 
@@ -53,11 +59,13 @@ export class DiagnosticReportService {
     limit: number = 20
   ): Promise<FHIRApiResponse<DiagnosticReport[]>> {
     try {
+      // Direct query (the get_recent_diagnostic_reports RPC does not exist in the live DB).
       const { data, error } = await supabase
-        .rpc('get_recent_diagnostic_reports', {
-          patient_id_param: patientId,
-          limit_param: limit,
-        });
+        .from('fhir_diagnostic_reports')
+        .select(REPORT_COLUMNS)
+        .eq('patient_id', patientId)
+        .order('issued', { ascending: false })
+        .limit(limit);
 
       if (error) throw error;
       return { success: true, data: data || [] };
@@ -149,7 +157,7 @@ export class DiagnosticReportService {
       const { data, error } = await supabase
         .from('fhir_diagnostic_reports')
         .insert([dbSafe])
-        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, result_observation_ids, conclusion, conclusion_code, conclusion_code_display, presented_form_url, presented_form_title, report_priority, created_at, updated_at')
+        .select(REPORT_COLUMNS)
         .single();
 
       if (error) throw error;
@@ -186,7 +194,7 @@ export class DiagnosticReportService {
         .from('fhir_diagnostic_reports')
         .update(cleanUpdates)
         .eq('id', id)
-        .select('id, fhir_id, patient_id, encounter_id, status, category, category_coding_system, code_system, code, code_display, code_text, effective_datetime, effective_period_start, effective_period_end, issued, performer_type, performer_id, performer_display, result_observation_ids, conclusion, conclusion_code, conclusion_code_display, presented_form_url, presented_form_title, report_priority, created_at, updated_at')
+        .select(REPORT_COLUMNS)
         .single();
 
       if (error) throw error;
@@ -210,8 +218,14 @@ export class DiagnosticReportService {
    */
   static async getPending(patientId: string): Promise<FHIRApiResponse<DiagnosticReport[]>> {
     try {
+      // Direct query (the get_pending_reports RPC does not exist in the live DB).
+      // FHIR DiagnosticReport.status values for in-progress studies: registered | partial.
       const { data, error } = await supabase
-        .rpc('get_pending_reports', { patient_id_param: patientId });
+        .from('fhir_diagnostic_reports')
+        .select(REPORT_COLUMNS)
+        .eq('patient_id', patientId)
+        .in('status', ['registered', 'partial'])
+        .order('issued', { ascending: false });
 
       if (error) throw error;
       return { success: true, data: data || [] };
