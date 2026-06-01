@@ -84,15 +84,20 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 
 ### RF-8 — `parseRiskAnalysis` regex-scrapes clinical risk from LLM prose
 - **File:** `src/services/claude/formatters.ts:156` (`analysis.match(/(LOW|MODERATE|HIGH|CRITICAL)/i)`)
-- **What:** clinical risk level + risk factors + recommendations are extracted from free-text LLM output via regex + bullet heuristics. Brittle; exactly the pattern Rule #16 (structured AI output) exists to eliminate. Grandfathered, but clinical.
-- **Fix (deferred — feature change, needs Maria):** migrate the underlying Claude call to a JSON response schema (risk_level enum, factors[], recommendations[]) and drop the regex parser. Requires the `claude-chat` edge function to support `response_format` / structured output. Not mechanical.
+- **What:** clinical risk level + risk factors + recommendations are extracted from free-text LLM output via regex + bullet heuristics. Brittle; exactly the pattern Rule #16 (structured AI output) exists to eliminate.
+- **LIVE PATH — confirmed used (2026-06-01):** `analyzeRiskAssessment` is called from `src/components/admin/RiskAssessmentForm.tsx:219`. A clinician using that form sees a risk level that was regex-scraped from prose (defaults to 'MODERATE' on a parse miss). This is NOT dead code — it matters.
+- **Status: SCHEDULED (own scoped session), not a tail-of-session bolt-on.** Engineering opinion: a rushed migration risks a half-done structured-output path on a clinical surface. Do it properly:
+  1. Confirm whether `claude-chat` edge fn supports a JSON response schema (`response_format`) — if not, that's the first sub-task.
+  2. Define the risk schema: `{ risk_level: enum(LOW|MODERATE|HIGH|CRITICAL), factors: string[], recommendations: string[], clinical_notes: string }`.
+  3. Migrate `analyzeRiskAssessment` to consume structured fields; keep a safe fallback if the model returns malformed output (don't silently default to MODERATE — surface low-confidence).
+  4. Tests proving the schema holds + RiskAssessmentForm still renders.
+- **Fix (full):** structured JSON output, drop the regex parser. Not mechanical — needs the edge-fn schema work above.
 - **Acceptance:** risk analysis returns structured fields from a schema, not regex.
 
 ### RF-9 — Service singletons instantiate at module import
 - **Files:** `claudeService.ts` (`claudeService = ClaudeService.getInstance()`), `fhirInteroperabilityIntegrator.ts` (`new FHIRInteroperabilityIntegrator()` → `new FHIRIntegrationService()`), `mcpHL7X12Client.ts` (`hl7x12MCP`), `mpiMatchingService.ts`.
 - **What:** importing the module runs the constructor (side effects at import). Minor; complicates isolated import in tests/SSR.
-- **Fix (deferred — low value):** consider lazy `getInstance()` accessors. Document as accepted if not worth the churn.
-- **Acceptance:** N/A unless prioritized.
+- **Status: ACCEPTED / WON'T-FIX (2026-06-01).** Engineering opinion: making these lazy would touch ~18+ call sites for a benefit that only appears in isolated test/SSR imports, which already pass. High churn + breakage risk, ~zero real benefit. Declining low-value churn is the correct call; no code change.
 
 ---
 
@@ -105,9 +110,9 @@ Severity: **P1** = correctness/compliance defect that reads as a finished featur
 5. **RF-5** ✅ DONE — FHIR audit swallow → audited (`f4218e86`)
 6. **RF-6** ✅ DONE — MPI filter input validation (`f4218e86`)
 7. **RF-7** ✅ DONE — CDA formatter dedup → `publicHealth/cda/formatters.ts` (`589a70b6`)
-8. **RF-8** — DEFERRED (feature: structured AI output for parseRiskAnalysis; needs `claude-chat` edge fn schema support + Maria).
-9. **RF-9** — DEFERRED (low value: lazy singleton init; accept-or-defer).
+8. **RF-8** — SCHEDULED (own scoped session). Structured AI output for `parseRiskAnalysis`; **confirmed live** (RiskAssessmentForm). Not a tail-of-session bolt-on — see RF-8 entry for the sub-tasks.
+9. **RF-9** — ✅ ACCEPTED / WON'T-FIX. Lazy singletons: high churn, ~zero benefit; declined by engineering judgment.
 
-**Open:** RF-1 full (real EPCS TOTP verifier) — PARKED until EPCS has a confirmed product need; full design captured above. RF-8 (structured AI output), RF-9 (lazy singletons) — deferred.
+**Final disposition (every finding has a decision):** RF-2/3/4/5/6/7 fixed · RF-1 interim fixed (fail-closed), full verifier PARKED (EPCS unused) · RF-8 SCHEDULED (live clinical path — own session) · RF-9 ACCEPTED/won't-fix. The only finding still warranting code work is **RF-8**.
 
 Each fix verified: scoped typecheck + lint + affected test suite.
