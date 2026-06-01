@@ -55,7 +55,7 @@ export async function getEPCSStats(
       totalPrescriptions: prescriptions.length,
       bySchedule,
       byStatus,
-      signedCount: byStatus['signed'] || 0 + (byStatus['transmitted'] || 0) + (byStatus['filled'] || 0),
+      signedCount: (byStatus['signed'] || 0) + (byStatus['transmitted'] || 0) + (byStatus['filled'] || 0),
       cancelledCount: byStatus['cancelled'] || 0,
     });
   } catch (err: unknown) {

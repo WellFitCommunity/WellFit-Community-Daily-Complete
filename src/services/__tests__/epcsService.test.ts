@@ -640,6 +640,9 @@ describe('EPCSService', () => {
       expect(result.data?.bySchedule[3]).toBe(1);
       expect(result.data?.bySchedule[4]).toBe(1);
       expect(result.data?.cancelledCount).toBe(1);
+      // RF-2: signedCount = signed(2) + transmitted(0) + filled(1) = 3.
+      // The pre-fix operator-precedence bug (`signed || 0 + ...`) returned 2.
+      expect(result.data?.signedCount).toBe(3);
     });
   });
 });
