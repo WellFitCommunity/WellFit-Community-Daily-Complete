@@ -1,6 +1,6 @@
 # God File Decomposition Tracker
 
-> **Last Updated:** 2026-05-29 (Tier 1 #1 `readmissionRiskPredictor.ts` decomposed 1340→487; bulk-export earlier — see row 4)
+> **Last Updated:** 2026-06-01 (Tier 1 #2 `healthcareIntegrationsService.ts` decomposed 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29; bulk-export earlier — see row 4)
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 > **Estimated Effort:** ~40–60 hours across 15–20 sessions (spread over months — not a sprint)
@@ -58,7 +58,7 @@ These are the biggest offenders. Each one's decomposition unblocks several small
 | # | File | Lines | Domain | Status |
 |---|------|-------|--------|--------|
 | 1 | `src/services/ai/readmissionRiskPredictor.ts` | ~~1340~~ → 487 | AI clinical | **DONE** (2026-05-29) — 5 modules in `readmission-predictor/` (types, plainLanguageExplainer, dischargeValidator, predictionPrompt, patientDataGatherer) all <600; barrel re-exports preserve all import paths; 171 tests green incl. 45 byte-identical golden tests |
-| 2 | `src/services/healthcareIntegrationsService.ts` | 1258 | Integration | TODO |
+| 2 | `src/services/healthcareIntegrationsService.ts` | ~~1258~~ → 93 | Integration | **DONE** (2026-06-01) — 4 domain modules in `healthcare-integrations/` (lab, pharmacy, imaging, insurance), each service class + its DB mappers, all <600 (largest 320); facade re-exports preserve all import paths; 9 new behavioral tests (snake→camel mapping + facade wiring) |
 | 3 | `src/services/hospitalWorkforceService.ts` | 1217 | Workforce | TODO |
 | 4 | `src/services/publicHealth/antimicrobialSurveillanceService.ts` | 1147 | Public health | TODO |
 | 5 | `src/services/epcsService.ts` | 1134 | EPCS | TODO |
