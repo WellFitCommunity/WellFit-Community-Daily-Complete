@@ -14,6 +14,8 @@
 
 ## NEXT SESSION — START HERE
 
+> **▶ NEXT SESSION STARTS HERE (set 2026-06-02): triage the 40 `rpc::` baseline entries.** Work the RPC half of the drift baseline first (smaller, higher signal than the 156 tables). For each of the 40 `rpc::<name>` lines in `scripts/db-reference-drift-baseline.txt`: grep for callers, bucket it (legacy/repoint · missing→create-via-migration · dead-code), fix or confirm, remove the line, re-run `python3 scripts/check-db-reference-drift.py`. Use the per-entry recipe below. The 156 `table::` entries come after.
+>
 > **🧭 DRIFT-BASELINE TRIAGE — the standing backlog after 2026-06-02.** Two CI gates now FREEZE the DB-reference perimeter (nothing new can drift in); the backlog is to work DOWN the grandfathered baselines by reachability, removing each entry as it's fixed.
 >
 > **Source-of-truth files (do not guess — read these):**
