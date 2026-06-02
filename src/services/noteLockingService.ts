@@ -13,87 +13,30 @@ import { auditLogger } from './auditLogger';
 import { ServiceResult, success, failure } from './_base';
 
 // =============================================================================
-// TYPES
+// TYPES — extracted to noteLockingService.types.ts (CLAUDE.md #12); re-exported
+// here so existing consumers keep importing them from noteLockingService.
 // =============================================================================
 
-export type NoteType = 'clinical_note' | 'ai_progress_note';
+export type {
+  NoteType,
+  ClinicalNote,
+  AIProgressNote,
+  LockResult,
+  NoteWithAmendments,
+  Amendment,
+  AmendmentType,
+  AmendmentStatus,
+  LockOptions,
+} from './noteLockingService.types';
 
-export interface ClinicalNote {
-  id: string;
-  encounter_id: string;
-  type: string;
-  content: string;
-  author_id: string | null;
-  is_locked: boolean;
-  locked_at: string | null;
-  locked_by: string | null;
-  signature_hash: string | null;
-  version: number;
-  patient_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AIProgressNote {
-  id: string;
-  note_id: string;
-  patient_id: string;
-  provider_id: string;
-  period_start: string;
-  period_end: string;
-  note_type: string;
-  summary: Record<string, unknown>;
-  key_findings: string[];
-  recommendations: string[];
-  status: string;
-  is_locked: boolean;
-  locked_at: string | null;
-  locked_by: string | null;
-  signature_hash: string | null;
-  version: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface LockResult {
-  success: boolean;
-  locked_at: string;
-  locked_by: string;
-  signature_hash?: string;
-}
-
-export interface NoteWithAmendments {
-  id: string;
-  content?: string;
-  summary?: Record<string, unknown>;
-  is_locked: boolean;
-  locked_at: string | null;
-  locked_by: string | null;
-  version: number;
-  amendments: Amendment[];
-}
-
-export interface Amendment {
-  id: string;
-  amendment_type: AmendmentType;
-  original_content: string | null;
-  amendment_content: string;
-  amendment_reason: string;
-  field_amended: string | null;
-  amended_by: string;
-  amended_at: string;
-  status: AmendmentStatus;
-  approved_by: string | null;
-  approved_at: string | null;
-}
-
-export type AmendmentType = 'correction' | 'addendum' | 'late_entry' | 'clarification';
-export type AmendmentStatus = 'pending' | 'approved' | 'rejected';
-
-export interface LockOptions {
-  generateSignature?: boolean;
-  reason?: string;
-}
+import type {
+  NoteType,
+  ClinicalNote,
+  AIProgressNote,
+  LockResult,
+  NoteWithAmendments,
+  LockOptions,
+} from './noteLockingService.types';
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -148,33 +91,33 @@ async function lockNote(
     let signatureHash: string | null = null;
 
     if (noteType === 'clinical_note') {
+      // clinical_notes is immutable and has no lock columns — read only the real columns
+      // needed to compute the signature.
       const { data, error } = await supabase
         .from('clinical_notes')
-        .select('id, encounter_id, type, content, author_id, is_locked, locked_at, locked_by, signature_hash, version, patient_id, created_at, updated_at')
+        .select('id, content')
         .eq('id', noteId)
         .single();
 
       if (error || !data) {
         return failure('NOT_FOUND', 'Clinical note not found');
       }
-      note = data as ClinicalNote;
+      note = data as unknown as ClinicalNote;
     } else {
       const { data, error } = await supabase
         .from('ai_progress_notes')
-        .select('id, note_id, patient_id, provider_id, period_start, period_end, note_type, summary, key_findings, recommendations, status, is_locked, locked_at, locked_by, signature_hash, version, created_at, updated_at')
+        .select('id, summary, key_findings, recommendations')
         .eq('id', noteId)
         .single();
 
       if (error || !data) {
         return failure('NOT_FOUND', 'AI progress note not found');
       }
-      note = data as AIProgressNote;
+      note = data as unknown as AIProgressNote;
     }
 
-    // Check if already locked
-    if (note.is_locked) {
-      return failure('OPERATION_FAILED', 'Note is already locked');
-    }
+    // "Already locked" is enforced server-side by lock_clinical_note (derived from the
+    // append-only clinical_note_lock_audit table); the note itself carries no lock column.
 
     // Generate signature hash if requested
     if (options.generateSignature) {
@@ -358,35 +301,65 @@ async function verifySignature(
   }>
 > {
   try {
-    const table = noteType === 'clinical_note' ? 'clinical_notes' : 'ai_progress_notes';
-    const { data, error } = await supabase.from(table).select('*').eq('id', noteId).single();
-
-    if (error || !data) {
-      return failure('NOT_FOUND', 'Note not found');
+    // Explicit columns per note type (§9 no SELECT *); only the real content fields needed
+    // to recompute the signature. clinical_notes is immutable and has no lock columns.
+    let note: ClinicalNote | AIProgressNote;
+    if (noteType === 'clinical_note') {
+      const { data, error } = await supabase
+        .from('clinical_notes')
+        .select('id, content')
+        .eq('id', noteId)
+        .single();
+      if (error || !data) {
+        return failure('NOT_FOUND', 'Note not found');
+      }
+      note = data as unknown as ClinicalNote;
+    } else {
+      const { data, error } = await supabase
+        .from('ai_progress_notes')
+        .select('id, summary, key_findings, recommendations')
+        .eq('id', noteId)
+        .single();
+      if (error || !data) {
+        return failure('NOT_FOUND', 'Note not found');
+      }
+      note = data as unknown as AIProgressNote;
     }
 
-    const note = data as ClinicalNote | AIProgressNote;
-    if (!note.signature_hash) {
+    // The signature lives in the append-only lock-audit table (the note is immutable and
+    // has no signature_hash column). Read the latest lock signature for this note.
+    const lockColumn = noteType === 'clinical_note' ? 'clinical_note_id' : 'ai_progress_note_id';
+    const { data: lockRow } = await supabase
+      .from('clinical_note_lock_audit')
+      .select('signature_hash')
+      .eq(lockColumn, noteId)
+      .eq('action', 'lock')
+      .order('performed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const storedHash = (lockRow as { signature_hash: string | null } | null)?.signature_hash ?? null;
+    if (!storedHash) {
       return failure('OPERATION_FAILED', 'Note does not have a signature hash');
     }
 
     const contentString = getNoteContentString(note, noteType);
     const computedHash = await generateSignatureHash(contentString);
 
-    const valid = computedHash === note.signature_hash;
+    const valid = computedHash === storedHash;
 
     if (!valid) {
       await auditLogger.error('NOTE_SIGNATURE_MISMATCH', new Error('Signature verification failed'), {
         noteId,
         noteType,
-        stored: note.signature_hash?.substring(0, 16),
+        stored: storedHash.substring(0, 16),
         computed: computedHash.substring(0, 16),
       });
     }
 
     return success({
       valid,
-      stored_hash: note.signature_hash,
+      stored_hash: storedHash,
       computed_hash: computedHash,
     });
   } catch (err: unknown) {
