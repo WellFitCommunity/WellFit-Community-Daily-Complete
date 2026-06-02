@@ -66,45 +66,51 @@ const HealthMetricsForm: React.FC<HealthMetricsFormProps> = ({
         </select>
       </div>
 
-      {/* Blood Pressure */}
+      {/* Blood Pressure — group heading + two inputs, each labelled via aria-labelledby
+          (group label + per-input descriptor) for full screen-reader context. */}
       <div className="mb-4">
-        <label className="block text-lg font-medium text-gray-700 mb-2">
+        <p id="sr-bp-group-label" className="block text-lg font-medium text-gray-700 mb-2">
           🩸 Blood Pressure (if you took it today)
-        </label>
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <input
+              id="sr-bp-systolic"
               type="number"
               placeholder="Top number"
               value={bloodPressureSystolic}
               onChange={(e) => setBloodPressureSystolic(e.target.value)}
+              aria-labelledby="sr-bp-group-label sr-bp-systolic-label"
               className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
               min={70}
               max={250}
             />
-            <span className="text-sm text-gray-600">Systolic (top)</span>
+            <span id="sr-bp-systolic-label" className="text-sm text-gray-600">Systolic (top)</span>
           </div>
           <div>
             <input
+              id="sr-bp-diastolic"
               type="number"
               placeholder="Bottom number"
               value={bloodPressureDiastolic}
               onChange={(e) => setBloodPressureDiastolic(e.target.value)}
+              aria-labelledby="sr-bp-group-label sr-bp-diastolic-label"
               className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
               min={40}
               max={150}
             />
-            <span className="text-sm text-gray-600">Diastolic (bottom)</span>
+            <span id="sr-bp-diastolic-label" className="text-sm text-gray-600">Diastolic (bottom)</span>
           </div>
         </div>
       </div>
 
       {/* Blood Sugar */}
       <div className="mb-4">
-        <label className="block text-lg font-medium text-gray-700 mb-2">
+        <label htmlFor="sr-blood-sugar" className="block text-lg font-medium text-gray-700 mb-2">
           🍯 Blood Sugar (if you checked it)
         </label>
         <input
+          id="sr-blood-sugar"
           type="number"
           placeholder="mg/dL"
           value={bloodSugar}
@@ -118,11 +124,12 @@ const HealthMetricsForm: React.FC<HealthMetricsFormProps> = ({
 
       {/* Blood Oxygen with Pulse Oximeter */}
       <div className="mb-4">
-        <label className="block text-lg font-medium text-gray-700 mb-2">
+        <label htmlFor="sr-blood-oxygen" className="block text-lg font-medium text-gray-700 mb-2">
           🫁 Blood Oxygen Level (if you measured it)
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            id="sr-blood-oxygen"
             type="number"
             placeholder="% (like 98)"
             value={bloodOxygen}
@@ -153,10 +160,11 @@ const HealthMetricsForm: React.FC<HealthMetricsFormProps> = ({
 
       {/* Weight */}
       <div className="mb-4">
-        <label className="block text-lg font-medium text-gray-700 mb-2">
+        <label htmlFor="sr-weight" className="block text-lg font-medium text-gray-700 mb-2">
           ⚖️ Weight (if you weighed yourself)
         </label>
         <input
+          id="sr-weight"
           type="number"
           step="0.1"
           placeholder="pounds"

@@ -56,37 +56,42 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
     <div className="border-b border-gray-200 pb-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">📈 Today&apos;s Health Numbers</h2>
 
-      {/* Blood Pressure */}
+      {/* Blood Pressure — group heading + two inputs, each labelled via aria-labelledby
+          (group label + per-input descriptor) so screen readers announce full context. */}
       <div className="mb-4">
-        <label className="block text-lg font-medium text-gray-700 mb-2">
+        <p id="bp-group-label" className="block text-lg font-medium text-gray-700 mb-2">
           🩸 Blood Pressure (if you took it today)
-        </label>
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <input
+              id="bp-systolic"
               type="number"
               placeholder="Top number"
               value={bpSystolic}
               onChange={(e) => onSetBpSystolic(e.target.value)}
               disabled={isSubmitting}
+              aria-labelledby="bp-group-label bp-systolic-label"
               className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white disabled:bg-gray-100"
               min={70}
               max={250}
             />
-            <span className="text-sm text-gray-600">Systolic (top)</span>
+            <span id="bp-systolic-label" className="text-sm text-gray-600">Systolic (top)</span>
           </div>
           <div>
             <input
+              id="bp-diastolic"
               type="number"
               placeholder="Bottom number"
               value={bpDiastolic}
               onChange={(e) => onSetBpDiastolic(e.target.value)}
               disabled={isSubmitting}
+              aria-labelledby="bp-group-label bp-diastolic-label"
               className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white disabled:bg-gray-100"
               min={40}
               max={150}
             />
-            <span className="text-sm text-gray-600">Diastolic (bottom)</span>
+            <span id="bp-diastolic-label" className="text-sm text-gray-600">Diastolic (bottom)</span>
           </div>
         </div>
       </div>
@@ -94,8 +99,9 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
       {/* Heart Rate & Blood Oxygen */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">❤️ Heart Rate (BPM)</label>
+          <label htmlFor="heart-rate" className="block text-lg font-medium text-gray-700 mb-2">❤️ Heart Rate (BPM)</label>
           <input
+            id="heart-rate"
             type="number"
             placeholder="e.g., 70"
             value={heartRate}
@@ -107,9 +113,10 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
           />
         </div>
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">🫁 Blood Oxygen (%)</label>
+          <label htmlFor="blood-oxygen" className="block text-lg font-medium text-gray-700 mb-2">🫁 Blood Oxygen (%)</label>
           <div className="flex gap-2">
             <input
+              id="blood-oxygen"
               type="number"
               placeholder="e.g., 98"
               value={pulseOximeter}
@@ -143,8 +150,9 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
       {/* Blood Sugar & Weight */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">🍯 Blood Sugar (mg/dL)</label>
+          <label htmlFor="blood-sugar" className="block text-lg font-medium text-gray-700 mb-2">🍯 Blood Sugar (mg/dL)</label>
           <input
+            id="blood-sugar"
             type="number"
             placeholder="e.g., 120"
             value={glucose}
@@ -156,8 +164,9 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
           />
         </div>
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">⚖️ Weight (lbs)</label>
+          <label htmlFor="weight" className="block text-lg font-medium text-gray-700 mb-2">⚖️ Weight (lbs)</label>
           <input
+            id="weight"
             type="number"
             step="0.1"
             placeholder="e.g., 165"
@@ -177,8 +186,9 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
       <h2 className="text-xl font-semibold text-gray-900 mb-4">🏃‍♀️ Today&apos;s Activities</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">🏃‍♀️ Physical Activity</label>
+          <label htmlFor="physical-activity" className="block text-lg font-medium text-gray-700 mb-2">🏃‍♀️ Physical Activity</label>
           <select
+            id="physical-activity"
             value={physicalActivity}
             onChange={(e) => onSetPhysicalActivity(e.target.value)}
             disabled={isSubmitting}
@@ -192,8 +202,9 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
           </select>
         </div>
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">👥 Social Connection</label>
+          <label htmlFor="social-connection" className="block text-lg font-medium text-gray-700 mb-2">👥 Social Connection</label>
           <select
+            id="social-connection"
             value={socialEngagement}
             onChange={(e) => onSetSocialEngagement(e.target.value)}
             disabled={isSubmitting}

@@ -110,9 +110,9 @@ These are the items that BLOCK certification. Must be done first.
 
 | # | Criterion | Gap | Files to Create/Modify | Est. Hours | Status |
 |---|-----------|-----|------------------------|-----------|--------|
-| ONC-11 | (g)(5) WCAG AA Accessibility Audit | ESLint a11y plugin configured, components mostly accessible. Need formal audit + fixes. | Run Lighthouse/axe-core across all routes, fix findings, document compliance | 8 | TODO |
+| ONC-11 | (g)(5) WCAG AA Accessibility Audit | ESLint a11y plugin configured, components mostly accessible. Need formal audit + fixes. | Run Lighthouse/axe-core across all routes, fix findings, document compliance | 8 | **IN PROGRESS (2026-06-01)** — alt-text RESOLVED. ✅ axe-core harness (`test-utils/axeHelper.ts` + `npm run test:a11y`); ✅ SkipLink wired into RootLayout; ✅ label sweep on 2 primary vitals forms (CheckInFormBody + HealthMetricsForm) w/ tests. Remaining: contrast (surgical, visual-gated), remaining forms (EnrollSenior/Demographics/registration/CPOE), manual AT validation. Detail in matrix §9.4 |
 | ONC-12 | (b)(3) eRx Network Integration | EPCS + PDMP complete. Missing: Surescripts/NCPDP SCRIPT transmission to pharmacy networks. | External: Surescripts enrollment + integration. Cannot be built without vendor agreement. | BLOCKED | TODO |
-| ONC-13 | ONC Compliance Matrix Document | No unified tracking document mapping all 170.315 criteria with evidence for ACB. | New: `docs/compliance/ONC_170.315_CERTIFICATION_MATRIX.md` — formal evidence matrix | 2 | TODO |
+| ONC-13 | ONC Compliance Matrix Document | No unified tracking document mapping all 170.315 criteria with evidence for ACB. | New: `docs/compliance/ONC_170.315_CERTIFICATION_MATRIX.md` — formal evidence matrix | 2 | **DONE (2026-06-01)** — all evidence paths verified against live source tree; honest gap status for ONC-11/ONC-12 |
 
 **Session 3 subtotal:** ~10 hours + Surescripts (external timeline)
 

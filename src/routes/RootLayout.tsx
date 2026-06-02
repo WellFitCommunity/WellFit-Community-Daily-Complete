@@ -25,6 +25,7 @@ import Footer from '../components/layout/Footer';
 import { ClinicalModeComponents, ClinicalPatientBanner } from '../components/app';
 
 // Global UI Components
+import { SkipLink } from '../components/ui/SkipLink';
 import OfflineIndicator from '../components/OfflineIndicator';
 import { LearningMilestone } from '../components/ai-transparency';
 import { IdleTimeoutProvider } from '../components/IdleTimeoutProvider';
@@ -108,6 +109,9 @@ export const RootLayout: React.FC = () => {
         setBranding={setBranding}
         refreshBranding={refreshBranding}
       >
+        {/* Skip navigation — first focusable element, reveals on keyboard focus (WCAG 2.4.1) */}
+        <SkipLink href="#main-content">Skip to main content</SkipLink>
+
         {/* Global Learning Milestone Celebration Display */}
         <LearningMilestone />
 
@@ -119,10 +123,18 @@ export const RootLayout: React.FC = () => {
         <AuthGate>
           {/* Idle Timeout Provider - Auto-logout after 15 min inactivity (HIPAA compliance) */}
           <IdleTimeoutProvider timeoutMinutes={15} warningMinutes={2}>
-            <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-              {/* Child routes render here via Outlet */}
-              <Outlet />
-            </Suspense>
+            {/*
+              Skip-link target (WCAG 2.4.1). Intentionally a <div>, not <main>:
+              ~20 routed pages (e.g. every EAPageLayout consumer) render their own
+              <main> landmark, so wrapping the Outlet in <main> would nest/duplicate
+              the main landmark. tabIndex={-1} lets the skip link move focus here.
+            */}
+            <div id="main-content" tabIndex={-1}>
+              <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                {/* Child routes render here via Outlet */}
+                <Outlet />
+              </Suspense>
+            </div>
 
             <Footer />
 
