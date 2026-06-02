@@ -166,18 +166,29 @@ serve(async (req) => {
         )
         .gt("cache_expires_at", new Date().toISOString())
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (!cacheError && cached && cached.has_interaction) {
-        // Use cached interaction
-        interactions.push({
-          severity: cached.severity || "unknown",
-          interacting_medication: rxcuiToMedName[activeRxcui],
-          description: cached.interaction_description || "",
-          source: "cache",
-        });
-      } else if (cacheError?.code === "PGRST116") {
-        // Not in cache - need to check API
+      if (!cacheError && cached) {
+        // Definitive cached answer.
+        if (cached.has_interaction) {
+          interactions.push({
+            severity: cached.severity || "unknown",
+            interacting_medication: rxcuiToMedName[activeRxcui],
+            description: cached.interaction_description || "",
+            source: "cache",
+          });
+        }
+        // cached negative (has_interaction === false): known no-interaction, skip.
+      } else {
+        // Cache MISS (no row) OR a read error — fail SAFE: verify against the API rather
+        // than silently dropping the pair. The prior code only re-checked on PGRST116, so
+        // any other cache error left the medication entirely unchecked (fail-open).
+        if (cacheError) {
+          logger.warn("Drug-interaction cache read failed; falling back to API check", {
+            rxcui: activeRxcui,
+            error: cacheError.message,
+          });
+        }
         uncachedRxcuis.push(activeRxcui);
       }
     }
@@ -187,6 +198,11 @@ serve(async (req) => {
       logger.info("Checking RxNorm API for uncached medications", {
         count: uncachedRxcuis.length
       });
+
+      // Track which active RxCUIs actually had an interaction, BY CODE (authoritative) —
+      // not by display-name substring (which mismatched chart names vs. RxNorm canonical
+      // names and poisoned the cache with false negatives).
+      const interactedRxcuis = new Set<string>();
 
       // RxNorm API can check multiple RxCUIs at once
       const rxcuiList = uncachedRxcuis.join("+");
@@ -214,6 +230,7 @@ serve(async (req) => {
             const interactingName = minConcept?.minConceptItem?.name || rxcuiToMedName[interactingRxcui] || "Unknown";
 
             if (interactingRxcui && interactingRxcui !== medication_rxcui) {
+              interactedRxcuis.add(interactingRxcui);
               interactions.push({
                 severity: severity.toLowerCase(),
                 interacting_medication: interactingName,
@@ -238,13 +255,10 @@ serve(async (req) => {
         }
       }
 
-      // Cache negative results too (no interaction found)
+      // Cache negative results too (no interaction found) — keyed by RxCUI, not by
+      // fragile display-name substring matching.
       for (const rxcui of uncachedRxcuis) {
-        const foundInteraction = interactions.some(
-          (i) => rxcuiToMedName[rxcui]?.includes(i.interacting_medication)
-        );
-
-        if (!foundInteraction) {
+        if (!interactedRxcuis.has(rxcui)) {
           await supabase.from("drug_interaction_cache").insert({
             drug_a_rxcui: medication_rxcui,
             drug_a_name: medication_name || "Unknown",

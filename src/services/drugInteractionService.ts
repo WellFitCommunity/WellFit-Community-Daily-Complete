@@ -189,6 +189,29 @@ Return as JSON:
 }`;
 }
 
+const SEVERITY_RANK: Record<string, number> = {
+  contraindicated: 4,
+  high: 3,
+  moderate: 2,
+  low: 1,
+};
+
+/**
+ * Merge the AI-proposed severity with the authoritative RxNorm/DrugBank severity.
+ * The AI may only ESCALATE severity, never downgrade it — an LLM returning "low" for a
+ * pair RxNorm flagged "high" must not soften the clinician-facing alert. Invalid/unknown
+ * AI values (rank 0) keep the authoritative value.
+ */
+function mostSevereSeverity(
+  authoritative: DrugInteraction['severity'],
+  aiProposed: unknown
+): DrugInteraction['severity'] {
+  const proposed = typeof aiProposed === 'string' ? aiProposed : '';
+  return (SEVERITY_RANK[proposed] ?? 0) > (SEVERITY_RANK[authoritative] ?? 0)
+    ? (proposed as DrugInteraction['severity'])
+    : authoritative;
+}
+
 /**
  * Parse Claude's JSON response and merge with interaction
  */
@@ -217,7 +240,8 @@ async function parseClaudeResponse(
         ? parsed.management.join('\n• ')
         : parsed.management || baseInteraction.management,
       patient_friendly_explanation: parsed.patient_friendly_explanation,
-      severity: parsed.severity || baseInteraction.severity,
+      // Fail-safe: the AI can escalate but never downgrade the authoritative severity.
+      severity: mostSevereSeverity(baseInteraction.severity, parsed.severity),
       confidence: 0.95 // High confidence when Claude validates
     };
   } catch (error: unknown) {

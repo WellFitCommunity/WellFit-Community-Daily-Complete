@@ -25,56 +25,13 @@ import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 
 import { SONNET_MODEL } from "../_shared/models.ts";
 import { requireUser, requirePatientAccess } from "../_shared/auth.ts";
+import type {
+  ContraindicationRequest,
+  PatientContext,
+  ContraindicationFinding,
+} from "./types.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface ContraindicationRequest {
-  patientId: string;
-  providerId: string;
-  medicationRxcui: string;
-  medicationName: string;
-  indication?: string;
-  proposedDosage?: string;
-  includeDrugInteractions?: boolean;
-  tenantId?: string;
-}
-
-interface PatientContext {
-  demographics: {
-    age?: number;
-    sex?: string;
-    weight?: number;
-    pregnancyStatus?: string;
-    lactationStatus?: string;
-  };
-  activeConditions: Array<{ code: string; display: string; category?: string }>;
-  activeMedications: Array<{ rxcui?: string; name: string; dosage?: string }>;
-  allergies: Array<{
-    allergen: string;
-    allergenType: string;
-    severity?: string;
-    criticality?: string;
-    reactions?: string[];
-  }>;
-  labValues: Record<string, number | undefined>;
-}
-
-interface ContraindicationFinding {
-  type: string;
-  severity: "contraindicated" | "high" | "moderate" | "low";
-  title: string;
-  description: string;
-  clinicalReasoning: string;
-  triggerFactor: string;
-  recommendations: string[];
-  alternatives?: string[];
-  confidence: number;
-  source: string;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PHI Redaction
@@ -297,10 +254,11 @@ async function gatherPatientContext(
       }));
     }
 
-    // Get active medications
+    // Get active medications (dosage_instruction does not exist; the human-readable
+    // instruction is dosage_text)
     const { data: medications } = await supabase
       .from("fhir_medication_requests")
-      .select("medication_code, medication_display, dosage_instruction")
+      .select("medication_code, medication_display, dosage_text")
       .eq("patient_id", patientId)
       .eq("status", "active")
       .limit(30);
@@ -309,18 +267,24 @@ async function gatherPatientContext(
       context.activeMedications = medications.map((m) => ({
         rxcui: m.medication_code || undefined,
         name: m.medication_display || "",
-        dosage: m.dosage_instruction || undefined,
+        dosage: m.dosage_text || undefined,
       }));
     }
 
-    // Get allergies
-    const { data: allergies } = await supabase
+    // Get allergies — allergy_intolerances keys on user_id (NOT patient_id). Capture the
+    // error: if the lookup FAILS we must not present the patient as having no allergies.
+    const { data: allergies, error: allergyError } = await supabase
       .from("allergy_intolerances")
       .select("allergen_name, allergen_type, severity, criticality, reaction_manifestation")
-      .eq("patient_id", patientId)
+      .eq("user_id", patientId)
       .eq("clinical_status", "active");
 
-    if (allergies) {
+    if (allergyError) {
+      context.allergiesUnavailable = true;
+      logger.warn("Allergy lookup failed in contraindication context; flagging as UNAVAILABLE (not NKDA)", {
+        error: allergyError.message,
+      });
+    } else if (allergies) {
       context.allergies = allergies.map((a) => ({
         allergen: a.allergen_name || "",
         allergenType: a.allergen_type || "medication",
@@ -345,17 +309,22 @@ async function gatherPatientContext(
     ];
 
     for (const lab of labCodes) {
+      // fhir_observations stores the numeric result in value_quantity_value and the date in
+      // effective_datetime (NOT value / effective_date — those columns do not exist).
       const { data: labResult } = await supabase
         .from("fhir_observations")
-        .select("value")
+        .select("value_quantity_value, effective_datetime")
         .eq("patient_id", patientId)
         .eq("code", lab.code)
-        .order("effective_date", { ascending: false })
+        .order("effective_datetime", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (labResult?.value) {
-        context.labValues[lab.key] = parseFloat(labResult.value);
+      const v = labResult?.value_quantity_value;
+      // Only record finite numeric results — never coerce a missing/NaN value into a number
+      // that downstream abnormality checks would treat as a valid (normal) reading.
+      if (v != null && Number.isFinite(Number(v))) {
+        context.labValues[lab.key] = Number(v);
       }
     }
   } catch (err: unknown) {
@@ -403,7 +372,9 @@ async function analyzeContraindications(
               `${a.allergen} (${a.allergenType}, ${a.criticality || "unknown"} criticality, ${a.severity || "unknown"} severity)${a.reactions?.length ? ` - Reactions: ${a.reactions.join(", ")}` : ""}`
           )
           .join("\n")
-      : "NKDA (No Known Drug Allergies)";
+      : context.allergiesUnavailable
+        ? "⚠️ ALLERGY HISTORY UNAVAILABLE — the system could not retrieve this patient's allergies. Do NOT assume the patient has no allergies; treat allergy status as unknown and flag accordingly."
+        : "NKDA (No Known Drug Allergies)";
 
   const labValuesText = Object.entries(context.labValues)
     .filter(([_, v]) => v !== undefined)

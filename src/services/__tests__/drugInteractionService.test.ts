@@ -183,7 +183,35 @@ Hope this helps!`
       const enhanced = await enhanceInteractionWithClaude(baseInteraction, 'Warfarin');
 
       expect(enhanced.clinical_effects).toBe('Test effect');
-      expect(enhanced.severity).toBe('moderate');
+      // Safety contract (mostSevereSeverity): the AI proposed 'moderate' but the
+      // authoritative RxNorm severity is 'high'. The AI may ESCALATE, never downgrade —
+      // so the merged severity stays 'high'. (Markdown extraction is proven by
+      // clinical_effects above.)
+      expect(enhanced.severity).toBe('high');
+    });
+
+    it('keeps the authoritative severity when the AI tries to downgrade it', async () => {
+      // base = 'high' (rxnorm); AI says 'low' → must NOT soften the clinician-facing alert.
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: { response: JSON.stringify({ clinical_effects: 'x', severity: 'low' }) },
+        error: null,
+      });
+
+      const enhanced = await enhanceInteractionWithClaude(baseInteraction, 'Aspirin');
+
+      expect(enhanced.severity).toBe('high');
+    });
+
+    it('escalates to the AI severity when the AI flags it MORE severe', async () => {
+      // base = 'high' (rxnorm); AI says 'contraindicated' → escalation is allowed.
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: { response: JSON.stringify({ clinical_effects: 'x', severity: 'contraindicated' }) },
+        error: null,
+      });
+
+      const enhanced = await enhanceInteractionWithClaude(baseInteraction, 'Aspirin');
+
+      expect(enhanced.severity).toBe('contraindicated');
     });
   });
 
