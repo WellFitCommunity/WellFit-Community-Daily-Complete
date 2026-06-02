@@ -92,9 +92,13 @@ The gate immediately found 10 pre-existing drift instances the manual audit miss
 | `ImmunizationService` | selects `fhir_id` (live has `external_id`) | verified real |
 | `PractitionerRoleService` | selects `fhir_id` (absent) | verified real |
 | `CareTeamService` | selects `fhir_id` on `fhir_care_teams` (absent) | verified real |
-| `GoalService` | `.from('fhir_goals')` — table does not exist | dead service (AV-2 class) |
-| `LocationService` | `.from('fhir_locations')` — table does not exist | dead service |
-| `OrganizationService` | `.from('fhir_organizations')` — table does not exist | dead service |
-| `ProvenanceService` | `.from('fhir_provenance')` — table does not exist | dead service |
+| `GoalService` | `.from('fhir_goals')` — table did not exist | ✅ FIXED — table created (`20260602210000`) |
+| `LocationService` | `.from('fhir_locations')` — table did not exist | ✅ FIXED — table created (`20260602210000`) |
+| `OrganizationService` | `.from('fhir_organizations')` — table did not exist | ✅ FIXED — table created (`20260602210000`) |
+| `ProvenanceService` | `.from('fhir_provenance')` — table did not exist | ✅ FIXED — table created (`20260602210000`) |
 
-**Remediation = a focused "Tier-1 schema-drift repair" follow-up:** for each column drift, fix the SELECT to the live columns + live round-trip; for each dead service, decide create-table vs remove-service (same call made for AV-2/`fhir_medications`). Remove each from the baseline as it's fixed.
+**Remediation = a focused "Tier-1 schema-drift repair" follow-up:** for each column drift, fix the SELECT to the live columns + live round-trip; for each dead service, **CREATE the missing table via migration — do NOT delete the service** (Maria-directed 2026-06-02; "tables that exist are FEATURES", same call as AV-2/`fhir_medications`).
+
+**✅ DONE — the 4 missing tables (migration `20260602210000`):** `fhir_goals`, `fhir_provenance` (patient-scoped PHI, RLS mirrors `fhir_conditions`, `tenant_id` defaults to `get_current_tenant_id()` so the services keep working), `fhir_locations`, `fhir_organizations` (catalog, RLS mirrors `fhir_medications`: global read / admin write). Columns match each service's `select` exactly. Applied via `db push`; all 4 service query shapes live-proven (seed → query → 0-left cleanup). Snapshot refreshed (27 tables); these 4 removed from the gate baseline.
+
+**Remaining (still baselined): the 6 column drifts** — fix the SELECT to the live columns (or add the column via migration where the field is genuinely needed) + live round-trip, then remove from `scripts/fhir-schema-gate-baseline.txt`.

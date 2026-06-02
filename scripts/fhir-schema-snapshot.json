@@ -3,7 +3,7 @@
     "description": "Live column snapshot of public.fhir_* tables. Source of truth for scripts/check-fhir-service-schema.py. DO NOT hand-edit \u2014 regenerate with scripts/refresh-fhir-schema-snapshot.sql against the live DB.",
     "generated": "2026-06-02",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "table_count": 23
+    "table_count": 27
   },
   "tables": {
     "fhir_bulk_export_jobs": [
@@ -329,6 +329,31 @@
       "updated_at",
       "created_by"
     ],
+    "fhir_goals": [
+      "id",
+      "patient_id",
+      "lifecycle_status",
+      "achievement_status",
+      "category",
+      "priority",
+      "priority_code",
+      "description_code",
+      "description_display",
+      "description_text",
+      "start_date",
+      "target",
+      "status_date",
+      "status_reason",
+      "expressed_by_id",
+      "expressed_by_display",
+      "addresses",
+      "note",
+      "tenant_id",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at"
+    ],
     "fhir_immunizations": [
       "id",
       "external_id",
@@ -380,6 +405,30 @@
       "updated_by",
       "performer_practitioner_id",
       "tenant_id"
+    ],
+    "fhir_locations": [
+      "id",
+      "status",
+      "name",
+      "alias",
+      "description",
+      "mode",
+      "type",
+      "telecom",
+      "address",
+      "physical_type",
+      "position",
+      "managing_organization_id",
+      "managing_organization_display",
+      "part_of_location_id",
+      "part_of_location_display",
+      "hours_of_operation",
+      "availability_exceptions",
+      "tenant_id",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at"
     ],
     "fhir_medication_requests": [
       "id",
@@ -541,6 +590,27 @@
       "check_in_id",
       "primary_performer_practitioner_id",
       "tenant_id"
+    ],
+    "fhir_organizations": [
+      "id",
+      "npi",
+      "tax_id",
+      "ccn",
+      "active",
+      "type",
+      "name",
+      "alias",
+      "telecom",
+      "address",
+      "part_of_id",
+      "part_of_display",
+      "contact",
+      "endpoint_references",
+      "tenant_id",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at"
     ],
     "fhir_patient_bundle": [
       "patient_id",
@@ -714,6 +784,26 @@
       "external_id",
       "primary_performer_practitioner_id",
       "tenant_id"
+    ],
+    "fhir_provenance": [
+      "id",
+      "target_references",
+      "target_types",
+      "target_patient_id",
+      "recorded",
+      "occurred_datetime",
+      "occurred_period_start",
+      "occurred_period_end",
+      "activity",
+      "agent",
+      "reason",
+      "policy",
+      "location",
+      "entity",
+      "signature",
+      "tenant_id",
+      "created_at",
+      "updated_at"
     ],
     "fhir_questionnaires": [
       "id",
