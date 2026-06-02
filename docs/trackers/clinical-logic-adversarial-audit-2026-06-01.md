@@ -102,3 +102,16 @@ The gate immediately found 10 pre-existing drift instances the manual audit miss
 **✅ DONE — the 4 missing tables (migration `20260602210000`):** `fhir_goals`, `fhir_provenance` (patient-scoped PHI, RLS mirrors `fhir_conditions`, `tenant_id` defaults to `get_current_tenant_id()` so the services keep working), `fhir_locations`, `fhir_organizations` (catalog, RLS mirrors `fhir_medications`: global read / admin write). Columns match each service's `select` exactly. Applied via `db push`; all 4 service query shapes live-proven (seed → query → 0-left cleanup). Snapshot refreshed (27 tables); these 4 removed from the gate baseline.
 
 **✅ DONE — the 6 column drifts (2026-06-02):** all were phantom columns (the table never had them → every read threw). Removed from each SELECT: `MedicationRequestService` `dosage_route` (kept the real `dosage_route_code`/`_display`); `PractitionerService` `fhir_id`+`full_name`; `ImmunizationService` `fhir_id`; `PractitionerRoleService` `fhir_id`; `CareTeamService` `fhir_id`. The matching type drift was fixed too — `FHIRPractitioner`/`FHIRImmunization`/`FHIRPractitionerRole`/`FHIRCareTeam` now `extends Omit<FHIRResource,'fhir_id'>` since those tables genuinely have no `fhir_id` column. Live-proven (each corrected SELECT executes against live), full `tsc` 0 errors, lint 0, 150 service tests green. **The gate baseline is now EMPTY — the FHIR service layer is fully schema-clean with zero grandfathered exceptions.**
+
+## RPC-drift triage (2026-06-02) — codebase-wide `.rpc()` scan
+
+A scan of all production `.rpc()` calls found **45 functions referenced but absent from live `pg_proc`**. Triaged the safety/security-relevant ones; status:
+
+| Subsystem | RPC(s) | Verdict |
+|---|---|---|
+| Medication allergy | `check_medication_allergy_from_request` | ✅ FIXED (`73df04a7`) — was **fail-OPEN** on a live CPOE/telehealth path (created Rx allergy-unchecked). Repointed to the existing `check_medication_allergy` + fail-safe on error. |
+| SOC dashboard | `acknowledge_security_alert`, `resolve_security_alert`, `soc_assign_alert`, `soc_add_alert_message` | ✅ FIXED (`bce63b8f`) — created all 4 (admin-gated, tenant-scoped, SECURITY DEFINER) against existing `security_alerts`/`soc_alert_messages`. |
+| Clinical note locking/amendments | `lock_clinical_note`, `create_note_amendment`, `get_note_with_amendments` | ✅ FIXED (`5502346b`) — reconciled onto the live `clinical_notes` immutability: 3 append-only tables + immutability-safe functions (lock = audit row, not a note UPDATE) + service fixes. Live-proven. **Amendment approval authority pending Akima.** |
+| FHIR security (dead) | `log_audit_event` (`fhirSecurityService`) | ⬜ Not fixed — **DEAD CODE** (0 non-test importers). No active risk; revisit if the service is ever wired. |
+
+**Remaining (not yet triaged):** ~38 other missing RPCs + ~154 missing `.from()` table refs (mostly legacy/superseded names like `conditions`→`fhir_conditions`). Recommend the **generalized schema gate** (extend `check-fhir-service-schema.py` to all tables + RPCs across `src/` + edge functions, baselined + CI-wired) to freeze the perimeter, then triage by reachability. (This was option "#2"; deferred after the safety RPCs per Maria.)
