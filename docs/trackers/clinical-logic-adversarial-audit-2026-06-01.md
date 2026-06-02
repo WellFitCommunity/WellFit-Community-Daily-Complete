@@ -77,5 +77,24 @@ Replace `|| 0`/`|| low` fail-unsafe defaults with explicit "unable to assess"; e
 **Tier 3 — CQM correctness:**
 Exclusion/exception logic, inverse-measure flag, clamp+intersect performanceRate; validate against CMS test decks. Do not submit until then.
 
-## Regression idea
-A `check-fhir-service-schema.sh` gate (diff each `fhir/*Service.ts` SELECT column list against `information_schema.columns`) would have caught AV-1/2/3 mechanically — the FHIR analogue of the SDK hygiene gate.
+## Regression idea — ✅ BUILT (2026-06-02)
+A gate that diffs each `fhir/*Service.ts` SELECT/filter column list against the live `fhir_*` column set — the FHIR analogue of the SDK hygiene gate — would have caught AV-1/2/3 mechanically.
+
+**Built:** `scripts/check-fhir-service-schema.py` (+ committed snapshot `scripts/fhir-schema-snapshot.json`, refreshed via `scripts/refresh-fhir-schema-snapshot.sql`; pre-existing offenders grandfathered in `scripts/fhir-schema-gate-baseline.txt`). Wired into the CI **Governance Boundary Check** job. CI has no DB creds, so it diffs against the committed snapshot. NEW drift fails the build.
+
+### Gate-surfaced findings (NEW — beyond the 4-reviewer audit; baselined, NOT yet fixed)
+The gate immediately found 10 pre-existing drift instances the manual audit missed. **6 column drifts are lead-verified real** (the SELECT names a column absent from the live table → the read throws), **4 are dead services** (query a table that does not exist — AV-2 class):
+
+| Service | Drift | Status |
+|---|---|---|
+| `MedicationRequestService` | selects phantom `dosage_route` (live has `dosage_route_code`/`_display`) | verified real |
+| `PractitionerService` | selects `fhir_id` + `full_name` (live has neither; `id`, `family_name`/`given_names`) | verified real |
+| `ImmunizationService` | selects `fhir_id` (live has `external_id`) | verified real |
+| `PractitionerRoleService` | selects `fhir_id` (absent) | verified real |
+| `CareTeamService` | selects `fhir_id` on `fhir_care_teams` (absent) | verified real |
+| `GoalService` | `.from('fhir_goals')` — table does not exist | dead service (AV-2 class) |
+| `LocationService` | `.from('fhir_locations')` — table does not exist | dead service |
+| `OrganizationService` | `.from('fhir_organizations')` — table does not exist | dead service |
+| `ProvenanceService` | `.from('fhir_provenance')` — table does not exist | dead service |
+
+**Remediation = a focused "Tier-1 schema-drift repair" follow-up:** for each column drift, fix the SELECT to the live columns + live round-trip; for each dead service, decide create-table vs remove-service (same call made for AV-2/`fhir_medications`). Remove each from the baseline as it's fixed.

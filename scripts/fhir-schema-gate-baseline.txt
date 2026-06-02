@@ -1,0 +1,15 @@
+# FHIR schema gate baseline — KNOWN pre-existing service/schema drift.
+# One key per line: <relpath>::<table>::<column|*MISSING_TABLE*>.
+# Regenerate with: python3 scripts/check-fhir-service-schema.py --write-baseline
+# Each entry is a real gap to close (see the clinical adversarial audit tracker);
+# baselining only stops NEW drift from landing on top of the known set.
+src/services/fhir/CareTeamService.ts::fhir_care_teams::fhir_id
+src/services/fhir/GoalService.ts::fhir_goals::*MISSING_TABLE*
+src/services/fhir/ImmunizationService.ts::fhir_immunizations::fhir_id
+src/services/fhir/LocationService.ts::fhir_locations::*MISSING_TABLE*
+src/services/fhir/MedicationRequestService.ts::fhir_medication_requests::dosage_route
+src/services/fhir/OrganizationService.ts::fhir_organizations::*MISSING_TABLE*
+src/services/fhir/PractitionerRoleService.ts::fhir_practitioner_roles::fhir_id
+src/services/fhir/PractitionerService.ts::fhir_practitioners::fhir_id
+src/services/fhir/PractitionerService.ts::fhir_practitioners::full_name
+src/services/fhir/ProvenanceService.ts::fhir_provenance::*MISSING_TABLE*

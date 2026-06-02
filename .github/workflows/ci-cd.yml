@@ -71,6 +71,11 @@ jobs:
         if: always()
         run: bash scripts/governance-drift-check.sh --skip-tests
 
+      - name: FHIR service schema-drift gate
+        id: fhir_schema
+        if: always()
+        run: python3 scripts/check-fhir-service-schema.py
+
       - name: Report to summary
         if: always()
         run: |
@@ -84,6 +89,11 @@ jobs:
             echo "✅ Governance drift check passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Governance drift detected — new god files, missing MCPs, or undocumented MCPs" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.fhir_schema.outcome }}" == "success" ]; then
+            echo "✅ FHIR service schema gate passed — no new schema drift" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ FHIR service schema drift — a service selects a column/table absent from the live snapshot" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ============================================
