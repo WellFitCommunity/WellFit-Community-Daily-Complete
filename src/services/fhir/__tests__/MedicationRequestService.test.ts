@@ -42,8 +42,8 @@ vi.mock('../../../lib/supabaseClient', () => ({
       })),
     })),
     rpc: vi.fn((funcName: string) => {
-      if (funcName === 'check_medication_allergy_from_request') {
-        return { data: [], error: null }; // No allergy
+      if (funcName === 'check_medication_allergy') {
+        return { data: [], error: null }; // No allergy (0 rows = none)
       }
       return {
         data: [{ id: 'rx-1', medication_display: 'Metformin 500mg' }],

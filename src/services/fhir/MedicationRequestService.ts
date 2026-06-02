@@ -94,11 +94,29 @@ export class MedicationRequestService {
         medication: request.medication_display,
       });
 
-      // Check for allergies first
-      const allergyCheck = await supabase.rpc('check_medication_allergy_from_request', {
-        patient_id_param: request.patient_id,
-        medication_display_param: request.medication_display,
+      // Check for allergies first. check_medication_allergy returns 0 rows when there is no
+      // allergy, one row per matching allergy otherwise. (The previous call targeted
+      // check_medication_allergy_from_request, which does NOT exist in the live DB — every
+      // call errored, data came back null, and the order was created allergy-UNCHECKED.)
+      const allergyCheck = await supabase.rpc('check_medication_allergy', {
+        user_id_param: request.patient_id,
+        medication_name_param: request.medication_display,
       });
+
+      // Fail SAFE: if the allergy check itself fails, do NOT create the prescription
+      // unchecked — surface the failure so a clinician verifies allergies and retries.
+      if (allergyCheck.error) {
+        await auditLogger.phi('MEDICATION_REQUEST_ALLERGY_CHECK_FAILED', request.patient_id, {
+          resourceType: 'MedicationRequest',
+          operation: 'create',
+          error: allergyCheck.error.message,
+        });
+        return {
+          success: false,
+          error:
+            'Could not verify medication allergies (allergy check unavailable). Order not created — please verify the patient’s allergies and retry.',
+        };
+      }
 
       if (allergyCheck.data && allergyCheck.data.length > 0) {
         const allergy = allergyCheck.data[0];
