@@ -25,7 +25,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_teams')
-        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
+        .select('id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .eq('patient_id', patientId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -50,7 +50,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_teams')
-        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
+        .select('id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .eq('id', id)
         .is('deleted_at', null)
         .single();
@@ -82,7 +82,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_teams')
-        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
+        .select('id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', 'active')
         .is('deleted_at', null)
@@ -116,7 +116,7 @@ export class CareTeamService {
     try {
       const { data, error } = await supabase
         .from('fhir_care_teams')
-        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
+        .select('id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .eq('patient_id', patientId)
         .eq('status', status)
         .is('deleted_at', null)
@@ -148,7 +148,7 @@ export class CareTeamService {
       const { data, error } = await supabase
         .from('fhir_care_teams')
         .insert([careTeam])
-        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
+        .select('id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -183,7 +183,7 @@ export class CareTeamService {
         .update(updates)
         .eq('id', id)
         .is('deleted_at', null)
-        .select('id, fhir_id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
+        .select('id, patient_id, status, name, category, period_start, period_end, encounter_reference, encounter_display, managing_organization_reference, managing_organization_display, telecom, reason_code, reason_display, note, version_id, created_by, updated_by, deleted_at, created_at, updated_at')
         .single();
 
       if (error) throw error;

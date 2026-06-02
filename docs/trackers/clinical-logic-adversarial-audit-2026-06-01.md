@@ -87,11 +87,11 @@ The gate immediately found 10 pre-existing drift instances the manual audit miss
 
 | Service | Drift | Status |
 |---|---|---|
-| `MedicationRequestService` | selects phantom `dosage_route` (live has `dosage_route_code`/`_display`) | verified real |
-| `PractitionerService` | selects `fhir_id` + `full_name` (live has neither; `id`, `family_name`/`given_names`) | verified real |
-| `ImmunizationService` | selects `fhir_id` (live has `external_id`) | verified real |
-| `PractitionerRoleService` | selects `fhir_id` (absent) | verified real |
-| `CareTeamService` | selects `fhir_id` on `fhir_care_teams` (absent) | verified real |
+| `MedicationRequestService` | selects phantom `dosage_route` (live has `dosage_route_code`/`_display`) | ✅ FIXED — SELECT corrected + live-proven |
+| `PractitionerService` | selects `fhir_id` + `full_name` (live has neither; `id`, `family_name`/`given_names`) | ✅ FIXED — SELECT corrected + live-proven |
+| `ImmunizationService` | selects `fhir_id` (live has `external_id`) | ✅ FIXED — SELECT corrected + live-proven |
+| `PractitionerRoleService` | selects `fhir_id` (absent) | ✅ FIXED — SELECT corrected + live-proven |
+| `CareTeamService` | selects `fhir_id` on `fhir_care_teams` (absent) | ✅ FIXED — SELECT corrected + live-proven |
 | `GoalService` | `.from('fhir_goals')` — table did not exist | ✅ FIXED — table created (`20260602210000`) |
 | `LocationService` | `.from('fhir_locations')` — table did not exist | ✅ FIXED — table created (`20260602210000`) |
 | `OrganizationService` | `.from('fhir_organizations')` — table did not exist | ✅ FIXED — table created (`20260602210000`) |
@@ -101,4 +101,4 @@ The gate immediately found 10 pre-existing drift instances the manual audit miss
 
 **✅ DONE — the 4 missing tables (migration `20260602210000`):** `fhir_goals`, `fhir_provenance` (patient-scoped PHI, RLS mirrors `fhir_conditions`, `tenant_id` defaults to `get_current_tenant_id()` so the services keep working), `fhir_locations`, `fhir_organizations` (catalog, RLS mirrors `fhir_medications`: global read / admin write). Columns match each service's `select` exactly. Applied via `db push`; all 4 service query shapes live-proven (seed → query → 0-left cleanup). Snapshot refreshed (27 tables); these 4 removed from the gate baseline.
 
-**Remaining (still baselined): the 6 column drifts** — fix the SELECT to the live columns (or add the column via migration where the field is genuinely needed) + live round-trip, then remove from `scripts/fhir-schema-gate-baseline.txt`.
+**✅ DONE — the 6 column drifts (2026-06-02):** all were phantom columns (the table never had them → every read threw). Removed from each SELECT: `MedicationRequestService` `dosage_route` (kept the real `dosage_route_code`/`_display`); `PractitionerService` `fhir_id`+`full_name`; `ImmunizationService` `fhir_id`; `PractitionerRoleService` `fhir_id`; `CareTeamService` `fhir_id`. The matching type drift was fixed too — `FHIRPractitioner`/`FHIRImmunization`/`FHIRPractitionerRole`/`FHIRCareTeam` now `extends Omit<FHIRResource,'fhir_id'>` since those tables genuinely have no `fhir_id` column. Live-proven (each corrected SELECT executes against live), full `tsc` 0 errors, lint 0, 150 service tests green. **The gate baseline is now EMPTY — the FHIR service layer is fully schema-clean with zero grandfathered exceptions.**

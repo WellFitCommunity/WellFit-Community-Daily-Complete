@@ -25,9 +25,7 @@ describe('PractitionerService', () => {
 
   // Sample practitioner data for tests
   const mockPractitioner: FHIRPractitioner = {
-    id: 'pract-123',
-    fhir_id: 'Practitioner/pract-123',
-    user_id: 'user-456',
+    id: 'pract-123',    user_id: 'user-456',
     active: true,
     npi: '1234567890',
     family_name: 'Smith',
@@ -47,9 +45,7 @@ describe('PractitionerService', () => {
   const mockPractitioners: FHIRPractitioner[] = [
     mockPractitioner,
     {
-      id: 'pract-124',
-      fhir_id: 'Practitioner/pract-124',
-      user_id: 'user-457',
+      id: 'pract-124',      user_id: 'user-457',
       active: true,
       npi: '9876543210',
       family_name: 'Johnson',
@@ -431,9 +427,7 @@ describe('PractitionerService', () => {
 
     it('should handle minimal name', () => {
       const practitioner: FHIRPractitioner = {
-        id: 'test',
-        fhir_id: 'Practitioner/test',
-        active: true,
+        id: 'test',        active: true,
         family_name: 'Doe',
         given_names: ['Jane'],
         created_at: '2025-01-01T00:00:00Z',
@@ -455,9 +449,7 @@ describe('PractitionerRoleService', () => {
   });
 
   const mockRole: FHIRPractitionerRole = {
-    id: 'role-123',
-    fhir_id: 'PractitionerRole/role-123',
-    practitioner_id: 'pract-123',
+    id: 'role-123',    practitioner_id: 'pract-123',
     organization_id: 'org-456',
     location_id: 'loc-789',
     active: true,

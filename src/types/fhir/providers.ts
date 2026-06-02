@@ -11,7 +11,10 @@ import type { FHIRResource, CodeableConcept, FHIRContactPoint, FHIRAddress } fro
 // PRACTITIONER
 // ============================================================================
 
-export interface FHIRPractitioner extends FHIRResource {
+// fhir_practitioners has NO fhir_id column in the live schema (it keys on id +
+// external_id/external_system), so omit the FHIRResource-required fhir_id here.
+// Verified against information_schema 2026-06-02 (clinical audit Tier-1 column drift).
+export interface FHIRPractitioner extends Omit<FHIRResource, 'fhir_id'> {
   // Link to auth.users
   user_id?: string;
 
@@ -99,7 +102,9 @@ export interface FHIRPractitionerQualification {
 // PRACTITIONER ROLE
 // ============================================================================
 
-export interface FHIRPractitionerRole extends FHIRResource {
+// fhir_practitioner_roles has NO fhir_id column in the live schema (keys on id), so omit
+// the FHIRResource-required fhir_id. Verified vs information_schema 2026-06-02 (Tier-1 drift).
+export interface FHIRPractitionerRole extends Omit<FHIRResource, 'fhir_id'> {
   practitioner_id: string; // Reference to Practitioner
   organization_id?: string; // Reference to Organization
   location_id?: string; // Reference to Location

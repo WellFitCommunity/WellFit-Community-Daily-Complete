@@ -11,7 +11,10 @@ import type { FHIRResource, CodeableConcept, Quantity, Reference } from './base'
 // IMMUNIZATION
 // ============================================================================
 
-export interface FHIRImmunization extends FHIRResource {
+// fhir_immunizations has NO fhir_id column in the live schema (it keys on id +
+// external_id/external_system), so omit the FHIRResource-required fhir_id here.
+// Verified against information_schema 2026-06-02 (clinical audit Tier-1 column drift).
+export interface FHIRImmunization extends Omit<FHIRResource, 'fhir_id'> {
   // External System Integration
   external_id?: string;
   external_system?: string;
@@ -284,7 +287,9 @@ export const SENIOR_CARE_ACTIVITIES = {
 // CARE TEAM
 // ============================================================================
 
-export interface FHIRCareTeam extends FHIRResource {
+// fhir_care_teams has NO fhir_id column in the live schema (keys on id + version_id), so
+// omit the FHIRResource-required fhir_id. Verified vs information_schema 2026-06-02 (Tier-1 drift).
+export interface FHIRCareTeam extends Omit<FHIRResource, 'fhir_id'> {
   patient_id: string;
   status: 'draft' | 'active' | 'suspended' | 'inactive' | 'entered-in-error';
   name?: string;
