@@ -76,6 +76,11 @@ jobs:
         if: always()
         run: python3 scripts/check-fhir-service-schema.py
 
+      - name: DB-reference drift gate (.from/.rpc existence)
+        id: db_reference
+        if: always()
+        run: python3 scripts/check-db-reference-drift.py
+
       - name: Report to summary
         if: always()
         run: |
@@ -94,6 +99,11 @@ jobs:
             echo "✅ FHIR service schema gate passed — no new schema drift" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ FHIR service schema drift — a service selects a column/table absent from the live snapshot" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.db_reference.outcome }}" == "success" ]; then
+            echo "✅ DB-reference gate passed — no new .from()/.rpc() targets missing from the live DB" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ DB-reference drift — code references a table/function absent from the live snapshot" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ============================================
