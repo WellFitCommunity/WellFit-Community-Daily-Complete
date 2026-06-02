@@ -304,14 +304,26 @@ serve(async (req) => {
       riskFactors: aiAssessment.riskFactors,
       protectiveFactors: aiAssessment.protectiveFactors,
       patientAge: patientData.age,
-      ageRiskCategory: patientData.age ? (patientData.age >= 80 ? "high" : patientData.age >= 65 ? "moderate" : "low") : "low",
+      // Fail-safe: a MISSING DOB must NOT be scored "low" — that silently under-triages
+      // the oldest, highest-risk cohort. Unknown age → "moderate" + a mandatory review flag
+      // (below) so a human verifies the DOB rather than trusting a falsely-reassuring score.
+      ageRiskCategory:
+        patientData.age == null
+          ? "moderate"
+          : patientData.age >= 80 ? "high" : patientData.age >= 65 ? "moderate" : "low",
       categoryScores: preliminaryScores,
       interventions: aiAssessment.interventions,
       precautions: aiAssessment.precautions,
       monitoringFrequency: aiAssessment.overallRiskScore >= 70 ? "intensive" : aiAssessment.overallRiskScore >= 40 ? "enhanced" : "standard",
       confidence: aiAssessment.confidence,
       requiresReview: true, // Always require review for clinical assessments
-      reviewReasons: aiAssessment.reviewReasons,
+      reviewReasons:
+        patientData.age == null
+          ? [
+              ...aiAssessment.reviewReasons,
+              "Date of birth missing — age-based fall risk estimated conservatively (assumed ≥65); verify DOB.",
+            ]
+          : aiAssessment.reviewReasons,
       plainLanguageExplanation: aiAssessment.plainLanguageExplanation,
       generatedAt: new Date().toISOString(),
     };
@@ -554,14 +566,16 @@ function calculatePreliminaryScores(data: PatientData): CategoryScores {
     environmental: 20, // Default baseline
   };
 
-  // Age risk (0-100)
-  if (data.age) {
-    if (data.age >= 85) scores.age = 100;
-    else if (data.age >= 80) scores.age = 80;
-    else if (data.age >= 75) scores.age = 60;
-    else if (data.age >= 65) scores.age = 40;
-    else if (data.age >= 55) scores.age = 20;
-  }
+  // Age risk (0-100). Unknown age must NOT contribute 0 — that under-triages the elderly
+  // when DOB is missing. Apply a conservative floor equal to the 65+ tier (flagged for
+  // review at the assessment level) rather than silently treating unknown age as no risk.
+  if (data.age == null) {
+    scores.age = 40; // conservative ≥65 floor; never silently 0
+  } else if (data.age >= 85) scores.age = 100;
+  else if (data.age >= 80) scores.age = 80;
+  else if (data.age >= 75) scores.age = 60;
+  else if (data.age >= 65) scores.age = 40;
+  else if (data.age >= 55) scores.age = 20;
 
   // Fall history risk
   if (data.fallHistory.length > 0) {
