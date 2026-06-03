@@ -59,6 +59,51 @@ parse_documented_mcp_servers() {
 readarray -t DOCUMENTED_MCP_SERVERS < <(parse_documented_mcp_servers)
 DOC_MCP_SERVERS=${#DOCUMENTED_MCP_SERVERS[@]}
 
+# Parse the documented tier (T1/T2/T3) for each S9 row, plus a "target" flag.
+# Emits tab-separated: name <TAB> Tcode <TAB> target|-
+# A tier cell annotated "(target)" marks an intentional, accepted code/doc gap
+# (e.g. a stub server not yet raised to its eventual tier) and is reported as
+# an exception, not drift.
+parse_documented_mcp_tiers() {
+  awk '
+    /^### S9\. MCP Servers/ { in_s9 = 1; next }
+    /^### S10\./           { in_s9 = 0 }
+    in_s9 && /^\| `mcp-/ {
+      if (!match($0, /`mcp-[a-z0-9-]+`/)) next
+      name = substr($0, RSTART + 1, RLENGTH - 2)
+      n = split($0, cols, "|")
+      tiercell = cols[3]
+      tcode = ""
+      if (match(tiercell, /T[1-3]/)) tcode = substr(tiercell, RSTART, RLENGTH)
+      istarget = (tiercell ~ /target/) ? "target" : "-"
+      print name "\t" tcode "\t" istarget
+    }
+  ' "$GOVERNANCE_DOC"
+}
+
+# Map a server's declared SERVER_CONFIG.tier string to the T1/T2/T3 scale.
+map_tier_to_code() {
+  case "$1" in
+    external_api) echo "T1" ;;
+    user_scoped)  echo "T2" ;;
+    admin)        echo "T3" ;;
+    *)            echo "?"  ;;
+  esac
+}
+
+# Read the declared tier string from a server's index.ts (empty if none).
+# The trailing `|| true` is REQUIRED: under `set -euo pipefail`, a server that
+# declares no tier (e.g. mcp-chain-orchestrator) makes the leading grep return
+# non-zero (no match), which `pipefail` propagates and `set -e` would treat as
+# fatal at the `raw_tier=$(...)` call site — killing the whole gate before it
+# reaches the "no tier declared" guard. Never let this function exit non-zero.
+declared_tier_string() {
+  local index_file="$1"
+  [ -f "$index_file" ] || return 0
+  grep -hoE "tier:[[:space:]]*[\"'][a-z_]+[\"']" "$index_file" 2>/dev/null \
+    | head -1 | grep -oE "[a-z_]+" | tail -1 || true
+}
+
 if [ "$DOC_MCP_SERVERS" -eq 0 ]; then
   echo "ERROR: Failed to parse MCP server list from $GOVERNANCE_DOC S9 section." >&2
   echo "       Verify that section heading '### S9. MCP Servers' is present" >&2
@@ -279,6 +324,52 @@ if [ ${#undocumented_mcp[@]} -gt 0 ]; then
   EXIT_CODE=1
 fi
 
+# Tier drift: compare each server's documented S9 tier against the tier
+# declared in its index.ts (SERVER_CONFIG.tier). A tier is a SECURITY control
+# (it selects anon-key+RLS vs service-key+RLS-bypass), so — unlike the numeric
+# architecture/schema drift above — a mismatch HARD-FAILS the build. Warn-only
+# on a security gate is how an under-protected server reaches production and is
+# then ignored. The only accepted gap is a row explicitly annotated "(target)"
+# in S9: an intentional, reviewed, documented stub (e.g. clearinghouse) carrying
+# its own written go-live remediation note. That annotation is the deliberate
+# escape valve — it does not stop production, but it forces an explicit Tier-3
+# decision in the governance doc rather than a silent pass. An UNKNOWN tier
+# (cannot map to T1/T2/T3) also fails: an unverifiable gate is a broken gate.
+tier_mismatches=0
+tier_targets=0
+tier_unknown=0
+while IFS=$'\t' read -r srv doc_tier is_target; do
+  [ -n "$srv" ] || continue
+  index_file="$REPO_ROOT/supabase/functions/${srv}/index.ts"
+  [ -f "$index_file" ] || continue   # presence drift already reported above
+  raw_tier=$(declared_tier_string "$index_file")
+  if [ -z "$raw_tier" ]; then
+    continue   # server declares no tier (e.g. orchestrator) — nothing to compare
+  fi
+  code_tier=$(map_tier_to_code "$raw_tier")
+  if [ "$code_tier" = "?" ]; then
+    echo "    UNKNOWN tier '${raw_tier}' in ${srv}/index.ts (cannot map to T1/T2/T3)"
+    tier_unknown=$(( tier_unknown + 1 ))
+    continue
+  fi
+  if [ "$code_tier" != "$doc_tier" ]; then
+    if [ "$is_target" = "target" ]; then
+      echo "    EXCEPTION: ${srv} doc=${doc_tier} (target) vs code=${code_tier} (${raw_tier}) — intentional gap"
+      tier_targets=$(( tier_targets + 1 ))
+    else
+      echo "    TIER DRIFT: ${srv} doc=${doc_tier} vs code=${code_tier} (${raw_tier})"
+      tier_mismatches=$(( tier_mismatches + 1 ))
+    fi
+  fi
+done < <(parse_documented_mcp_tiers)
+
+if [ "$tier_mismatches" -eq 0 ] && [ "$tier_unknown" -eq 0 ]; then
+  echo "  Tier alignment: OK (${tier_targets} accepted target exception(s))"
+else
+  echo "  Tier alignment: ${tier_mismatches} drift(s) + ${tier_unknown} unknown(s) [FAIL — fix S9 tier OR server SERVER_CONFIG.tier, or annotate '(target)' in S9 with a justification], ${tier_targets} accepted target exception(s)"
+  EXIT_CODE=1
+fi
+
 echo ""
 
 # ============================================================
@@ -310,7 +401,7 @@ echo "====================================="
 if [ "$EXIT_CODE" -eq 0 ]; then
   echo "Result: PASS — no critical drift detected"
 else
-  echo "Result: FAIL — critical drift (new god files, missing MCP servers, or undocumented MCP servers)"
+  echo "Result: FAIL — critical drift (new god files, missing/undocumented MCP servers, or MCP tier drift)"
 fi
 
 exit "$EXIT_CODE"

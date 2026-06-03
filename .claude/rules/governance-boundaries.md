@@ -386,12 +386,12 @@ This table is the single source of truth — `scripts/governance-drift-check.sh`
 | `mcp-fhir-server` | T3 | FHIR CRUD operations |
 | `mcp-hl7-x12-server` | T3 | HL7/X12 transformation |
 | `mcp-prior-auth-server` | T3 | Prior authorization workflow |
-| `mcp-clearinghouse-server` | T3 | Clearinghouse integration |
-| `mcp-cms-coverage-server` | T3 | CMS LCD/NCD lookups |
-| `mcp-npi-registry-server` | T3 | NPI validation |
-| `mcp-postgres-server` | T3 | Direct DB access |
+| `mcp-clearinghouse-server` | T3 (target) | Clearinghouse integration. **STUB** — code currently runs at T1 (`external_api`, apikey-header only, hardcoded `'tenant-id'`) because no live clearinghouse integration (Waystar/Change/Availity) is wired yet. Must be raised to T3 (JWT + role + tenant + service role) before any real EDI go-live. |
+| `mcp-cms-coverage-server` | T2 | CMS LCD/NCD lookups — public Medicare reference data only, no PHI; JWT-gated (`user_scoped`) is the correct tier. (Re-tiered T3→T2 in server v2.0.0; doc corrected 2026-06-03.) |
+| `mcp-npi-registry-server` | T1 | NPI validation — public NPPES registry only, no PHI; `external_api` is the correct tier. (Doc corrected 2026-06-03.) |
+| `mcp-postgres-server` | T2 | Direct DB access via **whitelisted named queries only** (no raw SQL), under the anon key so RLS is enforced + audit logged. The code declares `user_scoped`; the doc previously over-claimed T3 (admin/service-key, which would *bypass* RLS). The code posture is the safer one and the correct tier. (Doc corrected 2026-06-03 — verified vs `SERVER_CONFIG.tier` + the query-whitelist + RLS header.) |
 | `mcp-claude-server` | T3 | Claude API proxy |
-| `mcp-medical-codes-server` | T3 | Medical code lookups |
+| `mcp-medical-codes-server` | T2 | Medical code lookups (ICD/CPT/HCPCS reference data) — no PHI, RLS-scoped under the anon key; `user_scoped` is the correct tier. Doc previously over-claimed T3. (Doc corrected 2026-06-03.) |
 | `mcp-medical-coding-server` | T3 | Per-day encounter ledger + DRG grouping (Chain 6) |
 | `mcp-edge-functions-server` | T3 | Edge function orchestration |
 | `mcp-chain-orchestrator` | T3 | Multi-step MCP chain workflows (start, resume, approve, cancel) |
