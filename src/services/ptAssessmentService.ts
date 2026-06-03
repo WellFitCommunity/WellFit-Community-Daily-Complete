@@ -181,7 +181,7 @@ export class PTAssessmentService {
     patientId: string
   ): Promise<PTApiResponse<number>> {
     try {
-      const { data, error } = await supabase.rpc('calculate_functional_improvement', {
+      const { data, error } = await supabase.rpc('calculate_pt_functional_improvement', {
         p_patient_id: patientId,
       });
 

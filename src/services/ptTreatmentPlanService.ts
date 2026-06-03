@@ -194,7 +194,7 @@ export class PTTreatmentPlanService {
     planId: string
   ): Promise<PTApiResponse<DischargeReadiness>> {
     try {
-      const { data, error } = await supabase.rpc('evaluate_discharge_readiness', {
+      const { data, error } = await supabase.rpc('evaluate_pt_discharge_readiness', {
         p_plan_id: planId,
       });
 

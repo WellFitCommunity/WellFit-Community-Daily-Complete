@@ -9,16 +9,31 @@ import type { HistoricalCensusSnapshot, ScheduledArrival, LOSBenchmark } from '.
  * Get bed board view for tenant
  */
 export async function getBedBoard(tenantId: string): Promise<BedBoardEntry[]> {
-  const { data } = await supabase.rpc('get_bed_board_view', { p_tenant_id: tenantId });
-  return data || [];
+  // Live object is the security_invoker view v_bed_board (the get_bed_board_view
+  // RPC was renamed to a view). Tenant scoping is enforced by the view's RLS;
+  // the explicit .eq keeps parity with the old p_tenant_id argument.
+  const { data } = await supabase
+    .from('v_bed_board')
+    .select(
+      'bed_id, bed_label, room_number, bed_position, bed_type, status, status_changed_at, has_telemetry, has_isolation_capability, has_negative_pressure, unit_id, unit_code, unit_name, unit_type, floor_number, facility_id, facility_name, patient_id, patient_name, patient_mrn, assigned_at, expected_discharge_date, patient_acuity, tenant_id'
+    )
+    .eq('tenant_id', tenantId);
+  return (data ?? []) as unknown as BedBoardEntry[];
 }
 
 /**
  * Get unit capacity summary for tenant
  */
 export async function getUnitCapacity(tenantId: string): Promise<UnitCapacity[]> {
-  const { data } = await supabase.rpc('get_unit_capacity_summary', { p_tenant_id: tenantId });
-  return data || [];
+  // Live object is the security_invoker view v_unit_capacity (the
+  // get_unit_capacity_summary RPC was renamed to a view).
+  const { data } = await supabase
+    .from('v_unit_capacity')
+    .select(
+      'unit_id, unit_code, unit_name, unit_type, total_beds, target_census, max_census, facility_name, active_beds, occupied, available, pending_clean, out_of_service, occupancy_pct, tenant_id'
+    )
+    .eq('tenant_id', tenantId);
+  return (data ?? []) as unknown as UnitCapacity[];
 }
 
 /**
