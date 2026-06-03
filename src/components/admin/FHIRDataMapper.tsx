@@ -8,6 +8,7 @@ import { ErrorBoundary } from '../ErrorBoundary';
 import { MappingTableSkeleton, StatsSkeleton, CodePreviewSkeleton } from '../ui/skeleton';
 import { useFHIRMapping } from '../../hooks/useFHIRMapping';
 import { wellFitCodeGenerator } from '../../services/fhirCodeGeneration';
+import { auditLogger } from '../../services/auditLogger';
 
 interface FormData {
   sourceType: 'HL7v2' | 'CSV' | 'JSON' | 'XML' | 'Custom';
@@ -31,38 +32,41 @@ const FHIRDataMapper: React.FC = () => {
   const watchedSourceData = watch('sourceData');
 
   // Sample data templates
+  // Sample templates use OBVIOUSLY synthetic data only (CLAUDE.md Rule #15 /
+  // Rule #8 — no realistic PHI in the browser bundle). These exist solely to
+  // demonstrate the mapper's field-detection on each source format.
   const sampleData: Record<string, string> = {
-    HL7v2: `MSH|^~\\&|EPIC|EPICADT|SMS|SMSADT|199912271408|CHARRIS|ADT^A04|1817457|D|2.5
-PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVERYMAN^ADAM^A^III||19610615|M||C|1200 N ELM STREET^^GREENSBORO^NC^27401-1020|GL|(919)379-1212|(919)271-3434~(919)277-3114||S||PATID12345001^2^M10^ADT1^AN^A|123456789|9-87654^NC`,
-    
+    HL7v2: `MSH|^~\\&|TESTSYS|TESTFAC|TESTSYS|TESTFAC|20000101120000|TESTUSER|ADT^A04|TEST0001|D|2.5
+PID|0001||TESTMRN001^5^M11^ADT1^MR^TEST HOSPITAL~000000000^^^USSSA^SS||ZZTEST^ALPHA^A^III||20000101|M||C|100 TEST STREET^^TESTVILLE^TX^00000|GL|(555)555-0100|(555)555-0101||S||TESTAN001^2^M10^ADT1^AN^A|000000000|0-00000^TX`,
+
     CSV: `patient_id,first_name,last_name,dob,gender,phone,address,city,state,zip,mrn
-12345,John,Smith,1985-03-15,M,555-0123,123 Main St,Anytown,TX,12345,MRN001
-67890,Jane,Doe,1990-07-22,F,555-0456,456 Oak Ave,Somewhere,CA,67890,MRN002`,
+00001,Test,PatientAlpha,2000-01-01,M,555-0100,100 Test St,Testville,TX,00000,TESTMRN001
+00002,Test,PatientBeta,2000-01-01,F,555-0101,200 Test Ave,Testville,TX,00000,TESTMRN002`,
 
     JSON: `{
   "patients": [
     {
-      "id": "12345",
+      "id": "00001",
       "demographics": {
-        "firstName": "John",
-        "lastName": "Smith",
-        "dateOfBirth": "1985-03-15",
+        "firstName": "Test",
+        "lastName": "PatientAlpha",
+        "dateOfBirth": "2000-01-01",
         "gender": "M",
-        "phone": "555-0123",
+        "phone": "555-0100",
         "address": {
-          "street": "123 Main St",
-          "city": "Anytown", 
+          "street": "100 Test St",
+          "city": "Testville",
           "state": "TX",
-          "zip": "12345"
+          "zip": "00000"
         }
       },
       "identifiers": {
-        "mrn": "MRN001",
-        "ssn": "123-45-6789"
+        "mrn": "TESTMRN001",
+        "ssn": "000-00-0000"
       },
       "vitals": [
         {
-          "date": "2024-01-15",
+          "date": "2000-01-15",
           "bloodPressure": "120/80",
           "heartRate": 72,
           "temperature": 98.6
@@ -74,20 +78,20 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
 
     XML: `<?xml version="1.0" encoding="UTF-8"?>
 <patients>
-  <patient id="12345">
+  <patient id="00001">
     <demographics>
-      <firstName>John</firstName>
-      <lastName>Smith</lastName>
-      <dateOfBirth>1985-03-15</dateOfBirth>
+      <firstName>Test</firstName>
+      <lastName>PatientAlpha</lastName>
+      <dateOfBirth>2000-01-01</dateOfBirth>
       <gender>M</gender>
     </demographics>
     <contact>
-      <phone>555-0123</phone>
+      <phone>555-0100</phone>
       <address>
-        <street>123 Main St</street>
-        <city>Anytown</city>
+        <street>100 Test St</street>
+        <city>Testville</city>
         <state>TX</state>
-        <zip>12345</zip>
+        <zip>00000</zip>
       </address>
     </contact>
   </patient>
@@ -117,7 +121,13 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
       setValue('sourceData', state.sourceData);
       setValue('sourceType', state.sourceType);
     } catch (error: unknown) {
-
+      // loadFromFile surfaces a user-facing message via the hook's errors[]
+      // array; log here so the failure is captured in the audit trail.
+      await auditLogger.error(
+        'FHIR_MAPPER_FILE_UPLOAD_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { component: 'FHIRDataMapper', fileName: file.name }
+      );
     }
   };
 
