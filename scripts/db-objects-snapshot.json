@@ -4,7 +4,7 @@
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-04",
     "table_count": 757,
-    "function_count": 1458
+    "function_count": 1459
   },
   "tables": [
     "account_lockouts",
@@ -1478,6 +1478,7 @@
     "get_top_ai_users",
     "get_top_cached_queries",
     "get_transfer_metrics",
+    "get_uninvestigated_anomalies",
     "get_unit_census",
     "get_unread_security_notifications_count",
     "get_upcoming_reminders",
