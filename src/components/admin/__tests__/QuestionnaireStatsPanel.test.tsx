@@ -2,8 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QuestionnaireStatsPanel } from '../QuestionnaireStatsPanel';
 
+// Matches FHIRQuestionnaireService.getQuestionnaireStats so the mock is assignable
+// to the panel's fhirService prop under the full (test-inclusive) typecheck.
+type GetStatsFn = (questionnaireId: number) => Promise<Record<string, unknown>>;
+
 const renderPanel = (
-  getQuestionnaireStats: ReturnType<typeof vi.fn>,
+  getQuestionnaireStats: ReturnType<typeof vi.fn<GetStatsFn>>,
   onClose = vi.fn(),
   id = 42
 ) =>
@@ -18,7 +22,7 @@ const renderPanel = (
 
 describe('QuestionnaireStatsPanel', () => {
   it('fetches stats for the given questionnaire id and renders the values', async () => {
-    const getQuestionnaireStats = vi.fn().mockResolvedValue({
+    const getQuestionnaireStats = vi.fn<GetStatsFn>().mockResolvedValue({
       total_responses: 10,
       completed_responses: 8,
       completion_rate: 80,
@@ -37,7 +41,7 @@ describe('QuestionnaireStatsPanel', () => {
   });
 
   it('shows an empty-state note and dashes when there are no responses', async () => {
-    const getQuestionnaireStats = vi.fn().mockResolvedValue({
+    const getQuestionnaireStats = vi.fn<GetStatsFn>().mockResolvedValue({
       total_responses: 0,
       completed_responses: 0,
       completion_rate: null,
@@ -56,7 +60,7 @@ describe('QuestionnaireStatsPanel', () => {
 
   it('surfaces an error with a working Retry that refetches', async () => {
     const getQuestionnaireStats = vi
-      .fn()
+      .fn<GetStatsFn>()
       .mockRejectedValueOnce(new Error('boom'))
       .mockResolvedValueOnce({
         total_responses: 3,
@@ -77,7 +81,7 @@ describe('QuestionnaireStatsPanel', () => {
 
   it('calls onClose when the close button is clicked', async () => {
     const onClose = vi.fn();
-    const getQuestionnaireStats = vi.fn().mockResolvedValue({
+    const getQuestionnaireStats = vi.fn<GetStatsFn>().mockResolvedValue({
       total_responses: 1,
       completed_responses: 1,
       completion_rate: 100,
