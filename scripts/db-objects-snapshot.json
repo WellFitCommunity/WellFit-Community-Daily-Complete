@@ -3,8 +3,8 @@
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-04",
-    "table_count": 755,
-    "function_count": 1452
+    "table_count": 757,
+    "function_count": 1454
   },
   "tables": [
     "account_lockouts",
@@ -276,6 +276,8 @@
     "fhir_practitioners_decrypted",
     "fhir_procedures",
     "fhir_provenance",
+    "fhir_questionnaire_deployments",
+    "fhir_questionnaire_responses",
     "fhir_questionnaires",
     "fhir_service_requests",
     "field_visits",
@@ -958,6 +960,7 @@
     "decrypt_pending_password",
     "decrypt_phi_text",
     "deny_transfer_request",
+    "deploy_questionnaire_to_wellfit",
     "detect_ai_bias_disparities",
     "detect_expired_appointments",
     "detect_impossible_travel",
@@ -1441,6 +1444,7 @@
     "get_provider_stress_trend",
     "get_pt_quality_dashboard",
     "get_pt_therapist_caseload",
+    "get_questionnaire_stats",
     "get_recent_procedures",
     "get_referral_aging_stats",
     "get_referral_completion_stats",
