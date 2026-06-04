@@ -12,7 +12,6 @@ rpc::create_fhir_patient_from_profile
 rpc::decrement
 rpc::deploy_questionnaire_to_wellfit
 rpc::generate_patient_lab_token
-rpc::get_billable_procedures
 rpc::get_clearinghouse_credentials
 rpc::get_dementia_patients_due_for_assessment
 rpc::get_direct_reports
@@ -21,7 +20,6 @@ rpc::get_expiring_consents
 rpc::get_missed_check_in_alerts
 rpc::get_nurse_bypass_count_last_7_days
 rpc::get_patient_engagement_metrics
-rpc::get_procedures_by_encounter
 rpc::get_questionnaire_stats
 rpc::get_slow_queries
 rpc::get_team_time_entries

@@ -4,7 +4,7 @@
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-04",
     "table_count": 755,
-    "function_count": 1448
+    "function_count": 1450
   },
   "tables": [
     "account_lockouts",
@@ -1339,6 +1339,7 @@
     "get_available_slots",
     "get_backup_code_count",
     "get_backup_compliance_status",
+    "get_billable_procedures",
     "get_care_plan_activities_summary",
     "get_care_plans_by_category",
     "get_care_plans_by_status",
@@ -1427,6 +1428,7 @@
     "get_prior_auth_approaching_deadline",
     "get_prior_auth_statistics",
     "get_problem_list",
+    "get_procedures_by_encounter",
     "get_proj4_from_srid",
     "get_prometheus_metrics",
     "get_provider_appointment_stats",
