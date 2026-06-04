@@ -4,7 +4,7 @@
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-04",
     "table_count": 757,
-    "function_count": 1456
+    "function_count": 1458
   },
   "tables": [
     "account_lockouts",
@@ -1462,6 +1462,7 @@
     "get_system_overview",
     "get_table_columns",
     "get_table_row_count",
+    "get_team_time_entries",
     "get_tenant_ai_cost_summary",
     "get_tenant_ai_skills",
     "get_tenant_branding_by_subdomain",
@@ -1470,6 +1471,7 @@
     "get_tenant_config_history",
     "get_tenant_config_stats",
     "get_tenant_facilities",
+    "get_tenant_time_entries",
     "get_tenant_timezone",
     "get_time_entries",
     "get_todays_time_entry",
