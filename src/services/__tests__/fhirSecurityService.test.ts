@@ -22,6 +22,10 @@ import {
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     rpc: vi.fn(),
+    from: vi.fn(),
+    auth: {
+      getSession: vi.fn(),
+    },
   },
 }));
 
@@ -539,10 +543,21 @@ describe('FHIRSecurityService', () => {
   // AuditLogger Tests
   // ==========================================================================
   describe('AuditLogger', () => {
-    describe('log', () => {
-      it('should log audit event via RPC', async () => {
-        (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ data: null, error: null });
+    // The dead `log_audit_event` RPC was repointed to a direct audit_logs
+    // insert. INSERT RLS requires actor_user_id = auth.uid(), so log() reads the
+    // session first and writes actor_user_id explicitly.
+    let insertMock: ReturnType<typeof vi.fn>;
 
+    beforeEach(() => {
+      insertMock = vi.fn().mockResolvedValue({ error: null });
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({ insert: insertMock });
+      (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: { session: { user: { id: 'actor-1' } } },
+      });
+    });
+
+    describe('log', () => {
+      it('should persist an audit event to audit_logs with actor_user_id', async () => {
         await AuditLogger.log({
           eventType: 'FHIR_READ',
           eventCategory: 'FHIR_SYNC',
@@ -551,22 +566,36 @@ describe('FHIRSecurityService', () => {
           success: true,
         });
 
-        expect(supabase.rpc).toHaveBeenCalledWith('log_audit_event', {
-          p_event_type: 'FHIR_READ',
-          p_event_category: 'FHIR_SYNC',
-          p_resource_type: 'Patient',
-          p_resource_id: '123',
-          p_target_user_id: null,
-          p_operation: null,
-          p_metadata: {},
-          p_success: true,
-          p_error_message: null,
+        expect(supabase.from).toHaveBeenCalledWith('audit_logs');
+        expect(insertMock).toHaveBeenCalledWith({
+          event_type: 'FHIR_READ',
+          event_category: 'FHIR_SYNC',
+          actor_user_id: 'actor-1',
+          resource_type: 'Patient',
+          resource_id: '123',
+          target_user_id: null,
+          operation: null,
+          metadata: {},
+          success: true,
+          error_message: null,
         });
       });
 
-      it('should sanitize error messages in logs', async () => {
-        (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ data: null, error: null });
+      it('should skip silently when there is no authenticated session', async () => {
+        (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({
+          data: { session: null },
+        });
 
+        await AuditLogger.log({
+          eventType: 'FHIR_READ',
+          eventCategory: 'FHIR_SYNC',
+          success: true,
+        });
+
+        expect(supabase.from).not.toHaveBeenCalled();
+      });
+
+      it('should sanitize error messages in logs', async () => {
         await AuditLogger.log({
           eventType: 'FHIR_ERROR',
           eventCategory: 'FHIR_SYNC',
@@ -574,16 +603,13 @@ describe('FHIRSecurityService', () => {
           errorMessage: 'Error for SSN 123-45-6789',
         });
 
-        expect(supabase.rpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
-          p_error_message: expect.stringContaining('[REDACTED]'),
+        expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({
+          error_message: expect.stringContaining('[REDACTED]'),
         }));
       });
 
-      it('should not throw on RPC error', async () => {
-        (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
-          data: null,
-          error: { message: 'RPC failed' },
-        });
+      it('should not throw on insert error', async () => {
+        insertMock.mockResolvedValue({ error: { message: 'insert failed' } });
 
         await expect(
           AuditLogger.log({
@@ -597,31 +623,27 @@ describe('FHIRSecurityService', () => {
 
     describe('logPHIAccess', () => {
       it('should log PHI access with correct event type', async () => {
-        (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ data: null, error: null });
-
         await AuditLogger.logPHIAccess('Patient', '123', 'READ', 'user-456');
 
-        expect(supabase.rpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
-          p_event_type: 'PHI_READ',
-          p_event_category: 'PHI_ACCESS',
-          p_resource_type: 'Patient',
-          p_resource_id: '123',
-          p_target_user_id: 'user-456',
-          p_operation: 'READ',
+        expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({
+          event_type: 'PHI_READ',
+          event_category: 'PHI_ACCESS',
+          resource_type: 'Patient',
+          resource_id: '123',
+          target_user_id: 'user-456',
+          operation: 'READ',
         }));
       });
 
       it('should support all PHI operations', async () => {
-        (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ data: null, error: null });
-
         const operations: Array<'READ' | 'WRITE' | 'UPDATE' | 'DELETE' | 'EXPORT'> = [
           'READ', 'WRITE', 'UPDATE', 'DELETE', 'EXPORT'
         ];
 
         for (const op of operations) {
           await AuditLogger.logPHIAccess('Patient', '123', op);
-          expect(supabase.rpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
-            p_event_type: `PHI_${op}`,
+          expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({
+            event_type: `PHI_${op}`,
           }));
         }
       });
@@ -629,17 +651,15 @@ describe('FHIRSecurityService', () => {
 
     describe('logFHIROperation', () => {
       it('should log FHIR operation', async () => {
-        (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ data: null, error: null });
-
         await AuditLogger.logFHIROperation('FHIR_SYNC', 'Patient', true, { count: 10 });
 
-        expect(supabase.rpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
-          p_event_type: 'FHIR_SYNC',
-          p_event_category: 'FHIR_SYNC',
-          p_resource_type: 'Patient',
-          p_operation: 'FHIR_SYNC',
-          p_metadata: { count: 10 },
-          p_success: true,
+        expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({
+          event_type: 'FHIR_SYNC',
+          event_category: 'FHIR_SYNC',
+          resource_type: 'Patient',
+          operation: 'FHIR_SYNC',
+          metadata: { count: 10 },
+          success: true,
         }));
       });
     });

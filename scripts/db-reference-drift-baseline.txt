@@ -36,7 +36,6 @@ rpc::increment_billing_cache_hit
 rpc::increment_cultural_cache_hit
 rpc::increment_template_usage
 rpc::increment_visits_used
-rpc::log_audit_event
 rpc::remove_encounter_provider
 rpc::update_clearinghouse_config
 table::adapter_connections

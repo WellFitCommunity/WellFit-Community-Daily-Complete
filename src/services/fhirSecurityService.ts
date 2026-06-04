@@ -358,21 +358,49 @@ export class AuditLogger {
    */
   static async log(params: AuditLogParams): Promise<void> {
     try {
-      const { data: _data, error } = await supabase.rpc('log_audit_event', {
-        p_event_type: params.eventType,
-        p_event_category: params.eventCategory,
-        p_resource_type: params.resourceType || null,
-        p_resource_id: params.resourceId || null,
-        p_target_user_id: params.targetUserId || null,
-        p_operation: params.operation || null,
-        p_metadata: params.metadata || {},
-        p_success: params.success,
-        p_error_message: params.errorMessage ? ErrorSanitizer.sanitize(params.errorMessage) : null,
+      // The `log_audit_event` RPC was dropped from the live DB (drift); writes
+      // through it silently failed. Persist directly to `audit_logs`, mirroring
+      // the canonical auditLogger path. INSERT RLS requires
+      // actor_user_id = auth.uid(), so skip silently when unauthenticated
+      // (expected during the pre-login flow) rather than null-violating the policy.
+      const { data: { session } } = await supabase.auth.getSession();
+      const actorUserId = session?.user?.id;
+      if (!actorUserId) {
+        return;
+      }
+
+      const { error } = await supabase.from('audit_logs').insert({
+        event_type: params.eventType,
+        event_category: params.eventCategory,
+        actor_user_id: actorUserId,
+        resource_type: params.resourceType ?? null,
+        resource_id: params.resourceId ?? null,
+        target_user_id: params.targetUserId ?? null,
+        operation: params.operation ?? null,
+        metadata: params.metadata ?? {},
+        success: params.success,
+        error_message: params.errorMessage ? ErrorSanitizer.sanitize(params.errorMessage) : null,
       });
 
       if (error) {
+        const errorCode = (error as { code?: string }).code;
+        // 42501 = RLS violation, PGRST301 = JWT expired — expected on stale
+        // sessions; fail silently to avoid cascading. Report anything else.
+        if (errorCode === '42501' || errorCode === 'PGRST301') {
+          return;
+        }
+        await auditLogger.error(
+          'FHIR_AUDIT_PERSIST_FAILED',
+          new Error(error.message),
+          { eventType: params.eventType, eventCategory: params.eventCategory }
+        );
       }
-    } catch (_error: unknown) {
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'FHIR_AUDIT_PERSIST_EXCEPTION',
+        err instanceof Error ? err : new Error(String(err)),
+        { eventType: params.eventType }
+      );
     }
   }
 

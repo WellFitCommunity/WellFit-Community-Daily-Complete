@@ -12,6 +12,7 @@
 
 ## Progress
 - **DONE (Batch 1, commit `c24cf90b`):** `calculate_functional_improvement`→`calculate_pt_functional_improvement`; `evaluate_discharge_readiness`→`evaluate_pt_discharge_readiness`; `get_bed_board_view`→view `v_bed_board`; `get_unit_capacity_summary`→view `v_unit_capacity`. **4 down, 36 to go.**
+- **DONE (Batch 2):** #34 `log_audit_event` (C/B-repoint). The RPC is dead in live DB (`log_security_event` + `log_phi_access` exist; `log_audit_event` does not). Repointed `fhirSecurityService.AuditLogger.log` from the dead `.rpc('log_audit_event')` to a direct `audit_logs` insert mirroring the canonical `auditLogger` path: reads the session and writes `actor_user_id` explicitly (INSERT RLS requires `actor_user_id = auth.uid()`), skips silently when unauthenticated, and replaces the two **empty** `if (error) {}` / `catch {}` blocks (silent-failure, CLAUDE.md violation) with RLS-safe handling that reports unexpected errors via canonical `auditLogger.error`. Verified live: `audit_logs` has the full column set incl. `target_user_id`; INSERT policy `audit_logs_authenticated_insert` = `WITH CHECK (actor_user_id = auth.uid())`. Class is near-dead (only its own test imports it) but exported + tested; 76 tests rewritten to assert the insert path, all green. Scoped typecheck 0, lint 0. **35 to go.**
 
 ## Remaining 36 (caller file:line · migration-defs · bucket)
 
@@ -50,7 +51,7 @@
 | 31 | increment_cultural_cache_hit | ai/culturalHealthCoach.ts:422 | 0 | B-author | cache counter |
 | 32 | increment_template_usage | fhirQuestionnaireService.ts:237 | 0 | B-author | usage counter on documentation_templates |
 | 33 | increment_visits_used | ptTreatmentPlanService.ts:251 | 0 | **C-dead** | 0 callers of `incrementVisitsUsed`; `increment_pt_visits` trigger auto-increments. Delete dead method (Tier-3 ask) or leave baselined. |
-| 34 | log_audit_event | fhirSecurityService.ts:361 | 2 | **C/B-repoint** | known-dead (PROJECT_STATE `434d7c3b`). Caller's audit write silently fails → repoint to a live audit fn (`log_security_event` exists) or `audit_logs` insert. |
+| 34 | ~~log_audit_event~~ | fhirSecurityService.ts:361 | 2 | ✅ **DONE** | Repointed to direct `audit_logs` insert (actor_user_id from session; RLS-safe; silent-failure blocks fixed). See Progress Batch 2. |
 | 35 | remove_encounter_provider | encounterProviderService.ts:120 | 1 | B-restore | pair of #2 |
 | 36 | update_clearinghouse_config | ClearinghouseConfigPanel.tsx:68 | 1 | B-restore | pair of #12 |
 
