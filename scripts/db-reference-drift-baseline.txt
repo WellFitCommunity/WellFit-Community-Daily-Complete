@@ -14,8 +14,6 @@ rpc::deploy_questionnaire_to_wellfit
 rpc::generate_patient_lab_token
 rpc::get_clearinghouse_credentials
 rpc::get_dementia_patients_due_for_assessment
-rpc::get_direct_reports
-rpc::get_employee_by_number
 rpc::get_expiring_consents
 rpc::get_missed_check_in_alerts
 rpc::get_nurse_bypass_count_last_7_days

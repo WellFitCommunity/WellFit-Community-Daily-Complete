@@ -4,7 +4,7 @@
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-04",
     "table_count": 755,
-    "function_count": 1450
+    "function_count": 1452
   },
   "tables": [
     "account_lockouts",
@@ -1355,9 +1355,11 @@
     "get_current_tenant_id",
     "get_daily_trivia_questions",
     "get_department_wellness_metrics",
+    "get_direct_reports",
     "get_drill_compliance_status",
     "get_ed_boarding_metrics",
     "get_ed_census",
+    "get_employee_by_number",
     "get_enabled_modules",
     "get_encounter_available_transitions",
     "get_encounter_diagnoses",
