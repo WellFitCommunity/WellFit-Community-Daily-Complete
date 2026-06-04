@@ -12,6 +12,15 @@
 
 ---
 
+## 🛰️ ACTIVE BUILD (2026-06-04, autonomous, Maria-directed) — Guardian ↔ Behavioral-Anomaly Integration
+
+**Tracker:** `docs/trackers/guardian-anomaly-integration-tracker.md`
+**Why:** The behavioral-anomaly subsystem (`anomaly_detections` + `behavioralAnalyticsService` + `securityAutomationService`) is BUILT but islanded from Guardian. Maria's directive: *"they need to be included [in Guardian Eyes]."* Confirmed architecture: Detection → `anomaly_detections` → `securityAutomationService` (already imports `guardian-agent/SecurityAlertNotifier`) → `security_alerts` → Guardian (cron + Eyes + Brain). Gap = nothing runs layers 1–2; the table is empty; both services have zero importers.
+**Plan (piece by piece, commit each):** GA-1 Guardian *reads* anomaly_detections → security_alerts (Check 5); GA-2 Guardian *persists* server-side PHI-access detection into anomaly_detections; GA-3 e2e live proof (synthetic → detect → record → alert → cleanup); GA-4 admin visibility UI (get_uninvestigated_anomalies, VISUAL ACCEPTANCE PENDING); GA-5 (future) full real-time detection suite + securityAutomationService `anomaly_type`→`event_type` fix + scheduled threshold checks.
+**Status:** see tracker progress log.
+
+---
+
 ## NEXT SESSION — START HERE
 
 > **🔒 SESSION 2026-06-03 — MCP tier-drift gate HARDENED (committed `312b7c7b`).** `scripts/governance-drift-check.sh` now **HARD-FAILS** on any MCP server whose live `SERVER_CONFIG.tier` ≠ its documented S9 tier (was warn-only — wrong for a *security* control, since tier selects anon-key+RLS vs service-key+RLS-bypass). The only accepted gap is an explicit `(target)` annotation in S9 (the reviewed escape valve; the clearinghouse stub uses it). Also fixed a `set -euo pipefail` crash that had silently skipped tier-checking the 5 servers after `mcp-chain-orchestrator`, and corrected two stale S9 rows: `mcp-postgres-server` + `mcp-medical-codes-server` **T3→T2** (doc over-claimed admin; code is the *safer* `user_scoped`+RLS — verified vs each server's `SERVER_CONFIG.tier`). Proven green → (injected mis-tier) → FAIL → green.
