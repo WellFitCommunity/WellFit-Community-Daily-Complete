@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { FHIRQuestionnaireService, FHIRQuestion, FHIRQuestionnaire, FHIRQuestionnaireRecord, QuestionnaireTemplate } from '../../services/fhirQuestionnaireService';
+import { QuestionnaireStatsPanel } from './QuestionnaireStatsPanel';
 
 const FHIRFormBuilderEnhanced: React.FC = () => {
   const supabase = useSupabaseClient();
@@ -22,6 +23,7 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
   const [templates, setTemplates] = useState<QuestionnaireTemplate[]>([]);
   const [myQuestionnaires, setMyQuestionnaires] = useState<FHIRQuestionnaireRecord[]>([]);
   const [viewMode, setViewMode] = useState<'builder' | 'library'>('builder');
+  const [statsQuestionnaire, setStatsQuestionnaire] = useState<FHIRQuestionnaireRecord | null>(null);
 
   const loadTemplates = async () => {
     try {
@@ -500,6 +502,18 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
                         >
                           👁️ View
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setStatsQuestionnaire((current) =>
+                              current?.id === questionnaire.id ? null : questionnaire
+                            )
+                          }
+                          aria-expanded={statsQuestionnaire?.id === questionnaire.id}
+                        >
+                          📊 Stats
+                        </Button>
                         {!questionnaire.deployed_to_wellfit && (
                           <Button
                             size="sm"
@@ -514,6 +528,14 @@ const FHIRFormBuilderEnhanced: React.FC = () => {
                         )}
                       </div>
                     </div>
+                    {statsQuestionnaire?.id === questionnaire.id && (
+                      <QuestionnaireStatsPanel
+                        questionnaireId={questionnaire.id}
+                        questionnaireTitle={questionnaire.title}
+                        fhirService={fhirService}
+                        onClose={() => setStatsQuestionnaire(null)}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
