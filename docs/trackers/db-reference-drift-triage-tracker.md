@@ -27,8 +27,8 @@ Live backing-table check done 2026-06-04. **EXISTS live:** employee_profiles, cl
 | get_employee_by_number | same | **employee_profiles EXISTS** w/ employee_number | ✅ deps | **RESTORE — same JOIN rewrite.** Pair of above. |
 | get_questionnaire_stats | _APPLIED_20250928000000 | **fhir_questionnaires + questionnaire_responses EXIST** | ✅ deps | **RESTORE — verify cols + the questionnaire_uuid bigint-vs-uuid caller mismatch.** |
 | deploy_questionnaire_to_wellfit | _APPLIED_20250928000000 | **fhir_questionnaires EXISTS** | ⚠️ | RESTORE? — WRITE fn (deploys). bigint/uuid mismatch + verify write target table exists. Lower priority (write path). |
-| get_expiring_consents | 20251106000002/4 | consent_records/dynamic_consents MISSING; **patient_consents EXISTS** | ⚠️ | REPOINT to patient_consents (verify it has expiry cols) OR rebuild consent schema. |
-| get_vulnerability_summary | _SKIP_ pentest (never applied) | penetration_tests MISSING; **security_vulnerabilities EXISTS** | ⚠️ | REPOINT to security_vulnerabilities OR confirm dead (feature never deployed). |
+| ~~get_expiring_consents~~ | 20251106000004 | **privacy_consent** (NOT patient_consents) | ✅ **DONE** `20260604000005` | **RESTORED** against `privacy_consent` (single source of truth per 20251106000004). ⚠️ Disposition above was WRONG — `patient_consents` is a NAME-COLLISION TRAP: it's SMART-on-FHIR app-access consent (uuid PK), a DIFFERENT system. The caller `consentManagementService` binds entirely to `privacy_consent` (bigint PK matches `ExpiringConsent.consent_id: number`). Live round-trip caught an `auth.users.email varchar(255)` vs `TEXT` mismatch → fixed with `::TEXT`. |
+| ~~get_vulnerability_summary~~ | _SKIP_ pentest (never applied) | **security_vulnerabilities** | ✅ **DONE** `20260604000005` | **RESTORED** (NOT dead — ComplianceDashboard is reachable). Live table has no `remediation_due_date`; `total_overdue` rebuilt from a severity-based remediation SLA on `discovered_at` (CRITICAL 15d/HIGH 30d/MED 90d/LOW 180d) — ⚠️ Maria/Akima confirm SLA windows. Returns exact `VulnerabilitySum` shape. |
 | get_clearinghouse_credentials | _SKIP_ vault (never applied) | **clearinghouse_config EXISTS** | 🔒 | **SENSITIVE — reads secrets via Vault. Maria sign-off before restoring.** Pair w/ update. |
 | update_clearinghouse_config | _SKIP_ vault | **clearinghouse_config EXISTS** | 🔒 | **SENSITIVE — Maria sign-off.** Pair of above. |
 | calculate_readmission_risk_score | _SKIP_ discharge | discharge_plans EXISTS; readmission_risk_scores MISSING | 🧠 | **CLINICAL ALGO — Maria hold** (already flagged; don't invent scoring). |
@@ -70,7 +70,7 @@ Live backing-table check done 2026-06-04. **EXISTS live:** employee_profiles, cl
 | 13 | get_dementia_patients_due_for_assessment | neuroSuiteService.ts:836 | 2 | B-restore | |
 | 14 | ~~get_direct_reports~~ | employeeService.ts:276 | 3 | ✅ **DONE** | Batch 5. Restored from the correct 20251201110002 version (employee_directory view) + ambiguous-column fix. |
 | 15 | ~~get_employee_by_number~~ | employeeService.ts:447 | 3 | ✅ **DONE** | Batch 5, pair of #14. Returns SETOF employee_directory (full EmployeeDirectoryEntry). |
-| 16 | get_expiring_consents | consentManagementService.ts:499 | 2 | B-restore | |
+| 16 | ~~get_expiring_consents~~ | consentManagementService.ts:499 | 2 | ✅ **DONE** | Batch 7, `20260604000005`. Restored against `privacy_consent` (NOT patient_consents — name-collision trap). `auth.users.email`→`::TEXT` cast fix caught live. |
 | 17 | get_missed_check_in_alerts | lawEnforcementService.ts:189 | 2 | B-restore | |
 | 18 | get_nurse_bypass_count_last_7_days | shiftHandoffService.ts:266 | 1 | B-restore | sibling of the SH bypass rebuild (`20260527025413`) — check if count fn was meant to land there (sig p_nurse_id) |
 | 19 | get_patient_engagement_metrics | api/metrics.ts:23 | 0 | B-author | table `patient_engagement_metrics` + view `patient_engagement_scores` exist; caller needs a `(_tenant,_user)` fn |
@@ -80,7 +80,7 @@ Live backing-table check done 2026-06-04. **EXISTS live:** employee_profiles, cl
 | 23 | get_team_time_entries | timeClockService.ts:360 | 2 | B-restore | manager→reports logic (sig p_manager_user_id,p_tenant_id,dates) |
 | 24 | get_tenant_time_entries | timeClockService.ts:326 | 2 | B-restore | tenant-wide (sig p_tenant_id,dates,p_limit) |
 | 25 | get_uninvestigated_anomalies | behavioralAnalyticsService.ts:337 | 1 | B-restore | |
-| 26 | get_vulnerability_summary | ComplianceDashboard.tsx:76 | 1 | B-restore | |
+| 26 | ~~get_vulnerability_summary~~ | ComplianceDashboard.tsx:76 | 1 | ✅ **DONE** | Batch 7, `20260604000005`. Rebuilt against live `security_vulnerabilities` (no remediation_due_date; overdue from severity SLA on discovered_at — confirm windows). |
 | 27 | get_welfare_check_info | lawEnforcementService.ts:97 | 2 | B-restore | |
 | 28 | identify_high_burden_caregivers | neuroSuiteService.ts:719 | 2 | B-restore | |
 | 29 | increment | nurseos/resourceService.ts:70 | 0 | B-author | counter helper — verify arg shape |

@@ -4,7 +4,7 @@
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-04",
     "table_count": 757,
-    "function_count": 1454
+    "function_count": 1456
   },
   "tables": [
     "account_lockouts",
@@ -1367,6 +1367,7 @@
     "get_encounter_available_transitions",
     "get_encounter_diagnoses",
     "get_encryption_key_from_vault",
+    "get_expiring_consents",
     "get_exportable_columns",
     "get_facility",
     "get_failed_login_count",
@@ -1488,6 +1489,7 @@
     "get_vaccine_gaps",
     "get_visit_duration",
     "get_visit_location_distance",
+    "get_vulnerability_summary",
     "get_weekly_time_summary",
     "gettransactionid",
     "gidx_in",

@@ -13,7 +13,6 @@ rpc::decrement
 rpc::generate_patient_lab_token
 rpc::get_clearinghouse_credentials
 rpc::get_dementia_patients_due_for_assessment
-rpc::get_expiring_consents
 rpc::get_missed_check_in_alerts
 rpc::get_nurse_bypass_count_last_7_days
 rpc::get_patient_engagement_metrics
@@ -21,7 +20,6 @@ rpc::get_slow_queries
 rpc::get_team_time_entries
 rpc::get_tenant_time_entries
 rpc::get_uninvestigated_anomalies
-rpc::get_vulnerability_summary
 rpc::get_welfare_check_info
 rpc::identify_high_burden_caregivers
 rpc::increment
