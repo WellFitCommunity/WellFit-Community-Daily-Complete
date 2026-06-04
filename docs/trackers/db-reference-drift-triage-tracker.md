@@ -4,6 +4,9 @@
 > **Gate:** `python3 scripts/check-db-reference-drift.py` (must stay exit 0).
 > **Started:** 2026-06-03. **Recipe:** grep caller → bucket → fix → remove baseline line → re-run gate → scoped typecheck/lint/test → commit.
 
+## 🚨 SYSTEMIC FINDING (2026-06-04) — self-destructing `-- migrate:down` blocks
+40 migration files carry a dbmate/golang-migrate `-- migrate:down` block **after** the up-section `COMMIT;`. Supabase CLI (`supabase db push`) does NOT split on `-- migrate:up`/`-- migrate:down` markers — it executes the **entire file**. Any such migration that was applied via `db push` (rather than dbmate) created its objects and then **immediately dropped them in the same run**, while `schema_migrations` recorded success. This is a likely root cause for a chunk of the B-restore baseline (objects "applied" per the registry but absent from live). **Triage implication:** for every B-restore, the forensic isn't "who dropped it" — check whether the defining migration has a `migrate:down` block; if so and the objects are absent live, the fix is a NEW forward migration containing the up-section ONLY (no down block). A plain `db push` of the original will NOT help — its version is already in the registry and will be skipped. Most older `migrate:down` migrations did NOT self-destruct (their objects exist live — they were applied via dbmate, which honors the markers); verify per-object against live, don't assume. List: `grep -rln "migrate:down" supabase/migrations/`.
+
 ## Buckets
 - **A — repoint** (live object exists with matching shape): one-line rename or `.rpc()`→`.from()`. SAFE, do immediately.
 - **B-restore** (defined in a migration file but ABSENT from live = drift): restore IS legitimate, BUT first run the **DRIFT forensic** — `git log -p --all -S '<name>' -- supabase/migrations/` to learn *why* it's absent (deliberately dropped vs. unapplied/superseded migration). Only re-create if the drop was unintentional. Live-verify after `db push`.
@@ -12,6 +15,7 @@
 
 ## Progress
 - **DONE (Batch 1, commit `c24cf90b`):** `calculate_functional_improvement`→`calculate_pt_functional_improvement`; `evaluate_discharge_readiness`→`evaluate_pt_discharge_readiness`; `get_bed_board_view`→view `v_bed_board`; `get_unit_capacity_summary`→view `v_unit_capacity`. **4 down, 36 to go.**
+- **DONE (Batch 3 — encounter-provider cluster, #2 + #35):** `assign_encounter_provider` + `remove_encounter_provider`. **DRIFT forensic uncovered a systemic root cause (see SYSTEMIC FINDING below):** migration `20260212000001_encounter_provider_assignment.sql` is registered APPLIED in `schema_migrations` but ALL its objects were absent from live (no `encounter_providers`/`encounter_provider_audit` tables, no enum, no functions). Cause: the file carries a `-- migrate:down` block (dbmate syntax) after the up COMMIT; `supabase db push` runs the whole file, so it created everything then dropped it in the same run. Feature is REACHABLE (admin `EncounterProviderPanel`/`ProviderAssignmentDashboard` + CPOE `useOrderingProvider`), so this was a genuine live gap. Restored via new forward migration `20260604000000_restore_encounter_provider_assignment.sql` (up-section only, no down block; idempotent). All deps verified live first (encounters, billing_providers, is_admin, set_updated_at, + sibling state-machine objects which did NOT self-destruct). `transition_encounter_status` signature matched live → CREATE OR REPLACE upgraded it in place to add provider validation. Pushed + live-proven: all 8 objects exist, RLS on, and all 3 functions execute end-to-end (assign→NOT_FOUND, validate→PROVIDER_REQUIRED proving the `encounter_providers` SELECT works, remove→NOT_FOUND). Snapshot refreshed (755 tables / 1448 fns). 28 service tests green. **33 to go.**
 - **DONE (Batch 2):** #34 `log_audit_event` (C/B-repoint). The RPC is dead in live DB (`log_security_event` + `log_phi_access` exist; `log_audit_event` does not). Repointed `fhirSecurityService.AuditLogger.log` from the dead `.rpc('log_audit_event')` to a direct `audit_logs` insert mirroring the canonical `auditLogger` path: reads the session and writes `actor_user_id` explicitly (INSERT RLS requires `actor_user_id = auth.uid()`), skips silently when unauthenticated, and replaces the two **empty** `if (error) {}` / `catch {}` blocks (silent-failure, CLAUDE.md violation) with RLS-safe handling that reports unexpected errors via canonical `auditLogger.error`. Verified live: `audit_logs` has the full column set incl. `target_user_id`; INSERT policy `audit_logs_authenticated_insert` = `WITH CHECK (actor_user_id = auth.uid())`. Class is near-dead (only its own test imports it) but exported + tested; 76 tests rewritten to assert the insert path, all green. Scoped typecheck 0, lint 0. **35 to go.**
 
 ## Remaining 36 (caller file:line · migration-defs · bucket)
@@ -19,7 +23,7 @@
 | # | rpc:: name | caller | migdefs | bucket | note |
 |---|-----------|--------|:------:|--------|------|
 | 1 | aggregate_disparities_by_demographic | HealthEquityService.ts:89 | 0 | B-author | health-equity analytics |
-| 2 | assign_encounter_provider | encounterProviderService.ts:51 | 1 | B-restore | |
+| 2 | ~~assign_encounter_provider~~ | encounterProviderService.ts:51 | 1 | ✅ **DONE** | Batch 3. Restored via `20260604000000` (self-destruct migrate:down root cause). |
 | 3 | auto_generate_clinical_data_for_hospital_patient | PaperFormScanner.tsx:269 | 1 | B-restore | |
 | 4 | calculate_health_equity_metrics | HealthEquityService.ts:15 | 0 | B-author | analytics |
 | 5 | calculate_readmission_risk_score | dischargePlanningService.ts:47 | 1 | B-restore | **clinical risk algo — verify logic** |
@@ -52,7 +56,7 @@
 | 32 | increment_template_usage | fhirQuestionnaireService.ts:237 | 0 | B-author | usage counter on documentation_templates |
 | 33 | increment_visits_used | ptTreatmentPlanService.ts:251 | 0 | **C-dead** | 0 callers of `incrementVisitsUsed`; `increment_pt_visits` trigger auto-increments. Delete dead method (Tier-3 ask) or leave baselined. |
 | 34 | ~~log_audit_event~~ | fhirSecurityService.ts:361 | 2 | ✅ **DONE** | Repointed to direct `audit_logs` insert (actor_user_id from session; RLS-safe; silent-failure blocks fixed). See Progress Batch 2. |
-| 35 | remove_encounter_provider | encounterProviderService.ts:120 | 1 | B-restore | pair of #2 |
+| 35 | ~~remove_encounter_provider~~ | encounterProviderService.ts:120 | 1 | ✅ **DONE** | Batch 3, pair of #2. |
 | 36 | update_clearinghouse_config | ClearinghouseConfigPanel.tsx:68 | 1 | B-restore | pair of #12 |
 
 ## Suggested execution order (next sessions)

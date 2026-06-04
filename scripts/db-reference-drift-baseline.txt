@@ -4,7 +4,6 @@
 # Each entry is real drift to triage (legacy/renamed object, dead code, or a bug).
 # Baselining only stops NEW drift from landing on top of the known set.
 rpc::aggregate_disparities_by_demographic
-rpc::assign_encounter_provider
 rpc::auto_generate_clinical_data_for_hospital_patient
 rpc::calculate_health_equity_metrics
 rpc::calculate_readmission_risk_score
@@ -36,7 +35,6 @@ rpc::increment_billing_cache_hit
 rpc::increment_cultural_cache_hit
 rpc::increment_template_usage
 rpc::increment_visits_used
-rpc::remove_encounter_provider
 rpc::update_clearinghouse_config
 table::adapter_connections
 table::admin_actions
