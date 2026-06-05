@@ -389,6 +389,7 @@ export const superAdminRoutes: RouteConfig[] = [
   { path: '/guardian/dashboard', component: 'GuardianAgentDashboard', auth: 'superAdmin', category: 'superAdmin', wrapper: 'darkWrapper' },
   { path: '/guardian/approvals', component: 'GuardianApprovalsList', auth: 'superAdmin', category: 'superAdmin' },
   { path: '/guardian/approval/:ticketId', component: 'GuardianApprovalForm', auth: 'superAdmin', category: 'superAdmin' },
+  { path: '/guardian/anomalies', component: 'BehavioralAnomalyPanel', auth: 'superAdmin', category: 'superAdmin', wrapper: 'darkWrapper' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

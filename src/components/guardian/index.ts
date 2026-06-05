@@ -6,3 +6,4 @@
 
 export { GuardianApprovalForm } from './GuardianApprovalForm';
 export { GuardianApprovalsList } from './GuardianApprovalsList';
+export { BehavioralAnomalyPanel } from './BehavioralAnomalyPanel';

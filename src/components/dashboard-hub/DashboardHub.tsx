@@ -246,6 +246,16 @@ const hubCards: HubCard[] = [
     roles: ['super_admin'],
   },
   {
+    id: 'guardian-anomalies',
+    title: 'Behavioral Anomalies',
+    description: 'Investigate uninvestigated security anomalies detected by Guardian',
+    path: '/guardian/anomalies',
+    icon: AlertTriangle,
+    color: 'from-rose-700 to-rose-900',
+    category: 'workflows',
+    roles: ['super_admin'],
+  },
+  {
     id: 'healthcare-algorithms',
     title: 'Healthcare Algorithms',
     description: 'AI algorithm performance and transparency',

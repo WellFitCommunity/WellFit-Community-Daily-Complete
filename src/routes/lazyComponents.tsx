@@ -201,6 +201,9 @@ export const GuardianApprovalsList = React.lazy(() =>
 export const GuardianApprovalForm = React.lazy(() =>
   import('../components/guardian/GuardianApprovalForm').then(m => ({ default: m.GuardianApprovalForm }))
 );
+export const BehavioralAnomalyPanel = React.lazy(() =>
+  import('../components/guardian/BehavioralAnomalyPanel').then(m => ({ default: m.BehavioralAnomalyPanel }))
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CLINICAL DASHBOARDS
@@ -444,6 +447,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   EnterpriseMigrationDashboard,
   GuardianApprovalsList,
   GuardianApprovalForm,
+  BehavioralAnomalyPanel,
 
   // NurseOS
   ResilienceHubDashboard,

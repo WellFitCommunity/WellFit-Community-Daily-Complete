@@ -47,6 +47,23 @@ export interface AnomalyDetection {
   created_at: string;
 }
 
+/**
+ * Row shape returned by the `get_uninvestigated_anomalies` RPC.
+ * Distinct from {@link AnomalyDetection}: this is a denormalized join (user email/role,
+ * days-since) built for the admin investigation queue, NOT the raw table row.
+ */
+export interface UninvestigatedAnomaly {
+  id: string;
+  user_id: string;
+  user_email: string;
+  user_role: string;
+  aggregate_score: number;
+  risk_level: RiskLevel;
+  event_type: string | null;
+  detected_at: string;
+  days_since_detection: number;
+}
+
 export interface AnomalyBreakdown {
   impossible_travel_score?: number;
   unusual_time_score?: number;
@@ -332,7 +349,7 @@ export class BehavioralAnalyticsService {
   async getUninvestigatedAnomalies(
     minScore: number = 0.5,
     limit: number = 50
-  ): Promise<AnomalyDetection[]> {
+  ): Promise<UninvestigatedAnomaly[]> {
     try {
       const { data, error } = await supabase.rpc('get_uninvestigated_anomalies', {
         p_min_score: minScore,
@@ -347,12 +364,14 @@ export class BehavioralAnalyticsService {
         throw new Error(`Failed to fetch uninvestigated anomalies: ${error.message}`);
       }
 
+      const rows = (data ?? []) as UninvestigatedAnomaly[];
+
       await auditLogger.info('UNINVESTIGATED_ANOMALIES_RETRIEVED', {
-        count: data.length,
+        count: rows.length,
         min_score: minScore
       });
 
-      return data as AnomalyDetection[];
+      return rows;
     } catch (error: unknown) {
       await auditLogger.error('UNINVESTIGATED_ANOMALIES_FETCH_ERROR', error instanceof Error ? error : new Error(String(error)), {
         min_score: minScore
