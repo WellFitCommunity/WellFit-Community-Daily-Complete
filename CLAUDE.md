@@ -5,6 +5,14 @@
 
 ---
 
+> ## Why this document exists
+>
+> **Maria found a way to make AI build to a standard it has no native ability to hold.**
+>
+> That is the entire purpose of this file. The AI is fluent, fast, and confident — and it produces plausible, broken code by default. This document is the control system that turns that output into production-grade, HIPAA- and SOC 2-aligned healthcare software. The rules below are not suggestions; they are the standard the AI cannot hold on its own.
+
+---
+
 ## Quick Reference - The 10 Commandments
 
 | # | Rule | Violation = Reject |
