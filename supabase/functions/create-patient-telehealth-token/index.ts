@@ -61,7 +61,7 @@ serve(async (req: Request) => {
     // Get session details
     const { data: session, error: sessionError } = await sb
       .from("telehealth_sessions")
-      .select("*")
+      .select("id, patient_id, room_name, room_url")
       .eq("id", session_id)
       .single();
 
@@ -110,11 +110,13 @@ serve(async (req: Request) => {
     // Log patient joining session
     await sb.from("phi_access_logs").insert({
       user_id: user.id,
+      user_role: "patient",
       patient_id: user.id,
-      access_type: "telehealth_patient_join",
-      resource: `session:${session_id}`,
-      access_reason: "Patient joining telehealth session",
-      ip_address: req.headers.get("x-forwarded-for") || null, // inet type - use null if no IP available
+      action: "telehealth_patient_join",
+      data_types: ["telehealth_session"],
+      resource_type: "telehealth_session",
+      ip_address: req.headers.get("x-forwarded-for") || null,
+      metadata: { session_id, reason: "Patient joining telehealth session" },
     });
 
     return new Response(

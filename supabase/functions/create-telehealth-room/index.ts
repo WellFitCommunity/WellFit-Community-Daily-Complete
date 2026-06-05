@@ -182,11 +182,14 @@ serve(async (req: Request) => {
     // Log PHI access for HIPAA compliance
     await sb.from("phi_access_logs").insert({
       user_id: user.id,
+      user_role: "provider",
       patient_id,
-      access_type: "telehealth_session",
-      resource: `encounter:${encounter_id}`,
-      access_reason: `Telehealth ${encounter_type} visit`,
-      ip_address: req.headers.get("x-forwarded-for") || null, // inet type - use null if no IP available
+      action: "telehealth_session",
+      data_types: ["telehealth_session"],
+      resource_type: "encounter",
+      resource_id: encounter_id,
+      ip_address: req.headers.get("x-forwarded-for") || null,
+      metadata: { encounter_id, encounter_type: encounter_type || "outpatient", reason: `Telehealth ${encounter_type} visit` },
     });
 
     return new Response(
