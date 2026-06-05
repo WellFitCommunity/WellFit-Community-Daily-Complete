@@ -5,7 +5,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient } from '../_shared/supabaseClient.ts'
-import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
+import { corsFromRequest, handleOptions, rejectDisallowedOrigin } from '../_shared/cors.ts'
 import { createLogger } from "../_shared/auditLogger.ts";
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import type { GuardianEyesSnapshot } from './types.ts'
@@ -22,15 +22,17 @@ serve(async (req) => {
   }
 
   // Get CORS headers for this origin
-  const { headers: corsHeaders, allowed } = corsFromRequest(req);
+  const { headers: corsHeaders } = corsFromRequest(req);
 
-  // Reject requests from unauthorized origins
-  if (!allowed) {
-    return new Response(JSON.stringify({ error: "Origin not allowed" }), {
-      status: 403,
-      headers: corsHeaders,
-    });
-  }
+  // Reject only BROWSER requests from disallowed origins. A missing Origin header =
+  // non-browser (server-to-server) caller — e.g. the pg_cron `monitor` trigger — which
+  // the gateway JWT + admin client already authenticate. The old `if (!allowed)` check
+  // 403'd every no-origin call, so the per-minute monitoring cron never ran.
+  const originRejection = rejectDisallowedOrigin(req);
+  if (originRejection) return originRejection;
+
+  // Server-to-server callers (no Origin) are the cron path.
+  const isServerToServer = !req.headers.get('origin');
 
   try {
     const supabase = createAdminClient()
@@ -39,6 +41,23 @@ serve(async (req) => {
 
     // Resolve tenant_id from request data or auth JWT
     const tenantId = data?.tenant_id || await resolveTenantId(supabase, req);
+
+    // The cron posts `{action:'monitor'}` with no tenant_id and a service-role token
+    // (which resolves no profile/tenant). Monitor every active tenant in that case so
+    // the scheduled job actually covers the system instead of 400-ing.
+    if (action === 'monitor' && !tenantId && isServerToServer) {
+      const tenantIds = await getActiveTenantIds(supabase);
+      const allAlerts: unknown[] = [];
+      for (const t of tenantIds) {
+        const tenantAlerts = await runMonitoringChecks(supabase, t);
+        allAlerts.push(...tenantAlerts);
+      }
+      return new Response(
+        JSON.stringify({ success: true, tenants_monitored: tenantIds.length, alerts: allAlerts }),
+        { headers: corsHeaders }
+      );
+    }
+
     if (!tenantId) {
       return new Response(JSON.stringify({ error: 'tenant_id required' }), {
         status: 400,
@@ -89,6 +108,22 @@ serve(async (req) => {
     })
   }
 })
+
+/**
+ * Returns the ids of all active tenants (is_active true or null) for the cron
+ * "monitor every tenant" path. Admin client — RLS does not apply.
+ */
+async function getActiveTenantIds(supabase: SupabaseClient): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('id')
+    .or('is_active.is.null,is_active.eq.true');
+  if (error) {
+    logger.error('Failed to load active tenants for monitoring', { message: error.message });
+    return [];
+  }
+  return (data ?? []).map((t: { id: string }) => t.id);
+}
 
 /**
  * Resolves tenant_id from the Authorization JWT via profiles table lookup.
