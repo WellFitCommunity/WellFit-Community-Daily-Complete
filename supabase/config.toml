@@ -91,3 +91,12 @@ verify_jwt = false
 # in favor of the function's own SHA-256 hash + validate_api_key RPC check.
 [functions.validate-api-key]
 verify_jwt = false
+
+# Guardian agent is driven by pg_cron (guardian-automated-monitoring every 5 min,
+# guardian-daily-summary daily), which authenticate with the new `sb_secret_*` key.
+# That key is NOT a JWT, so the gateway's verify_jwt rejects it as
+# UNAUTHORIZED_INVALID_JWT_FORMAT before the function runs. JWT verification is
+# bypassed here in favor of the function's own cron-secret check
+# (isAuthorizedServerCaller: X-Cron-Secret / Bearer == CRON_SECRET or SB_SECRET_KEY).
+[functions.guardian-agent]
+verify_jwt = false

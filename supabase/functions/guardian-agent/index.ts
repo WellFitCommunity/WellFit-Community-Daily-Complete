@@ -7,6 +7,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions, rejectDisallowedOrigin } from '../_shared/cors.ts'
 import { createLogger } from "../_shared/auditLogger.ts";
+import { SB_SECRET_KEY } from '../_shared/env.ts'
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import type { GuardianEyesSnapshot } from './types.ts'
 import { runMonitoringChecks } from './monitoring.ts'
@@ -34,6 +35,22 @@ serve(async (req) => {
   // Server-to-server callers (no Origin) are the cron path.
   const isServerToServer = !req.headers.get('origin');
 
+  // Gateway JWT verification is DISABLED for this function (supabase/config.toml:
+  // [functions.guardian-agent] verify_jwt=false) because the pg_cron trigger
+  // authenticates with the NEW `sb_secret_*` key, which is NOT a JWT — the gateway
+  // rejected it as UNAUTHORIZED_INVALID_JWT_FORMAT before the function ever ran.
+  // We therefore enforce caller auth HERE. Server-to-server (no Origin) callers —
+  // the crons — must present the cron secret (X-Cron-Secret header or Bearer)
+  // matching CRON_SECRET or the new SB_SECRET_KEY (what trigger_guardian_monitoring
+  // sends). Browser callers carry an Origin and keep the verified-JWT path below
+  // (rejectDisallowedOrigin above + resolveTenantId's auth.getUser).
+  if (isServerToServer && !isAuthorizedServerCaller(req)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized — cron secret required' }), {
+      status: 401,
+      headers: corsHeaders,
+    });
+  }
+
   try {
     const supabase = createAdminClient()
 
@@ -42,18 +59,31 @@ serve(async (req) => {
     // Resolve tenant_id from request data or auth JWT
     const tenantId = data?.tenant_id || await resolveTenantId(supabase, req);
 
-    // The cron posts `{action:'monitor'}` with no tenant_id and a service-role token
-    // (which resolves no profile/tenant). Monitor every active tenant in that case so
-    // the scheduled job actually covers the system instead of 400-ing.
-    if (action === 'monitor' && !tenantId && isServerToServer) {
+    // The scheduled crons post `{action:'monitor'}` (every 5 min) and
+    // `{action:'analyze'}` (daily summary) with NO tenant_id and a secret-key token
+    // (which resolves no profile/tenant). Fan the work across every active tenant in
+    // that case so the scheduled jobs actually cover the system instead of 400-ing.
+    if (!tenantId && isServerToServer && (action === 'monitor' || action === 'analyze')) {
       const tenantIds = await getActiveTenantIds(supabase);
-      const allAlerts: unknown[] = [];
+
+      if (action === 'monitor') {
+        const allAlerts: unknown[] = [];
+        for (const t of tenantIds) {
+          allAlerts.push(...await runMonitoringChecks(supabase, t));
+        }
+        return new Response(
+          JSON.stringify({ success: true, tenants_monitored: tenantIds.length, alerts: allAlerts }),
+          { headers: corsHeaders }
+        );
+      }
+
+      // action === 'analyze'
+      const analyses: unknown[] = [];
       for (const t of tenantIds) {
-        const tenantAlerts = await runMonitoringChecks(supabase, t);
-        allAlerts.push(...tenantAlerts);
+        analyses.push(await analyzeRecordings(supabase, t));
       }
       return new Response(
-        JSON.stringify({ success: true, tenants_monitored: tenantIds.length, alerts: allAlerts }),
+        JSON.stringify({ success: true, tenants_analyzed: tenantIds.length, analyses }),
         { headers: corsHeaders }
       );
     }
@@ -108,6 +138,27 @@ serve(async (req) => {
     })
   }
 })
+
+/**
+ * Authenticates a server-to-server (no-Origin) caller — i.e. the pg_cron jobs.
+ * The platform gateway's verify_jwt is OFF for this function, so this IS the auth
+ * layer for cron calls. Accepts an `X-Cron-Secret` header or a `Bearer` token that
+ * equals the dedicated `CRON_SECRET` or the new-format `SB_SECRET_KEY` (the value
+ * `trigger_guardian_monitoring()` reads from Vault and sends). It deliberately does
+ * NOT accept the legacy JWT service-role key — that is a different, deprecated
+ * credential (CLAUDE.md supabase §14: new keys primary, legacy JWT keys phased out).
+ */
+function isAuthorizedServerCaller(req: Request): boolean {
+  const headerSecret = req.headers.get('X-Cron-Secret');
+  const bearerToken = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? null;
+  const candidate = headerSecret ?? bearerToken;
+  if (!candidate) return false;
+
+  const accepted = [Deno.env.get('CRON_SECRET'), SB_SECRET_KEY]
+    .filter((s): s is string => typeof s === 'string' && s.length > 0);
+
+  return accepted.some((s) => s === candidate);
+}
 
 /**
  * Returns the ids of all active tenants (is_active true or null) for the cron
