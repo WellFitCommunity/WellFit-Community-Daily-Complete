@@ -107,3 +107,21 @@ verify_jwt = false
 # SB_SECRET_KEY), so JWT verification is bypassed at the gateway here.
 [functions.security-alert-processor]
 verify_jwt = false
+
+# Email functions are invoked edge-to-edge with the new `sb_secret_*` key (a
+# non-JWT), e.g. guardian-agent and emergency-alert-dispatch -> send-email. The
+# gateway's default verify_jwt would reject that key as UNAUTHORIZED_INVALID_JWT_FORMAT,
+# so it is pinned off here; both functions enforce their own Bearer/service-key auth.
+# Pinned to lock the working live state — a plain redeploy would otherwise default to
+# verify_jwt=true and silently break guardian + emergency alert emails.
+[functions.send-email]
+verify_jwt = false
+
+[functions.send_welcome_email]
+verify_jwt = false
+
+# emergency-alert-dispatch is invoked server-to-server (DB webhook / non-JWT key) and
+# calls send-email with the service key. It ran verify_jwt=false; pinned here so a
+# redeploy doesn't default it to true and reject the non-JWT caller at the gateway.
+[functions.emergency-alert-dispatch]
+verify_jwt = false

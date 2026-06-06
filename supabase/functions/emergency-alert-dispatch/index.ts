@@ -5,7 +5,11 @@ import { createLogger } from '../_shared/auditLogger.ts'
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
 
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@wellfitcommunity.org";
-const SEND_EMAIL_FUNCTION_NAME = "send_email";
+// Use the hardened, authenticated email function `send-email` (dash). The former
+// `send_email` (underscore) was an unauthenticated duplicate with a different
+// contract (string `to`, no auth, wildcard CORS) and has been retired. `send-email`
+// expects `to` as an array of {email,name} and a required `html` body.
+const SEND_EMAIL_FUNCTION_NAME = "send-email";
 
 // Enhanced interfaces
 interface CheckinRecord {
@@ -40,13 +44,9 @@ interface EmailPayload {
   to?: string;
 }
 
-interface AuditLogger {
-  info: (message: string, data?: Record<string, unknown>) => void;
-  error: (message: string, data?: Record<string, unknown>) => void;
-  debug: (message: string, data?: Record<string, unknown>) => void;
-  security: (message: string, data?: Record<string, unknown>) => void;
-  phi: (message: string, data?: Record<string, unknown>) => void;
-}
+// Logger type is the actual return of createLogger (the hand-rolled local interface
+// had drifted from EdgeFunctionLogger and broke `deno check`).
+type DispatchLogger = ReturnType<typeof createLogger>;
 
 // Helper function to format email content
 function formatEmergencyEmailContent(
@@ -115,15 +115,24 @@ async function sendEmailWithRetry(
   supabaseClient: SupabaseClient,
   emailPayload: EmailPayload,
   recipient: string,
-  logger: AuditLogger,
+  logger: DispatchLogger,
   maxRetries: number = 5  // Increased from 2 - emergency alerts are life-critical
 ): Promise<EmailResult> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       logger.info('Attempting to send emergency alert email', { attempt, recipient });
 
+      // send-email (dash) contract: `to` is an ARRAY of {email,name}, `html` is
+      // required (it derives the text fallback from html). Adapt the single-string
+      // recipient + payload accordingly. Authenticated via the service-role client
+      // below (send-email accepts SB_SECRET_KEY as Bearer).
       const { error } = await supabaseClient.functions.invoke(SEND_EMAIL_FUNCTION_NAME, {
-        body: { ...emailPayload, to: recipient }
+        body: {
+          to: [{ email: recipient, name: "Emergency Contact" }],
+          subject: emailPayload.subject,
+          html: emailPayload.html,
+          priority: "high",
+        },
       });
 
       if (!error) {
