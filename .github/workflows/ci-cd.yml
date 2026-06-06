@@ -572,7 +572,7 @@ jobs:
           fi
 
       - name: Send email notification
-        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
         run: |
           # Determine status
           if [ "${{ job.status }}" == "success" ]; then

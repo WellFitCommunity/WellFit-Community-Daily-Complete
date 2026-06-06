@@ -428,7 +428,7 @@ jobs:
       # Send Email Notification via MailerSend
       # ============================================
       - name: Send email notification via MailerSend
-        if: always()
+        if: failure()
         run: |
           # Determine status emoji and color
           if [ "${{ job.status }}" == "success" ]; then
