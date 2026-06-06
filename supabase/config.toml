@@ -100,3 +100,10 @@ verify_jwt = false
 # (isAuthorizedServerCaller: X-Cron-Secret / Bearer == CRON_SECRET or SB_SECRET_KEY).
 [functions.guardian-agent]
 verify_jwt = false
+
+# Security alert processor is driven by pg_cron (every minute) with the new
+# `sb_secret_*` key — same non-JWT-vs-gateway problem as guardian-agent. The
+# function already enforces its own cron-secret check (accepts CRON_SECRET /
+# SB_SECRET_KEY), so JWT verification is bypassed at the gateway here.
+[functions.security-alert-processor]
+verify_jwt = false
