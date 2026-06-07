@@ -24,20 +24,25 @@ import {
 // T3-1: Clinical AI — ai-readmission-predictor, ai-fall-risk-predictor, ai-care-plan-generator
 // ════════════════════════════════════════════════════════════
 
-Deno.test("T3-1: ai-care-plan-generator validates required patientId", async () => {
+// NOTE: ai-care-plan-generator is auth-gated (requireUser/requirePatientAccess).
+// Called with the anon key (no authenticated user) it rejects with 401 BEFORE field
+// validation — the correct security posture for a clinical AI function. The 400
+// missing-patientId path is only reachable by an authenticated caller; covering it
+// needs a real user-session fixture (live-integration-testing tracker / EQ-9).
+Deno.test("T3-1: ai-care-plan-generator rejects unauthenticated caller", async () => {
   requireEnv();
 
   const result = await callEdgeFunction("ai-care-plan-generator", {});
 
   assert(
-    result.status === 400,
-    `Expected 400 for missing patientId, got ${result.status}`
+    result.status === 401,
+    `Expected 401 (auth required) for anon caller, got ${result.status}`
   );
 
   const data = result.data as Record<string, unknown>;
   assert(
-    typeof data.error === "string" && (data.error as string).includes("patientId"),
-    `Error should mention patientId, got ${JSON.stringify(data).slice(0, 200)}`
+    typeof data.error === "string" && (data.error as string).length > 0,
+    `Expected an auth error message, got ${JSON.stringify(data).slice(0, 200)}`
   );
 });
 
@@ -196,20 +201,24 @@ Deno.test("T3-2: ai-medication-reconciliation is deployed", async () => {
 // T3-3: Messaging — send-sms, send-email
 // ════════════════════════════════════════════════════════════
 
-Deno.test("T3-3: send-sms validates required fields", async () => {
+// NOTE: send-sms is a HIGH-RISK messaging function — it MUST reject callers that are
+// not an authenticated admin/clinical user. Called with the anon key it returns 401
+// BEFORE field validation. Asserting 401 verifies it is not anonymously callable. The
+// 400 missing-fields path needs an authenticated session (live-integration-testing / EQ-9).
+Deno.test("T3-3: send-sms rejects unauthenticated caller", async () => {
   requireEnv();
 
   const result = await callEdgeFunction("send-sms", {});
 
   assert(
-    result.status === 400,
-    `Expected 400 for missing fields, got ${result.status}`
+    result.status === 401,
+    `Expected 401 (auth required) for anon caller, got ${result.status}`
   );
 
   const data = result.data as Record<string, unknown>;
   assert(
-    typeof data.error === "string" && (data.error as string).includes("to"),
-    `Error should mention required fields, got ${JSON.stringify(data).slice(0, 200)}`
+    typeof data.error === "string" && (data.error as string).length > 0,
+    `Expected an auth error message, got ${JSON.stringify(data).slice(0, 200)}`
   );
 });
 
@@ -233,20 +242,24 @@ Deno.test("T3-3: send-sms rejects invalid phone number", async () => {
   }
 });
 
-Deno.test("T3-3: send-email validates required fields", async () => {
+// NOTE: send-email is a HIGH-RISK messaging function — it MUST reject callers that are
+// not an authenticated admin/clinical user. Called with the anon key it returns 401
+// BEFORE field validation. Asserting 401 verifies it is not anonymously callable. The
+// 400 missing-fields path needs an authenticated session (live-integration-testing / EQ-9).
+Deno.test("T3-3: send-email rejects unauthenticated caller", async () => {
   requireEnv();
 
   const result = await callEdgeFunction("send-email", {});
 
   assert(
-    result.status === 400,
-    `Expected 400 for missing fields, got ${result.status}`
+    result.status === 401,
+    `Expected 401 (auth required) for anon caller, got ${result.status}`
   );
 
   const data = result.data as Record<string, unknown>;
   assert(
-    typeof data.error === "string" && (data.error as string).includes("to"),
-    `Error should mention required fields, got ${JSON.stringify(data).slice(0, 200)}`
+    typeof data.error === "string" && (data.error as string).length > 0,
+    `Expected an auth error message, got ${JSON.stringify(data).slice(0, 200)}`
   );
 });
 
