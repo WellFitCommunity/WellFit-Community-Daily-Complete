@@ -1,6 +1,6 @@
 # Edge-Function `verify_jwt` Reconciliation + Health-Check Sweep
 
-**Created:** 2026-06-06 · **Owner:** Claude (Maria-directed) · **Status:** NOT STARTED (queued for next session)
+**Created:** 2026-06-06 · **Owner:** Claude (Maria-directed) · **Status:** ✅ BOTH TASKS DONE 2026-06-06 (awaiting commit + Maria's call on 8 FAILING functions)
 **Origin:** Came out of the 2026-06-05/06 cron-auth + email-consolidation work. While fixing guardian/security-alert-processor/send-email/emergency-alert-dispatch, we found `config.toml` has drifted badly from the live gateway state — making any bulk `supabase functions deploy` actively dangerous.
 
 ---
@@ -81,3 +81,43 @@ A bulk deploy today would flip **129 functions** to require a JWT and **break ev
 - `config.toml` declares `verify_jwt` for all 159 live-`false` functions; live-vs-config diff = 0 mismatches; any proposed `true` flips listed for Maria.
 - `scripts/edge-function-health-sweep.sh` exists, runs green across 168, FAILING/MISSING list reported.
 - Both committed; PROJECT_STATE updated.
+
+---
+
+## ✅ PROGRESS LOG — 2026-06-06 (both tasks done; commit pending)
+
+**Live re-measure (drifted by 1 from the original spec because `send_email` was deleted last session):**
+167 live functions · **9 `verify_jwt=true`** · **158 `verify_jwt=false`** · config declared only 30 → **128 live-false were undeclared** (would flip to `true` on bulk deploy).
+
+### Task #1 — config.toml reconciliation — DONE ✅
+- Rewrote `supabase/config.toml` to declare **all 167 live functions explicitly** (grouped: pre-auth/public, envision auth, admin auth, MCP, AI, bed, FHIR/interop/SMART, messaging, cron/ops, webhook/device, system/misc, + a `verify_jwt=true` group for the 9). Plus 2 not-yet-deployed-but-source-present (`mcp-patient-context-server`, `weather-proxy`) pinned `false` defensively for correct first-deploy posture.
+- **Per the guardrail: pinned every function to its working LIVE value; flipped NOTHING.** All 158 live-false → `false`; the 9 live-true → `true` (documenting existing state, not a flip).
+- Built **`scripts/check-verify-jwt-drift.py`** + committed live snapshot **`scripts/live-edge-functions.json`** (slug+verify_jwt only; refresh via MCP `list_edge_functions`). Diffs config-effective (declared, else CLI default `true`) vs live.
+- **Result: 0 mismatches across all 167.** Bulk `supabase functions deploy` is now idempotent. Proven: green → injected `send-email`=true drift → checker FAIL (exit 1) → restored → green (exit 0).
+- **No `true` flips proposed this pass** (every function works at its live value; flipping is Tier-3). A future "tighten browser-JWT-only functions to `true`" pass remains available for Maria's sign-off — deferred, not needed for the safety goal.
+
+### Task #2 — health-check sweep — DONE ✅
+- Built **`scripts/edge-function-health-sweep.sh`**: OPTIONS probe (CORS preflight — zero side effects, proves boot), public key from env/.env (never hardcoded), parallel (-P 8), retry-once on timeout. Classifies 2xx/400/401/403/405/426=ALIVE, 404=MISSING, 5xx/000=FAILING. Exit 1 if any MISSING/FAILING.
+- **Run result: 167 probed · 159 ALIVE · 0 MISSING · 8 flagged non-2xx on the preflight probe.**
+
+> **⚠️ IMPORTANT — the probe flags functions worth investigating, NOT confirmed outages.** A function can return non-2xx to an OPTIONS/POST *probe* and still work fine on its real (browser-invoke / cron-POST) path. **Maria confirmed 2026-06-06 that hCaptcha works in production** — so `verify-hcaptcha`'s `000` was a **PROBE FALSE POSITIVE**, not a dead function. Only flags **cross-confirmed in live edge logs as erroring on real method traffic** should be treated as real. Lesson baked into the tool's header: 000/timeout and 5xx-not-in-logs must be log-confirmed before being called FAILING.
+
+| Function | Probe | Real-traffic status |
+|---|---|---|
+| `verify-hcaptcha` | 000 | ✅ **WORKS — Maria-confirmed.** Probe false positive (raw curl ≠ the working `supabase.functions.invoke` path used by `src/utils/verifyHcaptcha.ts`). NOT an outage. |
+| `send-checkin-reminders` | 500 | OPTIONS→500 seen in live logs; **real cron-POST path unconfirmed** — verify before claiming broken |
+| `send-consecutive-missed-alerts` | 500 | OPTIONS→500 seen in live logs; real cron-POST path unconfirmed |
+| `send-telehealth-appointment-notification` | 500 | OPTIONS→500 seen in live logs; real path unconfirmed |
+| `nightly-excel-backup` | 500 | OPTIONS→500 seen in live logs; real cron path unconfirmed |
+| `ai-billing-suggester` | 500 | probe-only (not in log window) — unconfirmed |
+| `ai-readmission-predictor` | 500 | probe-only (not in log window) — unconfirmed |
+| `bed-capacity-monitor` | 503 | probe-only (not in log window) — unconfirmed |
+
+These have `handleOptions`/`corsFromRequest` in source yet error on a preflight — could be a preflight-only CORS bug (real path fine, as with hCaptcha) **or** stale-deploy / module-scope throw. **Not auto-fixed** (Tier-3). The honest next step is to confirm each against real-traffic logs (recent successful cron/invoke 2xx) before opening any repair tracker.
+
+### Other findings (bonus)
+- `guardian-pr-service` still **deployed live** (ALIVE 204) but its **source was deleted** in GRD-8 (same orphan pattern as the retired `send_email`). Cleanup candidate — confirm with Maria before undeploying.
+- `mcp-patient-context-server` (governance S9 lists it T2) has local source but is **NOT deployed**; `weather-proxy` likewise.
+- Likely renames: live `admin-user-questions-and-rate-limit` (true) vs local `admin-user-questions` (false).
+
+**Artifacts:** `supabase/config.toml` (rewritten), `scripts/check-verify-jwt-drift.py`, `scripts/live-edge-functions.json`, `scripts/edge-function-health-sweep.sh`. Validated: TOML parses (169 blocks), bash `-n` clean, py_compile clean, drift checker 0 mismatches.

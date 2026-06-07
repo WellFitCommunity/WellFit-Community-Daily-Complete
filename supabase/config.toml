@@ -1,10 +1,50 @@
 project_id = "xkybsjnvuohpqpbkikyn"
 
+# =============================================================================
+# Edge-function verify_jwt declarations — COMPLETE reconciliation against the
+# live gateway state (2026-06-06). Every deployed function is declared so that
+# `supabase functions deploy` is IDEMPOTENT and can never silently flip a
+# function to verify_jwt=true (the CLI default) and break a cron/webhook/
+# service-key caller. Tracker: edge-function-verify-jwt-reconciliation-tracker.md
+# =============================================================================
+
 [functions]
 
 # region = "iad1"
 
+# ---- Pre-auth & public: caller has no Supabase JWT yet, or presents its own
+# ---- credential (PIN, passkey, partner API key). Gateway JWT verify must be OFF.
+[functions.enrollClient]
+verify_jwt = false
+
+[functions.hash-pin]
+verify_jwt = false
+
+[functions.login]
+verify_jwt = false
+
+[functions.login-security]
+verify_jwt = false
+
+[functions.passkey-auth-finish]
+verify_jwt = false
+
+[functions.passkey-auth-start]
+verify_jwt = false
+
+[functions.passkey-register-finish]
+verify_jwt = false
+
+[functions.passkey-register-start]
+verify_jwt = false
+
 [functions.register]
+verify_jwt = false
+
+[functions.request-pin-reset]
+verify_jwt = false
+
+[functions.setup-admin-credentials]
 verify_jwt = false
 
 [functions.sms-send-code]
@@ -13,65 +53,102 @@ verify_jwt = false
 [functions.sms-verify-code]
 verify_jwt = false
 
-[functions.system-status]
+[functions.test-password-hash]
 verify_jwt = false
 
-# Login security - called before authentication
-[functions.login-security]
+[functions.test-users]
 verify_jwt = false
 
-# Envision login functions - some called before/during authentication
-[functions.envision-login]
+[functions.test_users]
 verify_jwt = false
 
-[functions.envision-verify-pin]
+# External partner API key validation. Callers present a partner-issued Bearer
+# key (not a Supabase JWT); the function does its own SHA-256 + validate_api_key RPC.
+[functions.validate-api-key]
 verify_jwt = false
 
-[functions.envision-request-reset]
-verify_jwt = false
-
-[functions.envision-complete-reset]
-verify_jwt = false
-
-[functions.envision-totp-setup]
-verify_jwt = false
-
-
-# PIN reset functions - called during forgot PIN flow (pre-auth)
-[functions.request-pin-reset]
+[functions.verify-hcaptcha]
 verify_jwt = false
 
 [functions.verify-pin-reset]
 verify_jwt = false
 
-# Admin PIN management - handles auth internally via Bearer token
+
+# ---- Envision clinical auth: some run before/during authentication.
+[functions.envision-check-super-admin]
+verify_jwt = false
+
+[functions.envision-complete-reset]
+verify_jwt = false
+
+[functions.envision-login]
+verify_jwt = false
+
+[functions.envision-request-reset]
+verify_jwt = false
+
+[functions.envision-totp-setup]
+verify_jwt = false
+
+[functions.envision-totp-use-backup]
+verify_jwt = false
+
+[functions.envision-totp-verify]
+verify_jwt = false
+
+[functions.envision-verify-pin]
+verify_jwt = false
+
+
+# ---- Admin auth & session: handle auth internally via Bearer/token.
+[functions.admin-totp-setup]
+verify_jwt = false
+
+[functions.admin-totp-verify]
+verify_jwt = false
+
+[functions.admin-user-questions]
+verify_jwt = false
+
+[functions.admin_end_session]
+verify_jwt = false
+
+[functions.admin_register]
+verify_jwt = false
+
 [functions.admin_set_pin]
+verify_jwt = false
+
+[functions.admin_start_session]
 verify_jwt = false
 
 [functions.verify-admin-pin]
 verify_jwt = false
 
-# Note: admin-login, wellfit-admin-login, wellfit-verify-pin were deleted
-# Use standard Supabase auth + envision-login + envision-verify-pin instead
 
-# MCP Servers - verify_jwt = false because they use API key auth internally
-# These servers implement rate limiting and tool-level authorization
+# ---- MCP servers: API-key auth + tool-level authorization in-function; rate-limited.
+[functions.mcp-chain-orchestrator]
+verify_jwt = false
+
 [functions.mcp-claude-server]
+verify_jwt = false
+
+[functions.mcp-clearinghouse-server]
 verify_jwt = false
 
 [functions.mcp-cms-coverage-server]
 verify_jwt = false
 
-[functions.mcp-npi-registry-server]
+[functions.mcp-community-engagement-server]
 verify_jwt = false
 
-[functions.mcp-postgres-server]
+[functions.mcp-cultural-competency-server]
+verify_jwt = false
+
+[functions.mcp-drg-grouper-server]
 verify_jwt = false
 
 [functions.mcp-edge-functions-server]
-verify_jwt = false
-
-[functions.mcp-medical-codes-server]
 verify_jwt = false
 
 [functions.mcp-fhir-server]
@@ -80,48 +157,400 @@ verify_jwt = false
 [functions.mcp-hl7-x12-server]
 verify_jwt = false
 
-[functions.mcp-clearinghouse-server]
+[functions.mcp-medical-codes-server]
+verify_jwt = false
+
+[functions.mcp-medical-coding-server]
+verify_jwt = false
+
+[functions.mcp-npi-registry-server]
+verify_jwt = false
+
+[functions.mcp-patient-context-server]
+verify_jwt = false  # source present, NOT yet deployed — declared for correct first-deploy posture
+
+[functions.mcp-postgres-server]
 verify_jwt = false
 
 [functions.mcp-prior-auth-server]
 verify_jwt = false
 
-# External partner API key validation. Callers present a partner-issued
-# Bearer key (not a Supabase JWT), so platform JWT verification is bypassed
-# in favor of the function's own SHA-256 hash + validate_api_key RPC check.
-[functions.validate-api-key]
+[functions.mcp-pubmed-server]
 verify_jwt = false
 
-# Guardian agent is driven by pg_cron (guardian-automated-monitoring every 5 min,
-# guardian-daily-summary daily), which authenticate with the new `sb_secret_*` key.
-# That key is NOT a JWT, so the gateway's verify_jwt rejects it as
-# UNAUTHORIZED_INVALID_JWT_FORMAT before the function runs. JWT verification is
-# bypassed here in favor of the function's own cron-secret check
-# (isAuthorizedServerCaller: X-Cron-Secret / Bearer == CRON_SECRET or SB_SECRET_KEY).
-[functions.guardian-agent]
+
+# ---- AI services: enforce JWT + role + tenant checks in-function (adversarial-audit rule).
+[functions.agent-orchestrator]
 verify_jwt = false
 
-# Security alert processor is driven by pg_cron (every minute) with the new
-# `sb_secret_*` key — same non-JWT-vs-gateway problem as guardian-agent. The
-# function already enforces its own cron-secret check (accepts CRON_SECRET /
-# SB_SECRET_KEY), so JWT verification is bypassed at the gateway here.
-[functions.security-alert-processor]
+[functions.ai-appointment-prep-instructions]
 verify_jwt = false
 
-# Email functions are invoked edge-to-edge with the new `sb_secret_*` key (a
-# non-JWT), e.g. guardian-agent and emergency-alert-dispatch -> send-email. The
-# gateway's default verify_jwt would reject that key as UNAUTHORIZED_INVALID_JWT_FORMAT,
-# so it is pinned off here; both functions enforce their own Bearer/service-key auth.
-# Pinned to lock the working live state — a plain redeploy would otherwise default to
-# verify_jwt=true and silently break guardian + emergency alert emails.
+[functions.ai-avatar-entity-extractor]
+verify_jwt = false
+
+[functions.ai-billing-suggester]
+verify_jwt = false
+
+[functions.ai-care-escalation-scorer]
+verify_jwt = false
+
+[functions.ai-care-plan-generator]
+verify_jwt = false
+
+[functions.ai-caregiver-briefing]
+verify_jwt = false
+
+[functions.ai-check-in-questions]
+verify_jwt = false
+
+[functions.ai-clinical-guideline-matcher]
+verify_jwt = false
+
+[functions.ai-contraindication-detector]
+verify_jwt = false
+
+[functions.ai-discharge-summary]
+verify_jwt = false
+
+[functions.ai-fall-risk-predictor]
+verify_jwt = false
+
+[functions.ai-fhir-semantic-mapper]
+verify_jwt = false
+
+[functions.ai-infection-risk-predictor]
+verify_jwt = false
+
+[functions.ai-medication-adherence-predictor]
+verify_jwt = false
+
+[functions.ai-medication-instructions]
+verify_jwt = false
+
+[functions.ai-medication-reconciliation]
+verify_jwt = false
+
+[functions.ai-missed-checkin-escalation]
+verify_jwt = false
+
+[functions.ai-nurseos-burnout-advisor]
+verify_jwt = false
+
+[functions.ai-nurseos-module-recommendations]
+verify_jwt = false
+
+[functions.ai-nurseos-stress-narrative]
+verify_jwt = false
+
+[functions.ai-patient-education]
+verify_jwt = false
+
+[functions.ai-patient-qa-bot]
+verify_jwt = false
+
+[functions.ai-progress-note-synthesizer]
+verify_jwt = false
+
+[functions.ai-provider-assistant]
+verify_jwt = false
+
+[functions.ai-readmission-predictor]
+verify_jwt = false
+
+[functions.ai-referral-letter]
+verify_jwt = false
+
+[functions.ai-schedule-optimizer]
+verify_jwt = false
+
+[functions.ai-soap-note-generator]
+verify_jwt = false
+
+[functions.ai-treatment-pathway]
+verify_jwt = false
+
+[functions.claude-chat]
+verify_jwt = false
+
+[functions.claude-personalization]
+verify_jwt = false
+
+[functions.coding-suggest]
+verify_jwt = false
+
+[functions.extract-patient-form]
+verify_jwt = false
+
+[functions.get-personalized-greeting]
+verify_jwt = false
+
+[functions.log-ai-confidence-score]
+verify_jwt = false
+
+[functions.process-medical-transcript]
+verify_jwt = false
+
+[functions.process-vital-image]
+verify_jwt = false
+
+[functions.sdoh-coding-suggest]
+verify_jwt = false
+
+[functions.smart-mood-suggestions]
+verify_jwt = false
+
+
+# ---- Bed management.
+[functions.bed-capacity-monitor]
+verify_jwt = false
+
+[functions.bed-management]
+verify_jwt = false
+
+[functions.bed-optimizer]
+verify_jwt = false
+
+
+# ---- FHIR / interoperability / export / SMART-on-FHIR.
+[functions.ccda-export]
+verify_jwt = false
+
+[functions.ecr-submit]
+verify_jwt = false
+
+[functions.enhanced-fhir-export]
+verify_jwt = false
+
+[functions.export-status]
+verify_jwt = false
+
+[functions.fhir-metadata]
+verify_jwt = false
+
+[functions.fhir-r4]
+verify_jwt = false
+
+[functions.generate-837p]
+verify_jwt = false
+
+[functions.hl7-receive]
+verify_jwt = false
+
+[functions.immunization-registry-submit]
+verify_jwt = false
+
+[functions.pdf-health-summary]
+verify_jwt = false
+
+[functions.pdmp-query]
+verify_jwt = false
+
+[functions.safer-guides-pdf]
+verify_jwt = false
+
+[functions.smart-authorize]
+verify_jwt = false
+
+[functions.smart-configuration]
+verify_jwt = false
+
+[functions.smart-register-app]
+verify_jwt = false
+
+[functions.smart-revoke]
+verify_jwt = false
+
+[functions.smart-token]
+verify_jwt = false
+
+[functions.syndromic-surveillance-submit]
+verify_jwt = false
+
+
+# ---- Messaging & notifications: invoked edge-to-edge (service key) or by cron.
+[functions.notify-family-missed-check-in]
+verify_jwt = false
+
+[functions.notify-stale-checkins]
+verify_jwt = false
+
+[functions.send-appointment-reminder]
+verify_jwt = false
+
+[functions.send-check-in-reminder-sms]
+verify_jwt = false
+
+[functions.send-checkin-reminders]
+verify_jwt = false
+
+[functions.send-consecutive-missed-alerts]
+verify_jwt = false
+
+# Invoked edge-to-edge with the non-JWT sb_secret_* key (guardian-agent, emergency-alert-dispatch).
+# Gateway JWT verify would reject the key; the function enforces its own Bearer/service-key auth.
 [functions.send-email]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.send-referral-followup-reminders]
+verify_jwt = false
+
+[functions.send-slack-notification]
+verify_jwt = false
+
+[functions.send-sms]
+verify_jwt = false
+
+[functions.send-stale-reminders]
+verify_jwt = false
+
+[functions.send-team-alert]
+verify_jwt = false
+
+[functions.send-telehealth-appointment-notification]
 verify_jwt = false
 
 [functions.send_welcome_email]
 verify_jwt = false
 
-# emergency-alert-dispatch is invoked server-to-server (DB webhook / non-JWT key) and
-# calls send-email with the service key. It ran verify_jwt=false; pinned here so a
-# redeploy doesn't default it to true and reject the non-JWT caller at the gateway.
+
+# ---- Cron / scheduled / background / ops: triggered by pg_cron via service key (non-JWT).
+[functions.cleanup-temp-images]
+verify_jwt = false
+
+[functions.daily-backup-verification]
+verify_jwt = false
+
+[functions.detect-no-shows]
+verify_jwt = false
+
+[functions.fix-performance-metrics]
+verify_jwt = false
+
+# Driven by pg_cron (guardian-automated-monitoring every 5 min via trigger_guardian_monitoring();
+# guardian-daily-summary daily) using the new non-JWT sb_secret_* key. Gateway JWT verify would
+# 401 it; the function enforces its own cron-secret check (CRON_SECRET / SB_SECRET_KEY).
+[functions.guardian-agent]
+verify_jwt = false
+
+[functions.guardian-agent-api]
+verify_jwt = false
+
+[functions.guardian-pr-service]
+verify_jwt = false
+
+[functions.health-monitor]
+verify_jwt = false
+
+[functions.ld-alert-notifier]
+verify_jwt = false
+
+[functions.nightly-excel-backup]
+verify_jwt = false
+
+[functions.nurse-question-auto-escalate]
+verify_jwt = false
+
+[functions.process-appointment-reminders]
+verify_jwt = false
+
+[functions.prometheus-metrics]
+verify_jwt = false
+
+# Driven by pg_cron every minute with the non-JWT sb_secret_* key; enforces its own cron-secret check.
+[functions.security-alert-processor]
+verify_jwt = false
+
+[functions.vital-threshold-monitor]
+verify_jwt = false
+
+
+# ---- Device & webhook ingest: external webhooks / device sync; own signature/key auth.
+[functions.ble-sync]
+verify_jwt = false
+
+[functions.fitbit-webhook]
+verify_jwt = false
+
+[functions.garmin-webhook]
+verify_jwt = false
+
+[functions.mobile-sync]
+verify_jwt = false
+
+[functions.save-fcm-token]
+verify_jwt = false
+
+[functions.update-profile-note]
+verify_jwt = false
+
+[functions.update-voice-profile]
+verify_jwt = false
+
+[functions.withings-webhook]
+verify_jwt = false
+
+
+# ---- System / PHI / misc: own in-function auth.
+[functions.check-drug-interactions]
+verify_jwt = false
+
+[functions.create-checkin]
+verify_jwt = false
+
+# Invoked server-to-server (DB webhook / non-JWT key); calls send-email with the service key.
 [functions.emergency-alert-dispatch]
 verify_jwt = false
+
+[functions.generate-api-key]
+verify_jwt = false
+
+[functions.get-risk-assessments]
+verify_jwt = false
+
+[functions.phi-encrypt]
+verify_jwt = false
+
+[functions.system-status]
+verify_jwt = false
+
+[functions.user-data-management]
+verify_jwt = false
+
+[functions.weather-proxy]
+verify_jwt = false  # source present, NOT yet deployed — declared for correct first-deploy posture
+
+
+# ============================================================================
+# verify_jwt = TRUE  — gateway verifies a logged-in user's Supabase JWT.
+# These match the live gateway state; do not flip without re-verifying the caller.
+# ============================================================================
+[functions.admin-user-questions-and-rate-limit]
+verify_jwt = true  # browser-called by an authenticated admin; gateway JWT check is the auth layer
+
+[functions.bulk-export]
+verify_jwt = true  # browser/admin-triggered export; gateway verifies the logged-in JWT
+
+[functions.create-patient-telehealth-token]
+verify_jwt = true  # browser-called by an authenticated user; gateway-verified
+
+[functions.create-telehealth-room]
+verify_jwt = true  # browser-called by an authenticated user; gateway-verified
+
+[functions.ms-send]
+verify_jwt = true  # gateway-verified JWT caller
+
+[functions.notify-emergency-access]
+verify_jwt = true  # break-the-glass; browser-called by an authenticated clinician; gateway-verified
+
+[functions.realtime_medical_transcription]
+verify_jwt = true  # browser-called by an authenticated user; gateway-verified
+
+[functions.validate-hcaptcha]
+verify_jwt = true  # live state is verify_jwt=true; left as-is (pinning working value)
+
+[functions.verify-phone]
+verify_jwt = true  # live state is verify_jwt=true; left as-is (pinning working value)

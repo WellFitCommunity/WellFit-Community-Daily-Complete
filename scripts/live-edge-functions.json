@@ -1,0 +1,673 @@
+{
+  "_comment": "Live Supabase edge-function verify_jwt snapshot. Refresh via MCP list_edge_functions (project xkybsjnvuohpqpbkikyn) or supabase CLI.",
+  "functions": [
+    {
+      "slug": "admin-totp-setup",
+      "verify_jwt": false
+    },
+    {
+      "slug": "admin-totp-verify",
+      "verify_jwt": false
+    },
+    {
+      "slug": "admin-user-questions",
+      "verify_jwt": false
+    },
+    {
+      "slug": "admin-user-questions-and-rate-limit",
+      "verify_jwt": true
+    },
+    {
+      "slug": "admin_end_session",
+      "verify_jwt": false
+    },
+    {
+      "slug": "admin_register",
+      "verify_jwt": false
+    },
+    {
+      "slug": "admin_set_pin",
+      "verify_jwt": false
+    },
+    {
+      "slug": "admin_start_session",
+      "verify_jwt": false
+    },
+    {
+      "slug": "agent-orchestrator",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-appointment-prep-instructions",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-avatar-entity-extractor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-billing-suggester",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-care-escalation-scorer",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-care-plan-generator",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-caregiver-briefing",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-check-in-questions",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-clinical-guideline-matcher",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-contraindication-detector",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-discharge-summary",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-fall-risk-predictor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-fhir-semantic-mapper",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-infection-risk-predictor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-medication-adherence-predictor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-medication-instructions",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-medication-reconciliation",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-missed-checkin-escalation",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-nurseos-burnout-advisor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-nurseos-module-recommendations",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-nurseos-stress-narrative",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-patient-education",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-patient-qa-bot",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-progress-note-synthesizer",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-provider-assistant",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-readmission-predictor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-referral-letter",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-schedule-optimizer",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-soap-note-generator",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ai-treatment-pathway",
+      "verify_jwt": false
+    },
+    {
+      "slug": "bed-capacity-monitor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "bed-management",
+      "verify_jwt": false
+    },
+    {
+      "slug": "bed-optimizer",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ble-sync",
+      "verify_jwt": false
+    },
+    {
+      "slug": "bulk-export",
+      "verify_jwt": true
+    },
+    {
+      "slug": "ccda-export",
+      "verify_jwt": false
+    },
+    {
+      "slug": "check-drug-interactions",
+      "verify_jwt": false
+    },
+    {
+      "slug": "claude-chat",
+      "verify_jwt": false
+    },
+    {
+      "slug": "claude-personalization",
+      "verify_jwt": false
+    },
+    {
+      "slug": "cleanup-temp-images",
+      "verify_jwt": false
+    },
+    {
+      "slug": "coding-suggest",
+      "verify_jwt": false
+    },
+    {
+      "slug": "create-checkin",
+      "verify_jwt": false
+    },
+    {
+      "slug": "create-patient-telehealth-token",
+      "verify_jwt": true
+    },
+    {
+      "slug": "create-telehealth-room",
+      "verify_jwt": true
+    },
+    {
+      "slug": "daily-backup-verification",
+      "verify_jwt": false
+    },
+    {
+      "slug": "detect-no-shows",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ecr-submit",
+      "verify_jwt": false
+    },
+    {
+      "slug": "emergency-alert-dispatch",
+      "verify_jwt": false
+    },
+    {
+      "slug": "enhanced-fhir-export",
+      "verify_jwt": false
+    },
+    {
+      "slug": "enrollClient",
+      "verify_jwt": false
+    },
+    {
+      "slug": "envision-check-super-admin",
+      "verify_jwt": false
+    },
+    {
+      "slug": "envision-complete-reset",
+      "verify_jwt": false
+    },
+    {
+      "slug": "envision-login",
+      "verify_jwt": false
+    },
+    {
+      "slug": "envision-request-reset",
+      "verify_jwt": false
+    },
+    {
+      "slug": "envision-totp-setup",
+      "verify_jwt": false
+    },
+    {
+      "slug": "envision-totp-use-backup",
+      "verify_jwt": false
+    },
+    {
+      "slug": "envision-totp-verify",
+      "verify_jwt": false
+    },
+    {
+      "slug": "envision-verify-pin",
+      "verify_jwt": false
+    },
+    {
+      "slug": "export-status",
+      "verify_jwt": false
+    },
+    {
+      "slug": "extract-patient-form",
+      "verify_jwt": false
+    },
+    {
+      "slug": "fhir-metadata",
+      "verify_jwt": false
+    },
+    {
+      "slug": "fhir-r4",
+      "verify_jwt": false
+    },
+    {
+      "slug": "fitbit-webhook",
+      "verify_jwt": false
+    },
+    {
+      "slug": "fix-performance-metrics",
+      "verify_jwt": false
+    },
+    {
+      "slug": "garmin-webhook",
+      "verify_jwt": false
+    },
+    {
+      "slug": "generate-837p",
+      "verify_jwt": false
+    },
+    {
+      "slug": "generate-api-key",
+      "verify_jwt": false
+    },
+    {
+      "slug": "get-personalized-greeting",
+      "verify_jwt": false
+    },
+    {
+      "slug": "get-risk-assessments",
+      "verify_jwt": false
+    },
+    {
+      "slug": "guardian-agent",
+      "verify_jwt": false
+    },
+    {
+      "slug": "guardian-agent-api",
+      "verify_jwt": false
+    },
+    {
+      "slug": "guardian-pr-service",
+      "verify_jwt": false
+    },
+    {
+      "slug": "hash-pin",
+      "verify_jwt": false
+    },
+    {
+      "slug": "health-monitor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "hl7-receive",
+      "verify_jwt": false
+    },
+    {
+      "slug": "immunization-registry-submit",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ld-alert-notifier",
+      "verify_jwt": false
+    },
+    {
+      "slug": "log-ai-confidence-score",
+      "verify_jwt": false
+    },
+    {
+      "slug": "login",
+      "verify_jwt": false
+    },
+    {
+      "slug": "login-security",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-chain-orchestrator",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-claude-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-clearinghouse-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-cms-coverage-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-community-engagement-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-cultural-competency-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-drg-grouper-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-edge-functions-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-fhir-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-hl7-x12-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-medical-codes-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-medical-coding-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-npi-registry-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-postgres-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-prior-auth-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mcp-pubmed-server",
+      "verify_jwt": false
+    },
+    {
+      "slug": "mobile-sync",
+      "verify_jwt": false
+    },
+    {
+      "slug": "ms-send",
+      "verify_jwt": true
+    },
+    {
+      "slug": "nightly-excel-backup",
+      "verify_jwt": false
+    },
+    {
+      "slug": "notify-emergency-access",
+      "verify_jwt": true
+    },
+    {
+      "slug": "notify-family-missed-check-in",
+      "verify_jwt": false
+    },
+    {
+      "slug": "notify-stale-checkins",
+      "verify_jwt": false
+    },
+    {
+      "slug": "nurse-question-auto-escalate",
+      "verify_jwt": false
+    },
+    {
+      "slug": "passkey-auth-finish",
+      "verify_jwt": false
+    },
+    {
+      "slug": "passkey-auth-start",
+      "verify_jwt": false
+    },
+    {
+      "slug": "passkey-register-finish",
+      "verify_jwt": false
+    },
+    {
+      "slug": "passkey-register-start",
+      "verify_jwt": false
+    },
+    {
+      "slug": "pdf-health-summary",
+      "verify_jwt": false
+    },
+    {
+      "slug": "pdmp-query",
+      "verify_jwt": false
+    },
+    {
+      "slug": "phi-encrypt",
+      "verify_jwt": false
+    },
+    {
+      "slug": "process-appointment-reminders",
+      "verify_jwt": false
+    },
+    {
+      "slug": "process-medical-transcript",
+      "verify_jwt": false
+    },
+    {
+      "slug": "process-vital-image",
+      "verify_jwt": false
+    },
+    {
+      "slug": "prometheus-metrics",
+      "verify_jwt": false
+    },
+    {
+      "slug": "realtime_medical_transcription",
+      "verify_jwt": true
+    },
+    {
+      "slug": "register",
+      "verify_jwt": false
+    },
+    {
+      "slug": "request-pin-reset",
+      "verify_jwt": false
+    },
+    {
+      "slug": "safer-guides-pdf",
+      "verify_jwt": false
+    },
+    {
+      "slug": "save-fcm-token",
+      "verify_jwt": false
+    },
+    {
+      "slug": "sdoh-coding-suggest",
+      "verify_jwt": false
+    },
+    {
+      "slug": "security-alert-processor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-appointment-reminder",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-check-in-reminder-sms",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-checkin-reminders",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-consecutive-missed-alerts",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-email",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-push-notification",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-referral-followup-reminders",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-slack-notification",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-sms",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-stale-reminders",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-team-alert",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send-telehealth-appointment-notification",
+      "verify_jwt": false
+    },
+    {
+      "slug": "send_welcome_email",
+      "verify_jwt": false
+    },
+    {
+      "slug": "setup-admin-credentials",
+      "verify_jwt": false
+    },
+    {
+      "slug": "smart-authorize",
+      "verify_jwt": false
+    },
+    {
+      "slug": "smart-configuration",
+      "verify_jwt": false
+    },
+    {
+      "slug": "smart-mood-suggestions",
+      "verify_jwt": false
+    },
+    {
+      "slug": "smart-register-app",
+      "verify_jwt": false
+    },
+    {
+      "slug": "smart-revoke",
+      "verify_jwt": false
+    },
+    {
+      "slug": "smart-token",
+      "verify_jwt": false
+    },
+    {
+      "slug": "sms-send-code",
+      "verify_jwt": false
+    },
+    {
+      "slug": "sms-verify-code",
+      "verify_jwt": false
+    },
+    {
+      "slug": "syndromic-surveillance-submit",
+      "verify_jwt": false
+    },
+    {
+      "slug": "system-status",
+      "verify_jwt": false
+    },
+    {
+      "slug": "test-password-hash",
+      "verify_jwt": false
+    },
+    {
+      "slug": "test-users",
+      "verify_jwt": false
+    },
+    {
+      "slug": "test_users",
+      "verify_jwt": false
+    },
+    {
+      "slug": "update-profile-note",
+      "verify_jwt": false
+    },
+    {
+      "slug": "update-voice-profile",
+      "verify_jwt": false
+    },
+    {
+      "slug": "user-data-management",
+      "verify_jwt": false
+    },
+    {
+      "slug": "validate-api-key",
+      "verify_jwt": false
+    },
+    {
+      "slug": "validate-hcaptcha",
+      "verify_jwt": true
+    },
+    {
+      "slug": "verify-admin-pin",
+      "verify_jwt": false
+    },
+    {
+      "slug": "verify-hcaptcha",
+      "verify_jwt": false
+    },
+    {
+      "slug": "verify-phone",
+      "verify_jwt": true
+    },
+    {
+      "slug": "verify-pin-reset",
+      "verify_jwt": false
+    },
+    {
+      "slug": "vital-threshold-monitor",
+      "verify_jwt": false
+    },
+    {
+      "slug": "withings-webhook",
+      "verify_jwt": false
+    }
+  ]
+}
