@@ -67,14 +67,12 @@ export async function getResources(filters?: {
  */
 export async function trackResourceView(resourceId: string): Promise<ServiceResult<void>> {
   try {
-    const { error } = await supabase.rpc('increment', {
-      table_name: 'resilience_resources',
-      row_id: resourceId,
-      column_name: 'view_count',
+    const { error } = await supabase.rpc('increment_resource_view_count', {
+      p_resource_id: resourceId,
     });
 
     if (error) {
-      // Fallback: manual increment if RPC doesn't exist
+      // Fallback: non-atomic manual increment (only reached if the RPC errors)
       const { data: resource } = await supabase
         .from('resilience_resources')
         .select('view_count')

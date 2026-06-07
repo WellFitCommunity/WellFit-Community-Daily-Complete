@@ -9,7 +9,6 @@ rpc::calculate_health_equity_metrics
 rpc::calculate_readmission_risk_score
 rpc::check_sensitive_consent
 rpc::create_fhir_patient_from_profile
-rpc::decrement
 rpc::generate_patient_lab_token
 rpc::get_clearinghouse_credentials
 rpc::get_dementia_patients_due_for_assessment
@@ -19,10 +18,8 @@ rpc::get_patient_engagement_metrics
 rpc::get_slow_queries
 rpc::get_welfare_check_info
 rpc::identify_high_burden_caregivers
-rpc::increment
 rpc::increment_billing_cache_hit
 rpc::increment_cultural_cache_hit
-rpc::increment_template_usage
 rpc::increment_visits_used
 rpc::update_clearinghouse_config
 table::adapter_connections

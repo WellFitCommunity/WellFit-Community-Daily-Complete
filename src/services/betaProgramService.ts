@@ -550,13 +550,19 @@ async function removeParticipant(
       return failure('DATABASE_ERROR', 'Failed to remove participant', error);
     }
 
-    // Decrement participant count
-    await supabase
-      .from('beta_programs')
-      .update({
-        current_participants: supabase.rpc('decrement', { x: 1 }),
-      })
-      .eq('id', enrollment.beta_program_id);
+    // Decrement participant count atomically. (The participant is already removed
+    // above; a counter failure must not fail the operation, but is logged.)
+    const { error: decrementError } = await supabase.rpc('decrement_beta_participants', {
+      p_program_id: enrollment.beta_program_id,
+    });
+
+    if (decrementError) {
+      await auditLogger.error(
+        'BETA_PARTICIPANT_COUNT_DECREMENT_FAILED',
+        new Error(decrementError.message),
+        { enrollmentId, programId: enrollment.beta_program_id }
+      );
+    }
 
     await auditLogger.info('BETA_PARTICIPANT_REMOVED', { enrollmentId });
 

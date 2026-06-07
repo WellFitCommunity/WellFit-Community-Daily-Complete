@@ -2,9 +2,9 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-06-04",
+    "generated": "2026-06-07",
     "table_count": 757,
-    "function_count": 1459
+    "function_count": 1462
   },
   "tables": [
     "account_lockouts",
@@ -956,6 +956,7 @@
     "deactivate_patient_marker",
     "debug_count_qa",
     "decrease_mapping_confidence",
+    "decrement_beta_participants",
     "decrypt_data",
     "decrypt_pending_password",
     "decrypt_phi_text",
@@ -1531,6 +1532,8 @@
     "hash_backup_code",
     "increment_counter",
     "increment_pt_visits",
+    "increment_resource_view_count",
+    "increment_template_usage",
     "initialize_provider_scribe_preferences",
     "int2_dist",
     "int4_dist",
