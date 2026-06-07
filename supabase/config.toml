@@ -546,6 +546,9 @@ verify_jwt = true  # break-the-glass; browser-called by an authenticated clinici
 [functions.realtime_medical_transcription]
 verify_jwt = true  # browser-called by an authenticated user; gateway-verified
 
-# validate-hcaptcha / verify-phone: live but source not in repo (no [functions.*] block —
-# a sourceless block breaks the GitHub-integration deploy bundler). CLI default verify_jwt=true
-# already matches their live state, so no pin is needed unless source is restored.
+[functions.validate-hcaptcha]
+verify_jwt = true  # standalone hCaptcha siteverify; companion to verify-hcaptcha. Source restored to repo.
+
+# verify-phone: legacy reader of the old DB-backed OTP system (phone_verifications table,
+# dropped 2025-07-03). Superseded by Twilio Verify (sms-send-code / sms-verify-code). Live husk
+# left deployed but unused — no source block here, so the deploy bundler skips it.
