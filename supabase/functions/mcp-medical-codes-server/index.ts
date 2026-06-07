@@ -124,6 +124,15 @@ serve(async (req: Request) => {
     const body = await req.json();
     const { method, params, id } = body;
 
+    // MCP Protocol: JSON-RPC notifications (e.g. "notifications/initialized")
+    // carry no `id` and expect NO response body. Per the Streamable HTTP
+    // transport spec, acknowledge with 202 Accepted and an empty body.
+    // Returning a 4xx here makes the client treat the whole connection as
+    // failed ("Error POSTing to endpoint").
+    if (typeof method === "string" && method.startsWith("notifications/")) {
+      return new Response(null, { status: 202, headers: corsHeaders });
+    }
+
     // MCP Protocol: Initialize handshake
     if (method === "initialize") {
       return new Response(JSON.stringify(createInitializeResponse(SERVER_CONFIG, id)), {
