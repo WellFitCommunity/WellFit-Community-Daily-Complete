@@ -14,6 +14,7 @@ import type { ReasoningEncounterInput } from '../_shared/compass-riley/types.ts'
 import { createLogger } from '../_shared/auditLogger.ts';
 import { fetchCulturalContext, formatCulturalContextCompact } from '../_shared/culturalCompetencyClient.ts';
 import { recordDecisionLink } from '../_shared/decisionChain.ts';
+import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimiter.ts';
 
 const SERVICE_KEY = SB_SECRET_KEY!;
 
@@ -68,6 +69,34 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const readmissionLogger = createLogger('ai-readmission-predictor', req);
+
+    // =========================================================================
+    // RATE LIMITING - AI prediction is expensive; cap per authenticated user
+    // =========================================================================
+    const rateLimit = await checkRateLimit(user.id, RATE_LIMITS.AI);
+    if (!rateLimit.allowed) {
+      readmissionLogger.warn('Readmission predictor rate limit exceeded', {
+        userId: user.id,
+        retryAfter: rateLimit.retryAfter,
+      });
+      return new Response(
+        JSON.stringify({
+          error: 'Rate limit exceeded',
+          message: `Too many readmission prediction requests. Try again in ${rateLimit.retryAfter} seconds.`,
+          retryAfter: rateLimit.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimit.retryAfter ?? RATE_LIMITS.AI.windowSeconds),
+          },
+        }
       );
     }
 
@@ -176,7 +205,11 @@ serve(async (req) => {
     }
 
     // 2. Gather patient data (similar to service implementation) - with tenant context
-    const patientData = await gatherPatientData(patientId, effectiveTenantId);
+    const { data: patientData, warnings: dataWarnings } = await gatherPatientData(
+      patientId,
+      effectiveTenantId,
+      readmissionLogger
+    );
 
     // 3. Generate prediction context
     const dischargeContext = {
@@ -190,7 +223,6 @@ serve(async (req) => {
     };
 
     // 4a. Fetch cultural competency context if population hints are provided
-    const readmissionLogger = createLogger('ai-readmission-predictor', req);
     let culturalBarrierNotes: string[] = [];
     let reasoningCulturalContext: ReasoningEncounterInput['culturalContext'];
     if (populationHints && Array.isArray(populationHints) && populationHints.length > 0) {
@@ -285,8 +317,16 @@ serve(async (req) => {
           checkInCompletionRate: patientData.checkInCompletionRate,
           hasActiveCarePlan: patientData.hasActiveCarePlan
         },
+        // Data completeness: which inputs failed to load. A non-empty list means
+        // the score is based on PARTIAL data — a zero here is "unknown", not "no risk".
+        dataCompleteness: {
+          complete: dataWarnings.length === 0,
+          unavailableSources: dataWarnings,
+        },
         reasoning: serializeReasoningForClient(reasoningResult),
-        message: 'Readmission risk prediction generated',
+        message: dataWarnings.length === 0
+          ? 'Readmission risk prediction generated'
+          : `Readmission risk prediction generated from PARTIAL data (missing: ${dataWarnings.join(', ')})`,
         timestamp: new Date().toISOString()
       }),
       {
@@ -306,63 +346,98 @@ serve(async (req) => {
   }
 });
 
-async function gatherPatientData(patientId: string, tenantId: string): Promise<PatientReadmissionData> {
+/**
+ * Gathers the four readmission-risk inputs for a patient.
+ *
+ * CRITICAL: a query failure must NOT collapse into a silent zero. For a risk
+ * model, "0 prior readmissions" and "we couldn't read the readmissions table"
+ * are clinically opposite. Each source that fails is logged AND reported back to
+ * the caller via `warnings`, so the response can flag the score as partial.
+ */
+async function gatherPatientData(
+  patientId: string,
+  tenantId: string,
+  logger: ReturnType<typeof createLogger>
+): Promise<{ data: PatientReadmissionData; warnings: string[] }> {
   const data: PatientReadmissionData = {
     readmissionCount: 0,
     sdohRiskFactors: 0,
     checkInCompletionRate: 0,
     hasActiveCarePlan: false
   };
+  const warnings: string[] = [];
 
-  try {
-    // 1. Readmission history (last 90 days) - SECURITY: Filter by tenant_id
-    const { data: readmissions } = await supabase
-      .from('patient_readmissions')
-      .select('id')
-      .eq('patient_id', patientId)
-      .eq('tenant_id', tenantId)
-      .gte('admission_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
+  // 1. Readmission history (last 90 days) - SECURITY: Filter by tenant_id
+  const { data: readmissions, error: readmissionsErr } = await supabase
+    .from('patient_readmissions')
+    .select('id')
+    .eq('patient_id', patientId)
+    .eq('tenant_id', tenantId)
+    .gte('admission_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
 
+  if (readmissionsErr) {
+    warnings.push('readmission_history');
+    logger.error('gatherPatientData: readmission_history query failed', {
+      error: readmissionsErr.message, patientId,
+    });
+  } else {
     data.readmissionCount = readmissions?.length || 0;
-
-    // 2. SDOH high risk indicators - SECURITY: Filter by tenant_id
-    const { data: sdoh } = await supabase
-      .from('sdoh_indicators')
-      .select('id')
-      .eq('patient_id', patientId)
-      .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .in('risk_level', ['high', 'critical']);
-
-    data.sdohRiskFactors = sdoh?.length || 0;
-
-    // 3. Check-in completion rate (last 30 days) - SECURITY: Filter by tenant_id
-    const { data: checkIns } = await supabase
-      .from('patient_daily_check_ins')
-      .select('status')
-      .eq('patient_id', patientId)
-      .eq('tenant_id', tenantId)
-      .gte('check_in_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-
-    if (checkIns && checkIns.length > 0) {
-      const typedCheckIns = checkIns as CheckInRecord[];
-      const completed = typedCheckIns.filter((c) => c.status === 'completed').length;
-      data.checkInCompletionRate = completed / 30;
-    }
-
-    // 4. Active care plan - SECURITY: Filter by tenant_id
-    const { data: carePlan } = await supabase
-      .from('care_coordination_plans')
-      .select('id')
-      .eq('patient_id', patientId)
-      .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .maybeSingle();
-
-    data.hasActiveCarePlan = !!carePlan;
-
-    return data;
-  } catch (err: unknown) {
-    return data;
   }
+
+  // 2. SDOH high risk indicators - SECURITY: Filter by tenant_id
+  const { data: sdoh, error: sdohErr } = await supabase
+    .from('sdoh_indicators')
+    .select('id')
+    .eq('patient_id', patientId)
+    .eq('tenant_id', tenantId)
+    .eq('status', 'active')
+    .in('risk_level', ['high', 'critical']);
+
+  if (sdohErr) {
+    warnings.push('sdoh_indicators');
+    logger.error('gatherPatientData: sdoh_indicators query failed', {
+      error: sdohErr.message, patientId,
+    });
+  } else {
+    data.sdohRiskFactors = sdoh?.length || 0;
+  }
+
+  // 3. Check-in completion rate (last 30 days) - SECURITY: Filter by tenant_id
+  const { data: checkIns, error: checkInsErr } = await supabase
+    .from('patient_daily_check_ins')
+    .select('status')
+    .eq('patient_id', patientId)
+    .eq('tenant_id', tenantId)
+    .gte('check_in_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+  if (checkInsErr) {
+    warnings.push('check_in_completion');
+    logger.error('gatherPatientData: check_in_completion query failed', {
+      error: checkInsErr.message, patientId,
+    });
+  } else if (checkIns && checkIns.length > 0) {
+    const typedCheckIns = checkIns as CheckInRecord[];
+    const completed = typedCheckIns.filter((c) => c.status === 'completed').length;
+    data.checkInCompletionRate = completed / 30;
+  }
+
+  // 4. Active care plan - SECURITY: Filter by tenant_id
+  const { data: carePlan, error: carePlanErr } = await supabase
+    .from('care_coordination_plans')
+    .select('id')
+    .eq('patient_id', patientId)
+    .eq('tenant_id', tenantId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (carePlanErr) {
+    warnings.push('active_care_plan');
+    logger.error('gatherPatientData: active_care_plan query failed', {
+      error: carePlanErr.message, patientId,
+    });
+  } else {
+    data.hasActiveCarePlan = !!carePlan;
+  }
+
+  return { data, warnings };
 }
