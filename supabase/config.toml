@@ -16,6 +16,11 @@ project_id = "xkybsjnvuohpqpbkikyn"
 # ---- credential (PIN, passkey, partner API key). Gateway JWT verify must be OFF.
 [functions.enrollClient]
 verify_jwt = false
+# Explicit entrypoint: the deploy bundler otherwise lowercases the slug and looks for
+# supabase/functions/enrollclient/index.ts (case-sensitive miss on Linux -> "failed to
+# bundle function"). The live slug stays enrollClient; callers are unchanged. Keep this
+# until/unless the function is migrated to a lowercase hyphenated name.
+entrypoint = "./functions/enrollClient/index.ts"
 
 [functions.hash-pin]
 verify_jwt = false
