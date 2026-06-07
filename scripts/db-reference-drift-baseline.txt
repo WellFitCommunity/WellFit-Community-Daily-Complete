@@ -11,13 +11,11 @@ rpc::check_sensitive_consent
 rpc::create_fhir_patient_from_profile
 rpc::generate_patient_lab_token
 rpc::get_clearinghouse_credentials
-rpc::get_dementia_patients_due_for_assessment
 rpc::get_missed_check_in_alerts
 rpc::get_nurse_bypass_count_last_7_days
 rpc::get_patient_engagement_metrics
 rpc::get_slow_queries
 rpc::get_welfare_check_info
-rpc::identify_high_burden_caregivers
 rpc::increment_billing_cache_hit
 rpc::increment_cultural_cache_hit
 rpc::increment_visits_used

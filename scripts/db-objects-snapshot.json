@@ -4,7 +4,7 @@
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-07",
     "table_count": 757,
-    "function_count": 1462
+    "function_count": 1464
   },
   "tables": [
     "account_lockouts",
@@ -1358,6 +1358,7 @@
     "get_current_shift_handoff",
     "get_current_tenant_id",
     "get_daily_trivia_questions",
+    "get_dementia_patients_due_for_assessment",
     "get_department_wellness_metrics",
     "get_direct_reports",
     "get_drill_compliance_status",
@@ -1530,6 +1531,7 @@
     "has_valid_consent",
     "has_valid_privacy_consent",
     "hash_backup_code",
+    "identify_high_burden_caregivers",
     "increment_counter",
     "increment_pt_visits",
     "increment_resource_view_count",
