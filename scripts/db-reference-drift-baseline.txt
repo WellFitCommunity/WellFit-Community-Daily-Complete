@@ -7,7 +7,6 @@ rpc::aggregate_disparities_by_demographic
 rpc::auto_generate_clinical_data_for_hospital_patient
 rpc::calculate_health_equity_metrics
 rpc::calculate_readmission_risk_score
-rpc::check_sensitive_consent
 rpc::create_fhir_patient_from_profile
 rpc::generate_patient_lab_token
 rpc::get_clearinghouse_credentials
@@ -48,7 +47,6 @@ table::care_coordination_events
 table::caregiver_access
 table::caregiver_relationships
 table::ccm_eligibility_assessments
-table::cfr42_authorization_log
 table::chain_steps
 table::checkins
 table::clinical_recommendations
@@ -152,8 +150,6 @@ table::sdoh_indicators
 table::security_events_analysis
 table::security_monitoring_dashboard
 table::security_workflow_preferences
-table::sensitive_data_segments
-table::sensitive_disclosure_log
 table::system_errors
 table::system_notifications
 table::table
