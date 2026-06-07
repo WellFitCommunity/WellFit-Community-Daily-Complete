@@ -12,7 +12,6 @@ rpc::create_fhir_patient_from_profile
 rpc::generate_patient_lab_token
 rpc::get_clearinghouse_credentials
 rpc::get_missed_check_in_alerts
-rpc::get_nurse_bypass_count_last_7_days
 rpc::get_patient_engagement_metrics
 rpc::get_slow_queries
 rpc::get_welfare_check_info

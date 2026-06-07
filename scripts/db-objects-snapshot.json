@@ -4,7 +4,7 @@
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-07",
     "table_count": 757,
-    "function_count": 1464
+    "function_count": 1465
   },
   "tables": [
     "account_lockouts",
@@ -1400,6 +1400,7 @@
     "get_no_show_policy",
     "get_note_with_amendments",
     "get_notification_stats",
+    "get_nurse_bypass_count_last_7_days",
     "get_observations_by_code",
     "get_or_create_patient_avatar",
     "get_or_set_cache",
