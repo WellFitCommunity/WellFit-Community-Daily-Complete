@@ -78,15 +78,39 @@ output) for new/modified functions.
 
 ## 🟠 TIER 1 — correctness / robustness
 
-### EQ-5 [verified] Rate limiter is wired into messaging but NOT the clinical AI functions
-**Evidence:** `grep` shows `checkRateLimit/withRateLimit` used in `send-sms`, `send-email`,
-`send-push-notification`, `send-slack-notification`, `claude-chat`, `evidenceRetrievalService`,
-and now `ai-readmission-predictor`. **The other ~28 `ai-*` functions have none.**
-(Corrects a sub-agent claim that the limiter was "defined but unused" — it IS used, just not on
-the AI clinical surface.)
-**Fix:** add `checkRateLimit(user.id, RATE_LIMITS.AI)` to each authenticated `ai-*` function (same
-3-line pattern as EQ-2). List to sweep: `ls -1d supabase/functions/ai-*`.
-**Acceptance:** every authenticated AI function returns 429 past its window.
+### EQ-5 [verified] Rate limiting missing on 27 of 29 AI functions — **the real remaining gap**
+**SWEEP RUN 2026-06-07 (lead, against actual source). Results corrected a wrong earlier claim.**
+
+**Auth (authentication): 29/29 ai-* functions ARE gated — ZERO wide open.** The earlier tracker
+line "~28 exposed" was **WRONG** and is retracted. Most functions use the shared
+`requireUser()` helper (`_shared/auth.ts:33`, which calls `supabaseAdmin.auth.getUser(token)` —
+real verification); a prior "AI-1-SWEEP" already added these. `ai-soap-note-generator` was the
+one genuine outlier (cosmetic `getUser`, now fixed = EQ-3). The original `getUser`-only grep was
+the wrong probe — it missed the `requireUser` helper.
+
+**Rate limiting: only 2/29 (`ai-readmission-predictor`, `ai-soap-note-generator`).** The other
+**27** have an auth gate but no per-user rate limit on an expensive AI endpoint. This is the
+clear, mechanical, safe-to-mass-apply gap.
+**Fix:** add the same 3-line `checkRateLimit(<user>.id, RATE_LIMITS.AI)` block to each. Note:
+most use `requireUser()` which returns the user object — key the limiter off that, not a fresh
+getUser.
+**Acceptance:** every ai-* function returns 429 past its window; re-run the sweep → 29/29 ratelimit=yes.
+
+### EQ-5b [verified-coarse] Authorization DEPTH — 10 functions show authN but no in-file role/tenant/patient check
+**These verify WHO the caller is but show no role/tenant/patient `authZ` keyword in `index.ts`
+(coarse grep — CANDIDATES for review, NOT confirmed holes; some may gate via a context helper):**
+`ai-appointment-prep-instructions`, `ai-care-escalation-scorer`, `ai-clinical-guideline-matcher`,
+`ai-discharge-summary`, `ai-infection-risk-predictor`, `ai-medication-instructions`,
+`ai-medication-reconciliation`, `ai-patient-education`, `ai-progress-note-synthesizer`,
+`ai-referral-letter`.
+**Why it matters:** `requireUser` proves identity; it does NOT prove the caller may access *this
+patient* in *this tenant*. `ai-contraindication-detector` already learned this and added
+`requirePatientAccess` (see its "AI-1-SWEEP fix" comment). The 10 above each touch patient data —
+each needs a per-function read to confirm whether a `requirePatientAccess`/tenant scope is present
+in a sub-module or genuinely missing.
+**Fix:** per-function review; add `requirePatientAccess(user, patientId)` where a patient is
+addressed. **Do NOT mass-apply blindly — some legitimately operate on tenant-aggregate data.**
+**Acceptance:** each of the 10 either has a documented patient/tenant gate or one is added.
 
 ### EQ-6 [verified] Rate limiter has a check-then-insert race + silent insert loss
 **File:** `supabase/functions/_shared/rateLimiter.ts:40-103`
