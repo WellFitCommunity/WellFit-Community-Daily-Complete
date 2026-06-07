@@ -30,6 +30,11 @@ const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY");
 const MAILERSEND_FROM_EMAIL = Deno.env.get("MAILERSEND_FROM_EMAIL");
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+// Mirror send-sms: support EITHER a Messaging Service SID OR a plain From number.
+// The project sends app SMS (registration/enrollment) via the Messaging Service,
+// so TWILIO_FROM_NUMBER may be unset — previously this made Guardian's SMS bail
+// out with "SMS not configured" even though Twilio itself was fully working.
+const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
 const TWILIO_FROM_NUMBER = Deno.env.get("TWILIO_FROM_NUMBER");
 const SLACK_SECURITY_WEBHOOK_URL = Deno.env.get("SLACK_SECURITY_WEBHOOK_URL");
 // PAGERDUTY_INTEGRATION_KEY removed 2026-04-21 — the "pagerduty" channel now
@@ -361,7 +366,10 @@ async function sendEmailNotification(alert: SecurityAlert): Promise<Notification
  * Send SMS notification via Twilio
  */
 async function sendSMSNotification(alert: SecurityAlert): Promise<NotificationResult> {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_FROM_NUMBER || SECURITY_ALERT_PHONES.length === 0) {
+  // Need account creds, at least one recipient, and a sender — EITHER a Messaging
+  // Service SID OR a From number (matches the proven send-sms resolution).
+  const hasSender = Boolean(TWILIO_MESSAGING_SERVICE_SID || TWILIO_FROM_NUMBER);
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !hasSender || SECURITY_ALERT_PHONES.length === 0) {
     return { channel: "sms", success: false, error: "SMS not configured" };
   }
 
@@ -371,10 +379,20 @@ async function sendSMSNotification(alert: SecurityAlert): Promise<NotificationRe
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const authHeader = "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
-    for (const phone of SECURITY_ALERT_PHONES) {
+    // Send to every recipient; one bad number must not block the others. Succeed
+    // if at least one delivered, and surface which (if any) failed.
+    let delivered = 0;
+    const failures: string[] = [];
+    for (const rawPhone of SECURITY_ALERT_PHONES) {
+      const phone = rawPhone.trim();
+      if (!phone) continue;
       const formData = new URLSearchParams();
       formData.set("To", phone);
-      formData.set("From", TWILIO_FROM_NUMBER);
+      if (TWILIO_MESSAGING_SERVICE_SID) {
+        formData.set("MessagingServiceSid", TWILIO_MESSAGING_SERVICE_SID);
+      } else if (TWILIO_FROM_NUMBER) {
+        formData.set("From", TWILIO_FROM_NUMBER);
+      }
       formData.set("Body", message);
 
       const response = await fetch(twilioUrl, {
@@ -386,13 +404,21 @@ async function sendSMSNotification(alert: SecurityAlert): Promise<NotificationRe
         body: formData,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        return { channel: "sms", success: false, error: errorText };
+      if (response.ok) {
+        delivered++;
+      } else {
+        failures.push(`${phone}: ${await response.text()}`);
       }
     }
 
-    return { channel: "sms", success: true };
+    if (delivered === 0) {
+      return { channel: "sms", success: false, error: failures.join("; ") || "No recipients delivered" };
+    }
+    return {
+      channel: "sms",
+      success: true,
+      error: failures.length ? `partial: ${failures.join("; ")}` : undefined,
+    };
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     return {
