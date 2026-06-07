@@ -1,5 +1,5 @@
 {
-  "_comment": "Live Supabase edge-function verify_jwt snapshot. Refresh via MCP list_edge_functions (project xkybsjnvuohpqpbkikyn) or supabase CLI. EXCLUDES functions that are live but have NO source in this repo (a sourceless [functions.*] block breaks the GitHub-integration deploy bundler): test-password-hash, fix-performance-metrics, guardian-pr-service, admin-user-questions-and-rate-limit, ms-send, verify-phone. Do NOT re-add these on refresh unless their source is restored to supabase/functions/<slug>/index.ts.",
+  "_comment": "Live Supabase edge-function verify_jwt snapshot. Refresh via MCP list_edge_functions (project xkybsjnvuohpqpbkikyn) or supabase CLI. EXCLUDES functions that are live but have NO source in this repo (a sourceless [functions.*] block breaks the GitHub-integration deploy bundler): test-password-hash, fix-performance-metrics, guardian-pr-service, admin-user-questions-and-rate-limit, ms-send. Do NOT re-add these on refresh unless their source is restored to supabase/functions/<slug>/index.ts.",
   "functions": [
     {
       "slug": "admin-totp-setup",

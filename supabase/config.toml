@@ -550,5 +550,5 @@ verify_jwt = true  # browser-called by an authenticated user; gateway-verified
 verify_jwt = true  # standalone hCaptcha siteverify; companion to verify-hcaptcha. Source restored to repo.
 
 # verify-phone: legacy reader of the old DB-backed OTP system (phone_verifications table,
-# dropped 2025-07-03). Superseded by Twilio Verify (sms-send-code / sms-verify-code). Live husk
-# left deployed but unused — no source block here, so the deploy bundler skips it.
+# dropped 2025-07-03). Superseded by Twilio Verify (sms-send-code / sms-verify-code).
+# Dead live function deleted from the project 2026-06-07. No block here — do not re-add.
