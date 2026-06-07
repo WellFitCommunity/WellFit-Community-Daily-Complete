@@ -53,9 +53,6 @@ verify_jwt = false
 [functions.sms-verify-code]
 verify_jwt = false
 
-[functions.test-password-hash]
-verify_jwt = false
-
 [functions.test-users]
 verify_jwt = false
 
@@ -427,9 +424,6 @@ verify_jwt = false
 [functions.detect-no-shows]
 verify_jwt = false
 
-[functions.fix-performance-metrics]
-verify_jwt = false
-
 # Driven by pg_cron (guardian-automated-monitoring every 5 min via trigger_guardian_monitoring();
 # guardian-daily-summary daily) using the new non-JWT sb_secret_* key. Gateway JWT verify would
 # 401 it; the function enforces its own cron-secret check (CRON_SECRET / SB_SECRET_KEY).
@@ -439,8 +433,12 @@ verify_jwt = false
 [functions.guardian-agent-api]
 verify_jwt = false
 
-[functions.guardian-pr-service]
-verify_jwt = false
+# guardian-pr-service: live (verify_jwt=false, cron-called) but source not in repo (GRD-8).
+# Slated for rebuild on the GitHub REST API. Do NOT add an active [functions.*] block back
+# until supabase/functions/guardian-pr-service/index.ts exists — a sourceless block makes the
+# GitHub-integration deploy fail to bundle. On rebuild, restore:
+#   [functions.guardian-pr-service]
+#   verify_jwt = false   # cron caller presents no Supabase JWT
 
 [functions.health-monitor]
 verify_jwt = false
@@ -528,9 +526,6 @@ verify_jwt = false  # source present, NOT yet deployed — declared for correct 
 # verify_jwt = TRUE  — gateway verifies a logged-in user's Supabase JWT.
 # These match the live gateway state; do not flip without re-verifying the caller.
 # ============================================================================
-[functions.admin-user-questions-and-rate-limit]
-verify_jwt = true  # browser-called by an authenticated admin; gateway JWT check is the auth layer
-
 [functions.bulk-export]
 verify_jwt = true  # browser/admin-triggered export; gateway verifies the logged-in JWT
 
@@ -540,17 +535,12 @@ verify_jwt = true  # browser-called by an authenticated user; gateway-verified
 [functions.create-telehealth-room]
 verify_jwt = true  # browser-called by an authenticated user; gateway-verified
 
-[functions.ms-send]
-verify_jwt = true  # gateway-verified JWT caller
-
 [functions.notify-emergency-access]
 verify_jwt = true  # break-the-glass; browser-called by an authenticated clinician; gateway-verified
 
 [functions.realtime_medical_transcription]
 verify_jwt = true  # browser-called by an authenticated user; gateway-verified
 
-[functions.validate-hcaptcha]
-verify_jwt = true  # live state is verify_jwt=true; left as-is (pinning working value)
-
-[functions.verify-phone]
-verify_jwt = true  # live state is verify_jwt=true; left as-is (pinning working value)
+# validate-hcaptcha / verify-phone: live but source not in repo (no [functions.*] block —
+# a sourceless block breaks the GitHub-integration deploy bundler). CLI default verify_jwt=true
+# already matches their live state, so no pin is needed unless source is restored.

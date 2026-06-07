@@ -1,5 +1,5 @@
 {
-  "_comment": "Live Supabase edge-function verify_jwt snapshot. Refresh via MCP list_edge_functions (project xkybsjnvuohpqpbkikyn) or supabase CLI.",
+  "_comment": "Live Supabase edge-function verify_jwt snapshot. Refresh via MCP list_edge_functions (project xkybsjnvuohpqpbkikyn) or supabase CLI. EXCLUDES functions that are live but have NO source in this repo (a sourceless [functions.*] block breaks the GitHub-integration deploy bundler): test-password-hash, fix-performance-metrics, guardian-pr-service, admin-user-questions-and-rate-limit, ms-send, validate-hcaptcha, verify-phone. Do NOT re-add these on refresh unless their source is restored to supabase/functions/<slug>/index.ts.",
   "functions": [
     {
       "slug": "admin-totp-setup",
@@ -12,10 +12,6 @@
     {
       "slug": "admin-user-questions",
       "verify_jwt": false
-    },
-    {
-      "slug": "admin-user-questions-and-rate-limit",
-      "verify_jwt": true
     },
     {
       "slug": "admin_end_session",
@@ -286,10 +282,6 @@
       "verify_jwt": false
     },
     {
-      "slug": "fix-performance-metrics",
-      "verify_jwt": false
-    },
-    {
       "slug": "garmin-webhook",
       "verify_jwt": false
     },
@@ -315,10 +307,6 @@
     },
     {
       "slug": "guardian-agent-api",
-      "verify_jwt": false
-    },
-    {
-      "slug": "guardian-pr-service",
       "verify_jwt": false
     },
     {
@@ -420,10 +408,6 @@
     {
       "slug": "mobile-sync",
       "verify_jwt": false
-    },
-    {
-      "slug": "ms-send",
-      "verify_jwt": true
     },
     {
       "slug": "nightly-excel-backup",
@@ -614,10 +598,6 @@
       "verify_jwt": false
     },
     {
-      "slug": "test-password-hash",
-      "verify_jwt": false
-    },
-    {
       "slug": "test-users",
       "verify_jwt": false
     },
@@ -642,20 +622,12 @@
       "verify_jwt": false
     },
     {
-      "slug": "validate-hcaptcha",
-      "verify_jwt": true
-    },
-    {
       "slug": "verify-admin-pin",
       "verify_jwt": false
     },
     {
       "slug": "verify-hcaptcha",
       "verify_jwt": false
-    },
-    {
-      "slug": "verify-phone",
-      "verify_jwt": true
     },
     {
       "slug": "verify-pin-reset",
