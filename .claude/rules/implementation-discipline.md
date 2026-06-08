@@ -52,3 +52,34 @@ fireEvent.click(screen.getByText('Escalate'));
 const chargeNurseBtn = await screen.findByText('Charge Nurse');
 fireEvent.click(chargeNurseBtn);
 ```
+
+### Mock-implementation leakage flakes — diagnose and fix (incremental hardening)
+
+`vi.clearAllMocks()` (used in most `beforeEach`/`afterEach` blocks here) clears call
+history but does **NOT** reset a mock's implementation set via `mockReturnValue` /
+`mockResolvedValue` / `mockImplementation`. So when one test overrides a mock and a
+later test doesn't re-establish the default, the override **leaks** — the classic
+"passes alone, fails in the shard, won't reproduce on replay" flake. (Global
+`mockReset: true` would fix the class but breaks ~200+ files here that set defaults in
+`vi.mock` factories — so we harden flaky files one at a time, not via config.)
+
+**Reproduce deterministically:** run the shard with shuffled order — it surfaces the
+order-dependence that isolated runs hide:
+```bash
+npx vitest run src/components/<area> --sequence.shuffle=true --reporter=dot
+# confirm it's a leak (not the component): the test passes alone, fails with siblings
+npx vitest run <file> -t "<failing test name>"   # passes alone ⇒ cross-test leak
+```
+
+**Two leak shapes seen in this codebase (both fixed 2026-06):**
+1. **Stale return value:** a test does `mockX.mockReturnValue(BIG_DATA)`; `clearAllMocks`
+   keeps that impl, so a later test renders `BIG_DATA`. Fix: re-establish the default in
+   the file's `beforeEach`/`setupDefaultMocks` for **every** mock any test overrides —
+   including hook mocks like `useRealtimeSubscription`.
+2. **Late async resolution:** a "loading state" test mocks with
+   `() => new Promise(resolve => setTimeout(resolve, 100))`; the promise resolves *after*
+   the test ends and fires a callback (`onSuccess`) into a later test. Fix: use a
+   never-resolving `new Promise(() => {})` for loading-state assertions.
+
+**Rule:** when you touch a flaky test, fix the **leak source** (reset/never-resolve), not
+the symptom — never add `retry` to mask it.
