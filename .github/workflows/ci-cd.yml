@@ -155,6 +155,9 @@ jobs:
     name: Deno Edge Function Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Pin DENO_DIR so the dependency cache below has a deterministic location.
+    env:
+      DENO_DIR: /home/runner/.cache/deno
 
     steps:
       - name: Checkout code
@@ -164,6 +167,17 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+
+      # Cache remote deps (esm.sh / deno.land) across runs so warm runs never
+      # hit the network. restore-keys gives a partial cache even when sources
+      # change, so only NEW imports touch esm.sh. Fixes the transient-522 flake.
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.DENO_DIR }}
+          key: deno-${{ runner.os }}-${{ hashFiles('supabase/functions/deno.json', 'supabase/functions/**/index.ts') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
 
       - name: Edge-function SDK hygiene (version + type-check coverage)
         id: sdk_hygiene

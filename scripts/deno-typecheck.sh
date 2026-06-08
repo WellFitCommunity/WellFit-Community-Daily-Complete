@@ -68,6 +68,10 @@ else
   done
 fi
 
+# Dependencies are integrity-pinned by supabase/functions/deno.lock and cached in
+# CI (DENO_DIR), so `deno check` resolves imports from the local cache rather than
+# re-fetching esm.sh on every run. `deno check` exits non-zero ONLY on a genuine
+# type error — no retry/tolerance logic, so real defects are never masked.
 ERRORS=0
 CHECKED=0
 
