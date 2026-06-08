@@ -223,9 +223,13 @@ describe('PhysicianDailyCheckin', () => {
     });
 
     it('should show loading state during submission', async () => {
-      mockSubmitDailyCheckin.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 100))
-      );
+      // Never-resolving promise keeps the loading state visible for the assertion
+      // WITHOUT firing onSuccess() after the test ends. The previous setTimeout(100)
+      // resolved ~100ms later — leaking an onSuccess() call into a subsequent test
+      // (after clearAllMocks zeroed the counter), which intermittently failed
+      // "should not call onSuccess when submission fails". Matches the sibling
+      // "disable submit button" test's correct pattern.
+      mockSubmitDailyCheckin.mockImplementation(() => new Promise(() => {}));
 
       render(<PhysicianDailyCheckin {...defaultProps} />);
 

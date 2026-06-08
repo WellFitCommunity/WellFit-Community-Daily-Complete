@@ -123,11 +123,6 @@ export default defineConfig({
     setupFiles: ['./src/setupTests.ts'],
     include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     exclude: ['node_modules', 'build', 'dist', 'supabase'],
-    // Retry only in CI to absorb low-frequency timing flakes on loaded runners
-    // (e.g. a waitFor occasionally exceeding its timeout). Retry rescues ONLY
-    // non-deterministic flakes — a genuinely broken test fails all attempts and
-    // still goes red, so this does not mask real failures. Locally: 0 (fail fast).
-    retry: process.env.CI ? 2 : 0,
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: ['node_modules/', 'src/test-utils/'],

@@ -160,10 +160,26 @@ const makeSubscriptionHealthNoStale = (): SubscriptionHealthEntry[] => [
 // HELPERS
 // ============================================================================
 
-function setupDefaultMocks() {
+async function setupDefaultMocks() {
   mockGetStatistics.mockResolvedValue(makeCacheStats());
   mockGetConnectionMetrics.mockResolvedValue(makeConnectionMetrics());
   mockGetMemoryCacheStats.mockReturnValue(makeMemoryCacheStats());
+  mockSupabaseSelect.mockResolvedValue({ data: [], error: null });
+  // Reset the realtime-subscription hook to its no-data default. vi.clearAllMocks()
+  // clears call history but NOT mockReturnValue implementations, so an earlier
+  // "subscription health" test that returned makeSubscriptionHealth() (which renders
+  // "5"s for total/active_subscriptions) would otherwise leak that data into later
+  // tests under shuffled order — making getByText('5') in "displays size in MB"
+  // match multiple elements. (This was the flaky-test root cause.)
+  const { default: useRealtimeSubscription } = await import('../../../hooks/useRealtimeSubscription');
+  vi.mocked(useRealtimeSubscription).mockReturnValue({
+    data: null,
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    isSubscribed: false,
+    subscriptionId: null,
+  });
 }
 
 async function renderAndWaitForLoad() {
@@ -179,9 +195,9 @@ async function renderAndWaitForLoad() {
 // ============================================================================
 
 describe('CacheMonitoringDashboard', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    setupDefaultMocks();
+    await setupDefaultMocks();
   });
 
   // --------------------------------------------------------------------------
@@ -465,7 +481,7 @@ describe('CacheMonitoringDashboard', () => {
     mockGetMemoryCacheStats.mockClear();
 
     // Re-setup the mocks so the refresh resolves
-    setupDefaultMocks();
+    await setupDefaultMocks();
 
     const refreshButton = screen.getByRole('button', { name: /refresh metrics/i });
     await user.click(refreshButton);
