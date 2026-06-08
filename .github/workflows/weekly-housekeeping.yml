@@ -38,7 +38,10 @@ jobs:
 
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # Repo stores the Supabase personal access token as SB_ACCESS_TOKEN; fall back to
+      # SUPABASE_ACCESS_TOKEN if that name is ever added. Without this the Supabase
+      # security + performance advisor checks silently SKIP.
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN || secrets.SB_ACCESS_TOKEN }}
       GH_TOKEN: ${{ github.token }}
 
     steps:
