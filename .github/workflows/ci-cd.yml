@@ -114,6 +114,41 @@ jobs:
           fi
 
   # ============================================
+  # Job 1b-ml: Python ML tree checkpoint (mypy strict + ruff + pytest)
+  # Isolated job — scoped to ml/. Governance: .claude/rules/python.md §12
+  # ============================================
+  ml-python:
+    name: Python ML Checkpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned ml/ dependencies
+        run: python3 -m venv ml/.venv && ml/.venv/bin/pip install -r ml/requirements.txt
+
+      - name: Run Python checkpoint (mypy + ruff + pytest)
+        id: ml_checkpoint
+        run: bash scripts/python-typecheck-changed.sh
+
+      - name: Report to summary
+        if: always()
+        run: |
+          echo "## 🐍 Python ML Checkpoint" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.ml_checkpoint.outcome }}" == "success" ]; then
+            echo "✅ mypy 0 / ruff 0 / pytest green (ml/)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Python checkpoint failed — fix before merge (.claude/rules/python.md §12)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ============================================
   # Job 1c: Deno Edge Function Type Check
   # ============================================
   deno-typecheck:

@@ -318,6 +318,7 @@ The following detailed standards are auto-loaded from `.claude/rules/`. Each is 
 | File | What It Covers |
 |------|---------------|
 | **`typescript.md`** | `any` ban, type guards, cast boundaries, lint warning policy |
+| **`python.md`** | Python error handling, typed I/O (Pydantic), model-output validation, PHI scoping, secrets, audit logging, ML structure, Claude-specific mistakes |
 | **`ai-services.md`** | Skill registration, AI service pattern, model pinning, structured output, HTI-2, cost tracking |
 | **`architecture-patterns.md`** | ServiceResult pattern, audit logging, error handling, patient context spine (ATLUS) |
 | **`supabase.md`** | Migrations, RLS, views, functions, edge function clients, CORS, JWT standards, key migration, auth session security, query standards, Deno rules, cleanup policy, realtime subscriptions |

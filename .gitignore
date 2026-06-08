@@ -101,3 +101,10 @@ src/types/database.generated.ts
 
 # Claude harness runtime lock
 .claude/scheduled_tasks.lock
+
+# Python ML tree — virtualenv + tool caches (never commit)
+ml/.venv/
+__pycache__/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/

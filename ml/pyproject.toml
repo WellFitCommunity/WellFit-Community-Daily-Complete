@@ -1,0 +1,29 @@
+# Python ML/AI tree — tool config. Governance: .claude/rules/python.md
+# Strict by default — the Python equivalent of TS strict mode + the `any` ban.
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+warn_return_any = true
+disallow_any_explicit = true        # the `any` ban, enforced
+disallow_untyped_defs = true        # every function typed (§2)
+no_implicit_optional = true         # no silent None (§2 / category #2)
+files = ["ml"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+# E/F pyflakes+pycodestyle, B bugbear (mutable defaults, broad except),
+# S bandit-style security (hardcoded secrets, unsafe paths), ASYNC, PTH (pathlib).
+select = ["E", "F", "B", "S", "ASYNC", "PTH", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Glob is relative to this pyproject.toml's directory (ml/), so "tests/*" not "ml/tests/*".
+"tests/*" = ["S101"]                # asserts are allowed in tests
+
+[tool.pytest.ini_options]
+testpaths = ["ml/tests"]
+addopts = "-q --strict-markers"

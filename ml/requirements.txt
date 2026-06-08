@@ -1,0 +1,19 @@
+# Python ML/AI tree — PINNED dependencies (governance: .claude/rules/python.md §11)
+# Phase 0/1 toolchain only. ML deps (pandas, scikit-learn) are added at Phase 2,
+# when real data justifies training — justify every dependency, no speculative installs.
+
+# --- Typed I/O (the Python "any" ban) ---
+pydantic==2.9.2
+
+# --- Verification checkpoint toolchain (mirrors the TS hard gate) ---
+mypy==1.13.0
+ruff==0.7.4
+pytest==8.3.3
+
+# --- Phase 2 (uncomment + pin when model training actually begins) ---
+# pandas==2.2.3
+# scikit-learn==1.5.2
+
+# --- Phase 1 network calls, if/when added (timeouts + bounded retry, §8) ---
+# httpx==0.27.2
+# tenacity==9.0.0
