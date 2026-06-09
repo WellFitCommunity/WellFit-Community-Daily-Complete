@@ -80,6 +80,13 @@ export function requireInternal(req: Request) {
  * legitimate follow-up tightening once the schema confirms `care_team_members`
  * is consistently populated. Until then this CLOSES the AI-1 PHI hole.
  *
+ * Tenant isolation (added 2026-06-09, gap-closure P1): beyond holding a
+ * clinical role, a non-super_admin caller must share the patient's tenant.
+ * Without this, a clinician in tenant A could pull tenant B's PHI by ID.
+ * `super_admin` (platform owner) bypasses the tenant match by design;
+ * self-access bypasses everything. profiles.tenant_id is NOT NULL, so a
+ * missing/NULL tenant on either side fails closed.
+ *
  * Throws a Response (401/403) on rejection so callers can re-throw.
  * Returns the caller's role name on success.
  */
@@ -102,7 +109,7 @@ export async function requirePatientAccess(
 
   const { data, error } = await supabaseAdmin
     .from("profiles")
-    .select("role_id, roles:role_id ( id, name )")
+    .select("tenant_id, role_id, roles:role_id ( id, name )")
     .eq("user_id", callerUserId)
     .maybeSingle();
 
@@ -118,6 +125,31 @@ export async function requirePatientAccess(
       JSON.stringify({ error: "Forbidden: not authorized to access this patient" }),
       { status: 403 },
     );
+  }
+
+  // Tenant isolation — super_admin may cross tenants; everyone else must
+  // share the patient's (non-null) tenant. Fails closed on any lookup miss.
+  if (roleName !== "super_admin") {
+    const callerTenantId = data?.tenant_id ?? null;
+
+    const { data: patientRow, error: patientErr } = await supabaseAdmin
+      .from("profiles")
+      .select("tenant_id")
+      .eq("user_id", patientId)
+      .maybeSingle();
+
+    if (patientErr) {
+      throw new Response(JSON.stringify({ error: "Authorization lookup failed" }), { status: 500 });
+    }
+
+    const patientTenantId = patientRow?.tenant_id ?? null;
+
+    if (!callerTenantId || !patientTenantId || callerTenantId !== patientTenantId) {
+      throw new Response(
+        JSON.stringify({ error: "Forbidden: patient is outside your tenant" }),
+        { status: 403 },
+      );
+    }
   }
 
   return roleName;

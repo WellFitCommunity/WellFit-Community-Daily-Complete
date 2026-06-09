@@ -19,6 +19,7 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { HAIKU_MODEL } from "../_shared/models.ts";
 import { requireUser, requirePatientAccess } from "../_shared/auth.ts";
+import { checkRateLimit, RATE_LIMITS } from "../_shared/rateLimiter.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -72,6 +73,27 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Authorization required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // RATE LIMITING — AI generation is expensive; cap per authenticated user (EQ-5)
+    const rateLimit = await checkRateLimit(user.id, RATE_LIMITS.AI);
+    if (!rateLimit.allowed) {
+      logger.warn("ai-caregiver-briefing rate limit exceeded", { userId: user.id, retryAfter: rateLimit.retryAfter });
+      return new Response(
+        JSON.stringify({
+          error: "Rate limit exceeded",
+          message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
+          retryAfter: rateLimit.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimit.retryAfter ?? RATE_LIMITS.AI.windowSeconds),
+          },
+        }
       );
     }
 
