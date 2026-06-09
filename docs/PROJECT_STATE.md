@@ -12,6 +12,20 @@
 
 ---
 
+## 🆕 NEW TRACKER (2026-06-09, Maria-directed) — Equity & Population-Health Analytics Query System
+
+**Tracker:** `docs/trackers/equity-analytics-query-system-tracker.md`
+**Gap-closure one-pager (separate, from code-level system analysis):** `docs/system-analysis-gap-closure-2026-06-09.md`
+**Goal:** Admin/physician/researcher asks a question **in plain language** → gets an **aggregated chart** (percentages, trends, intersectional cross-tabs by race/ethnicity/language × age/sex × SDOH/zip × clinical). **Never raw rows, never identifiers.**
+**Safety spine:** aggregate-only by construction; **no LLM-authored SQL** (Claude fills a whitelisted JSON spec, engine compiles to one parameterized aggregate query); **k=11 small-cell suppression**; **3-digit ZCTA** geography; role-gated + tenant-scoped + audit-logged; **researcher = stricter de-identified tier**.
+**Substrate verified live 2026-06-09:** `profiles` is the demographic spine (race/race_omb_categories, ethnicity/ethnicity_omb, gender, dob, zip_code, income_range, insurance_type, sdoh_risk_factors jsonb) + `senior_demographics.preferred_language` + `senior_sdoh`/`passive_sdoh_detections`/`sdoh_goals` + clinical sources (`check_ins`, `readmission_risk_predictions`). Substrate is complete — feature is fully feasible.
+**Decisions locked:** interactive query builder + plain-language (both compile to same spec); researcher stricter tier; all 4 dimension families; k=11; 3-digit zip.
+**Sessions:** S1 = catalog + safe aggregation engine + suppression (`supabase/functions/equity-analytics/` + `equityAnalyticsService.ts`, live-proven, no-raw-row proof); S2 = NL→spec via claude-chat forced tool_use (Rule #16) + server-side re-validation; S3 = `EquityInsightsDashboard` UI + charts + researcher tier + visual acceptance.
+**Open (surface, don't assume):** clinical measure priority list = **Akima**; charting lib = engineering call at S3.
+**Estimate:** ~16–48h, 3–4 sessions.
+
+---
+
 ## 🛰️ ACTIVE BUILD (2026-06-04, autonomous, Maria-directed) — Guardian ↔ Behavioral-Anomaly Integration
 
 **Tracker:** `docs/trackers/guardian-anomaly-integration-tracker.md`
