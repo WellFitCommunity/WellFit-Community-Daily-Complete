@@ -430,19 +430,24 @@ describe('NurseQuestionManager', () => {
 
   describe('Escalation', () => {
     it('shows escalation options when Escalate button is clicked', async () => {
+      // userEvent (not fireEvent) so the async claim-on-select + ResponsePanel
+      // mount effects flush inside act() before we open escalation. With
+      // fireEvent those updates settle late and can re-run the showEscalation
+      // reset effect, intermittently hiding the options (CI flake, 2026-06-09).
+      const user = userEvent.setup();
       render(<NurseQuestionManager />);
 
       await waitFor(() => {
         expect(screen.getByText('Test Patient Alpha')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByText('Test Patient Alpha'));
+      await user.click(screen.getByText('Test Patient Alpha'));
 
       await waitFor(() => {
         expect(screen.getByText('Escalate')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByText('Escalate'));
+      await user.click(screen.getByText('Escalate'));
 
       await waitFor(() => {
         expect(screen.getByText('Charge Nurse')).toBeInTheDocument();
@@ -452,24 +457,27 @@ describe('NurseQuestionManager', () => {
     });
 
     it('escalates to charge nurse through NurseQuestionService', async () => {
+      // userEvent (not fireEvent) to flush the async claim-on-select + mount
+      // effects inside act() before opening escalation — see flake note above.
+      const user = userEvent.setup();
       render(<NurseQuestionManager />);
 
       await waitFor(() => {
         expect(screen.getByText('Test Patient Alpha')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByText('Test Patient Alpha'));
+      await user.click(screen.getByText('Test Patient Alpha'));
 
       await waitFor(() => {
         expect(screen.getByText('Escalate')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByText('Escalate'));
+      await user.click(screen.getByText('Escalate'));
 
       await waitFor(() => {
         expect(screen.getByText('Charge Nurse')).toBeInTheDocument();
       });
-      fireEvent.click(screen.getByText('Charge Nurse'));
+      await user.click(screen.getByText('Charge Nurse'));
 
       await waitFor(() => {
         expect(mockEscalateQuestion).toHaveBeenCalledWith('q-001', 'charge_nurse', undefined);
