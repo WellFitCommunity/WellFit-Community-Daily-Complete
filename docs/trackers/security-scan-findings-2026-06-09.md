@@ -50,10 +50,22 @@ Backing table `rate_limit_attempts` verified live (id/identifier/attempted_at/me
 
 **Acceptance:** ✅ burst returns 429 (live-proven); ✅ captcha placement verified at the front door (`register`); side-paths rate-limited. **SS-3 CLOSED.**
 
-### SS-4 — MCP `community-engagement` tenant scoping + `chain-orchestrator` input validation — **TODO**
-**Finding:** Per the scan, `mcp-community-engagement-server` (T2, user_scoped) had no `tenant_id`/`tenantId` reference, and `mcp-chain-orchestrator` had no `VALIDATION/inputSchema/zod` match. (The 4 reference servers `npi-registry`/`pubmed`/`cms-coverage`/`medical-codes` legitimately need no tenant scoping — public no-PHI data per governance S9.)
-**Action:** (a) Verify `community-engagement` scopes its reads to the caller's tenant (it serves real member data). (b) Verify `chain-orchestrator` validates tool args before dispatch.
-**Acceptance:** community-engagement queries are tenant-scoped from JWT (not tool args); chain-orchestrator rejects malformed step specs. Both confirmed in code.
+### SS-4 — MCP `community-engagement` tenant scoping + `chain-orchestrator` input validation — **DONE 2026-06-09 (SS-4a fixed)**
+
+**SS-4a FIXED & live-proven (migration `20260609150000`):** revoked EXECUTE from `anon` + `PUBLIC` on `calculate_engagement_warning_score`; `authenticated` + `service_role` retained. Verified live: `has_function_privilege('anon',...)` = false, ACL now `{postgres, authenticated, service_role}`. Applied via `db push`. Optional future defense-in-depth (SECURITY INVOKER conversion) noted below but not required.
+
+
+**`chain-orchestrator` — NOT a gap (grep miss).** It derives the caller's identity + tenant from the request (returns 403 "No tenant_id associated with caller"), enforces an action allow-list (start/resume/approve/cancel/status), and validates required fields per action (manual, not zod — which is why the scan's `VALIDATION|zod` grep missed it). It correctly derives tenant from the **caller, not args.** No change needed.
+
+**SS-4a — `community-engagement` `get_engagement_score` — LOW severity, one-line fix.** Honest framing: this returns engagement *scores* (warning level + behavioral factors), not names/SSN/clinical data, keyed by a non-enumerable patient UUID, with **zero callers**. Worth tightening, not alarming. Verified live 2026-06-09:
+- The tool calls RPC `calculate_engagement_warning_score(p_patient_id, p_days)` which is **`SECURITY DEFINER`** (`prosecdef=true`, confirmed in `pg_proc`) → **bypasses RLS**. `patient_id` comes straight from tool args with no caller-authorization check.
+- The server uses the **global bare-anon client** (`initMCPServer` user_scoped → `SB_ANON_KEY`, no JWT forwarding), unlike the correct pattern (`createPerRequestClient(req)` used by `mcp-postgres-server`). `mcpServerBase.ts:323` documents that the global client is "only for SECURITY DEFINER RPCs" — but those RPCs must then do their own authorization, and this one doesn't.
+- `verify_jwt=false` + the public anon/publishable key (shipped in every browser) ⇒ **anyone who supplies a patient UUID gets that patient's `warning_score`/`warning_level`/`concerning_factors`, cross-tenant.** HIPAA §164.312(a)(1) access-control concern (health-engagement risk data, no access control).
+- The server's **other tools degrade safely**: `recommend_next_activity` (`patient_engagement_metrics`) and `get_personalized_greeting` (`profiles`) are RLS-keyed on `auth.uid()`, so the bare-anon client gets nothing back. Only the SECURITY DEFINER path leaks.
+- **Blast radius: zero in-repo callers** of `get_engagement_score`; not wired into any gateway. Fixing it breaks nothing.
+
+**Recommended fix (proportionate, one line):** `REVOKE EXECUTE ON FUNCTION calculate_engagement_warning_score(uuid,integer) FROM anon, PUBLIC;` (keep `authenticated` + `service_role`). That alone closes the "anyone with the public key" path. Optional defense-in-depth later: convert the fn to `SECURITY INVOKER` so the table's existing RLS governs it (verified `authenticated` has the table SELECT it needs). Maria's call (2026-06-09) was "harden the RPC itself." **Tier-3 (fn-security) → migration via `db push` when Maria says go.**
+**Acceptance:** `has_function_privilege('anon', ...)` = false; an authenticated self/tenant-admin caller still works.
 
 ### SS-5 — `ssn` field in `ExtractedDataPreview.tsx` (frontend) — awareness/confirm — **TODO**
 **Finding:** `src/components/admin/ExtractedDataPreview.tsx` renders an `ssn` field (paper-form scanner review UI); `FHIRDataMapper.tsx` uses fake placeholder `"000-00-0000"`. Both appear intentional (clinician reviews server-extracted scan data).

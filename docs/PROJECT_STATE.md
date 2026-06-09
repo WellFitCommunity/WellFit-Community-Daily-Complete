@@ -20,8 +20,8 @@
 - **SS-1** — 152 production files > 600 lines. Defers to existing `god-file-decomposition-tracker.md` (update its count; the rule is baselined/aspirational, not enforced).
 - **SS-2** — "44% audit coverage" is an artifact of god-file decomposition (helper modules counted as services). Re-measure PHI-touch-specifically via `/audit-check`, don't mass-edit.
 - **SS-3** — ✅ **DONE (2026-06-09).** Added per-phone (3/10min) + per-IP (10/10min) rate limiting to `sms-send-code` before the Twilio call; deployed per-function; **live-proven 429 before Twilio (zero SMS)**. Captcha **not needed** — traced the flow: hCaptcha already gates the initial send via `register` (verifies token then calls sms-send-code); only resend + direct-POST paths were open, now rate-limited.
-- **SS-4** — verify `mcp-community-engagement` tenant-scopes reads + `mcp-chain-orchestrator` validates tool args. **← NEXT**
-- **SS-5** — confirm `ExtractedDataPreview.tsx` `ssn` field never persists to client storage (server-side encrypted on save).
+- **SS-4** — ✅ **DONE (2026-06-09).** `chain-orchestrator` clean (authed + tenant-from-caller + manual validation). `community-engagement` SS-4a (low: anon could call a SECURITY DEFINER engagement-score RPC, zero callers) fixed via migration `20260609150000` — revoked anon/PUBLIC execute; live-verified anon=false.
+- **SS-5** — confirm `ExtractedDataPreview.tsx` `ssn` field never persists to client storage (server-side encrypted on save). **← NEXT**
 - **SS-6** — ✅ **DONE (2026-06-09).** Corrected `/security-scan` SKILL.md baselines (681 tables / 17 MCP / 152 god files), broadened Step-6 auth grep (0 false positives now), fixed Step-9 `find` precedence. Tooling now reports real numbers.
 **Remaining self-contained repairs:** SS-4, SS-5. **Estimate:** ~2–4h.
 
