@@ -12,6 +12,21 @@
 
 ---
 
+## 🔒 NEW TRACKER (2026-06-09) — Security-Scan Findings (`/security-scan` run)
+
+**Tracker:** `docs/trackers/security-scan-findings-2026-06-09.md`
+**Scan result:** **COMPLIANT** — all 6 critical checks passed (PHI logging, RLS, CORS/CSP, secrets, edge-fn auth, JWT). Live DB verified: 681 tables, **658 RLS-enabled (96.6%)**, 23 exceptions all reference/system/metrics (no tenant PHI table missing RLS). 163/163 edge functions authed; 17/17 MCP servers have auth+rate-limit+validation; 0 console/`any`/wildcards/secrets; no `getSession()` in edge fns.
+**Gaps to repair (none are compliance violations):**
+- **SS-1** — 152 production files > 600 lines. Defers to existing `god-file-decomposition-tracker.md` (update its count; the rule is baselined/aspirational, not enforced).
+- **SS-2** — "44% audit coverage" is an artifact of god-file decomposition (helper modules counted as services). Re-measure PHI-touch-specifically via `/audit-check`, don't mass-edit.
+- **SS-3** — ✅ **DONE (2026-06-09).** Added per-phone (3/10min) + per-IP (10/10min) rate limiting to `sms-send-code` before the Twilio call; deployed per-function; **live-proven 429 before Twilio (zero SMS)**. Captcha **not needed** — traced the flow: hCaptcha already gates the initial send via `register` (verifies token then calls sms-send-code); only resend + direct-POST paths were open, now rate-limited.
+- **SS-4** — verify `mcp-community-engagement` tenant-scopes reads + `mcp-chain-orchestrator` validates tool args. **← NEXT**
+- **SS-5** — confirm `ExtractedDataPreview.tsx` `ssn` field never persists to client storage (server-side encrypted on save).
+- **SS-6** — ✅ **DONE (2026-06-09).** Corrected `/security-scan` SKILL.md baselines (681 tables / 17 MCP / 152 god files), broadened Step-6 auth grep (0 false positives now), fixed Step-9 `find` precedence. Tooling now reports real numbers.
+**Remaining self-contained repairs:** SS-4, SS-5. **Estimate:** ~2–4h.
+
+---
+
 ## 🆕 NEW TRACKER (2026-06-09, Maria-directed) — Equity & Population-Health Analytics Query System
 
 **Tracker:** `docs/trackers/equity-analytics-query-system-tracker.md`

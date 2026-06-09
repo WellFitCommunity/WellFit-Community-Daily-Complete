@@ -2,6 +2,14 @@
 import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9?target=deno";
 import { cors } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
+import { checkRateLimit } from "../_shared/rateLimiter.ts";
+
+// Abuse controls for this pre-auth, unauthenticated OTP-send endpoint (SS-3).
+// Each Twilio Verify "start" sends a real SMS — so we throttle BEFORE calling Twilio
+// to stop (a) victim SMS-bombing (per-phone) and (b) one host spraying many numbers (per-IP).
+// Windows are well above any legitimate resend cadence (VerifyCodePage enforces its own cooldown).
+const SMS_SEND_RATE_PHONE = { maxAttempts: 3, windowSeconds: 600, keyPrefix: "sms_send_phone" } as const;
+const SMS_SEND_RATE_IP = { maxAttempts: 10, windowSeconds: 600, keyPrefix: "sms_send_ip" } as const;
 
 // Allowed country codes for phone numbers
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
@@ -110,6 +118,42 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Normalize phone to E.164 format for Twilio consistency
     const phoneNumber = parsePhoneNumber(phone, 'US');
     const normalizedPhone = phoneNumber.number;
+
+    // ---- Abuse controls (SS-3): throttle BEFORE spending a Twilio SMS ----
+    // Per-IP first (catches one host spraying many numbers), then per-phone (catches
+    // victim SMS-bombing). Both must pass. checkRateLimit fails OPEN on DB error by design.
+    const forwarded = req.headers.get("x-forwarded-for");
+    const clientIp = forwarded ? forwarded.split(",")[0].trim() : "";
+
+    if (clientIp) {
+      const ipLimit = await checkRateLimit(clientIp, SMS_SEND_RATE_IP);
+      if (!ipLimit.allowed) {
+        logger.warn("sms-send-code rate limited (per-IP)", { retryAfter: ipLimit.retryAfter });
+        return new Response(
+          JSON.stringify({
+            error: "RATE_LIMITED",
+            message: `Too many requests. Please try again in ${ipLimit.retryAfter} seconds.`,
+            retryAfter: ipLimit.retryAfter,
+          }),
+          { status: 429, headers: { ...headers, "Retry-After": String(ipLimit.retryAfter ?? SMS_SEND_RATE_IP.windowSeconds) } },
+        );
+      }
+    } else {
+      logger.warn("sms-send-code: no client IP for rate limiting, relying on per-phone limit");
+    }
+
+    const phoneLimit = await checkRateLimit(normalizedPhone, SMS_SEND_RATE_PHONE);
+    if (!phoneLimit.allowed) {
+      logger.warn("sms-send-code rate limited (per-phone)", { retryAfter: phoneLimit.retryAfter });
+      return new Response(
+        JSON.stringify({
+          error: "RATE_LIMITED",
+          message: `Too many codes requested for this number. Please try again in ${phoneLimit.retryAfter} seconds.`,
+          retryAfter: phoneLimit.retryAfter,
+        }),
+        { status: 429, headers: { ...headers, "Retry-After": String(phoneLimit.retryAfter ?? SMS_SEND_RATE_PHONE.windowSeconds) } },
+      );
+    }
 
     // Log phone normalization for debugging (not PHI context)
     logger.info("Phone normalization for SMS send", {
