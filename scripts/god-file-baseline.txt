@@ -136,8 +136,6 @@ src/services/physicalTherapyService.ts
 src/services/pillIdentifierService.ts
 src/services/publicHealth/antimicrobialSurveillanceService.ts
 src/services/publicHealth/ecrService.ts
-src/services/publicHealth/immunizationRegistryService.ts
-src/services/publicHealth/syndromicSurveillanceService.ts
 src/services/readmissionTrackingService.ts
 src/services/resilienceHubService.ts
 src/services/rolloutService.ts

@@ -1,6 +1,6 @@
 # God File Decomposition Tracker
 
-> **Last Updated:** 2026-06-01 (Tier 1 top-10 ALL DONE: #10 `mpiMatchingService.ts` 1010→100; #9 `mcpHL7X12Client.ts` 1017→381; #8 `fhirInteroperabilityIntegrator.ts` 1081→512; #7 `claudeService.ts` 1100→558; #6 `ecrService.ts` 1119→65; #5 `epcsService.ts` 1134→94; #4 `antimicrobialSurveillanceService.ts` 1147→78; #3 `hospitalWorkforceService.ts` 1217→151; #2 `healthcareIntegrationsService.ts` 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29)
+> **Last Updated:** 2026-06-09 (two public-health services split: immunizationRegistryService.ts 997→59 via `immunization-registry/`, syndromicSurveillanceService.ts 935→64 via `syndromic-surveillance/` — see "Additional src/ service decompositions" below). Tier 1 top-10 ALL DONE: #10 `mpiMatchingService.ts` 1010→100; #9 `mcpHL7X12Client.ts` 1017→381; #8 `fhirInteroperabilityIntegrator.ts` 1081→512; #7 `claudeService.ts` 1100→558; #6 `ecrService.ts` 1119→65; #5 `epcsService.ts` 1134→94; #4 `antimicrobialSurveillanceService.ts` 1147→78; #3 `hospitalWorkforceService.ts` 1217→151; #2 `healthcareIntegrationsService.ts` 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29)
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 > **Estimated Effort:** ~40–60 hours across 15–20 sessions (spread over months — not a sprint)
@@ -67,6 +67,13 @@ These are the biggest offenders. Each one's decomposition unblocks several small
 | 8 | `src/services/fhirInteroperabilityIntegrator.ts` | ~~1081~~ → 512 | FHIR | **DONE** (2026-06-01) — class (connection/sync/mapping/auto-sync) + `fhirIntegrator` singleton kept identical; extracted 5 modules to `fhir-integrator/` (types, fhirClient, importData, audit, helpers), all <600; stateless methods (fetch/push, importFHIRData, loggers, mappers) → free functions, `this.X` rewired; public types re-exported so all 10 importers unchanged. No test file exists for this service — guarantee is verbatim move + 0-error project-wide typecheck. |
 | 9 | `src/services/mcp/mcpHL7X12Client.ts` | ~~1017~~ → 381 | MCP client | **DONE** (2026-06-01) — extracted `hl7-x12/types.ts` (all HL7/X12/278 interfaces) + `hl7-x12/constants.ts` (HL7_TEMPLATES, X12_HELPERS, X12_278_* code maps), both <600; main file keeps the delegating HL7X12MCPClient class + singleton + convenience fns and re-exports types + constants; all 7 importers unchanged; 47 tests green across 3 suites |
 | 10 | `src/services/mpiMatchingService.ts` | ~~1010~~ → 100 | MPI | **DONE** (2026-06-01) — 6 modules in `mpi/` (types, matchingUtils, identity, candidates, duplicateDetection, config), all <600 (largest 271); free functions split by responsibility with a clean DAG (duplicateDetection → identity+candidates); main file re-assembles the `mpiMatchingService` object + re-exports types + utils; all importers unchanged; 73 tests green across 2 suites |
+
+### Additional src/ service decompositions (post Tier-1)
+
+| File | Lines | Domain | Status |
+|------|-------|--------|--------|
+| `src/services/publicHealth/immunizationRegistryService.ts` | ~~997~~ → 59 | Public health | **DONE** (2026-06-09) — 5 modules in `immunization-registry/` (types, constants, helpers, vxuMessage, operations), all <600 (largest `vxuMessage` 432); main file is a barrel re-exporting all named fns + types + the aggregate `ImmunizationRegistryService` object + default, import paths unchanged; HL7 builders moved verbatim; existing 9-test suite green through the barrel; full `tsc` clean; removed from `god-file-baseline.txt` |
+| `src/services/publicHealth/syndromicSurveillanceService.ts` | ~~935~~ → 64 | Public health | **DONE** (2026-06-09) — 5 modules in `syndromic-surveillance/` (types, constants, helpers, adtMessage, operations), all <600 (largest `operations` 395); main file is a barrel re-exporting all named fns + types + the aggregate `SyndromicSurveillanceService` object + default, import paths unchanged; HL7 ADT builders moved verbatim; existing 14-test suite green through the barrel; scoped typecheck clean; removed from `god-file-baseline.txt` |
 
 ### Frontend god files (separately tracked — components, not services)
 
