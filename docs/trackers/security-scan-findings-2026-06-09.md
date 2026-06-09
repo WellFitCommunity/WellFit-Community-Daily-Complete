@@ -67,10 +67,13 @@ Backing table `rate_limit_attempts` verified live (id/identifier/attempted_at/me
 **Recommended fix (proportionate, one line):** `REVOKE EXECUTE ON FUNCTION calculate_engagement_warning_score(uuid,integer) FROM anon, PUBLIC;` (keep `authenticated` + `service_role`). That alone closes the "anyone with the public key" path. Optional defense-in-depth later: convert the fn to `SECURITY INVOKER` so the table's existing RLS governs it (verified `authenticated` has the table SELECT it needs). Maria's call (2026-06-09) was "harden the RPC itself." **Tier-3 (fn-security) → migration via `db push` when Maria says go.**
 **Acceptance:** `has_function_privilege('anon', ...)` = false; an authenticated self/tenant-admin caller still works.
 
-### SS-5 — `ssn` field in `ExtractedDataPreview.tsx` (frontend) — awareness/confirm — **TODO**
-**Finding:** `src/components/admin/ExtractedDataPreview.tsx` renders an `ssn` field (paper-form scanner review UI); `FHIRDataMapper.tsx` uses fake placeholder `"000-00-0000"`. Both appear intentional (clinician reviews server-extracted scan data).
-**Action:** Confirm the SSN value is held only transiently for the review/correct step and is **not** persisted into browser-side state/localStorage/logs, and that the extracted SSN goes server-side (encrypted) on save — never to client storage.
-**Acceptance:** documented confirmation that SSN never lands in persistent client storage; if it does, move handling server-side.
+### SS-5 — `ssn` field in `ExtractedDataPreview.tsx` (frontend) — **DONE 2026-06-09 (PASS, no fix)**
+**Verified (read-only trace):**
+- **No client persistence.** Repo-wide: zero `localStorage`/`sessionStorage`/`indexedDB` writes of this data. `ExtractedDataPreview` holds it only in ephemeral React `useState` (`editedData`), discarded on unmount.
+- **SSN is never persisted server-side either.** In `PaperFormScanner.handleEnrollPatient`, the `enroll_hospital_patient` RPC params and the `profiles` `updateFields` map include every demographic/insurance field **except `ssn`** — the field is extracted by `extract-patient-form`, shown for staff review, then **dropped** on enroll. It is never written to any table.
+- Lifecycle: scanned image → `extract-patient-form` (server) → returned to browser → displayed in review modal (in-memory only) → dropped on save. No persistent storage, client or server.
+**Product observation (not security):** SSN is shown in the review UI but silently dropped on enroll — staff may expect it saved. If SSN capture is ever actually needed, it must go through server-side encryption (`phi-encrypt`), never `profiles`. Flag for Maria/Akima as a product decision, not a defect.
+**Acceptance:** ✅ confirmed SSN never lands in persistent client storage (nor server). **SS-5 CLOSED.**
 
 ### SS-6 — `/security-scan` skill's own baselines are stale — **DONE (2026-06-09)**
 **Fixed in `.claude/skills/security-scan/SKILL.md`:** Step 3 baseline → 681 tables / 658 RLS (with the 23 exceptions enumerated); Step 6 grep broadened to `withCORS|requireUser|requireRole|getUser|getClaims|cors(` + helper-name callout + 3 pre-auth flows added to known-public (verified: **0 false-positive auth flags** post-fix); Step 7 → 17 servers (enumerate, don't hardcode) + public-reference-tier exemption note; Step 9 baseline → 152 (corrected `find` precedence + test/generated exclusion, verified =152); Step 11 → flagged informational with the decomposition-inflation caveat; output/rules → dynamic server count + bash-grep fallback documented.
