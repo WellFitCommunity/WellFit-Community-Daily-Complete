@@ -11,6 +11,8 @@
 
 Let an **admin / physician / researcher** ask a question **in plain language** ("What % of diabetic patients over 65 have controlled blood pressure, broken down by race and language?") and get back an **aggregated chart** — percentages, trends, and intersectional cross-tabs — **never raw rows, never patient identifiers**. Built to assist **care coordination and health equity**.
 
+**Intent (Maria, 2026-06-09): this is forward infrastructure.** Build the capability NOW so it is ready and at our fingertips as data-collection fill-rates rise — it does NOT need high usage on day one. The value compounds as demographic/SDOH/clinical fields populate over time. Therefore the engine MUST **degrade gracefully on thin data**: a sparse or fully-suppressed result must render as an intentional, explained state ("Insufficient data for this breakdown — fewer than k records"), never a broken/empty/error-looking chart. Graceful low-N behavior is a Session 1 + Session 3 acceptance criterion, not a polish item.
+
 ## Non-negotiable safety invariants (the feature lives or dies on these)
 
 1. **Aggregate-only by construction.** The engine emits only `COUNT` / `AVG` / `%` with `GROUP BY`. There is NO code path that returns a raw patient row.
