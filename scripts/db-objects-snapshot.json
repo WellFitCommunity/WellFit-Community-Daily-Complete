@@ -2,9 +2,9 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-06-07",
+    "generated": "2026-06-10",
     "table_count": 760,
-    "function_count": 1469
+    "function_count": 1471
   },
   "tables": [
     "account_lockouts",
@@ -1412,6 +1412,7 @@
     "get_patient_active_consents",
     "get_patient_active_insurance",
     "get_patient_care_badges",
+    "get_patient_engagement_metrics",
     "get_patient_engagement_scores",
     "get_patient_imaging_studies",
     "get_patient_immunizations",
@@ -1465,6 +1466,7 @@
     "get_security_alert_stats",
     "get_session_insights",
     "get_sla_dashboard_metrics",
+    "get_slow_queries",
     "get_staff_savings",
     "get_staff_wellness_list",
     "get_super_admin_assigned_tenants",
