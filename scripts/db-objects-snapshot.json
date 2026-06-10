@@ -3,8 +3,8 @@
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
     "generated": "2026-06-10",
-    "table_count": 760,
-    "function_count": 1471
+    "table_count": 761,
+    "function_count": 1473
   },
   "tables": [
     "account_lockouts",
@@ -505,6 +505,7 @@
     "patient_engagement_scores",
     "patient_friendly_avs",
     "patient_insurance",
+    "patient_lab_access_tokens",
     "patient_locations",
     "patient_marker_history",
     "patient_markers",
@@ -1199,6 +1200,7 @@
     "generate_breach_incident_number",
     "generate_dea_prescription_id",
     "generate_ncpdp_claim_number",
+    "generate_patient_lab_token",
     "generate_smart_access_token",
     "generate_smart_auth_code",
     "generate_smart_client_id",
@@ -2184,6 +2186,7 @@
     "update_patient_avatar_updated_at",
     "update_patient_avs_updated_at",
     "update_patient_consents_updated_at",
+    "update_patient_lab_token_access",
     "update_practitioner_updated_at",
     "update_prehospital_handoffs_updated_at",
     "update_prior_auth_timestamp",

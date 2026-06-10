@@ -242,25 +242,6 @@ export class PTTreatmentPlanService {
   }
 
   /**
-   * Increment visits used (manual adjustment - normally done by trigger)
-   */
-  static async incrementVisitsUsed(
-    planId: string
-  ): Promise<PTApiResponse<PTTreatmentPlan>> {
-    try {
-      const { data, error } = await supabase.rpc('increment_visits_used', {
-        p_plan_id: planId,
-      });
-
-      if (error) throw error;
-
-      return { success: true, data };
-    } catch (err: unknown) {
-      return { success: false, error: getErrorMessage(err) };
-    }
-  }
-
-  /**
    * Update treatment plan status
    */
   static async updatePlanStatus(

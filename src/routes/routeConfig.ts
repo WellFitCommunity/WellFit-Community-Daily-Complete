@@ -45,7 +45,6 @@ export const publicRoutes: RouteConfig[] = [
   { path: '/admin-mfa-setup', component: 'AdminMfaSetupPage', auth: 'user', category: 'public' },
   // Generic login (redirects based on tenant)
   { path: '/login', component: 'LoginPage', auth: 'none', category: 'public' },
-  { path: '/metrics', component: 'MetricsPage', auth: 'none', category: 'public' },
   { path: '/home', component: 'Home', auth: 'none', category: 'public' },
   { path: '/demo', component: 'DemoPage', auth: 'none', category: 'public' },
   { path: '/law-enforcement', component: 'LawEnforcementLandingPage', auth: 'none', category: 'public', featureFlag: 'lawEnforcement' },
@@ -310,6 +309,9 @@ export const adminRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin'],
     category: 'admin',
   },
+  // Patient engagement metrics (tenant-scoped). Moved off the PUBLIC route it
+  // previously sat on — a cross-patient metrics view must be admin-gated.
+  { path: '/metrics', component: 'MetricsPage', auth: 'admin', category: 'admin' },
   // Prior Authorization Center (CMS-0057-F)
   {
     path: '/admin/prior-auth',

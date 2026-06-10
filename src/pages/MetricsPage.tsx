@@ -1,19 +1,13 @@
 // src/pages/MetricsPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '../contexts/AuthContext';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { fetchPatientEngagementMetrics, PatientEngagementMetric } from '../api/metrics';
-
-// If you already have a BrandingContext with tenant info, import it here:
-// import { useBranding } from '../contexts/BrandingContext';
 
 const MetricsPage: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
-
-  // 1) Provide your tenant UUID here.
-  //    Replace with your actual source of tenant id (BrandingContext, route param, etc.)
-  const TENANT_ID = '<PUT-YOUR-TENANT-UUID-HERE>';
+  const user = useUser();
 
   const [rows, setRows] = useState<PatientEngagementMetric[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,9 +19,36 @@ const MetricsPage: React.FC = () => {
       try {
         setLoading(true);
         setErrorMsg('');
+
+        if (!user?.id) {
+          if (isMounted) {
+            setRows([]);
+            setErrorMsg('You must be signed in to view engagement metrics.');
+          }
+          return;
+        }
+
+        // Resolve the caller's tenant from their own profile (profiles PK is user_id).
+        // RLS on patient_engagement_metrics still governs which rows the RPC returns.
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .single();
+        if (profileError) throw profileError;
+
+        const tenantId = profile?.tenant_id;
+        if (!tenantId) {
+          if (isMounted) {
+            setRows([]);
+            setErrorMsg('No tenant is associated with your account.');
+          }
+          return;
+        }
+
         const data = await fetchPatientEngagementMetrics(supabase, {
-          tenantId: TENANT_ID,
-          // If you want “my data only”, pass the user’s id as userId; otherwise leave null
+          tenantId,
+          // null = all patients in the tenant (admin view); RLS still applies.
           userId: null,
         });
         if (isMounted) setRows(data);
@@ -41,7 +62,7 @@ const MetricsPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [supabase, TENANT_ID]);
+  }, [supabase, user?.id]);
 
   if (loading) return <div className="p-4">Loading metrics…</div>;
   if (errorMsg) return <div className="p-4 text-red-600">Error: {errorMsg}</div>;
