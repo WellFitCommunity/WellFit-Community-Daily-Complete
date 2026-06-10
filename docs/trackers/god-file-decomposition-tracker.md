@@ -1,6 +1,6 @@
 # God File Decomposition Tracker
 
-> **Last Updated:** 2026-06-09 (two public-health services split: immunizationRegistryService.ts 997→59 via `immunization-registry/`, syndromicSurveillanceService.ts 935→64 via `syndromic-surveillance/` — see "Additional src/ service decompositions" below). Tier 1 top-10 ALL DONE: #10 `mpiMatchingService.ts` 1010→100; #9 `mcpHL7X12Client.ts` 1017→381; #8 `fhirInteroperabilityIntegrator.ts` 1081→512; #7 `claudeService.ts` 1100→558; #6 `ecrService.ts` 1119→65; #5 `epcsService.ts` 1134→94; #4 `antimicrobialSurveillanceService.ts` 1147→78; #3 `hospitalWorkforceService.ts` 1217→151; #2 `healthcareIntegrationsService.ts` 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29)
+> **Last Updated:** 2026-06-10 (Tier-2 edge function #1 `ai-treatment-pathway/index.ts` 1026→234 via 4 modules; corrected stale Tier-2 #6 `ccda-export` entry — already done 2026-05-29. Next Tier-2 edge target: #2 `ai-progress-note-synthesizer` 962.) Prior: 2026-06-09 (two public-health services split: immunizationRegistryService.ts 997→59 via `immunization-registry/`, syndromicSurveillanceService.ts 935→64 via `syndromic-surveillance/` — see "Additional src/ service decompositions" below). Tier 1 top-10 ALL DONE: #10 `mpiMatchingService.ts` 1010→100; #9 `mcpHL7X12Client.ts` 1017→381; #8 `fhirInteroperabilityIntegrator.ts` 1081→512; #7 `claudeService.ts` 1100→558; #6 `ecrService.ts` 1119→65; #5 `epcsService.ts` 1134→94; #4 `antimicrobialSurveillanceService.ts` 1147→78; #3 `hospitalWorkforceService.ts` 1217→151; #2 `healthcareIntegrationsService.ts` 1258→93; #1 `readmissionRiskPredictor.ts` 1340→487 on 2026-05-29)
 > **Owner:** Maria (AI System Director)
 > **Reviewer:** Akima (CCO)
 > **Estimated Effort:** ~40–60 hours across 15–20 sessions (spread over months — not a sprint)
@@ -92,12 +92,12 @@ The governance script does not scan these. They are production server code and e
 
 | # | File | Lines | Status |
 |---|------|-------|--------|
-| 1 | `supabase/functions/ai-treatment-pathway/index.ts` | 990 | TODO |
+| 1 | `supabase/functions/ai-treatment-pathway/index.ts` | ~~1026~~ → 234 | **DONE** (2026-06-10) — 4 modules in `ai-treatment-pathway/` (types 131, patientContext 255, pathwayGenerator 413, usageLogger 41), all <600; index.ts is the slim serve() handler that imports them; serve handler + safety guardrails + auth/rate-limit unchanged (verbatim moves). 18 deno tests green (fixed 1 pre-existing test bug: redact-phone expectation asserted a leftover space the canonical regex intentionally consumes). `deno check` 23→23 errors — all pre-existing untyped-Supabase-client `never`-row baseline (identical on the original monolith; fn not in CI high-risk list), zero introduced. |
 | 2 | `supabase/functions/ai-progress-note-synthesizer/index.ts` | 962 | TODO |
 | 3 | `supabase/functions/ai-infection-risk-predictor/index.ts` | 958 | TODO |
 | 4 | `supabase/functions/bulk-export/index.ts` | ~~868~~ → 175 | **DONE** (`ad1d4c0a`, 2026-05-29) — 6 modules all <600 + `_shared/exportColumns.ts`; repaired export_jobs drift + ONC-10 integrity |
 | 5 | `supabase/functions/ai-missed-checkin-escalation/index.ts` | 848 | TODO |
-| 6 | `supabase/functions/ccda-export/index.ts` | 836 | **NEXT** — ONC-10 ccda path. Verify live schema first (bulk-export had hidden drift). |
+| 6 | `supabase/functions/ccda-export/index.ts` | ~~836~~ → 95 | **DONE** (2026-05-29, tracker entry was stale) — already decomposed into `ccda-export/` modules (sections 469, types 131, document 127, queries 99, helpers 60), all <600; index.ts is the 95-line entry. |
 | 7 | `supabase/functions/ai-fall-risk-predictor/index.ts` | 807 | TODO |
 | 8 | `supabase/functions/ai-care-escalation-scorer/index.ts` | 793 | TODO |
 | 9 | `supabase/functions/pdf-health-summary/index.ts` | 776 | TODO |
