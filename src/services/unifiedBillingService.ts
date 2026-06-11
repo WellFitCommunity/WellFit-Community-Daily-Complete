@@ -619,7 +619,7 @@ export class UnifiedBillingService {
 
     // Verify entities exist
     const [patient, provider, payer] = await Promise.all([
-      supabase.from('patients').select('id').eq('id', input.patientId).single(),
+      supabase.from('profiles').select('user_id').eq('user_id', input.patientId).single(),
       supabase.from('billing_providers').select('id').eq('id', input.providerId).single(),
       supabase.from('billing_payers').select('id').eq('id', input.payerId).single()
     ]);

@@ -19,10 +19,14 @@ export async function exportQRDAI(
   const { tenantId, patientId, measureIds, reportingPeriodStart, reportingPeriodEnd } = options;
 
   try {
+    // profiles is the canonical patient store (governance S1); legacy `patients`
+    // table absent. profiles is keyed on user_id (rule #8). Aliases keep the
+    // PatientData shape stable: id:user_id, dob→date_of_birth, address→address_line1,
+    // zip_code→postal_code.
     const { data: patient, error: patientError } = await supabase
-      .from('patients')
-      .select('id, mrn, first_name, last_name, date_of_birth, gender, address_line1, city, state, postal_code')
-      .eq('id', patientId)
+      .from('profiles')
+      .select('id:user_id, mrn, first_name, last_name, date_of_birth:dob, gender, address_line1:address, city, state, postal_code:zip_code')
+      .eq('user_id', patientId)
       .eq('tenant_id', tenantId)
       .single();
 

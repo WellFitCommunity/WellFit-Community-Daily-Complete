@@ -180,10 +180,14 @@ export async function getPatientDataForMeasure(
   periodEnd: Date
 ): Promise<ServiceResult<PatientMeasureData>> {
   try {
+    // profiles is the canonical patient/identity store (governance S1); the legacy
+    // `patients` table doesn't exist live. profiles is keyed on user_id (rule #8),
+    // so filter/select on user_id; alias id:user_id + date_of_birth:dob to keep the
+    // downstream PatientMeasureData shape stable.
     const { data: patient, error: patientError } = await supabase
-      .from('patients')
-      .select('id, date_of_birth, gender, tenant_id')
-      .eq('id', patientId)
+      .from('profiles')
+      .select('id:user_id, date_of_birth:dob, gender, tenant_id')
+      .eq('user_id', patientId)
       .eq('tenant_id', tenantId)
       .single();
 
