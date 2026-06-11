@@ -97,7 +97,6 @@ interface EncounterRow {
 interface DiagnosisRow {
   code: string;
   sequence: number | null;
-  code_icd: { desc: string | null } | null;
 }
 
 interface ProcedureRow {
@@ -105,7 +104,6 @@ interface ProcedureRow {
   charge_amount: number | null;
   units: number | null;
   modifiers: string[] | null;
-  code_cpt: { short_desc: string | null } | null;
 }
 
 interface SuperbillRow {
@@ -340,28 +338,55 @@ export const encounterBillingBridgeService = {
         return failure('ALREADY_EXISTS', 'A superbill already exists for this encounter');
       }
 
-      // 3. Pull diagnoses
+      // 3. Pull diagnoses. Descriptions are looked up separately from code_icd10:
+      // an embed needs a FK, but code_icd10 is a PARTIAL reference seed, so a FK on
+      // encounter_diagnoses.code would reject legitimate unlisted ICD codes once real
+      // billing data lands. A display-only lookup is the correct, non-restrictive join.
       const { data: dxRows } = await supabase
         .from('encounter_diagnoses')
-        .select('code, sequence, code_icd(desc)')
+        .select('code, sequence')
         .eq('encounter_id', encounterId)
         .order('sequence', { ascending: true });
 
-      const diagnoses: DiagnosisEntry[] = ((dxRows || []) as unknown as DiagnosisRow[]).map(d => ({
+      const dxCodes = [...new Set(((dxRows || []) as DiagnosisRow[]).map(d => d.code).filter(Boolean))];
+      const icdDesc = new Map<string, string>();
+      if (dxCodes.length > 0) {
+        const { data: icdRows } = await supabase
+          .from('code_icd10')
+          .select('code, description')
+          .in('code', dxCodes);
+        for (const r of (icdRows || []) as Array<{ code: string; description: string | null }>) {
+          if (r.description) icdDesc.set(r.code, r.description);
+        }
+      }
+
+      const diagnoses: DiagnosisEntry[] = ((dxRows || []) as DiagnosisRow[]).map(d => ({
         code: d.code,
-        description: d.code_icd?.desc || undefined,
+        description: (d.code && icdDesc.get(d.code)) || undefined,
         sequence: d.sequence ?? undefined,
       }));
 
-      // 4. Pull procedures
+      // 4. Pull procedures (descriptions looked up from code_cpt the same way).
       const { data: procRows } = await supabase
         .from('encounter_procedures')
-        .select('code, charge_amount, units, modifiers, code_cpt(short_desc)')
+        .select('code, charge_amount, units, modifiers')
         .eq('encounter_id', encounterId);
 
-      const procedures: ProcedureEntry[] = ((procRows || []) as unknown as ProcedureRow[]).map(p => ({
+      const procCodes = [...new Set(((procRows || []) as ProcedureRow[]).map(p => p.code).filter(Boolean))];
+      const cptDesc = new Map<string, string>();
+      if (procCodes.length > 0) {
+        const { data: cptRows } = await supabase
+          .from('code_cpt')
+          .select('code, short_description')
+          .in('code', procCodes);
+        for (const r of (cptRows || []) as Array<{ code: string; short_description: string | null }>) {
+          if (r.short_description) cptDesc.set(r.code, r.short_description);
+        }
+      }
+
+      const procedures: ProcedureEntry[] = ((procRows || []) as ProcedureRow[]).map(p => ({
         code: p.code,
-        description: p.code_cpt?.short_desc || undefined,
+        description: (p.code && cptDesc.get(p.code)) || undefined,
         charge_amount: p.charge_amount ?? undefined,
         units: p.units ?? undefined,
         modifiers: p.modifiers ?? undefined,

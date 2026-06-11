@@ -45,7 +45,6 @@ table::ccm_eligibility_assessments
 table::chain_steps
 table::clinical_recommendations
 table::clinician_time_tracking
-table::code_icd
 table::codes_icd10
 table::coding_rules
 table::cognitive_assessments
