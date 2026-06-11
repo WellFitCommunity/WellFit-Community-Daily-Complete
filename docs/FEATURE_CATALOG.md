@@ -23,6 +23,7 @@ This platform was built by a Social and Behavioral Scientist (AI System Director
 - [Community Product (WellFit) — Features 1–18](#community-product-wellfit)
 - [Clinical Product (Envision Atlus) — Features 19–40](#clinical-product-envision-atlus)
 - [Shared Spine and Infrastructure — Features 41–60](#shared-spine-and-infrastructure)
+- [Recently Added Capabilities — Features 61–75](#recently-added-capabilities-features-6175)
 
 ---
 
@@ -752,14 +753,198 @@ This platform was built by a Social and Behavioral Scientist (AI System Director
 
 ---
 
+## Recently Added Capabilities (Features 61–75)
+
+These flagship capabilities exist in the live platform but were not in the original 60-feature catalog. Added 2026-06-11 after a full app-surface review. Several are grouped suites (matching the catalog's existing convention, e.g. "SOC2 Compliance Dashboard Suite").
+
+### Feature 61: My Health Hub — Patient Record Portal (21st Century Cures Act)
+
+**Primary Function:** A patient-facing portal giving seniors and members electronic access to their own clinical records — health observations and vitals, immunizations, active care plans, allergies, conditions, and a records export (PDF, FHIR, C-CDA, CSV). Central hub at `/my-health` with dedicated views per record type.
+
+**System Importance:** This is the platform's answer to the 21st Century Cures Act Information Blocking Rule, which requires patients have electronic access to their health information. It is the authorized community-to-clinical read path, surfacing clinician-owned data to the patient through FHIR services without exposing the underlying clinical tables.
+
+**Uniqueness:** Most patient portals are bolt-on afterthoughts with clunky PDF dumps. My Health Hub is built into the senior-friendly WellFit UI — large text, plain language, voice-enabled — so the same interface that collects daily check-ins also returns the patient's complete record in a form they can actually read.
+
+**Latent Benefit:** Cures Act compliance is a regulatory requirement most small facilities cannot afford to build. Shipping it as a standard feature turns a compliance liability into a competitive differentiator, and the export pipeline doubles as the records-release mechanism for care transitions.
+
+---
+
+### Feature 62: Specialty Clinical Module Suite (8 Modules)
+
+**Primary Function:** Eight specialty-specific clinical dashboards — Cardiology (ECG, echo, heart-failure, cardiac rehab, device monitoring), Oncology (cancer registry, TNM staging, chemo/radiation, CTCAE, survivorship), Labor & Delivery (prenatal, labor tracking, fetal monitoring, postpartum), Neuro/Stroke (NIHSS severity assessment), Memory Clinic (cognitive decline tracking), Physical Therapy (treatment plans, mobility outcomes), Dental Health, and Mental Health.
+
+**System Importance:** These modules extend the clinical engine from general care into specialty workflows, each with its own assessment instruments and documentation. They are individually feature-flagged so a facility enables only the specialties it offers.
+
+**Uniqueness:** A platform built by a superintendent and a nurse covering eight clinical specialties — each with the correct standardized instruments (TNM, NIHSS, CTCAE, Morse) rather than generic note fields — is a scope most commercial EHR specialty modules charge separately for.
+
+**Latent Benefit:** Each specialty module captures structured, codeable data (staging, severity scores) that flows directly into the billing and quality-measure engines, so specialty documentation becomes specialty revenue without a second data-entry pass.
+
+---
+
+### Feature 63: Computerized Provider Order Entry (CPOE — ONC Certified)
+
+**Primary Function:** Direct provider order entry for medications, lab tests, and imaging, plus implantable-device list management and family health history. Each screen maps to a specific ONC 2015 Edition Cures Update certification criterion: 170.315(a)(1) medications, (a)(2) labs, (a)(3) imaging, (a)(14) implantable devices, (a)(12) family health history.
+
+**System Importance:** CPOE is a foundational certified-EHR capability. Without it, a facility cannot attest to Promoting Interoperability and forfeits Medicare incentive payments. It is the order backbone that result escalation, billing, and the medication safety engine all build on.
+
+**Uniqueness:** Certification-grade order entry implemented to named ONC criteria — not a free-text "orders" box — in a platform built for a fraction of a commercial EHR's cost.
+
+**Latent Benefit:** Mapping each screen to its certification criterion means the certification evidence is built into the architecture; an auditor can trace a criterion straight to a route, collapsing the usual months-long certification documentation effort.
+
+---
+
+### Feature 64: AI Shift Handoff & Patient Transfer System
+
+**Primary Function:** AI-assisted nurse/physician shift handoff with auto-scored patient risks and real-time collaboration, plus an inter-facility Hospital Transfer Portal and a Receiving Dashboard for incoming patients. Generates structured handoff packets and a chronological handoff audit trail.
+
+**System Importance:** Handoffs are the highest-risk moments in care — most sentinel events trace to a communication failure at transition. This system standardizes the handoff, auto-elevates the sickest patients, and logs every transfer for accountability.
+
+**Uniqueness:** Most handoff tools are static SBAR templates. This one auto-scores patient risk from the live data stream so the handoff leads with the patients who matter, and it spans both intra-facility shift change and inter-facility transfer in one audited workflow.
+
+**Latent Benefit:** The structured handoff packet is reusable documentation — it feeds discharge summaries, care-coordination notes, and the readmission model, turning a verbal ritual into durable clinical data.
+
+---
+
+### Feature 65: Quality Measures Dashboard (eCQM / HEDIS / MIPS / Star Ratings)
+
+**Primary Function:** Tracks performance against electronic clinical quality measures, HEDIS, MIPS, and Medicare Star Ratings, showing gap-to-benchmark and the patients driving each measure.
+
+**System Importance:** Quality measure performance directly determines value-based reimbursement and Medicare Advantage Star bonuses. A facility that cannot measure its eCQMs cannot improve them or attest to them.
+
+**Uniqueness:** Quality measurement is usually a separate, expensive analytics product. Here it reads the same encounter and check-in data the rest of the platform already captures, so the measures are live rather than a quarterly retrospective.
+
+**Latent Benefit:** Because the measures are computed continuously, the dashboard surfaces a closeable gap while the patient is still in care — converting quality reporting from a backward-looking scorecard into a forward-looking revenue and outcomes tool.
+
+---
+
+### Feature 66: CCM Autopilot — Chronic Care Management Time Capture
+
+**Primary Function:** Automatically tracks the 20+ minutes of non-face-to-face care coordination per month required to bill Chronic Care Management codes, assembling the time log and documentation needed for the claim.
+
+**System Importance:** CCM is one of the most under-captured revenue streams in primary care because the time tracking is manual and clinicians forget to log it. Autopilot removes the manual step.
+
+**Uniqueness:** Rather than a stopwatch the nurse must remember to start, it infers billable coordination time from actual system activity against the patient, so the documentation accrues passively.
+
+**Latent Benefit:** At $42–$74 per 20-minute interaction across a chronic-disease panel, automated CCM capture can fund the platform itself — revenue that existed but was being left uncollected.
+
+---
+
+### Feature 67: Result Escalation Engine & Care Gap Detection
+
+**Primary Function:** Auto-routes abnormal lab and imaging results to the correct specialist with SLA deadlines, tracks unacknowledged results, manages a provider task queue with escalation, and detects open preventive-care gaps across the patient panel.
+
+**System Importance:** A critical result that no one acknowledges is a patient-safety and malpractice event. This engine guarantees every abnormal value has an owner, a deadline, and an audit trail.
+
+**Uniqueness:** Most systems drop results into an inbox and hope someone looks. This one enforces accountability with SLA timers, automatic escalation when a deadline passes, and coverage-aware routing when a provider is on leave.
+
+**Latent Benefit:** The same routing logic that protects patients also closes care gaps that carry quality and risk-adjustment dollars, so the safety system and the revenue system are one engine.
+
+---
+
+### Feature 68: Clinician Remote Patient Monitoring (RPM) Dashboard
+
+**Primary Function:** A clinician-facing oversight view of home-collected readings (blood pressure, heart rate, glucose, weight, SpO2) from check-ins and connected devices, with threshold alerting when a home value goes out of range.
+
+**System Importance:** This closes the loop on the platform's data collection — home vitals are only valuable clinically if a clinician sees them and can act. The RPM dashboard makes the community-side data stream actionable on the clinical side.
+
+**Uniqueness:** It unifies manually-entered check-in vitals and connected-device readings into one trend view, rather than siloing "app data" from "device data," and it is the clinician counterpart to the patient-facing wearables suite.
+
+**Latent Benefit:** The dashboard supplies the clinician-review documentation required for the RPM treatment-management codes (CPT 99457/99458), converting passive monitoring into a billable monthly service.
+
+---
+
+### Feature 69: MCP Server Suite & Management (20 Model Context Protocol Servers)
+
+**Primary Function:** Twenty Model Context Protocol servers give AI agents safe, tiered access to clinical and reference systems — FHIR, HL7/X12, prior auth, CMS coverage, NPI registry, medical codes, DRG grouping, PubMed, patient context, cultural competency, and more — managed from a console that monitors health, rotates API keys, orchestrates multi-server chains, and tracks per-run cost.
+
+**System Importance:** The MCP layer is the platform's AI-tooling backbone. It is what lets AI features compose real clinical operations (look up coverage, validate an NPI, group a DRG) instead of hallucinating them, with permission tiers that keep PHI access scoped and audited.
+
+**Uniqueness:** Protocol-level governance — runtime permission tiers and a learning loop built into the MCP servers themselves — is a novel composition, not an off-the-shelf pattern. Each server declares its tier (external-API, user-scoped, or admin) and is enforced at the protocol boundary.
+
+**Latent Benefit:** Because every AI capability is a discrete, individually-permissioned, cost-metered server, the platform can expose or restrict AI functions per tenant and bill AI usage precisely — turning the AI layer into a governable, sellable product surface.
+
+---
+
+### Feature 70: Revenue Cycle Completion Suite
+
+**Primary Function:** The remaining revenue-cycle stages beyond claim generation — insurance eligibility verification (270/271) before billing, ERA/835 remittance posting, claim aging by bucket, claim resubmission and void workflows, superbill provider sign-off, and NPI-verified provider registry.
+
+**System Importance:** A claim is only revenue when it is paid. These stages close the loop from eligibility check through payment posting, catching denials before submission and reconciling payments after.
+
+**Uniqueness:** Small facilities usually stitch this together from a clearinghouse portal plus spreadsheets. Here the full lifecycle — eligibility, submission, aging, resubmission, posting — lives in one system with the clinical data that justifies each charge.
+
+**Latent Benefit:** Front-loading eligibility verification prevents the most common denial category outright, and automated ERA posting eliminates the manual reconciliation that consumes most billing-staff hours.
+
+---
+
+### Feature 71: HIPAA Compliance Operations Suite
+
+**Primary Function:** Operational HIPAA tooling beyond the SOC2 dashboards — a Breach Notification Engine (incident tracking, risk assessment, 60-day notification clock), BAA lifecycle tracking, MFA enrollment compliance, workforce security-awareness training tracking, and the patient amendment review queue (45 CFR 164.526).
+
+**System Importance:** These are the day-to-day compliance obligations an auditor checks: did you track breaches, manage your business-associate agreements, enroll staff in MFA, train your workforce, and honor amendment requests. Missing any one is a finding.
+
+**Uniqueness:** Compliance is usually a binder of policies. This suite makes each obligation a live, dated workflow with its own clock and audit trail, so compliance status is queryable rather than aspirational.
+
+**Latent Benefit:** The 60-day breach clock and BAA renewal tracking convert two of the most common (and most penalized) compliance failures into automated reminders, materially lowering both audit risk and breach-penalty exposure.
+
+---
+
+### Feature 72: DSI Transparency & EHR Safety (HTI-1 Model Cards + SAFER Guides)
+
+**Primary Function:** AI/ML model cards documenting each algorithm's purpose, risk classification, and transparency attributes (ONC HTI-1 Decision Support Intervention requirements), plus the SAFER Guides EHR safety self-assessment used in ONC certification.
+
+**System Importance:** Under HTI-1, any predictive decision-support intervention must be transparent — described, risk-classified, and disclosed. The model-card registry is how the platform meets that bar for its clinical AI, and SAFER Guides documents the safe-use practices certification requires.
+
+**Uniqueness:** Most AI health tools ship the model and skip the transparency. Here every registered AI skill carries both a developer description and a plain-language patient description, and the model-card dashboard exposes them for audit — transparency as a built-in feature, not a PDF afterthought.
+
+**Latent Benefit:** As DSI transparency enforcement tightens, facilities using opaque AI face exposure. A platform that already documents and risk-classifies every model is audit-ready by default and can truthfully market algorithmic transparency.
+
+---
+
+### Feature 73: Staff Resilience & Wellness Hub
+
+**Primary Function:** Burnout-prevention and emotional-resilience tooling for clinical staff — a Nurse Wellness (Resilience Hub) dashboard, a staff wellness dashboard, and exportable team wellness reports.
+
+**System Importance:** Clinician burnout is the leading driver of turnover and a documented patient-safety risk. Supporting staff wellbeing is both a retention strategy and a quality strategy.
+
+**Uniqueness:** Most health platforms optimize for patient throughput and ignore the workforce entirely. Building wellness tooling for the staff — by a team that includes a 23-year RN — reflects a clinician's understanding that you cannot run a safe unit on an exhausted one.
+
+**Latent Benefit:** Reducing turnover avoids the six-figure cost of replacing a specialized nurse, and the wellness reports give administrators an early-warning signal for unit-level burnout before it becomes a staffing crisis.
+
+---
+
+### Feature 74: EMS Coordinated Response & Field Integration
+
+**Primary Function:** Coordinates emergency response between EMS crews and the clinical team — EMS metrics, paramedic handoff, and a coordinated-response dashboard that links a field handoff to the receiving clinical team.
+
+**System Importance:** The prehospital-to-hospital handoff is a notorious information gap. Tying EMS field data to the clinical record before the patient arrives gives the receiving team a head start on the sickest patients.
+
+**Uniqueness:** Few community-health platforms reach into the EMS field workflow at all. Connecting paramedic handoff directly into the same coordinated-response and clinical-alert system closes a gap that usually depends on a verbal radio report.
+
+**Latent Benefit:** Early structured EMS data feeds the same risk and bed-management engines, so the ED can pre-stage a bed and a team before the ambulance doors open.
+
+---
+
+### Feature 75: Community Safety Partner Programs (Law Enforcement / Constable Dispatch)
+
+**Primary Function:** A landing surface and dispatch-coordination view for law-enforcement and constable partner programs that participate in community wellness and safety checks.
+
+**System Importance:** Senior safety often involves non-clinical responders — welfare checks, lost-person events, constable dispatch. Giving those partners a coordinated entry point extends the safety net beyond the clinical walls.
+
+**Uniqueness:** Bridging community health and public-safety partners in one platform is unusual; it reflects the platform's origin as a genuine community-wellness system rather than a pure clinical product.
+
+**Latent Benefit:** The same crisis-routing and emergency-event data that drives clinical alerts can inform a coordinated community-safety response, linking the "I am lost" and fall pathways to a real-world responder network.
+
+---
+
 ## Summary Statistics
 
 | Metric | Count |
 |--------|-------|
-| **Total Features Documented** | 60 |
-| **Community Product (WellFit)** | 18 |
-| **Clinical Product (Envision Atlus)** | 22 |
-| **Shared Spine & Infrastructure** | 20 |
+| **Total Features Documented** | 75 |
+| **Community Product (WellFit)** | 20 |
+| **Clinical Product (Envision Atlus)** | 33 |
+| **Shared Spine & Infrastructure** | 22 |
 | **AI-Powered Features** | 28 |
 | **HIPAA/Compliance Features** | 15 |
 | **Revenue-Generating Features** | 12 |
