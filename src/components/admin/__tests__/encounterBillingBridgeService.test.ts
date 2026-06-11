@@ -98,6 +98,16 @@ function chainWithOrder(result: ChainResult): Record<string, unknown> {
   return chain;
 }
 
+/**
+ * Creates a chain builder where the terminal .eq() resolves to the given result
+ * (for queries ending with .eq(), e.g. the encounter_procedures lookup).
+ */
+function chainWithEq(result: ChainResult): Record<string, unknown> {
+  const chain = createChainBuilder(result);
+  (chain.eq as ReturnType<typeof vi.fn>).mockResolvedValue(result);
+  return chain;
+}
+
 // ============================================================================
 // FIXTURES
 // ============================================================================
@@ -295,15 +305,25 @@ describe('encounterBillingBridgeService', () => {
       fromCallResults.push(createChainBuilder({ data: null, error: null }));
       // 3. encounter_diagnoses.select().eq().order()
       fromCallResults.push(chainWithOrder({
-        data: [{ code: 'E11.9', sequence: 1, code_icd: { desc: 'Type 2 diabetes' } }],
+        data: [{ code: 'E11.9', sequence: 1 }],
         error: null,
       }));
-      // 4. encounter_procedures.select().eq()
-      fromCallResults.push(createChainBuilder({
-        data: [{ code: '99213', charge_amount: 150, units: 1, modifiers: null, code_cpt: { short_desc: 'Office visit' } }],
+      // 4. code_icd10.select().in() — diagnosis description lookup
+      fromCallResults.push(chainWithInTerminal({
+        data: [{ code: 'E11.9', description: 'Type 2 diabetes' }],
         error: null,
       }));
-      // 5. encounter_superbills.insert().select().single()
+      // 5. encounter_procedures.select().eq()
+      fromCallResults.push(chainWithEq({
+        data: [{ code: '99213', charge_amount: 150, units: 1, modifiers: null }],
+        error: null,
+      }));
+      // 6. code_cpt.select().in() — procedure description lookup
+      fromCallResults.push(chainWithInTerminal({
+        data: [{ code: '99213', short_description: 'Office visit' }],
+        error: null,
+      }));
+      // 7. encounter_superbills.insert().select().single()
       fromCallResults.push(createChainBuilder({ data: SUPERBILL_ROW, error: null }));
 
       const result = await encounterBillingBridgeService.generateSuperbillDraft('enc-001', 'tenant-001');
