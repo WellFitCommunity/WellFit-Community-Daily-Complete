@@ -45,7 +45,6 @@ table::ccm_eligibility_assessments
 table::chain_steps
 table::clinical_recommendations
 table::clinician_time_tracking
-table::codes_cpt
 table::codes_icd10
 table::coding_rules
 table::cognitive_assessments
@@ -53,7 +52,6 @@ table::communication_silence_window
 table::community
 table::community_photos
 table::compliance_status
-table::conditions
 table::cultural_content_analytics
 table::cultural_content_cache
 table::daily_check_ins
@@ -98,7 +96,6 @@ table::meals
 table::medical_transcripts
 table::medication_affordability_checks
 table::medication_records
-table::medication_requests
 table::medication_safety_alerts
 table::messages
 table::movement_patterns
@@ -109,7 +106,6 @@ table::mpi_merge_history
 table::mv_discharged_patient_dashboard
 table::notifications
 table::nurse_workflow_preferences
-table::observations
 table::outreach_logs
 table::parkinsons_patient_registry
 table::parkinsons_updrs
@@ -129,7 +125,6 @@ table::phi_access_audit
 table::pill_identifications
 table::pill_label_comparisons
 table::posts
-table::procedures
 table::provider_task_escalation_config
 table::provider_tasks
 table::public_data

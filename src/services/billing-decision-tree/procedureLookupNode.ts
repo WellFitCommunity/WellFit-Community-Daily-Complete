@@ -47,8 +47,8 @@ export async function lookupProcedureCPT(
   // If code provided, validate it
   if (providedCode) {
     const { data: cptCode, error } = await supabase
-      .from('codes_cpt')
-      .select('code, long_desc, short_desc')
+      .from('code_cpt')
+      .select('code, long_description, short_description')
       .eq('code', providedCode)
       .eq('status', 'active')
       .single();
@@ -57,7 +57,7 @@ export async function lookupProcedureCPT(
       return {
         found: true,
         cptCode: cptCode.code,
-        cptDescription: cptCode.long_desc || cptCode.short_desc || '',
+        cptDescription: cptCode.long_description || cptCode.short_description || '',
         requiresModifier: false
       };
     }
@@ -66,9 +66,9 @@ export async function lookupProcedureCPT(
   // Search by description
   if (description) {
     const { data: cptCodes, error } = await supabase
-      .from('codes_cpt')
-      .select('code, long_desc, short_desc')
-      .ilike('long_desc', `%${description}%`)
+      .from('code_cpt')
+      .select('code, long_description, short_description')
+      .ilike('long_description', `%${description}%`)
       .eq('status', 'active')
       .limit(1);
 
@@ -76,7 +76,7 @@ export async function lookupProcedureCPT(
       return {
         found: true,
         cptCode: cptCodes[0].code,
-        cptDescription: cptCodes[0].long_desc || cptCodes[0].short_desc || '',
+        cptDescription: cptCodes[0].long_description || cptCodes[0].short_description || '',
         requiresModifier: false
       };
     }

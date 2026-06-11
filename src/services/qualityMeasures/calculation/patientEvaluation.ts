@@ -198,31 +198,35 @@ export async function getPatientDataForMeasure(
       .gte('encounter_date', periodStart.toISOString())
       .lte('encounter_date', periodEnd.toISOString());
 
+    // Repointed to FHIR tables (the flat conditions/observations/procedures/
+    // medication_requests tables don't exist live). PostgREST column aliases keep
+    // the downstream PatientMeasureData shape (onset_date/status/value/unit/...)
+    // stable so the CQL bundle mapping below is unchanged.
     const { data: conditions } = await supabase
-      .from('conditions')
-      .select('id, code, code_system, onset_date, status')
+      .from('fhir_conditions')
+      .select('id, code, code_system, onset_date:onset_datetime, status:clinical_status')
       .eq('patient_id', patientId)
-      .eq('status', 'active');
+      .eq('clinical_status', 'active');
 
     const { data: observations } = await supabase
-      .from('observations')
-      .select('id, code, value, unit, effective_date')
+      .from('fhir_observations')
+      .select('id, code, value:value_quantity_value, unit:value_quantity_unit, effective_date:effective_datetime')
       .eq('patient_id', patientId)
-      .gte('effective_date', periodStart.toISOString())
-      .lte('effective_date', periodEnd.toISOString());
+      .gte('effective_datetime', periodStart.toISOString())
+      .lte('effective_datetime', periodEnd.toISOString());
 
     const { data: medications } = await supabase
-      .from('medication_requests')
+      .from('fhir_medication_requests')
       .select('id, medication_code, status, authored_on')
       .eq('patient_id', patientId)
       .eq('status', 'active');
 
     const { data: procedures } = await supabase
-      .from('procedures')
-      .select('id, code, performed_date, status')
+      .from('fhir_procedures')
+      .select('id, code, performed_date:performed_datetime, status')
       .eq('patient_id', patientId)
-      .gte('performed_date', periodStart.toISOString())
-      .lte('performed_date', periodEnd.toISOString());
+      .gte('performed_datetime', periodStart.toISOString())
+      .lte('performed_datetime', periodEnd.toISOString());
 
     const birthDate = new Date(patient.date_of_birth);
     const age = Math.floor(

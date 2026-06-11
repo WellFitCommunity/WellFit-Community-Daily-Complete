@@ -71,7 +71,7 @@ export async function lookupFee(
 
     // Fall back to chargemaster or default rates
     const { data: cptData } = await supabase
-      .from('codes_cpt')
+      .from('code_cpt')
       .select('code')
       .eq('code', cptCode)
       .single();
@@ -111,10 +111,12 @@ async function calculateRBRVSFee(
     // 2024 Medicare Conversion Factor (CMS updates annually)
     const MEDICARE_CF_2024 = 33.2875;
 
-    // Get RVU values from codes_cpt table or RVU reference table
+    // Get RVU values from code_cpt. PE RVU maps to the non-facility (office/clinic)
+    // practice-expense column — the standard place-of-service for outpatient billing.
+    // Aliases keep the RBRVS sum below (practice_rvu/malpractice_rvu) unchanged.
     const { data: rvuData } = await supabase
-      .from('codes_cpt')
-      .select('work_rvu, practice_rvu, malpractice_rvu')
+      .from('code_cpt')
+      .select('work_rvu, practice_rvu:non_facility_pe_rvu, malpractice_rvu:mp_rvu')
       .eq('code', cptCode)
       .single();
 

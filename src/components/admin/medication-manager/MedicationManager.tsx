@@ -107,7 +107,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
       if (patientsError) throw patientsError;
 
       const { data: medicationsData, error: medicationsError } = await supabase
-        .from('medication_requests').select('id, patient_id, medication_display, status, dosage_text, dosage_dose_quantity, dosage_dose_unit, dosage_timing_frequency, authored_on, created_at, dispense_valid_from, dispense_number_of_repeats, drug_class').order('created_at', { ascending: false });
+        .from('fhir_medication_requests').select('id, patient_id, medication_display, status, dosage_text, dosage_dose_quantity, dosage_dose_unit, dosage_timing_frequency, authored_on, created_at, dispense_valid_from:validity_period_start, dispense_number_of_repeats:number_of_repeats_allowed').order('created_at', { ascending: false });
       if (medicationsError) throw medicationsError;
 
       const patients: PatientMedication[] = (patientsData || []).map(patient => {
@@ -115,8 +115,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
         const activeMeds = patientMeds.filter(m => m.status === 'active');
         const highRiskMeds = activeMeds.filter(m =>
           HIGH_RISK_CATEGORIES.some(cat =>
-            (m.medication_display || '').toLowerCase().includes(cat) ||
-            (m.drug_class || '').toLowerCase().includes(cat)
+            (m.medication_display || '').toLowerCase().includes(cat)
           )
         );
         let riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' = 'LOW';
@@ -132,7 +131,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
           lastDispensedDate: m.dispense_valid_from || null,
           refillsRemaining: m.dispense_number_of_repeats || 0,
           isHighRisk: HIGH_RISK_CATEGORIES.some(cat => (m.medication_display || '').toLowerCase().includes(cat)),
-          drugClass: m.drug_class || 'unclassified', interactions: [],
+          drugClass: 'unclassified', interactions: [],
         }));
 
         return {
