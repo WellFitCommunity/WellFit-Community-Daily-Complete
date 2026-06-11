@@ -51,26 +51,30 @@ export async function validateEligibility(
   });
 
   try {
-    // Check patient insurance in database
-    const { data: patient, error: patientError } = await supabase
-      .from('patients')
-      .select('*, insurance_payer_id, insurance_member_id, insurance_status')
-      .eq('id', patientId)
-      .single();
+    // Check patient insurance. The legacy `patients` table (with embedded
+    // insurance_* columns) doesn't exist live — insurance lives in its own
+    // owning table `patient_insurance` (one row per policy, coverage_priority
+    // orders primary→secondary). Map: insurance_payer_id→payer_id,
+    // insurance_status→is_active. insurance_member_id was selected but unused.
+    const { data: policies, error: patientError } = await supabase
+      .from('patient_insurance')
+      .select('payer_id, is_active')
+      .eq('patient_id', patientId)
+      .order('coverage_priority', { ascending: true });
 
-    if (patientError || !patient) {
+    if (patientError || !policies || policies.length === 0) {
       return {
         eligible: false,
         authorized: false,
         authorizationRequired: false,
-        denialReason: 'Patient not found in system'
+        denialReason: 'No insurance on file for patient'
       };
     }
 
-    // Verify insurance is active
-    const policyActive = patient.insurance_status === 'active';
+    // Verify at least one policy is active
+    const activePolicies = policies.filter((p) => p.is_active === true);
 
-    if (!policyActive) {
+    if (activePolicies.length === 0) {
       return {
         eligible: false,
         authorized: false,
@@ -79,8 +83,8 @@ export async function validateEligibility(
       };
     }
 
-    // Verify payer matches
-    if (patient.insurance_payer_id !== payerId) {
+    // Verify an active policy matches the billing payer
+    if (!activePolicies.some((p) => p.payer_id === payerId)) {
       return {
         eligible: false,
         authorized: false,

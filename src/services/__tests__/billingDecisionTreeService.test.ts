@@ -100,6 +100,8 @@ describe('BillingDecisionTreeService', () => {
           single: vi.fn().mockResolvedValue(mockResult),
           then: (cb: (r: unknown) => void) => Promise.resolve(cb(mockResult)),
         }),
+        // .order() is a terminal in patient_insurance (eligibility) queries
+        order: vi.fn().mockResolvedValue(mockResult),
         single: vi.fn().mockResolvedValue(mockResult),
       };
     });
@@ -111,13 +113,8 @@ describe('BillingDecisionTreeService', () => {
   describe('validateEligibility', () => {
     it('should return eligible when patient has active coverage', async () => {
       setupSupabaseMock({
-        patients: {
-          data: {
-            id: 'patient-456',
-            insurance_payer_id: 'payer-001',
-            insurance_status: 'active',
-            insurance_member_id: 'MEM123',
-          },
+        patient_insurance: {
+          data: [{ payer_id: 'payer-001', is_active: true }],
           error: null,
         },
       });
@@ -128,9 +125,9 @@ describe('BillingDecisionTreeService', () => {
       expect(result.authorized).toBe(true);
     });
 
-    it('should return ineligible when patient not found', async () => {
+    it('should return ineligible when no insurance on file', async () => {
       setupSupabaseMock({
-        patients: {
+        patient_insurance: {
           data: null,
           error: { message: 'Not found' },
         },
@@ -139,17 +136,13 @@ describe('BillingDecisionTreeService', () => {
       const result = await BillingDecisionTreeService.validateEligibility('invalid-id', 'payer-001');
 
       expect(result.eligible).toBe(false);
-      expect(result.denialReason).toBe('Patient not found in system');
+      expect(result.denialReason).toBe('No insurance on file for patient');
     });
 
     it('should return ineligible when insurance is inactive', async () => {
       setupSupabaseMock({
-        patients: {
-          data: {
-            id: 'patient-456',
-            insurance_payer_id: 'payer-001',
-            insurance_status: 'inactive',
-          },
+        patient_insurance: {
+          data: [{ payer_id: 'payer-001', is_active: false }],
           error: null,
         },
       });
@@ -162,12 +155,8 @@ describe('BillingDecisionTreeService', () => {
 
     it('should return ineligible when payer mismatch', async () => {
       setupSupabaseMock({
-        patients: {
-          data: {
-            id: 'patient-456',
-            insurance_payer_id: 'different-payer',
-            insurance_status: 'active',
-          },
+        patient_insurance: {
+          data: [{ payer_id: 'different-payer', is_active: true }],
           error: null,
         },
       });
@@ -710,7 +699,7 @@ describe('BillingDecisionTreeService', () => {
   describe('processEncounter', () => {
     it('should return ineligible result when patient not eligible', async () => {
       setupSupabaseMock({
-        patients: { data: null, error: { message: 'Not found' } },
+        patient_insurance: { data: null, error: { message: 'Not found' } },
       });
 
       const input = createBaseInput();
@@ -733,13 +722,10 @@ describe('BillingDecisionTreeService', () => {
           single: vi.fn(),
         };
 
-        if (tableName === 'patients') {
-          mockChain.single = vi.fn().mockResolvedValue({
-            data: {
-              id: 'patient-456',
-              insurance_payer_id: 'payer-001',
-              insurance_status: 'active',
-            },
+        if (tableName === 'patient_insurance') {
+          // eligibility query: .select().eq().order() (terminal)
+          (mockChain as Record<string, unknown>).order = vi.fn().mockResolvedValue({
+            data: [{ payer_id: 'payer-001', is_active: true }],
             error: null,
           });
         } else if (tableName === 'encounters') {
@@ -792,13 +778,10 @@ describe('BillingDecisionTreeService', () => {
           single: vi.fn(),
         };
 
-        if (tableName === 'patients') {
-          mockChain.single = vi.fn().mockResolvedValue({
-            data: {
-              id: 'patient-456',
-              insurance_payer_id: 'payer-001',
-              insurance_status: 'active',
-            },
+        if (tableName === 'patient_insurance') {
+          // eligibility query: .select().eq().order() (terminal)
+          (mockChain as Record<string, unknown>).order = vi.fn().mockResolvedValue({
+            data: [{ payer_id: 'payer-001', is_active: true }],
             error: null,
           });
         } else if (tableName === 'code_cpt') {
