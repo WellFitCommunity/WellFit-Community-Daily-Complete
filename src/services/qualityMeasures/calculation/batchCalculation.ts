@@ -79,13 +79,19 @@ async function processCalculationJob(
       .update({ status: 'running', started_at: new Date().toISOString() })
       .eq('id', jobId);
 
+    // profiles is the canonical patient store (governance S1); legacy `patients`
+    // table absent. The patient population = profiles with a patient role
+    // ('patient'/'senior') — the same definition the `app_patients` view uses —
+    // so staff/clinician profiles are excluded from eCQM denominators. profiles is
+    // keyed on user_id (rule #8); alias id:user_id keeps `patient.id` downstream.
     let patientsQuery = supabase
-      .from('patients')
-      .select('id')
-      .eq('tenant_id', tenantId);
+      .from('profiles')
+      .select('id:user_id')
+      .eq('tenant_id', tenantId)
+      .in('role', ['patient', 'senior']);
 
     if (patientIds && patientIds.length > 0) {
-      patientsQuery = patientsQuery.in('id', patientIds);
+      patientsQuery = patientsQuery.in('user_id', patientIds);
     }
 
     const { data: patients, error: patientsError } = await patientsQuery;

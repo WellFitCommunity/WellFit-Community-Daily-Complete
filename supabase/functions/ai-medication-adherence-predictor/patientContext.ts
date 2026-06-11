@@ -22,15 +22,23 @@ export async function gatherPatientContext(
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Get patient profile
+  // Get patient profile. profiles is the canonical patient store (governance S1);
+  // legacy `patients` table absent. profiles is keyed on user_id (rule #8); alias
+  // id:user_id + date_of_birth:dob keep the downstream shape. primary_language lives
+  // on senior_demographics, queried separately.
   const { data: patient } = await supabase
-    .from('patients')
-    .select('id, date_of_birth, gender, primary_language, insurance_type')
-    .eq('id', patientId)
+    .from('profiles')
+    .select('id:user_id, date_of_birth:dob, gender, insurance_type')
+    .eq('user_id', patientId)
     .single();
 
   if (patient) {
-    context.patient = patient;
+    const { data: seniorDemo } = await supabase
+      .from('senior_demographics')
+      .select('preferred_language')
+      .eq('user_id', patientId)
+      .maybeSingle();
+    context.patient = { ...patient, primary_language: seniorDemo?.preferred_language ?? null };
     if (patient.date_of_birth) {
       const dob = new Date(patient.date_of_birth);
       context.age = Math.floor((now.getTime() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));

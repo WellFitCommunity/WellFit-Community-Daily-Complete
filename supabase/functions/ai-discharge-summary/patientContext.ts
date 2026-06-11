@@ -65,7 +65,8 @@ export async function gatherPatientContext(
     // Get patient profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name, date_of_birth, sex")
+      // profiles columns are dob/gender (not date_of_birth/sex); alias to keep shape
+      .select("first_name, last_name, date_of_birth:dob, sex:gender")
       .eq("user_id", patientId)
       .single();
 

@@ -91,7 +91,9 @@ async function fetchDemographics(
 ): Promise<void> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("date_of_birth, preferred_language")
+    // profiles column is dob (not date_of_birth); preferred_language lives on
+    // senior_demographics, queried separately below.
+    .select("date_of_birth:dob")
     .eq("user_id", patientId)
     .single();
 
@@ -106,8 +108,14 @@ async function fetchDemographics(
     else context.demographics.ageGroup = "geriatric";
   }
 
-  if (profile?.preferred_language) {
-    context.demographics.preferredLanguage = profile.preferred_language;
+  const { data: seniorDemo } = await supabase
+    .from("senior_demographics")
+    .select("preferred_language")
+    .eq("user_id", patientId)
+    .maybeSingle();
+
+  if (seniorDemo?.preferred_language) {
+    context.demographics.preferredLanguage = seniorDemo.preferred_language;
   }
 }
 

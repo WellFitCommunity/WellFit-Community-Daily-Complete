@@ -131,7 +131,8 @@ async function gatherDemographics(
 ): Promise<void> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("date_of_birth, sex")
+    // profiles columns are dob/gender (not date_of_birth/sex); alias to keep shape
+    .select("date_of_birth:dob, sex:gender")
     .eq("user_id", patientId)
     .single();
 
