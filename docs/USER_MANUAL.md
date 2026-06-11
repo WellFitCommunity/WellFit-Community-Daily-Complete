@@ -991,3 +991,154 @@ A: Yes. The app works on phones, tablets, and computers. It adjusts to fit your 
 *Document Version: 1.0*
 *Generated: February 2026*
 *Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.*
+
+---
+
+## Addendum -- Additional Features (verified 2026-06-11)
+
+These features are part of the live system but were not in the earlier version of this manual. A full review of every screen in the app on 2026-06-11 found them. They are grouped by who uses them.
+
+### For Patients and Seniors (WellFit)
+
+#### Medication Management
+**What it does:** A fuller view of your medicines than the Medicine Cabinet -- track doses, schedules, and refills.
+**How to get there:** Go to `/medication-management`
+
+#### Vital Capture
+**What it does:** Manually enter your vital signs (blood pressure, heart rate, oxygen, weight) any time, not just during a check-in.
+**How to get there:** Go to `/vital-capture`
+
+#### Questions
+**What it does:** Send a health question and browse questions you have asked before.
+**How to get there:** Go to `/questions`
+
+#### Check-In History
+**What it does:** Look back at your past daily check-ins and see how your health and mood have changed over time.
+**How to get there:** Go to `/check-in-history`
+
+#### Meal Details
+**What it does:** Open a meal suggestion to see the full recipe, ingredients, and nutrition information.
+**How to get there:** Tap a meal on your home screen, or go to `/meals/<meal id>`
+
+#### Photo and Privacy Consent
+**What it does:** Choose whether your photo can be shown in community features, and adjust your privacy preferences at any time.
+**How to get there:** Go to `/consent-photo` (photos) or `/consent-privacy` (privacy)
+
+#### Smart Callback
+**What it does:** Ask a provider to call you back, instead of waiting on hold.
+**How to get there:** Go to `/smart-callback`
+
+### For Nurses and Doctors -- Placing Orders (CPOE)
+
+These screens let clinical staff place orders directly in the system. They meet federal ONC certification requirements.
+
+#### Medication Orders
+**What it does:** Order medications for a patient. **How to get there:** `/admin/cpoe/medication/<patient id>`
+
+#### Lab Orders
+**What it does:** Order lab tests for a patient. **How to get there:** `/admin/cpoe/lab/<patient id>`
+
+#### Imaging Orders
+**What it does:** Order imaging (X-ray, CT, etc.) for a patient. **How to get there:** `/admin/cpoe/imaging/<patient id>`
+
+#### Implantable Devices
+**What it does:** Record and review a patient's implantable devices (pacemakers, etc.). **How to get there:** `/admin/devices/<patient id>`
+
+#### Family Health History
+**What it does:** Document a patient's family medical history. **How to get there:** `/admin/family-history/<patient id>`
+
+### For Nurses
+
+#### Nurse Wellness (Resilience Hub)
+**What it does:** Tools to help with burnout and emotional resilience for nursing staff.
+**How to get there:** Go to `/nurse-wellness`
+
+#### Team Wellness Report
+**What it does:** Generate and export a report on the wellness of your team.
+**How to get there:** Go to `/admin/wellness-report`
+
+#### Remote Patient Monitoring (RPM) Dashboard
+**What it does:** Watch home health readings (like blood pressure and glucose) from patients and get alerts when something looks wrong.
+**How to get there:** Go to `/rpm-dashboard`
+
+#### Patient Avatar
+**What it does:** A body-map picture of a patient that highlights their current health concerns at a glance.
+**How to get there:** Go to `/patient-avatar/<patient id>`
+
+#### Team Huddle
+**What it does:** A shared board for the daily team huddle and care-team communication.
+**How to get there:** Go to `/team-huddle`
+
+#### Receiving Dashboard
+**What it does:** Intake screen for patients being transferred in from another facility.
+**How to get there:** Go to `/handoff/receiving`
+
+### For Doctors and Providers
+
+#### Appointment Analytics
+**What it does:** See appointment usage, no-show rates, and scheduling trends. **How to get there:** `/appointment-analytics`
+
+#### Specialist Dashboard and Field Visits
+**What it does:** A specialty-specific dashboard, plus a workflow for documenting field/home visits. **How to get there:** `/specialist/dashboard/<type>` and `/specialist/visit/<visit id>`
+
+#### Provider Availability
+**What it does:** Set and edit your own availability and schedule. **How to get there:** `/provider/availability`
+
+#### Questionnaire Analytics
+**What it does:** Review patient-reported questionnaire results and outcomes. **How to get there:** `/questionnaire-analytics`
+
+#### Healthcare Integrations
+**What it does:** Manage connections to outside healthcare systems (EHRs). **How to get there:** `/healthcare-integrations`
+
+#### Care Operations
+**What it does:** Oversee provider workflows and day-to-day care operations. **How to get there:** `/care-operations`
+
+### For Administrators
+
+#### Dashboard Hub
+**What it does:** The central gateway with links to every administrative dashboard. **How to get there:** `/hub`
+
+#### Admin Profile Editor
+**What it does:** Edit organization and staff profile information. **How to get there:** `/admin-profile-editor`
+
+#### Admin Questions
+**What it does:** Manage the library of health questions patients can be asked. **How to get there:** `/admin-questions`
+
+#### Billing Suite
+**What it does:** The revenue-cycle hub -- claims, appeals, prior authorization, eligibility, and payment posting in one place. **How to get there:** `/billing-suite`
+
+#### API Key Manager
+**What it does:** Create and manage keys for system integrations. **How to get there:** `/admin/api-keys`
+
+#### Security and Compliance
+**What it does:** Monitor HIPAA and SOC 2 compliance status for your organization. **How to get there:** `/security-compliance`
+
+#### Interoperability Dashboard
+**What it does:** Manage FHIR, HL7, and data-mapping between systems. **How to get there:** `/interoperability`
+
+#### System Admin Suite
+**What it does:** Manage users, roles, facilities, modules, and clearinghouse settings. **How to get there:** `/system-admin`
+
+#### Clinical Quality Dashboard
+**What it does:** Track quality measures and public-health reporting. **How to get there:** `/clinical-quality`
+
+#### Admin Tools Dashboard
+**What it does:** Engagement, enrollment, export, and alert tools in one place. **How to get there:** `/admin-tools`
+
+### For Super Administrators
+
+#### MCP Management
+**What it does:** Manage the platform's AI tool servers -- health, API keys, workflow chains, and costs. **How to get there:** `/mcp-management`
+
+#### Behavioral Anomaly Panel
+**What it does:** Review unusual activity the Guardian Agent has detected. **How to get there:** `/guardian/anomalies`
+
+### EMS and Special Programs
+
+#### EMS Coordinated Response
+**What it does:** Coordinate an emergency response between EMS crews and the clinical team. **How to get there:** `/ems/coordinated-response/<handoff id>`
+
+#### Law Enforcement Program
+**What it does:** A landing page and dispatch coordination view for law-enforcement partner programs. **How to get there:** `/law-enforcement` and `/constable-dispatch`
+
+*Addendum generated 2026-06-11 from a full review of the app's screens. Covers 41 features that were missing from the earlier manual.*
