@@ -631,3 +631,61 @@ Envision ATLUS I.H.I.S. is a dual-product, HIPAA-compliant healthcare platform c
 ---
 
 *Generated from codebase crawl on 2026-02-28. Only features with actual routes, components, edge functions, or service implementations are listed. No invented features.*
+
+---
+
+## Addendum — Features Added Since Last Catalog (verified 2026-06-11)
+
+The following features exist in the live codebase but were not in the prior catalog. Verified by a full route crawl of `src/App.tsx` on 2026-06-11.
+
+### Patient & Community (WellFit)
+
+| Feature | Route | What it does |
+|---|---|---|
+| Questions | `/questions` | Submit and browse health questions |
+| Check-In History | `/check-in-history` | Review past check-ins and trends over time |
+| Meal Detail | `/meals/:id` | View a specific meal / nutrition plan |
+| Photo Consent | `/consent-photo` | Manage photo and likeness consent |
+| Privacy Consent | `/consent-privacy` | Review and adjust privacy consent |
+| Smart Callback | `/smart-callback` | Request a callback from a provider |
+
+### Clinical — CPOE Order Entry (ONC Certified)
+
+| Feature | Route | ONC Criterion |
+|---|---|---|
+| Medication Orders | `/admin/cpoe/medication/:patientId` | 170.315(a)(1) |
+| Lab Orders | `/admin/cpoe/lab/:patientId` | 170.315(a)(2) |
+| Imaging Orders | `/admin/cpoe/imaging/:patientId` | 170.315(a)(3) |
+| Implantable Device List | `/admin/devices/:patientId` | 170.315(a)(14) |
+| Family Health History | `/admin/family-history/:patientId` | 170.315(a)(12) |
+
+### Clinical Workflows
+
+| Feature | Route | What it does |
+|---|---|---|
+| Nurse Wellness (Resilience Hub) | `/nurse-wellness` | Burnout prevention and emotional resilience for nursing staff |
+| Team Huddle | `/team-huddle` | Daily team huddle and communication board |
+| Wellness Report | `/admin/wellness-report` | Generate and export team wellness reports |
+| Care Operations | `/care-operations` | Provider workflow and care operations management |
+
+### Administration & Hubs
+
+| Feature | Route | What it does |
+|---|---|---|
+| Dashboard Hub | `/hub` | Central gateway to all administrative dashboards |
+| Admin Questions | `/admin-questions` | Manage the health questions library |
+| Billing Suite | `/billing-suite` | Revenue cycle management hub (claims, appeals, prior auth, ERA) |
+| Security & Compliance | `/security-compliance` | HIPAA / SOC2 compliance management |
+| Interoperability Dashboard | `/interoperability` | FHIR, HL7, and data-mapping management |
+| System Admin Suite | `/system-admin` | Users, roles, facilities, modules, clearinghouse config |
+| Clinical Quality Dashboard | `/clinical-quality` | Quality measures and public-health reporting |
+| Admin Tools Dashboard | `/admin-tools` | Engagement, enrollment, export, and alert tools |
+
+### Platform & AI Infrastructure
+
+| Feature | Route | What it does |
+|---|---|---|
+| MCP Management | `/mcp-management` | Manage the 20 MCP servers — health, API keys, chain orchestration, cost |
+| Behavioral Anomaly Panel | `/guardian/anomalies` | Review behavioral anomalies detected by the Guardian Agent |
+
+*Addendum generated 2026-06-11 from a live `src/App.tsx` route crawl. 25 features that were missing from the prior catalog.*

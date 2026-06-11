@@ -1,0 +1,17 @@
+/* Print stylesheet for feature/manual PDFs — landscape + compact tables so wide
+   feature tables fit the page. Used by md-to-docx.sh via weasyprint. */
+@page {
+  size: Letter landscape;
+  margin: 1.5cm;
+  @bottom-center { content: counter(page); font-size: 9pt; color: #888; }
+}
+body { font-family: "DejaVu Sans", "Helvetica", sans-serif; font-size: 9pt; line-height: 1.35; color: #1a1a1a; }
+h1 { font-size: 20pt; color: #0b5; border-bottom: 2px solid #0b5; padding-bottom: 4px; }
+h2 { font-size: 14pt; color: #084; margin-top: 1.2em; }
+h3 { font-size: 11pt; color: #064; }
+table { border-collapse: collapse; width: 100%; margin: 0.6em 0; }
+th, td { border: 1px solid #cdd; padding: 3px 6px; text-align: left; vertical-align: top; }
+th { background: #eafaf1; font-weight: 600; }
+tr:nth-child(even) td { background: #f7fbf9; }
+code { background: #eef3f1; padding: 0 3px; border-radius: 3px; font-size: 8.5pt; }
+blockquote { color: #555; border-left: 3px solid #0b5; padding-left: 10px; margin-left: 0; }
