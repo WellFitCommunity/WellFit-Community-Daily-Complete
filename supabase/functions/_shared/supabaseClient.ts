@@ -253,7 +253,7 @@ export async function withQueryMetrics<T>(
  *
  * @example
  * const [patient, medications, labs] = await batchQueries([
- *   () => supabase.from('patients').select('*').eq('id', patientId).single(),
+ *   () => supabase.from('profiles').select('user_id, first_name').eq('user_id', patientId).single(),
  *   () => supabase.from('medications').select('*').eq('patient_id', patientId),
  *   () => supabase.from('lab_results').select('*').eq('patient_id', patientId)
  * ]);
@@ -278,7 +278,7 @@ export async function batchQueries<
  * @example
  * const results = await sequentialQueries([
  *   async () => {
- *     const { data: patient } = await supabase.from('patients').select('*').eq('id', id).single();
+ *     const { data: patient } = await supabase.from('profiles').select('user_id, first_name').eq('user_id', id).single();
  *     return patient;
  *   },
  *   async (patient) => {

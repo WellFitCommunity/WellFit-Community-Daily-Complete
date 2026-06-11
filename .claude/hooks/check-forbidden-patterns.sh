@@ -22,6 +22,15 @@ case "$FILE_PATH" in
   *__tests__*|*.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx) IS_TEST=true ;;
 esac
 
+# The audit logger implementation is the ONE place console.* is legitimate: it is
+# the output transport itself (in Deno edge functions there is no lower-level logger
+# to delegate to). Exempt it from the console.* check ONLY — every other rule below
+# (any, forwardRef, CORS wildcards, etc.) still applies to it.
+IS_LOGGER=false
+case "$FILE_PATH" in
+  */supabase/functions/_shared/auditLogger.ts) IS_LOGGER=true ;;
+esac
+
 # Skip the hook script itself + governance docs + scanner scripts that
 # define these patterns as their own subject matter.
 case "$FILE_PATH" in
@@ -46,7 +55,7 @@ ${matches}
   fi
 }
 
-if [ "$IS_TEST" = false ]; then
+if [ "$IS_TEST" = false ] && [ "$IS_LOGGER" = false ]; then
   # console.* in production code — auditLogger required
   check '(^|[^/])(console\.(log|error|warn|info|debug))' "console.* found — use auditLogger instead"
 fi

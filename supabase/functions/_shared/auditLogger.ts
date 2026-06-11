@@ -185,7 +185,7 @@ export const logger = new EdgeFunctionLogger();
  *
  * @example
  * const result = await measurePerf('fetchPatientData', async () => {
- *   return await supabase.from('patients').select('*');
+ *   return await supabase.from('profiles').select('user_id, first_name');
  * });
  */
 export async function measurePerf<T>(

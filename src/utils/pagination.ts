@@ -210,7 +210,7 @@ export function buildPaginationMeta(
  * Apply offset-based pagination to a Supabase query
  *
  * @example
- * const query = supabase.from('patients').select('*');
+ * const query = supabase.from('profiles').select('user_id, first_name');
  * const result = await applyPagination(query, { page: 2, pageSize: 50 });
  */
 export async function applyPagination<T>(

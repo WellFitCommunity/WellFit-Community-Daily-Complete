@@ -131,10 +131,10 @@ async function getEncounterData(encounterId: string) {
       claim_frequency_code,
       subscriber_relation_code,
       payer_id,
-      patient:patients(
+      patient:profiles!encounters_patient_id_profiles_fkey(
         first_name,last_name,dob,gender,
-        address_line1,city,state,zip,
-        member_id,ssn,phone
+        address_line1:address,city,state,zip:zip_code,
+        phone
       ),
       provider:billing_providers(
         id,organization_name,npi,taxonomy_code,ein,

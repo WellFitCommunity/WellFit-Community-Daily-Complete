@@ -118,7 +118,6 @@ table::patient_medications
 table::patient_procedures
 table::patient_risk_registry
 table::patient_vitals
-table::patients
 table::payers
 table::personalized_content_delivery
 table::phi_access_audit

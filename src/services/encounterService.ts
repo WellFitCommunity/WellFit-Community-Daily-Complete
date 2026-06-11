@@ -48,7 +48,7 @@ export class EncounterService {
       .from('encounters')
       .select(`
         id, patient_id, date_of_service, status, encounter_type, chief_complaint, claim_frequency_code, subscriber_relation_code, payer_id, facility_id, appointment_id, arrived_at, triaged_at, visit_started_at, visit_ended_at, signed_at, signed_by, status_changed_at, status_changed_by, tenant_id,
-        patient:patients(id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone),
+        patient:profiles!encounters_patient_id_profiles_fkey(id, first_name, last_name, dob, gender, address_line1:address, city, state, zip:zip_code, phone),
         provider:billing_providers(id, user_id, npi, taxonomy_code, organization_name, ein, submitter_id, contact_phone, address_line1, city, state, zip, created_by, created_at, updated_at),
         procedures:encounter_procedures(code, charge_amount, units, modifiers, service_date, diagnosis_pointers),
         diagnoses:encounter_diagnoses(code, sequence)
@@ -79,7 +79,7 @@ export class EncounterService {
       .from('encounters')
       .select(`
         id, patient_id, date_of_service, status, encounter_type, chief_complaint, claim_frequency_code, subscriber_relation_code, payer_id, facility_id, appointment_id, arrived_at, triaged_at, visit_started_at, visit_ended_at, signed_at, signed_by, status_changed_at, status_changed_by, tenant_id,
-        patient:patients(id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone),
+        patient:profiles!encounters_patient_id_profiles_fkey(id, first_name, last_name, dob, gender, address_line1:address, city, state, zip:zip_code, phone),
         provider:billing_providers(id, user_id, npi, taxonomy_code, organization_name, ein, submitter_id, contact_phone, address_line1, city, state, zip, created_by, created_at, updated_at),
         procedures:encounter_procedures(code, charge_amount, units, modifiers, service_date, diagnosis_pointers),
         diagnoses:encounter_diagnoses(code, sequence)
@@ -237,13 +237,42 @@ export class EncounterService {
   }
 
   // Patient Management
+  //
+  // The legacy `patients` table was consolidated into `profiles` (the canonical
+  // patient/identity store, governance S1). These Patient CRUD methods have no
+  // callers (superseded by the registration flow -> profiles + patientContextService);
+  // they are repointed to profiles so they no longer reference a non-existent table.
+  // profiles is keyed on user_id (rule #8) and has NO ssn/member_id columns
+  // (SS-5: SSN is not persisted), so those Patient fields are not read/written here.
+  private static readonly PATIENT_PROFILE_SELECT =
+    'id:user_id, first_name, last_name, dob, gender, address_line1:address, city, state, zip:zip_code, phone';
+
+  // Map Patient-shaped fields onto the columns that actually exist on profiles.
+  private static toProfileFields(patient: Partial<Patient>): Record<string, unknown> {
+    const mapped: Record<string, unknown> = {};
+    if (patient.first_name !== undefined) mapped.first_name = patient.first_name;
+    if (patient.last_name !== undefined) mapped.last_name = patient.last_name;
+    if (patient.dob !== undefined) mapped.dob = patient.dob;
+    if (patient.gender !== undefined) mapped.gender = patient.gender;
+    if (patient.address_line1 !== undefined) mapped.address = patient.address_line1;
+    if (patient.city !== undefined) mapped.city = patient.city;
+    if (patient.state !== undefined) mapped.state = patient.state;
+    if (patient.zip !== undefined) mapped.zip_code = patient.zip;
+    if (patient.phone !== undefined) mapped.phone = patient.phone;
+    // ssn / member_id intentionally dropped — no profiles column (SS-5).
+    return mapped;
+  }
+
   static async createPatient(
     patient: Omit<Patient, 'id'>
   ): Promise<Patient> {
+    // NOTE (vestigial): patients are normally created via the registration flow,
+    // which provisions the auth user + profile together. A standalone insert here
+    // cannot supply user_id; this method is retained only for API compatibility.
     const { data, error } = await supabase
-      .from('patients')
-      .insert(patient)
-      .select()
+      .from('profiles')
+      .insert(EncounterService.toProfileFields(patient))
+      .select(EncounterService.PATIENT_PROFILE_SELECT)
       .single();
 
     if (error) throw new Error(`Failed to create patient: ${error.message}`);
@@ -252,9 +281,9 @@ export class EncounterService {
 
   static async getPatient(id: string): Promise<Patient> {
     const { data, error } = await supabase
-      .from('patients')
-      .select('id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone')
-      .eq('id', id)
+      .from('profiles')
+      .select(EncounterService.PATIENT_PROFILE_SELECT)
+      .eq('user_id', id)
       .single();
 
     if (error) throw new Error(`Failed to get patient: ${error.message}`);
@@ -263,10 +292,10 @@ export class EncounterService {
 
   static async updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
     const { data, error } = await supabase
-      .from('patients')
-      .update(updates)
-      .eq('id', id)
-      .select()
+      .from('profiles')
+      .update(EncounterService.toProfileFields(updates))
+      .eq('user_id', id)
+      .select(EncounterService.PATIENT_PROFILE_SELECT)
       .single();
 
     if (error) throw new Error(`Failed to update patient: ${error.message}`);
@@ -298,9 +327,10 @@ export class EncounterService {
     });
 
     const { data, error } = await supabase
-      .from('patients')
-      .select('id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone')
-      .or(`first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,member_id.ilike.%${sanitized}%`)
+      .from('profiles')
+      .select(EncounterService.PATIENT_PROFILE_SELECT)
+      .in('role', ['patient', 'senior'])
+      .or(`first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%`)
       .limit(20);
 
     if (error) throw new Error(`Failed to search patients: ${error.message}`);
@@ -332,7 +362,7 @@ export class EncounterService {
   static async getClinicalNotes(encounterId: string): Promise<ClinicalNotesQueryResult> {
     const { data, error } = await supabase
       .from('clinical_notes')
-      .select('*') // TODO: specify columns when usage is traced — returns Record<string, unknown>[]
+      .select('id, encounter_id, note_type, content, author_id, created_at, updated_at')
       .eq('encounter_id', encounterId)
       .order('created_at');
 
@@ -464,7 +494,7 @@ private static transformEncounterData(rawData: EncounterRow): Encounter {
       .from('encounters')
       .select(`
         id, patient_id, date_of_service, status, encounter_type, chief_complaint, claim_frequency_code, subscriber_relation_code, payer_id, facility_id, appointment_id, arrived_at, triaged_at, visit_started_at, visit_ended_at, signed_at, signed_by, status_changed_at, status_changed_by, tenant_id,
-        patient:patients(id, first_name, last_name, dob, gender, address_line1, city, state, zip, member_id, ssn, phone),
+        patient:profiles!encounters_patient_id_profiles_fkey(id, first_name, last_name, dob, gender, address_line1:address, city, state, zip:zip_code, phone),
         provider:billing_providers(id, user_id, npi, taxonomy_code, organization_name, ein, submitter_id, contact_phone, address_line1, city, state, zip, created_by, created_at, updated_at),
         procedures:encounter_procedures(code, charge_amount, units, modifiers, service_date, diagnosis_pointers),
         diagnoses:encounter_diagnoses(code, sequence)

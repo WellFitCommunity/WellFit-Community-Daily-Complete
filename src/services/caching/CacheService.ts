@@ -479,7 +479,7 @@ export default cacheService;
  *   'patient-123',
  *   async () => {
  *     // This only runs on cache miss
- *     const { data } = await supabase.from('patients').select('*').eq('id', '123').single();
+ *     const { data } = await supabase.from('profiles').select('user_id, first_name').eq('user_id', '123').single();
  *     return data;
  *   },
  *   { namespace: 'patient_lookup', ttl: 300 }

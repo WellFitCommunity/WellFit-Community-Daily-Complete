@@ -102,7 +102,7 @@ serve(async (req) => {
       .from('encounters')
       .select(`
         *,
-        patient:patients(*),
+        patient:profiles!encounters_patient_id_profiles_fkey(dob),
         procedures:encounter_procedures(*),
         diagnoses:encounter_diagnoses(*),
         clinical_notes(*)
@@ -117,10 +117,15 @@ serve(async (req) => {
       })
     }
 
-    // Get patient's recent check-ins for SDOH analysis
+    // Get patient's recent check-ins for SDOH analysis.
+    // NOTE (pre-existing, out of scope): the mapping below reads
+    // housing_situation/food_security/transportation_barriers/social_isolation_score,
+    // which are NOT columns on check_ins (the SDOH domain fields live on
+    // sdoh_assessments). Those reads were already undefined; selecting explicit real
+    // columns here preserves that behavior without a wildcard. Tracked separately.
     const { data: checkIns } = await supabaseClient
       .from('check_ins')
-      .select('*')
+      .select('created_at, emotional_state, physical_activity, social_engagement, symptoms, notes')
       .eq('user_id', encounter.patient_id)
       .order('created_at', { ascending: false })
       .limit(5)
@@ -128,7 +133,7 @@ serve(async (req) => {
     // Get existing SDOH assessment if available
     const { data: sdohAssessment } = await supabaseClient
       .from('sdoh_assessments')
-      .select('*')
+      .select('id, patient_id, assessment_date, housing_instability, food_insecurity, transportation_barriers, social_isolation, financial_insecurity, education_barriers, employment_concerns, overall_complexity_score, ccm_eligible, ccm_tier, created_at')
       .eq('patient_id', encounter.patient_id)
       .order('created_at', { ascending: false })
       .limit(1)

@@ -136,7 +136,7 @@ export class SDOHBillingService {
       .from('encounters')
       .select(`
         id, patient_id, provider_id, payer_id, date_of_service, place_of_service, claim_frequency_code, subscriber_relation_code, status, notes, created_by, created_at, updated_at,
-        patient:patients(id),
+        patient:profiles!encounters_patient_id_profiles_fkey(id),
         procedures:encounter_procedures(id, encounter_id, code, charge_amount, units, modifiers, service_date, diagnosis_pointers, description, created_at, updated_at),
         diagnoses:encounter_diagnoses(id, encounter_id, code, sequence, description, created_at, updated_at),
         clinical_notes(id, encounter_id, type, content, author_id, created_at, updated_at)
@@ -231,7 +231,7 @@ export class SDOHBillingService {
       .from('encounters')
       .select(`
         id, patient_id, provider_id, payer_id, date_of_service, place_of_service, claim_frequency_code, subscriber_relation_code, status, notes, created_by, created_at, updated_at,
-        patient:patients(id),
+        patient:profiles!encounters_patient_id_profiles_fkey(id),
         clinical_notes(id, encounter_id, type, content, author_id, created_at, updated_at)
       `)
       .eq('id', encounterId)
