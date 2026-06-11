@@ -36,6 +36,24 @@ EXCLUDE_DIR_PARTS = {"__tests__", "__mocks__", "node_modules"}
 RE_FROM = re.compile(r"\.from\(\s*['\"]([a-z_][a-z0-9_]*)['\"]")
 RE_RPC = re.compile(r"\.rpc\(\s*['\"]([a-z_][a-z0-9_]*)['\"]")
 
+# PostgREST resource embedding lives inside .select(...) strings, e.g.
+#   .select('id, patient:patients(name), procedures:encounter_procedures(*)')
+#   .select(`... patient:profiles!encounters_patient_id_fkey(id) ...`)
+# These reference a related table/view but use NEITHER .from() NOR .rpc(), so the
+# checks above miss them — exactly the blind spot that let 5 `patient:patients(...)`
+# sister-bugs survive (2026-06-11). RE_SELECT grabs each select string; RE_EMBED finds
+# each embedded resource within it (stripping any `alias:` prefix and `!fk`/`!inner`
+# hint). EMBED_SKIP drops PostgREST aggregate functions, which share the `name(` shape.
+RE_SELECT = re.compile(r"\.select\(\s*([`'\"])(.*?)\1", re.DOTALL)
+RE_EMBED = re.compile(
+    r"(?<![\w.])"                     # token boundary (not mid-identifier, not `col.agg()`)
+    r"(?:[a-z_][a-z0-9_]*\s*:\s*)?"   # optional `alias:`
+    r"(?P<table>[a-z_][a-z0-9_]*)"    # the embedded resource (table/view)
+    r"(?:\s*!\s*[a-z_][a-z0-9_]*)?"   # optional `!fk_hint` or `!inner` / `!left`
+    r"\s*\("                          # opening paren marks the embed
+)
+EMBED_SKIP = {"count", "sum", "avg", "min", "max"}
+
 
 def is_excluded(path):
     parts = set(path.split(os.sep))
@@ -93,6 +111,18 @@ def main():
             name = m.group(1)
             if name not in functions:
                 all_drift.setdefault(f"rpc::{name}", (rel, src.count("\n", 0, m.start()) + 1))
+        # PostgREST embeds inside .select(...) strings → table references.
+        for sel in RE_SELECT.finditer(src):
+            base = sel.start(2)
+            for em in RE_EMBED.finditer(sel.group(2)):
+                name = em.group("table")
+                # PostgREST also embeds via the FK *column* (`alias:origin_unit_id(...)`),
+                # where the token before `(` is a column, not a table. Those FK columns end
+                # in `_id`/`_by`/`_to`; real table/view embeds (`patients`, `code_icd`) don't.
+                if name in EMBED_SKIP or name in tables or name.endswith(("_id", "_by", "_to")):
+                    continue
+                line = src.count("\n", 0, base + em.start("table")) + 1
+                all_drift.setdefault(f"table::{name}", (rel, line))
 
     if "--write-baseline" in sys.argv:
         with open(BASELINE, "w") as f:
@@ -124,7 +154,7 @@ def main():
 
     baselined_hits = sum(1 for k in all_drift if k in baseline)
     print(
-        f"✅ DB-reference gate: all .from()/.rpc() targets exist live "
+        f"✅ DB-reference gate: all .from()/.rpc()/embed targets exist live "
         f"({baselined_hits} baselined pre-existing refs skipped)."
     )
     return 0

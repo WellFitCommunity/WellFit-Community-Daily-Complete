@@ -45,6 +45,7 @@ table::ccm_eligibility_assessments
 table::chain_steps
 table::clinical_recommendations
 table::clinician_time_tracking
+table::code_icd
 table::codes_icd10
 table::coding_rules
 table::cognitive_assessments
@@ -118,6 +119,7 @@ table::patient_medications
 table::patient_procedures
 table::patient_risk_registry
 table::patient_vitals
+table::patients
 table::payers
 table::personalized_content_delivery
 table::phi_access_audit
