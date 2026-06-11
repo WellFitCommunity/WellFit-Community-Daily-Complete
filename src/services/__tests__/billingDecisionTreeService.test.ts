@@ -251,11 +251,11 @@ describe('BillingDecisionTreeService', () => {
   describe('lookupProcedureCPT', () => {
     it('should find CPT code when provided code exists', async () => {
       setupSupabaseMock({
-        codes_cpt: {
+        code_cpt: {
           data: {
             code: '99213',
-            short_desc: 'Office/Outpatient Visit Est',
-            long_desc: 'Office or other outpatient visit, established patient',
+            short_description: 'Office/Outpatient Visit Est',
+            long_description: 'Office or other outpatient visit, established patient',
             status: 'active',
           },
           error: null,
@@ -270,7 +270,7 @@ describe('BillingDecisionTreeService', () => {
 
     it('should return not found for unlisted procedure', async () => {
       setupSupabaseMock({
-        codes_cpt: { data: null, error: { message: 'Not found' } },
+        code_cpt: { data: null, error: { message: 'Not found' } },
       });
 
       const result = await BillingDecisionTreeService.lookupProcedureCPT('Unknown procedure');
@@ -281,14 +281,14 @@ describe('BillingDecisionTreeService', () => {
 
     it('should search by description when no code provided', async () => {
       mockFrom.mockImplementation((tableName: string) => {
-        if (tableName === 'codes_cpt') {
+        if (tableName === 'code_cpt') {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
             ilike: vi.fn().mockReturnThis(),
             limit: vi.fn().mockResolvedValue({
               data: [
-                { code: '11102', long_desc: 'Tangential biopsy of skin', status: 'active' },
+                { code: '11102', long_description: 'Tangential biopsy of skin', status: 'active' },
               ],
               error: null,
             }),
@@ -545,7 +545,7 @@ describe('BillingDecisionTreeService', () => {
             single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
           };
         }
-        if (tableName === 'codes_cpt') {
+        if (tableName === 'code_cpt') {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
@@ -574,7 +574,7 @@ describe('BillingDecisionTreeService', () => {
     it('should return default rate when all lookups fail', async () => {
       setupSupabaseMock({
         fee_schedule_items: { data: null, error: { message: 'Error' } },
-        codes_cpt: { data: null, error: { message: 'Error' } },
+        code_cpt: { data: null, error: { message: 'Error' } },
       });
 
       const result = await BillingDecisionTreeService.lookupFee('99213', 'payer-001', 'provider-123');
@@ -801,7 +801,7 @@ describe('BillingDecisionTreeService', () => {
             },
             error: null,
           });
-        } else if (tableName === 'codes_cpt') {
+        } else if (tableName === 'code_cpt') {
           mockChain.single = vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } });
           mockChain.limit = vi.fn().mockResolvedValue({ data: [], error: null });
         } else {
