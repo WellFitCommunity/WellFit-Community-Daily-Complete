@@ -56,7 +56,6 @@ table::community
 table::community_photos
 table::compliance_status
 table::conditions
-table::cpt_codes
 table::cultural_content_analytics
 table::cultural_content_cache
 table::daily_check_ins
@@ -89,11 +88,9 @@ table::geofence_events
 table::geofence_zones
 table::handoff_notification_failures
 table::handoff_notifications
-table::hcpcs_codes
 table::health_data
 table::health_equity_metrics
 table::hpsa_designations
-table::icd10_codes
 table::immunizations
 table::incident_response_queue
 table::interaction_log

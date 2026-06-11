@@ -27,37 +27,52 @@ These are `.from('<name>')` targets referenced in production code (`src/` + `sup
 
 ## Buckets
 
-- **A1 — Repoint, target CONFIRMED live (17):** a real renamed/legacy table exists. Repoint the caller + live round-trip. SAFEST. Still verify per-caller columns.
-- **A2 — Repoint, target NEEDS verification (14):** a look-alike exists but the mapping is risky/per-caller. Verify columns FIRST.
+- **A1 — Repoint (was "17 confirmed-live"; COLUMN-VERIFIED 2026-06-11):** ✅ **3 DONE** (code-ref fallbacks). The remaining 14 were **NOT clean** — re-classified: 6 → **A3 (repoint + column rewrite)**, 6 → re-bucketed (patient_id/user_id mismatch ×2, wrong-target ×4), 1 → false-positive (`community` = storage bucket), 1 → heavy (`ai_risk_assessments`). See the A1 section.
+- **A2 — Repoint, target NEEDS verification (14, minus `icd10_codes` done = 13):** a look-alike exists but the mapping is risky/per-caller. Verify columns FIRST (the A1 lesson applies double here).
+- **A3 — Repoint + column rewrite (6, from A1):** target exists, exact column fixes documented in the A1 section. Mechanical but per-caller; quality-measures cluster has CQM implications.
 - **S — Maria/Akima-gated (13):** sensitive (law-enforcement, MPI, PHI-decrypt, audit) or deliberately-skipped infra. Do NOT author without sign-off.
-- **B/C — long tail, no live match (106):** each is B-create (real feature, author from spec + Maria intent) or C-dead-caller (the service has no importers → Tier-3 delete). Triage per-cluster.
-- **False-positive (1):** `table` — see below.
+- **B/C — long tail, no live match (106 + the 4 wrong-target re-bucketed from A1):** each is B-create (real feature, author from spec + Maria intent) or C-dead-caller (the service has no importers → Tier-3 delete). Triage per-cluster.
+- **False-positive (2):** `table`, `community` (storage bucket) — see below.
 
 ---
 
-## A1 — Repoint, target confirmed live (17) — START HERE
+## A1 — Repoint (was "17 confirmed-live"; COLUMN-VERIFIED 2026-06-11)
 
-Do these first: lowest risk, highest signal. Repoint `.from('<from>')` → `.from('<to>')`, fix any column drift, live round-trip, remove the baseline line.
+> 🚨 **FINDING (2026-06-11): name-similarity ≠ schema-compatibility.** I read every caller's actual `.select()`/`.insert()`/`.eq()` columns and compared to the live target. **Only 3 of the 17 were truly clean repoints.** The other 14 have column/PK divergence — repointing them blindly would compile and then break (or silently return nothing), exactly the trap warning #1 predicts. The dominant failure mode: callers use **`patient_id`** but the legacy/community targets key on **`user_id`** (the AV-1 audit pattern), and FHIR-shaped callers expect structured columns the flat tables lack. Re-classified below. **The "do A1 first because it's clean" assumption was wrong — most of A1 is really A3 (repoint + column rewrite) or B-create (wrong target).**
 
-| from | → to | callers | note |
-|------|------|:------:|------|
-| `conditions` | `fhir_conditions` | 1 | classic FHIR legacy rename |
-| `immunizations` | `fhir_immunizations` | 1 | |
-| `medication_requests` | `fhir_medication_requests` | 2 | |
-| `fhir_allergy_intolerances` | `allergy_intolerances` | 7 | reverse: code over-prefixed; live is unprefixed |
-| `observations` | `fhir_observations` | 1 | ⚠ verify vs `dental_/ehr_/sdoh_observations` per caller domain |
-| `procedures` | `fhir_procedures` | 1 | ⚠ verify vs `dental_procedures` |
-| `daily_check_ins` | `check_ins` | 2 | |
-| `checkins` | `check_ins` | 1 | |
-| `patient_medications` | `medications` | 5 | |
-| `payers` | `billing_payers` | 2 | |
-| `community` | `community_moments` | 1 | |
-| `ai_risk_assessments` | `risk_assessments` | 10 | medium-heavy (10 callers across ai/*, mcp-fhir, enhanced-fhir-export) |
-| `codes_cpt` | `code_cpt` | 2 | code-ref table |
-| `cpt_codes` | `code_cpt` | 1 | code-ref table |
-| `hcpcs_codes` | `code_hcpcs` | 1 | code-ref table |
-| `behavioral_anomalies` | `anomaly_detections` | 1 | **KNOWN trap** (same as rpc #25) |
-| `clinician_time_tracking` | `time_clock_entries` | 1 | **KNOWN trap** (same as rpc #23/#24) |
+### ✅ DONE — clean repoints (3, commit pending)
+All in `mcp-medical-codes-server/toolHandlers.ts` (the legacy-table *fallback* branches; primary path already uses the `code_*` tables). Each selects only `code, description` — both confirmed present on the target. Live round-trip proven. ⏳ needs `mcp-medical-codes-server` redeploy to take effect.
+
+| from | → to | callers | status |
+|------|------|:------:|--------|
+| `cpt_codes` | `code_cpt` | 1 | ✅ repointed |
+| `hcpcs_codes` | `code_hcpcs` | 1 | ✅ repointed |
+| `icd10_codes` | `code_icd10` | 1 | ✅ repointed (target is `code_icd10`, NOT `code_icd` which doesn't exist) |
+
+### A3 — repoint NEEDS COLUMN REWRITE (target exists, columns diverge)
+Per-entry the exact column fixes are known (below). These are mechanical but must rewrite the caller's selected columns; some have clinical/CQM implications (the quality-measures cluster) so verify downstream logic uses the remapped fields.
+
+| from | → to | callers | column fixes required |
+|------|------|:------:|----------------------|
+| `conditions` | `fhir_conditions` | 1 (patientEvaluation) | `onset_date`→`onset_datetime`; `status`→`clinical_status` (+ value 'active') |
+| `observations` | `fhir_observations` | 1 (patientEvaluation) | `value`→`value_quantity_value`; `unit`→`value_quantity_unit`; `effective_date`→`effective_datetime` |
+| `procedures` | `fhir_procedures` | 1 (patientEvaluation) | `performed_date`→`performed_datetime` |
+| `medication_requests` | `fhir_medication_requests` | 2 | patientEvaluation caller is CLEAN (id, medication_code, status, authored_on all exist); MedicationManager.tsx needs `dispense_valid_from`→`validity_period_start`, `dispense_number_of_repeats`→`number_of_repeats_allowed`, and **`drug_class` has NO equivalent** (drop or source elsewhere). Entry only clears when BOTH callers fixed. |
+| `codes_cpt` | `code_cpt` | 4 (billing-decision-tree) | `long_desc`→`long_description`; `short_desc`→`short_description`; `practice_rvu`→`facility_pe_rvu`/`non_facility_pe_rvu` (semantic — which?); `malpractice_rvu`→`mp_rvu` |
+| `behavioral_anomalies` | `anomaly_detections` | 1 (handoffRiskSynthesizer) | `anomaly_type`→`event_type`; `severity`→`risk_level`; `description`→`additional_context`/`investigation_notes`. (KNOWN trap — same table the rpc pass used.) |
+| `checkins` | `check_ins` | 1 (WearableDashboard INSERT) | `additional_notes`→`notes`; **`location` has NO column on check_ins** (drop or add). |
+
+### Re-bucketed OUT of A1 (NOT repoints)
+- **`patient_id`↔`user_id` + flat-vs-FHIR mismatch (→ clinical, ties to AV-1/AV-2 audit):**
+  - `patient_medications` → `medications`: target PK is **`user_id`**, callers filter `.eq('patient_id', …)`; column sets differ. 5 callers. NOT a rename.
+  - `fhir_allergy_intolerances` → `allergy_intolerances`: target PK **`user_id`**, flat `allergen_name`/`allergen_code` vs callers' FHIR-structured `code.coding[]`; 7 callers filter `patient_id`. This **IS the AV-1 finding** — callers expect a FHIR allergy table that doesn't exist. → coordinate with the clinical-audit tracker, not a mechanical repoint.
+- **Wrong target (→ B-create or different table):**
+  - `immunizations` → ~~fhir_immunizations~~: `immunizations` is a **registry-submission tracker** (`registry_status`, `registry_submission_id`, joins `patients`), NOT the FHIR cache. 2 callers (immunization-registry-submit). B-create or repoint to the real registry table.
+  - `clinician_time_tracking` → ~~time_clock_entries~~: caller INSERTs handoff-efficiency cols (`action_type`, `epic_benchmark_seconds`, `ai_confidence_score`, `complexity_level`) that **don't exist** on the clock-in/out `time_clock_entries`. Different feature → B-create. (The rpc-pass trap mapping applied to the time-*entries* RPCs, NOT this handoff-metrics writer.)
+  - `daily_check_ins` → ~~check_ins~~: callers select `mood`/`mood_score`/`checked_in_at`/`completed` — none exist on the vitals `check_ins`. Different (mood-tracking) schema. 2 callers. B-create or find the real table.
+  - `payers` → `billing_payers`: caller selects `medicare_multiplier` — absent on billing_payers. 2 callers (feeScheduleNode, generate-837p). Needs a different source or column add.
+- **False-positive:** `community` — it's `supabase.storage.from('community')` (a **storage bucket**, not a table). Moved to the false-positive list. Leave baselined (or exclude `storage.from` in the gate regex).
+- **Heavy / needs detailed verification:** `ai_risk_assessments` → `risk_assessments` (14 refs incl. INSERTs across ai/*, mcp-fhir, bulk-export, enhanced-fhir-export). risk_assessments has `patient_id`/`risk_level`/`overall_score` but the INSERT payloads need column-by-column reconciliation. Medium-heavy; do as its own batch.
 
 ---
 
@@ -93,9 +108,10 @@ Do these first: lowest risk, highest signal. Repoint `.from('<from>')` → `.fro
 
 ---
 
-## False-positive (1)
+## False-positive (2)
 
 - **`table` [2 callers]** — NOT a real reference. Both hits are inside string/comment examples: a code-example string literal in `src/services/guardian-agent/RealHealingImplementations.ts:101` and a JSDoc comment in `supabase/functions/_shared/mcpQueryTimeout.ts:10`. **Leave baselined** (harmless) OR improve the gate regex to skip comments/strings (the cleaner fix — `check-db-reference-drift.py` matches `.from('table')` inside text). Do NOT author a `table` table.
+- **`community` [1 caller]** — NOT a table. It's `supabase.storage.from('community').getPublicUrl(...)` in `src/components/features/PhotoGallery.tsx:175` — a **Storage bucket**, which the gate regex can't distinguish from `.from('<table>')`. **Leave baselined** OR teach the gate to skip `storage.from(`. Do NOT author/repoint.
 
 ---
 
@@ -132,4 +148,5 @@ Each is **B-create** (real feature → migrate:down forensic + author from spec;
 > **Litmus test (airtight):** a fresh Claude can take any A1 row, grep its one caller, query `information_schema.columns` on the target, repoint, live round-trip, drop the baseline line, and re-run the gate — without asking a question.
 
 ## Progress
+- **2026-06-11 (second) — A1 column-verified + 3 clean repoints DONE.** Read every A1 caller's actual columns vs the live target: **only 3 of 17 were clean.** Repointed the 3 code-ref fallbacks in `mcp-medical-codes-server/toolHandlers.ts` (`cpt_codes`→`code_cpt`, `hcpcs_codes`→`code_hcpcs`, `icd10_codes`→`code_icd10`; each selects `code, description`, both confirmed live; live round-trip returns real rows). Removed 3 baseline lines; gate exit 0. ⏳ **needs `mcp-medical-codes-server` redeploy** to take effect live. **Re-classified the other 14** (the A1 table above): 6 → A3 (column rewrite, per-entry fixes documented), 2 → patient_id/user_id clinical mismatch (AV-1 tie-in), 4 → wrong-target B-create (`immunizations`, `clinician_time_tracking`, `daily_check_ins`, `payers`), 1 → false-positive (`community` = storage bucket), 1 → heavy (`ai_risk_assessments`, 14 refs). **Lesson: name-similarity ≠ schema-compatibility — verify columns before every repoint.** **148 to go.**
 - **2026-06-11 — SCOPED + 2 stale removed.** Live-verified all 153; removed `encounter_providers` + `encounter_provider_audit` (created in rpc Batch 3, never de-baselined). Bucketed the remaining 151 (A1=17 / A2=14 / S=13 / false-positive=1 / B-C tail=106). Confirmed repoint targets live (code_cpt/hcpcs/modifiers, risk_assessments, fhir_* legacy set, check_ins, medications, billing_payers, anomaly_detections, time_clock_entries) and confirmed-absent (fhir_patients, code_icd, risk_assessments_decrypted). Gate exit 0. **151 to go.**

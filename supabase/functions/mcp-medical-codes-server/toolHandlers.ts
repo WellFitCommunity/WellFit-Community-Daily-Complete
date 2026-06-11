@@ -63,7 +63,7 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
 
     if (error) {
       const { data: altData, error: altError } = await client
-        .from('cpt_codes')
+        .from('code_cpt')
         .select('code, description')
         .or(`code.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(limit);
@@ -90,7 +90,7 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
 
     if (error) {
       const { data: altData, error: altError } = await client
-        .from('icd10_codes')
+        .from('code_icd10')
         .select('code, description')
         .or(`code.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(limit);
@@ -117,7 +117,7 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
 
     if (error) {
       const { data: altData, error: altError } = await client
-        .from('hcpcs_codes')
+        .from('code_hcpcs')
         .select('code, description')
         .or(`code.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(limit);
