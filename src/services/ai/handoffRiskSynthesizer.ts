@@ -294,9 +294,11 @@ export class HandoffRiskSynthesizer {
       }
 
       // 3. Behavioral anomalies (last 24 hours)
+      // Source table is anomaly_detections; alias its columns to the BehavioralAnomalyRow
+      // shape (event_type→anomaly_type, risk_level→severity, investigation_notes→description).
       const { data: anomalies } = await supabase
-        .from('behavioral_anomalies')
-        .select('user_id, anomaly_type, severity, description, detected_at')
+        .from('anomaly_detections')
+        .select('user_id, anomaly_type:event_type, severity:risk_level, description:investigation_notes, detected_at')
         .in('user_id', context.patientIds)
         .gte('detected_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order('detected_at', { ascending: false })

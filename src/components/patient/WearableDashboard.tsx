@@ -148,16 +148,26 @@ export const WearableDashboard: React.FC = () => {
         timestamp: new Date().toISOString(),
       });
 
+      // check_ins.tenant_id is NOT NULL — resolve the user's tenant before inserting.
+      const { data: tenantRow } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', userId)
+        .single();
+
       // First, create a check-in record with is_emergency=true
-      // This triggers the emergency-alert-dispatch edge function via database webhook
+      // This triggers the emergency-alert-dispatch edge function via database webhook.
+      // Target is the real check_ins table: `additional_notes`→`notes`; check_ins has no
+      // `location` column, so location rides in `metadata` (jsonb).
       const { data: checkinData, error: checkinError } = await supabase
-        .from('checkins')
+        .from('check_ins')
         .insert({
           user_id: userId,
+          tenant_id: tenantRow?.tenant_id ?? null,
           label: 'Emergency SOS - Manual Trigger',
           is_emergency: true,
-          location: location,
-          additional_notes: 'Triggered from Wearable Dashboard SOS button',
+          notes: 'Triggered from Wearable Dashboard SOS button',
+          metadata: { source: 'wearable_sos', location: location ?? null },
           created_at: new Date().toISOString(),
         })
         .select()

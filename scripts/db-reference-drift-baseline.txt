@@ -34,7 +34,6 @@ table::alert_effectiveness
 table::appointment_reminders
 table::appointments
 table::avatars
-table::behavioral_anomalies
 table::billing_code_cache
 table::billing_codes
 table::billing_optimization_history
@@ -44,7 +43,6 @@ table::caregiver_access
 table::caregiver_relationships
 table::ccm_eligibility_assessments
 table::chain_steps
-table::checkins
 table::clinical_recommendations
 table::clinician_time_tracking
 table::codes_cpt

@@ -231,7 +231,9 @@ function setupMocks(options: {
       };
     }
 
-    if (table === 'behavioral_anomalies') {
+    // anomaly_detections, with PostgREST column aliases (event_type→anomaly_type,
+    // risk_level→severity); the mock returns the post-alias shape the service consumes.
+    if (table === 'anomaly_detections') {
       return {
         select: vi.fn().mockReturnThis(),
         in: vi.fn().mockReturnThis(),
