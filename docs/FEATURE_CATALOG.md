@@ -22,7 +22,7 @@ This platform was built by a Social and Behavioral Scientist (AI System Director
 
 - [Community Product (WellFit) — Features 1–18](#community-product-wellfit)
 - [Clinical Product (Envision Atlus) — Features 19–40](#clinical-product-envision-atlus)
-- [Shared Spine & Infrastructure — Features 41–60](#shared-spine--infrastructure)
+- [Shared Spine and Infrastructure — Features 41–60](#shared-spine-and-infrastructure)
 
 ---
 
@@ -510,7 +510,7 @@ This platform was built by a Social and Behavioral Scientist (AI System Director
 
 ---
 
-## Shared Spine & Infrastructure
+## Shared Spine and Infrastructure
 
 ### Feature 41: Compass Riley — Clinical AI Reasoning Engine
 
