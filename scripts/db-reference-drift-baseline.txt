@@ -71,8 +71,6 @@ table::emergency_contacts
 table::emergency_response_briefings
 table::ems_handoffs
 table::encounter_billing_suggestions
-table::encounter_provider_audit
-table::encounter_providers
 table::encryption_status_view
 table::exports
 table::fhir_allergies
