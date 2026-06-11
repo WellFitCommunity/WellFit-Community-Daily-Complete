@@ -241,29 +241,49 @@ export const LawEnforcementService = {
    */
   async getSeniorCheckInStatuses(): Promise<SeniorCheckInStatus[]> {
     try {
+      // profiles is the canonical patient store (governance S1); legacy `patients`
+      // table absent. Patient population = role 'patient'/'senior'. full_name is
+      // composed from first_name/last_name. law_enforcement_response_info embeds via
+      // its FK (patient_id -> profiles.id); check_ins has NO FK to profiles, so the
+      // latest check-in per patient is fetched separately and merged below.
       const { data, error } = await supabase
-        .from('patients')
+        .from('profiles')
         .select(`
-          id,
-          full_name,
+          id:user_id,
+          first_name,
+          last_name,
           address,
-          check_ins!inner(created_at),
           law_enforcement_response_info(response_priority, escalation_delay_hours)
         `)
-        .order('full_name');
+        .in('role', ['patient', 'senior'])
+        .order('last_name');
 
       if (error) throw error;
 
       // Type for Supabase join result
       type PatientRow = {
         id: string;
-        full_name: string;
-        address: string;
-        check_ins?: Array<{ created_at: string }>;
+        first_name: string | null;
+        last_name: string | null;
+        address: string | null;
         law_enforcement_response_info?: Array<{ response_priority?: string; escalation_delay_hours?: number }>;
       };
 
       const patientData = (data || []) as PatientRow[];
+
+      // check_ins has no FK to profiles — fetch the latest check-in per patient
+      // separately and index by user_id (PostgREST can't embed without a relationship).
+      const checkInByUser = new Map<string, string>();
+      if (patientData.length > 0) {
+        const { data: checkIns } = await supabase
+          .from('check_ins')
+          .select('user_id, created_at')
+          .in('user_id', patientData.map((p) => p.id))
+          .order('created_at', { ascending: false });
+        for (const ci of (checkIns || []) as Array<{ user_id: string; created_at: string }>) {
+          if (!checkInByUser.has(ci.user_id)) checkInByUser.set(ci.user_id, ci.created_at);
+        }
+      }
 
       // HIPAA §164.312(b) - Log bulk PHI access for check-in status monitoring
       if (patientData.length > 0) {
@@ -276,7 +296,7 @@ export const LawEnforcementService = {
       }
 
       return patientData.map((patient) => {
-        const lastCheckIn = patient.check_ins?.[0]?.created_at;
+        const lastCheckIn = checkInByUser.get(patient.id);
         const hoursSinceCheckIn = lastCheckIn
           ? (Date.now() - new Date(lastCheckIn).getTime()) / (1000 * 60 * 60)
           : null;
@@ -295,8 +315,8 @@ export const LawEnforcementService = {
 
         return {
           patientId: patient.id,
-          patientName: patient.full_name,
-          patientAddress: patient.address,
+          patientName: `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || 'Unknown',
+          patientAddress: patient.address || '',
           lastCheckIn,
           status,
           hoursSinceCheckIn: hoursSinceCheckIn || undefined,
@@ -315,14 +335,18 @@ export const LawEnforcementService = {
    */
   async sendCheckInReminder(patientId: string): Promise<boolean> {
     try {
-      // Get patient contact info
+      // Get patient contact info. profiles is the canonical patient store
+      // (governance S1); legacy `patients` table absent. profiles is keyed on
+      // user_id (rule #8); full_name is composed from first_name/last_name.
       const { data: patient, error: patientError } = await supabase
-        .from('patients')
-        .select('phone, email, full_name')
-        .eq('id', patientId)
+        .from('profiles')
+        .select('phone, email, first_name, last_name')
+        .eq('user_id', patientId)
         .single();
 
       if (patientError) throw patientError;
+
+      const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || 'Member';
 
       // HIPAA §164.312(b) - Log PHI access for check-in reminder
       await auditLogger.phi('CHECKIN_REMINDER_CONTACT_READ', patientId, {
@@ -336,7 +360,7 @@ export const LawEnforcementService = {
         await supabase.functions.invoke('send-check-in-reminder-sms', {
           body: {
             phone: patient.phone,
-            name: patient.full_name
+            name: fullName
           }
         });
       }
@@ -345,11 +369,11 @@ export const LawEnforcementService = {
       if (patient.email) {
         const emailService = getEmailService();
         await emailService.send({
-          to: { email: patient.email, name: patient.full_name },
+          to: { email: patient.email, name: fullName },
           subject: 'Check-In Reminder - WellFit Community',
           html: `
             <h1>Check-In Reminder</h1>
-            <p>Hello ${patient.full_name},</p>
+            <p>Hello ${fullName},</p>
             <p>This is a friendly reminder to complete your daily check-in.</p>
             <p>Your wellness matters to us and your loved ones. Please take a moment to check in today.</p>
             <p>Best regards,<br>The WellFit Community Team</p>
@@ -370,13 +394,18 @@ export const LawEnforcementService = {
    */
   async notifyFamilyMissedCheckIn(patientId: string): Promise<boolean> {
     try {
+      // profiles is the canonical patient store (governance S1); legacy `patients`
+      // table absent. full_name is composed from first_name/last_name; emergency
+      // contacts live in their own owning table senior_emergency_contacts.
       const { data: patient, error } = await supabase
-        .from('patients')
-        .select('full_name, emergency_contacts')
-        .eq('id', patientId)
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('user_id', patientId)
         .single();
 
       if (error) throw error;
+
+      const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || 'Member';
 
       // HIPAA §164.312(b) - Log PHI access for family notification
       await auditLogger.phi('FAMILY_NOTIFICATION_CONTACT_READ', patientId, {
@@ -385,16 +414,20 @@ export const LawEnforcementService = {
         purpose: 'missed_checkin_notification'
       });
 
-      type EmergencyContact = { name?: string; phone?: string; isPrimary?: boolean };
-      const emergencyContacts = (patient.emergency_contacts || []) as EmergencyContact[];
-      const primaryContact = emergencyContacts.find((c) => c.isPrimary) || emergencyContacts[0];
+      const { data: contacts } = await supabase
+        .from('senior_emergency_contacts')
+        .select('contact_name, contact_phone, contact_priority')
+        .eq('user_id', patientId)
+        .order('contact_priority', { ascending: true });
 
-      if (primaryContact?.phone) {
+      const primaryContact = (contacts || [])[0];
+
+      if (primaryContact?.contact_phone) {
         await supabase.functions.invoke('notify-family-missed-check-in', {
           body: {
-            seniorName: patient.full_name,
-            contactName: primaryContact.name,
-            contactPhone: primaryContact.phone
+            seniorName: fullName,
+            contactName: primaryContact.contact_name,
+            contactPhone: primaryContact.contact_phone
           }
         });
 
