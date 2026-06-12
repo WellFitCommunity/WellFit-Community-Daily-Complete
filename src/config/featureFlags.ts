@@ -51,6 +51,20 @@ export interface FeatureFlags {
   soc2Dashboards: boolean;
   performanceMonitoring: boolean;
   aiCostTracking: boolean;
+
+  // Wired admin-dashboard visibility — modular toggles (default ON; set
+  // VITE_FEATURE_<NAME>=false to make that dashboard inaccessible, no code change).
+  // Tier annotation = audience the nav gating enforces:
+  //   [envision] = platform / super-admin only;  [tenant] = each org, RLS-scoped.
+  aiAccuracyDashboard: boolean;            // [tenant]
+  aiFinancialDashboard: boolean;           // [tenant]
+  auditAnalyticsDashboard: boolean;        // [tenant]
+  disclosureAccountingDashboard: boolean;  // [tenant]
+  mcpCostDashboard: boolean;               // [envision]
+  disasterRecoveryDashboard: boolean;      // [envision]
+  guardianAgentDashboard: boolean;         // [envision]
+  interoperabilitySuite: boolean;          // [tenant]
+  engagementMetrics: boolean;              // [tenant]
 }
 
 // Environment-based feature flag configuration
@@ -104,10 +118,23 @@ const getFeatureFlags = (): FeatureFlags => {
     adminReports: env.VITE_FEATURE_ADMIN_REPORTS !== 'false', // Default ON
     enhancedQuestions: env.VITE_FEATURE_ENHANCED_QUESTIONS === 'true',
 
-    // Internal/Monitoring (default: disabled, super admin only)
-    soc2Dashboards: env.VITE_FEATURE_SOC2_DASHBOARDS === 'true',
+    // Internal/Monitoring (super admin only). soc2Dashboards + aiCostTracking are the
+    // gates for the wired SOC2 suite and AI-cost family below — default ON now that they
+    // are enforced (previously defined-but-unused). performanceMonitoring left as-is.
+    soc2Dashboards: env.VITE_FEATURE_SOC2_DASHBOARDS !== 'false',
     performanceMonitoring: env.VITE_FEATURE_PERFORMANCE_MONITORING === 'true',
-    aiCostTracking: env.VITE_FEATURE_AI_COST_TRACKING === 'true',
+    aiCostTracking: env.VITE_FEATURE_AI_COST_TRACKING !== 'false',
+
+    // Wired admin-dashboard visibility (default ON; VITE_FEATURE_<NAME>=false to hide)
+    aiAccuracyDashboard: env.VITE_FEATURE_AI_ACCURACY_DASHBOARD !== 'false',
+    aiFinancialDashboard: env.VITE_FEATURE_AI_FINANCIAL_DASHBOARD !== 'false',
+    auditAnalyticsDashboard: env.VITE_FEATURE_AUDIT_ANALYTICS_DASHBOARD !== 'false',
+    disclosureAccountingDashboard: env.VITE_FEATURE_DISCLOSURE_ACCOUNTING_DASHBOARD !== 'false',
+    mcpCostDashboard: env.VITE_FEATURE_MCP_COST_DASHBOARD !== 'false',
+    disasterRecoveryDashboard: env.VITE_FEATURE_DISASTER_RECOVERY_DASHBOARD !== 'false',
+    guardianAgentDashboard: env.VITE_FEATURE_GUARDIAN_AGENT_DASHBOARD !== 'false',
+    interoperabilitySuite: env.VITE_FEATURE_INTEROPERABILITY_SUITE !== 'false',
+    engagementMetrics: env.VITE_FEATURE_ENGAGEMENT_METRICS !== 'false',
   };
 };
 

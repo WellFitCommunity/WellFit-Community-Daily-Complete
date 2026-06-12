@@ -13,6 +13,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useBranding } from '../../BrandingContext';
+import { featureFlags } from '../../config/featureFlags';
 import {
   Home,
   FileText,
@@ -202,9 +203,11 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     { label: 'Audit Logs', path: '/admin/audit-logs', icon: FileText, show: true },
     { label: 'System Admin', path: '/admin/system', icon: Shield, show: adminRole === 'super_admin' },
     { label: 'SMART Apps', path: '/admin/smart-apps', icon: Smartphone, show: adminRole === 'super_admin' },
-    { label: 'Interoperability', path: '/interoperability', icon: LayoutGrid, show: true },
-    { label: 'Engagement Metrics', path: '/metrics', icon: ClipboardList, show: true },
-    { label: 'Guardian Agent', path: '/guardian/dashboard', icon: Activity, show: adminRole === 'super_admin' },
+    // Tenant-based (all admins; data is RLS-scoped per tenant). Flag = modular off-switch.
+    { label: 'Interoperability', path: '/interoperability', icon: LayoutGrid, show: featureFlags.interoperabilitySuite },
+    { label: 'Engagement Metrics', path: '/metrics', icon: ClipboardList, show: featureFlags.engagementMetrics },
+    // Envision-only (platform monitoring; super-admin) + flag off-switch.
+    { label: 'Guardian Agent', path: '/guardian/dashboard', icon: Activity, show: featureFlags.guardianAgentDashboard && adminRole === 'super_admin' },
   ];
 
   return (

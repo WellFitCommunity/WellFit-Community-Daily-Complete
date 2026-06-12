@@ -22,6 +22,7 @@ import { useUser } from '../contexts/AuthContext';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
 import AdminHeader from '../components/admin/AdminHeader';
 import SmartBackButton from '../components/ui/SmartBackButton';
+import { featureFlags } from '../config/featureFlags';
 import { SystemAdminDashboard } from '../components/admin/SystemAdminDashboard';
 import UserRoleManager from '../components/system/UserRoleManager';
 import ActiveSessionManager from '../components/system/ActiveSessionManager';
@@ -305,6 +306,7 @@ const SystemAdministrationPage: React.FC = () => {
                 <DatabaseAdminPanel />
               </CollapsibleSection>
 
+              {featureFlags.disasterRecoveryDashboard && (
               <CollapsibleSection
                 title="Disaster Recovery"
                 subtitle="Backup verification, recovery drills, RTO/RPO status, and failover readiness"
@@ -315,6 +317,7 @@ const SystemAdministrationPage: React.FC = () => {
                   <DisasterRecoveryDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
             </div>
           )}
 
@@ -344,6 +347,7 @@ const SystemAdministrationPage: React.FC = () => {
                 </Suspense>
               </CollapsibleSection>
 
+              {featureFlags.soc2Dashboards && (
               <CollapsibleSection
                 title="SOC2 Executive Overview"
                 subtitle="Executive-level SOC2 posture, control coverage, and audit readiness"
@@ -354,7 +358,9 @@ const SystemAdministrationPage: React.FC = () => {
                   <SOC2ExecutiveDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
 
+              {featureFlags.soc2Dashboards && (
               <CollapsibleSection
                 title="SOC2 Security Controls"
                 subtitle="Trust Service Criteria controls, evidence, and status"
@@ -365,7 +371,9 @@ const SystemAdministrationPage: React.FC = () => {
                   <SOC2SecurityDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
 
+              {featureFlags.soc2Dashboards && (
               <CollapsibleSection
                 title="SOC2 Audit Trail"
                 subtitle="Control audit history, evidence collection, and review cadence"
@@ -376,7 +384,9 @@ const SystemAdministrationPage: React.FC = () => {
                   <SOC2AuditDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
 
+              {featureFlags.soc2Dashboards && (
               <CollapsibleSection
                 title="SOC2 Incident Response"
                 subtitle="Security incident tracking, response workflows, and resolution status"
@@ -387,7 +397,9 @@ const SystemAdministrationPage: React.FC = () => {
                   <SOC2IncidentResponseDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
 
+              {featureFlags.auditAnalyticsDashboard && (
               <CollapsibleSection
                 title="Audit Analytics"
                 subtitle="Audit log analytics, access patterns, and anomaly trends"
@@ -398,6 +410,7 @@ const SystemAdministrationPage: React.FC = () => {
                   <AuditAnalyticsDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
             </div>
           )}
 
@@ -425,6 +438,7 @@ const SystemAdministrationPage: React.FC = () => {
                 </Suspense>
               </CollapsibleSection>
 
+              {featureFlags.aiCostTracking && (
               <CollapsibleSection
                 title="AI Cost Dashboard"
                 subtitle="Per-skill AI cost breakdown, token spend, and trend analysis"
@@ -435,7 +449,9 @@ const SystemAdministrationPage: React.FC = () => {
                   <AICostDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
 
+              {featureFlags.aiFinancialDashboard && (
               <CollapsibleSection
                 title="AI Financial Dashboard"
                 subtitle="AI ROI, staff savings, and financial impact of AI workflows"
@@ -446,7 +462,9 @@ const SystemAdministrationPage: React.FC = () => {
                   <AIFinancialDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
 
+              {featureFlags.mcpCostDashboard && (
               <CollapsibleSection
                 title="MCP Cost Tracking"
                 subtitle="MCP server API cost metrics and per-tool consumption"
@@ -457,7 +475,9 @@ const SystemAdministrationPage: React.FC = () => {
                   <MCPCostDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
 
+              {featureFlags.aiAccuracyDashboard && (
               <CollapsibleSection
                 title="AI Accuracy Monitoring"
                 subtitle="Model accuracy metrics, confidence calibration, and drift detection"
@@ -468,6 +488,7 @@ const SystemAdministrationPage: React.FC = () => {
                   <AIAccuracyDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
             </div>
           )}
 
@@ -510,6 +531,7 @@ const SystemAdministrationPage: React.FC = () => {
                 </Suspense>
               </CollapsibleSection>
 
+              {featureFlags.disclosureAccountingDashboard && (
               <CollapsibleSection
                 title="Disclosure Accounting"
                 subtitle="HIPAA accounting of disclosures — who accessed PHI, when, and why"
@@ -520,6 +542,7 @@ const SystemAdministrationPage: React.FC = () => {
                   <DisclosureAccountingDashboard />
                 </Suspense>
               </CollapsibleSection>
+              )}
             </div>
           )}
         </div>
