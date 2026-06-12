@@ -19,6 +19,7 @@ const SetCaregiverPinPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [existingPin, setExistingPin] = useState(false);
   const [skipAllowed, setSkipAllowed] = useState(false);
+  const [tenantId, setTenantId] = useState<string | null>(null);
 
   // Check if user already has a PIN set
   useEffect(() => {
@@ -29,7 +30,7 @@ const SetCaregiverPinPage: React.FC = () => {
         // Get user profile to check role
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('role, role_code')
+          .select('role, role_code, tenant_id')
           .eq('user_id', user.id)
           .single();
 
@@ -37,6 +38,8 @@ const SetCaregiverPinPage: React.FC = () => {
           // Only seniors need caregiver PINs
           const isSenior = profileData.role === 'senior' || profileData.role_code === 4;
           setSkipAllowed(!isSenior); // Allow skip for non-seniors
+          // tenant_id is required by caregiver_pins RLS (tenant_id = get_current_tenant_id())
+          setTenantId(profileData.tenant_id ?? null);
         }
 
         // Check if PIN already exists
@@ -101,6 +104,11 @@ const SetCaregiverPinPage: React.FC = () => {
       const pinHash = hashData?.hashed;
       if (!pinHash) throw new Error('Failed to hash PIN');
 
+      // tenant_id is mandatory — caregiver_pins RLS rejects NULL tenant rows (403)
+      if (!tenantId) {
+        throw new Error('Your account is missing an organization. Please contact support to set your caregiver PIN.');
+      }
+
       // Store the hashed PIN
       if (existingPin) {
         // Update existing PIN
@@ -121,6 +129,7 @@ const SetCaregiverPinPage: React.FC = () => {
           .insert({
             senior_user_id: user?.id,
             pin_hash: pinHash,
+            tenant_id: tenantId,
             updated_at: new Date().toISOString(),
             updated_by: user?.id
           });
