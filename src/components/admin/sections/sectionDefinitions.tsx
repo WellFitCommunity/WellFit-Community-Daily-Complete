@@ -56,6 +56,8 @@ import {
 } from './lazyImports';
 import { getRevenueSections } from './revenueSections';
 import { getMcpSections } from './mcpSections';
+import { getTenantDashboardSections } from './tenantDashboardSections';
+import { isFeatureEnabled } from '../../../config/featureFlags';
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -568,11 +570,20 @@ export const getAllSections = (): DashboardSection[] => [
     category: 'admin',
     priority: 'low',
   },
+
+  // Tenant-based dashboards (RLS-scoped; surfaced to tenant admins; flag-gated).
+  // Extracted to tenantDashboardSections.tsx for 600-line compliance.
+  ...getTenantDashboardSections(),
 ];
 
 /**
- * Get sections filtered by category
+ * Get sections filtered by category. Also drops any section whose modular
+ * feature flag is turned off (default ON) — see DashboardSection.featureFlag.
  */
 export const getSectionsByCategory = (category: DashboardSection['category']): DashboardSection[] => {
-  return getAllSections().filter(section => section.category === category);
+  return getAllSections().filter(
+    section =>
+      section.category === category &&
+      (!section.featureFlag || isFeatureEnabled(section.featureFlag))
+  );
 };

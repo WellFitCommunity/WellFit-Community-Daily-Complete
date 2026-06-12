@@ -5,6 +5,13 @@
 
 import { lazy } from 'react';
 
+// Tenant-based dashboards surfaced to tenant admins (RLS-scoped; gated by feature flag)
+export const AICostDashboard = lazy(() => import('../AICostDashboard'));
+export const AIFinancialDashboard = lazy(() => import('../AIFinancialDashboard'));
+export const AIAccuracyDashboard = lazy(() => import('../AIAccuracyDashboard'));
+export const AuditAnalyticsDashboard = lazy(() => import('../AuditAnalyticsDashboard'));
+export const DisclosureAccountingDashboard = lazy(() => import('../DisclosureAccountingDashboard'));
+
 // Core admin
 export const UsersList = lazy(() => import('../UsersList'));
 export const ReportsSection = lazy(() => import('../ReportsSection'));
