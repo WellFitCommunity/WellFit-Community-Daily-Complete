@@ -23,6 +23,7 @@ import {
   ArrowLeftRight,
   Terminal,
   Network,
+  Database,
 } from 'lucide-react';
 
 // Lazy-load each dashboard
@@ -31,6 +32,7 @@ const FHIRInteroperabilityDashboard = lazy(() => import('../admin/FHIRInteropera
 const FHIRFormBuilderEnhanced = lazy(() => import('../admin/FHIRFormBuilderEnhanced'));
 const FHIRDataMapper = lazy(() => import('../admin/FHIRDataMapper'));
 const HL7MessageTestPanel = lazy(() => import('../admin/HL7MessageTestPanel'));
+const HospitalAdapterManagementPanel = lazy(() => import('../admin/HospitalAdapterManagementPanel'));
 
 /** Loading fallback for lazy-loaded tab content */
 const TabLoadingFallback: React.FC = () => (
@@ -80,6 +82,10 @@ export const InteroperabilityDashboard: React.FC = () => {
               <Terminal className="h-4 w-4 mr-2" />
               HL7 Testing
             </EATabsTrigger>
+            <EATabsTrigger value="ehr-adapters">
+              <Database className="h-4 w-4 mr-2" />
+              EHR Adapters
+            </EATabsTrigger>
           </EATabsList>
 
           {/* ── Tab 1: FHIR Analytics ──────────────────────────────── */}
@@ -114,6 +120,13 @@ export const InteroperabilityDashboard: React.FC = () => {
           <EATabsContent value="hl7-testing">
             <Suspense fallback={<TabLoadingFallback />}>
               <HL7MessageTestPanel />
+            </Suspense>
+          </EATabsContent>
+
+          {/* ── Tab 6: EHR Adapters ────────────────────────────────── */}
+          <EATabsContent value="ehr-adapters">
+            <Suspense fallback={<TabLoadingFallback />}>
+              <HospitalAdapterManagementPanel />
             </Suspense>
           </EATabsContent>
         </EATabs>
