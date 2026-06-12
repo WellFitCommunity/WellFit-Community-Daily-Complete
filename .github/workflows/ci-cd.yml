@@ -9,7 +9,10 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '24'
+  # Run JS-based actions (checkout/setup-node/etc.) on Node 24 instead of the
+  # deprecated Node 20 runtime. GitHub forces this on 2026-06-16; opting in early.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   NOTIFICATION_EMAILS: "info@thewellfitcommunity.org"
   # Network resilience: auto-retry transient registry failures (ECONNRESET, etc.)
   # instead of failing the whole job on a single network blip.

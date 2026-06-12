@@ -13,6 +13,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  # Run JS-based actions on Node 24 instead of the deprecated Node 20 runtime.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   shadow-import-check:
     name: Shadow Import / TDZ Gate
