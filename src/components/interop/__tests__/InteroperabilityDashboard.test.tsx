@@ -96,6 +96,8 @@ describe('InteroperabilityDashboard', () => {
   it('should have proper tab ARIA roles', () => {
     renderDashboard();
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.length).toBe(5);
+    // 6 tabs: fhir-analytics, connections, form-builder, data-mapper, hl7-testing, ehr-adapters
+    // (ehr-adapters / HospitalAdapterManagementPanel wired in via commit fbcc523f)
+    expect(tabs.length).toBe(6);
   });
 });
