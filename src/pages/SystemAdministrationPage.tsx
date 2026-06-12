@@ -41,6 +41,28 @@ const ComplianceDashboard = React.lazy(() => import('../components/admin/Complia
 const SOC2ComplianceDashboard = React.lazy(() => import('../components/admin/SOC2ComplianceDashboard'));
 const ClaudeBillingMonitoringDashboard = React.lazy(() => import('../components/admin/ClaudeBillingMonitoringDashboard'));
 
+// Security tab — full SOC2 suite + audit analytics (named exports)
+const SOC2SecurityDashboard = React.lazy(() =>
+  import('../components/admin/SOC2SecurityDashboard').then((m) => ({ default: m.SOC2SecurityDashboard })));
+const SOC2AuditDashboard = React.lazy(() =>
+  import('../components/admin/SOC2AuditDashboard').then((m) => ({ default: m.SOC2AuditDashboard })));
+const SOC2ExecutiveDashboard = React.lazy(() =>
+  import('../components/admin/SOC2ExecutiveDashboard').then((m) => ({ default: m.SOC2ExecutiveDashboard })));
+const SOC2IncidentResponseDashboard = React.lazy(() =>
+  import('../components/admin/SOC2IncidentResponseDashboard').then((m) => ({ default: m.SOC2IncidentResponseDashboard })));
+const AuditAnalyticsDashboard = React.lazy(() => import('../components/admin/AuditAnalyticsDashboard'));
+
+// AI usage tab — cost / financial / accuracy (default exports, except MCPCost which is named)
+const AICostDashboard = React.lazy(() => import('../components/admin/AICostDashboard'));
+const AIFinancialDashboard = React.lazy(() => import('../components/admin/AIFinancialDashboard'));
+const AIAccuracyDashboard = React.lazy(() => import('../components/admin/AIAccuracyDashboard'));
+const MCPCostDashboard = React.lazy(() =>
+  import('../components/admin/MCPCostDashboard').then((m) => ({ default: m.MCPCostDashboard })));
+
+// Compliance / ops
+const DisclosureAccountingDashboard = React.lazy(() => import('../components/admin/DisclosureAccountingDashboard'));
+const DisasterRecoveryDashboard = React.lazy(() => import('../components/admin/DisasterRecoveryDashboard'));
+
 type SystemTabKey = 'overview' | 'users' | 'sessions' | 'database' | 'config' | 'security' | 'ai-usage' | 'performance' | 'compliance';
 
 interface CollapsibleSectionProps {
@@ -282,6 +304,17 @@ const SystemAdministrationPage: React.FC = () => {
               >
                 <DatabaseAdminPanel />
               </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Disaster Recovery"
+                subtitle="Backup verification, recovery drills, RTO/RPO status, and failover readiness"
+                icon={<HardDrive className="w-6 h-6 text-[#158A84]" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <DisasterRecoveryDashboard />
+                </Suspense>
+              </CollapsibleSection>
             </div>
           )}
 
@@ -310,6 +343,61 @@ const SystemAdministrationPage: React.FC = () => {
                   <SOC2ComplianceDashboard />
                 </Suspense>
               </CollapsibleSection>
+
+              <CollapsibleSection
+                title="SOC2 Executive Overview"
+                subtitle="Executive-level SOC2 posture, control coverage, and audit readiness"
+                icon={<ShieldCheck className="w-6 h-6 text-red-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <SOC2ExecutiveDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="SOC2 Security Controls"
+                subtitle="Trust Service Criteria controls, evidence, and status"
+                icon={<Shield className="w-6 h-6 text-red-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <SOC2SecurityDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="SOC2 Audit Trail"
+                subtitle="Control audit history, evidence collection, and review cadence"
+                icon={<ShieldCheck className="w-6 h-6 text-red-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <SOC2AuditDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="SOC2 Incident Response"
+                subtitle="Security incident tracking, response workflows, and resolution status"
+                icon={<Shield className="w-6 h-6 text-red-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <SOC2IncidentResponseDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Audit Analytics"
+                subtitle="Audit log analytics, access patterns, and anomaly trends"
+                icon={<Activity className="w-6 h-6 text-red-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <AuditAnalyticsDashboard />
+                </Suspense>
+              </CollapsibleSection>
             </div>
           )}
 
@@ -334,6 +422,50 @@ const SystemAdministrationPage: React.FC = () => {
               >
                 <Suspense fallback={<LoadingFallback />}>
                   <ClaudeBillingMonitoringDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="AI Cost Dashboard"
+                subtitle="Per-skill AI cost breakdown, token spend, and trend analysis"
+                icon={<BarChart3 className="w-6 h-6 text-purple-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <AICostDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="AI Financial Dashboard"
+                subtitle="AI ROI, staff savings, and financial impact of AI workflows"
+                icon={<BarChart3 className="w-6 h-6 text-green-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <AIFinancialDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="MCP Cost Tracking"
+                subtitle="MCP server API cost metrics and per-tool consumption"
+                icon={<Server className="w-6 h-6 text-blue-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <MCPCostDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="AI Accuracy Monitoring"
+                subtitle="Model accuracy metrics, confidence calibration, and drift detection"
+                icon={<Brain className="w-6 h-6 text-purple-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <AIAccuracyDashboard />
                 </Suspense>
               </CollapsibleSection>
             </div>
@@ -375,6 +507,17 @@ const SystemAdministrationPage: React.FC = () => {
               >
                 <Suspense fallback={<LoadingFallback />}>
                   <ComplianceDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Disclosure Accounting"
+                subtitle="HIPAA accounting of disclosures — who accessed PHI, when, and why"
+                icon={<ShieldCheck className="w-6 h-6 text-green-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <DisclosureAccountingDashboard />
                 </Suspense>
               </CollapsibleSection>
             </div>

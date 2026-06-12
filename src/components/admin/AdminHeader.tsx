@@ -202,6 +202,9 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     { label: 'Audit Logs', path: '/admin/audit-logs', icon: FileText, show: true },
     { label: 'System Admin', path: '/admin/system', icon: Shield, show: adminRole === 'super_admin' },
     { label: 'SMART Apps', path: '/admin/smart-apps', icon: Smartphone, show: adminRole === 'super_admin' },
+    { label: 'Interoperability', path: '/interoperability', icon: LayoutGrid, show: true },
+    { label: 'Engagement Metrics', path: '/metrics', icon: ClipboardList, show: true },
+    { label: 'Guardian Agent', path: '/guardian/dashboard', icon: Activity, show: adminRole === 'super_admin' },
   ];
 
   return (
