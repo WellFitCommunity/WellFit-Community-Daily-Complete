@@ -119,7 +119,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       // Fetch user_roles (authoritative source for role checks)
       const { data: rolesData } = await supabase
         .from("user_roles")
-        .select("role, created_at")
+        .select("role")
         .eq("user_id", user.id);
 
       if (cancelled) return;

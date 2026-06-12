@@ -127,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fetch from user_roles table (authoritative source)
       const { data, error: selErr } = await supabase
         .from('user_roles')
-        .select('role, created_at')
+        .select('role')
         .eq('user_id', u.id);
 
       if (selErr) {

@@ -42,7 +42,7 @@ export function useIsAdmin() {
         // Priority 1: Check user_roles table (authoritative source)
         const { data: userRolesData, error: rolesError } = await supabase
           .from('user_roles')
-          .select('role, created_at')
+          .select('role')
           .eq('user_id', session.user.id);
 
         if (cancelled) return;
