@@ -11,6 +11,7 @@ import React from 'react';
 import { useBranding } from '../../BrandingContext';
 import { useSignedImageUrl } from '../../hooks/useCommunityMoments';
 import AdminFeatureToggle from '../admin/AdminFeatureToggle';
+import MomentReactions from './MomentReactions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Moment } from './types';
 
@@ -23,9 +24,23 @@ interface MomentCardProps {
   isAdmin: boolean;
   onFeatureChange: (id: string, next: boolean) => void;
   supabase: SupabaseClient;
+  reactionCounts?: Record<string, number>;
+  myReactions?: string[];
+  onToggleReaction?: (momentId: string, emoji: string) => void;
+  reactionsDisabled?: boolean;
 }
 
-const MomentCard: React.FC<MomentCardProps> = ({ m, featured, isAdmin, onFeatureChange, supabase }) => {
+const MomentCard: React.FC<MomentCardProps> = ({
+  m,
+  featured,
+  isAdmin,
+  onFeatureChange,
+  supabase,
+  reactionCounts = {},
+  myReactions = [],
+  onToggleReaction,
+  reactionsDisabled,
+}) => {
   const { branding } = useBranding();
   // Use cached signed URL hook - prevents redundant Supabase Storage API calls
   const { data: signedUrl } = useSignedImageUrl(supabase, m.file_path);
@@ -34,7 +49,7 @@ const MomentCard: React.FC<MomentCardProps> = ({ m, featured, isAdmin, onFeature
 
   return (
     <motion.div
-      className={`bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center transition-all hover:shadow-2xl ${featured ? 'border-4 border-yellow-400' : isPending ? 'border-2 border-amber-300 opacity-90' : 'border-2 border-gray-200'}`}
+      className={`bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 ${featured ? 'border-4 border-yellow-400' : isPending ? 'border-2 border-amber-300 opacity-90' : 'border-2 border-gray-200'}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -92,8 +107,19 @@ const MomentCard: React.FC<MomentCardProps> = ({ m, featured, isAdmin, onFeature
           {m.profile?.first_name} {m.profile?.last_name}
         </span>
         <span className="mx-2">•</span>
+        <span className="text-2xl" aria-hidden="true">📅</span>
         <span>{new Date(m.created_at).toLocaleDateString()}</span>
       </div>
+
+      {/* Tappable emoji reactions — only on live (non-pending) posts */}
+      {onToggleReaction && !isPending && (
+        <MomentReactions
+          counts={reactionCounts}
+          mine={myReactions}
+          onToggle={(emoji) => onToggleReaction(String(m.id), emoji)}
+          disabled={reactionsDisabled}
+        />
+      )}
 
       {isAdmin && (
         <div className="mt-4">

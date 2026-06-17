@@ -121,7 +121,9 @@ const MomentUploadForm: React.FC<MomentUploadFormProps> = ({
         emoji,
         tags: cleanTags,
         is_gallery_high: false,
-        approval_status: 'pending',
+        // Auto-publish: posts go live immediately. Admins can still review and
+        // remove/hide after the fact via the admin panel (post-hoc moderation).
+        approval_status: 'approved',
         file_path: filePath,
         file_url: publicUrlData?.publicUrl ?? '',
       };
@@ -146,7 +148,7 @@ const MomentUploadForm: React.FC<MomentUploadFormProps> = ({
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
-      alert('🎉 Your photo has been uploaded! It will appear in the gallery while our team reviews it. Thank you for sharing!');
+      alert('🎉 Your photo is posted! It is now in the gallery for everyone to enjoy. Thank you for sharing!');
 
       // Refresh — include user's own pending photos
       const { data } = await supabase

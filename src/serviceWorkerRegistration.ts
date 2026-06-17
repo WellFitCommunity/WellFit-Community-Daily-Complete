@@ -157,6 +157,11 @@ export function register(config?: Config, maxActivateMs = 8000): void {
         // Activation watchdog
         const start = Date.now();
         let done = false;
+        let refreshing = false;
+        // Was an old SW already controlling this page when it loaded? If so, a
+        // later controllerchange means an UPDATE (not a first install), and we
+        // should reload so the page stops running the stale JS bundle.
+        const hadController = !!navigator.serviceWorker.controller;
 
         const finishOk = () => {
           if (done) return;
@@ -208,10 +213,28 @@ export function register(config?: Config, maxActivateMs = 8000): void {
           };
         };
 
-        // If controller changes, mark success
+        // If controller changes, mark success. When the change is an update
+        // (an old SW was replaced), reload ONCE so the page picks up the new
+        // build. Guarded by `hadController` so a first install never reloads,
+        // and by `refreshing` so we never loop.
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           finishOk();
+          if (hadController && !refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
         });
+
+        // Keep long-lived sessions fresh. An installed PWA on a phone that is
+        // never closed will otherwise run a stale build for days (it only
+        // checks for a new SW on navigation). Re-check when the tab becomes
+        // visible, when the network returns, and hourly.
+        const checkForUpdate = () => { void registration.update().catch(() => {}); };
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') checkForUpdate();
+        });
+        window.addEventListener('online', checkForUpdate);
+        window.setInterval(checkForUpdate, 60 * 60 * 1000);
 
         // Watchdog timer
         setTimeout(() => {

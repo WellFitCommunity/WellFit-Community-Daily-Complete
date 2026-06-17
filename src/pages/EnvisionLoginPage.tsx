@@ -28,6 +28,29 @@ interface SuperAdminUser {
   permissions: string[];
 }
 
+// Canonical Envision session keys — MUST match EnvisionAuthContext and the
+// RequireSuperAdmin route guard. The guard recognizes a session only by the
+// presence of BOTH of these; if they are missing, /super-admin redirects back
+// to /envision even after a valid TOTP code.
+const ENVISION_SESSION_KEY = 'envision_session';
+const ENVISION_USER_KEY = 'envision_user';
+
+/**
+ * Write the Envision session to the canonical localStorage keys that the auth
+ * context and route guard read. Mirrors EnvisionAuthContext.login().
+ */
+function persistEnvisionSession(sessionToken: string, user: Partial<SuperAdminUser>): void {
+  localStorage.setItem(ENVISION_SESSION_KEY, sessionToken);
+  const fullUser: SuperAdminUser = {
+    id: user?.id || '',
+    email: user?.email || '',
+    full_name: user?.full_name || '',
+    role: user?.role || 'super_admin',
+    permissions: user?.permissions || [],
+  };
+  localStorage.setItem(ENVISION_USER_KEY, JSON.stringify(fullUser));
+}
+
 export const EnvisionLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { supabase } = useAuth();
@@ -220,6 +243,9 @@ export const EnvisionLoginPage: React.FC = () => {
         localStorage.setItem('envision_session_token', data.session_token);
         localStorage.setItem('envision_session_expires', data.expires_at);
         localStorage.setItem('envision_totp_verified', data.user.id);
+        // Canonical keys read by EnvisionAuthContext + RequireSuperAdmin guard.
+        // Without these, /super-admin bounces back to /envision after a valid code.
+        persistEnvisionSession(data.session_token, data.user);
 
         await auditLogger.info('ENVISION_LOGIN_SUCCESS', {
           superAdminId: data.user.id,
@@ -285,6 +311,8 @@ export const EnvisionLoginPage: React.FC = () => {
         localStorage.setItem('envision_session_token', data.session_token);
         localStorage.setItem('envision_session_expires', data.expires_at);
         localStorage.setItem('envision_totp_verified', data.user.id);
+        // Canonical keys read by EnvisionAuthContext + RequireSuperAdmin guard.
+        persistEnvisionSession(data.session_token, data.user);
 
         if (data.warning) {
           await auditLogger.warn('ENVISION_LOW_BACKUP_CODES', {

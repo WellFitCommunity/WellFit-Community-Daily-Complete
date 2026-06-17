@@ -37,3 +37,17 @@ export const isBrowser = typeof window !== 'undefined' && typeof document !== 'u
 
 // Popular emojis for seniors - easy to see and relatable
 export const QUICK_EMOJIS = ['😊', '❤️', '🎉', '👍', '🌸', '☀️', '🎂', '🏆', '📸', '🌈', '⭐', '🎵'];
+
+// Reaction emojis members can tap UNDER each post. Must match the CHECK
+// constraint in migration 20260616210000_community_moment_reactions.sql.
+export const REACTION_EMOJIS = ['👍', '❤️', '😊', '🎉', '🌸', '🙏'] as const;
+
+// Accessible names for screen readers (paired with REACTION_EMOJIS).
+export const REACTION_LABELS: Record<string, string> = {
+  '👍': 'Like',
+  '❤️': 'Love',
+  '😊': 'Smile',
+  '🎉': 'Celebrate',
+  '🌸': 'Flower',
+  '🙏': 'Thank you',
+};

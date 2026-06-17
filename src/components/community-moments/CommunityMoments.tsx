@@ -14,6 +14,7 @@ import { useBranding } from '../../BrandingContext';
 import MomentsHeader from './MomentsHeader';
 import MomentUploadForm from './MomentUploadForm';
 import MomentCard from './MomentCard';
+import { useMomentReactions } from '../../hooks/useMomentReactions';
 import { normalizeMomentRows, useWindowSize } from './utils';
 import { PAGE_SIZE, isBrowser } from './types';
 import type { Affirmation, Moment } from './types';
@@ -207,6 +208,11 @@ const CommunityMoments: React.FC = () => {
     setTimeout(() => setShowConfetti(false), 3000);
   };
 
+  // Emoji reactions for all loaded moments (single batched fetch, no N+1)
+  const momentIds = moments.map((m) => m.id);
+  const { counts: reactionCounts, mine: myReactions, toggle: toggleReaction } =
+    useMomentReactions(supabase, momentIds, userId);
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 pb-12">
       {/* Confetti */}
@@ -229,21 +235,35 @@ const CommunityMoments: React.FC = () => {
 
       {/* Featured Moments */}
       {featured.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-4xl font-bold mb-6 flex items-center gap-3" style={{ color: branding.primaryColor }}>
-            <span className="text-5xl" aria-hidden>⭐</span>
-            Featured Community Moments
-          </h2>
+        <section className="mb-14">
+          <div className="mb-6">
+            <h2 className="text-4xl font-bold flex items-center gap-3" style={{ color: branding.primaryColor }}>
+              <span className="text-5xl" aria-hidden>⭐</span>
+              Featured Community Moments
+            </h2>
+            <p className="text-xl text-gray-600 mt-2 ml-1">The moments our community loved most 💛</p>
+          </div>
           <div className="grid gap-6 md:grid-cols-2">
             {featured.map((m) => (
-              <MomentCard key={m.id} m={m} featured isAdmin={isAdmin} onFeatureChange={handleFeatureChange} supabase={supabase} />
+              <MomentCard
+                key={m.id}
+                m={m}
+                featured
+                isAdmin={isAdmin}
+                onFeatureChange={handleFeatureChange}
+                supabase={supabase}
+                reactionCounts={reactionCounts[String(m.id)] || {}}
+                myReactions={myReactions[String(m.id)] || []}
+                onToggleReaction={toggleReaction}
+                reactionsDisabled={!userId}
+              />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Upload Form */}
-      <div ref={formRef}>
+      <div ref={formRef} className="mb-14">
         <MomentUploadForm
           supabase={supabase}
           onUploadComplete={handleUploadComplete}
@@ -253,13 +273,18 @@ const CommunityMoments: React.FC = () => {
       </div>
 
       {/* All Moments Gallery */}
-      <h2
-        className="text-4xl font-bold mb-6 flex items-center gap-3"
-        style={{ color: branding.primaryColor }}
-      >
-        <span className="text-5xl" aria-hidden="true">🖼️</span>
-        All Community Moments
-      </h2>
+      <div className="mb-6">
+        <h2
+          className="text-4xl font-bold flex items-center gap-3"
+          style={{ color: branding.primaryColor }}
+        >
+          <span className="text-5xl" aria-hidden="true">🖼️</span>
+          All Community Moments
+        </h2>
+        <p className="text-xl text-gray-600 mt-2 ml-1">
+          Every memory shared by our WellFit family 🌷
+        </p>
+      </div>
 
       {initialLoading ? (
         <div className="grid gap-6 md:grid-cols-2" role="status" aria-label="Loading community moments">
@@ -282,7 +307,17 @@ const CommunityMoments: React.FC = () => {
 
           <div className="grid gap-6 md:grid-cols-2" role="feed" aria-label="Community moments gallery">
             {regular.map((m) => (
-              <MomentCard key={m.id} m={m} isAdmin={isAdmin} onFeatureChange={handleFeatureChange} supabase={supabase} />
+              <MomentCard
+                key={m.id}
+                m={m}
+                isAdmin={isAdmin}
+                onFeatureChange={handleFeatureChange}
+                supabase={supabase}
+                reactionCounts={reactionCounts[String(m.id)] || {}}
+                myReactions={myReactions[String(m.id)] || []}
+                onToggleReaction={toggleReaction}
+                reactionsDisabled={!userId}
+              />
             ))}
             {regular.length === 0 && (
               <div className="text-gray-400 text-center text-2xl py-12 col-span-full bg-white rounded-2xl shadow-lg">
