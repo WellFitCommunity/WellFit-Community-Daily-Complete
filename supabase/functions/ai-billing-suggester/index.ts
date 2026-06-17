@@ -14,10 +14,9 @@ import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimiter.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { buildConstraintBlock } from '../_shared/clinicalGroundingRules.ts';
 
-const SUPABASE_URL = SUPABASE_URL!;
 const SERVICE_KEY = SB_SECRET_KEY!;
 
-const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
+const supabase = createClient(SUPABASE_URL!, SERVICE_KEY, {
   auth: { persistSession: false }
 });
 
