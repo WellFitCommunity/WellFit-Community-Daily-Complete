@@ -10,6 +10,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimiter.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { buildConstraintBlock } from '../_shared/clinicalGroundingRules.ts';
 
@@ -58,6 +59,26 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // RATE LIMITING — AI generation is expensive; cap per authenticated user (EQ-5)
+    const rateLimit = await checkRateLimit(user.id, RATE_LIMITS.AI);
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: 'Rate limit exceeded',
+          message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
+          retryAfter: rateLimit.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimit.retryAfter ?? RATE_LIMITS.AI.windowSeconds),
+          },
+        }
       );
     }
 
@@ -159,7 +180,7 @@ async function processSingleEncounter(
   // 2. Fetch encounter data from FHIR tables - SECURITY: Filter by tenant_id
   const { data: encounter } = await supabase
     .from('fhir_encounters')
-    .select('*')
+    .select('id, tenant_id, encounter_type, date_of_service, chief_complaint')
     .eq('id', encounterId)
     .eq('tenant_id', tenantId)
     .single();
@@ -192,10 +213,9 @@ async function processSingleEncounter(
     encounterId,
     patientId,
     tenantId,
-    encounterType: encounter.class || 'outpatient',
-    encounterStart: encounter.period_start,
-    encounterEnd: encounter.period_end,
-    chiefComplaint: encounter.reason_code_text,
+    encounterType: encounter.encounter_type || 'outpatient',
+    encounterStart: encounter.date_of_service,
+    chiefComplaint: encounter.chief_complaint,
     diagnosisCodes: (conditions as ConditionRecord[] | null)?.map((c) => c.code) || [],
     observations: observations || []
   };

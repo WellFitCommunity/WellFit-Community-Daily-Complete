@@ -13,6 +13,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { checkRateLimit, RATE_LIMITS } from "../_shared/rateLimiter.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { createAdminClient } from "../_shared/supabaseClient.ts";
 import { HAIKU_MODEL, calculateModelCost } from "../_shared/models.ts";
@@ -74,6 +75,27 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: "Authorization required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // RATE LIMITING — AI generation is expensive; cap per authenticated user (EQ-5)
+    const rateLimit = await checkRateLimit(user.id, RATE_LIMITS.AI);
+    if (!rateLimit.allowed) {
+      logger.warn("AI rate limit exceeded", { userId: user.id, retryAfter: rateLimit.retryAfter });
+      return new Response(
+        JSON.stringify({
+          error: "Rate limit exceeded",
+          message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
+          retryAfter: rateLimit.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimit.retryAfter ?? RATE_LIMITS.AI.windowSeconds),
+          },
+        }
       );
     }
 

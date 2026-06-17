@@ -22,6 +22,7 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { SONNET_MODEL } from "../_shared/models.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { checkRateLimit, RATE_LIMITS } from "../_shared/rateLimiter.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -159,6 +160,27 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Authorization required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // RATE LIMITING — AI generation is expensive; cap per authenticated user (EQ-5)
+    const rateLimit = await checkRateLimit(user.id, RATE_LIMITS.AI);
+    if (!rateLimit.allowed) {
+      logger.warn("AI rate limit exceeded", { userId: user.id, retryAfter: rateLimit.retryAfter });
+      return new Response(
+        JSON.stringify({
+          error: "Rate limit exceeded",
+          message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
+          retryAfter: rateLimit.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimit.retryAfter ?? RATE_LIMITS.AI.windowSeconds),
+          },
+        }
       );
     }
 
@@ -477,7 +499,7 @@ async function analyzeInfectionRisk(
   const haiRisks = haiTypes.map((type) => calculateHAIRisk(context, type));
 
   // Determine overall risk
-  const maxRisk = Math.max(...haiRisks.map((r) => r.riskScore));
+  const maxRisk = haiRisks.reduce((acc, r) => Math.max(acc, r.riskScore), -Infinity);
   const overallRiskCategory = getOverallRiskCategory(maxRisk);
   const primaryConcern =
     haiRisks.length > 0
@@ -813,7 +835,7 @@ function buildAssessmentFromAI(
   haiRisks: HAIRiskScore[],
   aiAnalysis: Record<string, unknown>
 ): InfectionRiskAssessment {
-  const maxScore = Math.max(...haiRisks.map((r) => r.riskScore));
+  const maxScore = haiRisks.reduce((acc, r) => Math.max(acc, r.riskScore), -Infinity);
 
   return {
     assessmentId,

@@ -21,6 +21,7 @@ import { createLogger } from "../_shared/auditLogger.ts";
 import { fetchCulturalContext, formatCulturalContextForPrompt } from "../_shared/culturalCompetencyClient.ts";
 import { CONDENSED_DRIFT_GUARD } from "../_shared/conversationDriftGuard.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { checkRateLimit, RATE_LIMITS } from "../_shared/rateLimiter.ts";
 
 const getEnv = (...keys: string[]): string => {
   for (const k of keys) {
@@ -110,6 +111,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: "Authorization required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // RATE LIMITING — AI generation is expensive; cap per authenticated user (EQ-5)
+    const rateLimit = await checkRateLimit(user.id, RATE_LIMITS.AI);
+    if (!rateLimit.allowed) {
+      logger.warn("AI rate limit exceeded", { userId: user.id, retryAfter: rateLimit.retryAfter });
+      return new Response(
+        JSON.stringify({
+          error: "Rate limit exceeded",
+          message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
+          retryAfter: rateLimit.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimit.retryAfter ?? RATE_LIMITS.AI.windowSeconds),
+          },
+        }
       );
     }
 

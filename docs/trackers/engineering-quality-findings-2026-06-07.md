@@ -78,7 +78,26 @@ output) for new/modified functions.
 
 ## 🟠 TIER 1 — correctness / robustness
 
-### EQ-5 [verified] Rate limiting missing on 27 of 29 AI functions — **the real remaining gap**
+### EQ-5 — ✅ DONE 2026-06-17. All 29/29 `ai-*` functions now rate-limited.
+**Sweep re-run 2026-06-17:** baseline had improved to 8 covered / 21 missing (more were added
+after 2026-06-07). Added the canonical `checkRateLimit(user.id, RATE_LIMITS.AI)` block (429 +
+`Retry-After`, keyed off the authenticated user, placed immediately after the auth gate) to all
+21 — byte-identical to the deployed `ai-treatment-pathway` reference. 20 use the shared
+`requireUser()` pattern (`user`/`logger`/`corsHeaders` already in scope); `ai-billing-suggester`
+uses an inline `auth.getUser` + has no `logger`, so its block omits the warn line (no
+`console.log` introduced). The 1 remaining "uncovered" by the `checkRateLimit` grep —
+`ai-nurseos-burnout-advisor` — already rate-limits via the MCP persistent limiter
+(`checkPersistentRateLimit` / `MCP_RATE_LIMITS.claude`, 15/min) = legitimately covered.
+**Verify:** sweep → 29/29 rate-limited; brace/paren balance clean on all 21; additions introduce
+ZERO `deno check` errors (proven: the deployed-good reference emits the same 26 lockfile-version
+errors under local `--no-lock`, none referencing the rate-limit additions; CI runs the real
+pinned-deno check). **⏳ Remaining = DEPLOY + live 429 proof.** Per the verify_jwt-reconciliation
+tracker, deploy **per-function only (NOT bulk)** — pin each `verify_jwt` in `config.toml` first.
+Live acceptance = 31 rapid authenticated calls → 31st returns 429.
+
+---
+
+### EQ-5 (original finding, retained for history) — Rate limiting missing on 27 of 29 AI functions
 **SWEEP RUN 2026-06-07 (lead, against actual source). Results corrected a wrong earlier claim.**
 
 **Auth (authentication): 29/29 ai-* functions ARE gated — ZERO wide open.** The earlier tracker
