@@ -202,7 +202,7 @@ Deno.test("Bulk Export Tests", async (t) => {
   });
 
   await t.step("should handle empty data array", () => {
-    const emptyData: any[] = [];
+    const emptyData: unknown[] = [];
 
     if (emptyData.length === 0) {
       const csvResult = '';
@@ -218,7 +218,7 @@ Deno.test("Bulk Export Tests", async (t) => {
       field4: 0
     };
 
-    const getValue = (val: any) => {
+    const getValue = (val: unknown) => {
       if (val === null || val === undefined) {
         return '';
       }
@@ -322,7 +322,7 @@ Deno.test("Bulk Export Tests", async (t) => {
       users_profiles: 'profiles',
       billing_claims: 'claims',
       fhir_resources: 'encounters',
-      audit_logs: 'admin_audit_log'
+      audit_logs: 'admin_audit_logs'
     };
 
     assertEquals(tableMapping.check_ins, 'check_ins');
@@ -330,7 +330,7 @@ Deno.test("Bulk Export Tests", async (t) => {
     assertEquals(tableMapping.users_profiles, 'profiles');
     assertEquals(tableMapping.billing_claims, 'claims');
     assertEquals(tableMapping.fhir_resources, 'encounters');
-    assertEquals(tableMapping.audit_logs, 'admin_audit_log');
+    assertEquals(tableMapping.audit_logs, 'admin_audit_logs');
   });
 
   await t.step("should use correct date field for each export type", () => {

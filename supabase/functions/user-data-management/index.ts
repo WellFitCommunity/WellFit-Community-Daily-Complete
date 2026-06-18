@@ -6,6 +6,7 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { resolveSelectColumns } from "../_shared/exportColumns.ts";
 
 interface DataRequest {
   action: 'export' | 'delete' | 'status';
@@ -197,7 +198,7 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
-        return await deleteUserData(targetUserId);
+        return await deleteUserData(targetUserId, user.id);
 
       case 'status':
         return await getUserDataStatus(targetUserId);
@@ -211,8 +212,8 @@ serve(async (req) => {
         });
     }
 
-  } catch (err) {
-    const error = err as Error;
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     return new Response(JSON.stringify({
       error: 'Internal server error',
       details: error.message
@@ -229,7 +230,7 @@ async function exportUserData(userId: string) {
   // Get profile data - already scoped to specific user
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'profiles'))
     .eq('user_id', userId)
     .single();
 
@@ -251,7 +252,7 @@ async function exportUserData(userId: string) {
   // Get check-ins - scoped to user (which is already tenant-scoped via profile)
   const { data: checkIns } = await supabase
     .from('check_ins_decrypted')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'check_ins_decrypted'))
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -260,7 +261,7 @@ async function exportUserData(userId: string) {
   // Get community moments - scoped to user
   const { data: moments } = await supabase
     .from('community_moments')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'community_moments'))
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -269,7 +270,7 @@ async function exportUserData(userId: string) {
   // Get alerts - scoped to user
   const { data: alerts } = await supabase
     .from('alerts')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'alerts'))
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -280,7 +281,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: medications } = await supabase
     .from('medications')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'medications'))
     .eq('user_id', userId)
     .order('medication_name');
 
@@ -289,7 +290,7 @@ async function exportUserData(userId: string) {
   // FHIR Medication Requests
   const { data: medicationRequests } = await supabase
     .from('fhir_medication_requests')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_medication_requests'))
     .eq('patient_id', userId)
     .order('authored_on', { ascending: false });
 
@@ -300,7 +301,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: allergies } = await supabase
     .from('allergy_intolerances')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'allergy_intolerances'))
     .eq('user_id', userId)
     .order('allergen_name');
 
@@ -311,7 +312,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: conditions } = await supabase
     .from('fhir_conditions')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_conditions'))
     .eq('patient_id', userId)
     .order('recorded_date', { ascending: false });
 
@@ -322,7 +323,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: procedures } = await supabase
     .from('fhir_procedures')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_procedures'))
     .eq('patient_id', userId)
     .order('performed_datetime', { ascending: false });
 
@@ -333,7 +334,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: immunizations } = await supabase
     .from('fhir_immunizations')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_immunizations'))
     .eq('patient_id', userId)
     .order('occurrence_datetime', { ascending: false });
 
@@ -344,7 +345,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: observations } = await supabase
     .from('fhir_observations')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_observations'))
     .eq('patient_id', userId)
     .order('effective_datetime', { ascending: false });
 
@@ -355,7 +356,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: labResults } = await supabase
     .from('lab_results')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'lab_results'))
     .eq('patient_mrn', userId)
     .order('extracted_at', { ascending: false });
 
@@ -366,7 +367,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: diagnosticReports } = await supabase
     .from('fhir_diagnostic_reports')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_diagnostic_reports'))
     .eq('patient_id', userId)
     .order('issued', { ascending: false });
 
@@ -377,7 +378,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: clinicalNotes } = await supabase
     .from('clinical_notes')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'clinical_notes'))
     .eq('author_id', userId)
     .order('created_at', { ascending: false });
 
@@ -388,7 +389,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: carePlans } = await supabase
     .from('fhir_care_plans')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_care_plans'))
     .eq('patient_id', userId)
     .order('created', { ascending: false });
 
@@ -399,7 +400,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: encounters } = await supabase
     .from('encounters')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'encounters'))
     .eq('patient_id', userId)
     .order('start_time', { ascending: false });
 
@@ -410,7 +411,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: careTeam } = await supabase
     .from('fhir_care_teams')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_care_teams'))
     .eq('patient_id', userId);
 
   userData.careTeam = careTeam || [];
@@ -420,7 +421,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: goals } = await supabase
     .from('fhir_goals')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_goals'))
     .eq('patient_id', userId)
     .order('start_date', { ascending: false });
 
@@ -431,7 +432,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: sdohAssessments } = await supabase
     .from('sdoh_assessments')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'sdoh_assessments'))
     .eq('patient_id', userId)
     .order('assessment_date', { ascending: false });
 
@@ -442,7 +443,7 @@ async function exportUserData(userId: string) {
   // =========================================================================
   const { data: provenance } = await supabase
     .from('fhir_provenance')
-    .select('*')
+    .select(await resolveSelectColumns(supabase, 'fhir_provenance'))
     .eq('target_patient_id', userId)
     .order('recorded', { ascending: false });
 
@@ -469,7 +470,7 @@ async function exportUserData(userId: string) {
   });
 }
 
-async function deleteUserData(userId: string) {
+async function deleteUserData(userId: string, actorUserId: string) {
   const deletionLog: DeletionLog = {
     userId,
     tenantId: currentTenantId,
@@ -541,13 +542,21 @@ async function deleteUserData(userId: string) {
       deletionLog.deletedTables.push({ table: 'profiles', count: 1, action: 'soft_deleted' });
     }
 
-    // Log the deletion for audit purposes - include tenant_id
+    // Log the deletion for audit purposes - include tenant_id.
+    // admin_audit_logs (plural) is the live audit table: admin_user_id is the
+    // actor (requester), resource_id is the affected user. action_type +
+    // resource_type are NOT NULL; action_type is constrained by
+    // admin_audit_logs_check_action (must be 'delete' here — the specific
+    // label lives in action_description).
     await supabase
-      .from('admin_audit_log')
+      .from('admin_audit_logs')
       .insert({
-        user_id: userId,
+        admin_user_id: actorUserId,
+        resource_id: userId,
+        resource_type: 'user_data',
         tenant_id: currentTenantId,
-        action: 'user_data_deletion',
+        action_type: 'delete',
+        action_description: 'user_data_deletion',
         metadata: deletionLog,
         timestamp: new Date().toISOString()
       });
@@ -567,8 +576,8 @@ async function deleteUserData(userId: string) {
       headers: { ...currentCorsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (err) {
-    const error = err as Error;
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     return new Response(JSON.stringify({
       error: 'Failed to delete user data',
       details: error.message,

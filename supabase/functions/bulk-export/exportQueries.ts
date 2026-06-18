@@ -58,7 +58,7 @@ export function buildCountQuery(
         .eq("tenant_id", tenantId);
     case "audit_logs": {
       let q = admin
-        .from("admin_audit_log")
+        .from("admin_audit_logs")
         .select("*", { count: "exact", head: true })
         .eq("tenant_id", tenantId);
       if (filters.dateFrom) q = q.gte("created_at", filters.dateFrom);
@@ -143,9 +143,9 @@ export async function buildBatchQuery(
       return q;
     }
     case "audit_logs": {
-      const cols = await resolveSelectColumns(admin, "admin_audit_log");
+      const cols = await resolveSelectColumns(admin, "admin_audit_logs");
       let q = admin
-        .from("admin_audit_log")
+        .from("admin_audit_logs")
         .select(cols)
         .eq("tenant_id", tenantId)
         .range(offset, offset + limit - 1);

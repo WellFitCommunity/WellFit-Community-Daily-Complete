@@ -16,7 +16,6 @@ rpc::increment_cultural_cache_hit
 rpc::update_clearinghouse_config
 table::adapter_connections
 table::admin_actions
-table::admin_audit_log
 table::admin_chat_feedback
 table::admin_chat_sessions
 table::admin_notes
