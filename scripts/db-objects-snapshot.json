@@ -2,8 +2,8 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-06-10",
-    "table_count": 761,
+    "generated": "2026-06-18",
+    "table_count": 762,
     "function_count": 1473
   },
   "tables": [
@@ -159,6 +159,7 @@
     "coding_recommendations",
     "comment_reports",
     "comments",
+    "community_moment_reactions",
     "community_moments",
     "condition_marker_mappings",
     "connection_pool_metrics",
