@@ -1,3 +1,9 @@
+---
+owner: Compliance
+last_updated: 2026-03-12
+review_status: needs-review
+---
+
 # Data Governance Specification
 
 **Envision Virtual Edge Group LLC**

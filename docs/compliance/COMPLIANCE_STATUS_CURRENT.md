@@ -1,3 +1,9 @@
+---
+owner: Compliance
+last_updated: 2026-02-04
+review_status: needs-review
+---
+
 # Current HIPAA/SOC 2 Compliance Status - What You Already Have
 
 **Assessment Date:** 2025-10-19

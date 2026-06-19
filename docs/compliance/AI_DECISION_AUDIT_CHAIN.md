@@ -1,3 +1,9 @@
+---
+owner: Compliance
+last_updated: 2026-03-12
+review_status: needs-review
+---
+
 # AI Decision Audit Chain -- Causal Traceability Specification
 
 > **Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.**

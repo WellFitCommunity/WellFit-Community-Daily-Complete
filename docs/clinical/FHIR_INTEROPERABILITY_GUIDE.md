@@ -1,3 +1,9 @@
+---
+owner: Clinical
+last_updated: 2026-02-04
+review_status: needs-review
+---
+
 # FHIR Interoperability Integration Guide
 
 ## Overview

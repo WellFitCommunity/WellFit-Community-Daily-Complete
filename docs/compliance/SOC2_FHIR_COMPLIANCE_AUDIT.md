@@ -1,3 +1,9 @@
+---
+owner: Compliance
+last_updated: 2026-02-04
+review_status: needs-review
+---
+
 # SOC 2 Compliance Audit Report - FHIR Backend Integration
 **Date**: 2025-10-18
 **Auditor**: Claude Code

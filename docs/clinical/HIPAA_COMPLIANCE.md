@@ -1,3 +1,9 @@
+---
+owner: Clinical
+last_updated: 2026-02-04
+review_status: needs-review
+---
+
 # 🏥 HIPAA Compliance for WellFit Offline Mode
 
 ## Overview

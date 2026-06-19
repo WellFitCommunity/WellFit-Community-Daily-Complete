@@ -128,6 +128,10 @@
   "scripts": {
     "docs:docx": "bash scripts/headless/md-to-docx.sh",
     "docs:build": "bash scripts/headless/build-docs.sh",
+    "docs:index": "node scripts/generate-docs-index.mjs",
+    "docs:index:check": "node scripts/generate-docs-index.mjs --check",
+    "docs:stamp": "node scripts/stamp-doc-frontmatter.mjs",
+    "docs:stamp:check": "node scripts/stamp-doc-frontmatter.mjs --check",
     "dev": "vite",
     "start": "vite",
     "start:cs": "vite --port 3100 --host",

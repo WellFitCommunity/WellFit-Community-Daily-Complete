@@ -1,3 +1,9 @@
+---
+owner: Compliance
+last_updated: 2026-04-21
+review_status: needs-review
+---
+
 # Change Management Policy
 
 **Document ID:** CMP-006

@@ -1,3 +1,9 @@
+---
+owner: Compliance
+last_updated: 2026-06-07
+review_status: needs-review
+---
+
 # 42 CFR Part 2 Sensitive-Data Subsystem — Compliance Decisions for Review
 
 > **Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.**

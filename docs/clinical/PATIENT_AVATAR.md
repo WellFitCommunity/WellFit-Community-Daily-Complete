@@ -1,3 +1,9 @@
+---
+owner: Clinical
+last_updated: 2026-02-04
+review_status: needs-review
+---
+
 # Patient Avatar Visualization System v2
 
 **Last Updated:** December 26, 2025

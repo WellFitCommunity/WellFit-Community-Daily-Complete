@@ -1,3 +1,9 @@
+---
+owner: Clinical
+last_updated: 2026-02-04
+review_status: needs-review
+---
+
 # Caregiver Suite (Family Access)
 
 Allows family caregivers to view senior health information using a PIN shared by the senior.
