@@ -85,7 +85,8 @@ export const ClinicalAlertsDashboard: React.FC = () => {
 
       let query = supabase
         .from('guardian_alerts')
-        .select('id, created_at, severity, category, title, description, status, acknowledged_by, acknowledged_at, patient_name, affected_component')
+        // guardian_alerts has no patient_name column (Guardian carries no PHI); selecting it 400s.
+        .select('id, created_at, severity, category, title, description, status, acknowledged_by, acknowledged_at, affected_component')
         .order('created_at', { ascending: false })
         .limit(50);
 

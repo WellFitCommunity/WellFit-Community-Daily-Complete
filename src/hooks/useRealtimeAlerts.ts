@@ -211,7 +211,9 @@ export function useRealtimeAlerts(
     try {
       let query = supabase
         .from('guardian_alerts')
-        .select('id, created_at, severity, category, title, description, status, patient_id, patient_name, room_number, affected_component, acknowledged_by, acknowledged_at')
+        // guardian_alerts carries NO patient identifiers (Guardian must not surface PHI — see
+        // ai-repair-authority.md); requesting patient_id/patient_name/room_number 400s.
+        .select('id, created_at, severity, category, title, description, status, affected_component, acknowledged_by, acknowledged_at')
         .order('created_at', { ascending: false })
         .limit(maxAlerts);
 
