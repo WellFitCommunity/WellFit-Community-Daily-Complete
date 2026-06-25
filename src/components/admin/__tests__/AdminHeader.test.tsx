@@ -71,6 +71,7 @@ vi.mock('lucide-react', () => {
     BedDouble: createIcon('BedDouble'),
     UserCheck: createIcon('UserCheck'),
     LayoutGrid: createIcon('LayoutGrid'),
+    BarChart3: createIcon('BarChart3'),
   };
 });
 

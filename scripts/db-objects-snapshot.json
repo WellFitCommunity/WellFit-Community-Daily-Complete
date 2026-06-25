@@ -2,7 +2,7 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-06-18",
+    "generated": "2026-06-25 (equity-analytics engine: analytics_query_log + equity_aggregate)",
     "table_count": 762,
     "function_count": 1473
   },
@@ -54,6 +54,7 @@
     "ai_transparency_log",
     "alerts",
     "allergy_intolerances",
+    "analytics_query_log",
     "anomaly_detections",
     "antimicrobial_resistance",
     "antimicrobial_usage",
@@ -771,6 +772,7 @@
     "x12_997_transaction_sets"
   ],
   "functions": [
+    "_equity_dim_expr",
     "_postgis_deprecate",
     "_postgis_index_extent",
     "_postgis_join_selectivity",
@@ -1000,6 +1002,7 @@
     "epcs_prescription_before_insert",
     "epcs_update_timestamp",
     "equals",
+    "equity_aggregate",
     "evaluate_conditional_mapping",
     "evaluate_feature_flag",
     "evaluate_pt_discharge_readiness",

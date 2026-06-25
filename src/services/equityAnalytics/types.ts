@@ -52,6 +52,9 @@ export interface EquityReportMeta {
   lowNCellCount: number;
   smallCellsDropped: boolean;
   generatedAt: string;
+  /** Present when the report came from a plain-language question (the AI layer). */
+  interpretedFrom?: string;
+  translatedBy?: string;
 }
 
 export interface EquityReport {

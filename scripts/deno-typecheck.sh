@@ -46,6 +46,7 @@ HIGH_RISK=(
   coding-suggest
   mcp-claude-server
   ai-medication-instructions
+  equity-analytics
 )
 
 if [[ "${1:-}" == "--all" ]]; then

@@ -147,7 +147,12 @@ const SingleDimChart: React.FC<{ rows: EquityCell[]; dim: string; measureLabel: 
           <CartesianGrid strokeDasharray="3 3" horizontal={false} />
           <XAxis type="number" />
           <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 14 }} />
-          <Tooltip formatter={(v: number, _n, p) => [`${fmt(v)}${(p?.payload as { low_n?: boolean })?.low_n ? '  (small group)' : ''}`, measureLabel]} />
+          <Tooltip
+            formatter={(value, _name, item) => {
+              const low = (item?.payload as { low_n?: boolean } | undefined)?.low_n;
+              return [`${fmt(typeof value === 'number' ? value : Number(value))}${low ? '  (small group)' : ''}`, measureLabel];
+            }}
+          />
           <Bar dataKey="value" name={measureLabel} radius={[0, 4, 4, 0]}>
             {data.map((d, i) => (
               <Cell key={i} fill={d.low_n ? LOW_N_COLOR : BAR_COLOR} />
