@@ -65,6 +65,7 @@ export interface FeatureFlags {
   guardianAgentDashboard: boolean;         // [envision]
   interoperabilitySuite: boolean;          // [tenant]
   engagementMetrics: boolean;              // [tenant]
+  equityInsights: boolean;                 // [tenant]
 }
 
 // Environment-based feature flag configuration
@@ -135,6 +136,7 @@ const getFeatureFlags = (): FeatureFlags => {
     guardianAgentDashboard: env.VITE_FEATURE_GUARDIAN_AGENT_DASHBOARD !== 'false',
     interoperabilitySuite: env.VITE_FEATURE_INTEROPERABILITY_SUITE !== 'false',
     engagementMetrics: env.VITE_FEATURE_ENGAGEMENT_METRICS !== 'false',
+    equityInsights: env.VITE_FEATURE_EQUITY_INSIGHTS !== 'false',
   };
 };
 

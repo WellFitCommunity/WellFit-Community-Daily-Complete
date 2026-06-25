@@ -37,6 +37,7 @@ import {
   BedDouble,
   UserCheck,
   LayoutGrid,
+  BarChart3,
 } from 'lucide-react';
 
 interface AdminHeaderProps {
@@ -206,6 +207,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     // Tenant-based (all admins; data is RLS-scoped per tenant). Flag = modular off-switch.
     { label: 'Interoperability', path: '/interoperability', icon: LayoutGrid, show: featureFlags.interoperabilitySuite },
     { label: 'Engagement Metrics', path: '/metrics', icon: ClipboardList, show: featureFlags.engagementMetrics },
+    { label: 'Equity Insights', path: '/admin/equity-insights', icon: BarChart3, show: featureFlags.equityInsights },
     // Envision-only (platform monitoring; super-admin) + flag off-switch.
     { label: 'Guardian Agent', path: '/guardian/dashboard', icon: Activity, show: featureFlags.guardianAgentDashboard && adminRole === 'super_admin' },
   ];

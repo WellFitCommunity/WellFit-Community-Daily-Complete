@@ -107,6 +107,22 @@ Clinical/measure sources: `check_ins` (adherence/vitals), `readmission_risk_pred
 
 ## Session 3 — UI + researcher tier + hardening
 
+> **STATUS 2026-06-25: Session 3 code-complete — AWAITING MARIA VISUAL ACCEPTANCE.** Built:
+> - `src/components/admin/equity/` — `EquityInsightsDashboard` (orchestrator) + `EquityQueryBuilder`
+>   (plain-language box AND point-and-click pickers, both → same spec; a11y native selects with
+>   htmlFor/id) + `EquityResults` (recharts bar / grouped-bar + cross-tab table + low-N legend +
+>   graceful "insufficient data" empty state). Small cells visibly flagged (amber + "small" badge),
+>   never hidden. Researcher tier shows a de-identified badge.
+> - Wired reachable: route `/admin/equity-insights` (admin + clinical/analyst roles), lazy-registered,
+>   nav link "Equity Insights" in `AdminHeader` (tenant section), modular flag `equityInsights`
+>   (`VITE_FEATURE_EQUITY_INSIGHTS=false` to hide).
+> - Tests render REAL recharts (no stub — Maria's rule). Verify: full tsc 0 / lint 0/0 / 16 tests pass.
+> **⚠️ NOT "done" until Maria sees it rendered (visual-acceptance.md).** When logged in as admin/super_admin,
+> navigate to **Equity Insights** → this also live-proves the full edge-fn + AI round-trip (Session 2's
+> open item) under a real session. **▶ AFTER acceptance: optional hardening (filters UI, researcher-login
+> suppression diff, Akima clinical measures into the catalog).**
+
+
 **Build:**
 - `EquityInsightsDashboard` (EA design system) at route `/admin/equity-insights` (lazy-loaded, nav link wired — Commandment #21: reachable from real UI).
 - Plain-language box + dimension/measure picker (both feed the same spec). Chart render (bar / stacked / heatmap for intersections) via a charting lib.

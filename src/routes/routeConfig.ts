@@ -144,6 +144,13 @@ export const adminRoutes: RouteConfig[] = [
   { path: '/admin/settings', component: 'AdminSettingsPage', auth: 'user', category: 'admin' },
   { path: '/admin/audit-logs', component: 'AuditLogsPage', auth: 'user', category: 'admin' },
   { path: '/admin/system', component: 'SystemAdministrationPage', auth: 'user', category: 'admin' },
+  {
+    path: '/admin/equity-insights',
+    component: 'EquityInsightsDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse_practitioner', 'clinical_supervisor', 'department_head', 'quality_manager', 'social_worker', 'case_manager', 'community_health_worker', 'researcher'],
+    category: 'admin',
+  },
   { path: '/it-admin', component: 'TenantITDashboard', auth: 'user', category: 'admin' },
   {
     path: '/template-maker',

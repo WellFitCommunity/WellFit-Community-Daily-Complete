@@ -144,6 +144,11 @@ export const MCPManagementDashboard = React.lazy(() =>
   import('../components/mcp-suite/MCPManagementDashboard').then(m => ({ default: m.MCPManagementDashboard }))
 );
 
+// Equity & Population-Health Insights
+export const EquityInsightsDashboard = React.lazy(() =>
+  import('../components/admin/equity/EquityInsightsDashboard').then(m => ({ default: m.EquityInsightsDashboard }))
+);
+
 // System Admin Suite
 export const SystemAdminSuiteDashboard = React.lazy(() =>
   import('../components/system-admin/SystemAdminSuiteDashboard').then(m => ({ default: m.SystemAdminSuiteDashboard }))
@@ -415,6 +420,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   CareOperationsDashboard,
   InteroperabilityDashboard,
   MCPManagementDashboard,
+  EquityInsightsDashboard,
   SystemAdminSuiteDashboard,
   ClinicalQualityDashboard,
   AdminToolsDashboard,
