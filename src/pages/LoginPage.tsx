@@ -290,9 +290,19 @@ const LoginPage: React.FC = () => {
   }, []);
 
   // Captcha helpers
+  // Defensive: resetting the captcha must NEVER throw. This runs inside login
+  // catch blocks — an error here would escape the handler and crash the whole
+  // app into the root error boundary ("full error screen") on a failed retry.
   const refreshCaptcha = () => {
-    captchaRef.current?.reset();
-    setCaptchaToken(null);
+    try {
+      captchaRef.current?.reset();
+    } catch (err: unknown) {
+      auditLogger.warn('CAPTCHA_REFRESH_FAILED', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setCaptchaToken(null);
+    }
   };
   const ensureCaptcha = async (): Promise<string> => {
     if (captchaToken) return captchaToken;

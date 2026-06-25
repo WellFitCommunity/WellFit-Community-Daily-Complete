@@ -7,6 +7,7 @@ import {
 } from 'react';
 import type { Ref } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { auditLogger } from '../services/auditLogger';
 
 // hCaptcha site key from environment
 const SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '';
@@ -86,7 +87,17 @@ function HCaptchaWidget({ onVerify, onError, onExpire, size = 'invisible', theme
     reset: () => {
       setToken('');
       clearPending();
-      widgetRef.current?.resetCaptcha?.();
+      // Defensive: the underlying hCaptcha library can throw if reset twice in
+      // quick succession (e.g. on a second failed login retry). A reset failure
+      // is non-fatal cleanup and must never propagate to the caller's error
+      // boundary. Swallow + log instead of crashing the app.
+      try {
+        widgetRef.current?.resetCaptcha?.();
+      } catch (err: unknown) {
+        auditLogger.warn('HCAPTCHA_RESET_FAILED', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
     },
   }));
 
