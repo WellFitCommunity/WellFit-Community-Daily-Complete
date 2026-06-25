@@ -70,14 +70,19 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
       try {
         const { data, error: profileError } = await supabase
           .from('profiles')
-          .select('role, role_slug, role_code, demographics_complete, demographics_step, first_name, last_name, phone, dob, address, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, gender, ethnicity, ethnicity_omb, race_omb_categories, marital_status, living_situation, education_level, income_range, insurance_type, preferred_language, requires_interpreter, veteran_status, health_conditions, medications, mobility_level, hearing_status, vision_status, has_smartphone, has_internet, tech_comfort_level, transportation_access, food_security, social_support')
+          // NOTE: preferred_language, requires_interpreter, veteran_status,
+          // emergency_contact_relationship, and role_slug are NOT columns on `profiles`.
+          // Those fields canonically live in the senior_* tables (loaded via
+          // SeniorDataService below). Selecting non-existent columns here returns a
+          // PostgREST 400 and breaks the entire intake form, so they are excluded.
+          .select('role, role_code, demographics_complete, demographics_step, first_name, last_name, phone, dob, address, emergency_contact_name, emergency_contact_phone, gender, ethnicity, ethnicity_omb, race_omb_categories, marital_status, living_situation, education_level, income_range, insurance_type, health_conditions, medications, mobility_level, hearing_status, vision_status, has_smartphone, has_internet, tech_comfort_level, transportation_access, food_security, social_support')
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (profileError) throw profileError;
 
         if (data) {
-          const roleName = data.role || data.role_slug || 'senior';
+          const roleName = data.role || 'senior';
           const userRoleCode = data.role_code || 4;
 
           if (userRoleCode === 4 || roleName === 'senior') {
@@ -116,7 +121,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
             address: data.address || '',
             emergency_contact_name: seniorData.emergency_contact_name || data.emergency_contact_name || '',
             emergency_contact_phone: seniorData.emergency_contact_phone || data.emergency_contact_phone || '',
-            emergency_contact_relationship: seniorData.emergency_contact_relationship || data.emergency_contact_relationship || '',
+            emergency_contact_relationship: seniorData.emergency_contact_relationship || '',
             gender: data.gender || '',
             race_omb: data.race_omb_categories || [],
             ethnicity_omb: data.ethnicity_omb || '',

@@ -17,9 +17,9 @@ Let an **admin / physician / researcher** ask a question **in plain language** (
 
 1. **Aggregate-only by construction.** The engine emits only `COUNT` / `AVG` / `%` with `GROUP BY`. There is NO code path that returns a raw patient row.
 2. **No LLM-authored SQL.** Plain-language input → Claude fills a **whitelisted JSON spec** (dimensions + measure + filters chosen from a server catalog) → engine compiles the spec into one parameterized aggregation query. Claude never writes SQL.
-3. **Small-cell suppression (k-anonymity).** Any result cell with `n < k` is masked (`"<11"`). Default **k = 11** (HHS/CMS standard), per-tenant configurable.
-4. **Geography is bucketed.** `zip_code` → **3-digit ZCTA** for everyone; full 5-digit zip never returned. Researcher tier suppresses zip beyond region entirely.
-5. **Role-gated, tenant-scoped, audit-logged.** Every query is logged (who, what spec, row counts pre/post suppression). Admin/physician = full-resolution tenant aggregates. **Researcher = stricter de-identified tier** (higher k, coarser age/date buckets, no tenant-identifying detail).
+3. **Small cells are FLAGGED, not masked (DECISION CHANGED — Maria, 2026-06-25).** The original plan masked any cell `n < k`. **We do not do that.** Masking n<11 would hide the exact small / underserved demographic groups that equity analytics exists to surface (a 6-person subgroup with a glaring disparity is the *signal*, not noise to suppress). Instead: every cell is returned with a `low_n` flag (default threshold 11) so the viewer knows it is thin, and a report MAY optionally exclude small cells (`minCellSize`) when appropriate. The stricter **researcher tier** is the one exception — it enforces a minimum cell size server-side because a researcher export is the only path where re-identifying a small group is a real risk.
+4. **Geography is bucketed.** `zip_code` → **3-digit ZCTA** for everyone; full 5-digit zip is never a returned dimension.
+5. **Role-gated, tenant-scoped, audit-logged.** Every query is logged (who, what spec, cell counts + low-N counts). Admin/clinical/analyst roles = full-resolution tenant aggregates. **Researcher = stricter de-identified tier** (enforced minimum cell size, no tenant-identifying detail).
 
 ---
 
@@ -45,6 +45,21 @@ Clinical/measure sources: `check_ins` (adherence/vitals), `readmission_risk_pred
 ---
 
 ## Session 1 — Engine spine (no UI, no NL yet)
+
+> **STATUS 2026-06-25: Session 1 code-complete + engine live-proven.** Rebuilt from scratch (the prior
+> session's S1 code was lost in a codespace crash — only tracker docs had been committed). Delivered:
+> - `supabase/migrations/20260625153942_equity_analytics_engine.sql` — `analytics_query_log` table (RLS,
+>   identity-enforced) + `equity_aggregate()` SECURITY DEFINER engine whose dimension/measure/filter
+>   whitelist lives in SQL (aggregate-only by construction). **Applied via `db push`, live-proven on
+>   WF-0001:** real member_count by gender (after fixing a case-split bug that undercounted "female"),
+>   race×age cross-tab, low-N flagged (not masked), out-of-catalog dim/measure rejected, cross-tenant → 0.
+> - `supabase/functions/equity-analytics/` — edge fn (auth + role gate + tenant scope + rate-limit +
+>   Zod/catalog validation + researcher-tier min-cell + audit write) and `catalog.ts` (served to UI).
+> - `src/services/equityAnalytics/` — typed `equityAnalyticsService` (ServiceResult) + types + tests.
+> - Verify: scoped tsc 0 / lint 0/0 / 7 tests pass. 4 sources live (members, checkins, readmission,
+>   sdoh_detections) with rich SDOH dimensions (housing, social isolation, financial stress, Z-codes).
+> **▶ NEXT: Session 2 (plain-language AI agent → spec), then Session 3 (EquityInsightsDashboard UI).**
+
 
 **Build:**
 - `supabase/functions/equity-analytics/` edge function (Deno). Auth via `_shared/auth.ts requireRole(['admin','physician','researcher'])`; CORS via `_shared/cors.ts`; rate-limit via `_shared/rateLimiter.ts`.
