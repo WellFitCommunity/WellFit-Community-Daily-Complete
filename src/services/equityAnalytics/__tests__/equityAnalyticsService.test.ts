@@ -140,3 +140,77 @@ describe('equityAnalyticsService.getCatalog', () => {
     }
   });
 });
+
+describe('equityAnalyticsService.translate', () => {
+  beforeEach(() => {
+    invoke.mockReset();
+  });
+
+  it('returns the interpreted spec for a clear question', async () => {
+    invoke.mockResolvedValue({
+      data: { spec: SPEC, interpretedFrom: 'members by gender', translatedBy: 'claude-sonnet-4-5-20250929' },
+      error: null,
+    });
+
+    const result = await equityAnalyticsService.translate('members by gender');
+
+    expect(result.success).toBe(true);
+    if (result.success && result.data.kind === 'spec') {
+      expect(result.data.spec).toEqual(SPEC);
+      expect(result.data.translatedBy).toContain('sonnet');
+    } else {
+      throw new Error('expected a spec result');
+    }
+    expect(invoke).toHaveBeenCalledWith('equity-analytics', {
+      body: { action: 'translate', question: 'members by gender' },
+    });
+  });
+
+  it('surfaces a clarification when the AI cannot map the question', async () => {
+    invoke.mockResolvedValue({
+      data: { clarification: 'Which measure did you mean?', question: 'huh' },
+      error: null,
+    });
+
+    const result = await equityAnalyticsService.translate('huh');
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.kind).toBe('clarification');
+      if (result.data.kind === 'clarification') {
+        expect(result.data.message).toBe('Which measure did you mean?');
+      }
+    }
+  });
+});
+
+describe('equityAnalyticsService.ask', () => {
+  beforeEach(() => {
+    invoke.mockReset();
+  });
+
+  it('returns a report when the question runs end-to-end', async () => {
+    invoke.mockResolvedValue({ data: REPORT, error: null });
+
+    const result = await equityAnalyticsService.ask('how many members by gender');
+
+    expect(result.success).toBe(true);
+    if (result.success && result.data.kind === 'report') {
+      expect(result.data.report.rows).toHaveLength(2);
+      expect(result.data.report.meta.lowNCellCount).toBe(1);
+    } else {
+      throw new Error('expected a report result');
+    }
+  });
+
+  it('returns a clarification (not a report) when the ask is unmappable', async () => {
+    invoke.mockResolvedValue({ data: { clarification: 'That field is not available.', question: 'x' }, error: null });
+
+    const result = await equityAnalyticsService.ask('show me their A1c lab values');
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.kind).toBe('clarification');
+    }
+  });
+});

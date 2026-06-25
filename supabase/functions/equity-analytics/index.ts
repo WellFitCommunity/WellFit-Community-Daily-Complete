@@ -15,6 +15,7 @@ import { z } from "https://esm.sh/zod@3.21.4";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { checkRateLimit, RATE_LIMITS } from "../_shared/rateLimiter.ts";
 import { CATALOG, MAX_DIMENSIONS, TIME_GRAINS, validateAgainstCatalog } from "./catalog.ts";
+import { NL_TRANSLATOR_MODEL, translateQuestion } from "./nlTranslator.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("SB_URL") ?? "";
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ??
@@ -120,75 +121,113 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ catalog: CATALOG, tier }, 200, cors);
   }
 
-  // 5. Validate the spec
-  const rawSpec = (body as { spec?: unknown }).spec ?? body;
-  const parsed = SpecSchema.safeParse(rawSpec);
-  if (!parsed.success) {
-    return json({ error: "Invalid spec", details: parsed.error.flatten() }, 400, cors);
-  }
-  const spec: Spec = parsed.data;
-
-  const catalogCheck = validateAgainstCatalog(spec);
-  if (!catalogCheck.ok) {
-    return json({ error: catalogCheck.error }, 400, cors);
+  // Normalize + validate any spec against the catalog (shared by query/ask).
+  function normalizeSpec(raw: unknown): { ok: true; spec: Spec } | { ok: false; error: string } {
+    const parsed = SpecSchema.safeParse(raw);
+    if (!parsed.success) return { ok: false, error: "Invalid spec" };
+    const check = validateAgainstCatalog(parsed.data);
+    if (!check.ok) return { ok: false, error: check.error };
+    return { ok: true, spec: parsed.data };
   }
 
-  // Researcher tier overrides: enforce a minimum cell size (drop small cells).
-  const effectiveMinCell = tier === "researcher"
-    ? Math.max(RESEARCHER_MIN_CELL, spec.minCellSize ?? 0)
-    : (spec.minCellSize ?? null);
+  // Run the deterministic engine + audit. nlProvenance records the AI translation for transparency.
+  async function runAggregate(
+    spec: Spec,
+    nlProvenance?: { question: string; model: string; usage: { input: number; output: number } },
+  ): Promise<{ status: number; body: unknown }> {
+    // Researcher tier enforces a minimum cell size (drops small cells); standard tier flags only.
+    const effectiveMinCell = tier === "researcher"
+      ? Math.max(RESEARCHER_MIN_CELL, spec.minCellSize ?? 0)
+      : (spec.minCellSize ?? null);
 
-  // 6. Run the engine (SECURITY DEFINER; tenant supplied is the caller's verified tenant)
-  const { data, error } = await admin.rpc("equity_aggregate", {
-    p_tenant: tenantId,
-    p_source: spec.source,
-    p_dimensions: spec.dimensions,
-    p_measure: spec.measure,
-    p_filters: spec.filters,
-    p_time_grain: spec.timeGrain ?? null,
-    p_date_from: spec.dateFrom ?? null,
-    p_date_to: spec.dateTo ?? null,
-    p_low_n_threshold: LOW_N_THRESHOLD,
-    p_min_cell_size: effectiveMinCell,
-    p_row_limit: 2000,
-  });
+    const { data, error } = await admin.rpc("equity_aggregate", {
+      p_tenant: tenantId,
+      p_source: spec.source,
+      p_dimensions: spec.dimensions,
+      p_measure: spec.measure,
+      p_filters: spec.filters,
+      p_time_grain: spec.timeGrain ?? null,
+      p_date_from: spec.dateFrom ?? null,
+      p_date_to: spec.dateTo ?? null,
+      p_low_n_threshold: LOW_N_THRESHOLD,
+      p_min_cell_size: effectiveMinCell,
+      p_row_limit: 2000,
+    });
+    if (error) {
+      return { status: 400, body: { error: "Aggregation failed", details: error.message } };
+    }
 
-  if (error) {
-    return json({ error: "Aggregation failed", details: error.message }, 400, cors);
-  }
+    const rows: Cell[] = (data ?? []).map((r: { cell: Cell }) => r.cell);
+    const lowNCount = rows.filter((c) => c.low_n).length;
+    const minCellN = rows.length ? rows.reduce((acc, c) => Math.min(acc, c.cell_n), Infinity) : null;
 
-  const rows: Cell[] = (data ?? []).map((r: { cell: Cell }) => r.cell);
-  const lowNCount = rows.filter((c) => c.low_n).length;
-  const minCellN = rows.length ? rows.reduce((acc, c) => Math.min(acc, c.cell_n), Infinity) : null;
-
-  // 7. Audit (who ran which spec + pre/post cell counts)
-  await admin.from("analytics_query_log").insert({
-    tenant_id: tenantId,
-    requested_by: userId,
-    requester_role: role,
-    source: spec.source,
-    measure: spec.measure,
-    dimensions: spec.dimensions,
-    spec: spec as unknown as Record<string, unknown>,
-    cell_count: rows.length,
-    low_n_cell_count: lowNCount,
-    min_cell_n: minCellN,
-    tier,
-  });
-
-  return json({
-    rows,
-    meta: {
+    await admin.from("analytics_query_log").insert({
+      tenant_id: tenantId,
+      requested_by: userId,
+      requester_role: role,
       source: spec.source,
       measure: spec.measure,
       dimensions: spec.dimensions,
-      timeGrain: spec.timeGrain ?? null,
+      // Full provenance for transparency: the spec verbatim plus the NL question + AI model when applicable.
+      spec: { ...spec, ...(nlProvenance ? { _nl: nlProvenance } : {}) } as unknown as Record<string, unknown>,
+      cell_count: rows.length,
+      low_n_cell_count: lowNCount,
+      min_cell_n: minCellN,
       tier,
-      cellCount: rows.length,
-      lowNCellCount: lowNCount,
-      // Small cells are flagged (low_n), never masked, unless the report explicitly drops them.
-      smallCellsDropped: effectiveMinCell != null,
-      generatedAt: new Date().toISOString(),
-    },
-  }, 200, cors);
+    });
+
+    return {
+      status: 200,
+      body: {
+        rows,
+        meta: {
+          source: spec.source,
+          measure: spec.measure,
+          dimensions: spec.dimensions,
+          timeGrain: spec.timeGrain ?? null,
+          tier,
+          cellCount: rows.length,
+          lowNCellCount: lowNCount,
+          // Small cells are flagged (low_n), never masked, unless the report explicitly drops them.
+          smallCellsDropped: effectiveMinCell != null,
+          generatedAt: new Date().toISOString(),
+          ...(nlProvenance ? { interpretedFrom: nlProvenance.question, translatedBy: nlProvenance.model } : {}),
+        },
+      },
+    };
+  }
+
+  // --- AI plain-language layer (translate / ask) ---
+  if (action === "translate" || action === "ask") {
+    const question = String((body as { question?: unknown }).question ?? "");
+    const t = await translateQuestion(question);
+
+    if (t.kind === "error") return json({ error: t.message }, 400, cors);
+    if (t.kind === "clarify") {
+      return json({ clarification: t.message, question }, 200, cors);
+    }
+
+    // t.kind === "spec": re-validate the AI's output against the catalog (never trust model output).
+    const norm = normalizeSpec(t.spec);
+    if (!norm.ok) {
+      return json({
+        clarification: `I couldn't map that to the available data: ${norm.error}. Try naming a specific measure or breakdown.`,
+        question,
+      }, 200, cors);
+    }
+
+    if (action === "translate") {
+      return json({ spec: norm.spec, interpretedFrom: question, translatedBy: NL_TRANSLATOR_MODEL }, 200, cors);
+    }
+    const result = await runAggregate(norm.spec, { question, model: NL_TRANSLATOR_MODEL, usage: t.usage });
+    return json(result.body, result.status, cors);
+  }
+
+  // --- Direct structured query (no AI) ---
+  const norm = normalizeSpec((body as { spec?: unknown }).spec ?? body);
+  if (!norm.ok) {
+    return json({ error: norm.error }, 400, cors);
+  }
+  const result = await runAggregate(norm.spec);
+  return json(result.body, result.status, cors);
 });

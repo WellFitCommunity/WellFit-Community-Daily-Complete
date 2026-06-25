@@ -79,3 +79,13 @@ export interface EquityCatalogResponse {
   catalog: Record<string, CatalogSource>;
   tier: 'standard' | 'researcher';
 }
+
+/** Result of translating a plain-language question (Session 2 AI layer). */
+export type EquityTranslation =
+  | { kind: 'spec'; spec: EquitySpec; interpretedFrom: string; translatedBy: string }
+  | { kind: 'clarification'; message: string; question: string };
+
+/** Result of asking a plain-language question and running it end-to-end. */
+export type EquityAskResult =
+  | { kind: 'report'; report: EquityReport }
+  | { kind: 'clarification'; message: string; question: string };

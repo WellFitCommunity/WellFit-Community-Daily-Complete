@@ -78,6 +78,24 @@ Clinical/measure sources: `check_ins` (adherence/vitals), `readmission_risk_pred
 
 ## Session 2 — Plain-language layer
 
+> **STATUS 2026-06-25: Session 2 code-complete + deployed.** The AI "front door" — English question →
+> whitelisted spec. Delivered:
+> - `supabase/functions/equity-analytics/nlTranslator.ts` — catalog-grounded system prompt + forced
+>   tool-use (`build_equity_spec` / `request_clarification`, `tool_choice:{type:'any'}`), SONNET pinned.
+>   AI never sees data, never writes SQL, picks catalog keys only; ambiguous/out-of-scope → clarifying
+>   question, not a guess.
+> - Edge fn actions `translate` (→ spec or clarification) and `ask` (translate → re-validate vs catalog
+>   → run → report). Model output re-validated server-side before the engine runs it (defense in depth).
+>   NL provenance (question + model) logged into `analytics_query_log.spec._nl`.
+> - `ai_skills` row #65 `equity_analytics_nl_translator` (model pinned, HTI-2 `patient_description`).
+> - `equityAnalyticsService.translate()/ask()` + discriminated-union types + tests (11 total pass).
+> - Verify: scoped tsc 0 / lint 0/0 / 11 tests / deployed / `ANTHROPIC_API_KEY` present / auth gate holds.
+> **⚠️ Full Claude round-trip NOT yet live-proven** — needs a real authenticated admin session (a
+> locally-minted JWT is rejected by the project's asymmetric signing key). This is exercised + visually
+> accepted in Session 3 when Maria is logged in. The deterministic engine IS fully live-proven.
+> **▶ NEXT: Session 3 — EquityInsightsDashboard UI (query builder + plain-language box + charts).**
+
+
 **Build:**
 - NL → spec translator via `claude-chat` with **forced tool_use / structured output** (Rule #16). Tool schema = the validated spec. Claude picks from the catalog ONLY; out-of-catalog asks → return a clarifying question, never guess.
 - Guardrail: the returned spec is re-validated against the Zod catalog server-side before it touches the engine (defense in depth — never trust model output, per python.md §3 / ai-services.md).
