@@ -86,7 +86,7 @@ Glucose `'glucose'`→`'blood_glucose'` fixed in DeviceService (save+read); grep
 - [ ] Codebase-wide grep for any other `'glucose'` vital_type writer/reader; fix sisters.
 **Acceptance:** scoped typecheck/lint/tests green. Field proof per device where hardware is available.
 
-### 🟡 Session C — Doctor weekly-average vitals view — CODE DONE 2026-06-30 (FHIR sub-item deferred, Tier 3)
+### ✅ Session C — Doctor weekly-average vitals view — DONE 2026-06-30 (FHIR included)
 - [x] New service `src/services/vitalsSummaryService.ts`: weekly buckets `{ weekStart, avg, min, max, count, outOfRangeCount }`
   + flagged outliers. Scoped to the 4 BLE verticals (`blood_pressure`, `blood_glucose`, `oxygen_saturation`, `weight`)
   per the "skip wearables" decision. Live schema of `wearable_vital_signs` verified before design (rule 18). Clinical
@@ -96,9 +96,12 @@ Glucose `'glucose'`→`'blood_glucose'` fixed in DeviceService (save+read); grep
 - [x] New component `src/components/clinical/VitalsWeeklySummary.tsx`: weekly-average chart (recharts) + vital + window
   selectors + "View complete list" expander + a persistent, always-visible "Out of Range / Outliers" panel.
 - [x] Wired into `src/pages/DoctorsView/DoctorsViewPage.tsx` (scoped to `userId`) and `RpmPatientDetail.tsx`.
-- [ ] **FHIR (DEFERRED — Tier 3, awaiting Maria):** map check-in `weight` (LOINC 29463-7) in the trigger; add a
-  wearable→`fhir_observations` path so BLE readings reach FHIR like check-ins do. Schema/trigger change — not a
-  defect; the weekly view is fully functional without it.
+- [x] **FHIR (APPROVED + APPLIED 2026-06-30, Tier 3):** migration `20260630180000_fhir_weight_and_ble_device_observations.sql`,
+  pushed live + verified. (a) Added Body weight (LOINC 29463-7) to `fn_checkin_to_fhir_observation` (also added the
+  missing `SET search_path = public`); (b) NEW `fn_wearable_to_fhir_observation` + `trg_wearable_to_fhir_observation`
+  on `wearable_vital_signs` mapping BP→85354-9, glucose→2339-0, SpO2→2708-6, weight→29463-7, HR→8867-4, temp→8310-5,
+  `sync_source='ble_device_trigger'`, device provenance via `device_id`. **Live round-trip proof:** inserting a BLE
+  `blood_glucose` reading produced exactly 1 `fhir_observations` row (LOINC 2339-0), then rolled back (0 residue verified).
 - [x] Tests: `vitalsSummaryService` (20) + `VitalsWeeklySummary` (renders averages, panels always visible, expander
   reveals full list, window re-query, empty state).
 **Verification (2026-06-30):** scoped typecheck 0 errors · lint 0/0 · tests 43 passed (20 service + component + 23 DoctorsView, no regression).
