@@ -376,7 +376,7 @@ describe('DeviceService', () => {
         id: 'glucose-1',
         user_id: mockUser.id,
         device_id: 'device-1',
-        vital_type: 'glucose',
+        vital_type: 'blood_glucose',
         value: 98,
         unit: 'mg/dL',
         measured_at: '2026-01-28T07:00:00Z',
@@ -407,8 +407,8 @@ describe('DeviceService', () => {
   describe('getGlucoseReadings', () => {
     it('returns glucose readings with meal context', async () => {
       const mockReadings = [
-        { id: '1', user_id: mockUser.id, device_id: 'd1', vital_type: 'glucose', value: 98, unit: 'mg/dL', measured_at: '2026-01-28', metadata: { meal_context: 'fasting' } },
-        { id: '2', user_id: mockUser.id, device_id: 'd1', vital_type: 'glucose', value: 145, unit: 'mg/dL', measured_at: '2026-01-28', metadata: { meal_context: 'after_meal' } },
+        { id: '1', user_id: mockUser.id, device_id: 'd1', vital_type: 'blood_glucose', value: 98, unit: 'mg/dL', measured_at: '2026-01-28', metadata: { meal_context: 'fasting' } },
+        { id: '2', user_id: mockUser.id, device_id: 'd1', vital_type: 'blood_glucose', value: 145, unit: 'mg/dL', measured_at: '2026-01-28', metadata: { meal_context: 'after_meal' } },
       ];
 
       const mockBuilder = {

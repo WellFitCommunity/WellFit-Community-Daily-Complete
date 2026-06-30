@@ -59,7 +59,7 @@
 
 ## 2. Sessions
 
-### Session A — BLE capture bridge + Blood Pressure vertical slice (~1 session)
+### ✅ Session A — BLE capture bridge + Blood Pressure vertical slice — DONE 2026-06-30 (commit 4d0726ea)
 **Build:**
 - [ ] New hook `src/hooks/useBleCapture.ts` — wraps `bleConnectionManager` + `useCapabilities`:
   returns `{ isSupported, isIOS, status, lastReading, error, pair(deviceType), disconnect() }`.
@@ -78,7 +78,8 @@
 - [ ] Test: `src/pages/devices/__tests__/BloodPressureMonitorPage.test.tsx` — assert (a) iPhone path shows manual-only + no pair button, (b) a parsed reading persists via mocked `ble-sync`, (c) saved reading renders, (d) saved friendly name renders on the connect button. Deletion-test compliant.
 **Acceptance:** scoped typecheck 0 / lint 0 / tests pass. **Field proof (Maria):** on an Android phone in Chrome, pair a real BP cuff, take a reading, see it appear + land in `wearable_vital_signs` (verify row via SQL); reload and confirm it reconnects by friendly name without the chooser.
 
-### Session B — Glucometer, Scale, Pulse-Ox slices (~1 session)
+### ✅ Session B — Glucometer, Scale, Pulse-Ox slices — DONE 2026-06-30
+Glucose `'glucose'`→`'blood_glucose'` fixed in DeviceService (save+read); grep confirmed it was the only DB sister. All three pages use `useBleCapture` with iPhone gating + friendly name + senior steps; weight maps `lb`→`lbs`. 65 device/service tests pass.
 - [ ] Apply the Session-A pattern to `GlucometerPage.tsx`, `SmartScalePage.tsx`, `PulseOximeterPage.tsx`.
 - [ ] Update `DeviceService`: glucose `'glucose'`→`'blood_glucose'` (save + read); confirm weight/spo2 already align to §1.2.
 - [ ] Tests per page (same three assertions). 

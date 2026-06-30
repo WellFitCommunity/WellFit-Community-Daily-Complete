@@ -549,7 +549,7 @@ export class DeviceService {
         .insert({
           user_id: user.id,
           device_id: reading.device_id,
-          vital_type: 'glucose',
+          vital_type: 'blood_glucose',
           value: reading.value,
           unit: 'mg/dL',
           measured_at: reading.measured_at,
@@ -579,7 +579,7 @@ export class DeviceService {
         .from('wearable_vital_signs')
         .select('id, user_id, device_id, value, unit, measured_at, metadata')
         .eq('user_id', user.id)
-        .eq('vital_type', 'glucose')
+        .eq('vital_type', 'blood_glucose')
         .order('measured_at', { ascending: false })
         .limit(limit);
 

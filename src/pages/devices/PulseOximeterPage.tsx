@@ -1,51 +1,114 @@
 // src/pages/devices/PulseOximeterPage.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type SpO2Reading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
 import CriticalValueAlert, { checkSpO2CriticalValues, type CriticalAlert } from '../../components/devices/CriticalValueAlert';
 import ManualEntryForm from '../../components/devices/ManualEntryForm';
+import { useBleCapture } from '../../hooks/useBleCapture';
+import { auditLogger } from '../../services/auditLogger';
+import type { BleVitalReading } from '../../types/ble';
 
 type SpO2Status = 'normal' | 'low' | 'critical';
+
+const FRIENDLY_NAME_KEY = 'ble_friendly_name_pulse_oximeter';
 
 const PulseOximeterPage: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [readings, setReadings] = useState<SpO2Reading[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [friendlyName, setFriendlyName] = useState<string | null>(null);
 
-  // Load connection status and readings on mount
-  useEffect(() => {
-    loadData();
+  const deviceIdRef = useRef<string | null>(null);
+
+  const loadReadings = useCallback(async () => {
+    const result = await DeviceService.getSpO2Readings(20);
+    if (result.success && result.data) {
+      setReadings(result.data);
+    }
   }, []);
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const handleBleReading = useCallback(
+    async (reading: BleVitalReading) => {
+      const spo2 = reading.values.find((v) => v.type === 'spo2')?.value;
+      const pulseRate = reading.values.find((v) => v.type === 'pulse_rate')?.value ?? 0;
+      if (spo2 === undefined) {
+        setError('That reading came through incomplete. Please take it again.');
+        return;
+      }
+      setSaving(true);
+      try {
+        const result = await DeviceService.saveSpO2Reading({
+          device_id: deviceIdRef.current ?? 'ble',
+          spo2: Math.round(spo2),
+          pulse_rate: Math.round(pulseRate),
+          measured_at: reading.timestamp,
+        });
+        if (result.success) {
+          setError(null);
+          await loadReadings();
+        } else {
+          setError(result.error ?? 'We could not save that reading. Please try again.');
+        }
+      } catch (err: unknown) {
+        await auditLogger.error(
+          'BLE_SPO2_SAVE_FAILED',
+          err instanceof Error ? err : new Error(String(err)),
+          { deviceType: 'pulse_oximeter' }
+        );
+        setError('We could not save that reading. Please try again.');
+      } finally {
+        setSaving(false);
+      }
+    },
+    [loadReadings]
+  );
+
+  const ble = useBleCapture({ deviceType: 'pulse_oximeter', onReading: handleBleReading });
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setIsLoading(true);
+      try {
+        await loadReadings();
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+      try {
+        const saved = localStorage.getItem(FRIENDLY_NAME_KEY);
+        if (mounted && saved) setFriendlyName(saved);
+      } catch {
+        // localStorage unavailable
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [loadReadings]);
+
+  useEffect(() => {
+    if (ble.status !== 'connected' || !ble.deviceName) return;
+    const name = ble.deviceName;
+    setFriendlyName(name);
     try {
-      const [connectionResult, readingsResult] = await Promise.all([
-        DeviceService.getConnectionStatus('pulse_oximeter'),
-        DeviceService.getSpO2Readings(10),
-      ]);
-
-      if (connectionResult.success && connectionResult.data) {
-        setIsConnected(connectionResult.data.connected);
-      }
-
-      if (readingsResult.success && readingsResult.data) {
-        setReadings(readingsResult.data);
-      }
+      localStorage.setItem(FRIENDLY_NAME_KEY, name);
     } catch {
-      setError('Failed to load data');
-    } finally {
-      setIsLoading(false);
+      // best-effort
     }
-  };
+    void (async () => {
+      const conn = await DeviceService.connectDevice('pulse_oximeter', name);
+      if (conn.success && conn.data) {
+        deviceIdRef.current = conn.data.id;
+      }
+    })();
+  }, [ble.status, ble.deviceName]);
 
   const getStatusColor = (status: SpO2Status) => {
     switch (status) {
@@ -74,30 +137,11 @@ const PulseOximeterPage: React.FC = () => {
     };
   };
 
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    setError(null);
-    try {
-      const result = await DeviceService.connectDevice('pulse_oximeter', 'Pulse Oximeter');
-      if (result.success) {
-        setIsConnected(true);
-        await loadData();
-      } else {
-        setError(result.error || 'Failed to connect');
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
   const handleDisconnect = async () => {
-    const result = await DeviceService.disconnectDevice('pulse_oximeter');
-    if (result.success) {
-      setIsConnected(false);
-    }
+    await ble.disconnect();
+    deviceIdRef.current = null;
   };
 
-  // Prepare chart data
   const chartData: ChartDataPoint[] = useMemo(() => {
     return readings.map((reading) => ({
       date: formatDateTime(reading.measured_at).date,
@@ -116,13 +160,10 @@ const PulseOximeterPage: React.FC = () => {
     { label: 'Low', value: 90, color: '#eab308', strokeDasharray: '3 3' },
   ];
 
-  // Check for critical values in recent readings
   const criticalAlerts: CriticalAlert[] = useMemo(() => {
     if (readings.length === 0) return [];
     const latestReading = readings[0];
-    return checkSpO2CriticalValues(latestReading).filter(
-      (alert) => !dismissedAlerts.has(alert.id)
-    );
+    return checkSpO2CriticalValues(latestReading).filter((alert) => !dismissedAlerts.has(alert.id));
   }, [readings, dismissedAlerts]);
 
   const handleDismissAlert = (alertId: string) => {
@@ -136,19 +177,19 @@ const PulseOximeterPage: React.FC = () => {
       pulse_rate: data.pulse_rate as number,
       measured_at: data.measured_at as string,
     });
-
     if (result.success) {
-      await loadData();
+      await loadReadings();
     }
-
     return result;
   };
 
+  const isConnected = ble.status === 'connected';
+  const isPairing = ble.status === 'pairing';
+  const connectLabel = `Connect ${friendlyName ?? 'Pulse Oximeter'}`;
+  const displayError = error ?? ble.error;
+
   return (
-    <div
-      className="min-h-screen pb-20"
-      style={{ background: branding.gradient }}
-    >
+    <div className="min-h-screen pb-20" style={{ background: branding.gradient }}>
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-3xl">
 
         {/* Header */}
@@ -162,65 +203,74 @@ const PulseOximeterPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Critical Value Alerts */}
-        <CriticalValueAlert
-          alerts={criticalAlerts}
-          onDismiss={handleDismissAlert}
-        />
+        <CriticalValueAlert alerts={criticalAlerts} onDismiss={handleDismissAlert} />
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6">
-            {error}
+        {displayError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6" role="alert">
+            {displayError}
           </div>
         )}
 
         {/* Connection Card */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div
-                className={`w-4 h-4 rounded-full ${
-                  isConnected ? 'bg-green-500' : 'bg-gray-300'
-                }`}
-              />
-              <span className="text-lg font-semibold text-gray-700">
-                {isLoading ? 'Loading...' : isConnected ? 'Connected' : 'Not Connected'}
-              </span>
+          {isLoading ? (
+            <div className="text-lg font-semibold text-gray-700">Loading...</div>
+          ) : !ble.isSupported ? (
+            <div className="bg-blue-50 rounded-xl p-4 text-blue-800">
+              <h3 className="font-semibold mb-1 text-lg">Bluetooth isn’t available on this device</h3>
+              <p className="text-base">
+                {ble.capabilityMessage ?? 'This device can’t connect a Bluetooth pulse oximeter.'} You can
+                still enter your reading by hand below — just type the numbers from your device.
+              </p>
             </div>
-            <button
-              onClick={isConnected ? handleDisconnect : handleConnect}
-              disabled={isConnecting || isLoading}
-              className={`px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
-                isConnected
-                  ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                  : 'text-white hover:opacity-90'
-              }`}
-              style={!isConnected ? { backgroundColor: branding.primaryColor } : {}}
-            >
-              {isConnecting ? 'Connecting...' : isConnected ? 'Disconnect' : 'Connect Pulse Ox'}
-            </button>
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className={`w-4 h-4 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-lg font-semibold text-gray-700">
+                    {isConnected ? `Connected: ${ble.deviceName ?? friendlyName ?? 'your device'}` : 'Not Connected'}
+                  </span>
+                </div>
+                <button
+                  onClick={isConnected ? handleDisconnect : ble.pair}
+                  disabled={isPairing}
+                  aria-label={isConnected ? 'Disconnect pulse oximeter' : connectLabel}
+                  className={`min-h-[44px] px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                    isConnected ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'text-white hover:opacity-90'
+                  }`}
+                  style={!isConnected ? { backgroundColor: branding.primaryColor } : {}}
+                >
+                  {isPairing ? 'Connecting...' : isConnected ? 'Disconnect' : connectLabel}
+                </button>
+              </div>
 
-          {!isConnected && !isLoading && (
-            <div className="bg-blue-50 rounded-xl p-4 text-blue-700">
-              <h3 className="font-semibold mb-2">Compatible Pulse Oximeters:</h3>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Masimo MightySat</li>
-                <li>Nonin 3230</li>
-                <li>Wellue O2Ring</li>
-                <li>iHealth Air</li>
-                <li>Any Bluetooth-enabled pulse oximeter</li>
-              </ul>
-            </div>
+              {isConnected ? (
+                <div className="bg-green-50 rounded-xl p-4 text-green-800">
+                  <p className="text-base font-medium">
+                    {saving ? 'Saving your reading…' : 'Put your finger in the device now — your reading will appear below automatically.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-blue-50 rounded-xl p-4 text-blue-800">
+                  <h3 className="font-semibold mb-2 text-lg">How to connect your pulse oximeter</h3>
+                  <ol className="list-decimal list-inside space-y-1 text-base">
+                    <li>Turn on your pulse oximeter so it is ready to pair.</li>
+                    <li>Tap <span className="font-semibold">Connect</span> above.</li>
+                    <li>Pick your device from the list that appears.</li>
+                  </ol>
+                  <p className="text-sm mt-3 text-blue-700">
+                    Works with standard Bluetooth pulse oximeters on Android phones and computers using Chrome.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
         {/* SpO2 Range Guide */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: branding.primaryColor }}
-          >
+          <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             Blood Oxygen (SpO2) Guide
           </h2>
           <div className="space-y-3">
@@ -252,7 +302,7 @@ const PulseOximeterPage: React.FC = () => {
         </div>
 
         {/* SpO2 Trend Chart */}
-        {isConnected && readings.length > 0 && (
+        {readings.length > 0 && (
           <div className="mb-6">
             <VitalTrendChart
               data={chartData}
@@ -266,61 +316,44 @@ const PulseOximeterPage: React.FC = () => {
         )}
 
         {/* SpO2 History */}
-        {isConnected && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-            <h2
-              className="text-2xl font-bold mb-6"
-              style={{ color: branding.primaryColor }}
-            >
-              Recent Readings
-            </h2>
-            {readings.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                No readings yet. Take an SpO2 measurement to record your first reading.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {readings.map((reading) => {
-                  const { date, time } = formatDateTime(reading.measured_at);
-                  const status = getSpO2Status(reading.spo2);
-                  return (
-                    <div
-                      key={reading.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-                    >
-                      <div>
-                        <div className="text-sm text-gray-500">
-                          {date} at {time}
-                        </div>
-                        <div className="text-2xl font-bold text-gray-800">
-                          {reading.spo2}%
-                          <span className="text-lg font-normal text-gray-500 ml-2">SpO2</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-500 mb-1">
-                          Pulse: {reading.pulse_rate} bpm
-                        </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}
-                        >
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </span>
+        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+          <h2 className="text-2xl font-bold mb-6" style={{ color: branding.primaryColor }}>
+            Recent Readings
+          </h2>
+          {readings.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              No readings yet. Take an SpO2 measurement to record your first reading.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {readings.map((reading) => {
+                const { date, time } = formatDateTime(reading.measured_at);
+                const status = getSpO2Status(reading.spo2);
+                return (
+                  <div key={reading.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div>
+                      <div className="text-sm text-gray-500">{date} at {time}</div>
+                      <div className="text-2xl font-bold text-gray-800">
+                        {reading.spo2}%
+                        <span className="text-lg font-normal text-gray-500 ml-2">SpO2</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                    <div className="text-right">
+                      <div className="text-sm text-gray-500 mb-1">Pulse: {reading.pulse_rate} bpm</div>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* When to Monitor */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: branding.primaryColor }}
-          >
+          <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             When to Monitor SpO2
           </h2>
           <div className="space-y-3">
@@ -358,16 +391,13 @@ const PulseOximeterPage: React.FC = () => {
         {/* Manual Entry */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2
-              className="text-2xl font-bold"
-              style={{ color: branding.primaryColor }}
-            >
+            <h2 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
               Manual Entry
             </h2>
             {!showManualEntry && (
               <button
                 onClick={() => setShowManualEntry(true)}
-                className="px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 hover:opacity-90"
+                className="min-h-[44px] px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 hover:opacity-90"
                 style={{ backgroundColor: branding.primaryColor }}
               >
                 + Add Reading

@@ -1,66 +1,125 @@
 // src/pages/devices/GlucometerPage.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type GlucoseReading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';
 import CriticalValueAlert, { checkGlucoseCriticalValues, type CriticalAlert } from '../../components/devices/CriticalValueAlert';
 import ManualEntryForm from '../../components/devices/ManualEntryForm';
+import { useBleCapture } from '../../hooks/useBleCapture';
+import { auditLogger } from '../../services/auditLogger';
+import type { BleVitalReading } from '../../types/ble';
 
 type GlucoseStatus = 'normal' | 'low' | 'high' | 'critical';
+
+const FRIENDLY_NAME_KEY = 'ble_friendly_name_glucose_meter';
 
 const GlucometerPage: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [readings, setReadings] = useState<GlucoseReading[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [friendlyName, setFriendlyName] = useState<string | null>(null);
 
-  // Load connection status and readings on mount
-  useEffect(() => {
-    loadData();
+  const deviceIdRef = useRef<string | null>(null);
+
+  const loadReadings = useCallback(async () => {
+    const result = await DeviceService.getGlucoseReadings(20);
+    if (result.success && result.data) {
+      setReadings(result.data);
+    }
   }, []);
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const handleBleReading = useCallback(
+    async (reading: BleVitalReading) => {
+      const value = reading.values.find((v) => v.type === 'glucose')?.value;
+      if (value === undefined) {
+        setError('That reading came through incomplete. Please take it again.');
+        return;
+      }
+      setSaving(true);
+      try {
+        const result = await DeviceService.saveGlucoseReading({
+          device_id: deviceIdRef.current ?? 'ble',
+          value: Math.round(value),
+          // A meter reading carries no meal context; default to fasting
+          // (same status thresholds as before_meal).
+          meal_context: 'fasting',
+          measured_at: reading.timestamp,
+        });
+        if (result.success) {
+          setError(null);
+          await loadReadings();
+        } else {
+          setError(result.error ?? 'We could not save that reading. Please try again.');
+        }
+      } catch (err: unknown) {
+        await auditLogger.error(
+          'BLE_GLUCOSE_SAVE_FAILED',
+          err instanceof Error ? err : new Error(String(err)),
+          { deviceType: 'glucose_meter' }
+        );
+        setError('We could not save that reading. Please try again.');
+      } finally {
+        setSaving(false);
+      }
+    },
+    [loadReadings]
+  );
+
+  const ble = useBleCapture({ deviceType: 'glucose_meter', onReading: handleBleReading });
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setIsLoading(true);
+      try {
+        await loadReadings();
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+      try {
+        const saved = localStorage.getItem(FRIENDLY_NAME_KEY);
+        if (mounted && saved) setFriendlyName(saved);
+      } catch {
+        // localStorage unavailable
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [loadReadings]);
+
+  useEffect(() => {
+    if (ble.status !== 'connected' || !ble.deviceName) return;
+    const name = ble.deviceName;
+    setFriendlyName(name);
     try {
-      const [connectionResult, readingsResult] = await Promise.all([
-        DeviceService.getConnectionStatus('glucometer'),
-        DeviceService.getGlucoseReadings(10),
-      ]);
-
-      if (connectionResult.success && connectionResult.data) {
-        setIsConnected(connectionResult.data.connected);
-      }
-
-      if (readingsResult.success && readingsResult.data) {
-        setReadings(readingsResult.data);
-      }
+      localStorage.setItem(FRIENDLY_NAME_KEY, name);
     } catch {
-      setError('Failed to load data');
-    } finally {
-      setIsLoading(false);
+      // best-effort
     }
-  };
+    void (async () => {
+      const conn = await DeviceService.connectDevice('glucometer', name);
+      if (conn.success && conn.data) {
+        deviceIdRef.current = conn.data.id;
+      }
+    })();
+  }, [ble.status, ble.deviceName]);
 
   const getGlucoseStatus = (value: number, mealContext: GlucoseReading['meal_context']): GlucoseStatus => {
-    // Fasting/Before meal targets: 80-130 mg/dL
-    // After meal target: <180 mg/dL
-    // Bedtime target: 100-140 mg/dL
     if (value < 70) return 'low';
     if (value > 250) return 'critical';
-
     if (mealContext === 'after_meal') {
       return value <= 180 ? 'normal' : 'high';
     }
     if (mealContext === 'bedtime') {
       return value >= 100 && value <= 140 ? 'normal' : (value < 100 ? 'low' : 'high');
     }
-    // fasting or before_meal
     return value >= 80 && value <= 130 ? 'normal' : (value < 80 ? 'low' : 'high');
   };
 
@@ -102,30 +161,11 @@ const GlucometerPage: React.FC = () => {
     };
   };
 
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    setError(null);
-    try {
-      const result = await DeviceService.connectDevice('glucometer', 'Glucometer');
-      if (result.success) {
-        setIsConnected(true);
-        await loadData();
-      } else {
-        setError(result.error || 'Failed to connect');
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
   const handleDisconnect = async () => {
-    const result = await DeviceService.disconnectDevice('glucometer');
-    if (result.success) {
-      setIsConnected(false);
-    }
+    await ble.disconnect();
+    deviceIdRef.current = null;
   };
 
-  // Prepare chart data
   const chartData: ChartDataPoint[] = useMemo(() => {
     return readings.map((reading) => ({
       date: formatDateTime(reading.measured_at).date,
@@ -144,13 +184,10 @@ const GlucometerPage: React.FC = () => {
     { label: 'Low', value: 70, color: '#3b82f6', strokeDasharray: '3 3' },
   ];
 
-  // Check for critical values in recent readings
   const criticalAlerts: CriticalAlert[] = useMemo(() => {
     if (readings.length === 0) return [];
     const latestReading = readings[0];
-    return checkGlucoseCriticalValues(latestReading).filter(
-      (alert) => !dismissedAlerts.has(alert.id)
-    );
+    return checkGlucoseCriticalValues(latestReading).filter((alert) => !dismissedAlerts.has(alert.id));
   }, [readings, dismissedAlerts]);
 
   const handleDismissAlert = (alertId: string) => {
@@ -164,19 +201,19 @@ const GlucometerPage: React.FC = () => {
       meal_context: data.meal_context as GlucoseReading['meal_context'],
       measured_at: data.measured_at as string,
     });
-
     if (result.success) {
-      await loadData();
+      await loadReadings();
     }
-
     return result;
   };
 
+  const isConnected = ble.status === 'connected';
+  const isPairing = ble.status === 'pairing';
+  const connectLabel = `Connect ${friendlyName ?? 'Glucometer'}`;
+  const displayError = error ?? ble.error;
+
   return (
-    <div
-      className="min-h-screen pb-20"
-      style={{ background: branding.gradient }}
-    >
+    <div className="min-h-screen pb-20" style={{ background: branding.gradient }}>
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-3xl">
 
         {/* Header */}
@@ -190,65 +227,74 @@ const GlucometerPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Critical Value Alerts */}
-        <CriticalValueAlert
-          alerts={criticalAlerts}
-          onDismiss={handleDismissAlert}
-        />
+        <CriticalValueAlert alerts={criticalAlerts} onDismiss={handleDismissAlert} />
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6">
-            {error}
+        {displayError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6" role="alert">
+            {displayError}
           </div>
         )}
 
         {/* Connection Card */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div
-                className={`w-4 h-4 rounded-full ${
-                  isConnected ? 'bg-green-500' : 'bg-gray-300'
-                }`}
-              />
-              <span className="text-lg font-semibold text-gray-700">
-                {isLoading ? 'Loading...' : isConnected ? 'Connected' : 'Not Connected'}
-              </span>
+          {isLoading ? (
+            <div className="text-lg font-semibold text-gray-700">Loading...</div>
+          ) : !ble.isSupported ? (
+            <div className="bg-blue-50 rounded-xl p-4 text-blue-800">
+              <h3 className="font-semibold mb-1 text-lg">Bluetooth isn’t available on this device</h3>
+              <p className="text-base">
+                {ble.capabilityMessage ?? 'This device can’t connect a Bluetooth glucometer.'} You can
+                still enter your reading by hand below — just type the number from your meter.
+              </p>
             </div>
-            <button
-              onClick={isConnected ? handleDisconnect : handleConnect}
-              disabled={isConnecting || isLoading}
-              className={`px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
-                isConnected
-                  ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                  : 'text-white hover:opacity-90'
-              }`}
-              style={!isConnected ? { backgroundColor: branding.primaryColor } : {}}
-            >
-              {isConnecting ? 'Connecting...' : isConnected ? 'Disconnect' : 'Connect Glucometer'}
-            </button>
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className={`w-4 h-4 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-lg font-semibold text-gray-700">
+                    {isConnected ? `Connected: ${ble.deviceName ?? friendlyName ?? 'your meter'}` : 'Not Connected'}
+                  </span>
+                </div>
+                <button
+                  onClick={isConnected ? handleDisconnect : ble.pair}
+                  disabled={isPairing}
+                  aria-label={isConnected ? 'Disconnect glucometer' : connectLabel}
+                  className={`min-h-[44px] px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                    isConnected ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'text-white hover:opacity-90'
+                  }`}
+                  style={!isConnected ? { backgroundColor: branding.primaryColor } : {}}
+                >
+                  {isPairing ? 'Connecting...' : isConnected ? 'Disconnect' : connectLabel}
+                </button>
+              </div>
 
-          {!isConnected && !isLoading && (
-            <div className="bg-blue-50 rounded-xl p-4 text-blue-700">
-              <h3 className="font-semibold mb-2">Compatible Glucometers:</h3>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Dexcom G6/G7 CGM</li>
-                <li>FreeStyle Libre 2/3</li>
-                <li>OneTouch Verio Reflect</li>
-                <li>Contour Next One</li>
-                <li>Any Bluetooth-enabled glucose meter</li>
-              </ul>
-            </div>
+              {isConnected ? (
+                <div className="bg-green-50 rounded-xl p-4 text-green-800">
+                  <p className="text-base font-medium">
+                    {saving ? 'Saving your reading…' : 'Take a reading on your meter now — it will appear below automatically.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-blue-50 rounded-xl p-4 text-blue-800">
+                  <h3 className="font-semibold mb-2 text-lg">How to connect your meter</h3>
+                  <ol className="list-decimal list-inside space-y-1 text-base">
+                    <li>Turn on your glucometer so it is ready to pair.</li>
+                    <li>Tap <span className="font-semibold">Connect</span> above.</li>
+                    <li>Pick your meter from the list that appears.</li>
+                  </ol>
+                  <p className="text-sm mt-3 text-blue-700">
+                    Works with standard Bluetooth glucose meters on Android phones and computers using Chrome.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
         {/* Target Ranges */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: branding.primaryColor }}
-          >
+          <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             Target Blood Glucose Ranges
           </h2>
           <div className="space-y-4">
@@ -271,7 +317,7 @@ const GlucometerPage: React.FC = () => {
         </div>
 
         {/* Glucose Trend Chart */}
-        {isConnected && readings.length > 0 && (
+        {readings.length > 0 && (
           <div className="mb-6">
             <VitalTrendChart
               data={chartData}
@@ -285,61 +331,44 @@ const GlucometerPage: React.FC = () => {
         )}
 
         {/* Glucose History */}
-        {isConnected && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-            <h2
-              className="text-2xl font-bold mb-6"
-              style={{ color: branding.primaryColor }}
-            >
-              Recent Readings
-            </h2>
-            {readings.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                No readings yet. Take a glucose measurement to record your first reading.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {readings.map((reading) => {
-                  const { date, time } = formatDateTime(reading.measured_at);
-                  const status = getGlucoseStatus(reading.value, reading.meal_context);
-                  return (
-                    <div
-                      key={reading.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-                    >
-                      <div>
-                        <div className="text-sm text-gray-500">
-                          {date} at {time}
-                        </div>
-                        <div className="text-2xl font-bold text-gray-800">
-                          {reading.value}
-                          <span className="text-lg font-normal text-gray-500 ml-2">mg/dL</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-500 mb-1">
-                          {getMealLabel(reading.meal_context)}
-                        </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}
-                        >
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </span>
+        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+          <h2 className="text-2xl font-bold mb-6" style={{ color: branding.primaryColor }}>
+            Recent Readings
+          </h2>
+          {readings.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              No readings yet. Take a glucose measurement to record your first reading.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {readings.map((reading) => {
+                const { date, time } = formatDateTime(reading.measured_at);
+                const status = getGlucoseStatus(reading.value, reading.meal_context);
+                return (
+                  <div key={reading.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div>
+                      <div className="text-sm text-gray-500">{date} at {time}</div>
+                      <div className="text-2xl font-bold text-gray-800">
+                        {reading.value}
+                        <span className="text-lg font-normal text-gray-500 ml-2">mg/dL</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                    <div className="text-right">
+                      <div className="text-sm text-gray-500 mb-1">{getMealLabel(reading.meal_context)}</div>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* A1C Tracking */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: branding.primaryColor }}
-          >
+          <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             A1C Tracking
           </h2>
           <p className="text-gray-600 mb-4">
@@ -367,16 +396,13 @@ const GlucometerPage: React.FC = () => {
         {/* Manual Entry */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2
-              className="text-2xl font-bold"
-              style={{ color: branding.primaryColor }}
-            >
+            <h2 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
               Manual Entry
             </h2>
             {!showManualEntry && (
               <button
                 onClick={() => setShowManualEntry(true)}
-                className="px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 hover:opacity-90"
+                className="min-h-[44px] px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 hover:opacity-90"
                 style={{ backgroundColor: branding.primaryColor }}
               >
                 + Add Reading
