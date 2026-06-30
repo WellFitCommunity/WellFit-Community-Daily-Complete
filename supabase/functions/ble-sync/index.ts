@@ -42,14 +42,108 @@ interface SyncRequest {
   connectionId?: string; // wearable_connections.id — if known
 }
 
-// Map BLE device types to wearable_vital_signs vital_type values
-const DEVICE_TYPE_TO_VITAL: Record<string, Record<string, string>> = {
-  blood_pressure: { systolic: "blood_pressure", diastolic: "blood_pressure", pulse: "heart_rate" },
-  glucose_meter: { glucose: "blood_glucose" },
-  pulse_oximeter: { spo2: "oxygen_saturation", pulse_rate: "heart_rate" },
-  weight_scale: { weight: "weight" },
-  thermometer: { temperature: "body_temperature" },
-};
+// -- Composite row mapping ----------------------------------------------------
+// CANONICAL SHAPE (see docs/trackers/ble-vitals-enrollment-tracker.md §1.2):
+// ONE row per reading, matching how DeviceService reads it back. A BP reading
+// becomes a single blood_pressure row carrying {systolic,diastolic,pulse} in
+// metadata — NOT three atomic rows. vital_type values must satisfy the live
+// wearable_vital_signs CHECK constraint (heart_rate, blood_pressure,
+// oxygen_saturation, temperature, respiratory_rate, blood_glucose, weight,
+// body_temperature — widened 2026-06-30).
+
+function valueOf(reading: BleVitalReading, type: string): number | undefined {
+  return reading.values.find((v) => v.type === type)?.value;
+}
+
+function unitOf(reading: BleVitalReading, type: string, fallback: string): string {
+  return reading.values.find((v) => v.type === type)?.unit ?? fallback;
+}
+
+/**
+ * Compose ONE wearable_vital_signs row from a BLE reading, or null if the
+ * reading is missing its required value(s).
+ */
+function composeRow(
+  reading: BleVitalReading,
+  userId: string,
+  connId: string,
+  tenantId: string,
+): Record<string, unknown> | null {
+  const base = {
+    user_id: userId,
+    device_id: connId,
+    tenant_id: tenantId,
+    measured_at: reading.timestamp,
+    activity_state: null,
+    quality_indicator: null,
+    alert_triggered: false,
+  };
+  const rawData = reading.rawData ?? null;
+
+  switch (reading.deviceType) {
+    case "blood_pressure": {
+      const systolic = valueOf(reading, "systolic");
+      const diastolic = valueOf(reading, "diastolic");
+      if (systolic === undefined || diastolic === undefined) return null;
+      const pulse = valueOf(reading, "pulse_rate") ?? valueOf(reading, "pulse") ?? null;
+      return {
+        ...base,
+        vital_type: "blood_pressure",
+        value: systolic,
+        unit: unitOf(reading, "systolic", "mmHg"),
+        metadata: { systolic, diastolic, pulse, bleDeviceType: reading.deviceType, rawData },
+      };
+    }
+    case "glucose_meter": {
+      const glucose = valueOf(reading, "glucose");
+      if (glucose === undefined) return null;
+      return {
+        ...base,
+        vital_type: "blood_glucose",
+        value: glucose,
+        unit: unitOf(reading, "glucose", "mg/dL"),
+        metadata: { bleDeviceType: reading.deviceType, rawData },
+      };
+    }
+    case "pulse_oximeter": {
+      const spo2 = valueOf(reading, "spo2");
+      if (spo2 === undefined) return null;
+      const pulseRate = valueOf(reading, "pulse_rate") ?? null;
+      return {
+        ...base,
+        vital_type: "oxygen_saturation",
+        value: spo2,
+        unit: unitOf(reading, "spo2", "%"),
+        metadata: { pulse_rate: pulseRate, bleDeviceType: reading.deviceType, rawData },
+      };
+    }
+    case "weight_scale": {
+      const weight = valueOf(reading, "weight");
+      if (weight === undefined) return null;
+      const bmi = valueOf(reading, "bmi") ?? null;
+      return {
+        ...base,
+        vital_type: "weight",
+        value: weight,
+        unit: unitOf(reading, "weight", "kg"),
+        metadata: { bmi, bleDeviceType: reading.deviceType, rawData },
+      };
+    }
+    case "thermometer": {
+      const temperature = valueOf(reading, "temperature");
+      if (temperature === undefined) return null;
+      return {
+        ...base,
+        vital_type: "body_temperature",
+        value: temperature,
+        unit: unitOf(reading, "temperature", "degC"),
+        metadata: { bleDeviceType: reading.deviceType, rawData },
+      };
+    }
+    default:
+      return null;
+  }
+}
 
 serve(async (req) => {
   const logger = createLogger("ble-sync", req);
@@ -215,30 +309,13 @@ serve(async (req) => {
         continue;
       }
 
-      const vitalTypeMap = DEVICE_TYPE_TO_VITAL[reading.deviceType] || {};
-
-      for (const val of reading.values) {
-        const vitalType = vitalTypeMap[val.type];
-        if (!vitalType) {
-          // Unknown value type — store with device type as fallback
-          skipped++;
-          continue;
-        }
-
-        rows.push({
-          user_id: user.id,
-          device_id: connId,
-          tenant_id: tenantId,
-          vital_type: vitalType,
-          value: val.value,
-          unit: val.unit,
-          measured_at: reading.timestamp,
-          activity_state: null,
-          quality_indicator: null,
-          alert_triggered: false,
-          metadata: reading.rawData ? { rawData: reading.rawData, bleDeviceType: reading.deviceType, bleValueType: val.type } : { bleDeviceType: reading.deviceType, bleValueType: val.type },
-        });
+      // ONE composite row per reading (canonical shape — matches DeviceService reads).
+      const row = composeRow(reading, user.id, connId, tenantId);
+      if (!row) {
+        skipped++;
+        continue;
       }
+      rows.push(row);
     }
 
     if (rows.length === 0) {

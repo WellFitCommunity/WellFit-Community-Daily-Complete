@@ -1,19 +1,15 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import BloodPressureMonitorPage from '../BloodPressureMonitorPage';
 import { DeviceService } from '../../../services/deviceService';
+import type { BleVitalReading } from '../../../types/ble';
 
-// Mock react-router-dom
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
+  return { ...actual, useNavigate: () => mockNavigate };
 });
 
-// Mock BrandingContext
 vi.mock('../../../BrandingContext', () => ({
   useBranding: () => ({
     branding: {
@@ -24,395 +20,214 @@ vi.mock('../../../BrandingContext', () => ({
   }),
 }));
 
-// Mock DeviceService
 vi.mock('../../../services/deviceService', () => ({
   DeviceService: {
-    getConnectionStatus: vi.fn(),
     getBPReadings: vi.fn(),
+    saveBPReading: vi.fn(),
     connectDevice: vi.fn(),
-    disconnectDevice: vi.fn(),
   },
 }));
 
-const mockBPReadings = [
-  {
-    id: '1',
-    user_id: 'user-1',
-    device_id: 'device-1',
-    systolic: 118,
-    diastolic: 76,
-    pulse: 72,
-    measured_at: '2026-01-28T08:00:00Z',
+// Controllable mock of the BLE capture hook. `state` is read on each render;
+// `onReading` captures the page's handler so a test can deliver a reading.
+const bleControl = vi.hoisted(() => ({
+  state: {
+    isSupported: true,
+    isIOS: false,
+    capabilityMessage: null as string | null,
+    status: 'idle' as string,
+    deviceName: null as string | null,
+    lastReading: null as unknown,
+    error: null as string | null,
   },
-  {
-    id: '2',
-    user_id: 'user-1',
-    device_id: 'device-1',
-    systolic: 135,
-    diastolic: 85,
-    pulse: 78,
-    measured_at: '2026-01-27T08:00:00Z',
-  },
-];
+  onReading: null as ((r: BleVitalReading) => void | Promise<void>) | null,
+  pair: vi.fn(),
+  disconnect: vi.fn(),
+}));
 
-const renderPage = () => {
-  return render(
+vi.mock('../../../hooks/useBleCapture', () => ({
+  useBleCapture: (opts: { onReading: (r: BleVitalReading) => void | Promise<void> }) => {
+    bleControl.onReading = opts.onReading;
+    return { ...bleControl.state, pair: bleControl.pair, disconnect: bleControl.disconnect };
+  },
+}));
+
+const FRIENDLY_NAME_KEY = 'ble_friendly_name_blood_pressure';
+
+const bpReading = (systolic: number, diastolic: number, pulse: number) => ({
+  id: `${systolic}-${diastolic}`,
+  user_id: 'user-1',
+  device_id: 'ble',
+  systolic,
+  diastolic,
+  pulse,
+  measured_at: '2026-06-30T08:00:00Z',
+});
+
+const renderPage = () =>
+  render(
     <MemoryRouter>
       <BloodPressureMonitorPage />
     </MemoryRouter>
   );
-};
 
 describe('BloodPressureMonitorPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    // Reset the BLE hook to a supported, idle Android-style default.
+    bleControl.state = {
+      isSupported: true,
+      isIOS: false,
+      capabilityMessage: null,
+      status: 'idle',
+      deviceName: null,
+      lastReading: null,
+      error: null,
+    };
+    bleControl.onReading = null;
+    // Default service implementations (clearAllMocks does not reset these).
+    vi.mocked(DeviceService.getBPReadings).mockResolvedValue({ success: true, data: [] });
+    vi.mocked(DeviceService.saveBPReading).mockResolvedValue({ success: true, data: bpReading(120, 80, 72) });
+    vi.mocked(DeviceService.connectDevice).mockResolvedValue({
+      success: true,
+      data: {
+        id: 'conn-1',
+        user_id: 'user-1',
+        device_type: 'bp_monitor',
+        device_name: 'BP Cuff',
+        connected: true,
+        last_sync: null,
+        created_at: '2026-06-30T00:00:00Z',
+      },
+    });
   });
 
   describe('Rendering', () => {
-    it('renders the page header correctly', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: null,
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-
+    it('renders the header and BP guide', async () => {
       renderPage();
-
       expect(screen.getByText('Blood Pressure Monitor')).toBeInTheDocument();
-      expect(screen.getByText(/Track your blood pressure and pulse readings/i)).toBeInTheDocument();
-    });
-
-    it('renders the BP guide section', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: null,
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByText('Blood Pressure Guide')).toBeInTheDocument();
-      });
+      await waitFor(() => expect(screen.getByText('Blood Pressure Guide')).toBeInTheDocument());
       expect(screen.getByText('Normal')).toBeInTheDocument();
       expect(screen.getByText('Elevated')).toBeInTheDocument();
     });
   });
 
-  describe('Loading States', () => {
-    it('shows loading state initially', () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockImplementation(
-        () => new Promise(() => {})
+  describe('Bluetooth capability gating', () => {
+    it('on a supported (Android) device, shows a Connect button that triggers pairing', async () => {
+      renderPage();
+      const connectBtn = await screen.findByRole('button', { name: /connect blood pressure cuff/i });
+      expect(connectBtn).toBeInTheDocument();
+      fireEvent.click(connectBtn);
+      expect(bleControl.pair).toHaveBeenCalledTimes(1);
+    });
+
+    it('on iPhone/iPad (no Web Bluetooth), shows manual-only message and NO pair button', async () => {
+      bleControl.state.isSupported = false;
+      bleControl.state.isIOS = true;
+      bleControl.state.capabilityMessage =
+        'Bluetooth is not supported in Safari. Please use camera or manual entry.';
+
+      renderPage();
+
+      await waitFor(() =>
+        expect(screen.getByText(/Bluetooth isn’t available on this device/i)).toBeInTheDocument()
       );
-      vi.mocked(DeviceService.getBPReadings).mockImplementation(
-        () => new Promise(() => {})
+      expect(screen.getByText(/not supported in Safari/i)).toBeInTheDocument();
+      // No pairing affordance on iPhone — manual entry only.
+      expect(screen.queryByRole('button', { name: /connect/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add reading/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('Device-name memory', () => {
+    it('labels the Connect button with the remembered friendly name', async () => {
+      localStorage.setItem(FRIENDLY_NAME_KEY, 'Rose’s Cuff');
+      renderPage();
+      expect(await screen.findByRole('button', { name: /connect rose’s cuff/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('Connected state', () => {
+    it('shows the connected device name and a Disconnect button that disconnects', async () => {
+      bleControl.state.status = 'connected';
+      bleControl.state.deviceName = 'Rose’s Cuff';
+
+      renderPage();
+
+      await waitFor(() => expect(screen.getByText(/Connected: Rose’s Cuff/i)).toBeInTheDocument());
+      const disconnectBtn = screen.getByRole('button', { name: /disconnect/i });
+      fireEvent.click(disconnectBtn);
+      await waitFor(() => expect(bleControl.disconnect).toHaveBeenCalledTimes(1));
+    });
+  });
+
+  describe('Reading capture', () => {
+    it('persists a Bluetooth reading and shows it in the list', async () => {
+      vi.mocked(DeviceService.getBPReadings)
+        .mockResolvedValueOnce({ success: true, data: [] })
+        .mockResolvedValue({ success: true, data: [bpReading(120, 80, 72)] });
+
+      renderPage();
+      await screen.findByText(/no readings yet/i);
+
+      // Simulate the cuff sending a reading over Bluetooth.
+      const reading: BleVitalReading = {
+        deviceType: 'blood_pressure',
+        timestamp: '2026-06-30T08:00:00Z',
+        values: [
+          { type: 'systolic', value: 120, unit: 'mmHg' },
+          { type: 'diastolic', value: 80, unit: 'mmHg' },
+          { type: 'pulse_rate', value: 72, unit: 'bpm' },
+        ],
+      };
+      await act(async () => {
+        await bleControl.onReading?.(reading);
+      });
+
+      await waitFor(() =>
+        expect(DeviceService.saveBPReading).toHaveBeenCalledWith(
+          expect.objectContaining({ systolic: 120, diastolic: 80, pulse: 72 })
+        )
       );
+      expect(await screen.findByText('120/80')).toBeInTheDocument();
+    });
 
+    it('does not save an incomplete reading and warns the user', async () => {
       renderPage();
+      await screen.findByText(/no readings yet/i);
 
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      const incomplete: BleVitalReading = {
+        deviceType: 'blood_pressure',
+        timestamp: '2026-06-30T08:00:00Z',
+        values: [{ type: 'systolic', value: 120, unit: 'mmHg' }], // missing diastolic
+      };
+      await act(async () => {
+        await bleControl.onReading?.(incomplete);
+      });
+
+      expect(DeviceService.saveBPReading).not.toHaveBeenCalled();
+      expect(await screen.findByText(/came through incomplete/i)).toBeInTheDocument();
     });
   });
 
-  describe('Connection Status', () => {
-    it('shows not connected state when device is not connected', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: null,
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-
+  describe('Manual entry & navigation', () => {
+    it('shows the inline manual entry form when Add Reading is clicked', async () => {
       renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByText('Not Connected')).toBeInTheDocument();
-      });
-      expect(screen.getByRole('button', { name: /connect monitor/i })).toBeInTheDocument();
-    });
-
-    it('shows connected state when device is connected', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: {
-          id: 'conn-1',
-          user_id: 'user-1',
-          device_type: 'bp_monitor',
-          device_name: 'BP Monitor',
-          connected: true,
-          last_sync: '2026-01-28T08:00:00Z',
-          created_at: '2026-01-01T00:00:00Z',
-        },
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: mockBPReadings,
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByText('Connected')).toBeInTheDocument();
-      });
-      expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument();
-    });
-
-    it('shows compatible devices list when not connected', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: null,
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByText('Compatible BP Monitors:')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Data Display', () => {
-    it('displays BP readings when connected', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: {
-          id: 'conn-1',
-          user_id: 'user-1',
-          device_type: 'bp_monitor',
-          device_name: 'BP Monitor',
-          connected: true,
-          last_sync: '2026-01-28T08:00:00Z',
-          created_at: '2026-01-01T00:00:00Z',
-        },
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: mockBPReadings,
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByText('Recent Readings')).toBeInTheDocument();
-      });
-      expect(screen.getByText('118/76')).toBeInTheDocument();
-      expect(screen.getByText('135/85')).toBeInTheDocument();
-    });
-
-    it('shows empty state when no readings exist', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: {
-          id: 'conn-1',
-          user_id: 'user-1',
-          device_type: 'bp_monitor',
-          device_name: 'BP Monitor',
-          connected: true,
-          last_sync: null,
-          created_at: '2026-01-01T00:00:00Z',
-        },
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByText(/no readings yet/i)).toBeInTheDocument();
-      });
-    });
-
-    it('displays correct BP status for normal reading', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: {
-          id: 'conn-1',
-          user_id: 'user-1',
-          device_type: 'bp_monitor',
-          device_name: 'BP Monitor',
-          connected: true,
-          last_sync: '2026-01-28T08:00:00Z',
-          created_at: '2026-01-01T00:00:00Z',
-        },
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [mockBPReadings[0]], // 118/76 is normal
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        // The status badge should show "Normal" for 118/76
-        const statusBadges = screen.getAllByText(/normal/i);
-        expect(statusBadges.length).toBeGreaterThan(0);
-      });
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('displays error message when connection fails', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: null,
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-      vi.mocked(DeviceService.connectDevice).mockResolvedValue({
-        success: false,
-        error: 'Device not found',
-      });
-
-      renderPage();
-
-      // Wait for loading to complete (button is disabled while loading)
-      await waitFor(() => {
-        expect(screen.getByText('Not Connected')).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: /connect monitor/i }));
-
-      await waitFor(() => {
-        expect(screen.getByText('Device not found')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Navigation', () => {
-    it('navigates back to My Health when back button clicked', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: null,
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /back to my health/i })).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: /back to my health/i }));
-
-      expect(mockNavigate).toHaveBeenCalledWith('/my-health');
-    });
-
-    it('shows inline manual entry form when Add Reading clicked', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: null,
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /add reading/i })).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: /add reading/i }));
-
+      const addBtn = await screen.findByRole('button', { name: /add reading/i });
+      fireEvent.click(addBtn);
       await waitFor(() => {
         expect(screen.getByText('Blood Pressure Reading')).toBeInTheDocument();
         expect(screen.getByLabelText(/Systolic/)).toBeInTheDocument();
         expect(screen.getByLabelText(/Diastolic/)).toBeInTheDocument();
       });
     });
-  });
 
-  describe('Connect/Disconnect Actions', () => {
-    it('calls connectDevice when connect button clicked', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: null,
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-      vi.mocked(DeviceService.connectDevice).mockResolvedValue({
-        success: true,
-        data: {
-          id: 'conn-1',
-          user_id: 'user-1',
-          device_type: 'bp_monitor',
-          device_name: 'Blood Pressure Monitor',
-          connected: true,
-          last_sync: null,
-          created_at: '2026-01-28T00:00:00Z',
-        },
-      });
-
+    it('navigates back to My Health', async () => {
       renderPage();
-
-      // Wait for loading to complete so button is enabled
-      await waitFor(() => {
-        const btn = screen.getByRole('button', { name: /connect monitor/i });
-        expect(btn).toBeInTheDocument();
-        expect(btn).not.toBeDisabled();
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: /connect monitor/i }));
-
-      await waitFor(() => {
-        expect(DeviceService.connectDevice).toHaveBeenCalledWith('bp_monitor', 'Blood Pressure Monitor');
-      });
-    });
-
-    it('calls disconnectDevice when disconnect button clicked', async () => {
-      vi.mocked(DeviceService.getConnectionStatus).mockResolvedValue({
-        success: true,
-        data: {
-          id: 'conn-1',
-          user_id: 'user-1',
-          device_type: 'bp_monitor',
-          device_name: 'BP Monitor',
-          connected: true,
-          last_sync: null,
-          created_at: '2026-01-01T00:00:00Z',
-        },
-      });
-      vi.mocked(DeviceService.getBPReadings).mockResolvedValue({
-        success: true,
-        data: [],
-      });
-      vi.mocked(DeviceService.disconnectDevice).mockResolvedValue({
-        success: true,
-      });
-
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: /disconnect/i }));
-
-      await waitFor(() => {
-        expect(DeviceService.disconnectDevice).toHaveBeenCalledWith('bp_monitor');
-      });
+      const backBtn = await screen.findByRole('button', { name: /back to my health/i });
+      fireEvent.click(backBtn);
+      expect(mockNavigate).toHaveBeenCalledWith('/my-health');
     });
   });
 });

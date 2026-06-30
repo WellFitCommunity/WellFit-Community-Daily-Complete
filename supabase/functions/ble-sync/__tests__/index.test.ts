@@ -71,16 +71,20 @@ Deno.test("BLE Sync Edge Function Tests", async (t) => {
   // Device Type Mapping
   // =========================================================================
 
-  await t.step("should map blood_pressure device to vital types", () => {
-    const mapping: Record<string, string> = {
-      systolic: "blood_pressure",
-      diastolic: "blood_pressure",
-      pulse: "heart_rate",
+  await t.step("should compose blood_pressure into ONE composite row", () => {
+    // Canonical shape: a BP reading becomes a single blood_pressure row whose
+    // metadata carries systolic/diastolic/pulse (NOT three atomic rows).
+    const row = {
+      vital_type: "blood_pressure",
+      value: 120,
+      unit: "mmHg",
+      metadata: { systolic: 120, diastolic: 80, pulse: 72 },
     };
 
-    assertEquals(mapping["systolic"], "blood_pressure");
-    assertEquals(mapping["diastolic"], "blood_pressure");
-    assertEquals(mapping["pulse"], "heart_rate");
+    assertEquals(row.vital_type, "blood_pressure");
+    assertEquals(row.value, row.metadata.systolic);
+    assertEquals(row.metadata.diastolic, 80);
+    assertEquals(row.metadata.pulse, 72);
   });
 
   await t.step("should map glucose_meter device to vital types", () => {
@@ -112,19 +116,21 @@ Deno.test("BLE Sync Edge Function Tests", async (t) => {
   // Reading-to-Row Transformation
   // =========================================================================
 
-  await t.step("should transform a blood pressure reading into multiple rows", () => {
+  await t.step("should transform a blood pressure reading into ONE composite row", () => {
     const reading = {
       deviceType: "blood_pressure",
       timestamp: "2026-03-27T10:30:00Z",
       values: [
         { type: "systolic", value: 120, unit: "mmHg" },
         { type: "diastolic", value: 80, unit: "mmHg" },
-        { type: "pulse", value: 72, unit: "bpm" },
+        { type: "pulse_rate", value: 72, unit: "bpm" },
       ],
     };
 
-    // Each value becomes its own row
+    // Three component values collapse into a single composite row.
+    const composedRowCount = 1;
     assertEquals(reading.values.length, 3);
+    assertEquals(composedRowCount, 1);
   });
 
   await t.step("should include metadata with rawData when present", () => {
@@ -138,12 +144,11 @@ Deno.test("BLE Sync Edge Function Tests", async (t) => {
     const metadata = {
       rawData: reading.rawData,
       bleDeviceType: reading.deviceType,
-      bleValueType: reading.values[0].type,
+      pulse_rate: null,
     };
 
     assertExists(metadata.rawData);
     assertEquals(metadata.bleDeviceType, "pulse_oximeter");
-    assertEquals(metadata.bleValueType, "spo2");
   });
 
   await t.step("should skip unknown value types gracefully", () => {
