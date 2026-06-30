@@ -86,14 +86,24 @@ Glucose `'glucose'`→`'blood_glucose'` fixed in DeviceService (save+read); grep
 - [ ] Codebase-wide grep for any other `'glucose'` vital_type writer/reader; fix sisters.
 **Acceptance:** scoped typecheck/lint/tests green. Field proof per device where hardware is available.
 
-### Session C — Doctor weekly-average vitals view (~1.5 sessions)
-- [ ] New service `src/services/vitalsSummaryService.ts`: given `patientId`, `vitalType`, window(1/3/6 mo) →
-  weekly buckets `{ weekStart, avg, min, max, count, outOfRangeCount }` + flagged outliers (e.g. >2 SD or clinical thresholds from `DeviceService` VALIDATION_THRESHOLDS / `WearableService.detectAbnormalVital`). Reuse averaging approach from `HealthInsightsWidget.computeAvg`.
-- [ ] New component `src/components/clinical/VitalsWeeklySummary.tsx`: weekly-average chart + "View complete list" expander + a persistent "Out of range / outliers" panel. Reachable from `DoctorsView` and `RpmPatientDetail`.
-- [ ] Wire into `src/pages/DoctorsView/*` (currently latest-only) and `RpmPatientDetail.tsx`.
-- [ ] FHIR: map check-in `weight` (LOINC 29463-7) in the trigger; add a wearable→`fhir_observations` path (trigger or export builder) so BLE readings reach FHIR like check-ins do. **(Schema/trigger = Tier 3 — confirm with Maria before applying.)**
-- [ ] Tests for `vitalsSummaryService` (weekly bucketing, outlier flagging, null/empty windows) + component.
-**Acceptance:** doctor sees one dot/week over 1/3/6 mo, can expand to full list, out-of-range always visible. Live proof: seed N days of readings, confirm weekly rollup + flags.
+### 🟡 Session C — Doctor weekly-average vitals view — CODE DONE 2026-06-30 (FHIR sub-item deferred, Tier 3)
+- [x] New service `src/services/vitalsSummaryService.ts`: weekly buckets `{ weekStart, avg, min, max, count, outOfRangeCount }`
+  + flagged outliers. Scoped to the 4 BLE verticals (`blood_pressure`, `blood_glucose`, `oxygen_saturation`, `weight`)
+  per the "skip wearables" decision. Live schema of `wearable_vital_signs` verified before design (rule 18). Clinical
+  out-of-range bounds aligned to the RPM chart reference lines (BP 90/140, glucose 70/200, SpO2 low 92; weight = no
+  absolute range). **Outlier method = Iglewicz–Hoaglin modified Z-score (MAD), not plain 2 SD** — plain SD lets a lone
+  spike mask itself in the small samples typical of senior home monitoring. Engineering-judgment substitution, same intent.
+- [x] New component `src/components/clinical/VitalsWeeklySummary.tsx`: weekly-average chart (recharts) + vital + window
+  selectors + "View complete list" expander + a persistent, always-visible "Out of Range / Outliers" panel.
+- [x] Wired into `src/pages/DoctorsView/DoctorsViewPage.tsx` (scoped to `userId`) and `RpmPatientDetail.tsx`.
+- [ ] **FHIR (DEFERRED — Tier 3, awaiting Maria):** map check-in `weight` (LOINC 29463-7) in the trigger; add a
+  wearable→`fhir_observations` path so BLE readings reach FHIR like check-ins do. Schema/trigger change — not a
+  defect; the weekly view is fully functional without it.
+- [x] Tests: `vitalsSummaryService` (20) + `VitalsWeeklySummary` (renders averages, panels always visible, expander
+  reveals full list, window re-query, empty state).
+**Verification (2026-06-30):** scoped typecheck 0 errors · lint 0/0 · tests 43 passed (20 service + component + 23 DoctorsView, no regression).
+**Acceptance:** doctor sees one dot/week over 1/3/6 mo, can expand to full list, out-of-range always visible. ✅ code.
+**Field proof (Maria, pending):** seed N days of device readings for an enrolled senior, open DoctorsView / RpmPatientDetail, confirm weekly rollup + flags render.
 
 ### Session D — Native-system-mode banner + contraindication safety message (~0.5 session)
 - [ ] Shared `src/components/shared/NativeModeBanner.tsx` — shows §1.7 copy when AI is unavailable.

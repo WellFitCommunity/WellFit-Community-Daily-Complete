@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import VitalTrendChart from '../devices/VitalTrendChart';
 import type { ChartDataPoint, DataSeries, ReferenceRange } from '../devices/VitalTrendChart';
+import VitalsWeeklySummary from '../clinical/VitalsWeeklySummary';
 import { rpmDashboardService } from '../../services/rpmDashboardService';
 import { auditLogger } from '../../services/auditLogger';
 import { supabase } from '../../lib/supabaseClient';
@@ -286,6 +287,9 @@ const RpmPatientDetail: React.FC<RpmPatientDetailProps> = ({
           yAxisDomain={[40, 400]}
         />
       </div>
+
+      {/* Weekly-average device vitals (BLE devices) */}
+      <VitalsWeeklySummary patientId={patientId} />
 
       {/* Alert History */}
       <EACard>

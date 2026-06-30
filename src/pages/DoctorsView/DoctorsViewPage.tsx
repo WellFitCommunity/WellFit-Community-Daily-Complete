@@ -21,6 +21,7 @@ import FileText from 'lucide-react/dist/esm/icons/file-text';
 import Calendar from 'lucide-react/dist/esm/icons/calendar';
 
 import { useDoctorsViewData } from './useDoctorsViewData';
+import VitalsWeeklySummary from '../../components/clinical/VitalsWeeklySummary';
 import { VitalCard } from './VitalCard';
 import { TimelineItem } from './TimelineItem';
 import { StatsCard } from './StatsCard';
@@ -200,6 +201,9 @@ const DoctorsViewPage: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Weekly device-vital averages (BLE devices) */}
+              {userId && <VitalsWeeklySummary patientId={userId} />}
 
               {/* Activity Timeline */}
               <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
