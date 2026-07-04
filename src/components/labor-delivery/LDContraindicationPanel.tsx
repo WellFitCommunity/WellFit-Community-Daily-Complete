@@ -66,7 +66,17 @@ const LDContraindicationPanel: React.FC<LDContraindicationPanelProps> = ({
             {loading ? 'Checking...' : 'Check Contraindications'}
           </button>
         </div>
-        {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+        {error && (
+          <div
+            role="alert"
+            className="mt-3 rounded-lg border-2 border-red-300 bg-red-50 p-3 text-sm text-red-800"
+          >
+            <p className="font-bold">
+              Automated contraindication safety check is unavailable — perform manual review.
+            </p>
+            <p className="mt-1 text-xs text-red-700">{error}</p>
+          </div>
+        )}
       </div>
     );
   }

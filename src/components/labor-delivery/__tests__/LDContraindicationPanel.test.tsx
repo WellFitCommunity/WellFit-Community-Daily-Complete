@@ -202,6 +202,28 @@ describe('LDContraindicationPanel', () => {
     });
   });
 
+  it('shows the explicit manual-review message when the automated check is unavailable (fail-safe)', async () => {
+    mockCheckLDContraindication.mockResolvedValue({
+      success: false,
+      data: null,
+      error: { code: 'CIRCUIT_BREAKER_OPEN', message: 'Claude service temporarily unavailable' },
+    });
+    render(
+      <LDContraindicationPanel
+        patientId="p1"
+        providerId="dr1"
+        medicationName="Oxytocin"
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check Contraindications' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(
+      'Automated contraindication safety check is unavailable — perform manual review.'
+    );
+  });
+
   it('passes all props including indication to the service', async () => {
     mockCheckLDContraindication.mockResolvedValue(safeResult);
     render(

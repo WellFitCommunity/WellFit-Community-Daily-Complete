@@ -10,6 +10,7 @@ import HealthInsightsWidget from './HealthInsightsWidget';
 import { WellnessSuggestions } from './wellness/WellnessSuggestions';
 import { offlineStorage, isOnline } from '../utils/offlineStorage';
 import { CheckInFormBody, CheckInModals } from './check-in';
+import { NativeModeBanner } from './shared/NativeModeBanner';
 import {
   ENABLE_LOCAL_HISTORY,
   STORAGE_KEY,
@@ -397,6 +398,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
       }}
     >
       <div className="max-w-3xl mx-auto px-4">
+        <NativeModeBanner className="mb-4" />
         {/* CARD */}
         <div className="rounded-xl shadow-md border border-white/20 bg-white">
           {/* Header / Back */}

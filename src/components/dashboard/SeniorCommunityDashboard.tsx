@@ -12,6 +12,7 @@ import PositiveAffirmations from './PositiveAffirmations';
 import EmergencyContact from '../features/EmergencyContact';
 import WhatsNewSeniorModal from '../WhatsNewSeniorModal';
 import UpcomingAppointmentBanner from './UpcomingAppointmentBanner';
+import { NativeModeBanner } from '../shared/NativeModeBanner';
 import { allRecipes } from '../../data/allRecipes';
 import type { Recipe } from '../../data/types';
 // Health widgets removed - now accessible via My Health Hub page
@@ -399,6 +400,8 @@ const SeniorCommunityDashboard: React.FC = () => {
       <WhatsNewSeniorModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />
 
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+
+        <NativeModeBanner className="mb-4" />
 
         {/* Welcome Header */}
         <div className="text-center mb-6 sm:mb-8">
