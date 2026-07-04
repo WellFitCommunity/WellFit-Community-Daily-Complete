@@ -186,7 +186,7 @@ const VitalsWeeklySummary: React.FC<VitalsWeeklySummaryProps> = ({
               <XAxis dataKey="weekLabel" stroke="#9ca3af" fontSize={12} />
               <YAxis stroke="#9ca3af" fontSize={12} />
               <Tooltip
-                formatter={(value: number) => [`${value} ${summary.unit}`, 'Weekly avg']}
+                formatter={(value) => [`${typeof value === 'number' ? value : Number(value)} ${summary.unit}`, 'Weekly avg']}
               />
               {typeof range.high === 'number' && (
                 <ReferenceLine
