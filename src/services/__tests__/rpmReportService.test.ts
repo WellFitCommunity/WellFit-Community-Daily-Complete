@@ -26,6 +26,15 @@ vi.mock('../auditLogger', () => ({
   auditLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
+const mockRpc = vi.fn();
+const mockFrom = vi.fn();
+vi.mock('../../lib/supabaseClient', () => ({
+  supabase: {
+    rpc: (...args: unknown[]) => mockRpc(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
+  },
+}));
+
 import { rpmReportService } from '../rpmReportService';
 
 const enrollment = {
@@ -193,5 +202,57 @@ describe('rpmReportService.buildActiveEnrollmentReports', () => {
     if (!result.success) return;
     expect(result.data).toHaveLength(1);
     expect(result.data[0].enrollmentId).toBe('enr-1');
+  });
+});
+
+describe('rpmReportService.logReportReview', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('records the reviewer via the log_rpm_report_review RPC', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ report_id: 'rep-1', reviewed_by: 'user-9', reviewed_at: '2026-07-04T12:00:00Z' }],
+      error: null,
+    });
+
+    const result = await rpmReportService.logReportReview('rep-1');
+    expect(mockRpc).toHaveBeenCalledWith('log_rpm_report_review', { p_report_id: 'rep-1' });
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.reviewedBy).toBe('user-9');
+    expect(result.data.reviewedAt).toBe('2026-07-04T12:00:00Z');
+  });
+
+  it('returns failure when the RPC errors (e.g. not authorized)', async () => {
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'Not authorized to review this report' } });
+    const result = await rpmReportService.logReportReview('rep-1');
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects an empty report id', async () => {
+    const result = await rpmReportService.logReportReview('');
+    expect(result.success).toBe(false);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+});
+
+describe('rpmReportService.listPatientReports', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns the patient\'s sent reports', async () => {
+    const rows = [{ id: 'rep-1', patient_id: 'pat-1', period_start: '2026-06-04', period_end: '2026-07-04', transmission_days: 18, is_billable_99454: true, sent_at: '2026-07-04T13:00:00Z', reviewed_by: null, reviewed_at: null }];
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    };
+    mockFrom.mockReturnValue(chain);
+
+    const result = await rpmReportService.listPatientReports('pat-1');
+    expect(mockFrom).toHaveBeenCalledWith('rpm_reports');
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].transmission_days).toBe(18);
   });
 });

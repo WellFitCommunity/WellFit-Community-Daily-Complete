@@ -454,6 +454,10 @@ verify_jwt = false
 [functions.nightly-excel-backup]
 verify_jwt = false
 
+# Weekly cron caller uses the non-JWT sb_secret_* key; verified in-function.
+[functions.rpm-weekly-report]
+verify_jwt = false
+
 [functions.nurse-question-auto-escalate]
 verify_jwt = false
 

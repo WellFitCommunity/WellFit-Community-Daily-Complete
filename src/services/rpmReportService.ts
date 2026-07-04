@@ -15,6 +15,7 @@
  */
 
 import { ServiceResult, success, failure } from './_base';
+import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
 import {
   getWeeklyVitalsSummary,
@@ -182,8 +183,75 @@ async function buildActiveEnrollmentReports(
   }
 }
 
+/** A persisted, sent RPM report row (from the rpm_reports table). */
+export interface StoredRpmReport {
+  id: string;
+  patient_id: string;
+  period_start: string;
+  period_end: string;
+  transmission_days: number;
+  is_billable_99454: boolean;
+  sent_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+}
+
+/**
+ * Record that the current user reviewed a sent report — the CPT 99457/99458
+ * billing-credit stamp. Identity is enforced server-side (auth.uid()); the first
+ * reviewer wins. Read access to the report is governed by RLS (tenant admin).
+ */
+async function logReportReview(
+  reportId: string
+): Promise<ServiceResult<{ reviewedBy: string | null; reviewedAt: string | null }>> {
+  if (!reportId) {
+    return failure('INVALID_INPUT', 'A report id is required.');
+  }
+  try {
+    const { data, error } = await supabase.rpc('log_rpm_report_review', { p_report_id: reportId });
+    if (error) {
+      await auditLogger.error('RPM_REPORT_REVIEW_FAILED', new Error(error.message), { reportId });
+      return failure('DATABASE_ERROR', 'Unable to record report review.', error);
+    }
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { reviewed_by: string | null; reviewed_at: string | null }
+      | undefined;
+    return success({ reviewedBy: row?.reviewed_by ?? null, reviewedAt: row?.reviewed_at ?? null });
+  } catch (err: unknown) {
+    await auditLogger.error(
+      'RPM_REPORT_REVIEW_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { reportId }
+    );
+    return failure('OPERATION_FAILED', 'Unable to record report review.', err);
+  }
+}
+
+/** List sent reports for a patient (tenant-admin RLS scopes visibility). */
+async function listPatientReports(patientId: string): Promise<ServiceResult<StoredRpmReport[]>> {
+  if (!patientId) {
+    return failure('INVALID_INPUT', 'A patient id is required.');
+  }
+  try {
+    const { data, error } = await supabase
+      .from('rpm_reports')
+      .select('id, patient_id, period_start, period_end, transmission_days, is_billable_99454, sent_at, reviewed_by, reviewed_at')
+      .eq('patient_id', patientId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) {
+      return failure('DATABASE_ERROR', 'Unable to load reports.', error);
+    }
+    return success((data ?? []) as StoredRpmReport[]);
+  } catch (err: unknown) {
+    return failure('OPERATION_FAILED', 'Unable to load reports.', err);
+  }
+}
+
 export const rpmReportService = {
   buildPatientReport,
   buildActiveEnrollmentReports,
+  logReportReview,
+  listPatientReports,
   REPORT_VITALS,
 };
