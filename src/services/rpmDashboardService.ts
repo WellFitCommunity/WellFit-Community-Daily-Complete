@@ -357,7 +357,7 @@ interface CheckInRow {
 }
 
 interface WearableRow {
-  recorded_at: string;
+  measured_at: string;
 }
 
 /**
@@ -384,12 +384,16 @@ async function getTransmissionDays(
     if (ciErr) return failure('DATABASE_ERROR', ciErr.message, ciErr);
 
     // Query wearable vital sign timestamps
+    // NOTE: the column is `measured_at` on wearable_vital_signs (verified live
+    // 2026-07-04). It was previously `recorded_at`, which does not exist — the
+    // wearable branch of this count always errored. See vitalsSummaryService,
+    // which already uses measured_at.
     const { data: wearableData, error: wErr } = await supabase
       .from('wearable_vital_signs')
-      .select('recorded_at')
+      .select('measured_at')
       .eq('user_id', patientId)
-      .gte('recorded_at', cutoff)
-      .order('recorded_at', { ascending: true });
+      .gte('measured_at', cutoff)
+      .order('measured_at', { ascending: true });
 
     if (wErr) return failure('DATABASE_ERROR', wErr.message, wErr);
 
@@ -407,7 +411,7 @@ async function getTransmissionDays(
     }
 
     for (const row of (wearableData || []) as WearableRow[]) {
-      const dateStr = row.recorded_at.split('T')[0];
+      const dateStr = row.measured_at.split('T')[0];
       const existing = dateMap.get(dateStr);
       if (existing) {
         existing.count += 1;
