@@ -181,7 +181,7 @@ Email: maria@wellfitcommunity.com
 - Clinical workflow design
 - Healthcare operations expertise
 
-Email: akima@wellfitcommunity.com
+Email: akima@thewellfitcommunity.org
 
 </td>
 </tr>

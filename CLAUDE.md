@@ -580,7 +580,7 @@ Detailed documentation for specific features is in the `docs/` folder:
 | User | Email | UUID |
 |------|-------|------|
 | Maria | maria@wellfitcommunity.com | `ba4f20ad-2707-467b-a87f-d46fe9255d2f` |
-| Akima | akima@wellfitcommunity.com | `06ce7189-1da3-4e22-a6b2-ede88aa1445a` |
+| Akima | akima@thewellfitcommunity.org | `06ce7189-1da3-4e22-a6b2-ede88aa1445a` |
 
 ### Feature Flags
 ```env

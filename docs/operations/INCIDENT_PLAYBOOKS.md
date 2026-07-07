@@ -21,7 +21,7 @@
 | Role | Person | Contact Method |
 |------|--------|---------------|
 | AI System Director | Maria | maria@wellfitcommunity.com |
-| CCO (Compliance) | Akima | akima@wellfitcommunity.com |
+| CCO (Compliance) | Akima | akima@thewellfitcommunity.org |
 | Supabase Support | — | Supabase Dashboard > Support |
 
 ## AI Authority Scope (Global)

@@ -137,7 +137,7 @@ The ONC Information Blocking Rule recognizes eight exceptions (45 CFR 171.200-17
 
 If a patient, provider, or third party believes we are blocking access to EHI:
 
-1. Submit complaint to Privacy Officer (akima@wellfitcommunity.com)
+1. Submit complaint to Privacy Officer (akima@thewellfitcommunity.org)
 2. Privacy Officer acknowledges within 2 business days
 3. Investigation completed within 10 business days
 4. Written response provided to complainant
