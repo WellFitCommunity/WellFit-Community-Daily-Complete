@@ -1,6 +1,7 @@
 export const config = { runtime: 'edge' };
 
 import { sbAsUser } from '../_lib/sb-fetch';
+import { getServerSession } from '../_lib/supabase-auth';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY } from '../_lib/env';
 
 export default async function handler(req: Request): Promise<Response> {
@@ -12,24 +13,27 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'target_user_id and role (admin|super_admin) required' }), { status: 400, headers });
   }
 
-  // 1) Authorize: caller must be super_admin (RLS handles this; we expect one row if allowed)
-  const can = await sbAsUser<any[]>(
-    req, headers,
-    `/rest/v1/user_roles?select=user_id&user_id=eq.${'x'}&role=eq.super_admin&limit=1`
+  // 1) Authorize: the CALLER must be a super_admin.
+  //    Identity comes from the verified server session (HttpOnly refresh cookie),
+  //    and the role is checked against the authoritative user_roles table via the
+  //    service role so authorization does NOT depend on RLS visibility.
+  //    (Previous code queried a literal 'x' and then only checked whether ANY
+  //    super_admin existed system-wide — a real privilege-escalation hole.)
+  const session = await getServerSession(req, headers);
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers });
+  }
+  const callerRolesRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/user_roles?select=role&user_id=eq.${session.user.id}&role=eq.super_admin&limit=1`,
+    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` } }
   );
-  // Re-run with caller id (ts-friendly split)
-  if (!can.ok) return new Response(JSON.stringify(can.body), { status: can.status, headers });
-  const check = await sbAsUser<any[]>(
-    req, headers,
-    `/rest/v1/user_roles?select=user_id&role=eq.super_admin&limit=1`
-  );
-  if (!check.ok) return new Response(JSON.stringify(check.body), { status: check.status, headers });
-  if ((check.data?.length ?? 0) === 0) {
+  const callerRoles: { role: string }[] = callerRolesRes.ok ? await callerRolesRes.json() : [];
+  if (!Array.isArray(callerRoles) || callerRoles.length === 0) {
     return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers });
   }
 
   // 2) Upsert role row for target
-  const upsert = await sbAsUser<any[]>(
+  const upsert = await sbAsUser<unknown>(
     req, headers,
     `/rest/v1/user_roles`,
     {
