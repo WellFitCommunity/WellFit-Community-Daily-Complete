@@ -1,0 +1,91 @@
+# Telehealth End-to-End Connection Tracker
+
+> **Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.**
+
+**Created:** 2026-07-07
+**Owner:** Maria (product) + Akima (clinical sign-off on PHI/RLS)
+**Why now:** Louisiana pilot, telehealth is a required workflow, targeted to start next month.
+**Preferred UX (Maria):** Senior uses the **WellFit app** to join; connects to the clinician in Envision Atlus.
+**Connection model (Maria-decided 2026-07-07):** **Pre-create the Daily room at scheduling time.** Senior can open WellFit anytime, join, and wait in the lobby; clinician admits via Daily "knocking."
+
+---
+
+## VERDICT (evaluated 2026-07-07, live-DB verified)
+
+**Telehealth is NOT connected end-to-end today.** A senior tapping "Join Video Call" in WellFit would **not** reach the doctor's room. The infrastructure is real and good (Daily.co, HIPAA config, 3 edge functions, 2 tables, a correct patient waiting-room component) — but the pieces are **not wired into one working flow**. This is a wiring/glue job, not a rebuild.
+
+### What's built and solid
+- Daily.co integration (`@daily-co/daily-js` ^0.85.0 installed), HIPAA room config (private, cloud recording, knocking, PHI access logging).
+- Edge functions: `create-telehealth-room`, `create-patient-telehealth-token`, `send-telehealth-appointment-notification`.
+- Tables (both live): `telehealth_appointments` (28 cols, 10 rows) + `telehealth_sessions` (20 cols, **0 rows**).
+- **Correct patient join component already exists**: `src/components/telehealth/PatientWaitingRoom.tsx` — reads the session, mints a patient token, joins the SAME room. It is **orphaned** (routed nowhere, rendered by nothing).
+
+### Confirmed defects (file:line)
+
+| # | Severity | Defect | Evidence |
+|---|----------|--------|----------|
+| **T-1** | 🔴 Blocker | WellFit patient page renders the **provider** component. `TelehealthAppointmentsPage` → `<TelehealthConsultation patientId={user.id} …/>`. That component creates an encounter treating the current user as the **Practitioner** and calls `create-telehealth-room` as room **owner** → a senior spins up their *own* room, never joins the doctor's. | `src/pages/TelehealthAppointmentsPage.tsx:238`; `src/components/telehealth/TelehealthConsultation.tsx:88-134` |
+| **T-2** | 🔴 Blocker | The room URL is **never populated**. `daily_room_url`/`session_id` on `telehealth_appointments`: **0 of 10 rows set**. No code path (scheduler, notification, or function) ever writes them. The appointment and the video room are never linked. | Live: `count(daily_room_url)=0, count(session_id)=0`; grep found zero writers of `telehealth_appointments.daily_room_url` |
+| **T-3** | 🔴 Blocker | Even the doctor's own flow is broken by a table mismatch: `TelehealthConsultation.createEncounter` INSERTs into **`fhir_encounters`**, but `create-telehealth-room` authorizes by looking the id up in **`encounters`** (different table) → 403 "Unauthorized access to this encounter." This is why `telehealth_sessions` has 0 rows. | `TelehealthConsultation.tsx:91`; `supabase/functions/create-telehealth-room/index.ts:72-83` |
+| **T-4** | 🔴 Security (PHI) | RLS on both tables is **tenant-wide, not patient-scoped**. `telehealth_appointments_select = USING (tenant_id = get_current_tenant_id() OR is_super_admin())`; `telehealth_sessions` policies are `is_admin()` / `provider_id=auth.uid()` / `tenant_id=get_current_tenant_id()`. No `patient_id = auth.uid()`. Once the patient flow works, a senior could read **other patients'** appointments/sessions in their tenant. The page hides it only via a query-level `.eq('patient_id',…)`. | `pg_policies` on both tables, live 2026-07-07 |
+| **T-5** | 🟠 Hides failures | Swallowed errors: empty `catch {}` blocks in the patient page, scheduler, and consultation. When RLS/query/room-creation fails, the senior silently sees "No Upcoming Appointments" or a dead button with no error. | `TelehealthAppointmentsPage.tsx:120-124`; `TelehealthConsultation.tsx:152-159, 262-264`; `TelehealthScheduler.tsx:114-116, 184-188` |
+| **T-6** | 🟡 Bug | `PatientWaitingRoom` embeds `provider:provider_id (full_name, email)` on `telehealth_sessions`. `profiles` has no `full_name` and the PK is `user_id` — embed will fail/return null. Must fetch provider name like the other pages do (first_name + last_name via `user_id`). | `PatientWaitingRoom.tsx:80-83` |
+
+### Config prerequisites (verify before pilot — not code)
+- [ ] `DAILY_API_KEY` set in Supabase secrets (both room functions throw on boot without it).
+- [ ] WellFit pilot domain in `ALLOWED_ORIGINS` (CORS) for the 3 telehealth functions.
+- [ ] Confirm `verify_jwt` posture for the 3 functions in `config.toml` (per the verify-jwt reconciliation tracker — do NOT bulk-deploy).
+- [ ] Confirm a WellFit senior actually has a `tenant_id` that matches the appointment's tenant, or T-4's tenant read returns 0 rows and the page shows "no appointments." (Community users' tenant context must be verified.)
+
+---
+
+## TARGET ARCHITECTURE (Model B — room pre-created at scheduling)
+
+```
+SCHEDULING (provider/staff books in TelehealthScheduler)
+  └─ INSERT telehealth_appointments (patient_id, provider_id, tenant_id, appointment_time, encounter_type)
+  └─ invoke create-telehealth-room { appointment_id }        ← NEW trigger point
+        ├─ create Daily room (private, knocking on)
+        ├─ INSERT telehealth_sessions (appointment link, room_url, room_name, provider_id, patient_id, tenant_id, status='scheduled')
+        └─ UPDATE telehealth_appointments SET session_id, daily_room_url, daily_room_name   ← THE BRIDGE (fixes T-2)
+        └─ IDEMPOTENT: if a session already exists for this appointment, return it (no duplicate rooms)
+
+SENIOR JOINS (WellFit app)
+  └─ TelehealthAppointmentsPage → <PatientWaitingRoom sessionId={appt.session_id} />   ← fixes T-1
+        └─ invoke create-patient-telehealth-token { session_id }  (verifies patient_id=auth.uid())
+        └─ daily.join(room_url?t=token)  → waits in lobby
+
+CLINICIAN JOINS (Envision / PhysicianPanel)
+  └─ "Start Telehealth" → joins the SAME session's room as owner, admits the knocking senior
+        └─ (provider component keyed to the appointment's existing session, NOT creating a new room)
+```
+
+No new tables. Uses columns that already exist. `encounters` vs `fhir_encounters` standardized on **`fhir_encounters`** (what the app uses); `create-telehealth-room` stops requiring the legacy `encounters` row (fixes T-3).
+
+---
+
+## SESSION PLAN (ordered; each item live-verified + committed)
+
+### Session 1 — Backend bridge + security (no UI-visible change yet)
+- [ ] **S1.1** Refactor `create-telehealth-room` to accept `appointment_id`, authorize off `telehealth_appointments` (caller is the appointment's provider OR tenant admin), create room, INSERT `telehealth_sessions`, and **UPDATE the appointment with session_id/daily_room_url/daily_room_name**. Make it **idempotent**. Remove the `encounters` dependency (T-3). Keep the existing `encounter_id` path working for the provider ad-hoc flow if still needed.
+- [ ] **S1.2** Migration: add **patient-scoped SELECT RLS** — `telehealth_appointments` and `telehealth_sessions` readable when `patient_id = auth.uid()` (in addition to provider/admin). Keep writes provider/admin/service-only. **[Tier-3 — Maria sign-off]** **[Akima: confirm patient-visibility scope is clinically correct]**
+- [ ] **S1.3** Live-prove: seed a synthetic appointment → invoke → session row created, appointment back-linked, second invoke returns same room (idempotent), patient RLS lets patient read own / denies other.
+
+### Session 2 — Wire the senior's WellFit join
+- [ ] **S2.1** `TelehealthAppointmentsPage`: render **`PatientWaitingRoom`** (pass `session_id`) instead of `TelehealthConsultation`; guard "Join" until `session_id` is present ("Your doctor hasn't started the room yet" if null). Fix T-5 swallowed catches → surface a real error.
+- [ ] **S2.2** Fix `PatientWaitingRoom` provider-name fetch (T-6).
+- [ ] **S2.3** Route `PatientWaitingRoom` if a standalone route is needed. **[Tier-3 route change — Maria sign-off]**
+- [ ] **S2.4** Trigger room pre-creation from the scheduler (S1.1 invoke) so `daily_room_url` is set at booking.
+- [ ] **S2.5** Live/visual: senior joins from WellFit, lands in lobby. **[Visual acceptance — Maria]**
+
+### Session 3 — Clinician side + full round-trip
+- [ ] **S3.1** Provider "Start Telehealth" joins the **appointment's existing session room** (not a fresh one); admits the knocking senior.
+- [ ] **S3.2** Full end-to-end live test: senior (WellFit) + clinician (Envision) in the SAME Daily room, two-way A/V, session status transitions, PHI access logged, recording per policy.
+- [ ] **S3.3** Update tests (deletion-test quality, synthetic data). Full verify checkpoint. **[Visual acceptance — Maria]**
+
+## Acceptance criteria (DONE MEANS DONE)
+- A senior with a scheduled appointment opens WellFit, taps Join, and lands in the **same Daily room** the clinician joins from Envision — two-way audio/video.
+- `telehealth_appointments.session_id`/`daily_room_url` populated at scheduling; `telehealth_sessions` row exists and transitions scheduled→active→completed.
+- Patient RLS: a senior can read ONLY their own appointment/session (cross-patient read denied — live-proven).
+- No swallowed errors: a failure shows the senior a real message, not "no appointments."
+- Config prerequisites checklist all green in the pilot environment.
