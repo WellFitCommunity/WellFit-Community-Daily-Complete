@@ -39,6 +39,44 @@
 
 ---
 
+## PROGRESS (2026-07-07) — Sessions 1, 2, and S3.1 DONE
+
+Branch `claude/telehealth-e2e-connection` (commits `c8d1eb4d`, `59a544d7`, + S3.1).
+
+**DONE & verified:**
+- **S1.1** create-telehealth-room refactored (appointment-driven, idempotent, back-links the
+  appointment, ad-hoc path preserved, encounters/fhir_encounters mismatch removed). Deno check clean.
+- **S1.2** patient-scoped RLS migration `20260707130000` applied + live-verified (leak closed).
+- **S1.3** live-proven: patient A sees only own rows (0 of B's); encounter→session→appointment
+  write path proven via rolled-back transaction. **Live proof caught 2 real vocab mismatches**
+  (encounters.encounter_type must be 'telehealth'/status 'scheduled'; telehealth_sessions.status
+  must be 'active') — fixed before they could fail at runtime.
+- **S2.1** WellFit page renders PatientWaitingRoom (not the provider component), gates Join on room
+  readiness, surfaces load errors (T-1, T-5). **S2.2** provider-name fetch fixed (T-6).
+  **S2.3** no route needed — /telehealth-appointments already nav-reachable.
+  **S2.4** scheduler pre-creates the room at booking + scheduleAppointment now sets tenant_id.
+  Typecheck 0 / lint 0 / page 6 + appt-service 13 tests green.
+- **S3.1** TelehealthConsultation joins the appointment's pre-created room via appointmentId
+  (idempotent); broken createEncounter removed; endCall closes the session.
+- **Edge function DEPLOYED** to prod (`create-telehealth-room`) + live-probed: unauth POST → 401,
+  OPTIONS → 204 (live, secure, CORS ok). Full invoke-with-real-room is the S3.2 round-trip.
+
+**REMAINING:**
+- **S3.1b — provider "Start Visit" entry** that passes `appointmentId` to TelehealthConsultation.
+  The scheduler (`TelehealthScheduler.tsx`) is a **792-line god-file (already over 600)** — do NOT
+  bolt onto it; add a small dedicated provider page + route (`/provider/telehealth/:appointmentId`
+  → renders TelehealthConsultation with the appointmentId). **[Tier-3 route — Maria sign-off]**
+- **S3.2 — full live two-party round-trip** (senior in WellFit + clinician in Envision, same Daily
+  room, two-way A/V) + **visual acceptance [Maria, Commandment #13]**. Requires the branch frontend
+  deployed (merge) + a real provider & patient session.
+- **Prereqs to confirm in the pilot env:** WellFit domain in ALLOWED_ORIGINS; community seniors have
+  a tenant_id matching their appointment (else the tenant-scoped reads return nothing).
+- **Follow-ups (non-blocking):** encounter status lifecycle on `encounters` (visit start/complete);
+  resolve the `encounters` vs `fhir_encounters` duplication (separate architecture decision);
+  a behavior test for TelehealthConsultation (none exists today).
+
+---
+
 ## TARGET ARCHITECTURE (Model B — room pre-created at scheduling)
 
 ```
