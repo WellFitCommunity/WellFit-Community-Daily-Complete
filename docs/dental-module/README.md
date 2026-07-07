@@ -610,7 +610,7 @@ npm run build
 ## 👥 Team & Support
 
 ### Questions & Support
-- **Contact**: maria@wellfitcommunity.com
+- **Contact**: maria@thewellfitcommunity.org
 
 ---
 
@@ -654,7 +654,7 @@ npm run build
 ## 📞 Contact
 
 **Envision Virtual Edge Group LLC**
-- Email: maria@wellfitcommunity.com
+- Email: maria@thewellfitcommunity.org
 
 ---
 

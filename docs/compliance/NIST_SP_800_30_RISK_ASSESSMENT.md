@@ -275,5 +275,5 @@ This assessment followed NIST SP 800-30 Rev. 1 methodology:
 ---
 
 *Document Owner: Envision Virtual Edge Group LLC*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*
 *Classification: Confidential — Internal Use Only*

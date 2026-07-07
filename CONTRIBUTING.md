@@ -135,4 +135,4 @@ If your change involves:
 
 ## Questions?
 
-Contact: maria@wellfitcommunity.com
+Contact: maria@thewellfitcommunity.org

@@ -93,7 +93,7 @@ Envision Atlus provides **EHR-agnostic AI** that works across your legacy and ne
 **CONTACT**
 
 Maria Camacho, CEO
-maria@wellfitcommunity.com | (832) 509-4514
+maria@thewellfitcommunity.org | (832) 509-4514
 
 ---
 
@@ -203,7 +203,7 @@ Envision Atlus brings the same AI capabilities used by major health systems to r
 **CONTACT**
 
 Maria Camacho, CEO
-maria@wellfitcommunity.com | (832) 509-4514
+maria@thewellfitcommunity.org | (832) 509-4514
 
 *Ask about our Rural Health Grant Support—we help you apply for USDA and HRSA funding to cover costs.*
 
@@ -273,7 +273,7 @@ Sincerely,
 
 Maria Camacho
 CEO, WellFit Community, LLC
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 (832) 509-4514
 
 ---
@@ -354,7 +354,7 @@ We help FQHCs apply for:
 **CONTACT**
 
 Maria Camacho, CEO
-maria@wellfitcommunity.com | (832) 509-4514
+maria@thewellfitcommunity.org | (832) 509-4514
 
 ---
 
@@ -462,7 +462,7 @@ Whether you're an MA plan chasing STAR ratings or an ACO managing total cost of 
 **CONTACT**
 
 Maria Camacho, CEO
-maria@wellfitcommunity.com | (832) 509-4514
+maria@thewellfitcommunity.org | (832) 509-4514
 
 ---
 
@@ -616,7 +616,7 @@ Envision Atlus proposes a strategic partnership with [EHR Vendor] to integrate o
 **CONTACT**
 
 Maria Camacho, CEO
-maria@wellfitcommunity.com | (832) 509-4514
+maria@thewellfitcommunity.org | (832) 509-4514
 
 ---
 
@@ -811,4 +811,4 @@ Maria
 ---
 
 *AI EMR Outreach Materials | Envision VirtualEdge Group LLC*
-*For questions: maria@wellfitcommunity.com*
+*For questions: maria@thewellfitcommunity.org*

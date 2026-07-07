@@ -187,4 +187,4 @@ If no role can be proven, access is denied.
 ---
 
 *Document Owner: Envision Virtual Edge Group LLC*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*

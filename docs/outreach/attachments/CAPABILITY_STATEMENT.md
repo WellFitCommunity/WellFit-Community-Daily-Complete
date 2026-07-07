@@ -168,7 +168,7 @@
 - Enterprise healthcare deployments
 - AI-first architecture design
 
-Email: maria@wellfitcommunity.com
+Email: maria@thewellfitcommunity.org
 
 </td>
 <td width="50%" valign="top">
@@ -195,7 +195,7 @@ Email: akima@thewellfitcommunity.org
 |--------|---------|
 | Primary Contact | Maria LeBlanc, CEO |
 | Clinical Contact | Akima Taylor, RN, CCO |
-| Email | maria@wellfitcommunity.com |
+| Email | maria@thewellfitcommunity.org |
 | Phone | (832) 576-3448 |
 | Website | https://thewellfitcommunity.org |
 | Address | Houston, Texas |

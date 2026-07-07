@@ -212,4 +212,4 @@ When operating offline (rural/unreliable internet):
 ---
 
 *Document Owner: Envision Virtual Edge Group LLC*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*

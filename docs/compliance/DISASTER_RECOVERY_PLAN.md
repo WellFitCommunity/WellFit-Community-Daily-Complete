@@ -300,4 +300,4 @@ This document defines the disaster recovery (DR) procedures for the WellFit Comm
 ---
 
 *Document Owner: Envision Virtual Edge Group LLC*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*

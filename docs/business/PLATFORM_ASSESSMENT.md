@@ -220,4 +220,4 @@ What this platform needs is not more features. It needs one pilot with real pati
 
 *Assessment conducted via independent codebase analysis*
 *Assessor: Claude Opus 4.6 (Anthropic)*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*

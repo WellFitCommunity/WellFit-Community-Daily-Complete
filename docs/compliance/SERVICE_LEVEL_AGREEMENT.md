@@ -113,7 +113,7 @@ This document defines the service level commitments for the WellFit Community an
 | Level | Timeframe | Contact |
 |-------|-----------|---------|
 | L1 - Engineering | Immediate | engineering@thewellfitcommunity.org |
-| L2 - Clinical Director | P0: 15 min / P1: 1 hour | maria@wellfitcommunity.com |
+| L2 - Clinical Director | P0: 15 min / P1: 1 hour | maria@thewellfitcommunity.org |
 | L3 - Executive | P0: 1 hour / P1: 4 hours | Executive team |
 
 ---
@@ -237,4 +237,4 @@ Enterprise customers receive quarterly reviews including:
 ---
 
 *Document Owner: Envision Virtual Edge Group LLC*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*

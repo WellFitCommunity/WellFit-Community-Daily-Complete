@@ -443,4 +443,4 @@ Target users include seniors with vision and motor impairments:
 ---
 
 *Document Owner: Envision Virtual Edge Group LLC*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*

@@ -609,7 +609,7 @@ Growing demand for integrated behavioral health.
 ---
 
 *Revenue Opportunities Analysis | Envision VirtualEdge Group LLC*
-*For questions: maria@wellfitcommunity.com*
+*For questions: maria@thewellfitcommunity.org*
 
 ---
 

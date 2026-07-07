@@ -187,7 +187,7 @@ Core framework:
 
 ## Contact
 
-**Maria** — maria@wellfitcommunity.com
+**Maria** — maria@thewellfitcommunity.org
 **Akima** — akima@thewellfitcommunity.org
 
 ---

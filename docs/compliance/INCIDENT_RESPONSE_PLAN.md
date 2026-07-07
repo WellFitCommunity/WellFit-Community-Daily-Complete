@@ -47,10 +47,10 @@ This plan covers all systems that process, store, or transmit ePHI:
 
 | Role | Primary | Backup | Contact |
 |------|---------|--------|---------|
-| **Security Officer** | Maria | Akima | maria@wellfitcommunity.com |
+| **Security Officer** | Maria | Akima | maria@thewellfitcommunity.org |
 | **Clinical Director (CCO)** | Akima | Maria | akima@thewellfitcommunity.org |
 | **Privacy Officer** | Akima | Maria | akima@thewellfitcommunity.org |
-| **Communications Lead** | Maria | Akima | maria@wellfitcommunity.com |
+| **Communications Lead** | Maria | Akima | maria@thewellfitcommunity.org |
 
 ### External Contacts
 

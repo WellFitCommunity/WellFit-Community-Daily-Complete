@@ -119,7 +119,7 @@ What you'll see:
 - Patient engagement metrics
 - Remote patient monitoring
 
-Questions? maria@wellfitcommunity.com
+Questions? maria@thewellfitcommunity.org
 ```
 
 ### Synthetic Demo Data Requirements
@@ -231,7 +231,7 @@ Happy to demo anytime.
 
 Maria
 AI System Director, Envision VirtualEdge Group LLC
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 ```
 
 ### What to Have Ready Before Sending

@@ -194,4 +194,4 @@ This compliance document will be reviewed annually. The review will verify:
 ---
 
 *Document Owner: Envision Virtual Edge Group LLC*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*

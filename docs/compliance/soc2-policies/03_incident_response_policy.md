@@ -71,7 +71,7 @@ Incidents are detected through:
 - SEV-2: Within 2 hours
 - SEV-3/SEV-4: Within 24 hours
 
-4.2.2 Reports go to: **maria@wellfitcommunity.com** and **akima@thewellfitcommunity.org**
+4.2.2 Reports go to: **maria@thewellfitcommunity.org** and **akima@thewellfitcommunity.org**
 
 4.2.3 Every reported incident gets an entry in `docs/compliance/incidents/YYYY-MM-DD-<short-slug>.md` with:
 - Reporter, detection method, time of detection

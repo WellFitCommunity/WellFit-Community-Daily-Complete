@@ -11,7 +11,7 @@ https://www.stedi.com/docs
 ## Part 1 — Create the Stedi account
 
 1. Go to **https://stedi.com**
-2. Sign up. Use a business email (e.g., maria@wellfitcommunity.com), not a personal one.
+2. Sign up. Use a business email (e.g., maria@thewellfitcommunity.org), not a personal one.
 3. When asked for a product line, pick **Healthcare** (the EDI / claims path — not the general B2B EDI path).
 4. Verify your email.
 5. You'll land in the Stedi dashboard. **Sandbox is free.** Production requires payment + business verification (don't worry about production yet).

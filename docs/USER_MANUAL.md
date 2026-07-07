@@ -964,7 +964,7 @@ If you are having a medical emergency, call **911** immediately. The app has eme
 If you have trouble logging in, the app is not working correctly, or you need help with your account, contact your organization's administrator or reach out to:
 
 **Envision Virtual Edge Group LLC**
-Email: maria@wellfitcommunity.com
+Email: maria@thewellfitcommunity.org
 
 ### Common Questions
 

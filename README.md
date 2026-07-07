@@ -256,4 +256,4 @@ See [LICENSE](LICENSE) for terms.
 - [Changelog](CHANGELOG.md)
 - [Security Policy](SECURITY.md)
 - [Full Documentation Index](docs/README.md)
-- Contact: maria@wellfitcommunity.com
+- Contact: maria@thewellfitcommunity.org

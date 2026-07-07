@@ -280,7 +280,7 @@ These are not required, but provide additional context:
 ## Contact
 
 **Instructor:** Maria Torres
-**Email:** maria@wellfitcommunity.com
+**Email:** maria@thewellfitcommunity.org
 **Office Hours:** By appointment (Zoom)
 
 For technical setup issues before the course, email with subject line: "AI Class — Setup Help"

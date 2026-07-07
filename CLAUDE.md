@@ -1,7 +1,7 @@
 # Claude Instructions for WellFit-Community-Daily-Complete
 
 > **Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.**
-> Proprietary and confidential. This document and the software it governs are the exclusive property of Envision Virtual Edge Group LLC. Unauthorized use, disclosure, or distribution is strictly prohibited. See [LICENSE](LICENSE) for full terms. Contact: maria@wellfitcommunity.com
+> Proprietary and confidential. This document and the software it governs are the exclusive property of Envision Virtual Edge Group LLC. Unauthorized use, disclosure, or distribution is strictly prohibited. See [LICENSE](LICENSE) for full terms. Contact: maria@thewellfitcommunity.org
 
 ---
 
@@ -579,7 +579,7 @@ Detailed documentation for specific features is in the `docs/` folder:
 ### Super Admin Credentials
 | User | Email | UUID |
 |------|-------|------|
-| Maria | maria@wellfitcommunity.com | `ba4f20ad-2707-467b-a87f-d46fe9255d2f` |
+| Maria | maria@thewellfitcommunity.org | `ba4f20ad-2707-467b-a87f-d46fe9255d2f` |
 | Akima | akima@thewellfitcommunity.org | `06ce7189-1da3-4e22-a6b2-ede88aa1445a` |
 
 ### Feature Flags

@@ -153,4 +153,4 @@ When a tenant terminates service:
 ---
 
 *Policy Owner: Envision Virtual Edge Group LLC*
-*Contact: maria@wellfitcommunity.com*
+*Contact: maria@thewellfitcommunity.org*

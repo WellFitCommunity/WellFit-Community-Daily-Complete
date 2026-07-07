@@ -89,7 +89,7 @@ Our leadership combines deep clinical expertise with healthcare technology:
 
 **Maria LeBlanc**
 Founder & CEO, Envision VirtualEdge Group
-Email: maria@wellfitcommunity.com
+Email: maria@thewellfitcommunity.org
 Phone: (832) 576-3448
 Website: https://thewellfitcommunity.org
 

@@ -59,7 +59,7 @@ Everything in this document is grounded in specific files, git commits, or verif
 > Best,
 > Maria LeBlanc
 > AI System Director, Envision Virtual Edge Group LLC
-> maria@wellfitcommunity.com | [phone]
+> maria@thewellfitcommunity.org | [phone]
 
 ---
 
