@@ -339,6 +339,15 @@ const TelehealthScheduler: React.FC = () => {
 
       const appointment = scheduleResult.data;
 
+      // Pre-create the Daily video room (Model B): creates the telehealth_sessions row
+      // and back-links session_id / daily_room_url onto the appointment, so the patient
+      // can join and wait in the lobby before the visit. Idempotent — if it fails here,
+      // the room is still created when the provider starts the visit, so booking is not blocked.
+      const { error: roomError } = await supabase.functions.invoke('create-telehealth-room', {
+        body: { appointment_id: appointment.id },
+      });
+      const roomReady = !roomError;
+
       // Send notification
       const { error: notifError } = await supabase.functions.invoke(
         'send-telehealth-appointment-notification',
@@ -354,7 +363,9 @@ const TelehealthScheduler: React.FC = () => {
 
       setMessage({
         type: 'success',
-        text: `Appointment scheduled successfully! Patient has been notified via SMS.`,
+        text: roomReady
+          ? 'Appointment scheduled! The video room is ready and the patient has been notified.'
+          : 'Appointment scheduled and patient notified. The video room will be prepared when you start the visit.',
       });
 
       // Reset form

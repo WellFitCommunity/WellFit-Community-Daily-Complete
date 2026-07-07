@@ -6,8 +6,10 @@ import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 
-// Lazy-load TelehealthConsultation (313 kB) - only downloaded when user joins a call
-const TelehealthConsultation = lazy(() => import('../components/telehealth/TelehealthConsultation'));
+// Lazy-load PatientWaitingRoom - only downloaded when the senior joins a call.
+// The senior joins the SAME room the clinician started (via the session created by
+// create-telehealth-room); they wait in the lobby and the clinician admits them.
+const PatientWaitingRoom = lazy(() => import('../components/telehealth/PatientWaitingRoom'));
 
 interface Appointment {
   id: string;
@@ -19,6 +21,7 @@ interface Appointment {
   provider_name: string;
   provider_specialty: string | null;
   daily_room_url: string | null;
+  session_id: string | null;
 }
 
 const TelehealthAppointmentsPage: React.FC = () => {
@@ -31,6 +34,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
   const [patientName, setPatientName] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Load appointments
   useEffect(() => {
@@ -63,6 +67,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
             status,
             reason_for_visit,
             daily_room_url,
+            session_id,
             provider_id
           `)
           .eq('patient_id', user.id)
@@ -81,6 +86,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
           status: string;
           reason_for_visit: string | null;
           daily_room_url: string | null;
+          session_id: string | null;
           provider_id: string | null;
         }
 
@@ -114,11 +120,16 @@ const TelehealthAppointmentsPage: React.FC = () => {
           provider_name: apt.provider_id ? providerMap.get(apt.provider_id) || 'Your Doctor' : 'Your Doctor',
           provider_specialty: null, // profiles table doesn't have specialty column
           daily_room_url: apt.daily_room_url,
+          session_id: apt.session_id,
         }));
 
         setAppointments(formattedAppointments);
-      } catch (error: unknown) {
-
+        setLoadError(null);
+      } catch {
+        // Never leave the senior staring at a silent "no appointments" — surface it.
+        setLoadError(
+          'We could not load your video visits right now. Please try again in a moment or call your care team.'
+        );
       } finally {
         setLoading(false);
       }
@@ -235,11 +246,10 @@ const TelehealthAppointmentsPage: React.FC = () => {
           </div>
         }
       >
-        <TelehealthConsultation
-          patientId={user?.id || ''}
+        <PatientWaitingRoom
+          sessionId={activeAppointment.session_id || ''}
           patientName={patientName}
-          encounterType={activeAppointment.encounter_type}
-          onEndCall={handleEndAppointment}
+          onCallEnded={handleEndAppointment}
         />
       </Suspense>
     );
@@ -283,8 +293,18 @@ const TelehealthAppointmentsPage: React.FC = () => {
           </p>
         </div>
 
+        {/* Load error — never silently show an empty list on failure */}
+        {loadError && (
+          <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-l-4 border-red-500" role="alert">
+            <p className="text-lg font-semibold text-gray-900 mb-1">
+              We couldn't load your visits
+            </p>
+            <p className="text-gray-700">{loadError}</p>
+          </div>
+        )}
+
         {/* Appointments List */}
-        {appointments.length === 0 ? (
+        {!loadError && appointments.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="text-6xl mb-4" aria-hidden="true">
               📅
@@ -367,7 +387,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
                   )}
 
                   {/* Join Button */}
-                  {canJoin ? (
+                  {canJoin && appointment.session_id ? (
                     <button
                       onClick={() => handleJoinAppointment(appointment)}
                       className="w-full py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg flex items-center justify-center gap-3"
@@ -377,6 +397,16 @@ const TelehealthAppointmentsPage: React.FC = () => {
                       </span>
                       <span>Join Video Call</span>
                     </button>
+                  ) : canJoin && !appointment.session_id ? (
+                    <div className="text-center p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-gray-800 font-semibold">
+                        Your video room is being prepared
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Please check back in a few minutes. If it's time for your visit and this
+                        hasn't changed, call your care team.
+                      </p>
+                    </div>
                   ) : (
                     <div className="text-center p-4 bg-gray-100 rounded-lg">
                       <p className="text-gray-600">

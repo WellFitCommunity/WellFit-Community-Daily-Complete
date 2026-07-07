@@ -71,18 +71,10 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
     try {
       setRoomState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-      // Get session details from database
+      // Get session details (no FK embed — telehealth_sessions has no FK to profiles)
       const { data: session, error: sessionError } = await supabase
         .from('telehealth_sessions')
-        .select(
-          `
-          *,
-          provider:provider_id (
-            full_name,
-            email
-          )
-        `
-        )
+        .select('id, patient_id, provider_id, room_url, room_name, status')
         .eq('id', sessionId)
         .single();
 
@@ -90,6 +82,22 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
 
       if (!session) {
         throw new Error('Telehealth session not found');
+      }
+
+      // Resolve provider display name from profiles (PK is user_id; there is no
+      // full_name column — use first_name + last_name, matching the rest of the app).
+      let providerName = 'Your Provider';
+      if (session.provider_id) {
+        const { data: providerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', session.provider_id)
+          .maybeSingle();
+        if (providerProfile) {
+          providerName =
+            `${providerProfile.first_name || ''} ${providerProfile.last_name || ''}`.trim() ||
+            'Your Provider';
+        }
       }
 
       // Create patient token
@@ -104,9 +112,6 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
       );
 
       if (tokenError) throw tokenError;
-
-      const providerName =
-        session.provider?.full_name || session.provider?.email || 'Your Provider';
 
       setRoomState((prev) => ({
         ...prev,

@@ -39,6 +39,8 @@ vi.mock('../../lib/supabaseClient', () => ({
       update: mockUpdate,
       select: vi.fn(() => ({
         eq: mockSelectEq.mockReturnValue({
+          // scheduleAppointment resolves the provider's tenant via profiles
+          maybeSingle: vi.fn().mockResolvedValue({ data: { tenant_id: 'tenant-1' }, error: null }),
           gte: mockSelectGte.mockReturnValue({
             lte: mockSelectLte.mockReturnValue({
               in: mockSelectIn.mockReturnValue({

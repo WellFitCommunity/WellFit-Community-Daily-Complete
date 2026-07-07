@@ -189,12 +189,22 @@ export async function scheduleAppointment(
       return failure('CONSTRAINT_VIOLATION', conflictDetails);
     }
 
+    // Resolve tenant from the provider's profile. telehealth_appointments.tenant_id is
+    // required by the INSERT RLS check (tenant_id = get_current_tenant_id()) and has no
+    // column default, so it must be set explicitly or the booking is rejected by RLS.
+    const { data: providerProfile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', input.providerId)
+      .maybeSingle();
+
     // No conflict, proceed with insert
     const { data, error } = await supabase
       .from('telehealth_appointments')
       .insert({
         patient_id: input.patientId,
         provider_id: input.providerId,
+        tenant_id: providerProfile?.tenant_id ?? null,
         appointment_time: input.appointmentTime.toISOString(),
         duration_minutes: input.durationMinutes,
         encounter_type: input.encounterType,
