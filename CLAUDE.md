@@ -331,6 +331,7 @@ The following detailed standards are auto-loaded from `.claude/rules/`. Each is 
 | **`implementation-discipline.md`** | Plan internally, time estimates, pre-push checks, test timing |
 | **`component-library.md`** | EA design system component reference (read before using EA components) |
 | **`adversarial-audit-lessons.md`** | Codebase-wide grep rule, edge function auth checklist, VITE_ secrets ban, RLS identity enforcement, profiles.user_id, function naming, JWT verification, regression prevention |
+| **`mental-health.md`** | Behavioral-health rules where the law is STRICTER than HIPAA: 42 CFR Part 2 (SUD), psychotherapy notes, data segmentation/break-the-glass, suicide-risk safety obligations, duty-to-warn/mandatory reporting, Cures Act exceptions, minor/adolescent consent |
 
 ---
 
