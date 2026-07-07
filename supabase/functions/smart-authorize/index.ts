@@ -1,731 +1,302 @@
 /**
- * SMART on FHIR Authorization Server
+ * SMART on FHIR Authorization Endpoint
  *
- * Implements OAuth2 authorization for third-party apps to access patient data.
- * Supports:
- * - Authorization code flow with PKCE
- * - Token exchange
- * - Token refresh
- * - Token revocation
- * - Dynamic client registration
+ * Implements the OAuth2 *authorization* leg of SMART App Launch:
+ *  - GET  (authorization_endpoint): validate the app + request, then redirect
+ *          the browser to the in-app consent screen (React /authorize route).
+ *  - POST action=approve: the consent screen calls this with the patient's
+ *          Supabase session token. Identity is taken from the VERIFIED JWT
+ *          (never the request body), an authorization code is issued, and a
+ *          durable authorization record is upserted.
+ *
+ * The token/refresh/introspect legs live in `smart-token`; revocation lives in
+ * `smart-revoke`; registration lives in `smart-register-app`. This function no
+ * longer duplicates them.
+ *
+ * Schema of record (verified live 2026-07-07):
+ *  - smart_registered_apps: client_id (unique), status='approved' to authorize,
+ *    redirect_uris[], scopes_allowed[], is_confidential, pkce_required
+ *  - smart_auth_codes: app_id, patient_id, code, code_challenge[_method],
+ *    redirect_uri, scopes_requested[], scopes_granted[], state, expires_at
+ *  - smart_authorizations: UNIQUE(app_id, patient_id), status in
+ *    (active|revoked|expired)
  *
  * @see https://hl7.org/fhir/smart-app-launch/
  */
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
-import { SUPABASE_URL, SB_SECRET_KEY } from '../_shared/env.ts';
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { SUPABASE_URL, SB_SECRET_KEY, ALLOWED_ORIGINS } from "../_shared/env.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
+const logger = createLogger("smart-authorize");
 const supabase = createClient(SUPABASE_URL ?? "", SB_SECRET_KEY ?? "");
 
-// Registered SMART App interface
-interface SMARTApp {
-  client_name: string;
-  logo_uri?: string;
+// Authorization code lifetime (SMART recommends short-lived, single-use codes)
+const AUTH_CODE_EXPIRY_SECONDS = 60 * 10; // 10 minutes
+
+/** Base URL of the patient-facing app that hosts the /authorize consent route. */
+function appBaseUrl(): string {
+  const explicit = (() => {
+    try {
+      return (globalThis as unknown as { Deno?: { env: { get(k: string): string | undefined } } })
+        .Deno?.env?.get?.("APP_BASE_URL")?.trim() ?? "";
+    } catch {
+      return "";
+    }
+  })();
+  return explicit || ALLOWED_ORIGINS[0] || "";
 }
 
-// Token expiration times
-const ACCESS_TOKEN_EXPIRY = 60 * 60; // 1 hour
-const REFRESH_TOKEN_EXPIRY = 60 * 60 * 24 * 30; // 30 days
-const AUTH_CODE_EXPIRY = 60 * 10; // 10 minutes
+interface RegisteredApp {
+  id: string;
+  client_id: string;
+  client_name: string;
+  redirect_uris: string[];
+  scopes_allowed: string[];
+  is_confidential: boolean;
+  pkce_required: boolean;
+  status: string;
+}
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+serve(async (req: Request): Promise<Response> => {
+  if (req.method === "OPTIONS") {
     return handleOptions(req);
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
   const url = new URL(req.url);
-  const action = url.searchParams.get('action');
+  const action = url.searchParams.get("action");
 
   try {
-    // Route based on action or HTTP method
-    if (req.method === 'GET') {
-      // Authorization request
-      return await handleAuthorize(req, url, corsHeaders);
+    if (req.method === "GET") {
+      return await handleAuthorize(url, corsHeaders);
     }
 
-    if (req.method === 'POST') {
-      const contentType = req.headers.get('content-type') || '';
-
-      if (contentType.includes('application/x-www-form-urlencoded')) {
-        const body = await req.text();
-        const params = new URLSearchParams(body);
-        const grantType = params.get('grant_type');
-
-        if (grantType === 'authorization_code') {
-          return await handleTokenExchange(params, corsHeaders);
-        }
-
-        if (grantType === 'refresh_token') {
-          return await handleRefreshToken(params, corsHeaders);
-        }
-      }
-
-      if (action === 'register') {
-        return await handleDynamicRegistration(req, corsHeaders);
-      }
-
-      if (action === 'revoke') {
-        return await handleRevoke(req, corsHeaders);
-      }
-
-      if (action === 'introspect') {
-        return await handleIntrospect(req, corsHeaders);
-      }
-
-      if (action === 'approve') {
-        return await handleApproval(req, corsHeaders);
-      }
+    if (req.method === "POST" && action === "approve") {
+      return await handleApprove(req, corsHeaders);
     }
 
-    return errorResponse('invalid_request', 'Unsupported request', 400, corsHeaders);
-
+    return errorResponse("invalid_request", "Unsupported request", 400, corsHeaders);
   } catch (err: unknown) {
-    const error = err as Error;
-    return errorResponse('server_error', error.message, 500, corsHeaders);
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("smart-authorize failed", { error: message });
+    return errorResponse("server_error", "Internal error", 500, corsHeaders);
   }
 });
 
 // ============================================================================
-// Authorization Endpoint (GET)
+// Helpers
 // ============================================================================
 
-async function handleAuthorize(req: Request, url: URL, corsHeaders: Record<string, string>) {
-  const clientId = url.searchParams.get('client_id');
-  const redirectUri = url.searchParams.get('redirect_uri');
-  const responseType = url.searchParams.get('response_type');
-  const scope = url.searchParams.get('scope') || '';
-  const state = url.searchParams.get('state');
-  const codeChallenge = url.searchParams.get('code_challenge');
-  const codeChallengeMethod = url.searchParams.get('code_challenge_method');
-  const aud = url.searchParams.get('aud');
+/** Parse a space-delimited OAuth scope string into a clean array. */
+function parseScopes(scope: string | null): string[] {
+  return (scope ?? "").split(/\s+/).map((s) => s.trim()).filter(Boolean);
+}
 
-  // Validate required parameters
-  if (!clientId || !redirectUri || responseType !== 'code') {
-    return errorResponse('invalid_request', 'Missing required parameters', 400, corsHeaders);
-  }
-
-  // Look up registered app
-  const { data: app, error: appError } = await supabase
-    .from('smart_registered_apps')
-    .select('*')
-    .eq('client_id', clientId)
-    .eq('is_active', true)
+/** Look up an app that is registered AND approved for authorization. */
+async function getApprovedApp(clientId: string): Promise<RegisteredApp | null> {
+  const { data, error } = await supabase
+    .from("smart_registered_apps")
+    .select("id, client_id, client_name, redirect_uris, scopes_allowed, is_confidential, pkce_required, status")
+    .eq("client_id", clientId)
     .single();
 
-  if (appError || !app) {
-    return errorResponse('unauthorized_client', 'Unknown or inactive client', 401, corsHeaders);
+  if (error || !data) return null;
+  if (data.status !== "approved") return null;
+  return data as RegisteredApp;
+}
+
+function generateSecureToken(byteLength: number): string {
+  const bytes = new Uint8Array(byteLength);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// ============================================================================
+// Authorization Endpoint (GET) — redirect to the in-app consent screen
+// ============================================================================
+
+async function handleAuthorize(url: URL, corsHeaders: Record<string, string>): Promise<Response> {
+  const clientId = url.searchParams.get("client_id");
+  const redirectUri = url.searchParams.get("redirect_uri");
+  const responseType = url.searchParams.get("response_type");
+  const requestedScopes = parseScopes(url.searchParams.get("scope"));
+  const state = url.searchParams.get("state");
+  const codeChallenge = url.searchParams.get("code_challenge");
+  const codeChallengeMethod = url.searchParams.get("code_challenge_method");
+
+  if (!clientId || !redirectUri || responseType !== "code") {
+    return errorResponse("invalid_request", "Missing or invalid required parameters", 400, corsHeaders);
   }
 
-  // Validate redirect URI
-  const allowedUris = app.redirect_uris || [];
-  if (!allowedUris.includes(redirectUri)) {
-    return errorResponse('invalid_request', 'Invalid redirect_uri', 400, corsHeaders);
+  const app = await getApprovedApp(clientId);
+  if (!app) {
+    return errorResponse("unauthorized_client", "Unknown or unapproved client", 401, corsHeaders);
   }
 
-  // For public apps, PKCE is required
-  if (app.client_type === 'public' && !codeChallenge) {
-    return errorResponse('invalid_request', 'PKCE required for public clients', 400, corsHeaders);
+  if (!app.redirect_uris.includes(redirectUri)) {
+    return errorResponse("invalid_request", "redirect_uri not registered for this client", 400, corsHeaders);
   }
 
-  // Check if user is authenticated
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    // Return HTML consent form
-    return renderConsentPage(clientId, redirectUri, scope, state, codeChallenge, codeChallengeMethod, app, corsHeaders);
+  const disallowed = requestedScopes.filter((s) => !app.scopes_allowed.includes(s));
+  if (disallowed.length > 0) {
+    return errorResponse("invalid_scope", `Scope(s) not permitted for this client: ${disallowed.join(", ")}`, 400, corsHeaders);
   }
 
-  // User is authenticated - verify and create authorization code
-  const token = authHeader.slice(7);
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-  if (authError || !user) {
-    return errorResponse('access_denied', 'User not authenticated', 401, corsHeaders);
+  if (app.pkce_required && !codeChallenge) {
+    return errorResponse("invalid_request", "PKCE code_challenge is required for this client", 400, corsHeaders);
   }
 
-  // Create authorization code
-  const authCode = generateSecureToken(32);
-  const expiresAt = new Date(Date.now() + AUTH_CODE_EXPIRY * 1000);
+  const base = appBaseUrl();
+  if (!base) {
+    logger.error("APP_BASE_URL / ALLOWED_ORIGINS not configured; cannot render consent");
+    return errorResponse("server_error", "Consent UI is not configured", 500, corsHeaders);
+  }
 
-  await supabase.from('smart_auth_codes').insert({
-    code: authCode,
-    client_id: clientId,
-    patient_id: user.id,
-    redirect_uri: redirectUri,
-    scope: scope,
-    code_challenge: codeChallenge,
-    code_challenge_method: codeChallengeMethod,
-    expires_at: expiresAt.toISOString()
-  });
-
-  // Redirect with authorization code
-  const redirectUrl = new URL(redirectUri);
-  redirectUrl.searchParams.set('code', authCode);
-  if (state) redirectUrl.searchParams.set('state', state);
+  // Hand the browser to the in-app consent screen. The patient authenticates
+  // via the normal app session there and approves via POST action=approve.
+  const consent = new URL("/authorize", base);
+  consent.searchParams.set("client_id", clientId);
+  consent.searchParams.set("redirect_uri", redirectUri);
+  consent.searchParams.set("response_type", "code");
+  consent.searchParams.set("scope", requestedScopes.join(" "));
+  if (state) consent.searchParams.set("state", state);
+  if (codeChallenge) consent.searchParams.set("code_challenge", codeChallenge);
+  if (codeChallengeMethod) consent.searchParams.set("code_challenge_method", codeChallengeMethod);
 
   return new Response(null, {
     status: 302,
-    headers: {
-      ...corsHeaders,
-      'Location': redirectUrl.toString()
-    }
+    headers: { ...corsHeaders, Location: consent.toString() },
   });
 }
 
 // ============================================================================
-// Token Exchange (POST grant_type=authorization_code)
+// Consent Approval (POST action=approve) — issue the authorization code
 // ============================================================================
 
-async function handleTokenExchange(params: URLSearchParams, corsHeaders: Record<string, string>) {
-  const code = params.get('code');
-  const redirectUri = params.get('redirect_uri');
-  const clientId = params.get('client_id');
-  const codeVerifier = params.get('code_verifier');
-
-  if (!code || !redirectUri || !clientId) {
-    return errorResponse('invalid_request', 'Missing required parameters', 400, corsHeaders);
+async function handleApprove(req: Request, corsHeaders: Record<string, string>): Promise<Response> {
+  // Identity comes from the VERIFIED session token, never the request body.
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return errorResponse("access_denied", "Authentication required", 401, corsHeaders);
   }
-
-  // Look up authorization code
-  const { data: authCode, error: codeError } = await supabase
-    .from('smart_auth_codes')
-    .select('*')
-    .eq('code', code)
-    .single();
-
-  if (codeError || !authCode) {
-    return errorResponse('invalid_grant', 'Invalid authorization code', 400, corsHeaders);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.slice(7));
+  if (authError || !user) {
+    return errorResponse("access_denied", "Invalid session", 401, corsHeaders);
   }
+  const patientId = user.id;
 
-  // Validate expiration
-  if (new Date(authCode.expires_at) < new Date()) {
-    await supabase.from('smart_auth_codes').delete().eq('code', code);
-    return errorResponse('invalid_grant', 'Authorization code expired', 400, corsHeaders);
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return errorResponse("invalid_request", "JSON body required", 400, corsHeaders);
   }
-
-  // Validate client_id and redirect_uri match
-  if (authCode.client_id !== clientId || authCode.redirect_uri !== redirectUri) {
-    return errorResponse('invalid_grant', 'Parameter mismatch', 400, corsHeaders);
-  }
-
-  // Validate PKCE if code_challenge was provided
-  if (authCode.code_challenge) {
-    if (!codeVerifier) {
-      return errorResponse('invalid_grant', 'code_verifier required', 400, corsHeaders);
-    }
-
-    const computedChallenge = await computeCodeChallenge(codeVerifier, authCode.code_challenge_method);
-    if (computedChallenge !== authCode.code_challenge) {
-      return errorResponse('invalid_grant', 'Invalid code_verifier', 400, corsHeaders);
-    }
-  }
-
-  // Delete used authorization code
-  await supabase.from('smart_auth_codes').delete().eq('code', code);
-
-  // Generate tokens
-  const accessToken = generateSecureToken(48);
-  const refreshToken = generateSecureToken(64);
-  const accessTokenExpiry = new Date(Date.now() + ACCESS_TOKEN_EXPIRY * 1000);
-  const refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000);
-
-  // Store access token
-  await supabase.from('smart_access_tokens').insert({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    client_id: clientId,
-    patient_id: authCode.patient_id,
-    scopes: authCode.scope,
-    expires_at: accessTokenExpiry.toISOString(),
-    refresh_expires_at: refreshTokenExpiry.toISOString()
-  });
-
-  // Return token response
-  return new Response(JSON.stringify({
-    access_token: accessToken,
-    token_type: 'Bearer',
-    expires_in: ACCESS_TOKEN_EXPIRY,
-    refresh_token: refreshToken,
-    scope: authCode.scope,
-    patient: authCode.patient_id  // SMART context
-  }), {
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-      'Pragma': 'no-cache'
-    }
-  });
-}
-
-// ============================================================================
-// Refresh Token (POST grant_type=refresh_token)
-// ============================================================================
-
-async function handleRefreshToken(params: URLSearchParams, corsHeaders: Record<string, string>) {
-  const refreshToken = params.get('refresh_token');
-  const clientId = params.get('client_id');
-
-  if (!refreshToken || !clientId) {
-    return errorResponse('invalid_request', 'Missing required parameters', 400, corsHeaders);
-  }
-
-  // Look up refresh token
-  const { data: tokenData, error: tokenError } = await supabase
-    .from('smart_access_tokens')
-    .select('*')
-    .eq('refresh_token', refreshToken)
-    .eq('client_id', clientId)
-    .single();
-
-  if (tokenError || !tokenData) {
-    return errorResponse('invalid_grant', 'Invalid refresh token', 400, corsHeaders);
-  }
-
-  // Check refresh token expiry
-  if (new Date(tokenData.refresh_expires_at) < new Date()) {
-    await supabase.from('smart_access_tokens').delete().eq('refresh_token', refreshToken);
-    return errorResponse('invalid_grant', 'Refresh token expired', 400, corsHeaders);
-  }
-
-  // Generate new access token
-  const newAccessToken = generateSecureToken(48);
-  const newAccessTokenExpiry = new Date(Date.now() + ACCESS_TOKEN_EXPIRY * 1000);
-
-  // Update token record
-  await supabase.from('smart_access_tokens')
-    .update({
-      access_token: newAccessToken,
-      expires_at: newAccessTokenExpiry.toISOString()
-    })
-    .eq('refresh_token', refreshToken);
-
-  return new Response(JSON.stringify({
-    access_token: newAccessToken,
-    token_type: 'Bearer',
-    expires_in: ACCESS_TOKEN_EXPIRY,
-    refresh_token: refreshToken,
-    scope: tokenData.scopes,
-    patient: tokenData.patient_id
-  }), {
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-      'Pragma': 'no-cache'
-    }
-  });
-}
-
-// ============================================================================
-// Dynamic Client Registration
-// ============================================================================
-
-async function handleDynamicRegistration(req: Request, corsHeaders: Record<string, string>) {
-  const body = await req.json();
-
   const {
-    client_name,
-    redirect_uris,
-    logo_uri,
-    contacts,
+    client_id: clientId,
+    redirect_uri: redirectUri,
     scope,
-    grant_types,
-    token_endpoint_auth_method
-  } = body;
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: codeChallengeMethod,
+  } = body as Record<string, string | undefined>;
 
-  if (!client_name || !redirect_uris || redirect_uris.length === 0) {
-    return errorResponse('invalid_client_metadata', 'client_name and redirect_uris required', 400, corsHeaders);
+  if (!clientId || !redirectUri) {
+    return errorResponse("invalid_request", "client_id and redirect_uri are required", 400, corsHeaders);
   }
 
-  // Generate client credentials
-  const clientId = generateSecureToken(24);
-  const clientSecret = token_endpoint_auth_method !== 'none' ? generateSecureToken(48) : null;
-
-  // Store registered app
-  const { error: insertError } = await supabase.from('smart_registered_apps').insert({
-    client_id: clientId,
-    client_secret: clientSecret,
-    client_name: client_name,
-    redirect_uris: redirect_uris,
-    logo_uri: logo_uri,
-    contacts: contacts,
-    scope: scope || 'patient/*.read',
-    grant_types: grant_types || ['authorization_code', 'refresh_token'],
-    token_endpoint_auth_method: token_endpoint_auth_method || 'client_secret_basic',
-    client_type: clientSecret ? 'confidential' : 'public',
-    is_active: true
-  });
-
-  if (insertError) {
-    return errorResponse('server_error', 'Failed to register client', 500, corsHeaders);
+  const app = await getApprovedApp(clientId);
+  if (!app) {
+    return errorResponse("unauthorized_client", "Unknown or unapproved client", 401, corsHeaders);
+  }
+  if (!app.redirect_uris.includes(redirectUri)) {
+    return errorResponse("invalid_request", "redirect_uri not registered for this client", 400, corsHeaders);
   }
 
-  return new Response(JSON.stringify({
-    client_id: clientId,
-    client_secret: clientSecret,
-    client_name: client_name,
-    redirect_uris: redirect_uris,
-    grant_types: grant_types || ['authorization_code', 'refresh_token'],
-    token_endpoint_auth_method: token_endpoint_auth_method || 'client_secret_basic'
-  }), {
-    status: 201,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json'
-    }
-  });
-}
-
-// ============================================================================
-// Token Revocation
-// ============================================================================
-
-async function handleRevoke(req: Request, corsHeaders: Record<string, string>) {
-  const body = await req.text();
-  const params = new URLSearchParams(body);
-  const token = params.get('token');
-
-  if (!token) {
-    return errorResponse('invalid_request', 'token required', 400, corsHeaders);
+  const requestedScopes = parseScopes(scope ?? null);
+  const disallowed = requestedScopes.filter((s) => !app.scopes_allowed.includes(s));
+  if (disallowed.length > 0) {
+    return errorResponse("invalid_scope", `Scope(s) not permitted for this client: ${disallowed.join(", ")}`, 400, corsHeaders);
+  }
+  if (app.pkce_required && !codeChallenge) {
+    return errorResponse("invalid_request", "PKCE code_challenge is required for this client", 400, corsHeaders);
   }
 
-  // Try to delete as access token or refresh token
-  await supabase.from('smart_access_tokens').delete().eq('access_token', token);
-  await supabase.from('smart_access_tokens').delete().eq('refresh_token', token);
+  const code = generateSecureToken(32);
+  const expiresAt = new Date(Date.now() + AUTH_CODE_EXPIRY_SECONDS * 1000).toISOString();
 
-  return new Response(null, {
-    status: 200,
-    headers: corsHeaders
+  const { error: codeError } = await supabase.from("smart_auth_codes").insert({
+    code,
+    app_id: app.id,
+    patient_id: patientId,
+    code_challenge: codeChallenge ?? null,
+    code_challenge_method: codeChallengeMethod ?? null,
+    redirect_uri: redirectUri,
+    scopes_requested: requestedScopes,
+    scopes_granted: requestedScopes,
+    state: state ?? null,
+    expires_at: expiresAt,
+    ip_address: req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip"),
+    user_agent: req.headers.get("user-agent"),
   });
-}
 
-// ============================================================================
-// Token Introspection
-// ============================================================================
-
-async function handleIntrospect(req: Request, corsHeaders: Record<string, string>) {
-  const body = await req.text();
-  const params = new URLSearchParams(body);
-  const token = params.get('token');
-
-  if (!token) {
-    return new Response(JSON.stringify({ active: false }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+  if (codeError) {
+    logger.error("Failed to store authorization code", { error: codeError.message || String(codeError) });
+    return errorResponse("server_error", "Failed to issue authorization code", 500, corsHeaders);
   }
 
-  const { data: tokenData, error } = await supabase
-    .from('smart_access_tokens')
-    .select('*')
-    .eq('access_token', token)
-    .single();
+  // Durable authorization record (one per app+patient) for the consent dashboard.
+  const now = new Date().toISOString();
+  const { error: authzError } = await supabase
+    .from("smart_authorizations")
+    .upsert(
+      {
+        app_id: app.id,
+        patient_id: patientId,
+        user_id: patientId,
+        scopes_granted: requestedScopes,
+        status: "active",
+        authorized_at: now,
+        updated_at: now,
+      },
+      { onConflict: "app_id,patient_id" },
+    );
 
-  if (error || !tokenData || new Date(tokenData.expires_at) < new Date()) {
-    return new Response(JSON.stringify({ active: false }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+  if (authzError) {
+    logger.error("Failed to upsert authorization record", { error: authzError.message || String(authzError) });
+    // The code was already issued; surface a soft failure but do not block the flow.
   }
 
-  return new Response(JSON.stringify({
-    active: true,
-    scope: tokenData.scopes,
-    client_id: tokenData.client_id,
-    exp: Math.floor(new Date(tokenData.expires_at).getTime() / 1000),
-    patient: tokenData.patient_id
-  }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-  });
-}
-
-// ============================================================================
-// User Approval (POST action=approve)
-// ============================================================================
-
-async function handleApproval(req: Request, corsHeaders: Record<string, string>) {
-  const body = await req.json();
-  const { client_id, patient_id, scope, redirect_uri, state, code_challenge, code_challenge_method } = body;
-
-  if (!client_id || !patient_id || !redirect_uri) {
-    return errorResponse('invalid_request', 'Missing required parameters', 400, corsHeaders);
-  }
-
-  // Create authorization code
-  const authCode = generateSecureToken(32);
-  const expiresAt = new Date(Date.now() + AUTH_CODE_EXPIRY * 1000);
-
-  await supabase.from('smart_auth_codes').insert({
-    code: authCode,
-    client_id: client_id,
-    patient_id: patient_id,
-    redirect_uri: redirect_uri,
-    scope: scope,
-    code_challenge: code_challenge,
-    code_challenge_method: code_challenge_method,
-    expires_at: expiresAt.toISOString()
+  await supabase.from("smart_audit_log").insert({
+    event_type: "authorization_granted",
+    app_id: app.id,
+    patient_id: patientId,
+    details: { scopes: requestedScopes, grant_type: "authorization_code" },
+    ip_address: req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip"),
+    user_agent: req.headers.get("user-agent"),
   });
 
-  // Log the authorization for patient visibility
-  await supabase.from('smart_authorizations').insert({
-    patient_id: patient_id,
-    client_id: client_id,
-    scope: scope,
-    authorized_at: new Date().toISOString()
-  });
-
-  // Build redirect URL
-  const redirectUrl = new URL(redirect_uri);
-  redirectUrl.searchParams.set('code', authCode);
-  if (state) redirectUrl.searchParams.set('state', state);
+  const redirectUrl = new URL(redirectUri);
+  redirectUrl.searchParams.set("code", code);
+  if (state) redirectUrl.searchParams.set("state", state);
 
   return new Response(JSON.stringify({ redirect_uri: redirectUrl.toString() }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 }
 
 // ============================================================================
-// Consent Page Renderer
+// Utility
 // ============================================================================
 
-function renderConsentPage(
-  clientId: string,
-  redirectUri: string,
-  scope: string,
-  state: string | null,
-  codeChallenge: string | null,
-  codeChallengeMethod: string | null,
-  app: SMARTApp,
-  corsHeaders: Record<string, string>
-) {
-  const scopes = scope.split(' ').filter(s => s);
-  const scopeDescriptions: Record<string, string> = {
-    'patient/Patient.read': 'View your basic profile information',
-    'patient/AllergyIntolerance.read': 'View your allergies',
-    'patient/Condition.read': 'View your health conditions',
-    'patient/MedicationRequest.read': 'View your medications',
-    'patient/Observation.read': 'View your vital signs and lab results',
-    'patient/Immunization.read': 'View your immunization records',
-    'patient/Procedure.read': 'View your procedures',
-    'patient/DiagnosticReport.read': 'View your diagnostic reports',
-    'patient/CarePlan.read': 'View your care plans',
-    'patient/CareTeam.read': 'View your care team',
-    'patient/Goal.read': 'View your health goals',
-    'patient/DocumentReference.read': 'View your clinical documents',
-    'patient/*.read': 'View all your health records',
-    'offline_access': 'Access your data when you\'re not logged in'
-  };
-
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Authorize ${app.client_name}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      max-width: 480px;
-      width: 100%;
-      padding: 30px;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 25px;
-    }
-    .app-logo {
-      width: 64px;
-      height: 64px;
-      border-radius: 12px;
-      margin-bottom: 15px;
-    }
-    h1 {
-      font-size: 22px;
-      color: #1a1a1a;
-      margin-bottom: 8px;
-    }
-    .subtitle {
-      color: #666;
-      font-size: 14px;
-    }
-    .permissions {
-      margin: 25px 0;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-    .permissions h3 {
-      font-size: 14px;
-      color: #333;
-      margin-bottom: 12px;
-    }
-    .permission-item {
-      display: flex;
-      align-items: center;
-      padding: 8px 0;
-      font-size: 14px;
-      color: #444;
-    }
-    .permission-item::before {
-      content: "✓";
-      color: #22c55e;
-      font-weight: bold;
-      margin-right: 10px;
-    }
-    .warning {
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      border-radius: 8px;
-      padding: 12px;
-      margin: 20px 0;
-      font-size: 13px;
-      color: #92400e;
-    }
-    .buttons {
-      display: flex;
-      gap: 12px;
-      margin-top: 25px;
-    }
-    button {
-      flex: 1;
-      padding: 14px 20px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-    }
-    .btn-deny {
-      background: #f3f4f6;
-      color: #374151;
-    }
-    .btn-deny:hover {
-      background: #e5e7eb;
-    }
-    .btn-approve {
-      background: #2563eb;
-      color: white;
-    }
-    .btn-approve:hover {
-      background: #1d4ed8;
-    }
-    .login-required {
-      text-align: center;
-      padding: 40px 20px;
-    }
-    .login-btn {
-      background: #2563eb;
-      color: white;
-      padding: 14px 30px;
-      border-radius: 8px;
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 20px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      ${app.logo_uri ? `<img src="${app.logo_uri}" alt="${app.client_name}" class="app-logo">` : ''}
-      <h1>${app.client_name}</h1>
-      <p class="subtitle">wants to access your health records</p>
-    </div>
-
-    <div class="permissions">
-      <h3>This app will be able to:</h3>
-      ${scopes.map(s => {
-        const desc = scopeDescriptions[s] || s;
-        return `<div class="permission-item">${desc}</div>`;
-      }).join('')}
-    </div>
-
-    <div class="warning">
-      <strong>Important:</strong> Only authorize apps you trust. ${app.client_name} will have read-only access to the data listed above.
-    </div>
-
-    <div class="buttons">
-      <button class="btn-deny" onclick="deny()">Deny</button>
-      <button class="btn-approve" onclick="approve()">Authorize</button>
-    </div>
-  </div>
-
-  <script>
-    const params = {
-      client_id: '${clientId}',
-      redirect_uri: '${redirectUri}',
-      scope: '${scope}',
-      state: ${state ? `'${state}'` : 'null'},
-      code_challenge: ${codeChallenge ? `'${codeChallenge}'` : 'null'},
-      code_challenge_method: ${codeChallengeMethod ? `'${codeChallengeMethod}'` : 'null'}
-    };
-
-    async function approve() {
-      // This would normally check if user is logged in
-      // For now, redirect to login with return URL
-      const loginUrl = '/login?return=' + encodeURIComponent(window.location.href);
-      window.location.href = loginUrl;
-    }
-
-    function deny() {
-      const redirectUri = new URL('${redirectUri}');
-      redirectUri.searchParams.set('error', 'access_denied');
-      redirectUri.searchParams.set('error_description', 'User denied the request');
-      ${state ? `redirectUri.searchParams.set('state', '${state}');` : ''}
-      window.location.href = redirectUri.toString();
-    }
-  </script>
-</body>
-</html>`;
-
-  return new Response(html, {
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'text/html'
-    }
-  });
-}
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-function generateSecureToken(length: number): string {
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function computeCodeChallenge(verifier: string, method: string | null): Promise<string> {
-  if (method === 'S256') {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(verifier);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(hash)));
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-  return verifier; // plain method
-}
-
-function errorResponse(error: string, description: string, status: number, headers: Record<string, string>) {
-  return new Response(JSON.stringify({
-    error,
-    error_description: description
-  }), {
+function errorResponse(
+  error: string,
+  description: string,
+  status: number,
+  headers: Record<string, string>,
+): Response {
+  return new Response(JSON.stringify({ error, error_description: description }), {
     status,
-    headers: { ...headers, 'Content-Type': 'application/json' }
+    headers: { ...headers, "Content-Type": "application/json" },
   });
 }
