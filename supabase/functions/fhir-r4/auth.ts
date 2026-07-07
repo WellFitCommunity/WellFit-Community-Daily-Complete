@@ -19,7 +19,7 @@ const supabase = createClient(SUPABASE_URL ?? "", SB_SECRET_KEY ?? "");
 export async function validateAccessToken(token: string): Promise<TokenValidation> {
   const { data: tokenData, error } = await supabase
     .from('smart_access_tokens')
-    .select('patient_id, scopes, app_id, expires_at')
+    .select('patient_id, scopes, app_id, access_token_expires_at, revoked')
     .eq('access_token', token)
     .single();
 
@@ -27,8 +27,13 @@ export async function validateAccessToken(token: string): Promise<TokenValidatio
     return { valid: false };
   }
 
+  // Reject revoked tokens
+  if (tokenData.revoked) {
+    return { valid: false };
+  }
+
   // Check expiration
-  if (new Date(tokenData.expires_at) < new Date()) {
+  if (new Date(tokenData.access_token_expires_at) < new Date()) {
     return { valid: false };
   }
 
