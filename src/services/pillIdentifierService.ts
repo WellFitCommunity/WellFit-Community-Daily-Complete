@@ -107,7 +107,7 @@ export interface PillLabelComparison {
 
 const CONFIG = {
   // Claude API Configuration
-  MODEL: import.meta.env.VITE_CLAUDE_DEFAULT_MODEL || 'claude-haiku-4-5-20250919', // Haiku 4.5 for fast pill identification
+  MODEL: import.meta.env.VITE_CLAUDE_DEFAULT_MODEL || 'claude-haiku-4-5-20251001', // Haiku 4.5 for fast pill identification
   MAX_TOKENS: 4000,
 
   // Image constraints
@@ -123,6 +123,56 @@ const CONFIG = {
   MAX_RETRY_ATTEMPTS: 3,
   RETRY_DELAY_MS: 1000,
 };
+
+// #16 structured output: Claude returns the identification via a forced tool
+// call (a typed object), eliminating free-text / ```json response parsing.
+const PILL_ID_TOOL_NAME = 'report_pill_identification';
+const PILL_ID_TOOL = {
+  name: PILL_ID_TOOL_NAME,
+  description:
+    'Return the structured pill identification result. You MUST call this tool with your analysis.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      medicationName: { type: 'string', description: 'Medication name if identifiable' },
+      genericName: { type: 'string' },
+      brandName: { type: 'string' },
+      strength: { type: 'string', description: 'e.g., 10mg, 500mg' },
+      dosageForm: { type: 'string', description: 'tablet, capsule, etc.' },
+      characteristics: {
+        type: 'object',
+        description:
+          'shape, color, size, imprint, score, formulation, coating, texture, surfaceFeatures, imageQuality, visualConfidence',
+      },
+      ndcCode: { type: 'string' },
+      rxcui: { type: 'string' },
+      alternativeMatches: {
+        type: 'array',
+        description: 'Other possible matches (medicationName, strength, confidence, ndcCode)',
+      },
+      confidence: { type: 'number', description: 'Overall confidence 0.0-1.0' },
+      identificationNotes: { type: 'string' },
+      warnings: { type: 'array', items: { type: 'string' } },
+    },
+    required: ['confidence'],
+  },
+};
+
+// Shape of the tool_use.input the model returns (validated at the SDK boundary).
+interface PillAIResult {
+  medicationName?: string;
+  genericName?: string;
+  brandName?: string;
+  strength?: string;
+  dosageForm?: string;
+  characteristics?: PillCharacteristics;
+  ndcCode?: string;
+  rxcui?: string;
+  alternativeMatches?: PillIdentification['alternativeMatches'];
+  confidence?: number;
+  identificationNotes?: string;
+  warnings?: string[];
+}
 
 // ============================================================================
 // PILL IDENTIFIER SERVICE
@@ -226,6 +276,8 @@ export class PillIdentifierService {
       const response = await this.anthropic.messages.create({
         model: CONFIG.MODEL,
         max_tokens: CONFIG.MAX_TOKENS,
+        tools: [PILL_ID_TOOL],
+        tool_choice: { type: 'tool', name: PILL_ID_TOOL_NAME },
         messages: [
           {
             role: 'user',
@@ -247,10 +299,13 @@ export class PillIdentifierService {
         ]
       });
 
-      // Parse response
-      const content = response.content[0];
-      if (content.type === 'text') {
-        const identification = this.parseAIResponse(content.text);
+      // Parse response — forced tool_choice guarantees a tool_use block
+      const toolUse = response.content.find(
+        (block): block is Extract<typeof block, { type: 'tool_use' }> =>
+          block.type === 'tool_use'
+      );
+      if (toolUse && toolUse.name === PILL_ID_TOOL_NAME) {
+        const identification = this.parseAIResponse(toolUse.input as PillAIResult);
         const apiSources = ['claude_vision'];
 
         return {
@@ -339,22 +394,15 @@ CONFIDENCE SCORING:
 - 0.5-0.7: Characteristics match but no imprint visible
 - 0.0-0.5: Poor image quality or ambiguous identification
 
-Now analyze the pill image and return the JSON:`;
+Now analyze the pill image and call the report_pill_identification tool with your findings.`;
   }
 
   /**
    * Parse AI response into PillIdentification
    */
-  private parseAIResponse(responseText: string): PillIdentification {
+  private parseAIResponse(parsed: PillAIResult): PillIdentification {
     try {
-      // Remove markdown code blocks if present
-      let jsonText = responseText.trim();
-      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-
-      // Parse JSON
-      const parsed = JSON.parse(jsonText);
-
-      // Build PillIdentification object
+      // `parsed` is the model's structured tool_use.input — no text parsing.
       const identification: PillIdentification = {
         medicationName: parsed.medicationName || undefined,
         genericName: parsed.genericName || undefined,
@@ -368,7 +416,7 @@ Now analyze the pill image and return the JSON:`;
         confidence: typeof parsed.confidence === 'number'
           ? Math.max(0, Math.min(1, parsed.confidence))
           : 0.5,
-        identificationMethod: parsed.identificationMethod || 'visual_ai',
+        identificationMethod: 'visual_ai',
         identificationNotes: parsed.identificationNotes || undefined,
         warnings: Array.isArray(parsed.warnings) ? parsed.warnings : []
       };
