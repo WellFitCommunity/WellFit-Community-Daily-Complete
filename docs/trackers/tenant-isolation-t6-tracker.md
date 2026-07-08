@@ -44,9 +44,31 @@ Any of the 27 whose policy is `role = ANY('{admin,super_admin}')` without `tenan
 
 ---
 
+## Behavioral verdict (live-proven 2026-07-08)
+
+Harness: `scripts/tenant-isolation-behavioral.ts` (Deno; creates 2 tenants + admin users, seeds tenant-B data, probes as tenant-A admin). Programmatic sign-in is blocked by hCaptcha-on-auth, so the definitive probe was run via SQL RLS-context simulation (`set_config('request.jwt.claims',…)` + `SET ROLE authenticated`) against the live DB, rolled back.
+
+**The leak is DEFINITIONALLY REAL but currently UNEXPLOITABLE:**
+- `is_admin(u)` returns true for a **tenant-level** admin (`profiles.role='admin'` / `is_admin=true`), not only a `super_admin`. The flagged policies (`provider_tasks`, `patient_engagement_metrics`, the `is_admin()` audit logs, …) are `is_admin(auth.uid()) OR …` with **no tenant filter** → a tenant admin *would* read every tenant's rows. **Proven by `is_admin()` + policy definitions.**
+- **BUT** empirically: `provider_tasks` and `patient_engagement_metrics` are **empty** in prod, only **1 tenant** (WF-0001) has data, and there are **zero** non-super tenant admins (every admin is a `super_admin`, cross-tenant *by design*). So the leak has **no data and no actor** today.
+
+**Severity → downgraded to "fix before multi-tenant scale."** It becomes live only when you (a) onboard a 2nd tenant with data AND (b) create tenant-level (non-super) admins. Fix during T6 policy remediation, before Pool go-live with real tenant admins. Not a current exposure.
+
+### 🔴 Bonus latent bugs found by exercising the system (real, unrelated to isolation)
+1. **`fn_audit_tenant_config()` — tenants can never be DELETED.** On DELETE it inserts a `tenant_config_audit` row that FK-references the tenant being deleted → circular FK violation. (Cleanup required `session_replication_role=replica`.)
+2. **`fn_audit_tenant_config()` — references `p.full_name`** which doesn't exist on `profiles` → tenant insert/update throws when `auth.uid()` is set.
+3. **`log_user_roles_delete()` — `user_roles` can never be DELETED.** Inserts `old_role_id` (UUID column) from `old.role_id` (integer) → type-mismatch error.
+→ File these as their own repair tickets; they'll bite tenant offboarding + role management.
+
+### ✅ Good control confirmed
+`profiles_restrict_user_update()` blocks **self-promotion to admin** and blocks updates when `auth.uid()` is null — solid anti-privilege-escalation.
+
+---
+
 ## Plan
 
 - [x] Baseline classification (live) + `scripts/tenant-isolation-audit.sql` committed.
+- [x] Behavioral harness built (`scripts/tenant-isolation-behavioral.ts`) + definitive verdict via live SQL RLS-simulation.
 - [ ] **Akima/Maria triage** of the 🔴 11 + ⚠️ 14 (+ role-based user_scoped) → per-table intent.
 - [ ] **Fix** the confirmed leaks (add `AND tenant_id = get_current_tenant_id()` to tenant-admin policies) via migration — Tier-3, live-verify each.
 - [ ] **Behavioral harness (the definitive proof)** — two synthetic test tenants (A, B) each with an admin + a member user (synthetic data per Rule #15). Assert: tenant A's admin/user reads of tenant B's rows return 0 / 403 across services, Edge Functions, MCP, RPCs, FHIR/SMART tokens, dashboards. This *proves* which flagged tables actually leak vs are by-design super-admin.
