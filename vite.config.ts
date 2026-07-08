@@ -50,7 +50,9 @@ export default defineConfig({
 
   build: {
     outDir: 'build',
-    sourcemap: true,
+    // T3: default OFF in production (source maps expose readable source for a
+    // healthcare app). Opt in locally with VITE_ENABLE_SOURCEMAP=true.
+    sourcemap: process.env.VITE_ENABLE_SOURCEMAP === 'true',
     rollupOptions: {
       output: {
         // Vendor splitting for optimal caching and reduced initial bundle

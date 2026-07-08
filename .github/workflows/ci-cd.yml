@@ -42,7 +42,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run TypeScript type check
         id: typecheck
@@ -220,7 +220,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run ESLint
         id: eslint
@@ -272,7 +272,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run ${{ matrix.name }} tests
         id: unit-tests
@@ -312,7 +312,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Create .env file for build
         run: |
@@ -379,7 +379,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Check for integration tests
         id: check-integration
