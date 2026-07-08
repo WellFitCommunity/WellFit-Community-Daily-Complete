@@ -38,9 +38,9 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
         .from('voice_profiles')
         .select('maturity_score, accent_adaptation_score, terminology_adaptation_score, workflow_adaptation_score, status, total_sessions, total_corrections, total_transcription_time_seconds, fully_adapted_at')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       setProfile(data);
     } catch {
       // Error handled silently - profile will show as not started

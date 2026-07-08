@@ -1,0 +1,24 @@
+-- ============================================================================
+-- Grant table privileges on care_team_alerts to the authenticated role
+-- ============================================================================
+-- Root cause: care_team_alerts has RLS ENABLED and a policy
+--   care_alerts_admin_and_assigned  USING (is_admin(auth.uid()) OR assigned_to = auth.uid())
+-- but the `authenticated` role was never GRANTed table privileges. An RLS
+-- policy does NOT grant privileges — PostgREST therefore returned
+-- 403 "permission denied for table care_team_alerts" for every caller
+-- (nurse/physician priority boards read it; several services insert alerts).
+--
+-- This is the same class of gap fixed for the billing/clinical tables in
+-- 20260708120000. RLS continues to enforce row-level access
+-- (admin OR assigned_to = auth.uid()); this migration only opens the table
+-- privilege so the policy can be evaluated at all.
+--
+-- Live-verified before authoring (CLAUDE.md #18): RLS enabled = true,
+-- policy present, has_table_privilege('authenticated', ..., 'SELECT') = false.
+-- ============================================================================
+
+-- SELECT: priority boards + timeline read alerts.
+-- INSERT: readmissionTrackingService / dischargePlanningService /
+--         readmissionRiskPredictor create alerts under the caller's session.
+-- UPDATE: acknowledge / resolve flows.
+GRANT SELECT, INSERT, UPDATE ON public.care_team_alerts TO authenticated;

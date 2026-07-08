@@ -36,7 +36,7 @@ npx supabase link --project-ref xkybsjnvuohpqpbkikyn
 
 ## 2. Row Level Security (RLS) — EVERY TABLE, NO EXCEPTIONS
 
-**Every new table MUST have RLS enabled and at least one policy.**
+**Every new table MUST have RLS enabled, at least one policy, AND an explicit GRANT.**
 
 ```sql
 -- Step 1: ALWAYS enable RLS
@@ -47,7 +47,37 @@ CREATE POLICY "Tenant isolation" ON public.my_new_table
   FOR ALL
   USING (tenant_id = get_current_tenant_id())
   WITH CHECK (tenant_id = get_current_tenant_id());
+
+-- Step 3: GRANT table privileges to authenticated (MANDATORY — see §2a)
+-- RLS does NOT grant privileges. Without this GRANT, PostgREST returns
+-- 403 "permission denied for table" even though the policy is correct.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.my_new_table TO authenticated;
+-- ^ Grant only the verbs the table's callers actually use (read-only tables: SELECT only).
 ```
+
+### 2a. RLS ≠ GRANT — you need BOTH (the #1 recurring 403)
+
+**Supabase no longer auto-grants table privileges to `authenticated`. Enabling RLS and writing a policy is NOT enough — the role also needs an explicit `GRANT`, or every query 403s.**
+
+RLS and GRANT are two independent gates, checked in order:
+
+1. **GRANT** — does the role have privilege on the table at all? (`has_table_privilege`) — **no GRANT → `403 permission denied for table`** (a hard error, zero rows never reached).
+2. **RLS policy** — of the rows the role *can* touch, which ones? (a failed policy returns **0 rows, no error** — a different symptom).
+
+So the symptom tells you which gate failed:
+
+| Symptom | Failed gate | Fix |
+|---------|-------------|-----|
+| `403` / `permission denied for table X` | **GRANT** missing | `GRANT <verbs> ON public.X TO authenticated;` |
+| Query succeeds but returns **0 rows** unexpectedly | **RLS policy** too strict | fix the `USING` / `WITH CHECK` expression |
+
+**Every new table AND every new view needs an explicit GRANT to `authenticated`** (views too — `security_invoker` controls whose RLS runs, not whether the role can read the view). Diagnose with:
+
+```sql
+SELECT has_table_privilege('authenticated','public.my_table','SELECT');  -- false ⇒ missing GRANT
+```
+
+When you fix one missing GRANT, **grep sibling tables from the same migration era** — they were almost certainly created the same way and are missing it too (this gap hit 6 billing/clinical tables + `care_team_alerts` across 2026-07).
 
 ### RLS Policy Patterns (Use These)
 
@@ -78,6 +108,7 @@ CREATE POLICY "Tenant isolation" ON public.my_new_table
 | Using `FOR ALL` when INSERT needs different rules | Split into `FOR SELECT`, `FOR INSERT`, etc. |
 | Not testing with a non-service-role client | Service role bypasses all RLS — your policy could be broken and you'd never know |
 | Hardcoding tenant IDs in policies | Use `get_current_tenant_id()` which reads from the JWT |
+| **Enabling RLS + policy but no `GRANT`** | **Supabase does not auto-grant. Add `GRANT <verbs> ON public.X TO authenticated;` or callers get `403 permission denied` — see §2a.** |
 
 ---
 
@@ -160,6 +191,10 @@ CREATE POLICY "Tenant isolation" ON public.my_table
   FOR ALL
   USING (tenant_id = get_current_tenant_id())
   WITH CHECK (tenant_id = get_current_tenant_id());
+
+-- GRANT (mandatory — RLS does NOT grant privileges; see §2a)
+-- Without this, PostgREST returns 403 "permission denied for table".
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.my_table TO authenticated;
 
 -- Indexes (add for frequently queried columns)
 CREATE INDEX IF NOT EXISTS idx_my_table_tenant
@@ -695,8 +730,10 @@ Before considering a migration complete:
 
 1. [ ] `ENABLE ROW LEVEL SECURITY` on every new table
 2. [ ] At least one RLS policy per table (tenant isolation minimum)
-3. [ ] `security_invoker = on` on every new view
-4. [ ] `SET search_path = public` on every `SECURITY DEFINER` function
-5. [ ] Indexes on `tenant_id` and frequently queried columns
-6. [ ] `npx supabase db push` executed and verified
-7. [ ] Service code written AFTER migration is pushed (not before)
+3. [ ] **`GRANT <verbs> ON public.X TO authenticated` on every new table AND view** — RLS does NOT grant privileges; without it PostgREST 403s (see §2a)
+4. [ ] `security_invoker = on` on every new view
+5. [ ] `SET search_path = public` on every `SECURITY DEFINER` function
+6. [ ] Indexes on `tenant_id` and frequently queried columns
+7. [ ] `npx supabase db push` executed and verified
+8. [ ] `has_table_privilege('authenticated', ...)` returns `true` for the intended verbs (proves the GRANT landed)
+9. [ ] Service code written AFTER migration is pushed (not before)
