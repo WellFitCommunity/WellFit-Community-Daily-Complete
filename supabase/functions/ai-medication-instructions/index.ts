@@ -298,7 +298,7 @@ Respond with a JSON object containing:
     const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
     const response = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20250929",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 4000,
       messages: [
         { role: "user", content: userPrompt }
@@ -336,7 +336,7 @@ Respond with a JSON object containing:
         result,
         metadata: {
           generatedAt: new Date().toISOString(),
-          model: "claude-haiku-4-5-20250929",
+          model: "claude-haiku-4-5-20251001",
           responseTimeMs,
           language,
           readingLevel,

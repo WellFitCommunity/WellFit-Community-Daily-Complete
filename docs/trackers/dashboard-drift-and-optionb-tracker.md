@@ -85,7 +85,7 @@ Project ref: `xkybsjnvuohpqpbkikyn`. Default tenant `WF-0001` (`2b902657-6a20-44
 
 Each: read source + `get_logs`/`get_edge_function`, fix, redeploy (`/deploy-edge`), verify live (200), confirm auth intact (JWT+role+tenant per `adversarial-audit-lessons.md`).
 
-- [ ] **C1 `claude-personalization` 500** (repeatable, ~575-700ms then 500, deploy v67). `supabase/functions/claude-personalization/`. Source dive.
+- [x] **C1 `claude-personalization` 500** — ✅ ROOT CAUSE FOUND + FIXED. Invalid Haiku model ID: code used `claude-haiku-4-5-20250929` (that's **Sonnet 4.5's** date), plus `-20250514` and `-20250919` — none are real Haiku snapshots. Anthropic returns **404 → function throws → 500**. **Live-proven** against api.anthropic.com: `-20250929`/`-20250514`/`-20250919` → HTTP 404 `not_found_error`; `-20251001` → HTTP 200. Systemic: 90 code refs across 39 files + **23 `ai_skills` rows**. **Fix:** swept all → `claude-haiku-4-5-20251001` (the only valid Haiku 4.5 ID; honors the no-`latest` rule) in code + `UPDATE ai_skills` (24 skills now valid). Sonnet IDs (`claude-sonnet-4-5-20250929`) are valid — left alone. ⚠️ **Deploy needed**: frontend rebuild + `claude-personalization` (and other Haiku-using) edge-function redeploy for prod to pick it up; DB fix is already live.
 - [ ] **C2 `send-consecutive-missed-alerts` 500** (v46). Community engagement — user-impacting.
 - [ ] **C3 `send-checkin-reminders` 500** (v117). Seniors not getting reminders — user-impacting; likely highest real-user impact.
 - [ ] **C4 `realtime_medical_transcription` 502** (repeated). Telehealth Compass-Riley scribe path — WebSocket/edge boundary; 502 ≠ app-layer, check the function is deployed/healthy.

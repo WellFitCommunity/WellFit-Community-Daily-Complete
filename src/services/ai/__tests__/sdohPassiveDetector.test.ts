@@ -103,7 +103,7 @@ const mockAIResponse = {
     ],
   }),
   cost: 0.003,
-  model: 'claude-haiku-4-5-20250929',
+  model: 'claude-haiku-4-5-20251001',
 };
 
 // ============================================================================
@@ -190,7 +190,7 @@ function _setupMocks(options: {
           sdoh_passive_detector_enabled: skillEnabled,
           sdoh_passive_detector_auto_create_indicators: autoCreateIndicators,
           sdoh_passive_detector_confidence_threshold: confidenceThreshold,
-          sdoh_passive_detector_model: 'claude-haiku-4-5-20250929',
+          sdoh_passive_detector_model: 'claude-haiku-4-5-20251001',
         },
         error: null,
       });

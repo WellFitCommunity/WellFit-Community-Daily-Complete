@@ -387,7 +387,7 @@ Deno.test("AI Schedule Optimizer Edge Function Tests", async (t) => {
 
   // Claude Model Tests
   await t.step("should use Claude Haiku for cost-effective optimization", () => {
-    const HAIKU_MODEL = "claude-haiku-4-5-20250514";
+    const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 
     assertEquals(HAIKU_MODEL.includes("haiku"), true);
   });
@@ -432,7 +432,7 @@ Deno.test("AI Schedule Optimizer Edge Function Tests", async (t) => {
         dateRange: { start: "2026-01-20", end: "2026-01-26" },
         staffCount: 15,
         generated_at: new Date().toISOString(),
-        model: "claude-haiku-4-5-20250514"
+        model: "claude-haiku-4-5-20251001"
       }
     };
 
@@ -446,7 +446,7 @@ Deno.test("AI Schedule Optimizer Edge Function Tests", async (t) => {
     const usageLog = {
       user_id: "scheduler-123",
       request_id: crypto.randomUUID(),
-      model: "claude-haiku-4-5-20250514",
+      model: "claude-haiku-4-5-20251001",
       request_type: "schedule_optimization",
       input_tokens: 500,
       output_tokens: 800,

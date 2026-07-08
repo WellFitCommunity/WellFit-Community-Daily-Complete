@@ -38,7 +38,7 @@ describe('PatientEducationService', () => {
         },
         metadata: {
           generated_at: new Date().toISOString(),
-          model: 'claude-haiku-4-5-20250919',
+          model: 'claude-haiku-4-5-20251001',
           response_time_ms: 150,
           tokens_used: 500,
         },
@@ -100,7 +100,7 @@ describe('PatientEducationService', () => {
         },
         metadata: {
           generated_at: new Date().toISOString(),
-          model: 'claude-haiku-4-5-20250919',
+          model: 'claude-haiku-4-5-20251001',
           response_time_ms: 100,
           tokens_used: 200,
         },

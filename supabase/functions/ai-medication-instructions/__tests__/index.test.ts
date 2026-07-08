@@ -569,14 +569,14 @@ Deno.test("AI Medication Instructions - Response Metadata", async (t) => {
   await t.step("should include response metadata", () => {
     const metadata = {
       generatedAt: new Date().toISOString(),
-      model: "claude-haiku-4-5-20250929",
+      model: "claude-haiku-4-5-20251001",
       responseTimeMs: 150,
       language: "English",
       readingLevel: "simple",
     };
 
     assertExists(metadata.generatedAt);
-    assertEquals(metadata.model, "claude-haiku-4-5-20250929");
+    assertEquals(metadata.model, "claude-haiku-4-5-20251001");
     assertEquals(metadata.language, "English");
   });
 });

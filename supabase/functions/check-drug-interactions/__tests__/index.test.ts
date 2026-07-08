@@ -248,7 +248,7 @@ Deno.test("Check Drug Interactions Edge Function Tests", async (t) => {
   });
 
   await t.step("should use Claude Haiku for alternative suggestions", () => {
-    const HAIKU_MODEL = "claude-haiku-4-5-20250919";
+    const HAIKU_MODEL = "claude-haiku-4-5-20251001";
     assertEquals(HAIKU_MODEL.includes("haiku"), true);
   });
 
@@ -269,7 +269,7 @@ Deno.test("Check Drug Interactions Edge Function Tests", async (t) => {
     const usageLog = {
       user_id: "provider-456",
       request_id: crypto.randomUUID(),
-      model: "claude-haiku-4-5-20250919",
+      model: "claude-haiku-4-5-20251001",
       request_type: "drug_interaction_alternatives",
       input_tokens: 300,
       output_tokens: 500,

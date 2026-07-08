@@ -475,7 +475,7 @@ Return response as strict JSON:
       const aiResponseUnknown = await this.optimizer.call({
         prompt,
         systemPrompt,
-        model: config.ccm_eligibility_scorer_model || 'claude-haiku-4-5-20250929',
+        model: config.ccm_eligibility_scorer_model || 'claude-haiku-4-5-20251001',
         complexity: 'medium',
         userId: context.patientId,
         context: {
@@ -864,7 +864,7 @@ Return response as strict JSON:
       ccm_eligibility_scorer_enabled: false,
       ccm_eligibility_scorer_auto_enroll: false,
       ccm_eligibility_scorer_minimum_score: 0.70,
-      ccm_eligibility_scorer_model: 'claude-haiku-4-5-20250929'
+      ccm_eligibility_scorer_model: 'claude-haiku-4-5-20251001'
     };
   }
 

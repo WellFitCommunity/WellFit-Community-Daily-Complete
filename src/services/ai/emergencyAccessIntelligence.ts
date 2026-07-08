@@ -542,7 +542,7 @@ Provide complete emergency response briefing.`;
 
     try {
       const response = await claudeEdgeService.chat({
-        model: 'claude-haiku-4-5-20250929',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2048,
         temperature: 0.1,
         system: systemPrompt,
@@ -561,7 +561,7 @@ Provide complete emergency response briefing.`;
       const cost = mcpOptimizer.calculateCost(
         response.usage.input_tokens,
         response.usage.output_tokens,
-        'claude-haiku-4-5-20250929'
+        'claude-haiku-4-5-20251001'
       );
 
       return {

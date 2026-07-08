@@ -613,7 +613,7 @@ Deno.test("AI Missed Check-In Escalation Tests", async (t) => {
   // =====================================================
 
   await t.step("should use Claude Haiku model", () => {
-    const HAIKU_MODEL = "claude-haiku-4-5-20250919";
+    const HAIKU_MODEL = "claude-haiku-4-5-20251001";
     assertEquals(HAIKU_MODEL.includes("haiku"), true);
   });
 
@@ -625,7 +625,7 @@ Deno.test("AI Missed Check-In Escalation Tests", async (t) => {
     const usageLog = {
       user_id: "patient-123",
       request_id: crypto.randomUUID(),
-      model: "claude-haiku-4-5-20250919",
+      model: "claude-haiku-4-5-20251001",
       request_type: "missed_checkin_escalation",
       input_tokens: 500,
       output_tokens: 400,

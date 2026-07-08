@@ -68,13 +68,13 @@ describe('MCP Helper Functions', () => {
       await analyzeText({
         text: 'Test',
         prompt: 'Test prompt',
-        model: 'claude-haiku-4-5-20250929'
+        model: 'claude-haiku-4-5-20251001'
       });
 
       expect(mockClient.callTool).toHaveBeenCalledWith(
         expect.objectContaining({
           arguments: expect.objectContaining({
-            model: 'claude-haiku-4-5-20250929'
+            model: 'claude-haiku-4-5-20251001'
           })
         })
       );
@@ -123,7 +123,7 @@ describe('MCP Helper Functions', () => {
         arguments: {
           context: { encounterType: 'urgent care' },
           task: 'Suggest billing codes',
-          model: 'claude-haiku-4-5-20250929'
+          model: 'claude-haiku-4-5-20251001'
         },
         userId: 'doc456'
       });
@@ -142,7 +142,7 @@ describe('MCP Helper Functions', () => {
       expect(mockClient.callTool).toHaveBeenCalledWith(
         expect.objectContaining({
           arguments: expect.objectContaining({
-            model: 'claude-haiku-4-5-20250929'
+            model: 'claude-haiku-4-5-20251001'
           })
         })
       );
@@ -166,7 +166,7 @@ describe('MCP Helper Functions', () => {
         arguments: {
           content: 'Long patient history...',
           maxLength: 500,
-          model: 'claude-haiku-4-5-20250929'
+          model: 'claude-haiku-4-5-20251001'
         },
         userId: 'nurse789'
       });

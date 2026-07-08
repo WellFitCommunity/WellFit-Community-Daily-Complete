@@ -14,7 +14,7 @@
  */
 
 /** Fast tier — UI personalization, quick responses, low-cost operations */
-export const HAIKU_MODEL = 'claude-haiku-4-5-20250929';
+export const HAIKU_MODEL = 'claude-haiku-4-5-20251001';
 
 /** Accurate tier — clinical analysis, billing, medical coding, risk assessment */
 export const SONNET_MODEL = 'claude-sonnet-4-5-20250929';

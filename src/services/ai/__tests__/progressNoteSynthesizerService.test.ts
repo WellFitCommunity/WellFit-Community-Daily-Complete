@@ -132,7 +132,7 @@ describe('ProgressNoteSynthesizerService', () => {
     metadata: {
       generated_at: '2025-12-23T10:00:00Z',
       response_time_ms: 1250,
-      model: 'claude-haiku-4-5-20250919',
+      model: 'claude-haiku-4-5-20251001',
     },
   };
 

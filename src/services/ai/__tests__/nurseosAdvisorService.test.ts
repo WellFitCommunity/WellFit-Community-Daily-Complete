@@ -114,7 +114,7 @@ const mockModuleRecsResponse = {
     confidence: 0.8,
   },
   metadata: {
-    model: 'claude-haiku-4-5-20250929',
+    model: 'claude-haiku-4-5-20251001',
     skill_key: 'nurseos_module_recommendations',
     input_tokens: 300,
     output_tokens: 200,
@@ -143,7 +143,7 @@ const mockStressNarrativeResponse = {
     confidence: 0.75,
   },
   metadata: {
-    model: 'claude-haiku-4-5-20250929',
+    model: 'claude-haiku-4-5-20251001',
     skill_key: 'nurseos_stress_narrative',
     period: '7d',
     checkin_count: 6,

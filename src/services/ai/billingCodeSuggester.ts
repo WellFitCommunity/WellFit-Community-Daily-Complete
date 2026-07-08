@@ -274,7 +274,7 @@ Return response as strict JSON with this structure:
       const aiResponse = await this.optimizer.call({
         prompt,
         systemPrompt,
-        model: config.billing_suggester_model || 'claude-haiku-4-5-20250929',
+        model: config.billing_suggester_model || 'claude-haiku-4-5-20251001',
         complexity: 'medium',
         userId: context.patientId,
         context: {
@@ -411,7 +411,7 @@ Return response as strict JSON with this structure:
     return {
       billing_suggester_enabled: cfg?.billing_suggester_enabled ?? false,
       billing_suggester_confidence_threshold: cfg?.billing_suggester_confidence_threshold ?? 0.85,
-      billing_suggester_model: cfg?.billing_suggester_model ?? 'claude-haiku-4-5-20250929'
+      billing_suggester_model: cfg?.billing_suggester_model ?? 'claude-haiku-4-5-20251001'
     };
   }
 

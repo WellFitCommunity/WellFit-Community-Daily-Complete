@@ -357,7 +357,7 @@ Deno.test("AI Check-In Questions Tests", async (t) => {
   // =====================================================
 
   await t.step("should use Claude Haiku model", () => {
-    const HAIKU_MODEL = "claude-haiku-4-5-20250919";
+    const HAIKU_MODEL = "claude-haiku-4-5-20251001";
     assertEquals(HAIKU_MODEL.includes("haiku"), true);
   });
 
@@ -384,7 +384,7 @@ Deno.test("AI Check-In Questions Tests", async (t) => {
       user_id: "patient-123",
       tenant_id: "tenant-456",
       request_id: crypto.randomUUID(),
-      model: "claude-haiku-4-5-20250919",
+      model: "claude-haiku-4-5-20251001",
       request_type: "check_in_questions",
       input_tokens: 300,
       output_tokens: 750,
@@ -409,7 +409,7 @@ Deno.test("AI Check-In Questions Tests", async (t) => {
       ],
       metadata: {
         generated_at: new Date().toISOString(),
-        model: "claude-haiku-4-5-20250919",
+        model: "claude-haiku-4-5-20251001",
         response_time_ms: 450,
         context_used: {
           diagnoses_count: 2,

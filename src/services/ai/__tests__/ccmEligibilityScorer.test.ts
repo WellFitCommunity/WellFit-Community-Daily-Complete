@@ -109,7 +109,7 @@ const mockAIResponse = {
     ]
   }),
   cost: 0.0025,
-  model: 'claude-haiku-4-5-20250929',
+  model: 'claude-haiku-4-5-20251001',
 };
 
 const mockCCMRates = new Map([
@@ -159,7 +159,7 @@ function setupMocks(options: {
           ccm_eligibility_scorer_enabled: skillEnabled,
           ccm_eligibility_scorer_auto_enroll: autoEnroll,
           ccm_eligibility_scorer_minimum_score: minimumScore,
-          ccm_eligibility_scorer_model: 'claude-haiku-4-5-20250929',
+          ccm_eligibility_scorer_model: 'claude-haiku-4-5-20251001',
         },
         error: null,
       });
@@ -378,7 +378,7 @@ describe('CCMEligibilityScorer', () => {
 
       expect(mockOptimizerCall).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'claude-haiku-4-5-20250929',
+          model: 'claude-haiku-4-5-20251001',
         })
       );
     });
@@ -592,7 +592,7 @@ describe('CCMEligibilityScorer', () => {
 
       expect(mockOptimizerCall).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'claude-haiku-4-5-20250929',
+          model: 'claude-haiku-4-5-20251001',
           complexity: 'medium',
           userId: validPatientId,
         })
@@ -633,7 +633,7 @@ describe('CCMEligibilityScorer', () => {
       const result = await scorer.assessEligibility(context);
 
       expect(result.aiCost).toBe(0.0025);
-      expect(result.aiModel).toBe('claude-haiku-4-5-20250929');
+      expect(result.aiModel).toBe('claude-haiku-4-5-20251001');
     });
 
     it('should handle AI response parsing errors', async () => {
@@ -641,7 +641,7 @@ describe('CCMEligibilityScorer', () => {
         aiResponse: {
           response: 'invalid json response',
           cost: 0.001,
-          model: 'claude-haiku-4-5-20250929',
+          model: 'claude-haiku-4-5-20251001',
         },
       });
       const context = createValidContext();
@@ -654,7 +654,7 @@ describe('CCMEligibilityScorer', () => {
         aiResponse: {
           response: 'No JSON here',
           cost: 0.001,
-          model: 'claude-haiku-4-5-20250929',
+          model: 'claude-haiku-4-5-20251001',
         },
       });
       const context = createValidContext();

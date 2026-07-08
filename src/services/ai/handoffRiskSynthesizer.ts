@@ -371,7 +371,7 @@ Return response as strict JSON with this structure:
       const aiResponseUnknown = await this.optimizer.call({
         prompt,
         systemPrompt,
-        model: config.handoff_synthesizer_model || 'claude-haiku-4-5-20250929',
+        model: config.handoff_synthesizer_model || 'claude-haiku-4-5-20251001',
         complexity: 'medium',
         userId: 'shift-handoff-system',
         context: {
@@ -544,7 +544,7 @@ Return response as strict JSON with this structure:
     return (data as TenantConfig) || {
       handoff_synthesizer_enabled: false,
       handoff_synthesizer_auto_generate: false,
-      handoff_synthesizer_model: 'claude-haiku-4-5-20250929'
+      handoff_synthesizer_model: 'claude-haiku-4-5-20251001'
     };
   }
 

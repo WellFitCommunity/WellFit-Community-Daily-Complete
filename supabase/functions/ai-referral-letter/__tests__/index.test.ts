@@ -123,7 +123,7 @@ Deno.test("AI Referral Letter Edge Function Tests", async (t) => {
 
   // Claude model tests
   await t.step("should use Claude Haiku 4.5 for cost-effective generation", () => {
-    const HAIKU_MODEL = "claude-haiku-4-5-20250919";
+    const HAIKU_MODEL = "claude-haiku-4-5-20251001";
     assertEquals(HAIKU_MODEL.includes("haiku"), true);
   });
 
@@ -382,7 +382,7 @@ Let me know if you need changes.`;
     const usageLog = {
       user_id: "provider-123",
       request_id: crypto.randomUUID(),
-      model: "claude-haiku-4-5-20250919",
+      model: "claude-haiku-4-5-20251001",
       request_type: "referral_letter_generation",
       input_tokens: 800,
       output_tokens: 600,
@@ -426,7 +426,7 @@ Let me know if you need changes.`;
       formattedLetter: "Primary Care Associates\nDr. Smith...",
       metadata: {
         generatedAt: new Date().toISOString(),
-        model: "claude-haiku-4-5-20250919",
+        model: "claude-haiku-4-5-20251001",
         responseTimeMs: 1200,
         specialty: "Cardiology",
         patientContext: {

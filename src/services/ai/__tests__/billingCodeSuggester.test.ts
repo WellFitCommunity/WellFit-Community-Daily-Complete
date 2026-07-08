@@ -70,7 +70,7 @@ const mockAIResponse = {
     reviewReason: '',
   }),
   cost: 0.002,
-  model: 'claude-haiku-4-5-20250929',
+  model: 'claude-haiku-4-5-20251001',
 };
 
 // ============================================================================
@@ -91,7 +91,7 @@ function setupMocks(options: {
         data: {
           billing_suggester_enabled: skillEnabled,
           billing_suggester_confidence_threshold: 0.85,
-          billing_suggester_model: 'claude-haiku-4-5-20250929',
+          billing_suggester_model: 'claude-haiku-4-5-20251001',
         },
         error: null,
       });
@@ -112,7 +112,7 @@ function setupMocks(options: {
           data: cacheHit
             ? {
                 id: 'cache-id-123',
-                model_used: 'claude-haiku-4-5-20250929',
+                model_used: 'claude-haiku-4-5-20251001',
                 suggested_cpt_codes: [{ code: '99214', description: 'Cached CPT', confidence: 0.95, rationale: 'Cached' }],
                 suggested_hcpcs_codes: [],
                 suggested_icd10_codes: [{ code: 'E11.9', description: 'Cached ICD', confidence: 0.98, rationale: 'Cached' }],
@@ -364,7 +364,7 @@ describe('BillingCodeSuggester', () => {
           requiresReview: false,
         }),
         cost: 0.002,
-        model: 'claude-haiku-4-5-20250929',
+        model: 'claude-haiku-4-5-20251001',
       };
       setupMocks({ cacheHit: false, aiResponse: lowConfidenceResponse });
       const suggester = new BillingCodeSuggester();
@@ -386,7 +386,7 @@ describe('BillingCodeSuggester', () => {
           reviewReason: 'Complex case requires physician review',
         }),
         cost: 0.002,
-        model: 'claude-haiku-4-5-20250929',
+        model: 'claude-haiku-4-5-20251001',
       };
       setupMocks({ cacheHit: false, aiResponse: reviewRequiredResponse });
       const suggester = new BillingCodeSuggester();
@@ -402,7 +402,7 @@ describe('BillingCodeSuggester', () => {
       const invalidResponse = {
         response: 'This is not valid JSON',
         cost: 0.002,
-        model: 'claude-haiku-4-5-20250929',
+        model: 'claude-haiku-4-5-20251001',
       };
       setupMocks({ cacheHit: false, aiResponse: invalidResponse });
       const suggester = new BillingCodeSuggester();
@@ -572,7 +572,7 @@ describe('BillingCodeSuggester', () => {
 
       const result = await suggester.suggestCodes(context);
 
-      expect(result.aiModel).toBe('claude-haiku-4-5-20250929');
+      expect(result.aiModel).toBe('claude-haiku-4-5-20251001');
     });
   });
 

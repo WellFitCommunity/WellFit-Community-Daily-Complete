@@ -743,7 +743,7 @@ describe('EmergencyAccessIntelligence', () => {
     });
 
     it('should use Haiku model for cost efficiency', () => {
-      const expectedModel = 'claude-haiku-4-5-20250929';
+      const expectedModel = 'claude-haiku-4-5-20251001';
       expect(expectedModel).toContain('haiku');
     });
   });

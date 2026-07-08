@@ -502,7 +502,7 @@ Deno.test("AI Progress Note Synthesizer Tests", async (t) => {
   // =====================================================
 
   await t.step("should use Claude Haiku model", () => {
-    const HAIKU_MODEL = "claude-haiku-4-5-20250919";
+    const HAIKU_MODEL = "claude-haiku-4-5-20251001";
     assertEquals(HAIKU_MODEL.includes("haiku"), true);
   });
 
@@ -532,7 +532,7 @@ Deno.test("AI Progress Note Synthesizer Tests", async (t) => {
     const usageLog = {
       user_id: "provider-456",
       request_id: crypto.randomUUID(),
-      model: "claude-haiku-4-5-20250919",
+      model: "claude-haiku-4-5-20251001",
       request_type: "progress_note_synthesis",
       input_tokens: 500,
       output_tokens: 800,

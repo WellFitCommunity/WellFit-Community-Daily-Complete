@@ -342,7 +342,7 @@ Deno.test("AI Caregiver Briefing Tests", async (t) => {
   // =====================================================
 
   await t.step("should use Claude Haiku model", () => {
-    const HAIKU_MODEL = "claude-haiku-4-5-20250919";
+    const HAIKU_MODEL = "claude-haiku-4-5-20251001";
     assertEquals(HAIKU_MODEL.includes("haiku"), true);
   });
 
@@ -367,7 +367,7 @@ Deno.test("AI Caregiver Briefing Tests", async (t) => {
     const usageLog = {
       user_id: "caregiver-123",
       request_id: crypto.randomUUID(),
-      model: "claude-haiku-4-5-20250919",
+      model: "claude-haiku-4-5-20251001",
       request_type: "caregiver_briefing",
       input_tokens: 400,
       output_tokens: 600,
@@ -377,7 +377,7 @@ Deno.test("AI Caregiver Briefing Tests", async (t) => {
     };
 
     assertEquals(usageLog.request_type, "caregiver_briefing");
-    assertEquals(usageLog.model, "claude-haiku-4-5-20250919");
+    assertEquals(usageLog.model, "claude-haiku-4-5-20251001");
     assertExists(usageLog.request_id);
     assertEquals(usageLog.success, true);
   });

@@ -25,7 +25,7 @@ export class MCPCostOptimizer {
     return {
       response: 'mock AI response',
       cost: 0.001,
-      model: 'claude-haiku-4-5-20250929',
+      model: 'claude-haiku-4-5-20251001',
       fromCache: false,
       inputTokens: 100,
       outputTokens: 50,

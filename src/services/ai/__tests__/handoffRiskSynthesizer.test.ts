@@ -155,7 +155,7 @@ const mockHandoffSummary: HandoffSummary = {
   },
   patientCount: 14,
   highRiskPatientCount: 3,
-  aiModel: 'claude-haiku-4-5-20250929',
+  aiModel: 'claude-haiku-4-5-20251001',
   aiCost: 0.008,
   synthesisDuration: 2500,
 };
@@ -172,7 +172,7 @@ const mockAIResponse = {
     medication_alerts: mockHandoffSummary.medicationAlerts,
   }),
   cost: 0.008,
-  model: 'claude-haiku-4-5-20250929',
+  model: 'claude-haiku-4-5-20251001',
 };
 
 // ============================================================================
@@ -194,7 +194,7 @@ function setupMocks(options: {
         data: {
           handoff_synthesizer_enabled: skillEnabled,
           handoff_synthesizer_auto_generate: autoGenerate,
-          handoff_synthesizer_model: 'claude-haiku-4-5-20250929',
+          handoff_synthesizer_model: 'claude-haiku-4-5-20251001',
         },
         error: null,
       });

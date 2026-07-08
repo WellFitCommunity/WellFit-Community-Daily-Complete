@@ -377,7 +377,7 @@ describe('AdminTaskModule', () => {
             patient_info: 'John Doe, 65yo male',
             clinical_details: 'Patient presents with chest pain',
           },
-          preferredModel: 'claude-haiku-4-5-20250929',
+          preferredModel: 'claude-haiku-4-5-20251001',
           userId: 'user-123',
         });
       });

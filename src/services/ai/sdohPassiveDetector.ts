@@ -352,7 +352,7 @@ Return empty array [] if no SDOH concerns detected.`;
       const aiResponse = await this.optimizer.call({
         prompt,
         systemPrompt,
-        model: config.sdoh_passive_detector_model || 'claude-haiku-4-5-20250929',
+        model: config.sdoh_passive_detector_model || 'claude-haiku-4-5-20251001',
         complexity: 'medium',
         userId: content.patientId,
         context: {
@@ -441,7 +441,7 @@ Return empty array [] if no SDOH concerns detected.`;
         patientId: content.patientId,
         entityType: content.sourceType,
         entityId: content.sourceId,
-        model: config.sdoh_passive_detector_model || 'claude-haiku-4-5-20250929'
+        model: config.sdoh_passive_detector_model || 'claude-haiku-4-5-20251001'
       });
 
       if (result.success) {
@@ -480,7 +480,7 @@ Return empty array [] if no SDOH concerns detected.`;
       ai_rationale: detection.aiRationale,
       recommended_actions: detection.recommendedActions,
       status: 'pending',
-      ai_model_used: 'claude-haiku-4-5-20250929',
+      ai_model_used: 'claude-haiku-4-5-20251001',
       ai_prediction_tracking_id: trackingId
     });
   }
@@ -540,7 +540,7 @@ Return empty array [] if no SDOH concerns detected.`;
       sdoh_passive_detector_enabled: false,
       sdoh_passive_detector_auto_create_indicators: false,
       sdoh_passive_detector_confidence_threshold: 0.75,
-      sdoh_passive_detector_model: 'claude-haiku-4-5-20250929'
+      sdoh_passive_detector_model: 'claude-haiku-4-5-20251001'
     };
 
     if (!data || !isRecord(data)) return fallback;

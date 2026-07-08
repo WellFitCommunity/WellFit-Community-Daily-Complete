@@ -255,12 +255,12 @@ Deno.test("MCP Claude Server Tests", async (t) => {
 
   await t.step("should calculate cost for Haiku model", () => {
     const pricing = {
-      "claude-haiku-4-5-20250929": { input: 0.8 / 1_000_000, output: 4.0 / 1_000_000 }
+      "claude-haiku-4-5-20251001": { input: 0.8 / 1_000_000, output: 4.0 / 1_000_000 }
     };
 
     const inputTokens = 1000;
     const outputTokens = 500;
-    const model = "claude-haiku-4-5-20250929";
+    const model = "claude-haiku-4-5-20251001";
 
     const rates = pricing[model];
     const cost = (inputTokens * rates.input) + (outputTokens * rates.output);
@@ -456,10 +456,10 @@ Deno.test("MCP Claude Server Tests", async (t) => {
   });
 
   await t.step("should allow model override", () => {
-    const toolArgs = { text: "test", prompt: "analyze", model: "claude-haiku-4-5-20250929" };
+    const toolArgs = { text: "test", prompt: "analyze", model: "claude-haiku-4-5-20251001" };
     const model = toolArgs.model || "claude-sonnet-4-5-20250929";
 
-    assertEquals(model, "claude-haiku-4-5-20250929");
+    assertEquals(model, "claude-haiku-4-5-20251001");
   });
 
   // =====================================================

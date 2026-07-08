@@ -116,7 +116,7 @@ Deno.test("AI Patient Education Edge Function Tests", async (t) => {
 
   // Claude Model Tests
   await t.step("should use Claude Haiku for cost-effective generation", () => {
-    const HAIKU_MODEL = "claude-haiku-4-5-20250514";
+    const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 
     assertEquals(HAIKU_MODEL.includes("haiku"), true);
   });
@@ -283,7 +283,7 @@ Deno.test("AI Patient Education Edge Function Tests", async (t) => {
       metadata: {
         topic: "diabetes management",
         generated_at: new Date().toISOString(),
-        model: "claude-haiku-4-5-20250514",
+        model: "claude-haiku-4-5-20251001",
         personalized: false
       }
     };
@@ -305,7 +305,7 @@ Deno.test("AI Patient Education Edge Function Tests", async (t) => {
     const usageLog = {
       user_id: "user-123",
       request_id: crypto.randomUUID(),
-      model: "claude-haiku-4-5-20250514",
+      model: "claude-haiku-4-5-20251001",
       request_type: "patient_education",
       input_tokens: 200,
       output_tokens: 500,

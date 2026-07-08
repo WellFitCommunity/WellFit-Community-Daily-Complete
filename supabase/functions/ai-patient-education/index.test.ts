@@ -114,7 +114,7 @@ Deno.test('should generate appropriate reading level content', () => {
 Deno.test('should include metadata in response', () => {
   const mockMetadata = {
     generated_at: new Date().toISOString(),
-    model: 'claude-haiku-4-5-20250919',
+    model: 'claude-haiku-4-5-20251001',
     response_time_ms: 150,
     tokens_used: 350,
   };

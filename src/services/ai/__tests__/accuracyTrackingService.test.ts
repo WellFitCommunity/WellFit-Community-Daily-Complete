@@ -90,7 +90,7 @@ describe('AccuracyTrackingService', () => {
         skillName: 'billing_codes',
         predictionType: 'code',
         predictionValue: { codes: [] },
-        model: 'claude-haiku-4-5-20250929'
+        model: 'claude-haiku-4-5-20251001'
       });
 
       expect(result.success).toBe(false);
