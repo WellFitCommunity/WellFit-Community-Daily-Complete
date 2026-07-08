@@ -31,13 +31,13 @@ const ALERT_COOLDOWN_HOURS = 23; // Don't send duplicate alerts within 23 hours
 
 // --- Setup ---
 const logger = createLogger("send-consecutive-missed-alerts");
-validateEnvVars([
-  "SUPABASE_URL",
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "FCM_SERVER_KEY",
-  "TWILIO_ACCOUNT_SID",
-  "TWILIO_AUTH_TOKEN",
-]);
+// Only the Supabase vars are boot-critical. This validateEnvVars runs at module
+// load, so any missing name throws and the function 500s on EVERY invocation.
+// - FCM_SERVER_KEY is not configured, and the FCM *legacy* HTTP API this used
+//   was shut down by Google (June 2024); the push path no-ops safely (0 tokens).
+// - TWILIO_* aren't used directly here — SMS is delegated to the send-sms edge
+//   function, which owns its own Twilio creds. Requiring them here was spurious.
+validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
 
 const supabase = createClient<DatabaseTypes>(
   SUPABASE_URL!,
@@ -406,7 +406,9 @@ serve(async (req) => {
     // Step 2: Fetch users who need alerts (3+ consecutive days)
     const { data: users, error: fetchError } = await supabase
       .from("user_consecutive_missed_days")
-      .select("*")
+      .select(
+        "user_id, first_name, last_name, phone, emergency_email, caregiver_first_name, caregiver_last_name, caregiver_phone, consecutive_missed_days, last_checkin_at"
+      )
       .gte("consecutive_missed_days", DAY_3_THRESHOLD);
 
     if (fetchError) {

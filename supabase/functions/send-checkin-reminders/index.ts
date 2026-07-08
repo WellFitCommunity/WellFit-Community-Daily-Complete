@@ -18,7 +18,11 @@ const MAX_TOKENS_PER_BATCH = 500; // FCM legacy supports up to 1000, we keep a s
 
 // --- Setup ---
 const logger = createLogger("send-checkin-reminders");
-validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
+// FCM_SERVER_KEY is NOT boot-critical: it isn't configured and the FCM legacy
+// HTTP API (fcm.googleapis.com/fcm/send + `key=`) was shut down by Google (2024).
+// Requiring it here threw at module load → 500 on every run. Push no-ops safely
+// (0 tokens). See send-consecutive-missed-alerts for the full note.
+validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
 
 const supabase = createClient<DatabaseTypes>(
   SUPABASE_URL,
@@ -30,12 +34,6 @@ const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY");
 type TokenRow = {
   user_id: string;
   token: string | null;
-  profiles: {
-    id: string;
-    full_name: string | null;
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
 };
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -45,13 +43,12 @@ function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 async function fetchUsersWithTokens(): Promise<TokenRow[]> {
+  // NOTE: no `profiles(...)` embed — fcm_tokens has no FK to profiles, so the
+  // embed 400s (PGRST200 "no relationship") and threw the whole function into a
+  // 500. The name was never used anyway (batch message uses buildNotificationBody(null)).
   const { data, error } = await supabase
     .from("fcm_tokens")
-    .select(`
-      user_id,
-      token,
-      profiles ( id, full_name, first_name, last_name )
-    `)
+    .select("user_id, token")
     .not("token", "is", null);
 
   if (error) throw new Error(`Fetch tokens failed: ${error.message}`);
