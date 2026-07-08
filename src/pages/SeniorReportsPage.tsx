@@ -58,6 +58,13 @@ interface ReportPeriod {
   days: number;
 }
 
+// Response from the get-caregiver-senior-data edge function (server-side BFF).
+// The function returns a fuller profile; this page only reads these fields.
+interface CaregiverDataResponse {
+  profile: SeniorProfile | null;
+  checkIns: CheckIn[];
+}
+
 const REPORT_PERIODS: ReportPeriod[] = [
   { label: 'Last 7 Days', days: 7 },
   { label: 'Last 14 Days', days: 14 },
@@ -126,49 +133,38 @@ const SeniorReportsPage: React.FC = () => {
     }
   }, [seniorId]);
 
-  // Load data for report
+  // Load report data via the server-side BFF (never query PHI with the anon
+  // key — RLS correctly blocks it). The edge function validates the caregiver
+  // session, logs the page view, and returns only the authorized senior's data
+  // for the requested period.
   const loadReportData = useCallback(async () => {
-    if (!session || !seniorId) return;
+    if (!session) return;
 
     try {
-      // Log page view
-      await anonSupabase.rpc('log_caregiver_page_view', {
-        p_session_token: session.sessionToken,
-        p_page_name: 'senior_reports'
-      });
+      const { data, error: fnError } = await anonSupabase.functions.invoke<CaregiverDataResponse>(
+        'get-caregiver-senior-data',
+        { body: { sessionToken: session.sessionToken, pageName: 'senior_reports', days: selectedPeriod.days } }
+      );
 
-      // Load profile
-      const { data: profileData } = await anonSupabase
-        .from('profiles')
-        .select('first_name, last_name, phone, dob')
-        .eq('user_id', seniorId)
-        .maybeSingle();
-
-      if (profileData) {
-        setSeniorProfile(profileData);
+      if (fnError || !data) {
+        auditLogger.error(
+          'CAREGIVER_REPORTS_LOAD_ERROR',
+          fnError instanceof Error ? fnError : new Error(fnError?.message ?? 'No data returned')
+        );
+        setError('Unable to load report data.');
+        setLoading(false);
+        return;
       }
 
-      // Load check-ins for selected period
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - selectedPeriod.days);
-
-      const { data: checkInData } = await anonSupabase
-        .from('check_ins')
-        .select('id, timestamp, label, notes, emotional_state, heart_rate, bp_systolic, bp_diastolic, pulse_oximeter, glucose_mg_dl')
-        .eq('user_id', seniorId)
-        .gte('timestamp', startDate.toISOString())
-        .order('timestamp', { ascending: false });
-
-      if (checkInData) {
-        setCheckIns(checkInData);
-      }
-
+      setSeniorProfile(data.profile ?? null);
+      setCheckIns(data.checkIns ?? []);
       setLoading(false);
     } catch (err: unknown) {
       auditLogger.error('CAREGIVER_REPORTS_LOAD_ERROR', err instanceof Error ? err : new Error(String(err)));
+      setError('Unable to load report data.');
       setLoading(false);
     }
-  }, [session, seniorId, selectedPeriod]);
+  }, [session, selectedPeriod]);
 
   // Initial load
   useEffect(() => {

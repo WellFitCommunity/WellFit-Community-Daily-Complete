@@ -69,6 +69,14 @@ verify_jwt = false
 [functions.validate-api-key]
 verify_jwt = false
 
+[functions.get-caregiver-senior-data]
+# Caregivers have no Supabase JWT — they hold an app-level caregiver session
+# token, validated in-code via validate_caregiver_session. Gateway JWT verify
+# would reject the anon-key call, so it must be false (same pattern as the
+# other tokenless public functions). The function authorizes via the session
+# token and derives the senior_id from it, not from client input.
+verify_jwt = false
+
 [functions.verify-hcaptcha]
 verify_jwt = false
 

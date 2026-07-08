@@ -74,6 +74,19 @@ interface MedicationReminder {
   notes: string | null;
 }
 
+// Response from the get-caregiver-senior-data edge function (server-side BFF).
+interface CaregiverDataResponse {
+  session: {
+    seniorId: string;
+    seniorName: string | null;
+    caregiverName: string | null;
+    expiresAt: string | null;
+  };
+  profile: SeniorProfile | null;
+  checkIns: CheckIn[];
+  medications: MedicationReminder[];
+}
+
 const SeniorViewPage: React.FC = () => {
   const navigate = useNavigate();
   const { seniorId } = useParams<{ seniorId: string }>();
@@ -141,68 +154,39 @@ const SeniorViewPage: React.FC = () => {
     }
   }, [seniorId]);
 
-  // Load senior data
+  // Load senior data via the server-side BFF. The browser must NOT query PHI
+  // with the anon key (RLS correctly blocks it). The edge function validates
+  // the caregiver session server-side, derives the authorized senior from the
+  // session, logs the page view, and returns only that senior's data.
   const loadSeniorData = useCallback(async () => {
-    if (!session || !seniorId) return;
+    if (!session) return;
 
     try {
-      // Log page view
-      await anonSupabase.rpc('log_caregiver_page_view', {
-        p_session_token: session.sessionToken,
-        p_page_name: 'senior_dashboard'
-      });
+      const { data, error: fnError } = await anonSupabase.functions.invoke<CaregiverDataResponse>(
+        'get-caregiver-senior-data',
+        { body: { sessionToken: session.sessionToken, pageName: 'senior_dashboard' } }
+      );
 
-      // Load profile (using service role would be needed for full access)
-      // For now, we'll use the data we have from session validation
-      const { data: profileData } = await anonSupabase
-        .from('profiles')
-        .select(`
-          first_name, last_name, phone, email, dob,
-          emergency_contact_phone,
-          caregiver_first_name, caregiver_last_name,
-          caregiver_phone, caregiver_relationship
-        `)
-        .eq('user_id', seniorId)
-        .maybeSingle();
-
-      if (profileData) {
-        setSeniorProfile(profileData);
+      if (fnError || !data) {
+        auditLogger.error(
+          'CAREGIVER_LOAD_DATA_ERROR',
+          fnError instanceof Error ? fnError : new Error(fnError?.message ?? 'No data returned')
+        );
+        setError('Unable to load senior information.');
+        setLoading(false);
+        return;
       }
 
-      // Load recent check-ins (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data: checkInData } = await anonSupabase
-        .from('check_ins')
-        .select('id, timestamp, label, notes, emotional_state, heart_rate, bp_systolic, bp_diastolic, pulse_oximeter, glucose_mg_dl')
-        .eq('user_id', seniorId)
-        .gte('timestamp', thirtyDaysAgo.toISOString())
-        .order('timestamp', { ascending: false })
-        .limit(50);
-
-      if (checkInData) {
-        setCheckIns(checkInData);
-      }
-
-      // Load medication reminders (if table exists)
-      const { data: medData } = await anonSupabase
-        .from('medication_reminders')
-        .select('id, medication_name, dosage, frequency, time_of_day, notes')
-        .eq('user_id', seniorId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (medData) {
-        setMedications(medData);
-      }
-
+      setSeniorProfile(data.profile ?? null);
+      setCheckIns(data.checkIns ?? []);
+      setMedications(data.medications ?? []);
       setLoading(false);
     } catch (err: unknown) {
       auditLogger.error('CAREGIVER_LOAD_DATA_ERROR', err instanceof Error ? err : new Error(String(err)));
+      setError('Unable to load senior information.');
       setLoading(false);
     }
-  }, [session, seniorId]);
+  }, [session]);
 
   // Initial session validation
   useEffect(() => {
