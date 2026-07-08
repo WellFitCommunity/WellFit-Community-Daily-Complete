@@ -559,7 +559,7 @@ export const SuperAdminService = {
 
       const { data, error } = await supabase
         .from('system_health_checks')
-        .select('id, check_type, check_name, component_name, status, response_time_ms, error_message, message, metrics, metadata, checked_at')
+        .select('id, check_type, check_name, status, response_time_ms, error_message, metadata, checked_at')
         .gte('checked_at', cutoff)
         .order('checked_at', { ascending: false });
 

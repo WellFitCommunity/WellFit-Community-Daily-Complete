@@ -71,9 +71,9 @@ const GuardianMonitoringDashboard: React.FC = () => {
       }
 
       // Get Guardian alerts
-      const { data: alerts, error: alertsError } = await supabase
+      const { data: alertRows, error: alertsError } = await supabase
         .from('guardian_alerts')
-        .select('id, created_at, severity, category, title, description, tenant_id, resolved')
+        .select('id, created_at, severity, category, title, description, tenant_id, status, resolved_at')
         .gte('created_at', cutoffDate.toISOString())
         .order('created_at', { ascending: false })
         .limit(50);
@@ -81,6 +81,19 @@ const GuardianMonitoringDashboard: React.FC = () => {
       if (alertsError && alertsError.code !== 'PGRST116') {
         throw alertsError;
       }
+
+      // guardian_alerts tracks lifecycle via `status`/`resolved_at`; there is no
+      // `resolved` column. Derive the boolean the dashboard renders from those.
+      const alerts: GuardianAlert[] = (alertRows || []).map((row) => ({
+        id: row.id,
+        created_at: row.created_at,
+        severity: row.severity,
+        category: row.category,
+        title: row.title,
+        description: row.description,
+        tenant_id: row.tenant_id,
+        resolved: row.status === 'resolved' || row.resolved_at !== null,
+      })) as GuardianAlert[];
 
       // Get cron execution logs
       const { data: cronLogs, error: cronError } = await supabase
