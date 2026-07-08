@@ -36,6 +36,7 @@ vi.mock('../../../lib/supabaseClient', () => ({
 
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabaseClient';
+import { createQueryBuilder } from '../../../test-utils';
 
 const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
@@ -46,12 +47,11 @@ describe('VoiceProfileMaturity', () => {
     mockUseAuth.mockReturnValue({ user: { id: 'test-user-123' } });
   });
 
-  const setupMockProfile = (profile: Record<string, unknown> | null, error: Record<string, unknown> | null = null) => {
-    // Component uses .maybeSingle() (no PGRST116 on empty) — mock must match.
-    const mockMaybeSingle = vi.fn().mockResolvedValue({ data: profile, error });
-    const mockEq = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
-    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-    mockFrom.mockReturnValue({ select: mockSelect });
+  // Chainable builder — resolves the same result whether the component queries
+  // via .single() or .maybeSingle(), so this test survives that swap instead of
+  // breaking on it (see src/test-utils/supabaseMock.ts).
+  const setupMockProfile = (profile: Record<string, unknown> | null, error: { code?: string } | null = null) => {
+    mockFrom.mockReturnValue(createQueryBuilder({ data: profile, error }));
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
