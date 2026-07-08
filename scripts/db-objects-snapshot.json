@@ -2,8 +2,8 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-07-08 (added live-verified RPM report objects: rpm_reports, rpm_report_settings, log_rpm_report_review)",
-    "table_count": 765,
+    "generated": "2026-07-08 (restored provider-task subsystem: provider_tasks, provider_task_escalation_config, v_provider_task_queue)",
+    "table_count": 768,
     "function_count": 1476
   },
   "tables": [
@@ -560,6 +560,8 @@
     "provider_support_circle_members",
     "provider_support_circles",
     "provider_support_reflections",
+    "provider_task_escalation_config",
+    "provider_tasks",
     "provider_training_completions",
     "provider_voice_profiles",
     "psych_med_alerts",
@@ -742,6 +744,7 @@
     "v_nurse_question_analytics",
     "v_pending_mental_health_sessions",
     "v_provider_coverage_summary",
+    "v_provider_task_queue",
     "v_push_targets",
     "v_readmission_active_alerts",
     "v_readmission_dashboard_metrics",
