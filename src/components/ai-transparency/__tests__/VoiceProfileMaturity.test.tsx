@@ -47,8 +47,9 @@ describe('VoiceProfileMaturity', () => {
   });
 
   const setupMockProfile = (profile: Record<string, unknown> | null, error: Record<string, unknown> | null = null) => {
-    const mockSingle = vi.fn().mockResolvedValue({ data: profile, error });
-    const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
+    // Component uses .maybeSingle() (no PGRST116 on empty) — mock must match.
+    const mockMaybeSingle = vi.fn().mockResolvedValue({ data: profile, error });
+    const mockEq = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
     const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
     mockFrom.mockReturnValue({ select: mockSelect });
   };
@@ -72,7 +73,7 @@ describe('VoiceProfileMaturity', () => {
 
   describe('No Profile State', () => {
     it('should show start message when no profile exists', async () => {
-      setupMockProfile(null, { code: 'PGRST116' });
+      setupMockProfile(null);
       render(<VoiceProfileMaturity />);
 
       await waitFor(() => {
@@ -82,7 +83,7 @@ describe('VoiceProfileMaturity', () => {
     });
 
     it('should show microphone emoji when no profile', async () => {
-      setupMockProfile(null, { code: 'PGRST116' });
+      setupMockProfile(null);
       render(<VoiceProfileMaturity />);
 
       await waitFor(() => {
