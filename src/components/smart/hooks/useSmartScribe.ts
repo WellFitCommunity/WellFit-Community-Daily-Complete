@@ -75,7 +75,7 @@ import type {
 // ============================================================================
 
 export function useSmartScribe(props: UseSmartScribeProps) {
-  const { selectedPatientId, onSessionComplete, forceDemoMode, scribeMode = 'compass-riley', reasoningMode = 'auto' } = props;
+  const { selectedPatientId, encounterId, onSessionComplete, forceDemoMode, scribeMode = 'compass-riley', reasoningMode = 'auto' } = props;
 
   // Core state
   const [transcript, setTranscript] = useState('');
@@ -308,6 +308,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
 
       const sessionId = await saveScribeSession({
         selectedPatientId,
+        encounterId,
         recordingStartTime: recordingStartTime ?? endTime,
         endTime,
         transcript,

@@ -106,10 +106,24 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
 
       const { room_url, session_id } = data;
 
+      // Resolve the encounter this session belongs to, so the Compass-Riley scribe
+      // persists the SOAP note + billing codes against the SAME encounter as an
+      // in-person visit (the edge function created and linked the encounter server-side).
+      let encounterId: string | null = null;
+      if (session_id) {
+        const { data: sess } = await supabase
+          .from('telehealth_sessions')
+          .select('encounter_id')
+          .eq('id', session_id)
+          .maybeSingle();
+        encounterId = sess?.encounter_id ?? null;
+      }
+
       setCallState((prev) => ({
         ...prev,
         roomUrl: room_url,
         sessionId: session_id,
+        encounterId,
       }));
 
       // Join the room (room_url already carries the provider owner token)
@@ -466,7 +480,11 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
               </p>
             </div>
             <div className="p-4">
-              <RealTimeSmartScribe />
+              <RealTimeSmartScribe
+                selectedPatientId={patientId}
+                selectedPatientName={patientName}
+                encounterId={callState.encounterId}
+              />
             </div>
           </div>
         )}

@@ -27,6 +27,7 @@ import {
   PatientChartNavigatorWrapper,
   CoordinatedResponseDashboardWrapper,
   ReceivingDashboardWrapper,
+  ProviderTelehealthVisitWrapper,
 } from './RouteRenderer';
 
 import type { StaffRole } from '../types/roles';
@@ -101,6 +102,7 @@ const wrapperComponentMap: Record<string, React.FC> = {
   PatientChartNavigatorWrapper,
   CoordinatedResponseDashboardWrapper,
   ReceivingDashboardWrapper,
+  ProviderTelehealthVisitWrapper,
 };
 
 type NoPropsComponent = React.ComponentType<Record<string, never>>;

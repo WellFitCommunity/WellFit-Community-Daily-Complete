@@ -12,6 +12,7 @@ import { featureFlags } from '../config/featureFlags';
 import { RouteConfig, allRoutes } from './routeConfig';
 import * as LazyComponents from './lazyComponents';
 import { useSupabaseClient } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 import type { StaffRole } from '../types/roles';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -175,6 +176,124 @@ export const CoordinatedResponseDashboardWrapper: React.FC = () => {
   );
 };
 
+/**
+ * Wrapper for the provider "Start Visit" entry (S3.1b). Reads the appointment id from
+ * the route, loads the appointment (patient + encounter type), resolves the patient's
+ * display name, then renders TelehealthConsultation keyed to that appointment so the
+ * provider joins the SAME pre-created Daily room the senior joins (create-telehealth-room
+ * is idempotent on the appointment). The scheduler (TelehealthScheduler) is a 792-line
+ * god-file already over the 600-line limit, so this lives as its own dedicated route
+ * rather than being bolted onto the scheduler.
+ */
+export const ProviderTelehealthVisitWrapper: React.FC = () => {
+  const { appointmentId } = useParams<{ appointmentId: string }>();
+  const [state, setState] = React.useState<{
+    loading: boolean;
+    error: string | null;
+    patientId: string | null;
+    patientName: string;
+    encounterType: 'outpatient' | 'er' | 'urgent-care';
+  }>({
+    loading: true,
+    error: null,
+    patientId: null,
+    patientName: 'Patient',
+    encounterType: 'outpatient',
+  });
+
+  React.useEffect(() => {
+    if (!appointmentId) {
+      setState((prev) => ({ ...prev, loading: false, error: 'No appointment ID provided' }));
+      return;
+    }
+
+    let active = true;
+    const load = async () => {
+      try {
+        // Provider reads the appointment (tenant-scoped RLS grants provider/admin read).
+        const { data: appt, error: apptError } = await supabase
+          .from('telehealth_appointments')
+          .select('id, patient_id, encounter_type')
+          .eq('id', appointmentId)
+          .single();
+
+        if (apptError) throw apptError;
+        if (!appt) throw new Error('Appointment not found');
+
+        // Resolve the patient's display name (profiles PK is user_id; no full_name column).
+        let patientName = 'Patient';
+        if (appt.patient_id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('user_id', appt.patient_id)
+            .maybeSingle();
+          if (profile) {
+            patientName =
+              `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Patient';
+          }
+        }
+
+        if (!active) return;
+        setState({
+          loading: false,
+          error: null,
+          patientId: appt.patient_id,
+          patientName,
+          encounterType:
+            (appt.encounter_type as 'outpatient' | 'er' | 'urgent-care') || 'outpatient',
+        });
+      } catch (err: unknown) {
+        if (!active) return;
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error:
+            err instanceof Error ? err.message : 'Failed to load the telehealth appointment',
+        }));
+      }
+    };
+
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [appointmentId]);
+
+  if (state.loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500">Loading telehealth visit…</p>
+      </div>
+    );
+  }
+
+  if (state.error || !state.patientId || !appointmentId) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-red-600">{state.error || 'Unable to start this telehealth visit.'}</p>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-gray-500">Loading telehealth visit…</p>
+        </div>
+      }
+    >
+      <LazyComponents.TelehealthConsultation
+        appointmentId={appointmentId}
+        patientId={state.patientId}
+        patientName={state.patientName}
+        encounterType={state.encounterType}
+      />
+    </Suspense>
+  );
+};
+
 // GuardianAgentDashboard is now loaded from lazyComponents.tsx
 
 /**
@@ -264,6 +383,7 @@ const wrapperComponentMap: Record<string, React.FC> = {
   PatientChartNavigatorWrapper,
   CoordinatedResponseDashboardWrapper,
   ReceivingDashboardWrapper,
+  ProviderTelehealthVisitWrapper,
 };
 
 type NoPropsComponent = React.ComponentType<Record<string, never>>;
@@ -282,7 +402,7 @@ const getRouteComponent = (componentName: string): NoPropsComponent | null => {
 
   if (!maybeComponent) return null;
 
-  // We intentionally accept any valid React component type here (function, memo, forwardRef, etc.)
+  // We intentionally accept any valid React component type here (function, memo, ref-as-prop, etc.)
   return maybeComponent as NoPropsComponent;
 };
 

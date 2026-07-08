@@ -222,6 +222,8 @@ export async function initializeRecording(
 
 export interface SaveSessionParams {
   selectedPatientId: string;
+  /** Optional clinical encounter to attach the note + billing to (e.g. a telehealth encounter). */
+  encounterId?: string | null;
   recordingStartTime: number;
   endTime: number;
   transcript: string;
@@ -234,7 +236,7 @@ export interface SaveSessionParams {
  * Returns the session ID on success, null on failure.
  */
 export async function saveScribeSession(params: SaveSessionParams): Promise<string | null> {
-  const { selectedPatientId, recordingStartTime, endTime, transcript, soapNote, suggestedCodes } = params;
+  const { selectedPatientId, encounterId, recordingStartTime, endTime, transcript, soapNote, suggestedCodes } = params;
   const durationSeconds = Math.floor((endTime - recordingStartTime) / 1000);
 
   const {
@@ -249,6 +251,7 @@ export async function saveScribeSession(params: SaveSessionParams): Promise<stri
     .from('scribe_sessions')
     .insert({
       patient_id: selectedPatientId,
+      encounter_id: encounterId ?? null,
       created_by: user.id,
       provider_id: user.id,
       recording_started_at: new Date(recordingStartTime).toISOString(),

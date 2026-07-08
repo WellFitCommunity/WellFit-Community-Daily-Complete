@@ -61,11 +61,33 @@ Branch `claude/telehealth-e2e-connection` (commits `c8d1eb4d`, `59a544d7`, + S3.
 - **Edge function DEPLOYED** to prod (`create-telehealth-room`) + live-probed: unauth POST → 401,
   OPTIONS → 204 (live, secure, CORS ok). Full invoke-with-real-room is the S3.2 round-trip.
 
+**S3.1b — DONE (2026-07-08, Maria-approved route + page).**
+- Route `/provider/telehealth/:appointmentId` → `ProviderTelehealthVisitWrapper` loads the
+  appointment, resolves the patient name, and renders `TelehealthConsultation` keyed to the
+  appointment (provider joins the SAME pre-created room). Wired into both routers, provider-role
+  gated. Route added, NOT bolted onto the scheduler.
+- Provider day view `/provider/telehealth` → **`TodaysTelehealthVisits`** (new page): lists the
+  signed-in provider's telehealth appointments for today via `getProviderAppointments`, each with
+  a "Start Visit" button → the visit route. Surfaces load errors (no silent empty list). Reachable
+  via a new tile on the CHW Command Center (`CHWDashboardPage`).
+- 4 behavior tests (deletion-test quality, synthetic data) green.
+
+**S3.1c — Compass-Riley connected to telehealth (2026-07-08).** The physician's telehealth visit
+  now gets the SAME scribe benefit as in-person: `TelehealthConsultation` passes
+  `selectedPatientId` + `selectedPatientName` + the visit's `encounterId` into `RealTimeSmartScribe`
+  (default `compass-riley` mode = SOAP + billing intelligence). Threaded `encounterId` through
+  `RealTimeSmartScribe → useSmartScribe → saveScribeSession → scribe_sessions.encounter_id` so the
+  SOAP note + suggested CPT/ICD-10 codes persist against the telehealth encounter. Previously the
+  scribe rendered prop-less at `TelehealthConsultation.tsx:469` → generated a note but saved nothing.
+  Live-verified the write path is runtime-safe (scribe_sessions: only patient_id is NOT NULL;
+  INSERT RLS `created_by/provider_id = auth.uid()` satisfied). 388 existing scribe/appt/page tests
+  still green.
+
 **REMAINING:**
-- **S3.1b — provider "Start Visit" entry** that passes `appointmentId` to TelehealthConsultation.
-  The scheduler (`TelehealthScheduler.tsx`) is a **792-line god-file (already over 600)** — do NOT
-  bolt onto it; add a small dedicated provider page + route (`/provider/telehealth/:appointmentId`
-  → renders TelehealthConsultation with the appointmentId). **[Tier-3 route — Maria sign-off]**
+- **Physician-dashboard nav placement (follow-up).** `TodaysTelehealthVisits` is reachable from the
+  CHW Command Center (admin/nurse/case-manager/clinical-supervisor). If physicians (physician/np/pa)
+  need it on a physician-specific dashboard, tell me where and I'll add the tile. `/provider/availability`
+  and `/appointment-analytics` are likewise typed-URL-only today — same nav gap.
 - **S3.2 — full live two-party round-trip** (senior in WellFit + clinician in Envision, same Daily
   room, two-way A/V) + **visual acceptance [Maria, Commandment #13]**. Requires the branch frontend
   deployed (merge) + a real provider & patient session.
