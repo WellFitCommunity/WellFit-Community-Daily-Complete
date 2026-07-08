@@ -2,9 +2,9 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-06-25 (equity-analytics engine: analytics_query_log + equity_aggregate)",
-    "table_count": 762,
-    "function_count": 1473
+    "generated": "2026-07-08 (added live-verified RPM report objects: rpm_reports, rpm_report_settings, log_rpm_report_review)",
+    "table_count": 765,
+    "function_count": 1476
   },
   "tables": [
     "account_lockouts",
@@ -615,6 +615,8 @@
     "rls_policy_audit",
     "roles",
     "rpm_enrollments",
+    "rpm_report_settings",
+    "rpm_reports",
     "safer_guide_assessments",
     "safer_guide_definitions",
     "safer_guide_questions",
@@ -1617,6 +1619,7 @@
     "log_notification",
     "log_phi_access",
     "log_prior_auth_status_change",
+    "log_rpm_report_review",
     "log_security_event",
     "log_telehealth_event",
     "log_user_roles_delete",
