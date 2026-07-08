@@ -548,7 +548,13 @@ verify_jwt = true  # browser-called by an authenticated user; gateway-verified
 verify_jwt = true  # break-the-glass; browser-called by an authenticated clinician; gateway-verified
 
 [functions.realtime_medical_transcription]
-verify_jwt = true  # browser-called by an authenticated user; gateway-verified
+# WebSocket function. Browsers cannot set an Authorization header on a WS upgrade,
+# so the JWT rides in ?access_token=. Gateway verify_jwt reads the header, finds
+# none, and fails the handshake with a 502 (observed: function_id null = request
+# never reached the function). The function verifies the token itself via
+# admin.auth.getUser(access_token) (index.ts ~L107), so gateway verification is
+# redundant here AND blocks the handshake. Must be false for WS to connect.
+verify_jwt = false
 
 [functions.validate-hcaptcha]
 verify_jwt = true  # standalone hCaptcha siteverify; companion to verify-hcaptcha. Source restored to repo.
