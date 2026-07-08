@@ -99,6 +99,38 @@ Branch `claude/telehealth-e2e-connection` (commits `c8d1eb4d`, `59a544d7`, + S3.
 
 ---
 
+## S3.2 — PRE-MERGE ROUND-TRIP TEST SETUP (deferred 2026-07-08, Maria not ready)
+
+When ready to run the live two-party test, here's the exact setup (backend recon already done):
+
+**Deploy:** Frontend can't be deployed from the Claude session (Vercel MCP token scoped to a
+different team → 403; no CLI). Vercel Git integration auto-builds a **preview** for the pushed
+branch `claude/telehealth-e2e-connection` — get the preview URL from the Vercel dashboard.
+
+**Confirmed already set (Supabase secrets):** `DAILY_API_KEY` ✅ present, `ALLOWED_ORIGINS` set.
+`DEV_ALLOW_VERCEL` is NOT set. `verify_jwt = true` on both `create-telehealth-room` and
+`create-patient-telehealth-token` (browser-called by an authenticated user — correct).
+
+**The one blocker for a PREVIEW round-trip: CORS.** The telehealth edge functions only accept
+origins in `ALLOWED_ORIGINS`; a `*.vercel.app` preview URL is not in it → Start Visit + senior join
+would be CORS-blocked. **Tier-3 CORS decision — pick one:**
+- **A.** Add the exact preview URL to `ALLOWED_ORIGINS` + redeploy the 2 room functions (surgical; URL changes per deploy).
+- **B.** Set `DEV_ALLOW_VERCEL=true` + redeploy (allows any `*.vercel.app` preview; turn off after). Gated by `supabase/functions/_shared/cors.ts` `VERCEL_PATTERN`.
+- **C.** Merge to `main` → production (`wellfitcommunity.live` already whitelisted; no CORS change needed).
+
+**Test data needed:** a `telehealth_appointments` row — `provider_id` = physician test login,
+`patient_id` = senior test login, same `tenant_id`, status scheduled/confirmed, `appointment_time`
+= today (so it appears in "Today's Telehealth Visits"). Claude can seed this given the two account
+UUIDs. Senior's `profiles.tenant_id` must match the appointment tenant (tracker prereq).
+
+**Click-path to verify:** physician logs in → `/physician-dashboard` → "Telehealth Video
+Appointments" → "Today's Telehealth Visits" → Start Visit (joins room, scribe panel present);
+senior logs into WellFit → `/telehealth-appointments` → Join → same Daily room; confirm two-way A/V,
+`telehealth_sessions` row active→completed, and a `scribe_sessions` row written with
+`encounter_id` set (proves S3.1c billing/SOAP linkage). **[Visual acceptance — Maria, Commandment #13]**
+
+---
+
 ## TARGET ARCHITECTURE (Model B — room pre-created at scheduling)
 
 ```
