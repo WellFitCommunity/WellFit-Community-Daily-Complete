@@ -146,6 +146,15 @@ const CHWDashboardPage: React.FC = () => {
       color: 'bg-green-500',
       hoverColor: 'hover:bg-green-600',
     },
+    {
+      id: 'telehealth-visits',
+      title: "Today's Telehealth Visits",
+      description: 'Start a scheduled video visit',
+      icon: '🩺',
+      path: '/provider/telehealth',
+      color: 'bg-teal-500',
+      hoverColor: 'hover:bg-teal-600',
+    },
   ];
 
   const impactMetrics = [

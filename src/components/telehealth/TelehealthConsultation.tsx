@@ -13,6 +13,12 @@ interface TelehealthConsultationProps {
   patientId: string;
   patientName: string;
   encounterType: 'outpatient' | 'er' | 'urgent-care';
+  /**
+   * When starting a SCHEDULED visit, pass the telehealth_appointments id. The provider
+   * then joins the SAME room the patient joins (create-telehealth-room is idempotent on
+   * the appointment). Omit for an ad-hoc provider-initiated visit.
+   */
+  appointmentId?: string;
   onEndCall?: () => void;
 }
 
@@ -61,6 +67,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
   patientId,
   patientName,
   encounterType,
+  appointmentId,
   onEndCall,
 }) => {
   const daily = useDaily();
@@ -79,63 +86,38 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [stethoscopeConnected, setStethoscopeConnected] = useState(false);
 
-  // Track encounter in database
-  const createEncounter = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Create FHIR encounter record
-      const encounterClass = encounterType === 'er' ? 'emergency' : encounterType;
-      const { data: encounter, error: encounterError } = await supabase
-        .from('fhir_encounters')
-        .insert({
-          patient_id: patientId,
-          provider_id: user.id,
-          class: encounterClass,
-          status: 'in-progress',
-          period_start: new Date().toISOString(),
-          resource: {
-            resourceType: 'Encounter',
-            status: 'in-progress',
-            class: { code: encounterClass },
-            subject: { reference: `Patient/${patientId}` },
-            participant: [{ individual: { reference: `Practitioner/${user.id}` } }],
-            period: { start: new Date().toISOString() }
-          }
-        })
-        .select()
-        .single();
-
-      if (encounterError) throw encounterError;
-
-      return encounter.id;
-    } catch (err: unknown) {
-
-      throw err;
-    }
-  }, [patientId, encounterType]);
-
-  // Create Daily.co room
+  // Start (or resume) the telehealth room. For a SCHEDULED visit we pass appointment_id
+  // so the edge function returns the SAME pre-created room (idempotent) that the patient
+  // joins; for an ad-hoc visit we pass patient_id/encounter_type and the function creates
+  // the encounter + room server-side. The encounter is owned by the edge function — the
+  // client no longer writes it (the previous fhir_encounters insert targeted columns that
+  // don't exist and 403'd every room).
   const createDailyRoom = useCallback(async () => {
     try {
       setCallState((prev) => ({ ...prev, isJoining: true, error: null }));
 
-      // Create encounter first
-      const encounterId = await createEncounter();
+      const body = appointmentId
+        ? { appointment_id: appointmentId }
+        : { patient_id: patientId, encounter_type: encounterType };
 
-      // Call Supabase Edge Function to create Daily room
-      const { data, error } = await supabase.functions.invoke('create-telehealth-room', {
-        body: {
-          encounter_id: encounterId,
-          patient_id: patientId,
-          encounter_type: encounterType,
-        },
-      });
+      const { data, error } = await supabase.functions.invoke('create-telehealth-room', { body });
 
       if (error) throw error;
 
       const { room_url, session_id } = data;
+
+      // Resolve the encounter this session belongs to, so the Compass-Riley scribe
+      // persists the SOAP note + billing codes against the SAME encounter as an
+      // in-person visit (the edge function created and linked the encounter server-side).
+      let encounterId: string | null = null;
+      if (session_id) {
+        const { data: sess } = await supabase
+          .from('telehealth_sessions')
+          .select('encounter_id')
+          .eq('id', session_id)
+          .maybeSingle();
+        encounterId = sess?.encounter_id ?? null;
+      }
 
       setCallState((prev) => ({
         ...prev,
@@ -144,20 +126,19 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
         encounterId,
       }));
 
-      // Join the room
+      // Join the room (room_url already carries the provider owner token)
       if (daily) {
         await daily.join({ url: room_url });
         setCallState((prev) => ({ ...prev, isInCall: true, isJoining: false }));
       }
     } catch (err: unknown) {
-
       setCallState((prev) => ({
         ...prev,
         error: err instanceof Error ? err.message : 'Failed to create telehealth session',
         isJoining: false,
       }));
     }
-  }, [daily, patientId, encounterType, createEncounter]);
+  }, [daily, appointmentId, patientId, encounterType]);
 
   // Handle call events
   useEffect(() => {
@@ -227,26 +208,16 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
         await daily.leave();
       }
 
-      // Update encounter status
-      if (callState.encounterId) {
+      // Mark the telehealth session completed. The encounter lifecycle is managed
+      // server-side (the edge function created it); the client only closes the session.
+      if (callState.sessionId) {
         await supabase
-          .from('fhir_encounters')
+          .from('telehealth_sessions')
           .update({
             status: 'completed',
-            period_end: new Date().toISOString(),
+            ended_at: new Date().toISOString(),
           })
-          .eq('id', callState.encounterId);
-
-        // Also update telehealth session status
-        if (callState.sessionId) {
-          await supabase
-            .from('telehealth_sessions')
-            .update({
-              status: 'completed',
-              ended_at: new Date().toISOString(),
-            })
-            .eq('id', callState.sessionId);
-        }
+          .eq('id', callState.sessionId);
       }
 
       setCallState({
@@ -260,10 +231,9 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
 
       if (onEndCall) onEndCall();
     } catch {
-
+      // Leave/cleanup errors are non-fatal for the user.
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sessionId accessed via callState
-  }, [daily, callState.encounterId, onEndCall]);
+  }, [daily, callState.sessionId, onEndCall]);
 
   // Connect stethoscope audio
   const connectStethoscope = useCallback(async () => {
@@ -510,7 +480,11 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
               </p>
             </div>
             <div className="p-4">
-              <RealTimeSmartScribe />
+              <RealTimeSmartScribe
+                selectedPatientId={patientId}
+                selectedPatientName={patientName}
+                encounterId={callState.encounterId}
+              />
             </div>
           </div>
         )}

@@ -302,6 +302,8 @@ export const MedicationPhotoCapture = React.lazy(() => import('../components/chw
 export const SDOHAssessment = React.lazy(() => import('../components/chw/SDOHAssessment'));
 export const TelehealthLobby = React.lazy(() => import('../components/chw/TelehealthLobby'));
 export const ProviderAvailabilityEditor = React.lazy(() => import('../components/telehealth/ProviderAvailabilityEditor'));
+export const TelehealthConsultation = React.lazy(() => import('../components/telehealth/TelehealthConsultation'));
+export const TodaysTelehealthVisits = React.lazy(() => import('../components/telehealth/TodaysTelehealthVisits'));
 export const AppointmentAnalyticsDashboard = React.lazy(() => import('../components/telehealth/AppointmentAnalyticsDashboard'));
 export const KioskDashboard = React.lazy(() => import('../components/chw/KioskDashboard'));
 

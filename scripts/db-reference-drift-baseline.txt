@@ -124,8 +124,6 @@ table::phi_access_audit
 table::pill_identifications
 table::pill_label_comparisons
 table::posts
-table::provider_task_escalation_config
-table::provider_tasks
 table::public_data
 table::risk_assessments_decrypted
 table::sdoh_flags
@@ -143,7 +141,6 @@ table::user_tenants
 table::users
 table::v_active_mental_health_patients
 table::v_connection_health_dashboard
-table::v_provider_task_queue
 table::wearable_apple_health_activity
 table::wearable_apple_health_devices
 table::wearable_apple_health_ecg

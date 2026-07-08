@@ -518,6 +518,12 @@ const PhysicianPanel: React.FC = () => {
                 </div>
               </div>
             </div>
+            <button
+              onClick={() => navigate('/provider/telehealth')}
+              className="mb-4 flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg bg-teal-600 px-6 py-3 text-lg font-bold text-white transition-colors hover:bg-teal-700"
+            >
+              🩺 Today&apos;s Telehealth Visits
+            </button>
             <TelehealthScheduler />
           </CollapsibleSection>
 

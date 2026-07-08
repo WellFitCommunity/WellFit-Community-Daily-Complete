@@ -39,6 +39,8 @@ export type ScribeMode = 'smartscribe' | 'compass-riley' | 'consultation';
 interface RealTimeSmartScribeProps {
   selectedPatientId?: string;
   selectedPatientName?: string;
+  /** Clinical encounter to attach the note + billing to (e.g. a telehealth encounter). */
+  encounterId?: string | null;
   onSessionComplete?: (sessionId: string) => void;
   /** Scribe mode - 'smartscribe' for nurses, 'compass-riley' for physicians (default) */
   mode?: ScribeMode;

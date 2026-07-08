@@ -283,6 +283,12 @@ export interface AssistanceSettings {
 export interface UseSmartScribeProps {
   selectedPatientId?: string;
   selectedPatientName?: string;
+  /**
+   * When the visit is tied to a clinical encounter (e.g. a telehealth visit), pass its
+   * id so the scribe session — SOAP note + suggested billing codes — is persisted against
+   * the SAME encounter as an in-person visit. Omit for ad-hoc/unlinked sessions.
+   */
+  encounterId?: string | null;
   onSessionComplete?: (sessionId: string) => void;
   /** Force demo mode regardless of env var. When true, simulates a patient visit. */
   forceDemoMode?: boolean;

@@ -735,6 +735,24 @@ export const chwRoutes: RouteConfig[] = [
     category: 'chw',
   },
   {
+    // Provider day view (S3.1b) — today's telehealth visits with a "Start Visit" action.
+    path: '/provider/telehealth',
+    component: 'TodaysTelehealthVisits',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'np', 'pa'],
+    category: 'clinical',
+  },
+  {
+    // Provider "Start Visit" entry (S3.1b) — joins the appointment's pre-created Daily
+    // room (same room the senior joins from WellFit) and runs the Compass-Riley scribe
+    // against the appointment's encounter.
+    path: '/provider/telehealth/:appointmentId',
+    component: 'ProviderTelehealthVisitWrapper',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'np', 'pa'],
+    category: 'clinical',
+  },
+  {
     path: '/appointment-analytics',
     component: 'AppointmentAnalyticsDashboard',
     auth: 'admin',
