@@ -97,7 +97,10 @@ export function createQueryBuilder<T = unknown>(
     onRejected?: ((reason: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> => Promise.resolve(resolved).then(onFulfilled, onRejected);
 
-  return builder as ChainableQueryBuilder<T>;
+  // Double-cast at the test-util boundary: `builder` is assembled dynamically
+  // (vi.fn()s keyed by method name) so it doesn't structurally overlap the typed
+  // interface until viewed as `unknown` first (TS2352 under the CI tsconfig).
+  return builder as unknown as ChainableQueryBuilder<T>;
 }
 
 /**
