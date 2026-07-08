@@ -18,7 +18,7 @@
 | **T3** | Disable production source maps | Medium (info disclosure) | ✅ **DONE** — `vite.config.ts` sourcemap now `process.env.VITE_ENABLE_SOURCEMAP === 'true'` (default off) |
 | **T4** | `npm install` → `npm ci` | Medium (reproducibility) | ✅ **DONE** — 5 CI jobs switched; `npm ci --dry-run` resolves clean against the lock |
 | **T5** | Claim cleanup (compliance/cert wording) | Medium-high (legal/business) | ☐ OPEN — **Maria/Akima wording call.** Verified real overclaims below |
-| **T6** | Tenant-isolation test suite | High (behavior gate) | ☐ OPEN — the flagship behavior gate |
+| **T6** | Tenant-isolation test suite | High (behavior gate) | ◐ IN PROGRESS — baseline done (505 tenant tables, 100% RLS, 453 tenant-scoped, ~25 to triage). See `tenant-isolation-t6-tracker.md` + `scripts/tenant-isolation-audit.sql` |
 
 ---
 
