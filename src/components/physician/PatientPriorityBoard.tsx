@@ -193,7 +193,7 @@ const PatientPriorityBoard: React.FC = () => {
           .in('status', ['active', 'in_progress']),
         supabase
           .from('readmission_risk_predictions')
-          .select('patient_id, readmission_risk_30_day, risk_category')
+          .select('patient_id, readmission_risk_score, risk_category')
           .in('patient_id', assignedPatientIds)
           .order('created_at', { ascending: false }),
         supabase
@@ -265,7 +265,7 @@ const PatientPriorityBoard: React.FC = () => {
         const locationScore = getLocationScore(enc?.encounter_type ?? null, enc?.status ?? null);
         const abnormal = isAbnormalVitals(bpSys, bpDia, hr, spo2);
         const priorityScore = calculatePriorityScore(
-          locationScore, risk?.readmission_risk_30_day ?? null,
+          locationScore, risk?.readmission_risk_score ?? null,
           fall?.overall_risk_score ?? null, eng?.engagement_score ?? null,
           alertData.critical, alertData.total, abnormal,
         );
@@ -281,7 +281,7 @@ const PatientPriorityBoard: React.FC = () => {
           encounter_id: enc?.id ?? null,
           priority_score: priorityScore,
           priority_level: getPriorityLevel(priorityScore),
-          readmission_risk: risk?.readmission_risk_30_day ?? null,
+          readmission_risk: risk?.readmission_risk_score ?? null,
           fall_risk: fall?.overall_risk_score ?? null,
           engagement_score: eng?.engagement_score ?? null,
           active_alerts: alertData.total,

@@ -43,7 +43,9 @@ export interface AlertRow {
 
 export interface RiskRow {
   patient_id: string;
-  readmission_risk_30_day: number;
+  // Live column is readmission_risk_score (0-1); it superseded the original
+  // readmission_risk_30_day when the table was recreated.
+  readmission_risk_score: number;
   risk_category: string;
 }
 
