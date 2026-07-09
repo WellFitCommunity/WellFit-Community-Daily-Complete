@@ -156,30 +156,69 @@ export async function runMonitoringChecks(supabase: SupabaseClient, tenantId: st
     })
   }
 
-  // Batch insert all alerts at once (tenant-scoped). Map to the REAL security_alerts
-  // schema: column is `description` (not `message`); `alert_type` is required and
-  // CHECK-constrained; `status` must be one of new/investigating/resolved/… ('new').
+  // Persist alerts with DEDUPLICATION (Maria-directed 2026-07-09). security_alerts
+  // carries occurrence_count / first_detected_at / last_occurrence_at columns for
+  // exactly this purpose. The old code did a plain batch .insert() every 5-minute
+  // cron tick, producing a byte-identical row each time — 40k+ duplicate slow_query
+  // rows that then all got escalated, destroying the severity signal. Now we bump an
+  // existing OPEN alert of the same (tenant_id, alert_type) instead. A fresh row is
+  // created only when no open alert of that type exists (condition newly appeared, or
+  // the prior one was resolved). Email fires only on a genuinely NEW critical/high
+  // alert — never on a recurrence — so an ongoing incident doesn't re-notify each tick.
   if (alerts.length > 0) {
-    const alertsToInsert = alerts.map(alert => ({
-      severity: alert.severity,
-      category: alert.category,
-      alert_type: alert.alertType,
-      title: alert.title,
-      description: alert.message,
-      metadata: alert.metadata ?? {},
-      tenant_id: tenantId,
-      status: 'new',
-    }));
+    const newlyCreatedCritical: SecurityAlert[] = [];
+    const nowIso = new Date().toISOString();
 
-    const { error: alertInsertError } = await supabase.from('security_alerts').insert(alertsToInsert);
-    if (alertInsertError) {
-      logger.error('Failed to persist security alerts', { message: alertInsertError.message });
+    for (const alert of alerts) {
+      const { data: existing } = await supabase
+        .from('security_alerts')
+        .select('id, occurrence_count')
+        .eq('tenant_id', tenantId)
+        .eq('alert_type', alert.alertType)
+        .not('status', 'in', '(resolved,false_positive,dismissed)')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        // Recurrence — bump the existing open alert instead of duplicating it.
+        const prevCount = (existing as { occurrence_count: number | null }).occurrence_count ?? 1;
+        const { error: updateError } = await supabase
+          .from('security_alerts')
+          .update({
+            occurrence_count: prevCount + 1,
+            last_occurrence_at: nowIso,
+            description: alert.message,
+            metadata: alert.metadata ?? {},
+            updated_at: nowIso,
+          })
+          .eq('id', (existing as { id: string }).id);
+        if (updateError) {
+          logger.error('Failed to bump security alert', { message: updateError.message, alertType: alert.alertType });
+        }
+      } else {
+        // First occurrence — create the alert (defaults: occurrence_count 1, status 'new').
+        const { error: insertError } = await supabase.from('security_alerts').insert({
+          severity: alert.severity,
+          category: alert.category,
+          alert_type: alert.alertType,
+          title: alert.title,
+          description: alert.message,
+          metadata: alert.metadata ?? {},
+          tenant_id: tenantId,
+          status: 'new',
+        });
+        if (insertError) {
+          logger.error('Failed to persist security alert', { message: insertError.message, alertType: alert.alertType });
+        } else if (alert.severity === 'critical' || alert.severity === 'high') {
+          newlyCreatedCritical.push(alert);
+        }
+      }
     }
 
-    // Send email notification for critical/high severity alerts
-    const criticalAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high');
-    if (criticalAlerts.length > 0) {
-      await sendAlertEmail(supabase, criticalAlerts);
+    // Email only for NEWLY created critical/high alerts (not recurrences).
+    if (newlyCreatedCritical.length > 0) {
+      await sendAlertEmail(supabase, newlyCreatedCritical);
     }
   }
 
