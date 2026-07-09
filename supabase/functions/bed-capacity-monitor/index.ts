@@ -15,7 +15,7 @@
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { corsFromRequest, handleOptions, rejectDisallowedOrigin } from '../_shared/cors.ts';
 import { SUPABASE_URL, SB_SECRET_KEY } from '../_shared/env.ts';
 
 // Capacity thresholds
@@ -50,6 +50,24 @@ interface MonitorResult {
   errors: string[];
 }
 
+/**
+ * Authenticates a server-to-server (no-Origin) caller — the pg_cron
+ * `bed-capacity-monitor-checks` trigger (and the health-monitor probe). Accepts an
+ * `X-Cron-Secret` header or a `Bearer` token equal to CRON_SECRET or the new-format
+ * SB_SECRET_KEY (what the cron reads from Vault). Mirrors guardian-agent / health-monitor.
+ */
+function isAuthorizedServerCaller(req: Request): boolean {
+  const headerSecret = req.headers.get('X-Cron-Secret');
+  const bearerToken = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? null;
+  const candidate = headerSecret ?? bearerToken;
+  if (!candidate) return false;
+
+  const accepted = [Deno.env.get('CRON_SECRET'), SB_SECRET_KEY]
+    .filter((s): s is string => typeof s === 'string' && s.length > 0);
+
+  return accepted.some((s) => s === candidate);
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -57,6 +75,19 @@ serve(async (req: Request) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+
+  // Reject disallowed BROWSER origins; a missing Origin = server-to-server caller
+  // (the pg_cron trigger / health-monitor probe), which must present the cron secret.
+  // verify_jwt is OFF for this function (config.toml), so this is the auth layer.
+  const originRejection = rejectDisallowedOrigin(req);
+  if (originRejection) return originRejection;
+
+  if (!req.headers.get('origin') && !isAuthorizedServerCaller(req)) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized — cron secret required' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
 
   try {
     // Initialize Supabase client with service role
