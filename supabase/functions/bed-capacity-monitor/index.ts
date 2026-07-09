@@ -16,7 +16,7 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
-import { getEnv } from '../_shared/env.ts';
+import { SUPABASE_URL, SB_SECRET_KEY } from '../_shared/env.ts';
 
 // Capacity thresholds
 const THRESHOLD_WATCH = 70;
@@ -60,8 +60,8 @@ serve(async (req: Request) => {
 
   try {
     // Initialize Supabase client with service role
-    const supabaseUrl = getEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
-    const serviceRoleKey = getEnv('SB_SECRET_KEY', 'SB_SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseUrl = SUPABASE_URL;
+    const serviceRoleKey = SB_SECRET_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
       throw new Error('Missing Supabase configuration');
