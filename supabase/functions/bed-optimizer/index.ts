@@ -13,6 +13,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { isHealthCheckRequest, healthCheckResponse } from "../_shared/healthCheck.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
@@ -91,6 +92,28 @@ interface PlacementRecommendation {
   };
 }
 
+// v_bed_board row — ONLY the columns the placement scorer needs. Deliberately excludes
+// patient_name / patient_mrn (PHI is not needed to score an *available* bed).
+interface AvailableBedRow {
+  bed_id: string;
+  bed_label: string | null;
+  room_number: string | null;
+  bed_type: string | null;
+  status: string;
+  has_telemetry: boolean | null;
+  has_isolation_capability: boolean | null;
+  has_negative_pressure: boolean | null;
+  unit_id: string;
+  unit_name: string | null;
+  tenant_id: string;
+}
+
+// v_unit_capacity row — per-unit occupancy for the load-balancing factor.
+interface UnitOccupancyRow {
+  unit_id: string | null;
+  occupancy_pct: number | null;
+}
+
 // =============================================================================
 // DEFAULT LOS DATA (used when database query fails)
 // =============================================================================
@@ -152,7 +175,7 @@ async function predictLOS(
   // Fallback: query table directly
   const { data: historical } = await supabase
     .from('los_predictions')
-    .select('*')
+    .select('avg_los_hours, std_dev_hours, sample_size')
     .eq('tenant_id', tenantId)
     .eq('diagnosis_category', lowerDiagnosis)
     .order('calculated_at', { ascending: false })
@@ -401,16 +424,32 @@ async function recommendPlacement(
   patientId: string,
   requirements?: BedOptimizerRequest['requirements']
 ): Promise<PlacementRecommendation[]> {
-  // Find available beds from the bed board view
-  const { data: availableBeds, error: bedsError } = await supabase
+  // Find available beds. Select only the columns the scorer needs — explicitly NOT
+  // patient_name / patient_mrn (no PHI needed to score an available bed).
+  const { data: availableBedsRaw, error: bedsError } = await supabase
     .from('v_bed_board')
-    .select('*')
+    .select('bed_id, bed_label, room_number, bed_type, status, has_telemetry, has_isolation_capability, has_negative_pressure, unit_id, unit_name, tenant_id')
     .eq('tenant_id', tenantId)
     .eq('status', 'available');
 
-  if (bedsError || !availableBeds || availableBeds.length === 0) {
+  if (bedsError || !availableBedsRaw || availableBedsRaw.length === 0) {
     return [];
   }
+  const availableBeds = availableBedsRaw as AvailableBedRow[];
+
+  // Real per-unit occupancy for the load-balancing factor. v_bed_board has NO occupancy
+  // column — the old code read a non-existent `unit_occupancy_pct` (always undefined ->
+  // fell back to 50), so load-balancing was dead. v_unit_capacity.occupancy_pct is the
+  // real source; build a unit_id -> occupancy map once.
+  const { data: unitCapRaw } = await supabase
+    .from('v_unit_capacity')
+    .select('unit_id, occupancy_pct')
+    .eq('tenant_id', tenantId);
+  const occupancyByUnit = new Map<string, number>(
+    ((unitCapRaw ?? []) as UnitOccupancyRow[])
+      .filter((u): u is UnitOccupancyRow & { unit_id: string } => u.unit_id != null)
+      .map((u) => [u.unit_id, u.occupancy_pct ?? 50])
+  );
 
   // Score each bed based on requirements and load balancing
   const recommendations: PlacementRecommendation[] = availableBeds.map(bed => {
@@ -422,20 +461,23 @@ async function recommendPlacement(
       predicted_turnover: 0
     };
 
-    // Requirements matching
+    // Requirements matching. FIXED 2026-07-09: these read non-existent v_bed_board
+    // columns (is_isolation / is_negative_pressure) — always undefined, so isolation &
+    // negative-pressure requirement scoring silently always penalized. Now the real
+    // columns: has_isolation_capability / has_negative_pressure.
     let reqScore = 1.0;
     if (requirements) {
       if (requirements.requires_telemetry && !bed.has_telemetry) reqScore -= 0.5;
-      if (requirements.requires_isolation && !bed.is_isolation) reqScore -= 0.5;
-      if (requirements.requires_negative_pressure && !bed.is_negative_pressure) reqScore -= 0.5;
+      if (requirements.requires_isolation && !bed.has_isolation_capability) reqScore -= 0.5;
+      if (requirements.requires_negative_pressure && !bed.has_negative_pressure) reqScore -= 0.5;
       if (requirements.preferred_unit && bed.unit_id === requirements.preferred_unit) reqScore += 0.3;
       if (requirements.bed_type && bed.bed_type !== requirements.bed_type) reqScore -= 0.3;
     }
     factors.requirements_match = Math.max(0, Math.min(1, reqScore));
     score += factors.requirements_match * 30;
 
-    // Unit load balance (prefer less full units)
-    const unitOccupancy = bed.unit_occupancy_pct || 50;
+    // Unit load balance (prefer less full units) — real occupancy from v_unit_capacity.
+    const unitOccupancy = occupancyByUnit.get(bed.unit_id) ?? 50;
     factors.unit_load_balance = 1 - (unitOccupancy / 100);
     score += factors.unit_load_balance * 15;
 
@@ -444,7 +486,7 @@ async function recommendPlacement(
     score += factors.predicted_turnover * 5;
 
     return {
-      bed_id: bed.bed_id || bed.id,
+      bed_id: bed.bed_id,
       unit_id: bed.unit_id,
       unit_name: bed.unit_name || 'Unknown',
       room_number: bed.room_number || 'N/A',
@@ -490,6 +532,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const { headers: corsHeaders, allowed } = corsFromRequest(req);
+
+  // Liveness handshake for the health-monitor watchdog — answered BEFORE the origin
+  // gate below (which would otherwise 403 the no-Origin probe) and before auth.
+  if (isHealthCheckRequest(req)) {
+    return healthCheckResponse('bed-optimizer', corsHeaders);
+  }
 
   // Reject unauthorized origins
   if (!allowed) {
