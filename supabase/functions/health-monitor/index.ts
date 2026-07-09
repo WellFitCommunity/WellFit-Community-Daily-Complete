@@ -15,7 +15,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
-import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { corsFromRequest, handleOptions, rejectDisallowedOrigin } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { checkReferenceDataFreshness } from "../_shared/referenceDataFreshness.ts";
 
@@ -300,19 +300,47 @@ async function attemptRecovery(
 // MAIN HANDLER
 // =============================================================================
 
+/**
+ * Authenticates a server-to-server (no-Origin) caller — the pg_cron health-check
+ * trigger. Accepts an `X-Cron-Secret` header or a `Bearer` token equal to the
+ * dedicated `CRON_SECRET` or the new-format `SB_SECRET_KEY` (what the cron reads
+ * from Vault and sends). Mirrors guardian-agent's isAuthorizedServerCaller.
+ */
+function isAuthorizedServerCaller(req: Request): boolean {
+  const headerSecret = req.headers.get("X-Cron-Secret");
+  const bearerToken = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? null;
+  const candidate = headerSecret ?? bearerToken;
+  if (!candidate) return false;
+
+  const accepted = [getEnv("CRON_SECRET"), getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY")]
+    .filter((s) => s.length > 0);
+
+  return accepted.some((s) => s === candidate);
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return handleOptions(req);
   }
 
-  const { headers: corsHeaders, allowed } = corsFromRequest(req);
+  const { headers: corsHeaders } = corsFromRequest(req);
 
-  // Reject unauthorized origins
-  if (!allowed) {
+  // Reject only BROWSER requests from disallowed origins. A missing Origin header =
+  // non-browser (server-to-server) caller — e.g. the pg_cron `health-monitor-checks`
+  // trigger. The old `if (!allowed)` 403'd every no-Origin call, which is exactly why
+  // this function could never be driven by a cron. (Mirror of guardian-agent.)
+  const originRejection = rejectDisallowedOrigin(req);
+  if (originRejection) return originRejection;
+
+  // Server-to-server callers (no Origin) MUST present the cron secret. verify_jwt is
+  // OFF for this function (config.toml), so this IS the auth layer for cron calls —
+  // without it the endpoint was reachable by any no-Origin HTTP client with no auth.
+  const isServerToServer = !req.headers.get("origin");
+  if (isServerToServer && !isAuthorizedServerCaller(req)) {
     return new Response(
-      JSON.stringify({ error: "Origin not allowed" }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Unauthorized — cron secret required" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
@@ -349,7 +377,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Get all agents
         const { data: agents, error } = await supabase
           .from('agent_registry')
-          .select('*');
+          .select('id, agent_name, agent_type, endpoint, is_critical, health_check_interval_seconds, max_consecutive_failures');
 
         if (error || !agents) {
           logger.error("Failed to fetch agents", { error: error?.message });
@@ -398,7 +426,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         const { data: agent, error: agentError } = await supabase
           .from('agent_registry')
-          .select('*')
+          .select('id, agent_name, agent_type, endpoint, is_critical, health_check_interval_seconds, max_consecutive_failures')
           .eq('agent_name', body.agent_name)
           .limit(1)
           .single();
@@ -456,7 +484,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         const { data: agent, error: agentError } = await supabase
           .from('agent_registry')
-          .select('*')
+          .select('id, agent_name, agent_type, endpoint, is_critical, health_check_interval_seconds, max_consecutive_failures')
           .eq('agent_name', body.agent_name)
           .limit(1)
           .single();
