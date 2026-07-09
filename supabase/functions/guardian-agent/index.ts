@@ -6,6 +6,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions, rejectDisallowedOrigin } from '../_shared/cors.ts'
+import { isHealthCheckRequest, healthCheckResponse } from '../_shared/healthCheck.ts'
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SB_SECRET_KEY } from '../_shared/env.ts'
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -24,6 +25,12 @@ serve(async (req) => {
 
   // Get CORS headers for this origin
   const { headers: corsHeaders } = corsFromRequest(req);
+
+  // Liveness handshake for the health-monitor watchdog — answered BEFORE origin/auth
+  // so the probe (which carries no guardian credentials) gets a true 200.
+  if (isHealthCheckRequest(req)) {
+    return healthCheckResponse('guardian-agent', corsHeaders);
+  }
 
   // Reject only BROWSER requests from disallowed origins. A missing Origin header =
   // non-browser (server-to-server) caller — e.g. the pg_cron `monitor` trigger — which

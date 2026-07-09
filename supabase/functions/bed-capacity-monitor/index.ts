@@ -16,6 +16,7 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { corsFromRequest, handleOptions, rejectDisallowedOrigin } from '../_shared/cors.ts';
+import { isHealthCheckRequest, healthCheckResponse } from '../_shared/healthCheck.ts';
 import { SUPABASE_URL, SB_SECRET_KEY } from '../_shared/env.ts';
 
 // Capacity thresholds
@@ -75,6 +76,12 @@ serve(async (req: Request) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+
+  // Liveness handshake for the health-monitor watchdog — answered BEFORE auth and
+  // BEFORE the capacity logic (so a probe never runs a real capacity check / alert).
+  if (isHealthCheckRequest(req)) {
+    return healthCheckResponse('bed-capacity-monitor', corsHeaders);
+  }
 
   // Reject disallowed BROWSER origins; a missing Origin = server-to-server caller
   // (the pg_cron trigger / health-monitor probe), which must present the cron secret.

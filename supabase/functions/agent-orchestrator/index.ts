@@ -13,6 +13,7 @@
  */
 
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { isHealthCheckRequest, healthCheckResponse } from "../_shared/healthCheck.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
 const logger = createLogger("agent-orchestrator");
@@ -264,6 +265,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const { headers: corsHeaders, allowed } = corsFromRequest(req);
   const startTime = Date.now();
+
+  // Liveness handshake for the health-monitor watchdog — answered BEFORE the origin
+  // gate below (which would otherwise 403 the no-Origin probe) and before auth.
+  if (isHealthCheckRequest(req)) {
+    return healthCheckResponse('agent-orchestrator', corsHeaders);
+  }
 
   // Reject unauthorized origins
   if (!allowed) {

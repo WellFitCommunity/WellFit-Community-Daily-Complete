@@ -93,27 +93,35 @@ async function checkAgentHealth(
     clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
 
-    if (!response.ok) {
+    // Liveness interpretation (fixed 2026-07-09). A function that RESPONDS at all has
+    // booted — only 5xx / timeouts mean it is actually down. Previously ANY non-2xx
+    // was reported 'degraded', so auth-gated (401/403) and no-health-handshake
+    // (400/404) agents read as degraded while demonstrably alive — a false signal that
+    // made the whole "degraded" count meaningless. Now:
+    //   >=500      -> unhealthy (real server error, incl. 503 BOOT_ERROR)
+    //   other <500 -> ALIVE. A clean 2xx (ideally the shared health handshake), or an
+    //                 auth/handshake rejection which is NOT a health problem. Report
+    //                 healthy and record the probe note so the dashboard stays honest.
+    //   timeout / network error -> 'unreachable' (catch block below).
+    if (response.status >= 500) {
       return {
         agent_id: agent.id,
-        status: response.status >= 500 ? 'unhealthy' : 'degraded',
+        status: 'unhealthy',
         response_time_ms: responseTime,
         error_message: `HTTP ${response.status}`,
         metadata: { status_code: response.status }
       };
     }
 
-    // Check response time thresholds
-    let status: 'healthy' | 'degraded' = 'healthy';
-    if (responseTime > 5000) {
-      status = 'degraded';
-    }
+    const status: 'healthy' | 'degraded' = responseTime > 5000 ? 'degraded' : 'healthy';
 
     return {
       agent_id: agent.id,
       status,
       response_time_ms: responseTime,
-      metadata: { status_code: response.status }
+      metadata: response.ok
+        ? { status_code: response.status }
+        : { status_code: response.status, probe_note: `alive; no health handshake (HTTP ${response.status})` }
     };
 
   } catch (err: unknown) {
