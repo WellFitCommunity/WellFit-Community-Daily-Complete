@@ -87,11 +87,11 @@ export async function getPatientSummary(
   if (sections.includes('allergies')) {
     const { data } = await sb
       .from('fhir_allergies')
-      .select('code_display, substance, reaction_description, criticality')
+      .select('code_display, reaction_description, criticality')
       .eq('patient_id', patientId)
       .limit(20);
     summary.sections.allergies = (data || []).map(a => ({
-      allergen: a.code_display || a.substance,
+      allergen: a.code_display,
       reaction: a.reaction_description,
       severity: a.criticality
     }));
