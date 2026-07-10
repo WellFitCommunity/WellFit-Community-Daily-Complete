@@ -11,6 +11,16 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { MCPLogger, PayerRule, RevenueProjection } from "./types.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 
+// §9 (supabase.md): explicit columns, not select('*'). Full live column
+// set of payer_rules (byte-identical output), verified against
+// information_schema 2026-07-10.
+const PAYER_RULE_COLUMNS =
+  "id, tenant_id, payer_type, state_code, fiscal_year, rule_type, acuity_tier, " +
+  "base_rate_amount, capital_rate_amount, wage_index_factor, cost_of_living_adjustment, " +
+  "per_diem_rate, allowable_percentage, max_days, outlier_threshold, revenue_codes, " +
+  "cos_criteria, carve_out_codes, drg_adjustments, rule_description, source_reference, " +
+  "is_active, effective_date, expiration_date, created_at, updated_at, created_by";
+
 export function createRevenueHandlers(
   sb: SupabaseClient,
   logger: MCPLogger
@@ -58,7 +68,7 @@ export function createRevenueHandlers(
 
     // Look up payer rules
     let ruleQuery = sb.from('payer_rules')
-      .select('*')
+      .select(PAYER_RULE_COLUMNS)
       .eq('payer_type', payerType)
       .eq('fiscal_year', fiscalYear)
       .eq('is_active', true);
@@ -83,7 +93,7 @@ export function createRevenueHandlers(
       };
     }
 
-    const rule = ruleRows as PayerRule;
+    const rule = ruleRows as unknown as PayerRule;
     const adjustments: string[] = [];
 
     // DRG-based (Medicare)
@@ -168,7 +178,7 @@ export function createRevenueHandlers(
     const isActive = args.is_active !== false;
 
     let query = sb.from('payer_rules')
-      .select('*')
+      .select(PAYER_RULE_COLUMNS)
       .eq('payer_type', payerType)
       .eq('fiscal_year', fiscalYear);
 
@@ -194,7 +204,7 @@ export function createRevenueHandlers(
       throw error;
     }
 
-    const rules = (data || []) as PayerRule[];
+    const rules = (data || []) as unknown as PayerRule[];
 
     logger.info('PAYER_RULES_RETRIEVED', {
       payerType, fiscalYear,

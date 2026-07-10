@@ -20,6 +20,16 @@ import type {
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 import { resolveZeroCharges } from "./feeScheduleResolver.ts";
 
+// §9 (supabase.md): explicit columns, not select('*'). Full live column
+// set of daily_charge_snapshots (byte-identical output), verified against
+// information_schema 2026-07-10.
+const DAILY_SNAPSHOT_COLUMNS =
+  "id, tenant_id, patient_id, encounter_id, admit_date, service_date, day_number, charges, " +
+  "total_charge_amount, charge_count, projected_drg_code, projected_drg_weight, " +
+  "projected_reimbursement, revenue_codes, optimization_suggestions, missing_charge_alerts, " +
+  "documentation_gaps, status, reviewed_by, reviewed_at, finalized_by, finalized_at, " +
+  "ai_skill_key, ai_model_used, created_at, updated_at";
+
 // -------------------------------------------------------
 // Database row shapes (system boundary casts)
 // -------------------------------------------------------
@@ -432,7 +442,7 @@ export function createChargeAggregationHandlers(
     const tenantId = args.tenant_id as string | undefined;
 
     let query = sb.from('daily_charge_snapshots')
-      .select('*')
+      .select(DAILY_SNAPSHOT_COLUMNS)
       .eq('encounter_id', encounterId);
 
     if (serviceDate) {
@@ -453,7 +463,7 @@ export function createChargeAggregationHandlers(
       throw error;
     }
 
-    const snapshots = (data || []) as DailyChargeSnapshot[];
+    const snapshots = (data || []) as unknown as DailyChargeSnapshot[];
 
     logger.info('DAILY_SNAPSHOT_RETRIEVED', {
       encounterId,
