@@ -28,6 +28,12 @@ import {
 } from "./inputResolver.ts";
 import { getServiceClient } from "./dbClient.ts";
 import {
+  CHAIN_RUN_COLS,
+  CHAIN_STEP_RESULT_COLS,
+  CHAIN_DEFINITION_COLS,
+  CHAIN_STEP_DEFINITION_COLS,
+} from "./columns.ts";
+import {
   updateStepStatus,
   updateRunStep,
   refreshChainRun,
@@ -55,7 +61,7 @@ export async function startChain(
   // Load chain definition
   const { data: chainDef, error: defErr } = await sb
     .from("chain_definitions")
-    .select("*")
+    .select(CHAIN_DEFINITION_COLS)
     .eq("chain_key", chainKey)
     .eq("is_active", true)
     .single();
@@ -68,14 +74,14 @@ export async function startChain(
   // Load step definitions
   const { data: stepDefs, error: stepsErr } = await sb
     .from("chain_step_definitions")
-    .select("*")
+    .select(CHAIN_STEP_DEFINITION_COLS)
     .eq("chain_definition_id", definition.id)
     .order("step_order", { ascending: true });
 
   if (stepsErr || !stepDefs || stepDefs.length === 0) {
     throw new Error(`No steps defined for chain: ${chainKey}`);
   }
-  const steps = stepDefs as ChainStepDefinition[];
+  const steps = stepDefs as unknown as ChainStepDefinition[];
 
   // Create chain run
   const { data: runData, error: runErr } = await sb
@@ -132,14 +138,14 @@ export async function resumeChain(
 
   const { data: runData, error: runErr } = await sb
     .from("chain_runs")
-    .select("*")
+    .select(CHAIN_RUN_COLS)
     .eq("id", chainRunId)
     .single();
 
   if (runErr || !runData) {
     throw new Error(`Chain run not found: ${chainRunId}`);
   }
-  const run = runData as ChainRun;
+  const run = runData as unknown as ChainRun;
 
   if (run.status !== "awaiting_approval" && run.status !== "failed") {
     throw new Error(
@@ -150,11 +156,11 @@ export async function resumeChain(
   // Load step definitions
   const { data: stepDefs } = await sb
     .from("chain_step_definitions")
-    .select("*")
+    .select(CHAIN_STEP_DEFINITION_COLS)
     .eq("chain_definition_id", run.chain_definition_id)
     .order("step_order", { ascending: true });
 
-  const steps = (stepDefs || []) as ChainStepDefinition[];
+  const steps = (stepDefs || []) as unknown as ChainStepDefinition[];
   if (steps.length === 0) {
     throw new Error(`No steps found for chain definition`);
   }
@@ -188,11 +194,11 @@ async function executeSteps(
   // Load all step results for context
   const { data: existingResults } = await sb
     .from("chain_step_results")
-    .select("*")
+    .select(CHAIN_STEP_RESULT_COLS)
     .eq("chain_run_id", run.id)
     .order("step_order", { ascending: true });
 
-  const allResults = (existingResults || []) as ChainStepResult[];
+  const allResults = (existingResults || []) as unknown as ChainStepResult[];
 
   for (const stepDef of steps) {
     if (stepDef.step_order < run.current_step_order) continue;

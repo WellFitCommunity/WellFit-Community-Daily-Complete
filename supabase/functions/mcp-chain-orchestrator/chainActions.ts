@@ -14,6 +14,7 @@ import type {
   ChainStepStatus,
 } from "./types.ts";
 import { getServiceClient } from "./dbClient.ts";
+import { CHAIN_RUN_COLS, CHAIN_STEP_RESULT_COLS } from "./columns.ts";
 
 // ============================================================
 // DB Helpers (used by chainEngine too)
@@ -47,14 +48,14 @@ export async function refreshChainRun(
 ): Promise<ChainRun> {
   const { data, error } = await sb
     .from("chain_runs")
-    .select("*")
+    .select(CHAIN_RUN_COLS)
     .eq("id", runId)
     .single();
 
   if (error || !data) {
     throw new Error(`Failed to refresh chain run: ${runId}`);
   }
-  return data as ChainRun;
+  return data as unknown as ChainRun;
 }
 
 // ============================================================
@@ -72,7 +73,7 @@ export async function approveStep(
 
   const { data: stepData, error: stepErr } = await sb
     .from("chain_step_results")
-    .select("*")
+    .select(CHAIN_STEP_RESULT_COLS)
     .eq("id", stepResultId)
     .eq("chain_run_id", chainRunId)
     .single();
@@ -80,7 +81,7 @@ export async function approveStep(
   if (stepErr || !stepData) {
     throw new Error(`Step result not found: ${stepResultId}`);
   }
-  const step = stepData as ChainStepResult;
+  const step = stepData as unknown as ChainStepResult;
 
   if (step.status !== "awaiting_approval") {
     throw new Error(
@@ -89,9 +90,13 @@ export async function approveStep(
   }
 
   // --- Enforce approval_role from step definition ---
-  // Look up the chain step definition to check required approval role
+  // Look up the chain step definition to check required approval role.
+  // NOTE: the definitions table is `chain_step_definitions` — a prior
+  // `chain_steps` reference was a non-existent table, so this lookup errored
+  // silently and the approval-role gate was skipped entirely (drift fix,
+  // verified against information_schema 2026-07-10).
   const { data: stepDefData } = await sb
-    .from("chain_steps")
+    .from("chain_step_definitions")
     .select("approval_role")
     .eq("chain_definition_id", (await sb
       .from("chain_runs")
@@ -165,7 +170,7 @@ export async function approveStep(
 
   const { data: updated } = await sb
     .from("chain_step_results")
-    .select("*")
+    .select(CHAIN_STEP_RESULT_COLS)
     .eq("id", stepResultId)
     .single();
 
@@ -183,14 +188,14 @@ export async function cancelChain(
 
   const { data: runData, error: runErr } = await sb
     .from("chain_runs")
-    .select("*")
+    .select(CHAIN_RUN_COLS)
     .eq("id", chainRunId)
     .single();
 
   if (runErr || !runData) {
     throw new Error(`Chain run not found: ${chainRunId}`);
   }
-  const run = runData as ChainRun;
+  const run = runData as unknown as ChainRun;
 
   if (run.status === "completed" || run.status === "cancelled") {
     throw new Error(
@@ -221,7 +226,7 @@ export async function getChainStatus(
 
   const { data: runData, error: runErr } = await sb
     .from("chain_runs")
-    .select("*")
+    .select(CHAIN_RUN_COLS)
     .eq("id", chainRunId)
     .single();
 
@@ -231,12 +236,12 @@ export async function getChainStatus(
 
   const { data: stepData } = await sb
     .from("chain_step_results")
-    .select("*")
+    .select(CHAIN_STEP_RESULT_COLS)
     .eq("chain_run_id", chainRunId)
     .order("step_order", { ascending: true });
 
   return {
-    run: runData as ChainRun,
-    steps: (stepData || []) as ChainStepResult[],
+    run: runData as unknown as ChainRun,
+    steps: (stepData || []) as unknown as ChainStepResult[],
   };
 }
