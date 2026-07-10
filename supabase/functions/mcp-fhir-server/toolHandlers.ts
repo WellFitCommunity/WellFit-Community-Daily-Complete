@@ -245,6 +245,17 @@ async function handleUpdateResource(
   return { resourceType, ...updated };
 }
 
+/** Row shape for fhir_observations — fields read by the observation/SDOH handlers.
+ *  Column names verified against the live FHIR R4 schema 2026-07-10. */
+interface FhirObservationRow {
+  id: string;
+  code: string | null;
+  code_display: string | null;
+  value_codeable_concept_display: string | null;
+  value_string: string | null;
+  effective_datetime: string | null;
+}
+
 async function handleGetObservations(
   sb: SupabaseClient,
   toolArgs: Record<string, unknown>
@@ -259,18 +270,18 @@ async function handleGetObservations(
   let query = sb.from('fhir_observations').select(getFHIRColumns('fhir_observations')).eq('patient_id', patientId);
   if (category) query = query.eq('category', category);
   if (code) query = query.eq('code', code);
-  if (dateFrom) query = query.gte('effective_date', dateFrom);
-  if (dateTo) query = query.lte('effective_date', dateTo);
+  if (dateFrom) query = query.gte('effective_datetime', dateFrom);
+  if (dateTo) query = query.lte('effective_datetime', dateTo);
 
   const { data, error } = await withTimeout(
-    query.order('effective_date', { ascending: false }).limit(limit || 50),
+    query.order('effective_datetime', { ascending: false }).limit(limit || 50),
     MCP_TIMEOUT_CONFIG.fhir.search,
     'FHIR observations search'
   );
   if (error) throw new Error(`Query failed: ${error.message}`);
 
   return createFHIRBundle(
-    (data || []).map(r => ({ resourceType: 'Observation', ...r })),
+    ((data ?? []) as unknown as (Record<string, unknown> & { id: string })[]).map((r) => ({ resourceType: 'Observation', ...r })),
     'searchset'
   );
 }
@@ -391,7 +402,7 @@ async function handleGetSdohAssessments(
     .eq('category', 'sdoh');
 
   const { data: observations, error } = await withTimeout(
-    query.order('effective_date', { ascending: false }).limit(50),
+    query.order('effective_datetime', { ascending: false }).limit(50),
     MCP_TIMEOUT_CONFIG.fhir.search,
     'FHIR SDOH assessments'
   );
@@ -411,12 +422,12 @@ async function handleGetSdohAssessments(
 
   return {
     patient_id: patientId,
-    assessments: (observations || []).map(o => ({
+    assessments: ((observations ?? []) as unknown as FhirObservationRow[]).map((o) => ({
       id: o.id,
       code: o.code,
       display: o.code_display,
-      value: o.value_codeable_concept || o.value_string,
-      date: o.effective_date
+      value: o.value_codeable_concept_display || o.value_string,
+      date: o.effective_datetime
     })),
     active_flags: (flags || []).map(f => ({
       id: f.id,
