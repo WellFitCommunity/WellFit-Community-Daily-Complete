@@ -41,10 +41,12 @@ tenant license digit `{ORG}-{LICENSE}{SEQUENCE}` and in `tenants.licensed_produc
 | **2. Products (sellable modules)** | Per tenant, per purchase | **`useProductAccess()` → `tenants.licensed_products`** | `'atlus'` → EMR features (charts, encounters, bed board, billing, SMART/FHIR); `'wellfit'` → Community Daily (check-ins, moments, engagement, RPM) |
 | **3. Shared (in-tenant)** | Within a tenant | **role** (`user_roles`) | Identity, users, tenant settings, branding, basic audit |
 
-> **Status (2026-07-10):** Layer 3 (role) is enforced. Layer 1 partial — API-key/MCP paths
-> being retightened to `super_admin`; SOC2 dashboards pending. Layer 2 (`useProductAccess`)
-> is **designed but not yet wired** — `licensed_products` exists in the DB but no
-> route/guard/section reads it yet. Tracked in
+> **Status (2026-07-10):** Layer 3 (role) enforced. Layer 1: **API-key generation + MCP keys
+> are super_admin-gated** — `generate-api-key` retightened to `['super_admin']` + deployed; MCP
+> via `RequireSuperAdmin` route + `create_mcp_key` RPC + section-role enforcement. **SOC2 /
+> compliance dashboards pending** the operator-vs-tenant split decision. Layer 2
+> (`useProductAccess`) is **designed but not yet wired** — `licensed_products` exists in the DB
+> but no route/guard/section reads it yet. Tracked in
 > `docs/trackers/product-separation-feature-list-2026-07-10.md`.
 
 ## 4. Protected cross-system bridges — DO NOT SEVER

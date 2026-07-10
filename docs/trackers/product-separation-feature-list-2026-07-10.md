@@ -42,13 +42,17 @@ no product gate.
 | Patient context / demographics | patientContextService surfaces | gov S5 |
 | AI cost / usage / model transparency dashboards | AI cost sections | gov S8 |
 
-## ⚑ Decisions I need from you
-1. **API-key generation policy (Part 3, still open):** super_admin-only (you/platform),
-   or self-service for **Atlus tenant admins** (a hospital's IT admin mints their own
-   tenant's keys)? — This decides whether the `generate-api-key` role check stays
-   `['admin','super_admin']` + Atlus gate (self-service) or tightens to `['super_admin']`.
-2. **Any row above misclassified?** Especially: should **audit logs / SOC2 / compliance**
-   be Shared or Atlus-only? (I put basic audit = Shared, enterprise SOC2 = Atlus — confirm.)
+## ⚑ Decisions
+1. **API-key generation policy — RESOLVED (super_admin / Envision operator only).** Maria
+   clarified the parent-vs-client model (Envision = parent operator; API keys are a "parent
+   specific," Layer 1). API keys are NOT a per-tenant/product feature — no client tenant admin
+   mints them. **Done:** `generate-api-key` retightened from `['admin','super_admin']` + atlus-gate
+   → `['super_admin']` only (the earlier atlus-license gate was the wrong axis), deployed. MCP keys
+   already super_admin (route `RequireSuperAdmin` + `create_mcp_key` RPC + section-role enforcement).
+2. **⚑ STILL OPEN — SOC2 / compliance operator-vs-tenant split.** Maria said the SOC2 dashboard is
+   Envision-operator (Layer 1 → super_admin). But some compliance/audit surfaces may be a *tenant's
+   own* view (their SOC2 posture), which is Layer 3. Need the split before gating the `security`
+   category sections: which security/compliance dashboards are operator-only vs tenant-level?
 3. **Enterprise-tier axis:** `tenants.license_tier` is `standard`/`enterprise` (separate from
    product). Do any features gate on `enterprise` *tier* in addition to the `atlus` *product*?
    (e.g. API keys = Atlus **and** enterprise-tier only?)
