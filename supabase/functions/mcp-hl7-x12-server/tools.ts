@@ -12,7 +12,7 @@ interface ToolDefinition {
   inputSchema: {
     type: string;
     properties: Record<string, unknown>;
-    required: string[];
+    required?: string[];
   };
 }
 

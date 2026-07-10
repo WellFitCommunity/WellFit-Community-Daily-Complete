@@ -5,7 +5,7 @@
 import { PING_TOOL } from "../_shared/mcpServerBase.ts";
 import { WHITELISTED_QUERIES } from "./queryWhitelist.ts";
 
-export const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required: string[] } }> = {
+export const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required?: string[] } }> = {
   "execute_query": {
     description: "Execute a pre-approved query against the database",
     inputSchema: {

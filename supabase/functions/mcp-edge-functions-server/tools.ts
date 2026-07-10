@@ -5,7 +5,7 @@
 import { PING_TOOL } from "../_shared/mcpServerBase.ts";
 import { ALLOWED_FUNCTIONS } from "./functionWhitelist.ts";
 
-export const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required: string[] } }> = {
+export const TOOLS: Record<string, { description: string; inputSchema: { type: string; properties: Record<string, unknown>; required?: string[] } }> = {
   "ping": PING_TOOL,
   "invoke_function": {
     description: "Invoke a whitelisted Supabase Edge Function",
