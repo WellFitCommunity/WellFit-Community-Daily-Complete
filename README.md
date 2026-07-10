@@ -7,14 +7,20 @@
 [![HIPAA](https://img.shields.io/badge/HIPAA-compliant-green)]()
 [![TypeScript](https://img.shields.io/badge/any%20types-0-brightgreen)]()
 
-A HIPAA-compliant, white-label healthcare platform built for community health organizations and clinical care teams.
+A HIPAA-compliant, white-label healthcare platform. **Envision (Atlus)** is the parent
+platform/operator; it is white-labeled to clients as **two products that sell together or
+separately** (the community system was the non-profit origin; the EMR was built to connect to it).
 
-| Product | Purpose | Target Users |
-|---------|---------|--------------|
-| **WellFit** | Community wellness and engagement | Seniors, caregivers, community orgs |
-| **Envision Atlus** | Clinical care management engine | Healthcare providers, clinicians |
+| Entity | Role | License |
+|--------|------|---------|
+| **Envision (Atlus)** | Parent platform / operator — the "parent specifics" (API keys, MCP, SOC2/compliance ops, provisioning). **Stripped from every white-label.** | `super_admin` only |
+| **WellFit EMR** | Clinical EMR — Atlus white-labeled ("WellFit Community EMR minus parent specifics") | `licensed_products: 'atlus'` |
+| **WellFit Community Daily** | Community wellness/engagement (the non-profit origin) — a separate, add-on product | `licensed_products: 'wellfit'` |
 
-Both products can be deployed independently or together under a single multi-tenant architecture.
+The two products deploy independently or together (license digit `8` = EMR only, `9` =
+Community only, `0` = both) under one multi-tenant architecture.
+**→ Full model, the 3-layer access gating, and the protected cross-system bridges:
+[`docs/architecture/PRODUCT_ARCHITECTURE.md`](docs/architecture/PRODUCT_ARCHITECTURE.md).**
 
 ---
 
