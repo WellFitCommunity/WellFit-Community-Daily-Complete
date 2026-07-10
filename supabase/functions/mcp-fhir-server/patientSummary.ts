@@ -101,13 +101,13 @@ export async function getPatientSummary(
   if (sections.includes('immunizations')) {
     const { data } = await sb
       .from('fhir_immunizations')
-      .select('vaccine_display, vaccine_code, occurrence_date, status')
+      .select('vaccine_display, vaccine_code, occurrence_datetime, status')
       .eq('patient_id', patientId)
-      .order('occurrence_date', { ascending: false })
+      .order('occurrence_datetime', { ascending: false })
       .limit(20);
     summary.sections.immunizations = (data || []).map(i => ({
       vaccine: i.vaccine_display || i.vaccine_code,
-      date: i.occurrence_date,
+      date: i.occurrence_datetime,
       status: i.status
     }));
   }
