@@ -65,6 +65,13 @@ export async function withTimeout<T>(
  * Per-server timeout configurations. Servers can import their tier's config.
  */
 export const MCP_TIMEOUT_CONFIG = {
+  /**
+   * Flat default timeout (ms) for servers doing standard single-table work
+   * (drg-grouper, medical-coding, patient-context). Callers read it as
+   * `MCP_TIMEOUT_CONFIG?.standard ?? 15_000` — this makes that resolve to the
+   * same 15s they already fell back to, so runtime behavior is unchanged.
+   */
+  standard: MCP_QUERY_TIMEOUT_MS,
   /** FHIR server: bundle exports are complex multi-table operations */
   fhir: {
     bundle: MCP_BUNDLE_TIMEOUT_MS,
