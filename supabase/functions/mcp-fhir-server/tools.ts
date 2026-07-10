@@ -49,7 +49,7 @@ export const FHIR_SELECT_COLUMNS: Record<string, string> = {
   'fhir_care_teams': 'id, patient_id, name, category, status, created_at, updated_at',
   'fhir_practitioners': 'id, family_name, given_names, specialty_display, phone, email, npi, active, created_at, updated_at',
   'fhir_practitioner_roles': 'id, practitioner_id, organization_id, code, specialty, active, created_at, updated_at',
-  'fhir_encounters': 'id, patient_id, status, class, type, period_start, period_end, reason_code, created_at, updated_at',
+  'fhir_encounters': 'id, patient_id, status, encounter_type, date_of_service, place_of_service, chief_complaint, visit_mode, created_at, updated_at',
   'fhir_document_references': 'id, patient_id, type, status, category, date, description, content_type, created_at, updated_at',
   'fhir_allergies': 'id, patient_id, code, code_display, clinical_status, verification_status, category, criticality, type, onset_date, created_at, updated_at',
   'fhir_goals': 'id, patient_id, description, status, category, priority, start_date, target_date, created_at, updated_at',
