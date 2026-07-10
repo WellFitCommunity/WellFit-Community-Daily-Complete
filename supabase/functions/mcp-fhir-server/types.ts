@@ -22,13 +22,14 @@ export interface ProfileRecord {
   mrn?: string;
   first_name?: string;
   last_name?: string;
-  middle_name?: string;
   gender?: string;
-  date_of_birth?: string;
+  // Live profiles schema: `dob` (not date_of_birth), single `address`
+  // (not address_line1/2), and no middle_name. Verified against
+  // information_schema 2026-07-10.
+  dob?: string;
   phone?: string;
   email?: string;
-  address_line1?: string;
-  address_line2?: string;
+  address?: string;
   city?: string;
   state?: string;
   zip_code?: string;

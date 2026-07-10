@@ -42,16 +42,16 @@ export function toFHIRPatient(profile: ProfileRecord): FHIRResource {
     name: [{
       use: 'official',
       family: profile.last_name,
-      given: [profile.first_name, profile.middle_name].filter(Boolean)
+      given: [profile.first_name].filter(Boolean)
     }],
     gender: profile.gender?.toLowerCase(),
-    birthDate: profile.date_of_birth,
+    birthDate: profile.dob,
     telecom: [
       profile.phone && { system: 'phone', value: profile.phone },
       profile.email && { system: 'email', value: profile.email }
     ].filter(Boolean),
-    address: profile.address_line1 ? [{
-      line: [profile.address_line1, profile.address_line2].filter(Boolean),
+    address: profile.address ? [{
+      line: [profile.address],
       city: profile.city,
       state: profile.state,
       postalCode: profile.zip_code,

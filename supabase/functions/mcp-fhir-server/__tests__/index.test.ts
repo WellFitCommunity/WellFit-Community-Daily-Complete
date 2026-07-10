@@ -2,6 +2,8 @@
 // Tests for MCP FHIR Server - Standardized FHIR R4 resource access and operations
 
 import { assertEquals, assertExists, assertNotEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { toFHIRPatient } from "../bundleBuilder.ts";
+import type { ProfileRecord } from "../types.ts";
 
 Deno.test("MCP FHIR Server Tests", async (t) => {
 
@@ -93,76 +95,55 @@ Deno.test("MCP FHIR Server Tests", async (t) => {
   // =====================================================
 
   await t.step("should convert profile to FHIR Patient resource", () => {
-    const profile = {
+    // Real-schema profile row (dob, single address, no middle_name) —
+    // verified against live information_schema 2026-07-10.
+    const profile: ProfileRecord = {
       id: 'patient-123',
       mrn: 'MRN001',
       first_name: 'John',
       last_name: 'Doe',
-      middle_name: 'Michael',
       gender: 'Male',
-      date_of_birth: '1980-05-15',
+      dob: '1980-05-15',
       phone: '555-123-4567',
       email: 'john.doe@example.com',
-      address_line1: '123 Main St',
+      address: '123 Main St',
       city: 'Houston',
       state: 'TX',
       zip_code: '77001',
       updated_at: '2025-01-15T12:00:00Z'
     };
 
-    const fhirPatient = {
-      resourceType: 'Patient',
-      id: profile.id,
-      meta: { lastUpdated: profile.updated_at },
-      identifier: [{ system: 'http://hospital.example.org/mrn', value: profile.mrn }],
-      name: [{
-        use: 'official',
-        family: profile.last_name,
-        given: [profile.first_name, profile.middle_name].filter(Boolean)
-      }],
-      gender: profile.gender.toLowerCase(),
-      birthDate: profile.date_of_birth,
-      telecom: [
-        { system: 'phone', value: profile.phone },
-        { system: 'email', value: profile.email }
-      ],
-      address: [{
-        line: [profile.address_line1],
-        city: profile.city,
-        state: profile.state,
-        postalCode: profile.zip_code,
-        country: 'US'
-      }]
-    };
+    // Exercise the real transformer (not a hand-built literal).
+    const fhirPatient = toFHIRPatient(profile);
+    const name = fhirPatient.name as Array<{ family: string; given: string[] }>;
+    const address = fhirPatient.address as Array<{ line: string[]; postalCode: string }>;
 
     assertEquals(fhirPatient.resourceType, 'Patient');
     assertEquals(fhirPatient.id, 'patient-123');
-    assertEquals(fhirPatient.name[0].family, 'Doe');
-    assertEquals(fhirPatient.name[0].given[0], 'John');
+    assertEquals(name[0].family, 'Doe');
+    assertEquals(name[0].given[0], 'John');
+    assertEquals(name[0].given.length, 1); // no middle_name in live schema
     assertEquals(fhirPatient.gender, 'male');
     assertEquals(fhirPatient.birthDate, '1980-05-15');
+    assertEquals(address[0].line[0], '123 Main St');
+    assertEquals(address[0].postalCode, '77001');
   });
 
   await t.step("should handle missing optional fields in patient conversion", () => {
-    const minimalProfile = {
+    const minimalProfile: ProfileRecord = {
       id: 'patient-456',
       first_name: 'Jane',
       last_name: 'Smith'
     };
 
-    const fhirPatient = {
-      resourceType: 'Patient',
-      id: minimalProfile.id,
-      name: [{
-        use: 'official',
-        family: minimalProfile.last_name,
-        given: [minimalProfile.first_name]
-      }]
-    };
+    const fhirPatient = toFHIRPatient(minimalProfile);
+    const name = fhirPatient.name as Array<{ family: string; given: string[] }>;
 
     assertEquals(fhirPatient.resourceType, 'Patient');
     assertExists(fhirPatient.name);
-    assertEquals(fhirPatient.name[0].family, 'Smith');
+    assertEquals(name[0].family, 'Smith');
+    assertEquals(fhirPatient.address, undefined); // no address → omitted
+    assertEquals(fhirPatient.birthDate, undefined);
   });
 
   // =====================================================

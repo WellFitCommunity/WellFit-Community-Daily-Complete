@@ -35,16 +35,16 @@ export async function getPatientSummary(
   if (sections.includes('demographics')) {
     const { data: patient } = await sb
       .from('profiles')
-      .select('first_name, last_name, date_of_birth, gender, phone, address_line1, city, state, zip_code')
+      .select('first_name, last_name, dob, gender, phone, address, city, state, zip_code')
       .eq('user_id', patientId)
       .single();
     if (patient) {
       summary.sections.demographics = {
         name: `${patient.first_name} ${patient.last_name}`,
-        date_of_birth: patient.date_of_birth,
+        date_of_birth: patient.dob,
         gender: patient.gender,
         phone: patient.phone,
-        address: [patient.address_line1, patient.city, patient.state, patient.zip_code]
+        address: [patient.address, patient.city, patient.state, patient.zip_code]
           .filter(Boolean)
           .join(', ')
       };

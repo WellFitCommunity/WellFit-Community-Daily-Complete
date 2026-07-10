@@ -31,7 +31,7 @@ export async function getPatientBundle(
   // Get patient demographics
   const { data: patient, error: patientError } = await withTimeout(
     sb.from('profiles')
-      .select('id, mrn, first_name, last_name, middle_name, gender, date_of_birth, phone, email, address_line1, address_line2, city, state, zip_code, created_at, updated_at')
+      .select('id, mrn, first_name, last_name, gender, dob, phone, email, address, city, state, zip_code, created_at, updated_at')
       .eq('id', patientId)
       .single(),
     MCP_TIMEOUT_CONFIG.fhir.single,
