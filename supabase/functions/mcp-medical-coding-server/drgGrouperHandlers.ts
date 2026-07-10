@@ -461,7 +461,7 @@ export function createDRGGrouperHandlers(
         confidence: analysis.confidence,
         pass_used: optimal.pass_used
       }
-    }).then(() => { /* fire and forget */ }).catch(() => { /* non-critical */ });
+    }).then(() => { /* fire and forget */ }, () => { /* non-critical */ });
 
     logger.info('DRG_GROUPER_COMPLETE', {
       encounterId,
@@ -529,7 +529,7 @@ export function createDRGGrouperHandlers(
     const tenantId = args.tenant_id as string | undefined;
 
     let query = sb.from('drg_grouping_results')
-      .select('*')
+      .select('id, tenant_id, patient_id, encounter_id, principal_diagnosis_code, secondary_diagnosis_codes, procedure_codes, drg_code, drg_description, drg_weight, drg_type, mdc_code, mdc_description, has_cc, has_mcc, cc_codes, mcc_codes, base_drg_code, base_drg_weight, cc_drg_code, cc_drg_weight, mcc_drg_code, mcc_drg_weight, optimal_drg_code, estimated_reimbursement, base_rate_used, grouper_version, ai_skill_key, ai_model_used, ai_confidence, ai_reasoning, status, confirmed_by, confirmed_at, created_at, updated_at')
       .eq('encounter_id', encounterId);
 
     if (grouperVersion) {

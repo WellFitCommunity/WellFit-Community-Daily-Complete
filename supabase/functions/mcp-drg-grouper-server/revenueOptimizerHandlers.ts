@@ -192,7 +192,7 @@ export function createRevenueOptimizerHandlers(
 
     // 1. Get the daily charge snapshot
     let snapshotQuery = sb.from('daily_charge_snapshots')
-      .select('*')
+      .select('id, tenant_id, patient_id, encounter_id, admit_date, service_date, day_number, charges, total_charge_amount, charge_count, projected_drg_code, projected_drg_weight, projected_reimbursement, revenue_codes, optimization_suggestions, missing_charge_alerts, documentation_gaps, status, reviewed_by, reviewed_at, finalized_by, finalized_at, ai_skill_key, ai_model_used, created_at, updated_at')
       .eq('encounter_id', encounterId)
       .eq('service_date', serviceDate);
 
@@ -400,7 +400,7 @@ export function createRevenueOptimizerHandlers(
         suggestion_count: suggestions.length,
         potential_uplift: analysis.total_potential_uplift
       }
-    }).then(() => {}).catch(() => {});
+    }).then(() => {}, () => {});
 
     logger.info('REVENUE_RISK_COMPLETE', {
       encounterId, serviceDate,
@@ -440,7 +440,7 @@ export function createRevenueOptimizerHandlers(
     const tenantId = args.tenant_id as string | undefined;
 
     let snapshotQuery = sb.from('daily_charge_snapshots')
-      .select('*')
+      .select('id, tenant_id, patient_id, encounter_id, admit_date, service_date, day_number, charges, total_charge_amount, charge_count, projected_drg_code, projected_drg_weight, projected_reimbursement, revenue_codes, optimization_suggestions, missing_charge_alerts, documentation_gaps, status, reviewed_by, reviewed_at, finalized_by, finalized_at, ai_skill_key, ai_model_used, created_at, updated_at')
       .eq('encounter_id', encounterId)
       .eq('service_date', serviceDate);
 
