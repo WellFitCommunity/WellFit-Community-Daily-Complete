@@ -25,7 +25,6 @@ interface ProfileRow {
   dob: string | null;
   gender: string | null;
   phone: string | null;
-  preferred_language: string | null;
   enrollment_type: string | null;
   tenant_id: string | null;
   mrn: string | null;
@@ -42,35 +41,34 @@ interface CaregiverGrantRow {
 
 interface CareTeamRow {
   member_name: string | null;
-  role: string | null;
-  phone: string | null;
-  email: string | null;
+  member_role: string | null;
+  member_phone: string | null;
+  member_email: string | null;
 }
 
 interface CheckInRow {
   id: string;
   created_at: string;
-  mood: string | null;
+  emotional_state: string | null;
   notes: string | null;
 }
 
 interface SelfReportRow {
   id: string;
   created_at: string;
-  symptom_category: string | null;
-  severity: string | null;
+  mood: string | null;
 }
 
 interface RiskPredictionRow {
-  risk_score: number | null;
-  risk_level: string | null;
+  readmission_risk_score: number | null;
+  risk_category: string | null;
   updated_at: string | null;
 }
 
 interface FallRiskRow {
-  fall_risk_score: number | null;
-  risk_level: string | null;
-  assessed_at: string | null;
+  overall_risk_score: number | null;
+  risk_category: string | null;
+  assessment_date: string | null;
 }
 
 // -------------------------------------------------------
@@ -113,7 +111,7 @@ export async function fetchDemographicsRow(
       sb
         .from("profiles")
         .select(
-          "user_id, first_name, last_name, dob, gender, phone, preferred_language, enrollment_type, tenant_id, mrn"
+          "user_id, first_name, last_name, dob, gender, phone, enrollment_type, tenant_id, mrn"
         )
         .eq("user_id", patientId)
         .single(),
@@ -148,7 +146,9 @@ export async function fetchDemographicsRow(
       dob: row.dob,
       gender: row.gender,
       phone: row.phone,
-      preferred_language: row.preferred_language,
+      // profiles has no preferred_language column (drift fix 2026-07-10); field
+      // retained in the PatientDemographics contract, sourced null until modeled.
+      preferred_language: null,
       enrollment_type: row.enrollment_type,
       tenant_id: row.tenant_id,
       mrn: row.mrn,
@@ -231,7 +231,7 @@ export async function fetchContactsRows(
       const { data, error } = await withTimeout(
         sb
           .from("care_team_members")
-          .select("member_name, role, phone, email")
+          .select("member_name, member_role, member_phone, member_email")
           .eq("patient_id", patientId),
         TIMEOUT,
         "Care team lookup"
@@ -251,9 +251,9 @@ export async function fetchContactsRows(
           contacts.push({
             contact_type: "care_team_member",
             name: r.member_name,
-            relationship: r.role,
-            phone: r.phone,
-            email: r.email,
+            relationship: r.member_role,
+            phone: r.member_phone,
+            email: r.member_email,
             is_primary: null,
           });
         }
@@ -294,7 +294,7 @@ export async function fetchTimelineEvents(
       const { data, error } = await withTimeout(
         sb
           .from("check_ins")
-          .select("id, created_at, mood, notes")
+          .select("id, created_at, emotional_state, notes")
           .eq("user_id", patientId)
           .gte("created_at", cutoff)
           .order("created_at", { ascending: false })
@@ -317,7 +317,7 @@ export async function fetchTimelineEvents(
           events.push({
             event_type: "check_in",
             occurred_at: r.created_at,
-            summary: r.mood ? `Mood: ${r.mood}` : "Check-in recorded",
+            summary: r.emotional_state ? `Mood: ${r.emotional_state}` : "Check-in recorded",
             metadata: { check_in_id: r.id },
           });
         }
@@ -341,7 +341,7 @@ export async function fetchTimelineEvents(
       const { data, error } = await withTimeout(
         sb
           .from("self_reports")
-          .select("id, created_at, symptom_category, severity")
+          .select("id, created_at, mood")
           .eq("user_id", patientId)
           .gte("created_at", cutoff)
           .order("created_at", { ascending: false })
@@ -364,10 +364,7 @@ export async function fetchTimelineEvents(
           events.push({
             event_type: "self_report",
             occurred_at: r.created_at,
-            summary:
-              r.symptom_category && r.severity
-                ? `${r.symptom_category} (${r.severity})`
-                : r.symptom_category ?? "Self-report",
+            summary: r.mood ? `Self-report — mood: ${r.mood}` : "Self-report",
             metadata: { self_report_id: r.id },
           });
         }
@@ -411,7 +408,7 @@ export async function fetchRiskSummaryData(
       const { data, error } = await withTimeout(
         sb
           .from("readmission_risk_predictions")
-          .select("risk_score, risk_level, updated_at")
+          .select("readmission_risk_score, risk_category, updated_at")
           .eq("patient_id", patientId)
           .order("updated_at", { ascending: false })
           .limit(1)
@@ -431,8 +428,8 @@ export async function fetchRiskSummaryData(
       } else if (data) {
         const row = data as RiskPredictionRow;
         summary.readmission_risk = {
-          score: row.risk_score,
-          level: row.risk_level,
+          score: row.readmission_risk_score,
+          level: row.risk_category,
           last_updated: row.updated_at,
         };
         dataSources.push({
@@ -463,9 +460,9 @@ export async function fetchRiskSummaryData(
       const { data, error } = await withTimeout(
         sb
           .from("ai_fall_risk_assessments")
-          .select("fall_risk_score, risk_level, assessed_at")
+          .select("overall_risk_score, risk_category, assessment_date")
           .eq("patient_id", patientId)
-          .order("assessed_at", { ascending: false })
+          .order("assessment_date", { ascending: false })
           .limit(1)
           .maybeSingle(),
         TIMEOUT,
@@ -483,9 +480,9 @@ export async function fetchRiskSummaryData(
       } else if (data) {
         const row = data as FallRiskRow;
         summary.fall_risk = {
-          score: row.fall_risk_score,
-          level: row.risk_level,
-          last_updated: row.assessed_at,
+          score: row.overall_risk_score,
+          level: row.risk_category,
+          last_updated: row.assessment_date,
         };
         dataSources.push({
           source: "ai_fall_risk_assessments",
