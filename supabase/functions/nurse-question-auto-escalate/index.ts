@@ -10,6 +10,27 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
+/**
+ * Authenticates the pg_cron caller. This function is cron-only (no app/edge invoker,
+ * verified 2026-07-10) and pinned verify_jwt=false in config.toml, so THIS is the
+ * only auth layer — without it the endpoint is reachable (and mutates data: it
+ * escalates nurse questions) by any HTTP client. Accepts an `X-Cron-Secret` header
+ * or a `Bearer` token equal to the dedicated `CRON_SECRET` or the new-format
+ * `SB_SECRET_KEY` the cron reads from Vault and sends. Mirrors health-monitor /
+ * guardian-agent's isAuthorizedServerCaller.
+ */
+function isAuthorizedCronCaller(req: Request): boolean {
+  const headerSecret = req.headers.get("X-Cron-Secret");
+  const bearerToken = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? null;
+  const candidate = headerSecret ?? bearerToken;
+  if (!candidate) return false;
+
+  const accepted = [Deno.env.get("CRON_SECRET") ?? "", SB_SECRET_KEY]
+    .filter((s) => s.length > 0);
+
+  return accepted.some((s) => s === candidate);
+}
+
 // --- Config ---
 const UNCLAIMED_THRESHOLD_HOURS = 2;
 const UNANSWERED_THRESHOLD_HOURS = 4;
@@ -42,6 +63,17 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   if (req.method === "OPTIONS") return handleOptions(req);
+
+  // Cron-only endpoint. verify_jwt is OFF (config.toml), so this cron-secret check
+  // IS the auth layer. Reject any caller that can't present the secret — closes the
+  // previously-open endpoint that let any HTTP client trigger data-mutating escalations.
+  if (!isAuthorizedCronCaller(req)) {
+    logger.warn("Rejected unauthorized caller (no valid cron secret)");
+    return new Response(
+      JSON.stringify({ success: false, error: "Unauthorized — cron secret required" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   try {
     logger.info("Auto-escalation function invoked");
