@@ -46,14 +46,18 @@ Dropping any would break live queries or change ON DELETE behavior.
 | `community_moments` (user_id) | `community_moments_user_id_fkey` + `_user_id_auth_fkey` (both →auth.users) + `_user_id_profiles_fkey` (→profiles) | `_fkey` (7 refs) + `_auth_fkey`/`_profiles_fkey` referenced; the multi-FK setup is the documented PostgREST disambiguation (see MEMORY `reference_fk_name_collision_drift`) |
 | `fhir_practitioner_roles` (practitioner_id) | `fhir_practitioner_role_practitioner_fk` + `..._practitioner_id_fkey` (both →fhir_practitioners) | `fhir_practitioner_role_practitioner_fk` appears in `database.generated.ts` (type-gen). Safe to drop ONLY with a type regen — deferred, low value. |
 
-## ⚠️ Flagged for review (not a sweep action)
-`encounters.patient_id` has TWO FKs to **different targets/columns**: `auth.users(id)`
-(CASCADE) and **`profiles(id)`** (RESTRICT) — note `profiles(id)`, not `profiles(user_id)`.
-A row must satisfy both; it works today because the referenced values line up, but the
-two-different-parents design is fragile if `profiles.id` ever diverges from the user id.
-Both are actively used as embed hints, so this is a design question for Maria/Akima, not a
-mechanical cleanup. (The new `claims.patient_id`, migration `20260710150000`, was
-deliberately given a SINGLE FK to `auth.users` per the §5 convention.)
+## ✅ Resolved — encounters.patient_id two-parent FK (migration `20260710170000`)
+`encounters.patient_id` carried TWO FKs: `auth.users(id)` (CASCADE) and
+**`profiles(id)`** (RESTRICT — note `id`, not `user_id`). It worked only because
+`profiles.id == profiles.user_id` for all 61 rows; it would have silently blocked
+encounter inserts for any future patient whose profile had `id <> user_id`.
+**Fix:** repointed the SAME-NAMED `encounters_patient_id_profiles_fkey` to
+`profiles(user_id)` (the PK/unique join key) — zero code change (every
+`profiles!encounters_patient_id_profiles_fkey` embed still resolves by name),
+`ON DELETE RESTRICT` and the canonical `auth.users` FK both preserved. Live-verified:
+def now `REFERENCES profiles(user_id)`, validated, all 10 rows satisfy it.
+(The new `claims.patient_id`, migration `20260710150000`, was deliberately given a
+SINGLE FK to `auth.users` per the §5 convention.)
 
 ## Regression guard
 ```sql
