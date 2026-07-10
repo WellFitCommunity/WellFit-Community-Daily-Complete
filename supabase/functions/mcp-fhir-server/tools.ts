@@ -47,7 +47,7 @@ export const FHIR_SELECT_COLUMNS: Record<string, string> = {
   'fhir_immunizations': 'id, patient_id, vaccine_code, vaccine_display, status, occurrence_date, lot_number, site, route, created_at, updated_at',
   'fhir_care_plans': 'id, patient_id, title, status, intent, category, description, period_start, period_end, created_at, updated_at',
   'fhir_care_teams': 'id, patient_id, name, category, status, created_at, updated_at',
-  'fhir_practitioners': 'id, name, specialty, phone, email, npi, active, created_at, updated_at',
+  'fhir_practitioners': 'id, family_name, given_names, specialty_display, phone, email, npi, active, created_at, updated_at',
   'fhir_practitioner_roles': 'id, practitioner_id, organization_id, code, specialty, active, created_at, updated_at',
   'fhir_encounters': 'id, patient_id, status, class, type, period_start, period_end, reason_code, created_at, updated_at',
   'fhir_document_references': 'id, patient_id, type, status, category, date, description, content_type, created_at, updated_at',
