@@ -157,7 +157,7 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
     // Get service lines
     const { data: serviceLines } = await sb
       .from('prior_auth_service_lines')
-      .select('id, prior_auth_id, line_number, service_code, description, units, status')
+      .select('id, prior_auth_id, line_number, cpt_code, cpt_description, requested_units, line_status')
       .eq('prior_auth_id', data.id)
       .order('line_number', { ascending: true });
 
