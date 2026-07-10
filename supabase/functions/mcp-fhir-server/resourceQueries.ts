@@ -78,9 +78,12 @@ export async function getPatientBundle(
 
   // Include AI assessments if requested
   if (options.includeAI) {
+    // Live table is `risk_assessments` (ai_risk_assessments never existed):
+    // risk_level / overall_score / risk_factors — verified against
+    // information_schema 2026-07-10.
     const { data: aiData } = await sb
-      .from('ai_risk_assessments')
-      .select('id, risk_type, risk_score, factors, created_at')
+      .from('risk_assessments')
+      .select('id, risk_level, overall_score, risk_factors, created_at')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false })
       .limit(10);
@@ -92,10 +95,12 @@ export async function getPatientBundle(
           id: assessment.id,
           subject: { reference: `Patient/${patientId}` },
           prediction: [{
-            outcome: { text: assessment.risk_type },
-            probabilityDecimal: assessment.risk_score
+            outcome: { text: assessment.risk_level },
+            probabilityDecimal: assessment.overall_score
           }],
-          basis: assessment.factors?.map((f: string) => ({ display: f })) || [],
+          basis: Array.isArray(assessment.risk_factors)
+            ? assessment.risk_factors.map((f: string) => ({ display: f }))
+            : [],
           meta: { lastUpdated: assessment.created_at }
         });
       }
