@@ -41,7 +41,7 @@ export const FHIR_SELECT_COLUMNS: Record<string, string> = {
   'profiles': 'id, mrn, first_name, last_name, gender, dob, phone, email, address, city, state, zip_code, created_at, updated_at',
   'fhir_medication_requests': 'id, patient_id, medication_code_system, medication_code, medication_display, medication_text, dosage_text, dosage_timing_frequency, dosage_route_display, status, requester_display, authored_on, validity_period_end, created_at, updated_at',
   'fhir_conditions': 'id, patient_id, code, code_display, code_system, clinical_status, verification_status, severity_code, severity_display, category, onset_datetime, recorded_date, created_at, updated_at',
-  'fhir_diagnostic_reports': 'id, patient_id, code, code_display, status, category, effective_date, issued, conclusion, created_at, updated_at',
+  'fhir_diagnostic_reports': 'id, patient_id, code, code_display, status, category, effective_datetime, issued, conclusion, created_at, updated_at',
   'fhir_procedures': 'id, patient_id, code, code_display, status, category, performed_date, created_at, updated_at',
   'fhir_observations': 'id, patient_id, code, code_display, category, value_quantity_value, value_quantity_unit, value_string, value_codeable_concept_display, effective_datetime, status, created_at, updated_at',
   'fhir_immunizations': 'id, patient_id, vaccine_code, vaccine_display, status, occurrence_date, lot_number, site, route, created_at, updated_at',
