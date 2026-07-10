@@ -203,7 +203,7 @@ serve(async (req) => {
 
         // Validation
         const validationErrors = validateForTool(name, args, VALIDATION);
-        if (validationErrors?.length > 0) {
+        if (validationErrors && validationErrors.length > 0) {
           return validationErrorResponse(validationErrors, id, corsHeaders);
         }
 
@@ -223,12 +223,12 @@ serve(async (req) => {
         }
 
         // Execute tool
-        let result = await handleToolCall(name, args || {});
+        let result: Record<string, unknown> = await handleToolCall(name, args || {});
         const executionTimeMs = Date.now() - startTime;
 
         // Safety filter on AI-generated content
         if (SAFETY_FILTERED_TOOLS.has(name) && typeof result === "object" && result !== null) {
-          result = sanitizeSuggestions(result as Record<string, unknown>);
+          result = sanitizeSuggestions(result);
         }
 
         // Audit log

@@ -527,7 +527,7 @@ export function createRevenueOptimizerHandlers(
     }
 
     // 3. Check for charge-to-diagnosis alignment
-    const diagCount = (snapshot as Record<string, unknown>).projected_drg_code ? 1 : 0;
+    const diagCount = snapshot.projected_drg_code ? 1 : 0;
     if (snapshot.charge_count > 0 && diagCount === 0 && !snapshot.projected_drg_code) {
       alerts.push({
         rule: 'has_diagnosis_alignment',

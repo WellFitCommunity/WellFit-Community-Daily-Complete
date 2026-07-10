@@ -3,7 +3,7 @@
 // Thin dispatch layer. Data-fetching lives in fetchers.ts.
 // =====================================================
 
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { MCPLogger, PatientContext, DataSourceRecord } from "./types.ts";
 import {
   fetchDemographicsRow,

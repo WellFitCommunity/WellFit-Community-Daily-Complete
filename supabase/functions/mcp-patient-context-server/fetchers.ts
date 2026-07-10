@@ -4,7 +4,7 @@
 // for ATLUS Accountability, and handles its own errors.
 // =====================================================
 
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 import type {
   PatientDemographics,
