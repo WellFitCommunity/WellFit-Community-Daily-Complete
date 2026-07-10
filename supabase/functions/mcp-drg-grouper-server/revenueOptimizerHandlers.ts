@@ -30,7 +30,7 @@ import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 // -------------------------------------------------------
 interface ClinicalNoteRow {
   id: string;
-  type: string;
+  note_type: string;
   content: string;
 }
 
@@ -133,7 +133,7 @@ function buildOptimizationPrompt(
         const content = n.content.length > 1500
           ? n.content.substring(0, 1500) + '... [truncated]'
           : n.content;
-        return `  [${n.type.toUpperCase()}]: ${content}`;
+        return `  [${n.note_type.toUpperCase()}]: ${content}`;
       }).join('\n\n')
     : '  (no clinical notes for this date)';
 
@@ -218,7 +218,7 @@ export function createRevenueOptimizerHandlers(
     // 2. Get clinical notes
     const { data: noteData } = await withTimeout(
       sb.from('clinical_notes')
-        .select('id, type, content')
+        .select('id, note_type, content')
         .eq('encounter_id', encounterId)
         .order('created_at', { ascending: false })
         .limit(10),
