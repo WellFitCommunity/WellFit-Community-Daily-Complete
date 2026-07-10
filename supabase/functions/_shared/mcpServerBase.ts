@@ -42,7 +42,9 @@ export interface MCPToolDefinition {
   inputSchema: {
     type: string;
     properties: Record<string, unknown>;
-    required: string[];
+    // Optional per JSON Schema: a tool with no parameters (e.g. ping, seed_profiles)
+    // legitimately omits `required`. The only consumer guards it (`if (def.required)`).
+    required?: string[];
   };
 }
 

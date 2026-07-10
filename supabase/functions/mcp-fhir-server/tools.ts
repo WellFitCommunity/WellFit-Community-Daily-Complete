@@ -76,7 +76,9 @@ export const TOOLS: Record<string, {
   inputSchema: {
     type: string;
     properties: Record<string, unknown>;
-    required: string[];
+    // Optional per JSON Schema — matches the shared MCPToolDefinition (param-less
+    // tools like `ping` omit `required`).
+    required?: string[];
   };
 }> = {
   "ping": PING_TOOL,
