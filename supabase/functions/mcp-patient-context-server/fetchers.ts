@@ -30,12 +30,11 @@ interface ProfileRow {
   mrn: string | null;
 }
 
-interface CaregiverGrantRow {
-  caregiver_first_name: string | null;
-  caregiver_last_name: string | null;
-  caregiver_phone: string | null;
-  caregiver_email: string | null;
+interface CaregiverContactRow {
+  caregiver_name: string | null;
   relationship: string | null;
+  phone: string | null;
+  email: string | null;
   is_primary: boolean | null;
 }
 
@@ -170,49 +169,43 @@ export async function fetchContactsRows(
 ): Promise<PatientContact[]> {
   const contacts: PatientContact[] = [];
 
-  // Caregiver grants
+  // Caregiver contacts — via the boundary-layer view that UNIONs the senior's
+  // profile primary caregiver with active view-grant holders (migration
+  // 20260710140000; security_invoker enforces the caller's RLS).
   {
     const fetched_at = now();
     try {
       const { data, error } = await withTimeout(
         sb
-          .from("caregiver_view_grants")
-          .select(
-            "caregiver_first_name, caregiver_last_name, caregiver_phone, caregiver_email, relationship, is_primary"
-          )
-          .eq("patient_id", patientId)
-          .eq("is_active", true),
+          .from("v_patient_caregiver_contacts")
+          .select("caregiver_name, relationship, phone, email, is_primary")
+          .eq("senior_user_id", patientId),
         TIMEOUT,
         "Caregiver contacts lookup"
       );
 
       if (error) {
         dataSources.push({
-          source: "caregiver_view_grants",
+          source: "v_patient_caregiver_contacts",
           fetched_at,
           success: false,
           record_count: 0,
           note: error.message,
         });
       } else {
-        const rows = (data ?? []) as CaregiverGrantRow[];
+        const rows = (data ?? []) as CaregiverContactRow[];
         for (const r of rows) {
-          const name =
-            [r.caregiver_first_name, r.caregiver_last_name]
-              .filter(Boolean)
-              .join(" ")
-              .trim() || null;
           contacts.push({
             contact_type: "caregiver",
-            name,
+            name: r.caregiver_name,
             relationship: r.relationship,
-            phone: r.caregiver_phone,
-            email: r.caregiver_email,
+            phone: r.phone,
+            email: r.email,
             is_primary: r.is_primary,
           });
         }
         dataSources.push({
-          source: "caregiver_view_grants",
+          source: "v_patient_caregiver_contacts",
           fetched_at,
           success: true,
           record_count: rows.length,
@@ -220,7 +213,7 @@ export async function fetchContactsRows(
         });
       }
     } catch (err: unknown) {
-      recordFailure(dataSources, "caregiver_view_grants", err, fetched_at);
+      recordFailure(dataSources, "v_patient_caregiver_contacts", err, fetched_at);
     }
   }
 

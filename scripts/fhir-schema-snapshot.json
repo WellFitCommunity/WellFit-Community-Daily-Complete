@@ -3,7 +3,7 @@
     "description": "Live column snapshot consumed by scripts/check-fhir-service-schema.py. Covers public.fhir_* tables/views PLUS every non-fhir public table the MCP servers (supabase/functions/mcp-*) and src/services/fhir reference via .from('literal'). DO NOT hand-edit \u2014 regenerate with scripts/refresh-fhir-schema-snapshot.sql against the live DB.",
     "generated": "2026-07-10",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "table_count": 75
+    "table_count": 76
   },
   "tables": {
     "affirmations": [
@@ -1973,6 +1973,15 @@
       "role",
       "tenant_id",
       "department"
+    ],
+    "v_patient_caregiver_contacts": [
+      "senior_user_id",
+      "tenant_id",
+      "caregiver_name",
+      "relationship",
+      "phone",
+      "email",
+      "is_primary"
     ]
   }
 }

@@ -16,10 +16,10 @@ runtime-dead drift; 0 false positives, 0 snapshot staleness.**
 | B3 self_reports drop | 2 | ✅ Fixed (summary sourced from real `mood`) |
 | B4 profiles.preferred_language drop | 1 | ✅ Fixed (returns `null`) |
 | EncounterService remap (Option A) | 14 | ✅ Fixed + tests updated |
-| **B1 caregiver contacts** | 8 | ⏸️ **HELD — baselined pending Maria's caregiver-model decision** |
+| **B1 caregiver contacts** | 8 | ✅ Fixed via boundary-layer view `v_patient_caregiver_contacts` |
 
-Gate: **green** (139 files clean, 8 baselined). Scoped typecheck 0, eslint 0,
-affected tests 34/34.
+Gate: **green** (139 files clean, **0 baselined** — all 46 findings closed).
+Scoped typecheck 0, eslint 0, affected tests 34/34.
 
 ## Fixes applied (real column mappings, live-verified)
 
@@ -42,16 +42,21 @@ affected tests 34/34.
   (`arrived`/`triaged`/`in_progress`); `getByClass`→`getByType`. Consumer
   `patient-context/fetchTimeline.extractLastEncounter` + both test files updated.
 
-## OPEN — decisions for Maria
+## Resolved
 
-1. **B1 — Caregiver contacts model.** `caregiver_view_grants` is the access-grant
-   edge (the PIN / read-only monitoring mechanism), not a contact record. Contact
-   fields live on `profiles.caregiver_*`. Proposed fix: list caregivers by joining
-   grant→profiles (by `senior_user_id`, active = `expires_at IS NULL OR > now()`)
-   **plus** the senior's own `profiles.caregiver_*` as the primary contact — giving
-   the "more than one way to reach caregiver info" goal. Baselined in
-   `scripts/fhir-schema-gate-baseline.txt` (8 entries) until decided.
-2. **B2 — `claims.patient_id`.** The encounter-join fix is correct today. If claims
+- **B1 — Caregiver contacts model (DONE).** `caregiver_view_grants` is the
+  access-grant edge (the PIN / read-only monitoring mechanism), not a contact
+  record. Fixed with boundary-layer view `v_patient_caregiver_contacts`
+  (migration `20260710140000`, `security_invoker=on`, GRANT to authenticated) that
+  UNIONs (1) the senior's own `profiles.caregiver_*` primary with (2) active
+  view-grant holders resolved to their own profile — the "more than one way to
+  reach caregiver info" goal. Fetcher repointed to the view; live-verified (view
+  exists, security_invoker on, GRANT true, cols resolve; 0 rows — tenant has no
+  caregiver data yet, so column-proven not seeded-round-trip-proven).
+
+## OPEN — decision for Maria
+
+1. **B2 — `claims.patient_id`.** The encounter-join fix is correct today. If claims
    should carry `patient_id` as a first-class column (837P-style), that's a separate
    deliberate migration + backfill — not bundled here.
 
