@@ -6,7 +6,7 @@
 
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
@@ -86,7 +86,7 @@ serve(async (req) => {
       );
     }
 
-    const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
+    const supabase: SupabaseClient = createClient(SUPABASE_URL, SB_SECRET_KEY);
     const now = new Date();
 
     // --- Step 1: Find unclaimed questions older than 2 hours ---
@@ -223,7 +223,7 @@ serve(async (req) => {
 
 // --- Helper: Escalate a single question ---
 async function escalateQuestion(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   logger: ReturnType<typeof createLogger>,
   question: StaleQuestion,
   level: string,
