@@ -42,8 +42,11 @@ export interface ProfileRecord {
  */
 export interface PractitionerRecord {
   id: string;
-  name?: string;
-  specialty?: string;
+  // Live fhir_practitioners schema: family_name + given_names (no bare `name`),
+  // specialty_display (no bare `specialty`). Verified vs information_schema 2026-07-10.
+  family_name?: string;
+  given_names?: string[] | string;
+  specialty_display?: string;
   phone?: string;
   email?: string;
 }

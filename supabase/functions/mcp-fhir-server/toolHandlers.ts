@@ -456,7 +456,7 @@ async function handleGetCareTeam(
       .filter((v): v is string => Boolean(v));
     if (practitionerIds.length) {
       const { data } = await sb.from('fhir_practitioners')
-        .select('id, name, specialty, phone, email')
+        .select('id, family_name, given_names, specialty_display, phone, email')
         .in('id', practitionerIds);
       practitioners = (data || []) as PractitionerRecord[];
     }
@@ -475,10 +475,14 @@ async function handleGetCareTeam(
       status: ct.status,
       members: (membersByTeam.get(ct.id) ?? []).map((m) => {
         const pract = practitionerMap.get(m.member_user_id || '');
+        const given = Array.isArray(pract?.given_names)
+          ? pract?.given_names.join(' ')
+          : pract?.given_names;
+        const practName = [given, pract?.family_name].filter(Boolean).join(' ').trim() || undefined;
         return {
           role: m.role_display,
-          name: m.member_display || pract?.name,
-          specialty: pract?.specialty,
+          name: m.member_display || practName,
+          specialty: pract?.specialty_display,
           phone: includeContactInfo ? pract?.phone : undefined,
           email: includeContactInfo ? pract?.email : undefined
         };
@@ -495,7 +499,7 @@ async function handleListEhrConnections(
   const status = toolArgs.status as string | undefined;
 
   let query = sb.from('fhir_connections')
-    .select('id, name, ehr_type, base_url, status, sync_mode, sync_frequency, last_sync_at, created_at');
+    .select('id, name, ehr_system, fhir_server_url, status, sync_direction, sync_frequency, last_sync, created_at');
   if (tenantId) query = query.eq('tenant_id', tenantId);
   if (status) query = query.eq('status', status);
 
@@ -510,12 +514,12 @@ async function handleListEhrConnections(
     connections: (data || []).map(c => ({
       id: c.id,
       name: c.name,
-      ehr_type: c.ehr_type,
-      base_url: c.base_url,
+      ehr_type: c.ehr_system,
+      base_url: c.fhir_server_url,
       status: c.status,
-      sync_mode: c.sync_mode,
+      sync_mode: c.sync_direction,
       sync_frequency: c.sync_frequency,
-      last_sync: c.last_sync_at
+      last_sync: c.last_sync
     })),
     total: data?.length || 0
   };
@@ -532,7 +536,7 @@ async function handleTriggerEhrSync(
 
   // Get connection details
   const { data: connection, error: connError } = await sb.from('fhir_connections')
-    .select('id, name, ehr_type, base_url, status, sync_mode, tenant_id')
+    .select('id, name, ehr_system, fhir_server_url, status, sync_direction, tenant_id')
     .eq('id', connectionId)
     .single();
 
@@ -544,7 +548,7 @@ async function handleTriggerEhrSync(
   const { data: syncLog, error: logError } = await sb.from('fhir_sync_logs').insert({
     connection_id: connectionId,
     patient_id: patientId,
-    direction: direction || connection.sync_mode,
+    direction: direction || connection.sync_direction,
     resource_types: resources || ['all'],
     status: 'pending',
     initiated_at: new Date().toISOString()
@@ -555,7 +559,7 @@ async function handleTriggerEhrSync(
   return {
     sync_id: syncLog?.id,
     connection_id: connectionId,
-    direction: direction || connection.sync_mode,
+    direction: direction || connection.sync_direction,
     status: 'initiated',
     message: 'Sync request queued. Check fhir_sync_logs for status.'
   };
