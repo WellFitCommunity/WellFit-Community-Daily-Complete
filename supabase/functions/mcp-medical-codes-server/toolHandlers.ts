@@ -5,7 +5,7 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { CPTCode, ICD10Code, HCPCSCode, CodeSuggestions } from "./types.ts";
 import { SDOH_CODES, checkBundling } from "./codeData.ts";
-import { handlePing } from "../_shared/mcpServerBase.ts";
+import { handlePing, type MCPInitResult } from "../_shared/mcpServerBase.ts";
 
 interface MCPLogger {
   info(event: string, data?: Record<string, unknown>): void;
@@ -166,7 +166,7 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
 
     switch (toolName) {
       case "ping": {
-        result = handlePing(serverConfig as { name: string; version: string; tier: "external_api" | "user_scoped" | "admin" }, initResult as { supabase: SupabaseClient | null; logger: MCPLogger; canRateLimit: boolean });
+        result = handlePing(serverConfig as { name: string; version: string; tier: "external_api" | "user_scoped" | "admin" }, initResult as MCPInitResult);
         break;
       }
 

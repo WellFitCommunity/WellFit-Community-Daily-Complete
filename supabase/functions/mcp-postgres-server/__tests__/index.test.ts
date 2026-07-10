@@ -221,7 +221,7 @@ Deno.test("MCP Postgres Server", async (t) => {
     // sdoh_flags names were aspirational schema drift that made the query fail).
     assertStringIncludes(q.query, "profiles");
     assertStringIncludes(q.query, "encounters");
-    assertStringIncludes(q.query, "care_coordination_plans");
+    assertStringIncludes(q.query, "provider_tasks");
     assertStringIncludes(q.query, "passive_sdoh_detections");
   });
 

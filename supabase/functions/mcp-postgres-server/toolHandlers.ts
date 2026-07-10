@@ -4,7 +4,7 @@
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { WHITELISTED_QUERIES, SAFE_TABLES } from "./queryWhitelist.ts";
-import { handlePing } from "../_shared/mcpServerBase.ts";
+import { handlePing, type MCPInitResult } from "../_shared/mcpServerBase.ts";
 import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 import { logMCPAudit } from "../_shared/mcpAudit.ts";
 
@@ -37,7 +37,7 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
       case "ping": {
         result = handlePing(
           serverConfig as { name: string; version: string; tier: "external_api" | "user_scoped" | "admin" },
-          initResult as { supabase: SupabaseClient | null; logger: MCPLogger; canRateLimit: boolean }
+          initResult as MCPInitResult
         );
         break;
       }

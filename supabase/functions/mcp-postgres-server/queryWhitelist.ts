@@ -213,23 +213,23 @@ export const WHITELISTED_QUERIES: Record<string, WhitelistedQuery> = {
     name: "get_dashboard_metrics",
     description: "Get key dashboard metrics",
     // NOTE: mapped to the REAL live schema (verified 2026-07-10). The original
-    // referenced tables/columns that do not exist here (patients, care_tasks,
-    // sdoh_flags, readmission_risk_30, encounter_date) — aspirational schema drift
-    // that made this query fail. Real sources:
-    //   active_members     -> profiles.enrollment_type = 'app'
+    // referenced tables/columns that never existed (patients, care_tasks, sdoh_flags,
+    // readmission_risk_30, encounter_date) — aspirational names. The real features DO
+    // exist under proper names:
+    //   active_members     -> profiles.enrollment_type = 'app'   (profiles is the member/patient spine)
     //   high_risk_patients -> profiles.risk_score >= 0.7
     //   todays_encounters  -> encounters.created_at::date = CURRENT_DATE (no encounter_date col)
-    //   pending_tasks      -> open care_coordination_plans (no care_tasks table; "pending"
-    //                         reinterpreted as not-yet-completed plans) [SEMANTIC — confirm]
-    //   active_sdoh_flags  -> passive_sdoh_detections where status <> 'resolved'
-    //                         (no sdoh_flags table) [SEMANTIC — confirm]
+    //   pending_tasks      -> provider_tasks (the real task table) still open
+    //                         status NOT IN ('completed','cancelled')
+    //   active_sdoh_flags  -> passive_sdoh_detections still needing attention
+    //                         status NOT IN ('resolved','dismissed')
     query: `
       SELECT
         (SELECT COUNT(*) FROM profiles WHERE tenant_id = $1 AND enrollment_type = 'app') as active_members,
         (SELECT COUNT(*) FROM profiles WHERE tenant_id = $1 AND risk_score >= 0.7) as high_risk_patients,
         (SELECT COUNT(*) FROM encounters WHERE tenant_id = $1 AND created_at::date = CURRENT_DATE) as todays_encounters,
-        (SELECT COUNT(*) FROM care_coordination_plans WHERE tenant_id = $1 AND status NOT IN ('completed', 'closed', 'cancelled')) as pending_tasks,
-        (SELECT COUNT(*) FROM passive_sdoh_detections WHERE tenant_id = $1 AND status IS DISTINCT FROM 'resolved') as active_sdoh_flags
+        (SELECT COUNT(*) FROM provider_tasks WHERE tenant_id = $1 AND status NOT IN ('completed', 'cancelled')) as pending_tasks,
+        (SELECT COUNT(*) FROM passive_sdoh_detections WHERE tenant_id = $1 AND status NOT IN ('resolved', 'dismissed')) as active_sdoh_flags
     `,
     parameters: ["tenant_id"],
     returnsRows: true

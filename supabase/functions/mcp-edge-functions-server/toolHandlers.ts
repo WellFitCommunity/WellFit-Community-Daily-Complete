@@ -4,7 +4,7 @@
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ALLOWED_FUNCTIONS, BLOCKED_FUNCTIONS } from "./functionWhitelist.ts";
-import { handlePing } from "../_shared/mcpServerBase.ts";
+import { handlePing, type MCPInitResult } from "../_shared/mcpServerBase.ts";
 import { logMCPAudit } from "../_shared/mcpAudit.ts";
 
 interface MCPLogger {
@@ -117,7 +117,7 @@ export function createToolHandlers(
       case "ping": {
         return handlePing(
           serverConfig as { name: string; version: string; tier: "external_api" | "user_scoped" | "admin" },
-          initResult as { supabase: SupabaseClient | null; logger: MCPLogger; canRateLimit: boolean }
+          initResult as MCPInitResult
         );
       }
 
