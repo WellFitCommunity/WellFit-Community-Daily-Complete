@@ -54,11 +54,18 @@ Scoped typecheck 0, eslint 0, affected tests 34/34.
   exists, security_invoker on, GRANT true, cols resolve; 0 rows — tenant has no
   caregiver data yet, so column-proven not seeded-round-trip-proven).
 
-## OPEN — decision for Maria
+- **B2 — `claims.patient_id` (DONE).** Added as a first-class column (migration
+  `20260710150000`): `uuid REFERENCES auth.users(id)`, `idx_claims_patient_id`,
+  backfill from `encounters`, and a keep-in-sync trigger `trg_set_claim_patient_id`
+  (`set_claim_patient_id`, SECURITY DEFINER + `search_path=public`) that derives
+  `patient_id` from the encounter on INSERT / `encounter_id` UPDATE. `claims`
+  already GRANTs authenticated (column inherits — §2a satisfied). Live round-trip
+  PROVEN: inserted a claim with no `patient_id` → trigger populated it from the
+  encounter (`a1111111…`); test row deleted (0 residue). The charge-aggregation
+  fallback keeps its encounter-join (it also needs `date_of_service`, which lives
+  on the encounter, not `claims`).
 
-1. **B2 — `claims.patient_id`.** The encounter-join fix is correct today. If claims
-   should carry `patient_id` as a first-class column (837P-style), that's a separate
-   deliberate migration + backfill — not bundled here.
+## Fully closed — no open items.
 
 ## Regression guard
 
