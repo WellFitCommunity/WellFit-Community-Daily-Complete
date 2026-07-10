@@ -329,6 +329,20 @@ async function handleGetMedicationList(
   };
 }
 
+/** Row shape for fhir_conditions — fields read by the condition list.
+ *  Column names verified against the live FHIR R4 schema 2026-07-10. */
+interface FhirConditionRow {
+  id: string;
+  code: string | null;
+  code_display: string | null;
+  code_system: string | null;
+  clinical_status: string | null;
+  verification_status: string | null;
+  severity_display: string | null;
+  onset_datetime: string | null;
+  recorded_date: string | null;
+}
+
 async function handleGetConditionList(
   sb: SupabaseClient,
   toolArgs: Record<string, unknown>
@@ -350,15 +364,15 @@ async function handleGetConditionList(
 
   return {
     patient_id: patientId,
-    conditions: (data || []).map(c => ({
+    conditions: ((data ?? []) as unknown as FhirConditionRow[]).map((c) => ({
       id: c.id,
       code: c.code,
       display: c.code_display,
       system: c.code_system,
       clinical_status: c.clinical_status,
       verification_status: c.verification_status,
-      severity: c.severity,
-      onset_date: c.onset_date,
+      severity: c.severity_display,
+      onset_date: c.onset_datetime,
       recorded_date: c.recorded_date
     })),
     total: data?.length || 0
