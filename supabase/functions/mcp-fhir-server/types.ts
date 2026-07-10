@@ -159,3 +159,13 @@ export interface FhirCareTeamMemberRow {
   member_user_id: string | null;
   is_primary_contact: boolean | null;
 }
+
+/** Row shape for passive_sdoh_detections — the real "active SDOH flags" source
+ *  (there is no sdoh_flags table). Verified against live schema 2026-07-10. */
+export interface SdohDetectionRow {
+  id: string;
+  sdoh_category: string | null;
+  risk_level: string | null;
+  ai_summary: string | null;
+  detected_at: string | null;
+}

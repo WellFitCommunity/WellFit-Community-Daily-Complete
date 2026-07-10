@@ -9,7 +9,7 @@ import { handlePing, type MCPInitResult, type MCPTier } from "../_shared/mcpServ
 import type {
   ToolResult, PractitionerRecord,
   FhirMedicationRow, FhirConditionRow, FhirObservationRow,
-  FhirCareTeamRow, FhirCareTeamMemberRow,
+  FhirCareTeamRow, FhirCareTeamMemberRow, SdohDetectionRow,
 } from "./types.ts";
 import { FHIR_TABLES, getFHIRColumns } from "./tools.ts";
 import { createFHIRBundle } from "./bundleBuilder.ts";
@@ -372,12 +372,13 @@ async function handleGetSdohAssessments(
     'FHIR SDOH assessments'
   );
 
-  // Also check sdoh_flags table
+  // Active SDOH flags — the real source is passive_sdoh_detections (there is no
+  // sdoh_flags table). "Active" = not resolved/dismissed (matches the KPI mapping).
   const { data: flags } = await withTimeout(
-    sb.from('sdoh_flags')
-      .select('id, flag_type, severity, description, detected_date')
+    sb.from('passive_sdoh_detections')
+      .select('id, sdoh_category, risk_level, ai_summary, detected_at')
       .eq('patient_id', patientId)
-      .eq('resolved', false)
+      .not('status', 'in', '(resolved,dismissed)')
       .limit(20),
     MCP_TIMEOUT_CONFIG.fhir.search,
     'FHIR SDOH flags'
@@ -394,12 +395,12 @@ async function handleGetSdohAssessments(
       value: o.value_codeable_concept_display || o.value_string,
       date: o.effective_datetime
     })),
-    active_flags: (flags || []).map(f => ({
+    active_flags: ((flags ?? []) as unknown as SdohDetectionRow[]).map((f) => ({
       id: f.id,
-      type: f.flag_type,
-      severity: f.severity,
-      description: f.description,
-      detected_date: f.detected_date
+      type: f.sdoh_category,
+      severity: f.risk_level,
+      description: f.ai_summary,
+      detected_date: f.detected_at
     })),
     total_assessments: observations?.length || 0,
     total_flags: flags?.length || 0
