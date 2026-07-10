@@ -148,14 +148,14 @@ export async function getPatientSummary(
   if (sections.includes('goals')) {
     const { data } = await sb
       .from('fhir_goals')
-      .select('description, lifecycle_status, target_date')
+      .select('description_text, lifecycle_status, target')
       .eq('patient_id', patientId)
       .neq('lifecycle_status', 'cancelled')
       .limit(10);
     summary.sections.goals = (data || []).map(g => ({
-      description: g.description,
+      description: g.description_text,
       status: g.lifecycle_status,
-      target_date: g.target_date
+      target_date: g.target
     }));
   }
 

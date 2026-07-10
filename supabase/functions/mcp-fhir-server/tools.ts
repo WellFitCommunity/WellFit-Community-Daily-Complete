@@ -52,7 +52,7 @@ export const FHIR_SELECT_COLUMNS: Record<string, string> = {
   'fhir_encounters': 'id, patient_id, status, encounter_type, date_of_service, place_of_service, chief_complaint, visit_mode, created_at, updated_at',
   'fhir_document_references': 'id, patient_id, type, status, category, date, description, content_type, created_at, updated_at',
   'fhir_allergies': 'id, patient_id, code, code_display, clinical_status, verification_status, category, criticality, type, onset_date, created_at, updated_at',
-  'fhir_goals': 'id, patient_id, description, status, category, priority, start_date, target_date, created_at, updated_at',
+  'fhir_goals': 'id, patient_id, description_text, lifecycle_status, achievement_status, category, priority, start_date, target, created_at, updated_at',
   'fhir_locations': 'id, name, status, type, address, telecom, created_at, updated_at',
   'fhir_organizations': 'id, name, type, active, telecom, address, created_at, updated_at',
   'fhir_medications': 'id, code, code_display, form, manufacturer_id, manufacturer_display, status, created_at, updated_at',
