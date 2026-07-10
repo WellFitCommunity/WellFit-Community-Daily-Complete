@@ -55,7 +55,7 @@ export const FHIR_SELECT_COLUMNS: Record<string, string> = {
   'fhir_goals': 'id, patient_id, description, status, category, priority, start_date, target_date, created_at, updated_at',
   'fhir_locations': 'id, name, status, type, address, telecom, created_at, updated_at',
   'fhir_organizations': 'id, name, type, active, telecom, address, created_at, updated_at',
-  'fhir_medications': 'id, code, code_display, form, manufacturer, status, created_at, updated_at',
+  'fhir_medications': 'id, code, code_display, form, manufacturer_id, manufacturer_display, status, created_at, updated_at',
   'fhir_connections': 'id, name, ehr_type, base_url, status, sync_mode, sync_frequency, last_sync_at, tenant_id, created_at',
 };
 
