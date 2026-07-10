@@ -14,7 +14,7 @@ interface Props {
 }
 
 export const SystemAdminCategory: React.FC<Props> = ({ userRole, defaultOpen = false }) => {
-  const sections = getSectionsByCategory('admin');
+  const sections = getSectionsByCategory('admin', userRole);
 
   if (sections.length === 0) return null;
 

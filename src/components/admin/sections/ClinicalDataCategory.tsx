@@ -14,7 +14,7 @@ interface Props {
 }
 
 export const ClinicalDataCategory: React.FC<Props> = ({ userRole, defaultOpen = false }) => {
-  const sections = getSectionsByCategory('clinical');
+  const sections = getSectionsByCategory('clinical', userRole);
 
   if (sections.length === 0) return null;
 

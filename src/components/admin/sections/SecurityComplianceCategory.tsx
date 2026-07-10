@@ -14,7 +14,7 @@ interface Props {
 }
 
 export const SecurityComplianceCategory: React.FC<Props> = ({ userRole, defaultOpen = false }) => {
-  const sections = getSectionsByCategory('security');
+  const sections = getSectionsByCategory('security', userRole);
 
   if (sections.length === 0) return null;
 

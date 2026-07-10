@@ -580,10 +580,19 @@ export const getAllSections = (): DashboardSection[] => [
  * Get sections filtered by category. Also drops any section whose modular
  * feature flag is turned off (default ON) — see DashboardSection.featureFlag.
  */
-export const getSectionsByCategory = (category: DashboardSection['category']): DashboardSection[] => {
+export const getSectionsByCategory = (
+  category: DashboardSection['category'],
+  userRole?: string,
+): DashboardSection[] => {
   return getAllSections().filter(
     section =>
       section.category === category &&
-      (!section.featureFlag || isFeatureEnabled(section.featureFlag))
+      (!section.featureFlag || isFeatureEnabled(section.featureFlag)) &&
+      // Enforce the section's declared role restriction. This was previously dead
+      // metadata (DashboardSection.roles was declared but never read), so a
+      // super_admin-only section — e.g. MCP API Key Management — rendered for any
+      // admin. Fail-closed: a role-restricted section is hidden unless the caller's
+      // role is explicitly listed. (2026-07-10 admin-separation hardening.)
+      (!section.roles || (userRole != null && section.roles.includes(userRole)))
   );
 };

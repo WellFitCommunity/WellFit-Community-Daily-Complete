@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const RevenueBillingCategory: React.FC<Props> = ({ userRole, defaultOpen = true }) => {
-  const sections = getSectionsByCategory('revenue');
+  const sections = getSectionsByCategory('revenue', userRole);
 
   if (sections.length === 0) return null;
 

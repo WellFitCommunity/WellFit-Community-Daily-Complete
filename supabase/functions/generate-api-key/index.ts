@@ -60,6 +60,33 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized: admin role required." }), { status: 403, headers });
     }
 
+    // Caller identity + service-role client (used for the product-license check and
+    // the write below). Service role so tenant RLS cannot mask the license lookup.
+    const { data: { user: caller } } = await userClient.auth.getUser();
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    }
+    const svc = createClient(SUPABASE_URL, SB_SECRET_KEY);
+
+    // Product boundary (2026-07-10 admin-separation hardening): API-key generation is
+    // an Atlus (enterprise) capability. A WellFit-only tenant admin must NOT be able to
+    // mint keys even though they hold the generic `admin` role — the UI route is
+    // super_admin-gated, but a direct call to this function would otherwise pass on role
+    // alone. Gate on the caller's tenant licensing 'atlus'.
+    const { data: callerProfile } = await svc
+      .from("profiles").select("tenant_id").eq("user_id", caller.id).single();
+    const callerTenantId = (callerProfile as { tenant_id?: string } | null)?.tenant_id;
+    if (!callerTenantId) {
+      return new Response(JSON.stringify({ error: "Forbidden: no tenant on caller profile" }), { status: 403, headers });
+    }
+    const { data: callerTenant } = await svc
+      .from("tenants").select("licensed_products").eq("id", callerTenantId).single();
+    const licensedProducts = (callerTenant as { licensed_products?: string[] } | null)?.licensed_products ?? [];
+    if (!licensedProducts.includes("atlus")) {
+      logger.error("API key generation denied — tenant lacks Atlus license", { tenantId: callerTenantId });
+      return new Response(JSON.stringify({ error: "Forbidden: API key generation requires an Atlus (enterprise) license." }), { status: 403, headers });
+    }
+
     // Parse body
     let org_name: unknown;
     try {
@@ -83,14 +110,10 @@ serve(async (req) => {
     const apiKeyPlain = `${orgSlug}-${randomHex}`;
     const apiKeyHash = await sha256Hex(apiKeyPlain);
 
-    // Get current user id for created_by
-    const { data: { user } } = await userClient.auth.getUser();
-
-    // Service role client for write
-    const svc = createClient(SUPABASE_URL, SB_SECRET_KEY);
+    // Persist (service role). Reuses the caller + svc client resolved above.
     const { error: insertErr } = await svc
       .from("api_keys")
-      .insert([{ org_name: org_name.trim(), api_key_hash: apiKeyHash, active: true, created_by: user?.id ?? null }]);
+      .insert([{ org_name: org_name.trim(), api_key_hash: apiKeyHash, active: true, created_by: caller.id }]);
 
     if (insertErr) {
       logger.error("Insert api_keys failed", { message: insertErr.message });
