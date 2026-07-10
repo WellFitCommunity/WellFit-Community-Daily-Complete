@@ -1,30 +1,40 @@
 #!/usr/bin/env python3
 """
-FHIR service schema-drift gate.
+FHIR schema-drift gate.
 
-Statically diffs the column names each `src/services/fhir/*Service.ts` references
-(in `.select(...)` lists and `.eq/.order/.contains/...` filters) against a committed
-snapshot of the live `public.fhir_*` schema (scripts/fhir-schema-snapshot.json).
+Statically diffs the column names the FHIR code references (in `.select(...)` lists,
+`.eq/.order/.contains/...` filters, and table-keyed column maps like FHIR_SELECT_COLUMNS)
+against a committed snapshot of the live schema (scripts/fhir-schema-snapshot.json).
 
-This is the FHIR analogue of scripts/check-edge-sdk-hygiene.sh. It exists because the
-clinical adversarial audit (2026-06-01) found multiple services querying columns/tables
-that do not exist in the live DB (AV-1 allergy_intolerances, AV-2 fhir_medications,
-AV-3 fhir_conditions, DiagnosticReportService) — every read silently threw and, in the
-worst case, a swallowed error rendered as "no known allergies." A drifted SELECT compiles
-fine in TypeScript; only the live DB knows it is wrong. This gate makes that class of bug
-mechanical to catch.
+Scope (both are scanned):
+  - src/services/fhir/*Service.ts          (the app-side FHIR service layer)
+  - supabase/functions/mcp-fhir-server/*.ts (the MCP FHIR server — tools.ts, resourceQueries.ts,
+                                             patientSummary.ts, toolHandlers.ts, bundleBuilder.ts)
 
-CI has no live-DB credentials, so the gate compares against the checked-in snapshot.
-Refresh the snapshot after any fhir_* migration with scripts/refresh-fhir-schema-snapshot.sql.
+Why: a drifted SELECT / column-map compiles fine in TypeScript; only the live DB knows it is
+wrong, so it fails at runtime with 42703 and (worst case) a swallowed error renders as empty
+data. The 2026-06-01 clinical audit found this in the fhir services; the 2026-07-10 session
+found the ENTIRE MCP FHIR server was runtime-dead the same way (export_patient_bundle,
+get_patient_summary, and 8 resource types selecting columns that don't exist live) because the
+MCP server was never in this gate's scope AND its column lists live in an object map
+(FHIR_SELECT_COLUMNS), not in `.select()` calls. This gate now covers both.
 
-Pre-existing violations are grandfathered in scripts/fhir-schema-gate-baseline.txt so the
-gate can be adopted without first fixing every legacy service. NEW violations fail the build.
+CI has no live-DB credentials, so the gate compares against the checked-in snapshot. Refresh it
+after ANY migration touching a covered table with scripts/refresh-fhir-schema-snapshot.sql.
+
+Coverage is defined by the snapshot: a referenced table is validated only if it is in the
+snapshot. A `fhir_`-prefixed table that is referenced but ABSENT from the snapshot is reported as
+a missing table (the snapshot covers all fhir_* tables). Non-fhir tables absent from the snapshot
+are skipped (out of coverage) — so the gate under-reports rather than producing false positives.
+
+Pre-existing violations are grandfathered in scripts/fhir-schema-gate-baseline.txt so the gate can
+be adopted without first fixing every legacy reference. NEW violations fail the build.
 
 Exit 0 = clean (or only baselined violations). Exit 1 = new violation. Exit 2 = config error.
 
-Conservative by design: only flags single-token, literal column references. It skips
-embeds (`rel:other(col)`), `select('*')`, computed/template selects, and `.or(...)` — so
-it under-reports rather than producing false positives.
+Conservative by design: only flags single-token, literal column references. It skips embeds
+(`rel:other(col)`), `select('*')`, computed/template selects, `.or(...)`, and dynamic
+`.from(variable)` / `.select(fn(...))` — so it under-reports rather than false-positives.
 """
 
 import json
@@ -33,9 +43,16 @@ import re
 import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SERVICE_DIR = os.path.join(REPO_ROOT, "src", "services", "fhir")
 SNAPSHOT = os.path.join(REPO_ROOT, "scripts", "fhir-schema-snapshot.json")
 BASELINE = os.path.join(REPO_ROOT, "scripts", "fhir-schema-gate-baseline.txt")
+
+# (directory, filename predicate) pairs to scan. __tests__ dirs are excluded.
+SCAN_TARGETS = [
+    (os.path.join(REPO_ROOT, "src", "services", "fhir"),
+     lambda f: f.endswith("Service.ts")),
+    (os.path.join(REPO_ROOT, "supabase", "functions", "mcp-fhir-server"),
+     lambda f: f.endswith(".ts") and not f.endswith(".test.ts")),
+]
 
 MISSING_TABLE = "*MISSING_TABLE*"
 
@@ -45,7 +62,8 @@ FILTER_METHODS = (
     "is", "in", "contains", "containedBy", "overlaps", "order",
 )
 
-RE_FROM = re.compile(r"\.from\(\s*['\"]([a-z_][a-z0-9_]*)['\"]")
+RE_FROM_LITERAL = re.compile(r"\.from\(\s*['\"]([a-z_][a-z0-9_]*)['\"]")
+RE_FROM_ANY = re.compile(r"\.from\(")
 RE_SELECT_LITERAL = re.compile(r"\.select\(\s*(['\"])(.*?)\1", re.DOTALL)
 RE_SELECT_CONST = re.compile(r"\.select\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)")
 RE_FILTER = re.compile(
@@ -53,6 +71,12 @@ RE_FILTER = re.compile(
 )
 RE_CONST = re.compile(
     r"\bconst\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(['\"])(.*?)\2", re.DOTALL
+)
+# Table-keyed column-map entry: 'table_name': 'col1, col2, ...'  (single-line string value).
+# Self-scopes via the snapshot: only entries whose quoted key is a known table are validated,
+# so ordinary config objects and the FHIR_TABLES resource map ('Patient': 'profiles') are ignored.
+RE_MAP_ENTRY = re.compile(
+    r"(['\"])([a-z_][a-z0-9_]*)\1\s*:\s*(['\"])([^'\"\n]+)\3"
 )
 
 # A literal column token is a bare snake_case identifier. Anything with embed/alias/star
@@ -96,31 +120,63 @@ def nearest_table(froms, pos):
 
 
 def scan_file(path, consts):
-    """Yield (line_no, table, column) references found in one service file."""
+    """Yield (line_no, table, column) references found in one file.
+
+    Two reference kinds:
+      1. `.from('t')` + a following literal/const `.select(...)` or `.eq('col')` filter
+         (table resolved from the nearest preceding `.from`).
+      2. Table-keyed column-map entries `'t': 'col, col'` (table = the map key itself).
+    """
     with open(path) as f:
         src = f.read()
     consts_local = {**consts, **resolve_consts(src)}
-    froms = sorted((m.start(), m.group(1)) for m in RE_FROM.finditer(src))
+    # Build the .from() table timeline. A dynamic `.from(variable)` is a BARRIER: it
+    # resolves to None so later `.select()`/`.eq()` refs in that statement are not
+    # mis-attributed to an earlier literal table from a different statement.
+    literal_at = {m.start(): m.group(1) for m in RE_FROM_LITERAL.finditer(src)}
+    froms = sorted((m.start(), literal_at.get(m.start())) for m in RE_FROM_ANY.finditer(src))
 
     def line_of(pos):
         return src.count("\n", 0, pos) + 1
 
-    refs = []
+    # Kind 1 — from/select/filter refs, table = nearest .from()
     for m in RE_SELECT_LITERAL.finditer(src):
-        for col in columns_from_select_string(m.group(2)):
-            refs.append((m.start(), col))
+        table = nearest_table(froms, m.start())
+        if table:
+            for col in columns_from_select_string(m.group(2)):
+                yield (line_of(m.start()), table, col)
     for m in RE_SELECT_CONST.finditer(src):
         val = consts_local.get(m.group(1))
-        if val is not None:
+        if val is None:
+            continue
+        table = nearest_table(froms, m.start())
+        if table:
             for col in columns_from_select_string(val):
-                refs.append((m.start(), col))
+                yield (line_of(m.start()), table, col)
     for m in RE_FILTER.finditer(src):
-        refs.append((m.start(), m.group(2)))
+        table = nearest_table(froms, m.start())
+        if table:
+            yield (line_of(m.start()), table, m.group(2))
 
-    for pos, col in refs:
-        table = nearest_table(froms, pos)
-        if table and table.startswith("fhir_"):
-            yield (line_of(pos), table, col)
+    # Kind 2 — table-keyed column maps (e.g. FHIR_SELECT_COLUMNS). table = the map key.
+    for m in RE_MAP_ENTRY.finditer(src):
+        key, val = m.group(2), m.group(4)
+        for col in columns_from_select_string(val):
+            yield (line_of(m.start()), key, col)
+
+
+def gather_files():
+    files = []
+    for directory, pred in SCAN_TARGETS:
+        if not os.path.isdir(directory):
+            continue
+        for name in sorted(os.listdir(directory)):
+            if name == "__tests__":
+                continue
+            full = os.path.join(directory, name)
+            if os.path.isfile(full) and pred(name):
+                files.append(full)
+    return files
 
 
 def load_baseline():
@@ -144,12 +200,7 @@ def main():
         print("❌ Snapshot has no 'tables' — regenerate it.", file=sys.stderr)
         return 2
     baseline = load_baseline()
-
-    files = sorted(
-        os.path.join(SERVICE_DIR, f)
-        for f in os.listdir(SERVICE_DIR)
-        if f.endswith("Service.ts")
-    )
+    files = gather_files()
 
     # Collect ALL current violations (deduped by key), independent of the baseline.
     all_by_key = {}  # key -> (rel, line_no, kind)
@@ -157,6 +208,10 @@ def main():
         rel = os.path.relpath(path, REPO_ROOT)
         for line_no, table, col in scan_file(path, {}):
             if table not in snapshot:
+                # A fhir_ table missing from the (fhir-complete) snapshot is genuine drift;
+                # any other uncovered table is simply out of scope — skip it.
+                if not table.startswith("fhir_"):
+                    continue
                 key = f"{rel}::{table}::{MISSING_TABLE}"
                 kind = f"table '{table}' does not exist in the live DB"
             elif col not in snapshot[table]:
@@ -190,19 +245,20 @@ def main():
     baselined_hits = sum(1 for key in all_by_key if key in baseline)
 
     if new_violations:
-        print("❌ FHIR service schema drift (CLAUDE.md #18 — verify vs live DB):\n")
+        print("❌ FHIR schema drift (CLAUDE.md #18 — verify vs live DB):\n")
         for rel, line_no, kind, key in new_violations:
             print(f"   {rel}:{line_no}  {kind}")
         print(
-            "\nFix the SELECT/filter to match the live column set, or — if the snapshot is\n"
-            "stale after a migration — refresh it with scripts/refresh-fhir-schema-snapshot.sql.\n"
-            "Only add to scripts/fhir-schema-gate-baseline.txt for a KNOWN pre-existing gap\n"
+            "\nFix the SELECT/filter/column-map to match the live column set, or — if the\n"
+            "snapshot is stale after a migration — refresh it with\n"
+            "scripts/refresh-fhir-schema-snapshot.sql. Only add to\n"
+            "scripts/fhir-schema-gate-baseline.txt for a KNOWN pre-existing gap\n"
             "(record it in the clinical audit tracker)."
         )
         return 1
 
     print(
-        f"✅ FHIR service schema gate: {len(files)} services clean "
+        f"✅ FHIR schema gate: {len(files)} files clean "
         f"({baselined_hits} baselined pre-existing references skipped)."
     )
     return 0
