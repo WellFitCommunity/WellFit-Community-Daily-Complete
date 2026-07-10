@@ -55,14 +55,14 @@ export async function getPatientSummary(
   if (sections.includes('conditions')) {
     const { data } = await sb
       .from('fhir_conditions')
-      .select('code, code_display, onset_date, clinical_status')
+      .select('code, code_display, onset_datetime, clinical_status')
       .eq('patient_id', patientId)
       .eq('clinical_status', 'active')
       .limit(20);
     summary.sections.conditions = (data || []).map(c => ({
       code: c.code,
       display: c.code_display,
-      onset: c.onset_date,
+      onset: c.onset_datetime,
       status: c.clinical_status
     }));
   }
@@ -71,13 +71,13 @@ export async function getPatientSummary(
   if (sections.includes('medications')) {
     const { data } = await sb
       .from('fhir_medication_requests')
-      .select('medication_name, dosage_instructions, status, requester_display')
+      .select('medication_display, medication_text, dosage_text, status, requester_display')
       .eq('patient_id', patientId)
       .eq('status', 'active')
       .limit(30);
     summary.sections.medications = (data || []).map(m => ({
-      name: m.medication_name,
-      dosage: m.dosage_instructions,
+      name: m.medication_display || m.medication_text,
+      dosage: m.dosage_text,
       status: m.status,
       prescriber: m.requester_display
     }));
@@ -116,16 +116,16 @@ export async function getPatientSummary(
   if (sections.includes('vitals')) {
     const { data } = await sb
       .from('fhir_observations')
-      .select('code_display, code, value_quantity, effective_date')
+      .select('code_display, code, value_quantity_value, value_quantity_unit, effective_datetime')
       .eq('patient_id', patientId)
       .eq('category', 'vital-signs')
-      .order('effective_date', { ascending: false })
+      .order('effective_datetime', { ascending: false })
       .limit(20);
     summary.sections.vitals = (data || []).map(v => ({
       type: v.code_display || v.code,
-      value: v.value_quantity?.value,
-      unit: v.value_quantity?.unit,
-      date: v.effective_date
+      value: v.value_quantity_value,
+      unit: v.value_quantity_unit,
+      date: v.effective_datetime
     }));
   }
 
@@ -163,7 +163,7 @@ export async function getPatientSummary(
   if (sections.includes('careplans')) {
     const { data } = await sb
       .from('fhir_care_plans')
-      .select('title, category, status, period')
+      .select('title, category, status, period_start, period_end')
       .eq('patient_id', patientId)
       .eq('status', 'active')
       .limit(5);
@@ -171,7 +171,7 @@ export async function getPatientSummary(
       title: cp.title,
       category: cp.category,
       status: cp.status,
-      period: cp.period
+      period: { start: cp.period_start, end: cp.period_end }
     }));
   }
 
