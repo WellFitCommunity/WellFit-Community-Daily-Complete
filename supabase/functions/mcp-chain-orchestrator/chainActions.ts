@@ -95,15 +95,16 @@ export async function approveStep(
   // `chain_steps` reference was a non-existent table, so this lookup errored
   // silently and the approval-role gate was skipped entirely (drift fix,
   // verified against information_schema 2026-07-10).
+  const { data: runRow } = await sb
+    .from("chain_runs")
+    .select("chain_definition_id")
+    .eq("id", chainRunId)
+    .single();
+  const chainDefinitionId = (runRow as { chain_definition_id?: string } | null)?.chain_definition_id;
   const { data: stepDefData } = await sb
     .from("chain_step_definitions")
     .select("approval_role")
-    .eq("chain_definition_id", (await sb
-      .from("chain_runs")
-      .select("chain_definition_id")
-      .eq("id", chainRunId)
-      .single()
-    ).data?.chain_definition_id)
+    .eq("chain_definition_id", chainDefinitionId)
     .eq("step_key", step.step_key)
     .single();
 
