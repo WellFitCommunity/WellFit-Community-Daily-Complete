@@ -212,13 +212,24 @@ export const WHITELISTED_QUERIES: Record<string, WhitelistedQuery> = {
   "get_dashboard_metrics": {
     name: "get_dashboard_metrics",
     description: "Get key dashboard metrics",
+    // NOTE: mapped to the REAL live schema (verified 2026-07-10). The original
+    // referenced tables/columns that do not exist here (patients, care_tasks,
+    // sdoh_flags, readmission_risk_30, encounter_date) — aspirational schema drift
+    // that made this query fail. Real sources:
+    //   active_members     -> profiles.enrollment_type = 'app'
+    //   high_risk_patients -> profiles.risk_score >= 0.7
+    //   todays_encounters  -> encounters.created_at::date = CURRENT_DATE (no encounter_date col)
+    //   pending_tasks      -> open care_coordination_plans (no care_tasks table; "pending"
+    //                         reinterpreted as not-yet-completed plans) [SEMANTIC — confirm]
+    //   active_sdoh_flags  -> passive_sdoh_detections where status <> 'resolved'
+    //                         (no sdoh_flags table) [SEMANTIC — confirm]
     query: `
       SELECT
-        (SELECT COUNT(*) FROM patients WHERE tenant_id = $1 AND enrollment_type = 'app') as active_members,
-        (SELECT COUNT(*) FROM patients WHERE tenant_id = $1 AND readmission_risk_30 >= 0.7) as high_risk_patients,
-        (SELECT COUNT(*) FROM encounters WHERE tenant_id = $1 AND encounter_date::date = CURRENT_DATE) as todays_encounters,
-        (SELECT COUNT(*) FROM care_tasks WHERE tenant_id = $1 AND status = 'pending') as pending_tasks,
-        (SELECT COUNT(*) FROM sdoh_flags WHERE tenant_id = $1 AND resolved = false) as active_sdoh_flags
+        (SELECT COUNT(*) FROM profiles WHERE tenant_id = $1 AND enrollment_type = 'app') as active_members,
+        (SELECT COUNT(*) FROM profiles WHERE tenant_id = $1 AND risk_score >= 0.7) as high_risk_patients,
+        (SELECT COUNT(*) FROM encounters WHERE tenant_id = $1 AND created_at::date = CURRENT_DATE) as todays_encounters,
+        (SELECT COUNT(*) FROM care_coordination_plans WHERE tenant_id = $1 AND status NOT IN ('completed', 'closed', 'cancelled')) as pending_tasks,
+        (SELECT COUNT(*) FROM passive_sdoh_detections WHERE tenant_id = $1 AND status IS DISTINCT FROM 'resolved') as active_sdoh_flags
     `,
     parameters: ["tenant_id"],
     returnsRows: true

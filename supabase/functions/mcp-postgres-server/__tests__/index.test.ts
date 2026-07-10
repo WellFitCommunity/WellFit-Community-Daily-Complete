@@ -215,12 +215,14 @@ Deno.test("MCP Postgres Server", async (t) => {
     assertStringIncludes(q.query, "COUNT(*)");
   });
 
-  await t.step("get_dashboard_metrics uses subqueries across multiple tables", () => {
+  await t.step("get_dashboard_metrics uses subqueries across real tables", () => {
     const q = WHITELISTED_QUERIES["get_dashboard_metrics"];
-    assertStringIncludes(q.query, "patients");
+    // Real live-schema tables (verified 2026-07-10 — the old patients/care_tasks/
+    // sdoh_flags names were aspirational schema drift that made the query fail).
+    assertStringIncludes(q.query, "profiles");
     assertStringIncludes(q.query, "encounters");
-    assertStringIncludes(q.query, "care_tasks");
-    assertStringIncludes(q.query, "sdoh_flags");
+    assertStringIncludes(q.query, "care_coordination_plans");
+    assertStringIncludes(q.query, "passive_sdoh_detections");
   });
 
   await t.step("get_bed_availability queries beds table", () => {

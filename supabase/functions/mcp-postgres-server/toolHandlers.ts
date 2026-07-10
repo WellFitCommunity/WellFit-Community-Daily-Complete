@@ -57,7 +57,11 @@ export function createToolHandlers(sb: SupabaseClient, logger: MCPLogger) {
         const { data, error } = await withTimeout(
           sb.rpc('execute_safe_query', {
             query_text: queryDef.query,
-            params: JSON.stringify([resolvedTenantId, ...(extraParams ? Object.values(extraParams as Record<string, unknown>) : [])]),
+            // Pass a real JSON array — execute_safe_query's `params` is jsonb and does
+            // jsonb_array_elements_text(params). JSON.stringify(...) here double-encoded
+            // it into a jsonb SCALAR string, which threw "cannot extract elements from a
+            // scalar" and broke every whitelisted query. (Fixed 2026-07-10.)
+            params: [resolvedTenantId, ...(extraParams ? Object.values(extraParams as Record<string, unknown>) : [])],
             p_caller_tenant_id: resolvedTenantId
           }),
           MCP_TIMEOUT_CONFIG.postgres.query,
