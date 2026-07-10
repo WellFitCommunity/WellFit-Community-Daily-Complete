@@ -7,14 +7,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EncounterService } from '../EncounterService';
 
-// Mock supabase with proper chain support
+// Mock supabase with proper chain support.
+// Operational `encounters` shape (matches the live column set the service reads).
 const encData = [
   {
     id: 'enc-1',
     patient_id: 'patient-1',
-    status: 'finished',
-    class_code: 'AMB',
-    period_start: '2026-01-15T09:00:00Z',
+    status: 'completed',
+    encounter_type: 'follow_up',
+    date_of_service: '2026-01-15T09:00:00Z',
   },
 ];
 
@@ -43,8 +44,8 @@ vi.mock('../../../lib/supabaseClient', () => ({
             data: {
               id: 'enc-new',
               patient_id: 'patient-1',
-              status: 'planned',
-              class_code: 'AMB',
+              status: 'draft',
+              encounter_type: 'follow_up',
             },
             error: null,
           })),
@@ -54,7 +55,7 @@ vi.mock('../../../lib/supabaseClient', () => ({
         eq: vi.fn(() => ({
           select: vi.fn(() => ({
             single: vi.fn(() => ({
-              data: { id: 'enc-1', status: 'finished' },
+              data: { id: 'enc-1', status: 'completed' },
               error: null,
             })),
           })),
@@ -70,29 +71,34 @@ describe('EncounterService', () => {
   });
 
   describe('getAll', () => {
-    it('should return all encounters for a patient', async () => {
+    it('should query the encounters table for the operational columns (not FHIR-shaped)', async () => {
       const result = await EncounterService.getAll('patient-1');
 
-      expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
+      // Regression guard for the 2026-07-10 drift fix: real columns, never the
+      // dead FHIR-shaped names that 42703'd.
+      expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('encounter_type'));
+      expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('date_of_service'));
+      expect(mockSelect).not.toHaveBeenCalledWith(expect.stringContaining('class_code'));
+      expect(mockSelect).not.toHaveBeenCalledWith(expect.stringContaining('period_start'));
     });
 
     it('should accept status filter option', async () => {
-      const result = await EncounterService.getAll('patient-1', { status: 'finished' });
+      const result = await EncounterService.getAll('patient-1', { status: 'completed' });
 
       expect(result).toBeDefined();
     });
 
-    it('should accept class_code filter option', async () => {
-      const result = await EncounterService.getAll('patient-1', { class_code: 'AMB' });
+    it('should accept encounter_type filter option', async () => {
+      const result = await EncounterService.getAll('patient-1', { encounter_type: 'follow_up' });
 
       expect(result).toBeDefined();
     });
 
     it('should accept both filter options', async () => {
       const result = await EncounterService.getAll('patient-1', {
-        status: 'finished',
-        class_code: 'IMP',
+        status: 'completed',
+        encounter_type: 'follow_up',
       });
 
       expect(result).toBeDefined();
@@ -109,26 +115,21 @@ describe('EncounterService', () => {
 
   });
 
-  describe('getByClass', () => {
-    it('should return encounters by class code', async () => {
-      const result = await EncounterService.getByClass('patient-1', 'IMP');
+  describe('getByType', () => {
+    it('should return encounters by type', async () => {
+      const result = await EncounterService.getByType('patient-1', 'follow_up');
 
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
 
-    it('should filter inpatient encounters', async () => {
-      const result = await EncounterService.getByClass('patient-1', 'IMP');
+    it('should filter follow-up encounters', async () => {
+      const result = await EncounterService.getByType('patient-1', 'follow_up');
       expect(result).toBeDefined();
     });
 
-    it('should filter outpatient encounters', async () => {
-      const result = await EncounterService.getByClass('patient-1', 'AMB');
-      expect(result).toBeDefined();
-    });
-
-    it('should filter emergency encounters', async () => {
-      const result = await EncounterService.getByClass('patient-1', 'EMER');
+    it('should filter new-patient encounters', async () => {
+      const result = await EncounterService.getByType('patient-1', 'new_patient');
       expect(result).toBeDefined();
     });
   });
@@ -161,10 +162,10 @@ describe('EncounterService', () => {
     it('should create a new encounter', async () => {
       const newEncounter = {
         patient_id: 'patient-1',
-        status: 'planned',
-        class_code: 'AMB',
-        period_start: new Date().toISOString(),
-        service_type: 'primary-care',
+        status: 'draft',
+        encounter_type: 'follow_up',
+        date_of_service: new Date().toISOString(),
+        chief_complaint: 'Routine visit',
       };
 
       const result = await EncounterService.create(newEncounter);
@@ -173,29 +174,29 @@ describe('EncounterService', () => {
       expect(result.id).toBeDefined();
     });
 
-    it('should create inpatient encounter', async () => {
-      const inpatient = {
+    it('should create an in-progress encounter', async () => {
+      const inProgress = {
         patient_id: 'patient-1',
-        status: 'in-progress',
-        class_code: 'IMP',
-        period_start: new Date().toISOString(),
-        hospitalization: { admit_source: 'emergency' },
+        status: 'in_progress',
+        encounter_type: 'new_patient',
+        date_of_service: new Date().toISOString(),
+        place_of_service: '11',
       };
 
-      const result = await EncounterService.create(inpatient);
+      const result = await EncounterService.create(inProgress);
       expect(result).toBeDefined();
     });
 
-    it('should create emergency encounter', async () => {
-      const emergency = {
+    it('should create an arrived encounter', async () => {
+      const arrived = {
         patient_id: 'patient-1',
         status: 'arrived',
-        class_code: 'EMER',
-        period_start: new Date().toISOString(),
-        priority: 'stat',
+        encounter_type: 'follow_up',
+        date_of_service: new Date().toISOString(),
+        visit_mode: 'in_person',
       };
 
-      const result = await EncounterService.create(emergency);
+      const result = await EncounterService.create(arrived);
       expect(result).toBeDefined();
     });
   });
@@ -233,13 +234,13 @@ describe('EncounterService', () => {
       expect(result).toBeDefined();
     });
 
-    it('should set status to finished', async () => {
+    it('should set status to completed', async () => {
       const result = await EncounterService.complete('enc-1');
       // The mock returns success
       expect(result).toBeDefined();
     });
 
-    it('should set period_end timestamp', async () => {
+    it('should stamp visit_ended_at timestamp', async () => {
       const result = await EncounterService.complete('enc-1');
       expect(result).toBeDefined();
     });

@@ -101,14 +101,17 @@ function extractLastEncounter(
   if (!encounters.length) return null;
 
   const latest = encounters[0];
-  const timestamp = latest.period_start ? String(latest.period_start) : null;
+  // EncounterService now returns the operational `encounters` shape (2026-07-10
+  // drift fix): date_of_service, encounter_type, chief_complaint, provider_id.
+  const timestamp = latest.date_of_service ? String(latest.date_of_service) : null;
   if (!timestamp) return null;
 
   return {
     timestamp,
-    encounter_type: String(latest.class_display ?? latest.type_display ?? 'Visit'),
-    provider_name: latest.participant_display ? String(latest.participant_display) : null,
-    diagnosis_summary: latest.reason_code_display ? String(latest.reason_code_display) : null,
+    encounter_type: String(latest.encounter_type ?? 'Visit'),
+    // encounters stores provider_id (uuid), not a provider name — resolved elsewhere.
+    provider_name: null,
+    diagnosis_summary: latest.chief_complaint ? String(latest.chief_complaint) : null,
   };
 }
 

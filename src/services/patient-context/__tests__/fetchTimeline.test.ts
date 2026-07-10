@@ -219,15 +219,15 @@ describe('fetchTimeline', () => {
     mockGetAllEncounters.mockResolvedValue([
       {
         id: 'enc-1',
-        period_start: '2026-02-07T14:00:00Z',
-        class_display: 'Outpatient',
-        participant_display: 'Dr. Kim',
-        reason_code_display: 'Annual physical',
+        date_of_service: '2026-02-07T14:00:00Z',
+        encounter_type: 'follow_up',
+        chief_complaint: 'Annual physical',
+        provider_id: '11111111-1111-1111-1111-111111111111',
       },
       {
         id: 'enc-2',
-        period_start: '2026-01-15T09:00:00Z',
-        class_display: 'Emergency',
+        date_of_service: '2026-01-15T09:00:00Z',
+        encounter_type: 'new_patient',
       },
     ]);
 
@@ -237,8 +237,8 @@ describe('fetchTimeline', () => {
     expect(result.success).toBe(true);
     expect(data.last_encounter).not.toBeNull();
     expect(data.last_encounter?.timestamp).toBe('2026-02-07T14:00:00Z');
-    expect(data.last_encounter?.encounter_type).toBe('Outpatient');
-    expect(data.last_encounter?.provider_name).toBe('Dr. Kim');
+    expect(data.last_encounter?.encounter_type).toBe('follow_up');
+    expect(data.last_encounter?.provider_name).toBeNull();
     expect(data.last_encounter?.diagnosis_summary).toBe('Annual physical');
   });
 
