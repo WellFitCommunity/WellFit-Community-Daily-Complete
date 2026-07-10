@@ -275,6 +275,20 @@ async function handleGetObservations(
   );
 }
 
+/** Row shape for fhir_medication_requests — fields read by the medication list.
+ *  Column names verified against the live FHIR R4 schema 2026-07-10. */
+interface FhirMedicationRow {
+  id: string;
+  medication_display: string | null;
+  dosage_text: string | null;
+  dosage_timing_frequency: number | null;
+  dosage_route_display: string | null;
+  status: string | null;
+  requester_display: string | null;
+  authored_on: string | null;
+  validity_period_end: string | null;
+}
+
 async function handleGetMedicationList(
   sb: SupabaseClient,
   toolArgs: Record<string, unknown>
@@ -300,16 +314,16 @@ async function handleGetMedicationList(
 
   return {
     patient_id: patientId,
-    medications: (data || []).map(m => ({
+    medications: ((data ?? []) as unknown as FhirMedicationRow[]).map((m) => ({
       id: m.id,
-      name: m.medication_name,
-      dosage: m.dosage_instructions,
-      frequency: m.frequency,
-      route: m.route,
+      name: m.medication_display,
+      dosage: m.dosage_text,
+      frequency: m.dosage_timing_frequency,
+      route: m.dosage_route_display,
       status: m.status,
       prescriber: m.requester_display,
       start_date: m.authored_on,
-      end_date: m.end_date
+      end_date: m.validity_period_end
     })),
     total: data?.length || 0
   };
