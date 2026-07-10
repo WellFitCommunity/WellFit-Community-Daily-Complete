@@ -133,13 +133,13 @@ export async function getPatientSummary(
   if (sections.includes('procedures')) {
     const { data } = await sb
       .from('fhir_procedures')
-      .select('code_display, performed_date, status')
+      .select('code_display, performed_datetime, status')
       .eq('patient_id', patientId)
-      .order('performed_date', { ascending: false })
+      .order('performed_datetime', { ascending: false })
       .limit(10);
     summary.sections.procedures = (data || []).map(p => ({
       name: p.code_display,
-      date: p.performed_date,
+      date: p.performed_datetime,
       status: p.status
     }));
   }
