@@ -6,10 +6,13 @@ Statically diffs the column names the FHIR code references (in `.select(...)` li
 `.eq/.order/.contains/...` filters, and table-keyed column maps like FHIR_SELECT_COLUMNS)
 against a committed snapshot of the live schema (scripts/fhir-schema-snapshot.json).
 
-Scope (both are scanned):
-  - src/services/fhir/*Service.ts          (the app-side FHIR service layer)
-  - supabase/functions/mcp-fhir-server/*.ts (the MCP FHIR server — tools.ts, resourceQueries.ts,
-                                             patientSummary.ts, toolHandlers.ts, bundleBuilder.ts)
+Scope (all scanned):
+  - src/services/fhir/*Service.ts     (the app-side FHIR service layer)
+  - supabase/functions/mcp-*/**/*.ts  (EVERY MCP server — fhir, chain-orchestrator,
+                                       medical-coding, drg-grouper, prior-auth, clearinghouse,
+                                       cms-coverage, cultural-competency, etc.)
+Despite the historical filename, this gate is NOT fhir-only — it validates column
+references for any table in the snapshot across all of the above.
 
 Why: a drifted SELECT / column-map compiles fine in TypeScript; only the live DB knows it is
 wrong, so it fails at runtime with 42703 and (worst case) a swallowed error renders as empty
@@ -37,6 +40,7 @@ Conservative by design: only flags single-token, literal column references. It s
 `.from(variable)` / `.select(fn(...))` — so it under-reports rather than false-positives.
 """
 
+import glob
 import json
 import os
 import re
@@ -46,13 +50,8 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SNAPSHOT = os.path.join(REPO_ROOT, "scripts", "fhir-schema-snapshot.json")
 BASELINE = os.path.join(REPO_ROOT, "scripts", "fhir-schema-gate-baseline.txt")
 
-# (directory, filename predicate) pairs to scan. __tests__ dirs are excluded.
-SCAN_TARGETS = [
-    (os.path.join(REPO_ROOT, "src", "services", "fhir"),
-     lambda f: f.endswith("Service.ts")),
-    (os.path.join(REPO_ROOT, "supabase", "functions", "mcp-fhir-server"),
-     lambda f: f.endswith(".ts") and not f.endswith(".test.ts")),
-]
+# Scan scope (see gather_files): src/services/fhir/*Service.ts + EVERY MCP server
+# under supabase/functions/mcp-* (recursively). __tests__ dirs and *.test.ts excluded.
 
 MISSING_TABLE = "*MISSING_TABLE*"
 
@@ -167,15 +166,22 @@ def scan_file(path, consts):
 
 def gather_files():
     files = []
-    for directory, pred in SCAN_TARGETS:
-        if not os.path.isdir(directory):
+    # 1. App-side FHIR service layer.
+    svc_dir = os.path.join(REPO_ROOT, "src", "services", "fhir")
+    if os.path.isdir(svc_dir):
+        for name in sorted(os.listdir(svc_dir)):
+            if name.endswith("Service.ts"):
+                files.append(os.path.join(svc_dir, name))
+    # 2. Every MCP server (supabase/functions/mcp-*), recursively.
+    for mcp_dir in sorted(glob.glob(os.path.join(REPO_ROOT, "supabase", "functions", "mcp-*"))):
+        if not os.path.isdir(mcp_dir):
             continue
-        for name in sorted(os.listdir(directory)):
-            if name == "__tests__":
+        for root, _dirs, names in os.walk(mcp_dir):
+            if "__tests__" in root.split(os.sep):
                 continue
-            full = os.path.join(directory, name)
-            if os.path.isfile(full) and pred(name):
-                files.append(full)
+            for name in sorted(names):
+                if name.endswith(".ts") and not name.endswith(".test.ts"):
+                    files.append(os.path.join(root, name))
     return files
 
 

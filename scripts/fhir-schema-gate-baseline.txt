@@ -3,3 +3,24 @@
 # Regenerate with: python3 scripts/check-fhir-service-schema.py --write-baseline
 # Each entry is a real gap to close (see the clinical adversarial audit tracker);
 # baselining only stops NEW drift from landing on top of the known set.
+#
+# ---------------------------------------------------------------------------
+# CAREGIVER CONTACTS (patient-context fetchContactsRows) — HELD pending decision.
+# The contacts fetcher queries caregiver_view_grants for contact columns it does
+# NOT have. caregiver_view_grants is the ACCESS-GRANT edge (caregiver_user_id,
+# senior_user_id, expires_at, last_used_at) — the PIN / read-only monitoring
+# mechanism — not a contact record. Caregiver contact fields live on profiles
+# (caregiver_first_name/last_name/phone/email/caregiver_relationship). Correct
+# fix is a structural join grant->profiles (by senior_user_id, active =
+# expires_at IS NULL OR > now()), which is a caregiver-model decision (Maria).
+# Tracked in docs/trackers/mcp-schema-drift-triage-2026-07-10.md. Remove these
+# 8 entries when the caregiver-contacts fix lands.
+# ---------------------------------------------------------------------------
+supabase/functions/mcp-patient-context-server/fetchers.ts::caregiver_view_grants::caregiver_email
+supabase/functions/mcp-patient-context-server/fetchers.ts::caregiver_view_grants::caregiver_first_name
+supabase/functions/mcp-patient-context-server/fetchers.ts::caregiver_view_grants::caregiver_last_name
+supabase/functions/mcp-patient-context-server/fetchers.ts::caregiver_view_grants::caregiver_phone
+supabase/functions/mcp-patient-context-server/fetchers.ts::caregiver_view_grants::is_active
+supabase/functions/mcp-patient-context-server/fetchers.ts::caregiver_view_grants::is_primary
+supabase/functions/mcp-patient-context-server/fetchers.ts::caregiver_view_grants::patient_id
+supabase/functions/mcp-patient-context-server/fetchers.ts::caregiver_view_grants::relationship
