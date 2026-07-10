@@ -31,7 +31,7 @@ interface EncounterRow {
   patient_id: string;
   date_of_service: string;
   status: string;
-  notes: string | null;
+  clinical_notes: string | null;
 }
 
 interface DiagnosisRow {
@@ -49,7 +49,7 @@ interface ProcedureRow {
 
 interface ClinicalNoteRow {
   id: string;
-  type: string;
+  note_type: string;
   content: string;
   created_at: string;
 }
@@ -180,7 +180,7 @@ export function createDRGGrouperHandlers(
     // Encounter header
     const { data: encounterData, error: encErr } = await withTimeout(
       sb.from('encounters')
-        .select('id, patient_id, date_of_service, status, notes')
+        .select('id, patient_id, date_of_service, status, clinical_notes')
         .eq('id', encounterId)
         .single(),
       timeoutMs,
@@ -222,7 +222,7 @@ export function createDRGGrouperHandlers(
     // Clinical notes (for AI extraction)
     const { data: noteData } = await withTimeout(
       sb.from('clinical_notes')
-        .select('id, type, content, created_at')
+        .select('id, note_type, content, created_at')
         .eq('encounter_id', encounterId)
         .order('created_at', { ascending: false })
         .limit(10),
@@ -587,7 +587,7 @@ function buildClinicalText(
   notes: ClinicalNoteRow[]
 ): string {
   const parts: string[] = [];
-  if (encounter.notes) parts.push(`ENCOUNTER NOTES:\n${encounter.notes}`);
+  if (encounter.clinical_notes) parts.push(`ENCOUNTER NOTES:\n${encounter.clinical_notes}`);
   if (diagnoses.length > 0) {
     const diagText = diagnoses
       .map(d => `  ${d.sequence}. ${d.code} — ${d.description || 'No description'}`)
@@ -595,7 +595,7 @@ function buildClinicalText(
     parts.push(`ASSIGNED DIAGNOSES:\n${diagText}`);
   }
   for (const noteType of ['assessment', 'plan', 'hpi', 'subjective', 'objective', 'general', 'ros']) {
-    const latest = notes.find(n => n.type === noteType);
+    const latest = notes.find(n => n.note_type === noteType);
     if (latest) {
       const content = latest.content.length > 2000
         ? latest.content.substring(0, 2000) + '... [truncated]'

@@ -297,17 +297,37 @@ export function createChargeAggregationHandlers(
     // --- 4. Claim Lines (already-filed charges — CPT/HCPCS) ---
     // First get claim IDs for this encounter/patient, then filter claim_lines
     {
-      // Look up claims for this encounter (or patient + date as fallback)
+      // Look up claims for this encounter. `claims` carries no patient_id/service_date
+      // column — a claim links to a patient only through its encounter — so the
+      // no-encounterId fallback resolves patient+date -> encounters -> claims
+      // (drift fix 2026-07-10; the old patient_id/service_date filter 42703'd).
       let claimIds: string[] = [];
-      const { data: claimRows } = await withTimeout(
-        encounterId
-          ? sb.from('claims').select('id').eq('encounter_id', encounterId)
-          : sb.from('claims').select('id').eq('patient_id', patientId).eq('service_date', serviceDate),
-        timeoutMs,
-        'Claims lookup for encounter'
-      );
-      if (claimRows) {
-        claimIds = (claimRows as Array<{ id: string }>).map(r => r.id);
+      if (encounterId) {
+        const { data: claimRows } = await withTimeout(
+          sb.from('claims').select('id').eq('encounter_id', encounterId),
+          timeoutMs,
+          'Claims lookup for encounter'
+        );
+        if (claimRows) {
+          claimIds = (claimRows as Array<{ id: string }>).map(r => r.id);
+        }
+      } else {
+        const { data: encRows } = await withTimeout(
+          sb.from('encounters').select('id').eq('patient_id', patientId).eq('date_of_service', serviceDate),
+          timeoutMs,
+          'Encounter lookup for claims'
+        );
+        const encIds = ((encRows as Array<{ id: string }> | null) ?? []).map(r => r.id);
+        if (encIds.length > 0) {
+          const { data: claimRows } = await withTimeout(
+            sb.from('claims').select('id').in('encounter_id', encIds),
+            timeoutMs,
+            'Claims lookup for encounters'
+          );
+          if (claimRows) {
+            claimIds = (claimRows as Array<{ id: string }>).map(r => r.id);
+          }
+        }
       }
 
       let clRows: unknown[] | null = null;
