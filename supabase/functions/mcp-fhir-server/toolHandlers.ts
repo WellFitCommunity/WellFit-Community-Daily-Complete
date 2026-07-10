@@ -5,8 +5,12 @@
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { EdgeFunctionLogger } from "../_shared/auditLogger.ts";
-import { handlePing, type MCPInitResult } from "../_shared/mcpServerBase.ts";
-import type { ToolResult, CareTeamParticipant, PractitionerRecord } from "./types.ts";
+import { handlePing, type MCPInitResult, type MCPTier } from "../_shared/mcpServerBase.ts";
+import type {
+  ToolResult, PractitionerRecord,
+  FhirMedicationRow, FhirConditionRow, FhirObservationRow,
+  FhirCareTeamRow, FhirCareTeamMemberRow,
+} from "./types.ts";
 import { FHIR_TABLES, getFHIRColumns } from "./tools.ts";
 import { createFHIRBundle } from "./bundleBuilder.ts";
 import { validateResource } from "./validation.ts";
@@ -24,7 +28,7 @@ import { withTimeout, MCP_TIMEOUT_CONFIG } from "../_shared/mcpQueryTimeout.ts";
 interface HandlerContext {
   sb: SupabaseClient;
   logger: EdgeFunctionLogger;
-  serverConfig: { name: string; version: string; tier: string };
+  serverConfig: { name: string; version: string; tier: MCPTier };
   initResult: MCPInitResult;
   caller: { userId?: string; role?: string; tenantId?: string };
 }
@@ -190,7 +194,7 @@ async function handleGetResource(
     `FHIR get ${resourceType}`
   );
   if (error) throw new Error(`Resource not found: ${error.message}`);
-  return { resourceType, ...data };
+  return { resourceType, ...(data as unknown as Record<string, unknown>) };
 }
 
 async function handleCreateResource(
@@ -245,17 +249,6 @@ async function handleUpdateResource(
   return { resourceType, ...updated };
 }
 
-/** Row shape for fhir_observations — fields read by the observation/SDOH handlers.
- *  Column names verified against the live FHIR R4 schema 2026-07-10. */
-interface FhirObservationRow {
-  id: string;
-  code: string | null;
-  code_display: string | null;
-  value_codeable_concept_display: string | null;
-  value_string: string | null;
-  effective_datetime: string | null;
-}
-
 async function handleGetObservations(
   sb: SupabaseClient,
   toolArgs: Record<string, unknown>
@@ -284,20 +277,6 @@ async function handleGetObservations(
     ((data ?? []) as unknown as (Record<string, unknown> & { id: string })[]).map((r) => ({ resourceType: 'Observation', ...r })),
     'searchset'
   );
-}
-
-/** Row shape for fhir_medication_requests — fields read by the medication list.
- *  Column names verified against the live FHIR R4 schema 2026-07-10. */
-interface FhirMedicationRow {
-  id: string;
-  medication_display: string | null;
-  dosage_text: string | null;
-  dosage_timing_frequency: number | null;
-  dosage_route_display: string | null;
-  status: string | null;
-  requester_display: string | null;
-  authored_on: string | null;
-  validity_period_end: string | null;
 }
 
 async function handleGetMedicationList(
@@ -338,20 +317,6 @@ async function handleGetMedicationList(
     })),
     total: data?.length || 0
   };
-}
-
-/** Row shape for fhir_conditions — fields read by the condition list.
- *  Column names verified against the live FHIR R4 schema 2026-07-10. */
-interface FhirConditionRow {
-  id: string;
-  code: string | null;
-  code_display: string | null;
-  code_system: string | null;
-  clinical_status: string | null;
-  verification_status: string | null;
-  severity_display: string | null;
-  onset_datetime: string | null;
-  recorded_date: string | null;
 }
 
 async function handleGetConditionList(
@@ -459,15 +424,35 @@ async function handleGetCareTeam(
 
   if (error) throw new Error(`Query failed: ${error.message}`);
 
+  const teams = (careTeams ?? []) as unknown as FhirCareTeamRow[];
+
+  // Members are normalized into fhir_care_team_members (not an embedded array).
+  const careTeamIds = teams.map((ct) => ct.id);
+  let members: FhirCareTeamMemberRow[] = [];
+  if (careTeamIds.length) {
+    const { data: memberData } = await withTimeout(
+      sb.from('fhir_care_team_members')
+        .select('care_team_id, role_display, member_display, member_user_id, is_primary_contact')
+        .in('care_team_id', careTeamIds),
+      MCP_TIMEOUT_CONFIG.fhir.search,
+      'FHIR care team members'
+    );
+    members = (memberData ?? []) as unknown as FhirCareTeamMemberRow[];
+  }
+
+  const membersByTeam = new Map<string, FhirCareTeamMemberRow[]>();
+  for (const m of members) {
+    const list = membersByTeam.get(m.care_team_id) ?? [];
+    list.push(m);
+    membersByTeam.set(m.care_team_id, list);
+  }
+
   // Get practitioner details if contact info requested
   let practitioners: PractitionerRecord[] = [];
-  if (includeContactInfo && careTeams?.length) {
-    const practitionerIds = careTeams.flatMap(ct =>
-      (ct.participants as CareTeamParticipant[] | undefined)
-        ?.map((p: CareTeamParticipant) => p.practitioner_id)
-        .filter(Boolean) || []
-    );
-
+  if (includeContactInfo && members.length) {
+    const practitionerIds = members
+      .map((m) => m.member_user_id)
+      .filter((v): v is string => Boolean(v));
     if (practitionerIds.length) {
       const { data } = await sb.from('fhir_practitioners')
         .select('id, name, specialty, phone, email')
@@ -482,22 +467,21 @@ async function handleGetCareTeam(
 
   return {
     patient_id: patientId,
-    care_teams: (careTeams || []).map(ct => ({
+    care_teams: teams.map((ct) => ({
       id: ct.id,
       name: ct.name,
       category: ct.category,
       status: ct.status,
-      members: (ct.participants as CareTeamParticipant[] | undefined)
-        ?.map((p: CareTeamParticipant) => {
-          const pract = practitionerMap.get(p.practitioner_id || '');
-          return {
-            role: p.role,
-            name: p.display || pract?.name,
-            specialty: pract?.specialty,
-            phone: includeContactInfo ? pract?.phone : undefined,
-            email: includeContactInfo ? pract?.email : undefined
-          };
-        }) || []
+      members: (membersByTeam.get(ct.id) ?? []).map((m) => {
+        const pract = practitionerMap.get(m.member_user_id || '');
+        return {
+          role: m.role_display,
+          name: m.member_display || pract?.name,
+          specialty: pract?.specialty,
+          phone: includeContactInfo ? pract?.phone : undefined,
+          email: includeContactInfo ? pract?.email : undefined
+        };
+      })
     }))
   };
 }

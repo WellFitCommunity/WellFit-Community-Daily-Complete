@@ -67,7 +67,7 @@ export async function getPatientBundle(
     );
 
     if (!error && data) {
-      for (const record of data) {
+      for (const record of data as unknown as (Record<string, unknown> & { id: string })[]) {
         bundleResources.push({
           resourceType,
           ...record
@@ -175,7 +175,7 @@ export async function searchResources(
   }
 
   return createFHIRBundle(
-    (data || []).map(r => ({ resourceType, ...r })),
+    ((data ?? []) as unknown as (Record<string, unknown> & { id: string })[]).map((r) => ({ resourceType, ...r })),
     'searchset'
   );
 }

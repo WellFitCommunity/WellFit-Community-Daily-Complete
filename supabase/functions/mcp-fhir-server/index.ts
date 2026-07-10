@@ -252,9 +252,9 @@ serve(async (req: Request) => {
           serverConfig: SERVER_CONFIG,
           initResult,
           caller: {
-            userId: caller.userId,
-            role: caller.role,
-            tenantId: caller.tenantId
+            userId: caller.userId ?? undefined,
+            role: caller.role ?? undefined,
+            tenantId: caller.tenantId ?? undefined
           }
         }
       );

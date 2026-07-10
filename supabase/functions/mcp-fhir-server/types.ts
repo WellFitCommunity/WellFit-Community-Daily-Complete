@@ -105,3 +105,57 @@ export interface FHIRAuditParams {
   executionTimeMs: number;
   errorMessage?: string;
 }
+
+// ---------------------------------------------------------------------------
+// DB row shapes for the fhir_* tables — the columns each list handler reads.
+// Names verified against the live FHIR R4 schema 2026-07-10. Used to type the
+// rows returned by dynamic-column .select() calls (which de-type the result).
+// ---------------------------------------------------------------------------
+
+export interface FhirMedicationRow {
+  id: string;
+  medication_display: string | null;
+  dosage_text: string | null;
+  dosage_timing_frequency: number | null;
+  dosage_route_display: string | null;
+  status: string | null;
+  requester_display: string | null;
+  authored_on: string | null;
+  validity_period_end: string | null;
+}
+
+export interface FhirConditionRow {
+  id: string;
+  code: string | null;
+  code_display: string | null;
+  code_system: string | null;
+  clinical_status: string | null;
+  verification_status: string | null;
+  severity_display: string | null;
+  onset_datetime: string | null;
+  recorded_date: string | null;
+}
+
+export interface FhirObservationRow {
+  id: string;
+  code: string | null;
+  code_display: string | null;
+  value_codeable_concept_display: string | null;
+  value_string: string | null;
+  effective_datetime: string | null;
+}
+
+export interface FhirCareTeamRow {
+  id: string;
+  name: string | null;
+  category: string | null;
+  status: string | null;
+}
+
+export interface FhirCareTeamMemberRow {
+  care_team_id: string;
+  role_display: string | null;
+  member_display: string | null;
+  member_user_id: string | null;
+  is_primary_contact: boolean | null;
+}
