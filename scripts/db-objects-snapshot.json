@@ -2,8 +2,8 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-07-08 (restored provider-task subsystem: provider_tasks, provider_task_escalation_config, v_provider_task_queue)",
-    "table_count": 768,
+    "generated": "2026-07-11 (added v_patient_caregiver_contacts view from migration 20260710140000 — B1 caregiver-contacts boundary-layer view, live-verified security_invoker=on + GRANT authenticated)",
+    "table_count": 769,
     "function_count": 1476
   },
   "tables": [
@@ -742,6 +742,7 @@
     "v_mental_health_discharge_blockers",
     "v_mh_wearable_activity_integration",
     "v_nurse_question_analytics",
+    "v_patient_caregiver_contacts",
     "v_pending_mental_health_sessions",
     "v_provider_coverage_summary",
     "v_provider_task_queue",
