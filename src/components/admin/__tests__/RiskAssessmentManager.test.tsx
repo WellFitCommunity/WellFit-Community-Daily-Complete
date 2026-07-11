@@ -123,7 +123,10 @@ const setupSuccessMocks = () => {
         }),
       };
     }
-    if (table === 'risk_assessments') {
+    // Component reads the PHI-decrypted view (base table stores notes/risk_factors/
+    // recommended_actions encrypted with plaintext nulled — see RiskAssessmentManager
+    // repoint in fe80ac33). Mock must key on the view the component actually queries.
+    if (table === 'risk_assessments_decrypted') {
       return {
         select: () => ({
           order: () => ({
