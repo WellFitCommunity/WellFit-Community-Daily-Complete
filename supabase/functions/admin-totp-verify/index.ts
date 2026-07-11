@@ -63,8 +63,10 @@ const toBigEndian8 = (counter: number): Uint8Array => {
 };
 
 const hmacSha1 = async (keyBytes: Uint8Array, msg: Uint8Array): Promise<Uint8Array> => {
-  const key = await crypto.subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", key, msg));
+  // WebCrypto boundary: lib types Uint8Array as Uint8Array<ArrayBufferLike>, which
+  // the stricter checker won't accept as BufferSource though it is one at runtime.
+  const key = await crypto.subtle.importKey("raw", keyBytes as BufferSource, { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", key, msg as BufferSource));
 };
 
 const hotp = async (secretBytes: Uint8Array, counter: number): Promise<string> => {
