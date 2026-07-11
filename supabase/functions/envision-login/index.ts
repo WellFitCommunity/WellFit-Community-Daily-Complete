@@ -314,8 +314,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // Audit log (fire and forget)
       try {
         const { error: alErr } = await supabase.from("audit_logs").insert({
-          user_id: null,
-          action: "ENVISION_PASSWORD_FAILED",
+          actor_user_id: null,
+          event_type: "ENVISION_PASSWORD_FAILED",
           resource_type: "envision_auth",
           resource_id: superAdmin.id,
           metadata: {
@@ -413,8 +413,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Audit log
     try {
       const { error: alOkErr } = await supabase.from("audit_logs").insert({
-        user_id: null,
-        action: "ENVISION_PASSWORD_SUCCESS",
+        actor_user_id: null,
+        event_type: "ENVISION_PASSWORD_SUCCESS",
         resource_type: "envision_auth",
         resource_id: superAdmin.id,
         metadata: {

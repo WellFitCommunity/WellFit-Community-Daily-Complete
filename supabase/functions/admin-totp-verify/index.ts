@@ -171,8 +171,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!ok) {
       // Record failure
       await serviceClient.from("audit_logs").insert({
-        user_id: userId,
-        action: "ADMIN_TOTP_VERIFY_FAILED",
+        actor_user_id: userId,
+        event_type: "ADMIN_TOTP_VERIFY_FAILED",
         resource_type: "mfa_enrollment",
         resource_id: userId,
         metadata: { client_ip: clientIp },

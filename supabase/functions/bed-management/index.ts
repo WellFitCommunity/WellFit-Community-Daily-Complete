@@ -129,7 +129,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         let query = supabase
           .from('v_bed_board')
-          .select('*')
+          .select('bed_id, bed_label, room_number, bed_position, bed_type, status, status_changed_at, has_telemetry, has_isolation_capability, has_negative_pressure, unit_id, unit_code, unit_name, unit_type, floor_number, facility_id, facility_name, patient_id, patient_name, patient_mrn, assigned_at, expected_discharge_date, patient_acuity, tenant_id')
           .eq('tenant_id', profile.tenant_id);
 
         if (unit_id) query = query.eq('unit_id', unit_id);
@@ -155,32 +155,30 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Get unit capacity summary
         const { unit_id, facility_id } = body;
 
-        let query = supabase
-          .from('v_unit_capacity')
-          .select('*')
-          .eq('tenant_id', profile.tenant_id);
-
-        if (unit_id) query = query.eq('unit_id', unit_id);
+        // Two distinct sources with different row shapes; branch instead of
+        // reassigning one `query` var (the reassignment across table types is what
+        // forced the previous select('*') — see 2026-07-09 revert note). Behavior
+        // preserved: facility_id filters hospital_units (unit_id not applied, as
+        // before); otherwise v_unit_capacity with the optional unit_id filter.
+        let data: unknown[] | null;
+        let error: { message: string } | null;
         if (facility_id) {
-          // Join with hospital_units to filter by facility
-          query = supabase
+          const res = await supabase
             .from('hospital_units')
-            .select(`
-              id,
-              unit_code,
-              unit_name,
-              unit_type,
-              total_beds,
-              target_census,
-              max_census,
-              facility_id
-            `)
+            .select('id, unit_code, unit_name, unit_type, total_beds, target_census, max_census, facility_id')
             .eq('tenant_id', profile.tenant_id)
             .eq('facility_id', facility_id)
             .eq('is_active', true);
+          data = res.data; error = res.error;
+        } else {
+          let query = supabase
+            .from('v_unit_capacity')
+            .select('unit_id, unit_code, unit_name, unit_type, total_beds, target_census, max_census, facility_name, active_beds, occupied, available, pending_clean, out_of_service, occupancy_pct, tenant_id')
+            .eq('tenant_id', profile.tenant_id);
+          if (unit_id) query = query.eq('unit_id', unit_id);
+          const res = await query;
+          data = res.data; error = res.error;
         }
-
-        const { data, error } = await query;
 
         if (error) {
           logger.error("Failed to fetch unit capacity", { error: error.message });
@@ -297,8 +295,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         // Audit log (best-effort, don't block response)
         await supabase.from('audit_logs').insert({
-          user_id: user.id,
-          action: 'BED_ASSIGNED',
+          actor_user_id: user.id,
+          event_type: 'BED_ASSIGNED',
           resource_type: 'bed_assignment',
           resource_id: data,
           metadata: { patient_id, bed_id, expected_los_days }
@@ -356,8 +354,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         // Audit log (best-effort, don't block response)
         await supabase.from('audit_logs').insert({
-          user_id: user.id,
-          action: 'PATIENT_DISCHARGED',
+          actor_user_id: user.id,
+          event_type: 'PATIENT_DISCHARGED',
           resource_type: 'bed_assignment',
           resource_id: patient_id,
           metadata: { disposition }
@@ -465,7 +463,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Fetch the generated forecast
         const { data: forecast } = await supabase
           .from('bed_availability_forecasts')
-          .select('*')
+          .select('id, tenant_id, unit_id, forecast_date, predicted_census, predicted_available, predicted_discharges, predicted_admissions, confidence_level, lower_bound, upper_bound, factors_json, model_version, generated_at, actual_census, actual_available, forecast_error, error_percentage, created_at')
           .eq('id', data)
           .single();
 

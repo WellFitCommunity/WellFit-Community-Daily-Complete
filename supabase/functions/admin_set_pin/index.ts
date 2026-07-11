@@ -275,14 +275,14 @@ serve(async (req) => {
 
           // Audit log the failed attempt
           await supabase.from('audit_logs').insert({
-            user_id: user_id,
-            action: 'PIN_CHANGE_FAILED',
+            actor_user_id: user_id,
+            event_type: 'PIN_CHANGE_FAILED',
             resource_type: 'staff_pin',
             metadata: {
               role,
               reason: 'incorrect_current_pin'
             }
-          }).catch(() => {});
+          }).then(undefined, () => {});
 
           return new Response(
             JSON.stringify({ error: "Current PIN is incorrect" }),
@@ -354,14 +354,14 @@ serve(async (req) => {
 
     // Audit log the successful PIN change
     await supabase.from('audit_logs').insert({
-      user_id: user_id,
-      action: hasExistingPin ? 'PIN_CHANGED' : 'PIN_SET',
+      actor_user_id: user_id,
+      event_type: hasExistingPin ? 'PIN_CHANGED' : 'PIN_SET',
       resource_type: 'staff_pin',
       metadata: {
         role,
         auth_method: authMethod
       }
-    }).catch(() => {});
+    }).then(undefined, () => {});
 
     // Send SMS notification if this was a PIN change (not first-time setup)
     if (hasExistingPin && profile.phone) {

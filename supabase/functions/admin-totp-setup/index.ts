@@ -276,8 +276,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         // Audit log failure
         await serviceClient.from("audit_logs").insert({
-          user_id: userId,
-          action: "ADMIN_TOTP_SETUP_CODE_FAILED",
+          actor_user_id: userId,
+          event_type: "ADMIN_TOTP_SETUP_CODE_FAILED",
           resource_type: "mfa_enrollment",
           resource_id: userId,
           metadata: { client_ip: clientIp },
@@ -322,8 +322,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Audit log success
       await serviceClient.from("audit_logs").insert({
-        user_id: userId,
-        action: "ADMIN_TOTP_SETUP_COMPLETE",
+        actor_user_id: userId,
+        event_type: "ADMIN_TOTP_SETUP_COMPLETE",
         resource_type: "mfa_enrollment",
         resource_id: userId,
         metadata: { backup_codes_generated: backupCodes.length },

@@ -263,16 +263,21 @@ serve(async (req) => {
 
     // Log to audit_logs for HIPAA compliance
     await supabaseAdmin.from("audit_logs").insert({
-      user_id: patient_id,
-      action: "LD_ALERT_NOTIFICATION_SENT",
-      details: JSON.stringify({
+      event_type: "LD_ALERT_NOTIFICATION_SENT",
+      event_category: "PHI_ACCESS",
+      // patient_id kept in metadata (informational — as the original insert intended):
+      // target_user_id has an FK to auth.users and patient_id is not guaranteed to be
+      // an auth user id. actor_ip_address is INET-typed; x-forwarded-for can be a
+      // comma-list / the "edge-function" sentinel (invalid inet) -> keep it in metadata.
+      metadata: {
+        patient_id,
         alert_id,
         alert_type,
         severity,
         notifications_sent: notificationsSent,
         care_team_size: careTeamMembers.length,
-      }),
-      ip_address: req.headers.get("x-forwarded-for") ?? "edge-function",
+        source_ip: req.headers.get("x-forwarded-for") ?? "edge-function",
+      },
     });
 
     logger.info("L&D alert notification complete", {

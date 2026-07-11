@@ -252,14 +252,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Audit log
     await supabase.from('audit_logs').insert({
-      user_id: tokenRecord.user_id,
-      action: 'PIN_RESET_CODE_VERIFIED',
+      actor_user_id: tokenRecord.user_id,
+      event_type: 'PIN_RESET_CODE_VERIFIED',
       resource_type: 'staff_pin',
       resource_id: tokenRecord.id,
       metadata: {
         phoneLastFour: normalizedPhone.slice(-4)
       }
-    }).catch(() => { /* ignore audit log failures */ });
+    }).then(undefined, () => { /* ignore audit log failures */ });
 
     // Return the OTP token to the client
     // This token should be passed to admin_set_pin to authorize the PIN change

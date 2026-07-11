@@ -260,7 +260,7 @@ serve(async (req: Request) => {
       // Fetch all active rules for this tenant
       const { data: rules, error: rulesErr } = await supabase
         .from('vital_threshold_rules')
-        .select('*')
+        .select('id, tenant_id, patient_id, condition_code, rule_name, vital_type, threshold_operator, threshold_value, alert_type, severity, escalation_level, escalation_targets, cooldown_minutes, auto_resolve')
         .eq('tenant_id', tenantId)
         .eq('is_active', true);
 
@@ -394,7 +394,7 @@ serve(async (req: Request) => {
     // Audit log the monitor run
     await supabase.from('audit_logs').insert({
       event_type: 'VITAL_THRESHOLD_MONITOR_RUN',
-      event_data: {
+      metadata: {
         patients_checked: result.patients_checked,
         alerts_created: result.alerts_created,
         alerts_resolved: result.alerts_resolved,

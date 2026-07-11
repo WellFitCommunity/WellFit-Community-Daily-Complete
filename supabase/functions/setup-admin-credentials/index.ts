@@ -124,8 +124,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Audit log
     await supabase.from('audit_logs').insert({
-      user_id: null,
-      action: 'ADMIN_CREDENTIALS_SET',
+      actor_user_id: null,
+      event_type: 'ADMIN_CREDENTIALS_SET',
       resource_type: 'super_admin_users',
       resource_id: admin.id,
       metadata: {
@@ -133,7 +133,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         password_updated: !!password,
         pin_updated: !!pin
       }
-    }).catch(() => {});
+    }).then(undefined, () => {});
 
     logger.info("Credentials updated successfully", {
       email: admin.email,

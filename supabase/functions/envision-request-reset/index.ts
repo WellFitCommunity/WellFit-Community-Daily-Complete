@@ -264,8 +264,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Audit log
     await supabase.from('audit_logs').insert({
-      user_id: null,
-      action: resetType === 'password' ? 'ENVISION_PASSWORD_RESET_REQUESTED' : 'ENVISION_PIN_RESET_REQUESTED',
+      actor_user_id: null,
+      event_type: resetType === 'password' ? 'ENVISION_PASSWORD_RESET_REQUESTED' : 'ENVISION_PIN_RESET_REQUESTED',
       resource_type: 'envision_auth',
       resource_id: superAdmin.id,
       metadata: {
@@ -273,7 +273,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         phoneLastFour: superAdmin.phone.slice(-4),
         resetType
       }
-    }).catch(() => {});
+    }).then(undefined, () => {});
 
     // Success! SMS was actually sent
     return createResponse();

@@ -386,11 +386,15 @@ export class FHIRIntegrationService {
   // SOC 2: Audit logging helper
   private async logAuditEvent(eventType: string, metadata: Record<string, unknown>): Promise<void> {
     try {
+      // audit_logs authenticated-INSERT RLS requires actor_user_id = auth.uid();
+      // supply it (getSession is the client-safe uid source). `created_at` is not a
+      // column — the real column is `timestamp` (defaults to now()), so it is omitted.
+      const { data: { session } } = await this.supabase.auth.getSession();
       await this.supabase.from('audit_logs').insert({
         event_type: eventType,
         event_category: 'PHI_ACCESS',
+        actor_user_id: session?.user?.id ?? null,
         metadata: metadata,
-        created_at: new Date().toISOString()
       });
     } catch (_err: unknown) {
       // Fallback: If audit logging fails, this is a critical security issue

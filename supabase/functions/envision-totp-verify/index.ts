@@ -223,8 +223,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // Audit log (best-effort)
       try {
         const { error: alErr } = await supabase.from("audit_logs").insert({
-          user_id: null,
-          action: "ENVISION_TOTP_FAILED",
+          actor_user_id: null,
+          event_type: "ENVISION_TOTP_FAILED",
           resource_type: "envision_auth",
           resource_id: superAdmin.id,
           metadata: {
@@ -301,8 +301,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Audit log (best-effort)
     try {
       await supabase.from("audit_logs").insert({
-        user_id: null,
-        action: "ENVISION_LOGIN_SUCCESS",
+        actor_user_id: null,
+        event_type: "ENVISION_LOGIN_SUCCESS",
         resource_type: "envision_auth",
         resource_id: superAdmin.id,
         metadata: {

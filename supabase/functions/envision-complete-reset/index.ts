@@ -276,8 +276,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Audit log
     await supabase.from('audit_logs').insert({
-      user_id: null,
-      action: resetType === 'password' ? 'ENVISION_PASSWORD_RESET_COMPLETED' : 'ENVISION_PIN_RESET_COMPLETED',
+      actor_user_id: null,
+      event_type: resetType === 'password' ? 'ENVISION_PASSWORD_RESET_COMPLETED' : 'ENVISION_PIN_RESET_COMPLETED',
       resource_type: 'envision_auth',
       resource_id: superAdmin.id,
       metadata: {
@@ -285,7 +285,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         phoneLastFour: superAdmin.phone.slice(-4),
         resetType
       }
-    }).catch(() => {});
+    }).then(undefined, () => {});
 
     // Send notification SMS
     if (TWILIO_FROM_NUMBER) {

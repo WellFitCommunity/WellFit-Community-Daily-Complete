@@ -115,8 +115,8 @@ const BulkExportPanel: React.FC = () => {
       // Log audit entry for PHI exports
       if (isPHIExport && user) {
         await supabase.from('audit_logs').insert({
-          user_id: user.id,
-          action: 'phi_export_initiated',
+          actor_user_id: user.id,
+          event_type: 'phi_export_initiated',
           resource_type: exportType,
           resource_id: jobId,
           metadata: {
@@ -205,8 +205,8 @@ const BulkExportPanel: React.FC = () => {
 
       if (isPHIExport && user) {
         await supabase.from('audit_logs').insert({
-          user_id: user.id,
-          action: 'phi_export_downloaded',
+          actor_user_id: user.id,
+          event_type: 'phi_export_downloaded',
           resource_type: job.type,
           resource_id: job.id,
           metadata: {

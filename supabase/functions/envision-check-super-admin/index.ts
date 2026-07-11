@@ -140,8 +140,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Audit log (fire and forget, don't block login)
     try {
       await supabase.from('audit_logs').insert({
-        user_id: user.id,
-        action: 'ENVISION_LOGIN_CHECK',
+        actor_user_id: user.id,
+        event_type: 'ENVISION_LOGIN_CHECK',
         resource_type: 'envision_auth',
         resource_id: superAdmin.id,
         metadata: {

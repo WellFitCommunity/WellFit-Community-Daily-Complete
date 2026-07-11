@@ -235,7 +235,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_success: false,
         p_client_ip: clientIp,
         p_user_agent: userAgent
-      }).catch((err: Error) => {
+      }).then(undefined, (err: Error) => {
         logger.error("Failed to record Envision PIN attempt", { error: err.message });
       });
 
@@ -252,8 +252,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Audit log
       await supabase.from('audit_logs').insert({
-        user_id: null,
-        action: 'ENVISION_PIN_FAILED',
+        actor_user_id: null,
+        event_type: 'ENVISION_PIN_FAILED',
         resource_type: 'envision_auth',
         resource_id: superAdmin.id,
         metadata: {
@@ -262,7 +262,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           failed_attempts: newFailedCount,
           remaining_attempts: remainingAttempts
         }
-      }).catch(() => {});
+      }).then(undefined, () => {});
 
       // Build error response with remaining attempts info
       const errorResponse: Record<string, unknown> = {
@@ -290,7 +290,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       p_success: true,
       p_client_ip: clientIp,
       p_user_agent: userAgent
-    }).catch((err: Error) => {
+    }).then(undefined, (err: Error) => {
       logger.error("Failed to record successful Envision PIN attempt", { error: err.message });
     });
 
@@ -335,8 +335,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Audit log
     await supabase.from('audit_logs').insert({
-      user_id: null,
-      action: 'ENVISION_LOGIN_SUCCESS',
+      actor_user_id: null,
+      event_type: 'ENVISION_LOGIN_SUCCESS',
       resource_type: 'envision_auth',
       resource_id: superAdmin.id,
       metadata: {
@@ -346,7 +346,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         client_ip: clientIp,
         session_expires: fullExpiresAt
       }
-    }).catch(() => {});
+    }).then(undefined, () => {});
 
     // Return full session info
     return new Response(

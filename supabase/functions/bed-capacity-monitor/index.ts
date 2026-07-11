@@ -213,7 +213,7 @@ serve(async (req: Request) => {
     // Log the monitor run
     await supabase.from('audit_logs').insert({
       event_type: 'CAPACITY_MONITOR_RUN',
-      event_data: {
+      metadata: {
         facilities_checked: result.facilities_checked,
         alerts_created: result.alerts_created,
         alerts_resolved: result.alerts_resolved,

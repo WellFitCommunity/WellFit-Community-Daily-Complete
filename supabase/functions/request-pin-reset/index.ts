@@ -263,15 +263,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Audit log
     await supabase.from('audit_logs').insert({
-      user_id: profile.user_id,
-      action: 'PIN_RESET_REQUESTED',
+      actor_user_id: profile.user_id,
+      event_type: 'PIN_RESET_REQUESTED',
       resource_type: 'staff_pin',
       resource_id: profile.user_id,
       metadata: {
         phoneLastFour: normalizedPhone.slice(-4),
         tenantId: profile.tenant_id
       }
-    }).catch(() => { /* ignore audit log failures */ });
+    }).then(undefined, () => { /* ignore audit log failures */ });
 
     return genericSuccessResponse;
 
