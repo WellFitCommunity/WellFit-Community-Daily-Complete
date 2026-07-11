@@ -36,12 +36,16 @@ import {
   MicOff,
   FileCode2,
   FileText,
+  LayoutGrid,
 } from 'lucide-react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { parseVoiceEntity, EntityType, ParsedEntity, SearchResult, ENTITY_ROUTES } from '../../contexts/VoiceActionContext';
 import { voiceSearch, searchPatients, searchBeds, searchProviders, searchMedicalCodes, searchClinicalNotes } from '../../services/voiceSearchService';
+import { searchNavigation } from '../../services/navigationSearchService';
 import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
+import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { auditLogger } from '../../services/auditLogger';
+import { logPhiAccess } from '../../hooks/usePhiAccessLogging';
 import { useVoiceCommand } from '../../hooks/useVoiceCommand';
 
 // ============================================================================
@@ -65,6 +69,7 @@ const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
   discharge: <LogOut className="w-4 h-4" />,
   medical_code: <FileCode2 className="w-4 h-4" />,
   clinical_note: <FileText className="w-4 h-4" />,
+  navigation: <LayoutGrid className="w-4 h-4" />,
 };
 
 const ENTITY_COLORS: Record<EntityType, string> = {
@@ -84,6 +89,7 @@ const ENTITY_COLORS: Record<EntityType, string> = {
   discharge: 'text-rose-400 bg-rose-400/10',
   medical_code: 'text-sky-400 bg-sky-400/10',
   clinical_note: 'text-lime-400 bg-lime-400/10',
+  navigation: 'text-slate-300 bg-slate-400/10',
 };
 
 const ENTITY_LABELS: Record<EntityType, string> = {
@@ -103,6 +109,7 @@ const ENTITY_LABELS: Record<EntityType, string> = {
   discharge: 'Discharge',
   medical_code: 'Medical Code',
   clinical_note: 'Clinical Note',
+  navigation: 'Go to',
 };
 
 // ============================================================================
@@ -140,6 +147,7 @@ export const GlobalSearchBar: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
   const { selectPatient } = usePatientContext();
+  const { adminRole } = useAdminAuth();
 
   // Voice command integration
   const [voiceState, voiceActions] = useVoiceCommand({
@@ -251,9 +259,16 @@ export const GlobalSearchBar: React.FC = () => {
       setIsSearching(true);
 
       try {
+        // Navigation/dashboard matches (non-PHI) always run alongside the entity
+        // search so a user can jump straight to a page by keyword — role-scoped
+        // so we never surface a destination they cannot open.
+        const navResults = searchNavigation(searchQuery, { role: adminRole });
+
         // Parse the query to detect entity type
         const entity = parseVoiceEntity(searchQuery);
         setParsedEntity(entity);
+
+        let entityResults: SearchResult[] = [];
 
         if (!entity) {
           // Default to patient search if no entity detected
@@ -264,44 +279,45 @@ export const GlobalSearchBar: React.FC = () => {
             rawTranscript: searchQuery,
             confidence: 50,
           };
-          const patientResults = await searchPatients(supabase, defaultEntity);
-          setResults(patientResults);
+          entityResults = await searchPatients(supabase, defaultEntity);
         } else {
           // Use appropriate search based on entity type
-          let searchResults: SearchResult[] = [];
-
           switch (entity.type) {
             case 'patient':
             case 'medication':
             case 'diagnosis':
             case 'admission':
             case 'discharge':
-              searchResults = await searchPatients(supabase, entity);
+              entityResults = await searchPatients(supabase, entity);
               break;
             case 'bed':
             case 'room':
-              searchResults = await searchBeds(supabase, entity);
+              entityResults = await searchBeds(supabase, entity);
               break;
             case 'provider':
-              searchResults = await searchProviders(supabase, entity);
+              entityResults = await searchProviders(supabase, entity);
               break;
             case 'medical_code':
-              searchResults = await searchMedicalCodes(supabase, entity);
+              entityResults = await searchMedicalCodes(supabase, entity);
               break;
             case 'clinical_note':
-              searchResults = await searchClinicalNotes(supabase, entity);
+              entityResults = await searchClinicalNotes(supabase, entity);
               break;
             default:
-              searchResults = await voiceSearch(supabase, entity);
+              entityResults = await voiceSearch(supabase, entity);
           }
-
-          setResults(searchResults);
         }
+
+        // Merge both sources, highest match first.
+        const merged = [...navResults, ...entityResults].sort(
+          (a, b) => b.matchScore - a.matchScore
+        );
+        setResults(merged);
 
         auditLogger.debug('GLOBAL_SEARCH_PERFORMED', {
           query: searchQuery,
           entityType: entity?.type || 'patient',
-          resultCount: results.length,
+          resultCount: merged.length,
         });
       } catch (error: unknown) {
         auditLogger.error('GLOBAL_SEARCH_ERROR', error instanceof Error ? error : new Error('Search failed'));
@@ -310,8 +326,7 @@ export const GlobalSearchBar: React.FC = () => {
         setIsSearching(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- results.length not needed for search logic
-    [supabase]
+    [supabase, adminRole]
   );
 
   // Debounced search
@@ -329,17 +344,39 @@ export const GlobalSearchBar: React.FC = () => {
 
   const handleResultSelect = useCallback(
     (result: SearchResult) => {
+      // Navigation results are non-PHI shortcuts — jump straight to the page.
+      if (result.type === 'navigation') {
+        const route = (result.metadata?.route as string | undefined) ?? ENTITY_ROUTES.navigation;
+        auditLogger.info('GLOBAL_SEARCH_NAVIGATION_SELECTED', { route });
+        navigate(route);
+        handleClose();
+        return;
+      }
+
       auditLogger.info('GLOBAL_SEARCH_RESULT_SELECTED', {
         type: result.type,
         id: result.id,
-        primaryText: result.primaryText,
+        // NOTE: do not log primaryText — for patient results it is the patient
+        // name (PHI). Log the token id only.
       });
 
+      const isPatientResult = ['patient', 'medication', 'diagnosis', 'admission', 'discharge'].includes(
+        result.type
+      );
+
+      // HIPAA §164.312(b): opening a patient result is a PHI access — audit it
+      // against the specific patient the clinician chose to view.
+      if (isPatientResult) {
+        void logPhiAccess({
+          resourceType: 'patient_search_result',
+          resourceId: result.id,
+          action: 'VIEW',
+          metadata: { entityType: result.type },
+        });
+      }
+
       // Update PatientContext for patient-related results
-      if (
-        ['patient', 'medication', 'diagnosis', 'admission', 'discharge'].includes(result.type) &&
-        result.metadata
-      ) {
+      if (isPatientResult && result.metadata) {
         const patient: SelectedPatient = {
           id: result.id,
           firstName: result.metadata.firstName as string,

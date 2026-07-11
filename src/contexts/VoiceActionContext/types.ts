@@ -24,7 +24,8 @@ export type EntityType =
   | 'admission'
   | 'discharge'
   | 'medical_code'
-  | 'clinical_note';
+  | 'clinical_note'
+  | 'navigation';
 
 export interface ParsedEntity {
   type: EntityType;
@@ -123,4 +124,7 @@ export const ENTITY_ROUTES: Record<EntityType, string> = {
   discharge: '/admin',
   medical_code: '/billing',
   clinical_note: '/admin',
+  // Navigation results carry their own destination in `metadata.route`; this is
+  // only the fallback if that is ever missing.
+  navigation: '/hub',
 };

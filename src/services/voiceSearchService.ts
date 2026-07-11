@@ -25,12 +25,14 @@ interface PatientRecord {
   user_id: string;
   first_name: string;
   last_name: string;
-  date_of_birth?: string;
+  // Live `profiles` stores date of birth in `dob` (there is NO `date_of_birth`
+  // column — selecting it 400s the whole query and the search returns nothing).
+  dob?: string;
   mrn?: string;
   room_number?: string;
   bed_number?: string;
   risk_score?: number;
-  unit?: string;
+  hospital_unit?: string;
   acuity_level?: number;
 }
 
@@ -57,7 +59,8 @@ interface ProviderRecord {
   first_name: string;
   last_name: string;
   role: string;
-  specialty?: string;
+  // NOTE: live `profiles` has no `specialty` column — only `department`.
+  // Selecting `specialty` 400s the query and provider search returns nothing.
   department?: string;
 }
 
@@ -214,7 +217,7 @@ export async function searchPatients(
     const { filters } = entity;
     let query = supabase
       .from('profiles')
-      .select('id, user_id, first_name, last_name, date_of_birth, mrn, room_number, bed_number, risk_score, hospital_unit')
+      .select('id, user_id, first_name, last_name, dob, mrn, room_number, bed_number, risk_score, hospital_unit')
       .limit(20);
 
     // Apply filters
@@ -240,7 +243,7 @@ export async function searchPatients(
     }
 
     if (filters.dateOfBirth) {
-      query = query.eq('date_of_birth', filters.dateOfBirth);
+      query = query.eq('dob', filters.dateOfBirth);
     }
 
     if (filters.mrn) {
@@ -295,7 +298,7 @@ export async function searchPatients(
       if (filters.lastName) {
         matchScore = Math.max(matchScore, calculateSimilarity(patient.last_name, filters.lastName));
       }
-      if (filters.dateOfBirth && patient.date_of_birth === filters.dateOfBirth) {
+      if (filters.dateOfBirth && patient.dob === filters.dateOfBirth) {
         matchScore = Math.max(matchScore, 95);
       }
       if (filters.mrn && patient.mrn === filters.mrn) {
@@ -310,7 +313,7 @@ export async function searchPatients(
 
       // Build secondary text with available info
       const infoParts: string[] = [];
-      if (patient.date_of_birth) infoParts.push(`DOB: ${formatDate(patient.date_of_birth)}`);
+      if (patient.dob) infoParts.push(`DOB: ${formatDate(patient.dob)}`);
       if (patient.mrn) infoParts.push(`MRN: ${patient.mrn}`);
       if (patient.room_number) infoParts.push(`Room: ${patient.room_number}`);
       if (patient.risk_score) infoParts.push(`Risk: ${getRiskLabel(patient.risk_score)}`);
@@ -324,18 +327,31 @@ export async function searchPatients(
         metadata: {
           firstName: patient.first_name,
           lastName: patient.last_name,
-          dateOfBirth: patient.date_of_birth,
+          dateOfBirth: patient.dob,
           mrn: patient.mrn,
           roomNumber: patient.room_number,
           bedNumber: patient.bed_number,
           riskScore: patient.risk_score,
-          unit: patient.unit,
+          unit: patient.hospital_unit,
         },
       };
     });
 
     // Sort by match score descending
-    return results.sort((a, b) => b.matchScore - a.matchScore);
+    const sorted = results.sort((a, b) => b.matchScore - a.matchScore);
+
+    // HIPAA §164.312(b): a patient search discloses PHI (names, DOB, MRN).
+    // Audit the access. Log patient IDs (tokens) + count only — never the raw
+    // query, which may itself contain a patient name.
+    if (sorted.length > 0) {
+      await auditLogger.phi('PATIENT_SEARCH', sorted[0].id, {
+        resultCount: sorted.length,
+        patientIds: sorted.map((r) => r.id),
+        searchType: 'patient',
+      });
+    }
+
+    return sorted;
   } catch (err: unknown) {
     auditLogger.error('VOICE_SEARCH_PATIENTS_ERROR', err instanceof Error ? err : new Error('Unknown error'));
     return [];
@@ -445,7 +461,7 @@ export async function searchProviders(
     const { filters } = entity;
     let query = supabase
       .from('profiles')
-      .select('id, user_id, first_name, last_name, role, specialty, department')
+      .select('id, user_id, first_name, last_name, role, department')
       .in('role', ['physician', 'doctor', 'nurse', 'provider', 'pt', 'physical_therapist'])
       .limit(20);
 
@@ -481,7 +497,6 @@ export async function searchProviders(
 
       const infoParts: string[] = [];
       if (provider.role) infoParts.push(provider.role);
-      if (provider.specialty) infoParts.push(provider.specialty);
       if (provider.department) infoParts.push(provider.department);
 
       return {
@@ -494,7 +509,6 @@ export async function searchProviders(
           firstName: provider.first_name,
           lastName: provider.last_name,
           role: provider.role,
-          specialty: provider.specialty,
           department: provider.department,
         },
       };
@@ -638,7 +652,7 @@ export async function searchClinicalNotes(
 
     if (!data || data.length === 0) return [];
 
-    return (data as ClinicalNoteRow[]).map((row) => {
+    const results: SearchResult[] = (data as ClinicalNoteRow[]).map((row) => {
       const matchScore = row.relevance > 0
         ? Math.min(100, Math.round(row.relevance * 100 + 50))
         : 60;
@@ -656,6 +670,17 @@ export async function searchClinicalNotes(
         },
       };
     });
+
+    // HIPAA §164.312(b): clinical notes are PHI — audit the disclosure.
+    if (results.length > 0) {
+      await auditLogger.phi('CLINICAL_NOTE_SEARCH', results[0].id, {
+        resultCount: results.length,
+        noteIds: results.map((r) => r.id),
+        searchType: 'clinical_note',
+      });
+    }
+
+    return results;
   } catch (err: unknown) {
     auditLogger.error(
       'CLINICAL_NOTE_SEARCH_ERROR',
