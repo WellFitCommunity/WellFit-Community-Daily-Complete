@@ -1,6 +1,7 @@
 {
   "version": "5",
   "redirects": {
+    "https://esm.sh/@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.107.0",
     "https://esm.sh/@supabase/supabase-js@2": "https://esm.sh/@supabase/supabase-js@2.93.3",
     "https://esm.sh/@supabase/supabase-js@2?target=deno": "https://esm.sh/@supabase/supabase-js@2.101.1?target=deno"
   },
@@ -179,6 +180,7 @@
     "https://deno.land/x/zod@v3.22.4/types.ts": "724185522fafe43ee56a52333958764c8c8cd6ad4effa27b42651df873fc151e",
     "https://esm.sh/@anthropic-ai/sdk@0.20.9?target=deno": "718469dd435ea0bce054005c86b6b00baa65ba0a07c13805070ca717136ee19f",
     "https://esm.sh/@supabase/supabase-js@2.101.1?target=deno": "7801fb4942e73388c89b5f4891b0bd04be3ebfc37b8958c80d8d6239d7ccd86c",
+    "https://esm.sh/@supabase/supabase-js@2.107.0": "8caa09b0223684d83cfa273de2946af25430d7ca8e5320b721226a0c7a8c6e98",
     "https://esm.sh/@supabase/supabase-js@2.39.0": "f51aeb2dbf8f67c8fa396628af45793e3513067d45705f1ea158f5c678bb0cea",
     "https://esm.sh/@supabase/supabase-js@2.45.4?dts": "1108d69216995335d057dbd15907caaf514a4d1ef082f097050573b9d589a57c",
     "https://esm.sh/@supabase/supabase-js@2.93.3": "7b7e42b1c60d8d90561c876ea63fdfefafedc8b4102481f09f413ce2026981a3",
