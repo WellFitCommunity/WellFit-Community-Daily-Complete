@@ -18,6 +18,16 @@ import type {
 } from './types';
 import { TARGET_SCHEMA, COLUMN_SYNONYMS } from './targetSchema';
 import { DataDNAGenerator } from './DataDNAGenerator';
+import {
+  SUGGEST_MAPPING_TOOL,
+  SUGGEST_MAPPING_TOOL_CHOICE,
+  extractToolUseInput,
+} from './aiMappingTool';
+import {
+  buildAISystemPrompt,
+  buildAIMappingPrompt,
+  normalizeAISuggestion,
+} from './aiMappingPrompts';
 import { auditLogger } from '../auditLogger';
 import {
   DEFAULT_MAPPING_INTELLIGENCE_CONFIG,
@@ -265,17 +275,18 @@ export class MappingIntelligence {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          system: buildAISystemPrompt(),
           messages: [
             {
-              role: 'system',
-              content: this.getAISystemPrompt(),
-            },
-            {
               role: 'user',
-              content: this.buildAIPrompt(column, sourceDNA),
+              content: buildAIMappingPrompt(column, sourceDNA),
             },
           ],
           max_tokens: this.aiConfig.maxTokens,
+          // Forced structured output — the model MUST return the mapping via the
+          // tool schema, so we never parse free-text / strip markdown (#16).
+          tools: [SUGGEST_MAPPING_TOOL],
+          tool_choice: SUGGEST_MAPPING_TOOL_CHOICE,
         }),
       });
 
@@ -289,17 +300,19 @@ export class MappingIntelligence {
       }
 
       const data = (await response.json()) as {
-        content?: Array<{ text?: string }>;
+        content?: Array<{ type?: string; name?: string; input?: unknown }>;
       };
 
-      if (!data.content || !data.content[0]?.text) {
+      // Structured tool output — already valid JSON, no string parsing.
+      const structured = extractToolUseInput(data.content);
+      if (!structured) {
         return null;
       }
 
-      // Parse AI response
-      const suggestion = this.parseAIResponse(
-        data.content[0].text,
-        column.originalName
+      const suggestion = normalizeAISuggestion(
+        structured,
+        column.originalName,
+        this.config.maxAIConfidence
       );
 
       if (suggestion) {
@@ -323,161 +336,6 @@ export class MappingIntelligence {
         err instanceof Error ? err : new Error(String(err)),
         { column: column.originalName }
       );
-      return null;
-    }
-  }
-
-  /**
-   * System prompt for AI mapping assistant
-   */
-  private getAISystemPrompt(): string {
-    const availableTables = Object.entries(TARGET_SCHEMA)
-      .map(([table, cols]) => `${table}: ${Object.keys(cols).join(', ')}`)
-      .join('\n');
-
-    return `You are an expert healthcare data migration specialist with deep knowledge of FHIR R4, HL7, and clinical data standards.
-
-Your task is to analyze a source column and suggest the best target table and column mapping.
-
-AVAILABLE TARGET TABLES AND COLUMNS:
-${availableTables}
-
-CLINICAL CODE SYSTEMS TO RECOGNIZE:
-- LOINC: Lab/observation codes (format: 12345-6)
-- SNOMED CT: Clinical codes (6-18 digit numbers)
-- ICD-10: Diagnosis codes (format: A00.1)
-- CPT: Procedure codes (5 digits)
-- RxNorm: Medication codes (5-7 digits)
-- NDC: Drug codes (4-4-2, 5-3-2, or 5-4-1 format)
-- NPI: Provider identifiers (10 digits with Luhn check)
-
-RESPOND WITH JSON ONLY - NO MARKDOWN:
-{
-  "suggestedTable": "table_name",
-  "suggestedColumn": "column_name",
-  "fhirResource": "FHIR resource if applicable (Patient, Observation, etc.)",
-  "fhirPath": "FHIR path if applicable",
-  "confidence": 0.85,
-  "reasoning": "Brief explanation of why this mapping is suggested",
-  "transformation": "Transformation needed, if any (e.g., NORMALIZE_PHONE, CONVERT_DATE_TO_ISO)",
-  "alternativeMappings": [
-    {"table": "alt_table", "column": "alt_column", "confidence": 0.6}
-  ]
-}`;
-  }
-
-  /**
-   * Build the AI prompt for a specific column
-   */
-  private buildAIPrompt(column: ColumnDNA, sourceDNA: SourceDNA): string {
-    return `Analyze this source column and suggest the best mapping:
-
-SOURCE COLUMN:
-- Name: ${column.originalName}
-- Normalized Name: ${column.normalizedName}
-- Detected Pattern: ${column.primaryPattern}
-- All Detected Patterns: ${column.detectedPatterns.join(', ')}
-- Inferred Data Type: ${column.dataTypeInferred}
-- Average Length: ${Math.round(column.avgLength)}
-- Sample Values: ${column.sampleValues.slice(0, 3).map((v) => `"${v}"`).join(', ')}
-- Unique %: ${Math.round(column.uniquePercentage * 100)}%
-- Null %: ${Math.round(column.nullPercentage * 100)}%
-
-SOURCE CONTEXT:
-- Source System: ${sourceDNA.sourceSystem || 'Unknown'}
-- Source Type: ${sourceDNA.sourceType}
-- Total Columns: ${sourceDNA.columnCount}
-
-Provide your mapping suggestion as JSON.`;
-  }
-
-  /**
-   * Parse AI response into structured suggestion
-   */
-  private parseAIResponse(
-    responseText: string,
-    sourceColumn: string
-  ): AIMappingSuggestion | null {
-    try {
-      // Clean up response (remove markdown if present)
-      const jsonText = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim();
-
-      const parsed = JSON.parse(jsonText) as {
-        suggestedTable?: string;
-        suggestedColumn?: string;
-        fhirResource?: string;
-        fhirPath?: string;
-        confidence?: number;
-        reasoning?: string;
-        transformation?: string;
-        alternativeMappings?: Array<{
-          table: string;
-          column: string;
-          confidence: number;
-        }>;
-      };
-
-      // Validate required fields
-      if (!parsed.suggestedTable || !parsed.suggestedColumn) {
-        return null;
-      }
-
-      // Validate suggested table exists
-      if (!TARGET_SCHEMA[parsed.suggestedTable]) {
-        // Try to find a close match
-        const availableTables = Object.keys(TARGET_SCHEMA);
-        const matchingTable = availableTables.find(
-          (t) =>
-            t.toLowerCase().includes(parsed.suggestedTable?.toLowerCase() || '') ||
-            (parsed.suggestedTable?.toLowerCase() || '').includes(t.toLowerCase())
-        );
-        if (matchingTable) {
-          parsed.suggestedTable = matchingTable;
-        } else {
-          return null;
-        }
-      }
-
-      // Validate suggested column exists in table
-      const tableSchema = TARGET_SCHEMA[parsed.suggestedTable];
-      if (!tableSchema[parsed.suggestedColumn]) {
-        // Try to find a close match
-        const availableColumns = Object.keys(tableSchema);
-        const matchingColumn = availableColumns.find(
-          (c) =>
-            c.toLowerCase().includes(parsed.suggestedColumn?.toLowerCase() || '') ||
-            (parsed.suggestedColumn?.toLowerCase() || '').includes(c.toLowerCase())
-        );
-        if (matchingColumn) {
-          parsed.suggestedColumn = matchingColumn;
-        }
-        // Allow unmapped columns for FHIR resources
-      }
-
-      return {
-        sourceColumn,
-        suggestedTable: parsed.suggestedTable,
-        suggestedColumn: parsed.suggestedColumn,
-        fhirResource: parsed.fhirResource,
-        fhirPath: parsed.fhirPath,
-        confidence: Math.min(
-          parsed.confidence || 0.7,
-          this.config.maxAIConfidence
-        ),
-        reasoning: parsed.reasoning || 'AI-suggested mapping',
-        transformation: parsed.transformation,
-        alternativeMappings: parsed.alternativeMappings?.filter(
-          (alt) => TARGET_SCHEMA[alt.table]
-        ),
-      };
-    } catch (err: unknown) {
-      auditLogger.warn('DNA_MAPPER_AI_PARSE_FAILED', {
-        error: err instanceof Error ? err.message : String(err),
-        sourceColumn,
-      });
       return null;
     }
   }

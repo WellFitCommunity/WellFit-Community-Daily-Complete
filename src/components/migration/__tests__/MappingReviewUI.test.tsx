@@ -198,11 +198,16 @@ describe('MappingReviewUI', () => {
       expect(screen.getByText('NPI')).toBeInTheDocument();
     });
 
-    it('should display sample data for each column', () => {
+    it('should display PHI-masked sample formats, never raw values', () => {
       render(<MappingReviewUI {...defaultProps} />);
 
-      expect(screen.getByText(/John, Jane/)).toBeInTheDocument();
-      expect(screen.getByText(/john@test.com/)).toBeInTheDocument();
+      // Names -> case-preserving letter templates; email keeps @ and . shape.
+      expect(screen.getByText(/Xxxx, Xxxx/)).toBeInTheDocument();
+      expect(screen.getByText(/xxxx@xxxx\.xxx/)).toBeInTheDocument();
+
+      // The raw PHI must NOT be rendered anywhere.
+      expect(screen.queryByText(/John, Jane/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/john@test\.com/)).not.toBeInTheDocument();
     });
   });
 

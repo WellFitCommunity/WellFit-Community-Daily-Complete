@@ -47,13 +47,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model = "claude-3-5-sonnet-20241022",
       max_tokens = 1024,
       system,
+      tools,
+      tool_choice,
     } = req.body || {};
-    
+
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: "Missing messages[] in body" });
     }
 
-    // Anthropic Messages API request
+    // Anthropic Messages API request. Forward tools/tool_choice only when the
+    // caller asks for structured (forced-tool) output — keeps plain callers
+    // unchanged.
+    const anthropicBody: Record<string, unknown> = { model, max_tokens, system, messages };
+    if (Array.isArray(tools) && tools.length > 0) {
+      anthropicBody.tools = tools;
+      if (tool_choice) anthropicBody.tool_choice = tool_choice;
+    }
+
     const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -61,12 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({
-        model,
-        max_tokens,
-        system,
-        messages,
-      }),
+      body: JSON.stringify(anthropicBody),
     });
 
     if (!anthropicRes.ok) {

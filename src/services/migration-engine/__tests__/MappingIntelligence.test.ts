@@ -26,6 +26,17 @@ vi.mock('../../auditLogger', () => ({
 // Mock fetch for AI calls
 global.fetch = vi.fn();
 
+// The engine forces structured output (tool_choice), so the model replies with a
+// `tool_use` content block whose `input` is the already-parsed mapping. This
+// helper builds that response shape.
+const toolUseResponse = (input: Record<string, unknown>) => ({
+  ok: true,
+  json: () =>
+    Promise.resolve({
+      content: [{ type: 'tool_use', name: 'suggest_mapping', input }],
+    }),
+});
+
 describe('MappingIntelligence', () => {
   let intelligence: MappingIntelligence;
   let generator: DataDNAGenerator;
@@ -216,22 +227,14 @@ describe('MappingIntelligence', () => {
 
     it('should call AI for low-confidence mappings', async () => {
       // Mock AI response
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            content: [
-              {
-                text: JSON.stringify({
-                  suggestedTable: 'hc_staff',
-                  suggestedColumn: 'first_name',
-                  confidence: 0.85,
-                  reasoning: 'Column name suggests first name field',
-                }),
-              },
-            ],
-          }),
-      });
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        toolUseResponse({
+          suggestedTable: 'hc_staff',
+          suggestedColumn: 'first_name',
+          confidence: 0.85,
+          reasoning: 'Column name suggests first name field',
+        })
+      );
 
       const dna = generator.generateDNA('CSV', ['person_given_name'], [
         { person_given_name: 'John' },
@@ -243,24 +246,38 @@ describe('MappingIntelligence', () => {
       expect(global.fetch).toHaveBeenCalled();
     });
 
+    it('never sends raw PHI sample values to the LLM — masks them first', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        toolUseResponse({ suggestedTable: 'hc_staff', suggestedColumn: 'first_name', confidence: 0.85 })
+      );
+
+      // A distinctive PHI-bearing value that would be unmistakable if it leaked.
+      const dna = generator.generateDNA('CSV', ['person_given_name'], [
+        { person_given_name: 'Johnnyunique' },
+      ]);
+
+      await intelligence.suggestMappings(dna);
+
+      expect(global.fetch).toHaveBeenCalled();
+      const requestInit = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as { body: string };
+      const body = requestInit.body;
+
+      // The raw PHI value must NOT appear anywhere in the request to the LLM,
+      // but its masked character-class template must.
+      expect(body).not.toContain('Johnnyunique');
+      expect(body).toContain('Xxxxxxxxxxxx'); // 12 letters -> X + 11 x
+    });
+
     it('should use cached AI response', async () => {
       // First call
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            content: [
-              {
-                text: JSON.stringify({
-                  suggestedTable: 'hc_staff',
-                  suggestedColumn: 'first_name',
-                  confidence: 0.85,
-                  reasoning: 'Test reasoning',
-                }),
-              },
-            ],
-          }),
-      });
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        toolUseResponse({
+          suggestedTable: 'hc_staff',
+          suggestedColumn: 'first_name',
+          confidence: 0.85,
+          reasoning: 'Test reasoning',
+        })
+      );
 
       const dna = generator.generateDNA('CSV', ['person_given_name'], [
         { person_given_name: 'John' },
@@ -274,22 +291,14 @@ describe('MappingIntelligence', () => {
     });
 
     it('should clear AI cache', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            content: [
-              {
-                text: JSON.stringify({
-                  suggestedTable: 'hc_staff',
-                  suggestedColumn: 'first_name',
-                  confidence: 0.85,
-                  reasoning: 'Test reasoning',
-                }),
-              },
-            ],
-          }),
-      });
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        toolUseResponse({
+          suggestedTable: 'hc_staff',
+          suggestedColumn: 'first_name',
+          confidence: 0.85,
+          reasoning: 'Test reasoning',
+        })
+      );
 
       const dna = generator.generateDNA('CSV', ['person_given_name'], [
         { person_given_name: 'John' },
@@ -318,22 +327,14 @@ describe('MappingIntelligence', () => {
     it('should cap AI confidence at maxAIConfidence', async () => {
       intelligence.setConfig({ maxAIConfidence: 0.9 });
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            content: [
-              {
-                text: JSON.stringify({
-                  suggestedTable: 'hc_staff',
-                  suggestedColumn: 'first_name',
-                  confidence: 0.99, // Higher than cap
-                  reasoning: 'Test reasoning',
-                }),
-              },
-            ],
-          }),
-      });
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        toolUseResponse({
+          suggestedTable: 'hc_staff',
+          suggestedColumn: 'first_name',
+          confidence: 0.99, // Higher than cap
+          reasoning: 'Test reasoning',
+        })
+      );
 
       const dna = generator.generateDNA('CSV', ['person_given_name'], [
         { person_given_name: 'John' },
