@@ -285,6 +285,28 @@ export function handleHealthCheck(
 }
 
 /**
+ * Method guard for MCP servers. MCP is a JSON-RPC POST-only transport. Call this
+ * AFTER the OPTIONS + GET /health checks — any remaining non-POST request (e.g. a
+ * bare GET from a browser/monitor/probe) would otherwise fall through to
+ * `await req.json()` and 500 on the empty/absent body. Returns a 405 Response for
+ * non-POST, or null to continue processing the POST.
+ */
+export function requirePost(
+  req: Request,
+  corsHeaders: Record<string, string>
+): Response | null {
+  if (req.method === "POST") return null;
+  return new Response(JSON.stringify({
+    jsonrpc: "2.0",
+    error: { code: -32600, message: `Method ${req.method} not allowed; MCP requires POST` },
+    id: null
+  }), {
+    status: 405,
+    headers: { ...corsHeaders, "Content-Type": "application/json", "Allow": "POST, OPTIONS" }
+  });
+}
+
+/**
  * Simple in-memory rate limiter for when Supabase is unavailable
  * This is a fallback - not as sophisticated as the Supabase-backed limiter
  */

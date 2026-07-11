@@ -20,6 +20,7 @@ import {
   createToolsListResponse,
   handlePing,
   handleHealthCheck,
+  requirePost,
   type MCPInitResult
 } from '../_shared/mcpServerBase.ts';
 import { getRequestId } from '../_shared/mcpAuthGate.ts';
@@ -120,6 +121,9 @@ serve(async (req: Request) => {
   if (req.method === 'GET') {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
+
+  const methodGuard = requirePost(req, corsHeaders);
+  if (methodGuard) return methodGuard;
 
   // Rate limiting - strict for expensive clearinghouse calls
   const identifier = getRequestIdentifier(req);

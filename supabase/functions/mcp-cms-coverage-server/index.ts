@@ -19,6 +19,7 @@ import {
   createErrorResponse,
   handlePing,
   handleHealthCheck,
+  requirePost,
   checkInMemoryRateLimit,
   type MCPInitResult,
 } from "../_shared/mcpServerBase.ts";
@@ -95,6 +96,9 @@ serve(async (req) => {
   if (req.method === "GET") {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
+
+  const methodGuard = requirePost(req, corsHeaders);
+  if (methodGuard) return methodGuard;
 
   try {
     // Rate limiting (in-memory + identity-based when available)

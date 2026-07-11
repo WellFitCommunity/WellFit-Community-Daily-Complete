@@ -24,6 +24,7 @@ import {
   createInitializeResponse,
   createToolsListResponse,
   handleHealthCheck,
+  requirePost,
   checkBodySize,
   buildProvenance,
   MCP_BODY_LIMIT_LARGE,
@@ -144,6 +145,9 @@ serve(async (req: Request) => {
   if (req.method === "GET") {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
+
+  const methodGuard = requirePost(req, corsHeaders);
+  if (methodGuard) return methodGuard;
 
   // P3-3: Body size limit (2MB for FHIR bundles)
   const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_LARGE, corsHeaders);

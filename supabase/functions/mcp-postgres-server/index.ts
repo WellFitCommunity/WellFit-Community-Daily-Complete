@@ -17,6 +17,7 @@ import {
   createErrorResponse,
   createPerRequestClient,
   handleHealthCheck,
+  requirePost,
   checkBodySize,
   buildProvenance,
   MCP_BODY_LIMIT_BYTES,
@@ -77,6 +78,9 @@ serve(async (req: Request) => {
   if (req.method === "GET" && new URL(req.url).pathname.endsWith("/health")) {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
+
+  const methodGuard = requirePost(req, corsHeaders);
+  if (methodGuard) return methodGuard;
 
   const requestId = getRequestId(req);
 

@@ -17,6 +17,7 @@ import {
   createToolsListResponse,
   handlePing,
   handleHealthCheck,
+  requirePost,
   checkBodySize,
   buildProvenance,
   MCP_BODY_LIMIT_LARGE,
@@ -297,6 +298,9 @@ serve(async (req: Request) => {
   if (req.method === "GET") {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
+
+  const methodGuard = requirePost(req, corsHeaders);
+  if (methodGuard) return methodGuard;
 
   // P3-3: Body size limit (2MB for HL7/X12 messages)
   const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_LARGE, corsHeaders);

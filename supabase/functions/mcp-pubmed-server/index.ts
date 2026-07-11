@@ -21,6 +21,7 @@ import {
   createErrorResponse,
   handlePing,
   handleHealthCheck,
+  requirePost,
   checkInMemoryRateLimit,
   PING_TOOL
 } from "../_shared/mcpServerBase.ts";
@@ -193,6 +194,9 @@ serve(async (req) => {
   if (req.method === "GET") {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
+
+  const methodGuard = requirePost(req, corsHeaders);
+  if (methodGuard) return methodGuard;
 
   try {
     // Rate limiting — conservative for NCBI (50 req/min to stay well under 3/sec)

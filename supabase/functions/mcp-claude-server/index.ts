@@ -25,6 +25,7 @@ import {
   createInitializeResponse,
   createToolsListResponse,
   handleHealthCheck,
+  requirePost,
   checkBodySize,
   buildProvenance,
   MCP_BODY_LIMIT_BYTES,
@@ -174,6 +175,9 @@ serve(async (req: Request) => {
       { name: "anthropic", ready: !!ANTHROPIC_API_KEY }
     ]);
   }
+
+  const methodGuard = requirePost(req, corsHeaders);
+  if (methodGuard) return methodGuard;
 
   // Body size limit (512KB for AI text operations)
   const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_BYTES, corsHeaders);

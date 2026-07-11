@@ -16,6 +16,7 @@ import {
   createInitializeResponse,
   createToolsListResponse,
   handleHealthCheck,
+  requirePost,
   checkBodySize,
   buildProvenance,
   MCP_BODY_LIMIT_BYTES,
@@ -90,6 +91,9 @@ serve(async (req: Request) => {
   if (req.method === "GET") {
     return handleHealthCheck(req, SERVER_CONFIG, initResult, corsHeaders);
   }
+
+  const methodGuard = requirePost(req, corsHeaders);
+  if (methodGuard) return methodGuard;
 
   // P3-3: Body size limit (512KB)
   const bodySizeResponse = checkBodySize(req, MCP_BODY_LIMIT_BYTES, corsHeaders);
