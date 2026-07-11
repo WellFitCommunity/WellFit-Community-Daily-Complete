@@ -132,14 +132,19 @@ The two share the word "migration" and almost nothing else. They are tracked sep
 | B2.2 | Auth: clinical-or-admin role + tenant isolation via `mcpAuthGate` pattern (per `.claude/rules/adversarial-audit-lessons.md` edge-function checklist) | Edge function | TODO |
 | B2.3 | Rate limit: import from `_shared/mcpRateLimiter.ts` (low limit — engine runs are expensive) | Edge function | TODO |
 | B2.4 | Client refactor: `IntelligentMigrationService` calls the edge function instead of running engine logic in-browser | `src/services/migration-engine/IntelligentMigrationService.ts` | TODO |
-| B2.5 | Keep client-side classes for **types + small helpers** but move the heavy lifting (pattern detection, DNA generation, LLM calls) server-side | All engine services | TODO |
+| B2.5 | Keep client-side classes for **types + small helpers** but move the heavy lifting (pattern detection, DNA generation) server-side. NOTE: LLM calls **already** go server-side via the `/api/anthropic-chats` proxy — that part is done. | All engine services | PARTIAL |
 
-**Why this matters:** Right now the engine runs client-side. That means:
-- Source healthcare data passes through the browser (PHI exposure risk if browser is compromised)
-- Anthropic API key would have to be `VITE_*` exposed to call the LLM from client (CLAUDE.md rule violation)
-- Hospital security review will flag client-side data processing as a non-starter
+**Why this matters:** The engine's heavy logic (pattern detection, DNA generation, dedup) still runs client-side, so source healthcare data passes through the browser (PHI exposure risk if the browser is compromised), and a hospital security review will flag client-side data processing. Moving that server-side behind an authenticated job endpoint is the remaining value here.
 
-**Estimate:** 6 hours.
+> **Correction (2026-07-11) — the original B2 rationale was partly wrong.** It claimed "the Anthropic API key would have to be `VITE_*` exposed to call the LLM from the client." **That is not true.** The engine's LLM calls go through the server-side **`/api/anthropic-chats`** Vercel function, which holds `ANTHROPIC_API_KEY` server-side — the key is never in the browser bundle. So the key-exposure argument for B2 does not apply.
+>
+> Also completed 2026-07-11 (commit `8b1e703a`), independently of the B2 wrapper:
+> - **PHI sample values are now redacted** (character-class masking) before they reach the LLM prompt **and** in the operator `MappingReviewUI` — closes the "PHI in the LLM prompt / on screen" slice of the PHI concern.
+> - The engine's AI mapping call was migrated to **forced structured output** (`tool_choice`), removing the ```json regex-strip (CLAUDE.md #16).
+>
+> **Real remaining gap (was NOT in the original B2):** `/api/anthropic-chats` has CORS + rate limiting but **no JWT/role auth** — any client can drive Anthropic spend. It is shared by the engine + `fhirQuestionnaireService` + `fhirMappingService`, so authenticating it is its own hardening task (tracked separately, not part of the B2 wrapper).
+
+**Estimate:** 6 hours (down-scoped — LLM path already server-side; remaining work is the pattern-detection/DNA move + the authenticated job endpoint).
 
 ### B3 — CI test gate for the engine specifically
 
