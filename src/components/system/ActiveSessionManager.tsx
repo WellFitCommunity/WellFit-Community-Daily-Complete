@@ -57,29 +57,48 @@ const ActiveSessionManager: React.FC = () => {
       if (!silent) setLoading(true);
       setMessage(null);
 
-      // Load active sessions from last 24 hours
+      // Load active sessions from last 24 hours. user_sessions has NO FK to profiles,
+      // so a PostgREST `profiles(...)` embed 400s — resolve the profile fields in a
+      // second query keyed on user_id instead. (Columns verified vs live schema.)
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('user_sessions')
-        .select('*, profiles(email, first_name, last_name)')
+        .select('id, user_id, device_type, browser, os, ip_address, session_start, session_end')
         .gte('session_start', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .is('session_end', null)
         .order('session_start', { ascending: false });
 
       if (sessionsError) throw sessionsError;
 
-      const formattedSessions: Session[] = ((sessionsData || []) as UserSessionRow[]).map((session) => ({
-        id: session.id,
-        user_id: session.user_id,
-        user_email: session.profiles?.email,
-        user_name: ((session.profiles?.first_name || '') + ' ' + (session.profiles?.last_name || '')).trim() || undefined,
-        device_type: session.device_type || 'unknown',
-        browser: session.browser || 'unknown',
-        os: session.os || 'unknown',
-        ip_address: session.ip_address,
-        session_start: session.session_start,
-        last_activity: session.last_activity,
-        location: session.location
-      }));
+      const rows = (sessionsData || []) as UserSessionRow[];
+      const userIds = [...new Set(rows.map((s) => s.user_id).filter(Boolean))];
+
+      const profileMap = new Map<string, { email?: string; first_name?: string; last_name?: string }>();
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, email, first_name, last_name')
+          .in('user_id', userIds);
+        for (const p of (profilesData || []) as Array<{ user_id: string; email?: string; first_name?: string; last_name?: string }>) {
+          profileMap.set(p.user_id, p);
+        }
+      }
+
+      const formattedSessions: Session[] = rows.map((session) => {
+        const profile = profileMap.get(session.user_id);
+        return {
+          id: session.id,
+          user_id: session.user_id,
+          user_email: profile?.email,
+          user_name: ((profile?.first_name || '') + ' ' + (profile?.last_name || '')).trim() || undefined,
+          device_type: session.device_type || 'unknown',
+          browser: session.browser || 'unknown',
+          os: session.os || 'unknown',
+          ip_address: session.ip_address,
+          session_start: session.session_start,
+          last_activity: session.last_activity,
+          location: session.location
+        };
+      });
 
       setSessions(formattedSessions);
       setLastRefresh(new Date());

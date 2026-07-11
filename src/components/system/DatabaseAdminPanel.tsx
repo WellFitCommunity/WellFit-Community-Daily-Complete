@@ -35,8 +35,8 @@ const DatabaseAdminPanel: React.FC = () => {
 
       // Get rough table counts for key tables
       const tableNames = [
-        'profiles', 'check_ins', 'community_moments', 'billing_claims',
-        'fhir_observations', 'patient_encounters', 'user_sessions',
+        'profiles', 'check_ins', 'community_moments', 'claims',
+        'fhir_observations', 'encounters', 'user_sessions',
         'phi_access_logs', 'security_events', 'audit_logs'
       ];
 

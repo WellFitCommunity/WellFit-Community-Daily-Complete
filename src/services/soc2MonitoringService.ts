@@ -209,7 +209,10 @@ export class SOC2MonitoringService {
     try {
       let query = this.supabase
         .from('security_events')
-        .select('id, event_type, severity, actor_user_id, actor_ip_address, actor_user_agent, timestamp, description, metadata, auto_blocked, requires_investigation, investigated, investigated_by, investigated_at, resolution, related_audit_log_id, correlation_id, alert_sent, alert_sent_at, alert_recipients')
+        // security_events stores the client IP in `ip_address` (NOT `actor_ip_address`,
+        // which is the audit_logs column). Alias it to the interface field name so the
+        // whole SecurityEvent chain + dashboards keep working. (Verified vs live schema.)
+        .select('id, event_type, severity, actor_user_id, actor_ip_address:ip_address, actor_user_agent, timestamp, description, metadata, auto_blocked, requires_investigation, investigated, investigated_by, investigated_at, resolution, related_audit_log_id, correlation_id, alert_sent, alert_sent_at, alert_recipients')
         .order('timestamp', { ascending: false });
 
       if (options?.limit) {

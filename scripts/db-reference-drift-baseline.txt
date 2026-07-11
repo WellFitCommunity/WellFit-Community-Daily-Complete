@@ -50,7 +50,6 @@ table::cognitive_assessments
 table::communication_silence_window
 table::community
 table::community_photos
-table::compliance_status
 table::cultural_content_analytics
 table::cultural_content_cache
 table::daily_check_ins
@@ -87,7 +86,6 @@ table::health_data
 table::health_equity_metrics
 table::hpsa_designations
 table::immunizations
-table::incident_response_queue
 table::interaction_log
 table::mcp_batch_metrics
 table::meal_images
@@ -120,15 +118,12 @@ table::patient_vitals
 table::patients
 table::payers
 table::personalized_content_delivery
-table::phi_access_audit
 table::pill_identifications
 table::pill_label_comparisons
 table::posts
 table::public_data
 table::sdoh_flags
 table::sdoh_indicators
-table::security_events_analysis
-table::security_monitoring_dashboard
 table::security_workflow_preferences
 table::system_errors
 table::system_notifications

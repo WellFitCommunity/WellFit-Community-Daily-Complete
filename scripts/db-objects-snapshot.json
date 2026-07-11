@@ -2,8 +2,8 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-07-11 (added v_patient_caregiver_contacts + risk_assessments_decrypted views, both live-verified security_invoker=on + GRANT authenticated; risk_assessments_decrypted also removed from db-reference-drift-baseline as it is now a real object)",
-    "table_count": 770,
+    "generated": "2026-07-11 (restored 5 SOC2 monitoring views: security_monitoring_dashboard, phi_access_audit, security_events_analysis, incident_response_queue, compliance_status — migration 20260711200000, live-verified security_invoker=on + GRANT authenticated; all removed from db-reference-drift-baseline as now-real objects)",
+    "table_count": 775,
     "function_count": 1476
   },
   "tables": [
@@ -162,6 +162,7 @@
     "comments",
     "community_moment_reactions",
     "community_moments",
+    "compliance_status",
     "condition_marker_mappings",
     "connection_pool_metrics",
     "consecutive_missed_checkins_log",
@@ -349,6 +350,7 @@
     "imaging_studies",
     "immunization_registry_submissions",
     "inactivity_reminder_log",
+    "incident_response_queue",
     "insurance_payer_connections",
     "interdisciplinary_care_teams",
     "lab_order_tests",
@@ -527,6 +529,7 @@
     "performance_telemetry",
     "pharmacy_connections",
     "pharmacy_provider_connections",
+    "phi_access_audit",
     "phi_access_by_patient",
     "phi_access_log",
     "phi_access_logs",
@@ -642,6 +645,8 @@
     "security_alert_dashboard",
     "security_alerts",
     "security_events",
+    "security_events_analysis",
+    "security_monitoring_dashboard",
     "security_notifications",
     "security_vulnerabilities",
     "self_report_submissions",
