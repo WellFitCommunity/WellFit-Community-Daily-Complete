@@ -2,8 +2,8 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-07-11 (added v_patient_caregiver_contacts view from migration 20260710140000 — B1 caregiver-contacts boundary-layer view, live-verified security_invoker=on + GRANT authenticated)",
-    "table_count": 769,
+    "generated": "2026-07-11 (added v_patient_caregiver_contacts + risk_assessments_decrypted views, both live-verified security_invoker=on + GRANT authenticated; risk_assessments_decrypted also removed from db-reference-drift-baseline as it is now a real object)",
+    "table_count": 770,
     "function_count": 1476
   },
   "tables": [
@@ -614,6 +614,7 @@
     "result_escalation_rules",
     "rfp_opportunities",
     "risk_assessments",
+    "risk_assessments_decrypted",
     "rls_policy_audit",
     "roles",
     "rpm_enrollments",

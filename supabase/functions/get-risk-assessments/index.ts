@@ -1,6 +1,6 @@
 // supabase/functions/get-risk-assessments/index.ts
 // SECURITY: Requires authentication and tenant-scoped access
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -10,7 +10,8 @@ interface ProfileWithRole {
   tenant_id: string | null;
   is_admin: boolean;
   role_id: string | null;
-  roles: { name: string } | null;
+  // PostgREST returns the embedded role_id(name) join as an array.
+  roles: { name: string }[] | null;
 }
 
 // Safely extract patient_id from GET ?patient_id=… or POST { patient_id: "…" }
@@ -42,13 +43,13 @@ serve(async (req: Request) => {
   const { headers } = corsFromRequest(req);
 
   try {
-    // Required env vars
-    const SUPABASE_URL = SUPABASE_URL;
+    // Required env vars. risk_assessments is CLINICAL PHI: the risk_assessments_decrypted
+    // view decrypts via the Vault clinical key inside decrypt_phi_text(..., true), so no
+    // per-connection key needs to be set here (the old WellFit set_phi_key path is gone).
     const SERVICE_ROLE = SB_SECRET_KEY;
-    const PHI_KEY = Deno.env.get("PHI_ENCRYPTION_KEY");
-    if (!SUPABASE_URL || !SERVICE_ROLE || !PHI_KEY) {
+    if (!SUPABASE_URL || !SERVICE_ROLE) {
       return new Response(
-        "Missing env: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / PHI_ENCRYPTION_KEY",
+        "Missing env: SUPABASE_URL / SB_SECRET_KEY",
         { status: 500, headers },
       );
     }
@@ -94,10 +95,10 @@ serve(async (req: Request) => {
     }
 
     // Check if user has clinical/admin role (required for viewing risk assessments)
-    const typedProfile = profile as ProfileWithRole;
-    const roleName = typedProfile.roles?.name;
+    const typedProfile = profile as unknown as ProfileWithRole;
+    const roleName = typedProfile.roles?.[0]?.name;
     const allowedRoles = ["admin", "super_admin", "nurse", "physician", "doctor", "case_manager", "nurse_practitioner"];
-    const hasAccess = profile.is_admin || allowedRoles.includes(roleName);
+    const hasAccess = profile.is_admin || (roleName ? allowedRoles.includes(roleName) : false);
 
     if (!hasAccess) {
       return new Response(
@@ -123,15 +124,6 @@ serve(async (req: Request) => {
         JSON.stringify({ error: "No tenant assigned to user" }),
         { status: 403, headers: { "content-type": "application/json", ...headers } },
       );
-    }
-
-    // Set the per-connection decryption key inside Postgres
-    const { error: keyErr } = await supabase.rpc("set_phi_key", { k: PHI_KEY });
-    if (keyErr) {
-      return new Response(`Key error: ${keyErr.message}`, {
-        status: 500,
-        headers,
-      });
     }
 
     const patientId = await getPatientId(req);

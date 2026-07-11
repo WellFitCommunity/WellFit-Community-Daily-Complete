@@ -125,7 +125,6 @@ table::pill_identifications
 table::pill_label_comparisons
 table::posts
 table::public_data
-table::risk_assessments_decrypted
 table::sdoh_flags
 table::sdoh_indicators
 table::security_events_analysis
