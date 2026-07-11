@@ -480,8 +480,31 @@ The two products are separated so they can deploy independently, but cohesive so
 | Edge functions that bypass tenant isolation | Security violation |
 | Blocking patient access to their own records | Cures Act violation |
 | Blocking clinician access to home-generated vitals (same tenant) | Defeats the value of shared deployment |
+| Decorative emoji glyphs baked into clinical data/metrics/forms (System B) | The community aesthetic leaks across the wall; reads as toy to a clinician/compliance officer |
 
 ---
+
+## Aesthetic Boundary — Emojis Are a System A Design Element
+
+The A/B wall is not only architectural (tables, edge functions, imports) — it is **visual**. The two products intentionally look different because they serve different people.
+
+| | System A — WellFit (Community) | System B — Envision Atlus (Clinical) |
+|---|---|---|
+| Audience | Seniors, caregivers, community orgs | Nurses, clinicians, compliance officers |
+| Tone | Warm, playful, encouraging | Instrument-grade, serious, precise |
+| **Emojis as data/labels** | **A first-class design element** — engagement, gamification, friendliness. Keep them. | **Forbidden.** Severity/status via EA badge/icon components, never emoji glyphs. |
+
+**The distinction that matters (raised by Maria 2026-07-11):** the ban is on **decorative emoji glyphs baked into the instrument face** — `StatCard icon="🚨"`, section headers like `🚽 Bathroom Independence`, metric tiles, form labels, buttons. Those make a clinical screen look childish.
+
+It is **NOT** a ban on deliberate, designed **moments of delight at a meaningful milestone** — e.g., the celebratory animation nurses see when a shift **handoff completes**. That is an intentional, scoped UX reward on a workflow event, not decoration smeared across the data. **Keep those.** The line: *decoration on the data = no; a chosen animation at a completion milestone = yes.*
+
+**Why the decoration ban exists:** AI code generation is *context-blind* about tone — it reaches for the friendly emoji default from consumer README training data regardless of which system it is writing. The community aesthetic bled into ~47 clinical files (caught 2026-07-11). Beyond optics, on clinical surfaces emojis-as-labels are a real defect: screen readers announce them literally (⚠️ → "warning sign emoji") — noise for the low-vision seniors the accessibility rules target — and they don't localize.
+
+**Where the decoration ban applies (System B):** `src/components/admin/*`, `src/components/admin/bed-board/*`, `src/components/admin/smart-app/*`, `src/components/admin/sections/*`, and any clinician-facing UI. Communicate severity with the EA design system (`EABadge`, `EAAlert`, icon components) — see `component-library.md`.
+
+**Where emojis stay (System A):** `src/components/community/*`, `src/components/check-in/*`, and other senior-facing engagement surfaces — a deliberate product choice, not a leak.
+
+**Shared design system** (`src/components/envision-atlus/*`) inherits the strict rule — it renders on clinical surfaces, so no decorative emoji glyphs there either. Designed milestone animations are the exception, invoked deliberately, not the default.
 
 ## Refactor Guardrails
 

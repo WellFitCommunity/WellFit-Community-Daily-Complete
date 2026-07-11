@@ -9,6 +9,19 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { RiskAssessment } from '../../types/riskAssessment';
 import { claudeService } from '../../services/claudeService';
+import {
+  ClipboardList,
+  Footprints,
+  Armchair,
+  Bath,
+  Utensils,
+  AlertTriangle,
+  BarChart3,
+  Stethoscope,
+  Brain,
+  Users,
+  Sparkles,
+} from 'lucide-react';
 
 interface RiskAssessmentFormProps {
   patientId: string;
@@ -268,11 +281,17 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
 
           {/* Functional Assessment Questions */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-4">📋 Functional Assessment Questions</h3>
+            <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-blue-700" aria-hidden="true" />
+              Functional Assessment Questions
+            </h3>
 
             {/* Basic Mobility */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">🚶‍♀️ Mobility & Movement</h4>
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <Footprints className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                Mobility &amp; Movement
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Can walk independently?</label>
@@ -309,7 +328,10 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
 
             {/* Sitting & Standing */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">🪑 Sitting & Standing</h4>
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <Armchair className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                Sitting &amp; Standing
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Can sit down safely?</label>
@@ -345,7 +367,10 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
 
             {/* Bathroom Independence */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">🚽 Bathroom Independence</h4>
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <Bath className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                Bathroom Independence
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Can get on/off toilet safely?</label>
@@ -381,7 +406,10 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
 
             {/* Daily Living Activities */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">🍽️ Daily Living Activities</h4>
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <Utensils className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                Daily Living Activities
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Can prepare meals?</label>
@@ -417,7 +445,10 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
 
             {/* Fall Risk Assessment */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">⚠️ Fall Risk Factors</h4>
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
+                Fall Risk Factors
+              </h4>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {[
                   'History of falls',
@@ -453,17 +484,20 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
 
           {/* Risk Scoring Section */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Clinical Risk Scores</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-gray-500" aria-hidden="true" />
+              Clinical Risk Scores
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { field: 'medical_risk_score', label: 'Medical Risk', icon: '🏥' },
-                { field: 'mobility_risk_score', label: 'Mobility Risk', icon: '🚶' },
-                { field: 'cognitive_risk_score', label: 'Cognitive Risk', icon: '🧠' },
-                { field: 'social_risk_score', label: 'Social Risk', icon: '👥' }
-              ].map(({ field, label, icon }) => (
+                { field: 'medical_risk_score', label: 'Medical Risk', Icon: Stethoscope },
+                { field: 'mobility_risk_score', label: 'Mobility Risk', Icon: Footprints },
+                { field: 'cognitive_risk_score', label: 'Cognitive Risk', Icon: Brain },
+                { field: 'social_risk_score', label: 'Social Risk', Icon: Users }
+              ].map(({ field, label, Icon }) => (
                 <div key={field} className="space-y-2">
                   <label className="text-sm font-medium flex items-center">
-                    <span className="mr-2">{icon}</span>
+                    <Icon className="h-4 w-4 mr-2 text-gray-500" aria-hidden="true" />
                     {label}
                   </label>
                   <div className="flex items-center space-x-2">
@@ -499,8 +533,8 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
           {/* AI Analysis Section */}
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-purple-900 flex items-center">
-                <span className="mr-2">🤖</span>
+              <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-700" aria-hidden="true" />
                 AI-Assisted Risk Analysis
               </h3>
               <Button

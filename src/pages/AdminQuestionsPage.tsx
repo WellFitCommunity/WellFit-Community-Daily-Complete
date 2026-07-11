@@ -1,13 +1,35 @@
 // src/pages/AdminQuestionsPage.tsx
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import RiskAssessmentManager from '../components/admin/RiskAssessmentManager';
 import NurseQuestionManager from '../components/admin/NurseQuestionManager';
 import SmartScribe from '../components/smart/RealTimeSmartScribe';
 import SmartBackButton from '../components/ui/SmartBackButton';
 import { ClipboardCheck, MessageSquare, Mic } from 'lucide-react';
 
+type AdminQuestionsTab = 'assessment' | 'questions' | 'scribe';
+const VALID_TABS: readonly AdminQuestionsTab[] = ['assessment', 'questions', 'scribe'];
+
 export default function AdminQuestionsPage() {
-  const [activeTab, setActiveTab] = useState<'assessment' | 'questions' | 'scribe'>('questions');
+  // Deep-linkable tab: e.g. /admin-questions?tab=assessment lands directly on the
+  // Health Assessments tab (the Risk Assessment Manager). Falls back to 'questions'.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab: AdminQuestionsTab =
+    tabParam && VALID_TABS.includes(tabParam as AdminQuestionsTab)
+      ? (tabParam as AdminQuestionsTab)
+      : 'questions';
+  const [activeTab, setActiveTabState] = useState<AdminQuestionsTab>(initialTab);
+
+  const setActiveTab = (tab: AdminQuestionsTab) => {
+    setActiveTabState(tab);
+    // Keep the URL in sync so the tab is shareable/back-button friendly.
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tab);
+      return next;
+    }, { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">

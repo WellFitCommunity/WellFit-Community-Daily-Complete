@@ -103,8 +103,12 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     setShowMobileMenu(false);
   };
 
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(`${path}/`);
+  const isActive = (path: string) => {
+    // Compare against the pathname only so query-string deep links
+    // (e.g. /admin-questions?tab=assessment) still highlight correctly.
+    const base = path.split('?')[0];
+    return location.pathname === base || location.pathname.startsWith(`${base}/`);
+  };
 
   // Role-aware navigation items
   const getRoleNavItems = () => {
@@ -172,7 +176,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
       },
       {
         label: 'Risk Assessment',
-        path: '/admin-questions',
+        path: '/admin-questions?tab=assessment',
         icon: ClipboardList,
         show: showRiskAssessment,
       },
@@ -201,6 +205,10 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     { label: 'Physician Dashboard', path: '/physician-dashboard', icon: Shield, show: adminRole === 'super_admin' },
     { divider: true, show: adminRole === 'super_admin' },
     { label: 'Admin Settings', path: '/admin/settings', icon: Settings, show: true },
+    // Always-available entry to the Risk Assessment Manager (Health Assessments tab),
+    // so it is findable from every admin surface, not only pages that opt into the
+    // contextual "Risk Assessment" main-nav button (showRiskAssessment).
+    { label: 'Risk Assessment', path: '/admin-questions?tab=assessment', icon: ClipboardList, show: true },
     { label: 'Audit Logs', path: '/admin/audit-logs', icon: FileText, show: true },
     { label: 'System Admin', path: '/admin/system', icon: Shield, show: adminRole === 'super_admin' },
     { label: 'SMART Apps', path: '/admin/smart-apps', icon: Smartphone, show: adminRole === 'super_admin' },
