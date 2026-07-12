@@ -281,9 +281,17 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
         const { error } = await supabase.functions.invoke('create-checkin', { body });
 
         if (error) {
-          // Fallback: save to self_reports table directly
+          // Fallback: save to self_reports directly. Its INSERT RLS requires
+          // tenant_id = get_current_tenant_id(); resolve it or the fallback also
+          // fails silently (self_reports has no trigger to backfill it).
+          const { data: tenantProfile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('user_id', userId)
+            .maybeSingle();
           const { error: insertError } = await supabase.from('self_reports').insert([{
             user_id: userId,
+            tenant_id: tenantProfile?.tenant_id ?? null,
             mood: mood || label,
             bp_systolic: sys,
             bp_diastolic: dia,

@@ -117,17 +117,19 @@ const OfflineIndicator: React.FC = () => {
    */
   const syncReportToSupabase = useCallback(async (reportData: Record<string, unknown>): Promise<boolean> => {
     try {
-      // Add metadata to track this was an offline sync
-      const dataWithMeta = {
-        ...reportData,
-        metadata: {
-          ...(typeof reportData.metadata === 'object' ? reportData.metadata : {}),
-          source: 'offline_sync',
-          synced_at: new Date().toISOString(),
-        },
-      };
+      // self_reports has NO `metadata` column (the old dataWithMeta wrapper 400'd every
+      // sync), and its INSERT RLS requires tenant_id = get_current_tenant_id(). Resolve
+      // the tenant and insert only real columns so offline check-ins actually sync.
+      const { data: tenantProfile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', reportData.user_id as string)
+        .maybeSingle();
 
-      const { error } = await supabase.from('self_reports').insert([dataWithMeta]);
+      const { error } = await supabase.from('self_reports').insert([{
+        ...reportData,
+        tenant_id: tenantProfile?.tenant_id ?? null,
+      }]);
 
       if (error) {
         auditLogger.warn('Offline sync failed for report', {

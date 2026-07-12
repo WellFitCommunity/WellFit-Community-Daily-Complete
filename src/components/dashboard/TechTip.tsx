@@ -189,16 +189,20 @@ const TechTip: React.FC = () => {
       // Get session to ensure user_id matches auth.uid() for RLS
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) {
-        await supabase.from('user_engagements').insert({
+        await supabase.from('user_engagements').upsert({
           user_id: session.user.id,
+          feature_name: 'tech_tips',            // NOT NULL on user_engagements
           engagement_type: 'tech_tip_feedback',
-          content_id: `tip-${todaysTipIndex}`,
+          // `content_id` is NOT a column — carry it in metadata. upsert on the
+          // (user_id, feature_name, engagement_type) unique key avoids a duplicate-key
+          // error when a senior gives feedback on more than one tip.
           metadata: {
+            content_id: `tip-${todaysTipIndex}`,
             tip_content: todaysTip,
             reaction: reaction,
             date: todaysDateString
           }
-        });
+        }, { onConflict: 'user_id,feature_name,engagement_type' });
       }
     } catch {
       // Silently fail - engagement tracking is not critical

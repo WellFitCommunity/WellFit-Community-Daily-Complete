@@ -324,6 +324,19 @@ export const VitalCapture: React.FC<VitalCaptureProps> = ({
         payload.temperature = pendingReading.value;
       }
 
+      // check_ins INSERT RLS requires tenant_id = get_current_tenant_id(); resolve it
+      // from the user's profile (mirrors SeniorCommunityDashboard / create-checkin).
+      // Without it the insert is silently rejected by RLS and the reading is lost.
+      const { data: tenantProfile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!tenantProfile?.tenant_id) {
+        throw new Error('Could not save your reading: no tenant is set on your profile. Please contact support.');
+      }
+      payload.tenant_id = tenantProfile.tenant_id;
+
       // Insert into check_ins
       const { error: insertError } = await supabase
         .from('check_ins')
