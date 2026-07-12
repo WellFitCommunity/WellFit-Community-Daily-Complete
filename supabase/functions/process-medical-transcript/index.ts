@@ -66,7 +66,7 @@ serve(async (req) => {
     if (userId) {
       const { data } = await supabase
         .from('provider_scribe_preferences')
-        .select('*')
+        .select('formality_level, humor_level, verbosity, interaction_style, documentation_style, billing_preferences, common_phrases, preferred_specialties, provider_type, interaction_count')
         .eq('provider_id', userId)
         .single();
       prefs = data;
@@ -145,7 +145,8 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929', // Latest model for best scribe performance
+        model: 'claude-sonnet-5', // Latest model for best scribe performance
+        thinking: { type: "disabled" },
         max_tokens: 4000,
         temperature: 0.1,
         messages: [{

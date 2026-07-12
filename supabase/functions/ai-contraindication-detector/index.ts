@@ -505,6 +505,7 @@ Return ONLY valid JSON.`;
     },
     body: JSON.stringify({
       model: SONNET_MODEL,
+      thinking: { type: "disabled" },
       max_tokens: 3000,
       messages: [{ role: "user", content: prompt }],
     }),

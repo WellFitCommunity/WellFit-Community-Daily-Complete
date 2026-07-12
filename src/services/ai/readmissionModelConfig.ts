@@ -529,7 +529,7 @@ export const TENANT_CONFIG_DEFAULTS = {
   READMISSION_PREDICTOR_ENABLED: false,
   AUTO_CREATE_CARE_PLAN: false,
   HIGH_RISK_THRESHOLD: 0.50,
-  DEFAULT_MODEL: 'claude-sonnet-4-5-20250929'
+  DEFAULT_MODEL: 'claude-sonnet-5'
 } as const;
 
 // =====================================================

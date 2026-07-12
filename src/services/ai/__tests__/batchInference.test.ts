@@ -28,7 +28,7 @@ vi.mock('../../mcp/mcp-cost-optimizer', () => ({
       ]),
       fromCache: false,
       cost: 0.003,
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-5',
     }),
     getMetrics: vi.fn().mockReturnValue({
       totalCalls: 100,

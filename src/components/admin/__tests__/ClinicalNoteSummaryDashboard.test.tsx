@@ -177,7 +177,7 @@ const MOCK_PROGRESS_NOTES = [
     synthesis_type: 'daily_summary',
     content: 'Synthesized daily progress for Test Patient Alpha. Overall status improving.',
     confidence_score: 0.92,
-    model_used: 'claude-sonnet-4-5-20250929',
+    model_used: 'claude-sonnet-5',
     created_at: '2026-01-15T18:00:00Z',
     reviewed: true,
     reviewer_id: 'reviewer-test-001',
@@ -201,7 +201,7 @@ const MOCK_PROGRESS_NOTES = [
     synthesis_type: 'care_coordination',
     content: 'Care coordination notes for Test Patient Gamma.',
     confidence_score: null,
-    model_used: 'claude-sonnet-4-5-20250929',
+    model_used: 'claude-sonnet-5',
     created_at: '2026-01-17T12:00:00Z',
     reviewed: false,
     reviewer_id: null,
@@ -498,8 +498,8 @@ describe('ClinicalNoteSummaryDashboard', () => {
 
     // Model - null defaults to 'Claude'
     expect(screen.getByText('Claude')).toBeInTheDocument();
-    // Two notes use claude-sonnet-4-5-20250929
-    const modelTexts = screen.getAllByText('claude-sonnet-4-5-20250929');
+    // Two notes use claude-sonnet-5
+    const modelTexts = screen.getAllByText('claude-sonnet-5');
     expect(modelTexts.length).toBe(2);
 
     // Review status badges

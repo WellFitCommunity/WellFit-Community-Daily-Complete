@@ -82,7 +82,7 @@ const mockBurnoutAdvisorResponse = {
     confidence: 0.85,
   },
   metadata: {
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-5',
     skill_key: 'nurseos_burnout_advisor',
     input_tokens: 500,
     output_tokens: 300,

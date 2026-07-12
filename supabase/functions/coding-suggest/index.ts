@@ -1,5 +1,5 @@
 // Supabase Edge Function (Deno) — production-grade
-// - Uses Anthropic Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) for maximum accuracy in medical coding
+// - Uses Anthropic Claude Sonnet 4.5 (claude-sonnet-5) for maximum accuracy in medical coding
 // - Revenue-critical: Accurate codes = correct reimbursement
 // - De-identifies input aggressively
 // - Writes comprehensive audit row (no PHI)
@@ -182,8 +182,8 @@ serve(async (req) => {
     if (band) deidentified.age_band = band;
     deidentified.time_frame = "recent";
 
-    // Claude call (model: claude-sonnet-4-5-20250929 - latest for best medical coding)
-    const model = "claude-sonnet-4-5-20250929";
+    // Claude call (model: claude-sonnet-5 - latest for best medical coding)
+    const model = "claude-sonnet-5";
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
     let text = "";
@@ -195,6 +195,7 @@ serve(async (req) => {
         const res = await withTimeout(
           anthropic.messages.create({
             model,
+            thinking: { type: "disabled" },
             max_tokens: 1024,
             system: SYSTEM_PROMPT,
             messages: [{ role: "user", content: userPrompt(deidentified) }],
@@ -304,7 +305,7 @@ serve(async (req) => {
         request_id: requestId,
         user_id: userId,
         request_type: 'medical_coding',
-        model: "claude-sonnet-4-5-20250929",
+        model: "claude-sonnet-5",
         input_tokens: 0,
         output_tokens: 0,
         cost: 0,
@@ -326,7 +327,7 @@ serve(async (req) => {
     try {
       await sb.from("coding_audits").insert({
         encounter_id: null,
-        model: "claude-sonnet-4-5-20250929", // Sonnet 4.5 - revenue-critical accuracy
+        model: "claude-sonnet-5", // Sonnet 4.5 - revenue-critical accuracy
         success: false,
         confidence: null,
         created_at: new Date().toISOString(),

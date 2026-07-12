@@ -94,7 +94,7 @@ const makeClaudeLogs = () => [
   },
   {
     created_at: '2026-02-10T09:00:00Z', cost: 0.15, success: true,
-    input_tokens: 1200, output_tokens: 800, model: 'claude-sonnet-4-5-20250929',
+    input_tokens: 1200, output_tokens: 800, model: 'claude-sonnet-5',
     response_time_ms: 350, error_code: null, user_id: 'user-test-alpha',
   },
   {
@@ -284,7 +284,7 @@ describe('ClaudeBillingMonitoringDashboard', () => {
     expect(screen.getByText('claude-haiku-4-5-20251001')).toBeInTheDocument();
     expect(screen.getByText('$0.08')).toBeInTheDocument();
 
-    expect(screen.getByText('claude-sonnet-4-5-20250929')).toBeInTheDocument();
+    expect(screen.getByText('claude-sonnet-5')).toBeInTheDocument();
     expect(screen.getByText('$0.15')).toBeInTheDocument();
   });
 

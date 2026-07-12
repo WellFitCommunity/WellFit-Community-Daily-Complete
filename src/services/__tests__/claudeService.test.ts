@@ -33,7 +33,7 @@ vi.mock('../../config/environment', () => ({
 
 vi.mock('../../utils/claudeModelSelection', () => ({
   modelSelector: {
-    selectModel: vi.fn(() => 'claude-sonnet-4-5-20250929'),
+    selectModel: vi.fn(() => 'claude-sonnet-5'),
   },
   createModelCriteria: vi.fn(() => ({
     userRole: 'senior_patient',

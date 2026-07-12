@@ -107,7 +107,7 @@ function createMockCareResponse(overrides?: {
       metadata: {
         generated_at: '2026-01-01T00:00:00Z',
         response_time_ms: 1200,
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-5',
       },
   } } as unknown as ServiceResult<never>;
 }

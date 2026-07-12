@@ -132,6 +132,7 @@ export async function enhanceWithAI(
       },
       body: JSON.stringify({
         model: SONNET_MODEL,
+        thinking: { type: "disabled" },
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       }),

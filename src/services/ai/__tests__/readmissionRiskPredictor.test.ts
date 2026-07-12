@@ -934,13 +934,13 @@ describe('Skill Enablement', () => {
       readmission_predictor_enabled: false,
       readmission_predictor_auto_create_care_plan: false,
       readmission_predictor_high_risk_threshold: 0.50,
-      readmission_predictor_model: 'claude-sonnet-4-5-20250929'
+      readmission_predictor_model: 'claude-sonnet-5'
     };
 
     expect(defaults.readmission_predictor_enabled).toBe(false);
     expect(defaults.readmission_predictor_auto_create_care_plan).toBe(false);
     expect(defaults.readmission_predictor_high_risk_threshold).toBe(0.50);
-    expect(defaults.readmission_predictor_model).toBe('claude-sonnet-4-5-20250929');
+    expect(defaults.readmission_predictor_model).toBe('claude-sonnet-5');
   });
 
   it('should use custom model when configured', () => {

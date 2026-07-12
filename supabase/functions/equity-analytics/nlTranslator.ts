@@ -130,6 +130,7 @@ export async function translateQuestion(question: string): Promise<TranslationRe
     response = await anthropic.messages.create({
       model: NL_TRANSLATOR_MODEL,
       max_tokens: 1024,
+      thinking: { type: "disabled" },
       system: SYSTEM_PROMPT,
       tools: TOOLS as unknown as Anthropic.Tool[],
       tool_choice: { type: "any" }, // MUST call one of the tools — never free-text

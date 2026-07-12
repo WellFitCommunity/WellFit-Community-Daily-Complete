@@ -123,7 +123,7 @@ function createMockCapacityForecast(overrides?: Partial<CapacityForecast>): Capa
       seasonalAdjustment: 1.0
     },
     recommendations: ['Consider early discharge rounds'],
-    aiModel: 'claude-sonnet-4-5-20250929',
+    aiModel: 'claude-sonnet-5',
     aiCost: 0.015,
     ...overrides
   };

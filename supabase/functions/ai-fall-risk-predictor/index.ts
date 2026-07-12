@@ -777,6 +777,7 @@ ${buildConstraintBlock(['escalation'])}`;
     },
     body: JSON.stringify({
       model: SONNET_MODEL,
+      thinking: { type: "disabled" },
       max_tokens: 2000,
       messages: [{ role: "user", content: prompt }],
     }),

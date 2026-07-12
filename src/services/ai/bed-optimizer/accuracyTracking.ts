@@ -94,7 +94,7 @@ export async function trackBedAssignment(
       patientId: patient.patientId,
       entityType: 'bed_assignment',
       entityId: recommendation.recommendedBedId,
-      model: 'claude-sonnet-4-5-20250929'
+      model: 'claude-sonnet-5'
     });
   } catch {
     // Don't fail if tracking fails

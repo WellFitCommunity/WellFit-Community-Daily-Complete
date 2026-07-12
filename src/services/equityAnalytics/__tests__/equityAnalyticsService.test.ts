@@ -148,7 +148,7 @@ describe('equityAnalyticsService.translate', () => {
 
   it('returns the interpreted spec for a clear question', async () => {
     invoke.mockResolvedValue({
-      data: { spec: SPEC, interpretedFrom: 'members by gender', translatedBy: 'claude-sonnet-4-5-20250929' },
+      data: { spec: SPEC, interpretedFrom: 'members by gender', translatedBy: 'claude-sonnet-5' },
       error: null,
     });
 

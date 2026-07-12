@@ -527,9 +527,17 @@ describe('Medical Coding Processor MCP — Payer Rules Engine', () => {
     });
 
     it('AI skills are pinned to specific model versions', () => {
-      // Per CLAUDE.md: "Pin AI model versions"
-      const modelVersion = 'claude-sonnet-4-5-20250929';
-      expect(modelVersion).toMatch(/^claude-\w+-\d+-\d+-\d{8}$/);
+      // Per CLAUDE.md #14: "Pin AI model versions" — an explicit, immutable model ID,
+      // never `latest`/unversioned. Two valid pin shapes:
+      //   - date-suffixed legacy IDs: claude-sonnet-4-5-20250929
+      //   - complete newer IDs (no date suffix): claude-sonnet-5, claude-opus-4-8
+      const modelVersion = 'claude-sonnet-5';
+      const dateSuffixed = /^claude-\w+-\d+-\d+-\d{8}$/;      // e.g. claude-sonnet-4-5-20250929
+      const completeVersioned = /^claude-[a-z]+-\d+(-\d+)?$/; // e.g. claude-sonnet-5, claude-opus-4-8
+      expect(dateSuffixed.test(modelVersion) || completeVersioned.test(modelVersion)).toBe(true);
+      // Must not be an unpinned/mutable reference
+      expect(modelVersion).not.toMatch(/latest/);
+      expect(modelVersion).not.toBe('claude-sonnet');
     });
 
     it('revenue projection never exceeds outlier threshold sanity check', () => {

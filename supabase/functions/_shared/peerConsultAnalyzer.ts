@@ -134,7 +134,8 @@ export async function runConsultPrepAnalysis(
       // was the original Rule #16 violation. Same pattern as the canonical
       // CR-2 fix in realtime_medical_transcription/index.ts.
       body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250929",
+        model: "claude-sonnet-5",
+        thinking: { type: "disabled" },
         max_tokens: 2000,
         messages: [{ role: "user", content: prompt }],
         tools: [PEER_CONSULT_SUMMARY_TOOL],

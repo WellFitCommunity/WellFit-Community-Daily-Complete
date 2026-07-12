@@ -203,7 +203,7 @@ Deno.test("Coding Suggest Edge Function Tests", async (t) => {
 
   // Claude API integration tests
   await t.step("should use Claude Sonnet 4.5 for medical coding", () => {
-    const model = "claude-sonnet-4-5-20250929";
+    const model = "claude-sonnet-5";
     assertEquals(model.includes("sonnet"), true);
   });
 
@@ -383,7 +383,7 @@ Return ONLY strict JSON matching this shape:
       request_id: crypto.randomUUID(),
       user_id: "user-123",
       request_type: "medical_coding",
-      model: "claude-sonnet-4-5-20250929",
+      model: "claude-sonnet-5",
       input_tokens: 500,
       output_tokens: 300,
       cost: 0.006,
@@ -409,7 +409,7 @@ Return ONLY strict JSON matching this shape:
       request_id: crypto.randomUUID(),
       user_id: "user-123",
       request_type: "medical_coding",
-      model: "claude-sonnet-4-5-20250929",
+      model: "claude-sonnet-5",
       input_tokens: 0,
       output_tokens: 0,
       cost: 0,
@@ -428,7 +428,7 @@ Return ONLY strict JSON matching this shape:
   await t.step("should log to coding_audits table", () => {
     const codingAudit = {
       encounter_id: "enc-123",
-      model: "claude-sonnet-4-5-20250929",
+      model: "claude-sonnet-5",
       success: true,
       confidence: 85,
       created_at: new Date().toISOString()

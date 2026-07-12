@@ -62,7 +62,7 @@ describe('AccuracyTrackingService', () => {
         predictionValue: { risk_score: 75, risk_category: 'HIGH' },
         confidence: 0.85,
         patientId: 'patient-123',
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-5',
         inputTokens: 500,
         outputTokens: 200,
         costUsd: 0.005,

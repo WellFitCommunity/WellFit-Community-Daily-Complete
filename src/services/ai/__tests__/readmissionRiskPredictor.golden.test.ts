@@ -305,7 +305,7 @@ const GOLDEN_TENANT_CONFIG = {
   readmission_predictor_enabled: true,
   readmission_predictor_auto_create_care_plan: true,
   readmission_predictor_high_risk_threshold: 0.50,
-  readmission_predictor_model: 'claude-sonnet-4-5-20250929'
+  readmission_predictor_model: 'claude-sonnet-5'
 };
 
 // AI response (deterministic)
@@ -413,7 +413,7 @@ function setupMockSupabase() {
 function setupMockMcpOptimizer() {
   mockMcpCall.mockResolvedValue({
     response: GOLDEN_AI_RESPONSE,
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-5',
     cost: 0.015
   });
 }
@@ -691,7 +691,7 @@ describe('GOLDEN TESTS: ReadmissionRiskPredictor', () => {
       // GOLDEN: Metadata
       expect(prediction.patientId).toBe(GOLDEN_PATIENT_ID);
       expect(prediction.dischargeDate).toBe(GOLDEN_DISCHARGE_DATE);
-      expect(prediction.aiModel).toBe('claude-sonnet-4-5-20250929');
+      expect(prediction.aiModel).toBe('claude-sonnet-5');
       expect(prediction.aiCost).toBe(0.015);
     });
 
@@ -773,7 +773,7 @@ describe('GOLDEN TESTS: ReadmissionRiskPredictor', () => {
 
       mockMcpCall.mockResolvedValueOnce({
         response: mockResponseWithExtra,
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-5',
         cost: 0.015
       });
 
@@ -798,7 +798,7 @@ describe('GOLDEN TESTS: ReadmissionRiskPredictor', () => {
 
       mockMcpCall.mockResolvedValueOnce({
         response: minimalValidResponse,
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-5',
         cost: 0.01
       });
 

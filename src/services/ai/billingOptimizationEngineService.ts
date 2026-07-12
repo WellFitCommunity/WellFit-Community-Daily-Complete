@@ -360,7 +360,7 @@ export const BillingOptimizationEngineService = {
         metadata: {
           generatedAt: new Date().toISOString(),
           responseTimeMs: Date.now() - startTime,
-          model: error ? 'local-only' : 'claude-sonnet-4-5-20250929',
+          model: error ? 'local-only' : 'claude-sonnet-5',
           codesAnalyzed: encounter.procedures.length + encounter.diagnoses.length,
         },
       };

@@ -240,12 +240,12 @@ Deno.test("MCP Claude Server Tests", async (t) => {
 
   await t.step("should calculate cost for Sonnet model", () => {
     const pricing = {
-      "claude-sonnet-4-5-20250929": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 }
+      "claude-sonnet-5": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 }
     };
 
     const inputTokens = 1000;
     const outputTokens = 500;
-    const model = "claude-sonnet-4-5-20250929";
+    const model = "claude-sonnet-5";
 
     const rates = pricing[model];
     const cost = (inputTokens * rates.input) + (outputTokens * rates.output);
@@ -270,11 +270,11 @@ Deno.test("MCP Claude Server Tests", async (t) => {
 
   await t.step("should default to Sonnet pricing for unknown models", () => {
     const pricing: Record<string, { input: number; output: number }> = {
-      "claude-sonnet-4-5-20250929": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 }
+      "claude-sonnet-5": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 }
     };
 
     const unknownModel = "claude-unknown-model";
-    const rates = pricing[unknownModel] || pricing["claude-sonnet-4-5-20250929"];
+    const rates = pricing[unknownModel] || pricing["claude-sonnet-5"];
 
     assertExists(rates);
     assertEquals(rates.input, 3.0 / 1_000_000);
@@ -332,7 +332,7 @@ Deno.test("MCP Claude Server Tests", async (t) => {
       user_id: "user-123",
       request_id: "req-abc-123",
       request_type: "mcp_analyze-text",
-      model: "claude-sonnet-4-5-20250929",
+      model: "claude-sonnet-5",
       input_tokens: 500,
       output_tokens: 200,
       cost: 0.0045,
@@ -356,7 +356,7 @@ Deno.test("MCP Claude Server Tests", async (t) => {
       user_id: "user-123",
       request_id: "req-xyz-789",
       request_type: "mcp_summarize",
-      model: "claude-sonnet-4-5-20250929",
+      model: "claude-sonnet-5",
       input_tokens: 0,
       output_tokens: 0,
       cost: 0,
@@ -397,7 +397,7 @@ Deno.test("MCP Claude Server Tests", async (t) => {
         outputTokens: 200,
         cost: 0.0045,
         responseTimeMs: 1500,
-        model: "claude-sonnet-4-5-20250929"
+        model: "claude-sonnet-5"
       }
     };
 
@@ -450,14 +450,14 @@ Deno.test("MCP Claude Server Tests", async (t) => {
 
   await t.step("should default to Sonnet model", () => {
     const toolArgs = { text: "test", prompt: "analyze" };
-    const model = toolArgs.model || "claude-sonnet-4-5-20250929";
+    const model = toolArgs.model || "claude-sonnet-5";
 
-    assertEquals(model, "claude-sonnet-4-5-20250929");
+    assertEquals(model, "claude-sonnet-5");
   });
 
   await t.step("should allow model override", () => {
     const toolArgs = { text: "test", prompt: "analyze", model: "claude-haiku-4-5-20251001" };
-    const model = toolArgs.model || "claude-sonnet-4-5-20250929";
+    const model = toolArgs.model || "claude-sonnet-5";
 
     assertEquals(model, "claude-haiku-4-5-20251001");
   });

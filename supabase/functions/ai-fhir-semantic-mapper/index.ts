@@ -469,6 +469,7 @@ Only suggest mappings you are confident about. Respond with valid JSON array onl
       },
       body: JSON.stringify({
         model: SONNET_MODEL,
+        thinking: { type: "disabled" },
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       }),

@@ -33,7 +33,7 @@ const GENERIC_TOOLS: Record<string, MCPToolDef> = {
       properties: {
         text: { type: "string", description: "Text to analyze" },
         prompt: { type: "string", description: "Analysis instructions" },
-        model: { type: "string", default: "claude-sonnet-4-5-20250929" },
+        model: { type: "string", default: "claude-sonnet-5" },
       },
       required: ["text", "prompt"],
     },

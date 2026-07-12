@@ -219,7 +219,7 @@ Deno.test("Process Medical Transcript Tests", async (t) => {
 
   await t.step("should construct Claude API request", () => {
     const request = {
-      model: "claude-sonnet-4-5-20250929",
+      model: "claude-sonnet-5",
       max_tokens: 4000,
       temperature: 0.1,
       messages: [{

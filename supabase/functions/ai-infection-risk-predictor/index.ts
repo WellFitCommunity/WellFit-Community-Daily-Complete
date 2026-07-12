@@ -521,6 +521,7 @@ async function analyzeInfectionRisk(
       },
       body: JSON.stringify({
         model: SONNET_MODEL,
+        thinking: { type: "disabled" },
         max_tokens: 2048,
         messages: [{ role: "user", content: prompt }],
       }),

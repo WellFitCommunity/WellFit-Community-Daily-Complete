@@ -289,7 +289,7 @@ Deno.test("MCP DRG Grouper Server Tests", async (t) => {
       base_rate_used: null,
       grouper_version: "MS-DRG v43",
       ai_skill_key: "drg_grouper",
-      ai_model_used: "claude-sonnet-4-5-20250929",
+      ai_model_used: "claude-sonnet-5",
       ai_confidence: 0.92,
       ai_reasoning: "Principal diagnosis I21.0 (STEMI anterior wall) maps to MDC 05. E11.65 qualifies as MCC.",
       status: "preliminary" as const,

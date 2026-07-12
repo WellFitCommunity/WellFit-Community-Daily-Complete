@@ -13,7 +13,7 @@ export enum UserRole {
 // NOTE: These values must stay in sync with src/constants/aiModels.ts and supabase/functions/_shared/models.ts
 export enum ClaudeModel {
   HAIKU_3_5 = 'claude-haiku-4-5-20251001', // Fast tier — UI/personalization
-  SONNET_3_5 = 'claude-sonnet-4-5-20250929', // Accurate tier — billing, medical coding
+  SONNET_3_5 = 'claude-sonnet-5', // Accurate tier — billing, medical coding
   OPUS_4_5 = 'claude-opus-4-5-20251101', // Complex tier — research, complex reasoning
 }
 

@@ -157,7 +157,7 @@ export class BedOptimizerService {
           bottlenecks: identifyUnitBottlenecks(u),
           opportunities: identifyUnitOpportunities(u)
         })),
-        aiModel: 'claude-sonnet-4-5-20250929',
+        aiModel: 'claude-sonnet-5',
         totalAiCost
       };
 

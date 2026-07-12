@@ -158,7 +158,8 @@ export async function runConsultationAnalysis(
       // CR-2-SISTER-3: structured output via forced tool_use.
       // Replaces text + ```json regex stripping + JSON.parse pipeline.
       body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250929",
+        model: "claude-sonnet-5",
+        thinking: { type: "disabled" },
         max_tokens: 4000,
         messages: [{ role: "user", content: consultationPrompt }],
         tools: [CONSULTATION_RESPONSE_TOOL],

@@ -96,7 +96,7 @@ const makeRegistryEntries = () => [
     model_type: 'classification',
     intervention_type: 'clinical_decision_support',
     provider_name: 'Anthropic',
-    provider_model_id: 'claude-sonnet-4-5-20250929',
+    provider_model_id: 'claude-sonnet-5',
     purpose: 'Predict 30-day readmission risk',
     intended_use: 'Clinical decision support',
     clinical_domain: 'care_coordination',
@@ -138,7 +138,7 @@ const makeSkillEntries = () => [
     skill_key: 'readmission_risk',
     skill_number: 1,
     description: 'Predict readmission',
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-5',
     is_active: true,
     created_at: '2026-01-01T00:00:00Z',
   },
@@ -576,7 +576,7 @@ describe('AIModelCardsDashboard', () => {
     await user.click(modelButton as HTMLElement);
 
     await waitFor(() => {
-      expect(screen.getByText('claude-sonnet-4-5-20250929')).toBeInTheDocument();
+      expect(screen.getByText('claude-sonnet-5')).toBeInTheDocument();
     });
   });
 

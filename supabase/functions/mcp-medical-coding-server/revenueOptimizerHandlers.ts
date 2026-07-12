@@ -262,6 +262,7 @@ export function createRevenueOptimizerHandlers(
       },
       body: JSON.stringify({
         model: SONNET_MODEL,
+        thinking: { type: "disabled" },
         max_tokens: 3000,
         messages: [{ role: "user", content: prompt }],
         tools: [REVENUE_OPTIMIZATION_TOOL],

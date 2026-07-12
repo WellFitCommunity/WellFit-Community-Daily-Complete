@@ -264,7 +264,7 @@ describe('Medical Coding — DRG Grouper (Session 2)', () => {
 
   describe('DRG grouper AI metadata', () => {
     it('uses SONNET model for clinical accuracy', () => {
-      const expectedModel = 'claude-sonnet-4-5-20250929';
+      const expectedModel = 'claude-sonnet-5';
       expect(expectedModel).toMatch(/^claude-sonnet-/);
     });
 

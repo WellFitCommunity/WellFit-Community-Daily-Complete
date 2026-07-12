@@ -145,7 +145,7 @@ Return response as strict JSON:
     const aiResponse = await optimizer.call({
       prompt,
       systemPrompt,
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-5',
       complexity: 'complex',
       userId: tenantId,
       context: {

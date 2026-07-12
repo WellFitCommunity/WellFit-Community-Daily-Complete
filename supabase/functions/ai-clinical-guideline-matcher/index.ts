@@ -141,6 +141,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: SONNET_MODEL,
+        thinking: { type: "disabled" },
         max_tokens: 4096,
         messages: [{ role: "user", content: prompt }],
       }),

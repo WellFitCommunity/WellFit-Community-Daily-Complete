@@ -728,7 +728,7 @@ export class FallRiskPredictorService {
         patientId: request.patientId,
         entityType: 'fall_risk_assessment',
         entityId: assessment.assessmentId,
-        model: metadata.model || 'claude-sonnet-4-5-20250929',
+        model: metadata.model || 'claude-sonnet-5',
         latencyMs: metadata.response_time_ms,
       });
 

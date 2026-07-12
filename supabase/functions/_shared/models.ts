@@ -18,7 +18,7 @@
 export const HAIKU_MODEL = 'claude-haiku-4-5-20251001';
 
 /** Accurate tier — clinical analysis, billing, medical coding, risk assessment */
-export const SONNET_MODEL = 'claude-sonnet-4-5-20250929';
+export const SONNET_MODEL = 'claude-sonnet-5';
 
 /** Complex tier — reserved for multi-step reasoning, research, complex clinical decisions */
 export const OPUS_MODEL = 'claude-opus-4-5-20251101';

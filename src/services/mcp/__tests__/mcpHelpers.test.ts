@@ -54,7 +54,7 @@ describe('MCP Helper Functions', () => {
         arguments: {
           text: 'Patient has chest pain',
           prompt: 'Extract symptoms',
-          model: 'claude-sonnet-4-5-20250929'
+          model: 'claude-sonnet-5'
         },
         userId: 'user123'
       });

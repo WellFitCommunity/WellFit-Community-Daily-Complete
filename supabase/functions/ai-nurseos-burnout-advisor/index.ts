@@ -406,6 +406,7 @@ serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model: SONNET_MODEL,
+        thinking: { type: "disabled" },
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
         system: "You are a clinical burnout prevention advisor for healthcare workers. Submit your analysis by calling the submit_burnout_advice tool. Base recommendations on evidence-based burnout prevention strategies (MBI framework, NIOSH Total Worker Health). Never minimize burnout symptoms. Always recommend professional help for critical risk levels.",

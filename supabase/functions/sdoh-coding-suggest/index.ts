@@ -195,7 +195,7 @@ serve(async (req) => {
     // Save coding audit log (keep existing for backward compatibility)
     await supabaseClient.from('coding_audits').insert({
       encounter_id: encounterId,
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-5',
       success: true,
       confidence: aiAnalysis.confidence,
       processing_time_ms: processingTime
@@ -319,7 +319,8 @@ Format as JSON with this structure:
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929', // Latest model for best coding and analysis
+        model: 'claude-sonnet-5', // Latest model for best coding and analysis
+        thinking: { type: "disabled" },
         max_tokens: 4000,
         system: systemPrompt,
         messages: [
@@ -367,7 +368,7 @@ Format as JSON with this structure:
           request_id: requestId,
           user_id: userId,
           request_type: 'sdoh_coding',
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-sonnet-5',
           input_tokens: inputTokens,
           output_tokens: outputTokens,
           cost: totalCost,
@@ -422,7 +423,7 @@ Format as JSON with this structure:
         ...analysis,
         confidence: Math.min(Math.max(analysis.confidence || 75, 0), 100),
         timestamp: new Date().toISOString(),
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-5',
         _validation: validationResult.flaggedOutput?._validationSummary ?? null,
         _rejectedCodes: validationResult.rejectedCodes,
       }
@@ -436,14 +437,14 @@ Format as JSON with this structure:
           request_id: requestId,
           user_id: userId,
           request_type: 'sdoh_coding',
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-sonnet-5',
           input_tokens: inputTokens,
           output_tokens: outputTokens,
           cost: totalCost,
           response_time_ms: Date.now() - startTime,
           success: false,
           error_code: 'JSON_PARSE_ERROR',
-          error_message: parseError.message,
+          error_message: parseErrorMessage,
           phi_scrubbed: true,
           metadata: { encounter_id: encounterId }
         });
@@ -475,7 +476,7 @@ Format as JSON with this structure:
           recommendations: ['Manual review required']
         },
         confidence: 0,
-        notes: `Analysis failed: ${parseError.message}`,
+        notes: `Analysis failed: ${parseErrorMessage}`,
         error: 'JSON_PARSE_ERROR'
       }
     }
@@ -489,7 +490,7 @@ Format as JSON with this structure:
         request_id: requestId,
         user_id: userId,
         request_type: 'sdoh_coding',
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-5',
         input_tokens: 0,
         output_tokens: 0,
         cost: 0,

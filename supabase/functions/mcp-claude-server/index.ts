@@ -342,7 +342,7 @@ serve(async (req: Request) => {
       // GENERIC TOOLS: analyze-text, generate-suggestion, summarize
       // ============================================================
       const sanitizedArgs = deepDeidentify(toolArgs) as Record<string, unknown>;
-      const model = (toolArgs.model as string) || "claude-sonnet-4-5-20250929";
+      const model = (toolArgs.model as string) || "claude-sonnet-5";
       const userPrompt = buildGenericPrompt(toolName, sanitizedArgs);
 
       // Call Claude with prompt caching

@@ -43,7 +43,7 @@ import {
 } from "./triageTools.schemas.ts";
 
 // Pinned model for all triage tools — Sonnet for accuracy-critical clinical reasoning
-const TRIAGE_MODEL = "claude-sonnet-4-5-20250929";
+const TRIAGE_MODEL = "claude-sonnet-5";
 
 /** Result from a triage tool handler */
 export interface TriageToolResult {
@@ -82,6 +82,7 @@ ${JSON.stringify(args.patient_demographics, null, 2)}` : "No demographic context
 
   const response = await anthropic.messages.create({
     model: TRIAGE_MODEL,
+    thinking: { type: "disabled" },
     max_tokens: 2048,
     messages: [{ role: "user", content: userPrompt }],
     system: [
@@ -158,6 +159,7 @@ ${JSON.stringify(args.alerts, null, 2)}`;
 
   const response = await anthropic.messages.create({
     model: TRIAGE_MODEL,
+    thinking: { type: "disabled" },
     max_tokens: 2048,
     messages: [{ role: "user", content: userPrompt }],
     system: [
@@ -245,6 +247,7 @@ ${JSON.stringify(args.population_context, null, 2)}` : "No population context av
 
   const response = await anthropic.messages.create({
     model: TRIAGE_MODEL,
+    thinking: { type: "disabled" },
     max_tokens: 2048,
     messages: [{ role: "user", content: userPrompt }],
     system: [
@@ -329,6 +332,7 @@ ${JSON.stringify(args.pending_actions, null, 2)}`;
 
   const response = await anthropic.messages.create({
     model: TRIAGE_MODEL,
+    thinking: { type: "disabled" },
     max_tokens: 2048,
     messages: [{ role: "user", content: userPrompt }],
     system: [

@@ -116,7 +116,7 @@ function buildAuditRow(params: ClaudeAuditParams): Record<string, unknown> {
     request_id: params.requestId,
     user_id: params.userId,
     request_type: 'transcription',
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-5',
     input_tokens: params.inputTokens,
     output_tokens: params.outputTokens,
     cost: params.cost,
@@ -317,7 +317,7 @@ describe('Performance & Cost Analysis (Sessions 9.4-9.5)', () => {
       expect(row.request_id).toBe('req-test-001');
       expect(row.user_id).toBe('user-test-abc');
       expect(row.request_type).toBe('transcription');
-      expect(row.model).toBe('claude-sonnet-4-5-20250929');
+      expect(row.model).toBe('claude-sonnet-5');
       expect(row.input_tokens).toBe(850);
       expect(row.output_tokens).toBe(620);
       expect(row.cost).toBe(0.012);

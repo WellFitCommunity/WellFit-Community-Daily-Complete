@@ -522,6 +522,7 @@ ${buildConstraintBlock(['care_planning'])}`;
     },
     body: JSON.stringify({
       model: SONNET_MODEL,
+      thinking: { type: "disabled" },
       max_tokens: 4000,
       messages: [{ role: "user", content: prompt }],
     }),

@@ -163,7 +163,7 @@ export class ReadmissionRiskPredictor {
         systemPrompt,
         model: (typeof config.readmission_predictor_model === 'string' && config.readmission_predictor_model)
           ? config.readmission_predictor_model
-          : 'claude-sonnet-4-5-20250929',
+          : 'claude-sonnet-5',
         complexity: 'complex',
         userId: context.patientId,
         context: {
@@ -356,7 +356,7 @@ export class ReadmissionRiskPredictor {
       readmission_predictor_enabled: false,
       readmission_predictor_auto_create_care_plan: false,
       readmission_predictor_high_risk_threshold: 0.50,
-      readmission_predictor_model: 'claude-sonnet-4-5-20250929'
+      readmission_predictor_model: 'claude-sonnet-5'
     };
 
     if (isTenantConfig(data)) {
