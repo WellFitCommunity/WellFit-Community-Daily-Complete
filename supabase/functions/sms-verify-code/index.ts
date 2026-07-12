@@ -227,7 +227,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       const { data: pending, error: pendingError } = await supabase
         .from("pending_registrations")
-        .select("*")
+        .select("id, phone, email, first_name, last_name, role_code, role_slug, password_encrypted, password_plaintext")
         .eq("phone", normalizedPhone)
         .maybeSingle();
 
@@ -432,7 +432,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
           phone: normalizedPhone,
           role_code: pending.role_code,
           role: pending.role_slug,
-          role_slug: pending.role_slug,
+          // NOTE: `role_slug` is NOT a column on profiles — including it here made the
+          // ENTIRE upsert 400 (swallowed at the error check below), silently leaving
+          // self-registered seniors' profiles without email/role_code/role. The slug is
+          // already carried into the `role` column above.
         }, {
           onConflict: 'user_id',  // Update if profile exists from trigger
           ignoreDuplicates: false  // We want to update with our richer data
