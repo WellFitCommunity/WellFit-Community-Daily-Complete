@@ -149,7 +149,7 @@ export async function logClaudeAudit(
   try {
     await client.from('claude_api_audit').insert({
       request_id: params.requestId, user_id: params.userId,
-      request_type: 'transcription', model: 'claude-sonnet-4-5-20250929',
+      request_type: 'transcription', model: 'claude-sonnet-5',
       input_tokens: params.inputTokens, output_tokens: params.outputTokens,
       cost: params.cost, response_time_ms: params.responseTimeMs,
       success: params.success, error_code: params.errorCode ?? null,

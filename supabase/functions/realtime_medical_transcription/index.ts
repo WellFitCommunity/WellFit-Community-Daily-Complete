@@ -352,8 +352,9 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250929", // Sonnet 4.5 - revenue-critical accuracy for billing codes
-        max_tokens: 2000,
+        model: "claude-sonnet-5", // upgraded from Sonnet 4.5 — revenue-critical billing accuracy (Rule #14)
+        max_tokens: 3000, // Sonnet 5 tokenizer ~+30% tokens — headroom so the forced tool_use output isn't truncated
+        thinking: { type: "disabled" }, // Sonnet 5 defaults thinking ON when omitted; keep this ~15s call fast/deterministic
         messages: [{
           role: "user",
           content: conversationalPrompt
