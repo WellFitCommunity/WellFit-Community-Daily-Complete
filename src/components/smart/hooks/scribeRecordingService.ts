@@ -94,7 +94,13 @@ export async function initializeRecording(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const base = (import.meta.env.VITE_SUPABASE_URL ?? '').replace('https://', 'wss://');
+  // Use the canonical URL resolution (VITE_SB_URL is the Dec-2025 migration primary;
+  // VITE_SUPABASE_URL is the legacy alias) — mirrors src/lib/env.ts / RegisterPage.
+  // If only VITE_SB_URL is set (as in prod), the old VITE_SUPABASE_URL-only lookup
+  // yielded '' → new WebSocket('/functions/...') fails and the recorder never connects.
+  const httpBase = import.meta.env.VITE_SB_URL || import.meta.env.VITE_SUPABASE_URL || '';
+  const base = httpBase.replace('https://', 'wss://');
+  if (!base) throw new Error('Recorder cannot start: Supabase URL is not configured (VITE_SB_URL).');
   const wsUrl = `${base}/functions/v1/realtime_medical_transcription?access_token=${encodeURIComponent(
     session.access_token
   )}&mode=${encodeURIComponent(scribeMode)}&reasoning_mode=${encodeURIComponent(reasoningMode)}`;

@@ -306,10 +306,21 @@ export async function initializeAudioRecording(
       config.onStatusChange('Recording stopped');
     };
 
-    // Create MediaRecorder for audio capture
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'audio/webm;codecs=opus',
-    });
+    // Create MediaRecorder for audio capture. The backend Deepgram relay is
+    // configured for opus (realtime_medical_transcription: encoding=opus), so an
+    // opus-capable container is required. Hardcoding 'audio/webm;codecs=opus' threw
+    // NotSupportedError on Safari/iOS (no webm/opus) → the recorder crashed with a
+    // cryptic message. Feature-detect and fail with an actionable one instead.
+    const OPUS_TYPES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+    const supportedType = OPUS_TYPES.find(
+      (t) => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)
+    );
+    if (!supportedType) {
+      throw new Error(
+        'This browser does not support the audio format required for dictation. Please use Chrome or Edge on a computer.'
+      );
+    }
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: supportedType });
 
     mediaRecorder.ondataavailable = async (e) => {
       if (ws.readyState === WebSocket.OPEN && e.data && e.data.size > 0) {
