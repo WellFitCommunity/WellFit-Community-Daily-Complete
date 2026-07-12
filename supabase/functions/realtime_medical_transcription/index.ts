@@ -165,8 +165,11 @@ export async function handleRequest(req: Request, opts: HandleRequestOptions = {
       interim_results: "true",
       endpointing: "300",
       utterance_end_ms: "1000",
-      encoding: "opus",
-      sample_rate: "16000",
+      // NOTE: the browser sends WebM-CONTAINER Opus (MediaRecorder
+      // 'audio/webm;codecs=opus'), NOT raw Opus. Do NOT set encoding/sample_rate —
+      // that tells Deepgram to expect raw Opus and it silently fails to decode the
+      // WebM container (mic on, socket "ready", but zero transcripts). Omitting them
+      // lets Deepgram auto-detect the container. THIS was the "recorder wouldn't record".
     });
 
     deepgramWs = new WebSocket(
@@ -307,7 +310,7 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
     // Fetch provider preferences for personalized interaction
     const { data: prefs } = await supabaseClient
       .from('provider_scribe_preferences')
-      .select('*')
+      .select('provider_id, provider_type, formality_level, interaction_style, verbosity, humor_level, common_phrases, documentation_style, interaction_count, preferred_specialties, billing_preferences, last_interaction_at')
       .eq('provider_id', userId)
       .single();
 
