@@ -23,13 +23,13 @@ export interface SyncLogEntry {
   id: string;
   connection_id: string;
   direction: 'pull' | 'push' | 'bidirectional';
-  status: 'success' | 'partial' | 'failed';
+  status: 'pending' | 'in_progress' | 'success' | 'partial' | 'failed';
   started_at: string;
   completed_at?: string;
   records_processed: number;
   records_succeeded: number;
   records_failed: number;
-  error_message?: string;
+  errors?: unknown[];
   created_at: string;
 }
 
@@ -230,7 +230,7 @@ export async function getSyncHistory(
   try {
     const { data, error } = await supabase
       .from('fhir_sync_logs')
-      .select('id, connection_id, direction, status, started_at, completed_at, records_processed, records_succeeded, records_failed, error_message, created_at')
+      .select('id, connection_id, direction, status, started_at, completed_at, records_processed, records_succeeded, records_failed, errors, created_at')
       .eq('connection_id', connectionId)
       .order('started_at', { ascending: false })
       .limit(limit);

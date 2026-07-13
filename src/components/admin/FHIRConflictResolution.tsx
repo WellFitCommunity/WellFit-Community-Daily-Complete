@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../../services/auditLogger';
 import {
   AlertCircle,
   CheckCircle,
@@ -87,7 +88,9 @@ export const FHIRConflictResolution: React.FC = () => {
       let query = supabase
         .from('fhir_sync_conflicts')
         .select(`
-          *,
+          id, connection_id, patient_id, resource_type, resource_id, conflict_type,
+          fhir_data, community_data, detected_at, resolution_action, resolved_at,
+          resolved_by, resolution_notes,
           fhir_connections(name),
           profiles!fhir_sync_conflicts_patient_id_fkey(first_name, last_name)
         `)
@@ -101,7 +104,7 @@ export const FHIRConflictResolution: React.FC = () => {
 
       if (error) throw error;
 
-      const mappedConflicts = (data || []).map((conflict: ConflictRow) => ({
+      const mappedConflicts = ((data || []) as unknown as ConflictRow[]).map((conflict) => ({
         ...conflict,
         connection_name: conflict.fhir_connections?.name,
         patient_name: conflict.profiles
@@ -111,7 +114,10 @@ export const FHIRConflictResolution: React.FC = () => {
 
       setConflicts(mappedConflicts);
     } catch (error: unknown) {
-
+      await auditLogger.error('FHIR_CONFLICT_FETCH_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { filter }
+      );
     } finally {
       setLoading(false);
     }
@@ -144,26 +150,101 @@ export const FHIRConflictResolution: React.FC = () => {
         await applyResolution(selectedConflict, action);
       }
 
-      // Log audit event
-      await supabase.from('audit_logs').insert({
-        event_type: 'FHIR_CONFLICT_RESOLVED',
-        event_category: 'DATA_SYNC',
-        metadata: {
-          conflict_id: conflictId,
-          resolution_action: action,
-          resource_type: selectedConflict?.resource_type,
-          resolved_by: currentUser?.id,
-        },
+      // Log audit event (canonical service — sets actor_user_id for the RLS WITH CHECK)
+      await auditLogger.info('FHIR_CONFLICT_RESOLVED', {
+        conflict_id: conflictId,
+        resolution_action: action,
+        resource_type: selectedConflict?.resource_type,
+        resolved_by: currentUser?.id,
       });
 
       // Refresh list
       await fetchConflicts();
       setSelectedConflict(null);
     } catch (error: unknown) {
-
+      await auditLogger.error('FHIR_CONFLICT_RESOLVE_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { conflict_id: conflictId, resolution_action: action }
+      );
       alert('Failed to resolve conflict. Please try again.');
     } finally {
       setResolving(false);
+    }
+  };
+
+  // Where each FHIR resource type lives locally, and which column identifies
+  // the row: Patient rows are keyed by the conflict's patient_id (never by
+  // resource_id — we must not create/overwrite profiles from a FHIR id);
+  // fhir_* cache tables are keyed by their fhir_id; tables without a fhir_id
+  // column are keyed by local row id. Table names + key columns verified
+  // against the live schema (information_schema, 2026-07-13).
+  interface ResourceTarget {
+    table: string;
+    matchColumn: 'user_id' | 'fhir_id' | 'id';
+    hasLastSyncedAt: boolean;
+  }
+
+  const resourceTableMap: Record<string, ResourceTarget> = {
+    Patient: { table: 'profiles', matchColumn: 'user_id', hasLastSyncedAt: false },
+    Observation: { table: 'fhir_observations', matchColumn: 'fhir_id', hasLastSyncedAt: true },
+    Condition: { table: 'fhir_conditions', matchColumn: 'fhir_id', hasLastSyncedAt: true },
+    MedicationRequest: { table: 'fhir_medication_requests', matchColumn: 'fhir_id', hasLastSyncedAt: true },
+    AllergyIntolerance: { table: 'allergy_intolerances', matchColumn: 'id', hasLastSyncedAt: false },
+    Procedure: { table: 'fhir_procedures', matchColumn: 'fhir_id', hasLastSyncedAt: true },
+    Immunization: { table: 'fhir_immunizations', matchColumn: 'id', hasLastSyncedAt: false },
+    Encounter: { table: 'encounters', matchColumn: 'id', hasLastSyncedAt: false },
+    DiagnosticReport: { table: 'fhir_diagnostic_reports', matchColumn: 'fhir_id', hasLastSyncedAt: true },
+    CarePlan: { table: 'fhir_care_plans', matchColumn: 'id', hasLastSyncedAt: false },
+  };
+
+  /** Apply mapped/merged field values to the conflict's local row (update-only:
+   * resolution must never fabricate a local record from a partial mapping). */
+  const applyToLocalRow = async (
+    conflict: FHIRConflict,
+    target: ResourceTarget,
+    fields: CommunityData
+  ) => {
+    const now = new Date().toISOString();
+    const matchValue = target.matchColumn === 'user_id' ? conflict.patient_id : conflict.resource_id;
+    const { error } = await supabase
+      .from(target.table)
+      .update({
+        ...fields,
+        updated_at: now,
+        ...(target.hasLastSyncedAt ? { last_synced_at: now } : {}),
+      })
+      .eq(target.matchColumn, matchValue);
+
+    if (error) throw new Error(`Failed to apply data to ${target.table}: ${error.message}`);
+  };
+
+  /** Record the resolution outcome in the sync log (canonical fhir_sync_logs shape). */
+  const logResolutionToSyncLog = async (
+    conflict: FHIRConflict,
+    resolution: 'use_community' | 'merge' | 'manual',
+    summary: Record<string, unknown>
+  ) => {
+    const now = new Date().toISOString();
+    const pending = resolution === 'manual';
+    const { error } = await supabase.from('fhir_sync_logs').insert({
+      connection_id: conflict.connection_id,
+      patient_id: conflict.patient_id,
+      sync_type: 'manual',
+      direction: 'pull',
+      resource_types: [conflict.resource_type],
+      status: pending ? 'pending' : 'success',
+      records_processed: 1,
+      records_succeeded: pending ? 0 : 1,
+      summary: { conflict_id: conflict.id, resolution, ...summary },
+      started_at: now,
+      ...(pending ? {} : { completed_at: now }),
+    });
+
+    if (error) {
+      await auditLogger.error('FHIR_CONFLICT_SYNC_LOG_FAILED',
+        new Error(error.message),
+        { conflict_id: conflict.id, resolution }
+      );
     }
   };
 
@@ -171,115 +252,42 @@ export const FHIRConflictResolution: React.FC = () => {
     conflict: FHIRConflict,
     action: 'use_fhir' | 'use_community' | 'merge' | 'manual'
   ) => {
-    const resourceTableMap: Record<string, string> = {
-      Patient: 'profiles',
-      Observation: 'patient_observations',
-      Condition: 'patient_conditions',
-      MedicationRequest: 'patient_medications',
-      AllergyIntolerance: 'patient_allergies',
-      Procedure: 'patient_procedures',
-      Immunization: 'patient_immunizations',
-      Encounter: 'patient_encounters',
-      DiagnosticReport: 'diagnostic_reports',
-      CarePlan: 'care_plans',
-    };
-
-    const tableName = resourceTableMap[conflict.resource_type];
+    const target = resourceTableMap[conflict.resource_type];
 
     switch (action) {
-      case 'use_fhir':
+      case 'use_fhir': {
         // Update community data with FHIR data
-        if (tableName && conflict.fhir_data) {
-          // Map FHIR data to community schema based on resource type
+        if (target && conflict.fhir_data) {
           const mappedData = mapFHIRToCommunitySchema(conflict.resource_type, conflict.fhir_data);
-
           if (mappedData) {
-            const { error } = await supabase
-              .from(tableName)
-              .upsert({
-                id: conflict.resource_id,
-                ...mappedData,
-                updated_at: new Date().toISOString(),
-                fhir_synced_at: new Date().toISOString(),
-              }, { onConflict: 'id' });
-
-            if (error) throw new Error(`Failed to apply FHIR data: ${error.message}`);
+            await applyToLocalRow(conflict, target, mappedData);
           }
         }
         break;
+      }
 
       case 'use_community':
-        // Keep community data, update sync log to mark as manually resolved
-        await supabase.from('fhir_sync_log').insert({
-          connection_id: conflict.connection_id,
-          patient_id: conflict.patient_id,
-          resource_type: conflict.resource_type,
-          resource_id: conflict.resource_id,
-          sync_action: 'conflict_resolved_keep_local',
-          sync_status: 'success',
-          synced_at: new Date().toISOString(),
-          metadata: {
-            conflict_id: conflict.id,
-            resolution: 'use_community',
-            fhir_data_rejected: true,
-          },
-        });
+        // Keep community data, log that the FHIR data was rejected
+        await logResolutionToSyncLog(conflict, 'use_community', { fhir_data_rejected: true });
         break;
 
-      case 'merge':
+      case 'merge': {
         // Smart merge: combine non-conflicting fields, prefer FHIR for clinical data
-        if (tableName && conflict.fhir_data && conflict.community_data) {
+        if (target && conflict.fhir_data && conflict.community_data) {
           const mergedData = smartMerge(
             conflict.resource_type,
             conflict.community_data,
             conflict.fhir_data
           );
-
-          const { error } = await supabase
-            .from(tableName)
-            .update({
-              ...mergedData,
-              updated_at: new Date().toISOString(),
-              fhir_synced_at: new Date().toISOString(),
-              merge_source: 'conflict_resolution',
-            })
-            .eq('id', conflict.resource_id);
-
-          if (error) throw new Error(`Failed to merge data: ${error.message}`);
-
-          // Log the merge in sync log
-          await supabase.from('fhir_sync_log').insert({
-            connection_id: conflict.connection_id,
-            patient_id: conflict.patient_id,
-            resource_type: conflict.resource_type,
-            resource_id: conflict.resource_id,
-            sync_action: 'conflict_resolved_merge',
-            sync_status: 'success',
-            synced_at: new Date().toISOString(),
-            metadata: {
-              conflict_id: conflict.id,
-              merged_fields: Object.keys(mergedData),
-            },
-          });
+          await applyToLocalRow(conflict, target, mergedData);
+          await logResolutionToSyncLog(conflict, 'merge', { merged_fields: Object.keys(mergedData) });
         }
         break;
+      }
 
       case 'manual':
         // Do nothing - admin will manually fix via other UI
-        // Just log that manual resolution was chosen
-        await supabase.from('fhir_sync_log').insert({
-          connection_id: conflict.connection_id,
-          patient_id: conflict.patient_id,
-          resource_type: conflict.resource_type,
-          resource_id: conflict.resource_id,
-          sync_action: 'conflict_deferred_manual',
-          sync_status: 'pending',
-          synced_at: new Date().toISOString(),
-          metadata: {
-            conflict_id: conflict.id,
-            resolution: 'manual',
-          },
-        });
+        await logResolutionToSyncLog(conflict, 'manual', {});
         break;
     }
   };
@@ -302,29 +310,32 @@ export const FHIRConflictResolution: React.FC = () => {
     };
     const getTelecom = () => fhirData.telecom as FHIRTelecom[] | undefined;
 
+    // Column names verified against the live schema (information_schema, 2026-07-13):
+    // profiles uses dob/address/zip_code; fhir_* cache tables use their FHIR-R4
+    // flattened columns (effective_datetime, value_quantity_value, ...).
     switch (resourceType) {
       case 'Patient':
         return {
           first_name: getName()?.given?.[0],
           last_name: getName()?.family,
-          date_of_birth: fhirData.birthDate,
+          dob: fhirData.birthDate,
           gender: fhirData.gender,
           phone: getTelecom()?.find((t: FHIRTelecom) => t.system === 'phone')?.value,
           email: getTelecom()?.find((t: FHIRTelecom) => t.system === 'email')?.value,
-          address_line1: getAddress()?.line?.[0],
+          address: getAddress()?.line?.[0],
           city: getAddress()?.city,
           state: getAddress()?.state,
-          zip: getAddress()?.postalCode,
+          zip_code: getAddress()?.postalCode,
         };
       case 'Observation': {
         const code = fhirData.code as { coding?: Array<{ code?: string; display?: string }> } | undefined;
         const valueQuantity = fhirData.valueQuantity as { value?: number; unit?: string } | undefined;
         return {
           code: code?.coding?.[0]?.code,
-          display_name: code?.coding?.[0]?.display,
-          value: valueQuantity?.value,
-          unit: valueQuantity?.unit,
-          effective_date: fhirData.effectiveDateTime,
+          code_display: code?.coding?.[0]?.display,
+          value_quantity_value: valueQuantity?.value,
+          value_quantity_unit: valueQuantity?.unit,
+          effective_datetime: fhirData.effectiveDateTime,
           status: fhirData.status,
         };
       }
@@ -333,9 +344,9 @@ export const FHIRConflictResolution: React.FC = () => {
         const clinicalStatus = fhirData.clinicalStatus as { coding?: Array<{ code?: string }> } | undefined;
         return {
           code: conditionCode?.coding?.[0]?.code,
-          display_name: conditionCode?.coding?.[0]?.display,
+          code_display: conditionCode?.coding?.[0]?.display,
           clinical_status: clinicalStatus?.coding?.[0]?.code,
-          onset_date: fhirData.onsetDateTime,
+          onset_datetime: fhirData.onsetDateTime,
           recorded_date: fhirData.recordedDate,
         };
       }
@@ -344,8 +355,8 @@ export const FHIRConflictResolution: React.FC = () => {
         const dosageInstruction = fhirData.dosageInstruction as Array<{ text?: string }> | undefined;
         return {
           medication_code: medConcept?.coding?.[0]?.code,
-          medication_name: medConcept?.coding?.[0]?.display,
-          dosage_instruction: dosageInstruction?.[0]?.text,
+          medication_display: medConcept?.coding?.[0]?.display,
+          dosage_text: dosageInstruction?.[0]?.text,
           status: fhirData.status,
           authored_on: fhirData.authoredOn,
         };
@@ -368,10 +379,10 @@ export const FHIRConflictResolution: React.FC = () => {
 
     // Clinical fields that FHIR should take precedence on
     const clinicalFields: Record<string, string[]> = {
-      Patient: ['date_of_birth', 'gender'],
-      Observation: ['value', 'unit', 'effective_date', 'status'],
-      Condition: ['clinical_status', 'code', 'onset_date'],
-      MedicationRequest: ['dosage_instruction', 'status', 'medication_code'],
+      Patient: ['dob', 'gender'],
+      Observation: ['value_quantity_value', 'value_quantity_unit', 'effective_datetime', 'status'],
+      Condition: ['clinical_status', 'code', 'onset_datetime'],
+      MedicationRequest: ['dosage_text', 'status', 'medication_code'],
     };
 
     // Administrative fields that community data should keep
@@ -389,6 +400,12 @@ export const FHIRConflictResolution: React.FC = () => {
         }
         // Otherwise keep community value (already in merged)
       }
+    }
+
+    // Identity/system columns must never be written back by a merge
+    const systemFields = ['id', 'user_id', 'patient_id', 'tenant_id', 'fhir_id', 'created_at', 'created_by'];
+    for (const field of systemFields) {
+      delete merged[field];
     }
 
     return merged;

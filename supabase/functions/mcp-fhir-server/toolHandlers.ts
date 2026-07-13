@@ -551,8 +551,8 @@ async function handleTriggerEhrSync(
     direction: direction || connection.sync_direction,
     resource_types: resources || ['all'],
     status: 'pending',
-    initiated_at: new Date().toISOString()
-  }).select().single();
+    started_at: new Date().toISOString()
+  }).select('id').single();
 
   if (logError) throw new Error(`Failed to create sync log: ${logError.message}`);
 

@@ -6,10 +6,11 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../auditLogger';
 import type { SyncResult, FHIRConnection, UnknownRecord } from './types';
 
 export async function logSyncResult(result: SyncResult): Promise<void> {
-  await supabase.from('fhir_sync_logs').insert({
+  const { error } = await supabase.from('fhir_sync_logs').insert({
     connection_id: result.connectionId,
     sync_type: result.syncType,
     direction: result.direction,
@@ -22,6 +23,13 @@ export async function logSyncResult(result: SyncResult): Promise<void> {
     started_at: result.startTime,
     completed_at: result.endTime
   });
+
+  if (error) {
+    await auditLogger.error('FHIR_SYNC_LOG_WRITE_FAILED',
+      new Error(error.message),
+      { connection_id: result.connectionId, status: result.status }
+    );
+  }
 }
 
 export function getIntervalMs(frequency: FHIRConnection['syncFrequency']): number {

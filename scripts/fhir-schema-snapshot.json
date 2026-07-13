@@ -1,9 +1,9 @@
 {
   "_meta": {
     "description": "Live column snapshot consumed by scripts/check-fhir-service-schema.py. Covers public.fhir_* tables/views PLUS every non-fhir public table the MCP servers (supabase/functions/mcp-*) and src/services/fhir reference via .from('literal'). DO NOT hand-edit \u2014 regenerate with scripts/refresh-fhir-schema-snapshot.sql against the live DB.",
-    "generated": "2026-07-10",
+    "generated": "2026-07-13",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "table_count": 76
+    "table_count": 80
   },
   "tables": {
     "affirmations": [
@@ -1170,6 +1170,17 @@
       "patient_id",
       "bundle"
     ],
+    "fhir_patient_mappings": [
+      "id",
+      "tenant_id",
+      "community_user_id",
+      "fhir_patient_id",
+      "connection_id",
+      "sync_status",
+      "last_synced_at",
+      "created_at",
+      "updated_at"
+    ],
     "fhir_practitioner_roles": [
       "id",
       "practitioner_id",
@@ -1426,6 +1437,23 @@
       "retired_at",
       "tenant_id"
     ],
+    "fhir_resource_sync": [
+      "id",
+      "tenant_id",
+      "connection_id",
+      "community_user_id",
+      "fhir_resource_type",
+      "fhir_resource_id",
+      "local_resource_id",
+      "local_table_name",
+      "sync_direction",
+      "sync_status",
+      "last_synced_at",
+      "sync_error",
+      "resource_version",
+      "created_at",
+      "updated_at"
+    ],
     "fhir_service_requests": [
       "id",
       "fhir_id",
@@ -1464,6 +1492,42 @@
       "external_id",
       "created_at",
       "updated_at"
+    ],
+    "fhir_sync_conflicts": [
+      "id",
+      "tenant_id",
+      "connection_id",
+      "patient_id",
+      "resource_type",
+      "resource_id",
+      "conflict_type",
+      "fhir_data",
+      "community_data",
+      "detected_at",
+      "resolution_action",
+      "resolved_at",
+      "resolved_by",
+      "resolution_notes",
+      "created_at",
+      "updated_at"
+    ],
+    "fhir_sync_logs": [
+      "id",
+      "tenant_id",
+      "connection_id",
+      "patient_id",
+      "sync_type",
+      "direction",
+      "resource_types",
+      "status",
+      "records_processed",
+      "records_succeeded",
+      "records_failed",
+      "errors",
+      "summary",
+      "started_at",
+      "completed_at",
+      "created_at"
     ],
     "mcp_code_lookup_logs": [
       "id",
