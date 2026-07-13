@@ -659,29 +659,39 @@ supabase gen bearer-jwt --role authenticated --sub <user-uuid>
 
 | Product | Key store | Variable name | Format |
 |---|---|---|---|
-| **WellFit (community)** | Supabase **Secrets** | `PHI_ENCRYPTION_KEY` (read in edge fns via `Deno.env.get('PHI_ENCRYPTION_KEY')`; persists into Postgres setting `app.settings.PHI_ENCRYPTION_KEY` for SQL contexts) | Plain string |
-| **Envision Atlus (clinical)** | Supabase **Vault** | `app.encryption_key` (read in SQL via `vault.decrypted_secrets`; persists into Postgres setting `app.phi_encryption_key` for SQL contexts) | Plain string |
+| **WellFit (community)** | Supabase **Secrets** | `PHI_ENCRYPTION_KEY` (read in edge fns via `Deno.env.get('PHI_ENCRYPTION_KEY')`; optionally surfaced to SQL as GUC `app.settings.PHI_ENCRYPTION_KEY` — **not set at DB level in prod as of 2026-07-13**) | Plain string |
+| **Envision Atlus (clinical)** | Supabase **Vault** | **`app_encryption_key`** (underscores — live-verified 2026-07-13; earlier versions of this doc said `app.encryption_key`, which never existed). Read in SQL via `vault.decrypted_secrets` inside the encrypt/decrypt RPCs | Plain string |
 
-### How the encrypt_phi_text RPC selects which key
+### How the encrypt_phi_text RPC selects which key (LIVE since migration 20260103000001)
+
+The live signature is **`encrypt_phi_text(data text, use_clinical_key boolean DEFAULT false)`** — there is **NO `encryption_key` argument anymore**, and **no hardcoded fallback key**. Calls that pass `encryption_key` fail with `undefined_function` (PostgREST `PGRST202`). Selection logic:
 
 ```sql
-key_to_use := COALESCE(
-  encryption_key,                              -- 1. caller-provided arg (WellFit edge fn passes this)
-  current_setting('app.phi_encryption_key', true), -- 2. session-level setting (Envision Atlus Vault-derived)
-  'PHI-ENCRYPT-2025-WELLFIT-SECURE-KEY-V1'     -- 3. WellFit community fallback (LAST resort)
-);
+IF use_clinical_key THEN
+  -- Envision Atlus (clinical): Vault secret 'app_encryption_key' — FAIL CLOSED if absent
+  SELECT decrypted_secret INTO encryption_key FROM vault.decrypted_secrets
+  WHERE name = 'app_encryption_key';
+ELSE
+  -- WellFit (community): GUC app.settings.PHI_ENCRYPTION_KEY, else falls back
+  -- to the SAME Vault key. NOTE: the GUC is unset in prod, so BOTH paths
+  -- currently resolve to the Vault key — the DB-side two-key split is
+  -- effectively converged until the GUC is provisioned (open §17 item).
+  encryption_key := current_setting('app.settings.PHI_ENCRYPTION_KEY', true);
+  IF encryption_key IS NULL THEN ... vault fallback ... END IF;
+END IF;
+-- Both paths RAISE EXCEPTION (fail closed) if no key resolves — plaintext is never stored.
 ```
 
-The `use_clinical_key` parameter (where it exists in callers) controls which path: `true` lets the RPC fall through to priority 2 (Vault), `false` makes the caller pass the WellFit Secrets key as priority 1.
+`decrypt_phi_text(encrypted_data text, use_clinical_key boolean DEFAULT false)` mirrors this.
 
-### Which path is which caller
+### Which path is which caller (live-verified 2026-07-13)
 
 | Caller | Uses which key? | How |
 |---|---|---|
-| `supabase/functions/phi-encrypt/index.ts` (edge fn) | **WellFit Secrets** | Reads `Deno.env.get('PHI_ENCRYPTION_KEY')` and passes it explicitly as the `encryption_key` arg → priority 1 in COALESCE |
-| `src/services/handoffService.ts` `encryptPHI()` / `decryptPHI()` | **Envision Atlus Vault** | Calls the RPC with `encryption_key: null` → priority 1 misses, falls through to priority 2 (Vault-derived session setting) |
-| `supabase/functions/get-risk-assessments/index.ts` | **WellFit Secrets** | Reads `Deno.env.get('PHI_ENCRYPTION_KEY')` directly |
-| `src/services/chwService.ts` (via `phiEncryptionClient.ts`) | **WellFit Secrets** | Calls the phi-encrypt edge function |
+| `src/services/handoffService.ts` `encryptPHI()` / `decryptPHI()` | **Envision Atlus Vault** | Calls the RPC with `use_clinical_key: true`; encrypt is FAIL-CLOSED (throws, never stores plaintext) |
+| `src/services/hospitalTransferIntegrationService.ts` | **Envision Atlus Vault** | Decrypts handoff packets with `use_clinical_key: true` |
+| `supabase/functions/get-risk-assessments/index.ts` | **Envision Atlus Vault** | Reads the `risk_assessments_decrypted` view, which decrypts via `decrypt_phi_text(..., true)` (migrated 2026-07-11; it no longer touches the WellFit key) |
+| `supabase/functions/phi-encrypt/index.ts` (edge fn) → `src/services/chwService.ts` via `phiEncryptionClient.ts` | ⚠️ **BROKEN since 2026-01-03** | Still passes `encryption_key: Deno.env.get('PHI_ENCRYPTION_KEY')` → `PGRST202` → 500. Fails CLOSED (no plaintext stored), but CHW medication-photo encryption errors. Repair needs a key decision (restore a caller-key RPC overload vs converge on Vault vs Deno-side crypto) — Maria/Akima call, do NOT fix ad hoc |
 
 ### What NOT to do
 
@@ -689,22 +699,23 @@ The `use_clinical_key` parameter (where it exists in callers) controls which pat
 |---|---|
 | Assume "the PHI key" is singular | Always ask "which product's PHI?" before touching encryption code |
 | Move the Vault key into env vars or vice versa | The split is deliberate — different scopes, different rotation cadences, different threat models |
-| Pass an explicit `encryption_key` arg from a clinical caller (Atlus) | Pass `encryption_key: null` so the RPC uses the Vault key via `current_setting` |
-| Pass `encryption_key: null` from a community caller (WellFit) | Explicitly pass `Deno.env.get('PHI_ENCRYPTION_KEY')` |
-| Forget to set the Vault secret on a new Atlus environment | Without it, the RPC falls through to priority 3 (WellFit fallback) — Atlus data encrypts with the WRONG key |
+| Pass an `encryption_key` argument to the RPCs | That parameter no longer exists (removed 20260103000001) — pass `use_clinical_key: true` (Atlus) or `false` (WellFit) |
+| Silently fall back to plaintext when encryption fails | FAIL CLOSED — the RPC raises, and callers must propagate (see `handoffService.encryptPHI`) |
+| Forget to set the Vault secret on a new Atlus environment | Without `app_encryption_key` in Vault, clinical encrypt/decrypt RAISES (fail-closed) — provision it first |
 
 ### Verification
 
 To confirm both keys are configured in any environment:
 
 1. **WellFit Secrets:** `supabase secrets list | grep PHI_ENCRYPTION_KEY` (CLI) OR Supabase Dashboard → Project Settings → Edge Functions → Secrets.
-2. **Envision Atlus Vault:** `SELECT name FROM vault.secrets WHERE name = 'app.encryption_key';` via MCP `execute_sql`. (Vault contents are never readable; only the presence of the secret is.)
+2. **Envision Atlus Vault:** `SELECT name FROM vault.secrets WHERE name = 'app_encryption_key';` via MCP `execute_sql`. (Vault contents are never readable; only the presence of the secret is.)
+3. **Dashboard:** the SOC2 Security Operations dashboard "Encryption Key Posture" panel surfaces both (via the admin-gated `get_platform_key_status()` accessor, migration `20260713120000` — metadata only, never key material).
 
-Tests documenting this architecture live in `src/services/__tests__/phiEncryption.test.ts` (Key Management describe block, lines ~260-279).
+Tests documenting this architecture live in `src/services/__tests__/phiEncryption.test.ts` (Key Management describe block).
 
 ### Migration history
 
-The current `encrypt_phi_text` function lives in migration `20251115180000_create_phi_encryption_functions.sql` and was later fixed for hardcoded-key fallback by `20251120000000_fix_hardcoded_phi_encryption_key.sql`. If the encrypt/decrypt behavior changes, those are the canonical files.
+`encrypt_phi_text`/`decrypt_phi_text` were created by `20251115180000_create_phi_encryption_functions.sql`, had the hardcoded-key fallback removed by `20251120000000_fix_hardcoded_phi_encryption_key.sql`, and were **replaced with the current fail-closed `(data, use_clinical_key)` signature by `_APPLIED_20260103000001_enforce_failsafe_phi_encryption.sql` — the canonical current definition.** The signature change orphaned every caller still passing `encryption_key` (5 sites, silently failing for ~6 months until found 2026-07-13; clinical callers repaired, phi-encrypt pending the key decision above).
 
 ---
 

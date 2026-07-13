@@ -263,8 +263,9 @@ describe('PHI Encryption - HIPAA Compliance', () => {
     });
 
     it('documents Envision Atlus key source', () => {
-      // Envision Atlus uses: vault.decrypted_secrets where name = 'app.encryption_key'
-      const atlusKeySource = 'Supabase Vault (app.encryption_key)';
+      // Envision Atlus uses: vault.decrypted_secrets where name = 'app_encryption_key'
+      // (underscores — live-verified 2026-07-13; 'app.encryption_key' never existed)
+      const atlusKeySource = 'Supabase Vault (app_encryption_key)';
       expect(atlusKeySource).toContain('Vault');
     });
 

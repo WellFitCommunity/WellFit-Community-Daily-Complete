@@ -87,8 +87,8 @@ describe('HospitalTransferIntegrationService', () => {
 
       // Mock PHI decryption
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'John Doe', error: null } as unknown as MockSupabaseResponse) // decrypt name
-        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as unknown as MockSupabaseResponse); // decrypt DOB
+        .mockResolvedValueOnce({ data: 'Test Patient Alpha', error: null } as unknown as MockSupabaseResponse) // decrypt name
+        .mockResolvedValueOnce({ data: '2000-01-01', error: null } as unknown as MockSupabaseResponse); // decrypt DOB
 
       // Mock patient lookup - not found, create new
       mockSupabase.from.mockImplementation((table: string) => {
@@ -164,6 +164,13 @@ describe('HospitalTransferIntegrationService', () => {
       expect(result.encounterId).toBe('encounter-789');
       expect(result.observationIds).toHaveLength(3);
       expect(result.billingCodes).toContain('99222');
+
+      // Live RPC signature is decrypt_phi_text(encrypted_data, use_clinical_key) —
+      // the old encryption_key arg fails with PGRST202 (found broken 2026-07-13)
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('decrypt_phi_text',
+        expect.objectContaining({ use_clinical_key: true }));
+      expect(mockSupabase.rpc).not.toHaveBeenCalledWith('decrypt_phi_text',
+        expect.objectContaining({ encryption_key: expect.anything() }));
     });
 
     it('should return error when user not authenticated', async () => {
@@ -202,8 +209,8 @@ describe('HospitalTransferIntegrationService', () => {
       } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'John Doe', error: null } as unknown as Record<string, unknown>)
-        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as unknown as Record<string, unknown>);
+        .mockResolvedValueOnce({ data: 'Test Patient Alpha', error: null } as unknown as Record<string, unknown>)
+        .mockResolvedValueOnce({ data: '2000-01-01', error: null } as unknown as Record<string, unknown>);
 
       // Mock finding existing patient
       mockSupabase.from.mockImplementation((table: string) => {
@@ -275,8 +282,8 @@ describe('HospitalTransferIntegrationService', () => {
       } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'John Doe', error: null } as unknown as Record<string, unknown>)
-        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as unknown as Record<string, unknown>);
+        .mockResolvedValueOnce({ data: 'Test Patient Alpha', error: null } as unknown as Record<string, unknown>)
+        .mockResolvedValueOnce({ data: '2000-01-01', error: null } as unknown as Record<string, unknown>);
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
@@ -347,8 +354,8 @@ describe('HospitalTransferIntegrationService', () => {
       } as unknown as Record<string, unknown>);
 
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'John Doe', error: null } as unknown as Record<string, unknown>)
-        .mockResolvedValueOnce({ data: '1955-03-15', error: null } as unknown as Record<string, unknown>);
+        .mockResolvedValueOnce({ data: 'Test Patient Alpha', error: null } as unknown as Record<string, unknown>)
+        .mockResolvedValueOnce({ data: '2000-01-01', error: null } as unknown as Record<string, unknown>);
 
       let _insertedObservations: unknown[] = [];
 

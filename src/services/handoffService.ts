@@ -2,6 +2,7 @@
 // Service layer for secure patient transfers between healthcare facilities
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 import { applyLimit } from '../utils/pagination';
 import type {
   HandoffPacket,
@@ -681,18 +682,23 @@ export class HandoffService {
    * Uses your existing encrypt_phi_text function
    */
   private static async encryptPHI(data: string): Promise<string> {
-    try {
-      const { data: encrypted, error } = await supabase.rpc('encrypt_phi_text', {
-        data,
-        encryption_key: null, // Uses session key from app.phi_encryption_key
-      });
+    // Envision Atlus clinical Vault key (§17). The live RPC signature is
+    // encrypt_phi_text(data, use_clinical_key) — the old encryption_key arg
+    // was removed by migration 20260103000001 and calls passing it fail with
+    // undefined_function. FAIL CLOSED: plaintext PHI must never be stored.
+    const { data: encrypted, error } = await supabase.rpc('encrypt_phi_text', {
+      data,
+      use_clinical_key: true,
+    });
 
-      if (error) throw error;
-      return (encrypted as string) || data; // Fallback to plaintext if encryption fails (logged in DB)
-    } catch {
-      // In production, you may want to throw instead of fallback
-      return data;
+    if (error || !encrypted) {
+      await auditLogger.error('HANDOFF_PHI_ENCRYPT_FAILED',
+        new Error(error?.message ?? 'encrypt_phi_text returned null'),
+        { context: 'handoff packet PHI encryption' }
+      );
+      throw new Error('PHI encryption failed — handoff packet not saved');
     }
+    return encrypted as string;
   }
 
   /**
@@ -703,13 +709,17 @@ export class HandoffService {
     try {
       const { data: decrypted, error } = await supabase.rpc('decrypt_phi_text', {
         encrypted_data: encryptedData,
-        encryption_key: null, // Uses session key from app.phi_encryption_key
+        use_clinical_key: true, // Envision Atlus clinical Vault key (§17)
       });
 
       if (error) throw error;
       return (decrypted as string) || encryptedData; // Fallback to showing encrypted if decryption fails
-    } catch {
-      return encryptedData;
+    } catch (err: unknown) {
+      await auditLogger.error('HANDOFF_PHI_DECRYPT_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { context: 'handoff packet PHI decryption' }
+      );
+      return encryptedData; // Show ciphertext rather than break the receive view
     }
   }
 }

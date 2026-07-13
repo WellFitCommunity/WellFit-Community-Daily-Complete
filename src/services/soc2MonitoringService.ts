@@ -134,6 +134,17 @@ export interface EncryptionStatus {
   days_until_expiration: number | null;
 }
 
+export interface PlatformKeyStatus {
+  key_scope: 'clinical' | 'community';
+  key_store: 'supabase_vault' | 'edge_function_secrets';
+  key_name: string;
+  /** true/false = verified from SQL; null = not SQL-visible (edge secret) */
+  present: boolean | null;
+  created_at: string | null;
+  last_rotated_at: string | null;
+  days_since_rotation: number | null;
+}
+
 export interface IncidentResponseItem {
   id: string;
   event_type: string;
@@ -368,6 +379,21 @@ export class SOC2MonitoringService {
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 encryption keys for performance
       return await applyLimit<EncryptionStatus>(query, PAGINATION_LIMITS.AUDIT_LOGS);
+    } catch {
+
+      return [];
+    }
+  }
+
+  /**
+   * Get platform PHI-key posture (§17) — admin-gated metadata from the
+   * get_platform_key_status() SECURITY DEFINER accessor. Never key material.
+   */
+  async getPlatformKeyStatus(): Promise<PlatformKeyStatus[]> {
+    try {
+      const { data, error } = await this.supabase.rpc('get_platform_key_status');
+      if (error) throw error;
+      return (data || []) as PlatformKeyStatus[];
     } catch {
 
       return [];

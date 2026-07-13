@@ -93,15 +93,18 @@ async function createOrFindPatient(
   userId: string
 ): Promise<{ success: boolean; patientId?: string; error?: string }> {
   try {
-    // Decrypt patient name and DOB
+    // Decrypt patient name and DOB — Envision Atlus clinical Vault key (§17).
+    // Handoff packets are encrypted by HandoffService.encryptPHI with
+    // use_clinical_key: true; the live RPC has no encryption_key argument
+    // (removed by migration 20260103000001).
     const { data: decryptedName, error: nameError } = await supabase.rpc('decrypt_phi_text', {
       encrypted_data: packet.patient_name_encrypted || '',
-      encryption_key: null,
+      use_clinical_key: true,
     });
 
     const { data: decryptedDOB, error: dobError } = await supabase.rpc('decrypt_phi_text', {
       encrypted_data: packet.patient_dob_encrypted || '',
-      encryption_key: null,
+      use_clinical_key: true,
     });
 
     if (nameError || dobError) {

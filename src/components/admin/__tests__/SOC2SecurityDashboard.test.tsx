@@ -21,12 +21,20 @@ import type { SecurityMetrics, SecurityEvent } from '../../../services/soc2Monit
 
 const mockGetSecurityMetrics = vi.fn();
 const mockGetSecurityEvents = vi.fn();
+const mockGetPlatformKeyStatus = vi.fn();
+const mockGetEncryptionStatus = vi.fn();
 
 vi.mock('../../../services/soc2MonitoringService', () => ({
   createSOC2MonitoringService: () => ({
     getSecurityMetrics: (...args: unknown[]) => mockGetSecurityMetrics(...args),
     getSecurityEvents: (...args: unknown[]) => mockGetSecurityEvents(...args),
+    getPlatformKeyStatus: (...args: unknown[]) => mockGetPlatformKeyStatus(...args),
+    getEncryptionStatus: (...args: unknown[]) => mockGetEncryptionStatus(...args),
   }),
+}));
+
+vi.mock('../../../services/auditLogger', () => ({
+  auditLogger: { error: vi.fn().mockResolvedValue(undefined) },
 }));
 
 vi.mock('../../../contexts/AuthContext', () => ({
@@ -137,6 +145,8 @@ function setupSuccessMocks(
 ) {
   mockGetSecurityMetrics.mockResolvedValue(metricsOverride ?? MOCK_METRICS);
   mockGetSecurityEvents.mockResolvedValue(eventsOverride ?? MOCK_EVENTS);
+  mockGetPlatformKeyStatus.mockResolvedValue([]);
+  mockGetEncryptionStatus.mockResolvedValue([]);
 }
 
 async function renderDashboard() {
