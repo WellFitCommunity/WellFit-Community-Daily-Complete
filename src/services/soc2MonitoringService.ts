@@ -122,10 +122,9 @@ export interface AuditSummaryStats {
 }
 
 export interface EncryptionStatus {
-  id: number;
+  id: string;
   key_name: string;
-  key_purpose: 'phi' | 'credentials' | 'tokens' | 'system';
-  key_algorithm: string;
+  key_version: number;
   is_active: boolean;
   created_at: string;
   rotated_at: string | null;
@@ -364,7 +363,7 @@ export class SOC2MonitoringService {
     try {
       const query = this.supabase
         .from('encryption_status_view')
-        .select('id, key_name, key_purpose, key_algorithm, is_active, created_at, rotated_at, expires_at, days_since_rotation, expiration_status, days_until_expiration');
+        .select('id, key_name, key_version, is_active, created_at, rotated_at, expires_at, days_since_rotation, expiration_status, days_until_expiration');
 
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 encryption keys for performance

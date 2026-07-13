@@ -225,10 +225,9 @@ function createMockAuditSummaryStats(overrides?: Partial<AuditSummaryStats>): Au
 
 function createMockEncryptionStatus(overrides?: Partial<EncryptionStatus>): EncryptionStatus {
   return {
-    id: 1,
-    key_name: 'phi_encryption_key',
-    key_purpose: 'phi',
-    key_algorithm: 'AES-256-GCM',
+    id: 'key-uuid-001',
+    key_name: 'test_rotation_key',
+    key_version: 1,
     is_active: true,
     created_at: '2025-01-01T00:00:00Z',
     rotated_at: '2025-06-01T00:00:00Z',
