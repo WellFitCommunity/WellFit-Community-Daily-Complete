@@ -691,7 +691,7 @@ END IF;
 | `src/services/handoffService.ts` `encryptPHI()` / `decryptPHI()` | **Envision Atlus Vault** | Calls the RPC with `use_clinical_key: true`; encrypt is FAIL-CLOSED (throws, never stores plaintext) |
 | `src/services/hospitalTransferIntegrationService.ts` | **Envision Atlus Vault** | Decrypts handoff packets with `use_clinical_key: true` |
 | `supabase/functions/get-risk-assessments/index.ts` | **Envision Atlus Vault** | Reads the `risk_assessments_decrypted` view, which decrypts via `decrypt_phi_text(..., true)` (migrated 2026-07-11; it no longer touches the WellFit key) |
-| `supabase/functions/phi-encrypt/index.ts` (edge fn) → `src/services/chwService.ts` via `phiEncryptionClient.ts` | ⚠️ **BROKEN since 2026-01-03** | Still passes `encryption_key: Deno.env.get('PHI_ENCRYPTION_KEY')` → `PGRST202` → 500. Fails CLOSED (no plaintext stored), but CHW medication-photo encryption errors. Repair needs a key decision (restore a caller-key RPC overload vs converge on Vault vs Deno-side crypto) — Maria/Akima call, do NOT fix ad hoc |
+| `supabase/functions/phi-encrypt/index.ts` (edge fn) → `src/services/chwService.ts` via `phiEncryptionClient.ts` | **WellFit Secrets** | Passes `Deno.env.get('PHI_ENCRYPTION_KEY')` to **`encrypt_phi_text_with_key`/`decrypt_phi_text_with_key`** (migration `20260713130000`, §17 option A — Maria approved 2026-07-13, Akima ratification flagged). These caller-key RPCs are FAIL-CLOSED and **service_role-only** (anon/authenticated EXECUTE revoked) — browsers can never pass key material |
 
 ### What NOT to do
 

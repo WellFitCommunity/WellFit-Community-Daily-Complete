@@ -17,7 +17,10 @@
 
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
+// Import specifier aligned with _shared/supabaseClient.ts — mixing `@2?target=deno`
+// and `@2` resolves two different package versions and breaks cross-module
+// SupabaseClient type compatibility (same class fixed in mcp-patient-context).
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { checkPersistentRateLimit, type RateLimitConfig } from "../_shared/mcpRateLimiter.ts";
@@ -48,7 +51,7 @@ function jsonResponse(body: EncryptResponse, status: number, corsHeaders: Record
 }
 
 async function logAudit(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   fields: {
     eventType: string;
     actorUserId: string | null;
@@ -287,15 +290,18 @@ serve(async (req) => {
 
   try {
     let result: string | null;
+    // Caller-key RPCs (§17 option A, migration 20260713130000): service_role-only,
+    // fail-closed. The old encrypt/decrypt_phi_text(encryption_key) shape was
+    // removed 2026-01-03 and had left this function failing with PGRST202.
     if (operation === 'encrypt') {
-      const { data: encrypted, error } = await supabase.rpc('encrypt_phi_text', {
+      const { data: encrypted, error } = await supabase.rpc('encrypt_phi_text_with_key', {
         data,
         encryption_key: encryptionKey,
       });
       if (error) throw error;
       result = encrypted as string | null;
     } else {
-      const { data: decrypted, error } = await supabase.rpc('decrypt_phi_text', {
+      const { data: decrypted, error } = await supabase.rpc('decrypt_phi_text_with_key', {
         encrypted_data: data,
         encryption_key: encryptionKey,
       });

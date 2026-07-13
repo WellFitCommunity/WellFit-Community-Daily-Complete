@@ -124,3 +124,42 @@ unless the trigger is also updated to pass `true`.
       `basis` empty (PHI-minimization)?
 
 **No code has been written or applied. Awaiting Akima on the four items above.**
+
+---
+
+## 7. ADDENDUM (2026-07-13) — Caller-key PHI RPCs restored (§17 option A) — RATIFICATION REQUESTED
+
+> **Status:** APPLIED (Maria approved 2026-07-13); flagged here for Akima's §17
+> ratification alongside the items above. (Note: the §4 trigger fix above was
+> also applied 2026-07-11 with `use_clinical_key=true` — migration
+> `20260711190000` — and likewise awaits ratification.)
+
+**What was found:** migration `_APPLIED_20260103000001` (Jan 3) replaced
+`encrypt_phi_text`/`decrypt_phi_text` with a fail-closed
+`(data, use_clinical_key)` signature and removed the caller-supplied
+`encryption_key` argument. Five call sites kept passing the removed argument
+and had been failing silently for ~6 months (`PGRST202`). **No plaintext PHI
+was ever stored** — `handoff_packets` has zero rows and `phi-encrypt` fails
+closed (both live-verified).
+
+**What was applied (2026-07-13):**
+
+| Change | Key used | Proof |
+|---|---|---|
+| `handoffService.encryptPHI/decryptPHI` → `use_clinical_key: true`; encrypt now FAIL-CLOSED (silent plaintext fallback REMOVED) | Clinical Vault `app_encryption_key` | Live encrypt→decrypt round-trip on the clinical path |
+| `hospitalTransferIntegrationService` decrypts → `use_clinical_key: true` | Clinical Vault | same |
+| NEW migration `20260713130000`: `encrypt_phi_text_with_key` / `decrypt_phi_text_with_key` — restores the WellFit Secrets-key path for `phi-encrypt` (CHW medication photos). FAIL-CLOSED (raises on missing key, no fallback), **service_role-only EXECUTE** (anon + authenticated revoked → a browser can never pass key material), identical cipher scheme to the live functions | WellFit `PHI_ENCRYPTION_KEY` (Supabase Secrets, held server-side by the edge fn) | Live round-trip + fail-closed-on-empty-key + privilege matrix all proven; edge fn redeployed, auth gate 401 |
+
+**Why option A (vs converging both products on the Vault key):** preserves the
+§17 two-key architecture — WellFit data under the WellFit key, independent
+rotation, and pre-Jan-3 env-key ciphertext stays decryptable.
+
+**Decisions Akima owns for this addendum:**
+
+- [ ] Ratify the two-key restoration (option A) and the service-role-only posture.
+- [ ] Ratify handoff packets / hospital transfers as **clinical-key** scope
+      (`use_clinical_key=true`).
+- [ ] Note: the WellFit GUC `app.settings.PHI_ENCRYPTION_KEY` is unset in prod, so
+      any WellFit caller using `use_clinical_key=false` on the ORIGINAL RPCs falls
+      back to the Vault key. If that convergence is unacceptable, the GUC should be
+      provisioned or those callers moved to the `_with_key` path.
