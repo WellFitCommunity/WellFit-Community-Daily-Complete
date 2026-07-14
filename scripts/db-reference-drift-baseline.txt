@@ -11,7 +11,6 @@ rpc::create_fhir_patient_from_profile
 rpc::get_clearinghouse_credentials
 rpc::get_missed_check_in_alerts
 rpc::get_welfare_check_info
-rpc::increment_billing_cache_hit
 rpc::increment_cultural_cache_hit
 rpc::update_clearinghouse_config
 table::adapter_connections
@@ -33,7 +32,6 @@ table::alert_effectiveness
 table::appointment_reminders
 table::appointments
 table::avatars
-table::billing_code_cache
 table::billing_codes
 table::billing_optimization_history
 table::care_coordination_alerts
@@ -63,9 +61,7 @@ table::emergency_briefing_analytics
 table::emergency_contacts
 table::emergency_response_briefings
 table::ems_handoffs
-table::encounter_billing_suggestions
 table::exports
-table::fhir_allergies
 table::fhir_allergy_intolerances
 table::fhir_appointments
 table::fhir_bundles

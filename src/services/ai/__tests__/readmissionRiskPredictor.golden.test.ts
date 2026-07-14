@@ -383,7 +383,15 @@ function setupMockSupabase() {
         return createChainableMock(null);
       case 'readmission_risk_predictions':
         return {
-          insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+          // storePrediction chains .insert().select('id').single()
+          insert: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { id: '00000000-0000-4000-8000-000000000001' },
+                error: null
+              })
+            })
+          }),
           update: vi.fn().mockReturnValue({
             eq: vi.fn().mockResolvedValue({ data: null, error: null })
           }),
