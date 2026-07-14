@@ -201,6 +201,26 @@ function getApplicableRules(
   return Array.from(rulesByType.values()).flat();
 }
 
+// ── Caller auth ──────────────────────────────────────────────────────────────
+
+/**
+ * verify_jwt=false (config.toml) so the pg_cron caller can reach us — which
+ * makes this an open, data-mutating endpoint unless we gate it ourselves.
+ * Accepts X-Cron-Secret or a Bearer equal to CRON_SECRET / SB_SECRET_KEY.
+ * Mirrors nurse-question-auto-escalate / bed-capacity-monitor.
+ */
+function isAuthorizedCronCaller(req: Request): boolean {
+  const headerSecret = req.headers.get('X-Cron-Secret');
+  const bearerToken = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? null;
+  const candidate = headerSecret ?? bearerToken;
+  if (!candidate) return false;
+
+  const accepted = [Deno.env.get('CRON_SECRET') ?? '', SB_SECRET_KEY]
+    .filter((s) => s.length > 0);
+
+  return accepted.some((s) => s === candidate);
+}
+
 // ── Main handler ─────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -209,6 +229,13 @@ serve(async (req: Request) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+
+  if (!isAuthorizedCronCaller(req)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     if (!SUPABASE_URL || !SB_SECRET_KEY) {

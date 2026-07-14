@@ -32,6 +32,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [location, setLocation] = useState<GeolocationCoordinates | null>(null);
+  const [specialistType, setSpecialistType] = useState<string | null>(null);
 
   const loadVisit = useCallback(async () => {
     try {
@@ -51,6 +52,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
 
       const workflowEngine = new SpecialistWorkflowEngine(workflow);
       setEngine(workflowEngine);
+      setSpecialistType(workflow.specialistType);
 
       const step = workflowEngine.getCurrentStep(visitData.current_step);
       setCurrentStep(step || null);
@@ -97,7 +99,8 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
       await engine.checkOut(visit.id, location || undefined);
       await fieldVisitManager.completeVisit(visit.id);
       alert('Visit completed successfully!');
-      window.location.href = '/specialist/dashboard';
+      // Route requires the :specialistType param — a bare /specialist/dashboard 404s
+      window.location.href = `/specialist/dashboard/${specialistType ?? 'CHW'}`;
     } catch (error: unknown) {
 
       alert('Check-out failed. Please try again.');
@@ -141,7 +144,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
       <div className="p-6 text-center">
         <p className="text-gray-600">Unable to load visit workflow</p>
         <button
-          onClick={() => window.location.href = '/specialist/dashboard'}
+          onClick={() => window.location.href = `/specialist/dashboard/${specialistType ?? 'CHW'}`}
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg"
         >
           Back to Dashboard

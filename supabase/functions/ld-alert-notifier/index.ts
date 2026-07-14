@@ -30,6 +30,25 @@ interface CareTeamMember {
   phone: string | null;
 }
 
+/**
+ * verify_jwt=false (config.toml) so the ld_alerts DB trigger can reach us —
+ * which makes this an open EXTERNAL-MESSAGING endpoint (SMS/email) unless we
+ * gate it ourselves. Accepts X-Cron-Secret or a Bearer equal to
+ * CRON_SECRET / SB_SECRET_KEY (the trigger sends the Vault sb_secret_key).
+ * Mirrors nurse-question-auto-escalate / bed-capacity-monitor.
+ */
+function isAuthorizedServerCaller(req: Request): boolean {
+  const headerSecret = req.headers.get("X-Cron-Secret");
+  const bearerToken = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? null;
+  const candidate = headerSecret ?? bearerToken;
+  if (!candidate) return false;
+
+  const accepted = [Deno.env.get("CRON_SECRET") ?? "", SB_SECRET_KEY ?? ""]
+    .filter((s) => s.length > 0);
+
+  return accepted.some((s) => s === candidate);
+}
+
 serve(async (req) => {
   const logger = createLogger("ld-alert-notifier", req);
 
@@ -38,6 +57,14 @@ serve(async (req) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+
+  if (!isAuthorizedServerCaller(req)) {
+    logger.warn("Unauthorized caller rejected");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     // Service role client — bypasses RLS for care team lookups
