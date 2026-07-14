@@ -79,7 +79,8 @@ const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, count, onClick
 
 interface EngagementGaugeProps {
   label: string;
-  value: number;
+  /** null = no underlying data — renders an empty gauge with an em dash, never a fake 0% */
+  value: number | null;
   color: string;
   bgColor: string;
 }
@@ -87,7 +88,7 @@ interface EngagementGaugeProps {
 const EngagementGauge: React.FC<EngagementGaugeProps> = ({ label, value, color, bgColor }) => {
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (value / 100) * circumference;
+  const offset = circumference - ((value ?? 0) / 100) * circumference;
 
   return (
     <div className="text-center">
@@ -103,7 +104,7 @@ const EngagementGauge: React.FC<EngagementGaugeProps> = ({ label, value, color, 
           />
           <text x="60" y="60" textAnchor="middle" dominantBaseline="central"
             className="fill-white text-2xl font-bold">
-            {value}%
+            {value === null ? '—' : `${value}%`}
           </text>
         </svg>
       </div>

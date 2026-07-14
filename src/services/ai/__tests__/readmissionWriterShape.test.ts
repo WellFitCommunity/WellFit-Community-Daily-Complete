@@ -42,11 +42,15 @@ const capturedInserts: Record<string, unknown>[] = [];
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
     from: vi.fn((table: string) => ({
-      insert: vi.fn(async (payload: Record<string, unknown>) => {
+      insert: vi.fn((payload: Record<string, unknown>) => {
         if (table === 'readmission_risk_predictions') {
           capturedInserts.push(payload);
         }
-        return { error: null };
+        return {
+          select: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({ data: { id: 'inserted-row-id' }, error: null }),
+          })),
+        };
       }),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -166,7 +170,11 @@ describe('readmission writer column shape', () => {
   it('AI writer throws when the insert fails instead of swallowing the error', async () => {
     const { supabase } = await import('../../../lib/supabaseClient');
     (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
-      insert: vi.fn(async () => ({ error: { message: 'column does not exist' } })),
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({ data: null, error: { message: 'column does not exist' } }),
+        })),
+      })),
     });
 
     const predictor = new ReadmissionRiskPredictor();

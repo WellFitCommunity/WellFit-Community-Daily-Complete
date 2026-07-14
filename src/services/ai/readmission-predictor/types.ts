@@ -43,6 +43,8 @@ export interface RecommendedIntervention {
 }
 
 export interface ReadmissionPrediction {
+  /** Row id of the persisted readmission_risk_predictions record (set after storage) */
+  predictionId?: string;
   patientId: string;
   dischargeDate: string;
   readmissionRisk30Day: number; // 0.00 to 1.00

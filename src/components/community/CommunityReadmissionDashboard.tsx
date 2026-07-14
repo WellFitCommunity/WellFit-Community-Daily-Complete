@@ -55,7 +55,7 @@ const emptyMetrics: DashboardMetrics = {
   active_care_plans: 0,
   avg_engagement_score: 0,
   check_in_completion_rate: 0,
-  medication_adherence_rate: 0,
+  medication_adherence_rate: null,
   cost_savings_estimate: 0,
   critical_alerts: 0,
 };
@@ -151,7 +151,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
           active_care_plans: Number(d.active_care_plans ?? 0),
           avg_engagement_score: Number(d.avg_engagement_score ?? 0),
           check_in_completion_rate: Number(d.check_in_completion_rate ?? 0),
-          medication_adherence_rate: Number(d.medication_adherence_rate ?? 0),
+          medication_adherence_rate: d.medication_adherence_rate == null ? null : Number(d.medication_adherence_rate),
           cost_savings_estimate: Number(d.cost_savings_estimate ?? 0),
           critical_alerts: Number(d.critical_alerts ?? 0),
         });

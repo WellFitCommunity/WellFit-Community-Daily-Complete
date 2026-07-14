@@ -123,7 +123,7 @@ export class ReadmissionRiskPredictor {
     }
 
     // Store prediction in database with comprehensive features
-    await this.storePrediction(context, prediction, features);
+    prediction.predictionId = await this.storePrediction(context, prediction, features);
 
     // Track prediction for accuracy monitoring
     await this.trackPrediction(context, prediction);
@@ -219,8 +219,8 @@ export class ReadmissionRiskPredictor {
     context: DischargeContext,
     prediction: ReadmissionPrediction,
     features: ReadmissionRiskFeatures
-  ): Promise<void> {
-    const { error } = await supabase
+  ): Promise<string | undefined> {
+    const { data, error } = await supabase
       .from('readmission_risk_predictions')
       .insert({
         tenant_id: context.tenantId,
@@ -252,7 +252,9 @@ export class ReadmissionRiskPredictor {
         self_reported_features: features.selfReported,
         data_completeness_score: features.dataCompletenessScore,
         missing_critical_data: features.missingCriticalData
-      });
+      })
+      .select('id')
+      .single();
 
     if (error) {
       await auditLogger.error('READMISSION_PREDICTION_STORE_FAILED', new Error(error.message), {
@@ -261,6 +263,8 @@ export class ReadmissionRiskPredictor {
       });
       throw new Error(`Failed to store readmission prediction: ${error.message}`);
     }
+
+    return (data as { id?: string } | null)?.id;
   }
 
   /**

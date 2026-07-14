@@ -62,6 +62,7 @@ import type {
   WebSpeechRecognitionEvent,
   WebSpeechRecognitionInstance,
 } from './bed-board';
+import { useDischargeFlow } from './bed-board/useDischargeFlow';
 
 // ============================================================================
 // COMPONENT
@@ -111,7 +112,6 @@ const BedManagementPanel: React.FC = () => {
   const [selectedBed, setSelectedBed] = useState<BedBoardEntry | null>(null);
   const [showDischargeModal, setShowDischargeModal] = useState(false);
   const [dischargeDisposition, setDischargeDisposition] = useState<string>('');
-  const [discharging, setDischarging] = useState(false);
 
   // Learning feedback state
   const [feedbackUnit, setFeedbackUnit] = useState<string>('');
@@ -368,39 +368,21 @@ const BedManagementPanel: React.FC = () => {
     else setError(result.error.message);
   };
 
-  const handleDischargePatient = async () => {
-    if (!selectedBed?.patient_id || !dischargeDisposition) { setError('Please select a discharge disposition'); return; }
-    setDischarging(true);
-    try {
-      const result = await BedManagementService.dischargePatient(selectedBed.patient_id, dischargeDisposition);
-      if (result.success) {
-        showAffirmation('discharge_complete');
-        broadcast('update', 'bed', `Discharged patient from ${selectedBed.bed_label}`, selectedBed.bed_id, `Bed ${selectedBed.bed_label}`);
-        const postAcuteDispositions = ['Skilled Nursing Facility', 'Inpatient Rehab', 'Long-Term Acute Care', 'Hospice'];
-        if (postAcuteDispositions.includes(dischargeDisposition)) {
-          navigate('/transfer-logs', {
-            state: {
-              createTransfer: true,
-              patientId: selectedBed.patient_id,
-              patientName: selectedBed.patient_name,
-              patientMrn: selectedBed.patient_mrn,
-              disposition: dischargeDisposition,
-              fromBedManagement: true,
-            },
-          });
-        } else {
-          await loadData();
-        }
-        setShowDischargeModal(false);
-        setSelectedBed(null);
-        setDischargeDisposition('');
-      } else {
-        setError(result.error.message);
-      }
-    } finally {
-      setDischarging(false);
-    }
-  };
+  const { discharging, handleDischargePatient } = useDischargeFlow({
+    selectedBed,
+    dischargeDisposition,
+    navigate,
+    broadcast,
+    showAffirmation,
+    notify: setAffirmationToast,
+    loadData,
+    setError,
+    onClosed: useCallback(() => {
+      setShowDischargeModal(false);
+      setSelectedBed(null);
+      setDischargeDisposition('');
+    }, []),
+  });
 
   const handleGenerateAiReport = async () => {
     setLoadingAiReport(true);

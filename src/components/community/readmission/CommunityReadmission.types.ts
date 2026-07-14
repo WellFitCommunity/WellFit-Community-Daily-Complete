@@ -49,7 +49,8 @@ export interface DashboardMetrics {
   active_care_plans: number;
   avg_engagement_score: number;
   check_in_completion_rate: number;
-  medication_adherence_rate: number;
+  /** null = no patient carries adherence data (view no longer fabricates a default) */
+  medication_adherence_rate: number | null;
   cost_savings_estimate: number;
   critical_alerts: number;
 }
