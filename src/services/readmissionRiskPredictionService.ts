@@ -27,6 +27,7 @@ import {
   SilenceWindowRiskContribution,
   DEFAULT_SILENCE_WINDOW_WEIGHTS,
 } from '../types/communicationSilenceWindow';
+import { toDbRiskCategory } from './ai/readmission-predictor/riskCategoryMap';
 
 // =====================================================
 // TYPES
@@ -438,12 +439,12 @@ export async function calculatePatientReadmissionRisk(
     const [profileResult, clinicalResult, silenceInput] = await Promise.all([
       supabase
         .from('profiles')
-        .select('date_of_birth')
+        .select('dob')
         .eq('user_id', patientId)
         .single(),
       supabase
         .from('readmission_risk_predictions')
-        .select('clinical_features, medication_features, social_determinants_features')
+        .select('discharge_date, clinical_features, medication_features, social_determinants_features')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -453,8 +454,8 @@ export async function calculatePatientReadmissionRisk(
 
     // Calculate age from DOB
     let age = 65; // Default
-    if (profileResult.data?.date_of_birth) {
-      const dob = new Date(profileResult.data.date_of_birth);
+    if (profileResult.data?.dob) {
+      const dob = new Date(profileResult.data.dob);
       const today = new Date();
       age = Math.floor((today.getTime() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
     }
@@ -480,8 +481,13 @@ export async function calculatePatientReadmissionRisk(
     // Calculate complete readmission risk
     const result = calculateReadmissionRisk(patientFactors, silenceResult);
 
-    // Store result in database
-    await storeReadmissionRiskResult(supabase, result, tenantId);
+    // Store result in database (carry the discharge episode forward from the
+    // latest prediction row — the live table requires a discharge_date)
+    const episodeDischargeDate =
+      typeof clinicalResult.data?.discharge_date === 'string'
+        ? clinicalResult.data.discharge_date
+        : null;
+    await storeReadmissionRiskResult(supabase, result, tenantId, episodeDischargeDate);
 
     await auditLogger.clinical('READMISSION_RISK_CALCULATION_COMPLETED', true, {
       patientId,
@@ -506,40 +512,40 @@ export async function calculatePatientReadmissionRisk(
 async function storeReadmissionRiskResult(
   supabase: SupabaseClient,
   result: ReadmissionRiskResult,
-  tenantId: string
+  tenantId: string,
+  episodeDischargeDate: string | null
 ): Promise<void> {
-  const { error } = await supabase.from('readmission_risk_predictions').upsert(
-    {
-      patient_id: result.patientId,
-      tenant_id: tenantId,
-      readmission_risk_30_day: result.totalRiskScore / 100,
-      risk_category: result.riskCategory.toLowerCase(),
-      prediction_confidence: result.dataConfidence / 100,
-      recommended_interventions: result.recommendedInterventions,
-      engagement_features: {
-        silenceWindowScore: result.silenceWindow.score,
-        silenceWindowRiskLevel: result.silenceWindow.riskLevel,
-        silenceWindowAlertTriggered: result.silenceWindow.alertTriggered,
-        behavioralScore: result.behavioralScore,
-      },
-      clinical_features: {
-        clinicalScore: result.clinicalScore,
-        ageScore: result.factors.ageScore,
-        priorAdmissionsScore: result.factors.priorAdmissionsScore,
-        chronicConditionsScore: result.factors.chronicConditionsScore,
-      },
-      social_determinants_features: {
-        socialScore: result.socialScore,
-        socialSupportScore: result.factors.socialSupportScore,
-        dischargeDestinationScore: result.factors.dischargeDestinationScore,
-      },
-      created_at: result.calculatedAt,
+  // Insert, not upsert: the live table has no unique constraint on
+  // patient_id — it is a time-series of predictions; readers take the
+  // latest row by created_at.
+  const { error } = await supabase.from('readmission_risk_predictions').insert({
+    patient_id: result.patientId,
+    tenant_id: tenantId,
+    discharge_date: episodeDischargeDate ?? result.calculatedAt.split('T')[0],
+    readmission_risk_score: result.totalRiskScore / 100,
+    risk_category: toDbRiskCategory(result.riskCategory),
+    prediction_confidence: result.dataConfidence / 100,
+    recommended_interventions: result.recommendedInterventions,
+    ai_model_used: `deterministic-${result.modelVersion}`,
+    engagement_features: {
+      silenceWindowScore: result.silenceWindow.score,
+      silenceWindowRiskLevel: result.silenceWindow.riskLevel,
+      silenceWindowAlertTriggered: result.silenceWindow.alertTriggered,
+      behavioralScore: result.behavioralScore,
     },
-    {
-      onConflict: 'patient_id',
-      ignoreDuplicates: false,
-    }
-  );
+    clinical_features: {
+      clinicalScore: result.clinicalScore,
+      ageScore: result.factors.ageScore,
+      priorAdmissionsScore: result.factors.priorAdmissionsScore,
+      chronicConditionsScore: result.factors.chronicConditionsScore,
+    },
+    social_determinants_features: {
+      socialScore: result.socialScore,
+      socialSupportScore: result.factors.socialSupportScore,
+      dischargeDestinationScore: result.factors.dischargeDestinationScore,
+    },
+    created_at: result.calculatedAt,
+  });
 
   if (error) {
     await auditLogger.error('READMISSION_RISK_STORE_FAILED', error.message, {

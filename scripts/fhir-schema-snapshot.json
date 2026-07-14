@@ -1986,7 +1986,12 @@
       "engagement_features",
       "self_reported_features",
       "data_completeness_score",
-      "missing_critical_data"
+      "missing_critical_data",
+      "readmission_risk_7_day",
+      "readmission_risk_90_day",
+      "prediction_confidence",
+      "data_sources_analyzed",
+      "plain_language_explanation"
     ],
     "risk_assessments": [
       "id",

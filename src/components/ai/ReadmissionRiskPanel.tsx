@@ -21,6 +21,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import type { ReadmissionPrediction } from '../../services/ai/readmissionRiskPredictor';
+import { fromDbRiskCategory } from '../../services/ai/readmission-predictor/riskCategoryMap';
 import { AIFeedbackButton } from './AIFeedbackButton';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../../services/auditLogger';
@@ -54,7 +55,7 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
       // Fetch prediction from database
       const { data, error: fetchError } = await supabase
         .from('readmission_risk_predictions')
-        .select('patient_id, discharge_date, readmission_risk_30_day, readmission_risk_7_day, readmission_risk_90_day, risk_category, risk_factors, protective_factors, recommended_interventions, predicted_readmission_date, prediction_confidence, plain_language_explanation, data_sources_analyzed, ai_model_used, ai_cost')
+        .select('patient_id, discharge_date, readmission_risk_score, readmission_risk_7_day, readmission_risk_90_day, risk_category, primary_risk_factors, secondary_risk_factors, protective_factors, recommended_interventions, predicted_readmission_date, prediction_confidence, plain_language_explanation, data_sources_analyzed, ai_model_used, ai_cost')
         .eq('id', predictionId)
         .single();
 
@@ -70,11 +71,11 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
       const transformedPrediction: ReadmissionPrediction = {
         patientId: data.patient_id,
         dischargeDate: data.discharge_date,
-        readmissionRisk30Day: data.readmission_risk_30_day || 0,
+        readmissionRisk30Day: data.readmission_risk_score || 0,
         readmissionRisk7Day: data.readmission_risk_7_day || 0,
         readmissionRisk90Day: data.readmission_risk_90_day || 0,
-        riskCategory: data.risk_category || 'low',
-        riskFactors: data.risk_factors || [],
+        riskCategory: fromDbRiskCategory(data.risk_category),
+        riskFactors: [...(data.primary_risk_factors || []), ...(data.secondary_risk_factors || [])],
         protectiveFactors: data.protective_factors || [],
         recommendedInterventions: data.recommended_interventions || [],
         predictedReadmissionDate: data.predicted_readmission_date,
@@ -194,7 +195,7 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
       <CardHeader className={riskColors.bg}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {prediction.riskCategory in ['critical', 'high'] ? (
+            {prediction.riskCategory === 'critical' || prediction.riskCategory === 'high' ? (
               <AlertTriangle className={`h-5 w-5 ${riskColors.text}`} />
             ) : (
               <Shield className="h-5 w-5 text-green-600" />
@@ -360,7 +361,7 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
         </div>
 
         {/* Action Buttons */}
-        {prediction.riskCategory in ['high', 'critical'] && (
+        {(prediction.riskCategory === 'high' || prediction.riskCategory === 'critical') && (
           <div className="flex gap-2 pt-4 border-t">
             <Button
               onClick={onCreateCarePlan}

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../../services/auditLogger';
+import { fromDbRiskCategory } from '../../services/ai/readmission-predictor/riskCategoryMap';
 
 // ============================================================================
 // TYPES
@@ -143,7 +144,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
       const risks: PatientRiskData = {
         readmission: readmissionData ? {
           score: Math.round((readmissionData.readmission_risk_score ?? 0) * 100),
-          level: (readmissionData.risk_category as 'low' | 'moderate' | 'high' | 'critical') || scoreToLevel(Math.round((readmissionData.readmission_risk_score ?? 0) * 100)),
+          level: readmissionData.risk_category ? fromDbRiskCategory(readmissionData.risk_category) : scoreToLevel(Math.round((readmissionData.readmission_risk_score ?? 0) * 100)),
           daysUntilPredicted: readmissionData.predicted_readmission_window_days ?? undefined,
           topFactor: primaryFactors[0]?.factor,
           plainLanguageExplanation: readmissionData.plain_language_explanation ?? undefined,
