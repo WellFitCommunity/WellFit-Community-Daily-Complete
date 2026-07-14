@@ -3,10 +3,16 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-07-14 (eighth session)
+**Last Updated:** 2026-07-14 (ninth session)
 
 ---
 ### 📨 HANDOFF FOR NEXT SESSION (read this first)
+
+**Session 2026-07-14 (ninth) — CI on main red→green (commit `3eae7896`): stale DB snapshot + golden-test mock.**
+- **Trigger:** Maria reported CI/CD + governance failing on GitHub. CI/CD Pipeline had been red on every push since the 2026-07-13 §17 commits (`fix(phi)` onward). **Security Scan was never failing** — the red was two CI/CD jobs.
+- **Failure 1 — Governance DB-reference drift gate:** flagged `encrypt_phi_text_with_key`/`decrypt_phi_text_with_key` (migration `20260713130000`) + `get_platform_key_status` (`20260713120000`) as "not in live DB." Live `pg_proc` verified all three EXIST — the migrations were applied but `scripts/db-objects-snapshot.json` was never refreshed after them (the seventh session's snapshot predated its own last two migrations). Regenerated from live (780→786 tables, 1476→1489 functions — also picked up the FHIR-sync/billing objects) + removed 4 drift-baseline entries that are now real (`billing_code_cache`, `encounter_billing_suggestions`, `fhir_allergies`, `increment_billing_cache_hit`). **Lesson: any session that pushes a migration must refresh the snapshot in the SAME commit, or the next push goes red.**
+- **Failure 2 — Unit Tests (services), 9 golden-test failures, ONE root cause:** eighth session's `16e8f27e` changed `storePrediction` to chain `.insert().select('id').single()`, but `readmissionRiskPredictor.golden.test.ts` still mocked `insert` as a plain resolved promise → `TypeError: .select is not a function` ×9. Mock now returns the chain with a synthetic id. Sister check: `readmissionWriterShape.test.ts` already chain-correct; `PatientRiskStrip.test` read-only — no other occurrences.
+- **Verified in CI:** CI/CD Pipeline all 14 jobs success; Security Scan all jobs success (Dependency Review skipped = normal on push); Secret/File-Size/Shadow-Import green. Local: scoped tsc 0, lint 0/0, 51 tests (45 golden + 6 shape), drift gate pass. NOTE: GitHub's run-level status API flapped stale "completed" responses mid-run — job-level (`gh run view --json jobs`) is the reliable signal.
 
 **Session 2026-07-14 (eighth) — readmission prediction WRITE path repaired end-to-end (both writers were 100% dead).**
 - **Trigger:** Maria asked whether risk assessments and readmission predictions are "2 separate systems that measure accurately but differently." **Separation verified YES** (distinct tables/writers/formulas; only coupling = readmission feature-extractor READS `risk_assessments` ADL/cognitive data as input — correct design). **"Accurately" was broken:** BOTH readmission writers had been drifted against the live table since the migrate:down footgun recreated it (original 20251115120000 shape create-then-dropped; surviving 20251115160000 shape is live) — every insert 400'd; AI path swallowed silently, deterministic upsert ALSO 42P10'd (`onConflict:'patient_id'` with no unique constraint — it never once wrote). The 6 live rows are demo seeds (Nov 25–Jan 26).
