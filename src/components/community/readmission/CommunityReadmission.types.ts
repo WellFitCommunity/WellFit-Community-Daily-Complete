@@ -21,8 +21,10 @@ export interface CommunityMember {
   phone?: string;
   discharge_facility?: string;
   primary_diagnosis?: string;
-  risk_score: number;
-  risk_category: 'low' | 'moderate' | 'high' | 'critical';
+  /** null = member has no risk score yet (view no longer fabricates 50) */
+  risk_score: number | null;
+  /** null = no analytics-derived category yet (view no longer fabricates 'moderate') */
+  risk_category: 'low' | 'moderate' | 'high' | 'critical' | null;
   total_visits_30d: number;
   er_visits_30d: number;
   readmissions_30d: number;
@@ -31,8 +33,10 @@ export interface CommunityMember {
   missed_check_ins_7d: number;
   has_active_care_plan: boolean;
   sdoh_risk_factors: string[];
-  engagement_score: number;
-  medication_adherence: number;
+  /** null = no engagement data (view no longer fabricates 50) */
+  engagement_score: number | null;
+  /** null = no adherence data (view no longer fabricates 50) */
+  medication_adherence: number | null;
   cms_penalty_risk: boolean;
   predicted_readmission_date?: string;
   days_since_discharge?: number;
@@ -130,16 +134,19 @@ export interface MemberDetailModalProps {
 // UTILITY FUNCTIONS
 // ============================================================================
 
-export const getRiskColor = (category: string): string => {
+export const getRiskColor = (category: string | null): string => {
   switch (category) {
     case 'critical': return 'text-red-400 bg-red-500/20 border-red-500/50';
     case 'high': return 'text-orange-400 bg-orange-500/20 border-orange-500/50';
     case 'moderate': return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/50';
-    default: return 'text-green-400 bg-green-500/20 border-green-500/50';
+    case 'low': return 'text-green-400 bg-green-500/20 border-green-500/50';
+    // Unscored must never look low-risk
+    default: return 'text-slate-400 bg-slate-500/20 border-slate-500/50';
   }
 };
 
-export const getRiskBgColor = (score: number): string => {
+export const getRiskBgColor = (score: number | null): string => {
+  if (score === null) return 'bg-slate-600';
   if (score >= 80) return 'bg-linear-to-r from-red-600 to-red-500';
   if (score >= 60) return 'bg-linear-to-r from-orange-600 to-orange-500';
   if (score >= 40) return 'bg-linear-to-r from-yellow-600 to-yellow-500';

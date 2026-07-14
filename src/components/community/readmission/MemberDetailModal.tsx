@@ -30,7 +30,7 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, on
             {member.phone && <p className="text-slate-400">{member.phone}</p>}
             <div className="flex items-center gap-2 mt-1">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRiskColor(member.risk_category)}`}>
-                Risk Score: {member.risk_score}
+                Risk Score: {member.risk_score ?? '—'}
               </span>
               {member.cms_penalty_risk && (
                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/50">
@@ -61,7 +61,7 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, on
             <p className="text-sm text-slate-400">Readmissions</p>
           </div>
           <div className="bg-green-500/20 rounded-lg p-4 text-center border border-green-500/30">
-            <p className="text-3xl font-bold text-green-400">{member.engagement_score}%</p>
+            <p className="text-3xl font-bold text-green-400">{member.engagement_score === null ? '—' : `${member.engagement_score}%`}</p>
             <p className="text-sm text-slate-400">Engagement</p>
           </div>
         </div>

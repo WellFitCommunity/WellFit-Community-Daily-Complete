@@ -42,7 +42,7 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, onSelect }) => (
     </td>
     <td className="px-6 py-4">
       <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRiskColor(member.risk_category)}`}>
-        {member.risk_score}
+        {member.risk_score ?? '—'}
         {member.cms_penalty_risk && (
           <AlertTriangle className="ml-1 text-yellow-400" size={14} />
         )}
@@ -76,18 +76,18 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, onSelect }) => (
       <div className="flex items-center gap-2">
         <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full ${member.engagement_score >= 80 ? 'bg-green-500' : member.engagement_score >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
-            style={{ width: `${member.engagement_score}%` }}
+            className={`h-full rounded-full ${member.engagement_score === null ? 'bg-slate-600' : member.engagement_score >= 80 ? 'bg-green-500' : member.engagement_score >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+            style={{ width: `${member.engagement_score ?? 0}%` }}
           />
         </div>
-        <span className="text-white text-sm">{member.engagement_score}%</span>
+        <span className="text-white text-sm">{member.engagement_score === null ? '—' : `${member.engagement_score}%`}</span>
       </div>
     </td>
     <td className="px-6 py-4">
       <div className="flex items-center gap-2">
-        <Pill size={16} className={member.medication_adherence >= 90 ? 'text-green-400' : member.medication_adherence >= 70 ? 'text-yellow-400' : 'text-red-400'} />
-        <span className={`text-sm font-medium ${member.medication_adherence >= 90 ? 'text-green-400' : member.medication_adherence >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>
-          {member.medication_adherence}%
+        <Pill size={16} className={member.medication_adherence === null ? 'text-slate-400' : member.medication_adherence >= 90 ? 'text-green-400' : member.medication_adherence >= 70 ? 'text-yellow-400' : 'text-red-400'} />
+        <span className={`text-sm font-medium ${member.medication_adherence === null ? 'text-slate-400' : member.medication_adherence >= 90 ? 'text-green-400' : member.medication_adherence >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>
+          {member.medication_adherence === null ? '—' : `${member.medication_adherence}%`}
         </span>
       </div>
     </td>
