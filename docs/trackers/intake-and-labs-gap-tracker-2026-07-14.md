@@ -34,6 +34,8 @@
 
 # PART 1 — INTAKE
 
+> **Design principle (Maria, 2026-07-14): intake is PATIENT-first, not senior-first.** The platform migrated to `patient_id` as the canonical identity (architecture-patterns.md) precisely because not every enrollee is a senior. The `senior_*` tables are a **geriatric enrichment layer**, applied by routing — not the default intake target. The routing hook already exists in schema: `profiles.care_protocol_geriatric` / `care_protocol_disability` / `care_protocol_mental_health` / `care_level` — and the ONLY component ever built to set them is the orphaned `PatientAdmissionForm.tsx`. The routing layer was designed, then islanded (see I-8). Every fix spec below that names a `senior_*` write target means "via the routing layer when the geriatric protocol applies"; general patients get the same data captured into the patient-generic stores (`profiles` columns + FHIR resources).
+
 Flows mapped (evidence: agent sweep 2026-07-14):
 1. Self-register: `src/pages/RegisterPage.tsx` → `supabase/functions/register` (`pending_registrations`) → `supabase/functions/sms-verify-code` (auth user + `profiles` upsert + welcome email + FHIR RPC + auto-signin).
 2. Admin enroll: `src/pages/EnrollSeniorPage.tsx` (+ `BulkEnrollmentPanel.tsx`) → `supabase/functions/enrollClient` (`profiles` UPDATE, role hardcoded senior/4).
@@ -115,7 +117,19 @@ Flows mapped (evidence: agent sweep 2026-07-14):
 
 ## I-7 (P3, docs) — REGISTRATION_FLOWS.md drift
 
-`docs/product/REGISTRATION_FLOWS.md` claims Flow-2 assigns "role_code 4 OR 19 (patient)" — **contradicted**: `enrollClient/index.ts:169,181` hardcodes role 4/senior; role 19 appears nowhere in enrollment code. Doc also omits the bulk path and test-patient branch. Update the doc (or implement role-19 if that was the intent — ⚑ MARIA one-line call).
+`docs/product/REGISTRATION_FLOWS.md` claims Flow-2 assigns "role_code 4 OR 19 (patient)" — **contradicted**: `enrollClient/index.ts:169,181` hardcodes role 4/senior; role 19 appears nowhere in enrollment code. Doc also omits the bulk path and test-patient branch. The role-19 gap is not just doc drift — it is the missing general-patient path; the real work is I-8. Update the doc as part of I-8.
+
+## I-8 (P1, architecture) — Patient-first intake + geriatric routing (the "what if it's not a senior" gap)
+
+**Defect:** every live enrollment path assumes senior. `enrollClient` hardcodes `role_id: 4`/`role_code: 4`/`role='senior'`; `RegisterPage` shows "Patient" in the dropdown but the server maps it to senior (code 4 — role 19 is not in `PUBLIC_ALLOWED`, `register/index.ts:117`); the demographics flow writes `senior_*` tables unconditionally via `seniorDataService`. Meanwhile the routing mechanism the schema already provides — `profiles.care_protocol_geriatric/care_protocol_disability/care_protocol_mental_health/care_level` — has exactly ONE writer ever built, the **orphaned** `PatientAdmissionForm.tsx` (zero importers). A non-senior patient (Atlus clinical patient, younger disabled member, behavioral-health client) has no correct intake path: they get mislabeled senior or can't enroll.
+
+**Fix spec:**
+1. Enable role-19 patient enrollment: add 19 to `enrollClient` as a caller-chosen parameter (default 4 for the WellFit senior flow; EnrollSeniorPage keeps its current behavior; a general "Enroll Patient" variant passes 19). Decide whether self-serve `/register` also offers it — ⚑ MARIA (D9, upgraded).
+2. Protocol routing at intake: enrollment sets `care_protocol_geriatric` (and siblings) from explicit selection or age-derivation rule — ⚑ AKIMA defines the rule (age ≥ 65? enrollment context? clinician judgment?) (D13). Routing drives: (a) which enrichment tables the demographics flow writes (`senior_*` only when geriatric protocol is on), (b) senior-friendly UI mode (accessibility.md), (c) downstream geriatric features (fall-risk baselines I-6, senior dashboards).
+3. Refactor `useDemographicsForm`/`seniorDataService` call site to branch on protocol: geriatric → current `senior_*` writes; general → same fields into patient-generic stores (`profiles` columns + FHIR resources; verify targets live before writing the mapper).
+4. Disposition `PatientAdmissionForm.tsx`: it is the designed writer of the protocol columns — either mount it (island list already flags it) or move its protocol-selection UI into the I-4 enrollment wizard. Do not build a duplicate protocol selector while the designed one sits orphaned (repair-don't-route-around).
+
+**Acceptance:** enroll one synthetic senior AND one synthetic non-senior patient — senior gets role 4 + `care_protocol_geriatric=true` + `senior_*` rows; patient gets role 19 + no `senior_*` rows + same safety fields (I-3) captured in patient-generic stores; routing column live-verified on both; REGISTRATION_FLOWS.md updated to match (closes I-7).
 
 ## Intake orphans (dispositions needed, from island list — no new findings)
 - `PatientAdmissionForm.tsx` (bed admission, orphan), `PaperFormUploader.tsx` (orphan; `PaperFormScanner` is the live sibling), `wellness_enrollments` writer `dischargeToWellnessBridge.enrollPatientInWellnessApp` (zero callers — the discharge→WellFit bridge never fires). Already on the island decision list (PROJECT_STATE 2026-07-14); I-4's wizard is the natural place to also mount wellness enrollment.
@@ -198,8 +212,8 @@ Data layer live + hardened (`patient_lab_access_tokens`, `generate_patient_lab_t
 | S1 | L-0 + I-2 (both dropped-object repairs; smallest, highest leverage) | <4h | I-2 needs Maria's A/B call; L-0 needs emergency_alerts repoint-vs-create call |
 | S2 | L-1 + L-2 (manual entry + escalation wiring = labs minimally ALIVE) | 4–16h (2 sessions) | none after S1 |
 | S3 | I-1 + I-3 (consent integrity + safety-minimum intake fields) | 4–16h (2 sessions) | I-1a data correction sign-off; I-3 canonical allergy table call |
-| S4 | I-4 (enrollment parity + wizard) | 4–16h | none |
-| S5 | L-4 (real exports) + I-7 (doc fix) | <4h–8h | none |
+| S4 | I-4 + I-8 (enrollment parity + wizard + patient-first routing — build together, same surfaces) | 16–48h (3–4 sessions) | D9 + D13 |
+| S5 | L-4 (real exports) | <4h–8h | none |
 | S6 | L-3 (ORU worker) | 4–16h | S2 done |
 | S7+ | I-5, I-6, L-5, L-6, L-8 | per decision | Maria/Akima decisions above |
 
@@ -215,7 +229,8 @@ Data layer live + hardened (`patient_lab_access_tokens`, `generate_patient_lab_t
 | D6 | I-4: backfill campaign for 24 existing seniors | Maria | ops, not code |
 | D7 | I-5: insurance capture scope per product | Maria | S7+ |
 | D8 | I-6: intake baseline instruments | Akima | S7+ |
-| D9 | I-7: role-19 patient enrollment — doc fix or feature | Maria | S5 |
+| D9 | I-8: role-19 general-patient enrollment — which flows offer it (admin only vs also self-serve) | Maria | S4 |
+| D13 | I-8: geriatric-routing rule — what sets `care_protocol_geriatric` (age threshold, enrollment context, clinician selection) | Akima | S4 |
 | D10 | L-5: canonical lab store architecture | Maria | before L-3 scales |
 | D11 | L-7: patient lab QR token pattern | Akima | carried |
 | D12 | L-8: results-release policy | Akima | S7+ |
