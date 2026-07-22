@@ -58,7 +58,9 @@ export const tenantSecurityService = {
     try {
       let query = supabase
         .from('security_alerts')
-        .select('id, severity, category, alert_type, title, message, status, source_ip, affected_user_id, affected_resource, created_at, acknowledged_at, resolved_at')
+        // Live columns aliased to the row shape: description, assigned_at,
+        // resolution_time (acknowledged_at/resolved_at/message never existed)
+        .select('id, severity, category, alert_type, title, message:description, status, source_ip, affected_user_id, affected_resource, created_at, acknowledged_at:assigned_at, resolved_at:resolution_time')
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -101,8 +103,9 @@ export const tenantSecurityService = {
         .from('security_alerts')
         .update({
           status: 'acknowledged',
-          acknowledged_at: new Date().toISOString(),
-          acknowledged_by: userId,
+          assigned_at: new Date().toISOString(),
+          assigned_to: userId,
+          assigned_by: userId,
           updated_at: new Date().toISOString(),
         })
         .eq('id', alertId);
@@ -131,8 +134,7 @@ export const tenantSecurityService = {
         .from('security_alerts')
         .update({
           status: 'resolved',
-          resolved_at: new Date().toISOString(),
-          resolved_by: userId,
+          resolution_time: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', alertId);
@@ -157,18 +159,47 @@ export const tenantSecurityService = {
    */
   async getActiveSessions(tenantId: string): Promise<ServiceResult<ActiveSessionRow[]>> {
     try {
-      const { data, error } = await supabase
+      // profiles has no last_sign_in_at column (it lives on auth.users, which
+      // the browser cannot read). The real client-readable sign-in source is
+      // login_attempts (success = true), latest row per user.
+      const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name, email, last_sign_in_at')
+        .select('user_id, first_name, last_name, email')
         .eq('tenant_id', tenantId)
-        .order('last_sign_in_at', { ascending: false, nullsFirst: false })
         .limit(100);
 
       if (error) {
         return failure('DATABASE_ERROR', 'Failed to load active sessions');
       }
 
-      const rows = (data || []) as SessionDbRow[];
+      const { data: loginData, error: loginError } = await supabase
+        .from('login_attempts')
+        .select('user_id, created_at')
+        .eq('tenant_id', tenantId)
+        .eq('success', true)
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (loginError) {
+        return failure('DATABASE_ERROR', 'Failed to load sign-in history');
+      }
+
+      const lastSignIns = new Map<string, string>();
+      for (const attempt of (loginData || []) as Array<{ user_id: string | null; created_at: string }>) {
+        if (attempt.user_id && !lastSignIns.has(attempt.user_id)) {
+          lastSignIns.set(attempt.user_id, attempt.created_at);
+        }
+      }
+
+      const rows = ((profileData || []) as Array<Omit<SessionDbRow, 'last_sign_in_at'>>)
+        .map(profile => ({
+          ...profile,
+          last_sign_in_at: lastSignIns.get(profile.user_id) ?? null,
+        }))
+        .sort((a, b) =>
+          (b.last_sign_in_at ? new Date(b.last_sign_in_at).getTime() : 0) -
+          (a.last_sign_in_at ? new Date(a.last_sign_in_at).getTime() : 0)
+        ) as SessionDbRow[];
       const now = Date.now();
       const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 min default
 
@@ -299,21 +330,22 @@ export const tenantSecurityService = {
         .from('tenant_system_status')
         .select('is_suspended, is_active, suspension_reason, suspended_at, suspended_by')
         .eq('tenant_id', tenantId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // No row = not suspended (table may not have an entry for this tenant)
-        if (error.code === 'PGRST116') {
-          return success({
-            is_suspended: false,
-            is_active: true,
-            suspension_reason: null,
-            suspended_at: null,
-            suspended_by: null,
-            suspended_by_name: null,
-          });
-        }
         return failure('DATABASE_ERROR', 'Failed to check suspension status');
+      }
+
+      // No row = not suspended (table may not have an entry for this tenant)
+      if (!data) {
+        return success({
+          is_suspended: false,
+          is_active: true,
+          suspension_reason: null,
+          suspended_at: null,
+          suspended_by: null,
+          suspended_by_name: null,
+        });
       }
 
       interface SuspensionDbRow {

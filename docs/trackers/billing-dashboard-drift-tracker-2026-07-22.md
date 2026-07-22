@@ -16,3 +16,19 @@
 - **B-7 `guardian-agent-api` 401 on error-boundary reportAndHeal:** client sends the session Bearer correctly (`guardianAgentClient.ts`) — the rejection is inside the edge fn's gate. Investigate the fn's role check; crash reports currently never reach Guardian.
 
 Regression check: `grep -rn "payer_id" src/services/eligibilityVerificationService.ts` (expect 0 after B-5); `grep -rn "received_at\|summary, details" src/services/eraPaymentPostingService.ts` (expect 0 after B-6).
+
+---
+
+## SOC2/AUDIT SURFACE CLUSTER (same 2026-07-22 walk, second console paste)
+
+### Fixed same day
+- **S-1 (403s):** `ai_model_registry`, `tenant_config_audit`, `disclosure_accounting` — RLS policies existed, GRANTs didn't → migration `20260722190000` (SELECT to authenticated, live-verified).
+- **S-2:** `admin_settings.security_rules` jsonb column never existed (reads 400'd, rule saves silently failed) → additive migration `20260722200000`; design honored (per-admin rules keyed user_id), zero code change.
+- **S-3 `tenantSecurityService`:** security_alerts read now aliases live columns (`message:description`, `acknowledged_at:assigned_at`, `resolved_at:resolution_time`) so the UI shape is unchanged; **acknowledge/resolve WRITES also targeted nonexistent columns** → repointed to `assigned_at/assigned_to/assigned_by` and `resolution_time` (resolver identity remains in the audit log). `getTenantSuspensionStatus` → `.maybeSingle()` (0 rows = not suspended; kills the 406). `getActiveSessions` no longer selects `profiles.last_sign_in_at` (never existed — it's an auth.users column) → real source: latest `login_attempts` success per user, joined to profiles client-side.
+- **S-4 `trainingTrackingService`:** `employee_profiles` has no name columns (employment data only) → names via `profiles` fetch keyed `user_id`.
+
+### NEEDS ITS OWN SWEEP — audit_logs READ fleet (S-5)
+The 2026-07-11 session fixed the audit_logs INSERT fleet (28 sites); the READ side was deferred as "not manifesting" — it manifests on the SOC2/compliance/audit-viewer surfaces. At least 8 distinct queries 400 today, selecting/filtering columns that don't exist. **Live column truth (2026-07-22):** `id, actor_user_id, actor_role, actor_ip_address, actor_user_agent, event_type, event_category, resource_type, resource_id, table_name, timestamp, target_user_id, operation, metadata, success, error_code, error_message, retention_date, checksum, tenant_id`.
+Mechanical mapping for the sweep: `created_at`→`timestamp` (INCLUDING all date-range filters), `action_category`/`category`→`event_category`, `action_type`→`event_type`, `action`→`operation`, `details`→`metadata`, `ip_address`→`actor_ip_address`, `patient_id`→`target_user_id`, `actor_name`→resolve via profiles join client-side.
+**Design decision (Maria):** `severity` DOES NOT EXIST on audit_logs — severity belongs to `security_alerts`. Dashboards showing "audit severity" must either derive it (event_category/success mapping) or drop the column from audit views. Do NOT add a severity column without a compliance discussion (audit_logs is immutable).
+Sweep method: same parser approach as the insert sweep (`97a15dba`) — enumerate every `.from('audit_logs').select/…` site, rewrite against the mapping, fleet-grep, scoped tests. Est. 1 session. Sites seen failing today include the SOC2 audit viewer, compliance report builder (category/severity/event_type/actor aggregates), and the admin activity feed.

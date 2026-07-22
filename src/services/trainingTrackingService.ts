@@ -190,11 +190,25 @@ export async function getTrainingStatus(): Promise<ServiceResult<EmployeeTrainin
 
     if (compError) return failure('DATABASE_ERROR', compError.message, compError);
 
+    // employee_profiles carries employment data only — names live on profiles
     const { data: employees, error: empError } = await supabase
       .from('employee_profiles')
-      .select('user_id, first_name, last_name');
+      .select('user_id');
 
     if (empError) return failure('DATABASE_ERROR', empError.message, empError);
+
+    const employeeIds = (employees ?? []).map(e => e.user_id).filter((v): v is string => !!v);
+    const nameMap = new Map<string, { first_name: string | null; last_name: string | null }>();
+    if (employeeIds.length > 0) {
+      const { data: nameRows, error: nameError } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name')
+        .in('user_id', employeeIds);
+      if (nameError) return failure('DATABASE_ERROR', nameError.message, nameError);
+      for (const row of nameRows ?? []) {
+        nameMap.set(row.user_id, { first_name: row.first_name, last_name: row.last_name });
+      }
+    }
 
     const now = new Date();
     const soon = new Date();
@@ -215,7 +229,7 @@ export async function getTrainingStatus(): Promise<ServiceResult<EmployeeTrainin
 
         statuses.push({
           employee_id: emp.user_id,
-          employee_name: `${emp.first_name ?? ''} ${emp.last_name ?? ''}`.trim() || null,
+          employee_name: `${nameMap.get(emp.user_id)?.first_name ?? ''} ${nameMap.get(emp.user_id)?.last_name ?? ''}`.trim() || null,
           course_id: course.id,
           course_name: course.course_name,
           category: course.category as TrainingCategory,
