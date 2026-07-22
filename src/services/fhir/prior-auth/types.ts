@@ -181,9 +181,10 @@ export interface PriorAuthStatistics {
   total_approved: number;
   total_denied: number;
   total_pending: number;
-  approval_rate: number;
-  avg_response_hours: number;
-  sla_compliance_rate: number;
+  // NULL when there is no underlying data — never fabricated (dashboard renders "—")
+  approval_rate: number | null;
+  avg_response_hours: number | null;
+  sla_compliance_rate: number | null;
   by_urgency: Record<string, { total: number; approved: number; denied: number }>;
 }
 

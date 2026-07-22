@@ -282,3 +282,14 @@ grep -rn "\.eq('role_code', *'" src/                                            
 **Gates after Log 2:** scoped tsc 0, lint 0/0, 74/74 tests (transfer + bed-board), drift gate green (snapshot 787 tables / 1494 fns).
 
 **STILL REMAINING:** ⚑ Maria visual acceptance on: HandoffSendPage, HandoffPacketViewPage, Patient Transfers wizard entry, bed-board Hospital Transfer button, ER stats strip + paramedic link. Browser click-walk (the only untested layer is the React UI event handling — every service payload + DB interaction + RPC + RLS path is live-proven). P-1..P-3 post-acute (Session 4). ⚑ Akima: D2/D3 + wizard emoji-icon cleanup. Department alert contacts (alert_phone/alert_email) still NULL.
+
+
+---
+
+## EXECUTION LOG 3 — 2026-07-22 (Maria's browser console during acceptance walk)
+
+**CRASH FIXED — PriorAuthDashboard `null.toFixed` (fabricated-compliance class):** with zero prior-auth data, `get_prior_auth_statistics` returned `avg_response_hours = NULL` (crashed the dashboard through the error boundary) while FABRICATING `approval_rate = 0` and `sla_compliance_rate = 100` — perfect SLA compliance claimed with no data. Migration `20260722170000` (pushed, live-verified: all three rates now NULL when denominator is 0). Client repaired at all layers: `PriorAuthStatistics` rates typed `number | null`; `PriorAuthAnalyticsService` boundary-normalizes (PostgREST numerics arrive as STRINGS — `.toFixed` would crash even with data) and its fallback no longer fabricates 100; `PriorAuthStatCards` renders "—" for null. New `PriorAuthStatCards.test.tsx` guards the null render; full `npx tsc` run (shared-type change) — no transitive errors. 28/28 prior-auth tests.
+
+**Sister candidates logged (NOT blind-guarded — a reflexive `?? 0` would fabricate):** `TrainingComplianceDashboard.compliance_rate`, `BehavioralAnomalyPanel.aggregate_score`, `BedBoardLearningTab.accuracy_percentage`, `nurseosAdvisorService.composite_score` — all typed non-null; verify each SOURCE (RPC/view) for null-with-no-data before guarding. Check command: `grep -rn "_rate\.toFixed\|_score\.toFixed\|_percentage\.toFixed" src`.
+
+**Also in Maria's console (triaged, no action this session):** (a) `guardian-agent-api` 401 on the error boundary's reportAndHeal — the self-heal reporter posts without a valid auth context after a crash; Guardian still logged the alert path client-side. Follow-up: give GuardianErrorBoundary's report call the session token or accept anon reports server-side (product call). (b) aria-hidden/focused-iframe warning — third-party widget (hCaptcha-class), benign. (c) realtime_subscription_registry PATCH chatter — normal heartbeat.

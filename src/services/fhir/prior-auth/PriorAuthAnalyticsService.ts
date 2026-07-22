@@ -29,18 +29,24 @@ export async function getStatistics(
 
     if (error) throw error;
 
-    const stats = data?.[0] || {
-      total_submitted: 0,
-      total_approved: 0,
-      total_denied: 0,
-      total_pending: 0,
-      approval_rate: 0,
-      avg_response_hours: 0,
-      sla_compliance_rate: 100,
-      by_urgency: {}
+    // Boundary normalization: PostgREST serializes numeric columns as strings,
+    // and the RPC returns NULL rates when there is no data (never fabricated).
+    const row = (data?.[0] ?? {}) as Record<string, unknown>;
+    const toCount = (v: unknown): number => (v == null ? 0 : Number(v));
+    const toRate = (v: unknown): number | null => (v == null ? null : Number(v));
+
+    const stats: PriorAuthStatistics = {
+      total_submitted: toCount(row.total_submitted),
+      total_approved: toCount(row.total_approved),
+      total_denied: toCount(row.total_denied),
+      total_pending: toCount(row.total_pending),
+      approval_rate: toRate(row.approval_rate),
+      avg_response_hours: toRate(row.avg_response_hours),
+      sla_compliance_rate: toRate(row.sla_compliance_rate),
+      by_urgency: (row.by_urgency ?? {}) as PriorAuthStatistics['by_urgency'],
     };
 
-    return { success: true, data: stats as PriorAuthStatistics };
+    return { success: true, data: stats };
   } catch (err: unknown) {
     return {
       success: false,

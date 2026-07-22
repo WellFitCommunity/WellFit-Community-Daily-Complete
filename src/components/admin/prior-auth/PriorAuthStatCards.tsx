@@ -32,6 +32,10 @@ interface PriorAuthStatCardsProps {
   stats: PriorAuthStatistics;
 }
 
+/** NULL metrics render as an em dash — no data is never shown as 0% or 100%. */
+const formatRate = (value: number | null, decimals: number, suffix = ''): string =>
+  value == null ? '—' : `${value.toFixed(decimals)}${suffix}`;
+
 export const PriorAuthStatCards: React.FC<PriorAuthStatCardsProps> = ({ stats }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Prior Authorization Statistics">
     <StatCard
@@ -42,19 +46,19 @@ export const PriorAuthStatCards: React.FC<PriorAuthStatCardsProps> = ({ stats })
     />
     <StatCard
       label="Approval Rate"
-      value={`${stats.approval_rate.toFixed(0)}%`}
+      value={formatRate(stats.approval_rate, 0, '%')}
       icon={<CheckCircle className="w-6 h-6 text-green-600" />}
       color="bg-green-50 border-green-200"
     />
     <StatCard
       label="Avg Response (hrs)"
-      value={stats.avg_response_hours.toFixed(1)}
+      value={formatRate(stats.avg_response_hours, 1)}
       icon={<Clock className="w-6 h-6 text-indigo-600" />}
       color="bg-indigo-50 border-indigo-200"
     />
     <StatCard
       label="SLA Compliance"
-      value={`${stats.sla_compliance_rate.toFixed(0)}%`}
+      value={formatRate(stats.sla_compliance_rate, 0, '%')}
       icon={<TrendingUp className="w-6 h-6 text-emerald-600" />}
       color="bg-emerald-50 border-emerald-200"
     />
