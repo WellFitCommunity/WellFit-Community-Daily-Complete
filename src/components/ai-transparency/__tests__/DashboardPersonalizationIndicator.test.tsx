@@ -48,91 +48,40 @@ describe('DashboardPersonalizationIndicator', () => {
 
   const setupMockQueries = (
     totalInteractions: number,
-    featuresData: Array<{ feature_clicked: string; click_count: number }> | null,
-    patternsCount: number,
+    sectionRows: Array<{ section_name: string }> | null,
+    _patternsCount: number,
     lastEvent: { created_at: string } | null
   ) => {
-    // Mock the various queries
-    const mockSelect = vi.fn();
-
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'dashboard_personalization_events') {
-        return {
-          select: mockSelect.mockImplementation((cols: string, opts?: Record<string, unknown>) => {
-            if (opts?.count === 'exact') {
-              // Count query
-              return {
-                eq: vi.fn().mockReturnValue({
-                  not: vi.fn().mockResolvedValue({
-                    count: patternsCount,
-                    error: null,
-                  }),
-                }),
-              };
-            }
-            // Regular select
-            return {
-              eq: vi.fn().mockImplementation(() => ({
-                order: vi.fn().mockImplementation(() => ({
-                  limit: vi.fn().mockImplementation(() => {
-                    if (cols.includes('feature_clicked')) {
-                      return Promise.resolve({ data: featuresData, error: null });
-                    }
-                    return {
-                      single: vi.fn().mockResolvedValue({
-                        data: lastEvent,
-                        error: lastEvent ? null : { code: 'PGRST116' },
-                      }),
-                    };
-                  }),
-                })),
-              })),
-              not: vi.fn().mockResolvedValue({
-                count: patternsCount,
-                error: null,
-              }),
-            };
-          }),
-        };
+      if (table !== 'dashboard_personalization_events') {
+        return { select: vi.fn() };
       }
-      return { select: vi.fn() };
-    });
-
-    // Override for count queries
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockImplementation((cols: string, opts?: Record<string, unknown>) => {
-        if (opts?.count === 'exact') {
+      return {
+        select: vi.fn().mockImplementation((cols: string, opts?: Record<string, unknown>) => {
+          if (opts?.count === 'exact') {
+            return {
+              eq: vi.fn().mockResolvedValue({ count: totalInteractions, error: null }),
+            };
+          }
           return {
             eq: vi.fn().mockReturnValue({
-              not: vi.fn().mockResolvedValue({
-                count: patternsCount,
-                error: null,
+              order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockImplementation(() => {
+                  if (cols.includes('section_name')) {
+                    return Promise.resolve({ data: sectionRows ?? [], error: null });
+                  }
+                  return {
+                    single: vi.fn().mockResolvedValue({
+                      data: lastEvent,
+                      error: lastEvent ? null : { code: 'PGRST116' },
+                    }),
+                  };
+                }),
               }),
             }),
           };
-        }
-        return {
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockImplementation((n: number) => {
-                if (n === 5) {
-                  return Promise.resolve({ data: featuresData, error: null });
-                }
-                return {
-                  single: vi.fn().mockResolvedValue({
-                    data: lastEvent,
-                    error: null,
-                  }),
-                };
-              }),
-            }),
-            not: vi.fn().mockResolvedValue({
-              count: patternsCount,
-              error: null,
-            }),
-          }),
-        };
-      }),
+        }),
+      };
     });
   };
 
@@ -164,13 +113,15 @@ describe('DashboardPersonalizationIndicator', () => {
       }, { timeout: 3000 });
     });
 
-    it('should show robot emoji for learning state', async () => {
+    it('should show the assistant icon (no emoji glyphs) for learning state', async () => {
       setupMockQueries(0, [], 0, null);
-      render(<DashboardPersonalizationIndicator />);
+      const { container } = render(<DashboardPersonalizationIndicator />);
 
       await waitFor(() => {
-        expect(screen.getByText('🤖')).toBeInTheDocument();
+        expect(screen.getByText('AI Learning Your Workflow')).toBeInTheDocument();
       }, { timeout: 3000 });
+      expect(container.querySelector('svg')).toBeInTheDocument();
+      expect(container.textContent).not.toContain('🤖');
     });
   });
 

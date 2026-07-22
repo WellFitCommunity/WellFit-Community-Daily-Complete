@@ -119,8 +119,8 @@ const ENCOUNTER_ROW = {
   status: 'signed',
   signed_at: '2026-02-10T14:00:00Z',
   tenant_id: 'tenant-001',
+  provider_id: 'prov-001',
   profiles: { first_name: 'John', last_name: 'Doe' },
-  billing_providers: { organization_name: 'Acme Health' },
   encounter_diagnoses: [{ code: 'E11.9' }],
   encounter_procedures: [{ code: '99213' }],
   encounter_superbills: [{ id: 'sb-001', superbill_status: 'draft' }],
@@ -163,6 +163,10 @@ describe('encounterBillingBridgeService', () => {
   describe('getBillingQueue', () => {
     it('returns mapped billing queue encounters with superbill status', async () => {
       fromCallResults.push(chainWithLimit({ data: [ENCOUNTER_ROW], error: null }));
+      fromCallResults.push(chainWithInTerminal({
+        data: [{ user_id: 'prov-001', first_name: 'Acme', last_name: 'Health' }],
+        error: null,
+      }));
 
       const result = await encounterBillingBridgeService.getBillingQueue();
 
@@ -182,6 +186,7 @@ describe('encounterBillingBridgeService', () => {
     it('handles encounters with no superbill attached', async () => {
       const rowNoSb = { ...ENCOUNTER_ROW, encounter_superbills: [] };
       fromCallResults.push(chainWithLimit({ data: [rowNoSb], error: null }));
+      fromCallResults.push(chainWithInTerminal({ data: [], error: null }));
 
       const result = await encounterBillingBridgeService.getBillingQueue();
 
@@ -195,6 +200,7 @@ describe('encounterBillingBridgeService', () => {
     it('handles null profile by returning "Unknown" patient name', async () => {
       const rowNoProfile = { ...ENCOUNTER_ROW, profiles: null };
       fromCallResults.push(chainWithLimit({ data: [rowNoProfile], error: null }));
+      fromCallResults.push(chainWithInTerminal({ data: [], error: null }));
 
       const result = await encounterBillingBridgeService.getBillingQueue();
 

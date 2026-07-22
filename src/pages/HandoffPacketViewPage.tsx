@@ -55,8 +55,8 @@ export const HandoffPacketViewPage: React.FC = () => {
 
       // Decrypt identifiers for the authorized clinical viewer (§17 clinical key)
       try {
-        setPatientName(await HandoffService.decryptPHI(loaded.patient_name_encrypted));
-        setPatientDob(await HandoffService.decryptPHI(loaded.patient_dob_encrypted));
+        setPatientName(await HandoffService.decryptPHI(loaded.patient_name_encrypted ?? ''));
+        setPatientDob(await HandoffService.decryptPHI(loaded.patient_dob_encrypted ?? ''));
       } catch {
         setPatientName('[decryption unavailable]');
         setPatientDob('');
@@ -70,7 +70,7 @@ export const HandoffPacketViewPage: React.FC = () => {
       setLogs(loadedLogs);
 
       // HIPAA §164.312(b) - packet view is a PHI access
-      await auditLogger.phi('HANDOFF_PACKET_VIEWED', loaded.patient_id ?? loaded.id, {
+      await auditLogger.phi('HANDOFF_PACKET_VIEWED', loaded.id, {
         resourceType: 'handoff_packet',
         action: 'READ',
         packetId: loaded.id,

@@ -58,6 +58,7 @@ function createChainableMock(result: { data: unknown; error: unknown }) {
     eq: vi.fn().mockReturnThis(),
     order: vi.fn().mockResolvedValue(result),
     single: vi.fn().mockResolvedValue(result),
+    in: vi.fn().mockResolvedValue(result),
   };
   chain.select.mockReturnValue(chain);
   chain.insert.mockReturnValue(chain);
@@ -257,14 +258,19 @@ describe('trainingTrackingService', () => {
       // Courses: terminal is .eq(), completions: terminal is .order(), employees: terminal is .select()
       coursesChain.eq.mockResolvedValue({ data: mockCourses, error: null });
       completionsChain.order.mockResolvedValue({ data: mockCompletions, error: null });
-      employeesChain.select.mockResolvedValue({ data: mockEmployees, error: null });
+      employeesChain.select.mockResolvedValue({
+        data: mockEmployees.map((e) => ({ user_id: e.user_id })),
+        error: null,
+      });
+      const namesChain = createChainableMock({ data: mockEmployees, error: null });
 
       let callCount = 0;
       mockSupabase.from.mockImplementation(() => {
         callCount++;
         if (callCount === 1) return coursesChain; // training_courses
         if (callCount === 2) return completionsChain; // training_completions
-        return employeesChain; // employee_profiles
+        if (callCount === 3) return employeesChain; // employee_profiles
+        return namesChain; // profiles (employee names)
       });
 
       const result = await getOverdueTraining();
@@ -301,14 +307,19 @@ describe('trainingTrackingService', () => {
       const employeesChain = createChainableMock({ data: mockEmployees, error: null });
       coursesChain.eq.mockResolvedValue({ data: mockCourses, error: null });
       completionsChain.order.mockResolvedValue({ data: mockCompletions, error: null });
-      employeesChain.select.mockResolvedValue({ data: mockEmployees, error: null });
+      employeesChain.select.mockResolvedValue({
+        data: mockEmployees.map((e) => ({ user_id: e.user_id })),
+        error: null,
+      });
+      const namesChain = createChainableMock({ data: mockEmployees, error: null });
 
       let callCount = 0;
       mockSupabase.from.mockImplementation(() => {
         callCount++;
         if (callCount === 1) return coursesChain;
         if (callCount === 2) return completionsChain;
-        return employeesChain;
+        if (callCount === 3) return employeesChain; // employee_profiles
+        return namesChain; // profiles (employee names)
       });
 
       const result = await getOverdueTraining();
@@ -346,14 +357,19 @@ describe('trainingTrackingService', () => {
       const employeesChain = createChainableMock({ data: mockEmployees, error: null });
       coursesChain.eq.mockResolvedValue({ data: mockCourses, error: null });
       completionsChain.order.mockResolvedValue({ data: mockCompletions, error: null });
-      employeesChain.select.mockResolvedValue({ data: mockEmployees, error: null });
+      employeesChain.select.mockResolvedValue({
+        data: mockEmployees.map((e) => ({ user_id: e.user_id })),
+        error: null,
+      });
+      const namesChain = createChainableMock({ data: mockEmployees, error: null });
 
       let callCount = 0;
       mockSupabase.from.mockImplementation(() => {
         callCount++;
         if (callCount === 1) return coursesChain;
         if (callCount === 2) return completionsChain;
-        return employeesChain;
+        if (callCount === 3) return employeesChain; // employee_profiles
+        return namesChain; // profiles (employee names)
       });
 
       const result = await getTenantComplianceRate();
@@ -382,14 +398,19 @@ describe('trainingTrackingService', () => {
       const employeesChain = createChainableMock({ data: mockEmployees, error: null });
       coursesChain.eq.mockResolvedValue({ data: mockCourses, error: null });
       completionsChain.order.mockResolvedValue({ data: mockCompletions, error: null });
-      employeesChain.select.mockResolvedValue({ data: mockEmployees, error: null });
+      employeesChain.select.mockResolvedValue({
+        data: mockEmployees.map((e) => ({ user_id: e.user_id })),
+        error: null,
+      });
+      const namesChain = createChainableMock({ data: mockEmployees, error: null });
 
       let callCount = 0;
       mockSupabase.from.mockImplementation(() => {
         callCount++;
         if (callCount === 1) return coursesChain;
         if (callCount === 2) return completionsChain;
-        return employeesChain;
+        if (callCount === 3) return employeesChain; // employee_profiles
+        return namesChain; // profiles (employee names)
       });
 
       const result = await getTenantComplianceRate();
