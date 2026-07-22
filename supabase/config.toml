@@ -570,3 +570,8 @@ verify_jwt = true  # standalone hCaptcha siteverify; companion to verify-hcaptch
 # verify-phone: legacy reader of the old DB-backed OTP system (phone_verifications table,
 # dropped 2025-07-03). Superseded by Twilio Verify (sms-send-code / sms-verify-code).
 # Dead live function deleted from the project 2026-06-07. No block here — do not re-add.
+[functions.send-department-alert]
+verify_jwt = false
+
+[functions.register-transfer-patient]
+verify_jwt = true

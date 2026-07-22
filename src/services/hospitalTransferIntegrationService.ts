@@ -1,6 +1,7 @@
 // Hospital-to-Hospital Transfer Integration Service
-// Integrates handoff packets into patient records, encounters, vitals, and billing
-// Mirrors emsIntegrationService.ts for consistency
+// Integrates handoff packets into patient records, encounters, vitals, and billing.
+// Rewritten 2026-07-22 against LIVE schema (tracker: ems-and-hospital-transfer-repair-tracker-2026-07-22.md).
+// Every write shape here is pinned by __tests__/hospitalTransferWriterShape.test.ts.
 
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../lib/getErrorMessage';
@@ -16,30 +17,46 @@ export interface HospitalTransferIntegrationResult {
   error?: string;
 }
 
+interface SuggestedCode {
+  code: string;
+  code_type: string;
+  description: string;
+  reason: string;
+}
+
 /**
- * Main integration function - called when hospital receives and acknowledges a transfer packet
- * Mirrors integrateEMSHandoff from emsIntegrationService.ts
+ * Main integration function - called when hospital receives and acknowledges a transfer packet.
  */
 export async function integrateHospitalTransfer(
   packetId: string,
   packet: HandoffPacket
 ): Promise<HospitalTransferIntegrationResult> {
   try {
-    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('User not authenticated');
     }
 
-    // Step 1: Create or find patient record
-    const patientResult = await createOrFindPatient(packet, user.id);
+    // Tenant comes from the integrating clinician's profile (profiles keys on user_id)
+    const { data: callerProfile, error: callerError } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .single();
+    if (callerError || !callerProfile?.tenant_id) {
+      throw new Error('Could not resolve caller tenant');
+    }
+    const tenantId = callerProfile.tenant_id;
+
+    // Step 1: Find or create patient record
+    const patientResult = await findOrCreatePatient(packetId, packet, tenantId);
     if (!patientResult.success || !patientResult.patientId) {
-      return { success: false, error: `Failed to create patient: ${patientResult.error}` };
+      return { success: false, error: `Failed to resolve patient: ${patientResult.error}` };
     }
     const patientId = patientResult.patientId;
 
     // Step 2: Create hospital transfer encounter
-    const encounterResult = await createTransferEncounter(packetId, patientId, packet, user.id);
+    const encounterResult = await createTransferEncounter(patientId, packet, user.id, tenantId);
     if (!encounterResult.success || !encounterResult.encounterId) {
       return {
         success: false,
@@ -50,10 +67,10 @@ export async function integrateHospitalTransfer(
     const encounterId = encounterResult.encounterId;
 
     // Step 3: Document vitals from transfer packet (if available)
-    const vitalResults = await documentTransferVitals(encounterId, patientId, packet, user.id);
+    const vitalResults = await documentTransferVitals(encounterId, patientId, packet, tenantId);
 
-    // Step 4: Generate billing codes based on transfer urgency and clinical data
-    const billingCodes = await generateBillingCodesFromTransfer(encounterId, packet, user.id);
+    // Step 4: Store ADVISORY billing suggestions (decision D2 — never auto-billed)
+    const billingCodes = await storeBillingSuggestions(encounterId, patientId, packet, user.id, tenantId);
 
     // Step 5: Link handoff packet to patient and encounter
     await linkHandoffToPatient(packetId, patientId, encounterId);
@@ -65,7 +82,7 @@ export async function integrateHospitalTransfer(
       packetId,
       encounterId,
       vitalsRecorded: vitalResults.length,
-      billingCodesGenerated: billingCodes.length,
+      billingCodesSuggested: billingCodes.length,
       sendingFacility: packet.sending_facility,
       receivingFacility: packet.receiving_facility
     });
@@ -78,6 +95,10 @@ export async function integrateHospitalTransfer(
       billingCodes,
     };
   } catch (error: unknown) {
+    await auditLogger.error('HOSPITAL_TRANSFER_INTEGRATION_FAILED',
+      error instanceof Error ? error : new Error(String(error)),
+      { packetId }
+    );
     return {
       success: false,
       error: getErrorMessage(error) || 'Unknown error during integration',
@@ -86,27 +107,42 @@ export async function integrateHospitalTransfer(
 }
 
 /**
- * Step 1: Create or find patient record
+ * Step 1: Find patient by MRN within the tenant, or create via the
+ * register-transfer-patient edge function (service role — browsers cannot
+ * create auth users). Decision D3.
  */
-async function createOrFindPatient(
+async function findOrCreatePatient(
+  packetId: string,
   packet: HandoffPacket,
-  userId: string
+  tenantId: string
 ): Promise<{ success: boolean; patientId?: string; error?: string }> {
   try {
+    // Try to find existing patient by MRN first (no decryption needed)
+    if (packet.patient_mrn) {
+      const { data: existingPatients, error: searchError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('mrn', packet.patient_mrn)
+        .eq('tenant_id', tenantId)
+        .limit(1);
+
+      if (searchError) {
+        throw searchError;
+      }
+      if (existingPatients && existingPatients.length > 0) {
+        return { success: true, patientId: existingPatients[0].user_id };
+      }
+    }
+
     // Decrypt patient name and DOB — Envision Atlus clinical Vault key (§17).
-    // Handoff packets are encrypted by HandoffService.encryptPHI with
-    // use_clinical_key: true; the live RPC has no encryption_key argument
-    // (removed by migration 20260103000001).
     const { data: decryptedName, error: nameError } = await supabase.rpc('decrypt_phi_text', {
       encrypted_data: packet.patient_name_encrypted || '',
       use_clinical_key: true,
     });
-
     const { data: decryptedDOB, error: dobError } = await supabase.rpc('decrypt_phi_text', {
       encrypted_data: packet.patient_dob_encrypted || '',
       use_clinical_key: true,
     });
-
     if (nameError || dobError) {
       throw new Error('Failed to decrypt patient information');
     }
@@ -119,88 +155,71 @@ async function createOrFindPatient(
       mrn: packet.patient_mrn || 'unknown'
     });
 
-    // Try to find existing patient by MRN
-    if (packet.patient_mrn) {
-      const { data: existingPatients, error: searchError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('mrn', packet.patient_mrn)
-        .eq('role_code', 'patient')
-        .limit(1);
+    const fullName = String(decryptedName ?? '').trim();
+    const spaceIdx = fullName.indexOf(' ');
+    const firstName = spaceIdx > 0 ? fullName.slice(0, spaceIdx) : fullName || 'Transfer';
+    const lastName = spaceIdx > 0 ? fullName.slice(spaceIdx + 1) : 'Patient';
 
-      if (searchError) {
-        throw searchError;
+    const { data: registration, error: registerError } = await supabase.functions.invoke(
+      'register-transfer-patient',
+      {
+        body: {
+          first_name: firstName,
+          last_name: lastName,
+          dob: decryptedDOB || null,
+          gender: packet.patient_gender || null,
+          mrn: packet.patient_mrn || null,
+          source: 'hospital_transfer',
+          source_reference: packetId,
+        },
       }
+    );
 
-      if (existingPatients && existingPatients.length > 0) {
-        return { success: true, patientId: existingPatients[0].id };
-      }
+    if (registerError || !registration?.patient_id) {
+      throw new Error(registerError?.message || 'Patient registration failed');
     }
 
-    // Create new patient profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        full_name: decryptedName,
-        date_of_birth: decryptedDOB,
-        mrn: packet.patient_mrn,
-        gender: packet.patient_gender,
-        role_code: 'patient',
-        created_by: userId,
-      })
-      .select('id')
-      .single();
-
-    if (profileError) throw profileError;
-
-    // HIPAA §164.312(b) - Log new patient record creation from transfer
-    await auditLogger.phi('TRANSFER_PATIENT_CREATED', profile.id, {
-      resourceType: 'patient_profile',
-      action: 'CREATE',
-      source: 'hospital_transfer',
-      mrn: packet.patient_mrn || 'unknown'
-    });
-
-    return { success: true, patientId: profile.id };
+    return { success: true, patientId: registration.patient_id as string };
   } catch (error: unknown) {
     return { success: false, error: getErrorMessage(error) };
   }
 }
 
 /**
- * Step 2: Create hospital transfer encounter
+ * Step 2: Create hospital transfer encounter (LIVE encounters shape:
+ * NOT NULL tenant_id + date_of_service; no start_time/location/notes columns).
  */
 async function createTransferEncounter(
-  packetId: string,
   patientId: string,
   packet: HandoffPacket,
-  userId: string
+  userId: string,
+  tenantId: string
 ): Promise<{ success: boolean; encounterId?: string; error?: string }> {
   try {
-    // Map urgency level to encounter type
-    let encounterType = 'inpatient';
-    if (packet.urgency_level === 'critical' || packet.urgency_level === 'emergent') {
-      encounterType = 'emergency';
-    }
+    const encounterType =
+      packet.urgency_level === 'critical' || packet.urgency_level === 'emergent'
+        ? 'emergency'
+        : 'inpatient';
+    const now = new Date();
 
     const { data: encounter, error: encounterError } = await supabase
       .from('encounters')
       .insert({
         patient_id: patientId,
-        encounter_type: encounterType,
-        status: 'arrived', // Patient arrived via transfer
-        chief_complaint: `Transfer from ${packet.sending_facility}: ${packet.reason_for_transfer}`,
         provider_id: userId,
-        start_time: new Date().toISOString(),
-        location: packet.receiving_facility,
-        notes: packet.sender_notes || '',
+        encounter_type: encounterType,
+        status: 'arrived',
+        chief_complaint: `Transfer from ${packet.sending_facility}: ${packet.reason_for_transfer}`,
+        clinical_notes: packet.sender_notes || null,
+        date_of_service: now.toISOString().slice(0, 10),
+        arrived_at: now.toISOString(),
+        tenant_id: tenantId,
       })
       .select('id')
       .single();
 
     if (encounterError) throw encounterError;
 
-    // HIPAA §164.312(b) - Log encounter creation for hospital transfer
     await auditLogger.phi('TRANSFER_ENCOUNTER_CREATED', patientId, {
       resourceType: 'encounter',
       action: 'CREATE',
@@ -216,225 +235,148 @@ async function createTransferEncounter(
   }
 }
 
+const VITAL_MAPPINGS: Array<{
+  key: keyof NonNullable<NonNullable<HandoffPacket['clinical_data']>['vitals']>;
+  code: string;
+  display: string;
+  unit: string;
+}> = [
+  { key: 'blood_pressure_systolic', code: '8480-6', display: 'Systolic Blood Pressure', unit: 'mmHg' },
+  { key: 'blood_pressure_diastolic', code: '8462-4', display: 'Diastolic Blood Pressure', unit: 'mmHg' },
+  { key: 'heart_rate', code: '8867-4', display: 'Heart Rate', unit: 'beats/min' },
+  { key: 'temperature', code: '8310-5', display: 'Body Temperature', unit: 'F' },
+  { key: 'oxygen_saturation', code: '2708-6', display: 'Oxygen Saturation', unit: '%' },
+  { key: 'respiratory_rate', code: '9279-1', display: 'Respiratory Rate', unit: 'breaths/min' },
+];
+
 /**
- * Step 3: Document vitals from transfer packet
+ * Step 3: Document vitals as FHIR observations (LIVE table: fhir_observations,
+ * NOT the 7-column ehr_observations jsonb cache).
  */
 async function documentTransferVitals(
   encounterId: string,
   patientId: string,
   packet: HandoffPacket,
-  userId: string
+  tenantId: string
 ): Promise<string[]> {
-  const observationIds: string[] = [];
+  const vitals = packet.clinical_data?.vitals;
+  if (!vitals) return [];
 
-  if (!packet.clinical_data?.vitals) {
-    return observationIds;
-  }
-
-  const vitals = packet.clinical_data.vitals;
-  const observations = [];
-
-  // Blood Pressure Systolic (LOINC: 8480-6)
-  if (vitals.blood_pressure_systolic) {
-    observations.push({
+  const nowISO = new Date().toISOString();
+  const observations = VITAL_MAPPINGS
+    .filter((m) => vitals[m.key] !== undefined && vitals[m.key] !== null)
+    .map((m) => ({
       patient_id: patientId,
       encounter_id: encounterId,
-      observation_type: 'vital_sign',
-      loinc_code: '8480-6',
-      display_name: 'Systolic Blood Pressure',
-      value_quantity: vitals.blood_pressure_systolic,
-      unit: 'mmHg',
+      tenant_id: tenantId,
       status: 'final',
-      effective_datetime: new Date().toISOString(),
-      recorded_by: userId,
-      notes: `From transfer: ${packet.sending_facility}`,
-    });
-  }
+      category: 'vital-signs',
+      code: m.code,
+      code_system: 'http://loinc.org',
+      code_display: m.display,
+      value_quantity_value: Number(vitals[m.key]),
+      value_quantity_unit: m.key === 'temperature' ? (vitals.temperature_unit || m.unit) : m.unit,
+      effective_datetime: nowISO,
+      sync_source: 'hospital_transfer',
+      note: `From transfer: ${packet.sending_facility}`,
+    }));
 
-  // Blood Pressure Diastolic (LOINC: 8462-4)
-  if (vitals.blood_pressure_diastolic) {
-    observations.push({
-      patient_id: patientId,
-      encounter_id: encounterId,
-      observation_type: 'vital_sign',
-      loinc_code: '8462-4',
-      display_name: 'Diastolic Blood Pressure',
-      value_quantity: vitals.blood_pressure_diastolic,
-      unit: 'mmHg',
-      status: 'final',
-      effective_datetime: new Date().toISOString(),
-      recorded_by: userId,
-      notes: `From transfer: ${packet.sending_facility}`,
-    });
-  }
+  if (observations.length === 0) return [];
 
-  // Heart Rate (LOINC: 8867-4)
-  if (vitals.heart_rate) {
-    observations.push({
-      patient_id: patientId,
-      encounter_id: encounterId,
-      observation_type: 'vital_sign',
-      loinc_code: '8867-4',
-      display_name: 'Heart Rate',
-      value_quantity: vitals.heart_rate,
-      unit: 'beats/min',
-      status: 'final',
-      effective_datetime: new Date().toISOString(),
-      recorded_by: userId,
-      notes: `From transfer: ${packet.sending_facility}`,
-    });
-  }
-
-  // Temperature (LOINC: 8310-5)
-  if (vitals.temperature) {
-    observations.push({
-      patient_id: patientId,
-      encounter_id: encounterId,
-      observation_type: 'vital_sign',
-      loinc_code: '8310-5',
-      display_name: 'Body Temperature',
-      value_quantity: vitals.temperature,
-      unit: vitals.temperature_unit || 'F',
-      status: 'final',
-      effective_datetime: new Date().toISOString(),
-      recorded_by: userId,
-      notes: `From transfer: ${packet.sending_facility}`,
-    });
-  }
-
-  // Oxygen Saturation (LOINC: 2708-6)
-  if (vitals.oxygen_saturation) {
-    observations.push({
-      patient_id: patientId,
-      encounter_id: encounterId,
-      observation_type: 'vital_sign',
-      loinc_code: '2708-6',
-      display_name: 'Oxygen Saturation',
-      value_quantity: vitals.oxygen_saturation,
-      unit: '%',
-      status: 'final',
-      effective_datetime: new Date().toISOString(),
-      recorded_by: userId,
-      notes: `From transfer: ${packet.sending_facility}`,
-    });
-  }
-
-  // Respiratory Rate (LOINC: 9279-1)
-  if (vitals.respiratory_rate) {
-    observations.push({
-      patient_id: patientId,
-      encounter_id: encounterId,
-      observation_type: 'vital_sign',
-      loinc_code: '9279-1',
-      display_name: 'Respiratory Rate',
-      value_quantity: vitals.respiratory_rate,
-      unit: 'breaths/min',
-      status: 'final',
-      effective_datetime: new Date().toISOString(),
-      recorded_by: userId,
-      notes: `From transfer: ${packet.sending_facility}`,
-    });
-  }
-
-  // Insert all observations
-  if (observations.length > 0) {
-    const { data, error } = await supabase
-      .from('ehr_observations')
-      .insert(observations)
-      .select('id');
-
-    if (!error && data) {
-      observationIds.push(...data.map((obs) => obs.id));
-
-      // HIPAA §164.312(b) - Log vitals creation from hospital transfer
-      await auditLogger.phi('TRANSFER_VITALS_CREATED', patientId, {
-        resourceType: 'ehr_observations',
-        action: 'CREATE',
-        encounterId,
-        observationCount: data.length,
-        source: packet.sending_facility
-      });
-    }
-  }
-
-  return observationIds;
-}
-
-/**
- * Step 4: Generate billing codes based on transfer urgency and clinical data
- */
-async function generateBillingCodesFromTransfer(
-  encounterId: string,
-  packet: HandoffPacket,
-  userId: string
-): Promise<string[]> {
-  const billingCodes: Array<{
-    encounter_id: string;
-    code_type: string;
-    code: string;
-    description: string;
-    created_by: string;
-  }> = [];
-
-  // Base hospital admission E/M code based on urgency
-  let admissionCode = '99221'; // Initial hospital care, low complexity
-  let admissionDesc = 'Initial hospital care, problem focused';
-
-  if (packet.urgency_level === 'critical') {
-    admissionCode = '99223'; // Initial hospital care, high complexity
-    admissionDesc = 'Initial hospital care, high complexity - critical transfer';
-  } else if (packet.urgency_level === 'emergent') {
-    admissionCode = '99222'; // Initial hospital care, moderate complexity
-    admissionDesc = 'Initial hospital care, moderate complexity - emergent transfer';
-  } else if (packet.urgency_level === 'urgent') {
-    admissionCode = '99222'; // Initial hospital care, moderate complexity
-    admissionDesc = 'Initial hospital care, moderate complexity - urgent transfer';
-  }
-
-  billingCodes.push({
-    encounter_id: encounterId,
-    code_type: 'CPT',
-    code: admissionCode,
-    description: admissionDesc,
-    created_by: userId,
-  });
-
-  // Interfacility transfer modifier (if applicable - this would be G0390 for Medicare)
-  billingCodes.push({
-    encounter_id: encounterId,
-    code_type: 'CPT',
-    code: 'G0390',
-    description: 'Trauma activation - interfacility transfer',
-    created_by: userId,
-  });
-
-  // Critical care time if critical transfer (99291)
-  if (packet.urgency_level === 'critical') {
-    billingCodes.push({
-      encounter_id: encounterId,
-      code_type: 'CPT',
-      code: '99291',
-      description: 'Critical care, first 30-74 minutes',
-      created_by: userId,
-    });
-  }
-
-  // Insert billing codes
   const { data, error } = await supabase
-    .from('billing_codes')
-    .insert(billingCodes)
-    .select('code');
+    .from('fhir_observations')
+    .insert(observations)
+    .select('id');
 
   if (error) {
+    // Vitals are supplementary — log loudly but do not abort the integration
+    await auditLogger.error('TRANSFER_VITALS_WRITE_FAILED', new Error(error.message), {
+      encounterId,
+      attempted: observations.length,
+    });
     return [];
   }
 
-  const codes = data?.map((bc) => bc.code) || [];
-  return codes;
+  await auditLogger.phi('TRANSFER_VITALS_CREATED', patientId, {
+    resourceType: 'fhir_observations',
+    action: 'CREATE',
+    encounterId,
+    observationCount: data.length,
+    source: packet.sending_facility
+  });
+
+  return data.map((obs) => obs.id);
 }
 
 /**
- * Step 5: Link handoff packet to patient and encounter
+ * Step 4: Store ADVISORY billing suggestions in encounter_billing_suggestions
+ * (decision D2). Urgency-based E/M only; a coder reviews before anything bills.
+ * The old unconditional G0390 "trauma activation" was removed as clinically wrong.
+ */
+async function storeBillingSuggestions(
+  encounterId: string,
+  patientId: string,
+  packet: HandoffPacket,
+  userId: string,
+  tenantId: string
+): Promise<string[]> {
+  const suggestions: SuggestedCode[] = [];
+
+  if (packet.urgency_level === 'critical') {
+    suggestions.push({
+      code: '99223', code_type: 'CPT',
+      description: 'Initial hospital care, high complexity',
+      reason: 'Critical interfacility transfer',
+    });
+    suggestions.push({
+      code: '99291', code_type: 'CPT',
+      description: 'Critical care, first 30-74 minutes',
+      reason: 'Critical transfer — confirm critical care time documented',
+    });
+  } else if (packet.urgency_level === 'emergent' || packet.urgency_level === 'urgent') {
+    suggestions.push({
+      code: '99222', code_type: 'CPT',
+      description: 'Initial hospital care, moderate complexity',
+      reason: `${packet.urgency_level} interfacility transfer`,
+    });
+  } else {
+    suggestions.push({
+      code: '99221', code_type: 'CPT',
+      description: 'Initial hospital care, low complexity',
+      reason: 'Routine interfacility transfer',
+    });
+  }
+
+  const { error } = await supabase
+    .from('encounter_billing_suggestions')
+    .insert({
+      tenant_id: tenantId,
+      encounter_id: encounterId,
+      patient_id: patientId,
+      encounter_start: new Date().toISOString(),
+      encounter_type: 'hospital_transfer',
+      chief_complaint: `Transfer from ${packet.sending_facility}: ${packet.reason_for_transfer}`,
+      suggested_codes: suggestions,
+      status: 'pending',
+      requires_review: true,
+      review_reason: 'Rule-based transfer admission suggestion — coder review required',
+      provider_id: userId,
+      ai_model_used: 'rule-based-transfer-v1',
+    });
+
+  if (error) {
+    // Advisory only — log loudly, never block the clinical integration
+    await auditLogger.error('TRANSFER_BILLING_SUGGESTION_FAILED', new Error(error.message), {
+      encounterId,
+    });
+    return [];
+  }
+
+  return suggestions.map((s) => s.code);
+}
+
+/**
+ * Step 5: Link handoff packet to patient and encounter (live-correct columns).
  */
 async function linkHandoffToPatient(
   packetId: string,

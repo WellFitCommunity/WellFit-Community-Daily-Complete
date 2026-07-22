@@ -2,9 +2,9 @@
   "_meta": {
     "description": "Live public table/view names + function names. Source of truth for scripts/check-db-reference-drift.py. Regenerate with scripts/refresh-db-objects-snapshot.sql.",
     "project_ref": "xkybsjnvuohpqpbkikyn",
-    "generated": "2026-07-14 (added caller-key PHI RPCs encrypt/decrypt_phi_text_with_key \u2014 migration 20260713130000; + get_platform_key_status \u2014 migration 20260713120000; all live-verified via pg_proc)",
+    "generated": "2026-07-22 (transfer repair: tenant-derive/notify fns migration 20260722120000 + ems_dispatch_protocols restore 20260722130000; live-verified via pg_trigger/pg_proc/information_schema)",
     "table_count": 786,
-    "function_count": 1489
+    "function_count": 1492
   },
   "tables": [
     "account_lockouts",
@@ -220,6 +220,7 @@
     "employee_directory",
     "employee_profiles",
     "ems_department_dispatches",
+    "ems_dispatch_protocols",
     "ems_provider_signoffs",
     "encounter_billing_suggestions",
     "encounter_diagnoses",
@@ -996,6 +997,8 @@
     "decrypt_phi_text_with_key",
     "deny_transfer_request",
     "deploy_questionnaire_to_wellfit",
+    "derive_tenant_from_ems_handoff",
+    "derive_tenant_prehospital_handoff",
     "detect_ai_bias_disparities",
     "detect_expired_appointments",
     "detect_impossible_travel",
@@ -1668,6 +1671,7 @@
     "miles_to_m",
     "nearest_hospitals",
     "next_seq",
+    "notify_department_dispatch",
     "notify_ld_alert",
     "notify_new_guardian_alert",
     "nurse_add_note",

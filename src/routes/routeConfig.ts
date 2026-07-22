@@ -812,6 +812,22 @@ export const workflowRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'nurse', 'physician', 'case_manager'],
     category: 'workflow',
   },
+  // New Transfer (sender form — LiteSenderPortal)
+  {
+    path: '/handoff/send',
+    component: 'HandoffSendPage',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'physician', 'case_manager'],
+    category: 'workflow',
+  },
+  // Transfer packet detail view
+  {
+    path: '/handoff/view/:id',
+    component: 'HandoffPacketViewPage',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'physician', 'case_manager'],
+    category: 'workflow',
+  },
   // Receiving Dashboard (for incoming transfers)
   {
     path: '/handoff/receiving',

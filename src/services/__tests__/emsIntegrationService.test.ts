@@ -1,501 +1,202 @@
 /**
- * EMS Integration Service Tests
- * Tests for EMS handoff integration into healthcare platform
+ * emsIntegrationService behavioral tests
+ *
+ * Column-shape pinning lives in transferWriterShape.test.ts; these tests cover
+ * flow behavior: auth/tenant gates, temp-patient registration via the
+ * register-transfer-patient edge function, severity-driven billing
+ * suggestions, and integration status reads.
  */
+
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import {
-  integrateEMSHandoff,
-  getHandoffIntegrationStatus
-} from '../emsIntegrationService';
-import { supabase } from '../../lib/supabaseClient';
-import type { PrehospitalHandoff } from '../emsService';
 
-// Mock Supabase client
-vi.mock('../../lib/supabaseClient', () => ({
-  supabase: {
-    auth: {
-      getUser: vi.fn(),
-      admin: {
-        createUser: vi.fn()
-      }
-    },
-    from: vi.fn()
-  }
-}));
-
-// Mock auditLogger
-vi.mock('../auditLogger', () => ({
-  auditLogger: {
-    phi: vi.fn().mockResolvedValue(undefined),
-    error: vi.fn(),
-    info: vi.fn(),
-    clinical: vi.fn()
-  }
-}));
-
-const mockSupabase = supabase as unknown as {
-  auth: {
-    getUser: ReturnType<typeof vi.fn>;
-    admin: { createUser: ReturnType<typeof vi.fn> };
-  };
-  from: ReturnType<typeof vi.fn>;
+const state = {
+  user: { id: 'clinician-test-id' } as { id: string } | null,
+  tenantId: 'tenant-test-0001' as string | null,
+  registerResult: { data: { success: true, patient_id: 'patient-temp-id' }, error: null } as {
+    data: Record<string, unknown> | null;
+    error: { message: string } | null;
+  },
+  handoffRow: null as Record<string, unknown> | null,
+  observationCount: 0,
 };
 
-describe('EMSIntegrationService', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+const invokedFunctions: Array<{ name: string; body: Record<string, unknown> }> = [];
+const insertedPayloads: Array<{ table: string; payload: unknown }> = [];
 
-  // Mock data combining PrehospitalHandoff fields with DB metadata
-  const mockHandoff = {
-    id: 'handoff-123',
-    unit_number: 'M-42',
-    ems_agency: 'Metro EMS',
-    paramedic_name: 'John Smith',
-    chief_complaint: 'Chest pain, shortness of breath',
-    scene_location: '123 Main St',
-    patient_age: 65,
-    patient_gender: 'M' as const,
-    mechanism_of_injury: undefined,
-    eta_hospital: '14:45',
-    receiving_hospital_name: 'Methodist Hospital',
-    treatments_given: [
-      { treatment: 'Aspirin 325mg', time: '14:15' },
-      { treatment: 'Nitroglycerin 0.4mg SL', time: '14:20' }
-    ],
-    stroke_alert: false,
-    stemi_alert: true,
-    trauma_alert: false,
-    sepsis_alert: false,
-    cardiac_arrest: false,
-    vitals: {
-      blood_pressure_systolic: 160,
-      blood_pressure_diastolic: 95,
-      heart_rate: 110,
-      respiratory_rate: 22,
-      oxygen_saturation: 94,
-      temperature: 98.6,
-      glucose: 145,
-      gcs_score: 15
-    },
-    status: 'en_route' as const,
-    created_at: '2026-01-16T14:30:00Z'
+function makeBuilder(table: string) {
+  return {
+    insert: vi.fn((payload: unknown) => {
+      insertedPayloads.push({ table, payload });
+      return {
+        select: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({ data: { id: `${table}-row-id` }, error: null }),
+          then: (resolve: (v: unknown) => unknown) =>
+            Promise.resolve({ data: [{ id: `${table}-row-id` }], error: null }).then(resolve),
+        })),
+        then: (resolve: (v: unknown) => unknown) =>
+          Promise.resolve({ data: null, error: null }).then(resolve),
+      };
+    }),
+    update: vi.fn(() => ({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+    select: vi.fn((cols: string, opts?: { count?: string; head?: boolean }) => {
+      const chain: Record<string, unknown> = {};
+      chain.eq = vi.fn(() => {
+        if (opts?.head) {
+          return Promise.resolve({ count: state.observationCount, error: null });
+        }
+        return chain;
+      });
+      chain.single = vi.fn().mockResolvedValue(
+        cols === 'tenant_id'
+          ? state.tenantId
+            ? { data: { tenant_id: state.tenantId }, error: null }
+            : { data: null, error: { message: 'not found' } }
+          : state.handoffRow
+            ? { data: state.handoffRow, error: null }
+            : { data: null, error: { message: 'not found' } }
+      );
+      return chain;
+    }),
   };
+}
 
-  describe('integrateEMSHandoff', () => {
-    it('should successfully integrate EMS handoff', async () => {
-      // Mock authenticated user
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'provider-123' } },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
+vi.mock('../../lib/supabaseClient', () => ({
+  supabase: {
+    from: vi.fn((table: string) => makeBuilder(table)),
+    functions: {
+      invoke: vi.fn((name: string, opts: { body: Record<string, unknown> }) => {
+        invokedFunctions.push({ name, body: opts.body });
+        return Promise.resolve(state.registerResult);
+      }),
+    },
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: state.user }, error: null })),
+    },
+  },
+}));
 
-      // Mock admin user creation for temp patient
-      mockSupabase.auth.admin.createUser.mockResolvedValue({
-        data: { user: { id: 'temp-patient-456' } },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
+vi.mock('../auditLogger', () => ({
+  auditLogger: {
+    error: vi.fn().mockResolvedValue(undefined),
+    phi: vi.fn().mockResolvedValue(undefined),
+    clinical: vi.fn(),
+  },
+}));
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-                })
-              })
-            }),
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { user_id: 'temp-patient-456' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'encounters') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'encounter-789' },
-                  error: null
-                })
-              })
-            }),
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'obs-1' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'prehospital_handoffs') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        return {} as unknown as ReturnType<typeof vi.fn>;
-      });
+import { integrateEMSHandoff, getHandoffIntegrationStatus } from '../emsIntegrationService';
+import type { PrehospitalHandoff } from '../emsService';
 
-      const result = await integrateEMSHandoff('handoff-123', mockHandoff);
+function makeHandoff(overrides: Partial<PrehospitalHandoff> = {}): PrehospitalHandoff {
+  return {
+    id: 'handoff-test-id',
+    patient_age: 70,
+    patient_gender: 'M',
+    chief_complaint: 'Chest pain',
+    eta_hospital: new Date(Date.now() + 600000).toISOString(),
+    vitals: { blood_pressure_systolic: 120, heart_rate: 88 },
+    paramedic_name: 'Test Paramedic Alpha',
+    unit_number: 'TEST-555',
+    ems_agency: 'Test EMS Agency',
+    receiving_hospital_name: 'Test Receiving Hospital',
+    ...overrides,
+  };
+}
 
-      expect(result.success).toBe(true);
-      expect(result.patientId).toBe('temp-patient-456');
-      expect(result.encounterId).toBe('encounter-789');
-      expect(result.billingCodes).toBeDefined();
-    });
+function suggestionCodes(): string[] {
+  const row = insertedPayloads.find((p) => p.table === 'encounter_billing_suggestions');
+  if (!row) return [];
+  return ((row.payload as Record<string, unknown>).suggested_codes as Array<{ code: string }>).map(
+    (c) => c.code
+  );
+}
 
-    it('should return error when user not authenticated', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
+beforeEach(() => {
+  state.user = { id: 'clinician-test-id' };
+  state.tenantId = 'tenant-test-0001';
+  state.registerResult = { data: { success: true, patient_id: 'patient-temp-id' }, error: null };
+  state.handoffRow = null;
+  state.observationCount = 0;
+  invokedFunctions.length = 0;
+  insertedPayloads.length = 0;
+});
 
-      const result = await integrateEMSHandoff('handoff-123', mockHandoff);
+describe('integrateEMSHandoff', () => {
+  it('integrates a handoff end-to-end: temp patient, ER encounter, vitals, suggestions', async () => {
+    const result = await integrateEMSHandoff('handoff-test-id', makeHandoff());
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('authenticated');
-    });
-
-    it('should generate high severity billing code for STEMI alert', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'provider-123' } },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
-
-      mockSupabase.auth.admin.createUser.mockResolvedValue({
-        data: { user: { id: 'temp-patient-456' } },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
-
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-                })
-              })
-            }),
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { user_id: 'temp-patient-456' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'encounters') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'encounter-789' },
-                  error: null
-                })
-              })
-            }),
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'obs-1' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'prehospital_handoffs') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        return {} as unknown as ReturnType<typeof vi.fn>;
-      });
-
-      const result = await integrateEMSHandoff('handoff-123', mockHandoff);
-
-      expect(result.success).toBe(true);
-      // STEMI should trigger moderate-to-high severity (99284)
-      expect(result.billingCodes?.some(bc => bc.code === '99284')).toBe(true);
-    });
-
-    it('should generate critical care code for cardiac arrest', async () => {
-      const cardiacArrestHandoff: PrehospitalHandoff = {
-        ...mockHandoff,
-        cardiac_arrest: true,
-        stemi_alert: false
-      };
-
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'provider-123' } },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
-
-      mockSupabase.auth.admin.createUser.mockResolvedValue({
-        data: { user: { id: 'temp-patient-456' } },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
-
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-                })
-              })
-            }),
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { user_id: 'temp-patient-456' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'encounters') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'encounter-789' },
-                  error: null
-                })
-              })
-            }),
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'obs-1' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'prehospital_handoffs') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        return {} as unknown as ReturnType<typeof vi.fn>;
-      });
-
-      const result = await integrateEMSHandoff('handoff-123', cardiacArrestHandoff);
-
-      expect(result.success).toBe(true);
-      // Cardiac arrest should trigger highest severity (99285) and critical care (99291)
-      expect(result.billingCodes?.some(bc => bc.code === '99285')).toBe(true);
-      expect(result.billingCodes?.some(bc => bc.code === '99291')).toBe(true);
-    });
+    expect(result.success).toBe(true);
+    expect(result.patientId).toBe('patient-temp-id');
+    expect(result.encounterId).toBe('encounters-row-id');
+    expect(insertedPayloads.map((p) => p.table)).toEqual(
+      expect.arrayContaining(['encounters', 'fhir_observations', 'encounter_billing_suggestions'])
+    );
+    const registration = invokedFunctions.find((f) => f.name === 'register-transfer-patient');
+    if (!registration) throw new Error('register-transfer-patient was not invoked');
+    expect(registration.body.source).toBe('ems');
   });
 
-  describe('getHandoffIntegrationStatus', () => {
-    it('should return integrated status when handoff is linked', async () => {
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'prehospital_handoffs') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: {
-                    patient_id: 'patient-123',
-                    encounter_id: 'encounter-456',
-                    integrated_at: '2026-01-16T15:00:00Z'
-                  },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({
-                count: 8,
-                error: null
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        return {} as unknown as ReturnType<typeof vi.fn>;
-      });
-
-      const result = await getHandoffIntegrationStatus('handoff-123');
-
-      expect(result.isIntegrated).toBe(true);
-      expect(result.patientId).toBe('patient-123');
-      expect(result.encounterId).toBe('encounter-456');
-      expect(result.observationCount).toBe(8);
-    });
-
-    it('should return not integrated when handoff not linked', async () => {
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'prehospital_handoffs') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: {
-                    patient_id: null,
-                    encounter_id: null,
-                    integrated_at: null
-                  },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        return {} as unknown as ReturnType<typeof vi.fn>;
-      });
-
-      const result = await getHandoffIntegrationStatus('handoff-123');
-
-      expect(result.isIntegrated).toBe(false);
-    });
-
-    it('should return not integrated when handoff not found', async () => {
-      mockSupabase.from.mockImplementation(() => ({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { code: 'PGRST116' }
-            })
-          })
-        })
-      } as unknown as ReturnType<typeof vi.fn>));
-
-      const result = await getHandoffIntegrationStatus('handoff-123');
-
-      expect(result.isIntegrated).toBe(false);
-    });
+  it('returns error when user is not authenticated', async () => {
+    state.user = null;
+    const result = await integrateEMSHandoff('handoff-test-id', makeHandoff());
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('authenticated');
   });
 
-  describe('urgency determination', () => {
-    it('should determine critical urgency for cardiac arrest', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'provider-123' } },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
+  it('returns error when the caller tenant cannot be resolved', async () => {
+    state.tenantId = null;
+    const result = await integrateEMSHandoff('handoff-test-id', makeHandoff());
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('tenant');
+  });
 
-      mockSupabase.auth.admin.createUser.mockResolvedValue({
-        data: { user: { id: 'temp-patient-456' } },
-        error: null
-      } as unknown as ReturnType<typeof vi.fn>);
+  it('fails when temp-patient registration fails', async () => {
+    state.registerResult = { data: null, error: { message: 'forbidden' } };
+    const result = await integrateEMSHandoff('handoff-test-id', makeHandoff());
+    expect(result.success).toBe(false);
+  });
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-                })
-              })
-            }),
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { user_id: 'temp-patient-456' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'encounters') {
-          let encounterInserted: Record<string, unknown> | null = null;
-          return {
-            insert: vi.fn((data: unknown) => {
-              encounterInserted = data as Record<string, unknown>;
-              return {
-                select: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({
-                    data: { id: 'encounter-789', ...(encounterInserted ?? {}) },
-                    error: null
-                  })
-                })
-              };
-            }),
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'obs-1' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        if (table === 'prehospital_handoffs') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as ReturnType<typeof vi.fn>;
-        }
-        return {} as unknown as ReturnType<typeof vi.fn>;
-      });
+  it('suggests high-severity ED code for STEMI alerts', async () => {
+    await integrateEMSHandoff('handoff-test-id', makeHandoff({ stemi_alert: true }));
+    expect(suggestionCodes()).toContain('99284');
+  });
 
-      const cardiacArrestHandoff: PrehospitalHandoff = {
-        ...mockHandoff,
-        cardiac_arrest: true
-      };
+  it('suggests critical care alongside high-severity ED code for cardiac arrest', async () => {
+    await integrateEMSHandoff('handoff-test-id', makeHandoff({ cardiac_arrest: true }));
+    expect(suggestionCodes()).toEqual(expect.arrayContaining(['99285', '99291']));
+  });
 
-      const result = await integrateEMSHandoff('handoff-123', cardiacArrestHandoff);
+  it('suggests moderate ED code when no alerts are active', async () => {
+    await integrateEMSHandoff('handoff-test-id', makeHandoff());
+    expect(suggestionCodes()).toEqual(['99283']);
+  });
+});
 
-      expect(result.success).toBe(true);
-    });
+describe('getHandoffIntegrationStatus', () => {
+  it('returns integrated status with observation count when linked', async () => {
+    state.handoffRow = {
+      patient_id: 'patient-temp-id',
+      encounter_id: 'encounter-id',
+      integrated_at: new Date().toISOString(),
+    };
+    state.observationCount = 3;
+
+    const status = await getHandoffIntegrationStatus('handoff-test-id');
+    expect(status.isIntegrated).toBe(true);
+    expect(status.patientId).toBe('patient-temp-id');
+    expect(status.observationCount).toBe(3);
+  });
+
+  it('returns not integrated when handoff is unlinked', async () => {
+    state.handoffRow = { patient_id: null, encounter_id: null, integrated_at: null };
+    const status = await getHandoffIntegrationStatus('handoff-test-id');
+    expect(status.isIntegrated).toBe(false);
+  });
+
+  it('returns not integrated when handoff is not found', async () => {
+    state.handoffRow = null;
+    const status = await getHandoffIntegrationStatus('handoff-test-id');
+    expect(status.isIntegrated).toBe(false);
   });
 });

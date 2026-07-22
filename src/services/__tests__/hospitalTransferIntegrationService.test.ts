@@ -1,426 +1,191 @@
 /**
- * Hospital Transfer Integration Service Tests
- * Tests for Hospital-to-Hospital transfer integration workflows
+ * hospitalTransferIntegrationService behavioral tests
+ *
+ * Column-shape pinning lives in transferWriterShape.test.ts; these tests cover
+ * the flow behavior: auth gate, MRN match vs edge-fn registration, decrypt
+ * failure, urgency-driven billing suggestions, and step-failure surfacing.
  */
+
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import {
-  integrateHospitalTransfer
-} from '../hospitalTransferIntegrationService';
-import { supabase } from '../../lib/supabaseClient';
-import type { HandoffPacket } from '../../types/handoff';
 
-/** Supabase-style response for mocks at test boundaries */
-interface MockSupabaseResponse<T = unknown> {
-  data: T;
-  error: { message: string } | null;
-}
-
-// Mock Supabase client
-vi.mock('../../lib/supabaseClient', () => ({
-  supabase: {
-    auth: {
-      getUser: vi.fn()
-    },
-    from: vi.fn(),
-    rpc: vi.fn()
-  }
-}));
-
-// Mock auditLogger
-vi.mock('../auditLogger', () => ({
-  auditLogger: {
-    phi: vi.fn().mockResolvedValue(undefined),
-    error: vi.fn(),
-    info: vi.fn(),
-    clinical: vi.fn()
-  }
-}));
-
-const mockSupabase = supabase as unknown as {
-  auth: { getUser: ReturnType<typeof vi.fn> };
-  from: ReturnType<typeof vi.fn>;
-  rpc: ReturnType<typeof vi.fn>;
+const state = {
+  user: { id: 'clinician-test-id' } as { id: string } | null,
+  tenantId: 'tenant-test-0001' as string | null,
+  mrnMatches: [] as Array<{ user_id: string }>,
+  decryptError: null as { message: string } | null,
+  registerResult: { data: { success: true, patient_id: 'patient-new-id' }, error: null } as {
+    data: Record<string, unknown> | null;
+    error: { message: string } | null;
+  },
+  encounterError: null as { message: string } | null,
 };
 
-describe('HospitalTransferIntegrationService', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+const invokedFunctions: Array<{ name: string; body: Record<string, unknown> }> = [];
+const insertedTables: string[] = [];
 
-  // Partial mock - contains fields used by tests
-  const mockHandoffPacket = {
-    id: 'packet-123',
-    packet_number: 'PKT-2026-001',
-    patient_name_encrypted: 'encrypted-name',
-    patient_dob_encrypted: 'encrypted-dob',
-    patient_mrn: 'MRN-12345',
-    patient_gender: 'M' as const,
-    sending_facility: 'General Hospital',
-    receiving_facility: 'Methodist Hospital',
-    urgency_level: 'urgent' as const,
-    reason_for_transfer: 'Cardiac catheterization needed',
-    sender_provider_name: 'Dr. Smith',
-    sender_callback_number: '+15551234567',
-    sender_notes: 'Patient stable for transport',
-    access_token: 'token-abc123',
-    clinical_data: {
-      vitals: {
-        blood_pressure_systolic: 120,
-        blood_pressure_diastolic: 80,
-        heart_rate: 72,
-        temperature: 98.6,
-        oxygen_saturation: 98,
-        respiratory_rate: 16
-      }
-    },
-    status: 'sent' as const,
-    created_at: '2026-01-16T10:00:00Z'
-  } as HandoffPacket;
-
-  describe('integrateHospitalTransfer', () => {
-    it('should successfully integrate a hospital transfer', async () => {
-      // Mock authenticated user
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123', email: 'provider@hospital.com' } },
-        error: null
-      } as unknown as MockSupabaseResponse);
-
-      // Mock PHI decryption
-      mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'Test Patient Alpha', error: null } as unknown as MockSupabaseResponse) // decrypt name
-        .mockResolvedValueOnce({ data: '2000-01-01', error: null } as unknown as MockSupabaseResponse); // decrypt DOB
-
-      // Mock patient lookup - not found, create new
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockResolvedValue({ data: [], error: null })
-                })
-              })
-            }),
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'patient-456' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'encounters') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'encounter-789' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockResolvedValue({
-                data: [
-                  { id: 'obs-1' },
-                  { id: 'obs-2' },
-                  { id: 'obs-3' }
-                ],
-                error: null
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'billing_codes') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockResolvedValue({
-                data: [{ code: '99222' }, { code: 'G0390' }],
-                error: null
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'handoff_packets') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        return {} as unknown as Record<string, unknown>;
-      });
-
-      const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
-
-      expect(result.success).toBe(true);
-      expect(result.patientId).toBe('patient-456');
-      expect(result.encounterId).toBe('encounter-789');
-      expect(result.observationIds).toHaveLength(3);
-      expect(result.billingCodes).toContain('99222');
-
-      // Live RPC signature is decrypt_phi_text(encrypted_data, use_clinical_key) —
-      // the old encryption_key arg fails with PGRST202 (found broken 2026-07-13)
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('decrypt_phi_text',
-        expect.objectContaining({ use_clinical_key: true }));
-      expect(mockSupabase.rpc).not.toHaveBeenCalledWith('decrypt_phi_text',
-        expect.objectContaining({ encryption_key: expect.anything() }));
-    });
-
-    it('should return error when user not authenticated', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: 'Not authenticated' }
-      } as unknown as Record<string, unknown>);
-
-      const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('not authenticated');
-    });
-
-    it('should return error when PHI decryption fails', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-        error: null
-      } as unknown as Record<string, unknown>);
-
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: { message: 'Decryption failed' }
-      } as unknown as Record<string, unknown>);
-
-      const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('decrypt');
-    });
-
-    it('should find existing patient by MRN instead of creating new', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-        error: null
-      } as unknown as Record<string, unknown>);
-
-      mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'Test Patient Alpha', error: null } as unknown as Record<string, unknown>)
-        .mockResolvedValueOnce({ data: '2000-01-01', error: null } as unknown as Record<string, unknown>);
-
-      // Mock finding existing patient
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockResolvedValue({
-                    data: [{ id: 'existing-patient-123' }],
-                    error: null
-                  })
-                })
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'encounters') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'encounter-789' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockResolvedValue({ data: [], error: null })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'billing_codes') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockResolvedValue({ data: [], error: null })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'handoff_packets') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        return {} as unknown as Record<string, unknown>;
-      });
-
-      const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
-
-      expect(result.success).toBe(true);
-      expect(result.patientId).toBe('existing-patient-123');
-    });
-
-    it('should generate critical care billing code for critical transfers', async () => {
-      const criticalPacket: HandoffPacket = {
-        ...mockHandoffPacket,
-        urgency_level: 'critical'
+function makeBuilder(table: string) {
+  return {
+    insert: vi.fn(() => {
+      insertedTables.push(table);
+      const err = table === 'encounters' ? state.encounterError : null;
+      return {
+        select: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue(
+            err ? { data: null, error: err } : { data: { id: `${table}-row-id` }, error: null }
+          ),
+          then: (resolve: (v: unknown) => unknown) =>
+            Promise.resolve({ data: [{ id: `${table}-row-id` }], error: null }).then(resolve),
+        })),
+        then: (resolve: (v: unknown) => unknown) =>
+          Promise.resolve({ data: null, error: err }).then(resolve),
       };
+    }),
+    update: vi.fn(() => ({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+    select: vi.fn((cols: string) => {
+      const chain: Record<string, unknown> = {};
+      chain.eq = vi.fn(() => chain);
+      chain.limit = vi.fn().mockResolvedValue({ data: state.mrnMatches, error: null });
+      chain.single = vi.fn().mockResolvedValue(
+        cols === 'tenant_id'
+          ? state.tenantId
+            ? { data: { tenant_id: state.tenantId }, error: null }
+            : { data: null, error: { message: 'not found' } }
+          : { data: null, error: null }
+      );
+      return chain;
+    }),
+  };
+}
 
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-        error: null
-      } as unknown as Record<string, unknown>);
+vi.mock('../../lib/supabaseClient', () => ({
+  supabase: {
+    from: vi.fn((table: string) => makeBuilder(table)),
+    rpc: vi.fn(() =>
+      Promise.resolve(
+        state.decryptError
+          ? { data: null, error: state.decryptError }
+          : { data: 'Test Patient Alpha', error: null }
+      )
+    ),
+    functions: {
+      invoke: vi.fn((name: string, opts: { body: Record<string, unknown> }) => {
+        invokedFunctions.push({ name, body: opts.body });
+        return Promise.resolve(state.registerResult);
+      }),
+    },
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: state.user }, error: null })),
+    },
+  },
+}));
 
-      mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'Test Patient Alpha', error: null } as unknown as Record<string, unknown>)
-        .mockResolvedValueOnce({ data: '2000-01-01', error: null } as unknown as Record<string, unknown>);
+vi.mock('../auditLogger', () => ({
+  auditLogger: {
+    error: vi.fn().mockResolvedValue(undefined),
+    phi: vi.fn().mockResolvedValue(undefined),
+    clinical: vi.fn(),
+  },
+}));
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockResolvedValue({
-                    data: [{ id: 'patient-456' }],
-                    error: null
-                  })
-                })
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'encounters') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'encounter-789' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockResolvedValue({ data: [], error: null })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'billing_codes') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockResolvedValue({
-                data: [{ code: '99223' }, { code: 'G0390' }, { code: '99291' }],
-                error: null
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'handoff_packets') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        return {} as unknown as Record<string, unknown>;
-      });
+import { integrateHospitalTransfer } from '../hospitalTransferIntegrationService';
+import type { HandoffPacket } from '../../types/handoff';
 
-      const result = await integrateHospitalTransfer('packet-123', criticalPacket);
+function makePacket(overrides: Partial<HandoffPacket> = {}): HandoffPacket {
+  return {
+    id: 'packet-test-id',
+    packet_number: 'HT-TEST-0001',
+    patient_name_encrypted: 'enc-name',
+    patient_dob_encrypted: 'enc-dob',
+    patient_mrn: 'TEST-MRN-0001',
+    patient_gender: 'F',
+    sending_facility: 'Test Sending Hospital',
+    receiving_facility: 'Test Receiving Hospital',
+    urgency_level: 'routine',
+    reason_for_transfer: 'Continued care',
+    sender_notes: 'Synthetic test packet',
+    clinical_data: { vitals: { heart_rate: 80 } },
+    status: 'sent',
+    ...overrides,
+  } as unknown as HandoffPacket;
+}
 
-      expect(result.success).toBe(true);
-      expect(result.billingCodes).toContain('99291'); // Critical care code
-    });
+beforeEach(() => {
+  state.user = { id: 'clinician-test-id' };
+  state.tenantId = 'tenant-test-0001';
+  state.mrnMatches = [];
+  state.decryptError = null;
+  state.registerResult = { data: { success: true, patient_id: 'patient-new-id' }, error: null };
+  state.encounterError = null;
+  invokedFunctions.length = 0;
+  insertedTables.length = 0;
+});
+
+describe('integrateHospitalTransfer', () => {
+  it('integrates a transfer end-to-end: patient, encounter, vitals, suggestions, linkage', async () => {
+    const result = await integrateHospitalTransfer('packet-test-id', makePacket());
+
+    expect(result.success).toBe(true);
+    expect(result.patientId).toBe('patient-new-id');
+    expect(result.encounterId).toBe('encounters-row-id');
+    expect(insertedTables).toContain('encounters');
+    expect(insertedTables).toContain('fhir_observations');
+    expect(insertedTables).toContain('encounter_billing_suggestions');
   });
 
-  describe('vitals documentation', () => {
-    it('should document all vitals from transfer packet', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-        error: null
-      } as unknown as Record<string, unknown>);
+  it('returns error when user is not authenticated', async () => {
+    state.user = null;
+    const result = await integrateHospitalTransfer('packet-test-id', makePacket());
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('authenticated');
+  });
 
-      mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'Test Patient Alpha', error: null } as unknown as Record<string, unknown>)
-        .mockResolvedValueOnce({ data: '2000-01-01', error: null } as unknown as Record<string, unknown>);
+  it('returns error when the caller tenant cannot be resolved', async () => {
+    state.tenantId = null;
+    const result = await integrateHospitalTransfer('packet-test-id', makePacket());
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('tenant');
+  });
 
-      let _insertedObservations: unknown[] = [];
+  it('uses the MRN-matched patient instead of registering a new one', async () => {
+    state.mrnMatches = [{ user_id: 'existing-patient-id' }];
+    const result = await integrateHospitalTransfer('packet-test-id', makePacket());
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockResolvedValue({
-                    data: [{ id: 'patient-456' }],
-                    error: null
-                  })
-                })
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'encounters') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: 'encounter-789' },
-                  error: null
-                })
-              })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'ehr_observations') {
-          return {
-            insert: vi.fn((obs: unknown[]) => {
-              _insertedObservations = obs;
-              return {
-                select: vi.fn().mockResolvedValue({
-                  data: (obs as unknown[]).map((_, i) => ({ id: `obs-${i}` })),
-                  error: null
-                })
-              };
-            })
-          } as unknown;
-        }
-        if (table === 'billing_codes') {
-          return {
-            insert: vi.fn().mockReturnValue({
-              select: vi.fn().mockResolvedValue({ data: [], error: null })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        if (table === 'handoff_packets') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          } as unknown as Record<string, unknown>;
-        }
-        return {} as unknown as Record<string, unknown>;
-      });
+    expect(result.success).toBe(true);
+    expect(result.patientId).toBe('existing-patient-id');
+    expect(invokedFunctions.find((f) => f.name === 'register-transfer-patient')).toBeUndefined();
+  });
 
-      const result = await integrateHospitalTransfer('packet-123', mockHandoffPacket);
+  it('fails when PHI decryption fails for an unmatched patient', async () => {
+    state.decryptError = { message: 'decryption failed' };
+    const result = await integrateHospitalTransfer('packet-test-id', makePacket());
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('patient');
+  });
 
-      expect(result.success).toBe(true);
-      expect(result.observationIds).toBeDefined();
-      expect(result.observationIds?.length).toBeGreaterThan(0);
-    });
+  it('fails when patient registration fails', async () => {
+    state.registerResult = { data: null, error: { message: 'registration rejected' } };
+    const result = await integrateHospitalTransfer('packet-test-id', makePacket());
+    expect(result.success).toBe(false);
+  });
+
+  it('suggests critical-care codes only for critical transfers', async () => {
+    const critical = await integrateHospitalTransfer(
+      'packet-test-id',
+      makePacket({ urgency_level: 'critical' } as Partial<HandoffPacket>)
+    );
+    expect(critical.billingCodes).toEqual(expect.arrayContaining(['99223', '99291']));
+
+    const routine = await integrateHospitalTransfer('packet-test-id', makePacket());
+    expect(routine.billingCodes).toEqual(['99221']);
+  });
+
+  it('surfaces encounter failure with the patient already resolved', async () => {
+    state.encounterError = { message: 'row-level security violation' };
+    const result = await integrateHospitalTransfer('packet-test-id', makePacket());
+    expect(result.success).toBe(false);
+    expect(result.patientId).toBe('patient-new-id');
+    expect(result.error).toContain('encounter');
   });
 });

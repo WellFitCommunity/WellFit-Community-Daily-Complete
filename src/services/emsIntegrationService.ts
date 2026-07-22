@@ -1,6 +1,9 @@
 // EMS Integration Service
-// Connects EMS handoffs to the rest of the healthcare platform
-// Creates patient records, encounters, observations, and billing integration
+// Connects EMS handoffs to the rest of the healthcare platform.
+// Rewritten 2026-07-22 against LIVE schema (tracker: ems-and-hospital-transfer-repair-tracker-2026-07-22.md).
+// Patient creation goes through the register-transfer-patient edge function
+// (decision D3) — browsers can never call auth.admin.createUser.
+// Every write shape here is pinned by __tests__/emsWriterShape.test.ts.
 
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../lib/getErrorMessage';
@@ -17,9 +20,8 @@ export interface EMSIntegrationResult {
 }
 
 /**
- * Complete EMS handoff integration
- * Called when patient arrives or handoff is completed
- * Creates/updates patient record, encounter, vitals, and billing codes
+ * Complete EMS handoff integration.
+ * Called when the ER transfers the arrived patient into the chart.
  */
 export async function integrateEMSHandoff(
   handoffId: string,
@@ -31,29 +33,37 @@ export async function integrateEMSHandoff(
       return { success: false, error: 'No authenticated user' };
     }
 
-    // Step 1: Create or find patient record
-    const patientResult = await createOrFindPatient(handoffData, user.id);
+    const { data: callerProfile, error: callerError } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .single();
+    if (callerError || !callerProfile?.tenant_id) {
+      return { success: false, error: 'Could not resolve caller tenant' };
+    }
+    const tenantId = callerProfile.tenant_id;
+
+    // Step 1: Register a temp patient record via the service-role edge function
+    const patientResult = await registerEMSPatient(handoffId, handoffData);
     if (!patientResult.success || !patientResult.patientId) {
       return { success: false, error: patientResult.error || 'Failed to create patient' };
     }
-
     const patientId = patientResult.patientId;
 
-    // Step 2: Create ER encounter
-    const encounterResult = await createEREncounter(handoffId, patientId, handoffData, user.id);
+    // Step 2: Create ER encounter (LIVE encounters shape)
+    const encounterResult = await createEREncounter(patientId, handoffData, user.id, tenantId);
     if (!encounterResult.success || !encounterResult.encounterId) {
       return { success: false, error: encounterResult.error || 'Failed to create encounter' };
     }
-
     const encounterId = encounterResult.encounterId;
 
-    // Step 3: Document vitals from EMS
-    const vitalResults = await documentEMSVitals(encounterId, patientId, handoffData, user.id);
+    // Step 3: Document EMS vitals as FHIR observations
+    const vitalResults = await documentEMSVitals(encounterId, patientId, handoffData, tenantId);
 
-    // Step 4: Generate billing codes based on severity
-    const billingCodes = await generateBillingCodesFromHandoff(encounterId, handoffData, user.id);
+    // Step 4: Store ADVISORY billing suggestions (decision D2)
+    const billingCodes = await storeBillingSuggestions(encounterId, patientId, handoffData, user.id, tenantId);
 
-    // Step 5: Update handoff with patient/encounter linkage
+    // Step 5: Link handoff to patient/encounter
     await linkHandoffToPatient(handoffId, patientId, encounterId);
 
     auditLogger.clinical('EMS_HANDOFF_INTEGRATED', true, {
@@ -61,7 +71,7 @@ export async function integrateEMSHandoff(
       patientId,
       encounterId,
       vitalsRecorded: vitalResults.length,
-      billingCodesGenerated: billingCodes.length,
+      billingCodesSuggested: billingCodes.length,
     });
 
     // HIPAA §164.312(b) - Log PHI access for EMS handoff integration
@@ -71,7 +81,7 @@ export async function integrateEMSHandoff(
       handoffId,
       encounterId,
       vitalsRecorded: vitalResults.length,
-      billingCodesGenerated: billingCodes.length,
+      billingCodesSuggested: billingCodes.length,
       emsUnit: handoffData.unit_number,
       emsAgency: handoffData.ems_agency
     });
@@ -91,123 +101,97 @@ export async function integrateEMSHandoff(
 }
 
 /**
- * Create or find patient record
- * Uses patient demographics from EMS handoff
+ * Step 1: Register a temp patient for the EMS arrival (identity usually unknown
+ * at the door). The record is flagged is_temp_record for later MPI merge.
  */
-async function createOrFindPatient(
-  handoff: PrehospitalHandoff,
-  _userId: string
+async function registerEMSPatient(
+  handoffId: string,
+  handoff: PrehospitalHandoff
 ): Promise<{ success: boolean; patientId?: string; error?: string }> {
   try {
-    // For EMS arrivals, we often don't have full patient identity
-    // Create a temporary patient record that can be matched later
-    const tempPatientName = `EMS-${handoff.unit_number}-${new Date().toISOString().split('T')[0]}`;
-
-    const { data: existingPatient } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .eq('first_name', tempPatientName)
-      .eq('role', 'patient')
-      .maybeSingle();
-
-    if (existingPatient) {
-      return { success: true, patientId: existingPatient.user_id };
+    // Estimated DOB from EMS-reported age (clinically useful for dosing/protocols)
+    let estimatedDob: string | null = null;
+    if (handoff.patient_age) {
+      const dob = new Date();
+      dob.setFullYear(dob.getFullYear() - handoff.patient_age);
+      estimatedDob = dob.toISOString().slice(0, 10);
     }
 
-    // Create new temporary patient record
-    const { data: newUser, error: authError } = await supabase.auth.admin.createUser({
-      email: `ems-${handoff.unit_number}-${Date.now()}@temp.wellfit.health`,
-      email_confirm: true,
-      user_metadata: {
-        role: 'patient',
-        is_ems_temp: true,
-        ems_handoff_id: handoff.id,
-      },
-    });
+    const { data: registration, error: registerError } = await supabase.functions.invoke(
+      'register-transfer-patient',
+      {
+        body: {
+          first_name: `EMS-${handoff.unit_number}`,
+          last_name: 'Unidentified',
+          dob: estimatedDob,
+          gender: handoff.patient_gender || 'U',
+          mrn: null,
+          source: 'ems',
+          source_reference: handoffId,
+        },
+      }
+    );
 
-    if (authError || !newUser.user) {
-      throw new Error('Failed to create temporary patient user');
+    if (registerError || !registration?.patient_id) {
+      throw new Error(registerError?.message || 'Patient registration failed');
     }
 
-    // Create profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: newUser.user.id,
-        first_name: tempPatientName,
-        last_name: 'EMS-Arrival',
-        role: 'patient',
-        date_of_birth: handoff.patient_age
-          ? new Date(new Date().setFullYear(new Date().getFullYear() - handoff.patient_age)).toISOString().split('T')[0]
-          : null,
-        gender: handoff.patient_gender || 'U',
-        created_at: new Date().toISOString(),
-      })
-      .select('user_id')
-      .single();
-
-    if (profileError) {
-      throw profileError;
-    }
-
-    auditLogger.clinical('EMS_TEMP_PATIENT_CREATED', true, {
-      patientId: newUser.user.id,
-      handoffId: handoff.id,
-      unitNumber: handoff.unit_number,
-    });
-
-    // HIPAA §164.312(b) - Log PHI creation for EMS temp patient
-    await auditLogger.phi('EMS_TEMP_PATIENT_PHI_CREATED', newUser.user.id, {
+    // HIPAA §164.312(b) - Log temp patient creation from EMS
+    await auditLogger.phi('EMS_TEMP_PATIENT_PHI_CREATED', registration.patient_id as string, {
       resourceType: 'patient_profile',
       action: 'CREATE',
       source: 'ems_handoff',
-      handoffId: handoff.id,
+      handoffId,
       emsUnit: handoff.unit_number
     });
 
-    return { success: true, patientId: newUser.user.id };
+    return { success: true, patientId: registration.patient_id as string };
   } catch (err: unknown) {
     return { success: false, error: getErrorMessage(err) };
   }
 }
 
 /**
- * Create ER encounter from EMS handoff
+ * Step 2: Create ER encounter from EMS handoff (LIVE encounters shape:
+ * NOT NULL tenant_id + date_of_service; EMS context goes into clinical_notes —
+ * the structured detail already lives on prehospital_handoffs, linked in step 5).
  */
 async function createEREncounter(
-  handoffId: string,
   patientId: string,
   handoff: PrehospitalHandoff,
-  providerId: string
+  providerId: string,
+  tenantId: string
 ): Promise<{ success: boolean; encounterId?: string; error?: string }> {
   try {
+    const now = new Date();
+    const alertSummary = [
+      handoff.cardiac_arrest && 'CARDIAC ARREST',
+      handoff.stroke_alert && 'STROKE ALERT',
+      handoff.stemi_alert && 'STEMI ALERT',
+      handoff.trauma_alert && 'TRAUMA ALERT',
+      handoff.sepsis_alert && 'SEPSIS ALERT',
+    ].filter(Boolean).join(', ');
+
+    const emsNarrative = [
+      `EMS arrival — unit ${handoff.unit_number}${handoff.ems_agency ? ` (${handoff.ems_agency})` : ''}, paramedic ${handoff.paramedic_name}.`,
+      alertSummary ? `Active alerts: ${alertSummary}.` : null,
+      handoff.mechanism_of_injury ? `Mechanism of injury: ${handoff.mechanism_of_injury}.` : null,
+      handoff.scene_location ? `Scene: ${handoff.scene_location}.` : null,
+      handoff.events_leading ? `Events: ${handoff.events_leading}.` : null,
+    ].filter(Boolean).join(' ');
+
     const { data: encounter, error } = await supabase
       .from('encounters')
       .insert({
         patient_id: patientId,
         provider_id: providerId,
         encounter_type: 'emergency',
-        status: 'in-progress',
+        status: 'arrived',
         chief_complaint: handoff.chief_complaint,
-        started_at: new Date().toISOString(),
-        location: 'Emergency Department',
-        urgency: determineUrgency(handoff),
-        metadata: {
-          ems_handoff_id: handoffId,
-          ems_unit: handoff.unit_number,
-          ems_agency: handoff.ems_agency,
-          paramedic_name: handoff.paramedic_name,
-          scene_location: handoff.scene_location,
-          mechanism_of_injury: handoff.mechanism_of_injury,
-          treatments_given: handoff.treatments_given,
-          critical_alerts: {
-            stroke: handoff.stroke_alert,
-            stemi: handoff.stemi_alert,
-            trauma: handoff.trauma_alert,
-            sepsis: handoff.sepsis_alert,
-            cardiac_arrest: handoff.cardiac_arrest,
-          },
-        },
+        clinical_notes: emsNarrative,
+        date_of_service: now.toISOString().slice(0, 10),
+        arrived_at: now.toISOString(),
+        tenant_id: tenantId,
       })
       .select('id')
       .single();
@@ -220,181 +204,173 @@ async function createEREncounter(
   }
 }
 
+const EMS_VITAL_MAPPINGS = [
+  { key: 'blood_pressure_systolic', code: '8480-6', display: 'Systolic Blood Pressure', unit: 'mmHg' },
+  { key: 'blood_pressure_diastolic', code: '8462-4', display: 'Diastolic Blood Pressure', unit: 'mmHg' },
+  { key: 'heart_rate', code: '8867-4', display: 'Heart Rate', unit: 'beats/min' },
+  { key: 'respiratory_rate', code: '9279-1', display: 'Respiratory Rate', unit: 'breaths/min' },
+  { key: 'oxygen_saturation', code: '59408-5', display: 'Oxygen Saturation', unit: '%' },
+  { key: 'temperature', code: '8310-5', display: 'Body Temperature', unit: 'F' },
+  { key: 'glucose', code: '2339-0', display: 'Glucose', unit: 'mg/dL' },
+  { key: 'gcs_score', code: '9269-2', display: 'Glasgow Coma Score', unit: 'score' },
+] as const;
+
 /**
- * Document EMS vitals as observations
+ * Step 3: Document EMS vitals as FHIR observations (LIVE table: fhir_observations).
  */
 async function documentEMSVitals(
   encounterId: string,
   patientId: string,
   handoff: PrehospitalHandoff,
-  recordedBy: string
+  tenantId: string
 ): Promise<string[]> {
-  const observationIds: string[] = [];
+  if (!handoff.vitals) return [];
 
-  if (!handoff.vitals) return observationIds;
+  const nowISO = new Date().toISOString();
+  const vitals = handoff.vitals as Record<string, unknown>;
+  const observations = EMS_VITAL_MAPPINGS
+    .filter((m) => vitals[m.key] !== undefined && vitals[m.key] !== null)
+    .map((m) => ({
+      patient_id: patientId,
+      encounter_id: encounterId,
+      tenant_id: tenantId,
+      status: 'final',
+      category: 'vital-signs',
+      code: m.code,
+      code_system: 'http://loinc.org',
+      code_display: m.display,
+      value_quantity_value: Number(vitals[m.key]),
+      value_quantity_unit: m.unit,
+      effective_datetime: nowISO,
+      sync_source: 'ems_handoff',
+      note: `EMS field vitals — unit ${handoff.unit_number}, paramedic ${handoff.paramedic_name}`,
+    }));
 
-  const vitalMappings = [
-    { key: 'blood_pressure_systolic', code: 'LOINC:8480-6', display: 'Systolic BP', unit: 'mmHg' },
-    { key: 'blood_pressure_diastolic', code: 'LOINC:8462-4', display: 'Diastolic BP', unit: 'mmHg' },
-    { key: 'heart_rate', code: 'LOINC:8867-4', display: 'Heart Rate', unit: 'bpm' },
-    { key: 'respiratory_rate', code: 'LOINC:9279-1', display: 'Respiratory Rate', unit: '/min' },
-    { key: 'oxygen_saturation', code: 'LOINC:59408-5', display: 'Oxygen Saturation', unit: '%' },
-    { key: 'temperature', code: 'LOINC:8310-5', display: 'Body Temperature', unit: 'degF' },
-    { key: 'glucose', code: 'LOINC:2339-0', display: 'Glucose', unit: 'mg/dL' },
-    { key: 'gcs_score', code: 'LOINC:9269-2', display: 'Glasgow Coma Score', unit: 'score' },
-  ];
+  if (observations.length === 0) return [];
 
-  for (const mapping of vitalMappings) {
-    const value = (handoff.vitals as Record<string, unknown>)[mapping.key];
-    if (value !== undefined && value !== null) {
-      try {
-        const { data, error } = await supabase
-          .from('ehr_observations')
-          .insert({
-            patient_id: patientId,
-            encounter_id: encounterId,
-            observation_type: mapping.display,
-            observation_code: mapping.code,
-            value_quantity: value,
-            unit: mapping.unit,
-            status: 'final',
-            effective_datetime: new Date().toISOString(),
-            recorded_by: recordedBy,
-            source: 'EMS Handoff',
-            metadata: {
-              ems_recorded: true,
-              paramedic_name: handoff.paramedic_name,
-              unit_number: handoff.unit_number,
-            },
-          })
-          .select('id')
-          .single();
+  const { data, error } = await supabase
+    .from('fhir_observations')
+    .insert(observations)
+    .select('id');
 
-        if (!error && data) {
-          observationIds.push(data.id);
-        }
-      } catch {
-
-      }
-    }
+  if (error) {
+    await auditLogger.error('EMS_VITALS_WRITE_FAILED', new Error(error.message), {
+      encounterId,
+      attempted: observations.length,
+    });
+    return [];
   }
 
   // HIPAA §164.312(b) - Log PHI access for EMS vitals documentation
-  if (observationIds.length > 0) {
-    await auditLogger.phi('EMS_VITALS_DOCUMENTED', patientId, {
-      resourceType: 'ehr_observations',
-      action: 'CREATE',
-      encounterId,
-      observationCount: observationIds.length,
-      source: 'ems_handoff',
-      emsUnit: handoff.unit_number
-    });
-  }
-
-  return observationIds;
-}
-
-/**
- * Generate billing codes based on EMS handoff severity
- */
-async function generateBillingCodesFromHandoff(
-  encounterId: string,
-  handoff: PrehospitalHandoff,
-  _providerId: string
-): Promise<Array<{ code: string; code_type?: string; description: string; suggested_by?: string }>> {
-  const billingCodes: Array<{ code: string; code_type?: string; description: string; suggested_by?: string }> = [];
-
-  // Determine ER visit level based on severity
-  let erVisitCode = '99283'; // Default: moderate severity
-  let erVisitDescription = 'Emergency department visit, moderate severity';
-
-  if (handoff.cardiac_arrest || handoff.trauma_alert) {
-    erVisitCode = '99285';
-    erVisitDescription = 'Emergency department visit, high severity requiring urgent evaluation';
-  } else if (handoff.stroke_alert || handoff.stemi_alert || handoff.sepsis_alert) {
-    erVisitCode = '99284';
-    erVisitDescription = 'Emergency department visit, moderate to high severity';
-  }
-
-  billingCodes.push({
-    code: erVisitCode,
-    code_type: 'CPT',
-    description: erVisitDescription,
-    suggested_by: 'EMS Handoff Severity',
+  await auditLogger.phi('EMS_VITALS_DOCUMENTED', patientId, {
+    resourceType: 'fhir_observations',
+    action: 'CREATE',
+    encounterId,
+    observationCount: data.length,
+    source: 'ems_handoff',
+    emsUnit: handoff.unit_number
   });
 
-  // Add trauma activation fee if applicable
-  if (handoff.trauma_alert) {
-    billingCodes.push({
-      code: '99288',
-      code_type: 'CPT',
-      description: 'Physician direction of emergency medical systems (EMS) emergency care, advanced life support',
-      suggested_by: 'Trauma Alert',
-    });
-  }
-
-  // Add critical care codes for cardiac arrest
-  if (handoff.cardiac_arrest) {
-    billingCodes.push({
-      code: '99291',
-      code_type: 'CPT',
-      description: 'Critical care, evaluation and management of the critically ill or critically injured patient; first 30-74 minutes',
-      suggested_by: 'Cardiac Arrest Alert',
-    });
-  }
-
-  // Store suggested codes in encounter metadata
-  try {
-    await supabase
-      .from('encounters')
-      .update({
-        metadata: {
-          suggested_billing_codes: billingCodes,
-          ems_severity_level: determineUrgency(handoff),
-        },
-      })
-      .eq('id', encounterId);
-  } catch {
-
-  }
-
-  return billingCodes;
+  return data.map((obs) => obs.id);
 }
 
 /**
- * Link handoff back to patient and encounter
+ * Step 4: Store ADVISORY billing suggestions in encounter_billing_suggestions
+ * (decision D2 — coder reviews before anything bills).
+ */
+async function storeBillingSuggestions(
+  encounterId: string,
+  patientId: string,
+  handoff: PrehospitalHandoff,
+  providerId: string,
+  tenantId: string
+): Promise<Array<{ code: string; code_type?: string; description: string; suggested_by?: string }>> {
+  const suggestions: Array<{ code: string; code_type: string; description: string; reason: string }> = [];
+
+  if (handoff.cardiac_arrest || handoff.trauma_alert) {
+    suggestions.push({
+      code: '99285', code_type: 'CPT',
+      description: 'Emergency department visit, high severity',
+      reason: handoff.cardiac_arrest ? 'Cardiac arrest alert' : 'Trauma alert',
+    });
+  } else if (handoff.stroke_alert || handoff.stemi_alert || handoff.sepsis_alert) {
+    suggestions.push({
+      code: '99284', code_type: 'CPT',
+      description: 'Emergency department visit, moderate to high severity',
+      reason: 'Time-critical EMS alert',
+    });
+  } else {
+    suggestions.push({
+      code: '99283', code_type: 'CPT',
+      description: 'Emergency department visit, moderate severity',
+      reason: 'EMS arrival',
+    });
+  }
+
+  if (handoff.cardiac_arrest) {
+    suggestions.push({
+      code: '99291', code_type: 'CPT',
+      description: 'Critical care, first 30-74 minutes',
+      reason: 'Cardiac arrest — confirm critical care time documented',
+    });
+  }
+
+  const { error } = await supabase
+    .from('encounter_billing_suggestions')
+    .insert({
+      tenant_id: tenantId,
+      encounter_id: encounterId,
+      patient_id: patientId,
+      encounter_start: new Date().toISOString(),
+      encounter_type: 'ems_arrival',
+      chief_complaint: handoff.chief_complaint,
+      suggested_codes: suggestions,
+      status: 'pending',
+      requires_review: true,
+      review_reason: 'Rule-based EMS arrival suggestion — coder review required',
+      provider_id: providerId,
+      ai_model_used: 'rule-based-ems-v1',
+    });
+
+  if (error) {
+    await auditLogger.error('EMS_BILLING_SUGGESTION_FAILED', new Error(error.message), {
+      encounterId,
+    });
+    return [];
+  }
+
+  return suggestions.map((s) => ({
+    code: s.code,
+    code_type: s.code_type,
+    description: s.description,
+    suggested_by: s.reason,
+  }));
+}
+
+/**
+ * Step 5: Link handoff back to patient and encounter (live-correct columns).
  */
 async function linkHandoffToPatient(
   handoffId: string,
   patientId: string,
   encounterId: string
 ): Promise<void> {
-  try {
-    await supabase
-      .from('prehospital_handoffs')
-      .update({
-        patient_id: patientId,
-        encounter_id: encounterId,
-        integrated_at: new Date().toISOString(),
-      })
-      .eq('id', handoffId);
-  } catch {
+  const { error } = await supabase
+    .from('prehospital_handoffs')
+    .update({
+      patient_id: patientId,
+      encounter_id: encounterId,
+      integrated_at: new Date().toISOString(),
+    })
+    .eq('id', handoffId);
 
+  if (error) {
+    throw error;
   }
 }
 
 /**
- * Determine urgency level from handoff alerts
- */
-function determineUrgency(handoff: PrehospitalHandoff): 'critical' | 'emergent' | 'urgent' | 'routine' {
-  if (handoff.cardiac_arrest) return 'critical';
-  if (handoff.stroke_alert || handoff.stemi_alert || handoff.trauma_alert) return 'emergent';
-  if (handoff.sepsis_alert) return 'urgent';
-  return 'routine';
-}
-
-/**
- * Get integration status for a handoff
+ * Get integration status for a handoff.
  */
 export async function getHandoffIntegrationStatus(
   handoffId: string
@@ -416,23 +392,21 @@ export async function getHandoffIntegrationStatus(
     }
 
     const isIntegrated = !!(handoff.patient_id && handoff.encounter_id);
-
-    if (isIntegrated) {
-      // Count observations
-      const { count } = await supabase
-        .from('ehr_observations')
-        .select('id', { count: 'exact', head: true })
-        .eq('encounter_id', handoff.encounter_id);
-
-      return {
-        isIntegrated: true,
-        patientId: handoff.patient_id,
-        encounterId: handoff.encounter_id,
-        observationCount: count || 0,
-      };
+    if (!isIntegrated) {
+      return { isIntegrated: false };
     }
 
-    return { isIntegrated: false };
+    const { count } = await supabase
+      .from('fhir_observations')
+      .select('id', { count: 'exact', head: true })
+      .eq('encounter_id', handoff.encounter_id);
+
+    return {
+      isIntegrated: true,
+      patientId: handoff.patient_id,
+      encounterId: handoff.encounter_id,
+      observationCount: count || 0,
+    };
   } catch {
     return { isIntegrated: false };
   }

@@ -177,7 +177,7 @@ Sender: ${packet.sender_provider_name}
 Callback: ${packet.sender_callback_number}
 
 ${packet.urgency_level === 'critical' || packet.urgency_level === 'emergent' ?
-  '⚠️ URGENT - Immediate attention required' : ''}
+  'URGENT - Immediate attention required' : ''}
 
 Please acknowledge receipt as soon as possible.
 
@@ -283,11 +283,15 @@ Access full report: [Link in email]
   }
 
   /**
-   * Generate secure access URL for packet
+   * Generate access URL for packet.
+   * Decision D7 (tracker 2026-07-22): no unauthenticated token route is exposed —
+   * receiving staff log in and view incoming transfers at /handoff/receiving.
+   * The packet access_token infrastructure is retained for a future
+   * Akima-approved external-facility portal.
    */
-  private static generateAccessURL(packet: HandoffPacket): string {
+  private static generateAccessURL(_packet: HandoffPacket): string {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/handoff/receive/${packet.access_token}`;
+    return `${baseUrl}/handoff/receiving`;
   }
 
   /**

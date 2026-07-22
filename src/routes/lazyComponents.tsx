@@ -315,6 +315,8 @@ export const BedManagementPanel = React.lazy(() => import('../components/admin/B
 export const AdminTransferLogs = React.lazy(() => import('../components/handoff/AdminTransferLogs'));
 export const ReceivingDashboard = React.lazy(() => import('../components/handoff/ReceivingDashboard'));
 export const HospitalTransferPortal = React.lazy(() => import('../pages/HospitalTransferPortal'));
+export const HandoffSendPage = React.lazy(() => import('../pages/HandoffSendPage'));
+export const HandoffPacketViewPage = React.lazy(() => import('../pages/HandoffPacketViewPage'));
 export const StaffWellnessDashboard = React.lazy(() => import('../pages/StaffWellnessDashboard'));
 
 // Law Enforcement
@@ -518,6 +520,8 @@ export const componentMap: Record<string, React.LazyExoticComponent<React.Compon
   AdminTransferLogs,
   // ReceivingDashboard requires explicit props — exported individually above
   HospitalTransferPortal,
+  HandoffSendPage,
+  HandoffPacketViewPage,
   StaffWellnessDashboard,
   LawEnforcementLandingPage,
   ConstableDispatchDashboard,

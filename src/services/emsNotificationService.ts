@@ -253,13 +253,14 @@ export function generateAlertMessage(
 ): string {
   const etaMinutes = Math.round((new Date(eta).getTime() - Date.now()) / 1000 / 60);
 
+  // Clinical channel — plain-text severity labels, no emoji glyphs (governance: System B)
   const alertMessages: Record<string, string> = {
-    stroke: `🧠 STROKE ALERT - ETA ${etaMinutes} min\n${chiefComplaint}\nActivate stroke team immediately`,
-    stemi: `❤️ STEMI ALERT - ETA ${etaMinutes} min\n${chiefComplaint}\nActivate cath lab immediately`,
-    trauma: `🏥 TRAUMA ALERT - ETA ${etaMinutes} min\n${chiefComplaint}\nActivate trauma team`,
-    sepsis: `🦠 SEPSIS ALERT - ETA ${etaMinutes} min\n${chiefComplaint}\nPrepare broad-spectrum antibiotics`,
-    cardiac_arrest: `🚨 CARDIAC ARREST - ETA ${etaMinutes} min\n${chiefComplaint}\nCode team standby`,
-    general: `📡 EMS Incoming - ETA ${etaMinutes} min\n${chiefComplaint}`,
+    stroke: `STROKE ALERT - ETA ${etaMinutes} min\n${chiefComplaint}\nActivate stroke team immediately`,
+    stemi: `STEMI ALERT - ETA ${etaMinutes} min\n${chiefComplaint}\nActivate cath lab immediately`,
+    trauma: `TRAUMA ALERT - ETA ${etaMinutes} min\n${chiefComplaint}\nActivate trauma team`,
+    sepsis: `SEPSIS ALERT - ETA ${etaMinutes} min\n${chiefComplaint}\nPrepare broad-spectrum antibiotics`,
+    cardiac_arrest: `CARDIAC ARREST - ETA ${etaMinutes} min\n${chiefComplaint}\nCode team standby`,
+    general: `EMS Incoming - ETA ${etaMinutes} min\n${chiefComplaint}`,
   };
 
   return alertMessages[alertType] || alertMessages.general;
