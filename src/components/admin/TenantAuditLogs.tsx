@@ -18,6 +18,7 @@ import React, { useState, useEffect } from 'react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { FileText, Download, Filter as _Filter, Search, Calendar as _Calendar } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
+import { AUDIT_LOG_READ_COLUMNS, deriveAuditSeverity } from '../../services/auditLogRead';
 
 interface AuditLog {
   id: string;
@@ -74,24 +75,22 @@ export const TenantAuditLogs: React.FC = () => {
       setTenantId(profile.tenant_id);
 
       // Build query for tenant-scoped audit logs
+      // Live audit_logs columns: event_type/event_category/timestamp/metadata;
+      // severity is DERIVED (no stored column on the immutable audit table)
       let query = supabase
         .from('audit_logs')
-        .select('*', { count: 'exact' })
+        .select(AUDIT_LOG_READ_COLUMNS, { count: 'exact' })
         .eq('tenant_id', profile.tenant_id)
-        .order('created_at', { ascending: false })
+        .order('timestamp', { ascending: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       // Apply filters
       if (filter.category !== 'all') {
-        query = query.eq('action_category', filter.category);
-      }
-
-      if (filter.severity !== 'all') {
-        query = query.eq('severity', filter.severity);
+        query = query.eq('event_category', filter.category);
       }
 
       if (filter.searchTerm) {
-        query = query.or(`user_email.ilike.%${filter.searchTerm}%,message.ilike.%${filter.searchTerm}%`);
+        query = query.or(`event_type.ilike.%${filter.searchTerm}%,operation.ilike.%${filter.searchTerm}%`);
       }
 
       // Date range filter
@@ -99,7 +98,7 @@ export const TenantAuditLogs: React.FC = () => {
         const days = parseInt(filter.dateRange.replace('d', ''));
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - days);
-        query = query.gte('created_at', cutoffDate.toISOString());
+        query = query.gte('timestamp', cutoffDate.toISOString());
       }
 
       const { data, error } = await query;
@@ -107,19 +106,25 @@ export const TenantAuditLogs: React.FC = () => {
       if (error) throw error;
 
       if (data) {
-        setLogs(data.map(log => ({
+        const mapped = data.map(log => ({
           id: log.id,
-          timestamp: log.created_at,
-          user_email: log.user_email || 'System',
-          action_type: log.action_type,
-          action_category: log.action_category,
+          timestamp: log.timestamp,
+          user_email: log.actor_user_id ? `${log.actor_user_id.substring(0, 8)}…` : 'System',
+          action_type: log.event_type,
+          action_category: log.event_category,
           resource_type: log.resource_type || 'N/A',
           resource_id: log.resource_id || 'N/A',
-          severity: log.severity || 'info',
-          message: log.message || 'No message',
-          ip_address: log.ip_address,
+          severity: deriveAuditSeverity(log.event_category, log.success),
+          message: log.error_message || log.event_type.replace(/_/g, ' '),
+          ip_address: log.actor_ip_address,
           metadata: log.metadata,
-        })));
+        }));
+        // Severity is derived, so filter client-side
+        setLogs(
+          filter.severity !== 'all'
+            ? mapped.filter(log => log.severity === filter.severity)
+            : mapped
+        );
       }
 
     } catch (error: unknown) {
@@ -216,9 +221,12 @@ export const TenantAuditLogs: React.FC = () => {
             <option value="all">All Categories</option>
             <option value="PHI_ACCESS">PHI Access</option>
             <option value="AUTHENTICATION">Authentication</option>
-            <option value="ADMINISTRATIVE">Administrative</option>
-            <option value="DATA_MODIFICATION">Data Modification</option>
+            <option value="ADMIN">Administrative</option>
+            <option value="SYSTEM_EVENT">System Event</option>
             <option value="SECURITY_EVENT">Security Event</option>
+            <option value="CLINICAL">Clinical</option>
+            <option value="BILLING">Billing</option>
+            <option value="GUARDIAN">Guardian</option>
           </select>
 
           {/* Severity Filter */}

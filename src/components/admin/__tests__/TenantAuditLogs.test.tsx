@@ -81,27 +81,35 @@ vi.mock('lucide-react', () => ({
 // TEST DATA — Synthetic only, obviously fake
 // ============================================================================
 
+// Live audit_logs shape: event_type/event_category/timestamp/success/error_message.
+// The component DERIVES severity (success+category) and maps display fields.
 const MOCK_AUDIT_LOGS = [
   {
-    id: 'log-001', created_at: '2026-01-15T10:30:00Z',
-    user_email: 'testuser-alpha@fake.test', action_type: 'VIEW_RECORD',
-    action_category: 'PHI_ACCESS', resource_type: 'Patient',
-    resource_id: 'patient-abc', severity: 'info',
-    message: 'Test Patient Alpha record viewed', ip_address: '10.0.0.1', metadata: null,
+    id: 'log-001', timestamp: '2026-01-15T10:30:00Z',
+    actor_user_id: 'aaaaaaaa-alpha-test', event_type: 'VIEW_RECORD',
+    event_category: 'PHI_ACCESS', resource_type: 'Patient',
+    resource_id: 'patient-abc', success: true,
+    error_message: 'Test Patient Alpha record viewed',
+    actor_ip_address: '10.0.0.1', metadata: null, operation: 'SELECT',
+    actor_role: 'nurse', actor_user_agent: null, error_code: null, target_user_id: null,
   },
   {
-    id: 'log-002', created_at: '2026-01-15T11:00:00Z',
-    user_email: 'testuser-beta@fake.test', action_type: 'LOGIN_FAILED',
-    action_category: 'AUTHENTICATION', resource_type: null,
-    resource_id: null, severity: 'critical',
-    message: 'Multiple failed login attempts detected', ip_address: '10.0.0.2', metadata: null,
+    id: 'log-002', timestamp: '2026-01-15T11:00:00Z',
+    actor_user_id: 'bbbbbbbb-beta-test', event_type: 'LOGIN_FAILED',
+    event_category: 'SECURITY_EVENT', resource_type: null,
+    resource_id: null, success: false, // failed security event -> derived critical
+    error_message: 'Multiple failed login attempts detected',
+    actor_ip_address: '10.0.0.2', metadata: null, operation: null,
+    actor_role: null, actor_user_agent: null, error_code: null, target_user_id: null,
   },
   {
-    id: 'log-003', created_at: '2026-01-15T12:00:00Z',
-    user_email: null, action_type: 'SYSTEM_BACKUP',
-    action_category: 'ADMINISTRATIVE', resource_type: 'Database',
-    resource_id: 'backup-xyz', severity: 'warning',
-    message: 'Scheduled backup completed with warnings', ip_address: null, metadata: null,
+    id: 'log-003', timestamp: '2026-01-15T12:00:00Z',
+    actor_user_id: null, event_type: 'SYSTEM_BACKUP',
+    event_category: 'ADMIN', resource_type: 'Database',
+    resource_id: 'backup-xyz', success: true, // succeeded -> derived info
+    error_message: 'Scheduled backup completed with warnings',
+    actor_ip_address: null, metadata: null, operation: null,
+    actor_role: null, actor_user_agent: null, error_code: null, target_user_id: null,
   },
 ];
 
@@ -143,12 +151,12 @@ describe('TenantAuditLogs', () => {
     await renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText('testuser-alpha@fake.test')).toBeInTheDocument();
+      expect(screen.getAllByText('aaaaaaaa…').length).toBeGreaterThan(0);
     });
     expect(screen.getByText('VIEW_RECORD')).toBeInTheDocument();
     expect(screen.getByText('PHI_ACCESS')).toBeInTheDocument();
     expect(screen.getByText('Test Patient Alpha record viewed')).toBeInTheDocument();
-    expect(screen.getByText('testuser-beta@fake.test')).toBeInTheDocument();
+    expect(screen.getAllByText('bbbbbbbb…').length).toBeGreaterThan(0);
     expect(screen.getByText('LOGIN_FAILED')).toBeInTheDocument();
     expect(screen.getByText('Multiple failed login attempts detected')).toBeInTheDocument();
     // Third log has null user_email — displays 'System'
@@ -170,8 +178,8 @@ describe('TenantAuditLogs', () => {
   it('renders info severity badge with blue styling', async () => {
     auditQueryResult = { data: MOCK_AUDIT_LOGS, error: null, count: 3 };
     await renderComponent();
-    await waitFor(() => { expect(screen.getByText('info')).toBeInTheDocument(); });
-    const badge = screen.getByText('info');
+    await waitFor(() => { expect(screen.getAllByText('info').length).toBeGreaterThan(0); });
+    const badge = screen.getAllByText('info')[0];
     expect(badge.className).toContain('bg-blue-100');
     expect(badge.className).toContain('text-blue-800');
   });
@@ -202,7 +210,7 @@ describe('TenantAuditLogs', () => {
     expect(options).toContain('PHI Access');
     expect(options).toContain('Authentication');
     expect(options).toContain('Administrative');
-    expect(options).toContain('Data Modification');
+    expect(options).toContain('System Event');
     expect(options).toContain('Security Event');
   });
 
@@ -237,7 +245,7 @@ describe('TenantAuditLogs', () => {
     auditQueryResult = { data: MOCK_AUDIT_LOGS, error: null, count: 3 };
     await renderComponent();
     await waitFor(() => {
-      expect(screen.getByText('testuser-alpha@fake.test')).toBeInTheDocument();
+      expect(screen.getAllByText('aaaaaaaa…').length).toBeGreaterThan(0);
     });
     expect(screen.getByRole('button', { name: /export csv/i })).toBeEnabled();
   });
@@ -331,7 +339,11 @@ describe('TenantAuditLogs', () => {
 
   // 21. Warning severity badge — yellow styling
   it('renders warning severity badge with yellow styling', async () => {
-    auditQueryResult = { data: MOCK_AUDIT_LOGS, error: null, count: 3 };
+    auditQueryResult = {
+      data: [{ ...MOCK_AUDIT_LOGS[1], id: 'log-004', success: true, event_type: 'SUSPICIOUS_PATTERN' }],
+      error: null,
+      count: 1,
+    };
     await renderComponent();
     await waitFor(() => { expect(screen.getByText('warning')).toBeInTheDocument(); });
     const badge = screen.getByText('warning');
@@ -360,7 +372,7 @@ describe('TenantAuditLogs', () => {
     const user = userEvent.setup();
     await renderComponent();
     await waitFor(() => {
-      expect(screen.getByText('testuser-alpha@fake.test')).toBeInTheDocument();
+      expect(screen.getAllByText('aaaaaaaa…').length).toBeGreaterThan(0);
     });
     await user.click(screen.getByRole('button', { name: /export csv/i }));
     expect(mockCreateObjectURL).toHaveBeenCalled();
@@ -384,10 +396,10 @@ describe('TenantAuditLogs', () => {
     auditQueryResult = { data: [MOCK_AUDIT_LOGS[1]], error: null, count: 1 };
     await renderComponent();
     await waitFor(() => {
-      expect(screen.getByText('testuser-beta@fake.test')).toBeInTheDocument();
+      expect(screen.getAllByText('bbbbbbbb…').length).toBeGreaterThan(0);
     });
     expect(screen.getByText('LOGIN_FAILED')).toBeInTheDocument();
-    expect(screen.getByText('AUTHENTICATION')).toBeInTheDocument();
+    expect(screen.getByText('SECURITY_EVENT')).toBeInTheDocument();
     expect(screen.getByText('Multiple failed login attempts detected')).toBeInTheDocument();
   });
 });

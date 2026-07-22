@@ -11,23 +11,26 @@
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
 import { ServiceResult, success, failure } from './_base';
+import {
+  AUDIT_LOG_READ_COLUMNS,
+  LIVE_AUDIT_CATEGORIES,
+  deriveAuditSeverity,
+  type AuditSeverity,
+  type LiveAuditCategory,
+} from './auditLogRead';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export type AuditEventCategory =
-  | 'AUTH'
-  | 'PHI_ACCESS'
-  | 'DATA_MOD'
-  | 'SYSTEM'
-  | 'SECURITY'
-  | 'BILLING'
-  | 'CLINICAL'
-  | 'ADMIN';
+// Live event_category vocabulary (see services/auditLogRead.ts)
+export type AuditEventCategory = LiveAuditCategory;
 
-export type AuditSeverity = 'info' | 'warning' | 'error' | 'critical';
+export type { AuditSeverity } from './auditLogRead';
 
+// Field names kept for the dashboard; values mapped from LIVE columns
+// (timestamp, event_category, metadata, operation, actor_ip_address,
+// target_user_id). severity is DERIVED — audit_logs stores none.
 export interface AuditLogEntry {
   id: string;
   event_type: string;
@@ -43,6 +46,43 @@ export interface AuditLogEntry {
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;
+}
+
+interface LiveAuditRow {
+  id: string;
+  event_type: string;
+  event_category: string | null;
+  actor_user_id: string | null;
+  actor_role: string | null;
+  target_user_id: string | null;
+  resource_type: string | null;
+  resource_id: string | null;
+  operation: string | null;
+  metadata: Record<string, unknown> | null;
+  actor_ip_address: string | null;
+  actor_user_agent: string | null;
+  success: boolean | null;
+  error_code: string | null;
+  error_message: string | null;
+  timestamp: string;
+}
+
+function mapLiveRow(row: LiveAuditRow): AuditLogEntry {
+  return {
+    id: row.id,
+    event_type: row.event_type,
+    category: (row.event_category ?? 'SYSTEM_EVENT') as AuditEventCategory,
+    severity: deriveAuditSeverity(row.event_category, row.success),
+    actor_user_id: row.actor_user_id,
+    patient_id: row.target_user_id,
+    resource_type: row.resource_type,
+    resource_id: row.resource_id,
+    action: row.operation,
+    details: row.metadata,
+    ip_address: row.actor_ip_address,
+    user_agent: row.actor_user_agent,
+    created_at: row.timestamp,
+  };
 }
 
 export interface AuditSearchFilters {
@@ -95,15 +135,11 @@ async function searchAuditLogs(
   try {
     let query = supabase
       .from('audit_logs')
-      .select('id, event_type, category, severity, actor_user_id, actor_name, patient_id, resource_type, resource_id, action, details, ip_address, user_agent, created_at', { count: 'exact' });
+      .select(AUDIT_LOG_READ_COLUMNS, { count: 'exact' });
 
-    // Apply filters
+    // Apply filters (live columns: event_category / target_user_id / timestamp)
     if (filters.category) {
-      query = query.eq('category', filters.category);
-    }
-
-    if (filters.severity) {
-      query = query.eq('severity', filters.severity);
+      query = query.eq('event_category', filters.category);
     }
 
     if (filters.eventType) {
@@ -115,7 +151,7 @@ async function searchAuditLogs(
     }
 
     if (filters.patientId) {
-      query = query.eq('patient_id', filters.patientId);
+      query = query.eq('target_user_id', filters.patientId);
     }
 
     if (filters.resourceType) {
@@ -123,27 +159,33 @@ async function searchAuditLogs(
     }
 
     if (filters.dateFrom) {
-      query = query.gte('created_at', filters.dateFrom);
+      query = query.gte('timestamp', filters.dateFrom);
     }
 
     if (filters.dateTo) {
-      query = query.lte('created_at', filters.dateTo);
+      query = query.lte('timestamp', filters.dateTo);
     }
 
-    // Full-text search on event_type and details
+    // Search on event_type/operation (metadata is jsonb — not ilike-able server-side)
     if (filters.query) {
-      query = query.or(`event_type.ilike.%${filters.query}%,details::text.ilike.%${filters.query}%`);
+      query = query.or(`event_type.ilike.%${filters.query}%,operation.ilike.%${filters.query}%`);
     }
 
     // Pagination
     const limit = filters.limit || 50;
     const offset = filters.offset || 0;
-    query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+    query = query.order('timestamp', { ascending: false }).range(offset, offset + limit - 1);
 
     const { data, error, count } = await query;
 
     if (error) {
       return failure('DATABASE_ERROR', 'Failed to search audit logs', error);
+    }
+
+    let entries = ((data || []) as unknown as LiveAuditRow[]).map(mapLiveRow);
+    // Severity is derived — filter client-side
+    if (filters.severity) {
+      entries = entries.filter(entry => entry.severity === filters.severity);
     }
 
     await auditLogger.info('AUDIT_SEARCH_PERFORMED', {
@@ -152,7 +194,7 @@ async function searchAuditLogs(
     });
 
     return success({
-      entries: (data || []) as AuditLogEntry[],
+      entries,
       total: count || 0,
     });
   } catch (err: unknown) {
@@ -173,54 +215,41 @@ async function getAuditStats(
     const startDate = dateFrom || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = dateTo || new Date().toISOString();
 
-    // Get total events
+    // Get total events (live time column is `timestamp`)
     const { count: totalEvents } = await supabase
       .from('audit_logs')
       .select('*', { count: 'exact', head: true })
-      .gte('created_at', startDate)
-      .lte('created_at', endDate);
+      .gte('timestamp', startDate)
+      .lte('timestamp', endDate);
 
-    // Get events by category
+    // One pass drives category AND derived-severity counts
     const { data: categoryData } = await supabase
       .from('audit_logs')
-      .select('category')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate);
+      .select('event_category, success')
+      .gte('timestamp', startDate)
+      .lte('timestamp', endDate);
 
-    const eventsByCategory: Record<AuditEventCategory, number> = {
-      AUTH: 0, PHI_ACCESS: 0, DATA_MOD: 0, SYSTEM: 0,
-      SECURITY: 0, BILLING: 0, CLINICAL: 0, ADMIN: 0,
-    };
-
-    for (const row of categoryData || []) {
-      if (row.category in eventsByCategory) {
-        eventsByCategory[row.category as AuditEventCategory]++;
-      }
-    }
-
-    // Get events by severity
-    const { data: severityData } = await supabase
-      .from('audit_logs')
-      .select('severity')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate);
+    const eventsByCategory = Object.fromEntries(
+      LIVE_AUDIT_CATEGORIES.map(category => [category, 0])
+    ) as Record<AuditEventCategory, number>;
 
     const eventsBySeverity: Record<AuditSeverity, number> = {
       info: 0, warning: 0, error: 0, critical: 0,
     };
 
-    for (const row of severityData || []) {
-      if (row.severity in eventsBySeverity) {
-        eventsBySeverity[row.severity as AuditSeverity]++;
+    for (const row of categoryData || []) {
+      if (row.event_category && row.event_category in eventsByCategory) {
+        eventsByCategory[row.event_category as AuditEventCategory]++;
       }
+      eventsBySeverity[deriveAuditSeverity(row.event_category, row.success)]++;
     }
 
     // Get top event types
     const { data: eventTypeData } = await supabase
       .from('audit_logs')
       .select('event_type')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate);
+      .gte('timestamp', startDate)
+      .lte('timestamp', endDate);
 
     const eventTypeCounts: Record<string, number> = {};
     for (const row of eventTypeData || []) {
@@ -236,8 +265,8 @@ async function getAuditStats(
     const { data: actorData } = await supabase
       .from('audit_logs')
       .select('actor_user_id')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
+      .gte('timestamp', startDate)
+      .lte('timestamp', endDate)
       .not('actor_user_id', 'is', null);
 
     const actorCounts: Record<string, number> = {};
@@ -255,14 +284,14 @@ async function getAuditStats(
     // Get events over time (by day)
     const { data: timeData } = await supabase
       .from('audit_logs')
-      .select('created_at')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .order('created_at');
+      .select('timestamp')
+      .gte('timestamp', startDate)
+      .lte('timestamp', endDate)
+      .order('timestamp');
 
     const dailyCounts: Record<string, number> = {};
     for (const row of timeData || []) {
-      const date = row.created_at.split('T')[0];
+      const date = row.timestamp.split('T')[0];
       dailyCounts[date] = (dailyCounts[date] || 0) + 1;
     }
 
@@ -298,14 +327,15 @@ async function getPHIAccessReport(
     const endDate = dateTo || new Date().toISOString();
 
     // Get all PHI access events for this patient
-    const { data, error } = await supabase
+    const { data: phiData, error } = await supabase
       .from('audit_logs')
-      .select('id, event_type, category, severity, actor_user_id, actor_name, patient_id, resource_type, resource_id, action, details, ip_address, user_agent, created_at')
-      .eq('patient_id', patientId)
-      .eq('category', 'PHI_ACCESS')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .order('created_at', { ascending: false });
+      .select(AUDIT_LOG_READ_COLUMNS)
+      .eq('target_user_id', patientId)
+      .eq('event_category', 'PHI_ACCESS')
+      .gte('timestamp', startDate)
+      .lte('timestamp', endDate)
+      .order('timestamp', { ascending: false });
+    const data = ((phiData || []) as unknown as LiveAuditRow[]).map(mapLiveRow);
 
     if (error) {
       return failure('DATABASE_ERROR', 'Failed to get PHI access report', error);
@@ -369,12 +399,13 @@ async function getSecurityEventSummary(
     const endDate = dateTo || new Date().toISOString();
 
     // Get security events
+    // security_events' live time column is `timestamp` (no created_at)
     const { data, error, count } = await supabase
       .from('security_events')
-      .select('id, event_type, severity, created_at', { count: 'exact' })
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .order('created_at', { ascending: false })
+      .select('id, event_type, severity, timestamp', { count: 'exact' })
+      .gte('timestamp', startDate)
+      .lte('timestamp', endDate)
+      .order('timestamp', { ascending: false })
       .limit(1000);
 
     if (error) {
@@ -397,8 +428,9 @@ async function getSecurityEventSummary(
 
     // Get recent critical events
     const recentCritical = (data || [])
-      .filter(e => e.severity === 'CRITICAL')
-      .slice(0, 5) as AuditLogEntry[];
+      .filter(e => (e.severity || '').toUpperCase() === 'CRITICAL')
+      .slice(0, 5)
+      .map(e => ({ ...e, created_at: e.timestamp })) as unknown as AuditLogEntry[];
 
     return success({
       total: count || 0,

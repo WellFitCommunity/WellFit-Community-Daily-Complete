@@ -45,12 +45,13 @@ import {
 // HELPERS
 // =============================================================================
 
+// Live event_category vocabulary (services/auditLogRead.ts)
 const CATEGORY_CONFIG: Record<AuditEventCategory, { label: string; color: string }> = {
-  AUTH: { label: 'Authentication', color: 'bg-blue-100 text-blue-800' },
+  AUTHENTICATION: { label: 'Authentication', color: 'bg-blue-100 text-blue-800' },
   PHI_ACCESS: { label: 'PHI Access', color: 'bg-purple-100 text-purple-800' },
-  DATA_MOD: { label: 'Data Modification', color: 'bg-yellow-100 text-yellow-800' },
-  SYSTEM: { label: 'System', color: 'bg-gray-100 text-gray-800' },
-  SECURITY: { label: 'Security', color: 'bg-red-100 text-red-800' },
+  SYSTEM_EVENT: { label: 'System', color: 'bg-gray-100 text-gray-800' },
+  SECURITY_EVENT: { label: 'Security', color: 'bg-red-100 text-red-800' },
+  GUARDIAN: { label: 'Guardian', color: 'bg-yellow-100 text-yellow-800' },
   BILLING: { label: 'Billing', color: 'bg-green-100 text-green-800' },
   CLINICAL: { label: 'Clinical', color: 'bg-indigo-100 text-indigo-800' },
   ADMIN: { label: 'Admin', color: 'bg-orange-100 text-orange-800' },
@@ -412,7 +413,7 @@ export const AuditAnalyticsDashboard: React.FC = () => {
             ) : (
               searchResults.map((entry) => {
                 const isExpanded = expandedId === entry.id;
-                const categoryConfig = CATEGORY_CONFIG[entry.category] || CATEGORY_CONFIG.SYSTEM;
+                const categoryConfig = CATEGORY_CONFIG[entry.category] || CATEGORY_CONFIG.SYSTEM_EVENT;
                 const severityConfig = SEVERITY_CONFIG[entry.severity] || SEVERITY_CONFIG.info;
 
                 return (

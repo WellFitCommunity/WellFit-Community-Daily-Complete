@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { deriveAuditSeverity } from '../../services/auditLogRead';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { Shield, CheckCircle, AlertCircle, FileText, Download, TrendingUp } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
@@ -112,23 +113,28 @@ export const TenantComplianceReport: React.FC = () => {
 
   const loadRecentComplianceEvents = useCallback(async (tid: string) => {
     // Get recent compliance-related events
+    // Live columns: event_type/event_category/timestamp; severity is DERIVED
+    // (audit_logs stores none) and 'ADMINISTRATIVE' was never a live category.
     const { data: logs, error } = await supabase
       .from('audit_logs')
-      .select('id, action_type, message, created_at, severity')
+      .select('id, event_type, error_message, timestamp, event_category, success')
       .eq('tenant_id', tid)
-      .in('action_category', ['ADMINISTRATIVE', 'SECURITY_EVENT'])
-      .order('created_at', { ascending: false })
+      .in('event_category', ['ADMIN', 'SECURITY_EVENT'])
+      .order('timestamp', { ascending: false })
       .limit(5);
 
     if (!error && logs) {
-      setEvents(logs.map(log => ({
-        id: log.id,
-        title: log.action_type,
-        description: log.message || 'No description',
-        timestamp: log.created_at,
-        type: log.severity === 'error' || log.severity === 'critical' ? 'error' :
-              log.severity === 'warning' ? 'warning' : 'success',
-      })));
+      setEvents(logs.map(log => {
+        const severity = deriveAuditSeverity(log.event_category, log.success);
+        return {
+          id: log.id,
+          title: log.event_type,
+          description: log.error_message || log.event_type.replace(/_/g, ' '),
+          timestamp: log.timestamp,
+          type: severity === 'error' || severity === 'critical' ? 'error' :
+                severity === 'warning' ? 'warning' : 'success',
+        };
+      }));
     }
   }, [supabase]);
 

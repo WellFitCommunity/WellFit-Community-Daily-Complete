@@ -104,27 +104,32 @@ import { TenantComplianceReport } from '../TenantComplianceReport';
 // TEST DATA
 // ============================================================================
 
+// Live audit_logs shape: event_type/error_message/timestamp/event_category/success
+// (the component derives severity — audit_logs stores none)
 const MOCK_AUDIT_LOGS = [
   {
     id: 'log-001',
-    action_type: 'ADMIN_LOGIN',
-    message: 'Admin Test Alpha logged in',
-    created_at: '2026-02-25T10:00:00Z',
-    severity: 'info',
+    event_type: 'ADMIN_LOGIN',
+    error_message: 'Admin Test Alpha logged in',
+    timestamp: '2026-02-25T10:00:00Z',
+    event_category: 'ADMIN',
+    success: true,
   },
   {
     id: 'log-002',
-    action_type: 'PHI_ACCESS',
-    message: 'PHI record accessed by Test Admin Beta',
-    created_at: '2026-02-24T14:00:00Z',
-    severity: 'warning',
+    event_type: 'PHI_ACCESS',
+    error_message: 'PHI record accessed by Test Admin Beta',
+    timestamp: '2026-02-24T14:00:00Z',
+    event_category: 'SECURITY_EVENT',
+    success: true, // derived: warning
   },
   {
     id: 'log-003',
-    action_type: 'RLS_VIOLATION',
-    message: 'RLS policy blocked unauthorized access',
-    created_at: '2026-02-23T09:00:00Z',
-    severity: 'error',
+    event_type: 'RLS_VIOLATION',
+    error_message: 'RLS policy blocked unauthorized access',
+    timestamp: '2026-02-23T09:00:00Z',
+    event_category: 'ADMIN',
+    success: false, // derived: error
   },
 ];
 

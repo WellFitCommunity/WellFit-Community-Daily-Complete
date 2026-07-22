@@ -58,7 +58,7 @@ export function useHuddleData(): HuddleDataResult {
           .from('audit_logs')
           .select('metadata')
           .eq('event_type', 'HUDDLE_DISCUSSED')
-          .gte('created_at', todayIso),
+          .gte('timestamp', todayIso),
       ]);
 
       if (practitionerResp.error) throw practitionerResp.error;

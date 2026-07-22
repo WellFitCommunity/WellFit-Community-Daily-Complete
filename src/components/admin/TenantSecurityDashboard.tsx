@@ -142,14 +142,15 @@ export const TenantSecurityDashboard: React.FC = () => {
   };
 
   const loadPHIMetric = async (tid: string) => {
-    const { data, error } = await supabase
+    // Live column is event_category; head:true returns no rows, so use count
+    const { count, error } = await supabase
       .from('audit_logs')
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tid)
-      .eq('action_category', 'PHI_ACCESS');
+      .eq('event_category', 'PHI_ACCESS');
 
     if (!error) {
-      setPhiCount(data?.length || 0);
+      setPhiCount(count || 0);
     }
   };
 

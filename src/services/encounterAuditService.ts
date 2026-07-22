@@ -16,6 +16,7 @@
  * Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.
  */
 
+import { deriveAuditSeverity } from './auditLogRead';
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
 import { encounterStateMachine } from './encounterStateMachine';
@@ -207,11 +208,12 @@ async function fetchLockEvents(encounterId: string): Promise<EncounterTimelineEn
 }
 
 async function fetchAuditLogs(encounterId: string): Promise<EncounterTimelineEntry[]> {
+  // Live columns: event_category/metadata/timestamp; severity is DERIVED
   const { data, error } = await supabase
     .from('audit_logs')
-    .select('id, event_type, category, severity, actor_user_id, details, created_at')
+    .select('id, event_type, event_category, success, actor_user_id, metadata, timestamp')
     .eq('resource_id', encounterId)
-    .order('created_at', { ascending: true })
+    .order('timestamp', { ascending: true })
     .limit(200);
 
   if (error || !data) return [];
@@ -219,24 +221,22 @@ async function fetchAuditLogs(encounterId: string): Promise<EncounterTimelineEnt
   interface AuditRow {
     id: string;
     event_type: string;
-    category: string;
-    severity: string;
+    event_category: string | null;
+    success: boolean | null;
     actor_user_id: string | null;
-    details: Record<string, unknown> | null;
-    created_at: string;
+    metadata: Record<string, unknown> | null;
+    timestamp: string;
   }
 
   return (data as AuditRow[]).map(entry => ({
     id: `audit-${entry.id}`,
-    timestamp: entry.created_at,
+    timestamp: entry.timestamp,
     source: 'audit_log' as TimelineSource,
     actor_id: entry.actor_user_id,
     summary: entry.event_type.replace(/_/g, ' '),
-    details: entry.details ?? {},
-    severity: (entry.severity === 'critical' ? 'critical' :
-               entry.severity === 'error' ? 'error' :
-               entry.severity === 'warning' ? 'warning' : 'info') as TimelineSeverity,
-    category: entry.category || 'Audit',
+    details: entry.metadata ?? {},
+    severity: deriveAuditSeverity(entry.event_category, entry.success) as TimelineSeverity,
+    category: entry.event_category || 'Audit',
   }));
 }
 
