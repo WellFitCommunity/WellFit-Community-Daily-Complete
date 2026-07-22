@@ -201,7 +201,7 @@ const AIFinancialDashboard: React.FC = () => {
         .from('mcp_cost_savings_summary')
         .select('total_spent, total_saved, avg_cache_hit_rate, total_calls, total_cached_calls, total_haiku_calls, total_sonnet_calls')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // zero rows is normal (no MCP usage yet) — .single() 406s
 
       if (!metricsError || metricsError.code === 'PGRST116') {
         setMcpUserMetrics(metricsData);

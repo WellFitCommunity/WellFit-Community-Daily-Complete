@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { Bot, Brain, RefreshCw, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -37,24 +38,27 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
 
       if (countError) throw countError;
 
-      // Get most used features
-      const { data: featureData, error: featureError } = await supabase
+      // Live event granularity is one row per interaction (section_name +
+      // action_type) — there is no feature_clicked/click_count/
+      // workflow_pattern_detected column. Tally the recent sample client-side.
+      const { data: recentEvents, error: eventsError } = await supabase
         .from('dashboard_personalization_events')
-        .select('feature_clicked, click_count')
+        .select('section_name')
         .eq('user_id', user.id)
-        .order('click_count', { ascending: false })
-        .limit(5);
+        .order('created_at', { ascending: false })
+        .limit(200);
 
-      if (featureError) throw featureError;
+      if (eventsError) throw eventsError;
 
-      // Get workflow patterns count
-      const { count: patternsCount, error: patternsError } = await supabase
-        .from('dashboard_personalization_events')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .not('workflow_pattern_detected', 'is', null);
-
-      if (patternsError) throw patternsError;
+      const sectionCounts = new Map<string, number>();
+      for (const event of recentEvents ?? []) {
+        if (event.section_name) {
+          sectionCounts.set(event.section_name, (sectionCounts.get(event.section_name) ?? 0) + 1);
+        }
+      }
+      const rankedSections = [...sectionCounts.entries()].sort((a, b) => b[1] - a[1]);
+      // A "pattern" = a section used repeatedly (3+ times in the recent sample)
+      const patternsCount = rankedSections.filter(([, count]) => count >= 3).length;
 
       // Get last update
       const { data: lastEvent, error: lastEventError } = await supabase
@@ -73,20 +77,15 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
         Math.floor(
           ((totalInteractions || 0) / 100) * 40 + // 40 points for interactions
             ((patternsCount || 0) / 20) * 30 + // 30 points for patterns detected
-            ((featureData?.length || 0) / 5) * 30 // 30 points for feature usage variety
+            (Math.min(rankedSections.length, 5) / 5) * 30 // 30 points for section usage variety
         )
       );
-
-      interface FeatureRow {
-        feature_clicked: string;
-        click_count: number;
-      }
 
       setMetrics({
         total_interactions: totalInteractions || 0,
         adaptation_score: adaptationScore,
-        most_used_features: featureData?.map((f: FeatureRow) => f.feature_clicked) || [],
-        workflow_patterns_detected: patternsCount || 0,
+        most_used_features: rankedSections.slice(0, 5).map(([section]) => section),
+        workflow_patterns_detected: patternsCount,
         last_personalization_update: lastEvent?.created_at || new Date().toISOString(),
       });
     } catch (error: unknown) {
@@ -112,7 +111,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
     return (
       <div className="bg-linear-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
         <div className="flex items-center space-x-3">
-          <div className="text-3xl">🤖</div>
+          <Bot className="w-8 h-8 text-indigo-500" aria-hidden="true" />
           <div>
             <p className="font-semibold text-gray-800">AI Learning Your Workflow</p>
             <p className="text-sm text-gray-600">Your dashboard will adapt to your usage patterns</p>
@@ -133,7 +132,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
       case 'personalized':
         return {
           label: 'Fully Personalized',
-          icon: '⚡',
+          icon: Zap,
           gradient: 'from-green-400 to-emerald-500',
           bgGradient: 'from-green-50 to-emerald-50',
           borderColor: 'border-green-300',
@@ -142,7 +141,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
       case 'adapting':
         return {
           label: 'Adapting',
-          icon: '🔄',
+          icon: RefreshCw,
           gradient: 'from-blue-400 to-cyan-500',
           bgGradient: 'from-blue-50 to-cyan-50',
           borderColor: 'border-blue-300',
@@ -151,7 +150,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
       default:
         return {
           label: 'Learning',
-          icon: '🧠',
+          icon: Brain,
           gradient: 'from-purple-400 to-pink-500',
           bgGradient: 'from-purple-50 to-pink-50',
           borderColor: 'border-purple-300',
@@ -188,9 +187,9 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
                 repeat: Infinity,
                 repeatDelay: level === 'adapting' ? 0 : 2,
               }}
-              className="text-2xl"
+              className={config.textColor}
             >
-              {config.icon}
+              <config.icon className="w-6 h-6" aria-hidden="true" />
             </motion.div>
             <div>
               <p className={`text-sm font-semibold ${config.textColor}`}>Dashboard Personalization</p>
@@ -296,9 +295,9 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
               repeat: Infinity,
               repeatDelay: level === 'adapting' ? 0 : 2,
             }}
-            className="text-5xl"
+            className={config.textColor}
           >
-            {config.icon}
+            <config.icon className="w-10 h-10" aria-hidden="true" />
           </motion.div>
           <div>
             <h3 className="text-2xl font-bold text-gray-800">Dashboard Personalization</h3>
@@ -371,7 +370,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
       {level === 'learning' && (
         <div className="bg-purple-100 border-l-4 border-purple-500 p-3 rounded-sm">
           <p className="text-sm text-purple-800">
-            <span className="font-semibold">🧠 Keep Using:</span> The more you use WellFit, the better it adapts to
+            <span className="font-semibold">Keep Using:</span> The more you use WellFit, the better it adapts to
             your workflow!
           </p>
         </div>
@@ -380,7 +379,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
       {level === 'adapting' && (
         <div className="bg-blue-100 border-l-4 border-blue-500 p-3 rounded-sm">
           <p className="text-sm text-blue-800">
-            <span className="font-semibold">🔄 Almost There:</span> Your dashboard is learning your patterns. Keep
+            <span className="font-semibold">Almost There:</span> Your dashboard is learning your patterns. Keep
             going!
           </p>
         </div>
@@ -389,7 +388,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
       {level === 'personalized' && (
         <div className="bg-green-100 border-l-4 border-green-500 p-3 rounded-sm">
           <p className="text-sm text-green-800">
-            <span className="font-semibold">⚡ Fully Personalized:</span> Your dashboard is optimized for your unique
+            <span className="font-semibold">Fully Personalized:</span> Your dashboard is optimized for your unique
             workflow!
           </p>
         </div>

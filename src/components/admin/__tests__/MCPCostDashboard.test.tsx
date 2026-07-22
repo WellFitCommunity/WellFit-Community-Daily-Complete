@@ -19,7 +19,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 
 // ---- Supabase mock chain ----
 const mockSingle = vi.fn();
-const mockEq = vi.fn(() => ({ single: mockSingle }));
+const mockEq = vi.fn(() => ({ single: mockSingle, maybeSingle: mockSingle }));
 const mockSelect = vi.fn(() => ({ eq: mockEq }));
 const mockFrom = vi.fn(() => ({ select: mockSelect }));
 const mockRpc = vi.fn();

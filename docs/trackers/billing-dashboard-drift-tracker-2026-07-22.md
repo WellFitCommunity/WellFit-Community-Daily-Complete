@@ -1,0 +1,18 @@
+# Billing-Dashboard Drift — Tracker (from Maria's 2026-07-22 browser walk)
+
+> **Status:** B-1..B-4 FIXED same day (commit trail below). B-5/B-6 NEED A DATA-MODEL DECISION — do not patch blind.
+> Source: console errors on the billing/revenue surfaces. All root causes live-verified via `supabase db query --linked`.
+
+## Fixed 2026-07-22
+- **B-1 (403s):** `icd10_hcc_mappings` + `hcc_hierarchies` had RLS read policies but NO grant → migration `20260722180000` (`GRANT SELECT TO authenticated`, live-verified true). `hccOpportunityService` works now.
+- **B-2 (406):** `mcp_cost_savings_summary` read used `.single()` — zero rows (no MCP usage yet) 406s. → `.maybeSingle()` in `MCPCostDashboard.tsx` + `AIFinancialDashboard.tsx` (+ test mocks).
+- **B-3 (400):** `encounterBillingBridgeService.getBillingQueue` — profiles embed used `encounters_patient_id_fkey` (targets auth.users; the profiles embed FK is `encounters_patient_id_profiles_fkey`) and embedded `billing_providers` (NO FK exists encounters→billing_providers). Fixed: correct FK name; provider names via second `profiles` fetch keyed `user_id` on `provider_id`. `encounter_superbills` embed verified OK (FK exists).
+- **B-4 (crash + fabrication, separate commit `683ebc43`):** PriorAuthDashboard null `.toFixed` + fabricated 100% SLA → honest NULLs migration `20260722170000` + boundary normalization + "—" render.
+- Also fixed same walk: `DashboardPersonalizationIndicator` queried nonexistent `feature_clicked`/`click_count`/`workflow_pattern_detected` → repointed to live `section_name` events (client-side tally); emoji glyphs → lucide icons (mounted in PhysicianPanel, System B).
+
+## NEEDS DESIGN (do NOT patch blind — both were written against a payer model that never existed)
+- **B-5 `eligibilityVerificationService`:** TWO queries select `encounters.payer_id` (column does not exist) + embed `billing_payers` (no FK), and the verification-submit path GATES on `billing_payers.payer_id` (line ~239) — so eligibility verification has never once run. **Decision needed: where does a payer attach?** Options: (a) add `encounters.payer_id → billing_payers` (column + FK migration — Tier 3); (b) resolve payer from the patient's insurance profile fields (`primary_insurance`/`insurance_id`); (c) resolve via the claim when one exists. Recommend (a) — eligibility is checked pre-claim, and the coverage_* columns already live on encounters. Maria approves the schema change; then repoint both queries + the submit gate + fix `encounter_procedures(procedure_code)` → `(code)`.
+- **B-6 `eraPaymentPostingService`:** live `remittances` = `id, payer_name, check_number, check_date, total_amount, file_path, processed, processed_at, created_at, tenant_id` — the service selects `payer_id, received_at, summary, details, billing_payers(name)` (NONE exist) and derives claim counts from a `summary` jsonb that was never stored. **Decision needed:** either extend `remittances` with the ERA-835 detail the service expects (summary/details jsonb, received_at) as part of a real ERA-ingest design, or rewrite the service to the live shape (payer_name direct, received_at→created_at, totals from `claim_payments` per remittance). Recommend the rewrite (live shape + claim_payments aggregation) — no schema change, honest data.
+- **B-7 `guardian-agent-api` 401 on error-boundary reportAndHeal:** client sends the session Bearer correctly (`guardianAgentClient.ts`) — the rejection is inside the edge fn's gate. Investigate the fn's role check; crash reports currently never reach Guardian.
+
+Regression check: `grep -rn "payer_id" src/services/eligibilityVerificationService.ts` (expect 0 after B-5); `grep -rn "received_at\|summary, details" src/services/eraPaymentPostingService.ts` (expect 0 after B-6).

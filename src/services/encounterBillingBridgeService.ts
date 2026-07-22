@@ -87,8 +87,8 @@ interface EncounterRow {
   status: string;
   signed_at: string | null;
   tenant_id: string | null;
+  provider_id: string | null;
   profiles: { first_name: string | null; last_name: string | null } | null;
-  billing_providers: { organization_name: string | null } | null;
   encounter_diagnoses: { code: string }[];
   encounter_procedures: { code: string }[];
   encounter_superbills: { id: string; superbill_status: string }[] | null;
@@ -174,12 +174,15 @@ export const encounterBillingBridgeService = {
    */
   async getBillingQueue(): Promise<ServiceResult<BillingQueueEncounter[]>> {
     try {
+      // Live embeds: the profiles embed must use encounters_patient_id_profiles_fkey
+      // (encounters_patient_id_fkey targets auth.users, not profiles) and there is
+      // NO FK from encounters to billing_providers — provider names come from a
+      // second profiles fetch keyed on provider_id (= auth.users.id = profiles.user_id).
       const { data, error } = await supabase
         .from('encounters')
         .select(`
-          id, patient_id, date_of_service, status, signed_at, tenant_id,
-          profiles!encounters_patient_id_fkey(first_name, last_name),
-          billing_providers(organization_name),
+          id, patient_id, provider_id, date_of_service, status, signed_at, tenant_id,
+          profiles!encounters_patient_id_profiles_fkey(first_name, last_name),
           encounter_diagnoses(code),
           encounter_procedures(code),
           encounter_superbills(id, superbill_status)
@@ -195,6 +198,19 @@ export const encounterBillingBridgeService = {
 
       const rows = (data || []) as unknown as EncounterRow[];
 
+      const providerIds = [...new Set(rows.map(r => r.provider_id).filter((v): v is string => !!v))];
+      const providerNames = new Map<string, string>();
+      if (providerIds.length > 0) {
+        const { data: providerProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', providerIds);
+        for (const prof of providerProfiles || []) {
+          const name = `${prof.first_name || ''} ${prof.last_name || ''}`.trim();
+          if (name) providerNames.set(prof.user_id, name);
+        }
+      }
+
       const queue: BillingQueueEncounter[] = rows.map(row => {
         const superbillArr = row.encounter_superbills || [];
         const superbill = superbillArr.length > 0 ? superbillArr[0] : null;
@@ -203,7 +219,7 @@ export const encounterBillingBridgeService = {
           encounter_id: row.id,
           patient_id: row.patient_id,
           patient_name: buildPatientName(row.profiles),
-          provider_name: row.billing_providers?.organization_name || 'Unassigned',
+          provider_name: (row.provider_id && providerNames.get(row.provider_id)) || 'Unassigned',
           date_of_service: row.date_of_service,
           status: row.status,
           signed_at: row.signed_at,

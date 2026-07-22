@@ -22,7 +22,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockOrder = vi.fn();
 const mockGte = vi.fn(() => ({ order: mockOrder }));
-const mockEq = vi.fn(() => ({ gte: mockGte, eq: mockEq, single: mockSingle }));
+const mockEq = vi.fn(() => ({ gte: mockGte, eq: mockEq, single: mockSingle, maybeSingle: mockSingle }));
 const mockSingle = vi.fn();
 const mockSelect = vi.fn(() => ({ gte: mockGte, eq: mockEq }));
 const mockFrom = vi.fn((_table: string) => ({ select: mockSelect }));
