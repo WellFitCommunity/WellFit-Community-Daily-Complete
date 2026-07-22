@@ -439,6 +439,22 @@ export const VOICE_COMMANDS: VoiceCommandMapping[] = [
     displayName: 'Transfer Logs',
   },
 
+  // Hospital Transfer Portal
+  {
+    phrases: ['hospital transfer', 'transfer portal', 'send transfer', 'new transfer'],
+    targetType: 'route',
+    targetId: '/hospital-transfer',
+    displayName: 'Hospital Transfer Portal',
+  },
+
+  // ER Incoming (EMS)
+  {
+    phrases: ['er dashboard', 'er board', 'incoming patients', 'ems board', 'er command center'],
+    targetType: 'route',
+    targetId: '/er-dashboard',
+    displayName: 'ER Command Center',
+  },
+
   // Frequent Flyers
   {
     phrases: ['frequent flyers', 'repeat patients', 'high utilizers'],

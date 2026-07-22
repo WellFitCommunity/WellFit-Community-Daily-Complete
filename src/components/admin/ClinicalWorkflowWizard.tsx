@@ -106,6 +106,43 @@ const CLINICAL_WORKFLOWS: ClinicalWorkflow[] = [
     ],
   },
   {
+    id: 'hospital-transfer',
+    name: 'Patient Transfers',
+    icon: '', // EA badge/icon standard — no emoji glyphs on clinical surfaces (governance #22)
+    description: 'Facility-to-facility transfers and inbound EMS: send, track, receive, integrate',
+    roles: ['nurse', 'physician', 'doctor', 'case_manager', 'admin', 'super_admin'],
+    steps: [
+      {
+        id: 'send-transfer',
+        label: 'Send New Transfer',
+        description: 'Create and send a secure handoff packet to a receiving facility',
+        route: '/handoff/send',
+        actionLabel: 'New Transfer',
+      },
+      {
+        id: 'track-transfers',
+        label: 'Track Transfers',
+        description: 'Monitor outgoing and incoming packets and acknowledgements',
+        route: '/hospital-transfer',
+        actionLabel: 'Open Transfer Portal',
+      },
+      {
+        id: 'receive-transfers',
+        label: 'Receive & Integrate',
+        description: 'Acknowledge incoming transfers and integrate them into the patient chart',
+        route: '/handoff/receiving',
+        actionLabel: 'Go to Receiving Dashboard',
+      },
+      {
+        id: 'er-incoming',
+        label: 'ER Incoming (EMS)',
+        description: 'Live board of inbound EMS patients with alerts, dispatch status, and provider sign-off',
+        route: '/er-dashboard',
+        actionLabel: 'Open ER Board',
+      },
+    ],
+  },
+  {
     id: 'billing-cycle',
     name: 'Encounter Billing',
     icon: '\uD83D\uDCB0',

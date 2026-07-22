@@ -270,7 +270,7 @@ async function documentTransferVitals(
       encounter_id: encounterId,
       tenant_id: tenantId,
       status: 'final',
-      category: 'vital-signs',
+      category: ['vital-signs'], // live column is text[] (FHIR CodeableConcept array)
       code: m.code,
       code_system: 'http://loinc.org',
       code_display: m.display,

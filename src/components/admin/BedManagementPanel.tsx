@@ -458,6 +458,7 @@ const BedManagementPanel: React.FC = () => {
         onToggleVoice={toggleVoiceListening}
         onRefresh={loadData}
         onNavigateTransferLogs={() => navigate('/transfer-logs')}
+        onNavigateHospitalTransfer={() => navigate('/hospital-transfer')}
       />
 
       {/* Error Banner */}

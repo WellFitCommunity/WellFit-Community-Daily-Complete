@@ -259,3 +259,26 @@ grep -rn "\.eq('role_code', *'" src/                                            
 4. **D8 re-canonicalization** of the remaining `_ARCHIVE_SKIPPED` EMS schema (prehospital_handoffs/dispatches/signoffs CREATEs) — protocols table now has an active migration; the other three still only exist via archive.
 5. **⚑ Akima ratifications:** D2 billing code choices, D3 temp-record policy, `coordinatedResponse`/`emsMetrics` feature-flag defaults (E-1 unfinished — flags still gate `/ems/metrics` + `/ems/coordinated-response`).
 6. Department paging contacts: `alert_phone`/`alert_email` are NULL for all 9 seeded departments — an admin must populate them before real SMS paging fires (dashboard notification works regardless).
+
+
+---
+
+## EXECUTION LOG 2 — 2026-07-22 (Maria: nav placement mine, round trip, solidify D8)
+
+**Nav wiring (D4 — my placement, ⚑ visual acceptance #13 pending):**
+- ClinicalWorkflowWizard: new "Patient Transfers" workflow (Send New Transfer → /handoff/send, Track → /hospital-transfer, Receive & Integrate → /handoff/receiving, ER Incoming → /er-dashboard). Icon intentionally blank (#22; the wizard's OTHER four workflows still carry pre-existing emoji icons — cleanup candidate).
+- Bed board header: new "Hospital Transfer" EAButton (→ /hospital-transfer) beside Transfer Logs.
+- ER Command Center: "Paramedic Handoff Form" link (→ /ems) in the stats strip; replaced the decorative ambulance emoji with the lucide icon (#22); **fixed pre-existing dead stats** — the strip queried `ems_handoffs` (table never existed live; stats always 0, swallowed) → repointed to `prehospital_handoffs` live columns/statuses.
+- Voice phrases added for Hospital Transfer Portal + ER Command Center (workflowPreferences).
+- Feature flags `emsMetrics`/`coordinatedResponse` verified present in featureFlags.ts (env-gated, default off) — deploy-env decision, not code.
+
+**ROUND TRIP (item 3) — full hospital-transfer lifecycle proven as the `authenticated` role, rolled back, 0 residue:** encrypt (clinical key) → create packet (number/token generated, **tenant derived**) → send → handoff_logs audit row → `acknowledge_handoff_packet` RPC → decrypt round-trip → encounter (live shape) → 2 LOINC vitals into fhir_observations → advisory billing-suggestion row → packet linked. Two MORE live defects found by the probe and fixed:
+- **Migration `20260722150000`:** handoff_packets INSERT was RLS-rejected for every clinician (tenant policy unsatisfiable: tenant_id nullable, no default, no writer sets it; only user_roles-admins passed). Tenant-derive triggers added for handoff_packets (from caller) + handoff_attachments/handoff_logs (from parent packet). Same class as the EMS tables.
+- **Migration `20260722160000`:** encounters.encounter_type CHECK only allowed outpatient values → additive widen with 'emergency' + 'inpatient'.
+- `fhir_observations.category` is **text[]** — both writers now send `['vital-signs']`.
+
+**D8 solidified (item 4) — migration `20260722140000` (pushed, prod no-op, post-push probe green):** full re-canonicalization of prehospital_handoffs + ems_department_dispatches + ems_provider_signoffs from LIVE DDL (information_schema/pg_constraint/pg_indexes/pg_get_functiondef dumps — constraints inline in CREATE TABLE IF NOT EXISTS so existing DBs skip them), all 20 live indexes, live RLS policies, GRANTs, updated_at trigger, and the 5 EMS RPCs via CREATE OR REPLACE. A fresh environment can now rebuild the entire EMS schema from active migrations.
+
+**Gates after Log 2:** scoped tsc 0, lint 0/0, 74/74 tests (transfer + bed-board), drift gate green (snapshot 787 tables / 1494 fns).
+
+**STILL REMAINING:** ⚑ Maria visual acceptance on: HandoffSendPage, HandoffPacketViewPage, Patient Transfers wizard entry, bed-board Hospital Transfer button, ER stats strip + paramedic link. Browser click-walk (the only untested layer is the React UI event handling — every service payload + DB interaction + RPC + RLS path is live-proven). P-1..P-3 post-acute (Session 4). ⚑ Akima: D2/D3 + wizard emoji-icon cleanup. Department alert contacts (alert_phone/alert_email) still NULL.

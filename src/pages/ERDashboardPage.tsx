@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Ambulance } from 'lucide-react';
 import ERIncomingPatientBoard from '../components/ems/ERIncomingPatientBoard';
 import AdminHeader from '../components/admin/AdminHeader';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
@@ -58,26 +59,26 @@ const ERDashboardPage: React.FC = () => {
     loadHospitalInfo();
   }, []);
 
-  // Load stats
+  // Load stats — live table is prehospital_handoffs (the ems_handoffs table this
+  // page originally queried never existed live; stats silently showed zeros)
   useEffect(() => {
     const loadStats = async () => {
       try {
         const { count: incomingCount } = await supabase
-          .from('ems_handoffs')
+          .from('prehospital_handoffs')
           .select('id', { count: 'exact', head: true })
-          .in('status', ['submitted', 'acknowledged', 'en_route']);
+          .in('status', ['dispatched', 'on_scene', 'en_route']);
 
         const { count: criticalCount } = await supabase
-          .from('ems_handoffs')
+          .from('prehospital_handoffs')
           .select('id', { count: 'exact', head: true })
-          .in('status', ['submitted', 'acknowledged', 'en_route'])
-          .or('is_stemi.eq.true,is_stroke.eq.true,is_trauma.eq.true,is_sepsis.eq.true');
+          .in('status', ['dispatched', 'on_scene', 'en_route'])
+          .or('stroke_alert.eq.true,stemi_alert.eq.true,trauma_alert.eq.true,sepsis_alert.eq.true,cardiac_arrest.eq.true');
 
         const { count: awaitingCount } = await supabase
-          .from('ems_handoffs')
+          .from('prehospital_handoffs')
           .select('id', { count: 'exact', head: true })
-          .eq('status', 'arrived')
-          .is('provider_signoff_at', null);
+          .eq('status', 'arrived');
 
         setStats({
           incomingPatients: incomingCount || 0,
@@ -103,9 +104,15 @@ const ERDashboardPage: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-2">
-                <span className="text-2xl">🚑</span>
+                <Ambulance className="w-6 h-6 text-red-200" aria-hidden="true" />
                 <span className="text-sm text-red-200 font-medium">{hospitalName}</span>
               </div>
+              <a
+                href="/ems"
+                className="min-h-[44px] flex items-center px-3 py-2 bg-red-800 hover:bg-red-900 rounded-lg text-sm font-medium text-white transition-colors"
+              >
+                Paramedic Handoff Form
+              </a>
               <div className="flex items-center gap-8 ml-auto">
                 <div className="text-center">
                   <div className="text-2xl font-bold">{stats.incomingPatients}</div>

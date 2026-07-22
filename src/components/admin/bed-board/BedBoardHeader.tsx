@@ -7,6 +7,7 @@ import {
   Bed as BedIcon,
   RefreshCw,
   Package,
+  Send,
   Mic,
   MicOff,
   Volume2,
@@ -24,6 +25,7 @@ export const BedBoardHeader: React.FC<BedBoardHeaderProps> = ({
   onToggleVoice,
   onRefresh,
   onNavigateTransferLogs,
+  onNavigateHospitalTransfer,
 }) => (
   <>
     {/* Voice Command Feedback (ATLUS: Intuitive Technology) */}
@@ -70,6 +72,13 @@ export const BedBoardHeader: React.FC<BedBoardHeaderProps> = ({
             </span>
           </button>
         )}
+        <EAButton
+          onClick={onNavigateHospitalTransfer}
+          icon={<Send className="w-4 h-4" />}
+          variant="secondary"
+        >
+          Hospital Transfer
+        </EAButton>
         <EAButton
           onClick={onNavigateTransferLogs}
           icon={<Package className="w-4 h-4" />}

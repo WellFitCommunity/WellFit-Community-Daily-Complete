@@ -131,6 +131,7 @@ export interface BedBoardHeaderProps {
   onToggleVoice: () => void;
   onRefresh: () => void;
   onNavigateTransferLogs: () => void;
+  onNavigateHospitalTransfer: () => void;
 }
 
 export interface BedBoardMetricCardsProps {
