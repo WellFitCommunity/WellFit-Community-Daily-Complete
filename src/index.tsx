@@ -34,6 +34,23 @@ import { claudeService } from './services/claudeService';
 import { initializeWearables } from './services/initializeWearables';
 
 // ============================================================================
+// STALE-CHUNK SELF-HEAL - After a deploy, tabs opened on the previous build
+// request lazy chunks that no longer exist; the host serves index.html for
+// them (MIME "text/html" module error) and the route dead-ends. Vite emits
+// vite:preloadError for exactly this case — reload once to pick up the new
+// build. sessionStorage guard prevents a reload loop if the failure persists.
+// ============================================================================
+window.addEventListener('vite:preloadError', (event) => {
+  const RELOAD_FLAG = 'chunk-reload-at';
+  const lastReload = Number(sessionStorage.getItem(RELOAD_FLAG) || 0);
+  if (Date.now() - lastReload > 30_000) {
+    sessionStorage.setItem(RELOAD_FLAG, String(Date.now()));
+    event.preventDefault();
+    window.location.reload();
+  }
+});
+
+// ============================================================================
 // STARTUP VALIDATION - Fail fast if critical env vars are missing
 // ============================================================================
 try {
