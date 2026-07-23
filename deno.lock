@@ -330,6 +330,7 @@
     "https://esm.sh/@supabase/supabase-js@2.38.4": "039569070c2e83c292b347c39879a10e76aac6079c166f2e2677453a7799e933",
     "https://esm.sh/@supabase/supabase-js@2.39.0": "f51aeb2dbf8f67c8fa396628af45793e3513067d45705f1ea158f5c678bb0cea",
     "https://esm.sh/@supabase/supabase-js@2.45.4": "1108d69216995335d057dbd15907caaf514a4d1ef082f097050573b9d589a57c",
+    "https://esm.sh/@supabase/supabase-js@2.45.4?dts": "1108d69216995335d057dbd15907caaf514a4d1ef082f097050573b9d589a57c",
     "https://esm.sh/@supabase/supabase-js@2.57.2?target=deno": "2c639b74987a890ff67129f41336303269859969295f586ac4d30f7a78245d28",
     "https://esm.sh/@supabase/supabase-js@2.93.3": "7b7e42b1c60d8d90561c876ea63fdfefafedc8b4102481f09f413ce2026981a3",
     "https://esm.sh/@supabase/supabase-js@2.93.3/denonext/supabase-js.mjs": "a0a30118608e6d6d98ea31b610fc85bacea11c2afc93a672fc58329a47fb65b9",
@@ -459,7 +460,8 @@
         "js-cookie": "^3.0.7",
         "tmp": "^0.2.6",
         "uuid": "^11.1.1",
-        "@grpc/grpc-js": "^1.10.9"
+        "@grpc/grpc-js": "^1.10.9",
+        "js-yaml": "^4.2.1"
       }
     }
   }

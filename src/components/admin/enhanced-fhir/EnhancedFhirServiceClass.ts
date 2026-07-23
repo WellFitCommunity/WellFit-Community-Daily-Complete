@@ -8,6 +8,7 @@
 
 import { supabase } from '../../../lib/supabaseClient';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { auditLogger } from '../../../services/auditLogger';
 import FHIRIntegrationService from '../FhirIntegrationService';
 import FhirAiService from '../FhirAiService';
 import type { AiConfiguration } from '../FhirAiService';
@@ -272,20 +273,39 @@ export class EnhancedFhirService {
   }
 
   // Private helper: process emergency alerts
+  // Writes care_team_alerts (emergency_alerts never existed live — repointed 2026-07-23, L-0
+  // sister sweep). EmergencyAlert.type maps onto the table's CHECK vocabulary.
   private async processEmergencyAlerts(alerts: EmergencyAlert[], patientId: string): Promise<void> {
+    const alertTypeMap: Record<EmergencyAlert['type'], string> = {
+      VITAL_ANOMALY: 'vitals_declining',
+      MISSED_CHECKINS: 'missed_check_ins',
+      RISK_ESCALATION: 'pattern_concerning',
+      EMERGENCY_CONTACT: 'emergency_incident'
+    };
+
     for (const alert of alerts) {
       if (alert.severity === 'CRITICAL') {
-        // In production, this would trigger actual emergency protocols
-
-        // Store alert in database
-        await this.supabase.from('emergency_alerts').insert({
+        const { error } = await this.supabase.from('care_team_alerts').insert({
           patient_id: patientId,
-          alert_type: alert.type,
-          severity: alert.severity,
-          message: alert.message,
-          suggested_actions: alert.suggestedActions,
-          created_at: new Date().toISOString()
+          alert_type: alertTypeMap[alert.type],
+          severity: 'critical',
+          priority: 'emergency',
+          title: `FHIR AI Alert: ${alert.type.replace(/_/g, ' ').toLowerCase()}`,
+          description: alert.message,
+          alert_data: {
+            source: 'enhanced-fhir-ai',
+            original_type: alert.type,
+            suggested_actions: alert.suggestedActions,
+            timestamp: alert.timestamp
+          }
         });
+        if (error) {
+          await auditLogger.error(
+            'FHIR_EMERGENCY_ALERT_INSERT_FAILED',
+            new Error(error.message),
+            { patientId, alertType: alert.type }
+          );
+        }
       }
     }
   }

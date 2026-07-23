@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
+import { createUserClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts"
 import { createLogger } from '../_shared/auditLogger.ts'
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -126,6 +126,15 @@ serve(async (req: Request) => {
 
     const { method } = req
 
+    // Resolve tenant once — every mobile_* table is tenant-RLS'd
+    // (tenant_id = get_current_tenant_id()); a NULL tenant_id insert is rejected.
+    const { data: profileRow } = await supabaseClient
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .single()
+    const tenantId: string | null = profileRow?.tenant_id ?? null
+
     if (method === 'POST') {
       const syncData: SyncRequest = await req.json()
       const results = {
@@ -137,18 +146,30 @@ serve(async (req: Request) => {
         errors: [] as string[]
       }
 
-      // Update device status first
+      // Update device status first — mobile_devices keys on user_id (not patient_id)
+      // and has no unique constraint on device_id, so upsert would 42P10:
+      // check-then-write on (user_id, device_id).
       if (syncData.device_id) {
-        const deviceUpdate = {
-          patient_id: user.id,
+        const deviceRow = {
+          user_id: user.id,
           device_id: syncData.device_id,
-          ...(syncData.device_status || {}),
-          updated_at: new Date().toISOString()
+          is_active: true,
+          last_seen_at: syncData.device_status?.last_active_at ?? new Date().toISOString(),
+          tenant_id: tenantId
         }
 
-        const { error: deviceError } = await supabaseClient
+        const { data: existingDevice } = await supabaseClient
           .from('mobile_devices')
-          .upsert(deviceUpdate, { onConflict: 'device_id' })
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('device_id', syncData.device_id)
+          .maybeSingle()
+
+        const { error: deviceError } = existingDevice
+          ? await supabaseClient.from('mobile_devices')
+              .update({ is_active: true, last_seen_at: deviceRow.last_seen_at })
+              .eq('id', existingDevice.id)
+          : await supabaseClient.from('mobile_devices').insert(deviceRow)
 
         if (deviceError) {
           results.errors.push(`Device update failed: ${deviceError.message}`)
@@ -157,32 +178,39 @@ serve(async (req: Request) => {
         }
       }
 
-      // Sync location data
+      // Location sync: NOT PROVISIONED. There is no GPS location table live —
+      // `patient_locations` is a hospital bed-placement table (department/room/bed),
+      // a name-collision trap, NOT a GPS store. Creating a continuous-location
+      // table is a product + privacy decision (documented in the intake/labs
+      // tracker follow-ups); until then this reports honestly instead of
+      // writing GPS points into the bed-board.
       if (syncData.locations && syncData.locations.length > 0) {
-        const locationInserts = syncData.locations.map(loc => ({
-          patient_id: user.id,
-          ...loc
-        }))
-
-        const { data: locationData, error: locationError } = await supabaseClient
-          .from('patient_locations')
-          .insert(locationInserts)
-
-        if (locationError) {
-          results.errors.push(`Location sync failed: ${locationError.message}`)
-        } else {
-          results.locations_synced = syncData.locations.length
-        }
+        results.errors.push('Location sync not provisioned: no GPS location table exists')
       }
 
-      // Sync vital signs
+      // Sync vital signs — mobile_vitals live shape:
+      // user_id, device_id, vital_type, vital_value, vital_unit, measured_at, source.
+      // blood_pressure carries two values → two rows (systolic/diastolic).
       if (syncData.vitals && syncData.vitals.length > 0) {
-        const vitalsInserts = syncData.vitals.map(vital => ({
-          patient_id: user.id,
-          ...vital
-        }))
+        const vitalsInserts = syncData.vitals.flatMap(vital => {
+          const base = {
+            user_id: user.id,
+            device_id: syncData.device_id ?? null,
+            vital_unit: vital.unit,
+            measured_at: vital.measured_at,
+            source: 'mobile_app',
+            tenant_id: tenantId
+          }
+          if (vital.measurement_type === 'blood_pressure' && vital.value_secondary != null) {
+            return [
+              { ...base, vital_type: 'blood_pressure_systolic', vital_value: vital.value_primary },
+              { ...base, vital_type: 'blood_pressure_diastolic', vital_value: vital.value_secondary }
+            ]
+          }
+          return [{ ...base, vital_type: vital.measurement_type, vital_value: vital.value_primary }]
+        })
 
-        const { data: vitalsData, error: vitalsError } = await supabaseClient
+        const { error: vitalsError } = await supabaseClient
           .from('mobile_vitals')
           .insert(vitalsInserts)
 
@@ -196,35 +224,28 @@ serve(async (req: Request) => {
         }
       }
 
-      // Sync geofence events
+      // Geofence events: storage NOT PROVISIONED (geofence_events table never
+      // created — baselined drift). Safety-first: still evaluate the submitted
+      // events for breach alerts even though the raw events can't be persisted.
       if (syncData.geofence_events && syncData.geofence_events.length > 0) {
-        const geofenceInserts = syncData.geofence_events.map(event => ({
-          patient_id: user.id,
-          ...event
-        }))
-
-        const { data: geofenceData, error: geofenceError } = await supabaseClient
-          .from('geofence_events')
-          .insert(geofenceInserts)
-
-        if (geofenceError) {
-          results.errors.push(`Geofence events sync failed: ${geofenceError.message}`)
-        } else {
-          results.geofence_events_synced = syncData.geofence_events.length
-
-          // Check for emergency geofence breaches
-          await checkGeofenceAlerts(supabaseClient, user.id, syncData.geofence_events)
-        }
+        results.errors.push('Geofence event storage not provisioned: geofence_events table does not exist')
+        await checkGeofenceAlerts(supabaseClient, user.id, syncData.geofence_events)
       }
 
-      // Sync emergency incidents
+      // Sync emergency incidents — mobile_emergency_incidents live shape:
+      // user_id, incident_type, location_lat/lng, status, notes.
       if (syncData.emergency_incidents && syncData.emergency_incidents.length > 0) {
         const incidentInserts = syncData.emergency_incidents.map(incident => ({
-          patient_id: user.id,
-          ...incident
+          user_id: user.id,
+          incident_type: incident.incident_type,
+          location_lat: incident.location_latitude ?? null,
+          location_lng: incident.location_longitude ?? null,
+          status: 'reported',
+          notes: incident.description ?? null,
+          tenant_id: tenantId
         }))
 
-        const { data: incidentData, error: incidentError } = await supabaseClient
+        const { error: incidentError } = await supabaseClient
           .from('mobile_emergency_incidents')
           .insert(incidentInserts)
 
@@ -238,31 +259,42 @@ serve(async (req: Request) => {
         }
       }
 
-      // Update sync status
+      // Update sync status — mobile_sync_status live shape is one row per
+      // (user_id, device_id) with last_sync_at/sync_status/pending_uploads
+      // (no per-data_type rows, no unique constraint → check-then-write).
       if (syncData.device_id) {
-        const syncUpdates = [
-          { data_type: 'locations', count: results.locations_synced },
-          { data_type: 'vitals', count: results.vitals_synced },
-          { data_type: 'geofence_events', count: results.geofence_events_synced },
-          { data_type: 'incidents', count: results.emergency_incidents_synced }
-        ]
+        const anySynced =
+          results.vitals_synced + results.emergency_incidents_synced > 0 || results.device_updated
 
-        // Batch sync status updates
-        const syncStatusUpdates = syncUpdates
-          .filter(update => update.count > 0)
-          .map(update => ({
-            patient_id: user.id,
+        if (anySynced) {
+          const statusRow = {
+            user_id: user.id,
             device_id: syncData.device_id,
-            data_type: update.data_type,
             last_sync_at: new Date().toISOString(),
-            last_successful_upload: new Date().toISOString(),
-            pending_upload_count: 0
-          }));
+            sync_status: results.errors.length > 0 ? 'completed_with_errors' : 'completed',
+            pending_uploads: 0,
+            tenant_id: tenantId
+          }
 
-        if (syncStatusUpdates.length > 0) {
-          await supabaseClient
+          const { data: existingStatus } = await supabaseClient
             .from('mobile_sync_status')
-            .upsert(syncStatusUpdates, { onConflict: 'patient_id,device_id,data_type' });
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('device_id', syncData.device_id)
+            .maybeSingle()
+
+          if (existingStatus) {
+            await supabaseClient
+              .from('mobile_sync_status')
+              .update({
+                last_sync_at: statusRow.last_sync_at,
+                sync_status: statusRow.sync_status,
+                pending_uploads: 0
+              })
+              .eq('id', existingStatus.id)
+          } else {
+            await supabaseClient.from('mobile_sync_status').insert(statusRow)
+          }
         }
       }
 
@@ -285,36 +317,34 @@ serve(async (req: Request) => {
       // Batch all data fetching operations in parallel for better performance
       const queries = [];
 
+      // Geofence zones: NOT PROVISIONED (geofence_zones table never created).
+      // Return an empty list so the app degrades gracefully instead of erroring.
       if (!dataType || dataType === 'geofence_zones') {
-        queries.push(
-          supabaseClient
-            .from('geofence_zones')
-            .select('*')
-            .eq('patient_id', user.id)
-            .eq('is_active', true)
-        );
+        queries.push(Promise.resolve({ data: [] as unknown[] }));
       } else {
         queries.push(Promise.resolve({ data: null }));
       }
 
+      // mobile_emergency_contacts keys on user_id; live columns have is_primary
+      // (no is_active / priority_order).
       if (!dataType || dataType === 'emergency_contacts') {
         queries.push(
           supabaseClient
             .from('mobile_emergency_contacts')
-            .select('*')
-            .eq('patient_id', user.id)
-            .eq('is_active', true)
-            .order('priority_order')
+            .select('id, contact_name, contact_phone, contact_relationship, is_primary')
+            .eq('user_id', user.id)
+            .order('is_primary', { ascending: false })
         );
       } else {
         queries.push(Promise.resolve({ data: null }));
       }
 
+      // mobile_vitals keys on user_id
       if (!dataType || dataType === 'recent_vitals') {
         let query = supabaseClient
           .from('mobile_vitals')
-          .select('*')
-          .eq('patient_id', user.id)
+          .select('id, device_id, vital_type, vital_value, vital_unit, measured_at, source')
+          .eq('user_id', user.id)
           .order('measured_at', { ascending: false })
           .limit(50);
 
@@ -387,21 +417,32 @@ async function triggerVitalsAnalysis(supabaseClient: SupabaseClient, patientId: 
       }
 
       if (isAbnormal) {
+        const critical = vital.value_primary < 50 || vital.value_primary > 150;
         alerts.push({
           patient_id: patientId,
-          alert_type: 'VITAL_ANOMALY',
-          severity: vital.value_primary < 50 || vital.value_primary > 150 ? 'CRITICAL' : 'WARNING',
-          message: alertMessage,
-          probability_score: vital.confidence_score || 85,
-          action_required: true
+          alert_type: 'vitals_declining',
+          severity: critical ? 'critical' : 'medium',
+          priority: critical ? 'emergency' : 'urgent',
+          title: `Mobile vitals anomaly: ${vital.measurement_type}`,
+          description: alertMessage,
+          alert_data: {
+            source: 'mobile-sync',
+            measurement_type: vital.measurement_type,
+            value: vital.value_primary,
+            probability_score: vital.confidence_score || 85
+          }
         });
       }
     }
 
-    // Batch insert all alerts
+    // Batch insert all alerts (care_team_alerts — emergency_alerts never existed live)
     if (alerts.length > 0) {
-      await supabaseClient.from('emergency_alerts').insert(alerts);
-      logger.phi('Vitals anomaly detected', { patientId, alertCount: alerts.length });
+      const { error } = await supabaseClient.from('care_team_alerts').insert(alerts);
+      if (error) {
+        logger.error('Vitals alert insert failed', { error: error.message, patientId });
+      } else {
+        logger.phi('Vitals anomaly detected', { patientId, alertCount: alerts.length });
+      }
     }
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
@@ -416,16 +457,22 @@ async function checkGeofenceAlerts(supabaseClient: SupabaseClient, patientId: st
     const breachEvents = events.filter(e => e.event_type === 'breach' || e.event_type === 'exit')
 
     if (breachEvents.length > 0) {
-      await supabaseClient
-        .from('emergency_alerts')
+      const { error } = await supabaseClient
+        .from('care_team_alerts')
         .insert({
           patient_id: patientId,
-          alert_type: 'GEOFENCE_BREACH',
-          severity: 'URGENT',
-          message: `Patient has left designated safe zone`,
-          action_required: true
+          alert_type: 'geofence_breach',
+          severity: 'high',
+          priority: 'urgent',
+          title: 'Geofence breach',
+          description: 'Patient has left designated safe zone',
+          alert_data: { source: 'mobile-sync', breach_count: breachEvents.length }
         })
-      logger.security('Geofence breach detected', { patientId, breachCount: breachEvents.length });
+      if (error) {
+        logger.error('Geofence alert insert failed', { error: error.message, patientId });
+      } else {
+        logger.security('Geofence breach detected', { patientId, breachCount: breachEvents.length });
+      }
     }
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
@@ -440,16 +487,22 @@ async function triggerEmergencyResponse(supabaseClient: SupabaseClient, patientI
     const criticalIncidents = incidents.filter(i => i.severity === 'critical' || i.severity === 'high')
 
     if (criticalIncidents.length > 0) {
-      await supabaseClient
-        .from('emergency_alerts')
+      const { error } = await supabaseClient
+        .from('care_team_alerts')
         .insert({
           patient_id: patientId,
-          alert_type: 'EMERGENCY_CONTACT',
-          severity: 'CRITICAL',
-          message: `Emergency incident detected via mobile app`,
-          action_required: true
+          alert_type: 'emergency_incident',
+          severity: 'critical',
+          priority: 'emergency',
+          title: 'Emergency incident (mobile app)',
+          description: 'Emergency incident detected via mobile app',
+          alert_data: { source: 'mobile-sync', incident_count: criticalIncidents.length }
         })
-      logger.security('Critical emergency incident detected', { patientId, incidentCount: criticalIncidents.length });
+      if (error) {
+        logger.error('Emergency alert insert failed', { error: error.message, patientId });
+      } else {
+        logger.security('Critical emergency incident detected', { patientId, incidentCount: criticalIncidents.length });
+      }
     }
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);

@@ -39,13 +39,6 @@ interface CreateUserPayload {
   };
 }
 
-// Supabase auth signIn payload
-interface SignInPayload {
-  password: string;
-  phone?: string;
-  email?: string;
-}
-
 Deno.serve(async (req: Request): Promise<Response> => {
   const logger = createLogger('sms-verify-code', req);
 
@@ -450,28 +443,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Don't fail here - user is created, profile can be fixed later
       }
 
-      // Create FHIR Patient resource for healthcare workflows
-      // This ensures patient is visible in FHIR-compliant systems from day 1
-      try {
-        const { error: fhirPatientError } = await supabase.rpc(
-          'create_fhir_patient_from_profile',
-          { user_id_param: authData.user.id }
-        );
-
-        if (fhirPatientError) {
-          logger.warn("FHIR patient creation failed during registration", {
-            userId: authData.user.id,
-            phone,
-            error: fhirPatientError.message
-          });
-        }
-      } catch (fhirError) {
-        logger.warn("FHIR patient creation exception during registration", {
-          userId: authData.user.id,
-          phone,
-          error: fhirError instanceof Error ? fhirError.message : String(fhirError)
-        });
-      }
+      // NOTE (I-2, 2026-07-23): the former create_fhir_patient_from_profile RPC call was
+      // removed. The function never existed live (defined only in an _ARCHIVE_SKIPPED
+      // migration, defensively dropped by 20251209100000) and there is no fhir_patients
+      // table — the platform serves FHIR Patient from `profiles` (mcp-fhir-server
+      // export_patient_bundle reads profiles directly). No separate row is needed.
 
       // Send welcome email if user has an email
       if (pending.email) {
@@ -512,15 +488,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // Auto sign-in the user after successful registration
       // This creates a session so they don't have to manually login
       // For shared phones, use email (generated or real) instead of phone
-      const signInPayload: SignInPayload = { password: userPassword };
-
-      if (authPhone) {
-        // Not a shared phone - can login with phone
-        signInPayload.phone = normalizedPhone;
-      } else {
-        // Shared phone - must login with generated email
-        signInPayload.email = authEmail;
-      }
+      // signInWithPassword takes a discriminated union (phone XOR email) — build the
+      // exact branch instead of a both-optional local shape (which fails to narrow).
+      const signInPayload = authPhone
+        ? { phone: normalizedPhone, password: userPassword }   // not a shared phone
+        : { email: authEmail, password: userPassword };        // shared phone → generated email
 
       const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword(signInPayload);
 

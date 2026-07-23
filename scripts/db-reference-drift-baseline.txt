@@ -7,7 +7,6 @@ rpc::aggregate_disparities_by_demographic
 rpc::auto_generate_clinical_data_for_hospital_patient
 rpc::calculate_health_equity_metrics
 rpc::calculate_readmission_risk_score
-rpc::create_fhir_patient_from_profile
 rpc::get_clearinghouse_credentials
 rpc::get_missed_check_in_alerts
 rpc::get_welfare_check_info
@@ -55,7 +54,6 @@ table::device_tokens
 table::discharge_summaries
 table::document_references
 table::ecr_submissions
-table::emergency_alerts
 table::emergency_briefing_access_log
 table::emergency_briefing_analytics
 table::emergency_contacts
