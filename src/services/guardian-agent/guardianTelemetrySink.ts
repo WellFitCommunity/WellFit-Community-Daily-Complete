@@ -16,6 +16,52 @@ import { auditLogger as systemAuditLogger } from '../auditLogger';
 import { resolveTenantId } from './tenantResolver';
 import type { AuditLogEntry } from './AuditLogger';
 
+// Only these metadata keys may reach guardian_telemetry. Everything on the row
+// must stay system/ops data (counts, durations, canned strings) — a caller that
+// stuffs a raw error message or PHI into entry.metadata gets filtered here at
+// the boundary instead of trusted. Extend this list only for keys whose values
+// are guaranteed PHI-free at every call site.
+const TELEMETRY_METADATA_ALLOWLIST = new Set<string>([
+  // AuditLogger.logHealingAction
+  'stepsCompleted',
+  'totalSteps',
+  'timeToDetect',
+  'timeToHeal',
+  'resourcesAffected',
+  'usersImpacted',
+  'lessons',
+  'preventiveMeasures',
+  // AuditLogger.logBlockedAction
+  'blockReason',
+  'requiresApproval',
+]);
+
+function filterTelemetryMetadata(
+  metadata: Record<string, unknown>,
+  auditId: string
+): Record<string, unknown> {
+  const allowed: Record<string, unknown> = {};
+  const droppedKeys: string[] = [];
+
+  for (const [key, value] of Object.entries(metadata)) {
+    if (TELEMETRY_METADATA_ALLOWLIST.has(key)) {
+      allowed[key] = value;
+    } else {
+      droppedKeys.push(key);
+    }
+  }
+
+  if (droppedKeys.length > 0) {
+    // Key names only — the values are exactly what we refused to persist.
+    systemAuditLogger.warn('GUARDIAN_TELEMETRY_METADATA_DROPPED', {
+      audit_id: auditId,
+      dropped_keys: droppedKeys,
+    });
+  }
+
+  return allowed;
+}
+
 export async function persistTelemetryEntry(entry: AuditLogEntry): Promise<void> {
   // Format for internal telemetry system
   const telemetryEvent = {
@@ -32,7 +78,7 @@ export async function persistTelemetryEntry(entry: AuditLogEntry): Promise<void>
     affected_resources: entry.affectedResources.join(','),
     user_id: entry.userId,
     session_id: entry.sessionId,
-    ...entry.metadata,
+    ...filterTelemetryMetadata(entry.metadata, entry.id),
   };
 
   // Send to internal telemetry (HIPAA-compliant, no external services)

@@ -96,4 +96,57 @@ describe('guardianTelemetrySink', () => {
       expect.objectContaining({ audit_id: 'audit-1', error: 'rls rejected' })
     );
   });
+
+  it('passes allowlisted metadata keys through to the telemetry event', async () => {
+    const qb = createQueryBuilder({});
+    mocks.from.mockReturnValue(qb);
+
+    await persistTelemetryEntry({
+      ...entry,
+      metadata: { stepsCompleted: 3, totalSteps: 5, blockReason: 'safety constraint' },
+    });
+
+    expect(qb.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_data: expect.objectContaining({
+          stepsCompleted: 3,
+          totalSteps: 5,
+          blockReason: 'safety constraint',
+        }),
+      })
+    );
+    expect(mocks.warn).not.toHaveBeenCalled();
+  });
+
+  it('drops non-allowlisted metadata keys and logs only the key names', async () => {
+    const qb = createQueryBuilder({});
+    mocks.from.mockReturnValue(qb);
+
+    await persistTelemetryEntry({
+      ...entry,
+      metadata: {
+        stepsCompleted: 3,
+        rawError: 'Patient Test Alpha (DOB 2000-01-01) failed lookup',
+        databaseQuery: "SELECT dob FROM profiles WHERE user_id = 'x'",
+      },
+    });
+
+    const inserted = qb.insert.mock.calls[0][0] as {
+      event_data: Record<string, unknown>;
+    };
+    expect(inserted.event_data.stepsCompleted).toBe(3);
+    expect(inserted.event_data).not.toHaveProperty('rawError');
+    expect(inserted.event_data).not.toHaveProperty('databaseQuery');
+    expect(JSON.stringify(inserted)).not.toContain('Test Alpha');
+
+    expect(mocks.warn).toHaveBeenCalledWith(
+      'GUARDIAN_TELEMETRY_METADATA_DROPPED',
+      expect.objectContaining({
+        audit_id: 'audit-1',
+        dropped_keys: ['rawError', 'databaseQuery'],
+      })
+    );
+    // The warn must carry key names only, never the refused values
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain('Test Alpha');
+  });
 });
