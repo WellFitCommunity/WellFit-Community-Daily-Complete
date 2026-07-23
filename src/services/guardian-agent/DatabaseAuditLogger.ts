@@ -12,6 +12,8 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../auditLogger';
+import { resolveTenantId } from './tenantResolver';
 import { DetectedIssue, HealingAction, HealingResult } from './types';
 import { /* AuditLogEntry, ReviewTicket */ } from './AuditLogger';
 
@@ -45,6 +47,7 @@ export interface SecurityAlert {
   metadata?: Record<string, unknown>;
   notification_sent?: boolean;
   notification_channels?: string[];
+  tenant_id?: string | null;
 }
 
 /**
@@ -89,7 +92,10 @@ export class DatabaseAuditLogger {
         error: securityEventResult.error || auditLogResult.error,
       };
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'logHealingAction' }
+      );
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -106,8 +112,10 @@ export class DatabaseAuditLogger {
     blockReason: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
+      const tenantId = await resolveTenantId();
       // Log as security event with auto_blocked flag
       const { error } = await supabase.from('security_events').insert({
+        tenant_id: tenantId,
         event_type: 'GUARDIAN_ACTION_BLOCKED',
         severity: this.mapSeverity(issue.severity),
         description: `Guardian Agent action blocked: ${blockReason}`,
@@ -126,7 +134,9 @@ export class DatabaseAuditLogger {
       });
 
       if (error) {
-
+        await auditLogger.warn('GUARDIAN_DB_AUDIT_WRITE_FAILED', {
+          table: 'security_events', context: 'logBlockedAction', message: error.message,
+        });
         return { success: false, error: error.message };
       }
 
@@ -135,7 +145,10 @@ export class DatabaseAuditLogger {
 
       return { success: true };
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'logBlockedAction' }
+      );
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -154,8 +167,10 @@ export class DatabaseAuditLogger {
     try {
       const eventType = this.mapIssueToEventType(issue);
       const severity = this.mapSeverity(issue.severity);
+      const tenantId = await resolveTenantId();
 
       const { error } = await supabase.from('security_events').insert({
+        tenant_id: tenantId,
         event_type: eventType,
         severity,
         description: `Guardian Agent: ${result.success ? 'Successfully healed' : 'Failed to heal'} ${issue.signature.category}`,
@@ -181,13 +196,18 @@ export class DatabaseAuditLogger {
       });
 
       if (error) {
-
+        await auditLogger.warn('GUARDIAN_DB_AUDIT_WRITE_FAILED', {
+          table: 'security_events', context: 'logSecurityEvent', message: error.message,
+        });
         return { success: false, error: error.message };
       }
 
       return { success: true };
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'logSecurityEvent' }
+      );
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -204,7 +224,15 @@ export class DatabaseAuditLogger {
     result: HealingResult
   ): Promise<{ success: boolean; error?: string }> {
     try {
+      // audit_logs INSERT RLS requires actor_user_id = auth.uid() for the
+      // authenticated role — without it every write was silently rejected.
+      const [{ data: authData }, tenantId] = await Promise.all([
+        supabase.auth.getUser(),
+        resolveTenantId(),
+      ]);
       const { error } = await supabase.from('audit_logs').insert({
+        actor_user_id: authData.user?.id,
+        tenant_id: tenantId,
         event_type: 'SYSTEM',
         event_category: 'SYSTEM',
         operation: action.strategy.toUpperCase(),
@@ -230,13 +258,18 @@ export class DatabaseAuditLogger {
       });
 
       if (error) {
-
+        await auditLogger.warn('GUARDIAN_DB_AUDIT_WRITE_FAILED', {
+          table: 'audit_logs', context: 'logAuditEntry', message: error.message,
+        });
         return { success: false, error: error.message };
       }
 
       return { success: true };
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'logAuditEntry' }
+      );
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -254,6 +287,7 @@ export class DatabaseAuditLogger {
   ): Promise<void> {
     try {
       const alert: SecurityAlert = {
+        tenant_id: await resolveTenantId(),
         alert_type: this.mapIssueToAlertType(issue),
         severity: this.mapSeverityToAlertLevel(issue.severity),
         status: result.success ? 'resolved' : 'new',
@@ -278,10 +312,15 @@ export class DatabaseAuditLogger {
       const { error } = await supabase.from('security_alerts').insert(alert);
 
       if (error) {
-
+        await auditLogger.warn('GUARDIAN_DB_AUDIT_WRITE_FAILED', {
+          table: 'security_alerts', context: 'createSecurityAlert', message: error.message,
+        });
       }
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'createSecurityAlert' }
+      );
     }
   }
 
@@ -295,6 +334,7 @@ export class DatabaseAuditLogger {
   ): Promise<void> {
     try {
       const alert: SecurityAlert = {
+        tenant_id: await resolveTenantId(),
         alert_type: 'guardian_action_blocked',
         severity: 'high',
         status: 'new',
@@ -316,9 +356,17 @@ export class DatabaseAuditLogger {
         notification_channels: ['email', 'slack'],
       };
 
-      await supabase.from('security_alerts').insert(alert);
+      const { error } = await supabase.from('security_alerts').insert(alert);
+      if (error) {
+        await auditLogger.warn('GUARDIAN_DB_AUDIT_WRITE_FAILED', {
+          table: 'security_alerts', context: 'createBlockedActionAlert', message: error.message,
+        });
+      }
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'createBlockedActionAlert' }
+      );
     }
   }
 
@@ -331,7 +379,9 @@ export class DatabaseAuditLogger {
     result: HealingResult
   ): Promise<void> {
     try {
+      const tenantId = await resolveTenantId();
       const { error } = await supabase.from('admin_audit_logs').insert({
+        tenant_id: tenantId,
         action_type: action.requiresApproval ? 'guardian_manual_approval' : 'guardian_auto_heal',
         description: `Guardian Agent ${result.success ? 'healed' : 'attempted to heal'} ${issue.signature.category}`,
         metadata: {
@@ -348,10 +398,15 @@ export class DatabaseAuditLogger {
       });
 
       if (error) {
-
+        await auditLogger.warn('GUARDIAN_DB_AUDIT_WRITE_FAILED', {
+          table: 'admin_audit_logs', context: 'logAdminAction', message: error.message,
+        });
       }
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'logAdminAction' }
+      );
     }
   }
 
@@ -368,7 +423,7 @@ export class DatabaseAuditLogger {
     try {
       let query = supabase
         .from('security_events')
-        .select('id, event_type, severity, actor_user_id, actor_ip_address, actor_user_agent, description, metadata, auto_blocked, requires_investigation, timestamp')
+        .select('id, event_type, severity, actor_user_id, actor_ip_address:ip_address, actor_user_agent, description, metadata, auto_blocked, requires_investigation, timestamp')
         .order('timestamp', { ascending: false });
 
       if (filters?.startDate) {
@@ -394,13 +449,18 @@ export class DatabaseAuditLogger {
       const { data, error } = await query;
 
       if (error) {
-
+        await auditLogger.warn('GUARDIAN_DB_AUDIT_READ_FAILED', {
+          table: 'security_events', context: 'getAuditLogs', message: error.message,
+        });
         return [];
       }
 
       return data || [];
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'getAuditLogs' }
+      );
       return [];
     }
   }
@@ -414,17 +474,23 @@ export class DatabaseAuditLogger {
         .from('security_alerts')
         .select('id, alert_type, severity, status, title, description, affected_user_id, affected_resource, source_ip, user_agent, detection_method, confidence_score, metadata, notification_sent, notification_channels')
         .in('status', ['new', 'investigating', 'escalated'])
-        .order('created_at', { ascending: false })
+        // Dedup (2026-07-09) bumps last_occurrence_at on recurring alerts.
+        .order('last_occurrence_at', { ascending: false, nullsFirst: false })
         .limit(100);
 
       if (error) {
-
+        await auditLogger.warn('GUARDIAN_DB_AUDIT_READ_FAILED', {
+          table: 'security_alerts', context: 'getActiveSecurityAlerts', message: error.message,
+        });
         return [];
       }
 
       return data || [];
     } catch (error: unknown) {
-
+      await auditLogger.error('GUARDIAN_DB_AUDIT_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        { context: 'getActiveSecurityAlerts' }
+      );
       return [];
     }
   }
@@ -470,7 +536,10 @@ export class DatabaseAuditLogger {
       phi_exposure_risk: 'data_exfiltration',
       hipaa_violation: 'security_policy_violation',
       security_vulnerability: 'anomalous_behavior',
-      api_failure: 'unauthorized_api_access',
+      // api_failure is an AVAILABILITY event. It was mapped to
+      // 'unauthorized_api_access' before 2026-07-23 (the enum had no honest
+      // value), which recorded API outages as access-control breaches.
+      api_failure: 'api_failure',
       memory_leak: 'anomalous_behavior',
     };
 
