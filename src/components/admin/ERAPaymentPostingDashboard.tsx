@@ -268,10 +268,10 @@ const ERAPaymentPostingDashboard: React.FC = () => {
           <div className="hidden sm:flex items-center gap-4 px-4 py-2 border-b text-xs font-medium text-gray-500 uppercase tracking-wider bg-white">
             <span className="w-32">Payer</span>
             <span className="w-28">Received</span>
-            <span className="w-24 text-right">Total Paid</span>
-            <span className="w-20 text-center">Claims</span>
+            <span className="w-24 text-right">Check Total</span>
+            <span className="w-24 text-right">Posted Amt</span>
             <span className="w-20 text-center">Posted</span>
-            <span className="w-20 text-center">Unposted</span>
+            <span className="w-24 text-right">Remaining</span>
             <span className="flex-1 text-right">Actions</span>
           </div>
 
@@ -297,24 +297,24 @@ const ERAPaymentPostingDashboard: React.FC = () => {
                 </span>
 
                 <span className="text-sm font-medium text-gray-900 w-24 text-right">
-                  {formatCurrency(rem.total_paid)}
+                  {formatCurrency(rem.total_amount)}
                 </span>
 
-                <span className="w-20 text-center text-sm text-gray-700">
-                  {rem.claim_count}
+                <span className="w-24 text-right text-sm text-gray-700">
+                  {formatCurrency(rem.posted_amount)}
                 </span>
 
                 <span className="w-20 text-center">
                   <EABadge variant="info" size="sm">{rem.posted_count}</EABadge>
                 </span>
 
-                <span className="w-20 text-center">
+                <span className="w-24 text-right">
                   <EABadge
-                    variant={rem.unposted_count > 0 ? 'elevated' : 'info'}
+                    variant={rem.remaining_amount > 0 ? 'elevated' : 'info'}
                     size="sm"
-                    pulse={rem.unposted_count > 0}
+                    pulse={rem.remaining_amount > 0}
                   >
-                    {rem.unposted_count}
+                    {formatCurrency(rem.remaining_amount)}
                   </EABadge>
                 </span>
 

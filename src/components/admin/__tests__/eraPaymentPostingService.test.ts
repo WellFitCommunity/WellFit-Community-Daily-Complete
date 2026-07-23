@@ -90,13 +90,15 @@ import { auditLogger } from '../../../services/auditLogger';
 // FIXTURES
 // ============================================================================
 
+// Live remittances shape (B-6): check header only — no summary/details jsonb
 const REMITTANCE_ROW = {
   id: 'rem-001',
-  payer_id: 'payer-001',
-  received_at: '2026-02-08T12:00:00Z',
-  summary: { total_paid: 5000, claim_count: 3 },
-  details: {},
-  billing_payers: { name: 'Aetna' },
+  payer_name: 'Aetna',
+  check_number: 'CHK-1001',
+  check_date: '2026-02-08',
+  total_amount: 5000,
+  processed: false,
+  created_at: '2026-02-08T12:00:00Z',
 };
 
 const PAYMENT_ROW = {
@@ -150,12 +152,12 @@ describe('eraPaymentPostingService', () => {
   // --------------------------------------------------------------------------
 
   describe('getUnpostedRemittances', () => {
-    it('returns remittances with correct unposted counts', async () => {
+    it('aggregates posted amount/count from claim_payments (live shape)', async () => {
       // 1. Fetch remittances
       fromCallResults.push(chainWithLimit({ data: [REMITTANCE_ROW], error: null }));
       // 2. Fetch posted payments per remittance
       fromCallResults.push(chainWithInTerminal({
-        data: [{ remittance_id: 'rem-001' }],
+        data: [{ remittance_id: 'rem-001', paid_amount: 2100 }],
         error: null,
       }));
 
@@ -166,18 +168,18 @@ describe('eraPaymentPostingService', () => {
         expect(result.data).toHaveLength(1);
         expect(result.data[0].remittance_id).toBe('rem-001');
         expect(result.data[0].payer_name).toBe('Aetna');
-        expect(result.data[0].total_paid).toBe(5000);
-        expect(result.data[0].claim_count).toBe(3);
+        expect(result.data[0].total_amount).toBe(5000);
         expect(result.data[0].posted_count).toBe(1);
-        expect(result.data[0].unposted_count).toBe(2);
+        expect(result.data[0].posted_amount).toBe(2100);
+        expect(result.data[0].remaining_amount).toBe(2900);
       }
     });
 
-    it('filters out fully posted remittances', async () => {
-      const fullyPosted = { ...REMITTANCE_ROW, summary: { total_paid: 1000, claim_count: 1 } };
+    it('filters out processed, fully posted remittances', async () => {
+      const fullyPosted = { ...REMITTANCE_ROW, total_amount: 1000, processed: true };
       fromCallResults.push(chainWithLimit({ data: [fullyPosted], error: null }));
       fromCallResults.push(chainWithInTerminal({
-        data: [{ remittance_id: 'rem-001' }],
+        data: [{ remittance_id: 'rem-001', paid_amount: 1000 }],
         error: null,
       }));
 
@@ -189,9 +191,8 @@ describe('eraPaymentPostingService', () => {
       }
     });
 
-    it('includes remittances with zero claim_count', async () => {
-      const zeroClaims = { ...REMITTANCE_ROW, summary: { total_paid: 0, claim_count: 0 } };
-      fromCallResults.push(chainWithLimit({ data: [zeroClaims], error: null }));
+    it('keeps unprocessed remittances visible even with nothing posted yet', async () => {
+      fromCallResults.push(chainWithLimit({ data: [REMITTANCE_ROW], error: null }));
       fromCallResults.push(chainWithInTerminal({ data: [], error: null }));
 
       const result = await eraPaymentPostingService.getUnpostedRemittances();
@@ -199,8 +200,8 @@ describe('eraPaymentPostingService', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data).toHaveLength(1);
-        expect(result.data[0].unposted_count).toBe(0);
-        expect(result.data[0].claim_count).toBe(0);
+        expect(result.data[0].posted_count).toBe(0);
+        expect(result.data[0].remaining_amount).toBe(5000);
       }
     });
 
@@ -216,9 +217,9 @@ describe('eraPaymentPostingService', () => {
       expect(auditLogger.error).toHaveBeenCalled();
     });
 
-    it('handles remittance with null summary gracefully', async () => {
-      const nullSummary = { ...REMITTANCE_ROW, summary: null };
-      fromCallResults.push(chainWithLimit({ data: [nullSummary], error: null }));
+    it('handles a remittance with null total_amount gracefully', async () => {
+      const nullTotal = { ...REMITTANCE_ROW, total_amount: null };
+      fromCallResults.push(chainWithLimit({ data: [nullTotal], error: null }));
       fromCallResults.push(chainWithInTerminal({ data: [], error: null }));
 
       const result = await eraPaymentPostingService.getUnpostedRemittances();
@@ -226,8 +227,8 @@ describe('eraPaymentPostingService', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data).toHaveLength(1);
-        expect(result.data[0].total_paid).toBe(0);
-        expect(result.data[0].claim_count).toBe(0);
+        expect(result.data[0].total_amount).toBe(0);
+        expect(result.data[0].remaining_amount).toBe(0);
       }
     });
   });

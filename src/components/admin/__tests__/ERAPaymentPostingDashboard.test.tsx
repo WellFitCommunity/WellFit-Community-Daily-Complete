@@ -46,24 +46,29 @@ import ERAPaymentPostingDashboard from '../ERAPaymentPostingDashboard';
 // FIXTURES
 // ============================================================================
 
+// Live-shape fixtures (B-6): check header on remittances + claim_payments aggregation
 const MOCK_REMITTANCES = [
   {
     remittance_id: 'rem-1',
     payer_name: 'Aetna',
     received_at: '2026-01-20T10:00:00Z',
-    total_paid: 5250.00,
-    claim_count: 5,
+    check_number: 'CHK-1001',
+    total_amount: 5250.00,
     posted_count: 2,
-    unposted_count: 3,
+    posted_amount: 2100.00,
+    remaining_amount: 3150.00,
+    processed: false,
   },
   {
     remittance_id: 'rem-2',
     payer_name: 'BlueCross',
     received_at: '2026-01-18T14:00:00Z',
-    total_paid: 12300.50,
-    claim_count: 10,
+    check_number: 'CHK-1002',
+    total_amount: 12300.50,
     posted_count: 8,
-    unposted_count: 2,
+    posted_amount: 12300.50,
+    remaining_amount: 0,
+    processed: false,
   },
 ];
 
@@ -206,13 +211,13 @@ describe('ERAPaymentPostingDashboard', () => {
 
     expect(screen.getByText('BlueCross')).toBeInTheDocument();
 
-    // Total paid amounts in rows
+    // Check totals in rows
     expect(screen.getByText('$5,250.00')).toBeInTheDocument();
-    expect(screen.getByText('$12,300.50')).toBeInTheDocument();
+    expect(screen.getAllByText('$12,300.50').length).toBeGreaterThanOrEqual(1);
 
-    // Claim counts
-    expect(screen.getByText('5')).toBeInTheDocument();
-    expect(screen.getByText('10')).toBeInTheDocument();
+    // Posted amount + remaining amount (the honest live-shape signals)
+    expect(screen.getByText('$2,100.00')).toBeInTheDocument();
+    expect(screen.getByText('$3,150.00')).toBeInTheDocument();
   });
 
   it('shows Match & Post button on each remittance row', async () => {

@@ -46,14 +46,22 @@ export interface AdjustmentReason {
   description?: string;
 }
 
+/**
+ * Live-shape remittance summary (B-6, 2026-07-23): `remittances` stores the
+ * check header (payer_name, check_number, total_amount) — there is NO ERA-835
+ * per-claim detail jsonb, so posted progress is derived from claim_payments
+ * aggregation. remaining_amount is the honest "still to post" signal.
+ */
 export interface UnpostedRemittance {
   remittance_id: string;
   payer_name: string;
   received_at: string;
-  total_paid: number;
-  claim_count: number;
+  check_number: string | null;
+  total_amount: number;
   posted_count: number;
-  unposted_count: number;
+  posted_amount: number;
+  remaining_amount: number;
+  processed: boolean;
 }
 
 export interface PaymentMatch {
@@ -98,11 +106,12 @@ export interface PaymentStats {
 
 interface RemittanceRow {
   id: string;
-  payer_id: string | null;
-  received_at: string;
-  summary: unknown;
-  details: unknown;
-  billing_payers: { name: string | null } | null;
+  payer_name: string | null;
+  check_number: string | null;
+  check_date: string | null;
+  total_amount: number | null;
+  processed: boolean | null;
+  created_at: string;
 }
 
 interface ClaimPaymentRow {
@@ -138,18 +147,6 @@ interface ClaimRow {
 // HELPERS
 // =============================================================================
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function parseRemittanceSummary(raw: unknown): { total_paid: number; claim_count: number } {
-  if (!raw || !isRecord(raw)) return { total_paid: 0, claim_count: 0 };
-  return {
-    total_paid: typeof raw.total_paid === 'number' ? raw.total_paid : 0,
-    claim_count: typeof raw.claim_count === 'number' ? raw.claim_count : 0,
-  };
-}
-
 function mapPaymentRow(row: ClaimPaymentRow): ClaimPayment {
   return {
     id: row.id,
@@ -183,10 +180,12 @@ export const eraPaymentPostingService = {
    */
   async getUnpostedRemittances(): Promise<ServiceResult<UnpostedRemittance[]>> {
     try {
+      // Live shape (B-6): payer_name/check data live directly on remittances;
+      // posted progress comes from claim_payments aggregation.
       const { data: remittances, error: remErr } = await supabase
         .from('remittances')
-        .select('id, payer_id, received_at, summary, details, billing_payers(name)')
-        .order('received_at', { ascending: false })
+        .select('id, payer_name, check_number, check_date, total_amount, processed, created_at')
+        .order('created_at', { ascending: false })
         .limit(100);
 
       if (remErr) {
@@ -197,36 +196,42 @@ export const eraPaymentPostingService = {
       const rows = (remittances || []) as unknown as RemittanceRow[];
       const remittanceIds = rows.map(r => r.id);
 
-      // Get posted payment counts per remittance
+      // Aggregate posted payments per remittance (count + amount)
       const { data: paymentData } = await supabase
         .from('claim_payments')
-        .select('remittance_id')
+        .select('remittance_id, paid_amount')
         .in('remittance_id', remittanceIds.length > 0 ? remittanceIds : ['__none__']);
 
       const postedCounts = new Map<string, number>();
-      for (const p of (paymentData || []) as Array<{ remittance_id: string | null }>) {
+      const postedAmounts = new Map<string, number>();
+      for (const p of (paymentData || []) as Array<{ remittance_id: string | null; paid_amount: number | null }>) {
         if (p.remittance_id) {
           postedCounts.set(p.remittance_id, (postedCounts.get(p.remittance_id) || 0) + 1);
+          postedAmounts.set(p.remittance_id, (postedAmounts.get(p.remittance_id) || 0) + Number(p.paid_amount ?? 0));
         }
       }
 
       const result: UnpostedRemittance[] = rows.map(row => {
-        const summary = parseRemittanceSummary(row.summary);
-        const posted = postedCounts.get(row.id) || 0;
+        const postedCount = postedCounts.get(row.id) || 0;
+        const postedAmount = postedAmounts.get(row.id) || 0;
+        // PostgREST can serialize numeric as a string — coerce defensively
+        const totalAmount = Number(row.total_amount ?? 0);
 
         return {
           remittance_id: row.id,
-          payer_name: row.billing_payers?.name || 'Unknown Payer',
-          received_at: row.received_at,
-          total_paid: summary.total_paid,
-          claim_count: summary.claim_count,
-          posted_count: posted,
-          unposted_count: Math.max(0, summary.claim_count - posted),
+          payer_name: row.payer_name || 'Unknown Payer',
+          received_at: row.created_at,
+          check_number: row.check_number,
+          total_amount: totalAmount,
+          posted_count: postedCount,
+          posted_amount: postedAmount,
+          remaining_amount: Math.max(0, totalAmount - postedAmount),
+          processed: row.processed ?? false,
         };
       });
 
-      // Filter to only show those with unposted items
-      const unposted = result.filter(r => r.unposted_count > 0 || r.claim_count === 0);
+      // Unposted = not yet marked processed, or the check total isn't fully posted
+      const unposted = result.filter(r => !r.processed || r.remaining_amount > 0);
 
       return success(unposted);
     } catch (err: unknown) {
