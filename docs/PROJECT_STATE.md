@@ -3,10 +3,31 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-07-23 (eleventh session)
+**Last Updated:** 2026-07-23 (twelfth session)
 
 ---
 ### 📨 HANDOFF FOR NEXT SESSION (read this first)
+
+**Session 2026-07-23 (twelfth) — Guardian telemetry/Eyes repaired end-to-end + security-alert queue investigated to ZERO open. 4 commits (`f02b6d01..67a800e7`), 3 migrations, all pushed to main. Full `npx tsc` now 0 project-wide errors.**
+
+**Arc:** Maria: "guardian telemetry needs to be addressed and guardian eyes is not actively monitoring" → root-caused a 4-layer silent-failure stack → full repair → then investigated every open security alert (slow_query ×5, unauthorized_api_access ×3, June-5 critical) → each turned out to be noise/mislabel/test-artifact → fixed the causes, resolved all with notes. **The alert queue is now 0 open (48 resolved, 1 false_positive), and what remains alerting is real signal.**
+
+**1. Guardian Eyes had recorded ZERO rows since inception (`f02b6d01`, migration `20260723170000`):** four stacked silent failures — (a) edge `recordSnapshot` inserted a `tenant_id` column `guardian_eyes_recordings` never had (analyzeRecordings filtered on it too → the daily analyze cron silently errored every run); (b) browser recorder's `system_recordings` upsert used `onConflict:'session_id'` with NO unique constraint = hard PG error every flush; (c) `session_recordings` insert used 2 nonexistent columns AND wrote the session row only at stop while `system_recordings` FKs to it (mid-session batches could never land) — recorder restructured to **open session row at start / finalize at stop**; (d) every failure swallowed by empty `catch {}`. New shared **`tenantResolver.ts`** (all Guardian browser writes now carry the real tenant uuid — RLS requires it). captureError now feeds the (previously orphaned, never-called) guardian-agent `record` action. **Live-proven:** record round-trip landed the FIRST ROW EVER in guardian_eyes_recordings; analyze returns `totalRecordings:1`; full open→batch→finalize + telemetry inserts pass RLS as a real non-admin auth user (rolled-back). Decomposed while repairing: AISystemRecorder 667→546, AuditLogger 638→575 (new `recorderPersistence`/`recordingSummarizer`/`guardianTelemetrySink`).
+
+**2. guardian_telemetry dead since 2026-07-10:** sole writer (frontend AuditLogger) hardcoded tenant `'wellfit-primary'` (a stub slug) — RLS `tenant_id = get_current_tenant_id()::text OR is_super_admin()` rejected every non-super-admin insert (the 7/10 rows were Maria's super-admin session). Now resolves the real tenant at insert time; old failure REPRODUCED live, fix proven live.
+
+**3. "Stale" alert dashboards were a display bug, not a pipeline failure:** the 2026-07-09 dedup bumps `last_occurrence_at` on recurring alerts instead of inserting rows — surfaces ordering by `created_at` looked frozen at 7/10 while alerts bumped at every tick. Reordered (SecurityPanel, socDashboardService, tenantSecurityService, DatabaseAuditLogger.getActiveSecurityAlerts). **SecurityPanel was also fully schema-drifted** (selected nonexistent `message`/`resolved_at`/`acknowledged_*` → 400 on every load; wrote `pending`/`acknowledged`/`ignored` statuses → CHECK violation on every button click) — realigned to live schema with "Last seen … N occurrences" display. **⚑ needs Maria's visual acceptance (#13) after next frontend deploy.**
+
+**4. slow_query alerts (×5, occurrence_count 12,287) = 100% admin-tooling noise (`a391fed9`, migration `20260723180000`):** every >1s query in cumulative-since-Dec pg_stat_statements was the `postgres` role (Supabase Studio ~21s schema introspection + diagnostic psql); **worst app-facing query ~140ms**. `get_slow_queries` now excludes superuser/maintenance roles — live monitor run returns `alerts:[]` across 5 tenants. Housekeeping found+fixed: `net._http_response` 296MB→1.2MB (VACUUM FULL; no index on `id` = the "12s query"); NEW daily `cron-history-purge` job (03:30 UTC, 30-day retention): `cron.job_run_details` 758,897→129,852 rows, `guardian_cron_log` 70,381→8,640.
+
+**5. unauthorized_api_access alerts (×3 escalated HIGH from 7/10) = MISLABELED Guardian self-reports (`385fd179`, migration `20260723200000`):** actually the browser Guardian's failed retry_with_backoff healing of an **mcp-postgres-server outage** during Maria's 7/10 06:45 session — the fn was redeployed 7/11 and pings healthy (v1.2.0), zero recurrences. `DatabaseAuditLogger` mapped category `api_failure`→alert_type `'unauthorized_api_access'` (enum had no honest value). Migration adds `api_failure` + `guardian_action_blocked` to the CHECK (the latter was **already being written and failing the CHECK silently on every insert**). DatabaseAuditLogger full repair: honest mapping; `tenant_id` on all 5 insert paths; **`actor_user_id` on audit_logs inserts (INSERT RLS requires `= auth.uid()` — every prior write was silently rejected)**; `getAuditLogs` selected nonexistent `actor_ip_address` (400 every call → aliased to live `ip_address`); all empty `if(error){}`/`catch{}` → auditLogger. New 5-test suite locks it in.
+
+**6. June-5 critical anomalous_behavior = GA-4 session's own test artifact:** the 2026-06-05 GA-4 live proof (commit `1ed7f485`) inserted a synthetic anomaly (`ga4_live_proof`, Maria's uid); Guardian's cron correctly spawned a critical alert from it in the 17 min before the session deleted the synthetic SOURCE row — the downstream alert was never cleaned, auto-escalated 1 min after the commit, sat 7 weeks. Closed false_positive with full paper trail. **Lesson saved to memory (`feedback_live_proof_cleanup_downstream`): live-proof cleanup must sweep DOWNSTREAM artifacts (alerts/telemetry spawned while synthetic data existed), not just the inserted row; prefer rolled-back transactions.**
+
+**7. Type debt cleared (`67a800e7`):** the 14 pre-existing full-tsc errors (Session 1b/1c capability-enforcer test files: `vi.fn(() => builder)` infers ZERO-arg signatures → TS2554 at every `.select('id')` call site; sink typed as generic `Mock`) — fixed type-only, tests identical 15/15. **Project-wide `npx tsc --noEmit`: 0 errors** (needs `NODE_OPTIONS='--max-old-space-size=8192'` or it OOMs on this codespace).
+
+**Notes for next session:** browser-side Guardian fixes (recorder, telemetry, SecurityPanel) go live on the **next frontend deploy** — after it, real proof = load app, trigger an error, rows appear in `system_recordings`/`guardian_eyes_recordings`. One labeled-synthetic row sits in guardian_eyes_recordings (this session's edge round-trip proof; severity `low` spawns nothing downstream — checked; daily retention cron clears it). claude.ai Supabase MCP allowlist still missing WellFit (`xkybsjnvuohpqpbkikyn` — the connected project is Maria's unrelated "RoyalDiadem2007's Project"); `psql "$SUPABASE_DB_URL"` (from .env, strip quotes) carried the whole session. Domains clarified in memory: `thewellfitcommunity.org` = org site + email; `www.wellfitcommunity.live` = the app. **⚑ Eleventh-session OPEN DECISION (Guardian Session 2-vs-3) is STILL OPEN — see below.**
+
 
 **Session 2026-07-23 (eleventh) — TODO-tracker cleanup + Guardian Option B build (Sessions 0/1a/1b/1c). 9 commits (`a4969705..3d9d864c`), all pushed to main. ⚑ ONE OPEN DECISION for Maria at the bottom — she went to sleep mid-decision.**
 
@@ -778,7 +799,7 @@ The right long-term fix is to automate items 1-9 as a Sunday-night GitHub Action
 |--------|-------|-------|
 | Tests | 11,880+ passed, 0 failed | 2026-05-28 |
 | Test Suites | 571+ | 2026-05-28 |
-| Typecheck | 0 errors (8GB heap — fixed OOM) | 2026-03-04 |
+| Typecheck | 0 errors project-wide (8GB heap required — default OOMs) | 2026-07-23 |
 | Lint | 0 errors, 0 warnings | 2026-03-04 |
 | God files (>600 lines) | 1 flagged: SOC2ComplianceDashboard (1,062 lines) — MCP servers all under 600 | 2026-02-27 |
 | AI Model Versions | Centralized — 0 hardcoded strings remaining | 2026-02-23 |
