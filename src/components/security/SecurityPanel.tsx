@@ -13,7 +13,12 @@ import React, { useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import useRealtimeSubscription from '../../hooks/useRealtimeSubscription';
+import { auditLogger } from '../../services/auditLogger';
 
+// Row shape aliased to the LIVE security_alerts schema (verified 2026-07-23):
+// `message` is aliased from `description`; ack/resolve map to assigned_*/resolution_time.
+// Status values are the live CHECK enum — the old pending/acknowledged/ignored values
+// never existed, which broke both the fetch and the action buttons.
 interface SecurityAlert {
   id: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
@@ -21,13 +26,16 @@ interface SecurityAlert {
   title: string;
   message: string;
   created_at: string;
-  status: 'pending' | 'acknowledged' | 'resolved' | 'ignored';
+  last_occurrence_at?: string;
+  occurrence_count?: number;
+  status: 'new' | 'investigating' | 'resolved' | 'false_positive' | 'escalated';
   metadata?: Record<string, unknown>;
-  resolved_at?: string;
-  resolved_by?: string;
-  acknowledged_at?: string;
-  acknowledged_by?: string;
+  resolution_time?: string;
+  assigned_at?: string;
+  assigned_to?: string;
 }
+
+const OPEN_STATUSES: SecurityAlert['status'][] = ['new', 'investigating', 'escalated'];
 
 export const SecurityPanel: React.FC = () => {
   const { user } = useAuth();
@@ -41,10 +49,13 @@ export const SecurityPanel: React.FC = () => {
     schema: 'public',
     componentName: 'SecurityPanel',
     initialFetch: async () => {
+      // Order by last_occurrence_at: since the 2026-07-09 dedup change, recurring
+      // alerts bump the existing row instead of inserting a new one, so created_at
+      // ordering makes an actively-firing alert look weeks stale.
       const { data, error } = await supabase
         .from('security_alerts')
-        .select('id, severity, category, title, message, created_at, status, metadata, resolved_at, resolved_by, acknowledged_at, acknowledged_by')
-        .order('created_at', { ascending: false });
+        .select('id, severity, category, title, message:description, created_at, last_occurrence_at, occurrence_count, status, metadata, resolution_time, assigned_at, assigned_to')
+        .order('last_occurrence_at', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       return data || [];
@@ -56,7 +67,7 @@ export const SecurityPanel: React.FC = () => {
     if (!allAlerts) return [];
 
     if (filter === 'pending') {
-      return allAlerts.filter(alert => alert.status === 'pending');
+      return allAlerts.filter(alert => OPEN_STATUSES.includes(alert.status));
     } else if (filter === 'critical') {
       return allAlerts.filter(alert => ['critical', 'high'].includes(alert.severity));
     }
@@ -64,18 +75,19 @@ export const SecurityPanel: React.FC = () => {
     return allAlerts;
   }, [allAlerts, filter]);
 
-  const updateAlertStatus = async (alertId: string, status: 'acknowledged' | 'resolved' | 'ignored') => {
+  const updateAlertStatus = async (alertId: string, action: 'acknowledged' | 'resolved' | 'ignored') => {
     try {
-      const updates: Partial<Pick<SecurityAlert, 'status' | 'acknowledged_at' | 'acknowledged_by' | 'resolved_at' | 'resolved_by'>> = { status };
       const timestamp = new Date().toISOString();
-
-      if (status === 'acknowledged') {
-        updates.acknowledged_at = timestamp;
-        updates.acknowledged_by = user?.id;
-      } else if (status === 'resolved') {
-        updates.resolved_at = timestamp;
-        updates.resolved_by = user?.id;
-      }
+      // Map UI actions to the live status enum + audit columns:
+      // acknowledge -> investigating (assigned to me), resolve -> resolved,
+      // ignore -> false_positive. The old pending/acknowledged/ignored writes
+      // violated the status CHECK constraint and failed on every click.
+      const updates: Record<string, unknown> =
+        action === 'acknowledged'
+          ? { status: 'investigating', assigned_at: timestamp, assigned_to: user?.id, assigned_by: user?.id, updated_at: timestamp }
+          : action === 'resolved'
+            ? { status: 'resolved', resolution_time: timestamp, updated_at: timestamp }
+            : { status: 'false_positive', resolution_time: timestamp, updated_at: timestamp };
 
       const { error } = await supabase
         .from('security_alerts')
@@ -86,8 +98,11 @@ export const SecurityPanel: React.FC = () => {
 
       await refresh();
       setSelectedAlert(null);
-    } catch (error: unknown) {
-      // Error handled silently - no PHI in console
+    } catch (err: unknown) {
+      await auditLogger.error('SECURITY_ALERT_STATUS_UPDATE_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { alertId, action }
+      );
       alert('Failed to update alert status');
     }
   };
@@ -104,10 +119,11 @@ export const SecurityPanel: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending': return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Pending</span>;
-      case 'acknowledged': return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">Acknowledged</span>;
+      case 'new': return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">New</span>;
+      case 'investigating': return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">Investigating</span>;
+      case 'escalated': return <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">Escalated</span>;
       case 'resolved': return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Resolved</span>;
-      case 'ignored': return <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Ignored</span>;
+      case 'false_positive': return <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">False Positive</span>;
       default: return null;
     }
   };
@@ -122,7 +138,7 @@ export const SecurityPanel: React.FC = () => {
 
   const alertStats = {
     total: alerts.length,
-    pending: alerts.filter(a => a.status === 'pending').length,
+    pending: alerts.filter(a => OPEN_STATUSES.includes(a.status)).length,
     critical: alerts.filter(a => ['critical', 'high'].includes(a.severity)).length,
     resolved: alerts.filter(a => a.status === 'resolved').length
   };
@@ -174,7 +190,7 @@ export const SecurityPanel: React.FC = () => {
               : 'bg-white text-gray-700 border border-gray-300'
           }`}
         >
-          Pending Only
+          Open Only
         </button>
         <button
           onClick={() => setFilter('critical')}
@@ -221,7 +237,8 @@ export const SecurityPanel: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-xs text-gray-500">
-                  {new Date(alert.created_at).toLocaleString()}
+                  Last seen {new Date(alert.last_occurrence_at ?? alert.created_at).toLocaleString()}
+                  {(alert.occurrence_count ?? 1) > 1 && ` · ${alert.occurrence_count} occurrences`}
                 </div>
               </div>
             ))
@@ -273,7 +290,7 @@ export const SecurityPanel: React.FC = () => {
                 )}
 
                 {/* Actions */}
-                {selectedAlert.status === 'pending' && (
+                {OPEN_STATUSES.includes(selectedAlert.status) && (
                   <div className="flex gap-2 pt-4 border-t">
                     <button
                       onClick={() => updateAlertStatus(selectedAlert.id, 'acknowledged')}

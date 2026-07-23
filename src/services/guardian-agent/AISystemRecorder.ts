@@ -15,6 +15,14 @@ import React from 'react';
 import { record } from 'rrweb';
 import type { eventWithTime, listenerHandler } from '@rrweb/types';
 import { supabase } from '../../lib/supabaseClient';
+import { resolveTenantId } from './tenantResolver';
+import {
+  persistSnapshotBatch,
+  openSessionRecording,
+  finalizeSessionRecording,
+  sendSnapshotToGuardian,
+} from './recorderPersistence';
+import { generateAISummary } from './recordingSummarizer';
 
 export interface SystemSnapshot {
   id: string;
@@ -91,9 +99,13 @@ export class AISystemRecorder {
 
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+    // Tenant scoping is required by RLS on the recording tables — resolve it
+    // from the signed-in user's profile when the caller doesn't provide it.
+    const resolvedTenantId = tenantId ?? (await resolveTenantId()) ?? undefined;
+
     this.currentSession = {
       session_id: sessionId,
-      tenant_id: tenantId,
+      tenant_id: resolvedTenantId,
       user_id: userId,
       start_time: new Date().toISOString(),
       snapshots: [],
@@ -104,6 +116,10 @@ export class AISystemRecorder {
     this.rrwebEvents = [];
     this.eventBuffer = [];
     this.lastUploadTime = Date.now();
+
+    // Open the session row FIRST — system_recordings batches carry a foreign key
+    // to session_recordings(session_id) and are rejected until this row exists.
+    await openSessionRecording(this.currentSession);
 
     // Start rrweb recording
     try {
@@ -237,17 +253,18 @@ export class AISystemRecorder {
     this.currentSession.rrweb_events = this.rrwebEvents;
 
     // Generate AI summary
-    this.currentSession.ai_summary = await this.generateAISummary(this.currentSession);
+    this.currentSession.ai_summary = generateAISummary(this.currentSession);
 
-    // Save session metadata to database
-    await this.saveRecording(this.currentSession);
-
-    // Generate recording URL (tenant-scoped storage path)
+    // Generate recording URL (tenant-scoped storage path) BEFORE persisting so
+    // session_recordings.recording_url is populated on the saved row.
     const tenantPrefix = this.currentSession.tenant_id ? `${this.currentSession.tenant_id}/` : '';
     const { data } = supabase.storage
       .from('guardian-eyes')
       .getPublicUrl(`${tenantPrefix}${this.currentSession.session_id}/`);
     this.currentSession.recording_url = data?.publicUrl;
+
+    // Finalize the session row opened at startRecording (counts, summary, URL)
+    await finalizeSessionRecording(this.currentSession);
 
     const recording = this.currentSession;
     this.currentSession = null;
@@ -336,6 +353,10 @@ export class AISystemRecorder {
 
     // Upload immediately on error
     this.uploadEventBuffer();
+
+    // Feed the edge Guardian Eyes store (guardian_eyes_recordings) so the daily
+    // analyze cron sees errors — fire-and-forget, failures logged inside.
+    void sendSnapshotToGuardian(snapshot, 'high');
   }
 
   /**
@@ -407,136 +428,16 @@ export class AISystemRecorder {
    * Flush snapshot buffer to database
    */
   private async flushSnapshotBuffer() {
-    if (this.snapshotBuffer.length === 0) return;
+    if (!this.currentSession || this.snapshotBuffer.length === 0) return;
 
     const snapshots = [...this.snapshotBuffer];
     this.snapshotBuffer = [];
 
-    try {
-      await supabase.from('system_recordings').upsert(
-        {
-          session_id: this.currentSession?.session_id,
-          snapshots: snapshots,
-          recorded_at: new Date().toISOString(),
-        },
-        { onConflict: 'session_id' }
-      );
-    } catch {
-      // Snapshots will be retried on next flush
+    const persisted = await persistSnapshotBatch(this.currentSession.session_id, snapshots);
+    if (!persisted) {
+      // Re-buffer so the batch is retried on the next flush
+      this.snapshotBuffer = [...snapshots, ...this.snapshotBuffer];
     }
-  }
-
-  /**
-   * Generate AI summary of session
-   */
-  private async generateAISummary(recording: SessionRecording) {
-    try {
-      const userActions = recording.snapshots.filter((s) => s.type === 'user_action');
-      const errors = recording.snapshots.filter((s) => s.type === 'error');
-      const stateChanges = recording.snapshots.filter((s) => s.type === 'state_change');
-
-      const userGoal = this.detectUserGoal(userActions);
-      const painPoints = this.detectPainPoints(errors, stateChanges);
-      const optimizations = this.generateOptimizations(recording);
-      const securityConcerns = this.detectSecurityConcerns(recording);
-
-      return {
-        user_goal: userGoal,
-        success: errors.length === 0,
-        pain_points: painPoints,
-        optimizations: optimizations,
-        security_concerns: securityConcerns,
-      };
-    } catch {
-      return undefined;
-    }
-  }
-
-  private detectUserGoal(actions: SystemSnapshot[]): string {
-    if (actions.length === 0) return 'Unknown goal';
-
-    const components = actions.map((a) => a.component);
-    const uniqueComponents = Array.from(new Set(components));
-
-    if (uniqueComponents.includes('LoginForm')) return 'User attempting to login';
-    if (uniqueComponents.includes('RegisterForm')) return 'User attempting to register';
-    if (uniqueComponents.includes('PatientDashboard')) return 'User viewing patient data';
-    if (uniqueComponents.includes('BillingForm')) return 'User processing billing';
-
-    return `User interacting with ${uniqueComponents.join(', ')}`;
-  }
-
-  private detectPainPoints(errors: SystemSnapshot[], stateChanges: SystemSnapshot[]): string[] {
-    const painPoints: string[] = [];
-
-    if (errors.length > 3) {
-      painPoints.push(`Multiple errors encountered (${errors.length} total)`);
-    }
-
-    const repeatedActions = this.detectRepeatedActions(stateChanges);
-    if (repeatedActions > 0) {
-      painPoints.push(`User repeated action ${repeatedActions} times (possible confusion)`);
-    }
-
-    return painPoints;
-  }
-
-  private generateOptimizations(recording: SessionRecording): string[] {
-    const optimizations: string[] = [];
-
-    const performanceSnapshots = recording.snapshots.filter((s) => s.type === 'performance');
-    const avgMemory =
-      performanceSnapshots.reduce(
-        (sum, s) => sum + (typeof s.metadata.performance?.memory_used === 'number' ? s.metadata.performance.memory_used : 0),
-        0
-      ) / (performanceSnapshots.length || 1);
-
-    if (avgMemory > 100 * 1024 * 1024) {
-      optimizations.push('High memory usage detected - consider optimizing component rendering');
-    }
-
-    const stateChanges = recording.snapshots.filter((s) => s.type === 'state_change');
-    if (stateChanges.length > 50) {
-      optimizations.push('Excessive state changes - consider state optimization or memoization');
-    }
-
-    return optimizations;
-  }
-
-  private detectSecurityConcerns(recording: SessionRecording): string[] {
-    const concerns: string[] = [];
-
-    for (const snapshot of recording.snapshots) {
-      const metadataStr = JSON.stringify(snapshot.metadata);
-      if (/\b\d{3}-\d{2}-\d{4}\b/.test(metadataStr)) {
-        concerns.push('Potential SSN detected in captured data');
-      }
-      if (/patient.*data/i.test(metadataStr)) {
-        concerns.push('Patient data reference detected - verify PHI protection');
-      }
-    }
-
-    return concerns;
-  }
-
-  private detectRepeatedActions(snapshots: SystemSnapshot[]): number {
-    if (snapshots.length < 2) return 0;
-
-    let repeatedCount = 0;
-    for (let i = 1; i < snapshots.length; i++) {
-      const current = snapshots[i];
-      const previous = snapshots[i - 1];
-
-      if (
-        current.component === previous.component &&
-        current.action === previous.action &&
-        Date.parse(current.timestamp) - Date.parse(previous.timestamp) < 3000
-      ) {
-        repeatedCount++;
-      }
-    }
-
-    return repeatedCount;
   }
 
   private getContextMetadata() {
@@ -563,28 +464,6 @@ export class AISystemRecorder {
       memory_limit: memory?.jsHeapSizeLimit,
       timestamp: performance.now(),
     };
-  }
-
-  private async saveRecording(recording: SessionRecording) {
-    try {
-      await supabase.from('session_recordings').insert({
-        session_id: recording.session_id,
-        user_id: recording.user_id,
-        start_time: recording.start_time,
-        end_time: recording.end_time,
-        snapshot_count: recording.snapshots.length,
-        rrweb_event_count: recording.rrweb_events.length,
-        recording_url: recording.recording_url,
-        ai_summary: recording.ai_summary,
-        metadata: {
-          duration_seconds: recording.end_time
-            ? (Date.parse(recording.end_time) - Date.parse(recording.start_time)) / 1000
-            : 0,
-        },
-      });
-    } catch {
-      // Recording will be saved on next attempt
-    }
   }
 
   private generateSnapshotId(): string {

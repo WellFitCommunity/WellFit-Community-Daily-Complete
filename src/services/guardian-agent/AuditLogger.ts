@@ -10,6 +10,8 @@ import { DetectedIssue, HealingAction, HealingResult, HealingStep } from './type
 import { DatabaseAuditLogger } from './DatabaseAuditLogger';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger as systemAuditLogger } from '../auditLogger';
+import { getCachedTenantId } from './tenantResolver';
+import { persistTelemetryEntry } from './guardianTelemetrySink';
 import { HealingStepData } from '../../types/guardianApproval';
 
 export interface AuditLogEntry {
@@ -116,7 +118,7 @@ export class AuditLogger {
     await this.logStorage.persist(entry);
 
     // Send to telemetry endpoints
-    await this.sendToTelemetry(entry);
+    await persistTelemetryEntry(entry);
 
     // Create review ticket if needed
     if (this.requiresHumanReview(action, result)) {
@@ -160,7 +162,7 @@ export class AuditLogger {
     await this.dbLogger.logBlockedAction(issue, action, blockReason);
 
     await this.logStorage.persist(entry);
-    await this.sendToTelemetry(entry);
+    await persistTelemetryEntry(entry);
 
     // Always create review ticket for blocked actions
     await this.createReviewTicket(entry, action, issue, null);
@@ -275,58 +277,6 @@ export class AuditLogger {
   }
 
   /**
-   * Send telemetry to monitoring stack
-   */
-  private async sendToTelemetry(entry: AuditLogEntry): Promise<void> {
-    // Format for internal telemetry system
-    const telemetryEvent = {
-      timestamp: entry.timestamp.toISOString(),
-      tenant: entry.tenant,
-      module: entry.module,
-      error_code: entry.errorCode,
-      action: entry.action,
-      version_before: entry.versionBefore,
-      version_after: entry.versionAfter,
-      validation_result: entry.validationResult,
-      severity: entry.severity,
-      environment: entry.environment,
-      affected_resources: entry.affectedResources.join(','),
-      user_id: entry.userId,
-      session_id: entry.sessionId,
-      ...entry.metadata,
-    };
-
-    // Send to internal telemetry (HIPAA-compliant, no external services)
-    try {
-      // 1. Store in guardian_telemetry table for internal monitoring
-      await supabase.from('guardian_telemetry').insert({
-        event_type: 'audit_log',
-        event_data: telemetryEvent,
-        severity: entry.severity,
-        module: entry.module,
-        tenant_id: entry.tenant,
-        user_id: entry.userId,
-        created_at: entry.timestamp.toISOString(),
-      });
-
-      // 2. Log to system audit logger for HIPAA compliance
-      systemAuditLogger.info('GUARDIAN_TELEMETRY_EVENT', {
-        audit_id: entry.id,
-        action: entry.action,
-        module: entry.module,
-        severity: entry.severity,
-        validation_result: entry.validationResult,
-      });
-    } catch (error: unknown) {
-      // Telemetry failures should not block the main flow
-      systemAuditLogger.warn('GUARDIAN_TELEMETRY_FAILED', {
-        audit_id: entry.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  }
-
-  /**
    * Notify admins of pending review via SOC Dashboard
    *
    * Creates a security_alert with type 'guardian_approval_required' which
@@ -360,8 +310,11 @@ export class AuditLogger {
   }
 
   private getTenantId(): string {
-    // In multi-tenant system, get from context
-    return 'wellfit-primary';
+    // Real tenant uuid resolved (and cached) by tenantResolver. Entries built
+    // before the first resolution completes carry 'unresolved'; sendToTelemetry
+    // re-resolves at insert time so the persisted row satisfies the
+    // guardian_telemetry RLS check (tenant_id = get_current_tenant_id()::text).
+    return getCachedTenantId() ?? 'unresolved';
   }
 
   private getEnvironment(): 'production' | 'staging' | 'development' {

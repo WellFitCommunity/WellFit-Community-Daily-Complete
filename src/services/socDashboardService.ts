@@ -71,7 +71,9 @@ export class SOCDashboardService {
           assigned_user:profiles!security_alerts_assigned_to_fkey(first_name, last_name, email),
           affected_user:profiles!security_alerts_affected_user_id_fkey(first_name, last_name, email)
         `)
-        .order('created_at', { ascending: false });
+        // Dedup (2026-07-09) bumps last_occurrence_at on recurring alerts instead of
+        // inserting new rows — created_at ordering makes live alerts look stale.
+        .order('last_occurrence_at', { ascending: false, nullsFirst: false });
 
       // Apply filters
       if (filters?.severity?.length) {

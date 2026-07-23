@@ -3,12 +3,15 @@
 
 export interface GuardianEyesSnapshot {
   timestamp: string;
-  type: 'error' | 'security' | 'performance' | 'audit';
+  // Must be a value in the guardian_eyes_recordings.type CHECK enum.
+  type: 'error' | 'security' | 'performance' | 'audit' | 'user_action' | 'state_change';
   component: string;
   action: string;
   metadata: Record<string, unknown>;
   severity: 'critical' | 'high' | 'medium' | 'low';
   tenant_id?: string;
+  session_id?: string;
+  user_id?: string;
 }
 
 export interface SecurityAlert {

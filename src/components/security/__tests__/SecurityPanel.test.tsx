@@ -42,7 +42,9 @@ vi.mock('../../../hooks/useRealtimeSubscription', () => ({
   default: (config: { initialFetch: () => Promise<unknown[]> }) => mockUseRealtimeSubscription(config),
 }));
 
-// Mock security alerts data
+// Mock security alerts data — statuses match the LIVE security_alerts CHECK enum
+// (new/investigating/resolved/false_positive/escalated); `message` mirrors the
+// aliased `description` column.
 const mockAlerts = [
   {
     id: 'alert-1',
@@ -51,7 +53,9 @@ const mockAlerts = [
     title: 'Suspicious Login Attempt',
     message: 'Multiple failed login attempts detected',
     created_at: '2024-01-15T10:00:00Z',
-    status: 'pending' as const,
+    last_occurrence_at: '2024-02-01T10:00:00Z',
+    occurrence_count: 12287,
+    status: 'new' as const,
     metadata: { ip: '192.168.1.1' },
   },
   {
@@ -61,9 +65,9 @@ const mockAlerts = [
     title: 'Unauthorized Access Attempt',
     message: 'User attempted to access restricted resource',
     created_at: '2024-01-15T09:00:00Z',
-    status: 'acknowledged' as const,
-    acknowledged_at: '2024-01-15T09:30:00Z',
-    acknowledged_by: 'admin-123',
+    status: 'investigating' as const,
+    assigned_at: '2024-01-15T09:30:00Z',
+    assigned_to: 'admin-123',
   },
   {
     id: 'alert-3',
@@ -73,8 +77,7 @@ const mockAlerts = [
     message: 'Bulk PHI access detected',
     created_at: '2024-01-15T08:00:00Z',
     status: 'resolved' as const,
-    resolved_at: '2024-01-15T08:30:00Z',
-    resolved_by: 'admin-456',
+    resolution_time: '2024-01-15T08:30:00Z',
   },
   {
     id: 'alert-4',
@@ -83,7 +86,7 @@ const mockAlerts = [
     title: 'Configuration Change',
     message: 'Security configuration updated',
     created_at: '2024-01-14T12:00:00Z',
-    status: 'pending' as const,
+    status: 'escalated' as const,
   },
 ];
 
@@ -103,7 +106,7 @@ describe('SecurityPanel', () => {
     });
 
     // Setup Supabase chain
-    mockFrom.mockReturnValue({ select: mockSelect });
+    mockFrom.mockReturnValue({ select: mockSelect, update: mockUpdate });
     mockSelect.mockReturnValue({ order: mockOrder });
     mockOrder.mockResolvedValue({ data: mockAlerts, error: null });
     mockUpdate.mockReturnValue({ eq: mockEq });
@@ -203,15 +206,15 @@ describe('SecurityPanel', () => {
       render(<SecurityPanel />);
 
       expect(screen.getByRole('button', { name: /all alerts/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /pending only/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /open only/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /critical\/high/i })).toBeInTheDocument();
     });
 
-    it('should have pending filter active by default', () => {
+    it('should have open filter active by default', () => {
       render(<SecurityPanel />);
 
-      const pendingButton = screen.getByRole('button', { name: /pending only/i });
-      expect(pendingButton).toHaveClass('bg-yellow-600');
+      const openButton = screen.getByRole('button', { name: /open only/i });
+      expect(openButton).toHaveClass('bg-yellow-600');
     });
 
     it('should switch to all alerts filter when clicked', async () => {
@@ -274,23 +277,25 @@ describe('SecurityPanel', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /all alerts/i }));
 
-      // Status badges
-      expect(screen.getAllByText('Pending').length).toBeGreaterThan(0);
-      expect(screen.getByText('Acknowledged')).toBeInTheDocument();
+      // Status badges (live enum)
+      expect(screen.getAllByText('New').length).toBeGreaterThan(0);
+      expect(screen.getByText('Investigating')).toBeInTheDocument();
+      expect(screen.getByText('Escalated')).toBeInTheDocument();
       expect(screen.getAllByText('Resolved').length).toBeGreaterThan(0);
     });
   });
 
   describe('Alert Filtering', () => {
-    it('should filter to show only pending alerts by default', () => {
+    it('should filter to show only open alerts by default', () => {
       render(<SecurityPanel />);
 
-      // Should show pending alerts (alert-1 and alert-4)
+      // Should show open alerts (new, investigating, escalated)
       expect(screen.getByText('Suspicious Login Attempt')).toBeInTheDocument();
+      expect(screen.getByText('Unauthorized Access Attempt')).toBeInTheDocument();
       expect(screen.getByText('Configuration Change')).toBeInTheDocument();
 
-      // Should not show acknowledged/resolved alerts
-      expect(screen.queryByText('Unauthorized Access Attempt')).not.toBeInTheDocument();
+      // Should not show resolved alerts
+      expect(screen.queryByText('PHI Access Log')).not.toBeInTheDocument();
     });
 
     it('should show all alerts when all filter selected', async () => {
@@ -367,16 +372,16 @@ describe('SecurityPanel', () => {
       expect(screen.getByRole('button', { name: /ignore/i })).toBeInTheDocument();
     });
 
-    it('should not show action buttons for non-pending alerts', async () => {
+    it('should not show action buttons for closed alerts', async () => {
       render(<SecurityPanel />);
 
-      // Switch to all alerts and select acknowledged alert
+      // Switch to all alerts and select the resolved alert
       await userEvent.click(screen.getByRole('button', { name: /all alerts/i }));
 
-      const alertCard = screen.getByText('Unauthorized Access Attempt').closest('div[class*="cursor-pointer"]');
+      const alertCard = screen.getByText('PHI Access Log').closest('div[class*="cursor-pointer"]');
       if (alertCard) fireEvent.click(alertCard);
 
-      // Action buttons should not appear for acknowledged alert
+      // Action buttons should not appear for a resolved alert
       expect(screen.queryByRole('button', { name: /acknowledge/i })).not.toBeInTheDocument();
     });
   });
@@ -416,24 +421,23 @@ describe('SecurityPanel', () => {
   });
 
   describe('Status Badge Colors', () => {
-    it('should apply yellow for pending status', () => {
+    it('should apply yellow for new status', () => {
       render(<SecurityPanel />);
 
-      // Find a Pending badge (there are multiple)
-      const pendingBadges = screen.getAllByText('Pending');
-      const pendingBadge = pendingBadges.find(
+      const newBadges = screen.getAllByText('New');
+      const newBadge = newBadges.find(
         (el) => el.className.includes('bg-yellow')
       );
-      expect(pendingBadge).toBeTruthy();
+      expect(newBadge).toBeTruthy();
     });
 
-    it('should apply blue for acknowledged status', async () => {
+    it('should apply blue for investigating status', async () => {
       render(<SecurityPanel />);
 
       await userEvent.click(screen.getByRole('button', { name: /all alerts/i }));
 
-      const acknowledgedBadge = screen.getByText('Acknowledged');
-      expect(acknowledgedBadge.className).toContain('bg-blue');
+      const investigatingBadge = screen.getByText('Investigating');
+      expect(investigatingBadge.className).toContain('bg-blue');
     });
 
     it('should apply green for resolved status', async () => {
@@ -497,8 +501,8 @@ describe('SecurityPanel', () => {
     it('should show alert count in header', async () => {
       render(<SecurityPanel />);
 
-      // Default pending filter shows 2 pending alerts
-      expect(screen.getByText(/alerts \(2\)/i)).toBeInTheDocument();
+      // Default open filter shows 3 open alerts (new, investigating, escalated)
+      expect(screen.getByText(/alerts \(3\)/i)).toBeInTheDocument();
     });
 
     it('should update count when filter changes', async () => {
@@ -508,6 +512,58 @@ describe('SecurityPanel', () => {
 
       // All 4 alerts
       expect(screen.getByText(/alerts \(4\)/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Occurrence Display (dedup-aware freshness)', () => {
+    it('should show last-seen time and occurrence count for recurring alerts', () => {
+      render(<SecurityPanel />);
+
+      // alert-1 has occurrence_count 12287 and a last_occurrence_at newer than created_at
+      expect(screen.getByText(/12287 occurrences/)).toBeInTheDocument();
+      expect(screen.getAllByText(/last seen/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Status Updates (live schema columns)', () => {
+    it('should write resolved status with resolution_time when Resolve clicked', async () => {
+      render(<SecurityPanel />);
+
+      const alertCard = screen.getByText('Suspicious Login Attempt').closest('div[class*="cursor-pointer"]');
+      if (alertCard) fireEvent.click(alertCard);
+
+      await userEvent.click(screen.getByRole('button', { name: /resolve/i }));
+
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'resolved', resolution_time: expect.any(String) })
+      );
+      expect(mockEq).toHaveBeenCalledWith('id', 'alert-1');
+    });
+
+    it('should write investigating status with assignment when Acknowledge clicked', async () => {
+      render(<SecurityPanel />);
+
+      const alertCard = screen.getByText('Suspicious Login Attempt').closest('div[class*="cursor-pointer"]');
+      if (alertCard) fireEvent.click(alertCard);
+
+      await userEvent.click(screen.getByRole('button', { name: /acknowledge/i }));
+
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'investigating', assigned_to: 'test-user-id' })
+      );
+    });
+
+    it('should write false_positive status when Ignore clicked', async () => {
+      render(<SecurityPanel />);
+
+      const alertCard = screen.getByText('Suspicious Login Attempt').closest('div[class*="cursor-pointer"]');
+      if (alertCard) fireEvent.click(alertCard);
+
+      await userEvent.click(screen.getByRole('button', { name: /ignore/i }));
+
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'false_positive' })
+      );
     });
   });
 });

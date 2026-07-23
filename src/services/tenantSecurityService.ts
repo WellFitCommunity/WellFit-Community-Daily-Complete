@@ -62,7 +62,9 @@ export const tenantSecurityService = {
         // resolution_time (acknowledged_at/resolved_at/message never existed)
         .select('id, severity, category, alert_type, title, message:description, status, source_ip, affected_user_id, affected_resource, created_at, acknowledged_at:assigned_at, resolved_at:resolution_time')
         .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false })
+        // Dedup (2026-07-09) bumps last_occurrence_at on recurring alerts instead of
+        // inserting new rows — created_at ordering makes live alerts look stale.
+        .order('last_occurrence_at', { ascending: false, nullsFirst: false })
         .limit(50);
 
       if (statusFilter === 'active') {
