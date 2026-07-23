@@ -14,6 +14,7 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { healerScopedDb } from './guardianCapabilityEnforcer';
 import { auditLogger } from '../auditLogger';
 import type { HealingStep, DetectedIssue } from './types';
 
@@ -106,7 +107,7 @@ export class RuntimeHealer {
           }
         } else {
           // For non-URL targets (e.g., Supabase operations), verify DB connectivity
-          const { error } = await supabase.from('profiles').select('id').limit(1);
+          const { error } = await healerScopedDb.from('profiles').select('id').limit(1);
           if (!error) {
             await auditLogger.info('GUARDIAN_RETRY_SUCCESS', {
               target, attempt, maxRetries, issueId: issue.id,
@@ -404,7 +405,7 @@ export class RuntimeHealer {
     }
 
     // Record block in security_notifications table
-    const { error } = await supabase.from('security_notifications').insert({
+    const { error } = await healerScopedDb.from('security_notifications').insert({
       notification_type: 'suspicious_activity_blocked',
       severity: 'critical',
       title: `Guardian: Blocked suspicious activity for user ${userId}`,
@@ -472,7 +473,7 @@ export class RuntimeHealer {
     }
 
     // Verify Supabase connection health as a basic consistency check
-    const { error } = await supabase.from('profiles').select('id').limit(1);
+    const { error } = await healerScopedDb.from('profiles').select('id').limit(1);
     if (error) {
       return { success: false, message: `Database health check failed: ${error.message}` };
     }

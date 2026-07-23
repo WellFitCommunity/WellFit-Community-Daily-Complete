@@ -23,6 +23,13 @@
 import type { ToolMetadata } from './ToolRegistry';
 import { auditLogger } from '../auditLogger';
 
+/**
+ * Anything the enforcer can gate: it only needs an id and declared capabilities.
+ * A full `ToolMetadata` satisfies this, but so does a lightweight descriptor for
+ * a non-sandbox subsystem (e.g. the RuntimeHealer) that still wants confinement.
+ */
+export type CapabilityBearer = Pick<ToolMetadata, 'id' | 'capabilities'>;
+
 export type CapabilityViolationKind = 'egress' | 'db-table' | 'db-write';
 
 export interface CapabilityViolation {
@@ -92,7 +99,7 @@ export class CapabilityEnforcer {
    * Complements the ExecutionSandbox fetch override by making denials count
    * toward quarantine. `'*'` in egress means unrestricted (declared, so allowed).
    */
-  assertEgressAllowed(tool: ToolMetadata, url: string): void {
+  assertEgressAllowed(tool: CapabilityBearer, url: string): void {
     const egress = tool.capabilities.egress ?? [];
     if (egress.includes('*')) return;
 
@@ -118,7 +125,7 @@ export class CapabilityEnforcer {
    * verb (insert/update/upsert/delete) is always called there, so deeper chained
    * filters (`.eq`, `.select`) need no re-wrapping.
    */
-  wrapDatabaseClient<T extends object>(tool: ToolMetadata, client: T): T {
+  wrapDatabaseClient<T extends object>(tool: CapabilityBearer, client: T): T {
     const handler: ProxyHandler<T> = {
       get: (target, prop, receiver) => {
         const original = Reflect.get(target, prop, receiver);
@@ -154,7 +161,7 @@ export class CapabilityEnforcer {
 
   // --- internals ---
 
-  private wrapQueryBuilder(tool: ToolMetadata, tableName: string, builder: object): object {
+  private wrapQueryBuilder(tool: CapabilityBearer, tableName: string, builder: object): object {
     const handler: ProxyHandler<object> = {
       get: (target, prop, receiver) => {
         const original = Reflect.get(target, prop, receiver);
@@ -175,7 +182,7 @@ export class CapabilityEnforcer {
     return new Proxy(builder, handler);
   }
 
-  private assertTableTouchable(tool: ToolMetadata, tableName: string): void {
+  private assertTableTouchable(tool: CapabilityBearer, tableName: string): void {
     const caps = tool.capabilities;
     const touchable = new Set<string>([
       ...(caps.databaseTables ?? []),
@@ -189,7 +196,7 @@ export class CapabilityEnforcer {
     }
   }
 
-  private assertTableWritable(tool: ToolMetadata, tableName: string, method: string): void {
+  private assertTableWritable(tool: CapabilityBearer, tableName: string, method: string): void {
     const writable = new Set<string>(tool.capabilities.writes ?? []);
     if (!writable.has(tableName)) {
       const reason = `${method} on ${tableName} requires declared write capability`;

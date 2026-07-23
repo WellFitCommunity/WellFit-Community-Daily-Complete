@@ -148,8 +148,24 @@ Design — enforcement by **scoped context injection**, not ambient access:
 
 **Honest scope line (DONE MEANS DONE):**
 - Quarantine refusal + egress escalation are LIVE in the sandbox path.
-- DB-table enforcement is delivered + tested as `wrapDatabaseClient`, exposed via `getCapabilityEnforcer()`. It becomes binding for a given tool when that tool's executor uses the wrapped client. **Migrating individual healing tools to the wrapped client is the tracked follow-on** (Session 1c) — the enforcer is ready; the tools that currently import the ambient `supabase` singleton need to take the scoped client. Not claiming every tool is DB-gated yet.
+- DB-table enforcement is delivered + tested as `wrapDatabaseClient`, exposed via `getCapabilityEnforcer()`. **Now BINDING for the real healer — see Session 1c below.**
 - **Pre-existing debt nudged:** `ExecutionSandbox.ts` was already over the 600-line cap (967); the wiring added ~34 lines (now 1001). The *logic* lives in the new module per the rule; only essential integration touched the god file. Decomposing `ExecutionSandbox.ts` remains a separate tracked task (not done here, to stay stable).
+
+## Session 1c — Make DB gating binding for the REAL healer ✅ DONE 2026-07-23
+
+**Correction to the plan's assumption:** the `ExecutionSandbox`/`ToolRegistry` framework is **not used in production** — nothing instantiates it or calls `registerWithExecutor` outside tests. So there were no "sandbox tools" to migrate. The ACTUAL autonomous healer is `RuntimeHealer` (path: `AgentBrain.execute` → `HealingEngine.execute` → `RuntimeHealer.perform`), which reaches the DB via the ambient `supabase` singleton, bypassing the sandbox entirely. That is what got confined.
+
+**Live-verified healer DB footprint (2026-07-23):** `RuntimeHealer` READS `profiles` (health probes, lines 110/476) and WRITES `security_notifications` (line 408); `RealHealingImplementations` READS `profiles` (line 338). Nothing else.
+
+**Built:**
+- `CapabilityEnforcer`: loosened the public param from `ToolMetadata` to `CapabilityBearer` (`Pick<ToolMetadata,'id'|'capabilities'>`) so non-sandbox subsystems can be gated. Backward compatible (ToolMetadata satisfies it).
+- `src/services/guardian-agent/guardianCapabilityEnforcer.ts` — a shared process-wide `CapabilityEnforcer` (real security_alerts sink), the `RUNTIME_HEALER_CAPABILITY` descriptor (reads `profiles`; writes `security_notifications`), and `healerScopedDb` = the capability-scoped client.
+- `RuntimeHealer` + `RealHealingImplementations` now use `healerScopedDb.from(...)` for all DB access (kept `supabase.auth` in RuntimeHealer). A healer bug/compromise that tried an undeclared table or wrote a read-only one now throws, records a `security_alerts` row, and counts toward quarantine.
+- `__tests__/guardianCapabilityEnforcer.test.ts` — 4 tests: profiles read allowed, security_notifications write allowed, profiles write DENIED (read-only), undeclared tables (audit_logs/patients) DENIED. Tripwire if the healer's real usage ever drifts from the declaration.
+
+**Verification:** guardian suite **44/44** (4 new); scoped typecheck 0; **full `tsc --noEmit` 0 errors project-wide** (ran because a widely-imported public signature changed); lint 0. The DB-gating is now binding on the live autonomous-healing path, not just available.
+
+---
 
 ## Session 2 — Tool signing (T-4b item 1) (~1 session)
 

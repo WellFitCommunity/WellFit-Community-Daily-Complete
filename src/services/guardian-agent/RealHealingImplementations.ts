@@ -6,7 +6,7 @@
  * to secure the codebase.
  */
 
-import { supabase } from '../../lib/supabaseClient';
+import { healerScopedDb } from './guardianCapabilityEnforcer';
 
 export interface HealingOperation {
   type: string;
@@ -333,9 +333,9 @@ useEffect(() => {
       ];
 
 
-      // Check current Supabase connection health
+      // Check current Supabase connection health (capability-scoped client)
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { data, error } = await supabase.from('profiles').select('id').limit(1);
+        const { data, error } = await healerScopedDb.from('profiles').select('id').limit(1);
 
       if (error) {
         throw new Error(`Database connection check failed: ${error.message}`);
