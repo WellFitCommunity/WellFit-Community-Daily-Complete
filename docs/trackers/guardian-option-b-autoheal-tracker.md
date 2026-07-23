@@ -72,6 +72,17 @@ The tracker (and the 46-day-old memory) said `guardian-pr-service` was deleted i
 
 **This retroactively validates the whole Option B exercise:** an auto-merge-to-main path already existed unguarded. Session 3's design (GitHub App, Contents+PR-write only, NO merge perm, branch protection requiring review) is what structurally prevents this from being possible again.
 
+### ✅ RESOLVED 2026-07-23 — hardened in place (Maria's call: keep the feature, don't delete)
+
+Maria chose to KEEP the feature (Guardian opens a PR; she reviews+merges from the GitHub mobile app) and KEEP the `GITHUB_TOKEN` — merging from her phone uses her GitHub identity, NOT the function's `merge_pr` action, so removing that action costs her nothing. Commit `659dd4ca`:
+- **Source restored** to `supabase/functions/guardian-pr-service/index.ts` (drift closed; `config.toml` block back with `verify_jwt=false` + rationale).
+- **Auth gate added:** internal cron/service secret required (`X-Cron-Secret` or `Bearer == CRON_SECRET/SB_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY`), mirroring `security-alert-processor`. CORS origin is explicitly NOT the auth boundary.
+- **`merge_pr` action + `mergePR` + `logPRMerge` removed.** Only `create_pr` + `get_pr_status` remain. A comment marks the deliberate absence so no future session re-adds it.
+- Proper TS types (deployed bundle had untyped params); `deno check` clean.
+- **Live-verified post-deploy:** no-secret → 401; `merge_pr` + valid secret → 400 "Unknown or unsupported action"; `get_pr_status` + valid secret → reaches GitHub (token intact).
+
+**Impact on Session 3:** the PR-creation service now EXISTS, hardened, in the repo. Session 3 shrinks from "rebuild from scratch" to "adapt the existing hardened function to the Paper Trail Contract + (optionally) migrate PAT→GitHub App." The GitHub App migration is now a *hardening nicety*, not a prerequisite — the PAT + in-code secret gate is an acceptable posture. Re-scope Session 3 when reached.
+
 ---
 
 ## Session 0 — Pre-flight verification (~1h, can prepend to Session 1)
