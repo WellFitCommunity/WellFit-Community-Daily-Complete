@@ -91,6 +91,11 @@ jobs:
         if: always()
         run: python3 scripts/check-db-reference-drift.py
 
+      - name: Guardian tool-signature coverage gate
+        id: guardian_signatures
+        if: always()
+        run: node scripts/guardian-sign-tools.mjs --check
+
       - name: Report to summary
         if: always()
         run: |

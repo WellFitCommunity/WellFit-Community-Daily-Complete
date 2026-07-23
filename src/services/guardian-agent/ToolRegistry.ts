@@ -12,6 +12,8 @@
 
 import { TokenScope } from './TokenAuth';
 import { auditLogger } from '../auditLogger';
+import { verifyToolSignature, reportToolSignatureFailure } from './toolSignatureGate';
+import type { SignatureVerdict, ToolSignatureRecord } from './toolSignatureGate';
 
 /**
  * Checksum Utility - SHA-256 hashing for tool integrity
@@ -147,6 +149,10 @@ export interface ToolMetadata {
   /** Checksum (SHA-256) for integrity verification */
   checksum: string;
 
+  /** ES256 signature over the checksum (Session 2) — first-party tools may
+   *  instead be covered by the committed guardianToolSignatures.json map */
+  signature?: ToolSignatureRecord;
+
   /** Author/maintainer */
   author: string;
 
@@ -210,6 +216,8 @@ interface RegisteredTool {
   metadata: ToolMetadata;
   executor?: ToolExecutor;
   executorChecksum?: string;
+  /** ES256 signature verdict (Session 2) — resolves async after register() */
+  signatureVerdict?: Promise<SignatureVerdict>;
 }
 
 /**
@@ -243,8 +251,28 @@ export class ToolRegistry {
     this.validateCapabilities(metadata.capabilities);
 
     // Store in registry
-    this.tools.set(metadata.id, { metadata });
+    const entry: RegisteredTool = { metadata };
+    this.tools.set(metadata.id, entry);
     this.checksumCache.set(metadata.id, metadata.checksum);
+
+    // ES256 signature verification (Session 2). register() is sync, WebCrypto
+    // is async — the verdict resolves on the entry; enforce mode UNREGISTERS an
+    // invalid tool the moment the verdict lands, and registerWithExecutor /
+    // getExecutor await the verdict before trusting the tool.
+    entry.signatureVerdict = verifyToolSignature(
+      metadata.id,
+      metadata.checksum,
+      metadata.signature
+    ).then(async (verdict) => {
+      if (!verdict.valid && verdict.mode !== 'off') {
+        await reportToolSignatureFailure(metadata.id, verdict);
+        if (verdict.mode === 'enforce') {
+          this.tools.delete(metadata.id);
+          this.checksumCache.delete(metadata.id);
+        }
+      }
+      return verdict;
+    });
 
     // Log registration
     void auditLogger.info('TOOL_REGISTERED', {
@@ -264,6 +292,15 @@ export class ToolRegistry {
   ): Promise<void> {
     // First register metadata
     this.register(metadata);
+
+    // Session 2: await the signature verdict — in enforce mode an unsigned or
+    // tampered tool is REJECTED here (register() already unregistered it).
+    const verdict = await this.tools.get(metadata.id)?.signatureVerdict;
+    if (verdict && !verdict.valid && verdict.mode === 'enforce') {
+      throw new Error(
+        `Tool ${metadata.id} rejected: ${verdict.reason ?? 'signature verification failed'}`
+      );
+    }
 
     // Compute executor checksum
     const executorChecksum = await ChecksumUtils.computeFunctionChecksum(
@@ -311,6 +348,16 @@ export class ToolRegistry {
         executor: undefined as unknown as ToolExecutor<TInput, TOutput>,
         valid: false,
         error: `Tool ${toolId} has no registered executor`,
+      };
+    }
+
+    // Session 2: an unsigned/tampered tool never executes in enforce mode
+    const signatureVerdict = await tool.signatureVerdict;
+    if (signatureVerdict && !signatureVerdict.valid && signatureVerdict.mode === 'enforce') {
+      return {
+        executor: undefined as unknown as ToolExecutor<TInput, TOutput>,
+        valid: false,
+        error: `Tool ${toolId} signature invalid: ${signatureVerdict.reason ?? 'verification failed'}`,
       };
     }
 

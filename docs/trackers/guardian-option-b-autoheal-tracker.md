@@ -167,7 +167,34 @@ Design — enforcement by **scoped context injection**, not ambient access:
 
 ---
 
-## Session 2 — Tool signing (T-4b item 1) (~1 session)
+## Session 2 — ✅ BUILT 2026-07-23 (warn-only until Maria provisions the key)
+
+**Shipped:** `ToolSigning.ts` (ES256/WebCrypto verify over the tool checksum) +
+`toolSignatureGate.ts` (failure sink → audit + security_alerts, mirrors
+capabilityViolationSink) + `guardianSigningKey.ts` (public-key holder, currently
+`null` = not provisioned) + `guardianToolSignatures.json` (committed signature
+map) + `scripts/guardian-generate-signing-key.mjs` (Maria's one-time local key
+generation — private JWK printed to stdout only, public key written to the
+holder module) + `scripts/guardian-sign-tools.mjs` (signs all built-in tools;
+`--check` mode wired into CI as the "Guardian tool-signature coverage gate").
+`ToolRegistry` now verifies on register (async verdict; enforce mode
+UNREGISTERS invalid tools), rejects at `registerWithExecutor`, and refuses
+execution at `getExecutor`. Modes: off (no key) / warn (default) / enforce
+(`VITE_GUARDIAN_REQUIRE_SIGNATURES=enforce`). 11 new tests incl. a real ES256
+tamper-detection round-trip with a fixed test keypair; guardian suite 82/82.
+
+**⚑ MARIA's 2-minute step to arm it:** run
+`node scripts/guardian-generate-signing-key.mjs` locally → store the printed
+private JWK in your password manager + as the `GUARDIAN_SIGNING_KEY` GitHub
+Actions secret → commit the updated `guardianSigningKey.ts` → run
+`GUARDIAN_SIGNING_KEY='<private jwk>' node scripts/guardian-sign-tools.mjs` →
+commit `guardianToolSignatures.json`. System then runs warn-mode; flip
+`VITE_GUARDIAN_REQUIRE_SIGNATURES=enforce` in the deploy env after one quiet
+session (the planned rollout).
+
+<details><summary>Original Session 2 plan</summary>
+
+## Session 2 (original plan) — Tool signing (T-4b item 1) (~1 session)
 
 **New module:** `src/services/guardian-agent/ToolSigning.ts` + `scripts/guardian-sign-tools.ts` + `__tests__/ToolSigning.test.ts`.
 
@@ -179,6 +206,8 @@ Design:
 - `scripts/guardian-sign-tools.ts` signs all first-party tools; wire into CI so a tool edit without re-signing fails the build (deliberate: an unreviewed tool change should be loud).
 
 **Acceptance (live):** tampering one byte of a signed executor → registration rejected + alert row; all first-party tools signed; enforcement flag flipped ON; counts reported.
+
+</details>
 
 ## Session 3 — ✅ DONE 2026-07-23 (PAT path; GitHub App migration stays optional)
 
