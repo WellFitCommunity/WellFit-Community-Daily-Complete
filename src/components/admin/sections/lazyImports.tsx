@@ -79,6 +79,7 @@ export const ReferralAgingDashboard = lazy(() => import('../ReferralAgingDashboa
 export const ReferralCompletionDashboard = lazy(() => import('../ReferralCompletionDashboard'));
 export const EncounterAuditTimeline = lazy(() => import('../EncounterAuditTimeline'));
 export const ResultEscalationDashboard = lazy(() => import('../ResultEscalationDashboard'));
+export const LabResultEntryPanel = lazy(() => import('../LabResultEntryPanel'));
 export const ProviderCoverageDashboard = lazy(() => import('../ProviderCoverageDashboard'));
 
 // Phase 2 Revenue (P4, P7, P8)

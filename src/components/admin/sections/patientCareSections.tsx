@@ -1,0 +1,132 @@
+/**
+ * Patient Care Section Definitions
+ * Extracted from sectionDefinitions.tsx for 600-line compliance (2026-07-23).
+ *
+ * Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.
+ */
+
+import React, { Suspense } from 'react';
+import { DashboardSection } from './types';
+import { SectionLoadingFallback } from './sectionDefinitions';
+import {
+  PatientEngagementDashboard,
+  ProviderAssignmentDashboard,
+  UnacknowledgedResultsDashboard,
+  ProviderTaskQueueDashboard,
+  ResultEscalationDashboard,
+  LabResultEntryPanel,
+  ProviderCoverageDashboard,
+  AdminTransferLogs,
+  ShiftHandoffDashboard,
+  UsersList,
+} from './lazyImports';
+
+export const getPatientCareSections = (): DashboardSection[] => [
+  {
+    id: 'patient-engagement',
+    title: 'Patient Engagement & Risk Assessment',
+    subtitle: 'Monitor senior activity levels to identify at-risk patients',
+    icon: '\uD83D\uDCCA',
+    headerColor: 'text-indigo-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><PatientEngagementDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+  },
+  {
+    id: 'provider-assignment',
+    title: 'Encounter Provider Assignments',
+    subtitle: 'Assign attending, supervising, and consulting providers to clinical encounters',
+    icon: '\uD83D\uDC68\u200D\u2695\uFE0F',
+    headerColor: 'text-blue-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ProviderAssignmentDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse'],
+  },
+  {
+    id: 'unacknowledged-results',
+    title: 'Unacknowledged Results',
+    subtitle: 'Track and acknowledge critical lab and imaging results requiring clinician review',
+    icon: '\uD83D\uDD2C',
+    headerColor: 'text-red-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><UnacknowledgedResultsDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'lab_tech'],
+  },
+  {
+    id: 'provider-task-queue',
+    title: 'Provider Task Queue',
+    subtitle: 'Inbox routing with SLA deadlines, escalation tracking, and task lifecycle management',
+    icon: '\uD83D\uDCCB',
+    headerColor: 'text-orange-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ProviderTaskQueueDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager'],
+  },
+  {
+    id: 'result-escalation',
+    title: 'Result Escalation Rules Engine',
+    subtitle: 'Auto-route abnormal lab values to specialist providers with SLA tracking and audit trail',
+    icon: '\u2695\uFE0F',
+    headerColor: 'text-red-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ResultEscalationDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'lab_tech'],
+  },
+  {
+    id: 'lab-result-entry',
+    title: 'Lab Result Entry',
+    subtitle: 'Manually enter laboratory results \u2014 writes the chart, acknowledgment queue, and escalation engine',
+    icon: '\u2695\uFE0F',
+    headerColor: 'text-[var(--ea-primary)]',
+    component: <Suspense fallback={<SectionLoadingFallback />}><LabResultEntryPanel /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'lab_tech'],
+  },
+  {
+    id: 'provider-coverage',
+    title: 'Provider Coverage & On-Call',
+    subtitle: 'Manage provider absence coverage, on-call rotations, and automatic task routing',
+    icon: '\uD83D\uDD04',
+    headerColor: 'text-[var(--ea-primary)]',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ProviderCoverageDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'physician', 'nurse'],
+  },
+  {
+    id: 'patient-handoff',
+    title: 'Patient Handoff System',
+    subtitle: 'Secure transfer of care between facilities - HIPAA compliant',
+    icon: '\uD83C\uDFE5',
+    headerColor: 'text-[var(--ea-primary)]',
+    component: <Suspense fallback={<SectionLoadingFallback />}><AdminTransferLogs showExportButton={true} /></Suspense>,
+    category: 'patient-care',
+    priority: 'medium',
+  },
+  {
+    id: 'shift-handoff',
+    title: 'Smart Shift Handoff',
+    subtitle: 'AI-assisted nurse shift handoff with auto-scored patient risks and real-time collaboration',
+    icon: '\uD83D\uDD04',
+    headerColor: 'text-blue-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><ShiftHandoffDashboard /></Suspense>,
+    category: 'patient-care',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'nurse', 'charge_nurse'],
+  },
+  {
+    id: 'user-management',
+    title: 'User Management',
+    subtitle: 'Manage patient and staff accounts',
+    icon: '\uD83D\uDC65',
+    headerColor: 'text-gray-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><UsersList /></Suspense>,
+    category: 'patient-care',
+    priority: 'medium',
+  },
+];
