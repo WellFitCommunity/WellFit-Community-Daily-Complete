@@ -80,8 +80,11 @@ export async function fetchCcdaData(
     supabase.from('fhir_conditions').select(CONDITION_COLS).eq('patient_id', userId),
     supabase.from('fhir_procedures').select(PROCEDURE_COLS).eq('patient_id', userId).limit(50),
     supabase.from('fhir_immunizations').select(IMMUNIZATION_COLS).eq('patient_id', userId),
-    supabase.from('fhir_observations').select(OBSERVATION_COLS).eq('patient_id', userId).contains('category', ['vital-signs']).limit(50),
-    supabase.from('lab_results').select(LAB_RESULT_COLS).eq('patient_mrn', userId).limit(50),
+    // Both vital-signs AND laboratory observations (labs were previously invisible:
+    // only vital-signs were exported, and lab_results was filtered by patient_mrn
+    // — a TEXT MRN column — against the auth UUID, matching nothing. L-4, 2026-07-23)
+    supabase.from('fhir_observations').select(OBSERVATION_COLS).eq('patient_id', userId).overlaps('category', ['vital-signs', 'laboratory']).limit(100),
+    supabase.from('lab_results').select(LAB_RESULT_COLS).eq('patient_id', userId).limit(50),
     supabase.from('fhir_care_plans').select(CARE_PLAN_COLS).eq('patient_id', userId).in('status', ['active', 'draft']),
   ]);
 

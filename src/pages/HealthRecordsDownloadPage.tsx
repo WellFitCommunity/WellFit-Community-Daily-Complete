@@ -2,6 +2,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
+import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from '../services/auditLogger';
+import { logPhiAccess } from '../hooks/usePhiAccessLogging';
 
 type RecordType =
   | 'all'
@@ -27,6 +30,7 @@ const HealthRecordsDownloadPage: React.FC = () => {
   const [selectedFormat, setSelectedFormat] = useState<string>('pdf');
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadComplete, setDownloadComplete] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const recordTypes: { id: RecordType; label: string; icon: string }[] = [
     { id: 'all', label: 'All Records', icon: '📋' },
@@ -79,26 +83,8 @@ const HealthRecordsDownloadPage: React.FC = () => {
     }
   };
 
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    setDownloadComplete(false);
-
-    // Simulate download process
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    // Create a mock file download
-    const filename = `health_records_${new Date().toISOString().split('T')[0]}.${selectedFormat === 'fhir' ? 'json' : selectedFormat}`;
-
-    // In production, this would be an actual API call to generate and download the file
-    // For now, we'll just simulate it
-    const mockContent =
-      selectedFormat === 'pdf'
-        ? 'PDF content would be here'
-        : JSON.stringify({ records: selectedRecords, format: selectedFormat }, null, 2);
-
-    const blob = new Blob([mockContent], {
-      type: selectedFormat === 'pdf' ? 'application/pdf' : 'application/json',
-    });
+  const triggerFileDownload = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -107,9 +93,97 @@ const HealthRecordsDownloadPage: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
 
+  /** Flatten a FHIR bundle into simple CSV rows (resource type, date, name, value, status). */
+  const bundleToCsv = (bundle: { entry?: Array<{ resource?: Record<string, unknown> }> }): string => {
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rows = ['Record Type,Date,Name,Value,Status'];
+    for (const entry of bundle.entry ?? []) {
+      const r = entry.resource;
+      if (!r) continue;
+      const code = r.code as { text?: string; coding?: Array<{ display?: string }> } | undefined;
+      const name =
+        code?.text ?? code?.coding?.[0]?.display ??
+        (r.medicationCodeableConcept as { text?: string } | undefined)?.text ??
+        (r.vaccineCode as { text?: string } | undefined)?.text ?? '';
+      const quantity = r.valueQuantity as { value?: number; unit?: string } | undefined;
+      const value = quantity ? `${quantity.value ?? ''} ${quantity.unit ?? ''}`.trim() : '';
+      const date =
+        (r.effectiveDateTime as string | undefined) ??
+        (r.onsetDateTime as string | undefined) ??
+        (r.occurrenceDateTime as string | undefined) ??
+        (r.authoredOn as string | undefined) ?? '';
+      rows.push(
+        [esc(r.resourceType), esc(date), esc(name), esc(value), esc(r.status)].join(',')
+      );
+    }
+    return rows.join('\n');
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    setDownloadComplete(false);
+    setDownloadError(null);
+    const dateStamp = new Date().toISOString().split('T')[0];
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id ?? null;
+      await logPhiAccess({
+        resourceType: 'health_records_export',
+        resourceId: userId,
+        action: 'EXPORT',
+        metadata: { format: selectedFormat },
+      });
+
+      if (selectedFormat === 'pdf') {
+        // Real generator: pdf-health-summary returns print-ready HTML
+        const { data, error } = await supabase.functions.invoke('pdf-health-summary', {});
+        if (error || !data?.html) throw new Error(error?.message ?? 'No document returned');
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(data.html);
+          printWindow.document.close();
+          printWindow.onload = () => printWindow.print();
+        } else {
+          triggerFileDownload(data.html, `my-health-summary-${dateStamp}.html`, 'text/html');
+        }
+      } else if (selectedFormat === 'ccda') {
+        const { data, error } = await supabase.functions.invoke('ccda-export', {});
+        if (error || !data?.xml) throw new Error(error?.message ?? 'No document returned');
+        triggerFileDownload(data.xml, `my-health-record-${dateStamp}.xml`, 'application/xml');
+      } else {
+        // FHIR bundle (also the source for the CSV flattening)
+        const { data, error } = await supabase.functions.invoke('enhanced-fhir-export', {
+          body: { format: 'bundle' },
+        });
+        if (error || !data) throw new Error(error?.message ?? 'No bundle returned');
+
+        if (selectedFormat === 'csv') {
+          triggerFileDownload(bundleToCsv(data), `my-health-records-${dateStamp}.csv`, 'text/csv');
+        } else {
+          triggerFileDownload(
+            JSON.stringify(data, null, 2),
+            `my-health-records-fhir-${dateStamp}.json`,
+            'application/json'
+          );
+        }
+      }
+
+      setDownloadComplete(true);
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'HEALTH_RECORDS_EXPORT_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { format: selectedFormat }
+      );
+      setDownloadError(
+        'We could not prepare your records right now. Please try again, or contact support if this keeps happening.'
+      );
+    }
     setIsDownloading(false);
-    setDownloadComplete(true);
   };
 
   return (
@@ -133,6 +207,17 @@ const HealthRecordsDownloadPage: React.FC = () => {
             <div>
               <div className="font-semibold">Download Complete!</div>
               <div className="text-sm">Your health records have been downloaded.</div>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {downloadError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 rounded-2xl p-4 mb-6 flex items-center gap-3" role="alert">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <div className="font-semibold">Download Failed</div>
+              <div className="text-sm">{downloadError}</div>
             </div>
           </div>
         )}
