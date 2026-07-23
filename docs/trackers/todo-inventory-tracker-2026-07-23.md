@@ -18,7 +18,21 @@ Every TODO in production code was read in context and traced to its callers befo
 | Client handling (verified intact) | `src/components/vitals/VitalCapture.tsx:270` checks `processResult?.error === 'ocr_client_required'` → shows "Image processing is not available. Please enter your numbers manually." and switches to manual entry. Error-code mapping between edge fn and client confirmed end-to-end. |
 | What still works | The live **camera-scan** path uses real client-side Tesseract.js (`src/components/vitals/useCameraScan.ts`; `tesseract.js` is in `package.json`). Nothing is broken. |
 | The actual gap | The **photo-upload → auto-read** feature does not exist server-side. Every upload ends in manual entry. A senior who taps "upload photo" gets a working-but-disappointing dead end. The upload flow also creates a `temp_image_jobs` row + storage upload (`VitalCapture.tsx:235–257`) that serves no purpose if OCR never runs. |
-| Status | **OPEN — needs Maria's product decision (Tier 3: touches an edge function + a user workflow)** |
+| Status | **DONE 2026-07-23 — Option A built, deployed, live-verified.** |
+
+### Resolution (Option A — Maria approved 2026-07-23)
+
+Implemented Claude vision OCR in `process-vital-image` + two latent workflow blockers found and fixed during live verification:
+
+| Change | Detail |
+|---|---|
+| Vision OCR | `performOCR()` now calls Claude (`SONNET_MODEL`, thinking disabled, JSON schema `{readable, display_text, notes}`). The model is a **transcription boundary only** — it reports labeled digits; the existing deterministic physiological-range parsers remain the validation gate. Falls back to `ocr_client_required` when `ANTHROPIC_API_KEY` is absent; vision API failures fail the job gracefully to manual entry (never a raw 500). Rate-limited 10/10min per user. |
+| Parser fix | Removed Tesseract-era char substitutions (S→5, l→1, O→0) from the server parser — they mangled clean labeled transcriptions ("SpO2 98" → "5p02 98" → parsed as 2 → rejected). Whitespace normalization only. Client-side Tesseract parsing (`useCameraScan.ts`) is separate and untouched. |
+| Skill registration | `ai_skills` #66 `vital_image_ocr`, model pinned `claude-sonnet-5`, `patient_description` for HTI-2. Migration `20260723150000`, pushed + live-verified. |
+| **Latent blocker 1 (found in live test)** | `temp_image_jobs` had RLS policy `tenant_id = get_current_tenant_id()` but the client inserts without `tenant_id` → every regular user's job INSERT failed RLS (ONC-1 defect class). Fix: column DEFAULT `get_current_tenant_id()` — migration `20260723151000`, pushed + verified. |
+| **Latent blocker 2 (found in live test)** | `temp_image_jobs` had **no GRANT to authenticated** (§2a class) → 403 before RLS was even evaluated; photo path was broken for all users since creation (20251209200000). Fix: `GRANT SELECT, INSERT, UPDATE` — migration `20260723152000`, pushed; `has_table_privilege` verified true. Sibling table from same migration (`vital_capture_sources`) checked — already granted. |
+
+**Live end-to-end evidence (2026-07-23):** synthetic user (role senior, tenant WF-0001) → uploaded generated BP-display image (user JWT, storage RLS passed) → job INSERT without tenant_id succeeded, `tenant_id` auto-populated to WF-0001 → edge function returned `{success:true, reading:{systolic:142, diastolic:86, pulse:78, confidence:0.9}}` matching the image exactly → job row `status=processed` with `extracted_data` persisted → synthetic user/image/job deleted. Note: the photo path was previously dead for ALL users at the GRANT gate, so the vision OCR is the first time this workflow has ever worked end-to-end.
 
 ### Decision required (pick one)
 
