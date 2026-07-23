@@ -17,15 +17,17 @@ import { CapabilityEnforcer, CapabilityViolationError } from '../CapabilityEnfor
 import { RUNTIME_HEALER_CAPABILITY } from '../guardianCapabilityEnforcer';
 
 function fakeClient() {
+  // Rest params so call sites like .from('profiles').select('id').limit(1)
+  // typecheck — vi.fn(() => builder) infers a ZERO-argument signature (TS2554).
   const builder = {
-    select: vi.fn(() => builder),
-    insert: vi.fn(() => builder),
-    update: vi.fn(() => builder),
-    delete: vi.fn(() => builder),
-    eq: vi.fn(() => builder),
-    limit: vi.fn(() => builder),
+    select: vi.fn((..._args: unknown[]) => builder),
+    insert: vi.fn((..._args: unknown[]) => builder),
+    update: vi.fn((..._args: unknown[]) => builder),
+    delete: vi.fn((..._args: unknown[]) => builder),
+    eq: vi.fn((..._args: unknown[]) => builder),
+    limit: vi.fn((..._args: unknown[]) => builder),
   };
-  return { client: { from: vi.fn(() => builder) }, builder };
+  return { client: { from: vi.fn((..._args: unknown[]) => builder) }, builder };
 }
 
 describe('RUNTIME_HEALER_CAPABILITY', () => {

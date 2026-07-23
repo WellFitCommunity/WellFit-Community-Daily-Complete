@@ -5,7 +5,7 @@
  * wrapDatabaseClient returned the client untouched, or assertEgressAllowed became
  * a no-op). These assert denials/allows and the quarantine escalation, not shape.
  */
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 import {
   CapabilityEnforcer,
   CapabilityViolationError,
@@ -40,19 +40,21 @@ function makeTool(id: string, capabilities: Partial<ToolCapabilities>): ToolMeta
 /** Minimal Supabase-shaped fake: `.from(t)` → builder with select/insert/etc. */
 function makeFakeClient() {
   const calls: string[] = [];
+  // Rest params so call sites like .select('id') / .insert({...}) typecheck —
+  // vi.fn(() => builder) infers a ZERO-argument signature (TS2554 at call sites).
   const builder = {
-    select: vi.fn(() => { calls.push('select'); return builder; }),
-    insert: vi.fn(() => { calls.push('insert'); return builder; }),
-    update: vi.fn(() => { calls.push('update'); return builder; }),
-    delete: vi.fn(() => { calls.push('delete'); return builder; }),
-    eq: vi.fn(() => builder),
+    select: vi.fn((..._args: unknown[]) => { calls.push('select'); return builder; }),
+    insert: vi.fn((..._args: unknown[]) => { calls.push('insert'); return builder; }),
+    update: vi.fn((..._args: unknown[]) => { calls.push('update'); return builder; }),
+    delete: vi.fn((..._args: unknown[]) => { calls.push('delete'); return builder; }),
+    eq: vi.fn((..._args: unknown[]) => builder),
   };
   const from = vi.fn((_table: string) => builder);
   return { client: { from }, from, builder, calls };
 }
 
 describe('CapabilityEnforcer — database table gating', () => {
-  let sink: ReturnType<typeof vi.fn>;
+  let sink: Mock<(v: CapabilityViolation) => void>;
   let violations: CapabilityViolation[];
   let enforcer: CapabilityEnforcer;
 
