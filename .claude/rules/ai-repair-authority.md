@@ -88,6 +88,8 @@ The Guardian Agent (`supabase/functions/guardian-agent/`) is a monitoring and au
 - Send alert emails to admin for critical/high severity events
 - Log health checks to `guardian_cron_log`
 - Mark alerts as resolved after auto-heal (performance category only)
+- **Execute SAFE/TRANSIENT mitigations** to restore service without a code change: retry with backoff, circuit-break a failing dependency, failover to a backup model/endpoint, clear cache, restart connection pools, and toggle a feature flag **OFF** a broken code path (flag-**off** only; turning a flag **on** requires a human). Every mitigation must satisfy the Paper Trail Contract (audit row + `security_alerts` row + `guardian_review_tickets` row). (Option B, ratified 2026-07-23.)
+- **Auto-OPEN a GitHub pull request** via `guardian-pr-service` proposing a code fix (branch + commit + PR body with evidence). **Opening only** — see MAY NOT. (Option B, ratified 2026-07-23.)
 
 ### Guardian MAY NOT
 - Modify database schema or RLS policies
@@ -96,12 +98,13 @@ The Guardian Agent (`supabase/functions/guardian-agent/`) is a monitoring and au
 - Block user accounts (can flag, cannot act)
 - Modify edge function code or deployment
 - Access or modify PHI — Guardian sees aggregate counts only, never patient data
+- **Merge, approve, or deploy any pull request, including its own.** Auto-merge and auto-deploy of AI-authored code remain **Tier-4 forbidden**. Guardian proposes; a human disposes (Maria merges from the GitHub app). (Ratified 2026-07-23.)
 
 ### Guardian Escalation Path
 1. **Detect** — monitoring checks identify anomaly
 2. **Log** — write to `security_alerts` with severity and metadata
 3. **Notify** — email admin for critical/high alerts via `send-email` edge function
-4. **Wait** — Guardian does NOT auto-heal security or compliance issues; only performance issues (`clear cache`, `restart connection pools`) are auto-healable
+4. **Heal or propose** — Guardian may autonomously execute safe/transient mitigations (retry/backoff, circuit-break, failover, clear cache, restart pools, feature-flag OFF) and auto-open a PR for code fixes. It **never merges/deploys code** and **never auto-heals a security or compliance issue** without a human. (Option B, ratified 2026-07-23; supersedes the prior "performance-only" auto-heal scope.)
 
 ---
 

@@ -19,7 +19,7 @@
 
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
@@ -257,7 +257,10 @@ function getChannelsForSeverity(severity: string, escalated: boolean): string[] 
   if (severity === "critical" || escalated) {
     return ["email", "slack", "pagerduty", "sms"];
   } else if (severity === "high") {
-    return ["email", "slack"];
+    // SMS added 2026-07-23 (Maria): email + slack are unconfigured in prod, so
+    // without SMS a HIGH alert reaches nobody. Overnight autonomy (Option B)
+    // requires HIGH to be audible on a phone. See guardian-option-b-autoheal-tracker.md.
+    return ["email", "slack", "sms"];
   }
   return ["email"];
 }
@@ -497,7 +500,7 @@ async function sendSlackNotification(alert: SecurityAlert): Promise<Notification
  * existing in-app notification panel.
  */
 async function sendInternalNotification(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   alert: SecurityAlert
 ): Promise<NotificationResult> {
   // Only route critical/escalated to the in-app panel to avoid noise —
@@ -537,7 +540,7 @@ async function sendInternalNotification(
  * Check and process escalations
  */
 async function checkEscalations(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   logger: ReturnType<typeof createLogger>
 ): Promise<void> {
   try {
