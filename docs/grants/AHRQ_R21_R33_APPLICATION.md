@@ -53,7 +53,7 @@
 - Name: Maria Camacho
 - Title: CEO & Founder
 - Organization: WellFit Community, LLC
-- Email: maria@wellfitcommunity.com
+- Email: maria@thewellfitcommunity.org
 - Phone: (832) 509-4514
 - Effort: 15%
 
@@ -838,4 +838,4 @@ Beyond traditional channels, we will employ:
 
 *AHRQ R21/R33 Application Draft | WellFit Community, LLC*
 *Technology Partner Application - Requires Academic/Non-Profit Lead*
-*For questions: maria@wellfitcommunity.com*
+*For questions: maria@thewellfitcommunity.org*

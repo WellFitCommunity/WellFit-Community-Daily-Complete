@@ -94,7 +94,7 @@ Nobody funds or buys software they can't touch. Every conversation — with Anth
 |---------|--------|
 | **Tenant** | `DEMO-0001` (license digit `0` — shows both products) |
 | **Demo URL** | Your production URL + a `/demo` landing page |
-| **Demo credentials** | A shared login: `demo@wellfitcommunity.com` / simple password |
+| **Demo credentials** | A shared login: `demo@thewellfitcommunity.org` / simple password |
 | **Demo role** | Admin role (so they can see everything) |
 | **Data** | Pre-loaded synthetic patients, check-ins, vitals, care plans, risk scores |
 | **Guardrails** | Read-only where possible. If they can create data, it resets nightly. |
@@ -110,7 +110,7 @@ Built by a superintendent and a nurse using AI. $645 total cost.
 16 MCP servers. 11,726 tests. HIPAA-compliant. ONC certification in progress.
 
 [Log in to Demo]
-Email: demo@wellfitcommunity.com
+Email: demo@thewellfitcommunity.org
 Password: ________
 
 What you'll see:

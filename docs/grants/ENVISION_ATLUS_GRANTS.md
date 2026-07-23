@@ -447,4 +447,4 @@ The combination of **WellFit** (patient engagement) and **Envision Atlus** (clin
 ---
 
 *Envision Atlus Grant Opportunities | WellFit Community, LLC*
-*For questions: maria@wellfitcommunity.com*
+*For questions: maria@thewellfitcommunity.org*

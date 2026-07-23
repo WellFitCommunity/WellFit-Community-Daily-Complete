@@ -1,7 +1,7 @@
 # Patent Specification — Intelligent Healthcare Data Migration with DNA Fingerprinting
 
 > **Applicant:** Envision Virtual Edge Group LLC
-> **Contact:** maria@wellfitcommunity.com
+> **Contact:** maria@thewellfitcommunity.org
 > **Prepared:** 2026-03-10
 > **Classification:** Healthcare Information Technology, Machine Learning, Data Migration, Pattern Recognition
 > **Confidential — Attorney-Client Work Product

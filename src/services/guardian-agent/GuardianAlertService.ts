@@ -220,7 +220,7 @@ export class GuardianAlertService {
       if (!securityTeam || securityTeam.length === 0) return;
 
       const emailService = getEmailService();
-      const baseUrl = import.meta.env.VITE_BASE_URL || 'https://app.wellfitcommunity.com';
+      const baseUrl = import.meta.env.VITE_BASE_URL || 'https://thewellfitcommunity.org';
 
       const severityColors: Record<string, string> = {
         info: '#17a2b8',

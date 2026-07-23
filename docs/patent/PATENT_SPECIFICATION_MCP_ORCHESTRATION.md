@@ -1,7 +1,7 @@
 # Patent Specification — AI-Governed Clinical Orchestration System
 
 > **Applicant:** Envision Virtual Edge Group LLC
-> **Contact:** maria@wellfitcommunity.com
+> **Contact:** maria@thewellfitcommunity.org
 > **Prepared:** 2026-03-10
 > **Classification:** Healthcare Information Technology, Artificial Intelligence, Clinical Decision Support
 > **Confidential — Attorney-Client Work Product**

@@ -162,7 +162,7 @@ WellFit Community, LLC must partner with an eligible lead applicant:
 **Technology Partner:**
 Maria Camacho, CEO
 WellFit Community, LLC
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 (832) 509-4514
 
 ---

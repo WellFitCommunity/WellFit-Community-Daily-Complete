@@ -19,8 +19,6 @@ const ALLOWED_HOSTS = new Set<string>([
   'thewellfitcommunity.org',
   'www.thewellfitcommunity.org',
   // Additional domains
-  'wellfitcommunity.com',
-  'www.wellfitcommunity.com',
   'app.thewellfitcommunity.org',
   'app.wellfitcommunity.live',
   // Development

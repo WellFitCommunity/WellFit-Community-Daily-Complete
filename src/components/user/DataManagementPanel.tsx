@@ -366,8 +366,8 @@ export default function DataManagementPanel() {
           <p className="text-blue-700 text-sm">
             You have the right to access, correct, or delete your personal information at any time.
             For questions about your data or to request corrections, please contact us at{' '}
-            <a href="mailto:privacy@wellfitcommunity.com" className="underline">
-              privacy@wellfitcommunity.com
+            <a href="mailto:info@thewellfitcommunity.org" className="underline">
+              info@thewellfitcommunity.org
             </a>
           </p>
         </div>

@@ -265,8 +265,8 @@ function generateCapabilityStatement(
         {
           name: 'WellFit Support',
           telecom: [
-            { system: 'url', value: 'https://wellfitcommunity.com/support' },
-            { system: 'email', value: 'support@wellfitcommunity.com' },
+            { system: 'url', value: 'https://thewellfitcommunity.org/support' },
+            { system: 'email', value: 'info@thewellfitcommunity.org' },
           ],
         },
       ],

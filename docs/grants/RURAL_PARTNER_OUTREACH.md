@@ -102,7 +102,7 @@
 │                                                                             │
 │  Maria Gonzalez-Smithfield, CEO                                             │
 │  WellFit Community, LLC                                                     │
-│  maria@wellfitcommunity.com                                                 │
+│  maria@thewellfitcommunity.org                                                 │
 │  [Phone Number]                                                             │
 │                                                                             │
 │  "We bring the technology. You bring the patients.                          │
@@ -191,7 +191,7 @@ I would welcome 30 minutes of your time to discuss whether this partnership
 aligns with [Hospital Name]'s strategic priorities. I'm available at your
 convenience and happy to meet in person, by video, or by phone.
 
-Please feel free to contact me directly at [phone] or maria@wellfitcommunity.com.
+Please feel free to contact me directly at [phone] or maria@thewellfitcommunity.org.
 
 Sincerely,
 
@@ -293,7 +293,7 @@ With respect for your important work,
 Maria Gonzalez-Smithfield
 Chief Executive Officer
 WellFit Community, LLC
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 [Phone Number]
 
 P.S. We especially welcome FQHCs serving Health Professional Shortage Areas
@@ -389,7 +389,7 @@ Best regards,
 
 Maria Gonzalez-Smithfield
 CEO, WellFit Community
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 [Phone Number]
 
 P.S. RHCs with Medicare Flex Program experience or prior USDA/HRSA grants
@@ -501,7 +501,7 @@ With respect,
 Maria Gonzalez-Smithfield
 Chief Executive Officer
 WellFit Community, LLC
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 [Phone Number]
 
 P.S. We have experience working with diverse communities and are committed
@@ -589,7 +589,7 @@ Sincerely,
 
 Maria Gonzalez-Smithfield
 CEO, WellFit Community
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 [Phone Number]
 
 Enclosure: Partnership One-Pager for distribution to members
@@ -678,7 +678,7 @@ Respectfully,
 
 Maria Gonzalez-Smithfield
 CEO, WellFit Community
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 [Phone Number]
 ```
 
@@ -712,7 +712,7 @@ Worth a 15-minute call to see if it's a fit?
 Best,
 Maria Gonzalez-Smithfield
 CEO, WellFit Community
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 ```
 
 ---
@@ -927,14 +927,14 @@ it's a good fit. Better to know upfront than waste everyone's time.
 
 Maria Gonzalez-Smithfield
 Chief Executive Officer
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 [Phone Number]
 
 Akima Taylor, RN, BSN
 Clinical Operations Lead
-akima@wellfitcommunity.com
+akima@thewellfitcommunity.org
 
-**Website:** [wellfitcommunity.com]
+**Website:** [thewellfitcommunity.org]
 **Location:** San Antonio, Texas
 
 ---

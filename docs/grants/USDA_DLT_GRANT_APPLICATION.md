@@ -71,7 +71,7 @@ The project will:
 | **Tax ID (EIN)** | [To be provided] |
 | **Address** | San Antonio, Texas |
 | **Contact Person** | Maria Gonzalez-Smithfield, CEO |
-| **Email** | maria@wellfitcommunity.com |
+| **Email** | maria@thewellfitcommunity.org |
 | **Role** | Technology platform, devices, training, support |
 
 ## 1.3 Additional Partners
@@ -647,7 +647,7 @@ Signature: ____________________________ Date: ____________
 
 **WellFit Community Contact:**
 - Maria Gonzalez-Smithfield, CEO
-- maria@wellfitcommunity.com
+- maria@thewellfitcommunity.org
 
 ---
 

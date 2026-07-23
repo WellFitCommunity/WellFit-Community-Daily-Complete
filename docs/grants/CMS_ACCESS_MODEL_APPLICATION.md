@@ -61,7 +61,7 @@ WellFit Community currently serves:
 |-------|-------------|
 | **Name** | Maria Gonzalez-Smithfield |
 | **Title** | Chief Executive Officer |
-| **Email** | maria@wellfitcommunity.com |
+| **Email** | maria@thewellfitcommunity.org |
 | **Phone** | [To be provided] |
 
 ### Clinical Director Contact
@@ -80,7 +80,7 @@ WellFit Community currently serves:
 |-------|-------------|
 | **Name** | Akima Taylor, RN, BSN |
 | **Title** | Clinical Operations Lead |
-| **Email** | akima@wellfitcommunity.com |
+| **Email** | akima@thewellfitcommunity.org |
 | **Phone** | [To be provided] |
 
 ---
@@ -939,12 +939,12 @@ Our AI/ML models operate as:
 
 **Application Contact:**
 Maria Gonzalez-Smithfield, CEO
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 
 **Clinical Contact:**
 Akima Taylor, RN, BSN
 Clinical Operations Lead
-akima@wellfitcommunity.com
+akima@thewellfitcommunity.org
 
 **Technical Contact:**
 [Technical Lead Name]

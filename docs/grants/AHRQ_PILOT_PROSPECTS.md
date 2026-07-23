@@ -448,7 +448,7 @@ I would welcome a 30-minute call to discuss this opportunity and answer any ques
 Best regards,
 Maria Camacho
 CEO, WellFit Community, LLC
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 (832) 509-4514
 
 ---
@@ -483,7 +483,7 @@ I would welcome a call to discuss whether this partnership would benefit [site n
 Best regards,
 Maria Camacho
 CEO, WellFit Community, LLC
-maria@wellfitcommunity.com
+maria@thewellfitcommunity.org
 (832) 509-4514
 
 ---
@@ -527,7 +527,7 @@ maria@wellfitcommunity.com
 ---
 
 *AHRQ R21/R33 Pilot Prospects | WellFit Community, LLC*
-*For questions: maria@wellfitcommunity.com*
+*For questions: maria@thewellfitcommunity.org*
 
 ---
 

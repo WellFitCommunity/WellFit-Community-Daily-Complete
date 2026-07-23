@@ -1,7 +1,7 @@
 # Health Data Assets Strategy — What WellFit / Envision Atlus Can Fund, Sell, and Prove
 
 > **Copyright (c) 2025-2026 Envision Virtual Edge Group LLC. All rights reserved.**
-> Proprietary and confidential. Contact: maria@wellfitcommunity.com
+> Proprietary and confidential. Contact: maria@thewellfitcommunity.org
 
 **Author:** AI Health Analyst (Claude) for Maria LeBlanc, AI Systems Director
 **Date:** 2026-06-23
