@@ -49,13 +49,30 @@ no product gate.
    mints them. **Done:** `generate-api-key` retightened from `['admin','super_admin']` + atlus-gate
    → `['super_admin']` only (the earlier atlus-license gate was the wrong axis), deployed. MCP keys
    already super_admin (route `RequireSuperAdmin` + `create_mcp_key` RPC + section-role enforcement).
-2. **⚑ STILL OPEN — SOC2 / compliance operator-vs-tenant split.** Maria said the SOC2 dashboard is
-   Envision-operator (Layer 1 → super_admin). But some compliance/audit surfaces may be a *tenant's
-   own* view (their SOC2 posture), which is Layer 3. Need the split before gating the `security`
-   category sections: which security/compliance dashboards are operator-only vs tenant-level?
-3. **Enterprise-tier axis:** `tenants.license_tier` is `standard`/`enterprise` (separate from
-   product). Do any features gate on `enterprise` *tier* in addition to the `atlus` *product*?
-   (e.g. API keys = Atlus **and** enterprise-tier only?)
+2. **RESOLVED 2026-07-23 (engineering call, Maria delegated "build gating … all on your own"):
+   the DATA SCOPE decides the layer.** Operator-only (Layer 1 → super_admin): dashboards showing
+   PLATFORM-wide posture — the SOC2 Security Operations suite (incl. Encryption Key Posture),
+   incident-response queue, disaster-recovery, Guardian admin/review surfaces. A white-label
+   tenant must never see platform key posture or cross-tenant telemetry ("parent specifics").
+   Tenant-level (Layer 3, role-gated, both products): the tenant's OWN tenant-scoped views —
+   TenantSecurityDashboard, audit/PHI-access logs, ComplianceDashboard, training compliance
+   (all already tenant-scoped by RLS).
+3. **RESOLVED 2026-07-23 (engineering call): NO tier gating now.** `license_tier` has zero
+   documented feature mapping — inventing tier gates would be product design without product
+   input. `useProductAccess()` must EXPOSE `licenseTier` in its return so a tier gate is
+   one-line-able when Maria defines the packaging; nothing gates on it today. (API keys are
+   already super_admin/operator-only, which supersedes the "Atlus + enterprise" question.)
+
+### Part 1 build spec (next session — decisions above are final, execute without asking)
+1. `src/hooks/useProductAccess.ts`: resolve caller profile → `tenants.licensed_products`
+   (`text[]`) + `license_tier`; return `{ hasAtlus, hasWellfit, products, licenseTier, loading }`.
+2. `DashboardSection` gains `products?: Array<'wellfit'|'atlus'>`; `getSectionsByCategory`
+   filters fail-closed when set; stamp section lists per tables A/B above (C stays unstamped);
+   thread product access through the 5 category components (they already thread `userRole`).
+3. Route gating: `products?` on route config entries for the A/B surfaces; filtered in
+   `RouteRenderer` alongside feature flags.
+4. Edge-fn sweep = follow-up (zero live impact — every tenant currently holds both products;
+   `generate-api-key` is already operator-locked).
 
 ## Notes
 - All current tenants are licensed `['wellfit','atlus']` (both), so this gate has **zero
