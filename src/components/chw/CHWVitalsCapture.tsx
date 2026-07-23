@@ -342,6 +342,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
       onComplete();
     } catch (err: unknown) {
       setError('Failed to save vitals. Please try again.');
+    } finally {
       setLoading(false);
     }
   };

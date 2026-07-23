@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 import { offlineSync } from './specialist-workflow-engine/OfflineDataSync';
 import { FieldVisit, SpecialistAssessment, SpecialistAlert } from './specialist-workflow-engine/types';
 import { encryptPHI } from '../utils/phiEncryptionClient';
+import { auditLogger } from './auditLogger';
 
 // Kiosk-specific types
 export interface KioskSession {
@@ -64,6 +65,45 @@ export interface SDOHData {
 export class CHWService {
   private readonly CHW_SPECIALIST_TYPE = 'CHW';
   private readonly WORKFLOW_TEMPLATE_ID = 'chw-rural-v1';
+  private cachedTenantId: string | null = null;
+
+  /**
+   * Resolve the tenant for writes. Every CHW table (field_visits,
+   * specialist_alerts, specialist_assessments, phi_access_logs) has an RLS
+   * check of tenant_id = get_current_tenant_id() with no column default, so
+   * an insert without tenant_id is rejected. Resolution order: the
+   * authenticated user's profile (cached), then the patient's profile.
+   */
+  private async resolveTenantId(patientId?: string): Promise<string | null> {
+    if (this.cachedTenantId) return this.cachedTenantId;
+
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData?.user?.id;
+    if (userId) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (data?.tenant_id) {
+        this.cachedTenantId = data.tenant_id;
+        return data.tenant_id;
+      }
+    }
+
+    if (patientId) {
+      // Patient-derived tenant is not cached — a kiosk session is not
+      // guaranteed to stay on one patient.
+      const { data } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', patientId)
+        .maybeSingle();
+      if (data?.tenant_id) return data.tenant_id;
+    }
+
+    return null;
+  }
 
   /**
    * Initialize offline sync on service creation
@@ -85,24 +125,32 @@ export class CHWService {
     device_id?: string;
     kiosk_id?: string;
   }): Promise<void> {
+    const tenantId = await this.resolveTenantId(params.patient_id);
+    const { data: authData } = await supabase.auth.getUser();
+
     const auditLog = {
       action: params.action,
       patient_id: params.patient_id,
       visit_id: params.visit_id,
       data_types: params.data_types,
       user_role: 'kiosk_system',
+      user_id: authData?.user?.id ?? null,
+      tenant_id: tenantId,
       device_id: params.device_id || 'unknown',
       kiosk_id: params.kiosk_id,
       timestamp: new Date().toISOString(),
-      ip_address: await this.getClientIP(),
     };
 
-    try {
-      // Log to phi_access_logs table
-      await supabase.from('phi_access_logs').insert(auditLog);
-    } catch {
-      // CRITICAL: If audit logging fails, we should not proceed
-
+    // Supabase does not throw on insert failure — the error comes back on the
+    // result. Checking it is what makes this gate actually fail closed
+    // (phi_access_logs INSERT RLS requires tenant_id = get_current_tenant_id()).
+    const { error } = await supabase.from('phi_access_logs').insert(auditLog);
+    if (error) {
+      await auditLogger.error(
+        'CHW_PHI_AUDIT_INSERT_FAILED',
+        new Error(error.message),
+        { action: params.action, visit_id: params.visit_id, tenant_id: tenantId }
+      );
       throw new Error('Audit logging failed. Cannot proceed with PHI operation for compliance reasons.');
     }
   }
@@ -122,24 +170,23 @@ export class CHWService {
       });
 
       if (error) {
-
+        // Fail closed, but visibly — a dropped RPC here blocks the photo
+        // workflow and should be diagnosable.
+        await auditLogger.warn('CHW_CONSENT_CHECK_FAILED', {
+          consent_type: consentType,
+          error: error.message,
+        });
         return false;
       }
 
       return data === true;
-    } catch {
-
+    } catch (err: unknown) {
+      await auditLogger.warn('CHW_CONSENT_CHECK_FAILED', {
+        consent_type: consentType,
+        error: err instanceof Error ? err.message : String(err),
+      });
       return false;
     }
-  }
-
-  /**
-   * Get client IP address for audit logging
-   */
-  private async getClientIP(): Promise<string> {
-    // In a real implementation, this would come from the server
-    // For kiosk mode, we might get it from a device-specific API
-    return 'kiosk-local';
   }
 
   /**
@@ -152,8 +199,10 @@ export class CHWService {
     locationGPS?: { latitude: number; longitude: number }
   ): Promise<FieldVisit> {
     const visitId = this.generateUUID();
+    const tenantId = await this.resolveTenantId(patientId);
 
-    // Get CHW specialist provider (or create generic kiosk user)
+    // Get CHW specialist provider — the read is tenant-scoped by RLS
+    // (specialist_providers_tenant policy), so no code-side tenant filter.
     const { data: specialist } = await supabase
       .from('specialist_providers')
       .select('id')
@@ -168,6 +217,7 @@ export class CHWService {
 
     const visit: Partial<FieldVisit> = {
       id: visitId,
+      tenant_id: tenantId,
       specialist_id: specialist.id,
       patient_id: patientId,
       visit_type: 'kiosk-check-in',
@@ -201,22 +251,20 @@ export class CHWService {
       return visit as FieldVisit;
     }
 
-    // Try to save to server
-    try {
-      const { data, error } = await supabase
-        .from('field_visits')
-        .insert(visit)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as FieldVisit;
-    } catch {
-      // Fallback to offline storage
-
+    // Try to save to server. The id is generated client-side, so the local
+    // object is the row — no round-trip select needed.
+    const { error } = await supabase.from('field_visits').insert(visit);
+    if (error) {
+      // Offline-first: fall back to local storage, but never silently — an
+      // RLS rejection here looks identical to a network drop unless logged.
+      await auditLogger.error('CHW_FIELD_VISIT_INSERT_FAILED', new Error(error.message), {
+        visit_id: visitId,
+        kiosk_id: kioskId,
+        tenant_id: tenantId,
+      });
       await offlineSync.saveOffline('visits', visit);
-      return visit as FieldVisit;
     }
+    return visit as FieldVisit;
   }
 
   /**
@@ -244,8 +292,15 @@ export class CHWService {
       });
     }
 
-    // Validate vitals and check for critical values
-    const alerts = this.validateVitals(vitalsData);
+    // Validate vitals and check for critical values, then stamp the identity
+    // fields validateVitals cannot know: visit_id (was inserted as '' before,
+    // failing the FK) and tenant_id (required by specialist_alerts RLS).
+    const tenantId = await this.resolveTenantId(visit?.patient_id);
+    const alerts = this.validateVitals(vitalsData).map((alert) => ({
+      ...alert,
+      visit_id: visitId,
+      tenant_id: tenantId,
+    }));
 
     // Update visit data
     const visitUpdate = {
@@ -282,18 +337,31 @@ export class CHWService {
 
       if (visitError) throw visitError;
 
-      // Create alerts if any
+      // Create alerts if any. A failed alert insert is a patient-safety
+      // defect (a critical BP that never reaches a clinician) — log it and
+      // queue the alerts for sync instead of dropping them.
       if (alerts.length > 0) {
         const { error: alertError } = await supabase
           .from('specialist_alerts')
           .insert(alerts);
 
         if (alertError) {
-
+          await auditLogger.error('CHW_ALERT_INSERT_FAILED', new Error(alertError.message), {
+            visit_id: visitId,
+            alert_count: alerts.length,
+            tenant_id: tenantId,
+          });
+          for (const alert of alerts) {
+            await offlineSync.saveOffline('alerts', alert);
+          }
         }
       }
-    } catch {
-
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'CHW_VITALS_SAVE_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { visit_id: visitId }
+      );
       await offlineSync.saveOffline('visits', visitUpdate);
       for (const alert of alerts) {
         await offlineSync.saveOffline('alerts', alert);
@@ -415,8 +483,12 @@ export class CHWService {
           timestamp: photo.timestamp
         });
       }
-    } catch {
-
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'CHW_MEDICATION_PHOTO_SAVE_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { visit_id: visitId, photo_count: encryptedPhotos.length }
+      );
       await offlineSync.saveOffline('visits', photoData);
       for (const photo of encryptedPhotos) {
         await offlineSync.saveOffline('photos', {
@@ -444,10 +516,12 @@ export class CHWService {
   ): Promise<void> {
     // Calculate risk score
     const riskScore = this.calculateSDOHRiskScore(sdohData);
+    const tenantId = await this.resolveTenantId();
 
     const assessmentId = this.generateUUID();
     const assessment: Partial<SpecialistAssessment> = {
       id: assessmentId,
+      tenant_id: tenantId,
       visit_id: visitId,
       assessment_type: 'SDOH_PRAPARE',
       template_id: 'prapare',
@@ -460,8 +534,11 @@ export class CHWService {
       created_at: new Date()
     };
 
-    // Create alerts for high-risk SDOH issues
-    const alerts = this.generateSDOHAlerts(visitId, sdohData);
+    // Create alerts for high-risk SDOH issues (tenant-stamped for RLS)
+    const alerts = this.generateSDOHAlerts(visitId, sdohData).map((alert) => ({
+      ...alert,
+      tenant_id: tenantId,
+    }));
 
     // Save offline-first
     if (!navigator.onLine) {
@@ -502,8 +579,12 @@ export class CHWService {
           updated_at: new Date()
         })
         .eq('id', visitId);
-    } catch {
-
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'CHW_SDOH_SAVE_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { visit_id: visitId, assessment_id: assessmentId, tenant_id: tenantId }
+      );
       await offlineSync.saveOffline('assessments', assessment);
       for (const alert of alerts) {
         await offlineSync.saveOffline('alerts', alert);
@@ -558,8 +639,12 @@ export class CHWService {
         .eq('id', visitId);
 
       if (error) throw error;
-    } catch {
-
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'CHW_VISIT_COMPLETE_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { visit_id: visitId }
+      );
       await offlineSync.saveOffline('visits', visitUpdate);
     }
   }
@@ -775,39 +860,51 @@ export class CHWService {
     kiosk_id?: string;
   }): Promise<void> {
     try {
+      const tenantId = await this.resolveTenantId(params.patient_id);
+      const { data: authData } = await supabase.auth.getUser();
+
+      // Mapped to the live security_events schema: description is NOT NULL,
+      // and patient/visit/kiosk context lives in metadata (the table has no
+      // dedicated columns for them). The old shape failed on every insert.
       const { error } = await supabase
         .from('security_events')
         .insert({
           event_type: params.event_type,
           severity: params.severity,
-          patient_id: params.patient_id,
-          visit_id: params.visit_id,
-          details: params.details || {},
-          kiosk_id: params.kiosk_id,
-          user_role: 'kiosk_system',
-          ip_address: await this.getClientIP(),
-          created_at: new Date()
+          description: `CHW kiosk security event: ${params.event_type}`,
+          tenant_id: tenantId,
+          actor_user_id: authData?.user?.id ?? null,
+          detected_by: 'chw_kiosk',
+          metadata: {
+            patient_id: params.patient_id,
+            visit_id: params.visit_id,
+            kiosk_id: params.kiosk_id,
+            user_role: 'kiosk_system',
+            ...(params.details || {}),
+          },
         });
 
       if (error) {
-        // DB logging failed - silently fail to not block user workflow
-        // Security events are logged best-effort only
+        // Best-effort by design (never block the kiosk flow), but the
+        // failure itself must be visible.
+        await auditLogger.warn('CHW_SECURITY_EVENT_LOG_FAILED', {
+          event_type: params.event_type,
+          error: error.message,
+        });
       }
-    } catch {
-      // Silent fail - don't block user flow for logging failures
-
+    } catch (err: unknown) {
+      await auditLogger.warn('CHW_SECURITY_EVENT_LOG_FAILED', {
+        event_type: params.event_type,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
   /**
-   * Generate UUID
+   * Generate UUID (crypto-backed; Math.random is not collision-safe for row IDs)
    */
   private generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
+    return crypto.randomUUID();
   }
 }
 

@@ -23,6 +23,19 @@ interface CHWServicePrivate {
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     from: vi.fn(),
+    auth: {
+      // Kiosk-style session: no authenticated user; tenant resolution falls
+      // through to the patient's profile (or null).
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    },
+  },
+}));
+
+vi.mock('../auditLogger', () => ({
+  auditLogger: {
+    error: vi.fn().mockResolvedValue(undefined),
+    warn: vi.fn().mockResolvedValue(undefined),
+    info: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -491,7 +504,8 @@ describe('CHWService', () => {
       // Mock supabase to provide select and insert methods for offline scenario
       const mockSelect = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null })
+          single: vi.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
         })
       });
 
@@ -526,7 +540,8 @@ describe('CHWService', () => {
 
       const mockSelect = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null })
+          single: vi.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
         })
       });
 

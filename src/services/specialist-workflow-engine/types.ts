@@ -154,6 +154,7 @@ export interface SpecialistProvider {
 
 export interface FieldVisit {
   id: string;
+  tenant_id?: string | null;
   specialist_id: string;
   patient_id: string;
   visit_type: string;
@@ -178,6 +179,7 @@ export interface FieldVisit {
 
 export interface SpecialistAssessment {
   id: string;
+  tenant_id?: string | null;
   visit_id: string;
   assessment_type: string;
   template_id: string;
@@ -192,6 +194,7 @@ export interface SpecialistAssessment {
 
 export interface SpecialistAlert {
   id: string;
+  tenant_id?: string | null;
   visit_id: string;
   alert_rule_id: string;
   severity: SeverityLevel;

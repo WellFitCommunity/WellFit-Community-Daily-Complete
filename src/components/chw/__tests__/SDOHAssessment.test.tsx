@@ -408,6 +408,58 @@ describe('SDOHAssessment - Question selection', () => {
         );
       });
     });
+
+    it('submits safety_concerns=true when the patient does NOT feel safe (answer is inverted)', async () => {
+      // The question asks "Do you feel safe?" — answering No means a safety
+      // concern EXISTS. The service alerts on safety_concerns === true, so the
+      // submission must invert the raw answer. Regression guard for the
+      // inverted-alert bug fixed 2026-07-23.
+      (chwService.recordSDOHAssessment as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+
+      render(<SDOHAssessment {...mockProps} />);
+
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
+
+      fireEvent.click(screen.getByText(/Complete Assessment/i));
+
+      await waitFor(() => {
+        expect(chwService.recordSDOHAssessment).toHaveBeenCalledWith(
+          'visit-123',
+          expect.objectContaining({ safety_concerns: true })
+        );
+      });
+    });
+
+    it('submits the canonical isolation value, not the localized label', async () => {
+      // The service risk scorer compares against 'always'/'often' — persisting
+      // the display string ('Always', 'Siempre') silently broke scoring.
+      (chwService.recordSDOHAssessment as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+
+      render(<SDOHAssessment {...mockProps} />);
+
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^Always$/i }));
+
+      fireEvent.click(screen.getByText(/Complete Assessment/i));
+
+      await waitFor(() => {
+        expect(chwService.recordSDOHAssessment).toHaveBeenCalledWith(
+          'visit-123',
+          expect.objectContaining({ social_isolation_frequency: 'always' })
+        );
+      });
+    });
   });
 
   describe('Accessibility', () => {

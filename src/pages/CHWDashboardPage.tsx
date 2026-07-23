@@ -25,15 +25,23 @@ import AdminHeader from '../components/admin/AdminHeader';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
 import NurseQuestionManager from '../components/admin/NurseQuestionManager';
 import RiskAssessmentManager from '../components/admin/RiskAssessmentManager';
+import { chwService } from '../services/chwService';
+import { auditLogger } from '../services/auditLogger';
 
 interface CHWStats {
   totalVisitsToday: number;
   vitalsRecorded: number;
   sdohAssessments: number;
-  medicationPhotos: number;
   pendingSync: number;
-  patientsAtRisk: number;
-  scheduledVisits: number;
+  openAlerts: number;
+}
+
+interface ScheduledVisit {
+  id: string;
+  patient_id: string;
+  patient_name: string;
+  visit_type: string;
+  scheduled_at: string | null;
 }
 
 const CHWDashboardPage: React.FC = () => {
@@ -42,11 +50,10 @@ const CHWDashboardPage: React.FC = () => {
     totalVisitsToday: 0,
     vitalsRecorded: 0,
     sdohAssessments: 0,
-    medicationPhotos: 0,
     pendingSync: 0,
-    patientsAtRisk: 0,
-    scheduledVisits: 0,
+    openAlerts: 0,
   });
+  const [scheduledVisits, setScheduledVisits] = useState<ScheduledVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -62,44 +69,89 @@ const CHWDashboardPage: React.FC = () => {
     };
   }, []);
 
-  // Load stats
+  // Load stats — all counts are CHW-scoped (field_visits / specialist_* tables),
+  // not proxies over unrelated community tables.
   const loadStats = useCallback(async () => {
     try {
-      // Get today's date range
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      // Get vitals recorded today
-      const { count: vitalsCount } = await supabase
-        .from('health_data')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', todayISO);
+      const [visitsRes, vitalsRes, sdohRes, alertsRes, syncStatus] = await Promise.all([
+        supabase
+          .from('field_visits')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', todayISO),
+        supabase
+          .from('field_visits')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', todayISO)
+          .gte('current_step', 2),
+        supabase
+          .from('specialist_assessments')
+          .select('id', { count: 'exact', head: true })
+          .eq('assessment_type', 'SDOH_PRAPARE')
+          .gte('created_at', todayISO),
+        supabase
+          .from('specialist_alerts')
+          .select('id', { count: 'exact', head: true })
+          .eq('resolved', false),
+        chwService.getSyncStatus(),
+      ]);
 
-      // Get SDOH assessments
-      const { count: sdohCount } = await supabase
-        .from('questionnaire_responses')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', todayISO);
-
-      // Get at-risk patients (those with high SDOH flags or missed check-ins)
-      const { count: riskCount } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'senior')
-        .eq('is_active', true);
-
+      const pending = syncStatus.pending;
       setStats({
-        totalVisitsToday: (vitalsCount || 0) + (sdohCount || 0),
-        vitalsRecorded: vitalsCount || 0,
-        sdohAssessments: sdohCount || 0,
-        medicationPhotos: 0, // Would query medication_photos table
-        pendingSync: 0, // Would check IndexedDB
-        patientsAtRisk: Math.min(riskCount || 0, 5), // Cap for demo
-        scheduledVisits: 3, // Would come from scheduling system
+        totalVisitsToday: visitsRes.count ?? 0,
+        vitalsRecorded: vitalsRes.count ?? 0,
+        sdohAssessments: sdohRes.count ?? 0,
+        openAlerts: alertsRes.count ?? 0,
+        pendingSync:
+          pending.visits + pending.assessments + pending.photos + pending.alerts,
       });
-    } catch {
-      // Stats will show zeros
+
+      // Today's scheduled visits (real rows, not demo fixtures)
+      const { data: visits, error: visitsError } = await supabase
+        .from('field_visits')
+        .select('id, patient_id, visit_type, scheduled_at')
+        .eq('status', 'scheduled')
+        .gte('scheduled_at', todayISO)
+        .order('scheduled_at', { ascending: true })
+        .limit(20);
+
+      if (visitsError) throw new Error(visitsError.message);
+
+      const patientIds = [...new Set((visits ?? []).map((v) => v.patient_id))];
+      let nameByPatient = new Map<string, string>();
+      if (patientIds.length > 0) {
+        // Separate query rather than an embed: field_visits carries multiple
+        // patient_id relationships, so PostgREST embedding is ambiguous.
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', patientIds);
+        nameByPatient = new Map(
+          (profiles ?? []).map((p) => [
+            p.user_id,
+            [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown patient',
+          ])
+        );
+      }
+
+      setScheduledVisits(
+        (visits ?? []).map((v) => ({
+          id: v.id,
+          patient_id: v.patient_id,
+          patient_name: nameByPatient.get(v.patient_id) ?? 'Unknown patient',
+          visit_type: v.visit_type,
+          scheduled_at: v.scheduled_at,
+        }))
+      );
+    } catch (err: unknown) {
+      await auditLogger.error(
+        'CHW_DASHBOARD_STATS_LOAD_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { page: 'CHWDashboardPage' }
+      );
     } finally {
       setLoading(false);
     }
@@ -155,37 +207,19 @@ const CHWDashboardPage: React.FC = () => {
       color: 'bg-teal-500',
       hoverColor: 'hover:bg-teal-600',
     },
-  ];
-
-  const impactMetrics = [
     {
-      label: 'Readmission Prevention',
-      value: '32%',
-      description: 'Reduction via CHW touchpoints',
-      icon: '🏥',
-    },
-    {
-      label: 'SDOH Flags Identified',
-      value: '47',
-      description: 'Food, housing, transport issues',
-      icon: '🚨',
-    },
-    {
-      label: 'Clinic Connections',
-      value: '89%',
-      description: 'Patients connected to PCP',
-      icon: '🔗',
-    },
-    {
-      label: 'Medication Adherence',
-      value: '+18%',
-      description: 'Improvement with CHW support',
-      icon: '💊',
+      id: 'public-health',
+      title: 'Public Health Reporting',
+      description: 'Immunization registry, surveillance, eCR',
+      icon: '🌐',
+      path: '/public-health',
+      color: 'bg-indigo-500',
+      hoverColor: 'hover:bg-indigo-600',
     },
   ];
 
   return (
-    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'community_health_worker', 'chw', 'case_manager', 'clinical_supervisor']}>
+    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'community_health_worker', 'chw', 'case_manager']}>
       <div className="min-h-screen bg-gray-50">
         <AdminHeader title="CHW Command Center" showRiskAssessment={false} />
 
@@ -268,8 +302,8 @@ const CHWDashboardPage: React.FC = () => {
                     <span className="text-2xl">⚠️</span>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-orange-600">{stats.patientsAtRisk}</div>
-                    <div className="text-sm text-gray-500">At-Risk Patients</div>
+                    <div className="text-2xl font-bold text-orange-600">{stats.openAlerts}</div>
+                    <div className="text-sm text-gray-500">Open Alerts</div>
                   </div>
                 </div>
               </div>
@@ -295,77 +329,49 @@ const CHWDashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Impact Metrics - Shows value to Methodist */}
-            <div className="bg-teal-50 rounded-xl border border-teal-200 p-6">
-              <h2 className="text-lg font-semibold text-teal-900 mb-2 flex items-center gap-2">
-                <span>📈</span> Community-to-Clinical Impact
-              </h2>
-              <p className="text-teal-700 text-sm mb-4">
-                How CHW touchpoints reduce hospital readmissions and improve outcomes
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {impactMetrics.map((metric, idx) => (
-                  <div key={idx} className="bg-white rounded-lg p-4 border border-teal-200 shadow-sm">
-                    <div className="text-2xl mb-2">{metric.icon}</div>
-                    <div className="text-2xl font-bold text-teal-700">{metric.value}</div>
-                    <div className="text-sm font-medium text-gray-900">{metric.label}</div>
-                    <div className="text-xs text-gray-500 mt-1">{metric.description}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Scheduled Visits */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <span>📅</span> Today's Scheduled Visits
                 </h2>
-                <span className="text-sm text-gray-500">{stats.scheduledVisits} visits remaining</span>
+                <span className="text-sm text-gray-500">{scheduledVisits.length} scheduled</span>
               </div>
               <div className="space-y-3">
-                {/* Demo visit items */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 font-medium">JD</div>
-                    <div>
-                      <div className="text-gray-900 font-medium">John Doe</div>
-                      <div className="text-sm text-gray-500">Post-discharge follow-up - CHF</div>
+                {scheduledVisits.length === 0 && (
+                  <p className="text-sm text-gray-500">No visits scheduled for today.</p>
+                )}
+                {scheduledVisits.map((visit) => (
+                  <div
+                    key={visit.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 font-medium">
+                        {visit.patient_name
+                          .split(' ')
+                          .map((part) => part[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-gray-900 font-medium">{visit.patient_name}</div>
+                        <div className="text-sm text-gray-500">{visit.visit_type}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-900">
+                        {visit.scheduled_at
+                          ? new Date(visit.scheduled_at).toLocaleTimeString([], {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })
+                          : 'Unscheduled'}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-900">10:30 AM</div>
-                    <div className="text-xs text-gray-500">Home Visit</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-600 font-medium">MS</div>
-                    <div>
-                      <div className="text-gray-900 font-medium">Maria Santos</div>
-                      <div className="text-sm text-gray-500">SDOH screening - Transportation needs</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-900">1:00 PM</div>
-                    <div className="text-xs text-gray-500">Community Center</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center text-orange-600 font-medium">RJ</div>
-                    <div>
-                      <div className="text-gray-900 font-medium">Robert Johnson</div>
-                      <div className="text-sm text-orange-600">Medication reconciliation - High risk</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-900">3:30 PM</div>
-                    <div className="text-xs text-gray-500">Senior Center</div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 

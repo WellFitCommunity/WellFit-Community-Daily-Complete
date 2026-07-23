@@ -773,6 +773,16 @@ export const chwRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'nurse', 'community_health_worker', 'chw'],
     category: 'chw',
   },
+  {
+    // CHW + Public Health lane: registry submissions (immunization, syndromic
+    // surveillance, eCR) get a first-class route instead of living only as a
+    // tab inside Clinical Quality.
+    path: '/public-health',
+    component: 'PublicHealthReportingDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'physician', 'nurse', 'case_manager', 'community_health_worker', 'chw'],
+    category: 'chw',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -24,8 +24,7 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSkip = () => {}
 }) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, boolean | string>>({});
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -143,7 +142,7 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
     if (answers.transportation_barrier === true) score += 1;
     if (answers.utility_shutoff_threat === true) score += 2;
     if (answers.safety_concerns === false) score += 2; // Not feeling safe is high risk
-    if (answers.social_isolation_frequency === t.always || answers.social_isolation_frequency === t.often) score += 1;
+    if (answers.social_isolation_frequency === 'always' || answers.social_isolation_frequency === 'often') score += 1;
     return Math.min(score, 10);
   };
 
@@ -166,14 +165,21 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
 
     try {
       const sdohData: SDOHData = {
-        food_worry: answers.food_worry,
-        food_insecurity: answers.food_insecurity,
-        housing_status: answers.housing_status,
-        housing_worry: answers.housing_worry,
-        transportation_barrier: answers.transportation_barrier,
-        utility_shutoff_threat: answers.utility_shutoff_threat,
-        safety_concerns: answers.safety_concerns,
-        social_isolation_frequency: answers.social_isolation_frequency,
+        food_worry: answers.food_worry === true,
+        food_insecurity: answers.food_insecurity === true,
+        housing_status:
+          typeof answers.housing_status === 'string' ? answers.housing_status : undefined,
+        housing_worry: answers.housing_worry === true,
+        transportation_barrier: answers.transportation_barrier === true,
+        utility_shutoff_threat: answers.utility_shutoff_threat === true,
+        // The question asks "Do you feel safe?" — answering NO is the safety
+        // concern. SDOHData.safety_concerns means "a concern exists", and the
+        // service alerts on true, so the answer must be inverted here.
+        safety_concerns: answers.safety_concerns === false,
+        social_isolation_frequency:
+          typeof answers.social_isolation_frequency === 'string'
+            ? answers.social_isolation_frequency
+            : undefined,
         notes: notes || undefined,
         assessed_at: new Date().toISOString()
       };
@@ -319,17 +325,26 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
               <div className="mb-8">
                 <label className="block text-2xl text-gray-800 mb-4 font-medium">{t.isolationQuestion}</label>
                 <div className="space-y-3">
-                  {[t.never, t.rarely, t.sometimes, t.often, t.always].map(option => (
+                  {/* Store the canonical value, render the localized label —
+                      the service risk scorer compares against 'often'/'always',
+                      so persisting display strings broke isolation scoring. */}
+                  {([
+                    ['never', t.never],
+                    ['rarely', t.rarely],
+                    ['sometimes', t.sometimes],
+                    ['often', t.often],
+                    ['always', t.always],
+                  ] as const).map(([value, label]) => (
                     <button
-                      key={option}
-                      onClick={() => handleAnswer('social_isolation_frequency', option)}
+                      key={value}
+                      onClick={() => handleAnswer('social_isolation_frequency', value)}
                       className={`w-full text-left text-xl font-bold py-5 px-6 rounded-xl transition-all ${
-                        answers.social_isolation_frequency === option
+                        answers.social_isolation_frequency === value
                           ? 'bg-indigo-600 text-white selected'
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                     >
-                      {option}
+                      {label}
                     </button>
                   ))}
                 </div>

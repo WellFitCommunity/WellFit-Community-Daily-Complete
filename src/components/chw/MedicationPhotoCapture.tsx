@@ -165,9 +165,10 @@ export const MedicationPhotoCapture: React.FC<MedicationPhotoCaptureProps> = ({
       await chwService.photoMedicationReconciliation(visitId, photos);
       onComplete();
     } catch (err: unknown) {
-      setError('Failed to save photos. Data saved offline and will sync when connection is restored.');
-      // Still proceed since we save offline
-      setTimeout(() => onComplete(), 2000);
+      // The service throws BEFORE saving anything when the visit is missing,
+      // consent is absent, or the PHI audit gate fails — so nothing was saved,
+      // offline or otherwise. Do not advance the workflow past a compliance gate.
+      setError(err instanceof Error ? err.message : 'Failed to save photos. Please try again.');
     } finally {
       setLoading(false);
     }

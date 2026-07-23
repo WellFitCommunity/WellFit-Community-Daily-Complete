@@ -38,6 +38,7 @@ import {
   UserCheck,
   LayoutGrid,
   BarChart3,
+  Globe,
 } from 'lucide-react';
 
 interface AdminHeaderProps {
@@ -138,7 +139,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 
     if (isCHWRole) {
       return [
-        { label: 'CHW Dashboard', path: '/chw-dashboard', icon: Activity, show: true },
+        { label: 'CHW Dashboard', path: '/chw/dashboard', icon: Activity, show: true },
+        { label: 'Public Health', path: '/public-health', icon: Globe, show: true },
         { label: 'Readmission Prevention', path: '/community-readmission', icon: Heart, show: true, methodist: true },
         { label: 'Care Coordination', path: '/care-coordination', icon: Users, show: true },
       ];

@@ -39,8 +39,12 @@ const Dashboard: React.FC = () => {
         const physicianRoleCodes = [5, 9]; // Physician(5), PA(9)
 
         // Care coordination roles - route to nurse dashboard (similar workflows)
-        const careCoordinationRoles = ['case_manager', 'social_worker', 'community_health_worker', 'chw'];
-        const careCoordinationRoleCodes = [14, 15, 17, 18]; // Case_manager(14), Social_worker(15), CHW(17, 18)
+        const careCoordinationRoles = ['case_manager', 'social_worker'];
+        const careCoordinationRoleCodes = [14, 15]; // Case_manager(14), Social_worker(15)
+
+        // CHW roles get their own lane (community/public health), not the nurse suite
+        const chwRoles = ['community_health_worker', 'chw'];
+        const chwRoleCodes = [17, 18]; // Community_health_worker(17), CHW(18)
 
         // IT Admin routes to admin dashboard
         const itAdminRoles = ['it_admin'];
@@ -81,9 +85,15 @@ const Dashboard: React.FC = () => {
           return;
         }
 
-        // Care coordination roles (Case Manager, Social Worker, CHW) use nurse dashboard
+        // Care coordination roles (Case Manager, Social Worker) use nurse dashboard
         if (careCoordinationRoles.includes(role) || careCoordinationRoleCodes.includes(roleCode)) {
           navigate('/nurse-dashboard', { replace: true });
+          return;
+        }
+
+        // CHW roles land on the CHW Command Center, not the nurse dashboard
+        if (chwRoles.includes(role) || chwRoleCodes.includes(roleCode)) {
+          navigate('/chw/dashboard', { replace: true });
           return;
         }
 

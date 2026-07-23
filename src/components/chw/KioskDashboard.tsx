@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { chwService } from '../../services/chwService';
+import { auditLogger } from '../../services/auditLogger';
 
 interface SyncResult {
   visits: number;
@@ -32,6 +33,19 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncing, setSyncing] = useState(false);
   const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const loadSyncStatus = React.useCallback(async () => {
+    try {
+      const status = await chwService.getSyncStatus();
+      setSyncStatus(status);
+    } catch (err: unknown) {
+      await auditLogger.warn('CHW_KIOSK_SYNC_STATUS_FAILED', {
+        kiosk_id: kioskId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }, [kioskId]);
 
   useEffect(() => {
     // Update online status
@@ -52,30 +66,27 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
       window.removeEventListener('offline', handleOffline);
       clearInterval(interval);
     };
-  }, []);
-
-  const loadSyncStatus = async () => {
-    try {
-      const status = await chwService.getSyncStatus();
-      setSyncStatus(status);
-    } catch (err: unknown) {
-
-    }
-  };
+  }, [loadSyncStatus]);
 
   const handleManualSync = async () => {
     if (!isOnline) {
-      alert('Cannot sync while offline. Please check your internet connection.');
+      setSyncError('Cannot sync while offline. Please check your internet connection.');
       return;
     }
 
     setSyncing(true);
+    setSyncError(null);
     try {
       const result = await chwService.syncOfflineData();
       setLastSyncResult(result);
       await loadSyncStatus();
     } catch (err: unknown) {
-
+      setSyncError('Sync failed. Data remains safely stored on this device.');
+      await auditLogger.error(
+        'CHW_KIOSK_MANUAL_SYNC_FAILED',
+        err instanceof Error ? err : new Error(String(err)),
+        { kiosk_id: kioskId }
+      );
     } finally {
       setSyncing(false);
     }
@@ -205,6 +216,12 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
               {syncing ? 'Syncing...' : 'Sync Now'}
             </button>
           </div>
+
+          {syncError && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert">
+              <p className="text-red-800 font-medium">{syncError}</p>
+            </div>
+          )}
 
           {/* Last sync result */}
           {lastSyncResult && (
