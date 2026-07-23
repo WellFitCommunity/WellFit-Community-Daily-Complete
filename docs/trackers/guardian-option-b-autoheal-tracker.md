@@ -49,13 +49,22 @@ A healing action with no paper trail is a DEFECT, same class as a silent catch b
 
 | Check | Result |
 |---|---|
-| `SECURITY_ALERT_PHONES` secret | **SET this session** to Maria+Akima numbers (was absent). Not yet live-tested (real SMS send pending Maria's OK). |
+| `SECURITY_ALERT_PHONES` secret | **SET this session** to Maria+Akima numbers (was absent). |
+| **SMS channel live-test** | ✅ **PASSED 2026-07-23.** Synthetic `critical` alert → `security-alert-processor` → `{channel:"sms",success:true}`; **Maria confirmed she received the text.** Overnight SMS channel is proven. Synthetic alert + its in-app notification deleted afterward (0 synthetic rows remain). |
 | Twilio secrets | All present (`TWILIO_MESSAGING_SERVICE_SID` etc.). |
 | `security-alert-processor` deployed | ACTIVE v37, cron `* * * * *` active. |
 | Monitoring cron alive | YES — `guardian-automated-monitoring` last ran **2026-07-23 07:15** (`guardian_cron_log`). |
 | Ticket RPCs in `pg_proc` | All 3 present: `create_guardian_review_ticket`, `approve_guardian_ticket`, `reject_guardian_ticket`. |
 | `security_alerts` last 24h | 0 rows — quiet, not broken (monitoring is firing; nothing tripped). |
 | **`guardian-pr-service`** | ⚠️ **CRITICAL FINDING — see below. The tracker's premise ("does not exist") was WRONG.** |
+
+### ⚠️ Session 0 finding #2 (lower severity): HIGH-severity alerts have NO working delivery channel
+
+Surfaced by the SMS test. `getChannelsForSeverity` routes: **critical** → email+slack+pagerduty+**sms**; **high** → email+slack only; else → email. In this environment **email is unconfigured** (MailerSend — "Email not configured") and **slack is not connected**. So:
+- **critical** alerts DO get through — via **SMS** (proven) + the internal in-app "pagerduty" notification (`security_notifications` row). ✅
+- **high** alerts currently reach **nobody** — both their channels are down.
+
+The SMS test incidentally processed 2 stale Dec-2025 `high` Guardian `type_mismatch` alerts that were still `notification_sent=false` (the every-minute cron would have marked them within 60s anyway — left as-is, that is their stable state; no SMS went out for them since high has no SMS route). **Decision for Maria (feeds Option B):** for overnight autonomy, either (a) add SMS to the `high` channel set, (b) guarantee overnight-actionable events are classified `critical`, or (c) configure email/slack. Until then, only `critical` is audible overnight. **Not blocking** the build, but the autonomy design must not rely on `high` reaching anyone.
 
 ### 🚨 Session 0 blocker: orphaned, unauthenticated, merge-capable `guardian-pr-service` is LIVE
 
@@ -82,6 +91,12 @@ Maria chose to KEEP the feature (Guardian opens a PR; she reviews+merges from th
 - **Live-verified post-deploy:** no-secret → 401; `merge_pr` + valid secret → 400 "Unknown or unsupported action"; `get_pr_status` + valid secret → reaches GitHub (token intact).
 
 **Impact on Session 3:** the PR-creation service now EXISTS, hardened, in the repo. Session 3 shrinks from "rebuild from scratch" to "adapt the existing hardened function to the Paper Trail Contract + (optionally) migrate PAT→GitHub App." The GitHub App migration is now a *hardening nicety*, not a prerequisite — the PAT + in-code secret gate is an acceptable posture. Re-scope Session 3 when reached.
+
+---
+
+### Session 0 verdict
+
+**COMPLETE. Ground is solid for the Option B build**, with two findings recorded above: (1) the merge-capable orphan — RESOLVED (hardened in place); (2) high-severity delivery gap — noted, a design input for Option B, not a blocker. SMS overnight channel proven live. Monitoring cron + ticket RPCs verified. Next: Session 1 (governance edit needs Maria's wording sign-off, then capability enforcement).
 
 ---
 
