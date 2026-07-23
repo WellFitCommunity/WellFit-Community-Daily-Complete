@@ -45,6 +45,35 @@ A healing action with no paper trail is a DEFECT, same class as a silent catch b
 
 ---
 
+## Session 0 — RESULTS (2026-07-23)
+
+| Check | Result |
+|---|---|
+| `SECURITY_ALERT_PHONES` secret | **SET this session** to Maria+Akima numbers (was absent). Not yet live-tested (real SMS send pending Maria's OK). |
+| Twilio secrets | All present (`TWILIO_MESSAGING_SERVICE_SID` etc.). |
+| `security-alert-processor` deployed | ACTIVE v37, cron `* * * * *` active. |
+| Monitoring cron alive | YES — `guardian-automated-monitoring` last ran **2026-07-23 07:15** (`guardian_cron_log`). |
+| Ticket RPCs in `pg_proc` | All 3 present: `create_guardian_review_ticket`, `approve_guardian_ticket`, `reject_guardian_ticket`. |
+| `security_alerts` last 24h | 0 rows — quiet, not broken (monitoring is firing; nothing tripped). |
+| **`guardian-pr-service`** | ⚠️ **CRITICAL FINDING — see below. The tracker's premise ("does not exist") was WRONG.** |
+
+### 🚨 Session 0 blocker: orphaned, unauthenticated, merge-capable `guardian-pr-service` is LIVE
+
+The tracker (and the 46-day-old memory) said `guardian-pr-service` was deleted in GRD-8. **Half true:** GRD-8 (commit `50ca085d`) removed the *source from the repo*, but the *deployed edge function was never undeployed.* It is live right now:
+
+- **Deployed & ACTIVE**, version 46, last updated 2026-03-28. Not in the repo — a source-less production function (deploy/repo drift, the exact class the governance warns about).
+- Exposes three actions: `create_pr`, `get_pr_status`, **`merge_pr`**.
+- **`merge_pr` merges straight to `main`** (`PUT /pulls/{n}/merge`, `merge_method: squash`) with **no approval gate, no test gate, no JWT, no role check** — the ONLY gate is a CORS origin check. CORS is not an auth boundary for non-browser callers (the `Origin` header is trivially forgeable by any HTTP client). Uses a stored **PAT** (`GITHUB_TOKEN`, provisioned) with write access to `main`.
+- This is simultaneously: (a) an edge-function-auth violation (adversarial-audit-lessons #2), and (b) the **literal auto-merge-to-prod capability Maria forbade**, sitting live in production for ~4 months.
+- **Blast-radius check:** nothing in the current repo invokes `guardian-pr-service`, and no other edge function uses `GITHUB_TOKEN`. It is fully orphaned — neutralizing it breaks nothing in the current codebase.
+- **Also note:** the client-side `propose-workflow/` merge path (`ProposeWorkflow.mergeProposal`, `GitHubIntegration.autoMerge`) DOES gate on `status==='approved'` + checks — so the *client* path is Option-B-consistent. The raw edge-function `merge_pr` action is the hole.
+
+**Recommended remediation (Maria's call — Tier 3, security):** **undeploy the live `guardian-pr-service` function now** (it's orphaned; the Session 3 rebuild replaces it cleanly with a GitHub App that has NO merge permission). Cleanest because it removes the drift entirely. Lower-touch alternative: remove the `GITHUB_TOKEN` secret, which instantly neuters it (function 500s without the token) and is trivially reversible — but leaves the drifted function deployed. Either way, `merge_pr` must NOT survive into the Option B design.
+
+**This retroactively validates the whole Option B exercise:** an auto-merge-to-main path already existed unguarded. Session 3's design (GitHub App, Contents+PR-write only, NO merge perm, branch protection requiring review) is what structurally prevents this from being possible again.
+
+---
+
 ## Session 0 — Pre-flight verification (~1h, can prepend to Session 1)
 
 1. **SMS channel live?** Check Supabase secrets for `SECURITY_ALERT_PHONES` (`supabase secrets list`), confirm `security-alert-processor` deployed version includes the Messaging-Service fix, then live-test: insert a synthetic critical `security_alerts` row → confirm both founders receive the text. Recipients per `guardian-sms-alert-delivery-tracker.md` (numbers are operational config in that tracker — do NOT copy into new files). If not live: finish that tracker's remaining steps FIRST — overnight autonomy without a working alert channel is forbidden.
