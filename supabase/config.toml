@@ -446,12 +446,11 @@ verify_jwt = false
 [functions.guardian-agent-api]
 verify_jwt = false
 
-# guardian-pr-service: live (verify_jwt=false, cron-called) but source not in repo (GRD-8).
-# Slated for rebuild on the GitHub REST API. Do NOT add an active [functions.*] block back
-# until supabase/functions/guardian-pr-service/index.ts exists — a sourceless block makes the
-# GitHub-integration deploy fail to bundle. On rebuild, restore:
-#   [functions.guardian-pr-service]
-#   verify_jwt = false   # cron caller presents no Supabase JWT
+# guardian-pr-service: source RESTORED to repo 2026-07-23 (was live-but-sourceless
+# after GRD-8 removed the source without undeploying). Hardened: internal cron/service
+# secret required + merge_pr action removed (Option B — Guardian proposes, human merges).
+[functions.guardian-pr-service]
+verify_jwt = false   # cron caller presents no Supabase JWT; in-code secret check is the auth boundary
 
 [functions.health-monitor]
 verify_jwt = false
