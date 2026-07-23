@@ -16,6 +16,7 @@
 import { supabase } from '../../lib/supabaseClient';
 import { healerScopedDb } from './guardianCapabilityEnforcer';
 import { auditLogger } from '../auditLogger';
+import { proposePatchPr } from './patchProposal';
 import type { HealingStep, DetectedIssue } from './types';
 
 export interface ActionResult {
@@ -486,17 +487,10 @@ export class RuntimeHealer {
   // =========================================================================
 
   private async applyPatch(step: HealingStep, issue: DetectedIssue): Promise<ActionResult> {
-    // Auto-patch creates proposals, not direct code changes
-    await auditLogger.info('GUARDIAN_PATCH_PROPOSED', {
-      filePath: step.parameters.location || step.target,
-      patchType: step.parameters.patchType,
-      issueId: issue.id,
-    });
-
-    return {
-      success: true,
-      message: `Patch proposal logged for ${step.target} (requires PR review)`,
-    };
+    // Option B (2026-07-23): auto_patch NEVER touches the running system — it
+    // opens a Guardian PR + full paper trail via the propose_pr relay
+    // (see ./patchProposal.ts). Merging remains a human act.
+    return proposePatchPr(step, issue);
   }
 
   // =========================================================================

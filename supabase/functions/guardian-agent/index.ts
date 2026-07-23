@@ -14,6 +14,8 @@ import type { GuardianEyesSnapshot } from './types.ts'
 import { runMonitoringChecks } from './monitoring.ts'
 import { recordSnapshot, analyzeRecordings } from './recordings.ts'
 import { autoHeal } from './healing.ts'
+import { handleProposePr } from './proposePr.ts'
+import type { ProposePrRequest } from './proposePr.ts'
 
 const logger = createLogger("guardian-agent");
 
@@ -132,6 +134,14 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true, result: healingResult }), {
           headers: corsHeaders,
         })
+
+      case 'propose_pr': {
+        // Option B: the browser healer's ONLY path to opening a Guardian PR.
+        // Server-side relay — dedupe + rate limit + ticket/alert paper trail +
+        // guardian-pr-service call with the internal secret (never in browser).
+        const proposeResult = await handleProposePr(supabase, tenantId, data as ProposePrRequest)
+        return new Response(JSON.stringify(proposeResult), { headers: corsHeaders })
+      }
 
       default:
         throw new Error(`Unknown action: ${action}`)

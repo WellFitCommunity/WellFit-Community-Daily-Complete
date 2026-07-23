@@ -180,7 +180,21 @@ Design:
 
 **Acceptance (live):** tampering one byte of a signed executor → registration rejected + alert row; all first-party tools signed; enforcement flag flipped ON; counts reported.
 
-## Session 3 — `guardian-pr-service` rebuild on GitHub REST API (~1–1.5 sessions)
+## Session 3 — ✅ DONE 2026-07-23 (PAT path; GitHub App migration stays optional)
+
+**Maria's call (2026-07-23): do BOTH Session 3 and Session 2, 3 first.** Built + live-proven:
+
+- **`guardian-agent` `propose_pr` relay (new `proposePr.ts`):** the browser healer's ONLY path to a PR. Server-side it (1) dedupes by issue signature (pending ticket, category+component), (2) enforces the max-3-open-Guardian-PRs cap, (3) creates the review ticket via `create_guardian_review_ticket` (which writes the linked security_alerts row + Guardian Eyes snapshot), (4) calls the hardened `guardian-pr-service` with the internal secret — the changed file is ALWAYS a server-constructed `docs/guardian/proposals/guardian-proposal-<safeId>.md`; **a browser caller can never choose a repo path**, (5) links the PR URL onto ticket + alert metadata. SMS leg = the every-minute `security-alert-processor` cron (critical/high).
+- **`RuntimeHealer.applyPatch` → `patchProposal.ts`:** auto_patch now routes to the relay instead of only logging "patch proposed". 5 new tripwire tests (incl. "client must not choose file paths"). Guardian suite 76/76.
+- **Two RPC defects found by the live proof:** `create_guardian_review_ticket` (a) rejected the service-role/autonomous caller entirely — only interactive super_admins could create tickets (migration `20260723235000` adds the service_role branch); (b) wrote the RAW issue category as `guardian_eyes_recordings.type`, violating the 6-value CHECK for every real error-signature category (migration `20260723236000` maps to 'error').
+- **Two `guardian-pr-service` defects:** rejected no-Origin server-to-server callers ("Origin not allowed" — origin check now browser-only; the secret gate is the auth) and `btoa()` crashed on any non-Latin1 char in file content (now UTF-8-safe base64).
+- **LIVE PROOF (synthetic, medium severity → deliberately no SMS):** propose_pr → **real PR #102 opened autonomously** (branch `guardian/fix-synthetic-s3-proof-20260723-20260723`, only the proposal doc, full paper-trail body) → ticket `4d96f512` pending with pr_url → alert `3c16f24b` with ticket+pr metadata → **dedupe re-call returned `deduped:true`**. Cleanup: PR closed unmerged + branch deleted + ticket rejected-with-note + all 3 proof alerts resolved-with-note + 3 synthetic Eyes rows deleted → **alert queue back to 0 open, 0 residue**. Merge remains impossible from the service (merge_pr action removed Session 0; live-proven 400).
+
+**Still optional (unchanged):** PAT→GitHub App migration + branch protection requiring 1 review (Maria's clicks, belt-and-suspenders).
+
+<details><summary>Original Session 3 plan (superseded by the above)</summary>
+
+## Session 3 (original plan) — `guardian-pr-service` rebuild on GitHub REST API (~1–1.5 sessions)
 
 **New edge function:** `supabase/functions/guardian-pr-service/index.ts` (+ `_shared` reuse; Deno rules: esm.sh imports, explicit `.ts` extensions).
 
@@ -199,6 +213,8 @@ Design:
 **Acceptance (live):** inject a synthetic error whose signature maps to `auto_patch` → Guardian opens a real PR on a real branch with a complete paper-trail body → ticket row links it → SMS received → **verify the App token CANNOT merge** (attempt merge via the App token → 403/blocked). Then close the test PR.
 
 ---
+
+</details>
 
 ## Explicitly parked (do not build without a new Maria decision)
 

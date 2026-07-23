@@ -90,8 +90,11 @@ serve(async (req: Request): Promise<Response> => {
   // Get CORS headers for this origin
   const { headers: corsHeaders, allowed } = corsFromRequest(req);
 
-  // Reject requests from unauthorized origins (defense in depth — NOT the auth boundary)
-  if (!allowed) {
+  // Reject BROWSER requests from unauthorized origins (defense in depth — NOT
+  // the auth boundary). Server-to-server callers (the guardian-agent propose_pr
+  // relay) send NO Origin header and are authenticated solely by the secret
+  // gate below — rejecting no-Origin here broke the internal relay (2026-07-23).
+  if (req.headers.get("Origin") && !allowed) {
     return new Response(JSON.stringify({ error: "Origin not allowed" }), {
       status: 403,
       headers: corsHeaders,
@@ -282,6 +285,20 @@ async function createPullRequest(
 /**
  * Create or update a file on a branch with a pre-fetched SHA
  */
+/**
+ * Base64-encode arbitrary UTF-8 text for the GitHub contents API.
+ * (btoa alone throws on any character outside Latin1 — e.g. em-dashes.)
+ */
+function base64EncodeUtf8(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 async function createCommitWithSha(
   githubToken: string,
   owner: string,
@@ -300,7 +317,7 @@ async function createCommitWithSha(
         Accept: "application/vnd.github.v3+json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message, content: btoa(change.newContent), sha: currentSha, branch }),
+      body: JSON.stringify({ message, content: base64EncodeUtf8(change.newContent), sha: currentSha, branch }),
     },
   );
   if (!updateFileResponse.ok) {
