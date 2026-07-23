@@ -4,32 +4,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { getAllPatientEngagementScores } from '../../services/engagementTracking';
+import type { PatientEngagementScoreRow } from '../../services/engagementTracking';
 import { DashboardSkeleton } from '../ui/skeleton';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
-interface EngagementScore {
-  user_id: string;
-  email: string;
-  check_ins_30d: number;
-  trivia_games_30d: number;
-  word_games_30d: number;
-  self_reports_30d: number;
-  questions_asked_30d: number;
-  check_ins_7d: number;
-  trivia_games_7d: number;
-  last_check_in: string | null;
-  last_trivia_game: string | null;
-  last_word_game: string | null;
-  last_self_report: string | null;
-  avg_trivia_score_pct: number | null;
-  avg_trivia_completion_time: number | null;
-  // ⭐ Mood & Self-Report Risk Indicators
-  avg_mood_score_30d: number | null;
-  latest_mood: string | null;
-  negative_moods_30d: number;
-  symptom_reports_30d: number;
-  engagement_score: number;
-}
+type EngagementScore = PatientEngagementScoreRow;
 
 const PatientEngagementDashboard: React.FC = () => {
   const { theme } = useDashboardTheme();
@@ -53,7 +32,7 @@ const PatientEngagementDashboard: React.FC = () => {
         throw new Error(fetchError.message || 'Failed to load engagement data');
       }
 
-      setEngagementData((data as unknown as EngagementScore[]) || []);
+      setEngagementData(data || []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load engagement data');
     } finally {

@@ -343,7 +343,10 @@ async function generateExportOutput(
       const tableName = FHIR_TABLE_MAP[resourceType];
       if (!tableName) continue;
 
-      let query = supabase.from(tableName).select('*'); // TODO: specify columns per resource type — dynamic table requires full export for NDJSON
+      // INTENTIONAL full-row select (ratified 2026-07-23): bulk NDJSON export over dynamic
+      // table names — exporting the complete resource is the feature's contract, and the
+      // column set varies per table. Accepted exception to the no-SELECT-* rule.
+      let query = supabase.from(tableName).select('*'); // governance-exception: select-star
 
       // Apply since_date filter if provided
       if (job.since_date) {

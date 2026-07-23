@@ -58,6 +58,65 @@ type DbResult<T> = { data: T | null; error: Error | null };
 type DbListResult<T> = { data: T[]; error: Error | null };
 
 /**
+ * A user question row as returned by loadUserQuestions.
+ * Minimum-necessary column set for question/answer display — intentionally
+ * excludes nurse-queue internals (nurse_notes, ai_suggestions, ai_urgency_score,
+ * patient_context, assignment/escalation fields), which nurse workflows query directly.
+ */
+export interface UserQuestionRow {
+  id: string;
+  user_id: string;
+  question_text: string;
+  category: string | null;
+  priority: string | null;
+  urgency: string | null;
+  status: string | null;
+  response_text: string | null;
+  responded_by: string | null;
+  responded_at: string | null;
+  created_at: string;
+  updated_at: string | null;
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+  } | null;
+}
+
+/**
+ * A patient engagement score row (patient_engagement_scores materialized view).
+ * Column set live-verified 2026-07-23; matches what PatientEngagementDashboard renders.
+ */
+export interface PatientEngagementScoreRow {
+  user_id: string;
+  email: string;
+  check_ins_30d: number;
+  trivia_games_30d: number;
+  word_games_30d: number;
+  self_reports_30d: number;
+  questions_asked_30d: number;
+  check_ins_7d: number;
+  trivia_games_7d: number;
+  last_check_in: string | null;
+  last_trivia_game: string | null;
+  last_word_game: string | null;
+  last_self_report: string | null;
+  avg_trivia_score_pct: number | null;
+  avg_trivia_completion_time: number | null;
+  avg_mood_score_30d: number | null;
+  latest_mood: string | null;
+  negative_moods_30d: number;
+  symptom_reports_30d: number;
+  engagement_score: number;
+}
+
+const ENGAGEMENT_SCORE_COLUMNS =
+  'user_id, email, check_ins_30d, trivia_games_30d, word_games_30d, self_reports_30d, ' +
+  'questions_asked_30d, check_ins_7d, trivia_games_7d, last_check_in, last_trivia_game, ' +
+  'last_word_game, last_self_report, avg_trivia_score_pct, avg_trivia_completion_time, ' +
+  'avg_mood_score_30d, latest_mood, negative_moods_30d, symptom_reports_30d, engagement_score';
+
+/**
  * Save trivia game results to database
  */
 export async function saveTriviaGameResult(
@@ -196,18 +255,19 @@ export async function loadUserQuestions(
   supabase: SupabaseClient,
   userId?: string,
   isAdmin: boolean = false
-): Promise<DbListResult<DbRow>> {
+): Promise<DbListResult<UserQuestionRow>> {
   try {
     let query = supabase
       .from('user_questions')
       .select(`
-        *,
+        id, user_id, question_text, category, priority, urgency, status,
+        response_text, responded_by, responded_at, created_at, updated_at,
         profiles:user_id (
           first_name,
           last_name,
           phone
         )
-      `) // TODO: replace * with specific user_questions columns when usage is traced — returns Record<string, unknown>[]
+      `)
       .order('created_at', { ascending: false });
 
     // If not admin, filter by user_id
@@ -221,7 +281,7 @@ export async function loadUserQuestions(
       return { data: [], error: new Error(error.message) };
     }
 
-    return { data: (data as DbRow[]) || [], error: null };
+    return { data: (data as unknown as UserQuestionRow[]) || [], error: null };
   } catch (err: unknown) {
     return { data: [], error: new Error(getErrorMessage(err)) };
   }
@@ -264,11 +324,11 @@ export async function saveSelfReportSubmission(
 export async function getPatientEngagementScore(
   supabase: SupabaseClient,
   userId: string
-): Promise<DbResult<DbRow>> {
+): Promise<DbResult<PatientEngagementScoreRow>> {
   try {
     const { data, error } = await supabase
       .from('patient_engagement_scores')
-      .select('*') // TODO: specify columns when usage is traced — returns Record<string, unknown>
+      .select(ENGAGEMENT_SCORE_COLUMNS)
       .eq('user_id', userId)
       .single();
 
@@ -276,7 +336,7 @@ export async function getPatientEngagementScore(
       return { data: null, error: new Error(error.message) };
     }
 
-    return { data: (data as DbRow) ?? null, error: null };
+    return { data: (data as unknown as PatientEngagementScoreRow) ?? null, error: null };
   } catch (err: unknown) {
     return { data: null, error: new Error(getErrorMessage(err)) };
   }
@@ -287,18 +347,18 @@ export async function getPatientEngagementScore(
  */
 export async function getAllPatientEngagementScores(
   supabase: SupabaseClient
-): Promise<DbListResult<DbRow>> {
+): Promise<DbListResult<PatientEngagementScoreRow>> {
   try {
     const { data, error } = await supabase
       .from('patient_engagement_scores')
-      .select('*') // TODO: specify columns when usage is traced — returns Record<string, unknown>[]
+      .select(ENGAGEMENT_SCORE_COLUMNS)
       .order('engagement_score', { ascending: false });
 
     if (error) {
       return { data: [], error: new Error(error.message) };
     }
 
-    return { data: (data as DbRow[]) || [], error: null };
+    return { data: (data as unknown as PatientEngagementScoreRow[]) || [], error: null };
   } catch (err: unknown) {
     return { data: [], error: new Error(getErrorMessage(err)) };
   }

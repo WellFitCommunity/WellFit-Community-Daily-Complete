@@ -68,6 +68,11 @@ report_violations() {
   local pattern="$2"
   local title="$3"
   local fix_hint="$4"
+  # Optional 5th arg: an inline exemption marker. A matching line that carries
+  # this marker (as a trailing comment) is a Maria-ratified exception and is
+  # skipped. Markers are per-rule and must reference a ratification (tracker or
+  # rules doc) at the annotation site — never add one without her sign-off.
+  local exempt_marker="${5:-}"
 
   if [ -z "$files" ]; then
     return 0
@@ -83,6 +88,10 @@ report_violations() {
     | grep -vE '^[^:]+:[0-9]+:\s*\*' \
     | grep -vE '^[^:]+:[0-9]+:\s*#' \
     | head -10)
+
+  if [ -n "$exempt_marker" ] && [ -n "$matches" ]; then
+    matches=$(echo "$matches" | grep -vF "$exempt_marker" || true)
+  fi
 
   if [ -n "$matches" ]; then
     REPORT="${REPORT}
@@ -203,11 +212,17 @@ if [ -n "$STAGED_SRC" ]; then
   # ---------------------------------------------------------------------------
   # 11. SELECT * in Supabase queries — column-explicit only
   #     Performance + PHI exposure risk. We fixed 270 files for this already.
+  #     Exemption marker (Maria-ratified 2026-07-23, see T-3 in
+  #     docs/trackers/todo-inventory-tracker-2026-07-23.md): exactly two
+  #     accepted exceptions — fhirBulkExportService.ts (bulk NDJSON export)
+  #     and fhirSearch.ts (polymorphic FHIR search). Do NOT add the marker
+  #     elsewhere without her sign-off.
   # ---------------------------------------------------------------------------
   report_violations "$STAGED_SRC" \
     "\.select\s*\(\s*['\"]\*['\"]\s*\)" \
     ".select('*') found (.claude/rules/supabase.md §9)" \
-    "Specify explicit columns. Wildcards waste bandwidth and may expose PHI."
+    "Specify explicit columns. Wildcards waste bandwidth and may expose PHI." \
+    "governance-exception: select-star"
 
   # ---------------------------------------------------------------------------
   # 12. functions.invoke with underscores — directory names usually use dashes,

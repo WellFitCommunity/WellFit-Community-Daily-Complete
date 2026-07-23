@@ -65,8 +65,10 @@ class FHIRSearchBuilder<T extends FHIRResource = FHIRResource> {
   constructor(table: string, params: FHIRSearchParams) {
     this.table = table;
     this.params = params;
-    // TODO: specify columns when usage is traced — polymorphic FHIR resource search
-    this.query = supabase.from(table).select('*');
+    // INTENTIONAL full-row select (ratified 2026-07-23): polymorphic FHIR search across
+    // resource tables — the column set varies by table, and the full resource IS the
+    // search result payload. Accepted exception to the no-SELECT-* rule.
+    this.query = supabase.from(table).select('*'); // governance-exception: select-star
   }
 
   /**

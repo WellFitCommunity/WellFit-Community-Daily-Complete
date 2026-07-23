@@ -614,8 +614,8 @@ export class FHIRSyncIntegration {
     error?: string;
   }> {
     try {
-      // Fetch all resources for the patient in parallel
-      // TODO: specify columns per FHIR resource type — full export needed for FHIR Bundle generation
+      // Fetch all resources for the patient in parallel — columns are explicit per
+      // resource type, matching what each mapToFHIR* mapper consumes
       const [observations, conditions, medications, procedures, carePlans, immunizations] =
         await Promise.all([
           supabase
