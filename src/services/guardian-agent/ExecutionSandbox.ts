@@ -17,6 +17,7 @@ import { ToolMetadata, ToolExecutionContext, ToolExecutionResult } from './ToolR
 import { TokenManager } from './TokenAuth';
 import { SchemaValidator } from './SchemaValidator';
 import { auditLogger } from '../auditLogger';
+import { CapabilityEnforcer } from './CapabilityEnforcer';
 
 /**
  * Resource limits for tool execution
@@ -143,8 +144,12 @@ export class ResourceMonitor {
     const currentRate = recentExecutions.length;
 
     if (currentRate >= maxPerMinute) {
-      // Calculate when the oldest execution will expire
-      const oldestInWindow = Math.min(...recentExecutions);
+      // Calculate when the oldest execution will expire (reduce, not spread —
+      // recentExecutions is unbounded, so Math.min(...arr) risks a stack overflow)
+      const oldestInWindow = recentExecutions.reduce(
+        (acc, v) => Math.min(acc, v),
+        Infinity,
+      );
       const retryAfterMs = this.WINDOW_MS - (now - oldestInWindow);
 
       this.recordViolation(toolId, maxPerMinute, currentRate);
@@ -357,11 +362,19 @@ export class ExecutionSandbox {
   private tokenManager: TokenManager;
   private schemaValidator: SchemaValidator;
   private resourceMonitor: ResourceMonitor;
+  private capabilityEnforcer: CapabilityEnforcer;
 
-  constructor(tokenManager: TokenManager, schemaValidator: SchemaValidator) {
+  constructor(
+    tokenManager: TokenManager,
+    schemaValidator: SchemaValidator,
+    capabilityEnforcer?: CapabilityEnforcer,
+  ) {
     this.tokenManager = tokenManager;
     this.schemaValidator = schemaValidator;
     this.resourceMonitor = new ResourceMonitor();
+    // Injectable so callers can supply a security_alerts-backed sink; defaults
+    // to an audit-log-only enforcer (no external dependency).
+    this.capabilityEnforcer = capabilityEnforcer ?? new CapabilityEnforcer();
   }
 
   /**
@@ -369,6 +382,14 @@ export class ExecutionSandbox {
    */
   getResourceMonitor(): ResourceMonitor {
     return this.resourceMonitor;
+  }
+
+  /**
+   * Get the capability enforcer (for wrapping DB clients, checking quarantine,
+   * or clearing a tool after human re-approval).
+   */
+  getCapabilityEnforcer(): CapabilityEnforcer {
+    return this.capabilityEnforcer;
   }
 
   /**
@@ -399,6 +420,18 @@ export class ExecutionSandbox {
     const egressCalls: Array<{ domain: string; endpoint: string }> = [];
 
     try {
+      // 0. Refuse execution if the tool is quarantined for capability violations.
+      //    A quarantined tool must be cleared by a human before it can run again.
+      if (this.capabilityEnforcer.isQuarantined(tool.id)) {
+        await auditLogger.warn('TOOL_QUARANTINED', {
+          toolId: tool.id,
+          violationCount: this.capabilityEnforcer.getViolationCount(tool.id),
+        });
+        throw new Error(
+          `Tool ${tool.id} is quarantined after capability violations and requires human re-approval.`
+        );
+      }
+
       // 1. Check execution policy
       const policy = this.policies.get(tool.id);
       if (!policy) {
@@ -565,6 +598,11 @@ export class ExecutionSandbox {
             };
             this.accessLogs.push(logEntry);
 
+            // Escalate to a recorded capability violation (security_alerts +
+            // quarantine counting), then deny. assertEgressAllowed throws a
+            // CapabilityViolationError; if the host WAS in declared egress but
+            // not the policy allow-list, fall back to the original denial.
+            this.capabilityEnforcer.assertEgressAllowed(tool, urlString);
             throw new Error(
               `Network access denied: ${domain} not in allow-list for tool ${tool.id}`
             );

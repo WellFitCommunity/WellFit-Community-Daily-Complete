@@ -133,6 +133,24 @@ Design — enforcement by **scoped context injection**, not ambient access:
 
 **Acceptance (live, not mocked):** a test tool declaring `egress: []` attempts `ctx.fetch('https://example.com')` → blocked + violation row exists in `security_alerts`; a tool with `tables: ['guardian_cron_log']` reads it successfully and is denied on `profiles`. Deletion test: removing enforcer logic fails the tests. Scoped typecheck/lint/tests reported with counts.
 
+### ✅ DONE 2026-07-23 — CapabilityEnforcer built + wired
+
+**The real gap found (not what the sketch assumed):** egress was ALREADY enforced (the sandbox overrides `globalThis.fetch` against an allow-list). DB/table access was the hole — `ExecutionSandbox.checkDatabaseAccess()` existed but was **never called anywhere** (dead). Declared `databaseTables` were not binding at runtime.
+
+**Built:**
+- `src/services/guardian-agent/CapabilityEnforcer.ts` (246 lines) — `wrapDatabaseClient(tool, client)` returns a Proxy gating `.from(table)` against declared tables (read-by-default; mutation requires the table in `writes`); `assertEgressAllowed(tool, url)`; violation recording with per-tool counting → **quarantine after 3 violations** (tool can't run until a human calls `clearTool`). Injectable violation sink (dependency-free, unit-testable). `CapabilityViolationError`.
+- `src/services/guardian-agent/capabilityViolationSink.ts` (73 lines) — default sink: writes `security_alerts` (`security_policy_violation`, `critical` when quarantining so it hits the overnight SMS channel, else `high`) + audit log.
+- `__tests__/CapabilityEnforcer.test.ts` — 11 behavioral tests (deletion-test-passing): declared-table read allowed; undeclared table denied; mutation allowed only when writable; write on read-only table denied (blocked BEFORE the real insert); egress allow/deny/empty-fail-closed/wildcard; quarantine after threshold; `clearTool` re-approval.
+
+**Wired into `ExecutionSandbox` (minimal):** constructor accepts an injectable `CapabilityEnforcer` (defaults to audit-only); `execute()` refuses a quarantined tool (step 0); the fetch-override denial now escalates via `assertEgressAllowed` (security_alerts + quarantine counting). `getCapabilityEnforcer()` exposes it for wrapping DB clients / clearing tools.
+
+**Verification:** scoped typecheck 0 errors; full tsc clean for the new files; lint 0/0; guardian suite **40/40** (11 new + 29 existing, no regression).
+
+**Honest scope line (DONE MEANS DONE):**
+- Quarantine refusal + egress escalation are LIVE in the sandbox path.
+- DB-table enforcement is delivered + tested as `wrapDatabaseClient`, exposed via `getCapabilityEnforcer()`. It becomes binding for a given tool when that tool's executor uses the wrapped client. **Migrating individual healing tools to the wrapped client is the tracked follow-on** (Session 1c) — the enforcer is ready; the tools that currently import the ambient `supabase` singleton need to take the scoped client. Not claiming every tool is DB-gated yet.
+- **Pre-existing debt nudged:** `ExecutionSandbox.ts` was already over the 600-line cap (967); the wiring added ~34 lines (now 1001). The *logic* lives in the new module per the rule; only essential integration touched the god file. Decomposing `ExecutionSandbox.ts` remains a separate tracked task (not done here, to stay stable).
+
 ## Session 2 — Tool signing (T-4b item 1) (~1 session)
 
 **New module:** `src/services/guardian-agent/ToolSigning.ts` + `scripts/guardian-sign-tools.ts` + `__tests__/ToolSigning.test.ts`.
