@@ -12,6 +12,7 @@
 import { useState, useCallback } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 import { BedManagementService } from '../../../services/bedManagementService';
+import { PostAcuteTransferService } from '../../../services/postAcuteTransferService';
 import { triggerDischargeReadmissionPrediction } from '../../../services/ai/readmission-predictor/dischargeTrigger';
 import type { useActivityBroadcast } from '../../collaboration';
 import type { BedBoardEntry } from '../../../types/bed';
@@ -74,16 +75,34 @@ export function useDischargeFlow({
         broadcast('update', 'bed', `Discharged patient from ${selectedBed.bed_label}`, selectedBed.bed_id, `Bed ${selectedBed.bed_label}`);
         firePrediction(patientId, dischargeDisposition, facilityName);
         if (POST_ACUTE_DISPOSITIONS.includes(dischargeDisposition)) {
-          navigate('/transfer-logs', {
-            state: {
-              createTransfer: true,
-              patientId,
-              patientName: selectedBed.patient_name,
-              patientMrn: selectedBed.patient_mrn,
-              disposition: dischargeDisposition,
-              fromBedManagement: true,
-            },
-          });
+          // P-2: auto-compose a DRAFT post-acute packet from the chart, then
+          // take the clinician to the packet view to complete receiving-facility
+          // details and SEND. Compose failure must NOT block the discharge —
+          // fall back to the manual sender with a visible error.
+          const draft = await PostAcuteTransferService.composeDraftForDischarge(
+            patientId,
+            dischargeDisposition
+          );
+          if (draft.success && draft.handoff_packet_id) {
+            notify({
+              message: 'Draft transfer packet composed from the chart — complete facility details and send',
+              type: 'success',
+            });
+            navigate(`/handoff/view/${draft.handoff_packet_id}`);
+          } else {
+            setError(
+              `Automatic packet composition failed (${draft.error ?? 'unknown'}) — create the transfer manually`
+            );
+            navigate('/handoff/send', {
+              state: {
+                patientId,
+                patientName: selectedBed.patient_name,
+                patientMrn: selectedBed.patient_mrn,
+                disposition: dischargeDisposition,
+                fromBedManagement: true,
+              },
+            });
+          }
         } else {
           await loadData();
         }
@@ -94,7 +113,7 @@ export function useDischargeFlow({
     } finally {
       setDischarging(false);
     }
-  }, [selectedBed, dischargeDisposition, navigate, broadcast, showAffirmation, loadData, setError, onClosed, firePrediction]);
+  }, [selectedBed, dischargeDisposition, navigate, broadcast, showAffirmation, notify, loadData, setError, onClosed, firePrediction]);
 
   return { discharging, handleDischargePatient };
 }

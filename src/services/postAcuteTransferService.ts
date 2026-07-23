@@ -11,7 +11,8 @@ import type { CreateHandoffPacketRequest } from '../types/handoff';
 import type { DischargePlan } from './dischargePlanningService';
 
 export interface PostAcuteTransferRequest {
-  discharge_plan_id: string;
+  /** Optional — draft composition from the discharge flow may pre-date a plan */
+  discharge_plan_id?: string;
   patient_id: string;
   encounter_id: string;
   receiving_facility_name: string;
@@ -43,24 +44,39 @@ export class PostAcuteTransferService {
    */
   static async createPostAcuteTransfer(request: PostAcuteTransferRequest): Promise<PostAcuteTransferResult> {
     try {
-      // Get discharge plan
-      const { data: dischargePlan, error: planError } = await supabase
-        .from('discharge_plans')
-        .select('id, patient_id, encounter_id, discharge_disposition, planned_discharge_date, planned_discharge_time, actual_discharge_datetime, medication_reconciliation_complete, discharge_prescriptions_sent, follow_up_appointment_scheduled, follow_up_appointment_date, follow_up_appointment_provider, follow_up_appointment_location, discharge_summary_completed, discharge_summary_sent_to_pcp, patient_education_completed, patient_education_topics, patient_understands_diagnosis, patient_understands_medications, patient_understands_followup, dme_needed, dme_ordered, dme_items, home_health_needed, home_health_ordered, home_health_agency, home_health_start_date, caregiver_identified, caregiver_name, caregiver_phone, caregiver_training_completed, transportation_arranged, transportation_method, readmission_risk_score, readmission_risk_category, requires_48hr_call, requires_72hr_call, requires_7day_pcp_visit, risk_factors, post_acute_facility_id, post_acute_facility_name, post_acute_facility_phone, post_acute_bed_confirmed, post_acute_handoff_packet_id, discharge_planning_time_minutes, care_coordination_time_minutes, billing_codes_generated, status, checklist_completion_percentage, created_by, created_at, updated_at, barriers_to_discharge')
-        .eq('id', request.discharge_plan_id)
-        .single();
+      // Get discharge plan — by id when supplied, else best-effort by encounter
+      // (the draft-composition path can legitimately pre-date a plan).
+      const PLAN_COLUMNS =
+        'id, patient_id, encounter_id, discharge_disposition, planned_discharge_date, planned_discharge_time, actual_discharge_datetime, medication_reconciliation_complete, discharge_prescriptions_sent, follow_up_appointment_scheduled, follow_up_appointment_date, follow_up_appointment_provider, follow_up_appointment_location, discharge_summary_completed, discharge_summary_sent_to_pcp, patient_education_completed, patient_education_topics, patient_understands_diagnosis, patient_understands_medications, patient_understands_followup, dme_needed, dme_ordered, dme_items, home_health_needed, home_health_ordered, home_health_agency, home_health_start_date, caregiver_identified, caregiver_name, caregiver_phone, caregiver_training_completed, transportation_arranged, transportation_method, readmission_risk_score, readmission_risk_category, requires_48hr_call, requires_72hr_call, requires_7day_pcp_visit, risk_factors, post_acute_facility_id, post_acute_facility_name, post_acute_facility_phone, post_acute_bed_confirmed, post_acute_handoff_packet_id, discharge_planning_time_minutes, care_coordination_time_minutes, billing_codes_generated, status, checklist_completion_percentage, created_by, created_at, updated_at, barriers_to_discharge';
 
-      if (planError || !dischargePlan) {
-        return {
-          success: false,
-          error: 'Discharge plan not found',
-        };
+      let dischargePlan: DischargePlan | null = null;
+      if (request.discharge_plan_id) {
+        const { data, error: planError } = await supabase
+          .from('discharge_plans')
+          .select(PLAN_COLUMNS)
+          .eq('id', request.discharge_plan_id)
+          .single();
+        if (planError || !data) {
+          return { success: false, error: 'Discharge plan not found' };
+        }
+        dischargePlan = data as unknown as DischargePlan;
+      } else {
+        const { data } = await supabase
+          .from('discharge_plans')
+          .select(PLAN_COLUMNS)
+          .eq('encounter_id', request.encounter_id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        dischargePlan = (data as unknown as DischargePlan) ?? null;
       }
 
-      // Get patient profile
+      // Get patient profile (live columns: no full_name/date_of_birth/facility_name —
+      // compose the name; DOB column is `dob`; the sending facility comes from the
+      // caller's tenant, not the patient row. Repaired 2026-07-23, P-1.)
       const { data: patient, error: patientError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, date_of_birth, mrn, gender, facility_name, phone')
+        .select('user_id, first_name, last_name, dob, mrn, gender, phone')
         .eq('user_id', request.patient_id)
         .single();
 
@@ -71,10 +87,11 @@ export class PostAcuteTransferService {
         };
       }
 
-      // Get encounter details
+      // Get encounter details (live columns — admission_date/discharge_date never
+      // existed; the operational timestamps are arrived_at/visit_ended_at)
       const { data: encounter, error: encounterError } = await supabase
         .from('encounters')
-        .select('id, patient_id, encounter_type, status, chief_complaint, admission_date, discharge_date')
+        .select('id, patient_id, encounter_type, status, chief_complaint, date_of_service, arrived_at, visit_ended_at')
         .eq('id', request.encounter_id)
         .single();
 
@@ -85,7 +102,7 @@ export class PostAcuteTransferService {
         };
       }
 
-      // Get current facility from user profile
+      // Get the sending clinician + their tenant (the sending facility)
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -93,17 +110,31 @@ export class PostAcuteTransferService {
         return { success: false, error: 'User not authenticated' };
       }
 
-      const { data: userProfile } = await supabase.from('profiles').select('facility_name, phone').eq('user_id', user.id).single();  // A-9 fix
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, phone, tenant_id')
+        .eq('user_id', user.id)
+        .single();
 
-      const sendingFacility = userProfile?.facility_name || 'Hospital';
+      let sendingFacility = 'Hospital';
+      if (userProfile?.tenant_id) {
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('name')
+          .eq('id', userProfile.tenant_id)
+          .single();
+        if (tenant?.name) sendingFacility = tenant.name;
+      }
 
       // Gather clinical data for transfer
       const clinicalData = await this.gatherClinicalDataForTransfer(request.patient_id, request.encounter_id, dischargePlan);
 
       // Create handoff packet (reusing existing handoff system)
+      const patientName =
+        [patient.first_name, patient.last_name].filter(Boolean).join(' ') || 'Unknown Patient';
       const handoffRequest: CreateHandoffPacketRequest = {
-        patient_name: patient.full_name || 'Unknown Patient',
-        patient_dob: patient.date_of_birth || '1970-01-01',
+        patient_name: patientName,
+        patient_dob: patient.dob || '1970-01-01',
         patient_mrn: patient.mrn,
         patient_gender: patient.gender,
 
@@ -115,7 +146,9 @@ export class PostAcuteTransferService {
 
         clinical_data: clinicalData,
 
-        sender_provider_name: user.email || 'Discharge Planning Team',
+        sender_provider_name:
+          [userProfile?.first_name, userProfile?.last_name].filter(Boolean).join(' ') ||
+          user.email || 'Discharge Planning Team',
         sender_callback_number: userProfile?.phone || 'N/A',
         sender_notes: request.clinical_summary,
 
@@ -140,25 +173,31 @@ export class PostAcuteTransferService {
         .eq('id', handoffResult.packet.id);
 
       if (updateError) {
-        // Intentionally left unchanged per locked protocol (no logging/behavior edits)
+        await auditLogger.error(
+          'POST_ACUTE_PACKET_FLAG_UPDATE_FAILED',
+          new Error(updateError.message),
+          { handoffPacketId: handoffResult.packet.id, dischargePlanId: request.discharge_plan_id }
+        );
       }
 
-      // Update discharge plan with handoff packet ID
-      await supabase
-        .from('discharge_plans')
-        .update({
-          post_acute_handoff_packet_id: handoffResult.packet.id,
-          post_acute_facility_name: request.receiving_facility_name,
-          post_acute_facility_phone: request.receiving_facility_phone,
-        })
-        .eq('id', request.discharge_plan_id);
+      // Update discharge plan with handoff packet ID (when one exists)
+      if (dischargePlan?.id) {
+        await supabase
+          .from('discharge_plans')
+          .update({
+            post_acute_handoff_packet_id: handoffResult.packet.id,
+            post_acute_facility_name: request.receiving_facility_name,
+            post_acute_facility_phone: request.receiving_facility_phone,
+          })
+          .eq('id', dischargePlan.id);
+      }
 
       // HIPAA §164.312(b) - Log PHI access for post-acute transfer creation
       await auditLogger.phi('POST_ACUTE_TRANSFER_CREATED', request.patient_id, {
         resourceType: 'post_acute_transfer',
         action: 'CREATE',
         handoffPacketId: handoffResult.packet.id,
-        dischargePlanId: request.discharge_plan_id,
+        dischargePlanId: dischargePlan?.id ?? null,
         encounterId: request.encounter_id,
         facilityType: request.post_acute_facility_type,
         receivingFacility: request.receiving_facility_name
@@ -207,7 +246,7 @@ export class PostAcuteTransferService {
   private static async gatherClinicalDataForTransfer(
     patientId: string,
     encounterId: string,
-    dischargePlan: DischargePlan
+    dischargePlan: DischargePlan | null
   ): Promise<Record<string, unknown>> {
     const clinicalData: Record<string, unknown> = {
       discharge_summary: {},
@@ -219,51 +258,55 @@ export class PostAcuteTransferService {
     };
 
     try {
-      // Get medications
+      // Get medications — live table is `medications` keyed on user_id
+      // (patient_medications never existed; the column is `dosage`, not `dose`)
       const { data: medications } = await supabase
-        .from('patient_medications')
-        .select('id, medication_name, dose, frequency, route, instructions')
-        .eq('patient_id', patientId)
+        .from('medications')
+        .select('id, medication_name, dosage, frequency, route, instructions')
+        .eq('user_id', patientId)
         .eq('status', 'active');
 
       clinicalData.medications =
         medications?.map((med) => ({
           name: med.medication_name,
-          dose: med.dose,
+          dose: med.dosage,
           frequency: med.frequency,
           route: med.route,
           instructions: med.instructions,
         })) || [];
 
-      // Get allergies
-      const { data: allergies } = await supabase.from('patient_allergies').select('id, allergen, reaction, severity').eq('patient_id', patientId).eq('is_active', true);
+      // Get allergies — live table is `allergy_intolerances` keyed on user_id
+      const { data: allergies } = await supabase
+        .from('allergy_intolerances')
+        .select('id, allergen_name, reaction_description, reaction_manifestation, severity, clinical_status')
+        .eq('user_id', patientId)
+        .eq('clinical_status', 'active');
 
       clinicalData.allergies =
         allergies?.map((allergy) => ({
-          allergen: allergy.allergen,
-          reaction: allergy.reaction,
+          allergen: allergy.allergen_name,
+          reaction: allergy.reaction_description ?? allergy.reaction_manifestation ?? null,
           severity: allergy.severity,
         })) || [];
 
-      // Get latest vitals
+      // Get latest vitals — live store is fhir_observations (category text[])
       const { data: vitals } = await supabase
-        .from('ehr_observations')
-        .select('id, loinc_code, display_name, value_quantity, unit, effective_datetime')
+        .from('fhir_observations')
+        .select('id, code, code_display, value_quantity_value, value_quantity_unit, effective_datetime')
         .eq('patient_id', patientId)
-        .eq('encounter_id', encounterId)
-        .eq('observation_type', 'vital_sign')
+        .contains('category', ['vital-signs'])
         .order('effective_datetime', { ascending: false })
-        .limit(10);
+        .limit(20);
 
       if (vitals) {
-        // Group vitals by type (latest of each)
+        // Group vitals by LOINC code (latest of each)
         const vitalMap = new Map();
         vitals.forEach((vital) => {
-          if (!vitalMap.has(vital.loinc_code)) {
-            vitalMap.set(vital.loinc_code, {
-              name: vital.display_name,
-              value: vital.value_quantity,
-              unit: vital.unit,
+          if (!vitalMap.has(vital.code)) {
+            vitalMap.set(vital.code, {
+              name: vital.code_display,
+              value: vital.value_quantity_value,
+              unit: vital.value_quantity_unit,
               recorded: vital.effective_datetime,
             });
           }
@@ -272,18 +315,24 @@ export class PostAcuteTransferService {
         clinicalData.vitals = Object.fromEntries(vitalMap);
       }
 
-      // Get diagnoses
-      const { data: diagnoses } = await supabase.from('encounter_diagnoses').select('id, diagnosis_code, diagnosis_description, diagnosis_type').eq('encounter_id', encounterId);
+      // Get diagnoses — live columns are code/description/sequence
+      const { data: diagnoses } = await supabase
+        .from('encounter_diagnoses')
+        .select('id, code, description, sequence')
+        .eq('encounter_id', encounterId)
+        .order('sequence', { ascending: true });
 
       clinicalData.diagnoses =
         diagnoses?.map((dx) => ({
-          code: dx.diagnosis_code,
-          description: dx.diagnosis_description,
-          type: dx.diagnosis_type,
+          code: dx.code,
+          description: dx.description,
+          sequence: dx.sequence,
         })) || [];
 
-      // Add discharge planning information
-      clinicalData.discharge_needs = {
+      // Add discharge planning information (honest note when no plan exists yet)
+      clinicalData.discharge_needs = !dischargePlan ? {
+        note: 'No discharge plan on file at packet composition time',
+      } : {
         discharge_disposition: dischargePlan.discharge_disposition,
         readmission_risk_score: dischargePlan.readmission_risk_score,
         readmission_risk_category: dischargePlan.readmission_risk_category,
@@ -312,23 +361,29 @@ export class PostAcuteTransferService {
         barriers_to_discharge: dischargePlan.barriers_to_discharge || [],
       };
 
-      // Add functional status if available
+      // Functional status — the live ADL/mobility/cognitive source is
+      // risk_assessments, read through risk_assessments_decrypted (§17 clinical
+      // key). If no assessment exists, say so honestly — never fabricate values.
       const { data: functionalStatus } = await supabase
-        .from('functional_assessments')
-        .select('id, adl_score, mobility_level, cognitive_status, assessment_date')
+        .from('risk_assessments_decrypted')
+        .select('id, mobility_risk_score, cognitive_risk_score, overall_score, risk_level, walking_ability, bathing_ability, medication_management, created_at')
         .eq('patient_id', patientId)
-        .order('assessment_date', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (functionalStatus) {
-        clinicalData.functional_status = {
-          adl_score: functionalStatus.adl_score,
-          mobility_level: functionalStatus.mobility_level,
-          cognitive_status: functionalStatus.cognitive_status,
-          assessment_date: functionalStatus.assessment_date,
-        };
-      }
+      clinicalData.functional_status = functionalStatus
+        ? {
+            mobility_risk_score: functionalStatus.mobility_risk_score,
+            cognitive_risk_score: functionalStatus.cognitive_risk_score,
+            overall_score: functionalStatus.overall_score,
+            risk_level: functionalStatus.risk_level,
+            walking_ability: functionalStatus.walking_ability,
+            bathing_ability: functionalStatus.bathing_ability,
+            medication_management: functionalStatus.medication_management,
+            assessment_date: functionalStatus.created_at,
+          }
+        : { note: 'No functional/risk assessment on file' };
       // HIPAA §164.312(b) - Log PHI access for clinical data gathering
       await auditLogger.phi('TRANSFER_CLINICAL_DATA_READ', patientId, {
         resourceType: 'clinical_data_bundle',
@@ -339,11 +394,69 @@ export class PostAcuteTransferService {
         allergyCount: (clinicalData.allergies as Array<unknown>).length,
         diagnosisCount: (clinicalData.diagnoses as Array<unknown>).length
       });
-    } catch (_err: unknown) {
-      // Continue with partial data
+    } catch (err: unknown) {
+      // Continue with partial data — but never silently
+      await auditLogger.error(
+        'POST_ACUTE_CLINICAL_GATHER_PARTIAL',
+        err instanceof Error ? err : new Error(String(err)),
+        { patientId, encounterId }
+      );
     }
 
     return clinicalData;
+  }
+
+  /** Bed-board discharge disposition labels → post-acute facility types (P-2) */
+  static readonly DISPOSITION_FACILITY_TYPES: Record<
+    string,
+    PostAcuteTransferRequest['post_acute_facility_type']
+  > = {
+    'Skilled Nursing Facility': 'skilled_nursing',
+    'Inpatient Rehab': 'inpatient_rehab',
+    'Long-Term Acute Care': 'long_term_acute_care',
+    'Hospice': 'hospice',
+  };
+
+  /**
+   * Compose a DRAFT post-acute packet straight from the discharge flow (P-2).
+   * Auto-composes the clinical sections from the chart; the clinician then
+   * completes receiving-facility contact details and SENDS from the packet
+   * view — a packet never leaves without contact info and a human click
+   * (HandoffService only sends status='draft' packets explicitly).
+   */
+  static async composeDraftForDischarge(
+    patientId: string,
+    dispositionLabel: string
+  ): Promise<PostAcuteTransferResult> {
+    const facilityType = this.DISPOSITION_FACILITY_TYPES[dispositionLabel];
+    if (!facilityType) {
+      return { success: false, error: `Not a post-acute disposition: ${dispositionLabel}` };
+    }
+
+    // Most recent encounter for the patient (the one being discharged)
+    const { data: encounter } = await supabase
+      .from('encounters')
+      .select('id')
+      .eq('patient_id', patientId)
+      .order('date_of_service', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!encounter) {
+      return { success: false, error: 'No encounter found for patient' };
+    }
+
+    return this.createPostAcuteTransfer({
+      patient_id: patientId,
+      encounter_id: encounter.id,
+      receiving_facility_name: `${this.getFacilityTypeDescription(facilityType)} — facility to be confirmed`,
+      receiving_facility_phone: 'To be completed',
+      post_acute_facility_type: facilityType,
+      urgency_level: 'routine',
+      expected_transfer_date: new Date().toISOString(),
+      clinical_summary:
+        'Draft auto-composed at discharge. Complete receiving-facility details and review all sections before sending.',
+    });
   }
 
   /**
