@@ -1,6 +1,6 @@
 # Clinical & Compliance Ratification Packet — for Akima
 
-**Prepared:** 2026-07-23 · **From:** Maria (WellFit / Envision Atlus engineering)
+**Prepared:** 2026-07-23 · **Updated:** 2026-07-25 (Section 1 addendum — encryption) · **From:** Maria (WellFit / Envision Atlus engineering)
 **Purpose:** One consolidated packet of every open item awaiting your clinical/compliance sign-off. Each section gives plain-language context, what (if anything) is already applied in production, and the specific decisions you own. Nothing here requires you to read code — file references are included only for audit trail.
 
 ---
@@ -25,6 +25,21 @@
 - [ ] Awareness note (separate surface): the restored `phi_access_audit` compliance view surfaces patient name / actor email from audit metadata to admin users only, per the original design. Flagging for your §17 awareness.
 
 *Full technical detail: `docs/clinical/RISK_ASSESSMENTS_ENCRYPTION_REVIEW.md`.*
+
+### Addendum 2026-07-25 — Encryption Upgrade & Demographics Posture (external audit follow-up)
+
+**Context.** An external security audit (2026-07-25) examined the encryption layer. Two changes were applied the same day under Maria's approval; both need your ratification because they touch clinical-key scope.
+
+**A. Encryption method upgraded (applies to BOTH keys).** The mathematical method used to scramble PHI had two weaknesses: the same value always produced the same scrambled output (so two patients sharing a birth date had identical ciphertext — patterns visible without ever decrypting), and a modified ciphertext could not be detected. The method was upgraded so every encryption produces a unique result and any tampering is detected and rejected. All 14 previously-encrypted values were re-encrypted under the new method and verified against their source values. Nothing about who can encrypt/decrypt, which key covers which product, or the fail-closed behavior changed. (Migration `20260725110000`; procedure documented in `docs/compliance/PHI_ENCRYPTION_KEY_ROTATION.md`.)
+
+- [ ] Ratify the encryption-method upgrade for clinical-key scope (risk assessments, handoff packets).
+
+**B. Demographics protection posture (nine "decorative" columns removed).** The audit also found nine database columns holding an *encrypted copy* of a value that sat **unencrypted in the same row** (dates of birth, organization tax IDs). The encrypted copy protected nothing — anyone able to read the row read the plain value beside it — and the plain values must stay readable because identity matching (e.g., the CHW kiosk finding a senior by name + birth date) requires them. With Maria's approval the nine duplicate columns were removed, and the protection posture for demographics and organization identifiers is now stated honestly:
+
+> *Demographics and organization identifiers are protected by whole-database encryption at rest, tenant Row-Level Security isolation, and PHI access audit logging. Column-level encryption is reserved for high-sensitivity content that keeps no plaintext copy — risk-assessment narratives, handoff packets, and CHW kiosk photos, all of which remain fully encrypted and were untouched.*
+
+- [ ] Ratify the demographics/org-identifier protection posture as stated above.
+- [ ] Awareness note: if a future customer or certification requires column-level encryption of demographics, that is a scoped project (searchable-index infrastructure) — documented as the rejected-for-now alternative in the rotation procedure file.
 
 ---
 
