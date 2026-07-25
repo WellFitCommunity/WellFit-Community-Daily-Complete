@@ -124,12 +124,12 @@ serve(async (req: Request) => {
     const submissionId = crypto.randomUUID();
     const submissionTimestamp = new Date().toISOString();
 
-    // In production, this would:
-    // 1. Generate HL7 VXU message using immunizationRegistryService
-    // 2. Submit to actual state registry endpoint
-    // 3. Parse ACK response
+    // No live registry transport is configured. This function records the
+    // submission intent honestly as pending_transport — it does NOT transmit
+    // and does NOT fabricate a registry ACK. Real transmission requires
+    // ImmTrac2 (or other state registry) enrollment + HL7 VXU transport wiring.
 
-    // Record the submission
+    // Record the submission intent
     const { error: insertError } = await supabase
       .from('immunization_registry_submissions')
       .insert({
@@ -141,9 +141,9 @@ serve(async (req: Request) => {
         registry_state: state.toUpperCase(),
         registry_endpoint: endpoint,
         submission_timestamp: submissionTimestamp,
-        status: 'submitted',
-        ack_code: 'AA', // Application Accept (simulated)
-        ack_message: 'Message accepted (simulated)',
+        status: 'pending_transport',
+        ack_code: null,
+        ack_message: 'Not transmitted — no live registry connection configured. Awaiting registry enrollment and transport wiring.',
         is_test: useTestEndpoint,
       });
 
@@ -158,7 +158,7 @@ serve(async (req: Request) => {
     await supabase
       .from('immunizations')
       .update({
-        registry_status: 'submitted',
+        registry_status: 'pending_transport',
         registry_submission_id: submissionId,
         registry_submission_date: submissionTimestamp,
       })
@@ -172,8 +172,9 @@ serve(async (req: Request) => {
           destination: stateConfig.name,
           endpoint,
           timestamp: submissionTimestamp,
-          status: 'submitted',
-          ackCode: 'AA',
+          status: 'pending_transport',
+          transmitted: false,
+          message: 'Recorded for submission. Not transmitted — no live registry connection configured.',
         },
       }),
       { status: 200, headers: corsHeaders }

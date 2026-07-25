@@ -119,10 +119,12 @@ serve(async (req: Request) => {
 
     if (recentQuery) {
       // Return cached result
+      // Explicit live columns; FK column is pdmp_query_id (live-verified
+      // 2026-07-25 — the previous 'query_id' filter silently errored)
       const { data: prescriptions } = await supabase
         .from('pdmp_prescription_history')
-        .select('*')
-        .eq('query_id', recentQuery.id);
+        .select('id, medication_name, medication_ndc, dea_schedule, quantity, days_supply, refills_authorized, written_date, filled_date, prescriber_name, prescriber_npi, pharmacy_name, pharmacy_npi, morphine_milligram_equivalent, overlaps_with_other, early_refill')
+        .eq('pdmp_query_id', recentQuery.id);
 
       return new Response(
         JSON.stringify({
@@ -151,31 +153,14 @@ serve(async (req: Request) => {
     const queryId = crypto.randomUUID();
     const queryTimestamp = new Date().toISOString();
 
-    // In production, this would:
-    // 1. Build PMIX/NABP request
-    // 2. Submit to state PDMP endpoint
-    // 3. Parse response and analyze for risk flags
-    // 4. Calculate MME for opioids
+    // No live PDMP connection (PMIX/NABP) is configured. This function MUST
+    // NOT fabricate prescription history — fabricated (or fabricated-empty)
+    // controlled-substance data could directly influence prescribing
+    // decisions. It records the attempted query honestly as an error and
+    // fails closed. Real operation requires state PDMP (TX AWARxE) onboarding
+    // + PMIX/NABP request/response wiring + MME/risk-flag analysis.
 
-    // Simulated prescription history for testing
-    const simulatedPrescriptions = [
-      {
-        drug_name: 'Hydrocodone/APAP 5/325',
-        drug_ndc: '00406-0123-01',
-        dea_schedule: 2,
-        quantity_dispensed: 60,
-        days_supply: 30,
-        prescriber_name: 'Dr. Test Provider',
-        prescriber_npi: providerNpi,
-        prescriber_dea: providerDea,
-        pharmacy_name: 'Test Pharmacy',
-        pharmacy_npi: '1234567890',
-        filled_date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-        written_date: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
-
-    // Create query record
+    // Record the attempted query for the audit trail
     const { error: insertError } = await supabase
       .from('pdmp_queries')
       .insert({
@@ -193,9 +178,9 @@ serve(async (req: Request) => {
         date_range_start: dateRangeStart.toISOString(),
         date_range_end: dateRangeEnd.toISOString(),
         query_timestamp: queryTimestamp,
-        response_status: 'success',
-        response_code: '200',
-        prescriptions_found: simulatedPrescriptions.length,
+        response_status: 'error',
+        response_code: null,
+        prescriptions_found: 0,
         is_test: useTestEndpoint,
       });
 
@@ -206,48 +191,23 @@ serve(async (req: Request) => {
       );
     }
 
-    // Store prescription history
-    for (const rx of simulatedPrescriptions) {
-      await supabase
-        .from('pdmp_prescription_history')
-        .insert({
-          query_id: queryId,
-          tenant_id: tenantId,
-          patient_id: patientId,
-          ...rx,
-        });
-    }
-
-    // Analyze risk flags
-    const riskFlags = {
-      doctorShopping: false,
-      pharmacyShopping: false,
-      earlyRefill: false,
-      highMme: false,
-      overlappingPrescriptions: false,
-    };
-
     return new Response(
       JSON.stringify({
-        success: true,
+        success: false,
+        error: 'PDMP_NOT_CONNECTED',
+        message:
+          'No live PDMP connection is configured — prescription history is UNAVAILABLE. ' +
+          'Do NOT interpret this as a negative (clean) history. Use the state PDMP web portal until a live connection is provisioned.',
         data: {
           queryId,
           state: state.toUpperCase(),
           pdmpName: stateConfig.name,
           endpoint,
           queryTimestamp,
-          dateRange: {
-            start: dateRangeStart.toISOString(),
-            end: dateRangeEnd.toISOString(),
-          },
-          prescriptionsFound: simulatedPrescriptions.length,
-          prescriptions: simulatedPrescriptions,
-          riskFlags,
-          riskLevel: 'low',
           isTest: useTestEndpoint,
         },
       }),
-      { status: 200, headers: corsHeaders }
+      { status: 501, headers: corsHeaders }
     );
 
   } catch (err: unknown) {

@@ -89,10 +89,11 @@ serve(async (req: Request) => {
       config = dbConfig || FALLBACK_DIRECT_CONFIGS[state.toUpperCase()] || AIMS_CONFIG;
     }
 
-    // Fetch the case report
+    // Fetch the case report (explicit live columns — verified 2026-07-25;
+    // live schema uses trigger_code/trigger_description, not condition_*)
     const { data: caseReport, error: reportError } = await supabase
       .from('electronic_case_reports')
-      .select('*')
+      .select('id, status, trigger_code, trigger_description')
       .eq('tenant_id', tenantId)
       .eq('id', caseReportId)
       .single();
@@ -122,12 +123,12 @@ serve(async (req: Request) => {
     const submissionId = crypto.randomUUID();
     const submissionTimestamp = new Date().toISOString();
 
-    // In production, this would:
-    // 1. Generate eICR CDA document using ecrService
-    // 2. Submit to AIMS or state endpoint
-    // 3. Parse response and handle RR (Reportability Response)
+    // No live AIMS/state transport is configured. This function records the
+    // submission intent honestly as pending_transport — it does NOT transmit
+    // and does NOT fabricate an acceptance response. Real transmission
+    // requires AIMS onboarding + eICR CDA generation and RR handling.
 
-    // Record the submission
+    // Record the submission intent
     const { error: insertError } = await supabase
       .from('ecr_submissions')
       .insert({
@@ -138,9 +139,9 @@ serve(async (req: Request) => {
         destination_name: config.name,
         destination_endpoint: endpoint,
         submission_timestamp: submissionTimestamp,
-        status: 'submitted',
-        response_code: '200',
-        response_message: 'eICR accepted for processing (simulated)',
+        status: 'pending_transport',
+        response_code: null,
+        response_message: 'Not transmitted — no live AIMS/state connection configured. Awaiting onboarding and transport wiring.',
         is_test: useTestEndpoint,
       });
 
@@ -155,7 +156,7 @@ serve(async (req: Request) => {
     await supabase
       .from('electronic_case_reports')
       .update({
-        status: 'submitted',
+        status: 'pending_submission',
         submission_id: submissionId,
         submission_date: submissionTimestamp,
         submission_route: submissionRoute,
@@ -171,9 +172,11 @@ serve(async (req: Request) => {
           route: submissionRoute,
           endpoint,
           timestamp: submissionTimestamp,
-          status: 'submitted',
-          conditionCode: caseReport.condition_code,
-          conditionName: caseReport.condition_name,
+          status: 'pending_transport',
+          transmitted: false,
+          conditionCode: caseReport.trigger_code,
+          conditionName: caseReport.trigger_description,
+          message: 'Recorded for submission. Not transmitted — no live AIMS/state connection configured.',
         },
       }),
       { status: 200, headers: corsHeaders }
