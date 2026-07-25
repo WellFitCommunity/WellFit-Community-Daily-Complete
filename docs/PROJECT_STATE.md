@@ -3,10 +3,24 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-07-23 (thirteenth session)
+**Last Updated:** 2026-07-25 (fourteenth session)
 
 ---
 ### 📨 HANDOFF FOR NEXT SESSION (read this first)
+
+**Session 2026-07-25 (fourteenth) — external audit triage: all 3 findings closed + stale artifacts deleted. 4 commits (`a1938e4c..e3540770`), 2 migrations, all pushed to main.**
+
+**Arc:** Maria forwarded a Claude Cowork audit (3 findings + appendix) → every finding live-DB-verified before acting → she approved "all 3 one at a time" → shipped in order 2, 1, 3, then the artifact deletions.
+
+**1. Finding 2 — fabricated registry ACKs (`a1938e4c`):** immunization/syndromic/ecr submitters wrote fake `(simulated)` acceptances while the ONC matrix said READY; sister sweep caught a 4th the audit missed — **pdmp-query returned a fabricated hydrocodone prescription as real controlled-substance history** (0 callers, 0 rows ever, but deployed). All 4 now honest: submitters record `pending_transport`/`transmitted:false`; pdmp-query fails closed 501 `PDMP_NOT_CONNECTED`. Matrix corrected ((f)(1)/(f)(2)/(f)(5)/(f)(7) READY→GAP). Deeper drift recorded: `immunizations`/`patients`/`ecr_submissions` tables don't exist live; `syndromic_surveillance_encounters` has no `hl7_message` column — **none of the f-series submitters ever worked**; rebuild = future tracker + registry enrollment (external).
+
+**2. Finding 1 — frontend PHI logging dead (`8b137a63`, migration `20260725100000`):** 9-arg `log_phi_access` calls hit a live 4-arg fn → PGRST202 on every call since Dec 2025; `phi_access_log` 0 rows ever. Restored the 9-arg overload (identity-enforced: RAISES on unauth/spoof — NOT the archived trusting version), callers now FAIL CLOSED (throw on log failure, mirrors CHW gate; UsersList closes the record view + toasts; healthCheck probes via deliberate identity-mismatch so it writes nothing). Writer-shape test pins the 9-arg payload. Live-proven rolled-back: round-trip + spoof + unauth all correct, 0 residue.
+
+**3. Finding 3 — deterministic PHI encryption (`b201644a`, migration `20260725110000`):** raw AES-CBC zero-IV (equal plaintexts → equal ciphertexts, no integrity, bare-hash KDF) → v2 `pgp_sym_encrypt` AES-256 (random session key, S2K KDF, MDC tamper detection), stored `'v2:'+base64`; decrypt accepts both formats; all four fns incl. `*_with_key`; ALL 14 legacy rows re-encrypted from plaintext twins and verified. NEW `docs/compliance/PHI_ENCRYPTION_KEY_ROTATION.md` = rotation procedure + plaintext-twin inventory. §17 updated (v2 canonical, old primitive banned).
+
+**4. Stale artifacts deleted (`e3540770`, Maria-approved):** TENANT_ISOLATION_SUCCESS.txt, SECURITY_ANALYSIS_EXECUTIVE_SUMMARY.txt, DEVELOPMENT_STATUS.md (+ dangling CLAUDE.md row). PROJECT_STATE.md is the single source of truth.
+
+**⚑ Maria's queue from this session:** (a) **plaintext-twin drop decision** — `profiles.dob` + 9 sibling columns retain plaintext beside ciphertext, so at-rest encryption is decorative there; sequence + inventory in `PHI_ENCRYPTION_KEY_ROTATION.md` §3 (irreversible; Akima for clinical columns); (b) **Akima ratification** of the v2 clinical-key primitive change — add to her packet; (c) f-series public-health rebuild decision (schema + transport + registry enrollment) when a pilot needs it. **CHW kiosk working-tree files remain uncommitted/untouched (open Tier-3 kiosk-auth decision from 2026-07-23).** Audit appendix doc-count corrections (DRG 188-not-760 etc.) NOT yet applied to the other stale docs — only flagged.
 
 **Session 2026-07-23 (thirteenth, autonomous "keep working until done") — SEVEN workstreams shipped in one run: labs S1+S2 (critical-lab landmine defused + first working ingestion), Cures Act exports made real (L-4), Guardian Option B Sessions 3 AND 2, post-acute transfers P-1..P-3, billing B-5+B-6, Akima DOCX packet. 8 commits (`c9f26726..06e3ac7b`), 8 migrations, all pushed to main, full tsc 0 project-wide.**
 
