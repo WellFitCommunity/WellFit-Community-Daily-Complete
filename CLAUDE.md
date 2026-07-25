@@ -571,7 +571,6 @@ Detailed documentation for specific features is in the `docs/` folder:
 | [docs/product/VOICE_COMMANDS.md](docs/product/VOICE_COMMANDS.md) | Voice command infrastructure |
 | [docs/clinical/PATIENT_AVATAR.md](docs/clinical/PATIENT_AVATAR.md) | Patient avatar visualization system |
 | [docs/clinical/PATIENT_CONTEXT_SPINE.md](docs/clinical/PATIENT_CONTEXT_SPINE.md) | Canonical patient data access |
-| [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) | Current dev status & ATLUS alignment |
 
 ---
 
