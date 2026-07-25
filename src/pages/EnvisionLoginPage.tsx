@@ -456,18 +456,28 @@ export const EnvisionLoginPage: React.FC = () => {
       <div className="relative z-10 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="relative inline-flex items-center justify-center mb-3">
-            {/* Soft halo behind the logo */}
-            <div className="absolute inset-0 bg-[#00857a]/20 blur-3xl" aria-hidden="true" />
-            {/* Radial mask feathers the lockup's baked-in dark background into the page */}
+          <div className="relative inline-flex items-center justify-center mb-2">
+            {/* Soft halo behind the emblem */}
+            <div className="absolute inset-0 rounded-full bg-[#00857a]/25 blur-3xl scale-110" aria-hidden="true" />
             <img
-              src="/envision-atlus-logo.png"
-              alt="Envision Atlus — Intelligent Healthcare Interoperability System (IHIS)"
-              className="relative w-full max-w-sm select-none [mask-image:radial-gradient(ellipse_75%_72%_at_center,black_74%,transparent_100%)]"
+              src="/envision-atlus-emblem.png"
+              alt=""
+              aria-hidden="true"
+              className="relative w-36 h-36 select-none"
               draggable={false}
             />
           </div>
-          <h1 className="sr-only">Envision Atlus Portal</h1>
+          <h1 className="mb-1 leading-tight">
+            <span className="block text-2xl font-extrabold tracking-[0.3em] bg-linear-to-b from-slate-100 via-slate-300 to-slate-500 bg-clip-text text-transparent">
+              ENVISION
+            </span>
+            <span className="block text-4xl font-extrabold tracking-[0.22em] bg-linear-to-b from-[#7fe7e0] via-[#33bfb7] to-[#0a9e93] bg-clip-text text-transparent">
+              ATLUS
+            </span>
+          </h1>
+          <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 mb-3">
+            Intelligent Healthcare Interoperability System
+          </p>
           <p className="text-teal-300 text-sm">
             {step === 'credentials' && 'Authorized Personnel Only'}
             {step === 'totp' && 'Step 2: Authenticator Code'}

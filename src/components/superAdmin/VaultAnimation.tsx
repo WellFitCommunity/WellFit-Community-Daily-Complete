@@ -144,10 +144,10 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
     }
   }, [prefersReducedMotion, onComplete]);
 
-  // Preload the logo so the reveal doesn't pop in late
+  // Preload the emblem so the reveal doesn't pop in late
   useEffect(() => {
     const img = new Image();
-    img.src = '/envision-atlus-logo.png';
+    img.src = '/envision-atlus-emblem.png';
   }, []);
 
   // Animation sequence timing
@@ -362,18 +362,17 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
               transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 18 }}
               className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center"
             >
-              {/* Radial mask feathers the lockup's baked-in dark background into the backdrop */}
               <img
-                src="/envision-atlus-logo.png"
-                alt="Envision Atlus — Intelligent Healthcare Interoperability System (IHIS)"
-                className="w-[30rem] max-w-[85vw] mb-4 select-none [mask-image:radial-gradient(ellipse_75%_72%_at_center,black_74%,transparent_100%)]"
+                src="/envision-atlus-emblem.png"
+                alt="Envision Atlus"
+                className="w-48 h-48 mb-2 select-none drop-shadow-[0_0_35px_rgba(0,133,122,0.45)]"
                 draggable={false}
               />
               <div className="text-5xl font-bold text-[#33bfb7] mb-3 tracking-[0.2em] drop-shadow-lg">
                 ACCESS GRANTED
               </div>
-              <div className="text-lg text-slate-300 tracking-wide">
-                Master Panel
+              <div className="text-sm uppercase tracking-[0.28em] text-slate-400">
+                Envision Atlus Master Panel
               </div>
             </motion.div>
           )}
