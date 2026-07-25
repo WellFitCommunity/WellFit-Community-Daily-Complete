@@ -368,11 +368,12 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
                 className="w-48 h-48 mb-2 select-none drop-shadow-[0_0_35px_rgba(0,133,122,0.45)]"
                 draggable={false}
               />
-              <div className="text-5xl font-bold text-[#33bfb7] mb-3 tracking-[0.2em] drop-shadow-lg">
-                ACCESS GRANTED
+              <div className="text-4xl md:text-5xl font-extrabold mb-3 tracking-[0.12em] drop-shadow-lg">
+                <span className="bg-linear-to-b from-slate-100 via-slate-300 to-slate-500 bg-clip-text text-transparent">ENVISION</span>{' '}
+                <span className="bg-linear-to-b from-[#7fe7e0] via-[#33bfb7] to-[#0a9e93] bg-clip-text text-transparent">A.T.L.U.S.</span>
               </div>
               <div className="text-sm uppercase tracking-[0.28em] text-slate-400">
-                Envision Atlus Master Panel
+                Intelligent Healthcare Interoperability System
               </div>
             </motion.div>
           )}
