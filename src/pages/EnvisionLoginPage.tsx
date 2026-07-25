@@ -14,9 +14,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft, Smartphone, Key, Mail } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft, Smartphone, Key, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { auditLogger } from '../services/auditLogger';
+import { VAULT_ENTRY_FLAG } from '../constants/envisionVault';
 
 type AuthStep = 'credentials' | 'totp' | 'backup-code' | 'totp-setup' | 'forgot' | 'reset-sent';
 
@@ -40,6 +41,8 @@ const ENVISION_USER_KEY = 'envision_user';
  * context and route guard read. Mirrors EnvisionAuthContext.login().
  */
 function persistEnvisionSession(sessionToken: string, user: Partial<SuperAdminUser>): void {
+  // Fresh login → arm the vault entry animation (consumed once by SuperAdminDashboard)
+  sessionStorage.setItem(VAULT_ENTRY_FLAG, '1');
   localStorage.setItem(ENVISION_SESSION_KEY, sessionToken);
   const fullUser: SuperAdminUser = {
     id: user?.id || '',
@@ -435,8 +438,8 @@ export const EnvisionLoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      {/* Background pattern */}
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 overflow-hidden">
+      {/* Background grid pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
           backgroundImage: `
@@ -446,14 +449,29 @@ export const EnvisionLoginPage: React.FC = () => {
           backgroundSize: '50px 50px'
         }} />
       </div>
+      {/* Ambient teal glow accents */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#00857a]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -right-32 w-[28rem] h-[28rem] bg-[#33bfb7]/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-[#00857a]/10 rounded-full mb-4 border-2 border-[#00857a]/30">
-            <Shield className="w-10 h-10 text-[#33bfb7]" />
+          <div className="relative inline-flex items-center justify-center mb-5">
+            {/* Soft halo behind the logo */}
+            <div className="absolute inset-0 rounded-full bg-[#00857a]/25 blur-2xl scale-125" aria-hidden="true" />
+            <img
+              src="/envision-atlus-logo.png"
+              alt="Envision Atlus — Intelligent Healthcare Interoperability System"
+              className="relative w-32 h-32 rounded-full ring-2 ring-[#00857a]/50 shadow-[0_0_45px_rgba(0,133,122,0.35)] select-none"
+              draggable={false}
+            />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Envision Atlus Portal</h1>
+          <h1 className="text-3xl font-bold text-white mb-1 tracking-wide">
+            Envision <span className="text-[#33bfb7]">Atlus</span>
+          </h1>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400 mb-3">
+            Intelligent Healthcare Interoperability System
+          </p>
           <p className="text-teal-300 text-sm">
             {step === 'credentials' && 'Authorized Personnel Only'}
             {step === 'totp' && 'Step 2: Authenticator Code'}
@@ -465,7 +483,7 @@ export const EnvisionLoginPage: React.FC = () => {
         </div>
 
         {/* Login Card */}
-        <div className="bg-slate-800/50 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-8">
+        <div className="bg-slate-800/50 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 ring-1 ring-[#00857a]/20 p-8">
 
           {/* Step 1: Email + Password */}
           {step === 'credentials' && (

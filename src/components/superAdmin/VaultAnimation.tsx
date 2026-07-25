@@ -1,26 +1,129 @@
 /**
- * Vault Animation - Epic Master Panel Entry Sequence
+ * Vault Animation - Master Panel Entry Sequence
  *
- * Cinematic authentication sequence for Envision VirtualEdge Group super admins
- * Features: Mechanical locks, spinning gears, sound effects, and vault door opening
+ * Cinematic entry sequence for Envision VirtualEdge Group super admins.
+ * One continuous scene: locking bolts engage, the vault wheel spins and
+ * retracts the bolts, then the door splits open to reveal the Envision
+ * Atlus mark. Skippable (ESC / click), auto-skips for reduced motion.
  *
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Lock, Unlock } from 'lucide-react';
 
 interface VaultAnimationProps {
   onComplete: () => void;
   skipEnabled?: boolean;
 }
 
+type Stage = 'bolts' | 'wheel' | 'opening' | 'complete';
+
+// Brand palette (Envision Atlus teal)
+const TEAL = '#00857a';
+const TEAL_LIGHT = '#33bfb7';
+const STEEL = '#94a3b8';
+const PLATE = '#1e293b';
+const PLATE_DARK = '#0f172a';
+
+const BOLT_COUNT = 8;
+const BOLT_RADIUS = 140;
+
+/** Bolt positions around the door rim (8 bolts, every 45°) */
+const boltPositions = Array.from({ length: BOLT_COUNT }, (_, i) => {
+  const angle = (i * 360) / BOLT_COUNT - 90;
+  const rad = (angle * Math.PI) / 180;
+  return { x: 200 + BOLT_RADIUS * Math.cos(rad), y: 200 + BOLT_RADIUS * Math.sin(rad) };
+});
+
+/**
+ * The circular vault door face, built from geometric primitives so it renders
+ * predictably. Rendered twice (one copy clipped inside each sliding panel) so
+ * the door visually splits in half when the panels part.
+ */
+const VaultDoorFace: React.FC<{ stage: Stage }> = ({ stage }) => {
+  const boltsRetracted = stage === 'wheel' || stage === 'opening' || stage === 'complete';
+  return (
+    <svg width="400" height="400" viewBox="0 0 400 400" aria-hidden="true">
+      <defs>
+        <radialGradient id="vault-plate" cx="35%" cy="30%" r="80%">
+          <stop offset="0%" stopColor="#334155" />
+          <stop offset="70%" stopColor={PLATE} />
+          <stop offset="100%" stopColor={PLATE_DARK} />
+        </radialGradient>
+        <linearGradient id="vault-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#cbd5e1" />
+          <stop offset="50%" stopColor="#64748b" />
+          <stop offset="100%" stopColor="#334155" />
+        </linearGradient>
+        <radialGradient id="vault-bolt" cx="35%" cy="30%" r="80%">
+          <stop offset="0%" stopColor="#e2e8f0" />
+          <stop offset="100%" stopColor={STEEL} />
+        </radialGradient>
+      </defs>
+
+      {/* Outer rim + door plate */}
+      <circle cx="200" cy="200" r="188" fill={PLATE_DARK} stroke="url(#vault-rim)" strokeWidth="8" />
+      <circle cx="200" cy="200" r="170" fill="url(#vault-plate)" stroke="#475569" strokeWidth="2" />
+      {/* Teal accent ring */}
+      <circle cx="200" cy="200" r="156" fill="none" stroke={TEAL} strokeWidth="2" opacity="0.45" />
+
+      {/* Locking bolts — engage on mount, retract when the wheel turns */}
+      {boltPositions.map((pos, i) => (
+        <motion.circle
+          key={i}
+          cx={pos.x}
+          cy={pos.y}
+          r="11"
+          fill="url(#vault-bolt)"
+          stroke="#475569"
+          strokeWidth="1.5"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={boltsRetracted ? { scale: 0.35, opacity: 0.35 } : { scale: 1, opacity: 1 }}
+          transition={
+            boltsRetracted
+              ? { delay: i * 0.05, duration: 0.25 }
+              : { delay: i * 0.06, type: 'spring', stiffness: 400, damping: 22 }
+          }
+          style={{ originX: `${pos.x}px`, originY: `${pos.y}px` }}
+        />
+      ))}
+
+      {/* Vault wheel — rim, three spokes, hub. Spins to retract the bolts. */}
+      <motion.g
+        style={{ originX: '200px', originY: '200px' }}
+        initial={{ rotate: 0 }}
+        animate={boltsRetracted ? { rotate: 270 } : { rotate: 0 }}
+        transition={{ duration: 0.9, ease: [0.65, 0, 0.35, 1] }}
+      >
+        <circle cx="200" cy="200" r="72" fill="none" stroke="url(#vault-rim)" strokeWidth="12" />
+        {[0, 120, 240].map((deg) => {
+          const rad = ((deg - 90) * Math.PI) / 180;
+          return (
+            <line
+              key={deg}
+              x1="200"
+              y1="200"
+              x2={200 + 66 * Math.cos(rad)}
+              y2={200 + 66 * Math.sin(rad)}
+              stroke="url(#vault-rim)"
+              strokeWidth="10"
+              strokeLinecap="round"
+            />
+          );
+        })}
+        <circle cx="200" cy="200" r="20" fill="url(#vault-plate)" stroke={TEAL_LIGHT} strokeWidth="2.5" />
+        <circle cx="200" cy="200" r="6" fill={TEAL_LIGHT} />
+      </motion.g>
+    </svg>
+  );
+};
+
 export const VaultAnimation: React.FC<VaultAnimationProps> = ({
   onComplete,
   skipEnabled = true
 }) => {
-  const [stage, setStage] = useState<'locks' | 'gears' | 'opening' | 'complete'>('locks');
+  const [stage, setStage] = useState<Stage>('bolts');
   const [skipped, setSkipped] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -41,15 +144,21 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
     }
   }, [prefersReducedMotion, onComplete]);
 
-  // Animation sequence timing - Faster, non-blocking
+  // Preload the logo so the reveal doesn't pop in late
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/envision-atlus-logo.png';
+  }, []);
+
+  // Animation sequence timing
   useEffect(() => {
     if (skipped || prefersReducedMotion) return;
 
     const timers = [
-      setTimeout(() => setStage('gears'), 600),       // Locks click into place (faster)
-      setTimeout(() => setStage('opening'), 1200),    // Gears turn (faster)
-      setTimeout(() => setStage('complete'), 1800),   // Vault opens (faster)
-      setTimeout(() => onComplete(), 2200)            // Auto-complete after 2.2s
+      setTimeout(() => setStage('wheel'), 800),      // Bolts engaged → wheel spins
+      setTimeout(() => setStage('opening'), 1700),   // Door splits open
+      setTimeout(() => setStage('complete'), 2300),  // Access granted reveal
+      setTimeout(() => onComplete(), 3200)           // Hand off to the dashboard
     ];
 
     return () => timers.forEach(clearTimeout);
@@ -71,57 +180,159 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSkip]);
 
-  // Play sound effects
-  const playSound = useCallback((type: 'lock' | 'gear' | 'open' | 'granted') => {
-    // Web Audio API - using oscillator for now (you can replace with actual audio files)
-    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+  // --- Sound design (Web Audio, synthesized in-code — no audio assets) ----
+  // One shared context, resumed if the browser suspended it (autoplay policy).
+  // The old implementation created a fresh context per stage and never resumed
+  // a suspended one, so the sounds could silently not play.
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    // Sound profiles
-    switch (type) {
-      case 'lock':
-        oscillator.frequency.value = 150;
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        break;
-      case 'gear':
-        oscillator.frequency.value = 200;
-        oscillator.type = 'sawtooth';
-        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        break;
-      case 'open':
-        oscillator.frequency.value = 100;
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-        break;
-      case 'granted':
-        oscillator.frequency.value = 600;
-        oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        break;
+  const getAudioContext = useCallback((): AudioContext | null => {
+    try {
+      if (!audioCtxRef.current) {
+        const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        audioCtxRef.current = new Ctor();
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        void audioCtxRef.current.resume();
+      }
+      return audioCtxRef.current;
+    } catch {
+      return null; // No audio support — animation still plays silently
     }
-
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
   }, []);
 
-  // Trigger sounds
+  useEffect(() => {
+    return () => {
+      void audioCtxRef.current?.close();
+      audioCtxRef.current = null;
+    };
+  }, []);
+
+  /** Short filtered noise burst + low thump — a metal bolt snapping home */
+  const scheduleBoltClick = useCallback((ctx: AudioContext, t: number) => {
+    const noiseLength = Math.floor(ctx.sampleRate * 0.05);
+    const buffer = ctx.createBuffer(1, noiseLength, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < noiseLength; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (noiseLength * 0.15));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const bandpass = ctx.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.value = 2500;
+    bandpass.Q.value = 6;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.22, t);
+    noise.connect(bandpass).connect(noiseGain).connect(ctx.destination);
+    noise.start(t);
+
+    const thump = ctx.createOscillator();
+    thump.frequency.setValueAtTime(120, t);
+    thump.frequency.exponentialRampToValueAtTime(55, t + 0.08);
+    const thumpGain = ctx.createGain();
+    thumpGain.gain.setValueAtTime(0.18, t);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    thump.connect(thumpGain).connect(ctx.destination);
+    thump.start(t);
+    thump.stop(t + 0.12);
+  }, []);
+
+  /** Accelerating ratchet ticks + low rumble — the wheel spinning */
+  const playWheelSpin = useCallback((ctx: AudioContext) => {
+    const start = ctx.currentTime;
+    let offset = 0;
+    for (let i = 0; i < 14; i++) {
+      const tick = ctx.createOscillator();
+      tick.type = 'square';
+      tick.frequency.value = 1800;
+      const tickGain = ctx.createGain();
+      tickGain.gain.setValueAtTime(0.06, start + offset);
+      tickGain.gain.exponentialRampToValueAtTime(0.001, start + offset + 0.03);
+      tick.connect(tickGain).connect(ctx.destination);
+      tick.start(start + offset);
+      tick.stop(start + offset + 0.04);
+      offset += 0.03 + i * 0.006; // ticks spread out as the wheel decelerates
+    }
+
+    const rumble = ctx.createOscillator();
+    rumble.type = 'sawtooth';
+    rumble.frequency.setValueAtTime(45, start);
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 140;
+    const rumbleGain = ctx.createGain();
+    rumbleGain.gain.setValueAtTime(0.0001, start);
+    rumbleGain.gain.exponentialRampToValueAtTime(0.12, start + 0.15);
+    rumbleGain.gain.exponentialRampToValueAtTime(0.001, start + 0.9);
+    rumble.connect(lowpass).connect(rumbleGain).connect(ctx.destination);
+    rumble.start(start);
+    rumble.stop(start + 1);
+  }, []);
+
+  /** Deep filtered-noise sweep — the vault doors parting */
+  const playDoorWhoosh = useCallback((ctx: AudioContext) => {
+    const start = ctx.currentTime;
+    const noiseLength = Math.floor(ctx.sampleRate * 1.2);
+    const buffer = ctx.createBuffer(1, noiseLength, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < noiseLength; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.setValueAtTime(900, start);
+    lowpass.frequency.exponentialRampToValueAtTime(90, start + 1.1);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.25, start + 0.2);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 1.15);
+    noise.connect(lowpass).connect(gain).connect(ctx.destination);
+    noise.start(start);
+  }, []);
+
+  /** Warm rising major-chord arpeggio — access granted */
+  const playGrantedChord = useCallback((ctx: AudioContext) => {
+    const start = ctx.currentTime;
+    // C3 root for warmth, then C5–E5–G5 arpeggio
+    const notes = [130.81, 523.25, 659.25, 783.99];
+    notes.forEach((freq, i) => {
+      const t = start + i * 0.09;
+      const osc = ctx.createOscillator();
+      osc.type = i === 0 ? 'triangle' : 'sine';
+      osc.frequency.value = freq;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(i === 0 ? 0.1 : 0.14, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 1.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 1.4);
+    });
+  }, []);
+
+  // Trigger sounds per stage
   useEffect(() => {
     if (prefersReducedMotion || skipped) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-    if (stage === 'locks') playSound('lock');
-    if (stage === 'gears') playSound('gear');
-    if (stage === 'opening') playSound('open');
-    if (stage === 'complete') playSound('granted');
-  }, [stage, playSound, prefersReducedMotion, skipped]);
+    if (stage === 'bolts') {
+      // One click per bolt, matching the visual stagger
+      for (let i = 0; i < BOLT_COUNT; i++) {
+        scheduleBoltClick(ctx, ctx.currentTime + 0.05 + i * 0.06);
+      }
+    }
+    if (stage === 'wheel') playWheelSpin(ctx);
+    if (stage === 'opening') playDoorWhoosh(ctx);
+    if (stage === 'complete') playGrantedChord(ctx);
+  }, [stage, prefersReducedMotion, skipped, getAudioContext, scheduleBoltClick, playWheelSpin, playDoorWhoosh, playGrantedChord]);
 
   if (prefersReducedMotion || skipped) return null;
+
+  const doorsOpen = stage === 'opening' || stage === 'complete';
 
   return (
     <AnimatePresence>
@@ -129,198 +340,86 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center"
+        className="fixed inset-0 z-50 overflow-hidden bg-slate-900"
         onClick={handleSkip}
       >
-        {/* Background grid pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
+        {/* Revealed backdrop (visible once the doors part) */}
+        <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
+          <div className="absolute inset-0 opacity-5" style={{
             backgroundImage: `
-              linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px)
+              linear-gradient(rgba(0, 133, 122, 0.2) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 133, 122, 0.2) 1px, transparent 1px)
             `,
             backgroundSize: '50px 50px'
           }} />
-        </div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[36rem] h-[36rem] bg-[#00857a]/15 rounded-full blur-3xl" />
 
-        <div className="relative z-10 text-center">
-          {/* Stage 1: Lock Mechanisms */}
-          {stage === 'locks' && (
-            <motion.div className="flex items-center justify-center gap-8">
-              {[0, 1, 2, 3].map((index) => (
-                <motion.div
-                  key={index}
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{
-                    delay: index * 0.15,
-                    type: 'spring',
-                    stiffness: 260,
-                    damping: 20
-                  }}
-                  className="relative"
-                >
-                  {/* Lock ring */}
-                  <svg width="120" height="120" viewBox="0 0 120 120">
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="55"
-                      fill="none"
-                      stroke="url(#gradient)"
-                      strokeWidth="4"
-                      className="drop-shadow-lg"
-                    />
-                    <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#3b82f6" />
-                        <stop offset="100%" stopColor="#1d4ed8" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* Rotating segments */}
-                    <motion.g
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, ease: 'easeInOut' }}
-                      style={{ originX: '60px', originY: '60px' }}
-                    >
-                      <line x1="60" y1="10" x2="60" y2="25" stroke="#60a5fa" strokeWidth="3" />
-                      <line x1="60" y1="95" x2="60" y2="110" stroke="#60a5fa" strokeWidth="3" />
-                      <line x1="10" y1="60" x2="25" y2="60" stroke="#60a5fa" strokeWidth="3" />
-                      <line x1="95" y1="60" x2="110" y2="60" stroke="#60a5fa" strokeWidth="3" />
-                    </motion.g>
-                  </svg>
-
-                  {/* Lock icon */}
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.15 + 0.5 }}
-                  >
-                    <Lock className="w-10 h-10 text-blue-400" />
-                  </motion.div>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-
-          {/* Stage 2: Gears Turning */}
-          {stage === 'gears' && (
+          {/* ACCESS GRANTED */}
+          {stage === 'complete' && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative w-80 h-80 mx-auto"
+              transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 18 }}
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center"
             >
-              {/* Large gear */}
-              <motion.svg
-                className="absolute inset-0"
-                width="320"
-                height="320"
-                viewBox="0 0 200 200"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, ease: 'linear', repeat: Infinity }}
-              >
-                <path
-                  d="M100,10 L110,40 L120,40 L130,10 L140,10 L140,30 L150,30 L160,10 L170,20 L160,40 L170,50 L180,40 L180,50 L160,60 L160,70 L180,80 L180,90 L160,90 L150,110 L160,130 L180,130 L180,140 L160,140 L160,150 L180,160 L170,170 L150,160 L140,170 L140,190 L130,190 L120,170 L110,170 L100,190 L90,190 L80,170 L70,170 L60,190 L50,190 L50,170 L40,160 L20,170 L10,160 L30,150 L30,140 L10,130 L10,120 L30,110 L30,100 L10,90 L10,80 L30,70 L30,60 L10,50 L10,40 L30,40 L40,30 L30,10 L40,10 L50,30 L60,30 L70,10 L80,10 L90,30 L100,30 Z"
-                  fill="#1e40af"
-                  stroke="#3b82f6"
-                  strokeWidth="2"
-                  className="drop-shadow-2xl"
-                />
-                <circle cx="100" cy="100" r="20" fill="#0f172a" stroke="#3b82f6" strokeWidth="2" />
-              </motion.svg>
-
-              {/* Small gear */}
-              <motion.svg
-                className="absolute top-20 right-10"
-                width="120"
-                height="120"
-                viewBox="0 0 100 100"
-                animate={{ rotate: -360 }}
-                transition={{ duration: 1.5, ease: 'linear', repeat: Infinity }}
-              >
-                <path
-                  d="M50,5 L55,20 L60,20 L65,5 L70,10 L65,25 L70,30 L80,25 L80,35 L70,35 L65,50 L70,65 L80,65 L80,75 L70,70 L65,75 L70,90 L65,95 L60,80 L55,80 L50,95 L45,95 L40,80 L35,80 L30,95 L25,90 L30,75 L25,70 L15,75 L15,65 L25,65 L30,50 L25,35 L15,35 L15,25 L25,30 L30,25 L25,10 L30,5 L35,20 L40,20 L45,5 Z"
-                  fill="#1e3a8a"
-                  stroke="#60a5fa"
-                  strokeWidth="1.5"
-                  className="drop-shadow-xl"
-                />
-                <circle cx="50" cy="50" r="12" fill="#0f172a" stroke="#60a5fa" strokeWidth="1.5" />
-              </motion.svg>
-
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Shield className="w-16 h-16 text-blue-400 drop-shadow-lg" />
+              <img
+                src="/envision-atlus-logo.png"
+                alt="Envision Atlus"
+                className="w-32 h-32 rounded-full ring-2 ring-[#00857a]/50 shadow-[0_0_45px_rgba(0,133,122,0.4)] mb-6 select-none"
+                draggable={false}
+              />
+              <div className="text-5xl font-bold text-[#33bfb7] mb-3 tracking-[0.2em] drop-shadow-lg">
+                ACCESS GRANTED
+              </div>
+              <div className="text-lg text-slate-300 tracking-wide">
+                Envision Atlus Master Panel
+              </div>
+              <div className="text-[11px] uppercase tracking-[0.3em] text-slate-500 mt-2">
+                Intelligent Healthcare Interoperability System
               </div>
             </motion.div>
           )}
-
-          {/* Stage 3: Vault Opening */}
-          {(stage === 'opening' || stage === 'complete') && (
-            <div className="relative w-screen h-screen flex items-center justify-center overflow-hidden">
-              {/* Left door */}
-              <motion.div
-                initial={{ x: 0 }}
-                animate={{ x: '-50vw' }}
-                transition={{ duration: 1.2, ease: [0.43, 0.13, 0.23, 0.96] }}
-                className="absolute left-0 top-0 w-1/2 h-full bg-linear-to-r from-slate-800 to-slate-700 border-r-4 border-blue-500"
-                style={{
-                  boxShadow: '0 0 50px rgba(59, 130, 246, 0.5)'
-                }}
-              >
-                <div className="absolute right-8 top-1/2 -translate-y-1/2">
-                  <Lock className="w-16 h-16 text-blue-400" />
-                </div>
-              </motion.div>
-
-              {/* Right door */}
-              <motion.div
-                initial={{ x: 0 }}
-                animate={{ x: '50vw' }}
-                transition={{ duration: 1.2, ease: [0.43, 0.13, 0.23, 0.96] }}
-                className="absolute right-0 top-0 w-1/2 h-full bg-linear-to-l from-slate-800 to-slate-700 border-l-4 border-blue-500"
-                style={{
-                  boxShadow: '0 0 50px rgba(59, 130, 246, 0.5)'
-                }}
-              >
-                <div className="absolute left-8 top-1/2 -translate-y-1/2">
-                  <Unlock className="w-16 h-16 text-blue-400" />
-                </div>
-              </motion.div>
-
-              {/* ACCESS GRANTED */}
-              {stage === 'complete' && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.6, type: 'spring', stiffness: 200 }}
-                  className="absolute z-20 text-center"
-                >
-                  <Shield className="w-24 h-24 text-blue-400 mx-auto mb-4 drop-shadow-2xl" />
-                  <div className="text-5xl font-bold text-blue-400 mb-2 tracking-wider drop-shadow-lg">
-                    ACCESS GRANTED
-                  </div>
-                  <div className="text-xl text-blue-300">
-                    Envision VirtualEdge Group
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          )}
-
-          {/* Skip hint */}
-          {skipEnabled && stage !== 'complete' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              transition={{ delay: 1 }}
-              className="absolute bottom-8 left-1/2 -translate-x-1/2 text-blue-300 text-sm"
-            >
-              Press ESC or click to skip
-            </motion.div>
-          )}
         </div>
+
+        {/* Left door panel — carries the left half of the vault face */}
+        <motion.div
+          initial={{ x: 0 }}
+          animate={doorsOpen ? { x: '-62vw' } : { x: 0 }}
+          transition={{ duration: 1.1, ease: [0.43, 0.13, 0.23, 0.96] }}
+          className="absolute left-0 top-0 w-1/2 h-full overflow-hidden bg-linear-to-r from-slate-900 to-slate-800"
+          style={{ boxShadow: '0 0 60px rgba(0, 133, 122, 0.35)' }}
+        >
+          <div className="absolute right-0 top-0 h-full w-[3px] bg-[#00857a]/60" />
+          <div className="absolute top-1/2 -translate-y-1/2 -right-[200px]">
+            <VaultDoorFace stage={stage} />
+          </div>
+        </motion.div>
+
+        {/* Right door panel — carries the right half of the vault face */}
+        <motion.div
+          initial={{ x: 0 }}
+          animate={doorsOpen ? { x: '62vw' } : { x: 0 }}
+          transition={{ duration: 1.1, ease: [0.43, 0.13, 0.23, 0.96] }}
+          className="absolute right-0 top-0 w-1/2 h-full overflow-hidden bg-linear-to-l from-slate-900 to-slate-800"
+          style={{ boxShadow: '0 0 60px rgba(0, 133, 122, 0.35)' }}
+        >
+          <div className="absolute left-0 top-0 h-full w-[3px] bg-[#00857a]/60" />
+          <div className="absolute top-1/2 -translate-y-1/2 -left-[200px]">
+            <VaultDoorFace stage={stage} />
+          </div>
+        </motion.div>
+
+        {/* Skip hint */}
+        {skipEnabled && stage !== 'complete' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.6 }}
+            transition={{ delay: 1 }}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 text-teal-300 text-sm"
+          >
+            Press ESC or click to skip
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );

@@ -9,6 +9,7 @@ import SystemHealthPanel from './SystemHealthPanel';
 import AuditLogViewer from './AuditLogViewer';
 import TenantDataViewer from './TenantDataViewer';
 import VaultAnimation from './VaultAnimation';
+import { VAULT_ENTRY_FLAG } from '../../constants/envisionVault';
 import PlatformSOC2Dashboard from './PlatformSOC2Dashboard';
 import PlatformAICostDashboard from './PlatformAICostDashboard';
 import GuardianMonitoringDashboard from './GuardianMonitoringDashboard';
@@ -144,8 +145,13 @@ const SuperAdminDashboard: React.FC = () => {
 
   useEffect(() => {
     checkAccess();
-    // Vault animation disabled for production - proceed directly to dashboard
-    setShowVaultAnimation(false);
+    // Play the vault entry sequence once per fresh Envision login.
+    // EnvisionLoginPage arms the flag on successful 2FA; consuming it here
+    // means refreshes and tab returns skip straight to the dashboard.
+    if (sessionStorage.getItem(VAULT_ENTRY_FLAG) === '1') {
+      sessionStorage.removeItem(VAULT_ENTRY_FLAG);
+      setShowVaultAnimation(true);
+    }
   }, [checkAccess]);
 
   const loadSystemData = async () => {
