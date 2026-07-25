@@ -36,11 +36,13 @@ export async function logAuditEvent(eventType: string, metadata: UnknownRecord):
 // SOC 2: Security event logging helper
 export async function logSecurityEvent(eventType: string, metadata: UnknownRecord): Promise<void> {
   try {
+    // Live shape: description is NOT NULL and there is no created_at column
+    // (the table stamps `timestamp` itself) — the old payload failed on every insert.
     await supabase.from('security_events').insert({
       event_type: eventType,
       severity: 'HIGH',
-      metadata: metadata,
-      created_at: new Date().toISOString()
+      description: `FHIR integrator security event: ${eventType}`,
+      metadata: metadata
     });
   } catch (err: unknown) {
     // RF-5: see logAuditEvent — surface a dropped security-event write.

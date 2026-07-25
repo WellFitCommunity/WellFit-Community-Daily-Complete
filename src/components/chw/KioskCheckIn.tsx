@@ -1,411 +1,262 @@
 /**
- * Kiosk Check-In Component
- * Patient lookup and authentication for library/community center kiosks
- * HIPAA COMPLIANT: 2-minute inactivity timeout with auto-logout
+ * KioskCheckIn - Public check-in flow for shared CHW kiosks
+ *
+ * Purpose: lets a senior check in at a library/community-center kiosk with
+ * no user credentials on the device. All PHI access happens server-side in
+ * the chw-kiosk edge function; this component only collects identity fields
+ * and a possession/knowledge factor and renders the outcome.
+ *
+ * Device model (Maria approved 2026-07-23): the kiosk authenticates as a
+ * DEVICE. Staff provision the kiosk once with its kiosk ID + device token
+ * (issued at registration, hash stored on chw_kiosk_devices); credentials
+ * persist in localStorage on the kiosk device only.
+ *
+ * Identity flow: name + DOB lookup -> SMS one-time code (verified phone) or
+ * last-4-of-phone fallback -> privacy consent -> server creates the visit.
+ * No SSN — none is stored, by design.
+ *
+ * HIPAA: 2-minute inactivity timeout clears all entered data.
+ * Used by: route /kiosk/check-in (auth 'none').
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import bcrypt from 'bcryptjs';
 import { supabase } from '../../lib/supabaseClient';
-import { chwService } from '../../services/chwService';
-import { validateName, validateDOB, validateSSNLast4, validatePIN, RateLimiter } from '../../utils/kioskValidation';
+import { validateName, validateDOB } from '../../utils/kioskValidation';
+import { kioskTranslations, KioskLanguage } from './kioskTranslations';
 
-// CRITICAL FIX: Inactivity timeout (2 minutes)
-const INACTIVITY_TIMEOUT = 120000; // 2 minutes in milliseconds
-const NOTIFICATION_DISPLAY_TIME = 5000; // 5 seconds
+const INACTIVITY_TIMEOUT = 120000; // 2 minutes
+const NOTIFICATION_DISPLAY_TIME = 5000;
+const SUCCESS_RESET_TIME = 12000;
+
+const STORAGE_KIOSK_ID = 'chw_kiosk_id';
+const STORAGE_KIOSK_TOKEN = 'chw_kiosk_token';
+
+type Step = 'setup' | 'language' | 'lookup' | 'privacy' | 'verify' | 'see-staff' | 'success';
+type VerifyMethod = 'sms' | 'phone_last4' | 'none';
+
+interface KioskLookupResponse {
+  found?: boolean;
+  method?: VerifyMethod;
+  masked_phone?: string;
+  error?: string;
+}
+
+interface KioskVerifyResponse {
+  verified?: boolean;
+  visit_id?: string;
+  patient_first_name?: string;
+  error?: string;
+}
+
+/**
+ * Invoke the chw-kiosk edge function. supabase-js surfaces non-2xx responses
+ * as FunctionsHttpError with the raw Response on .context — parse it so the
+ * UI can distinguish device-auth failure (401) from rate limiting (429).
+ */
+async function callKiosk<T>(body: Record<string, unknown>): Promise<{ status: number; data: T | null }> {
+  const { data, error } = await supabase.functions.invoke('chw-kiosk', { body });
+  if (!error) return { status: 200, data: data as T };
+  const ctx = (error as { context?: Response }).context;
+  if (ctx instanceof Response) {
+    try {
+      return { status: ctx.status, data: (await ctx.json()) as T };
+    } catch {
+      return { status: ctx.status, data: null };
+    }
+  }
+  return { status: 0, data: null };
+}
 
 interface KioskCheckInProps {
   kioskId?: string;
   locationName?: string;
-  onCheckInComplete?: (visitId: string, patientId: string) => void;
+  onCheckInComplete?: (visitId: string) => void;
 }
 
 export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
-  kioskId = 'kiosk-web-001',
-  locationName = 'Web Kiosk',
-  onCheckInComplete = () => {}
+  kioskId,
+  locationName = 'WellFit Kiosk',
+  onCheckInComplete = () => {},
 }) => {
-  const [step, setStep] = useState<'lookup' | 'privacy' | 'language'>('language');
-  const [language, setLanguage] = useState<'en' | 'es' | 'vi'>('en');
+  const [deviceId, setDeviceId] = useState<string>(() => kioskId ?? localStorage.getItem(STORAGE_KIOSK_ID) ?? '');
+  const [deviceToken, setDeviceToken] = useState<string>(() => localStorage.getItem(STORAGE_KIOSK_TOKEN) ?? '');
+  const provisioned = Boolean(deviceId && deviceToken);
+
+  const [step, setStep] = useState<Step>(provisioned ? 'language' : 'setup');
+  const [language, setLanguage] = useState<KioskLanguage>('en');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [dob, setDob] = useState('');
-  const [lastFourSSN, setLastFourSSN] = useState('');
-  const [pin, setPin] = useState('');
+  const [method, setMethod] = useState<VerifyMethod>('none');
+  const [maskedPhone, setMaskedPhone] = useState('');
+  const [factor, setFactor] = useState('');
+  const [patientFirstName, setPatientFirstName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [patientId, setPatientId] = useState('');
-  const [notification, setNotification] = useState<{type: 'info' | 'warning' | 'error', message: string} | null>(null);
+  const [notification, setNotification] = useState<{ type: 'info' | 'warning' | 'error'; message: string } | null>(null);
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Staff provisioning form (setup step)
+  const [setupId, setSetupId] = useState('');
+  const [setupToken, setSetupToken] = useState('');
 
-  // Rate limiting for failed lookups
-  const rateLimiterRef = useRef<RateLimiter>(new RateLimiter(5, 300000)); // 5 attempts per 5 minutes
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset all state and return to language selection
+  const t = kioskTranslations[language];
+
+  // Reset all patient-entered state and return to the language screen
   const resetSession = useCallback(() => {
     setStep('language');
     setFirstName('');
     setLastName('');
     setDob('');
-    setLastFourSSN('');
-    setPin('');
-    setPatientId('');
+    setMethod('none');
+    setMaskedPhone('');
+    setFactor('');
+    setPatientFirstName('');
     setError('');
     setLoading(false);
   }, []);
 
-  // Reset inactivity timer
+  // HIPAA: inactivity timeout clears all PHI from the screen
   const resetInactivityTimer = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    if (resetTimeoutRef.current) {
-      clearTimeout(resetTimeoutRef.current);
-    }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
 
     timeoutRef.current = setTimeout(() => {
-      // Session timed out - clear all PHI and return to start
-      setNotification({
-        type: 'warning',
-        message: language === 'en'
-          ? 'Session timed out for security. Please start over.'
-          : 'La sesión expiró por seguridad. Por favor, comience de nuevo.'
-      });
-      // Wait for user to see notification, then reset
+      setNotification({ type: 'warning', message: t.timedOut });
       resetTimeoutRef.current = setTimeout(() => {
         resetSession();
         setNotification(null);
       }, NOTIFICATION_DISPLAY_TIME);
     }, INACTIVITY_TIMEOUT);
-  }, [language, resetSession]);
+  }, [t.timedOut, resetSession]);
 
-  // Set up inactivity detection
   useEffect(() => {
-    // Start initial timer
     resetInactivityTimer();
-
-    // Cleanup
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      if (resetTimeoutRef.current) {
-        clearTimeout(resetTimeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     };
-  }, [step, resetInactivityTimer]);  
+  }, [step, resetInactivityTimer]);
 
-  const translations = {
-    en: {
-      welcome: 'Welcome to WellFit Health Kiosk',
-      selectLanguage: 'Select Your Language',
-      english: 'English',
-      spanish: 'Spanish',
-      patientLookup: 'Patient Lookup',
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      dateOfBirth: 'Date of Birth',
-      lastFour: 'Last 4 of SSN',
-      pin: 'PIN (if you have one)',
-      findMe: 'Find Me',
-      privacy: 'Privacy Consent',
-      privacyText: 'Your health information is private and secure. This kiosk uses encryption and follows HIPAA guidelines. By continuing, you consent to using this kiosk for your health check-in.',
-      agree: 'I Agree',
-      cancel: 'Cancel',
-      startVisit: 'Start Your Visit',
-      checking: 'Looking you up...',
-      error: 'Error',
-      notFound: 'Patient not found. Please check your information or see staff for assistance.'
-    },
-    es: {
-      welcome: 'Bienvenido al Quiosco de Salud WellFit',
-      selectLanguage: 'Seleccione su idioma',
-      english: 'Inglés',
-      spanish: 'Español',
-      patientLookup: 'Búsqueda de Paciente',
-      firstName: 'Nombre',
-      lastName: 'Apellido',
-      dateOfBirth: 'Fecha de Nacimiento',
-      lastFour: 'Últimos 4 del SSN',
-      pin: 'PIN (si tiene uno)',
-      findMe: 'Encuéntrame',
-      privacy: 'Consentimiento de Privacidad',
-      privacyText: 'Su información de salud es privada y segura. Este quiosco usa encriptación y sigue las pautas de HIPAA. Al continuar, usted consiente en usar este quiosco para su registro de salud.',
-      agree: 'Estoy de acuerdo',
-      cancel: 'Cancelar',
-      startVisit: 'Comenzar su Visita',
-      checking: 'Buscándote...',
-      error: 'Error',
-      notFound: 'Paciente no encontrado. Por favor verifique su información o consulte al personal.'
-    },
-    vi: {
-      welcome: 'Chào Mừng Đến Quầy Sức Khỏe WellFit',
-      selectLanguage: 'Chọn Ngôn Ngữ Của Bạn',
-      english: 'Tiếng Anh',
-      spanish: 'Tiếng Tây Ban Nha',
-      vietnamese: 'Tiếng Việt',
-      patientLookup: 'Tra Cứu Bệnh Nhân',
-      firstName: 'Tên',
-      lastName: 'Họ',
-      dateOfBirth: 'Ngày Sinh',
-      lastFour: '4 Số Cuối Của SSN',
-      pin: 'Mã PIN (nếu bạn có)',
-      findMe: 'Tìm Tôi',
-      privacy: 'Đồng Ý Quyền Riêng Tư',
-      privacyText: 'Thông tin sức khỏe của bạn được bảo mật và an toàn. Quầy này sử dụng mã hóa và tuân theo hướng dẫn HIPAA. Bằng cách tiếp tục, bạn đồng ý sử dụng quầy này để đăng ký sức khỏe của mình.',
-      agree: 'Tôi Đồng Ý',
-      cancel: 'Hủy',
-      startVisit: 'Bắt Đầu Chuyến Thăm',
-      checking: 'Đang tìm kiếm bạn...',
-      error: 'Lỗi',
-      notFound: 'Không tìm thấy bệnh nhân. Vui lòng kiểm tra thông tin của bạn hoặc liên hệ nhân viên để được hỗ trợ.',
-    }
+  // Success screen auto-resets so the kiosk is ready for the next person
+  useEffect(() => {
+    if (step !== 'success') return;
+    const timer = setTimeout(resetSession, SUCCESS_RESET_TIME);
+    return () => clearTimeout(timer);
+  }, [step, resetSession]);
+
+  const handleProvision = () => {
+    const id = setupId.trim();
+    const token = setupToken.trim();
+    if (!id || !token) return;
+    localStorage.setItem(STORAGE_KIOSK_ID, id);
+    localStorage.setItem(STORAGE_KIOSK_TOKEN, token);
+    setDeviceId(id);
+    setDeviceToken(token);
+    setSetupId('');
+    setSetupToken('');
+    setStep('language');
   };
 
-  const t = translations[language];
+  const deviceCredentials = { kiosk_id: deviceId, device_token: deviceToken };
+  const identityFields = { first_name: firstName.trim(), last_name: lastName.trim(), dob: dob.trim() };
 
-  const handleLanguageSelect = (lang: 'en' | 'es' | 'vi') => {
-    setLanguage(lang);
-    setStep('lookup');
-  };
+  const failForStatus = useCallback(
+    (status: number): string => {
+      if (status === 401) return t.kioskUnavailable;
+      if (status === 429) return t.tooManyAttempts;
+      return t.notFound;
+    },
+    [t]
+  );
 
   const handleLookup = async () => {
-    setLoading(true);
     setError('');
 
-    // FIXED: Comprehensive input validation and rate limiting
-    const rateLimitKey = `${kioskId}-lookup`;
-
-    try {
-
-      // Check rate limit
-      if (rateLimiterRef.current.isRateLimited(rateLimitKey)) {
-        setError(language === 'en'
-          ? 'Too many failed attempts. Please wait 5 minutes or contact staff for assistance.'
-          : 'Demasiados intentos fallidos. Espere 5 minutos o contacte al personal.');
-        await chwService.logSecurityEvent({
-          event_type: 'rate_limit_exceeded',
-          severity: 'high',
-          kiosk_id: kioskId,
-          details: { limit_type: 'patient_lookup' }
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Validate first name
-      const firstNameValidation = validateName(firstName);
-      if (!firstNameValidation.valid) {
-        setError(firstNameValidation.error || t.notFound);
-        setLoading(false);
-        return;
-      }
-
-      // Validate last name
-      const lastNameValidation = validateName(lastName);
-      if (!lastNameValidation.valid) {
-        setError(lastNameValidation.error || t.notFound);
-        setLoading(false);
-        return;
-      }
-
-      // Validate DOB
-      const dobValidation = validateDOB(dob);
-      if (!dobValidation.valid) {
-        setError(dobValidation.error || t.notFound);
-        setLoading(false);
-        return;
-      }
-
-      // Validate SSN
-      const ssnValidation = validateSSNLast4(lastFourSSN);
-      if (!ssnValidation.valid) {
-        setError(ssnValidation.error || t.notFound);
-        setLoading(false);
-        return;
-      }
-
-      // Validate PIN (if provided)
-      const pinValidation = validatePIN(pin);
-      if (!pinValidation.valid) {
-        setError(pinValidation.error || 'Invalid PIN');
-        setLoading(false);
-        return;
-      }
-
-      // Use sanitized values
-      const sanitizedFirstName = firstNameValidation.sanitized;
-      const sanitizedLastName = lastNameValidation.sanitized;
-      const sanitizedSSN = ssnValidation.sanitized;
-      const sanitizedPIN = pinValidation.sanitized;
-
-      // Query profiles table with sanitized inputs
-      const { data: patients, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, date_of_birth, ssn_last_four, caregiver_pin_hash')
-        .ilike('first_name', sanitizedFirstName)
-        .ilike('last_name', sanitizedLastName)
-        .limit(5);
-
-      if (error) {
-        // Log error without exposing PHI
-        await chwService.logSecurityEvent({
-          event_type: 'patient_lookup_error',
-          severity: 'medium',
-          details: { error_code: error.code },
-          kiosk_id: kioskId
-        });
-        setError(t.notFound);
-        return;
-      }
-
-      if (!patients || patients.length === 0) {
-        rateLimiterRef.current.recordAttempt(rateLimitKey);
-        await chwService.logSecurityEvent({
-          event_type: 'patient_lookup_no_match',
-          severity: 'low',
-          details: { attempted_name_length: `${sanitizedFirstName.length},${sanitizedLastName.length}` },
-          kiosk_id: kioskId
-        });
-        setError(t.notFound);
-        return;
-      }
-
-      // Multi-factor verification: DOB + Last 4 SSN
-      const matchedPatient = patients.find(p => {
-        const dbDOB = new Date(p.date_of_birth).toISOString().split('T')[0];
-        const dobMatch = dbDOB === dob;
-        const ssnMatch = p.ssn_last_four === sanitizedSSN;
-        return dobMatch && ssnMatch;
-      });
-
-      if (!matchedPatient) {
-        rateLimiterRef.current.recordAttempt(rateLimitKey);
-        await chwService.logSecurityEvent({
-          event_type: 'patient_lookup_verification_failed',
-          severity: 'medium',
-          details: { verification_type: 'dob_ssn_mismatch' },
-          kiosk_id: kioskId
-        });
-        setError(t.notFound);
-        return;
-      }
-
-      // If PIN provided, verify it with bcrypt
-      if (sanitizedPIN) {
-        if (!matchedPatient.caregiver_pin_hash) {
-          rateLimiterRef.current.recordAttempt(rateLimitKey);
-          await chwService.logSecurityEvent({
-            event_type: 'pin_verification_failed',
-            severity: 'medium',
-            patient_id: matchedPatient.id,
-            details: { reason: 'no_pin_set' },
-            kiosk_id: kioskId
-          });
-          setError('PIN verification failed. Please try without PIN or contact staff.');
-          return;
-        }
-
-        // FIXED: Actual bcrypt verification
-        const pinValid = await bcrypt.compare(sanitizedPIN, matchedPatient.caregiver_pin_hash);
-
-        if (!pinValid) {
-          rateLimiterRef.current.recordAttempt(rateLimitKey);
-          await chwService.logSecurityEvent({
-            event_type: 'pin_verification_failed',
-            severity: 'high',
-            patient_id: matchedPatient.id,
-            details: { reason: 'incorrect_pin' },
-            kiosk_id: kioskId
-          });
-          setError('PIN verification failed. Please check your PIN or contact staff.');
-          return;
-        }
-
-        await chwService.logSecurityEvent({
-          event_type: 'pin_verification_success',
-          severity: 'low',
-          patient_id: matchedPatient.id,
-          kiosk_id: kioskId
-        });
-      }
-
-      // Success - patient found and verified, clear rate limit
-      rateLimiterRef.current.clearAttempts(rateLimitKey);
-
-      await chwService.logSecurityEvent({
-        event_type: 'patient_lookup_success',
-        severity: 'low',
-        patient_id: matchedPatient.id,
-        details: { verification_method: sanitizedPIN ? 'dob_ssn_pin' : 'dob_ssn' },
-        kiosk_id: kioskId
-      });
-
-      setPatientId(matchedPatient.id);
-      setStep('privacy');
-    } catch (err: unknown) {
-      // Log error without PHI
-      rateLimiterRef.current.recordAttempt(rateLimitKey);
-      await chwService.logSecurityEvent({
-        event_type: 'patient_lookup_exception',
-        severity: 'high',
-        details: { error_type: err instanceof Error ? err.name : 'unknown' },
-        kiosk_id: kioskId
-      });
-      setError(t.notFound);
-    } finally {
-      setLoading(false);
+    const firstCheck = validateName(firstName);
+    if (!firstCheck.valid) {
+      setError(firstCheck.error ?? t.notFound);
+      return;
     }
-  };
+    const lastCheck = validateName(lastName);
+    if (!lastCheck.valid) {
+      setError(lastCheck.error ?? t.notFound);
+      return;
+    }
+    const dobCheck = validateDOB(dob.trim());
+    if (!dobCheck.valid) {
+      setError(dobCheck.error ?? t.notFound);
+      return;
+    }
 
-  const handlePrivacyConsent = async () => {
     setLoading(true);
-
     try {
-      // Get GPS location if available
-      let location: { latitude: number; longitude: number } | undefined;
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-          });
-          location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          };
-        } catch {
-          // GPS not available, continue without it
-        }
+      const { status, data } = await callKiosk<KioskLookupResponse>({
+        action: 'lookup',
+        ...deviceCredentials,
+        ...identityFields,
+      });
+
+      if (status !== 200 || !data) {
+        setError(failForStatus(status));
+        return;
       }
-
-      // Start field visit
-      const visit = await chwService.startFieldVisit(
-        patientId,
-        kioskId,
-        locationName,
-        location
-      );
-
-      onCheckInComplete(visit.id, patientId);
-    } catch (err: unknown) {
-      setError('Failed to start visit. Please try again.');
+      if (!data.found) {
+        setError(t.notFound);
+        return;
+      }
+      if (data.method === 'none' || !data.method) {
+        setStep('see-staff');
+        return;
+      }
+      setMethod(data.method);
+      setMaskedPhone(data.masked_phone ?? '');
+      setStep('privacy');
     } finally {
       setLoading(false);
     }
   };
 
-  // Notification component
+  const handleVerify = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const factorField =
+        method === 'sms' ? { code: factor.trim() } : { phone_last4: factor.trim() };
+      const { status, data } = await callKiosk<KioskVerifyResponse>({
+        action: 'verify',
+        ...deviceCredentials,
+        ...identityFields,
+        ...factorField,
+        language,
+      });
+
+      if (status === 200 && data?.verified && data.visit_id) {
+        setPatientFirstName(data.patient_first_name ?? '');
+        setStep('success');
+        onCheckInComplete(data.visit_id);
+        return;
+      }
+      if (status === 401 && data?.error === 'Verification failed') {
+        setFactor('');
+        setError(t.verifyFailed);
+        return;
+      }
+      setError(failForStatus(status));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const NotificationBanner = () => {
     if (!notification) return null;
-
     const bgColor = {
       info: 'bg-blue-100 border-blue-500',
       warning: 'bg-yellow-100 border-yellow-500',
-      error: 'bg-red-100 border-red-500'
+      error: 'bg-red-100 border-red-500',
     }[notification.type];
-
     return (
       <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 ${bgColor} border-4 px-8 py-6 rounded-2xl shadow-2xl z-50 max-w-2xl`}>
         <p className="text-2xl font-bold text-gray-800">{notification.message}</p>
@@ -413,186 +264,283 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
     );
   };
 
-  // Language Selection
+  const Shell: React.FC<{ children: React.ReactNode; wide?: boolean }> = ({ children, wide }) => (
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
+      <NotificationBanner />
+      <div className={`bg-white rounded-3xl shadow-2xl p-12 ${wide ? 'max-w-3xl' : 'max-w-2xl'} w-full`}>
+        {children}
+      </div>
+    </div>
+  );
+
+  const ErrorBox = () =>
+    error ? (
+      <div role="alert" className="bg-red-100 border-4 border-red-400 text-red-700 px-6 py-4 rounded-xl text-xl">
+        {error}
+      </div>
+    ) : null;
+
+  // ── Staff provisioning (device not yet configured) ─────────────────────
+  if (step === 'setup') {
+    return (
+      <Shell>
+        <h1 className="text-4xl font-bold text-gray-800 mb-4 text-center">Kiosk Setup</h1>
+        <p className="text-xl text-gray-600 mb-8 text-center">
+          Staff only: enter this kiosk’s ID and device token to activate check-in.
+        </p>
+        <div className="space-y-6">
+          <div>
+            <label htmlFor="setupKioskId" className="block text-2xl font-medium text-gray-700 mb-3">
+              Kiosk ID
+            </label>
+            <input
+              id="setupKioskId"
+              type="text"
+              value={setupId}
+              onChange={(e) => setSetupId(e.target.value)}
+              className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
+              autoComplete="off"
+            />
+          </div>
+          <div>
+            <label htmlFor="setupKioskToken" className="block text-2xl font-medium text-gray-700 mb-3">
+              Device Token
+            </label>
+            <input
+              id="setupKioskToken"
+              type="password"
+              value={setupToken}
+              onChange={(e) => setSetupToken(e.target.value)}
+              className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
+              autoComplete="off"
+            />
+          </div>
+          <button
+            onClick={handleProvision}
+            disabled={!setupId.trim() || !setupToken.trim()}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
+          >
+            Activate Kiosk
+          </button>
+        </div>
+      </Shell>
+    );
+  }
+
+  // ── Language selection ─────────────────────────────────────────────────
   if (step === 'language') {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
-        <NotificationBanner />
-        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
+      <Shell>
+        <div className="text-center">
           <h1 className="text-5xl font-bold text-gray-800 mb-12">{t.welcome}</h1>
           <p className="text-3xl text-gray-600 mb-12">{t.selectLanguage}</p>
-
           <div className="space-y-6">
             <button
-              onClick={() => handleLanguageSelect('en')}
+              onClick={() => { setLanguage('en'); setStep('lookup'); }}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white text-3xl font-bold py-8 px-12 rounded-2xl shadow-lg transition-all transform hover:scale-105"
             >
-              {t.english}
+              English
             </button>
-
             <button
-              onClick={() => handleLanguageSelect('es')}
+              onClick={() => { setLanguage('es'); setStep('lookup'); }}
               className="w-full bg-green-600 hover:bg-green-700 text-white text-3xl font-bold py-8 px-12 rounded-2xl shadow-lg transition-all transform hover:scale-105"
             >
-              {t.spanish}
+              Español (Spanish)
             </button>
-
             <button
-              onClick={() => handleLanguageSelect('vi')}
+              onClick={() => { setLanguage('vi'); setStep('lookup'); }}
               className="w-full bg-red-600 hover:bg-red-700 text-white text-3xl font-bold py-8 px-12 rounded-2xl shadow-lg transition-all transform hover:scale-105"
             >
               Tiếng Việt (Vietnamese)
             </button>
           </div>
-
-          <div className="mt-12 text-gray-500 text-xl">
-            Location: {locationName}
-          </div>
+          <div className="mt-12 text-gray-500 text-xl">Location: {locationName}</div>
+          <button
+            onClick={() => setStep('setup')}
+            className="mt-6 text-gray-400 text-sm underline"
+          >
+            Staff Setup
+          </button>
         </div>
-      </div>
+      </Shell>
     );
   }
 
-  // Patient Lookup
+  // ── Patient lookup (name + DOB) ────────────────────────────────────────
   if (step === 'lookup') {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
-        <NotificationBanner />
-        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-3xl w-full">
-          <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.patientLookup}</h2>
-
-          <div className="space-y-6">
-            <div>
-              <label htmlFor="firstName" className="block text-2xl font-medium text-gray-700 mb-3">
-                {t.firstName}
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
-                autoComplete="off"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="lastName" className="block text-2xl font-medium text-gray-700 mb-3">
-                {t.lastName}
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
-                autoComplete="off"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="dob" className="block text-2xl font-medium text-gray-700 mb-3">
-                {t.dateOfBirth}
-              </label>
-              <input
-                id="dob"
-                type="text"
-                value={dob}
-                onChange={(e) => setDob(e.target.value)}
-                placeholder="YYYY-MM-DD"
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="lastFourSSN" className="block text-2xl font-medium text-gray-700 mb-3">
-                {t.lastFour}
-              </label>
-              <input
-                id="lastFourSSN"
-                type="text"
-                value={lastFourSSN}
-                onChange={(e) => setLastFourSSN(e.target.value.slice(0, 4))}
-                maxLength={4}
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
-                placeholder="1234"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="pin" className="block text-2xl font-medium text-gray-700 mb-3">
-                {t.pin}
-              </label>
-              <input
-                id="pin"
-                type="password"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.slice(0, 6))}
-                maxLength={6}
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
-                placeholder="Optional"
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-100 border-4 border-red-400 text-red-700 px-6 py-4 rounded-xl text-xl">
-                {error}
-              </div>
-            )}
-
-            <div className="flex gap-4 pt-6">
-              <button
-                onClick={() => setStep('language')}
-                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 text-2xl font-bold py-6 px-8 rounded-xl transition-all"
-              >
-                {t.cancel}
-              </button>
-
-              <button
-                onClick={handleLookup}
-                disabled={loading || !firstName.trim() || !lastName.trim() || !dob.trim() || !lastFourSSN.trim()}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
-              >
-                {loading ? t.checking : t.findMe}
-              </button>
-            </div>
+      <Shell wide>
+        <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.patientLookup}</h2>
+        <div className="space-y-6">
+          <div>
+            <label htmlFor="firstName" className="block text-2xl font-medium text-gray-700 mb-3">
+              {t.firstName}
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
+              autoComplete="off"
+            />
+          </div>
+          <div>
+            <label htmlFor="lastName" className="block text-2xl font-medium text-gray-700 mb-3">
+              {t.lastName}
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
+              autoComplete="off"
+            />
+          </div>
+          <div>
+            <label htmlFor="dob" className="block text-2xl font-medium text-gray-700 mb-3">
+              {t.dateOfBirth}
+            </label>
+            <input
+              id="dob"
+              type="text"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              placeholder="YYYY-MM-DD"
+              className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
+            />
+          </div>
+          <ErrorBox />
+          <div className="flex gap-4 pt-6">
+            <button
+              onClick={resetSession}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 text-2xl font-bold py-6 px-8 rounded-xl transition-all"
+            >
+              {t.cancel}
+            </button>
+            <button
+              onClick={handleLookup}
+              disabled={loading || !firstName.trim() || !lastName.trim() || !dob.trim()}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
+            >
+              {loading ? t.checking : t.findMe}
+            </button>
           </div>
         </div>
-      </div>
+      </Shell>
     );
   }
 
-  // Privacy Consent
-  return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
-      <NotificationBanner />
-      <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-3xl w-full">
+  // ── Privacy consent (before any check-in state is created) ─────────────
+  if (step === 'privacy') {
+    return (
+      <Shell wide>
         <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.privacy}</h2>
-
         <div className="bg-blue-50 border-4 border-blue-200 rounded-xl p-8 mb-8">
-          <p className="text-2xl text-gray-700 leading-relaxed">
-            {t.privacyText}
-          </p>
+          <p className="text-2xl text-gray-700 leading-relaxed">{t.privacyText}</p>
         </div>
-
         <div className="flex gap-4">
           <button
-            onClick={() => setStep('lookup')}
+            onClick={resetSession}
             className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 text-2xl font-bold py-6 px-8 rounded-xl transition-all"
           >
             {t.cancel}
           </button>
-
           <button
-            onClick={handlePrivacyConsent}
-            disabled={loading}
-            className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
+            onClick={() => setStep('verify')}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
           >
-            {loading ? t.checking : t.agree}
+            {t.agree}
           </button>
         </div>
+      </Shell>
+    );
+  }
+
+  // ── Identity verification (SMS code or last 4 of phone) ───────────────
+  if (step === 'verify') {
+    return (
+      <Shell wide>
+        <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.verifyTitle}</h2>
+        <div className="space-y-6">
+          {method === 'sms' ? (
+            <p className="text-2xl text-gray-700 text-center">
+              {t.codeSentTo} <span className="font-bold">{maskedPhone}</span>
+            </p>
+          ) : (
+            <p className="text-2xl text-gray-700 text-center">{t.phoneLast4Help}</p>
+          )}
+          <div>
+            <label htmlFor="factor" className="block text-2xl font-medium text-gray-700 mb-3">
+              {method === 'sms' ? t.enterCode : t.enterPhoneLast4}
+            </label>
+            <input
+              id="factor"
+              type="text"
+              inputMode="numeric"
+              value={factor}
+              onChange={(e) => setFactor(e.target.value.replace(/\D/g, '').slice(0, method === 'sms' ? 8 : 4))}
+              className="w-full text-3xl tracking-widest text-center px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
+              autoComplete="one-time-code"
+            />
+          </div>
+          <ErrorBox />
+          <div className="flex gap-4 pt-6">
+            <button
+              onClick={resetSession}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 text-2xl font-bold py-6 px-8 rounded-xl transition-all"
+            >
+              {t.cancel}
+            </button>
+            <button
+              onClick={handleVerify}
+              disabled={loading || factor.length < 4}
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
+            >
+              {loading ? t.checking : t.checkIn}
+            </button>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
+
+  // ── Found, but no unattended verification path ─────────────────────────
+  if (step === 'see-staff') {
+    return (
+      <Shell>
+        <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.seeStaffTitle}</h2>
+        <p className="text-2xl text-gray-700 text-center mb-12">{t.seeStaffText}</p>
+        <button
+          onClick={resetSession}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
+        >
+          {t.startOver}
+        </button>
+      </Shell>
+    );
+  }
+
+  // ── Checked in ─────────────────────────────────────────────────────────
+  return (
+    <Shell>
+      <div className="text-center">
+        <h2 className="text-5xl font-bold text-green-700 mb-8">
+          {t.successTitle}
+        </h2>
+        {patientFirstName && (
+          <p className="text-3xl text-gray-800 mb-6 font-bold">{patientFirstName}</p>
+        )}
+        <p className="text-2xl text-gray-700 mb-12">{t.successText}</p>
+        <button
+          onClick={resetSession}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
+        >
+          {t.startOver}
+        </button>
       </div>
-    </div>
+    </Shell>
   );
 };
 

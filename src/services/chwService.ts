@@ -864,13 +864,14 @@ export class CHWService {
       const { data: authData } = await supabase.auth.getUser();
 
       // Mapped to the live security_events schema: description is NOT NULL,
-      // and patient/visit/kiosk context lives in metadata (the table has no
-      // dedicated columns for them). The old shape failed on every insert.
+      // patient/visit/kiosk context lives in metadata (the table has no
+      // dedicated columns for them), and the severity CHECK only accepts
+      // UPPERCASE values — lowercase fails the constraint.
       const { error } = await supabase
         .from('security_events')
         .insert({
           event_type: params.event_type,
-          severity: params.severity,
+          severity: params.severity.toUpperCase(),
           description: `CHW kiosk security event: ${params.event_type}`,
           tenant_id: tenantId,
           actor_user_id: authData?.user?.id ?? null,

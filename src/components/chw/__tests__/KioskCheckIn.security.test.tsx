@@ -1,579 +1,121 @@
 /**
- * Security Integration Tests for KioskCheckIn Component
- * Tests authentication, rate limiting, and security event logging
+ * Security Tests for KioskCheckIn
+ *
+ * Pins the security invariants of the public kiosk surface:
+ * - NO direct PHI table access from the browser (everything via chw-kiosk)
+ * - client-side input validation rejects injection before any network call
+ * - rate limiting and device-auth failures surface safe, generic messages
+ * - inactivity timeout clears entered PHI from the screen
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { KioskCheckIn } from '../KioskCheckIn';
-import { chwService } from '../../../services/chwService';
 import { supabase } from '../../../lib/supabaseClient';
-import bcrypt from 'bcryptjs';
 
-// Mock dependencies
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
-    from: vi.fn()
-  }
-}));
-
-vi.mock('../../../services/chwService', () => ({
-  chwService: {
-    logSecurityEvent: vi.fn(),
-    startFieldVisit: vi.fn()
-  }
-}));
-
-vi.mock('bcryptjs', () => ({
-  default: {
-    compare: vi.fn()
+    from: vi.fn(),
+    functions: { invoke: vi.fn() },
   },
-  compare: vi.fn()
 }));
 
-describe('KioskCheckIn - Security Tests', () => {
-  const mockProps = {
-    kioskId: 'test-kiosk-001',
-    locationName: 'Test Library',
-    onCheckInComplete: vi.fn()
-  };
+const mockInvoke = supabase.functions.invoke as ReturnType<typeof vi.fn>;
+const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 
+function errorResponse(body: Record<string, unknown>, status: number) {
+  return {
+    data: null,
+    error: { context: new Response(JSON.stringify(body), { status }) },
+  };
+}
+
+function startLookup(first: string, last: string, dob: string) {
+  fireEvent.click(screen.getByText('English'));
+  fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: first } });
+  fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: last } });
+  fireEvent.change(screen.getByLabelText(/Date of Birth/i), { target: { value: dob } });
+  fireEvent.click(screen.getByText(/Find Me/i));
+}
+
+describe('KioskCheckIn - Security', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    localStorage.setItem('chw_kiosk_id', 'kiosk-test-001');
+    localStorage.setItem('chw_kiosk_token', 'test-device-token');
+    mockInvoke.mockResolvedValue({ data: { found: false }, error: null });
   });
 
-  describe('Input Validation', () => {
-    it('should reject SQL injection in name fields', async () => {
-      // Mock logSecurityEvent to resolve
-      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      // Select language
-      fireEvent.click(screen.getByText('English'));
-
-      // Fill in all required fields with SQL injection in first name
-      const firstNameInput = screen.getByLabelText('First Name');
-      fireEvent.change(firstNameInput, {
-        target: { value: "Robert'); DROP TABLE profiles;--" }
+  describe('No direct PHI access', () => {
+    it('never queries database tables directly — not even on a full lookup', async () => {
+      mockInvoke.mockResolvedValue({
+        data: { found: true, method: 'phone_last4' },
+        error: null,
       });
+      render(<KioskCheckIn />);
+      startLookup('Test', 'Alpha', '1950-01-01');
+      await waitFor(() => expect(mockInvoke).toHaveBeenCalled());
+      expect(mockFrom).not.toHaveBeenCalled();
+    });
+  });
 
-      const lastNameInput = screen.getByLabelText('Last Name');
-      fireEvent.change(lastNameInput, {
-        target: { value: 'Smith' }
-      });
-
-      const dobInput = screen.getByLabelText('Date of Birth');
-      fireEvent.change(dobInput, {
-        target: { value: '1990-01-01' }
-      });
-
-      const ssnInput = screen.getByLabelText('Last 4 of SSN');
-      fireEvent.change(ssnInput, {
-        target: { value: '1234' }
-      });
-
-      const findButton = screen.getByText('Find Me');
-      fireEvent.click(findButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Invalid input detected|Name contains invalid characters/i)).toBeInTheDocument();
-      });
-
-      // Should not query database
-      expect(supabase.from).not.toHaveBeenCalled();
+  describe('Input validation blocks injection before any network call', () => {
+    it('rejects SQL injection in the name fields', async () => {
+      render(<KioskCheckIn />);
+      startLookup("Robert'); DROP TABLE profiles;--", 'Smith', '1950-01-01');
+      expect(
+        await screen.findByText(/Invalid input detected|invalid characters/i)
+      ).toBeInTheDocument();
+      expect(mockInvoke).not.toHaveBeenCalled();
     });
 
-    it('should reject XSS attempts', async () => {
-      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      // Fill in all required fields with XSS in last name
-      fireEvent.change(screen.getByLabelText('First Name'), {
-        target: { value: 'John' }
-      });
-
-      const lastNameInput = screen.getByLabelText('Last Name');
-      fireEvent.change(lastNameInput, {
-        target: { value: '<script>alert("XSS")</script>' }
-      });
-
-      fireEvent.change(screen.getByLabelText('Date of Birth'), {
-        target: { value: '1990-01-01' }
-      });
-
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
-        target: { value: '5678' }
-      });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(screen.getByText(/Invalid input|contains invalid characters/i)).toBeInTheDocument();
-      });
+    it('rejects script tags in the name fields', async () => {
+      render(<KioskCheckIn />);
+      startLookup('<script>alert(1)</script>', 'Smith', '1950-01-01');
+      expect(
+        await screen.findByText(/Invalid input detected|invalid characters/i)
+      ).toBeInTheDocument();
+      expect(mockInvoke).not.toHaveBeenCalled();
     });
 
-    it('should validate date of birth format', async () => {
-      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      // Fill all required fields
-      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
-      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
-      const dobInput = screen.getByLabelText('Date of Birth');
-      fireEvent.change(dobInput, { target: { value: '01/15/1990' } }); // Wrong format
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), { target: { value: '1234' } });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(screen.getByText(/Invalid date format/i)).toBeInTheDocument();
-      });
+    it('rejects a malformed date of birth', async () => {
+      render(<KioskCheckIn />);
+      startLookup('Test', 'Alpha', 'not-a-date');
+      expect(await screen.findByText(/Invalid date format/i)).toBeInTheDocument();
+      expect(mockInvoke).not.toHaveBeenCalled();
     });
 
-    it('should reject future dates of birth', async () => {
-      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      const futureDate = new Date();
-      futureDate.setFullYear(futureDate.getFullYear() + 1);
-      const futureDateStr = futureDate.toISOString().split('T')[0];
-
-      // Fill all required fields
-      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
-      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
-      const dobInput = screen.getByLabelText('Date of Birth');
-      fireEvent.change(dobInput, { target: { value: futureDateStr } });
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), { target: { value: '1234' } });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(screen.getByText(/cannot be in the future/i)).toBeInTheDocument();
-      });
-    });
-
-    it('should validate SSN format', async () => {
-      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      // Fill all required fields
-      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
-      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
-      fireEvent.change(screen.getByLabelText('Date of Birth'), { target: { value: '1990-01-15' } });
-      const ssnInput = screen.getByLabelText('Last 4 of SSN');
-      fireEvent.change(ssnInput, { target: { value: 'abcd' } }); // Non-numeric
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(screen.getByText(/must be exactly 4 digits/i)).toBeInTheDocument();
-      });
-    });
-
-    it('should block obviously fake SSNs', async () => {
-      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      // Fill all required fields
-      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
-      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
-      fireEvent.change(screen.getByLabelText('Date of Birth'), { target: { value: '1990-01-15' } });
-      const ssnInput = screen.getByLabelText('Last 4 of SSN');
-      fireEvent.change(ssnInput, { target: { value: '0000' } });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(screen.getByText(/Invalid SSN/i)).toBeInTheDocument();
-      });
-    });
-
-    it('should block common weak PINs', async () => {
-      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      // Fill all required fields
-      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
-      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
-      fireEvent.change(screen.getByLabelText('Date of Birth'), { target: { value: '1990-01-15' } });
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), { target: { value: '5678' } });
-      const pinInput = screen.getByLabelText(/PIN/i);
-      fireEvent.change(pinInput, { target: { value: '1234' } }); // Common PIN
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(screen.getByText(/PIN too common/i)).toBeInTheDocument();
+    it('accepts legitimate apostrophe names like O’Brien', async () => {
+      render(<KioskCheckIn />);
+      startLookup("O'Brien", 'Test', '1950-01-01');
+      await waitFor(() => expect(mockInvoke).toHaveBeenCalled());
+      expect(mockInvoke).toHaveBeenCalledWith('chw-kiosk', {
+        body: expect.objectContaining({ first_name: "O'Brien" }),
       });
     });
   });
 
-  describe('Multi-Factor Authentication', () => {
-    it('should require DOB + SSN match for patient verification', async () => {
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          ilike: vi.fn().mockReturnValue({
-            ilike: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'patient-123',
-                    first_name: 'John',
-                    last_name: 'Doe',
-                    date_of_birth: '1990-01-15',
-                    ssn_last_four: '5678' // Different SSN
-                  }
-                ],
-                error: null
-              })
-            })
-          })
-        })
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      // Fill in valid data but wrong SSN
-      fireEvent.change(screen.getByLabelText('First Name'), {
-        target: { value: 'John' }
-      });
-      fireEvent.change(screen.getByLabelText('Last Name'), {
-        target: { value: 'Doe' }
-      });
-      fireEvent.change(screen.getByLabelText('Date of Birth'), {
-        target: { value: '1990-01-15' }
-      });
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
-        target: { value: '1234' }
-      });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(chwService.logSecurityEvent).toHaveBeenCalledWith(
-          expect.objectContaining({
-            event_type: 'patient_lookup_verification_failed',
-            severity: 'medium',
-            details: { verification_type: 'dob_ssn_mismatch' }
-          })
-        );
-      });
-    });
-
-    it('should verify PIN with bcrypt when provided', async () => {
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          ilike: vi.fn().mockReturnValue({
-            ilike: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'patient-123',
-                    first_name: 'John',
-                    last_name: 'Doe',
-                    date_of_birth: '1990-01-15',
-                    ssn_last_four: '1234',
-                    caregiver_pin_hash: '$2a$10$hashedpin'
-                  }
-                ],
-                error: null
-              })
-            })
-          })
-        })
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
-      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      fireEvent.change(screen.getByLabelText('First Name'), {
-        target: { value: 'John' }
-      });
-      fireEvent.change(screen.getByLabelText('Last Name'), {
-        target: { value: 'Doe' }
-      });
-      fireEvent.change(screen.getByLabelText('Date of Birth'), {
-        target: { value: '1990-01-15' }
-      });
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
-        target: { value: '1234' }
-      });
-      fireEvent.change(screen.getByLabelText(/PIN/i), {
-        target: { value: '567890' }
-      });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(bcrypt.compare).toHaveBeenCalledWith('567890', '$2a$10$hashedpin');
-      });
-    });
-
-    it('should reject incorrect PIN', async () => {
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          ilike: vi.fn().mockReturnValue({
-            ilike: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'patient-123',
-                    first_name: 'John',
-                    last_name: 'Doe',
-                    date_of_birth: '1990-01-15',
-                    ssn_last_four: '1234',
-                    caregiver_pin_hash: '$2a$10$hashedpin'
-                  }
-                ],
-                error: null
-              })
-            })
-          })
-        })
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
-      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(false); // Wrong PIN
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      fireEvent.change(screen.getByLabelText('First Name'), {
-        target: { value: 'John' }
-      });
-      fireEvent.change(screen.getByLabelText('Last Name'), {
-        target: { value: 'Doe' }
-      });
-      fireEvent.change(screen.getByLabelText('Date of Birth'), {
-        target: { value: '1990-01-15' }
-      });
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
-        target: { value: '1234' }
-      });
-      fireEvent.change(screen.getByLabelText(/PIN/i), {
-        target: { value: '567890' }
-      });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(chwService.logSecurityEvent).toHaveBeenCalledWith(
-          expect.objectContaining({
-            event_type: 'pin_verification_failed',
-            severity: 'high',
-            details: { reason: 'incorrect_pin' }
-          })
-        );
-      });
-    });
-  });
-
-  describe('Rate Limiting', () => {
-    it('should rate limit after 5 failed attempts', async () => {
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          ilike: vi.fn().mockReturnValue({
-            ilike: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [],
-                error: null
-              })
-            })
-          })
-        })
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      // Make 5 failed attempts
-      for (let i = 0; i < 5; i++) {
-        fireEvent.change(screen.getByLabelText('First Name'), {
-          target: { value: 'Wrong' }
-        });
-        fireEvent.change(screen.getByLabelText('Last Name'), {
-          target: { value: 'Name' }
-        });
-        fireEvent.change(screen.getByLabelText('Date of Birth'), {
-          target: { value: '1990-01-15' }
-        });
-        fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
-          target: { value: '5678' }
-        });
-
-        fireEvent.click(screen.getByText('Find Me'));
-
-        await waitFor(() => {
-          expect(screen.getByText(/not found/i)).toBeInTheDocument();
-        });
-      }
-
-      // 6th attempt should be rate limited
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(screen.getByText(/Too many failed attempts/i)).toBeInTheDocument();
-      });
-
-      expect(chwService.logSecurityEvent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event_type: 'rate_limit_exceeded',
-          severity: 'high'
-        })
+  describe('Server rejection handling', () => {
+    it('shows the wait message when the server rate-limits (429)', async () => {
+      mockInvoke.mockResolvedValue(
+        errorResponse({ error: 'Too many attempts. Please wait and try again.' }, 429)
       );
+      render(<KioskCheckIn />);
+      startLookup('Test', 'Alpha', '1950-01-01');
+      expect(await screen.findByText(/Too many attempts/i)).toBeInTheDocument();
     });
 
-    it('should clear rate limit on successful authentication', async () => {
-      // This test would verify that successful login clears the rate limiter
-      // Implementation depends on rate limiter reset logic
-    });
-  });
-
-  describe('Security Event Logging', () => {
-    it('should log patient lookup errors without PHI', async () => {
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          ilike: vi.fn().mockReturnValue({
-            ilike: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: null,
-                error: { code: 'PGRST116', message: 'Database error' }
-              })
-            })
-          })
-        })
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      fireEvent.change(screen.getByLabelText('First Name'), {
-        target: { value: 'John' }
-      });
-      fireEvent.change(screen.getByLabelText('Last Name'), {
-        target: { value: 'Doe' }
-      });
-      fireEvent.change(screen.getByLabelText('Date of Birth'), {
-        target: { value: '1990-01-15' }
-      });
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
-        target: { value: '5678' }
-      });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(chwService.logSecurityEvent).toHaveBeenCalledWith(
-          expect.objectContaining({
-            event_type: 'patient_lookup_error',
-            severity: 'medium',
-            details: { error_code: 'PGRST116' },
-            kiosk_id: 'test-kiosk-001'
-          })
-        );
-
-      });
-
-      // Should NOT log patient names or SSN
-      const logCall = (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mock.calls[0][0];
-      expect(JSON.stringify(logCall)).not.toContain('John');
-      expect(JSON.stringify(logCall)).not.toContain('Doe');
-      expect(JSON.stringify(logCall)).not.toContain('5678');
-    });
-
-    it('should log successful authentication', async () => {
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          ilike: vi.fn().mockReturnValue({
-            ilike: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'patient-123',
-                    first_name: 'John',
-                    last_name: 'Doe',
-                    date_of_birth: '1990-01-15',
-                    ssn_last_four: '5678',
-                    caregiver_pin_hash: null
-                  }
-                ],
-                error: null
-              })
-            })
-          })
-        })
-      });
-
-      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
-      (chwService.startFieldVisit as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'visit-123' });
-
-      render(<KioskCheckIn {...mockProps} />);
-
-      fireEvent.click(screen.getByText('English'));
-
-      fireEvent.change(screen.getByLabelText('First Name'), {
-        target: { value: 'John' }
-      });
-      fireEvent.change(screen.getByLabelText('Last Name'), {
-        target: { value: 'Doe' }
-      });
-      fireEvent.change(screen.getByLabelText('Date of Birth'), {
-        target: { value: '1990-01-15' }
-      });
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
-        target: { value: '5678' }
-      });
-
-      fireEvent.click(screen.getByText('Find Me'));
-
-      await waitFor(() => {
-        expect(chwService.logSecurityEvent).toHaveBeenCalledWith(
-          expect.objectContaining({
-            event_type: 'patient_lookup_success',
-            severity: 'low',
-            patient_id: 'patient-123',
-            details: { verification_method: 'dob_ssn' }
-          })
-        );
-      });
+    it('shows a generic unavailable message on device-auth failure without leaking detail', async () => {
+      mockInvoke.mockResolvedValue(errorResponse({ error: 'Device not authorized' }, 401));
+      render(<KioskCheckIn />);
+      startLookup('Test', 'Alpha', '1950-01-01');
+      expect(await screen.findByText(/kiosk is unavailable/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Device not authorized/i)).not.toBeInTheDocument();
     });
   });
 
-  describe('Session Timeout', () => {
+  describe('HIPAA inactivity timeout', () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -582,47 +124,19 @@ describe('KioskCheckIn - Security Tests', () => {
       vi.useRealTimers();
     });
 
-    it('should timeout after 2 minutes of inactivity', () => {
-      render(<KioskCheckIn {...mockProps} />);
-
+    it('clears entered PHI and returns to the language screen after inactivity', async () => {
+      render(<KioskCheckIn />);
       fireEvent.click(screen.getByText('English'));
+      fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'Test' } });
 
-      // Fast-forward time by 2 minutes and run all timers
       act(() => {
-        vi.advanceTimersByTime(120000);
+        vi.advanceTimersByTime(120000 + 5000);
       });
 
-      // Should show timeout notification
-      expect(screen.getByText(/Session timed out for security/i)).toBeInTheDocument();
-    });
-
-    it('should clear PHI on timeout', () => {
-      render(<KioskCheckIn {...mockProps} />);
-
+      expect(screen.getByText(/Select Your Language/i)).toBeInTheDocument();
+      // Re-entering the lookup screen shows an empty form — PHI was cleared
       fireEvent.click(screen.getByText('English'));
-
-      // Fill in sensitive data
-      fireEvent.change(screen.getByLabelText('First Name'), {
-        target: { value: 'John' }
-      });
-      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
-        target: { value: '5678' }
-      });
-
-      // Timeout - advance past the initial timeout
-      act(() => {
-        vi.advanceTimersByTime(120000);
-      });
-
-      // Wait for reset notification display time
-      act(() => {
-        vi.advanceTimersByTime(5000);
-      });
-
-      // Should be back to language selection (all data cleared)
-      expect(screen.getByText('Select Your Language')).toBeInTheDocument();
+      expect(screen.getByLabelText(/First Name/i)).toHaveValue('');
     });
-
-    vi.useRealTimers();
   });
 });

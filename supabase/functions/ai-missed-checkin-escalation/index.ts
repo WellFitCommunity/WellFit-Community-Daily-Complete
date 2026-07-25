@@ -857,7 +857,9 @@ async function executeEscalation(
     // Log the escalation for audit
     await supabase.from("security_events").insert({
       event_type: "missed_checkin_escalation",
-      severity: escalation.escalationLevel === "emergency" ? "critical" : "warning",
+      // security_events severity CHECK only accepts LOW/MEDIUM/HIGH/CRITICAL
+      // (uppercase) — 'critical'/'warning' failed the constraint on every insert.
+      severity: escalation.escalationLevel === "emergency" ? "CRITICAL" : "MEDIUM",
       description: `Missed check-in escalation: ${escalation.escalationLevel}`,
       metadata: {
         patient_id: patientId,

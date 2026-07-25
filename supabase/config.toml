@@ -512,6 +512,11 @@ verify_jwt = false
 [functions.check-drug-interactions]
 verify_jwt = false
 
+# Public kiosk proxy: authenticates the DEVICE via chw_kiosk_devices token hash
+# (no user JWT exists on a shared kiosk). All PHI access is server-side.
+[functions.chw-kiosk]
+verify_jwt = false
+
 [functions.create-checkin]
 verify_jwt = false
 

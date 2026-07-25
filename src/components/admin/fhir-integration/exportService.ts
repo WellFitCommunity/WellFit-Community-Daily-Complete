@@ -405,11 +405,13 @@ export class FHIRIntegrationService {
   // SOC 2: Security event logging helper
   private async logSecurityEvent(eventType: string, metadata: Record<string, unknown>): Promise<void> {
     try {
+      // Live shape: description is NOT NULL and there is no created_at column
+      // (the table stamps `timestamp` itself) — the old payload failed on every insert.
       await this.supabase.from('security_events').insert({
         event_type: eventType,
         severity: 'HIGH',
-        metadata: metadata,
-        created_at: new Date().toISOString()
+        description: `FHIR export security event: ${eventType}`,
+        metadata: metadata
       });
     } catch (_err: unknown) {
       // Fallback: If security logging fails, this is critical
