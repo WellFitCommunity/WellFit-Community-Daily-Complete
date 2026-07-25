@@ -684,6 +684,8 @@ END IF;
 
 `decrypt_phi_text(encrypted_data text, use_clinical_key boolean DEFAULT false)` mirrors this.
 
+**v2 primitive (LIVE since migration `20260725110000`, 2026-07-25 — audit finding 3):** all four encrypt/decrypt functions now use `pgp_sym_encrypt` (AES-256, random per-call session key → non-deterministic ciphertext, S2K salted+iterated KDF, MDC integrity — tampering raises). Ciphertext is stored as `'v2:' + base64`. Decrypt functions still accept the legacy bare-base64 raw-AES format (zero-IV, deterministic — the audit finding) for any pre-migration rows; all 14 that existed were re-encrypted to v2 and verified. Rotation procedure + plaintext-twin inventory: `docs/compliance/PHI_ENCRYPTION_KEY_ROTATION.md`. Do NOT reintroduce `extensions.encrypt(...digest(key,'sha256'), 'aes')` anywhere.
+
 ### Which path is which caller (live-verified 2026-07-13)
 
 | Caller | Uses which key? | How |
@@ -715,7 +717,7 @@ Tests documenting this architecture live in `src/services/__tests__/phiEncryptio
 
 ### Migration history
 
-`encrypt_phi_text`/`decrypt_phi_text` were created by `20251115180000_create_phi_encryption_functions.sql`, had the hardcoded-key fallback removed by `20251120000000_fix_hardcoded_phi_encryption_key.sql`, and were **replaced with the current fail-closed `(data, use_clinical_key)` signature by `_APPLIED_20260103000001_enforce_failsafe_phi_encryption.sql` — the canonical current definition.** The signature change orphaned every caller still passing `encryption_key` (5 sites, silently failing for ~6 months until found 2026-07-13; clinical callers repaired, phi-encrypt pending the key decision above).
+`encrypt_phi_text`/`decrypt_phi_text` were created by `20251115180000_create_phi_encryption_functions.sql`, had the hardcoded-key fallback removed by `20251120000000_fix_hardcoded_phi_encryption_key.sql`, were **replaced with the fail-closed `(data, use_clinical_key)` signature by `_APPLIED_20260103000001_enforce_failsafe_phi_encryption.sql`**, and had the primitive upgraded to v2 PGP (non-deterministic, integrity-checked) by `20260725110000_phi_encryption_v2_random_iv_aead.sql` — **the canonical current definition.** The signature change orphaned every caller still passing `encryption_key` (5 sites, silently failing for ~6 months until found 2026-07-13; clinical callers repaired, phi-encrypt pending the key decision above).
 
 ---
 
