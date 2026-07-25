@@ -178,20 +178,35 @@ class HealthCheckService {
         return result;
       }
 
-      // Test the log_phi_access RPC function
+      // Probe the nine-arg log_phi_access RPC WITHOUT writing a row into the
+      // immutable phi_access_log: send a deliberately mismatched accessor id
+      // (the all-zeros UUID can never be auth.uid()). A healthy function
+      // rejects it with [PHI_ACCESS_IDENTITY_MISMATCH] — proving both that
+      // the function exists (no PGRST202) and that identity enforcement
+      // works. Success would mean enforcement is broken; any other error
+      // means the function is missing or misconfigured.
       const { error } = await supabase.rpc('log_phi_access', {
-        p_accessor_user_id: userData.user.id,
-        p_accessor_role: 'user',
+        p_accessor_user_id: '00000000-0000-0000-0000-000000000000',
+        p_accessor_role: 'health_check',
         p_phi_type: 'patient_record',
-        p_phi_resource_id: 'health-check-test',
-        p_patient_id: 'health-check-test',
+        p_phi_resource_id: 'health-check-probe',
+        p_patient_id: null,
         p_access_type: 'view',
         p_access_method: 'UI',
         p_purpose: 'operations',
         p_ip_address: null,
       });
 
-      if (error) {
+      if (error && error.message?.includes('PHI_ACCESS_IDENTITY_MISMATCH')) {
+        // Expected rejection — function present, identity enforcement active
+        result.healthy = true;
+      } else if (!error) {
+        result.error = 'PHI logging identity enforcement BROKEN: spoofed accessor was accepted';
+        result.details = { enforcement: 'missing' };
+        errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', result.error, {
+          context: 'Health check — identity enforcement',
+        });
+      } else {
         result.error = `PHI logging FAILED: ${error.message} (Code: ${error.code})`;
         result.details = {
           errorCode: error.code,
@@ -203,8 +218,6 @@ class HealthCheckService {
           context: 'Health check',
           code: error.code,
         });
-      } else {
-        result.healthy = true;
       }
     } catch (err: unknown) {
       result.error = `PHI logging exception: ${err instanceof Error ? err.message : String(err)}`;

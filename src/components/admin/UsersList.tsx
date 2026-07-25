@@ -262,27 +262,29 @@ const UsersList: React.FC = () => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
 
-  // HIPAA AUDIT LOGGING: Log PHI access when viewing user details
+  // HIPAA AUDIT LOGGING: Log PHI access when viewing user details.
+  // FAIL CLOSED (§164.312(b)): if the access cannot be logged, the detail
+  // view is closed — an unauditable PHI read must not proceed.
   const logPhiAccess = useCallback(async (patientUserId: string, accessType: 'READ' | 'VIEW_LIST') => {
     if (!currentUser?.id) return;
 
-    try {
-      await supabase.rpc('log_phi_access', {
-        p_accessor_user_id: currentUser.id,
-        p_accessor_role: 'admin', // This is the admin panel
-        p_phi_type: 'patient_profile',
-        p_phi_resource_id: patientUserId,
-        p_patient_id: patientUserId,
-        p_access_type: accessType,
-        p_access_method: 'UI',
-        p_purpose: 'administrative_review',
-        p_ip_address: 'client_side' // Client-side IP not available; Edge Functions log server IP
-      });
-    } catch (logError: unknown) {
+    const { error } = await supabase.rpc('log_phi_access', {
+      p_accessor_user_id: currentUser.id,
+      p_accessor_role: 'admin', // This is the admin panel
+      p_phi_type: 'patient_profile',
+      p_phi_resource_id: patientUserId,
+      p_patient_id: patientUserId,
+      p_access_type: accessType,
+      p_access_method: 'UI',
+      p_purpose: 'administrative_review',
+      p_ip_address: null // Client-side IP not reliable; RPC falls back to x-forwarded-for
+    });
 
-      // Don't block UI for logging failures
+    if (error) {
+      setSelectedUser(null);
+      addToast('error', 'PHI access logging failed — record view blocked for HIPAA compliance.');
     }
-  }, [currentUser, supabase]);
+  }, [currentUser, supabase, addToast]);
 
   const fetchProfiles = useCallback(async (showToast = false) => {
     setLoading(true);

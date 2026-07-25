@@ -85,7 +85,7 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
       expect(supabase.rpc).not.toHaveBeenCalled();
     });
 
-    it('should handle RPC errors gracefully', async () => {
+    it('fails closed when the RPC errors — the PHI operation must not proceed', async () => {
       const mockUser = { id: 'user-123' };
       (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: mockUser },
@@ -105,7 +105,9 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
         error: { message: 'Database error' },
       });
 
-      // Should not throw - silent failure
+      // FAIL CLOSED (§164.312(b)): a failed audit write blocks the operation.
+      // The previous swallow-and-continue contract is how a broken RPC
+      // signature went unnoticed for months (2026-07-25 audit, finding 1).
       await expect(
         logPhiAccess({
           phiType: 'patient_record',
@@ -113,7 +115,52 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
           patientId: 'patient-456',
           accessType: 'view',
         })
-      ).resolves.not.toThrow();
+      ).rejects.toThrow('Audit logging failed');
+    });
+
+    it('writer shape: pins the exact nine-argument RPC payload (drift guard)', async () => {
+      const mockUser = { id: 'user-123' };
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: { user: mockUser },
+      });
+
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { role: 'provider', is_admin: false },
+            }),
+          }),
+        }),
+      });
+
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
+
+      await logPhiAccess({
+        phiType: 'patient_record',
+        phiResourceId: 'patient-456',
+        patientId: 'patient-456',
+        accessType: 'view',
+      });
+
+      // Pin the EXACT argument-name set of the nine-arg log_phi_access
+      // overload (migration 20260725100000). If either side changes shape,
+      // this fails before production does — the drift between the frontend's
+      // nine args and the live four-arg function silently killed all
+      // frontend PHI logging for months.
+      const rpcArgs = (supabase.rpc as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(rpcArgs[0]).toBe('log_phi_access');
+      expect(Object.keys(rpcArgs[1] as Record<string, unknown>).sort()).toEqual([
+        'p_access_method',
+        'p_access_type',
+        'p_accessor_role',
+        'p_accessor_user_id',
+        'p_ip_address',
+        'p_patient_id',
+        'p_phi_resource_id',
+        'p_phi_type',
+        'p_purpose',
+      ]);
     });
 
     it('should default to UI access method and treatment purpose', async () => {

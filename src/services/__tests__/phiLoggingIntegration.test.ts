@@ -222,13 +222,12 @@ describe('PHI Logging Integration Tests', () => {
   });
 
   describe('PHI Logging Error Handling', () => {
-    it('should continue operation if PHI logging fails', async () => {
+    it('fails closed: the PHI operation is blocked when PHI logging fails', async () => {
       // Make log_phi_access fail
       (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         error: { message: 'Logging failed' },
       });
 
-      // Should still create encounter successfully
       const encounterData = {
         patient_id: 'patient-456',
         provider_id: 'provider-123',
@@ -237,9 +236,12 @@ describe('PHI Logging Integration Tests', () => {
         place_of_service: '11',
       };
 
+      // FAIL CLOSED (§164.312(b), 2026-07-25 audit finding 1): an operation
+      // whose PHI access cannot be audited must not report success. The old
+      // continue-on-failure contract hid a broken RPC signature for months.
       await expect(
         EncounterService.createEncounter(encounterData)
-      ).resolves.not.toThrow();
+      ).rejects.toThrow('Audit logging failed');
     });
 
     it('should handle missing user gracefully', async () => {
