@@ -3,10 +3,24 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-07-25 (fourteenth session)
+**Last Updated:** 2026-07-25 (fifteenth session)
 
 ---
 ### 📨 HANDOFF FOR NEXT SESSION (read this first)
+
+**Session 2026-07-25 (fifteenth) — Envision portal branding + vault entry animation reconnected. 6 commits (`0ca389e7..806dad0b`), no migrations, all pushed to main, tree clean.**
+
+**Arc:** Maria: "envision open up graphics is not connected and i need the design to look better" → the phrase means the **VaultAnimation** that plays when the Master Panel opens after `/envision` login (NOT the login page — first guess was wrong). Root cause: a prior session had hard-disabled it (`setShowVaultAnimation(false)` "disabled for production"). Reconnected + redesigned end-to-end with Maria approving each iteration via artifact previews.
+
+**1. Vault animation reconnected (`0ca389e7`):** plays **once per fresh Envision login** via one-shot `sessionStorage` flag `VAULT_ENTRY_FLAG` (`src/constants/envisionVault.ts`) — armed in EnvisionLoginPage `persistEnvisionSession()` on successful 2FA (TOTP + backup-code paths), consumed in SuperAdminDashboard; refresh/tab-return never replays. Redesigned as one continuous teal vault-door scene (8 bolts engage → 3-spoke wheel spins 270°, bolts retract → door splits, panels slide apart) built from geometric SVG primitives. ESC/click skip + `prefers-reduced-motion` auto-skip preserved.
+
+**2. Sound design (same commit, Maria: "can we have music or a sound"):** synthesized Web Audio (no assets/licensing) — per-bolt metallic clicks matching the visual stagger, decelerating ratchet + rumble for the wheel, low noise-sweep whoosh for the doors, warm rising major chord at reveal. Old code created a fresh AudioContext per stage and never `resume()`d a suspended one (autoplay policy = silent failure); now one shared context with resume + `close()` on unmount.
+
+**3. Logo saga (`e7e1eef2`, `b432901a`, `5a5d0ef3`, `806dad0b`):** the REAL logo was `docs/Envision Atlus (IHIS) logo.png` all along (caduceus shield + silver orbital ring lockup; a Canva design was a wrong first guess). Final architecture = **mark/wordmark split**: `public/envision-atlus-emblem.png` (emblem extracted with circular feathered alpha, baked tagline patched out) + typeset wordmark (silver-gradient ENVISION / teal-gradient ATLUS) + tagline as real HTML text. `/envision` login header rebuilt this way; `public/envision-atlus-logo.png` (web lockup) deleted (Maria approved; source stays in docs/). Vault reveal headline is **"ENVISION A.T.L.U.S." + "Intelligent Healthcare Interoperability System"** — Maria replaced ACCESS GRANTED. Naming ratified by Maria this session: IHIS = Intelligent Healthcare Interoperability System; **A.T.L.U.S. = Accountable Technology Leading in Unified Service**. (The source raster's baked tagline has a typo "Interoperabiity" — moot in UI since tagline is HTML now, but fix the image before using the lockup in decks.)
+
+**Gates:** scoped typecheck 0 errors (0 project-wide) every commit; lint 0/0; smoke + superAdmin suites 21/21; VaultAnimation.tsx 428 lines. No dedicated test file exists for EnvisionLoginPage/VaultAnimation (pre-existing gap, visual components).
+
+**⚑ NEXT SESSION (Maria's stated plan): (a) react-router v8 migration** per `docs/trackers/react-router-v8-migration-tracker.md` (removes the GHSA-qwww-vcr4-c8h2 audit-ci allowlist when done); **(b) LOGIN CHECKS after the migration** — live `/envision` login end-to-end: credentials → TOTP → vault animation plays with sound → lands on `/super-admin` without bouncing (the `envision_session`/`envision_user` localStorage coupling is the known bounce trap — see memory `reference_envision_session_keys_coupling`). This doubles as Maria's **visual acceptance (#13)** of the login page + vault animation, which she has so far accepted only via artifact previews (https://claude.ai/code/artifact/6db677ac-86fa-4845-97d5-1f42bbbe8c4a vault, https://claude.ai/code/artifact/cf86cc70-c3df-47c6-909d-1b0683e2b660 login), not a live render.
 
 **Session 2026-07-25 (fourteenth) — external audit triage: all 3 findings closed + stale artifacts deleted. 4 commits (`a1938e4c..e3540770`), 2 migrations, all pushed to main.**
 
