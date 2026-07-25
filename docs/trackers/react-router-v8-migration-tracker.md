@@ -1,31 +1,100 @@
-# React Router v7 → v8 Migration Tracker
+# React Router v7 → v8 Migration — Plan of Action
 
-**Created:** 2026-07-25 · **Status:** SCHEDULED (Maria approved "later", not urgent)
-**Trigger:** GHSA-qwww-vcr4-c8h2 (react-router RSC-mode CSRF, published 2026-07-24, patched only in 8.3.0). NOT applicable to this app (Vite SPA, no RSC/server router mode) — allowlisted in `audit-ci.json` with Maria's approval 2026-07-25. This migration removes the allowlist entry for good.
-
-**Estimate:** 1–2 sessions (size Session 1 first — v7→v8 may be mostly non-breaking for library-mode SPA usage; do NOT assume either way).
+**Created:** 2026-07-25 · **Sized:** 2026-07-25 (changelog read, full surface mapped) · **Status:** READY TO EXECUTE — one focused session + Maria's visual pass
+**Approved:** Maria 2026-07-25 ("do the exception and schedule v8 for later")
 
 ---
 
-## Current state (live-verified 2026-07-25)
+## Why this exists
 
-| Fact | Value |
+GHSA-qwww-vcr4-c8h2 (react-router RSC-mode CSRF, published 2026-07-24, patched only in 8.x) turned the Security Scan red. The advisory is **not applicable** to this Vite SPA (no RSC/server router mode) and is allowlisted in `audit-ci.json` with rationale in `.github/workflows/security-scan.yml`. **This migration's job is to make that exception unnecessary and delete it.**
+
+## Sizing verdict (2026-07-25 — do not re-derive)
+
+The v8.0.0 changelog was read in full and mapped against this codebase. **Zero behavioral/API changes affect us.** Every breaking change is framework-mode/SSR/data-router-only (middleware, pass-through requests, split route modules, `meta`/`hasErrorBoundary` removals) — this app has **0 hits** on `createBrowserRouter`, `useLoaderData`, route loaders, `useRouteError`. Our entire API surface (`BrowserRouter`, `Routes`/`Route`, `useNavigate` ×160 files, `Link` ×73, `Navigate`, `useParams`, `useLocation`, `useSearchParams`) is unchanged in v8.
+
+The migration is **rename-shaped**: the `react-router-dom` package is discontinued; imports move to `react-router`.
+
+| Measured surface (2026-07-25) | Count |
 |---|---|
-| Installed | `react-router-dom@7.18.1` (declared `^7.11.0` in package.json) |
-| Target | `react-router@8.3.0`+ (latest at authoring: 8.3.0) |
-| Usage mode | Library/declarative mode in a Vite SPA — no framework mode, no SSR, no RSC |
-| Route registry | `src/routes/routeConfig.ts` (single source, ~line 700 has `/kiosk/check-in`) + `src/routes/lazyComponents.tsx` |
-| Renderer | `RouteRenderer` (feature-flag filtering) — find via `grep -rn "RouteRenderer" src` |
+| Files importing `react-router-dom` | **199** |
+| Test files mocking `'react-router-dom'` by name | **36** ← the real risk |
+| React | `^19.2.0` → needs ≥ **19.2.7** (patch bump) |
+| Vite | `^7.3.0` ✓ (v8 needs 7+) |
+| Node — CI | 24 ✓ (v8 needs 22.22+) |
+| Node — codespace | v20 ✗ → `nvm install 24 && nvm alias default 24` before building |
 
-## Exit criteria (all required — DONE MEANS DONE)
+**No codemod exists upstream; TypeScript errors guide stragglers.** No future-flags prep needed (we set none).
 
-1. [ ] **Session 1 — size it:** read the official v7→v8 upgrade guide (https://reactrouter.com/upgrading) + CHANGELOG for 8.0–8.3. List every breaking change that touches library-mode APIs we use: `grep -rn "useNavigate\|useParams\|useLocation\|<Link\|<Navigate\|createBrowserRouter\|RouterProvider\|Routes\|Route " src --include="*.tsx" -l | wc -l` and enumerate the API surface actually used. If v8 is non-breaking for our surface, this collapses to a version bump + full regression pass.
-2. [ ] Bump `react-router-dom` to `^8.3.0`, fix all typecheck/lint errors (full `npx tsc --noEmit` — routing types are widely imported; scoped typecheck is NOT sufficient per `feedback_scoped_typecheck_misses_transitive_errors`).
-3. [ ] Full test suite on routing-adjacent files + `npm run build` green.
-4. [ ] **Maria's visual acceptance (#13):** login → dashboard nav, senior check-in flow, My Health Hub sub-routes, admin panel deep links, `/kiosk/check-in`, browser back/forward, and a hard-refresh on a deep URL.
-5. [ ] **Remove `GHSA-qwww-vcr4-c8h2` from `audit-ci.json` allowlist** and delete the rationale comment block in `.github/workflows/security-scan.yml` — the exception dies with the migration.
-6. [ ] Security Scan green WITHOUT the allowlist entry.
+---
 
-## Standing check (any session, until migrated)
+## Pre-flight (5 min — run before anything)
 
-Watch for an upstream 7.x backport: `npm view react-router versions --json | jq '[.[] | select(startswith("7."))] | last'` — if a version > 7.18.1 appears, a patch bump + allowlist removal may close this tracker without the v8 migration (then v8 becomes a normal, unhurried upgrade).
+1. **Backport check — this may cancel the whole session:**
+   `npm view react-router versions --json | jq '[.[] | select(startswith("7."))] | last'`
+   If > `7.18.1` exists AND `npm audit` clears with it: patch-bump instead, remove the allowlist entry (Phase 5), done. v8 then becomes leisure.
+2. Confirm clean working tree + green CI on HEAD.
+3. `nvm install 24 && nvm use 24` in the codespace (v8 engines: Node ≥22.22).
+
+## Phase 1 — Dependency swap (~15 min)
+
+1. `npm uninstall react-router-dom && npm install react-router@^8.3.0` (or latest 8.x — re-check `npm view react-router version`).
+2. `npm install react@^19.2.7 react-dom@^19.2.7` (v8 peer minimum).
+3. Check for stragglers that also declare it: `grep -rn "react-router" package.json` — expect only `react-router`.
+
+## Phase 2 — Import rename, source files (~30 min, mechanical)
+
+1. Sweep (both quote styles, and deep paths like `react-router-dom/...` if any — check first: `grep -rn "react-router-dom/" src | head`):
+   ```bash
+   grep -rl "react-router-dom" src --include='*.ts' --include='*.tsx' \
+     | xargs sed -i "s|from 'react-router-dom'|from 'react-router'|g; s|from \"react-router-dom\"|from \"react-router\"|g"
+   ```
+2. Zero-tolerance residue check: `grep -rn "react-router-dom" src | wc -l` → **must be 0** (test mocks included — they're handled in Phase 3 but the sed above already rewrote import lines; mocks use a different syntax).
+
+## Phase 3 — The 36 test mocks (INDIVIDUAL attention, not sed) (~1–2 hrs)
+
+`vi.mock('react-router-dom', ...)` silently stops applying once code imports `'react-router'` — a mock aimed at a module nobody imports is a no-op, and some tests would then exercise the REAL router and pass/fail for wrong reasons. This is the silent-failure class this repo documents (`vi.clearAllMocks` lesson, mock-leakage lesson).
+
+1. List them: `grep -rln "mock('react-router-dom'\|mock(\"react-router-dom\"" src --include='*.test.*'`
+2. For EACH file: change the mock specifier to `'react-router'`, then **run that file** and confirm it still passes for the right reason (spot-check one assertion by temporarily breaking the mock — deletion-test spirit).
+3. Sweep for partial-mock passthroughs: `importActual('react-router-dom')` → `importActual('react-router')`.
+4. Residue gate: `grep -rn "react-router-dom" src` → **0 lines, no exceptions**.
+
+## Phase 4 — Verification gates (in this order)
+
+1. **Full** typecheck (routing types imported everywhere — scoped is insufficient per `feedback_scoped_typecheck_misses_transitive_errors`):
+   `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit` → 0 errors.
+2. Routing-adjacent tests (NOT the full 11k suite — `feedback_no_full_test_suite`): the 36 mock files + `src/routes/` tests + App-level tests. All pass, 0 skipped.
+3. `npm run lint` → 0 errors, no new warnings.
+4. `npm run build` → green; note bundle-size delta.
+5. `npm run dev` smoke: app boots, no console router errors.
+
+## Phase 5 — Kill the exception (the point of it all)
+
+1. Remove `"GHSA-qwww-vcr4-c8h2"` from `audit-ci.json` allowlist.
+2. Delete the rationale comment block at the audit-ci gate in `.github/workflows/security-scan.yml` (keep the `--config audit-ci.json` invocation — that structural fix stays).
+3. `npx audit-ci --config audit-ci.json` locally → passes with **empty allowlist**.
+
+## Phase 6 — Ship + visual acceptance
+
+1. Commit (verification counts in message), push, **watch Security Scan go green without the allowlist**.
+2. Frontend deploy (router ships in the bundle — nothing is live until deployed).
+3. **⚑ Maria visual acceptance (#13)** — the routing layer sits under every page:
+   - [ ] Login → dashboard navigation (both products' entry paths)
+   - [ ] Senior daily check-in flow end-to-end
+   - [ ] My Health Hub + at least two sub-routes (`/health-observations`, `/medicine-cabinet`)
+   - [ ] Admin panel deep link (e.g., `/admin/family-history/:patientId` via PatientChartNavigator)
+   - [ ] `/kiosk/check-in` (public route, no auth)
+   - [ ] Browser back/forward through 3+ pages
+   - [ ] Hard refresh on a deep URL (SPA fallback still routes)
+4. Update this tracker → CLOSED, update `PROJECT_STATE.md`.
+
+## Rollback
+
+Single revert commit restores `react-router-dom@7.18.1` + the allowlist entry (keep the allowlist-removal in the same commit as the migration so revert is atomic). No data/schema involvement — frontend-only.
+
+## Explicitly out of scope
+
+- Adopting data routers / loaders / framework mode — separate product decision, never a migration side effect.
+- Any route ADDITIONS or reordering (Tier 3, `src/App.tsx`/routeConfig changes beyond import lines).
+- Touching the 2 files matching `RouterProvider` without first confirming they're real usages, not test scaffolding.
