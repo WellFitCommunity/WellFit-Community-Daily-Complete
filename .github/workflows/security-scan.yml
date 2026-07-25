@@ -148,10 +148,13 @@ jobs:
               ' audit-results.json || true
             fi
 
+            # This step is informational (report + annotations). ENFORCEMENT is
+            # the audit-ci gate below, which supports a documented allowlist —
+            # raw npm-audit counts cannot express an accepted-risk exception,
+            # which is why this step previously double-failed alongside it.
+            # (Changed 2026-07-25, Maria approved, for GHSA-qwww-vcr4-c8h2.)
             if [ "$HIGH" -gt 0 ] || [ "$CRIT" -gt 0 ]; then
-              echo "### ❌ High/Critical vulnerabilities detected." >> $GITHUB_STEP_SUMMARY
-              echo "FAIL=1" >> $GITHUB_ENV
-              echo "FAIL_REASONS=${FAIL_REASONS:-}npm-audit|" >> $GITHUB_ENV
+              echo "### ⚠️ High/Critical advisories present — see the audit-ci gate (allowlist-aware) for pass/fail." >> $GITHUB_STEP_SUMMARY
             else
               echo "✅ No High/Critical vulnerabilities." >> $GITHUB_STEP_SUMMARY
             fi
@@ -314,9 +317,15 @@ jobs:
         run: |
           echo "## Dependency Security" >> $GITHUB_STEP_SUMMARY
 
-          # audit-ci: Only fail on HIGH and CRITICAL vulnerabilities
-          # Moderate vulnerabilities in webpack-dev-server are dev-only and non-blocking
-          if ! audit-ci --high; then
+          # audit-ci: fail on HIGH/CRITICAL, honoring the allowlist in
+          # audit-ci.json. Current allowlist (review before adding entries):
+          #   GHSA-qwww-vcr4-c8h2 — react-router RSC-mode CSRF (published
+          #   2026-07-24; patched only in v8). NOT APPLICABLE here: this is a
+          #   Vite SPA with no RSC/server router mode, so the vulnerable code
+          #   path never executes. Maria approved the exception 2026-07-25.
+          #   REMOVE when a 7.x backport ships or the v8 migration lands —
+          #   see docs/trackers/react-router-v8-migration-tracker.md.
+          if ! audit-ci --config audit-ci.json; then
             echo "⚠️ audit-ci found vulnerabilities" >> $GITHUB_STEP_SUMMARY
             echo "FAIL=1" >> $GITHUB_ENV
             echo "FAIL_REASONS=${FAIL_REASONS:-}audit-ci|" >> $GITHUB_ENV
