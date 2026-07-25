@@ -13,7 +13,11 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
+// Same import shape as security-alert-processor (fixed 0e87931f-era): the
+// `?target=deno` variant resolves to a build whose `ReturnType<typeof
+// createClient>` collapses to a never-schema client under deno check strict,
+// making every `.from()` row `never` (31 phantom errors).
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
@@ -285,7 +289,7 @@ serve(async (req) => {
 // ============================================================================
 
 async function gatherEscalationContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   patientId: string,
   consecutiveMissedCount: number,
   logger: ReturnType<typeof createLogger>
@@ -339,7 +343,7 @@ async function gatherEscalationContext(
       .single();
 
     if (membership?.tenants) {
-      const tenantCode = (membership.tenants as { tenant_code: string }).tenant_code || "";
+      const tenantCode = (membership.tenants as unknown as { tenant_code: string }).tenant_code || "";
       // Extract license digit (first digit after the dash)
       const licenseMatch = tenantCode.match(/-([089])/);
       if (licenseMatch) {
@@ -416,7 +420,7 @@ async function gatherEscalationContext(
       .eq("is_active", true);
 
     if (caregivers) {
-      context.caregivers = (caregivers as CaregiverRelationshipWithProfile[]).map((c) => ({
+      context.caregivers = (caregivers as unknown as CaregiverRelationshipWithProfile[]).map((c) => ({
         id: c.caregiver_id,
         name: `${c.profiles?.first_name || ""} ${c.profiles?.last_name || ""}`.trim(),
         relationship: c.relationship,
@@ -721,29 +725,34 @@ function buildRuleBasedEscalation(context: EscalationContext): EscalationResult 
     notifyTenant = true; // Even for low, notify tenant first
   }
 
+  // NOTE: this rule-based builder only ever produces low/medium/high —
+  // "emergency" comes from buildEmergencyEscalation and "none" from the AI
+  // path. The comparisons below reflect that real range (the checker proves
+  // none/emergency guards here are dead code).
+
   const actions: string[] = ["Step 1: Notify tenant organization"];
   if (notifyCaregiver) actions.push("Step 2: Notify caregiver");
   if (notifyEmergencyContact) actions.push("Step 3: Contact emergency contact");
   if (callForWelfareCheck) {
     actions.push("Step 4 (Last resort): Request welfare check if no response");
-  } else if (level !== "none" && level !== "low") {
+  } else if (level !== "low") {
     actions.push("Review patient history and attempt phone contact");
   }
 
   return {
     escalationLevel: level,
     reasoning: `${context.consecutiveMissed} missed check-in(s) with ${context.riskLevel} risk level. Standard escalation protocol applied.`,
-    recommendedActions: level === "none" ? ["Monitor for next check-in"] : actions,
+    recommendedActions: actions,
     notifyTenant,
     notifyCaregiver,
     notifyEmergencyContact,
     callForWelfareCheck,
     message: {
-      subject: level === "high" || level === "emergency"
+      subject: level === "high"
         ? `Important: Check-in needed for ${context.patientName}`
         : `Update about ${context.patientName}`,
       body: `${context.patientName} has missed ${context.consecutiveMissed} check-in(s). If you are in contact with them, please let us know they are okay.`,
-      urgency: level === "emergency" ? "emergency" : level === "high" ? "urgent" : "routine",
+      urgency: level === "high" ? "urgent" : "routine",
     },
     riskFactors: [`${context.consecutiveMissed} missed check-ins`],
     protectiveFactors: context.caregivers.length > 0 ? ["Active caregiver involvement"] : [],
@@ -755,7 +764,7 @@ function buildRuleBasedEscalation(context: EscalationContext): EscalationResult 
 // ============================================================================
 
 async function executeEscalation(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   patientId: string,
   checkInId: string | undefined,
   context: EscalationContext,
@@ -817,7 +826,7 @@ async function executeEscalation(
               patient_id: patientId,
               escalation_level: escalation.escalationLevel,
               consecutive_missed: context.consecutiveMissed,
-              tenant_code: (admin.tenants as { tenant_code: string })?.tenant_code,
+              tenant_code: (admin.tenants as unknown as { tenant_code: string })?.tenant_code,
               welfare_check_recommended: escalation.callForWelfareCheck,
               escalation_step: "tenant_notification",
             },

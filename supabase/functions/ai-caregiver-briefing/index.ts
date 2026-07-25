@@ -13,7 +13,7 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
@@ -201,7 +201,7 @@ interface CaregiverContext {
 }
 
 async function gatherCaregiverContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   patientId: string,
   briefingType: string,
   logger: ReturnType<typeof createLogger>

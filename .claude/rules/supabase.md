@@ -415,7 +415,7 @@ Edge functions run in **Deno**, not Node.js. Different rules apply:
 | **Never use `jsr:@supabase/supabase-js@2`** | Causes transitive `npm:openai` resolution failure in `deno check` |
 | **Never use `npm:` specifiers** (e.g., `npm:@anthropic-ai/sdk`) | Requires `node_modules` setup; use `https://esm.sh/` URL imports instead |
 | **Never use `jsr:@supabase/functions-js/edge-runtime.d.ts`** | Same transitive dependency issue; not needed with `esm.sh` imports |
-| Use `https://esm.sh/@supabase/supabase-js@2?target=deno` | Correct import for Supabase client in edge functions |
+| Use `https://esm.sh/@supabase/supabase-js@2?target=deno` | Correct import for Supabase client in edge functions — **EXCEPT** when the file annotates helper params with the client type: the `?target=deno` build's `ReturnType<typeof createClient>` collapses to a never-schema client under `deno check` strict (every `.from()` row becomes `never` — 31 phantom errors in ai-missed-checkin-escalation, 16 in ai-caregiver-briefing, fixed 2026-07-25). In that case import `{ createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"` and annotate params as bare `SupabaseClient` (the security-alert-processor pattern). Never annotate `supabase: ReturnType<typeof createClient>`. |
 | Use `https://esm.sh/@anthropic-ai/sdk@VERSION?target=deno` | Correct import for Anthropic SDK in edge functions |
 
 **Why `jsr:` and `npm:` are banned (April 2026):**
