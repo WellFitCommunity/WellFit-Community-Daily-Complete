@@ -362,20 +362,18 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
               transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 18 }}
               className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center"
             >
+              {/* Radial mask feathers the lockup's baked-in dark background into the backdrop */}
               <img
                 src="/envision-atlus-logo.png"
-                alt="Envision Atlus"
-                className="w-32 h-32 rounded-full ring-2 ring-[#00857a]/50 shadow-[0_0_45px_rgba(0,133,122,0.4)] mb-6 select-none"
+                alt="Envision Atlus — Intelligent Healthcare Interoperability System (IHIS)"
+                className="w-[30rem] max-w-[85vw] mb-4 select-none [mask-image:radial-gradient(ellipse_75%_72%_at_center,black_74%,transparent_100%)]"
                 draggable={false}
               />
               <div className="text-5xl font-bold text-[#33bfb7] mb-3 tracking-[0.2em] drop-shadow-lg">
                 ACCESS GRANTED
               </div>
               <div className="text-lg text-slate-300 tracking-wide">
-                Envision Atlus Master Panel
-              </div>
-              <div className="text-[11px] uppercase tracking-[0.3em] text-slate-500 mt-2">
-                Intelligent Healthcare Interoperability System
+                Master Panel
               </div>
             </motion.div>
           )}

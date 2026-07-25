@@ -456,22 +456,18 @@ export const EnvisionLoginPage: React.FC = () => {
       <div className="relative z-10 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="relative inline-flex items-center justify-center mb-5">
+          <div className="relative inline-flex items-center justify-center mb-3">
             {/* Soft halo behind the logo */}
-            <div className="absolute inset-0 rounded-full bg-[#00857a]/25 blur-2xl scale-125" aria-hidden="true" />
+            <div className="absolute inset-0 bg-[#00857a]/20 blur-3xl" aria-hidden="true" />
+            {/* Radial mask feathers the lockup's baked-in dark background into the page */}
             <img
               src="/envision-atlus-logo.png"
-              alt="Envision Atlus — Intelligent Healthcare Interoperability System"
-              className="relative w-32 h-32 rounded-full ring-2 ring-[#00857a]/50 shadow-[0_0_45px_rgba(0,133,122,0.35)] select-none"
+              alt="Envision Atlus — Intelligent Healthcare Interoperability System (IHIS)"
+              className="relative w-full max-w-sm select-none [mask-image:radial-gradient(ellipse_75%_72%_at_center,black_74%,transparent_100%)]"
               draggable={false}
             />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-1 tracking-wide">
-            Envision <span className="text-[#33bfb7]">Atlus</span>
-          </h1>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400 mb-3">
-            Intelligent Healthcare Interoperability System
-          </p>
+          <h1 className="sr-only">Envision Atlus Portal</h1>
           <p className="text-teal-300 text-sm">
             {step === 'credentials' && 'Authorized Personnel Only'}
             {step === 'totp' && 'Step 2: Authenticator Code'}
