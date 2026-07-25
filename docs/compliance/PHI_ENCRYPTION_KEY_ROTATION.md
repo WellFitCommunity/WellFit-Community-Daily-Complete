@@ -66,7 +66,9 @@ Ciphertext does not embed a key identifier, so rotation is a **re-encrypt sweep 
 
 ## 3. Ciphertext column inventory + plaintext-twin status
 
-Live-verified 2026-07-25. **The plaintext twins mean encryption is currently decorative for those columns** (audit finding 3): an attacker with table read access reads the plaintext directly. Dropping the twins is an **irreversible schema change requiring Maria's explicit sign-off (+ Akima for clinical scope)** and application repair first — readers still select the plaintext columns.
+**RESOLVED 2026-07-25 (Maria approved): the nine decorative twin columns, their nine `*_decrypted` views, and both dual-write trigger functions were DROPPED** (migration `20260725150000`). Ratified posture: demographics and org identifiers are protected by disk-level encryption at rest + RLS tenant isolation + PHI access audit logging; **column-level encryption is reserved for high-sensitivity content with no plaintext copy** (risk_assessments encrypt+NULL, handoff_packets, CHW media — all untouched and intact). Pre-drop sweep: zero code readers of every twin column and every decorative view; each view decrypted only its twin. Plaintext columns unaffected (they are load-bearing: kiosk identity match, search, FHIR, age logic). If a future customer/certification requires column-level demographics encryption, that is the blind-index project (keyed-HMAC lookup columns + reader migration + plaintext drop).
+
+Historical inventory as it stood before the drop:
 
 | Table.column (ciphertext) | Plaintext twin | Twin populated? | Writer | Key flag |
 |---|---|---|---|---|
@@ -83,7 +85,7 @@ Live-verified 2026-07-25. **The plaintext twins mean encryption is currently dec
 | `handoff_packets.patient_name_encrypted` / `patient_dob_encrypted` | none | n/a | `handoffService.encryptPHI` (client → RPC) | clinical |
 | CHW kiosk media (`phi-encrypt` edge fn) | none | n/a | `chwService` → `*_with_key` | WellFit secret |
 
-**Recommended sequence for the twin-drop decision (NOT yet executed):** (1) migrate readers of `profiles.dob` / `senior_demographics.date_of_birth` (and the other twins as they populate) to the `*_decrypted` views; (2) convert the dual-write triggers to the NULL-out pattern `encrypt_risk_assessments_phi` already uses; (3) only then drop the plaintext columns. Until step 3, "PHI encrypted at rest" must not be claimed for the twin columns.
+*(The originally-drafted alternative — migrate readers to decrypted views, NULL-out plaintext — was considered and rejected 2026-07-25: v2 non-deterministic ciphertext cannot serve equality lookups, so plaintext-free demographics require blind-index infrastructure that no current requirement pays for.)*
 
 ---
 
@@ -91,8 +93,8 @@ Live-verified 2026-07-25. **The plaintext twins mean encryption is currently dec
 
 | Item | Owner | Status |
 |---|---|---|
-| Plaintext-twin drop decision (§3) | Maria (+ Akima for clinical columns) | OPEN — irreversible, needs sign-off |
+| Plaintext-twin drop decision (§3) | Maria | **CLOSED 2026-07-25** — twins/views/triggers dropped (migration `20260725150000`); posture ratified |
 | Provision the WellFit GUC `app.settings.PHI_ENCRYPTION_KEY` so the DB-side two-key split is real (§17 known item) | Maria | OPEN (pre-existing) |
-| Remove the legacy decrypt branch once zero non-`v2:` ciphertext exists platform-wide | Any session | OPEN — verify first |
+| Remove the legacy decrypt branch once zero non-`v2:` ciphertext exists platform-wide | Any session | OPEN — verify first. NOTE: any CHW media encrypted via `phi-encrypt` before 2026-07-25 is legacy-format; check before removing |
 | KMS-backed envelope encryption (long-term) | Future tracker | OPEN |
 | Akima ratification of the v2 primitive change (clinical-key scope) | Akima | OPEN — add to next packet |
