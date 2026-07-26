@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 // Optimized imports for tree-shaking (saves ~18KB)
 import Activity from 'lucide-react/dist/esm/icons/activity';
 import Heart from 'lucide-react/dist/esm/icons/heart';

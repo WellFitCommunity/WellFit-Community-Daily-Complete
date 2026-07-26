@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { supabase } from '../../lib/supabaseClient';
 import { usePatientContext } from '../../contexts/PatientContext';
 import { auditLogger } from '../../services/auditLogger';

@@ -3,7 +3,7 @@
 // Tests match ACTUAL component UI
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 import CheckInTracker from '../CheckInTracker';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';

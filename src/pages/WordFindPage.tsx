@@ -1,6 +1,6 @@
 // src/components/WordFind.tsx
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import Confetti from 'react-confetti';
 import { dailyThemes } from '../data/wordThemes';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';

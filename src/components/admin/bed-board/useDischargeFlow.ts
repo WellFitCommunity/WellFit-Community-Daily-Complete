@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { NavigateFunction } from 'react-router-dom';
+import type { NavigateFunction } from 'react-router';
 import { BedManagementService } from '../../../services/bedManagementService';
 import { PostAcuteTransferService } from '../../../services/postAcuteTransferService';
 import { triggerDischargeReadmissionPrediction } from '../../../services/ai/readmission-predictor/dischargeTrigger';

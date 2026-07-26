@@ -3,7 +3,7 @@
 // Envision Atlus Dark Theme
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { toast } from 'react-toastify';
 // ExcelJS is lazy-loaded in exportToExcel() to reduce bundle size (~600KB)
 import type { Workbook } from 'exceljs';

@@ -2,7 +2,7 @@
 // Public Register: role dropdown (labels only), hCaptcha race guard, +1 hint
 
 import React, { useState, useRef, useCallback, FormEvent, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 import { useBranding } from '../BrandingContext';
 

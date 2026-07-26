@@ -10,9 +10,9 @@ import type { Mock as _Mock } from 'vitest';
 
 import { renderHook, act } from '@testing-library/react';
 
-// Mock react-router-dom
+// Mock react-router
 const mockNavigate = vi.fn();
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 

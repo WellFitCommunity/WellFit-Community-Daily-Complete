@@ -13,7 +13,7 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Shield, X, ArrowRight } from 'lucide-react';
 import { useMfaEnrollment } from '../../hooks/useMfaEnrollment';
 import { useUser } from '../../contexts/AuthContext';

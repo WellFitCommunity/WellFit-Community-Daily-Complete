@@ -26,7 +26,7 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { useSession, useAuth } from '../contexts/AuthContext';
 import { useNavigationHistorySafe } from '../contexts/NavigationHistoryContext';
 import { auditLogger } from '../services/auditLogger';

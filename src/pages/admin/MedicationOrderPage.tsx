@@ -10,7 +10,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { MedicationOrderForm } from '../../components/admin/cpoe/MedicationOrderForm';
 
 export const MedicationOrderPage: React.FC = () => {

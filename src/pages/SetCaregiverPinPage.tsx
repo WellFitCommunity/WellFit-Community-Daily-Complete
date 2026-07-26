@@ -3,7 +3,7 @@
 // This PIN is separate from their login password and is used ONLY for caregiver access
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth, useSupabaseClient } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 

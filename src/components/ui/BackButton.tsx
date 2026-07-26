@@ -1,7 +1,7 @@
 // src/components/ui/BackButton.tsx
 // Simple back button - uses browser history first, then fallback
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 
 interface BackButtonProps {
   fallbackPath?: string; // Where to go if no history

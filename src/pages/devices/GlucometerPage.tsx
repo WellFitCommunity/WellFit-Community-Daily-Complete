@@ -1,6 +1,6 @@
 // src/pages/devices/GlucometerPage.tsx
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type GlucoseReading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries, type ReferenceRange } from '../../components/devices/VitalTrendChart';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import AdminLoginPage from '../AdminLoginPage';
 
 // Mock AuthContext - all values must be defined inline due to jest hoisting

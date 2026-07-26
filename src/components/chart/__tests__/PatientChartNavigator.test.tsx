@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { PatientChartNavigator } from '../PatientChartNavigator';
 
 // Mock supabase — must be vi.fn() based for proper async resolution

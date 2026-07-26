@@ -1,6 +1,6 @@
 // src/pages/MetricsPage.tsx
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { fetchPatientEngagementMetrics, PatientEngagementMetric } from '../api/metrics';
 

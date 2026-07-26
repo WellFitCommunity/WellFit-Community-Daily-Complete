@@ -20,7 +20,7 @@ vi.mock('../../BrandingContext', () => ({
   useBranding: vi.fn(),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: vi.fn(() => vi.fn()),
 }));
 

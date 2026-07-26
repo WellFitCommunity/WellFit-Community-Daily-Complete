@@ -19,7 +19,7 @@
 // ============================================================================
 
 import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { auditLogger } from '../../services/auditLogger';
 import { HuddleSection } from './team-huddle/HuddleSection';
 import { useHuddleData } from './team-huddle/useHuddleData';

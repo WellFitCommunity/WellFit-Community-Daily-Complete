@@ -1,6 +1,6 @@
 // src/pages/ChangePasswordPage.tsx
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient } from '../contexts/AuthContext';
 
 function readHashParams(): Record<string, string> {

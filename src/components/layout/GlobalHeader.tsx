@@ -1,7 +1,7 @@
 // src/components/layout/GlobalHeader.tsx - Complete Updated Header for Senior-Focused Navigation
 // UPDATED: Added all health features, games submenu, caregiver access
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import {
   Menu,
   X,

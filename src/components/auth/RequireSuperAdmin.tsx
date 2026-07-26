@@ -4,7 +4,7 @@
 // Supports both Supabase auth (legacy JWT) and Envision standalone auth
 
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router';
 import { useAuth, useUser } from '../../contexts/AuthContext';
 import { SuperAdminService } from '../../services/superAdminService';
 import { auditLogger } from '../../services/auditLogger';

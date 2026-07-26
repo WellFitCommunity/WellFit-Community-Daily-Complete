@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth, useSupabaseClient } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import { auditLogger } from '../services/auditLogger';

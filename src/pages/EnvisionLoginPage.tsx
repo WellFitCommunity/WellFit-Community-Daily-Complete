@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft, Smartphone, Key, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { auditLogger } from '../services/auditLogger';

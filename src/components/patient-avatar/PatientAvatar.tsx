@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { PatientAvatarProps } from '../../types/patientAvatar';
 import { usePatientAvatar } from './hooks/usePatientAvatar';
 import { usePatientMarkers } from './hooks/usePatientMarkers';

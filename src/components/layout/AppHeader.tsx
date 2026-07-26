@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import GlobalHeader from './GlobalHeader';
 import WelcomeHeader from './WelcomeHeader';
 import { allRoutes } from '../../routes/routeConfig';

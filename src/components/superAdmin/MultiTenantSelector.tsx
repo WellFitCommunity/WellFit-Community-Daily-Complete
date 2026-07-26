@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { TenantAssignmentService, TenantAssignment, SuperAdminProfile } from '../../services/tenantAssignmentService';
 import { Building2, Shield, Activity, AlertCircle, Grid3x3, Maximize2 } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';

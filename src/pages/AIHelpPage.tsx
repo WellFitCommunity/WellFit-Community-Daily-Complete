@@ -1,7 +1,7 @@
 // src/pages/AIHelpPage.tsx - AI-Enhanced Senior-Friendly Help
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../BrandingContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { Card } from '../components/ui/card';
 import claudeService from '../services/claudeService';

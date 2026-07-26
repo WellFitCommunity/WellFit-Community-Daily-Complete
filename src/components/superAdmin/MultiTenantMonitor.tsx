@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { TenantAssignmentService, TenantAssignment } from '../../services/tenantAssignmentService';
 import { Building2, X, Maximize2, Minimize2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';

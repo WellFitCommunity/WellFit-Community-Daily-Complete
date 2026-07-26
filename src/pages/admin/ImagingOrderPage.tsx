@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { ImagingOrderForm } from '../../components/admin/cpoe/ImagingOrderForm';
 
 export const ImagingOrderPage: React.FC = () => {

@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { getGuardianApprovalService } from '../../services/guardianApprovalService';
 import {

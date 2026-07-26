@@ -3,8 +3,8 @@
 // Use these wrappers instead of importing MemoryRouter/BrowserRouter directly
 
 import React from 'react';
-import { MemoryRouter, BrowserRouter, HashRouter } from 'react-router-dom';
-import type { MemoryRouterProps, BrowserRouterProps, HashRouterProps } from 'react-router-dom';
+import { MemoryRouter, BrowserRouter, HashRouter } from 'react-router';
+import type { MemoryRouterProps, BrowserRouterProps, HashRouterProps } from 'react-router';
 
 /**
  * MemoryRouter wrapper for tests

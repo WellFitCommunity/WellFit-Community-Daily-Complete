@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useSupabaseClient, useSession } from '../../contexts/AuthContext';
 import { useBranding } from '../../BrandingContext';

@@ -1,6 +1,6 @@
 // src/components/auth/RequireAuth.tsx
 import { type ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router';
 import { useAuth, useUser } from '../../contexts/AuthContext';
 
 interface RequireAuthProps {

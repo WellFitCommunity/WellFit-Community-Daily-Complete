@@ -3,7 +3,7 @@
 // This replaces the Shell component from App.tsx and integrates with the route tree
 
 import React, { useEffect, useState, Suspense } from 'react';
-import { Outlet, useLocation, ScrollRestoration } from 'react-router-dom';
+import { Outlet, useLocation, ScrollRestoration } from 'react-router';
 
 import { BrandingConfig, getCurrentBranding } from '../branding.config';
 import { performanceMonitor } from '../services/performanceMonitoring';

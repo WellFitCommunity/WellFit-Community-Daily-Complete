@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { findVoiceCommandMatch, VoiceCommandMapping } from '../services/workflowPreferences';
 import { auditLogger } from '../services/auditLogger';
 import { parseVoiceEntity, useVoiceActionSafe } from '../contexts/VoiceActionContext';

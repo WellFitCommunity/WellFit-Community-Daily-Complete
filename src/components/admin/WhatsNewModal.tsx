@@ -3,7 +3,7 @@
 // Production-grade with accessibility, error handling, and analytics
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 interface Feature {
   title: string;

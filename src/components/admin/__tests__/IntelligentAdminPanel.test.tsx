@@ -22,7 +22,7 @@ let mockAdminRole: string | null = 'super_admin';
 let mockAiSuggestions: string[] = [];
 let mockCategoryOrder: Array<{ categoryId: string; priority: number }> = [];
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 

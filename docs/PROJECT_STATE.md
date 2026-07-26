@@ -3,10 +3,26 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-07-25 (fifteenth session)
+**Last Updated:** 2026-07-26 (sixteenth session)
 
 ---
 ### 📨 HANDOFF FOR NEXT SESSION (read this first)
+
+**Session 2026-07-26 (sixteenth) — react-router v7 → v8 migration executed end-to-end; GHSA-qwww-vcr4-c8h2 allowlist DELETED. 1 commit, no DB migrations, tree clean.**
+
+**Arc:** Maria: "the migration is the most important next step" → executed `docs/trackers/react-router-v8-migration-tracker.md` in one pass. Pre-flight backport check: no 7.x > 7.18.1 exists, so v8 proceeded.
+
+**1. The migration (rename-shaped, as sized):** `react-router-dom` (discontinued) → `react-router@8.3.0`; react/react-dom → 19.2.8 (v8 peer min 19.2.7 — package.json `overrides` for react also bumped, npm hard-errors EOVERRIDE when override and direct dep disagree). 217 source files renamed (surface grew from 199 at sizing); all 36 test-mock files individually renamed + re-run (629 tests); deletion-test spot-check proved renamed mocks are load-bearing (re-aiming one at the dead specifier failed 3 tests). `grep react-router-dom src` = 0.
+
+**2. Sizing correction (documented in tracker):** app IS in data-router mode — `createHashRouter` + `RouterProvider` + `errorElement` (`src/routes/createAppRouter.tsx` / `src/index.tsx`); the sizing grep only checked `createBrowserRouter`. No impact — zero loaders/actions/`useLoaderData`/`defer`/`json()` in the codebase, rename-only verdict held.
+
+**3. One unplanned change:** `tsconfig.json` `moduleResolution` `"Node"` → `"bundler"` — v8 is `exports`-only; classic resolution TS2307'd every import. `"bundler"` is the canonical Vite setting; full tsc = 0 errors project-wide after. (`tsconfig.scripts.json` independent, untouched.)
+
+**4. The point — allowlist killed:** `audit-ci.json` allowlist now `[]`, rationale block removed from `security-scan.yml` (structural audit-ci gate kept); local `npx audit-ci` passes with empty allowlist.
+
+**Gates:** full tsc 0 errors; lint 0/0; routing-adjacent tests 660 passed 0 failed 0 skipped; `npm run build` green; dev boot smoke HTTP 200 no errors; audit-ci pass. Codespace Node now 24.18.0 via nvm (`export NVM_DIR=/usr/local/share/nvm; source $NVM_DIR/nvm.sh` — needed per shell; v8 engines ≥22.22).
+
+**⚑ NEXT SESSION: (a) frontend deploy** (router ships in the bundle — v8 not live until deployed); **(b) Maria visual acceptance (#13)** per the tracker Phase 6 checklist (login→dashboard both products, senior check-in, My Health Hub + 2 sub-routes, admin deep link, `/kiosk/check-in`, back/forward, hard refresh on deep URL); **(c) the LOGIN CHECKS carried from fifteenth session** — live `/envision` login end-to-end: credentials → TOTP → vault animation with sound → `/super-admin` without bouncing (bounce trap: `envision_session`/`envision_user` localStorage coupling, memory `reference_envision_session_keys_coupling`). (b) and (c) overlap — one live walk covers both.
 
 **Session 2026-07-25 (fifteenth) — Envision portal branding + vault entry animation reconnected. 6 commits (`0ca389e7..806dad0b`), no migrations, all pushed to main, tree clean.**
 

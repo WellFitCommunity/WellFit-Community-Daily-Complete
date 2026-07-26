@@ -1,7 +1,19 @@
 # React Router v7 → v8 Migration — Plan of Action
 
-**Created:** 2026-07-25 · **Sized:** 2026-07-25 (changelog read, full surface mapped) · **Status:** READY TO EXECUTE — one focused session + Maria's visual pass
+**Created:** 2026-07-25 · **Sized:** 2026-07-25 (changelog read, full surface mapped) · **Status:** CODE-COMPLETE 2026-07-26 — all gates green, allowlist deleted; AWAITING frontend deploy + Maria's visual pass (Phase 6 items 2–3)
 **Approved:** Maria 2026-07-25 ("do the exception and schedule v8 for later")
+
+## Execution record (2026-07-26)
+
+- Pre-flight: no 7.x backport (latest 7.x = 7.18.1) → v8 proceeded. Node 24.18.0 via nvm (`/usr/local/share/nvm`).
+- Phase 1: `react-router@8.3.0`, react/react-dom `19.2.8` (`overrides` block also bumped — npm EOVERRIDE if dependency and override disagree).
+- Phase 2: 217 source files renamed (surface had grown from the 199 measured at sizing) — 0 residue.
+- Phase 3: all 36 mock files renamed and re-run (629 tests pass). Deletion-test spot-check on PatientAvatar.test.tsx: re-aiming the mock at the dead `'react-router-dom'` specifier made 3 tests fail → mocks are load-bearing, not no-ops.
+- **Sizing correction discovered:** the app IS in data-router mode — `createHashRouter` + `RouterProvider` + `errorElement` (`src/routes/createAppRouter.tsx`, `src/index.tsx`). The sizing grep checked `createBrowserRouter` only. No impact: zero loaders/actions/`useLoaderData`/`defer`/`json()` anywhere, so the rename-only verdict held.
+- **One unplanned change:** `tsconfig.json` `moduleResolution: "Node"` → `"bundler"` — v8 is an `exports`-only package that classic Node resolution cannot see (TS2307 on every import). `"bundler"` is the canonical Vite setting; full tsc confirmed 0 fallout project-wide. `tsconfig.scripts.json` is independent (no extends).
+- Phase 4 gates: full tsc **0 errors**; lint **0/0**; routing tests **660 passed, 0 failed, 0 skipped** (36 mock files + App.test + routes tests); `npm run build` green (1m11s); dev-server boot smoke HTTP 200, no errors.
+- Phase 5: allowlist emptied, workflow rationale block deleted, `npx audit-ci --config audit-ci.json` passes with **empty allowlist**.
+- Phase 6 remaining: frontend deploy, then Maria's visual checklist below.
 
 ---
 

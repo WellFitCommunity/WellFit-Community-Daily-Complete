@@ -1,6 +1,6 @@
 // src/pages/DashboardPage.tsx - Updated to route users to role-appropriate dashboards
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchMyProfile } from '../data/profile';
 import SeniorCommunityDashboard from '../components/dashboard/SeniorCommunityDashboard';

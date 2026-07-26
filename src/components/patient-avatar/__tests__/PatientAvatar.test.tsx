@@ -12,9 +12,9 @@ import { AvatarMarker } from '../AvatarMarker';
 import { AvatarThumbnail } from '../AvatarThumbnail';
 import { PatientMarker } from '../../../types/patientAvatar';
 
-// Mock react-router-dom
+// Mock react-router
 const mockNavigate = vi.fn();
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 

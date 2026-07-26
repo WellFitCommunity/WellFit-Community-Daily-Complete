@@ -3,7 +3,7 @@
 // Completely separate from /login — does not affect production auth flow
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';

@@ -1,6 +1,6 @@
 // src/components/ErrorBoundary.tsx
 import * as React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 
 type FallbackRender = (args: {
   error: Error;

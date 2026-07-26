@@ -2,7 +2,7 @@
 // Reusable page header with back button for consistent navigation
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 interface PageHeaderProps {
   title: string;

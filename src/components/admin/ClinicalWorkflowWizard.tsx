@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { CheckCircle2, Circle, ArrowRight, X, Play, RotateCcw } from 'lucide-react';
 
 interface WorkflowStep {

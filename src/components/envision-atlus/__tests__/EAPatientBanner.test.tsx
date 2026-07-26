@@ -76,8 +76,8 @@ vi.mock('../../../contexts/PatientContext', () => ({
   // Re-export types
 }));
 
-// PatientAvatar now uses useNavigate — mock react-router-dom
-vi.mock('react-router-dom', () => ({
+// PatientAvatar now uses useNavigate — mock react-router
+vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 

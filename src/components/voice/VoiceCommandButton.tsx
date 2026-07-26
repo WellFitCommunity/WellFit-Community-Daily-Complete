@@ -8,7 +8,7 @@
 // ============================================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { voiceCommandService, VoiceCommand, VoiceState, PauseDuration } from '../../services/voiceCommandService';
 
 interface VoiceCommandButtonProps {

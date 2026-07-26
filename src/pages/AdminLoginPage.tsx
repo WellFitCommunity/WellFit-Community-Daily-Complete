@@ -2,7 +2,7 @@
 // Purpose: Second-factor staff gate (PIN) after staff email/phone login.
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { useAuth, useSupabaseClient } from '../contexts/AuthContext';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
 import { StaffRole, ROLE_DISPLAY_NAMES } from '../types/roles';

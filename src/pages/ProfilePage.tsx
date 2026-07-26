@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Camera, Trophy, Calendar, Heart, Settings, User } from 'lucide-react';
 import SmartBackButton from '../components/ui/SmartBackButton';
 

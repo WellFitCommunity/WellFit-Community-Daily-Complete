@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { AlertTriangle, Bell, X, Volume2, VolumeX, ExternalLink } from 'lucide-react';
 import { useRealtimeAlerts, RealtimeAlert, AlertSeverity } from '../../hooks/useRealtimeAlerts';
 import { useAuth } from '../../contexts/AuthContext';

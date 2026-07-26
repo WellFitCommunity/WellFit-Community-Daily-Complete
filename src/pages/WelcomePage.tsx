@@ -1,6 +1,6 @@
 // src/pages/WelcomePage.tsx
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient } from '../contexts/AuthContext';
 
 const WELLFIT_BLUE = '#003865';

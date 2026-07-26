@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import AdminHeader from '../components/admin/AdminHeader';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
 import { useAdminAuth } from '../contexts/AdminAuthContext';

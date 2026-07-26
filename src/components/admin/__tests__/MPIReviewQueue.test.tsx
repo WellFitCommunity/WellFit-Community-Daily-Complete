@@ -42,7 +42,7 @@ const mockGetUser = vi.fn();
 // vi.mock declarations
 // ---------------------------------------------------------------------------
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 

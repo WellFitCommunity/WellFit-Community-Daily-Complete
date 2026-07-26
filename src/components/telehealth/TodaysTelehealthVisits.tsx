@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useUser } from '../../contexts/AuthContext';
 import { getProviderAppointments, type ConflictingAppointment } from '../../services/appointmentService';
 

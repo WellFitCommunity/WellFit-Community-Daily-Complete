@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { SuperAdminService } from '../../services/superAdminService';
 import { SystemOverview, TenantWithStatus } from '../../types/superAdmin';
 import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign, Brain, Home, LayoutDashboard } from 'lucide-react';

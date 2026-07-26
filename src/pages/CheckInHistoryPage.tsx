@@ -2,7 +2,7 @@
 // Displays real check-in history from Supabase — senior-friendly, clean layout.
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import { ArrowLeft, Calendar, Heart, Droplets, Activity, Weight, ThermometerSun, Smile } from 'lucide-react';

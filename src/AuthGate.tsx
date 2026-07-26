@@ -1,6 +1,6 @@
 // src/AuthGate.tsx — centralized role authority, schema-aware, fail-safe
 import { useEffect, type ReactNode } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 import { useSupabaseClient, useSession, useUser } from "./contexts/AuthContext";
 import {
   checkAdminFromProfile,

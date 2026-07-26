@@ -1,6 +1,6 @@
 // src/pages/VerifyCodePage.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { useSupabaseClient } from '../contexts/AuthContext';
 
 type LocState = { phone?: string } | null;

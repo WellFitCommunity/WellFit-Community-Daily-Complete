@@ -1,6 +1,6 @@
 // src/pages/ResetPasswordPage.tsx — PRODUCTION-READY VERSION
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient } from '../contexts/AuthContext';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 

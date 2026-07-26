@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { cn } from '../../lib/utils';
 import { EACard, EACardContent } from '../envision-atlus/EACard';
 import { EAButton } from '../envision-atlus/EAButton';

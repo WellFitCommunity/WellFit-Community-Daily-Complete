@@ -3,7 +3,7 @@
   "moderate": false,
   "high": true,
   "critical": true,
-  "allowlist": ["GHSA-qwww-vcr4-c8h2"],
+  "allowlist": [],
   "skip-dev": false,
   "report-type": "summary",
   "output-format": "text"

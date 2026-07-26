@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router';
 import { ArrowLeft, Pill, AlertTriangle } from 'lucide-react';
 import { MedicationRequestManager } from '../components/patient/MedicationRequestManager';
 import AdminHeader from '../components/admin/AdminHeader';

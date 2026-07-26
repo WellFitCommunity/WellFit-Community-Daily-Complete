@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useUser } from '../../contexts/AuthContext';
 import { auditLogger } from '../../services/auditLogger';

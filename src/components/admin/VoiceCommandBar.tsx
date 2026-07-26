@@ -15,7 +15,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Mic, MicOff, X, Volume2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useVoiceCommand, VoiceCommandState, VoiceCommandActions } from '../../hooks/useVoiceCommand';
 import { getAllVoiceCommands } from '../../services/workflowPreferences';
 

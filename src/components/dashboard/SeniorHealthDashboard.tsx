@@ -2,7 +2,7 @@
 // Ultra-simple interface with large buttons, clear messaging, and minimal clicks
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useBranding } from '../../BrandingContext';
 import CheckInTracker from '../CheckInTracker';
 import HealthHistory from '../HealthHistory';

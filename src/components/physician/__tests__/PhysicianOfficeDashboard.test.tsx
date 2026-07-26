@@ -17,7 +17,7 @@ import userEvent from '@testing-library/user-event';
 // Track navigate calls
 const mockNavigate = vi.fn();
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useLocation: () => ({ pathname: '/physician-office' }),
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,

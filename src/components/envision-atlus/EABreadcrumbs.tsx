@@ -16,7 +16,7 @@
  */
 
 import React from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router';
 import { ChevronRight, Home, User } from 'lucide-react';
 import { usePatientContextSafe } from '../../contexts/PatientContext';
 

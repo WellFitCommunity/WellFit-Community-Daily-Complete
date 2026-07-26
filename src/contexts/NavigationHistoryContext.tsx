@@ -14,7 +14,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useRef, useCallback, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from './AuthContext';
 
 // localStorage key for persistence

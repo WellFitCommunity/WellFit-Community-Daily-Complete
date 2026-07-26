@@ -1,6 +1,6 @@
 // src/pages/devices/SmartScalePage.tsx
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useBranding } from '../../BrandingContext';
 import { DeviceService, type WeightReading } from '../../services/deviceService';
 import VitalTrendChart, { type ChartDataPoint, type DataSeries } from '../../components/devices/VitalTrendChart';

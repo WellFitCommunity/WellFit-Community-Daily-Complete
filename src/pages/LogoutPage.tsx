@@ -1,6 +1,6 @@
 // src/pages/LogoutPage.tsx
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient } from '../contexts/AuthContext';
 import { useTimeClockOptional } from '../contexts/TimeClockContext';
 import { ClockOutConfirmDialog } from '../components/time-clock/ClockOutConfirmDialog';

@@ -1,6 +1,6 @@
 // Health Insights Page - AI-powered personalized health dashboard
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useBranding } from '../BrandingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchMyProfile } from '../data/profile';

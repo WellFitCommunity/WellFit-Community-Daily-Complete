@@ -1,6 +1,6 @@
 // src/pages/AdminQuestionsPage.tsx
 import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import RiskAssessmentManager from '../components/admin/RiskAssessmentManager';
 import NurseQuestionManager from '../components/admin/NurseQuestionManager';
 import SmartScribe from '../components/smart/RealTimeSmartScribe';

@@ -24,7 +24,7 @@ let mockAdminRole: string | null = 'super_admin';
 const mockLogoutAdmin = vi.fn();
 let mockBranding: Record<string, unknown> | null = null;
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useLocation: () => ({ pathname: mockPathname }),
 }));

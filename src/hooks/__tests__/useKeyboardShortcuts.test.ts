@@ -6,11 +6,11 @@
 
 import { formatKeyCombo, GLOBAL_SHORTCUTS } from '../useKeyboardShortcuts';
 
-// Mock react-router-dom
+// Mock react-router
 const mockNavigate = vi.fn();
 const mockLocation = { pathname: '/admin' };
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useLocation: () => mockLocation,
 }));

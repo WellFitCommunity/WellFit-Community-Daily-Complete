@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useBranding } from '../BrandingContext';
 import { Shield, CheckCircle, LayoutDashboard, AlertTriangle, Users, Phone, ChevronRight } from 'lucide-react';
 

@@ -10,7 +10,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 // Patient Banner Component
 import { EAPatientBanner } from '../envision-atlus/EAPatientBanner';

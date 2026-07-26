@@ -2,7 +2,7 @@
 // Custom hook containing all state and logic for the Demographics form
 
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { SeniorDataService, mapFormDataToSeniorProfile } from '../../services/seniorDataService';
 import { auditLogger } from '../../services/auditLogger';

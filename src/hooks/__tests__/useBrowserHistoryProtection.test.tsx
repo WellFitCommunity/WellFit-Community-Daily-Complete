@@ -7,7 +7,7 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 
 // ============================================================================
 // MOCKS
@@ -16,8 +16,8 @@ import { MemoryRouter } from 'react-router-dom';
 // Track navigation calls
 const mockNavigate = vi.fn();
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual('react-router');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -46,7 +46,7 @@ vi.mock('../../services/auditLogger', () => ({
 import { useBrowserHistoryProtection } from '../useBrowserHistoryProtection';
 import { useSession, useAuth } from '../../contexts/AuthContext';
 import { useNavigationHistorySafe } from '../../contexts/NavigationHistoryContext';
-import { useLocation as useLocationMock } from 'react-router-dom';
+import { useLocation as useLocationMock } from 'react-router';
 
 const mockedUseSession = vi.mocked(useSession);
 const mockedUseAuth = vi.mocked(useAuth);

@@ -1,6 +1,6 @@
 // src/components/layout/Footer.tsx
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { useBranding } from '../../BrandingContext';
 
 function readableTextOn(bgHex: string): '#000000' | '#ffffff' {

@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useCallback, useEffect as _useEffect, createContext, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   Bell,
   ChevronLeft as _ChevronLeft,

@@ -17,7 +17,7 @@
  */
 
 import React, { useState, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useUser } from '../contexts/AuthContext';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
 import AdminHeader from '../components/admin/AdminHeader';

@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useBranding } from '../../BrandingContext';
 import { featureFlags } from '../../config/featureFlags';

@@ -3,7 +3,7 @@
 // Shows new features and improvements relevant to seniors
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 interface SeniorFeature {
   title: string;

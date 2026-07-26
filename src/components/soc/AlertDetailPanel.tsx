@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { getSOCDashboardService } from '../../services/socDashboardService';
 import {

@@ -1,6 +1,6 @@
 // src/components/NotFoundPage.tsx
 import * as React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
 import Card from '../components/ui/PrettyCard';
 import PageLayout from '../components/ui/PageLayout';

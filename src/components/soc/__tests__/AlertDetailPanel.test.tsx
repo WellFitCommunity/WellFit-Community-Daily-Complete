@@ -8,7 +8,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import { AlertDetailPanel } from '../AlertDetailPanel';
 import { SecurityAlert, SOCPresence } from '../../../types/socDashboard';
 
@@ -17,8 +17,8 @@ Element.prototype.scrollIntoView = vi.fn();
 
 // Mock navigate
 const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual('react-router');
   return {
     ...actual,
     useNavigate: () => mockNavigate,

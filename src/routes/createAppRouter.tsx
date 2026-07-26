@@ -3,8 +3,8 @@
 // This replaces the JSX-based HashRouter with createHashRouter
 
 import React, { Suspense } from 'react';
-import { createHashRouter } from 'react-router-dom';
-import type { RouteObject } from 'react-router-dom';
+import { createHashRouter } from 'react-router';
+import type { RouteObject } from 'react-router';
 
 // Auth & Providers
 import RequireAuth from '../components/auth/RequireAuth';
@@ -224,7 +224,7 @@ const buildRoutes = (): RouteObject[] => {
  * Usage in index.tsx:
  * ```tsx
  * import { createAppRouter } from './routes/createAppRouter';
- * import { RouterProvider } from 'react-router-dom';
+ * import { RouterProvider } from 'react-router';
  *
  * const router = createAppRouter();
  *

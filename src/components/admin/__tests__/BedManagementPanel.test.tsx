@@ -13,7 +13,7 @@ import userEvent from '@testing-library/user-event';
 
 const mockNavigate = vi.fn();
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
-import { MemoryRouter, useNavigate, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, useNavigate, Routes, Route } from 'react-router';
 import { NavigationHistoryProvider, useNavigationHistory } from '../NavigationHistoryContext';
 
 // Type for the navigation history context

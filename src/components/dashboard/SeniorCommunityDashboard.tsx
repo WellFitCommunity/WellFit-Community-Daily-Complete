@@ -1,6 +1,6 @@
 // src/components/dashboard/SeniorCommunityDashboard.tsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { useBranding } from '../../BrandingContext';
 import { useLanguage } from '../../contexts/LanguageContext';

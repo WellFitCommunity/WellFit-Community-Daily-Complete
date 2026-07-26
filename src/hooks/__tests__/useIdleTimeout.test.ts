@@ -19,7 +19,7 @@ const { mockNavigate, mockSignOut, mockAuditLogger } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 

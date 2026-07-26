@@ -1,6 +1,6 @@
 // src/pages/MealDetailPage.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router';
 import PhotoUpload from '../components/features/PhotoUpload';
 import PhotoGallery from '../components/features/PhotoGallery';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';

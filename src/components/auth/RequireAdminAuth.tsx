@@ -1,6 +1,6 @@
 // src/components/auth/RequireAdminAuth.tsx
 import { ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { StaffRole } from '../../types/roles';
 

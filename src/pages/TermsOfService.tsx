@@ -1,6 +1,6 @@
 // src/pages/TermsOfService.tsx
 import * as React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 
 const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';

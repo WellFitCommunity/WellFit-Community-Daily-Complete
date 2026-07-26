@@ -1,7 +1,7 @@
 // src/routes/RouteRenderer.tsx
 // Dynamic route renderer based on route configuration
 import React, { Suspense } from 'react';
-import { Routes, Route, useParams, useLocation } from 'react-router-dom';
+import { Routes, Route, useParams, useLocation } from 'react-router';
 
 import RequireAuth from '../components/auth/RequireAuth';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';

@@ -11,7 +11,7 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { auditLogger } from '../../services/auditLogger';
 import type { VoiceAction, SearchResult, VoiceActionContextType, SearchHandler, EntityType } from './types';
 import { ENTITY_ROUTES } from './types';

@@ -2,7 +2,7 @@
 // Shows a prominent banner when patient has an upcoming telehealth appointment
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 
 interface UpcomingAppointment {

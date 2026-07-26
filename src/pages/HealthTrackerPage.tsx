@@ -1,6 +1,6 @@
 // src/pages/HealthTrackerPage.tsx - AI-Lite Self Reporting Dashboard
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import SeniorHealthDashboard from '../components/dashboard/SeniorHealthDashboard';
 
 const HealthTrackerPage: React.FC = () => {

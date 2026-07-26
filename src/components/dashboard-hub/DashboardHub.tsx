@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import AdminHeader from '../admin/AdminHeader';
 import {

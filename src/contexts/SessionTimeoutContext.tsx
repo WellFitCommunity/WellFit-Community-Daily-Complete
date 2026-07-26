@@ -1,6 +1,6 @@
 // src/contexts/SessionTimeoutContext.tsx
 import React, { createContext, useContext, useEffect, useCallback, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { supabase } from '../lib/supabaseClient';
 
 // ---------- helpers ----------

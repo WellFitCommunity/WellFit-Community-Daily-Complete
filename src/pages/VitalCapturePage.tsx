@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { VitalCapture } from '../components/vitals';
 import { VitalType, VitalReading } from '../components/vitals/types';
 

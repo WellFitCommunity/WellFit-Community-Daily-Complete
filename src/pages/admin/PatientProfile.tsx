@@ -1,6 +1,6 @@
 // src/pages/admin/PatientProfile.tsx
 import { useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { supabase } from "../../lib/supabaseClient";
 
 export default function PatientProfile() {

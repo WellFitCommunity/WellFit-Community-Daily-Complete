@@ -3,7 +3,7 @@
 // Two views: Paramedic form (mobile) and ER dashboard (desktop)
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import ParamedicHandoffForm from '../components/ems/ParamedicHandoffForm';
 import ERIncomingPatientBoard from '../components/ems/ERIncomingPatientBoard';
 

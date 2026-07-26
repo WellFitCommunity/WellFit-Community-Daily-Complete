@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { ImplantableDevicesPanel } from '../../components/admin/devices/ImplantableDevicesPanel';
 
 export const ImplantableDevicesPage: React.FC = () => {

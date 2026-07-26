@@ -16,7 +16,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useBranding } from '../BrandingContext';
 import { auditLogger } from '../services/auditLogger';
 import { createClient } from '@supabase/supabase-js';

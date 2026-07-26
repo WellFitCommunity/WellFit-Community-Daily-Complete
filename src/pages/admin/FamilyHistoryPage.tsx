@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { FamilyHistoryPanel } from '../../components/admin/family-history/FamilyHistoryPanel';
 
 export const FamilyHistoryPage: React.FC = () => {

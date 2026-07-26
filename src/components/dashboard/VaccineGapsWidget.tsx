@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import FHIRService from '../../services/fhirResourceService';
 import { useAuth } from '../../contexts/AuthContext';
 

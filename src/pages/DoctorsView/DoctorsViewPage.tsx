@@ -9,7 +9,7 @@
  * Copyright 2025-2026 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router';
 import { useBranding } from '../../BrandingContext';
 import Activity from 'lucide-react/dist/esm/icons/activity';
 import Heart from 'lucide-react/dist/esm/icons/heart';

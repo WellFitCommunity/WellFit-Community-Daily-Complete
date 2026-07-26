@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   AlertTriangle, Activity, Heart, Thermometer,
   ChevronDown, ChevronUp, RefreshCw, ExternalLink,

@@ -11,7 +11,7 @@
  */
 
 import React, { useState, Suspense, lazy } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import AdminHeader from '../admin/AdminHeader';
 import PatientPriorityBoard from './PatientPriorityBoard';
 

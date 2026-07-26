@@ -318,13 +318,8 @@ jobs:
           echo "## Dependency Security" >> $GITHUB_STEP_SUMMARY
 
           # audit-ci: fail on HIGH/CRITICAL, honoring the allowlist in
-          # audit-ci.json. Current allowlist (review before adding entries):
-          #   GHSA-qwww-vcr4-c8h2 — react-router RSC-mode CSRF (published
-          #   2026-07-24; patched only in v8). NOT APPLICABLE here: this is a
-          #   Vite SPA with no RSC/server router mode, so the vulnerable code
-          #   path never executes. Maria approved the exception 2026-07-25.
-          #   REMOVE when a 7.x backport ships or the v8 migration lands —
-          #   see docs/trackers/react-router-v8-migration-tracker.md.
+          # audit-ci.json. Allowlist is currently EMPTY — review before
+          # adding entries, and document the rationale here when you do.
           if ! audit-ci --config audit-ci.json; then
             echo "⚠️ audit-ci found vulnerabilities" >> $GITHUB_STEP_SUMMARY
             echo "FAIL=1" >> $GITHUB_ENV

@@ -1,7 +1,7 @@
 // src/App.tsx
 // Main application component - refactored for maintainability
 import React, { useEffect, useState, Suspense } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 

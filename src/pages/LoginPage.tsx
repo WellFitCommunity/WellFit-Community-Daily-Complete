@@ -3,7 +3,7 @@
 // SOC2 CC6.1: Includes rate limiting and account lockout protection
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router';
 import { useSupabaseClient } from '../contexts/AuthContext';
 // Branding config replaces hardcoded WELLFIT_COLORS and APP_INFO
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
