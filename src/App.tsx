@@ -31,7 +31,7 @@ import { LearningMilestone } from './components/ai-transparency';
 import { IdleTimeoutProvider } from './components/IdleTimeoutProvider';
 
 // Theme
-import { useThemeInit } from './hooks/useTheme';
+import { useDisplayPrefsInit } from './hooks/useTheme';
 
 // Browser History Protection - prevents back button from navigating to login when authenticated
 import { useBrowserHistoryProtection } from './hooks/useBrowserHistoryProtection';
@@ -46,7 +46,7 @@ function Shell() {
   const { supabase, user } = useAuth();
 
   // Initialize theme from database/localStorage
-  useThemeInit();
+  useDisplayPrefsInit();
 
   // Protect against browser back button navigating to auth routes when authenticated
   // This prevents race conditions with session management and stale token errors

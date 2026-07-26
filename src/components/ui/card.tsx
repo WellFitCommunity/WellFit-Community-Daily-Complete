@@ -13,7 +13,7 @@ function Card({ className, ref, ...props }: CardProps) {
     <div
       ref={ref}
       className={cn(
-        'rounded-lg bg-white text-gray-950 shadow-lg border-2',
+        'rounded-lg bg-white text-gray-950 shadow-lg border-2 dark:bg-slate-900 dark:text-slate-100',
         className
       )}
       style={{
@@ -55,7 +55,7 @@ interface CardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement
 
 function CardDescription({ className, ref, ...props }: CardDescriptionProps) {
   return (
-    <p ref={ref} className={cn('text-sm text-gray-500', className)} {...props} />
+    <p ref={ref} className={cn('text-sm text-gray-500 dark:text-slate-400', className)} {...props} />
   );
 }
 

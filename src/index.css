@@ -3,6 +3,14 @@
 @config '../tailwind.config.cjs';
 
 /*
+  Class-based dark mode: `dark:` variants respond to the `dark` class that
+  useThemeInit()/setTheme() toggle on <html>, not the OS media query.
+  Without this, Tailwind v4 defaults dark: to prefers-color-scheme and the
+  in-app theme setting has no effect.
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.

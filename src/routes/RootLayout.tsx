@@ -31,7 +31,7 @@ import { LearningMilestone } from '../components/ai-transparency';
 import { IdleTimeoutProvider } from '../components/IdleTimeoutProvider';
 
 // Theme
-import { useThemeInit } from '../hooks/useTheme';
+import { useDisplayPrefsInit } from '../hooks/useTheme';
 
 // Browser History Protection
 import { useBrowserHistoryProtection } from '../hooks/useBrowserHistoryProtection';
@@ -56,7 +56,7 @@ export const RootLayout: React.FC = () => {
   const { supabase, user } = useAuth();
 
   // Initialize theme from database/localStorage
-  useThemeInit();
+  useDisplayPrefsInit();
 
   // Protect against browser back button navigating to auth routes when authenticated
   useBrowserHistoryProtection();

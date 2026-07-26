@@ -236,8 +236,8 @@ const AdminSettingsPanel: React.FC = memo(() => {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6 text-center">
-          <p className="text-gray-600">Loading settings...</p>
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6 text-center">
+          <p className="text-gray-600 dark:text-slate-400">Loading settings...</p>
         </div>
       </div>
     );
@@ -246,21 +246,21 @@ const AdminSettingsPanel: React.FC = memo(() => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6" aria-label="Admin Settings Panel">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Settings</h1>
-            <p className="text-gray-600 mt-1">Customize your admin panel experience and system preferences</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Admin Settings</h1>
+            <p className="text-gray-600 dark:text-slate-400 mt-1">Customize your admin panel experience and system preferences</p>
           </div>
           <div className="flex items-center space-x-3">
             {lastSaved && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-slate-400">
                 Last saved: {lastSaved.toLocaleTimeString()}
               </span>
             )}
             <button
               onClick={resetToDefaults}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium"
+              className="px-4 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 dark:text-slate-200 rounded-md hover:bg-gray-50 dark:hover:bg-slate-800 text-sm font-medium"
             >
               Reset to Defaults
             </button>
@@ -276,14 +276,14 @@ const AdminSettingsPanel: React.FC = memo(() => {
       </div>
 
       {/* Theme Settings */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4 flex items-center">
           <span className="mr-2">🎨</span>
           Appearance
         </h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Theme</label>
             <div className="grid grid-cols-3 gap-3">
               {(['light', 'dark', 'auto'] as const).map((themeOption) => (
                 <button
@@ -309,7 +309,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 onChange={(e) => updateSetting('display', 'compactMode', e.target.checked)}
                 className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
-              <span className="ml-2 text-sm text-gray-700">Compact mode</span>
+              <span className="ml-2 text-sm text-gray-700 dark:text-slate-300">Compact mode</span>
             </label>
 
             <label className="flex items-center">
@@ -319,12 +319,12 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 onChange={(e) => updateSetting('display', 'showAdvancedMetrics', e.target.checked)}
                 className="rounded-sm border-gray-300 text-[var(--ea-primary,#00857a)] focus-visible:ring-[var(--ea-primary,#00857a)]"
               />
-              <span className="ml-2 text-sm text-gray-700">Show advanced metrics</span>
+              <span className="ml-2 text-sm text-gray-700 dark:text-slate-300">Show advanced metrics</span>
             </label>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Default Dashboard View</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Default Dashboard View</label>
             <select
               value={settings.display.defaultDashboardView}
               onChange={(e) => updateSetting('display', 'defaultDashboardView', e.target.value)}
@@ -339,16 +339,16 @@ const AdminSettingsPanel: React.FC = memo(() => {
       </div>
 
       {/* Notifications */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4 flex items-center">
           <span className="mr-2">🔔</span>
           Notifications
         </h2>
         <div className="space-y-4">
           <label className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-medium text-gray-700">Email notifications</span>
-              <p className="text-xs text-gray-500">Receive admin alerts via email</p>
+              <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Email notifications</span>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Receive admin alerts via email</p>
             </div>
             <input
               type="checkbox"
@@ -360,8 +360,8 @@ const AdminSettingsPanel: React.FC = memo(() => {
 
           <label className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-medium text-gray-700">Browser notifications</span>
-              <p className="text-xs text-gray-500">Show desktop notifications</p>
+              <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Browser notifications</span>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Show desktop notifications</p>
             </div>
             <input
               type="checkbox"
@@ -373,8 +373,8 @@ const AdminSettingsPanel: React.FC = memo(() => {
 
           <label className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-medium text-gray-700">Emergency alerts</span>
-              <p className="text-xs text-gray-500">Critical patient alerts (always enabled)</p>
+              <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Emergency alerts</span>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Critical patient alerts (always enabled)</p>
             </div>
             <input
               type="checkbox"
@@ -388,14 +388,14 @@ const AdminSettingsPanel: React.FC = memo(() => {
       </div>
 
       {/* Security */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4 flex items-center">
           <span className="mr-2">🔒</span>
           Security
         </h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Session timeout (minutes)
             </label>
             <select
@@ -412,8 +412,8 @@ const AdminSettingsPanel: React.FC = memo(() => {
 
           <label className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-medium text-gray-700">Require PIN for sensitive actions</span>
-              <p className="text-xs text-gray-500">Ask for PIN before accessing patient data</p>
+              <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Require PIN for sensitive actions</span>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Ask for PIN before accessing patient data</p>
             </div>
             <input
               type="checkbox"
@@ -435,8 +435,8 @@ const AdminSettingsPanel: React.FC = memo(() => {
 
       {/* System Settings (Super Admin Only) */}
       {adminRole === 'super_admin' && (
-        <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4 flex items-center">
             <span className="mr-2">⚙️</span>
             System Settings
             <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Super Admin</span>
@@ -452,8 +452,8 @@ const AdminSettingsPanel: React.FC = memo(() => {
 
             <label className="flex items-center justify-between">
               <div>
-                <span className="text-sm font-medium text-gray-700">Enable beta features</span>
-                <p className="text-xs text-gray-500">Access experimental features (may be unstable)</p>
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Enable beta features</span>
+                <p className="text-xs text-gray-500 dark:text-slate-400">Access experimental features (may be unstable)</p>
               </div>
               <input
                 type="checkbox"

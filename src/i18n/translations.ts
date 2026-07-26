@@ -110,6 +110,11 @@ export interface Translations {
         medium: string;
         large: string;
         extraLarge: string;
+        theme: string;
+        themeDesc: string;
+        themeLight: string;
+        themeDark: string;
+        themeAuto: string;
       };
       notifications: {
         title: string;
@@ -261,6 +266,11 @@ export const translations: Record<Language, Translations> = {
           medium: 'Medium',
           large: 'Large',
           extraLarge: 'Extra Large',
+          theme: 'Appearance',
+          themeDesc: 'Choose light or dark colors, or match your device',
+          themeLight: 'Light',
+          themeDark: 'Dark',
+          themeAuto: 'Match Device',
         },
         notifications: {
           title: '🔔 Notification Preferences',
@@ -410,6 +420,11 @@ export const translations: Record<Language, Translations> = {
           medium: 'Mediano',
           large: 'Grande',
           extraLarge: 'Extra Grande',
+          theme: 'Apariencia',
+          themeDesc: 'Elige colores claros u oscuros, o iguala tu dispositivo',
+          themeLight: 'Claro',
+          themeDark: 'Oscuro',
+          themeAuto: 'Igual que el Dispositivo',
         },
         notifications: {
           title: '🔔 Preferencias de Notificaciones',
@@ -559,6 +574,11 @@ export const translations: Record<Language, Translations> = {
           medium: 'Trung Bình',
           large: 'Lớn',
           extraLarge: 'Rất Lớn',
+          theme: 'Giao Diện',
+          themeDesc: 'Chọn màu sáng hoặc tối, hoặc theo thiết bị của bạn',
+          themeLight: 'Sáng',
+          themeDark: 'Tối',
+          themeAuto: 'Theo Thiết Bị',
         },
         notifications: {
           title: '🔔 Tùy Chọn Thông Báo',

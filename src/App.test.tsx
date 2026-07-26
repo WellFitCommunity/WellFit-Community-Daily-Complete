@@ -133,6 +133,7 @@ vi.mock('./components/IdleTimeoutProvider', () => ({
 
 // Mock hooks
 vi.mock('./hooks/useTheme', () => ({
+  useDisplayPrefsInit: vi.fn(),
   useThemeInit: vi.fn(),
 }));
 
@@ -147,7 +148,7 @@ import { performanceMonitor } from './services/performanceMonitoring';
 import { GuardianAgent } from './services/guardian-agent/GuardianAgent';
 import { smartRecordingStrategy } from './services/guardian-agent/SmartRecordingStrategy';
 import { getCurrentBranding } from './branding.config';
-import { useThemeInit } from './hooks/useTheme';
+import { useDisplayPrefsInit } from './hooks/useTheme';
 import { useBrowserHistoryProtection } from './hooks/useBrowserHistoryProtection';
 
 const mockedUseAuth = vi.mocked(useAuth);
@@ -249,7 +250,7 @@ describe('App', () => {
   describe('Initialization', () => {
     it('should initialize theme on mount', () => {
       renderApp();
-      expect(useThemeInit).toHaveBeenCalled();
+      expect(useDisplayPrefsInit).toHaveBeenCalled();
     });
 
     it('should initialize browser history protection', () => {

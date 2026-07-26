@@ -187,7 +187,7 @@ export default function GlobalHeader() {
               {healthOpen && (
                 <div
                   role="menu"
-                  className="absolute left-0 mt-2 w-72 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/10 z-50"
+                  className="absolute left-0 mt-2 w-72 overflow-hidden rounded-xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50"
                 >
                   <div className="py-2">
                     <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Health Hub</div>
@@ -252,7 +252,7 @@ export default function GlobalHeader() {
               {gamesOpen && (
                 <div
                   role="menu"
-                  className="absolute left-0 mt-2 w-64 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/10 z-50"
+                  className="absolute left-0 mt-2 w-64 overflow-hidden rounded-xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50"
                 >
                   <div className="py-2">
                     <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Brain Games</div>
@@ -298,7 +298,7 @@ export default function GlobalHeader() {
               {moreOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-2 w-72 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/10 z-50"
+                  className="absolute right-0 mt-2 w-72 overflow-hidden rounded-xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50"
                 >
                   <div className="py-2">
                     <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Support</div>
@@ -349,7 +349,7 @@ export default function GlobalHeader() {
                         href={branding.websiteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                        className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800"
                         role="menuitem"
                       >
                         <ExternalLink className="w-4 h-4 mr-3 text-gray-400" />
@@ -544,7 +544,7 @@ function DropdownItem({
   return (
     <Link
       to={to}
-      className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+      className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
       role="menuitem"
     >
       <span className="mr-3">{icon}</span>

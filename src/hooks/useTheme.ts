@@ -1,88 +1,178 @@
 /**
- * Theme Hook
+ * Display Preferences Hooks — theme (light/dark/auto) + font size
  *
- * Initializes and manages dark/light mode theme.
- * Loads from database on mount, falls back to localStorage, then system preference.
+ * Theme read order: profiles.theme (any signed-in user) → admin_settings.theme
+ * (legacy admin fallback) → localStorage → system preference.
+ * Font size: profiles.font_size applied as a root font-size percentage, so every
+ * rem-based Tailwind utility scales app-wide with zero per-component work.
  *
- * Usage: Call useThemeInit() once in App.tsx to initialize theme on app start.
+ * Usage: call useDisplayPrefsInit() once at the app shell (RootLayout).
+ * `dark:` variants respond to the `dark` class via the @custom-variant in
+ * src/index.css — without that variant the class toggle does nothing.
  */
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from '../services/auditLogger';
 
-type Theme = 'light' | 'dark' | 'auto';
+export type Theme = 'light' | 'dark' | 'auto';
+export type FontSize = 'small' | 'medium' | 'large' | 'extra-large';
 
-/**
- * Apply theme to document
- */
-function applyTheme(theme: Theme): void {
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else if (theme === 'light') {
-    document.documentElement.classList.remove('dark');
-  } else {
-    // Auto mode - check system preference
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (prefersDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }
-  localStorage.setItem('admin_theme', theme);
+const THEME_STORAGE_KEY = 'admin_theme'; // legacy key kept — existing users have it
+const FONT_SIZE_STORAGE_KEY = 'wellfit_font_size';
+
+// Matches the px values the settings page historically applied (14/16/18/22px)
+const FONT_SIZE_SCALE: Record<FontSize, string> = {
+  small: '87.5%',
+  medium: '100%',
+  large: '112.5%',
+  'extra-large': '137.5%',
+};
+
+function isTheme(value: unknown): value is Theme {
+  return value === 'light' || value === 'dark' || value === 'auto';
+}
+
+function isFontSize(value: unknown): value is FontSize {
+  return value === 'small' || value === 'medium' || value === 'large' || value === 'extra-large';
 }
 
 /**
- * Initialize theme on app start
- * Call this once in App.tsx
+ * Apply theme to document and remember it locally.
  */
-export function useThemeInit(): void {
+export function applyTheme(theme: Theme): void {
+  const wantsDark =
+    theme === 'dark' ||
+    (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.classList.toggle('dark', wantsDark);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
+
+/**
+ * Apply font size to the document root and remember it locally.
+ * Rem-based utilities (all Tailwind text/spacing defaults) scale from this.
+ */
+export function applyFontSize(size: FontSize): void {
+  document.documentElement.style.fontSize = FONT_SIZE_SCALE[size];
+  localStorage.setItem(FONT_SIZE_STORAGE_KEY, size);
+}
+
+/**
+ * Persist + apply a theme choice for the signed-in user.
+ * DOM/localStorage always update; the DB write is best-effort (audited on failure).
+ */
+export async function setTheme(theme: Theme): Promise<void> {
+  applyTheme(theme);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ theme })
+      .eq('user_id', session.user.id);
+    if (error) throw new Error(error.message);
+  } catch (err: unknown) {
+    await auditLogger.error(
+      'THEME_PREFERENCE_SAVE_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { theme }
+    );
+  }
+}
+
+/**
+ * Persist + apply a font-size choice for the signed-in user.
+ */
+export async function setFontSize(size: FontSize): Promise<void> {
+  applyFontSize(size);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ font_size: size })
+      .eq('user_id', session.user.id);
+    if (error) throw new Error(error.message);
+  } catch (err: unknown) {
+    await auditLogger.error(
+      'FONT_SIZE_PREFERENCE_SAVE_FAILED',
+      err instanceof Error ? err : new Error(String(err)),
+      { size }
+    );
+  }
+}
+
+/**
+ * Initialize theme + font size on app start. Call once at the app shell.
+ * localStorage paints immediately; the DB preference (if any) wins afterwards.
+ */
+export function useDisplayPrefsInit(): void {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     if (initialized) return;
 
-    const initTheme = async () => {
+    const init = async () => {
       try {
-        // First, apply localStorage immediately for fast paint
-        const localTheme = localStorage.getItem('admin_theme') as Theme | null;
-        if (localTheme) {
-          applyTheme(localTheme);
-        }
+        const localTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        if (isTheme(localTheme)) applyTheme(localTheme);
+        const localSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+        if (isFontSize(localSize)) applyFontSize(localSize);
 
-        // Then check if user is logged in and has database preference
         const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          const { data } = await supabase
+        if (!session?.user?.id) return;
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('theme, font_size')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (isTheme(profile?.theme)) {
+          applyTheme(profile.theme);
+        } else {
+          // Legacy admin fallback: theme predates profiles.theme for admins
+          const { data: adminRow } = await supabase
             .from('admin_settings')
             .select('theme')
             .eq('user_id', session.user.id)
             .maybeSingle();
-
-          if (data?.theme) {
-            applyTheme(data.theme as Theme);
-          }
-          // If no row exists, fall back to localStorage/system default (already applied above)
+          if (isTheme(adminRow?.theme)) applyTheme(adminRow.theme);
         }
-      } catch {
-        // Fail silently - use localStorage or system default
+
+        if (isFontSize(profile?.font_size)) applyFontSize(profile.font_size);
+      } catch (err: unknown) {
+        // Display prefs must never block app start — log and fall back to defaults
+        await auditLogger.error(
+          'DISPLAY_PREFS_INIT_FAILED',
+          err instanceof Error ? err : new Error(String(err)),
+          {}
+        );
       } finally {
         setInitialized(true);
       }
     };
 
-    initTheme();
+    init();
   }, [initialized]);
 }
 
 /**
- * Listen for theme changes from other components
+ * Back-compat alias — existing call sites use useThemeInit.
+ */
+export const useThemeInit = useDisplayPrefsInit;
+
+/**
+ * Listen for theme changes from other tabs/components.
  */
 export function useThemeListener(): void {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'admin_theme' && e.newValue) {
-        applyTheme(e.newValue as Theme);
+      if (e.key === THEME_STORAGE_KEY && isTheme(e.newValue)) {
+        applyTheme(e.newValue);
+      }
+      if (e.key === FONT_SIZE_STORAGE_KEY && isFontSize(e.newValue)) {
+        applyFontSize(e.newValue);
       }
     };
 
