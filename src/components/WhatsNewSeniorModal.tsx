@@ -127,7 +127,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
         {/* Modal */}
         <div
           ref={modalRef}
-          className="relative bg-white rounded-3xl shadow-2xl max-w-3xl w-full transform transition-all"
+          className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full transform transition-all"
           style={{ border: '4px solid #8cc63f' }}
         >
           {/* Header */}
@@ -202,7 +202,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
                           </span>
                         )}
                       </div>
-                      <p className="text-xl text-gray-800 leading-relaxed mb-2">
+                      <p className="text-xl text-gray-800 dark:text-slate-200 leading-relaxed mb-2">
                         {feature.description}
                       </p>
                       {feature.link && (
@@ -240,7 +240,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
                   type="checkbox"
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="w-6 h-6 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500 focus:ring-4 cursor-pointer"
+                  className="w-6 h-6 text-blue-600 border-gray-300 dark:border-slate-600 rounded-sm focus:ring-blue-500 focus:ring-4 cursor-pointer"
                   aria-label="Don't show What's New automatically anymore"
                 />
                 <span className="ml-3 text-lg font-semibold group-hover:underline" style={{ color: '#003865' }}>

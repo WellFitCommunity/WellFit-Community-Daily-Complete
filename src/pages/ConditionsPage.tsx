@@ -19,7 +19,7 @@ const ConditionsPage: React.FC = () => {
   if (!user?.id) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl text-gray-600">Please log in to view your conditions.</p>
+        <p className="text-xl text-gray-600 dark:text-slate-400">Please log in to view your conditions.</p>
       </div>
     );
   }

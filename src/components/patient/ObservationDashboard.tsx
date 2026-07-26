@@ -57,17 +57,17 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'final':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300 border-green-300';
       case 'preliminary':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 border-yellow-300';
       case 'amended':
       case 'corrected':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
+        return 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300';
       case 'cancelled':
       case 'entered-in-error':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-300 dark:border-slate-600';
     }
   };
 
@@ -75,14 +75,14 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
     if (!interpretation || interpretation.length === 0) return null;
 
     const interp = interpretation[0]?.toLowerCase();
-    let color = 'bg-gray-100 text-gray-700';
+    let color = 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300';
     let icon = '';
 
     if (interp.includes('normal') || interp === 'n') {
-      color = 'bg-green-100 text-green-700';
+      color = 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300';
       icon = '✓';
     } else if (interp.includes('high') || interp === 'h' || interp === 'hh') {
-      color = 'bg-red-100 text-red-700';
+      color = 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300';
       icon = '↑';
     } else if (interp.includes('low') || interp === 'l' || interp === 'll') {
       color = 'bg-orange-100 text-orange-700';
@@ -136,10 +136,10 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-12">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-12">
         <div className="flex flex-col items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading observations...</p>
+          <p className="mt-4 text-gray-600 dark:text-slate-400">Loading observations...</p>
         </div>
       </div>
     );
@@ -157,7 +157,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
           {!readOnly && (
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 focus:outline-hidden focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 font-semibold shadow-md transition-all transform hover:scale-105"
+              className="px-6 py-3 bg-white dark:bg-slate-900 text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-700 focus:outline-hidden focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 font-semibold shadow-md transition-all transform hover:scale-105"
             >
               {showAddForm ? '✕ Close' : '+ Add Observation'}
             </button>
@@ -166,19 +166,19 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
+          <div className="bg-white dark:bg-slate-900 bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
             <div className="text-blue-100 text-sm font-medium">Total Observations</div>
             <div className="text-3xl font-bold mt-1">{observations.length}</div>
           </div>
-          <div className="bg-white bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
+          <div className="bg-white dark:bg-slate-900 bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
             <div className="text-blue-100 text-sm font-medium">Vital Signs</div>
             <div className="text-3xl font-bold mt-1">{getObservationCount('vital-signs')}</div>
           </div>
-          <div className="bg-white bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
+          <div className="bg-white dark:bg-slate-900 bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
             <div className="text-blue-100 text-sm font-medium">Lab Results</div>
             <div className="text-3xl font-bold mt-1">{getObservationCount('laboratory')}</div>
           </div>
-          <div className="bg-white bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
+          <div className="bg-white dark:bg-slate-900 bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
             <div className="text-blue-100 text-sm font-medium">Social History</div>
             <div className="text-3xl font-bold mt-1">{getObservationCount('social-history')}</div>
           </div>
@@ -195,8 +195,8 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700">
+        <div className="border-b border-gray-200 dark:border-slate-700">
           <nav className="flex -mb-px">
             {[
               { id: 'all' as TabType, label: 'All', icon: '📊' },
@@ -210,7 +210,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
                 className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -225,8 +225,8 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
           {filteredObservations.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📊</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No observations found</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">No observations found</h3>
+              <p className="text-gray-600 dark:text-slate-400 mb-4">
                 {activeTab === 'all'
                   ? "No health observations recorded yet."
                   : `No ${activeTab} observations recorded yet.`}
@@ -246,37 +246,37 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
                 <div
                   key={obs.id}
                   onClick={() => setSelectedObservation(obs)}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"
+                  className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-slate-900"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
                       <div className="text-3xl">{getObservationIcon(obs.category)}</div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-gray-900">{obs.code_display}</h3>
+                          <h3 className="font-semibold text-gray-900 dark:text-slate-100">{obs.code_display}</h3>
                           <span className={`px-2 py-0.5 rounded-sm text-xs font-medium border ${getStatusColor(obs.status)}`}>
                             {obs.status}
                           </span>
                           {getInterpretationBadge(obs.interpretation_display)}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-slate-400 mb-2">
                           <span>{formatDate(obs.effective_datetime)}</span>
                           {obs.code && (
-                            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-sm">
+                            <span className="text-xs bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-sm">
                               Code: {obs.code}
                             </span>
                           )}
                         </div>
-                        <div className="text-lg font-bold text-gray-900">
+                        <div className="text-lg font-bold text-gray-900 dark:text-slate-100">
                           {formatValue(obs)}
                         </div>
                         {obs.reference_range_low !== undefined && obs.reference_range_high !== undefined && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                             Reference: {obs.reference_range_low}-{obs.reference_range_high} {obs.value_quantity_unit}
                           </div>
                         )}
                         {obs.note && (
-                          <div className="mt-2 text-sm text-gray-600 italic">
+                          <div className="mt-2 text-sm text-gray-600 dark:text-slate-400 italic">
                             Note: {obs.note}
                           </div>
                         )}
@@ -287,7 +287,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
                         e.stopPropagation();
                         setSelectedObservation(obs);
                       }}
-                      className="text-gray-400 hover:text-gray-600 ml-2"
+                      className="text-gray-400 dark:text-slate-500 hover:text-gray-600 ml-2"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -309,12 +309,12 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
       {/* Detail Modal */}
       {selectedObservation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Observation Details</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Observation Details</h2>
               <button
                 onClick={() => setSelectedObservation(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 dark:text-slate-500 hover:text-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -323,39 +323,39 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Observation Type</div>
+                <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Observation Type</div>
                 <div className="text-lg font-semibold">{selectedObservation.code_display}</div>
-                <div className="text-xs text-gray-500">LOINC: {selectedObservation.code}</div>
+                <div className="text-xs text-gray-500 dark:text-slate-400">LOINC: {selectedObservation.code}</div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Status</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Status</div>
                   <span className={`inline-block px-3 py-1 rounded-sm text-sm font-medium border ${getStatusColor(selectedObservation.status)}`}>
                     {selectedObservation.status}
                   </span>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Category</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Category</div>
                   <div className="text-sm font-medium">{selectedObservation.category.join(', ')}</div>
                 </div>
               </div>
 
               <div>
-                <div className="text-sm text-gray-600 mb-1">Value</div>
-                <div className="text-2xl font-bold text-gray-900">{formatValue(selectedObservation)}</div>
+                <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Value</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">{formatValue(selectedObservation)}</div>
               </div>
 
               {selectedObservation.interpretation_display && (
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Interpretation</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Interpretation</div>
                   {getInterpretationBadge(selectedObservation.interpretation_display)}
                 </div>
               )}
 
               {(selectedObservation.reference_range_low !== undefined || selectedObservation.reference_range_high !== undefined) && (
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Reference Range</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Reference Range</div>
                   <div className="text-sm">
                     {selectedObservation.reference_range_low} - {selectedObservation.reference_range_high} {selectedObservation.value_quantity_unit}
                   </div>
@@ -364,25 +364,25 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Effective Date/Time</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Effective Date/Time</div>
                   <div className="text-sm">{formatDate(selectedObservation.effective_datetime)}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Issued</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Issued</div>
                   <div className="text-sm">{formatDate(selectedObservation.issued)}</div>
                 </div>
               </div>
 
               {selectedObservation.note && (
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Notes</div>
-                  <div className="text-sm bg-gray-50 p-3 rounded-sm">{selectedObservation.note}</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Notes</div>
+                  <div className="text-sm bg-gray-50 dark:bg-slate-800 p-3 rounded-sm">{selectedObservation.note}</div>
                 </div>
               )}
 
               {selectedObservation.performer_display && selectedObservation.performer_display.length > 0 && (
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Performed By</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Performed By</div>
                   <div className="text-sm">{selectedObservation.performer_display.join(', ')}</div>
                 </div>
               )}

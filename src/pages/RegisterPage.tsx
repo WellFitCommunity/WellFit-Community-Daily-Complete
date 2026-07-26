@@ -263,7 +263,7 @@ const RegisterPage: React.FC = () => {
   // ---------- RENDER ----------
   return (
     <div className="min-h-screen py-8 px-4" style={{ background: branding.gradient }}>
-      <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
+      <div className="max-w-md mx-auto p-6 bg-white dark:bg-slate-900 rounded-xl shadow-md">
         <h1 className="text-2xl font-bold text-center mb-6" style={{ color: branding.primaryColor }}>
           Create Account - {branding.appName}
         </h1>
@@ -275,7 +275,7 @@ const RegisterPage: React.FC = () => {
             placeholder="First Name"
             value={formData.firstName}
             onChange={(e) => setFormData((s) => ({ ...s, firstName: e.target.value }))}
-            className="p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
+            className="p-3 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="First Name"
             autoComplete="given-name"
@@ -285,7 +285,7 @@ const RegisterPage: React.FC = () => {
             placeholder="Last Name"
             value={formData.lastName}
             onChange={(e) => setFormData((s) => ({ ...s, lastName: e.target.value }))}
-            className="p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
+            className="p-3 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Last Name"
             autoComplete="family-name"
@@ -300,13 +300,13 @@ const RegisterPage: React.FC = () => {
             placeholder="+1 555-555-5555"
             value={formData.phone}
             onChange={handlePhoneChange}
-            className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Phone Number"
             autoComplete="tel"
             inputMode="tel"
           />
-          <p className="text-xs text-gray-500 mt-1">Tip: Start with “+1” for US numbers.</p>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Tip: Start with “+1” for US numbers.</p>
         </div>
 
         <input
@@ -314,7 +314,7 @@ const RegisterPage: React.FC = () => {
           placeholder={formData.roleLabel === 'Caregiver' ? 'Email (Required for emergency notifications)' : 'Email (Optional)'}
           value={formData.email}
           onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
-          className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:ring-blue-500"
           aria-label={formData.roleLabel === 'Caregiver' ? 'Email (Required)' : 'Email (Optional)'}
           autoComplete="email"
           required={formData.roleLabel === 'Caregiver'}
@@ -326,7 +326,7 @@ const RegisterPage: React.FC = () => {
             placeholder="Password"
             value={formData.password}
             onChange={(e) => setFormData((s) => ({ ...s, password: e.target.value }))}
-            className="w-full p-3 pr-12 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 pr-12 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Password"
             autoComplete="new-password"
@@ -334,7 +334,7 @@ const RegisterPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
@@ -356,7 +356,7 @@ const RegisterPage: React.FC = () => {
             placeholder="Confirm Password"
             value={formData.confirmPassword}
             onChange={(e) => setFormData((s) => ({ ...s, confirmPassword: e.target.value }))}
-            className="w-full p-3 pr-12 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 pr-12 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Confirm Password"
             autoComplete="new-password"
@@ -364,7 +364,7 @@ const RegisterPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600"
             aria-label={showConfirmPassword ? "Hide password" : "Show password"}
           >
             {showConfirmPassword ? (
@@ -386,19 +386,19 @@ const RegisterPage: React.FC = () => {
             id="role"
             value={formData.roleLabel}
             onChange={(e) => setFormData((s) => ({ ...s, roleLabel: e.target.value }))}
-            className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:ring-blue-500"
             aria-label="Role"
           >
             {PUBLIC_ROLES.map((label) => (
               <option key={label} value={label}>{label}</option>
             ))}
           </select>
-          <p className="text-xs text-gray-500 mt-1">Admins/moderators are created internally only.</p>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Admins/moderators are created internally only.</p>
         </div>
 
         {/* Terms, Privacy & Consent Agreement Section */}
-        <div className="space-y-3 p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
-          <h3 className="font-semibold text-gray-800">Important Agreements</h3>
+        <div className="space-y-3 p-4 border-2 border-blue-200 dark:border-slate-600 rounded-lg bg-blue-50 dark:bg-slate-800">
+          <h3 className="font-semibold text-gray-800 dark:text-slate-200">Important Agreements</h3>
 
           {/* View Documents Buttons */}
           <div className="flex gap-2">
@@ -406,7 +406,7 @@ const RegisterPage: React.FC = () => {
               href="/terms"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded-sm hover:bg-white transition-colors"
+              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded-sm hover:bg-white dark:hover:bg-slate-800 transition-colors"
             >
               View Terms
             </a>
@@ -414,25 +414,25 @@ const RegisterPage: React.FC = () => {
               href="/privacy-policy"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded-sm hover:bg-white transition-colors"
+              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded-sm hover:bg-white dark:hover:bg-slate-800 transition-colors"
             >
               View Privacy Policy
             </a>
           </div>
 
           {/* Agreement Checkbox */}
-          <div className="flex items-start gap-3 p-3 bg-white rounded-sm border border-gray-200">
+          <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-900 rounded-sm border border-gray-200 dark:border-slate-700">
             <input
               type="checkbox"
               id="agreedToTerms"
               checked={agreedToTerms}
               onChange={(e) => setAgreedToTerms(e.target.checked)}
-              className="mt-0.5 w-5 h-5 text-blue-600 border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
+              className="mt-0.5 w-5 h-5 text-blue-600 border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:ring-blue-500"
               aria-describedby="terms-text"
             />
-            <label htmlFor="agreedToTerms" id="terms-text" className="text-sm text-gray-700 leading-relaxed">
+            <label htmlFor="agreedToTerms" id="terms-text" className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed">
               <span className="font-medium">I acknowledge and agree to the following:</span>
-              <ul className="mt-1 ml-4 list-disc text-gray-600 space-y-1">
+              <ul className="mt-1 ml-4 list-disc text-gray-600 dark:text-slate-400 space-y-1">
                 <li>I have read and accept the <strong>Terms of Service</strong></li>
                 <li>I have read and accept the <strong>Privacy Policy</strong></li>
                 <li>I consent to use this application for health and wellness services</li>
@@ -467,7 +467,7 @@ const RegisterPage: React.FC = () => {
         />
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-sm" role="alert">
+          <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-sm" role="alert">
             <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}

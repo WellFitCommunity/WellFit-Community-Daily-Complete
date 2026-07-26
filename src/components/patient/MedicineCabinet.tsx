@@ -136,11 +136,11 @@ export function MedicineCabinet() {
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-3">
               <Pill className="w-10 h-10 text-blue-600" />
               Medicine Cabinet
             </h1>
-            <p className="text-gray-600 mt-2">AI-powered medication management</p>
+            <p className="text-gray-600 dark:text-slate-400 mt-2">AI-powered medication management</p>
           </div>
 
           <button
@@ -173,7 +173,7 @@ export function MedicineCabinet() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             {error}
           </div>
@@ -198,8 +198,8 @@ export function MedicineCabinet() {
             {medications.length === 0 && !loading && (
               <div className="col-span-full text-center py-12">
                 <Pill className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No medications yet</p>
-                <p className="text-gray-400">Scan a medication label to get started</p>
+                <p className="text-gray-500 dark:text-slate-400 text-lg">No medications yet</p>
+                <p className="text-gray-400 dark:text-slate-500">Scan a medication label to get started</p>
               </div>
             )}
           </div>

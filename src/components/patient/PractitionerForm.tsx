@@ -153,24 +153,24 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-slate-200">
         {practitionerId ? 'Edit Practitioner' : 'Add New Practitioner'}
       </h2>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-800">{error}</p>
+        <div className="mb-4 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-md">
+          <p className="text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name Section */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-          <h3 className="font-semibold text-gray-800">Name</h3>
+        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
+          <h3 className="font-semibold text-gray-800 dark:text-slate-200">Name</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Prefix (e.g., Dr., Prof.)
               </label>
               <input
@@ -178,11 +178,11 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
                 value={prefix}
                 onChange={(e) => setPrefix(e.target.value)}
                 placeholder="Dr."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Given Names <span className="text-red-500">*</span>
               </label>
               <input
@@ -191,11 +191,11 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
                 onChange={(e) => setGivenNames(e.target.value)}
                 placeholder="John Michael"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Family Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -204,11 +204,11 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
                 onChange={(e) => setFamilyName(e.target.value)}
                 placeholder="Smith"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Suffix (e.g., MD, PhD, RN)
               </label>
               <input
@@ -216,45 +216,45 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
                 value={suffix}
                 onChange={(e) => setSuffix(e.target.value)}
                 placeholder="MD, FACP"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
         </div>
 
         {/* Contact Information */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-          <h3 className="font-semibold text-gray-800">Contact Information</h3>
+        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
+          <h3 className="font-semibold text-gray-800 dark:text-slate-200">Contact Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="doctor@example.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Phone</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="(555) 123-4567"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
         </div>
 
         {/* Professional Identifiers */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-          <h3 className="font-semibold text-gray-800">Professional Identifiers</h3>
+        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
+          <h3 className="font-semibold text-gray-800 dark:text-slate-200">Professional Identifiers</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 NPI (10 digits)
               </label>
               <input
@@ -264,11 +264,11 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
                 placeholder="1234567890"
                 pattern="\d{10}"
                 maxLength={10}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 State License Number
               </label>
               <input
@@ -276,11 +276,11 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
                 value={stateLicense}
                 onChange={(e) => setStateLicense(e.target.value)}
                 placeholder="ABC123456"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 DEA Number
               </label>
               <input
@@ -288,15 +288,15 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
                 value={deaNumber}
                 onChange={(e) => setDeaNumber(e.target.value)}
                 placeholder="AB1234563"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Gender</label>
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other' | 'unknown')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -308,15 +308,15 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
         </div>
 
         {/* Specialties */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-          <h3 className="font-semibold text-gray-800">Specialties</h3>
+        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
+          <h3 className="font-semibold text-gray-800 dark:text-slate-200">Specialties</h3>
           <div>
             <select
               onChange={(e) => {
                 handleAddSpecialty(e.target.value);
                 e.target.value = '';
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Add a specialty...</option>
               {allSpecialties.map((specialty) => (
@@ -331,7 +331,7 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
               {specialties.map((specialty) => (
                 <span
                   key={specialty}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center gap-2"
+                  className="px-3 py-1 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 rounded-full text-sm flex items-center gap-2"
                 >
                   {specialty}
                   <button
@@ -348,9 +348,9 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
         </div>
 
         {/* Languages */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-800">Languages</h3>
+            <h3 className="font-semibold text-gray-800 dark:text-slate-200">Languages</h3>
             <button
               type="button"
               onClick={handleAddLanguage}
@@ -364,13 +364,13 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
               {languages.map((lang) => (
                 <span
                   key={lang}
-                  className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm flex items-center gap-2"
+                  className="px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-full text-sm flex items-center gap-2"
                 >
                   {lang.toUpperCase()}
                   <button
                     type="button"
                     onClick={() => handleRemoveLanguage(lang)}
-                    className="text-gray-600 hover:text-gray-800"
+                    className="text-gray-600 dark:text-slate-400 hover:text-gray-800"
                   >
                     ×
                   </button>
@@ -381,14 +381,14 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
         </div>
 
         {/* Biography */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-          <h3 className="font-semibold text-gray-800">Biography</h3>
+        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
+          <h3 className="font-semibold text-gray-800 dark:text-slate-200">Biography</h3>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Professional biography..."
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
@@ -399,15 +399,15 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
             id="active"
             checked={active}
             onChange={(e) => setActive(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
+            className="w-4 h-4 text-blue-600 border-gray-300 dark:border-slate-600 rounded-sm focus:ring-blue-500"
           />
-          <label htmlFor="active" className="text-sm font-medium text-gray-700">
+          <label htmlFor="active" className="text-sm font-medium text-gray-700 dark:text-slate-300">
             Active Practitioner
           </label>
         </div>
 
         {/* Form Actions */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
+        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
           <button
             type="submit"
             disabled={saving}
@@ -420,7 +420,7 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
               type="button"
               onClick={onCancel}
               disabled={saving}
-              className="px-6 py-3 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition"
+              className="px-6 py-3 bg-gray-200 text-gray-800 dark:text-slate-200 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition"
             >
               Cancel
             </button>

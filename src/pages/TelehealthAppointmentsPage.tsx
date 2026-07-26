@@ -266,7 +266,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <div className="text-lg text-gray-700">Loading your appointments...</div>
+              <div className="text-lg text-gray-700 dark:text-slate-300">Loading your appointments...</div>
             </div>
           </div>
         </div>
@@ -295,24 +295,24 @@ const TelehealthAppointmentsPage: React.FC = () => {
 
         {/* Load error — never silently show an empty list on failure */}
         {loadError && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-l-4 border-red-500" role="alert">
-            <p className="text-lg font-semibold text-gray-900 mb-1">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 mb-6 border-l-4 border-red-500" role="alert">
+            <p className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-1">
               We couldn't load your visits
             </p>
-            <p className="text-gray-700">{loadError}</p>
+            <p className="text-gray-700 dark:text-slate-300">{loadError}</p>
           </div>
         )}
 
         {/* Appointments List */}
         {!loadError && appointments.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8 text-center">
             <div className="text-6xl mb-4" aria-hidden="true">
               📅
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-3">
               No Upcoming Appointments
             </h2>
-            <p className="text-lg text-gray-600 mb-6">
+            <p className="text-lg text-gray-600 dark:text-slate-400 mb-6">
               You don't have any scheduled video appointments at this time.
             </p>
             <button
@@ -332,18 +332,18 @@ const TelehealthAppointmentsPage: React.FC = () => {
               return (
                 <div
                   key={appointment.id}
-                  className="bg-white rounded-2xl shadow-xl p-6 sm:p-8"
+                  className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8"
                 >
                   {/* Appointment Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h2 className="text-2xl font-bold text-gray-900">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                           Video Visit with {appointment.provider_name}
                         </h2>
                       </div>
                       {appointment.provider_specialty && (
-                        <p className="text-gray-600 mb-2">
+                        <p className="text-gray-600 dark:text-slate-400 mb-2">
                           {appointment.provider_specialty}
                         </p>
                       )}
@@ -354,16 +354,16 @@ const TelehealthAppointmentsPage: React.FC = () => {
                   </div>
 
                   {/* Appointment Time */}
-                  <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="mb-4 p-4 bg-blue-50 dark:bg-slate-800 rounded-lg">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-2xl" aria-hidden="true">
                         🕒
                       </span>
-                      <span className="text-lg font-semibold text-gray-900">
+                      <span className="text-lg font-semibold text-gray-900 dark:text-slate-100">
                         {formatAppointmentTime(appointment.appointment_time)}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-600 ml-8">
+                    <div className="text-sm text-gray-600 dark:text-slate-400 ml-8">
                       Duration: {appointment.duration_minutes} minutes
                       {canJoin && (
                         <span className="ml-3 text-green-600 font-semibold">
@@ -371,7 +371,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
                         </span>
                       )}
                       {!canJoin && timeUntil !== 'Started' && (
-                        <span className="ml-3 text-gray-500">
+                        <span className="ml-3 text-gray-500 dark:text-slate-400">
                           • Starts {timeUntil}
                         </span>
                       )}
@@ -381,8 +381,8 @@ const TelehealthAppointmentsPage: React.FC = () => {
                   {/* Reason for Visit */}
                   {appointment.reason_for_visit && (
                     <div className="mb-4">
-                      <h3 className="font-semibold text-gray-700 mb-1">Reason for Visit:</h3>
-                      <p className="text-gray-600">{appointment.reason_for_visit}</p>
+                      <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Reason for Visit:</h3>
+                      <p className="text-gray-600 dark:text-slate-400">{appointment.reason_for_visit}</p>
                     </div>
                   )}
 
@@ -399,20 +399,20 @@ const TelehealthAppointmentsPage: React.FC = () => {
                     </button>
                   ) : canJoin && !appointment.session_id ? (
                     <div className="text-center p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-gray-800 font-semibold">
+                      <p className="text-gray-800 dark:text-slate-200 font-semibold">
                         Your video room is being prepared
                       </p>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
                         Please check back in a few minutes. If it's time for your visit and this
                         hasn't changed, call your care team.
                       </p>
                     </div>
                   ) : (
-                    <div className="text-center p-4 bg-gray-100 rounded-lg">
-                      <p className="text-gray-600">
+                    <div className="text-center p-4 bg-gray-100 dark:bg-slate-800 rounded-lg">
+                      <p className="text-gray-600 dark:text-slate-400">
                         You can join this appointment 15 minutes before the scheduled time
                       </p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                         Check back {timeUntil}
                       </p>
                     </div>
@@ -427,7 +427,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
         <div className="mt-8 text-center">
           <button
             onClick={() => navigate('/my-health')}
-            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <span className="text-2xl" aria-hidden="true">
               ←

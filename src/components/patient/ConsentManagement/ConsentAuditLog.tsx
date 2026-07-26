@@ -130,7 +130,7 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
       case 'authorization_revoked':
         return <User className="w-4 h-4 text-red-600" />;
       default:
-        return <History className="w-4 h-4 text-gray-600" />;
+        return <History className="w-4 h-4 text-gray-600 dark:text-slate-400" />;
     }
   };
 
@@ -190,14 +190,14 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
     <div className="space-y-4">
       {/* Header with filters */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <h3 className="text-lg font-medium text-gray-900 flex items-center">
-          <History className="w-5 h-5 mr-2 text-gray-500" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 flex items-center">
+          <History className="w-5 h-5 mr-2 text-gray-500 dark:text-slate-400" />
           Access History
         </h3>
 
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+          <Filter className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+          <div className="flex rounded-lg border border-gray-300 dark:border-slate-600 overflow-hidden">
             {filters.map((f) => (
               <button
                 key={f.id}
@@ -205,7 +205,7 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
                 className={`px-3 py-1.5 text-sm ${
                   filter === f.id
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                 }`}
               >
                 {f.label}
@@ -218,8 +218,8 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
       {entries.length === 0 ? (
         <div className="text-center py-12">
           <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Access History</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">No Access History</h3>
+          <p className="text-gray-600 dark:text-slate-400">
             {filter === 'all'
               ? 'No one has accessed your health data yet.'
               : `No ${filter.replace('_', ' ')} events found.`}
@@ -236,10 +236,10 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
               return (
                 <div
                   key={entry.id}
-                  className={`border-l-4 ${getEventColor(entry.event_type)} bg-white rounded-r-lg shadow-sm`}
+                  className={`border-l-4 ${getEventColor(entry.event_type)} bg-white dark:bg-slate-900 rounded-r-lg shadow-sm`}
                 >
                   <div
-                    className="p-4 cursor-pointer hover:bg-gray-50"
+                    className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800"
                     onClick={() => setExpandedEntry(isExpanded ? null : entry.id)}
                   >
                     <div className="flex items-start justify-between">
@@ -248,17 +248,17 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
                           {getEventIcon(entry.event_type)}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-gray-900 dark:text-slate-100">
                             {getEventDescription(entry)}
                           </p>
                           {entry.resource_type && (
-                            <p className="text-sm text-gray-600 mt-0.5">
+                            <p className="text-sm text-gray-600 dark:text-slate-400 mt-0.5">
                               Resource: {entry.resource_type}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center text-sm text-gray-500">
+                      <div className="flex items-center text-sm text-gray-500 dark:text-slate-400">
                         <span className="mr-2">{date} at {time}</span>
                         {isExpanded ? (
                           <ChevronUp className="w-4 h-4" />
@@ -271,26 +271,26 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
 
                   {/* Expanded details */}
                   {isExpanded && (
-                    <div className="px-4 pb-4 pt-2 border-t border-gray-100">
+                    <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-slate-700">
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         {entry.app_name && (
                           <div>
-                            <span className="text-gray-500">App:</span>
-                            <span className="ml-2 text-gray-900">{entry.app_name}</span>
+                            <span className="text-gray-500 dark:text-slate-400">App:</span>
+                            <span className="ml-2 text-gray-900 dark:text-slate-100">{entry.app_name}</span>
                           </div>
                         )}
                         {entry.ip_address && (
                           <div>
-                            <span className="text-gray-500">IP Address:</span>
-                            <span className="ml-2 text-gray-900 font-mono text-xs">
+                            <span className="text-gray-500 dark:text-slate-400">IP Address:</span>
+                            <span className="ml-2 text-gray-900 dark:text-slate-100 font-mono text-xs">
                               {entry.ip_address}
                             </span>
                           </div>
                         )}
                         {entry.details && Object.keys(entry.details).length > 0 && (
                           <div className="col-span-2">
-                            <span className="text-gray-500">Details:</span>
-                            <pre className="mt-1 text-xs bg-gray-50 p-2 rounded overflow-auto">
+                            <span className="text-gray-500 dark:text-slate-400">Details:</span>
+                            <pre className="mt-1 text-xs bg-gray-50 dark:bg-slate-800 p-2 rounded overflow-auto">
                               {JSON.stringify(entry.details, null, 2)}
                             </pre>
                           </div>
@@ -318,7 +318,7 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
       )}
 
       {/* Export option */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
+      <div className="mt-6 pt-4 border-t border-gray-200 dark:border-slate-700">
         <button
           onClick={() => {
             // Export audit log as JSON
@@ -333,7 +333,7 @@ const ConsentAuditLog: React.FC<ConsentAuditLogProps> = ({ userId, onCountUpdate
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
           }}
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+          className="flex items-center text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900"
         >
           <Download className="w-4 h-4 mr-2" />
           Export access history

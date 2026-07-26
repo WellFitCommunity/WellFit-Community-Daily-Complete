@@ -213,7 +213,7 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700">
         {/* Header */}
         <div className="bg-linear-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-xl">
           <div className="flex justify-between items-center">
@@ -232,21 +232,21 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
 
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="mb-6 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg p-4">
+              <p className="text-red-800 dark:text-red-300 text-sm">{error}</p>
             </div>
           )}
 
           {/* Category Tabs */}
           <div className="mb-6">
-            <div className="flex border-b border-gray-200">
+            <div className="flex border-b border-gray-200 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setCategory('common')}
                 className={`px-6 py-3 text-sm font-medium transition-colors ${
                   category === 'common'
                     ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
                 }`}
               >
                 Common Vaccines
@@ -257,7 +257,7 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
                 className={`px-6 py-3 text-sm font-medium transition-colors ${
                   category === 'all'
                     ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
                 }`}
               >
                 All Vaccines
@@ -268,7 +268,7 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
                 className={`px-6 py-3 text-sm font-medium transition-colors ${
                   category === 'custom'
                     ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
                 }`}
               >
                 Custom Entry
@@ -279,7 +279,7 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
           {/* Vaccine Selection */}
           {category !== 'custom' && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
                 Select Vaccine <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -290,15 +290,15 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
                     onClick={() => handleTemplateSelect(vaccine)}
                     className={`p-4 rounded-lg border-2 text-left transition-all ${
                       selectedTemplate?.code === vaccine.code
-                        ? 'border-purple-600 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                        ? 'border-purple-600 bg-purple-50 dark:bg-slate-800'
+                        : 'border-gray-200 dark:border-slate-700 hover:border-purple-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{vaccine.icon}</span>
                       <div className="flex-1">
-                        <div className="font-semibold text-gray-900">{vaccine.display}</div>
-                        <div className="text-xs text-gray-600">CVX: {vaccine.code}</div>
+                        <div className="font-semibold text-gray-900 dark:text-slate-100">{vaccine.display}</div>
+                        <div className="text-xs text-gray-600 dark:text-slate-400">CVX: {vaccine.code}</div>
                       </div>
                       {selectedTemplate?.code === vaccine.code && (
                         <span className="text-purple-600">✓</span>
@@ -314,27 +314,27 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
           {category === 'custom' && (
             <div className="mb-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Vaccine Code (CVX) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.vaccineCode}
                   onChange={(e) => handleInputChange('vaccineCode', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="e.g., 141"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Vaccine Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.vaccineDisplay}
                   onChange={(e) => handleInputChange('vaccineDisplay', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="e.g., Influenza, seasonal, injectable"
                   required
                 />
@@ -347,13 +347,13 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
             <div className="space-y-6">
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Status <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.status}
                   onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   required
                 >
                   <option value="completed">Completed</option>
@@ -365,26 +365,26 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
               {/* Date and Time */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
                     value={formData.occurrenceDate}
                     onChange={(e) => handleInputChange('occurrenceDate', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Time <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="time"
                     value={formData.occurrenceTime}
                     onChange={(e) => handleInputChange('occurrenceTime', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -393,40 +393,40 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
               {/* Lot Number and Expiration */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Lot Number
                   </label>
                   <input
                     type="text"
                     value={formData.lotNumber}
                     onChange={(e) => handleInputChange('lotNumber', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="e.g., LOT123456"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Expiration Date
                   </label>
                   <input
                     type="date"
                     value={formData.expirationDate}
                     onChange={(e) => handleInputChange('expirationDate', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               {/* Manufacturer */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Manufacturer
                 </label>
                 <input
                   type="text"
                   value={formData.manufacturer}
                   onChange={(e) => handleInputChange('manufacturer', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="e.g., Pfizer, Moderna, GSK"
                 />
               </div>
@@ -434,13 +434,13 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
               {/* Site and Route */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Administration Site
                   </label>
                   <select
                     value={formData.siteCode}
                     onChange={(e) => handleSiteChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value="">Select site...</option>
                     {Object.entries(IMMUNIZATION_SITES).map(([code, site]) => (
@@ -451,13 +451,13 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Route
                   </label>
                   <select
                     value={formData.routeCode}
                     onChange={(e) => handleRouteChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value="">Select route...</option>
                     {Object.entries(IMMUNIZATION_ROUTES).map(([code, route]) => (
@@ -472,7 +472,7 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
               {/* Dose */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Dose Quantity
                   </label>
                   <input
@@ -480,19 +480,19 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
                     step="0.1"
                     value={formData.doseValue}
                     onChange={(e) => handleInputChange('doseValue', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="e.g., 0.5"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Unit
                   </label>
                   <input
                     type="text"
                     value={formData.doseUnit}
                     onChange={(e) => handleInputChange('doseUnit', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="e.g., mL"
                   />
                 </div>
@@ -501,26 +501,26 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
               {/* Series Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Dose Number (in series)
                   </label>
                   <input
                     type="number"
                     value={formData.doseNumber}
                     onChange={(e) => handleInputChange('doseNumber', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="e.g., 1"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Total Doses in Series
                   </label>
                   <input
                     type="number"
                     value={formData.seriesTotal}
                     onChange={(e) => handleInputChange('seriesTotal', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="e.g., 2"
                   />
                 </div>
@@ -529,26 +529,26 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
               {/* Performer and Location */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Administered By
                   </label>
                   <input
                     type="text"
                     value={formData.performerName}
                     onChange={(e) => handleInputChange('performerName', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="e.g., Jane Smith, RN"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Location
                   </label>
                   <input
                     type="text"
                     value={formData.location}
                     onChange={(e) => handleInputChange('location', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="e.g., WellFit Health Center"
                   />
                 </div>
@@ -561,9 +561,9 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
                     type="checkbox"
                     checked={formData.primarySource}
                     onChange={(e) => handleInputChange('primarySource', e.target.checked)}
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded-sm focus:ring-purple-500"
+                    className="w-4 h-4 text-purple-600 border-gray-300 dark:border-slate-600 rounded-sm focus:ring-purple-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-300">
                     Primary source (vaccine was directly observed)
                   </span>
                 </label>
@@ -571,24 +571,24 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Notes
                 </label>
                 <textarea
                   value={formData.note}
                   onChange={(e) => handleInputChange('note', e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                   placeholder="Additional notes about this vaccination..."
                 />
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  className="flex-1 px-6 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors font-medium"
                 >
                   Cancel
                 </button>

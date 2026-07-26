@@ -228,7 +228,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">Loading medications...</span>
+        <span className="ml-3 text-gray-600 dark:text-slate-400">Loading medications...</span>
       </div>
     );
   }
@@ -240,8 +240,8 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
         {/* Header */}
         <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Medication Requests</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Medication Requests</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             Manage prescriptions and medication orders with allergy checking
           </p>
         </div>
@@ -258,27 +258,27 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Total Prescriptions</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">Total Prescriptions</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{stats.total}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Active</div>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">Active</div>
           <div className="text-2xl font-bold text-green-600 mt-1">{stats.active}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Completed</div>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">Completed</div>
           <div className="text-2xl font-bold text-blue-600 mt-1">{stats.completed}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Cancelled</div>
-          <div className="text-2xl font-bold text-gray-600 mt-1">{stats.cancelled}</div>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">Cancelled</div>
+          <div className="text-2xl font-bold text-gray-600 dark:text-slate-400 mt-1">{stats.cancelled}</div>
         </div>
       </div>
 
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg p-4">
           <div className="flex items-start">
             <svg className="w-5 h-5 text-red-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -288,7 +288,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
               />
             </svg>
             <div className="ml-3 flex-1">
-              <p className="text-sm text-red-800">{error}</p>
+              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
             <button onClick={() => currentQuery.refetch()} className="text-red-600 hover:text-red-800" title="Retry">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -305,7 +305,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
       {/* Allergy Warning */}
       {allergyWarning && (
-        <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+        <div className="bg-yellow-50 dark:bg-slate-800 border-2 border-yellow-400 rounded-lg p-4">
           <div className="flex items-start">
             <svg className="w-6 h-6 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -315,8 +315,8 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
               />
             </svg>
             <div className="ml-3 flex-1">
-              <h3 className="text-sm font-medium text-yellow-800">Allergy Alert</h3>
-              <p className="text-sm text-yellow-700 mt-1">{allergyWarning}</p>
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Allergy Alert</h3>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">{allergyWarning}</p>
               <p className="text-xs text-yellow-600 mt-2">
                 This medication was NOT prescribed due to a documented allergy. Please consult with the patient or
                 review allergy records before proceeding.
@@ -337,15 +337,15 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
       {/* Add/Edit Form */}
       {isAddingNew && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">
             {editingId ? 'Edit Medication Request' : 'New Medication Request'}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Medication Code */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   RxNorm Code <span className="text-red-600">*</span>
                 </label>
                 <input
@@ -353,14 +353,14 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                   value={formData.medication_code || ''}
                   onChange={(e) => setFormData({ ...formData, medication_code: e.target.value })}
                   placeholder="e.g., 197361"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
 
               {/* Medication Display */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Medication Name <span className="text-red-600">*</span>
                 </label>
                 <input
@@ -368,18 +368,18 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                   value={formData.medication_display || ''}
                   onChange={(e) => setFormData({ ...formData, medication_display: e.target.value })}
                   placeholder="e.g., Lisinopril 10mg tablet"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
 
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Status</label>
                 <select
                   value={formData.status || ''}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as MedicationRequest['status'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {STATUS_OPTIONS.map((status) => (
                     <option key={status.value} value={status.value}>
@@ -391,11 +391,11 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
               {/* Intent */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Intent</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Intent</label>
                 <select
                   value={formData.intent || ''}
                   onChange={(e) => setFormData({ ...formData, intent: e.target.value as MedicationRequest['intent'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {INTENT_OPTIONS.map((intent) => (
                     <option key={intent.value} value={intent.value}>
@@ -407,11 +407,11 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
               {/* Priority */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Priority</label>
                 <select
                   value={formData.priority || ''}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as MedicationRequest['priority'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {PRIORITY_OPTIONS.map((priority) => (
                     <option key={priority.value} value={priority.value}>
@@ -423,55 +423,55 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
               {/* Dosage Text */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Dosage Instructions</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Dosage Instructions</label>
                 <input
                   type="text"
                   value={formData.dosage_text || ''}
                   onChange={(e) => setFormData({ ...formData, dosage_text: e.target.value })}
                   placeholder="e.g., Take 1 tablet by mouth daily"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
               {/* Route */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Route</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Route</label>
                 <input
                   type="text"
                   value={formData.dosage_route || ''}
                   onChange={(e) => setFormData({ ...formData, dosage_route: e.target.value })}
                   placeholder="e.g., oral, IV, topical"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
               {/* Frequency */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Frequency</label>
                 <input
                   type="number"
                   value={formData.dosage_timing_frequency || ''}
                   onChange={(e) => setFormData({ ...formData, dosage_timing_frequency: parseInt(e.target.value) })}
                   placeholder="e.g., 1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
               {/* Period */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Period</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Period</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
                     value={formData.dosage_timing_period || ''}
                     onChange={(e) => setFormData({ ...formData, dosage_timing_period: parseFloat(e.target.value) })}
                     placeholder="1"
-                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-1/2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   <select
                     value={formData.dosage_timing_period_unit || ''}
                     onChange={(e) => setFormData({ ...formData, dosage_timing_period_unit: e.target.value as MedicationRequest['dosage_timing_period_unit'] })}
-                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-1/2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Unit</option>
                     <option value="d">day</option>
@@ -484,28 +484,28 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
               {/* Dispense Quantity */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Dispense Quantity</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Dispense Quantity</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
                     value={formData.dispense_quantity || ''}
                     onChange={(e) => setFormData({ ...formData, dispense_quantity: parseFloat(e.target.value) })}
                     placeholder="30"
-                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-1/2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   <input
                     type="text"
                     value={formData.dispense_quantity_unit || ''}
                     onChange={(e) => setFormData({ ...formData, dispense_quantity_unit: e.target.value })}
                     placeholder="tablets"
-                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-1/2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
 
               {/* Number of Refills */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Number of Refills</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Number of Refills</label>
                 <input
                   type="number"
                   value={formData.dispense_number_of_repeats || ''}
@@ -514,20 +514,20 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                   }
                   placeholder="0"
                   min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Clinical Notes</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Clinical Notes</label>
               <textarea
                 value={formData.note || ''}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                 rows={3}
                 placeholder="Additional notes..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -544,7 +544,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                 type="button"
                 onClick={resetForm}
                 disabled={loading}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancel
               </button>
@@ -561,7 +561,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search medications..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
         <div className="flex gap-2">
@@ -570,7 +570,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
               key={f}
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                filter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200'
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -582,9 +582,9 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
       {/* Medications List */}
       <div className="space-y-3">
         {filteredMedications.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-8 text-center">
             <svg
-              className="mx-auto h-12 w-12 text-gray-400"
+              className="mx-auto h-12 w-12 text-gray-400 dark:text-slate-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -596,7 +596,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                 d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
               />
             </svg>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
               {searchTerm ? 'No medications match your search' : 'No medications found'}
             </p>
           </div>
@@ -604,12 +604,12 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
           filteredMedications.map((medication) => (
             <div
               key={medication.id}
-              className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-5 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900">{medication.medication_display}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{medication.medication_display}</h3>
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full bg-${getStatusColor(
                         medication.status
@@ -623,25 +623,25 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
                     Code: <span className="font-mono font-medium">{medication.medication_code}</span>
                   </p>
                   {medication.dosage_text && (
-                    <p className="text-sm text-gray-700 mt-2">
+                    <p className="text-sm text-gray-700 dark:text-slate-300 mt-2">
                       <strong>Dosage:</strong> {medication.dosage_text}
                     </p>
                   )}
                   {medication.dispense_quantity && (
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
                       <strong>Dispense:</strong> {medication.dispense_quantity} {medication.dispense_quantity_unit}
                       {medication.dispense_number_of_repeats !== undefined &&
                         ` (${medication.dispense_number_of_repeats} refills)`}
                     </p>
                   )}
                   {medication.note && (
-                    <p className="text-sm text-gray-700 mt-2 italic">{medication.note}</p>
+                    <p className="text-sm text-gray-700 dark:text-slate-300 mt-2 italic">{medication.note}</p>
                   )}
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">
                     Ordered: {new Date(medication.authored_on).toLocaleDateString()}
                   </p>
                 </div>
@@ -650,7 +650,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
                   <div className="flex gap-2 ml-4">
                     <button
                       onClick={() => handleEdit(medication)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
                       title="Edit prescription"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

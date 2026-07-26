@@ -25,10 +25,10 @@ const SeniorHealthDashboard: React.FC = () => {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl">
         {/* Simple Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-slate-200 mb-2">
             Your Health Today
           </h1>
-          <p className="text-lg sm:text-xl text-gray-600">
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-slate-400">
             Let's check in today
           </p>
         </div>
@@ -37,47 +37,47 @@ const SeniorHealthDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Weather Widget - Stationary */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
             <WeatherWidget />
           </div>
 
           {/* Scripture Widget - Stationary */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
             <DailyScripture />
           </div>
 
           {/* Daily Check-in - Stationary and Essential */}
-          <div className="md:col-span-2 bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
             <CheckInTracker />
           </div>
 
           {/* Health History - Shows past check-ins */}
-          <div className="md:col-span-2 bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
             <HealthHistory />
           </div>
 
           {/* Emergency Contact - Stationary */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
             <EmergencyContact />
           </div>
 
           {/* Positive Affirmations - Stationary */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
             <PositiveAffirmations />
           </div>
 
           {/* Tech Tips - Stationary */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
             <TechTip />
           </div>
 
           {/* Self Report Button - Card with Button */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6 text-center">
             <div className="text-2xl sm:text-3xl mb-3">📋</div>
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 dark:text-slate-200 mb-3">
               Self Report
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mb-4">
               Share how you're feeling with your care team
             </p>
             <button
@@ -89,17 +89,17 @@ const SeniorHealthDashboard: React.FC = () => {
           </div>
 
           {/* Today's Meal - Stationary but can open page */}
-          <div className="md:col-span-2 bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
             <DashMealOfTheDay />
           </div>
 
           {/* Brain Games - Cards with buttons to pages */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6 text-center">
             <div className="text-2xl sm:text-3xl mb-3">🧩</div>
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 dark:text-slate-200 mb-3">
               Word Search
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mb-4">
               Keep your mind sharp with daily puzzles
             </p>
             <button
@@ -110,12 +110,12 @@ const SeniorHealthDashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6 text-center">
             <div className="text-2xl sm:text-3xl mb-3">🎭</div>
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 dark:text-slate-200 mb-3">
               Memory Lane
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mb-4">
               Take a trip down memory lane with questions from your era
             </p>
             <button
@@ -127,12 +127,12 @@ const SeniorHealthDashboard: React.FC = () => {
           </div>
 
           {/* Doctor's View - Card with button */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6 text-center">
             <div className="text-2xl sm:text-3xl mb-3">🩺</div>
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 dark:text-slate-200 mb-3">
               For Your Doctor
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mb-4">
               View your health summary to share with your healthcare team
             </p>
             <button
@@ -144,12 +144,12 @@ const SeniorHealthDashboard: React.FC = () => {
           </div>
 
           {/* Community - Card with button */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6 text-center">
             <div className="text-2xl sm:text-3xl mb-3">👥</div>
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 dark:text-slate-200 mb-3">
               Community
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mb-4">
               Connect with other community members
             </p>
             <button

@@ -170,17 +170,17 @@ const SmartScalePage: React.FC = () => {
         </div>
 
         {displayError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6" role="alert">
+          <div className="bg-red-100 dark:bg-red-950 border border-red-400 text-red-700 dark:text-red-300 rounded-xl p-4 mb-6" role="alert">
             {displayError}
           </div>
         )}
 
         {/* Connection Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           {isLoading ? (
-            <div className="text-lg font-semibold text-gray-700">Loading...</div>
+            <div className="text-lg font-semibold text-gray-700 dark:text-slate-300">Loading...</div>
           ) : !ble.isSupported ? (
-            <div className="bg-blue-50 rounded-xl p-4 text-blue-800">
+            <div className="bg-blue-50 dark:bg-slate-800 rounded-xl p-4 text-blue-800 dark:text-blue-300">
               <h3 className="font-semibold mb-1 text-lg">Bluetooth isn’t available on this device</h3>
               <p className="text-base">
                 {ble.capabilityMessage ?? 'This device can’t connect a Bluetooth scale.'} You can still
@@ -192,7 +192,7 @@ const SmartScalePage: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className={`w-4 h-4 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-lg font-semibold text-gray-700">
+                  <span className="text-lg font-semibold text-gray-700 dark:text-slate-300">
                     {isConnected ? `Connected: ${ble.deviceName ?? friendlyName ?? 'your scale'}` : 'Not Connected'}
                   </span>
                 </div>
@@ -201,7 +201,7 @@ const SmartScalePage: React.FC = () => {
                   disabled={isPairing}
                   aria-label={isConnected ? 'Disconnect scale' : connectLabel}
                   className={`min-h-[44px] px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
-                    isConnected ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'text-white hover:opacity-90'
+                    isConnected ? 'bg-red-100 dark:bg-red-950 text-red-600 hover:bg-red-200' : 'text-white hover:opacity-90'
                   }`}
                   style={!isConnected ? { backgroundColor: branding.primaryColor } : {}}
                 >
@@ -210,20 +210,20 @@ const SmartScalePage: React.FC = () => {
               </div>
 
               {isConnected ? (
-                <div className="bg-green-50 rounded-xl p-4 text-green-800">
+                <div className="bg-green-50 dark:bg-slate-800 rounded-xl p-4 text-green-800 dark:text-green-300">
                   <p className="text-base font-medium">
                     {saving ? 'Saving your reading…' : 'Step on your scale now — your weight will appear below automatically.'}
                   </p>
                 </div>
               ) : (
-                <div className="bg-blue-50 rounded-xl p-4 text-blue-800">
+                <div className="bg-blue-50 dark:bg-slate-800 rounded-xl p-4 text-blue-800 dark:text-blue-300">
                   <h3 className="font-semibold mb-2 text-lg">How to connect your scale</h3>
                   <ol className="list-decimal list-inside space-y-1 text-base">
                     <li>Turn on your scale so it is ready to pair.</li>
                     <li>Tap <span className="font-semibold">Connect</span> above.</li>
                     <li>Pick your scale from the list that appears.</li>
                   </ol>
-                  <p className="text-sm mt-3 text-blue-700">
+                  <p className="text-sm mt-3 text-blue-700 dark:text-blue-300">
                     Works with standard Bluetooth scales on Android phones and computers using Chrome. Many
                     consumer scales sync only through their own app and won’t connect here — enter your weight by hand instead.
                   </p>
@@ -246,40 +246,40 @@ const SmartScalePage: React.FC = () => {
         )}
 
         {/* Weight History */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <h2 className="text-2xl font-bold mb-6" style={{ color: branding.primaryColor }}>
             Recent Measurements
           </h2>
           {readings.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
+            <p className="text-gray-500 dark:text-slate-400 text-center py-8">
               No readings yet. Step on your scale to record your first measurement.
             </p>
           ) : (
             <div className="space-y-4">
               {readings.map((reading) => (
-                <div key={reading.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div key={reading.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-xl">
                   <div>
-                    <div className="text-sm text-gray-500">{formatDate(reading.measured_at)}</div>
-                    <div className="text-2xl font-bold text-gray-800">
+                    <div className="text-sm text-gray-500 dark:text-slate-400">{formatDate(reading.measured_at)}</div>
+                    <div className="text-2xl font-bold text-gray-800 dark:text-slate-200">
                       {reading.weight} {reading.unit}
                     </div>
                   </div>
                   <div className="text-right grid grid-cols-3 gap-4">
                     {reading.bmi && (
                       <div>
-                        <div className="text-xs text-gray-500">BMI</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">BMI</div>
                         <div className="font-semibold">{reading.bmi.toFixed(1)}</div>
                       </div>
                     )}
                     {reading.body_fat && (
                       <div>
-                        <div className="text-xs text-gray-500">Body Fat</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Body Fat</div>
                         <div className="font-semibold">{reading.body_fat.toFixed(1)}%</div>
                       </div>
                     )}
                     {reading.muscle_mass && (
                       <div>
-                        <div className="text-xs text-gray-500">Muscle</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Muscle</div>
                         <div className="font-semibold">{reading.muscle_mass.toFixed(1)}%</div>
                       </div>
                     )}
@@ -291,7 +291,7 @@ const SmartScalePage: React.FC = () => {
         </div>
 
         {/* Manual Entry */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
               Manual Entry
@@ -315,7 +315,7 @@ const SmartScalePage: React.FC = () => {
               primaryColor={branding.primaryColor}
             />
           ) : (
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-slate-400">
               Don't have a smart scale? Click "Add Reading" to manually enter your weight.
             </p>
           )}
@@ -326,7 +326,7 @@ const SmartScalePage: React.FC = () => {
           <button
             onClick={() => navigate('/my-health')}
             aria-label="Go back to My Health"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <span className="text-2xl" aria-hidden="true">←</span>
             <span>Back to My Health</span>

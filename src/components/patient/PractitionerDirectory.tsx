@@ -86,8 +86,8 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Provider Directory</h2>
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-slate-200">Provider Directory</h2>
 
       {/* Search and Filter Section */}
       <div className="mb-6 space-y-4">
@@ -98,7 +98,7 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, specialty, or NPI..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <button
             type="submit"
@@ -110,13 +110,13 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
 
         {/* Specialty Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Filter by Specialty
           </label>
           <select
             value={selectedSpecialty}
             onChange={(e) => setSelectedSpecialty(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">All Specialties</option>
             {allSpecialties.map((specialty) => (
@@ -129,13 +129,13 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
       </div>
 
       {/* Results Count */}
-      <div className="mb-4 text-sm text-gray-600">
+      <div className="mb-4 text-sm text-gray-600 dark:text-slate-400">
         Showing {filteredPractitioners.length} of {practitioners.length} providers
       </div>
 
       {/* Practitioners Grid */}
       {filteredPractitioners.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-gray-500 dark:text-slate-400">
           <p className="text-lg">No providers found</p>
           <p className="text-sm mt-2">Try adjusting your search or filters</p>
         </div>
@@ -147,8 +147,8 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
               onClick={() => handleSelectPractitioner(practitioner)}
               className={`border rounded-lg p-4 cursor-pointer transition ${
                 selectedPractitioner?.id === practitioner.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-slate-800'
+                  : 'border-gray-200 dark:border-slate-700 hover:border-blue-300 hover:shadow-md'
               }`}
             >
               {/* Photo and Name */}
@@ -160,17 +160,17 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
                     className="w-16 h-16 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-semibold text-xl">
+                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 dark:text-slate-400 font-semibold text-xl">
                     {practitioner.family_name[0]}
                     {practitioner.given_names?.[0]?.[0]}
                   </div>
                 )}
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">
+                  <h3 className="font-semibold text-gray-900 dark:text-slate-100">
                     {PractitionerService.getFullName(practitioner)}
                   </h3>
                   {practitioner.suffix && practitioner.suffix.length > 0 && (
-                    <p className="text-sm text-gray-600">{practitioner.suffix.join(', ')}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">{practitioner.suffix.join(', ')}</p>
                   )}
                 </div>
               </div>
@@ -182,13 +182,13 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
                     {practitioner.specialties.slice(0, 2).map((specialty, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                        className="px-2 py-1 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-xs rounded-full"
                       >
                         {specialty}
                       </span>
                     ))}
                     {practitioner.specialties.length > 2 && (
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                      <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 text-xs rounded-full">
                         +{practitioner.specialties.length - 2} more
                       </span>
                     )}
@@ -197,7 +197,7 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
               )}
 
               {/* Contact Info */}
-              <div className="space-y-1 text-sm text-gray-600">
+              <div className="space-y-1 text-sm text-gray-600 dark:text-slate-400">
                 {practitioner.phone && (
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Phone:</span>
@@ -220,8 +220,8 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
 
               {/* Languages */}
               {practitioner.communication_languages && practitioner.communication_languages.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <p className="text-xs text-gray-500">
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-slate-700">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     Languages: {practitioner.communication_languages.join(', ')}
                   </p>
                 </div>

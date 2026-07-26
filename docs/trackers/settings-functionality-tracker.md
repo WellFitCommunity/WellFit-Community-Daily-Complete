@@ -37,12 +37,17 @@ Key files: `src/hooks/useTheme.ts` · `src/contexts/LanguageContext.tsx` · `src
 7. **Tests:** LanguageContext persistence, useTheme read-order + setTheme, font-size application, SettingsPage save round-trip (deletion-test quality; synthetic data).
 8. Gates: scoped tsc (+ full tsc — LanguageContext/useTheme are widely imported), lint, scoped tests, build. Live round-trip proof: save theme/language/font in DB as a real user, values land in `profiles` (rolled back or swept per live-proof rules).
 
-## Session 2 — Dark-mode styling coverage (senior surfaces + admin shell)
+## Session 2 — Dark-mode styling coverage (✅ CODE-COMPLETE 2026-07-26, visual pass pending)
 
-- Senior-facing pages: SeniorCommunityDashboard, check-in flow (CheckInTracker + check-in/*), SettingsPage (done S1), My Health Hub pages (`/my-health` + sub-pages), login/registration, GlobalHeader/nav shells.
-- Admin shell: AdminHeader, dashboard-hub shell, AdminSettingsPanel (done S1) — NOT the 71 clinical panels (later phase, Maria's scoping).
-- Method: per-component `dark:` variants; senior accessibility rules hold in dark (WCAG AA contrast 4.5:1, no pure-black backgrounds — use slate-900-family).
-- **⚑ Maria visual acceptance (#13) required** — light AND dark screenshots of each surface.
+**Executed as a consolidated tree sweep** (Maria mid-session: "consolidate and pull it together" — page-by-page cherry-picking was missing the sub-component trees where the real content lives). Method: mechanical light→dark class mapper (`darkify.sh` pattern: each light-only utility gets a WCAG-safe slate-family `dark:` twin; guards prevent matching inside `hover:`/opacity variants; run-once per file) + manual residue scan + hand-fixes.
+
+**Coverage (68 files this session, 77 files with `dark:` total):** entire `src/components/patient/**` (incl. medicine-cabinet/*, ConsentManagement/*, the five My Health managers), `src/components/dashboard/**`, `src/components/check-in/**`, `src/components/community/**`, `src/components/devices/**` + `src/pages/devices/**` (BLE device pages), all My Health Hub pages, Login/Register, CheckInTracker, HealthInsights/HealthTracker/CheckInHistory pages, LanguageSelector, WhatsNewSeniorModal. AdminHeader + DashboardHub inspected — **natively dark-styled already** (slate-900/brand navy), nothing needed. Clinical admin panels untouched (later phase per Maria's scoping).
+
+**Design decisions:** brand gradients on page shells KEPT in dark (cards/tiles go dark on top of them — SettingsPage's S1 overlay treatment is the exception); saturated mid-tone elements (blue/green-500 buttons, status dots) left as-is (identical contrast both themes); light-flash `hover:bg-*-50` icon buttons got dark hovers.
+
+**Gates:** full tsc 0 · lint 0/0 · 226 tests passed 0 failed across all 17 test suites of swept components · build green.
+
+**⚑ Maria visual acceptance (#13) REQUIRED and pending** — dark + light walk of: dashboard, check-in flow, My Health Hub + managers (allergies/conditions/care plans/immunizations/observations), Medicine Cabinet, a BLE device page, login/register, settings. One walk covers Session 1+2.
 
 ## Session 3 — Language coverage (senior surfaces) + "other things"
 

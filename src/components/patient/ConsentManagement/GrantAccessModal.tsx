@@ -137,16 +137,16 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
         />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto z-10">
+        <div className="relative bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-lg w-full mx-auto z-10">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 flex items-center">
               <Shield className="w-5 h-5 mr-2 text-blue-600" />
               Grant Data Access
             </h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 dark:text-slate-500 hover:text-gray-600"
             >
               <X className="w-5 h-5" />
             </button>
@@ -161,7 +161,7 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                       step >= s
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-600'
+                        : 'bg-gray-200 text-gray-600 dark:text-slate-400'
                     }`}
                   >
                     {step > s ? <CheckCircle className="w-5 h-5" /> : s}
@@ -176,7 +176,7 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                 </div>
               ))}
             </div>
-            <div className="flex justify-between mt-2 text-xs text-gray-500 px-4">
+            <div className="flex justify-between mt-2 text-xs text-gray-500 dark:text-slate-400 px-4">
               <span>Recipient</span>
               <span>Data</span>
               <span>Confirm</span>
@@ -189,7 +189,7 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
             {step === 1 && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Who are you granting access to?
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -205,8 +205,8 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                           onClick={() => setFormData(prev => ({ ...prev, accessType: type.id as AccessType }))}
                           className={`p-3 rounded-lg border text-center ${
                             formData.accessType === type.id
-                              ? 'border-blue-500 bg-blue-50 text-blue-700'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? 'border-blue-500 bg-blue-50 dark:bg-slate-800 text-blue-700 dark:text-blue-300'
+                              : 'border-gray-200 dark:border-slate-700 hover:border-gray-300'
                           }`}
                         >
                           <Icon className="w-5 h-5 mx-auto mb-1" />
@@ -218,7 +218,7 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     Name or Organization
                   </label>
                   <input
@@ -226,12 +226,12 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                     value={formData.recipientName}
                     onChange={(e) => setFormData(prev => ({ ...prev, recipientName: e.target.value }))}
                     placeholder="e.g., Dr. Smith, Methodist Hospital"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     Email (optional)
                   </label>
                   <input
@@ -239,12 +239,12 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                     value={formData.recipientEmail}
                     onChange={(e) => setFormData(prev => ({ ...prev, recipientEmail: e.target.value }))}
                     placeholder="contact@example.com"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     Purpose (optional)
                   </label>
                   <input
@@ -252,7 +252,7 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                     value={formData.purpose}
                     onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
                     placeholder="e.g., Second opinion, Care coordination"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -262,7 +262,7 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
             {step === 2 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                     Select data to share:
                   </label>
                   <button
@@ -279,8 +279,8 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                       key={category.id}
                       className={`flex items-start p-3 rounded-lg border cursor-pointer ${
                         formData.dataCategories.includes(category.id)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-slate-800'
+                          : 'border-gray-200 dark:border-slate-700 hover:border-gray-300'
                       }`}
                     >
                       <input
@@ -290,15 +290,15 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                         className="mt-1 mr-3"
                       />
                       <div>
-                        <p className="font-medium text-gray-900">{category.label}</p>
-                        <p className="text-sm text-gray-500">{category.description}</p>
+                        <p className="font-medium text-gray-900 dark:text-slate-100">{category.label}</p>
+                        <p className="text-sm text-gray-500 dark:text-slate-400">{category.description}</p>
                       </div>
                     </label>
                   ))}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     Access expires after:
                   </label>
                   <select
@@ -307,7 +307,7 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                       ...prev,
                       expirationDays: e.target.value === 'never' ? null : parseInt(e.target.value),
                     }))}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className="w-full p-2 border border-gray-300 dark:border-slate-600 rounded-lg"
                   >
                     <option value="30">30 days</option>
                     <option value="90">90 days</option>
@@ -322,33 +322,33 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
             {/* Step 3: Confirmation */}
             {step === 3 && (
               <div className="space-y-4">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-yellow-50 dark:bg-slate-800 border border-yellow-200 dark:border-slate-600 rounded-lg p-4">
                   <div className="flex items-start">
                     <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
                     <div>
-                      <h4 className="font-medium text-yellow-800">Review before confirming</h4>
-                      <p className="text-sm text-yellow-700 mt-1">
+                      <h4 className="font-medium text-yellow-800 dark:text-yellow-300">Review before confirming</h4>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
                         You are about to share your health information. Please review the details below.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 space-y-3">
                   <div>
-                    <p className="text-sm text-gray-500">Sharing with:</p>
-                    <p className="font-medium text-gray-900">{formData.recipientName}</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Sharing with:</p>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">{formData.recipientName}</p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500">Data included:</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Data included:</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {formData.dataCategories.map((catId) => {
                         const cat = DATA_CATEGORIES.find(c => c.id === catId);
                         return (
                           <span
                             key={catId}
-                            className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                            className="text-xs bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-1 rounded"
                           >
                             {cat?.label}
                           </span>
@@ -358,8 +358,8 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500">Expires:</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Expires:</p>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">
                       {formData.expirationDays
                         ? `In ${formData.expirationDays} days`
                         : 'Never (until you revoke)'}
@@ -368,13 +368,13 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
 
                   {formData.purpose && (
                     <div>
-                      <p className="text-sm text-gray-500">Purpose:</p>
-                      <p className="font-medium text-gray-900">{formData.purpose}</p>
+                      <p className="text-sm text-gray-500 dark:text-slate-400">Purpose:</p>
+                      <p className="font-medium text-gray-900 dark:text-slate-100">{formData.purpose}</p>
                     </div>
                   )}
                 </div>
 
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-slate-400">
                   By clicking "Grant Access", you authorize {formData.recipientName} to view
                   the selected health information. You can revoke this access at any time
                   from your Consent Management dashboard.
@@ -384,10 +384,10 @@ const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ userId, onClose, on
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 rounded-b-lg">
             <button
               onClick={step === 1 ? onClose : () => setStep((step - 1) as 1 | 2)}
-              className="px-4 py-2 text-gray-700 hover:text-gray-900"
+              className="px-4 py-2 text-gray-700 dark:text-slate-300 hover:text-gray-900"
             >
               {step === 1 ? 'Cancel' : 'Back'}
             </button>

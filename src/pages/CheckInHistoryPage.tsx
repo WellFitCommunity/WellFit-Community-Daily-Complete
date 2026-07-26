@@ -90,10 +90,10 @@ export default function CheckInHistoryPage() {
     >
       <div className="max-w-3xl mx-auto px-4">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md p-4 sm:p-6 mb-6">
           <button
             onClick={() => navigate('/check-in')}
-            className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-xs hover:shadow-md transition-shadow border border-gray-200"
+            className="flex items-center mb-4 px-3 py-2 bg-white dark:bg-slate-900 rounded-lg shadow-xs hover:shadow-md transition-shadow border border-gray-200 dark:border-slate-700"
             style={{ color: branding.primaryColor || '#003865' }}
             aria-label="Back to check-in"
           >
@@ -107,7 +107,7 @@ export default function CheckInHistoryPage() {
           >
             📋 Your Check-In History
           </h1>
-          <p className="text-gray-600 text-center text-lg">
+          <p className="text-gray-600 dark:text-slate-400 text-center text-lg">
             See what you reported over the past days
           </p>
 
@@ -120,7 +120,7 @@ export default function CheckInHistoryPage() {
                 className={`px-4 py-2 rounded-full text-base font-medium transition-all min-h-[44px] ${
                   daysFilter === days
                     ? 'text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200'
                 }`}
                 style={daysFilter === days ? { backgroundColor: branding.primaryColor || '#003865' } : undefined}
               >
@@ -132,18 +132,18 @@ export default function CheckInHistoryPage() {
 
         {/* Loading */}
         {isLoading && (
-          <div className="bg-white rounded-xl shadow-md p-8 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-            <p className="text-gray-600 text-lg">Loading your check-ins...</p>
+            <p className="text-gray-600 dark:text-slate-400 text-lg">Loading your check-ins...</p>
           </div>
         )}
 
         {/* Empty State */}
         {!isLoading && records.length === 0 && (
-          <div className="bg-white rounded-xl shadow-md p-8 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md p-8 text-center">
             <span className="text-5xl mb-4 block">📝</span>
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">No Check-Ins Yet</h2>
-            <p className="text-gray-600 text-lg mb-4">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-slate-200 mb-2">No Check-Ins Yet</h2>
+            <p className="text-gray-600 dark:text-slate-400 text-lg mb-4">
               You haven&apos;t recorded any check-ins in the last {daysFilter} days.
             </p>
             <button
@@ -164,13 +164,13 @@ export default function CheckInHistoryPage() {
             </p>
 
             {records.map((record) => (
-              <div key={record.id} className="bg-white rounded-xl shadow-md p-4 sm:p-5 border-l-4" style={{ borderLeftColor: branding.primaryColor || '#003865' }}>
+              <div key={record.id} className="bg-white dark:bg-slate-900 rounded-xl shadow-md p-4 sm:p-5 border-l-4" style={{ borderLeftColor: branding.primaryColor || '#003865' }}>
                 {/* Date & Mood Header */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Calendar size={18} className="text-gray-400" />
-                    <span className="font-semibold text-gray-800 text-lg">{formatDate(record.timestamp)}</span>
-                    <span className="text-gray-500">{formatTime(record.timestamp)}</span>
+                    <Calendar size={18} className="text-gray-400 dark:text-slate-500" />
+                    <span className="font-semibold text-gray-800 dark:text-slate-200 text-lg">{formatDate(record.timestamp)}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{formatTime(record.timestamp)}</span>
                   </div>
                   {record.emotional_state && (
                     <span className="text-2xl" title={record.emotional_state}>
@@ -183,18 +183,18 @@ export default function CheckInHistoryPage() {
                 {record.emotional_state && (
                   <div className="mb-3 flex items-center gap-2">
                     <Smile size={18} className="text-[#8cc63f]" />
-                    <span className="text-gray-700 text-base">Mood: <strong>{record.emotional_state}</strong></span>
+                    <span className="text-gray-700 dark:text-slate-300 text-base">Mood: <strong>{record.emotional_state}</strong></span>
                   </div>
                 )}
 
                 {/* Vitals Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
                   {record.bp_systolic != null && record.bp_diastolic != null && (
-                    <div className="bg-red-50 rounded-lg p-2 flex items-center gap-2">
+                    <div className="bg-red-50 dark:bg-red-950 rounded-lg p-2 flex items-center gap-2">
                       <Droplets size={16} className="text-red-500" />
                       <div>
-                        <div className="text-xs text-gray-500">Blood Pressure</div>
-                        <div className="font-semibold text-gray-800">{record.bp_systolic}/{record.bp_diastolic}</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Blood Pressure</div>
+                        <div className="font-semibold text-gray-800 dark:text-slate-200">{record.bp_systolic}/{record.bp_diastolic}</div>
                       </div>
                     </div>
                   )}
@@ -202,17 +202,17 @@ export default function CheckInHistoryPage() {
                     <div className="bg-pink-50 rounded-lg p-2 flex items-center gap-2">
                       <Heart size={16} className="text-pink-500" />
                       <div>
-                        <div className="text-xs text-gray-500">Heart Rate</div>
-                        <div className="font-semibold text-gray-800">{record.heart_rate} BPM</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Heart Rate</div>
+                        <div className="font-semibold text-gray-800 dark:text-slate-200">{record.heart_rate} BPM</div>
                       </div>
                     </div>
                   )}
                   {record.pulse_oximeter != null && (
-                    <div className="bg-blue-50 rounded-lg p-2 flex items-center gap-2">
+                    <div className="bg-blue-50 dark:bg-slate-800 rounded-lg p-2 flex items-center gap-2">
                       <ThermometerSun size={16} className="text-blue-500" />
                       <div>
-                        <div className="text-xs text-gray-500">SpO2</div>
-                        <div className="font-semibold text-gray-800">{record.pulse_oximeter}%</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">SpO2</div>
+                        <div className="font-semibold text-gray-800 dark:text-slate-200">{record.pulse_oximeter}%</div>
                       </div>
                     </div>
                   )}
@@ -220,17 +220,17 @@ export default function CheckInHistoryPage() {
                     <div className="bg-amber-50 rounded-lg p-2 flex items-center gap-2">
                       <Droplets size={16} className="text-amber-500" />
                       <div>
-                        <div className="text-xs text-gray-500">Glucose</div>
-                        <div className="font-semibold text-gray-800">{record.glucose_mg_dl} mg/dL</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Glucose</div>
+                        <div className="font-semibold text-gray-800 dark:text-slate-200">{record.glucose_mg_dl} mg/dL</div>
                       </div>
                     </div>
                   )}
                   {record.weight != null && (
-                    <div className="bg-green-50 rounded-lg p-2 flex items-center gap-2">
+                    <div className="bg-green-50 dark:bg-slate-800 rounded-lg p-2 flex items-center gap-2">
                       <Weight size={16} className="text-green-500" />
                       <div>
-                        <div className="text-xs text-gray-500">Weight</div>
-                        <div className="font-semibold text-gray-800">{record.weight} lbs</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Weight</div>
+                        <div className="font-semibold text-gray-800 dark:text-slate-200">{record.weight} lbs</div>
                       </div>
                     </div>
                   )}
@@ -238,8 +238,8 @@ export default function CheckInHistoryPage() {
                     <div className="bg-emerald-50 rounded-lg p-2 flex items-center gap-2">
                       <Activity size={16} className="text-emerald-500" />
                       <div>
-                        <div className="text-xs text-gray-500">Activity</div>
-                        <div className="font-semibold text-gray-800 truncate">{record.physical_activity}</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Activity</div>
+                        <div className="font-semibold text-gray-800 dark:text-slate-200 truncate">{record.physical_activity}</div>
                       </div>
                     </div>
                   )}
@@ -248,14 +248,14 @@ export default function CheckInHistoryPage() {
                 {/* Notes / Symptoms */}
                 {record.symptoms && (
                   <div className="bg-orange-50 rounded-lg p-2 mb-2">
-                    <span className="text-xs text-gray-500">Symptoms: </span>
-                    <span className="text-gray-800">{record.symptoms}</span>
+                    <span className="text-xs text-gray-500 dark:text-slate-400">Symptoms: </span>
+                    <span className="text-gray-800 dark:text-slate-200">{record.symptoms}</span>
                   </div>
                 )}
                 {record.notes && (
-                  <div className="bg-gray-50 rounded-lg p-2">
-                    <span className="text-xs text-gray-500">Notes: </span>
-                    <span className="text-gray-800">{record.notes}</span>
+                  <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-2">
+                    <span className="text-xs text-gray-500 dark:text-slate-400">Notes: </span>
+                    <span className="text-gray-800 dark:text-slate-200">{record.notes}</span>
                   </div>
                 )}
               </div>

@@ -20,10 +20,10 @@ const DashMealOfTheDay: React.FC = () => {
     return (
       <div className="text-center">
         <div className="text-2xl sm:text-3xl mb-3">🍽️</div>
-        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 dark:text-slate-200 mb-3">
           Today's Meal
         </h3>
-        <p className="text-sm sm:text-base text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400">
           Loading today's featured meal...
         </p>
       </div>
@@ -38,7 +38,7 @@ const DashMealOfTheDay: React.FC = () => {
       {/* Content */}
       <div className="relative z-10">
       <div className="text-2xl sm:text-3xl mb-3 animate-bounce">🍽️</div>
-      <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+      <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 dark:text-slate-200 mb-3">
         Today's Featured Meal
       </h3>
 
@@ -54,14 +54,14 @@ const DashMealOfTheDay: React.FC = () => {
             }}
           />
         )}
-        <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+        <h4 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-slate-200 mb-2">
           {todaysMeal.name}
         </h4>
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+        <p className="text-sm text-gray-600 dark:text-slate-400 mb-3 line-clamp-2">
           {todaysMeal.description || 'A delicious and nutritious meal for today!'}
         </p>
 
-        <div className="flex justify-center gap-4 text-xs sm:text-sm text-gray-500 mb-4">
+        <div className="flex justify-center gap-4 text-xs sm:text-sm text-gray-500 dark:text-slate-400 mb-4">
           {todaysMeal.calories && (
             <span>🔥 {todaysMeal.calories} cal</span>
           )}

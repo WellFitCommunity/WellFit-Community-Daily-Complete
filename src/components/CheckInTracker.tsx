@@ -408,13 +408,13 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
       <div className="max-w-3xl mx-auto px-4">
         <NativeModeBanner className="mb-4" />
         {/* CARD */}
-        <div className="rounded-xl shadow-md border border-white/20 bg-white">
+        <div className="rounded-xl shadow-md border border-white/20 bg-white dark:bg-slate-900">
           {/* Header / Back */}
-          <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-slate-700">
             {showBackButton && (
               <button
                 onClick={() => navigate('/dashboard')}
-                className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-xs hover:shadow-md transition-shadow border border-gray-200"
+                className="flex items-center mb-4 px-3 py-2 bg-white dark:bg-slate-900 rounded-lg shadow-xs hover:shadow-md transition-shadow border border-gray-200 dark:border-slate-700"
                 style={{ color: branding.primaryColor || '#003865' }}
                 aria-label="Go back"
               >
@@ -429,7 +429,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
             >
               📊 Daily Check-In Center
             </h1>
-            <p className="text-gray-700 text-center">Track your health every day — you can report twice daily!</p>
+            <p className="text-gray-700 dark:text-slate-300 text-center">Track your health every day — you can report twice daily!</p>
           </div>
 
           {/* Form Body */}

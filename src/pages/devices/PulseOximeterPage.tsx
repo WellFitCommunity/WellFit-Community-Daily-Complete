@@ -113,13 +113,13 @@ const PulseOximeterPage: React.FC = () => {
   const getStatusColor = (status: SpO2Status) => {
     switch (status) {
       case 'normal':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300';
       case 'low':
-        return 'bg-yellow-100 text-yellow-700';
+        return 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300';
       case 'critical':
-        return 'bg-red-100 text-red-700';
+        return 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300';
     }
   };
 
@@ -206,17 +206,17 @@ const PulseOximeterPage: React.FC = () => {
         <CriticalValueAlert alerts={criticalAlerts} onDismiss={handleDismissAlert} />
 
         {displayError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 mb-6" role="alert">
+          <div className="bg-red-100 dark:bg-red-950 border border-red-400 text-red-700 dark:text-red-300 rounded-xl p-4 mb-6" role="alert">
             {displayError}
           </div>
         )}
 
         {/* Connection Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           {isLoading ? (
-            <div className="text-lg font-semibold text-gray-700">Loading...</div>
+            <div className="text-lg font-semibold text-gray-700 dark:text-slate-300">Loading...</div>
           ) : !ble.isSupported ? (
-            <div className="bg-blue-50 rounded-xl p-4 text-blue-800">
+            <div className="bg-blue-50 dark:bg-slate-800 rounded-xl p-4 text-blue-800 dark:text-blue-300">
               <h3 className="font-semibold mb-1 text-lg">Bluetooth isn’t available on this device</h3>
               <p className="text-base">
                 {ble.capabilityMessage ?? 'This device can’t connect a Bluetooth pulse oximeter.'} You can
@@ -228,7 +228,7 @@ const PulseOximeterPage: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className={`w-4 h-4 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-lg font-semibold text-gray-700">
+                  <span className="text-lg font-semibold text-gray-700 dark:text-slate-300">
                     {isConnected ? `Connected: ${ble.deviceName ?? friendlyName ?? 'your device'}` : 'Not Connected'}
                   </span>
                 </div>
@@ -237,7 +237,7 @@ const PulseOximeterPage: React.FC = () => {
                   disabled={isPairing}
                   aria-label={isConnected ? 'Disconnect pulse oximeter' : connectLabel}
                   className={`min-h-[44px] px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
-                    isConnected ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'text-white hover:opacity-90'
+                    isConnected ? 'bg-red-100 dark:bg-red-950 text-red-600 hover:bg-red-200' : 'text-white hover:opacity-90'
                   }`}
                   style={!isConnected ? { backgroundColor: branding.primaryColor } : {}}
                 >
@@ -246,20 +246,20 @@ const PulseOximeterPage: React.FC = () => {
               </div>
 
               {isConnected ? (
-                <div className="bg-green-50 rounded-xl p-4 text-green-800">
+                <div className="bg-green-50 dark:bg-slate-800 rounded-xl p-4 text-green-800 dark:text-green-300">
                   <p className="text-base font-medium">
                     {saving ? 'Saving your reading…' : 'Put your finger in the device now — your reading will appear below automatically.'}
                   </p>
                 </div>
               ) : (
-                <div className="bg-blue-50 rounded-xl p-4 text-blue-800">
+                <div className="bg-blue-50 dark:bg-slate-800 rounded-xl p-4 text-blue-800 dark:text-blue-300">
                   <h3 className="font-semibold mb-2 text-lg">How to connect your pulse oximeter</h3>
                   <ol className="list-decimal list-inside space-y-1 text-base">
                     <li>Turn on your pulse oximeter so it is ready to pair.</li>
                     <li>Tap <span className="font-semibold">Connect</span> above.</li>
                     <li>Pick your device from the list that appears.</li>
                   </ol>
-                  <p className="text-sm mt-3 text-blue-700">
+                  <p className="text-sm mt-3 text-blue-700 dark:text-blue-300">
                     Works with standard Bluetooth pulse oximeters on Android phones and computers using Chrome.
                   </p>
                 </div>
@@ -269,34 +269,34 @@ const PulseOximeterPage: React.FC = () => {
         </div>
 
         {/* SpO2 Range Guide */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             Blood Oxygen (SpO2) Guide
           </h2>
           <div className="space-y-3">
-            <div className="flex justify-between items-center p-4 bg-green-50 rounded-xl">
+            <div className="flex justify-between items-center p-4 bg-green-50 dark:bg-slate-800 rounded-xl">
               <div>
-                <div className="text-green-700 font-semibold">Normal</div>
+                <div className="text-green-700 dark:text-green-300 font-semibold">Normal</div>
                 <div className="text-sm text-green-600">Healthy oxygen levels</div>
               </div>
-              <div className="text-green-700 font-bold text-xl">95-100%</div>
+              <div className="text-green-700 dark:text-green-300 font-bold text-xl">95-100%</div>
             </div>
-            <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-xl">
+            <div className="flex justify-between items-center p-4 bg-yellow-50 dark:bg-slate-800 rounded-xl">
               <div>
-                <div className="text-yellow-700 font-semibold">Low</div>
+                <div className="text-yellow-700 dark:text-yellow-300 font-semibold">Low</div>
                 <div className="text-sm text-yellow-600">Consult your doctor</div>
               </div>
-              <div className="text-yellow-700 font-bold text-xl">90-94%</div>
+              <div className="text-yellow-700 dark:text-yellow-300 font-bold text-xl">90-94%</div>
             </div>
-            <div className="flex justify-between items-center p-4 bg-red-50 rounded-xl">
+            <div className="flex justify-between items-center p-4 bg-red-50 dark:bg-red-950 rounded-xl">
               <div>
-                <div className="text-red-700 font-semibold">Critical</div>
+                <div className="text-red-700 dark:text-red-300 font-semibold">Critical</div>
                 <div className="text-sm text-red-600">Seek medical attention</div>
               </div>
-              <div className="text-red-700 font-bold text-xl">Below 90%</div>
+              <div className="text-red-700 dark:text-red-300 font-bold text-xl">Below 90%</div>
             </div>
           </div>
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-4">
             *Normal SpO2 may vary for individuals with certain conditions. Consult your healthcare provider for your personal targets.
           </p>
         </div>
@@ -316,12 +316,12 @@ const PulseOximeterPage: React.FC = () => {
         )}
 
         {/* SpO2 History */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <h2 className="text-2xl font-bold mb-6" style={{ color: branding.primaryColor }}>
             Recent Readings
           </h2>
           {readings.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
+            <p className="text-gray-500 dark:text-slate-400 text-center py-8">
               No readings yet. Take an SpO2 measurement to record your first reading.
             </p>
           ) : (
@@ -330,16 +330,16 @@ const PulseOximeterPage: React.FC = () => {
                 const { date, time } = formatDateTime(reading.measured_at);
                 const status = getSpO2Status(reading.spo2);
                 return (
-                  <div key={reading.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div key={reading.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-xl">
                     <div>
-                      <div className="text-sm text-gray-500">{date} at {time}</div>
-                      <div className="text-2xl font-bold text-gray-800">
+                      <div className="text-sm text-gray-500 dark:text-slate-400">{date} at {time}</div>
+                      <div className="text-2xl font-bold text-gray-800 dark:text-slate-200">
                         {reading.spo2}%
-                        <span className="text-lg font-normal text-gray-500 ml-2">SpO2</span>
+                        <span className="text-lg font-normal text-gray-500 dark:text-slate-400 ml-2">SpO2</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-gray-500 mb-1">Pulse: {reading.pulse_rate} bpm</div>
+                      <div className="text-sm text-gray-500 dark:text-slate-400 mb-1">Pulse: {reading.pulse_rate} bpm</div>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}>
                         {status.charAt(0).toUpperCase() + status.slice(1)}
                       </span>
@@ -352,44 +352,44 @@ const PulseOximeterPage: React.FC = () => {
         </div>
 
         {/* When to Monitor */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             When to Monitor SpO2
           </h2>
           <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+            <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl">
               <span className="text-xl">🏃</span>
               <div>
                 <div className="font-medium">During Exercise</div>
-                <div className="text-sm text-gray-500">Monitor if you have respiratory conditions</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">Monitor if you have respiratory conditions</div>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+            <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl">
               <span className="text-xl">😴</span>
               <div>
                 <div className="font-medium">During Sleep</div>
-                <div className="text-sm text-gray-500">Check for sleep apnea concerns</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">Check for sleep apnea concerns</div>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+            <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl">
               <span className="text-xl">🤒</span>
               <div>
                 <div className="font-medium">When Feeling Unwell</div>
-                <div className="text-sm text-gray-500">Respiratory infections or COVID-19 monitoring</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">Respiratory infections or COVID-19 monitoring</div>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+            <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl">
               <span className="text-xl">🏔️</span>
               <div>
                 <div className="font-medium">At High Altitude</div>
-                <div className="text-sm text-gray-500">Monitor for altitude sickness</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">Monitor for altitude sickness</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Manual Entry */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
               Manual Entry
@@ -413,7 +413,7 @@ const PulseOximeterPage: React.FC = () => {
               primaryColor={branding.primaryColor}
             />
           ) : (
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-slate-400">
               Don't have a connected pulse oximeter? Click "Add Reading" to manually enter your SpO2 level.
             </p>
           )}
@@ -424,7 +424,7 @@ const PulseOximeterPage: React.FC = () => {
           <button
             onClick={() => navigate('/my-health')}
             aria-label="Go back to My Health"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <span className="text-2xl" aria-hidden="true">←</span>
             <span>Back to My Health</span>

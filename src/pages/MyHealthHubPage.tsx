@@ -205,7 +205,7 @@ const MyHealthHubPage: React.FC = () => {
             onClick={handleDownloadRecords}
             disabled={isDownloading}
             aria-label="Download all my health records"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="text-2xl" aria-hidden="true">📥</span>
             <span>{isDownloading ? 'Preparing Download...' : 'Download My Records'}</span>
@@ -226,7 +226,7 @@ const MyHealthHubPage: React.FC = () => {
                 key={device.id}
                 onClick={() => navigate(device.route)}
                 aria-label={`${device.connected ? 'Connected' : 'Connect'} ${device.title}: ${device.description}`}
-                className="group relative bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-6 text-center"
+                className="group relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-6 text-center"
                 style={{ minHeight: '180px' }}
               >
                 {/* Connection Status Indicator */}
@@ -251,7 +251,7 @@ const MyHealthHubPage: React.FC = () => {
                 </h3>
 
                 {/* Description */}
-                <p className="text-sm sm:text-base text-gray-600 leading-snug relative z-10">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 leading-snug relative z-10">
                   {device.description}
                 </p>
 
@@ -274,7 +274,7 @@ const MyHealthHubPage: React.FC = () => {
             <button
               onClick={() => navigate(healthTiles[0].route)}
               aria-label={`Go to ${healthTiles[0].title}: ${healthTiles[0].description}`}
-              className="group relative bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-8 sm:p-10 text-left w-full"
+              className="group relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-8 sm:p-10 text-left w-full"
               style={{ minHeight: '220px' }}
             >
               <div
@@ -292,7 +292,7 @@ const MyHealthHubPage: React.FC = () => {
               >
                 {healthTiles[0].title}
               </h2>
-              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed relative z-10">
+              <p className="text-lg sm:text-xl text-gray-600 dark:text-slate-400 leading-relaxed relative z-10">
                 {healthTiles[0].description}
               </p>
               <div className="absolute bottom-6 right-6 text-3xl opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
@@ -308,7 +308,7 @@ const MyHealthHubPage: React.FC = () => {
               key={tile.id}
               onClick={() => navigate(tile.route)}
               aria-label={`Go to ${tile.title}: ${tile.description}`}
-              className="group relative bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-8 sm:p-10 text-left"
+              className="group relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-8 sm:p-10 text-left"
               style={{ minHeight: '220px' }}
             >
               {/* Gradient Background Accent - Using Branding Colors */}
@@ -333,7 +333,7 @@ const MyHealthHubPage: React.FC = () => {
               </h2>
 
               {/* Description */}
-              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed relative z-10">
+              <p className="text-lg sm:text-xl text-gray-600 dark:text-slate-400 leading-relaxed relative z-10">
                 {tile.description}
               </p>
 
@@ -351,7 +351,7 @@ const MyHealthHubPage: React.FC = () => {
           <button
             onClick={() => navigate('/dashboard')}
             aria-label="Go back to main dashboard"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <span className="text-2xl" aria-hidden="true">←</span>
             <span>Back to Dashboard</span>
@@ -363,7 +363,7 @@ const MyHealthHubPage: React.FC = () => {
           <h3 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             <span aria-hidden="true">💡</span> Quick Tips
           </h3>
-          <ul className="space-y-3 text-lg sm:text-xl text-gray-700">
+          <ul className="space-y-3 text-lg sm:text-xl text-gray-700 dark:text-slate-300">
             <li className="flex items-start gap-3">
               <span className="text-2xl shrink-0" aria-hidden="true">✅</span>
               <span>Keep your health records up to date for better care coordination</span>

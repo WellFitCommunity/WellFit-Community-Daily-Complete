@@ -180,13 +180,13 @@ const ManualEntryForm: React.FC<ManualEntryFormProps> = ({
 
   if (showSuccess) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+      <div className="bg-green-50 dark:bg-slate-800 border border-green-200 dark:border-slate-600 rounded-xl p-6 text-center">
         <div className="text-4xl mb-3">✓</div>
-        <h3 className="text-xl font-bold text-green-700 mb-2">Reading Saved!</h3>
+        <h3 className="text-xl font-bold text-green-700 dark:text-green-300 mb-2">Reading Saved!</h3>
         <p className="text-green-600 mb-4">Your {config.title.toLowerCase()} has been recorded.</p>
         <button
           onClick={handleReset}
-          className="px-4 py-2 text-green-700 hover:bg-green-100 rounded-lg transition-colors"
+          className="px-4 py-2 text-green-700 dark:text-green-300 hover:bg-green-100 rounded-lg transition-colors"
         >
           Add Another Reading
         </button>
@@ -196,10 +196,10 @@ const ManualEntryForm: React.FC<ManualEntryFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-700">{config.title}</h3>
+      <h3 className="text-lg font-semibold text-gray-700 dark:text-slate-300">{config.title}</h3>
 
       {submitError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-lg p-3 text-sm">
           {submitError}
         </div>
       )}
@@ -209,7 +209,7 @@ const ManualEntryForm: React.FC<ManualEntryFormProps> = ({
           <div key={field.name} className={field.type === 'select' ? 'sm:col-span-2' : ''}>
             <label
               htmlFor={field.name}
-              className="block text-sm font-medium text-gray-600 mb-1"
+              className="block text-sm font-medium text-gray-600 dark:text-slate-400 mb-1"
             >
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
@@ -223,7 +223,7 @@ const ManualEntryForm: React.FC<ManualEntryFormProps> = ({
                 className={`w-full px-4 py-3 rounded-lg border ${
                   errors[field.name]
                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                    : 'border-gray-300 focus:ring-2 focus:border-transparent'
+                    : 'border-gray-300 dark:border-slate-600 focus:ring-2 focus:border-transparent'
                 } transition-colors`}
                 style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
               >
@@ -248,12 +248,12 @@ const ManualEntryForm: React.FC<ManualEntryFormProps> = ({
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors[field.name]
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-2 focus:border-transparent'
+                      : 'border-gray-300 dark:border-slate-600 focus:ring-2 focus:border-transparent'
                   } transition-colors ${field.unit ? 'pr-16' : ''}`}
                   style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
                 />
                 {field.unit && (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-sm">
                     {field.unit}
                   </span>
                 )}
@@ -280,7 +280,7 @@ const ManualEntryForm: React.FC<ManualEntryFormProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-3 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="px-6 py-3 rounded-xl font-semibold text-gray-600 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 transition-colors"
           >
             Cancel
           </button>

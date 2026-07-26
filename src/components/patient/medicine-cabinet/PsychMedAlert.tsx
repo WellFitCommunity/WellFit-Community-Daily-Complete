@@ -24,7 +24,7 @@ export const PsychMedAlert: React.FC<PsychMedAlertProps> = ({
 
   return (
     <div className={`mb-6 rounded-xl border-2 p-6 ${
-      isCritical ? 'bg-red-50 border-red-300' : 'bg-yellow-50 border-yellow-300'
+      isCritical ? 'bg-red-50 dark:bg-red-950 border-red-300' : 'bg-yellow-50 dark:bg-slate-800 border-yellow-300'
     }`}>
       <div className="flex items-start gap-4">
         <div className={`shrink-0 ${isCritical ? 'text-red-600' : 'text-yellow-600'}`}>
@@ -36,19 +36,19 @@ export const PsychMedAlert: React.FC<PsychMedAlertProps> = ({
           }`}>
             Multiple Psychiatric Medications Detected
           </h3>
-          <p className={`mb-3 ${isCritical ? 'text-red-800' : 'text-yellow-800'}`}>
+          <p className={`mb-3 ${isCritical ? 'text-red-800 dark:text-red-300' : 'text-yellow-800 dark:text-yellow-300'}`}>
             Patient is taking {psychMedAlert.psychMedCount} psychiatric medications simultaneously.
             {psychMedAlert.requiresReview && ' Requires clinical review.'}
           </p>
 
           {/* Medication List */}
-          <div className="bg-white bg-opacity-60 rounded-lg p-4 mb-3">
-            <p className="font-semibold text-gray-900 mb-2">Psychiatric Medications:</p>
+          <div className="bg-white dark:bg-slate-900 bg-opacity-60 rounded-lg p-4 mb-3">
+            <p className="font-semibold text-gray-900 dark:text-slate-100 mb-2">Psychiatric Medications:</p>
             <ul className="space-y-1">
               {psychMedAlert.medications.map((med, idx) => (
-                <li key={idx} className="text-sm text-gray-800">
+                <li key={idx} className="text-sm text-gray-800 dark:text-slate-200">
                   • <span className="font-medium">{med.name}</span>
-                  <span className="text-gray-600"> - {med.category}</span>
+                  <span className="text-gray-600 dark:text-slate-400"> - {med.category}</span>
                 </li>
               ))}
             </ul>
@@ -56,11 +56,11 @@ export const PsychMedAlert: React.FC<PsychMedAlertProps> = ({
 
           {/* Warnings */}
           {psychMedAlert.warnings.length > 0 && (
-            <div className="bg-white bg-opacity-60 rounded-lg p-4 mb-3">
-              <p className="font-semibold text-gray-900 mb-2">Warnings:</p>
+            <div className="bg-white dark:bg-slate-900 bg-opacity-60 rounded-lg p-4 mb-3">
+              <p className="font-semibold text-gray-900 dark:text-slate-100 mb-2">Warnings:</p>
               <ul className="space-y-1">
                 {psychMedAlert.warnings.map((warning, idx) => (
-                  <li key={idx} className="text-sm text-gray-800 flex items-start gap-2">
+                  <li key={idx} className="text-sm text-gray-800 dark:text-slate-200 flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                     {warning}
                   </li>
@@ -87,7 +87,7 @@ export const PsychMedAlert: React.FC<PsychMedAlertProps> = ({
               </button>
             )}
             {firstAlert.acknowledged && (
-              <div className="flex items-center gap-2 text-green-700">
+              <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
                 <CheckCircle className="w-5 h-5" />
                 <span className="text-sm font-medium">Acknowledged</span>
               </div>

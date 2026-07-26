@@ -58,8 +58,8 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
 
     const values = trendData.map(d => d.value).filter((v): v is number => v !== undefined);
     if (values.length === 0) return null;
-    const min = Math.min(...values);
-    const max = Math.max(...values);
+    const min = values.reduce((acc, v) => Math.min(acc, v), Infinity);
+    const max = values.reduce((acc, v) => Math.max(acc, v), -Infinity);
     const range = max - min;
     const padding = range * 0.1;
 
@@ -91,17 +91,17 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
   const selectedType = observationTypes.find(t => t.code === selectedCode);
 
   return (
-    <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Observation Trends</h2>
-          <p className="text-sm text-gray-600 mt-1">Visualize changes over time</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Observation Trends</h2>
+          <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">Visualize changes over time</p>
         </div>
       </div>
 
       {/* Observation Type Selector */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
           Select Observation to Trend
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -111,12 +111,12 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
               onClick={() => setSelectedCode(type.code)}
               className={`text-left p-4 rounded-lg border-2 transition-all ${
                 selectedCode === type.code
-                  ? 'border-blue-500 bg-blue-50 shadow-md'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-slate-800 shadow-md'
+                  : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
               }`}
             >
-              <div className="font-semibold text-gray-900 text-sm">{type.display}</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="font-semibold text-gray-900 dark:text-slate-100 text-sm">{type.display}</div>
+              <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                 {type.count} reading{type.count > 1 ? 's' : ''} • {type.unit || 'N/A'}
               </div>
             </button>
@@ -128,21 +128,21 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
       {selectedCode && trendData.length > 0 && chartData && (
         <div className="space-y-4">
           {/* Chart Container */}
-          <div className="bg-linear-to-br from-gray-50 to-blue-50 rounded-lg p-6 border border-gray-200">
+          <div className="bg-linear-to-br from-gray-50 to-blue-50 rounded-lg p-6 border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">{selectedType?.display} Trend</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100">{selectedType?.display} Trend</h3>
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-gray-600">Normal</span>
+                  <span className="text-gray-600 dark:text-slate-400">Normal</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span className="text-gray-600">High</span>
+                  <span className="text-gray-600 dark:text-slate-400">High</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <span className="text-gray-600">Low</span>
+                  <span className="text-gray-600 dark:text-slate-400">Low</span>
                 </div>
               </div>
             </div>
@@ -264,27 +264,27 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
 
           {/* Data Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+              <thead className="bg-gray-50 dark:bg-slate-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                     Date/Time
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                     Value
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                     Interpretation
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-700">
                 {trendData.slice().reverse().map((point, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-slate-800">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-slate-100">
                       {formatDate(point.date)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-slate-100">
                       {point.value} {selectedType?.unit}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
@@ -308,28 +308,28 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
 
           {/* Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <div className="bg-blue-50 dark:bg-slate-800 rounded-lg p-4 border border-blue-200 dark:border-slate-600">
               <div className="text-sm text-blue-600 font-medium">Latest</div>
-              <div className="text-2xl font-bold text-blue-900 mt-1">
+              <div className="text-2xl font-bold text-blue-900 dark:text-blue-200 mt-1">
                 {trendData[trendData.length - 1].value} {selectedType?.unit}
               </div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+            <div className="bg-green-50 dark:bg-slate-800 rounded-lg p-4 border border-green-200 dark:border-slate-600">
               <div className="text-sm text-green-600 font-medium">Average</div>
               <div className="text-2xl font-bold text-green-900 mt-1">
                 {(trendData.reduce((sum, p) => sum + (p.value ?? 0), 0) / trendData.length).toFixed(1)} {selectedType?.unit}
               </div>
             </div>
-            <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+            <div className="bg-red-50 dark:bg-red-950 rounded-lg p-4 border border-red-200 dark:border-red-900">
               <div className="text-sm text-red-600 font-medium">Maximum</div>
               <div className="text-2xl font-bold text-red-900 mt-1">
-                {Math.max(...trendData.map(p => p.value ?? 0)).toFixed(1)} {selectedType?.unit}
+                {trendData.reduce((acc, p) => Math.max(acc, p.value ?? 0), -Infinity).toFixed(1)} {selectedType?.unit}
               </div>
             </div>
             <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
               <div className="text-sm text-orange-600 font-medium">Minimum</div>
               <div className="text-2xl font-bold text-orange-900 mt-1">
-                {Math.min(...trendData.map(p => p.value ?? 0)).toFixed(1)} {selectedType?.unit}
+                {trendData.reduce((acc, p) => Math.min(acc, p.value ?? 0), Infinity).toFixed(1)} {selectedType?.unit}
               </div>
             </div>
           </div>
@@ -337,18 +337,18 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
       )}
 
       {!selectedCode && (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+        <div className="text-center py-12 bg-gray-50 dark:bg-slate-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-slate-600">
           <div className="text-5xl mb-4">📊</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Select an Observation to View Trends</h3>
-          <p className="text-gray-600">Choose an observation type above to see how values change over time</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">Select an Observation to View Trends</h3>
+          <p className="text-gray-600 dark:text-slate-400">Choose an observation type above to see how values change over time</p>
         </div>
       )}
 
       {selectedCode && trendData.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+        <div className="text-center py-12 bg-gray-50 dark:bg-slate-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-slate-600">
           <div className="text-5xl mb-4">📉</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Trend Data Available</h3>
-          <p className="text-gray-600">Not enough data points to display a trend</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">No Trend Data Available</h3>
+          <p className="text-gray-600 dark:text-slate-400">Not enough data points to display a trend</p>
         </div>
       )}
     </div>

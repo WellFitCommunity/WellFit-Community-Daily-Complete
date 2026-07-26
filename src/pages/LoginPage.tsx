@@ -529,7 +529,7 @@ const LoginPage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center" style={{ background: branding.gradient }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
     );
@@ -540,7 +540,7 @@ const LoginPage: React.FC = () => {
     return (
       <div className="min-h-screen py-16 px-4" style={{ background: branding.gradient }}>
         <div
-          className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md"
+          className="max-w-md mx-auto p-6 bg-white dark:bg-slate-900 rounded-xl shadow-md"
           style={{ borderColor: accent, borderWidth: '2px' }}
         >
           <img
@@ -553,7 +553,7 @@ const LoginPage: React.FC = () => {
             Already Logged In
           </h1>
 
-          <p className="text-center text-gray-700 mb-6">
+          <p className="text-center text-gray-700 dark:text-slate-300 mb-6">
             You are currently logged in as <strong>{existingUserEmail}</strong>
           </p>
 
@@ -570,7 +570,7 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full py-3 font-semibold rounded-sm border-2 hover:bg-gray-50 transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2"
+              className="w-full py-3 font-semibold rounded-sm border-2 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2"
               style={{ borderColor: accent, color: primary }}
             >
               Logout and Login as Different User
@@ -584,7 +584,7 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen py-16 px-4" style={{ background: branding.gradient }}>
       <div
-        className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md"
+        className="max-w-md mx-auto p-6 bg-white dark:bg-slate-900 rounded-xl shadow-md"
         style={{ borderColor: accent, borderWidth: '2px' }}
       >
         <img
@@ -635,15 +635,15 @@ const LoginPage: React.FC = () => {
       {/* Forms */}
       {/* Show redirect message from registration */}
       {redirectMessage && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-blue-800 text-center font-medium">{redirectMessage}</p>
+        <div className="mb-4 p-4 bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg">
+          <p className="text-blue-800 dark:text-blue-300 text-center font-medium">{redirectMessage}</p>
         </div>
       )}
 
       {(mode === 'senior' || mode === 'patient') ? (
         <form onSubmit={handleSeniorLogin} className="space-y-4" noValidate>
           <div>
-            <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1 text-left">
               Phone Number
             </label>
             <input
@@ -655,18 +655,18 @@ const LoginPage: React.FC = () => {
               required
               aria-required="true"
               aria-invalid={Boolean(error && phone.trim() === '')}
-              className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden"
+              className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:outline-hidden"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="tel"
               inputMode="tel"
             />
-            <p className="text-xs text-left mt-1 text-gray-500">
+            <p className="text-xs text-left mt-1 text-gray-500 dark:text-slate-400">
               You don't need to type "+1". We add it for you.
             </p>
           </div>
 
           <div>
-            <label htmlFor="senior-password-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            <label htmlFor="senior-password-input" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1 text-left">
               Password
             </label>
             <div className="relative">
@@ -679,14 +679,14 @@ const LoginPage: React.FC = () => {
                 required
                 aria-required="true"
                 aria-invalid={Boolean(error && seniorPassword.trim() === '')}
-                className="w-full p-3 pr-12 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden"
+                className="w-full p-3 pr-12 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:outline-hidden"
                 style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowSeniorPassword(!showSeniorPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600"
                 aria-label={showSeniorPassword ? "Hide password" : "Show password"}
               >
                 {showSeniorPassword ? (
@@ -719,10 +719,10 @@ const LoginPage: React.FC = () => {
             <>
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="w-full border-t border-gray-300 dark:border-slate-600"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">OR</span>
+                  <span className="px-2 bg-white dark:bg-slate-900 text-gray-500 dark:text-slate-400">OR</span>
                 </div>
               </div>
 
@@ -730,7 +730,7 @@ const LoginPage: React.FC = () => {
                 type="button"
                 onClick={handlePasskeyLogin}
                 disabled={passkeyLoading || loading}
-                className="w-full py-4 min-h-[56px] font-semibold text-lg rounded-sm border-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                className="w-full py-4 min-h-[56px] font-semibold text-lg rounded-sm border-2 hover:bg-gray-50 dark:hover:bg-slate-800 active:bg-gray-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 style={{ borderColor: accent, color: primary }}
               >
                 {passkeyLoading ? (
@@ -763,7 +763,7 @@ const LoginPage: React.FC = () => {
 
           {/* Dev-only debug canary */}
           {import.meta.env.MODE !== 'production' && (
-            <div className="mt-3 text-xs text-gray-500 text-center">
+            <div className="mt-3 text-xs text-gray-500 dark:text-slate-400 text-center">
               <div>Auth URL: {debug.url}</div>
               <div>Client Ready: {String(debug.hasAuth)}</div>
             </div>
@@ -780,7 +780,7 @@ const LoginPage: React.FC = () => {
       ) : (
         <form onSubmit={handleAdminLogin} className="space-y-4" noValidate>
           <div>
-            <label htmlFor="admin-email-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            <label htmlFor="admin-email-input" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1 text-left">
               Admin Email
             </label>
             <input
@@ -798,7 +798,7 @@ const LoginPage: React.FC = () => {
               required
               aria-required="true"
               aria-invalid={Boolean(error && adminEmail.trim() === '')}
-              className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden"
+              className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:outline-hidden"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="email"
               inputMode="email"
@@ -806,7 +806,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="admin-password-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            <label htmlFor="admin-password-input" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1 text-left">
               Password
             </label>
             <div className="relative">
@@ -819,14 +819,14 @@ const LoginPage: React.FC = () => {
                 required
                 aria-required="true"
                 aria-invalid={Boolean(error && adminPassword.trim() === '')}
-                className="w-full p-3 pr-12 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden"
+                className="w-full p-3 pr-12 border border-gray-300 dark:border-slate-600 rounded-sm focus:ring-2 focus:outline-hidden"
                 style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowAdminPassword(!showAdminPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600"
                 aria-label={showAdminPassword ? "Hide password" : "Show password"}
               >
                 {showAdminPassword ? (
@@ -861,14 +861,14 @@ const LoginPage: React.FC = () => {
           </button>
 
           <div className="mt-3 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-slate-400">
               After email login, you'll need to enter your admin PIN
             </p>
           </div>
 
           {/* Dev-only debug canary */}
           {import.meta.env.MODE !== 'production' && (
-            <div className="mt-3 text-xs text-gray-500 text-center">
+            <div className="mt-3 text-xs text-gray-500 dark:text-slate-400 text-center">
               <div>Auth URL: {debug.url}</div>
               <div>Client Ready: {String(debug.hasAuth)}</div>
             </div>
@@ -889,7 +889,7 @@ const LoginPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/envision')}
-            className="text-xs text-gray-400 hover:text-teal-600 transition-colors"
+            className="text-xs text-gray-400 dark:text-slate-500 hover:text-teal-600 transition-colors"
           >
             Envision
           </button>

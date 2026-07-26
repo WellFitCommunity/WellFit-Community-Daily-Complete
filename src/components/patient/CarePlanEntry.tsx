@@ -178,7 +178,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700">
         {/* Header */}
         <div className="bg-linear-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-xl">
           <div className="flex justify-between items-center">
@@ -197,27 +197,27 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="mb-6 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg p-4">
+              <p className="text-red-800 dark:text-red-300 text-sm">{error}</p>
             </div>
           )}
 
           {/* Basic Information */}
           <div className="space-y-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 border-b border-gray-200 dark:border-slate-700 pb-2">
               Basic Information
             </h3>
 
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Title <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="e.g., Diabetes Management Plan, Fall Prevention Plan"
                 required
               />
@@ -225,14 +225,14 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 placeholder="Describe the purpose and scope of this care plan..."
               />
             </div>
@@ -240,13 +240,13 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
             {/* Status and Intent */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Status <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.status}
                   onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
                   <option value="draft">Draft</option>
@@ -257,13 +257,13 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Intent <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.intent}
                   onChange={(e) => handleInputChange('intent', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
                   <option value="proposal">Proposal</option>
@@ -276,19 +276,19 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
             {/* Categories */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
                 Categories <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {Object.entries(CARE_PLAN_CATEGORY_NAMES).map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 cursor-pointer p-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+                  <label key={key} className="flex items-center gap-2 cursor-pointer p-3 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
                     <input
                       type="checkbox"
                       checked={formData.category.includes(key)}
                       onChange={() => handleCategoryToggle(key)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-slate-600 rounded-sm focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-900">{label}</span>
+                    <span className="text-sm text-gray-900 dark:text-slate-100">{label}</span>
                   </label>
                 ))}
               </div>
@@ -297,26 +297,26 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
             {/* Period */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Start Date <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={formData.periodStart}
                   onChange={(e) => handleInputChange('periodStart', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   End Date (Optional)
                 </label>
                 <input
                   type="date"
                   value={formData.periodEnd}
                   onChange={(e) => handleInputChange('periodEnd', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -324,26 +324,26 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
             {/* Author and Care Team */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Author (Provider/Organization)
                 </label>
                 <input
                   type="text"
                   value={formData.authorDisplay}
                   onChange={(e) => handleInputChange('authorDisplay', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., Dr. Smith, Primary Care"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Care Team
                 </label>
                 <input
                   type="text"
                   value={formData.careTeamDisplay}
                   onChange={(e) => handleInputChange('careTeamDisplay', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., Primary Care Team, Diabetes Care Team"
                 />
               </div>
@@ -352,8 +352,8 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
           {/* Goals */}
           <div className="space-y-4 mb-8">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Goals</h3>
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 pb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Goals</h3>
               <button
                 type="button"
                 onClick={addGoal}
@@ -369,7 +369,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
                     type="text"
                     value={goal}
                     onChange={(e) => updateGoal(index, e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="e.g., Maintain HbA1c below 7%, Reduce fall risk"
                   />
                   <button
@@ -386,8 +386,8 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
           {/* Conditions Addressed */}
           <div className="space-y-4 mb-8">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Conditions Addressed</h3>
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 pb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Conditions Addressed</h3>
               <button
                 type="button"
                 onClick={addCondition}
@@ -403,7 +403,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
                     type="text"
                     value={condition}
                     onChange={(e) => updateCondition(index, e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="e.g., Type 2 Diabetes, Hypertension, COPD"
                   />
                   <button
@@ -420,8 +420,8 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
           {/* Activities */}
           <div className="space-y-4 mb-8">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Activities</h3>
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 pb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Activities</h3>
               <button
                 type="button"
                 onClick={addActivity}
@@ -433,14 +433,14 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
             {/* Activity Templates */}
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Quick Add Common Activities:</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Quick Add Common Activities:</p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(SENIOR_CARE_ACTIVITIES).slice(0, 6).map(([key, activity]) => (
                   <button
                     key={key}
                     type="button"
                     onClick={() => addTemplateActivity(activity)}
-                    className="px-3 py-1 text-xs bg-purple-100 text-purple-700 border border-purple-300 rounded-lg hover:bg-purple-200 transition-colors"
+                    className="px-3 py-1 text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-300 rounded-lg hover:bg-purple-200 transition-colors"
                   >
                     + {activity.display}
                   </button>
@@ -451,9 +451,9 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
             {/* Activity List */}
             <div className="space-y-3">
               {activities.map((activity, index) => (
-                <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div key={index} className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
                   <div className="flex items-start justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">Activity {index + 1}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-slate-100">Activity {index + 1}</h4>
                     <button
                       type="button"
                       onClick={() => removeActivity(index)}
@@ -464,25 +464,25 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                         Activity Name
                       </label>
                       <input
                         type="text"
                         value={activity.detail?.code_display || ''}
                         onChange={(e) => updateActivity(index, 'detail.code_display', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         placeholder="e.g., Daily glucose monitoring"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                         Status
                       </label>
                       <select
                         value={activity.status || 'not-started'}
                         onChange={(e) => updateActivity(index, 'status', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       >
                         <option value="not-started">Not Started</option>
                         <option value="scheduled">Scheduled</option>
@@ -494,14 +494,14 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
                     </div>
                   </div>
                   <div className="mt-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                       Description
                     </label>
                     <textarea
                       value={activity.detail?.description || ''}
                       onChange={(e) => updateActivity(index, 'detail.description', e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
                       placeholder="Describe the activity..."
                     />
                   </div>
@@ -512,24 +512,24 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
 
           {/* Notes */}
           <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Notes
             </label>
             <textarea
               value={formData.note}
               onChange={(e) => handleInputChange('note', e.target.value)}
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="Additional notes about this care plan..."
             />
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-6 border-t border-gray-200">
+          <div className="flex gap-3 pt-6 border-t border-gray-200 dark:border-slate-700">
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-6 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors font-medium"
             >
               Cancel
             </button>

@@ -58,7 +58,7 @@ const HealthObservationsWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
         </div>
@@ -67,9 +67,9 @@ const HealthObservationsWidget: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
       <div className="text-center">
-        <h3 className="text-xl font-bold text-[#003865] mb-4 flex items-center justify-center gap-2">
+        <h3 className="text-xl font-bold text-[#003865] dark:text-sky-300 mb-4 flex items-center justify-center gap-2">
           <span>📊</span>
           Health Observations
         </h3>
@@ -77,7 +77,7 @@ const HealthObservationsWidget: React.FC = () => {
         {latestObservations.length === 0 ? (
           <div className="py-6">
             <div className="text-5xl mb-3">💓</div>
-            <p className="text-gray-600 mb-4 text-sm">Track your vitals and lab results</p>
+            <p className="text-gray-600 dark:text-slate-400 mb-4 text-sm">Track your vitals and lab results</p>
             <button
               onClick={() => navigate('/health-observations')}
               className="w-full p-3 bg-[#8cc63f] text-white rounded-lg hover:bg-[#003865] transition font-semibold"
@@ -91,17 +91,17 @@ const HealthObservationsWidget: React.FC = () => {
               {latestObservations.map((obs) => (
                 <div
                   key={obs.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition"
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <span className="text-2xl">{getIcon(obs.category)}</span>
                     <div className="text-left flex-1">
-                      <div className="font-semibold text-sm text-gray-900">{obs.code_display}</div>
-                      <div className="text-xs text-gray-500">{formatDate(obs.effective_datetime)}</div>
+                      <div className="font-semibold text-sm text-gray-900 dark:text-slate-100">{obs.code_display}</div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">{formatDate(obs.effective_datetime)}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-[#003865]">{formatValue(obs)}</div>
+                    <div className="font-bold text-[#003865] dark:text-sky-300">{formatValue(obs)}</div>
                   </div>
                 </div>
               ))}

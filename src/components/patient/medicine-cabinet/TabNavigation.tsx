@@ -27,7 +27,7 @@ const TABS: Array<{ id: TabId; label: string; icon: React.FC<{ className?: strin
 export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange }) => {
   return (
     <div className="max-w-7xl mx-auto mb-6">
-      <div className="flex gap-2 bg-white rounded-xl shadow-md p-2 overflow-x-auto">
+      <div className="flex gap-2 bg-white dark:bg-slate-900 rounded-xl shadow-md p-2 overflow-x-auto">
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -35,7 +35,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabCh
             className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all whitespace-nowrap ${
               activeTab === tab.id
                 ? 'bg-linear-to-r from-blue-600 to-purple-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
             }`}
           >
             <tab.icon className="w-5 h-5" />

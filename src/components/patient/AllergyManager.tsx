@@ -120,11 +120,11 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
   const getCriticalityColor = (criticality?: string) => {
     switch (criticality) {
       case 'high':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-300';
       case 'low':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 border-yellow-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-300 dark:border-slate-600';
     }
   };
 
@@ -133,12 +133,12 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
       <ToastContainer />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Allergy & Intolerance Management</h2>
-          <p className="text-sm text-gray-600 mt-1">Critical for medication safety</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Allergy & Intolerance Management</h2>
+          <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">Critical for medication safety</p>
         </div>
         {!readOnly && (
           <button
@@ -151,20 +151,20 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
       </div>
 
       {showAddForm && !readOnly && (
-        <form onSubmit={handleSubmit} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="font-semibold text-gray-900 mb-4">
+        <form onSubmit={handleSubmit} className="mb-6 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+          <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-4">
             {editingId ? 'Edit Allergy' : 'Add New Allergy'}
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Type</label>
               <select
                 value={formData.allergen_type}
                 onChange={(e) =>
                   setFormData({ ...formData, allergen_type: e.target.value as 'medication' | 'food' | 'environment' | 'biologic' })
                 }
-                className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full border-gray-300 dark:border-slate-600 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                 required
               >
                 <option value="medication">Medication</option>
@@ -175,27 +175,27 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Allergen Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.allergen_name}
                 onChange={(e) => setFormData({ ...formData, allergen_name: e.target.value })}
-                className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full border-gray-300 dark:border-slate-600 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                 placeholder="e.g., Penicillin, Peanuts"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Criticality</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Criticality</label>
               <select
                 value={formData.criticality}
                 onChange={(e) =>
                   setFormData({ ...formData, criticality: e.target.value as 'low' | 'high' | 'unable-to-assess' })
                 }
-                className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full border-gray-300 dark:border-slate-600 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
                 <option value="low">Low</option>
                 <option value="high">High</option>
@@ -204,11 +204,11 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Severity</label>
               <select
                 value={formData.severity}
                 onChange={(e) => setFormData({ ...formData, severity: e.target.value as 'mild' | 'moderate' | 'severe' })}
-                className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full border-gray-300 dark:border-slate-600 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
                 <option value="mild">Mild</option>
                 <option value="moderate">Moderate</option>
@@ -217,7 +217,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Reaction Description
               </label>
               <textarea
@@ -225,18 +225,18 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
                 onChange={(e) =>
                   setFormData({ ...formData, reaction_description: e.target.value })
                 }
-                className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full border-gray-300 dark:border-slate-600 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                 rows={2}
                 placeholder="Describe the reaction (e.g., hives, difficulty breathing)"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Notes</label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full border-gray-300 dark:border-slate-600 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                 rows={2}
                 placeholder="Additional notes"
               />
@@ -247,7 +247,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium"
+              className="px-4 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-md hover:bg-gray-50 dark:hover:bg-slate-800 text-sm font-medium"
             >
               Cancel
             </button>
@@ -262,7 +262,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
       )}
 
       {allergies.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 dark:text-slate-400">
           <p className="text-lg font-medium">No Known Allergies</p>
           <p className="text-sm mt-1">Patient has no recorded allergies or intolerances</p>
         </div>
@@ -276,8 +276,8 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3">
-                    <h3 className="font-semibold text-gray-900">{allergy.allergen_name}</h3>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white border">
+                    <h3 className="font-semibold text-gray-900 dark:text-slate-100">{allergy.allergen_name}</h3>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white dark:bg-slate-900 border">
                       {allergy.allergen_type}
                     </span>
                     {allergy.criticality === 'high' && (
@@ -293,7 +293,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
                     </p>
                   )}
 
-                  <div className="flex items-center space-x-4 mt-2 text-xs text-gray-600">
+                  <div className="flex items-center space-x-4 mt-2 text-xs text-gray-600 dark:text-slate-400">
                     <span>
                       Status: <span className="font-medium">{allergy.clinical_status}</span>
                     </span>
@@ -308,7 +308,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
                   </div>
 
                   {allergy.notes && (
-                    <p className="text-sm text-gray-700 mt-2 italic">{allergy.notes}</p>
+                    <p className="text-sm text-gray-700 dark:text-slate-300 mt-2 italic">{allergy.notes}</p>
                   )}
                 </div>
 
@@ -316,7 +316,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
                   <div className="flex space-x-2 ml-4">
                     <button
                       onClick={() => handleEdit(allergy)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-sm"
+                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-sm"
                       title="Edit"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

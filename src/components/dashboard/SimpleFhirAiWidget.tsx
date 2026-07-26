@@ -97,30 +97,30 @@ const SimpleFhirAiWidget: React.FC = () => {
   const getStatusColors = (status: SimpleHealthStatus['status']) => {
     switch (status) {
       case 'GREAT': return {
-        bg: 'bg-green-100',
+        bg: 'bg-green-100 dark:bg-green-950',
         border: 'border-green-300',
-        text: 'text-green-800',
+        text: 'text-green-800 dark:text-green-300',
         emoji: '🌟',
         statusText: 'Excellent!'
       };
       case 'GOOD': return {
-        bg: 'bg-blue-100',
+        bg: 'bg-blue-100 dark:bg-blue-950',
         border: 'border-blue-300',
-        text: 'text-blue-800',
+        text: 'text-blue-800 dark:text-blue-300',
         emoji: '😊',
         statusText: 'Good'
       };
       case 'NEEDS_ATTENTION': return {
-        bg: 'bg-yellow-100',
+        bg: 'bg-yellow-100 dark:bg-yellow-950',
         border: 'border-yellow-300',
-        text: 'text-yellow-800',
+        text: 'text-yellow-800 dark:text-yellow-300',
         emoji: '⚠️',
         statusText: 'Pay Attention'
       };
       case 'CONTACT_DOCTOR': return {
-        bg: 'bg-red-100',
+        bg: 'bg-red-100 dark:bg-red-950',
         border: 'border-red-300',
-        text: 'text-red-800',
+        text: 'text-red-800 dark:text-red-300',
         emoji: '🏥',
         statusText: 'Contact Doctor'
       };
@@ -129,10 +129,10 @@ const SimpleFhirAiWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-8 text-center">
         <div className="animate-pulse">
           <div className="text-6xl mb-4">🔄</div>
-          <div className="text-xl text-gray-600">Checking your health...</div>
+          <div className="text-xl text-gray-600 dark:text-slate-400">Checking your health...</div>
         </div>
       </div>
     );
@@ -140,9 +140,9 @@ const SimpleFhirAiWidget: React.FC = () => {
 
   if (!healthStatus) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-8 text-center">
         <div className="text-6xl mb-4">📱</div>
-        <div className="text-xl text-gray-700 mb-4">Ready to check your health?</div>
+        <div className="text-xl text-gray-700 dark:text-slate-300 mb-4">Ready to check your health?</div>
         <button
           onClick={() => window.location.href = '/daily-checkin'}
           className="bg-blue-600 text-white text-xl px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors"
@@ -159,10 +159,10 @@ const SimpleFhirAiWidget: React.FC = () => {
     <div className="space-y-6">
       {/* Emergency Alert */}
       {healthStatus.hasEmergencyAlert && (
-        <div className="bg-red-100 border-2 border-red-400 rounded-xl p-6 text-center">
+        <div className="bg-red-100 dark:bg-red-950 border-2 border-red-400 rounded-xl p-6 text-center">
           <div className="text-4xl mb-3">🚨</div>
-          <div className="text-xl font-bold text-red-800 mb-2">Important Health Alert</div>
-          <div className="text-lg text-red-700 mb-4">{healthStatus.emergencyMessage}</div>
+          <div className="text-xl font-bold text-red-800 dark:text-red-300 mb-2">Important Health Alert</div>
+          <div className="text-lg text-red-700 dark:text-red-300 mb-4">{healthStatus.emergencyMessage}</div>
           <button
             onClick={() => window.location.href = 'tel:911'}
             className="bg-red-600 text-white text-xl px-8 py-4 rounded-lg hover:bg-red-700 transition-colors mr-4"
@@ -186,21 +186,21 @@ const SimpleFhirAiWidget: React.FC = () => {
           <div className={`text-3xl font-bold ${colors.text} mb-2`}>
             {colors.statusText}
           </div>
-          <div className="text-xl text-gray-700 leading-relaxed">
+          <div className="text-xl text-gray-700 dark:text-slate-300 leading-relaxed">
             {healthStatus.mainMessage}
           </div>
         </div>
 
         {/* Health Score (Simple) */}
         <div className="mb-6">
-          <div className="text-sm text-gray-600 mb-2">Your Health Score</div>
+          <div className="text-sm text-gray-600 dark:text-slate-400 mb-2">Your Health Score</div>
           <div className={`text-5xl font-bold ${colors.text}`}>
             {healthStatus.healthScore}/100
           </div>
         </div>
 
         {/* Action Message */}
-        <div className="text-lg text-gray-600 mb-6">
+        <div className="text-lg text-gray-600 dark:text-slate-400 mb-6">
           {healthStatus.actionMessage}
         </div>
 
@@ -225,7 +225,7 @@ const SimpleFhirAiWidget: React.FC = () => {
           {/* Secondary Action */}
           <button
             onClick={() => window.location.href = '/self-reporting'}
-            className="bg-gray-100 text-gray-700 text-xl px-8 py-4 rounded-xl hover:bg-gray-200 transition-colors w-full"
+            className="bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 text-xl px-8 py-4 rounded-xl hover:bg-gray-200 transition-colors w-full"
           >
             📊 View My Health
           </button>
@@ -233,10 +233,10 @@ const SimpleFhirAiWidget: React.FC = () => {
       </div>
 
       {/* Simple Progress Indicator */}
-      <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6 text-center">
         <div className="text-2xl mb-3">📅</div>
-        <div className="text-lg font-medium text-gray-800 mb-2">Last Check-In</div>
-        <div className="text-xl text-gray-600">
+        <div className="text-lg font-medium text-gray-800 dark:text-slate-200 mb-2">Last Check-In</div>
+        <div className="text-xl text-gray-600 dark:text-slate-400">
           {healthStatus.lastCheckIn === 'Never' ? 'Not yet' :
            new Date(healthStatus.lastCheckIn).toLocaleDateString('en-US', {
              weekday: 'long',

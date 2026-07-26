@@ -226,7 +226,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">Loading conditions...</span>
+        <span className="ml-3 text-gray-600 dark:text-slate-400">Loading conditions...</span>
       </div>
     );
   }
@@ -238,8 +238,8 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Conditions & Diagnoses</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Conditions & Diagnoses</h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
               Manage patient health conditions, diagnoses, and health concerns
             </p>
         </div>
@@ -256,27 +256,27 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Total Conditions</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">Total Conditions</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{stats.total}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Active</div>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">Active</div>
           <div className="text-2xl font-bold text-red-600 mt-1">{stats.active}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Chronic</div>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">Chronic</div>
           <div className="text-2xl font-bold text-orange-600 mt-1">{stats.chronic}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Resolved</div>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">Resolved</div>
           <div className="text-2xl font-bold text-green-600 mt-1">{stats.resolved}</div>
         </div>
       </div>
 
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg p-4">
           <div className="flex items-start">
             <svg className="w-5 h-5 text-red-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -286,7 +286,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
               />
             </svg>
             <div className="ml-3 flex-1">
-              <p className="text-sm text-red-800">{error}</p>
+              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
             <button onClick={() => currentQuery.refetch()} className="text-red-600 hover:text-red-800" title="Retry">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -303,15 +303,15 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
 
       {/* Add/Edit Form */}
       {isAddingNew && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">
             {editingId ? 'Edit Condition' : 'Add New Condition'}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Code */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   ICD-10 Code <span className="text-red-600">*</span>
                 </label>
                 <input
@@ -319,14 +319,14 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                   value={formData.code || ''}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="e.g., I10"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
 
               {/* Display Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Condition Name <span className="text-red-600">*</span>
                 </label>
                 <input
@@ -334,18 +334,18 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                   value={formData.code_display || ''}
                   onChange={(e) => setFormData({ ...formData, code_display: e.target.value })}
                   placeholder="e.g., Essential hypertension"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Category</label>
                 <select
                   value={formData.category?.[0] || ''}
                   onChange={(e) => setFormData({ ...formData, category: [e.target.value] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {CONDITION_CATEGORIES.map((cat) => (
                     <option key={cat.value} value={cat.value}>
@@ -357,14 +357,14 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
 
               {/* Clinical Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Clinical Status</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Clinical Status</label>
                 <select
                   value={formData.clinical_status || ''}
                   onChange={(e) => {
                     const value = e.target.value as Condition['clinical_status'];
                     setFormData({ ...formData, clinical_status: value });
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {CLINICAL_STATUS_OPTIONS.map((status) => (
                     <option key={status.value} value={status.value}>
@@ -376,11 +376,11 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
 
               {/* Severity */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Severity</label>
                 <select
                   value={formData.severity_code || ''}
                   onChange={(e) => setFormData({ ...formData, severity_code: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Not specified</option>
                   {SEVERITY_OPTIONS.map((sev) => (
@@ -393,36 +393,36 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
 
               {/* Onset Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Onset Date</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Onset Date</label>
                 <input
                   type="date"
                   value={formData.onset_datetime?.split('T')[0] || ''}
                   onChange={(e) => setFormData({ ...formData, onset_datetime: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
               {/* Recorded Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Recorded Date</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Recorded Date</label>
                 <input
                   type="date"
                   value={formData.recorded_date?.split('T')[0] || ''}
                   onChange={(e) => setFormData({ ...formData, recorded_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Clinical Notes</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Clinical Notes</label>
               <textarea
                 value={formData.note || ''}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                 rows={3}
                 placeholder="Additional notes about this condition..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -439,7 +439,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                 type="button"
                 onClick={resetForm}
                 disabled={loading}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancel
               </button>
@@ -456,7 +456,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search conditions..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
         <div className="flex gap-2">
@@ -467,7 +467,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === f
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200'
               }`}
             >
               {f === 'all' ? 'All' : f === 'problem-list' ? 'Problem List' : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -479,9 +479,9 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
       {/* Conditions List */}
       <div className="space-y-3">
         {filteredConditions.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-8 text-center">
             <svg
-              className="mx-auto h-12 w-12 text-gray-400"
+              className="mx-auto h-12 w-12 text-gray-400 dark:text-slate-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -493,7 +493,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
               {searchTerm ? 'No conditions match your search' : 'No conditions recorded'}
             </p>
           </div>
@@ -501,12 +501,12 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
           filteredConditions.map((condition) => (
             <div
               key={condition.id}
-              className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-5 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900">{condition.code_display}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{condition.code_display}</h3>
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full bg-${getStatusColor(
                         condition.clinical_status
@@ -524,19 +524,19 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
                     Code: <span className="font-mono font-medium">{condition.code}</span>
                   </p>
                   {condition.onset_datetime && (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                       Onset: {new Date(condition.onset_datetime).toLocaleDateString()}
                     </p>
                   )}
                   {condition.note && (
-                    <p className="text-sm text-gray-700 mt-2 italic">{condition.note}</p>
+                    <p className="text-sm text-gray-700 dark:text-slate-300 mt-2 italic">{condition.note}</p>
                   )}
                   {condition.recorded_date && (
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">
                       Recorded: {new Date(condition.recorded_date).toLocaleDateString()}
                     </p>
                   )}
@@ -546,7 +546,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                   <div className="flex gap-2 ml-4">
                     <button
                       onClick={() => handleEdit(condition)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
                       title="Edit condition"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -561,7 +561,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                     {condition.clinical_status === 'active' && (
                       <button
                         onClick={() => handleResolve(condition.id)}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         title="Mark as resolved"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -103,8 +103,8 @@ const VitalTrendChart: React.FC<VitalTrendChartProps> = ({
     if (!active || !payload || !payload.length) return null;
 
     return (
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3">
-        <p className="text-sm text-gray-500 mb-2">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 p-3">
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">
           {label ? formatTooltipDate(label) : ''}
         </p>
         {payload.map((entry, index) => {
@@ -126,14 +126,14 @@ const VitalTrendChart: React.FC<VitalTrendChartProps> = ({
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8">
         <h2
           className="text-2xl font-bold mb-4"
           style={{ color: primaryColor }}
         >
           {title}
         </h2>
-        <div className="flex items-center justify-center h-48 text-gray-400">
+        <div className="flex items-center justify-center h-48 text-gray-400 dark:text-slate-500">
           <p>No data available for chart</p>
         </div>
       </div>
@@ -141,7 +141,7 @@ const VitalTrendChart: React.FC<VitalTrendChartProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <h2
           className="text-2xl font-bold"
@@ -157,7 +157,7 @@ const VitalTrendChart: React.FC<VitalTrendChartProps> = ({
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 timeRange === range
                   ? 'text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-200'
               }`}
               style={timeRange === range ? { backgroundColor: primaryColor } : {}}
             >
@@ -168,7 +168,7 @@ const VitalTrendChart: React.FC<VitalTrendChartProps> = ({
       </div>
 
       {filteredData.length === 0 ? (
-        <div className="flex items-center justify-center h-48 text-gray-400">
+        <div className="flex items-center justify-center h-48 text-gray-400 dark:text-slate-500">
           <p>No readings in selected time range</p>
         </div>
       ) : (

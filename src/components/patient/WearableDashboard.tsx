@@ -41,22 +41,22 @@ const WearablesPilotNotice: React.FC = () => (
   <div className="min-h-[60vh] flex items-center justify-center p-8">
     <div className="max-w-lg text-center">
       <div className="text-6xl mb-4">⌚</div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-4">
         Wearable Integration - Pilot Program
       </h1>
-      <p className="text-lg text-gray-600 mb-6">
+      <p className="text-lg text-gray-600 dark:text-slate-400 mb-6">
         Wearable device integration is currently in pilot testing with select healthcare partners.
       </p>
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-        <h3 className="font-semibold text-blue-800 mb-2">Coming Soon:</h3>
-        <ul className="text-blue-700 space-y-1">
+      <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg p-4 text-left">
+        <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Coming Soon:</h3>
+        <ul className="text-blue-700 dark:text-blue-300 space-y-1">
           <li>• Apple Health & HealthKit sync</li>
           <li>• Fitbit heart rate & activity tracking</li>
           <li>• Fall detection alerts</li>
           <li>• Emergency SOS functionality</li>
         </ul>
       </div>
-      <p className="text-sm text-gray-500 mt-6">
+      <p className="text-sm text-gray-500 dark:text-slate-400 mt-6">
         Contact your care coordinator for pilot program availability.
       </p>
     </div>
@@ -342,7 +342,7 @@ export const WearableDashboard: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-4 border-b-2 border-gray-200">
+      <div className="flex space-x-4 border-b-2 border-gray-200 dark:border-slate-700">
         {['overview', 'vitals', 'activity', 'falls', 'devices'].map((tab) => (
           <button
             key={tab}
@@ -350,7 +350,7 @@ export const WearableDashboard: React.FC = () => {
             className={`px-6 py-3 text-lg font-semibold ${
               activeTab === tab
                 ? 'border-b-4 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -363,40 +363,40 @@ export const WearableDashboard: React.FC = () => {
         <div className="space-y-6">
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="text-gray-600 text-sm mb-1">Connected Devices</div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-md">
+              <div className="text-gray-600 dark:text-slate-400 text-sm mb-1">Connected Devices</div>
               <div className="text-3xl font-bold">{connectedDevices.length}</div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="text-gray-600 text-sm mb-1">Today's Steps</div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-md">
+              <div className="text-gray-600 dark:text-slate-400 text-sm mb-1">Today's Steps</div>
               <div className="text-3xl font-bold">
                 {activities[0]?.steps?.toLocaleString() || '0'}
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="text-gray-600 text-sm mb-1">Latest Heart Rate</div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-md">
+              <div className="text-gray-600 dark:text-slate-400 text-sm mb-1">Latest Heart Rate</div>
               <div className="text-3xl font-bold">
                 {vitals[vitals.length - 1]?.value || '--'} <span className="text-lg">bpm</span>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="text-gray-600 text-sm mb-1">Falls This Month</div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-md">
+              <div className="text-gray-600 dark:text-slate-400 text-sm mb-1">Falls This Month</div>
               <div className="text-3xl font-bold">{falls.length}</div>
             </div>
           </div>
 
           {/* Recent Fall Alerts */}
           {falls.length > 0 && (
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
+            <div className="bg-yellow-50 dark:bg-slate-800 border-2 border-yellow-400 rounded-lg p-6">
               <h2 className="text-xl font-bold mb-4 text-yellow-900">Recent Fall Alerts</h2>
               {falls.slice(0, 3).map((fall) => (
-                <div key={fall.id} className="mb-4 p-4 bg-white rounded-sm border border-yellow-300">
+                <div key={fall.id} className="mb-4 p-4 bg-white dark:bg-slate-900 rounded-sm border border-yellow-300">
                   <div className="flex justify-between items-center">
                     <div>
                       <div className="font-semibold">
                         Fall detected on {new Date(fall.detected_at).toLocaleDateString()}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-slate-400">
                         Severity: {fall.fall_severity} |
                         Response: {fall.user_responded ? '✓ Responded' : '⚠ No response'}
                       </div>
@@ -419,13 +419,13 @@ export const WearableDashboard: React.FC = () => {
 
       {activeTab === 'vitals' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-4">Heart Rate Trend (7 Days)</h2>
             {vitals.length > 0 ? (
               <div className="space-y-2">
                 {vitals.map((vital) => (
-                  <div key={vital.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-sm">
-                    <span className="text-sm text-gray-600">
+                  <div key={vital.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-800 rounded-sm">
+                    <span className="text-sm text-gray-600 dark:text-slate-400">
                       {new Date(vital.measured_at).toLocaleString()}
                     </span>
                     <span className="font-bold text-lg">
@@ -438,7 +438,7 @@ export const WearableDashboard: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">No vital signs data available</p>
+              <p className="text-gray-500 dark:text-slate-400">No vital signs data available</p>
             )}
           </div>
         </div>
@@ -446,30 +446,30 @@ export const WearableDashboard: React.FC = () => {
 
       {activeTab === 'activity' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-4">Activity Summary (7 Days)</h2>
             {activities.length > 0 ? (
               <div className="space-y-4">
                 {activities.map((activity) => (
-                  <div key={activity.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div key={activity.id} className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
                     <div className="font-bold text-lg mb-2">
                       {new Date(activity.date).toLocaleDateString()}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <div className="text-gray-600">Steps</div>
+                        <div className="text-gray-600 dark:text-slate-400">Steps</div>
                         <div className="font-bold text-lg">{activity.steps?.toLocaleString() || '--'}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Active Minutes</div>
+                        <div className="text-gray-600 dark:text-slate-400">Active Minutes</div>
                         <div className="font-bold text-lg">{activity.active_minutes || '--'}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Calories</div>
+                        <div className="text-gray-600 dark:text-slate-400">Calories</div>
                         <div className="font-bold text-lg">{activity.calories_burned || '--'}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Sleep</div>
+                        <div className="text-gray-600 dark:text-slate-400">Sleep</div>
                         <div className="font-bold text-lg">
                           {activity.sleep_minutes ? `${Math.floor(activity.sleep_minutes / 60)}h` : '--'}
                         </div>
@@ -479,7 +479,7 @@ export const WearableDashboard: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">No activity data available</p>
+              <p className="text-gray-500 dark:text-slate-400">No activity data available</p>
             )}
           </div>
         </div>
@@ -487,7 +487,7 @@ export const WearableDashboard: React.FC = () => {
 
       {activeTab === 'falls' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-4">Fall Detection History</h2>
             {falls.length > 0 ? (
               <div className="space-y-4">
@@ -498,20 +498,20 @@ export const WearableDashboard: React.FC = () => {
                         <div className="font-bold text-lg">
                           {new Date(fall.detected_at).toLocaleString()}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-slate-400">
                           Severity: <span className="font-semibold">{fall.fall_severity}</span>
                         </div>
                       </div>
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-bold ${
-                          fall.user_responded ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          fall.user_responded ? 'bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300'
                         }`}
                       >
                         {fall.user_responded ? 'Responded' : 'No Response'}
                       </span>
                     </div>
                     {fall.latitude && fall.longitude && (
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-slate-400">
                         Location: {fall.latitude.toFixed(6)}, {fall.longitude.toFixed(6)}
                       </div>
                     )}
@@ -530,8 +530,8 @@ export const WearableDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500 text-lg">No falls detected</p>
-                <p className="text-gray-400 text-sm mt-2">Great job staying safe!</p>
+                <p className="text-gray-500 dark:text-slate-400 text-lg">No falls detected</p>
+                <p className="text-gray-400 dark:text-slate-500 text-sm mt-2">Great job staying safe!</p>
               </div>
             )}
           </div>
@@ -541,7 +541,7 @@ export const WearableDashboard: React.FC = () => {
       {activeTab === 'devices' && (
         <div className="space-y-6">
           {/* Connected Devices */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-4">Connected Devices</h2>
             {connectedDevices.length > 0 ? (
               <div className="space-y-4">
@@ -549,19 +549,19 @@ export const WearableDashboard: React.FC = () => {
                   <div key={device.id} className="flex justify-between items-center p-4 border rounded-lg">
                     <div>
                       <div className="font-bold text-lg">{device.device_model}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-slate-400">
                         Type: {device.device_type.replace('_', ' ')}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-slate-400">
                         Last sync: {new Date(device.last_sync).toLocaleString()}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                         Permissions: {device.permissions_granted?.join(', ') || 'None'}
                       </div>
                     </div>
                     <button
                       onClick={() => handleDisconnectDevice(device.id)}
-                      className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200"
+                      className="bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 px-4 py-2 rounded-lg hover:bg-red-200"
                     >
                       Disconnect
                     </button>
@@ -569,7 +569,7 @@ export const WearableDashboard: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 mb-4">No devices connected</p>
+              <p className="text-gray-500 dark:text-slate-400 mb-4">No devices connected</p>
             )}
           </div>
 

@@ -75,13 +75,13 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300 border-green-300';
       case 'not-done':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 border-yellow-300';
       case 'entered-in-error':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-300 dark:border-slate-600';
     }
   };
 
@@ -144,12 +144,12 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Error Display */}
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-6">
+        <div className="mb-6 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-xl p-6">
           <div className="flex items-start">
             <span className="text-3xl mr-4">⚠️</span>
             <div>
-              <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Immunization Records</h3>
-              <p className="text-red-700">{error}</p>
+              <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Unable to Load Immunization Records</h3>
+              <p className="text-red-700 dark:text-red-300">{error}</p>
               <p className="text-sm text-red-600 mt-2">Retrying automatically...</p>
             </div>
           </div>
@@ -173,7 +173,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
               </button>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="px-4 py-2 bg-white text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200 font-semibold"
+                className="px-4 py-2 bg-white dark:bg-slate-900 text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200 font-semibold"
               >
                 + Add Vaccine
               </button>
@@ -204,19 +204,19 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
       {/* Care Gaps Alert */}
       {gapsCount > 0 && activeTab !== 'gaps' && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
+        <div className="bg-yellow-50 dark:bg-slate-800 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
           <div className="flex items-start">
             <span className="text-2xl mr-3">⚠️</span>
             <div className="flex-1">
-              <h3 className="font-semibold text-yellow-800 mb-1">
+              <h3 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
                 {gapsCount} Vaccine{gapsCount > 1 ? 's' : ''} Due or Overdue
               </h3>
-              <p className="text-sm text-yellow-700 mb-2">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
                 Stay protected! You have recommended vaccines that need attention.
               </p>
               <button
                 onClick={() => setActiveTab('gaps')}
-                className="text-sm font-medium text-yellow-800 hover:text-yellow-900 underline"
+                className="text-sm font-medium text-yellow-800 dark:text-yellow-300 hover:text-yellow-900 underline"
               >
                 View Care Gaps →
               </button>
@@ -226,14 +226,14 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 mb-6">
-        <div className="flex border-b border-gray-200">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 mb-6">
+        <div className="flex border-b border-gray-200 dark:border-slate-700">
           <button
             onClick={() => setActiveTab('all')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'all'
                 ? 'border-b-2 border-purple-600 text-purple-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
             }`}
           >
             All Vaccines ({immunizations.length})
@@ -243,7 +243,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'completed'
                 ? 'border-b-2 border-purple-600 text-purple-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
             }`}
           >
             Completed ({completedCount})
@@ -253,7 +253,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'gaps'
                 ? 'border-b-2 border-purple-600 text-purple-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
             }`}
           >
             Care Gaps ({gapsCount})
@@ -265,12 +265,12 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
       {activeTab === 'gaps' && (
         <div className="space-y-4">
           {vaccineGaps.length === 0 ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
+            <div className="bg-green-50 dark:bg-slate-800 border border-green-200 dark:border-slate-600 rounded-lg p-8 text-center">
               <span className="text-4xl mb-3 block">✅</span>
               <h3 className="text-lg font-semibold text-green-900 mb-2">
                 All Caught Up!
               </h3>
-              <p className="text-green-700">
+              <p className="text-green-700 dark:text-green-300">
                 You're up-to-date with all recommended vaccines for your age group.
               </p>
             </div>
@@ -278,33 +278,33 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
             vaccineGaps.map((gap, index) => (
               <div
                 key={index}
-                className="bg-white border border-yellow-300 rounded-lg p-6 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-slate-900 border border-yellow-300 rounded-lg p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-3xl">{getVaccineIcon(gap.vaccine_code)}</span>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
                           {gap.vaccine_name}
                         </h3>
-                        <p className="text-sm text-gray-600">{gap.recommendation}</p>
+                        <p className="text-sm text-gray-600 dark:text-slate-400">{gap.recommendation}</p>
                       </div>
                     </div>
                     <div className="mt-3 space-y-1">
                       {gap.last_received_date && (
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-slate-400">
                           <span className="font-medium">Last received:</span>{' '}
                           {formatDate(gap.last_received_date)}
                           {gap.months_since_last && (
-                            <span className="text-yellow-700 ml-2">
+                            <span className="text-yellow-700 dark:text-yellow-300 ml-2">
                               ({gap.months_since_last} months ago)
                             </span>
                           )}
                         </p>
                       )}
                       {!gap.last_received_date && (
-                        <p className="text-sm text-yellow-700 font-medium">
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">
                           No previous record found
                         </p>
                       )}
@@ -329,12 +329,12 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
       {activeTab !== 'gaps' && (
         <div className="space-y-4">
           {filteredImmunizations.length === 0 ? (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+            <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-12 text-center">
               <span className="text-6xl mb-4 block">💉</span>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">
                 No Immunization Records Yet
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-slate-400 mb-6">
                 Start tracking your vaccination history to stay healthy and protected.
               </p>
               {!readOnly && (
@@ -350,7 +350,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
             filteredImmunizations.map((immunization) => (
               <div
                 key={immunization.id}
-                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-6 hover:shadow-lg transition-all duration-200 cursor-pointer"
                 onClick={() => setSelectedImmunization(immunization)}
               >
                 <div className="flex items-start justify-between">
@@ -358,10 +358,10 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-3xl">{getVaccineIcon(immunization.vaccine_code)}</span>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
                           {immunization.vaccine_display}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-slate-400">
                           {formatDate(immunization.occurrence_datetime)}
                         </p>
                       </div>
@@ -372,31 +372,31 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
                         {immunization.status}
                       </span>
                       {getDoseInfo(immunization) && (
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300">
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300">
                           {getDoseInfo(immunization)}
                         </span>
                       )}
                       {immunization.lot_number && (
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600">
                           Lot: {immunization.lot_number}
                         </span>
                       )}
                     </div>
 
                     {immunization.performer_actor_display && (
-                      <p className="text-sm text-gray-600 mt-2">
+                      <p className="text-sm text-gray-600 dark:text-slate-400 mt-2">
                         <span className="font-medium">Administered by:</span>{' '}
                         {immunization.performer_actor_display}
                       </p>
                     )}
                     {immunization.location_display && (
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-400">
                         <span className="font-medium">Location:</span>{' '}
                         {immunization.location_display}
                       </p>
                     )}
                     {immunization.site_display && (
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-400">
                         <span className="font-medium">Site:</span>{' '}
                         {immunization.site_display}
                         {immunization.route_display && ` (${immunization.route_display})`}
@@ -413,7 +413,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
       {/* Detail Modal */}
       {selectedImmunization && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-linear-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-xl">
               <div className="flex justify-between items-start">
                 <div>
@@ -431,7 +431,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
             <div className="p-6 space-y-4">
               <div>
-                <h3 className="font-semibold text-gray-700 mb-2">Status</h3>
+                <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-2">Status</h3>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(selectedImmunization.status)}`}>
                   {selectedImmunization.status}
                 </span>
@@ -439,29 +439,29 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
               {selectedImmunization.lot_number && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Lot Number</h3>
-                  <p className="text-gray-900">{selectedImmunization.lot_number}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Lot Number</h3>
+                  <p className="text-gray-900 dark:text-slate-100">{selectedImmunization.lot_number}</p>
                 </div>
               )}
 
               {selectedImmunization.manufacturer && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Manufacturer</h3>
-                  <p className="text-gray-900">{selectedImmunization.manufacturer}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Manufacturer</h3>
+                  <p className="text-gray-900 dark:text-slate-100">{selectedImmunization.manufacturer}</p>
                 </div>
               )}
 
               {getDoseInfo(selectedImmunization) && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Dose Information</h3>
-                  <p className="text-gray-900">{getDoseInfo(selectedImmunization)}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Dose Information</h3>
+                  <p className="text-gray-900 dark:text-slate-100">{getDoseInfo(selectedImmunization)}</p>
                 </div>
               )}
 
               {selectedImmunization.dose_quantity_value && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Dose Quantity</h3>
-                  <p className="text-gray-900">
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Dose Quantity</h3>
+                  <p className="text-gray-900 dark:text-slate-100">
                     {selectedImmunization.dose_quantity_value} {selectedImmunization.dose_quantity_unit}
                   </p>
                 </div>
@@ -469,43 +469,43 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
               {selectedImmunization.performer_actor_display && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Administered By</h3>
-                  <p className="text-gray-900">{selectedImmunization.performer_actor_display}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Administered By</h3>
+                  <p className="text-gray-900 dark:text-slate-100">{selectedImmunization.performer_actor_display}</p>
                 </div>
               )}
 
               {selectedImmunization.location_display && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Location</h3>
-                  <p className="text-gray-900">{selectedImmunization.location_display}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Location</h3>
+                  <p className="text-gray-900 dark:text-slate-100">{selectedImmunization.location_display}</p>
                 </div>
               )}
 
               {selectedImmunization.site_display && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Administration Site</h3>
-                  <p className="text-gray-900">{selectedImmunization.site_display}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Administration Site</h3>
+                  <p className="text-gray-900 dark:text-slate-100">{selectedImmunization.site_display}</p>
                 </div>
               )}
 
               {selectedImmunization.route_display && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Route</h3>
-                  <p className="text-gray-900">{selectedImmunization.route_display}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Route</h3>
+                  <p className="text-gray-900 dark:text-slate-100">{selectedImmunization.route_display}</p>
                 </div>
               )}
 
               {selectedImmunization.note && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Notes</h3>
-                  <p className="text-gray-900">{selectedImmunization.note}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Notes</h3>
+                  <p className="text-gray-900 dark:text-slate-100">{selectedImmunization.note}</p>
                 </div>
               )}
 
               {selectedImmunization.primary_source !== undefined && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Primary Source</h3>
-                  <p className="text-gray-900">
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Primary Source</h3>
+                  <p className="text-gray-900 dark:text-slate-100">
                     {selectedImmunization.primary_source ? 'Yes - directly observed' : 'No - reported by patient'}
                   </p>
                 </div>

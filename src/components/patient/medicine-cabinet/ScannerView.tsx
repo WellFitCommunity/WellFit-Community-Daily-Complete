@@ -30,19 +30,19 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-8">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md p-8">
       {!scannedData ? (
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <Camera className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Scan Medication Label</h2>
-            <p className="text-gray-600">AI will automatically extract all medication information</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">Scan Medication Label</h2>
+            <p className="text-gray-600 dark:text-slate-400">AI will automatically extract all medication information</p>
           </div>
 
           {!processing ? (
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
-              <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-6">Take a clear photo of the prescription label</p>
+            <div className="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl p-12 text-center">
+              <Upload className="w-16 h-16 text-gray-400 dark:text-slate-500 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-slate-400 mb-6">Take a clear photo of the prescription label</p>
               <input
                 type="file"
                 accept="image/*"
@@ -64,7 +64,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               <div className="flex items-center justify-center mb-6">
                 <Sparkles className="w-16 h-16 text-blue-600 animate-pulse" />
               </div>
-              <h3 className="text-xl font-semibold text-center text-gray-700 mb-4">
+              <h3 className="text-xl font-semibold text-center text-gray-700 dark:text-slate-300 mb-4">
                 AI is reading your medication label...
               </h3>
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
@@ -73,7 +73,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <p className="text-center text-gray-500">{uploadProgress}% complete</p>
+              <p className="text-center text-gray-500 dark:text-slate-400">{uploadProgress}% complete</p>
             </div>
           )}
         </div>
@@ -84,31 +84,31 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             Review Scanned Information
           </h2>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg p-4 mb-6">
             <div className="flex items-center gap-2 mb-2">
               <Info className="w-5 h-5 text-blue-600" />
-              <span className="font-semibold text-blue-900">AI Confidence: {Math.round((scannedData.medication?.confidence || 0) * 100)}%</span>
+              <span className="font-semibold text-blue-900 dark:text-blue-200">AI Confidence: {Math.round((scannedData.medication?.confidence || 0) * 100)}%</span>
             </div>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
               {scannedData.medication?.extractionNotes || 'Information extracted successfully'}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Medication Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Medication Name</label>
               <input
                 type="text"
                 defaultValue={scannedData.medication?.medicationName}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Strength/Dosage</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Strength/Dosage</label>
               <input
                 type="text"
                 defaultValue={scannedData.medication?.strength || scannedData.medication?.dosage}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg"
               />
             </div>
           </div>

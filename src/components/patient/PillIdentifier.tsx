@@ -158,7 +158,7 @@ export function PillIdentifier({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-8">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md p-8">
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
@@ -174,7 +174,7 @@ export function PillIdentifier({
             </>
           )}
         </h2>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-slate-400">
           {mode === 'identify'
             ? 'Take a photo of a pill to identify what medication it is'
             : 'Verify the pill in your hand matches the medication label on the bottle'}
@@ -182,10 +182,10 @@ export function PillIdentifier({
       </div>
 
       {/* Safety Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg p-4 mb-6">
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-          <div className="text-sm text-blue-800">
+          <div className="text-sm text-blue-800 dark:text-blue-300">
             <p className="font-semibold mb-1">Safety Tips:</p>
             <ul className="list-disc list-inside space-y-1">
               <li>Take a clear, well-lit photo of the pill</li>
@@ -199,9 +199,9 @@ export function PillIdentifier({
 
       {/* Image Upload Section */}
       {!selectedFile && !identificationResult && !comparisonResult && (
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
-          <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 mb-6 text-lg">
+        <div className="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl p-12 text-center">
+          <Camera className="w-16 h-16 text-gray-400 dark:text-slate-500 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-slate-400 mb-6 text-lg">
             Take a photo of the pill you want to {mode === 'identify' ? 'identify' : 'verify'}
           </p>
           <input
@@ -246,7 +246,7 @@ export function PillIdentifier({
               <div className="flex items-center justify-center mb-6">
                 <Sparkles className="w-16 h-16 text-blue-600 animate-pulse" />
               </div>
-              <h3 className="text-xl font-semibold text-center text-gray-700 mb-4">
+              <h3 className="text-xl font-semibold text-center text-gray-700 dark:text-slate-300 mb-4">
                 AI is analyzing the pill...
               </h3>
               <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
@@ -255,7 +255,7 @@ export function PillIdentifier({
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <p className="text-center text-gray-500">{uploadProgress}% complete</p>
+              <p className="text-center text-gray-500 dark:text-slate-400">{uploadProgress}% complete</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -279,17 +279,17 @@ export function PillIdentifier({
                     </button>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-gray-700 font-medium">Select medication to verify against:</p>
+                      <p className="text-gray-700 dark:text-slate-300 font-medium">Select medication to verify against:</p>
                       <div className="grid gap-2 max-h-64 overflow-y-auto">
                         {medications.map(med => (
                           <button
                             key={med.id}
                             onClick={() => handleVerifyPill(med.id)}
-                            className="text-left bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg p-3 transition-all"
+                            className="text-left bg-gray-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 hover:border-blue-300 rounded-lg p-3 transition-all"
                           >
-                            <p className="font-semibold text-gray-900">{med.medication_name}</p>
+                            <p className="font-semibold text-gray-900 dark:text-slate-100">{med.medication_name}</p>
                             {med.strength && (
-                              <p className="text-sm text-gray-600">{med.strength}</p>
+                              <p className="text-sm text-gray-600 dark:text-slate-400">{med.strength}</p>
                             )}
                           </button>
                         ))}
@@ -301,7 +301,7 @@ export function PillIdentifier({
 
               <button
                 onClick={handleReset}
-                className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+                className="w-full bg-gray-200 text-gray-700 dark:text-slate-300 py-3 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Take Different Photo
               </button>
@@ -350,7 +350,7 @@ function IdentificationResults({
       {/* Confidence Score */}
       <div className={`bg-${confidenceColor}-50 border border-${confidenceColor}-200 rounded-lg p-4`}>
         <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold text-gray-900">Identification Confidence:</span>
+          <span className="font-semibold text-gray-900 dark:text-slate-100">Identification Confidence:</span>
           <span className={`text-${confidenceColor}-700 font-bold text-lg`}>
             {Math.round(identification.confidence * 100)}%
           </span>
@@ -365,37 +365,37 @@ function IdentificationResults({
 
       {/* Medication Info */}
       {identification.medicationName ? (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4 flex items-center gap-2">
             <Pill className="w-6 h-6 text-blue-600" />
             Identified Medication
           </h3>
           <div className="space-y-3">
             <div>
-              <span className="text-sm text-gray-600">Medication Name:</span>
-              <p className="text-lg font-semibold text-gray-900">{identification.medicationName}</p>
+              <span className="text-sm text-gray-600 dark:text-slate-400">Medication Name:</span>
+              <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{identification.medicationName}</p>
             </div>
             {identification.genericName && (
               <div>
-                <span className="text-sm text-gray-600">Generic Name:</span>
-                <p className="font-medium text-gray-800">{identification.genericName}</p>
+                <span className="text-sm text-gray-600 dark:text-slate-400">Generic Name:</span>
+                <p className="font-medium text-gray-800 dark:text-slate-200">{identification.genericName}</p>
               </div>
             )}
             {identification.strength && (
               <div>
-                <span className="text-sm text-gray-600">Strength:</span>
-                <p className="font-medium text-gray-800">{identification.strength}</p>
+                <span className="text-sm text-gray-600 dark:text-slate-400">Strength:</span>
+                <p className="font-medium text-gray-800 dark:text-slate-200">{identification.strength}</p>
               </div>
             )}
           </div>
         </div>
       ) : (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div className="bg-yellow-50 dark:bg-slate-800 border border-yellow-200 dark:border-slate-600 rounded-lg p-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-6 h-6 text-yellow-600 mt-0.5" />
             <div>
               <p className="font-semibold text-yellow-900 mb-2">Unable to Identify Medication</p>
-              <p className="text-sm text-yellow-800">
+              <p className="text-sm text-yellow-800 dark:text-yellow-300">
                 The pill image quality or characteristics were not sufficient for identification.
               </p>
             </div>
@@ -404,16 +404,16 @@ function IdentificationResults({
       )}
 
       {/* Pill Characteristics */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Eye className="w-5 h-5 text-gray-600" />
+      <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-6">
+        <h4 className="font-semibold text-gray-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+          <Eye className="w-5 h-5 text-gray-600 dark:text-slate-400" />
           Observed Characteristics
         </h4>
-        <p className="text-gray-700">{formatPillDescription(identification.characteristics)}</p>
+        <p className="text-gray-700 dark:text-slate-300">{formatPillDescription(identification.characteristics)}</p>
         {identification.characteristics.imprint && (
-          <div className="mt-3 p-3 bg-white rounded-sm border border-gray-200">
-            <span className="text-sm text-gray-600">Imprint Code:</span>
-            <p className="font-mono font-bold text-lg text-gray-900">
+          <div className="mt-3 p-3 bg-white dark:bg-slate-900 rounded-sm border border-gray-200 dark:border-slate-700">
+            <span className="text-sm text-gray-600 dark:text-slate-400">Imprint Code:</span>
+            <p className="font-mono font-bold text-lg text-gray-900 dark:text-slate-100">
               {identification.characteristics.imprint}
             </p>
           </div>
@@ -422,16 +422,16 @@ function IdentificationResults({
 
       {/* Alternative Matches */}
       {identification.alternativeMatches && identification.alternativeMatches.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h4 className="font-semibold text-blue-900 mb-3">Other Possible Matches:</h4>
+        <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg p-6">
+          <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-3">Other Possible Matches:</h4>
           <div className="space-y-2">
             {identification.alternativeMatches.map((match, idx) => (
-              <div key={idx} className="bg-white rounded-sm p-3 border border-blue-100">
+              <div key={idx} className="bg-white dark:bg-slate-900 rounded-sm p-3 border border-blue-100">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{match.medicationName}</p>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">{match.medicationName}</p>
                     {match.strength && (
-                      <p className="text-sm text-gray-600">{match.strength}</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-400">{match.strength}</p>
                     )}
                   </div>
                   <span className="text-sm text-blue-600 font-medium">
@@ -446,12 +446,12 @@ function IdentificationResults({
 
       {/* Warnings */}
       {identification.warnings && identification.warnings.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg p-4">
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
             <div className="space-y-1">
               {identification.warnings.map((warning, idx) => (
-                <p key={idx} className="text-sm text-red-800">{warning}</p>
+                <p key={idx} className="text-sm text-red-800 dark:text-red-300">{warning}</p>
               ))}
             </div>
           </div>
@@ -469,7 +469,7 @@ function IdentificationResults({
         {onComplete && (
           <button
             onClick={onComplete}
-            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+            className="flex-1 bg-gray-200 text-gray-700 dark:text-slate-300 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
           >
             Done
           </button>
@@ -510,15 +510,15 @@ function ComparisonResults({
               {comparison.safetyRecommendation}
             </p>
             <div className="mt-3">
-              <span className="text-sm text-gray-600">Match Confidence:</span>
+              <span className="text-sm text-gray-600 dark:text-slate-400">Match Confidence:</span>
               <div className="flex items-center gap-3 mt-1">
-                <div className="flex-1 bg-white rounded-full h-2 overflow-hidden">
+                <div className="flex-1 bg-white dark:bg-slate-900 rounded-full h-2 overflow-hidden">
                   <div
                     className={`bg-${matchColor}-500 h-full transition-all`}
                     style={{ width: `${comparison.matchConfidence * 100}%` }}
                   />
                 </div>
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-gray-900 dark:text-slate-100">
                   {Math.round(comparison.matchConfidence * 100)}%
                 </span>
               </div>
@@ -529,7 +529,7 @@ function ComparisonResults({
 
       {/* Discrepancies */}
       {comparison.discrepancies.length > 0 && (
-        <div className="bg-white border border-red-200 rounded-lg p-6">
+        <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900 rounded-lg p-6">
           <h4 className="font-bold text-red-900 mb-4 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             Discrepancies Found
@@ -540,17 +540,17 @@ function ComparisonResults({
                 key={idx}
                 className={`border-l-4 border-${getSeverityColor(disc.severity)}-500 bg-${getSeverityColor(disc.severity)}-50 p-4 rounded-sm`}
               >
-                <p className="font-semibold text-gray-900 mb-1">
+                <p className="font-semibold text-gray-900 dark:text-slate-100 mb-1">
                   {disc.field.replace(/([A-Z])/g, ' $1').trim()}
                 </p>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">Pill shows:</span>
-                    <p className="font-medium text-gray-900">{disc.pillValue}</p>
+                    <span className="text-gray-600 dark:text-slate-400">Pill shows:</span>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">{disc.pillValue}</p>
                   </div>
                   <div>
-                    <span className="text-gray-600">Label shows:</span>
-                    <p className="font-medium text-gray-900">{disc.labelValue}</p>
+                    <span className="text-gray-600 dark:text-slate-400">Label shows:</span>
+                    <p className="font-medium text-gray-900 dark:text-slate-100">{disc.labelValue}</p>
                   </div>
                 </div>
               </div>
@@ -561,18 +561,18 @@ function ComparisonResults({
 
       {/* Pharmacist Review Notice */}
       {comparison.requiresPharmacistReview && (
-        <div className="bg-red-50 border-2 border-red-300 rounded-lg p-6">
+        <div className="bg-red-50 dark:bg-red-950 border-2 border-red-300 rounded-lg p-6">
           <div className="flex items-start gap-3">
             <Shield className="w-8 h-8 text-red-600 shrink-0" />
             <div>
               <p className="font-bold text-red-900 text-lg mb-2">
                 Pharmacist Review Required
               </p>
-              <p className="text-red-800 mb-3">
+              <p className="text-red-800 dark:text-red-300 mb-3">
                 Do not take this medication until you have confirmed with your pharmacist that it is safe.
                 This could be a different medication or the wrong dosage.
               </p>
-              <p className="text-sm text-red-700 font-medium">
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
                 Contact your pharmacy immediately to verify this medication.
               </p>
             </div>
@@ -582,36 +582,36 @@ function ComparisonResults({
 
       {/* Pill Details */}
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h5 className="font-semibold text-gray-900 mb-3">Pill Identification:</h5>
+        <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+          <h5 className="font-semibold text-gray-900 dark:text-slate-100 mb-3">Pill Identification:</h5>
           {comparison.pillIdentification.medicationName ? (
             <div className="space-y-2 text-sm">
               <div>
-                <span className="text-gray-600">Name:</span>
+                <span className="text-gray-600 dark:text-slate-400">Name:</span>
                 <p className="font-medium">{comparison.pillIdentification.medicationName}</p>
               </div>
               {comparison.pillIdentification.strength && (
                 <div>
-                  <span className="text-gray-600">Strength:</span>
+                  <span className="text-gray-600 dark:text-slate-400">Strength:</span>
                   <p className="font-medium">{comparison.pillIdentification.strength}</p>
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">Could not identify pill</p>
+            <p className="text-gray-500 dark:text-slate-400 text-sm">Could not identify pill</p>
           )}
         </div>
 
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h5 className="font-semibold text-gray-900 mb-3">Label Information:</h5>
+        <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+          <h5 className="font-semibold text-gray-900 dark:text-slate-100 mb-3">Label Information:</h5>
           <div className="space-y-2 text-sm">
             <div>
-              <span className="text-gray-600">Name:</span>
+              <span className="text-gray-600 dark:text-slate-400">Name:</span>
               <p className="font-medium">{comparison.labelInformation.medicationName}</p>
             </div>
             {comparison.labelInformation.strength && (
               <div>
-                <span className="text-gray-600">Strength:</span>
+                <span className="text-gray-600 dark:text-slate-400">Strength:</span>
                 <p className="font-medium">{comparison.labelInformation.strength}</p>
               </div>
             )}
@@ -630,7 +630,7 @@ function ComparisonResults({
         {onComplete && (
           <button
             onClick={onComplete}
-            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+            className="flex-1 bg-gray-200 text-gray-700 dark:text-slate-300 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
           >
             Done
           </button>

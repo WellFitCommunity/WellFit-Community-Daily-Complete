@@ -35,8 +35,8 @@ export const CheckInModals: React.FC<CheckInModalsProps> = ({
         aria-modal="true"
         aria-labelledby="crisis-options-title"
       >
-        <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full mx-4">
-          <h3 id="crisis-options-title" className="text-xl font-bold mb-4 text-[#003865] text-center">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg max-w-md w-full mx-4">
+          <h3 id="crisis-options-title" className="text-xl font-bold mb-4 text-[#003865] dark:text-sky-300 text-center">
             How can we help you?
           </h3>
           <div className="space-y-4">
@@ -63,7 +63,7 @@ export const CheckInModals: React.FC<CheckInModalsProps> = ({
             </button>
             <button
               onClick={onCloseCrisis}
-              className="w-full py-4 px-6 text-xl bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400 transition mt-6"
+              className="w-full py-4 px-6 text-xl bg-gray-300 text-gray-700 dark:text-slate-300 font-semibold rounded-lg hover:bg-gray-400 transition mt-6"
             >
               Cancel
             </button>
@@ -79,10 +79,10 @@ export const CheckInModals: React.FC<CheckInModalsProps> = ({
         role="alert"
         aria-live="assertive"
       >
-        <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full mx-4 text-center">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg max-w-md w-full mx-4 text-center">
           {selectedCrisisOption === 'speak_someone' && (
             <>
-              <h3 className="text-xl font-bold mb-4 text-[#003865]">Crisis Support Available</h3>
+              <h3 className="text-xl font-bold mb-4 text-[#003865] dark:text-sky-300">Crisis Support Available</h3>
               <p className="text-lg mb-4">
                 If you&apos;re in crisis or need emotional support, please call or text the 988 Suicide &amp; Crisis Lifeline:
               </p>
@@ -92,7 +92,7 @@ export const CheckInModals: React.FC<CheckInModalsProps> = ({
               >
                 📞 Call or Text 988
               </a>
-              <p className="text-sm text-gray-600 mt-2">Available 24/7 for free, confidential support</p>
+              <p className="text-sm text-gray-600 dark:text-slate-400 mt-2">Available 24/7 for free, confidential support</p>
             </>
           )}
           {selectedCrisisOption === 'fallen_injured' && (

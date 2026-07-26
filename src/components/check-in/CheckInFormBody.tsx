@@ -22,12 +22,12 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
   onSetSymptoms, onSetActivityNotes,
   onStartVoice, onStopVoice, onShowPulseOximeter, onCheckIn,
 }) => (
-  <div className="space-y-6 p-4 sm:p-6 text-gray-900">
+  <div className="space-y-6 p-4 sm:p-6 text-gray-900 dark:text-slate-100">
     {/* Mood Section */}
-    <div className="border-b border-gray-200 pb-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">😊 How Are You Feeling?</h2>
+    <div className="border-b border-gray-200 dark:border-slate-700 pb-6">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">😊 How Are You Feeling?</h2>
       <div className="mb-4">
-        <label htmlFor="mood" className="block text-lg font-medium text-gray-700 mb-2">
+        <label htmlFor="mood" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">
           Select your mood today <span className="text-red-500">*</span>
         </label>
         <select
@@ -36,12 +36,12 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
           onChange={(e) => onSetMood(e.target.value)}
           disabled={isSubmitting}
           aria-required="true"
-          className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900"
+          className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900 dark:text-slate-100"
           style={{ minHeight: '48px', fontSize: '16px' }}
         >
-          <option value="" disabled className="text-gray-500 bg-gray-50">-- Select your mood --</option>
+          <option value="" disabled className="text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800">-- Select your mood --</option>
           {MOOD_OPTIONS.map((option) => (
-            <option key={option} value={option} className="text-gray-900 bg-white">{option}</option>
+            <option key={option} value={option} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-900">{option}</option>
           ))}
         </select>
       </div>
@@ -53,13 +53,13 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
     </div>
 
     {/* Health Metrics Section */}
-    <div className="border-b border-gray-200 pb-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">📈 Today&apos;s Health Numbers</h2>
+    <div className="border-b border-gray-200 dark:border-slate-700 pb-6">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">📈 Today&apos;s Health Numbers</h2>
 
       {/* Blood Pressure — group heading + two inputs, each labelled via aria-labelledby
           (group label + per-input descriptor) so screen readers announce full context. */}
       <div className="mb-4">
-        <p id="bp-group-label" className="block text-lg font-medium text-gray-700 mb-2">
+        <p id="bp-group-label" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">
           🩸 Blood Pressure (if you took it today)
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -72,11 +72,11 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
               onChange={(e) => onSetBpSystolic(e.target.value)}
               disabled={isSubmitting}
               aria-labelledby="bp-group-label bp-systolic-label"
-              className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white disabled:bg-gray-100"
+              className="w-full py-3 px-4 text-lg border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-slate-100 placeholder-gray-400 bg-white dark:bg-slate-900 disabled:bg-gray-100"
               min={70}
               max={250}
             />
-            <span id="bp-systolic-label" className="text-sm text-gray-600">Systolic (top)</span>
+            <span id="bp-systolic-label" className="text-sm text-gray-600 dark:text-slate-400">Systolic (top)</span>
           </div>
           <div>
             <input
@@ -87,11 +87,11 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
               onChange={(e) => onSetBpDiastolic(e.target.value)}
               disabled={isSubmitting}
               aria-labelledby="bp-group-label bp-diastolic-label"
-              className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white disabled:bg-gray-100"
+              className="w-full py-3 px-4 text-lg border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-slate-100 placeholder-gray-400 bg-white dark:bg-slate-900 disabled:bg-gray-100"
               min={40}
               max={150}
             />
-            <span id="bp-diastolic-label" className="text-sm text-gray-600">Diastolic (bottom)</span>
+            <span id="bp-diastolic-label" className="text-sm text-gray-600 dark:text-slate-400">Diastolic (bottom)</span>
           </div>
         </div>
       </div>
@@ -99,7 +99,7 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
       {/* Heart Rate & Blood Oxygen */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
-          <label htmlFor="heart-rate" className="block text-lg font-medium text-gray-700 mb-2">❤️ Heart Rate (BPM)</label>
+          <label htmlFor="heart-rate" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">❤️ Heart Rate (BPM)</label>
           <input
             id="heart-rate"
             type="number"
@@ -107,13 +107,13 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
             value={heartRate}
             onChange={(e) => onSetHeartRate(e.target.value)}
             disabled={isSubmitting}
-            className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white disabled:bg-gray-100"
+            className="w-full py-3 px-4 text-lg border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-slate-100 placeholder-gray-400 bg-white dark:bg-slate-900 disabled:bg-gray-100"
             min={30}
             max={220}
           />
         </div>
         <div>
-          <label htmlFor="blood-oxygen" className="block text-lg font-medium text-gray-700 mb-2">🫁 Blood Oxygen (%)</label>
+          <label htmlFor="blood-oxygen" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">🫁 Blood Oxygen (%)</label>
           <div className="flex gap-2">
             <input
               id="blood-oxygen"
@@ -122,7 +122,7 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
               value={pulseOximeter}
               onChange={(e) => onSetPulseOximeter(e.target.value)}
               disabled={isSubmitting}
-              className="flex-1 py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white disabled:bg-gray-100"
+              className="flex-1 py-3 px-4 text-lg border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-slate-100 placeholder-gray-400 bg-white dark:bg-slate-900 disabled:bg-gray-100"
               min={50}
               max={100}
             />
@@ -140,8 +140,8 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
       </div>
 
       {/* Pulse Oximeter Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-        <p className="text-sm text-gray-700">
+      <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg p-3 mb-4">
+        <p className="text-sm text-gray-700 dark:text-slate-300">
           <strong>📱 New!</strong> Use your phone camera to measure your pulse and blood oxygen.
           Tap the <Heart size={14} className="inline text-red-500" /> button to get started!
         </p>
@@ -150,7 +150,7 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
       {/* Blood Sugar & Weight */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="blood-sugar" className="block text-lg font-medium text-gray-700 mb-2">🍯 Blood Sugar (mg/dL)</label>
+          <label htmlFor="blood-sugar" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">🍯 Blood Sugar (mg/dL)</label>
           <input
             id="blood-sugar"
             type="number"
@@ -158,13 +158,13 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
             value={glucose}
             onChange={(e) => onSetGlucose(e.target.value)}
             disabled={isSubmitting}
-            className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white disabled:bg-gray-100"
+            className="w-full py-3 px-4 text-lg border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-slate-100 placeholder-gray-400 bg-white dark:bg-slate-900 disabled:bg-gray-100"
             min={40}
             max={600}
           />
         </div>
         <div>
-          <label htmlFor="weight" className="block text-lg font-medium text-gray-700 mb-2">⚖️ Weight (lbs)</label>
+          <label htmlFor="weight" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">⚖️ Weight (lbs)</label>
           <input
             id="weight"
             type="number"
@@ -173,7 +173,7 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
             value={weight}
             onChange={(e) => onSetWeight(e.target.value)}
             disabled={isSubmitting}
-            className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white disabled:bg-gray-100"
+            className="w-full py-3 px-4 text-lg border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-slate-100 placeholder-gray-400 bg-white dark:bg-slate-900 disabled:bg-gray-100"
             min={50}
             max={500}
           />
@@ -182,38 +182,38 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
     </div>
 
     {/* Activity & Social Section */}
-    <div className="border-b border-gray-200 pb-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">🏃‍♀️ Today&apos;s Activities</h2>
+    <div className="border-b border-gray-200 dark:border-slate-700 pb-6">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">🏃‍♀️ Today&apos;s Activities</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="physical-activity" className="block text-lg font-medium text-gray-700 mb-2">🏃‍♀️ Physical Activity</label>
+          <label htmlFor="physical-activity" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">🏃‍♀️ Physical Activity</label>
           <select
             id="physical-activity"
             value={physicalActivity}
             onChange={(e) => onSetPhysicalActivity(e.target.value)}
             disabled={isSubmitting}
-            className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 disabled:bg-gray-100"
+            className="w-full py-3 px-4 text-lg border-2 border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-slate-100 disabled:bg-gray-100"
             style={{ minHeight: '48px', fontSize: '16px' }}
           >
-            <option value="" className="text-gray-500 bg-gray-50">Select an activity...</option>
+            <option value="" className="text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800">Select an activity...</option>
             {PHYSICAL_ACTIVITY_OPTIONS.map((option) => (
-              <option key={option} value={option} className="text-gray-900 bg-white">{option}</option>
+              <option key={option} value={option} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-900">{option}</option>
             ))}
           </select>
         </div>
         <div>
-          <label htmlFor="social-connection" className="block text-lg font-medium text-gray-700 mb-2">👥 Social Connection</label>
+          <label htmlFor="social-connection" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">👥 Social Connection</label>
           <select
             id="social-connection"
             value={socialEngagement}
             onChange={(e) => onSetSocialEngagement(e.target.value)}
             disabled={isSubmitting}
-            className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 disabled:bg-gray-100"
+            className="w-full py-3 px-4 text-lg border-2 border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-slate-100 disabled:bg-gray-100"
             style={{ minHeight: '48px', fontSize: '16px' }}
           >
-            <option value="" className="text-gray-500 bg-gray-50">How did you connect?</option>
+            <option value="" className="text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800">How did you connect?</option>
             {SOCIAL_ENGAGEMENT_OPTIONS.map((option) => (
-              <option key={option} value={option} className="text-gray-900 bg-white">{option}</option>
+              <option key={option} value={option} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-900">{option}</option>
             ))}
           </select>
         </div>
@@ -221,11 +221,11 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
     </div>
 
     {/* Notes Section with Voice */}
-    <div className="border-b border-gray-200 pb-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">📝 Additional Notes (Optional)</h2>
+    <div className="border-b border-gray-200 dark:border-slate-700 pb-6">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">📝 Additional Notes (Optional)</h2>
 
       <div className="mb-4">
-        <label htmlFor="symptoms" className="block text-lg font-medium text-gray-700 mb-2">
+        <label htmlFor="symptoms" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">
           🤒 Any symptoms you&apos;re experiencing?
         </label>
         <div className="relative">
@@ -235,7 +235,7 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
             onChange={(e) => onSetSymptoms(e.target.value)}
             rows={3}
             disabled={isSubmitting}
-            className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
+            className="w-full py-3 px-4 text-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg shadow-xs focus:outline-hidden focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 dark:text-slate-100 placeholder-gray-400"
             placeholder="e.g., headache, fatigue, feeling dizzy..."
             maxLength={500}
           />
@@ -262,7 +262,7 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
       </div>
 
       <div className="mb-4">
-        <label htmlFor="activityNotes" className="block text-lg font-medium text-gray-700 mb-2">
+        <label htmlFor="activityNotes" className="block text-lg font-medium text-gray-700 dark:text-slate-300 mb-2">
           📓 Tell us more about your day
         </label>
         <div className="relative">
@@ -272,7 +272,7 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
             onChange={(e) => onSetActivityNotes(e.target.value)}
             rows={3}
             disabled={isSubmitting}
-            className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
+            className="w-full py-3 px-4 text-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg shadow-xs focus:outline-hidden focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 dark:text-slate-100 placeholder-gray-400"
             placeholder="Tell us about your day, any concerns, or how you're feeling..."
             maxLength={500}
           />
@@ -320,8 +320,8 @@ export const CheckInFormBody: React.FC<CheckInFormBodyProps> = ({
     )}
 
     {/* Quick Check-ins */}
-    <div className="pt-6 border-t border-gray-200">
-      <h3 className="text-lg font-semibold mb-3 text-center text-gray-700">Or Quick Status Update:</h3>
+    <div className="pt-6 border-t border-gray-200 dark:border-slate-700">
+      <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-slate-300">Or Quick Status Update:</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {CHECK_IN_BUTTONS.map((label) => (
           <button

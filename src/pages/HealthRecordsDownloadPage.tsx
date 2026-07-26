@@ -202,7 +202,7 @@ const HealthRecordsDownloadPage: React.FC = () => {
 
         {/* Success Message */}
         {downloadComplete && (
-          <div className="bg-green-100 border border-green-400 text-green-700 rounded-2xl p-4 mb-6 flex items-center gap-3">
+          <div className="bg-green-100 dark:bg-green-950 border border-green-400 text-green-700 dark:text-green-300 rounded-2xl p-4 mb-6 flex items-center gap-3">
             <span className="text-2xl">✅</span>
             <div>
               <div className="font-semibold">Download Complete!</div>
@@ -213,7 +213,7 @@ const HealthRecordsDownloadPage: React.FC = () => {
 
         {/* Error Message */}
         {downloadError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 rounded-2xl p-4 mb-6 flex items-center gap-3" role="alert">
+          <div className="bg-red-100 dark:bg-red-950 border border-red-400 text-red-700 dark:text-red-300 rounded-2xl p-4 mb-6 flex items-center gap-3" role="alert">
             <span className="text-2xl">⚠️</span>
             <div>
               <div className="font-semibold">Download Failed</div>
@@ -223,7 +223,7 @@ const HealthRecordsDownloadPage: React.FC = () => {
         )}
 
         {/* Record Selection */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             Select Records to Include
           </h2>
@@ -235,12 +235,12 @@ const HealthRecordsDownloadPage: React.FC = () => {
                 className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 ${
                   selectedRecords.includes(record.id) ||
                   (record.id !== 'all' && selectedRecords.includes('all'))
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-slate-800'
+                    : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-300'
                 }`}
               >
                 <span className="text-2xl">{record.icon}</span>
-                <span className="font-medium text-gray-700">{record.label}</span>
+                <span className="font-medium text-gray-700 dark:text-slate-300">{record.label}</span>
                 {(selectedRecords.includes(record.id) ||
                   (record.id !== 'all' && selectedRecords.includes('all'))) && (
                   <span className="ml-auto text-blue-500">✓</span>
@@ -251,7 +251,7 @@ const HealthRecordsDownloadPage: React.FC = () => {
         </div>
 
         {/* Format Selection */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
           <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             Choose Export Format
           </h2>
@@ -262,14 +262,14 @@ const HealthRecordsDownloadPage: React.FC = () => {
                 onClick={() => setSelectedFormat(format.id)}
                 className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                   selectedFormat === format.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-slate-800'
+                    : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-300'
                 }`}
               >
                 <span className="text-3xl">{format.icon}</span>
                 <div className="flex-1">
-                  <div className="font-semibold text-gray-800">{format.name}</div>
-                  <div className="text-sm text-gray-500">{format.description}</div>
+                  <div className="font-semibold text-gray-800 dark:text-slate-200">{format.name}</div>
+                  <div className="text-sm text-gray-500 dark:text-slate-400">{format.description}</div>
                 </div>
                 {selectedFormat === format.id && <span className="text-blue-500 text-xl">✓</span>}
               </button>
@@ -278,9 +278,9 @@ const HealthRecordsDownloadPage: React.FC = () => {
         </div>
 
         {/* Privacy Notice */}
-        <div className="bg-yellow-50 rounded-2xl p-4 mb-6 flex items-start gap-3">
+        <div className="bg-yellow-50 dark:bg-slate-800 rounded-2xl p-4 mb-6 flex items-start gap-3">
           <span className="text-2xl">🔒</span>
-          <div className="text-sm text-yellow-800">
+          <div className="text-sm text-yellow-800 dark:text-yellow-300">
             <div className="font-semibold mb-1">Privacy Notice</div>
             Your health records contain sensitive information. Only download and share with trusted
             healthcare providers. Files are encrypted during transfer.
@@ -308,31 +308,31 @@ const HealthRecordsDownloadPage: React.FC = () => {
         </button>
 
         {/* Additional Options */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mt-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 sm:p-8 mt-6">
           <h2 className="text-2xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             Other Options
           </h2>
           <div className="space-y-4">
             <button
               onClick={() => navigate('/doctors-view')}
-              className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-200"
+              className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-700 hover:border-gray-300 transition-all duration-200"
             >
               <span className="text-2xl">👨‍⚕️</span>
               <div className="text-left">
-                <div className="font-semibold text-gray-800">Share with Provider</div>
-                <div className="text-sm text-gray-500">
+                <div className="font-semibold text-gray-800 dark:text-slate-200">Share with Provider</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">
                   Generate a secure link for your healthcare provider
                 </div>
               </div>
             </button>
             <button
               onClick={() => navigate('/consent-management')}
-              className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-200"
+              className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-700 hover:border-gray-300 transition-all duration-200"
             >
               <span className="text-2xl">📝</span>
               <div className="text-left">
-                <div className="font-semibold text-gray-800">Manage Consent</div>
-                <div className="text-sm text-gray-500">Control who can access your health data</div>
+                <div className="font-semibold text-gray-800 dark:text-slate-200">Manage Consent</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">Control who can access your health data</div>
               </div>
             </button>
           </div>
@@ -343,7 +343,7 @@ const HealthRecordsDownloadPage: React.FC = () => {
           <button
             onClick={() => navigate('/my-health')}
             aria-label="Go back to My Health"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <span className="text-2xl" aria-hidden="true">
               ←

@@ -217,7 +217,7 @@ const TechTip: React.FC = () => {
   const todaysTip = techTips[todaysTipIndex];
 
   return (
-    <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md relative overflow-hidden">
+    <section className="bg-white dark:bg-slate-900 border-2 border-wellfit-green p-6 rounded-xl shadow-md relative overflow-hidden">
       {/* Animated glow effect */}
       <div className="absolute inset-0 bg-linear-to-r from-blue-400/10 via-green-400/10 to-blue-400/10 animate-pulse pointer-events-none"></div>
 
@@ -229,7 +229,7 @@ const TechTip: React.FC = () => {
           <span className="mr-2 text-2xl animate-bounce">💡</span>
           Tech Tip of the Day
         </h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-slate-400">
           {new Date().toLocaleDateString('en-US', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -241,12 +241,12 @@ const TechTip: React.FC = () => {
 
       {/* Tip Content with enhanced glow */}
       <div className="bg-linear-to-r from-blue-50 to-green-50 p-5 rounded-lg mb-5 border-l-4 border-wellfit-blue shadow-lg ring-2 ring-blue-200/50 hover:ring-blue-300/70 transition-all duration-300">
-        <p className="text-gray-800 text-lg leading-relaxed">{todaysTip}</p>
+        <p className="text-gray-800 dark:text-slate-200 text-lg leading-relaxed">{todaysTip}</p>
       </div>
 
       {/* Feedback Section */}
       <div className="border-t pt-4">
-        <p className="text-sm text-gray-600 mb-3 text-center">
+        <p className="text-sm text-gray-600 dark:text-slate-400 mb-3 text-center">
           Was today's tip helpful?
         </p>
         
@@ -254,32 +254,32 @@ const TechTip: React.FC = () => {
           <div className="flex justify-center space-x-3">
             <button
               onClick={() => handleFeedback('helpful')}
-              className="flex items-center space-x-2 px-6 py-3 bg-white border-2 border-green-300 rounded-lg hover:bg-green-50 hover:border-green-400 transition-all duration-200 shadow-xs"
+              className="flex items-center space-x-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-slate-700 hover:border-green-400 transition-all duration-200 shadow-xs"
             >
               <span className="text-2xl">👍</span>
-              <span className="font-medium text-green-700">Helpful</span>
+              <span className="font-medium text-green-700 dark:text-green-300">Helpful</span>
             </button>
 
             <button
               onClick={() => handleFeedback('not-helpful')}
-              className="flex items-center space-x-2 px-6 py-3 bg-white border-2 border-red-300 rounded-lg hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-xs"
+              className="flex items-center space-x-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-red-300 rounded-lg hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-xs"
             >
               <span className="text-2xl">👎</span>
-              <span className="font-medium text-red-700">Not helpful</span>
+              <span className="font-medium text-red-700 dark:text-red-300">Not helpful</span>
             </button>
           </div>
         ) : (
           <div className={`text-center p-3 rounded-lg ${
             feedback.reaction === 'helpful' 
-              ? 'bg-green-100 border border-green-300' 
-              : 'bg-red-100 border border-red-300'
+              ? 'bg-green-100 dark:bg-green-950 border border-green-300' 
+              : 'bg-red-100 dark:bg-red-950 border border-red-300'
           }`}>
             <div className="flex justify-center items-center space-x-2">
               <span className="text-2xl">
                 {feedback.reaction === 'helpful' ? '👍' : '👎'}
               </span>
               <span className={`font-medium ${
-                feedback.reaction === 'helpful' ? 'text-green-700' : 'text-red-700'
+                feedback.reaction === 'helpful' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
               }`}>
                 You marked this tip as {feedback.reaction === 'helpful' ? 'helpful' : 'not helpful'}
               </span>
@@ -289,8 +289,8 @@ const TechTip: React.FC = () => {
 
         {/* Feedback confirmation message */}
         {showFeedback && (
-          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center animate-pulse">
-            <p className="text-sm text-blue-700 font-medium">
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg text-center animate-pulse">
+            <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
               ✨ Thank you for your feedback! Come back tomorrow for a new tip.
             </p>
           </div>
@@ -299,7 +299,7 @@ const TechTip: React.FC = () => {
 
       {/* Bottom info */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 dark:text-slate-500">
           💡 New tip every day • Check back tomorrow for more!
         </p>
       </div>

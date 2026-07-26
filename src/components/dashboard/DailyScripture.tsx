@@ -90,18 +90,18 @@ const DailyScripture: React.FC = () => {
   const currentScripture = scriptures[today % scriptures.length];
   
   return (
-    <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md">
+    <section className="bg-white dark:bg-slate-900 border-2 border-wellfit-green p-6 rounded-xl shadow-md">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-semibold text-wellfit-blue">Daily Scripture</h2>
-        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-sm">
+        <span className="text-sm text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded-sm">
           {today} of {scriptures.length}
         </span>
       </div>
-      <blockquote className="text-gray-800 italic text-lg leading-relaxed">
+      <blockquote className="text-gray-800 dark:text-slate-200 italic text-lg leading-relaxed">
         "{currentScripture}"
       </blockquote>
-      <div className="mt-4 pt-3 border-t border-gray-200">
-        <p className="text-sm text-gray-600 text-center">
+      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-slate-700">
+        <p className="text-sm text-gray-600 dark:text-slate-400 text-center">
           🙏 May this verse bring encouragement to your day
         </p>
       </div>

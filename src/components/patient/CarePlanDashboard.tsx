@@ -52,18 +52,18 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300 border-green-300';
       case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
+        return 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300';
       case 'on-hold':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 border-yellow-300';
       case 'revoked':
       case 'entered-in-error':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-300';
       case 'draft':
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-300 dark:border-slate-600';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-300 dark:border-slate-600';
     }
   };
 
@@ -74,11 +74,11 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
       case 'in-progress':
         return 'text-blue-600';
       case 'not-started':
-        return 'text-gray-600';
+        return 'text-gray-600 dark:text-slate-400';
       case 'cancelled':
         return 'text-red-600';
       default:
-        return 'text-gray-600';
+        return 'text-gray-600 dark:text-slate-400';
     }
   };
 
@@ -142,7 +142,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
           {!readOnly && (
             <button
               onClick={() => setShowAddForm(true)}
-              className="px-6 py-3 bg-white text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-semibold shadow-lg"
+              className="px-6 py-3 bg-white dark:bg-slate-900 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg transition-all duration-200 font-semibold shadow-lg"
             >
               + New Care Plan
             </button>
@@ -177,12 +177,12 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-2xl">⭐</span>
-                <h2 className="text-xl font-bold text-gray-900">Current Care Plan</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Current Care Plan</h2>
               </div>
               <h3 className="text-2xl font-semibold text-green-900 mb-1">
                 {currentPlan.title || 'Untitled Care Plan'}
               </h3>
-              <p className="text-sm text-gray-700">{currentPlan.description}</p>
+              <p className="text-sm text-gray-700 dark:text-slate-300">{currentPlan.description}</p>
             </div>
             <span className={`px-4 py-2 rounded-full text-sm font-semibold border ${getStatusColor(currentPlan.status)}`}>
               {currentPlan.status}
@@ -191,18 +191,18 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
                 <span className="font-semibold">Category:</span>{' '}
                 {getCategoryDisplay(currentPlan.category)}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
                 <span className="font-semibold">Period:</span>{' '}
                 {formatDate(currentPlan.period_start)} - {formatDate(currentPlan.period_end)}
               </p>
             </div>
             {currentPlan.care_team_display && (
               <div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-slate-400">
                   <span className="font-semibold">Care Team:</span>{' '}
                   {currentPlan.care_team_display}
                 </p>
@@ -212,10 +212,10 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
           {currentPlan.goal_displays && currentPlan.goal_displays.length > 0 && (
             <div className="mt-4">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Goals:</p>
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Goals:</p>
               <ul className="space-y-1">
                 {currentPlan.goal_displays.map((goal: string, index: number) => (
-                  <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                  <li key={index} className="text-sm text-gray-700 dark:text-slate-300 flex items-start gap-2">
                     <span className="text-green-600">🎯</span>
                     {goal}
                   </li>
@@ -234,14 +234,14 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 mb-6">
-        <div className="flex border-b border-gray-200">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 mb-6">
+        <div className="flex border-b border-gray-200 dark:border-slate-700">
           <button
             onClick={() => setActiveTab('all')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'all'
                 ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
             }`}
           >
             All Plans ({carePlans.length})
@@ -251,7 +251,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'active'
                 ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
             }`}
           >
             Active ({activePlansCount})
@@ -261,7 +261,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'completed'
                 ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900'
             }`}
           >
             Completed ({completedPlans})
@@ -272,12 +272,12 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
       {/* Care Plans List */}
       <div className="space-y-4">
         {filteredPlans.length === 0 ? (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+          <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-12 text-center">
             <span className="text-6xl mb-4 block">📋</span>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">
               No Care Plans Yet
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-slate-400 mb-6">
               Create a care plan to coordinate your healthcare goals and activities.
             </p>
             {!readOnly && (
@@ -296,24 +296,24 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
             return (
               <div
                 key={plan.id}
-                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-6 hover:shadow-lg transition-all duration-200 cursor-pointer"
                 onClick={() => setSelectedPlan(plan)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-1">
                       {plan.title || 'Untitled Care Plan'}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-2">{plan.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400 mb-2">{plan.description}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(plan.status)}`}>
                         {plan.status}
                       </span>
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300">
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300">
                         {plan.intent}
                       </span>
                       {Array.isArray(plan.category) && plan.category.map((cat: string, idx: number) => (
-                        <span key={idx} className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-300">
+                        <span key={idx} className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300">
                           {CARE_PLAN_CATEGORY_NAMES[cat] || cat}
                         </span>
                       ))}
@@ -323,12 +323,12 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-slate-400">
                       <span className="font-medium">Period:</span>{' '}
                       {formatDate(plan.period_start)} - {formatDate(plan.period_end)}
                     </p>
                     {plan.author_display && (
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-400">
                         <span className="font-medium">Author:</span>{' '}
                         {plan.author_display}
                       </p>
@@ -336,7 +336,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
                   </div>
                   {plan.care_team_display && (
                     <div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-400">
                         <span className="font-medium">Care Team:</span>{' '}
                         {plan.care_team_display}
                       </p>
@@ -346,10 +346,10 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
                 {/* Activity Progress */}
                 {progress && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Activity Progress</span>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Activity Progress</span>
+                      <span className="text-sm text-gray-600 dark:text-slate-400">
                         {progress.completed} of {progress.total} completed
                       </span>
                     </div>
@@ -370,7 +370,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
       {/* Detail Modal */}
       {selectedPlan && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-linear-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-xl">
               <div className="flex justify-between items-start">
                 <div>
@@ -392,7 +392,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
                 <span className={`px-4 py-2 rounded-full text-sm font-semibold border ${getStatusColor(selectedPlan.status)}`}>
                   {selectedPlan.status}
                 </span>
-                <span className="px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 border border-blue-300">
+                <span className="px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300">
                   {selectedPlan.intent}
                 </span>
               </div>
@@ -400,10 +400,10 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               {/* Categories */}
               {Array.isArray(selectedPlan.category) && selectedPlan.category.length > 0 && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Categories</h3>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-2">Categories</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedPlan.category.map((cat, idx) => (
-                      <span key={idx} className="px-3 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-sm">
+                      <span key={idx} className="px-3 py-1 rounded-lg bg-purple-50 dark:bg-slate-800 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-slate-600 text-sm">
                         {CARE_PLAN_CATEGORY_NAMES[cat] || cat}
                       </span>
                     ))}
@@ -413,8 +413,8 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
               {/* Period */}
               <div>
-                <h3 className="font-semibold text-gray-700 mb-1">Active Period</h3>
-                <p className="text-gray-900">
+                <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Active Period</h3>
+                <p className="text-gray-900 dark:text-slate-100">
                   {formatDate(selectedPlan.period_start)} - {formatDate(selectedPlan.period_end)}
                 </p>
               </div>
@@ -424,14 +424,14 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {selectedPlan.author_display && (
                     <div>
-                      <h3 className="font-semibold text-gray-700 mb-1">Author</h3>
-                      <p className="text-gray-900">{selectedPlan.author_display}</p>
+                      <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Author</h3>
+                      <p className="text-gray-900 dark:text-slate-100">{selectedPlan.author_display}</p>
                     </div>
                   )}
                   {selectedPlan.care_team_display && (
                     <div>
-                      <h3 className="font-semibold text-gray-700 mb-1">Care Team</h3>
-                      <p className="text-gray-900">{selectedPlan.care_team_display}</p>
+                      <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Care Team</h3>
+                      <p className="text-gray-900 dark:text-slate-100">{selectedPlan.care_team_display}</p>
                     </div>
                   )}
                 </div>
@@ -440,10 +440,10 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               {/* Goals */}
               {Array.isArray(selectedPlan.goal_displays) && selectedPlan.goal_displays.length > 0 && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Goals</h3>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-2">Goals</h3>
                   <ul className="space-y-2">
                     {selectedPlan.goal_displays.map((goal, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-900">
+                      <li key={index} className="flex items-start gap-2 text-gray-900 dark:text-slate-100">
                         <span className="text-green-600 mt-1">🎯</span>
                         <span>{goal}</span>
                       </li>
@@ -455,10 +455,10 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               {/* Conditions Addressed */}
               {Array.isArray(selectedPlan.addresses_condition_displays) && selectedPlan.addresses_condition_displays.length > 0 && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Addresses Conditions</h3>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-2">Addresses Conditions</h3>
                   <ul className="space-y-1">
                     {selectedPlan.addresses_condition_displays.map((condition, index) => (
-                      <li key={index} className="text-gray-900 text-sm">
+                      <li key={index} className="text-gray-900 dark:text-slate-100 text-sm">
                         • {condition}
                       </li>
                     ))}
@@ -469,12 +469,12 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               {/* Activities */}
               {Array.isArray(selectedPlan.activities) && selectedPlan.activities.length > 0 && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-3">Activities</h3>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-3">Activities</h3>
                   <div className="space-y-3">
                     {selectedPlan.activities.map((activity: CarePlanActivity, index: number) => (
-                      <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <div key={index} className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
                         <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">
+                          <h4 className="font-medium text-gray-900 dark:text-slate-100">
                             {activity.detail?.code_display || `Activity ${index + 1}`}
                           </h4>
                           {activity.status && (
@@ -484,10 +484,10 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
                           )}
                         </div>
                         {activity.detail?.description && (
-                          <p className="text-sm text-gray-600 mb-2">{activity.detail.description}</p>
+                          <p className="text-sm text-gray-600 dark:text-slate-400 mb-2">{activity.detail.description}</p>
                         )}
                         {activity.detail?.performer_display && activity.detail.performer_display.length > 0 && (
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-slate-400">
                             <span className="font-medium">Performer:</span>{' '}
                             {activity.detail.performer_display.join(', ')}
                           </p>
@@ -501,8 +501,8 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               {/* Notes */}
               {selectedPlan.note && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-1">Notes</h3>
-                  <p className="text-gray-900 whitespace-pre-wrap">{selectedPlan.note}</p>
+                  <h3 className="font-semibold text-gray-700 dark:text-slate-300 mb-1">Notes</h3>
+                  <p className="text-gray-900 dark:text-slate-100 whitespace-pre-wrap">{selectedPlan.note}</p>
                 </div>
               )}
             </div>

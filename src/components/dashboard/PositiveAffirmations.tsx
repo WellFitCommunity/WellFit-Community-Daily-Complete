@@ -36,13 +36,13 @@ const PositiveAffirmations: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-4 sm:p-6">
       <div className="text-center">
         <div className="text-2xl sm:text-3xl mb-3">✨</div>
-        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 dark:text-slate-200 mb-3">
           Daily Affirmation
         </h3>
-        <p className="text-base sm:text-lg text-gray-700 mb-4 italic">
+        <p className="text-base sm:text-lg text-gray-700 dark:text-slate-300 mb-4 italic">
           "{currentAffirmation}"
         </p>
         <button

@@ -86,7 +86,7 @@ const WeatherWidget: React.FC = () => {
   };
 
   return (
-    <section className="bg-white border-2 border-wellfit-green p-4 rounded-xl shadow-md w-full max-w-sm text-sm text-[#003865]">
+    <section className="bg-white dark:bg-slate-900 border-2 border-wellfit-green p-4 rounded-xl shadow-md w-full max-w-sm text-sm text-[#003865] dark:text-sky-300">
       <h2 className="text-lg font-semibold text-wellfit-blue mb-2">Current Weather</h2>
 
       {error && !useManual && (

@@ -145,7 +145,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
               onClick={() => setTimeRange(range.days)}
               className={`px-4 py-2 rounded-lg transition-all ${
                 timeRange === range.days
-                  ? 'bg-white text-purple-600 font-semibold'
+                  ? 'bg-white dark:bg-slate-900 text-purple-600 font-semibold'
                   : 'bg-white/20 hover:bg-white/30 text-white'
               }`}
             >
@@ -156,15 +156,15 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
       </div>
 
       {/* Vaccine Type Filter */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6 mb-6">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Filter by Vaccine Type</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6 mb-6">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Filter by Vaccine Type</h3>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedVaccine(null)}
             className={`px-4 py-2 rounded-lg transition-all ${
               selectedVaccine === null
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200'
             }`}
           >
             All Vaccines ({immunizations.length})
@@ -176,7 +176,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
               className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
                 selectedVaccine === code
                   ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200'
               }`}
             >
               <span>{getVaccineIcon(code)}</span>
@@ -190,14 +190,14 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
       </div>
 
       {/* Timeline View */}
-      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
         {filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <span className="text-6xl mb-4 block">📅</span>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">
               No Immunizations Found
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-slate-400">
               {selectedVaccine
                 ? 'No records for this vaccine in the selected time range.'
                 : 'No immunization records in the selected time range.'}
@@ -220,11 +220,11 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
 
                   {/* Event Content */}
                   <div className="flex-1 pb-6">
-                    <div className="bg-linear-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
-                      <h3 className="font-semibold text-gray-900 mb-1">
+                    <div className="bg-linear-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200 dark:border-slate-600">
+                      <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-1">
                         {formatDate(event.date)}
                       </h3>
-                      <p className="text-sm text-gray-600 mb-3">
+                      <p className="text-sm text-gray-600 dark:text-slate-400 mb-3">
                         {event.immunizations.length} vaccine{event.immunizations.length > 1 ? 's' : ''} administered
                       </p>
 
@@ -233,39 +233,39 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
                         {event.immunizations.map((imm) => (
                           <div
                             key={imm.id}
-                            className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow"
+                            className="bg-white dark:bg-slate-900 rounded-lg p-4 border border-gray-200 dark:border-slate-700 hover:shadow-md transition-shadow"
                           >
                             <div className="flex items-start gap-3">
                               <span className="text-2xl">{getVaccineIcon(imm.vaccine_code)}</span>
                               <div className="flex-1">
-                                <h4 className="font-semibold text-gray-900">
+                                <h4 className="font-semibold text-gray-900 dark:text-slate-100">
                                   {imm.vaccine_display}
                                 </h4>
                                 <div className="mt-2 space-y-1">
                                   {imm.lot_number && (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-slate-400">
                                       <span className="font-medium">Lot:</span> {imm.lot_number}
                                     </p>
                                   )}
                                   {imm.performer_actor_display && (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-slate-400">
                                       <span className="font-medium">By:</span> {imm.performer_actor_display}
                                     </p>
                                   )}
                                   {imm.location_display && (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-slate-400">
                                       <span className="font-medium">Location:</span> {imm.location_display}
                                     </p>
                                   )}
                                   {imm.protocol_dose_number_positive_int && imm.protocol_series_doses_positive_int && (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-slate-400">
                                       <span className="font-medium">Dose:</span>{' '}
                                       {imm.protocol_dose_number_positive_int} of{' '}
                                       {imm.protocol_series_doses_positive_int}
                                     </p>
                                   )}
                                   {imm.site_display && (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-slate-400">
                                       <span className="font-medium">Site:</span> {imm.site_display}
                                       {imm.route_display && ` (${imm.route_display})`}
                                     </p>
@@ -274,8 +274,8 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
                                 <div className="mt-2">
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                     imm.status === 'completed'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-gray-100 text-gray-800'
+                                      ? 'bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300'
+                                      : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200'
                                   }`}>
                                     {imm.status}
                                   </span>
@@ -296,20 +296,20 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
 
       {/* Vaccine History Table */}
       {selectedVaccine && vaccineGroups[selectedVaccine] && (
-        <div className="mt-6 bg-white rounded-lg shadow-xs border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="mt-6 bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">
             {getVaccineIcon(selectedVaccine)} {VACCINE_NAMES[selectedVaccine] || selectedVaccine} History
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Lot Number</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Location</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Administered By</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Dose</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                <tr className="border-b border-gray-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-slate-300">Date</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-slate-300">Lot Number</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-slate-300">Location</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-slate-300">Administered By</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-slate-300">Dose</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-slate-300">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -320,7 +320,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
                     return dateB - dateA;
                   })
                   .map((imm) => (
-                    <tr key={imm.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={imm.id} className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800">
                       <td className="py-3 px-4">{formatShortDate(imm.occurrence_datetime || '')}</td>
                       <td className="py-3 px-4">{imm.lot_number || '-'}</td>
                       <td className="py-3 px-4">{imm.location_display || '-'}</td>
@@ -333,8 +333,8 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           imm.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300'
+                            : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200'
                         }`}>
                           {imm.status}
                         </span>
@@ -349,19 +349,19 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
 
       {/* Summary Stats */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-linear-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-6">
+        <div className="bg-linear-to-br from-purple-50 to-indigo-50 border border-purple-200 dark:border-slate-600 rounded-lg p-6">
           <div className="text-3xl font-bold text-purple-900 mb-1">
             {Object.keys(vaccineGroups).length}
           </div>
-          <div className="text-sm text-purple-700">Different Vaccine Types</div>
+          <div className="text-sm text-purple-700 dark:text-purple-300">Different Vaccine Types</div>
         </div>
-        <div className="bg-linear-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-6">
-          <div className="text-3xl font-bold text-blue-900 mb-1">
+        <div className="bg-linear-to-br from-blue-50 to-cyan-50 border border-blue-200 dark:border-slate-600 rounded-lg p-6">
+          <div className="text-3xl font-bold text-blue-900 dark:text-blue-200 mb-1">
             {immunizations.length}
           </div>
-          <div className="text-sm text-blue-700">Total Doses Administered</div>
+          <div className="text-sm text-blue-700 dark:text-blue-300">Total Doses Administered</div>
         </div>
-        <div className="bg-linear-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
+        <div className="bg-linear-to-br from-green-50 to-emerald-50 border border-green-200 dark:border-slate-600 rounded-lg p-6">
           <div className="text-3xl font-bold text-green-900 mb-1">
             {immunizations.filter(i => {
               if (!i.occurrence_datetime) return false;
@@ -371,7 +371,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
               return date >= oneYearAgo;
             }).length}
           </div>
-          <div className="text-sm text-green-700">Vaccines in Last Year</div>
+          <div className="text-sm text-green-700 dark:text-green-300">Vaccines in Last Year</div>
         </div>
       </div>
     </div>

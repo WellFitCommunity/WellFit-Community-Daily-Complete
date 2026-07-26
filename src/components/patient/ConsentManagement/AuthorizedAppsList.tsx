@@ -200,12 +200,12 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
     return (
       <div className="text-center py-12">
         <Smartphone className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Connected Apps</h3>
-        <p className="text-gray-600 mb-4">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">No Connected Apps</h3>
+        <p className="text-gray-600 dark:text-slate-400 mb-4">
           You haven't authorized any third-party apps to access your health data.
         </p>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-          <p className="text-sm text-blue-700">
+        <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg p-4 max-w-md mx-auto">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
             <strong>What are connected apps?</strong><br />
             Apps like Apple Health, fitness trackers, or care coordination apps
             can request access to your health records via SMART on FHIR.
@@ -221,16 +221,16 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
       <ToastContainer />
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Connected Apps</h3>
-          <span className="text-sm text-gray-500">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100">Connected Apps</h3>
+          <span className="text-sm text-gray-500 dark:text-slate-400">
             {apps.length} app{apps.length !== 1 ? 's' : ''} connected
           </span>
         </div>
 
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+        <div className="bg-yellow-50 dark:bg-slate-800 border border-yellow-200 dark:border-slate-600 rounded-lg p-3 mb-4">
           <div className="flex items-start">
             <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
-            <p className="text-sm text-yellow-700">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
               These apps can access your health data based on the permissions you granted.
               Revoke access anytime if you no longer use an app.
             </p>
@@ -240,12 +240,12 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
         {apps.map((app) => (
           <div
             key={app.id}
-            className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+            className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-slate-900"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start">
                 {/* App Icon */}
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center mr-4">
                   {app.logo_uri ? (
                     <img
                       src={app.logo_uri}
@@ -256,17 +256,17 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
                       }}
                     />
                   ) : (
-                    <Smartphone className="w-6 h-6 text-gray-400" />
+                    <Smartphone className="w-6 h-6 text-gray-400 dark:text-slate-500" />
                   )}
                 </div>
 
                 {/* App Info */}
                 <div className="flex-1">
                   <div className="flex items-center">
-                    <h4 className="font-medium text-gray-900">{app.app_name}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-slate-100">{app.app_name}</h4>
                     <a
                       href="#"
-                      className="ml-2 text-gray-400 hover:text-gray-600"
+                      className="ml-2 text-gray-400 dark:text-slate-500 hover:text-gray-600"
                       title="View app details"
                     >
                       <ExternalLink className="w-4 h-4" />
@@ -274,23 +274,23 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
                   </div>
 
                   {app.app_description && (
-                    <p className="text-sm text-gray-600 mt-1">{app.app_description}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">{app.app_description}</p>
                   )}
 
                   {/* Permissions */}
                   <div className="mt-2">
-                    <p className="text-xs text-gray-500 mb-1">Permissions:</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Permissions:</p>
                     <div className="flex flex-wrap gap-1">
                       {app.scopes_granted.slice(0, 4).map((scope, idx) => (
                         <span
                           key={idx}
-                          className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded"
+                          className="text-xs bg-blue-50 dark:bg-slate-800 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded"
                         >
                           {getScopeDisplayName(scope)}
                         </span>
                       ))}
                       {app.scopes_granted.length > 4 && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-slate-400">
                           +{app.scopes_granted.length - 4} more
                         </span>
                       )}
@@ -298,7 +298,7 @@ const AuthorizedAppsList: React.FC<AuthorizedAppsListProps> = ({ userId, onCount
                   </div>
 
                   {/* Access Stats */}
-                  <div className="mt-3 flex items-center text-xs text-gray-500 space-x-4">
+                  <div className="mt-3 flex items-center text-xs text-gray-500 dark:text-slate-400 space-x-4">
                     <span className="flex items-center">
                       <Shield className="w-3 h-3 mr-1" />
                       Connected {formatDate(app.authorized_at)}

@@ -57,7 +57,7 @@ const CarePlansWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
         </div>
@@ -66,9 +66,9 @@ const CarePlansWidget: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
       <div className="text-center">
-        <h3 className="text-xl font-bold text-[#003865] mb-4 flex items-center justify-center gap-2">
+        <h3 className="text-xl font-bold text-[#003865] dark:text-sky-300 mb-4 flex items-center justify-center gap-2">
           <span>📋</span>
           Care Plans
         </h3>
@@ -76,7 +76,7 @@ const CarePlansWidget: React.FC = () => {
         {!currentPlan && activePlans.length === 0 ? (
           <div className="py-6">
             <div className="text-5xl mb-3">🎯</div>
-            <p className="text-gray-600 mb-4 text-sm">Coordinate your healthcare goals</p>
+            <p className="text-gray-600 dark:text-slate-400 mb-4 text-sm">Coordinate your healthcare goals</p>
             <button
               onClick={() => navigate('/care-plans')}
               className="w-full p-3 bg-[#8cc63f] text-white rounded-lg hover:bg-[#003865] transition font-semibold"
@@ -95,7 +95,7 @@ const CarePlansWidget: React.FC = () => {
                     <div className="font-bold text-sm text-green-900">
                       {currentPlan.title || 'Current Care Plan'}
                     </div>
-                    <div className="text-xs text-green-700 mt-1">
+                    <div className="text-xs text-green-700 dark:text-green-300 mt-1">
                       {currentPlan.description}
                     </div>
                     <div className="text-xs text-green-600 mt-2">
@@ -108,7 +108,7 @@ const CarePlansWidget: React.FC = () => {
                       if (progress) {
                         return (
                           <div className="mt-3">
-                            <div className="flex items-center justify-between text-xs text-green-800 mb-1">
+                            <div className="flex items-center justify-between text-xs text-green-800 dark:text-green-300 mb-1">
                               <span>Progress</span>
                               <span>{progress.completed}/{progress.total} activities</span>
                             </div>
@@ -130,8 +130,8 @@ const CarePlansWidget: React.FC = () => {
 
             {/* Active Plans Count */}
             {activePlans.length > 1 && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="text-sm text-blue-900">
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-slate-600">
+                <div className="text-sm text-blue-900 dark:text-blue-200">
                   <span className="font-semibold">{activePlans.length}</span> active care plans
                 </div>
               </div>

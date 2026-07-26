@@ -74,7 +74,7 @@ const HealthScoreDisplay: React.FC<{ score: number; riskLevel: string }> = ({ sc
            riskLevel === 'MODERATE' ? 'Watch & Improve' :
            riskLevel === 'HIGH' ? 'Needs Attention' : 'Please Contact Care Team'}
         </Badge>
-        <p className="text-sm text-gray-600 max-w-xs mx-auto">
+        <p className="text-sm text-gray-600 dark:text-slate-400 max-w-xs mx-auto">
           {getScoreMessage(score, riskLevel)}
         </p>
       </CardContent>
@@ -114,13 +114,13 @@ const HealthMetrics: React.FC<{ metrics: HealthMetric[] }> = ({ metrics }) => {
                 <span className="text-2xl">{getStatusIcon(metric.status)}</span>
                 <div>
                   <div className="font-medium">{metric.name}</div>
-                  <div className="text-sm text-gray-600">{metric.value}</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-400">{metric.value}</div>
                 </div>
               </div>
               <div className="text-right">
                 <div className="flex items-center space-x-1">
                   <span className="text-lg">{getTrendIcon(metric.trend)}</span>
-                  <span className="text-xs text-gray-500 capitalize">{metric.trend}</span>
+                  <span className="text-xs text-gray-500 dark:text-slate-400 capitalize">{metric.trend}</span>
                 </div>
               </div>
             </div>
@@ -147,11 +147,11 @@ const CareRecommendations: React.FC<{ recommendations: CareRecommendation[]; nex
       </CardHeader>
       <CardContent className="space-y-4">
         {nextActions.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 mb-2">Next Steps for You:</h4>
+          <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 rounded-lg p-4">
+            <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Next Steps for You:</h4>
             <ul className="space-y-1">
               {nextActions.slice(0, 3).map((action, index) => (
-                <li key={index} className="text-sm text-blue-700 flex items-start">
+                <li key={index} className="text-sm text-blue-700 dark:text-blue-300 flex items-start">
                   <span className="mr-2">•</span>
                   <span>{action}</span>
                 </li>
@@ -172,7 +172,7 @@ const CareRecommendations: React.FC<{ recommendations: CareRecommendation[]; nex
                       {rec.priority}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-700 mb-2">{rec.recommendation}</p>
+                  <p className="text-sm text-gray-700 dark:text-slate-300 mb-2">{rec.recommendation}</p>
                   {rec.estimatedImpact && (
                     <p className="text-xs text-green-600">Expected benefit: {rec.estimatedImpact}</p>
                   )}
@@ -246,7 +246,7 @@ const EncouragementCard: React.FC<{
       <CardContent className="p-6">
         <div className="text-center">
           <div className="text-3xl mb-3">{getEncouragementEmoji(adherenceScore)}</div>
-          <p className="text-gray-700 mb-4">{encouragement}</p>
+          <p className="text-gray-700 dark:text-slate-300 mb-4">{encouragement}</p>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-medium">Check-in Streak:</span>
@@ -451,42 +451,42 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl: 
         <Card className="bg-linear-to-br from-blue-50 to-indigo-50">
           <CardContent className="p-8 text-center">
             <div className="text-6xl mb-4">🏥</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-3">
               Welcome to Your Health Dashboard!
             </h2>
-            <p className="text-gray-700 mb-6 max-w-md mx-auto">
+            <p className="text-gray-700 dark:text-slate-300 mb-6 max-w-md mx-auto">
               Your personalized AI-powered health insights will appear here once you complete your first health check-in.
             </p>
 
-            <div className="bg-white rounded-lg p-6 mb-6 max-w-lg mx-auto">
-              <h3 className="font-semibold text-gray-900 mb-3">What you'll see here:</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-lg p-6 mb-6 max-w-lg mx-auto">
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-3">What you'll see here:</h3>
               <div className="space-y-3 text-left">
                 <div className="flex items-start space-x-3">
                   <span className="text-2xl">📊</span>
                   <div>
-                    <div className="font-medium text-gray-900">Your Health Score</div>
-                    <div className="text-sm text-gray-600">Track your overall wellness over time</div>
+                    <div className="font-medium text-gray-900 dark:text-slate-100">Your Health Score</div>
+                    <div className="text-sm text-gray-600 dark:text-slate-400">Track your overall wellness over time</div>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="text-2xl">💡</span>
                   <div>
-                    <div className="font-medium text-gray-900">AI-Powered Insights</div>
-                    <div className="text-sm text-gray-600">Personalized recommendations based on your data</div>
+                    <div className="font-medium text-gray-900 dark:text-slate-100">AI-Powered Insights</div>
+                    <div className="text-sm text-gray-600 dark:text-slate-400">Personalized recommendations based on your data</div>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="text-2xl">📈</span>
                   <div>
-                    <div className="font-medium text-gray-900">Health Trends</div>
-                    <div className="text-sm text-gray-600">See how your vitals change over time</div>
+                    <div className="font-medium text-gray-900 dark:text-slate-100">Health Trends</div>
+                    <div className="text-sm text-gray-600 dark:text-slate-400">See how your vitals change over time</div>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="text-2xl">🎯</span>
                   <div>
-                    <div className="font-medium text-gray-900">Personalized Action Items</div>
-                    <div className="text-sm text-gray-600">Clear next steps to improve your health</div>
+                    <div className="font-medium text-gray-900 dark:text-slate-100">Personalized Action Items</div>
+                    <div className="text-sm text-gray-600 dark:text-slate-400">Clear next steps to improve your health</div>
                   </div>
                 </div>
               </div>
@@ -500,7 +500,7 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl: 
               Complete Your First Check-in
             </Button>
 
-            <p className="text-sm text-gray-500 mt-4">
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-4">
               Takes only 2-3 minutes
             </p>
           </CardContent>
@@ -512,7 +512,7 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl: 
             <CardTitle className="text-lg">💡 Getting Started Tips</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm text-gray-700">
+            <div className="space-y-2 text-sm text-gray-700 dark:text-slate-300">
               <p>• Complete daily check-ins regularly to see meaningful trends</p>
               <p>• Be honest and accurate with your health data for better insights</p>
               <p>• Check back daily to see how your health score improves</p>
@@ -528,8 +528,8 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl: 
     <div className="space-y-6 max-w-4xl mx-auto p-4">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Health Dashboard</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">Your Health Dashboard</h1>
+        <p className="text-gray-600 dark:text-slate-400">
           Last updated: {lastUpdated?.toLocaleTimeString()}
         </p>
       </div>

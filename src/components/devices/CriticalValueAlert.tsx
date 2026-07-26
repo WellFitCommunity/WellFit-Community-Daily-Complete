@@ -37,18 +37,18 @@ const CriticalValueAlert: React.FC<CriticalValueAlertProps> = ({
     switch (severity) {
       case 'critical':
         return {
-          container: 'bg-red-50 border-red-500',
+          container: 'bg-red-50 dark:bg-red-950 border-red-500',
           icon: '🚨',
-          title: 'text-red-800',
-          message: 'text-red-700',
+          title: 'text-red-800 dark:text-red-300',
+          message: 'text-red-700 dark:text-red-300',
           button: 'text-red-600 hover:bg-red-100',
         };
       case 'warning':
         return {
-          container: 'bg-yellow-50 border-yellow-500',
+          container: 'bg-yellow-50 dark:bg-slate-800 border-yellow-500',
           icon: '⚠️',
-          title: 'text-yellow-800',
-          message: 'text-yellow-700',
+          title: 'text-yellow-800 dark:text-yellow-300',
+          message: 'text-yellow-700 dark:text-yellow-300',
           button: 'text-yellow-600 hover:bg-yellow-100',
         };
     }

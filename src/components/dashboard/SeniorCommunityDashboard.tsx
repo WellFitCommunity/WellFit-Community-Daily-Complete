@@ -405,10 +405,10 @@ const SeniorCommunityDashboard: React.FC = () => {
 
         {/* Welcome Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#003865] mb-2">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#003865] dark:text-sky-300 mb-2">
             {t.dashboard.welcome}
           </h1>
-          <p className="text-lg sm:text-xl text-gray-600">
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-slate-400">
             {t.dashboard.welcomeSubtitle}
           </p>
         </div>
@@ -436,7 +436,7 @@ const SeniorCommunityDashboard: React.FC = () => {
                     }
                   }}
                   aria-label="Call 911 emergency services"
-                  className="bg-white text-red-600 px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 transition"
+                  className="bg-white dark:bg-slate-900 text-red-600 px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 dark:hover:bg-slate-700 transition"
                 >
                   📞 Call 911 Now
                 </button>
@@ -451,7 +451,7 @@ const SeniorCommunityDashboard: React.FC = () => {
                     }
                   }}
                   aria-label={`Call emergency contact at ${caregiverPhone}`}
-                  className="bg-white text-yellow-600 px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 transition"
+                  className="bg-white dark:bg-slate-900 text-yellow-600 px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 dark:hover:bg-slate-700 transition"
                 >
                   📞 Call Emergency Contact
                 </button>
@@ -466,14 +466,14 @@ const SeniorCommunityDashboard: React.FC = () => {
                   }
                 }}
                 aria-label="Keep emergency banner visible"
-                className="bg-white bg-opacity-90 text-gray-800 px-6 py-3 rounded-lg font-bold text-lg hover:bg-opacity-100 transition"
+                className="bg-white dark:bg-slate-900 bg-opacity-90 text-gray-800 dark:text-slate-200 px-6 py-3 rounded-lg font-bold text-lg hover:bg-opacity-100 transition"
               >
                 📌 Keep This Message Visible
               </button>
               <button
                 onClick={() => setShowEmergencyBanner(false)}
                 aria-label="Close emergency banner"
-                className="bg-white bg-opacity-90 text-gray-800 px-6 py-3 rounded-lg font-bold text-lg hover:bg-opacity-100 transition"
+                className="bg-white dark:bg-slate-900 bg-opacity-90 text-gray-800 dark:text-slate-200 px-6 py-3 rounded-lg font-bold text-lg hover:bg-opacity-100 transition"
               >
                 Close
               </button>
@@ -484,8 +484,8 @@ const SeniorCommunityDashboard: React.FC = () => {
         {/* Follow-up Modal */}
         {showFollowUp && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4" role="dialog" aria-modal="true" aria-labelledby="followup-title">
-            <div className="bg-white rounded-xl p-6 max-w-md w-full">
-              <h3 id="followup-title" className="text-xl font-bold text-[#003865] mb-4 text-center">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 max-w-md w-full">
+              <h3 id="followup-title" className="text-xl font-bold text-[#003865] dark:text-sky-300 mb-4 text-center">
                 Help us understand better
               </h3>
               
@@ -578,7 +578,7 @@ const SeniorCommunityDashboard: React.FC = () => {
                 <button
                   onClick={() => navigate('/questions')}
                   aria-label="Message your nurse now"
-                  className="bg-white text-[#8cc63f] px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 transition"
+                  className="bg-white dark:bg-slate-900 text-[#8cc63f] px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 dark:hover:bg-slate-700 transition"
                 >
                   💬 Message Your Nurse Now
                 </button>
@@ -595,25 +595,25 @@ const SeniorCommunityDashboard: React.FC = () => {
           <div className="space-y-6">
             
             {/* Weather Widget */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
               <WeatherWidget />
             </div>
 
             {/* Daily Scripture */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
               <DailyScripture />
             </div>
 
             {/* Emergency Contact */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
               <EmergencyContact />
             </div>
 
           </div>
 
           {/* Center Column - Check-in Buttons */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 id="daily-checkin-heading" className="text-2xl font-bold text-[#003865] mb-6 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
+            <h2 id="daily-checkin-heading" className="text-2xl font-bold text-[#003865] dark:text-sky-300 mb-6 text-center">
               {t.dashboard.dailyCheckIn}
             </h2>
 
@@ -652,9 +652,9 @@ const SeniorCommunityDashboard: React.FC = () => {
           <div className="space-y-6">
             
             {/* Community Moments */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
               <div className="text-center">
-                <h3 id="community-moments-heading" className="text-xl font-bold text-[#003865] mb-4">
+                <h3 id="community-moments-heading" className="text-xl font-bold text-[#003865] dark:text-sky-300 mb-4">
                   {t.dashboard.communityMoments}
                 </h3>
 
@@ -703,14 +703,14 @@ const SeniorCommunityDashboard: React.FC = () => {
             </div>
 
             {/* DASH Meal of the Day */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
               <div className="text-center">
-                <h3 id="meal-heading" className="text-xl font-bold text-[#003865] mb-3">
+                <h3 id="meal-heading" className="text-xl font-bold text-[#003865] dark:text-sky-300 mb-3">
                   {t.dashboard.dashMeal}
                 </h3>
 
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-gray-700 mb-2">
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-slate-800 rounded-lg">
+                  <p className="text-sm text-gray-700 dark:text-slate-300 mb-2">
                     <strong>{t.dashboard.dashExplanation}</strong>
                   </p>
                   <a
@@ -727,7 +727,7 @@ const SeniorCommunityDashboard: React.FC = () => {
                 {todaysMeal && (
                   <div className="mb-4" role="region" aria-labelledby="meal-heading">
                     <h4 className="font-semibold text-lg">{todaysMeal.name}</h4>
-                    <p className="text-gray-600 text-sm">{todaysMeal.description}</p>
+                    <p className="text-gray-600 dark:text-slate-400 text-sm">{todaysMeal.description}</p>
                   </div>
                 )}
 
@@ -750,7 +750,7 @@ const SeniorCommunityDashboard: React.FC = () => {
             </div>
 
             {/* Tech Tips */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
               <TechTip />
             </div>
 
@@ -766,7 +766,7 @@ const SeniorCommunityDashboard: React.FC = () => {
               <button
                 onClick={() => navigate('/my-health')}
                 aria-label="View my health records including vaccines, vitals, labs, medications, and care plans"
-                className="w-full p-4 bg-white text-blue-700 rounded-lg hover:bg-gray-50 transition-all transform hover:scale-105 text-xl font-bold shadow-lg flex items-center justify-center gap-3"
+                className="w-full p-4 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-all transform hover:scale-105 text-xl font-bold shadow-lg flex items-center justify-center gap-3"
               >
                 <span className="text-2xl" aria-hidden="true">📋</span>
                 <span>View My Health Records</span>
@@ -781,12 +781,12 @@ const SeniorCommunityDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
 
           {/* Word Find */}
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6 text-center">
             <div className="text-3xl mb-3" aria-hidden="true">🧩</div>
-            <h3 id="word-find-heading" className="text-xl font-bold text-[#003865] mb-3">
+            <h3 id="word-find-heading" className="text-xl font-bold text-[#003865] dark:text-sky-300 mb-3">
               {t.dashboard.dailyWordFind}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-slate-400 mb-4">
               Keep your mind sharp with today's puzzle
             </p>
             <button
@@ -802,12 +802,12 @@ const SeniorCommunityDashboard: React.FC = () => {
           </div>
 
           {/* Memory Lane */}
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6 text-center">
             <div className="text-3xl mb-3" aria-hidden="true">🎭</div>
-            <h3 id="memory-lane-heading" className="text-xl font-bold text-[#003865] mb-3">
+            <h3 id="memory-lane-heading" className="text-xl font-bold text-[#003865] dark:text-sky-300 mb-3">
               {t.dashboard.memoryLane}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-slate-400 mb-4">
               Take a trip down memory lane with trivia from your era
             </p>
             <button

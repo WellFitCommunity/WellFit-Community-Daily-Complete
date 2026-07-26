@@ -192,7 +192,7 @@ const UpcomingAppointmentBanner: React.FC = () => {
               {joinable ? (
                 <button
                   onClick={() => navigate('/telehealth-appointments')}
-                  className="px-6 py-3 bg-white text-green-700 rounded-lg font-bold text-lg hover:bg-gray-100 transition shadow-lg flex items-center gap-2"
+                  className="px-6 py-3 bg-white dark:bg-slate-900 text-green-700 dark:text-green-300 rounded-lg font-bold text-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition shadow-lg flex items-center gap-2"
                   aria-label="Join video call now"
                 >
                   <span className="text-2xl" aria-hidden="true">

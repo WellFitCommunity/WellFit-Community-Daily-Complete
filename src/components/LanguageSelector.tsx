@@ -32,7 +32,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
       {showLabel && (
-        <label className="text-base font-semibold text-gray-700">
+        <label className="text-base font-semibold text-gray-700 dark:text-slate-300">
           {getLabel()}
         </label>
       )}
@@ -43,7 +43,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
           className={`px-4 py-3 font-semibold transition-colors rounded-lg border-2 ${
             language === 'en'
               ? 'bg-[#003865] text-white border-[#003865]'
-              : 'bg-white text-[#003865] border-gray-300 hover:border-[#003865]'
+              : 'bg-white dark:bg-slate-900 text-[#003865] dark:text-sky-300 border-gray-300 dark:border-slate-600 hover:border-[#003865]'
           }`}
           aria-label="Switch to English"
           aria-pressed={language === 'en'}
@@ -57,7 +57,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
           className={`px-4 py-3 font-semibold transition-colors rounded-lg border-2 ${
             language === 'es'
               ? 'bg-[#8cc63f] text-white border-[#8cc63f]'
-              : 'bg-white text-[#003865] border-gray-300 hover:border-[#8cc63f]'
+              : 'bg-white dark:bg-slate-900 text-[#003865] dark:text-sky-300 border-gray-300 dark:border-slate-600 hover:border-[#8cc63f]'
           }`}
           aria-label="Cambiar a Espanol"
           aria-pressed={language === 'es'}
@@ -71,7 +71,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
           className={`px-4 py-3 font-semibold transition-colors rounded-lg border-2 ${
             language === 'vi'
               ? 'bg-[#da251d] text-white border-[#da251d]'
-              : 'bg-white text-[#003865] border-gray-300 hover:border-[#da251d]'
+              : 'bg-white dark:bg-slate-900 text-[#003865] dark:text-sky-300 border-gray-300 dark:border-slate-600 hover:border-[#da251d]'
           }`}
           aria-label="Chuyen sang Tieng Viet"
           aria-pressed={language === 'vi'}
