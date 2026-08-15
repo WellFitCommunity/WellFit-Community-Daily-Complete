@@ -3,10 +3,18 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-08-15 (eighteenth session)
+**Last Updated:** 2026-08-15 (nineteenth session — doc only)
 
 ---
 ### 📨 HANDOFF FOR NEXT SESSION (read this first)
+
+**Session 2026-08-15 (nineteenth) — NEW STRATEGIC PROGRAM TRACKER: `docs/trackers/clinic-ready-atlus-tracker.md`. Doc-only session, no code/DB changes, tree clean.**
+
+Maria asked whether a clinic could run on Atlus (an Epic-using contact prompted it) and directed: full end-to-end tracker addressing the blind spots — position Atlus on its own strength, not against Epic. Claude verified the four external-wire gaps against HEAD: **W1** live clearinghouse (mcp-clearinghouse-server is a T1 stub, hardcoded `'tenant-id'`, no live creds — 837P output goes nowhere), **W2** eRx transmission (epcsService is a real internal lifecycle with ZERO network layer; no routine eRx path either), **W3** in-clinic scheduling (only `telehealth_appointments` exists — no front-desk book), **W4** lab wire (internal repairs stay owned by `intake-and-labs-gap-tracker-2026-07-14.md`; this adds only the aggregator connection), **W5** CEHRT decision + the ONC tracker is STALE (f-series rows still say READY despite the 2026-07-25 correction; (b)(3) EPCS row overstates), **W6** Mode-A "alongside-EHR" positioning sellable now. Meta blind spot named: docs repeatedly described service-layer code as live external integrations — every workstream now carries a live-sandbox-round-trip acceptance criterion. **⚑ MARIA: 5 decisions in the tracker (D-1 clearinghouse vendor, D-2 eRx embed vendor, D-3 lab aggregator, D-4 CEHRT timing incl. CCM-CEHRT ⚑Akima verify, D-5 priority).** Recommended order: finish security remediation S4–S5 first (S4 touches generate-837p, which W1 also touches), then W1-S1 hardening; W3 + W6-S1 are vendor-independent and can interleave. ~14–18 build sessions + external vendor lead times (start paperwork early).
+
+**⚑ NEXT SESSION priority unchanged: S4 of the external-audit remediation tracker** (A-3 + A-4) — unless Maria reorders via D-5.
+
+---
 
 **Session 2026-08-15 (eighteenth) — MARIA APPROVED THE REMEDIATION ORDER; S1 + S2 + S3 ALL SHIPPED (A-0, A-1, A-2 closed with live proof) + AGENT_INSTRUCTIONS.md realigned + audit-ci dependency gate repaired. 6 commits (`54386e82..3123818a`), 1 migration (`20260815120000_a0_bed_rpc_lockdown.sql`, pushed + live-verified), 8 edge functions redeployed (transcript, dispatch, pdmp, sdoh, claude-chat + the 3 public-health submitters), tree clean, Security Scan green.**
 
