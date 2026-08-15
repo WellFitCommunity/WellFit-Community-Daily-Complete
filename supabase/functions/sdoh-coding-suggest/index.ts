@@ -8,6 +8,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from "../_shared/auditLogger.ts";
 import { fetchCulturalContext, type CulturalContextResponse } from "../_shared/culturalCompetencyClient.ts";
 import { buildConstraintBlock } from "../_shared/clinicalGroundingRules.ts";
+import { SONNET_MODEL } from "../_shared/models.ts";
 import { validateClinicalOutput, logValidationResults } from "../_shared/clinicalOutputValidator.ts";
 import type { CodingOutput } from "../_shared/clinicalOutputValidator.ts";
 
@@ -160,11 +161,16 @@ serve(async (req) => {
       })),
       recentCheckIns: checkIns?.slice(0, 3).map(checkIn => ({
         date: checkIn.created_at,
-        housingStatus: checkIn.housing_situation,
-        foodSecurity: checkIn.food_security,
-        transportationIssues: checkIn.transportation_barriers,
-        socialSupport: checkIn.social_isolation_score,
-        financialStress: checkIn.financial_stress
+        // SDOH domain fields live on sdoh_assessments (fetched as existingSDOH
+        // below), NOT on check_ins — these five were ALWAYS undefined at
+        // runtime (see NOTE above). Made explicit 2026-08-15 so deno check
+        // reflects reality; the real SDOH check-in mapping repair is now in
+        // the external-audit remediation tracker flags.
+        housingStatus: undefined,
+        foodSecurity: undefined,
+        transportationIssues: undefined,
+        socialSupport: undefined,
+        financialStress: undefined
       })) || [],
       existingSDOH: sdohAssessment?.[0] || null
     }
@@ -195,7 +201,7 @@ serve(async (req) => {
     // Save coding audit log (keep existing for backward compatibility)
     await supabaseClient.from('coding_audits').insert({
       encounter_id: encounterId,
-      model: 'claude-sonnet-5',
+      model: SONNET_MODEL,
       success: true,
       confidence: aiAnalysis.confidence,
       processing_time_ms: processingTime
@@ -319,7 +325,7 @@ Format as JSON with this structure:
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5', // Latest model for best coding and analysis
+        model: SONNET_MODEL, // Centralized pin — _shared/models.ts
         thinking: { type: "disabled" },
         max_tokens: 4000,
         system: systemPrompt,
@@ -328,8 +334,9 @@ Format as JSON with this structure:
             role: 'user',
             content: userPrompt
           }
-        ],
-        temperature: 0.1
+        ]
+        // `temperature` is deprecated for claude-sonnet-5 — Anthropic 400s if
+        // sent (live-verified 2026-08-15, same defect as process-medical-transcript).
       })
     })
 
@@ -368,7 +375,7 @@ Format as JSON with this structure:
           request_id: requestId,
           user_id: userId,
           request_type: 'sdoh_coding',
-          model: 'claude-sonnet-5',
+          model: SONNET_MODEL,
           input_tokens: inputTokens,
           output_tokens: outputTokens,
           cost: totalCost,
@@ -423,7 +430,7 @@ Format as JSON with this structure:
         ...analysis,
         confidence: Math.min(Math.max(analysis.confidence || 75, 0), 100),
         timestamp: new Date().toISOString(),
-        model: 'claude-sonnet-5',
+        model: SONNET_MODEL,
         _validation: validationResult.flaggedOutput?._validationSummary ?? null,
         _rejectedCodes: validationResult.rejectedCodes,
       }
@@ -437,7 +444,7 @@ Format as JSON with this structure:
           request_id: requestId,
           user_id: userId,
           request_type: 'sdoh_coding',
-          model: 'claude-sonnet-5',
+          model: SONNET_MODEL,
           input_tokens: inputTokens,
           output_tokens: outputTokens,
           cost: totalCost,
@@ -490,7 +497,7 @@ Format as JSON with this structure:
         request_id: requestId,
         user_id: userId,
         request_type: 'sdoh_coding',
-        model: 'claude-sonnet-5',
+        model: SONNET_MODEL,
         input_tokens: 0,
         output_tokens: 0,
         cost: 0,

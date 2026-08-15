@@ -107,7 +107,17 @@ Tier-3 migration. Requires Maria's explicit go. Sweep all bed-management `SECURI
 
 ---
 
-## A-1 — Functions with NO authentication at all · **CONFIRMED** 🔴
+## A-1 — Functions with NO authentication at all · **✅ REMEDIATED 2026-08-15 (S2)**
+
+> **S2 executed 2026-08-15.** No schema changes — edge-function bodies only, all reusing the existing `_shared/auth.ts` helpers (`requireUser` / `requireRole` / `requirePatientAccess`) + `_shared/rateLimiter.ts`. Deployed and live-verified.
+>
+> **What shipped:** (a) `process-medical-transcript` — verified clinical caller (SCRIBE role set) required BEFORE body parse and before anything reaches Anthropic; `requirePatientAccess` when a patientId is named; 30/hr rate limit; model pin moved to `SONNET_MODEL`. (b) `emergency-alert-dispatch` — auth BEFORE payload parse: service caller (Bearer==SB_SECRET_KEY or x-internal-secret) OR verified user; a user may only dispatch for THEMSELVES unless staff-role; response no longer returns patient name/raw recipient emails; payload no longer logged (PHI); deliberately NOT rate-limited (life-critical). (c) `pdmp-query` — verified prescriber-class caller + tenant resolved from the CALLER's profile (body tenantId honored only for super_admin) + `requirePatientAccess` before the cache path; 30/hr rate limit.
+>
+> **Live proof (synthetic user, fully cleaned up incl. auth user + rate-limit rows, 0 downstream alerts):** no-auth → 401 ×3; `Bearer garbage` → 401 ×3; valid JWT with NO clinical role → 403 (transcript); wrong body tenant → 403 (pdmp); physician JWT → pdmp honest 501 `PDMP_NOT_CONNECTED` with audit row; physician JWT → transcript 200 with real Anthropic round-trip; service-secret + non-emergency record → 200 skipped (nothing sent). deno check 0 errors ×5.
+>
+> **Defects surfaced by the positive proofs and fixed in the same pass (sister-swept):** (1) **`temperature` is deprecated for claude-sonnet-5 → Anthropic 400** — transcript and `sdoh-coding-suggest` had been failing on EVERY call since the July sonnet-5 migration; removed there and defensively stripped in `claude-chat` (no live caller sends it today); sdoh's 6 hardcoded `'claude-sonnet-5'` strings moved to `SONNET_MODEL`. (2) **`pdmp_queries` insert drift** — live table has no `response_code`/`is_test` columns, so the audit-trail insert failed on every call; realigned to the live shape (test-endpoint flag rides `request_payload`). (3) sdoh-coding-suggest's check-in mapping reads 5 SDOH fields that don't exist on `check_ins` (always undefined; a prior session said "tracked separately" but no tracker entry existed) — made explicitly undefined; **real repair = map from `sdoh_assessments`/real check-in signals, added to flags below.**
+
+### Original finding (for the record) · CONFIRMED 🔴
 
 All three are `verify_jwt = false`, so the gateway does not protect them either.
 
@@ -392,7 +402,7 @@ Sized on the CLAUDE.md session scale. **No work starts without Maria's go; A-0, 
 | Session | Scope | Gate |
 |---|---|---|
 | **S1 ✅ DONE 2026-08-15** | **A-0 bed RPCs.** Swept by name AND prosrc (3 → 15 fns); migration `20260815120000_a0_bed_rpc_lockdown.sql`: REVOKE anon + `assert_bed_management_caller` in all 9 DEFINER RPCs. Live 10-test proof rolled back, zero residue. | ✅ `has_function_privilege('anon',…)` false ×13; cross-tenant denied (assign + metrics); senior role denied; same-tenant assign/discharge/status all work; service_role passes |
-| **S2** | **A-1 the three no-auth functions.** transcript, emergency-dispatch, pdmp-query. | `Bearer garbage` → 401 on all three; no Anthropic call without verified caller |
+| **S2 ✅ DONE 2026-08-15** | **A-1 the three no-auth functions.** All three gated via existing `_shared/auth.ts` helpers; no schema changes. Positive proofs surfaced + fixed 2 latent breakages (sonnet-5 `temperature` 400 in 3 fns; `pdmp_queries` insert drift). | ✅ no-auth/garbage → 401 ×6; role-less JWT → 403; wrong tenant → 403; physician e2e: pdmp honest 501 + transcript 200 through Anthropic; service path 200; synthetic artifacts fully swept |
 | **S3** | **Wave 0 gates + A-2.** Build the missing shared gates (machine/integration identity; edge-usable patient access) alongside `requireUser` / `requirePatientAccess` / `mcpAuthGate`. Apply to the public-health trio. | Shared gate exists; eCR/immunization/syndromic all 401 on garbage, 403 cross-tenant; `pending_transport` honesty preserved |
 | **S4** | **A-3 + A-4.** phi-encrypt decrypt, 837P, drug interactions, provider assistant, HL7. Adopt the S3 gates. | Cross-patient decrypt 403; patient→physician-role 403; X-Tenant-Id alone rejected |
 | **S5** | **A-5 MCP FHIR tenant enforcement.** Every tool; force caller tenant on `list_ehr_connections`. | Real-handler cross-tenant test → 403/404, zero PHI |

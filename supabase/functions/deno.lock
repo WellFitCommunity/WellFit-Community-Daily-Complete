@@ -181,6 +181,7 @@
     "https://deno.land/x/zod@v3.22.4/mod.ts": "64e55237cb4410e17d968cd08975566059f27638ebb0b86048031b987ba251c4",
     "https://deno.land/x/zod@v3.22.4/types.ts": "724185522fafe43ee56a52333958764c8c8cd6ad4effa27b42651df873fc151e",
     "https://esm.sh/@anthropic-ai/sdk@0.20.9?target=deno": "718469dd435ea0bce054005c86b6b00baa65ba0a07c13805070ca717136ee19f",
+    "https://esm.sh/@anthropic-ai/sdk@0.39.0?target=deno": "91ed8460a0a2465ac64a05cc9ab71ee0f079014af02c78a12b61318c85ef447c",
     "https://esm.sh/@supabase/supabase-js@2.101.1?target=deno": "7801fb4942e73388c89b5f4891b0bd04be3ebfc37b8958c80d8d6239d7ccd86c",
     "https://esm.sh/@supabase/supabase-js@2.107.0": "8caa09b0223684d83cfa273de2946af25430d7ca8e5320b721226a0c7a8c6e98",
     "https://esm.sh/@supabase/supabase-js@2.39.0": "f51aeb2dbf8f67c8fa396628af45793e3513067d45705f1ea158f5c678bb0cea",

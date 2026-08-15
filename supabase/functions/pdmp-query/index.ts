@@ -8,8 +8,20 @@
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { requireUser, requireRole, requirePatientAccess, supabaseAdmin } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/rateLimiter.ts';
+
+// A-1c remediation: this endpoint gates CONTROLLED-SUBSTANCE prescription
+// history. The previous check accepted any string shaped like "Bearer x".
+// Now: verified JWT + prescriber-class role + patient authorization (tenant
+// isolation) before the 24h cache path is reachable. The tenant is resolved
+// from the CALLER's profile — the body's tenantId is honored only for
+// super_admin and must otherwise match the caller's tenant.
+const PRESCRIBER_ROLES = [
+  'admin', 'super_admin', 'physician', 'doctor',
+  'nurse_practitioner', 'physician_assistant',
+];
 
 // State PDMP configurations
 const STATE_CONFIGS: Record<string, {
@@ -53,13 +65,33 @@ serve(async (req: Request) => {
 
   const { headers: corsHeaders } = corsFromRequest(req);
 
+  // Re-emit a Response thrown by the shared auth helpers with CORS attached.
+  const withCors = async (e: Response): Promise<Response> => {
+    const body = await e.text();
+    return new Response(body, { status: e.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  };
+
   try {
-    // Validate authorization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    // A-1c: verified prescriber-class caller required before anything else.
+    let callerId: string;
+    let callerRole: string;
+    try {
+      const user = await requireUser(req);
+      callerRole = await requireRole(user.id, PRESCRIBER_ROLES);
+      callerId = user.id;
+    } catch (e: unknown) {
+      if (e instanceof Response) return await withCors(e);
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing authorization' }),
-        { status: 401, headers: corsHeaders }
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const rl = await checkRateLimit(callerId, { maxAttempts: 30, windowSeconds: 3600, keyPrefix: 'pdmp-query' });
+    if (!rl.allowed) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Rate limit exceeded', retryAfter: rl.retryAfter }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -87,6 +119,40 @@ serve(async (req: Request) => {
       );
     }
 
+    // A-1c: the tenant is the CALLER's tenant, not the body's. super_admin may
+    // pass an explicit tenantId; anyone else's body tenantId must match.
+    const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', callerId)
+      .maybeSingle();
+
+    if (callerProfileError || !callerProfile?.tenant_id) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Caller tenant could not be resolved' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const effectiveTenantId =
+      callerRole === 'super_admin' ? tenantId : callerProfile.tenant_id;
+
+    if (callerRole !== 'super_admin' && tenantId !== callerProfile.tenant_id) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden: tenant mismatch' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // A-1c: patient-level authorization (clinical role + tenant isolation) —
+    // the cached controlled-substance path is unreachable without it.
+    try {
+      await requirePatientAccess(callerId, patientId, PRESCRIBER_ROLES);
+    } catch (e: unknown) {
+      if (e instanceof Response) return await withCors(e);
+      throw e;
+    }
+
     // Get state configuration
     const stateConfig = STATE_CONFIGS[state.toUpperCase()];
     if (!stateConfig) {
@@ -96,10 +162,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseKey = Deno.env.get('SB_SECRET_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = supabaseAdmin;
 
     // Check for recent query (avoid duplicate queries within 24 hours)
     const twentyFourHoursAgo = new Date();
@@ -108,7 +171,7 @@ serve(async (req: Request) => {
     const { data: recentQuery } = await supabase
       .from('pdmp_queries')
       .select('id, query_timestamp, response_status')
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', effectiveTenantId)
       .eq('patient_id', patientId)
       .eq('pdmp_state', state.toUpperCase())
       .gte('query_timestamp', twentyFourHoursAgo.toISOString())
@@ -160,12 +223,15 @@ serve(async (req: Request) => {
     // fails closed. Real operation requires state PDMP (TX AWARxE) onboarding
     // + PMIX/NABP request/response wiring + MME/risk-flag analysis.
 
-    // Record the attempted query for the audit trail
+    // Record the attempted query for the audit trail.
+    // Live column set verified 2026-08-15: pdmp_queries has NO response_code
+    // and NO is_test column (the old insert failed on every call) — the
+    // test-endpoint flag rides in request_payload instead.
     const { error: insertError } = await supabase
       .from('pdmp_queries')
       .insert({
         id: queryId,
-        tenant_id: tenantId,
+        tenant_id: effectiveTenantId,
         query_type: 'patient_history',
         provider_id: providerId,
         provider_npi: providerNpi,
@@ -175,13 +241,13 @@ serve(async (req: Request) => {
         patient_last_name: patientLastName,
         patient_dob: patientDob,
         pdmp_state: state.toUpperCase(),
+        pdmp_system_name: stateConfig.name,
+        request_payload: { is_test: useTestEndpoint, endpoint, date_range_months: dateRangeMonths },
         date_range_start: dateRangeStart.toISOString(),
         date_range_end: dateRangeEnd.toISOString(),
         query_timestamp: queryTimestamp,
         response_status: 'error',
-        response_code: null,
         prescriptions_found: 0,
-        is_test: useTestEndpoint,
       });
 
     if (insertError) {

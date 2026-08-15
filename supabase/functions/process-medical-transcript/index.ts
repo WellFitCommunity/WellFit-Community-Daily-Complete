@@ -5,8 +5,18 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { CONDENSED_GROUNDING_RULES } from '../_shared/clinicalGroundingRules.ts';
+import { requireUser, requireRole, requirePatientAccess } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/rateLimiter.ts';
+import { SONNET_MODEL } from '../_shared/models.ts';
 
 const logger = createLogger("process-medical-transcript");
+
+// A-1a remediation: the scribe is a PROVIDER tool. A verified clinical caller
+// is required before the body is parsed and before anything reaches Anthropic.
+const SCRIBE_ROLES = [
+  'admin', 'super_admin', 'physician', 'doctor', 'nurse',
+  'nurse_practitioner', 'physician_assistant', 'clinical_supervisor',
+];
 
 interface MedicalCode {
   code: string;
@@ -21,6 +31,7 @@ interface ProcessingResult {
   actionItems: string[];
   clinicalNotes: string;
   recommendations: string[];
+  keyFindings?: string[];
 }
 
 serve(async (req) => {
@@ -32,14 +43,58 @@ serve(async (req) => {
   // Get CORS headers for this request's origin
   const { headers: corsHeaders } = corsFromRequest(req);
 
+  // Re-emit a Response thrown by the shared auth helpers with CORS attached.
+  const withCors = async (e: Response): Promise<Response> => {
+    const body = await e.text();
+    return new Response(body, { status: e.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  };
+
+  // A-1a: verified clinical caller REQUIRED — before the body is parsed and
+  // before any PHI can reach Anthropic. No unauthenticated path exists.
+  let userId: string;
   try {
-    const { transcript, sessionType, patientId, audioUrl, duration } = await req.json()
+    const user = await requireUser(req);
+    await requireRole(user.id, SCRIBE_ROLES);
+    userId = user.id;
+  } catch (e: unknown) {
+    if (e instanceof Response) return await withCors(e);
+    const msg = e instanceof Error ? e.message : String(e);
+    logger.error("Auth check failed", { error: msg.slice(0, 300) });
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // AI calls are expensive — per-provider rate limit.
+  const rl = await checkRateLimit(userId, { maxAttempts: 30, windowSeconds: 3600, keyPrefix: 'scribe-transcript' });
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded', retryAfter: rl.retryAfter }),
+      { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  try {
+    const { transcript, sessionType, patientId, duration } = await req.json()
 
     if (!transcript) {
       return new Response(
         JSON.stringify({ error: 'Transcript is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // A-1a: a named patient requires patient-level authorization (self is
+    // impossible here — SCRIBE_ROLES already excludes patients; the helper
+    // enforces clinical role + tenant match against the patient).
+    if (patientId) {
+      try {
+        await requirePatientAccess(userId, patientId, SCRIBE_ROLES);
+      } catch (e: unknown) {
+        if (e instanceof Response) return await withCors(e);
+        throw e;
+      }
     }
 
     // Initialize Supabase client with connection pooling
@@ -51,19 +106,9 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY not configured')
     }
 
-    // Get authorization header to identify user
-    const authHeader = req.headers.get('authorization');
-    let userId = null;
-
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user } } = await supabase.auth.getUser(token);
-      userId = user?.id;
-    }
-
-    // Fetch provider preferences if authenticated
+    // Fetch provider preferences (caller is always authenticated now)
     let prefs = null;
-    if (userId) {
+    {
       const { data } = await supabase
         .from('provider_scribe_preferences')
         .select('formality_level, humor_level, verbosity, interaction_style, documentation_style, billing_preferences, common_phrases, preferred_specialties, provider_type, interaction_count')
@@ -99,7 +144,7 @@ serve(async (req) => {
         current_mood: 'neutral'
       });
     } else {
-      // Default conversational prompt for unauthenticated users
+      // Default conversational prompt for providers without saved preferences
       promptContent = `You are an experienced medical scribe - like a trusted coworker who's been doing this for years.
 Analyze this medical transcript and provide structured, helpful output.
 
@@ -145,10 +190,12 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5', // Latest model for best scribe performance
+        model: SONNET_MODEL, // Centralized pin — _shared/models.ts
         thinking: { type: "disabled" },
         max_tokens: 4000,
-        temperature: 0.1,
+        // `temperature` is deprecated for claude-sonnet-5 — Anthropic returns
+        // 400 if sent (live-verified 2026-08-15; this call was broken since the
+        // July sonnet-5 migration left temperature in the payload).
         messages: [{
           role: 'user',
           content: promptContent
@@ -201,7 +248,7 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
         session_type: sessionType,
         transcript_length: transcript.length,
         duration_seconds: duration,
-        ai_model_used: 'claude-sonnet-4.5',
+        ai_model_used: SONNET_MODEL,
         codes_suggested: validatedCodes.length,
         processing_time_ms: Date.now(),
         success: true

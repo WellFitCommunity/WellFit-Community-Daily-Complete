@@ -332,7 +332,10 @@ serve(async (req) => {
       max_tokens: enforcedMaxTokens,
       system: finalSystem,
       messages: sanitizedMessages as unknown as Parameters<typeof anthropic.messages.create>[0]['messages'],
-      ...(temperature !== undefined ? { temperature } : {}),
+      // `temperature` is deprecated for the claude-sonnet-5 family — Anthropic
+      // hard-400s if sent (live-verified 2026-08-15). Forward it only for
+      // models that still accept it.
+      ...(temperature !== undefined && !modelUsed.startsWith('claude-sonnet-5') ? { temperature } : {}),
       // Only forwarded when the caller supplies them; otherwise the call is unchanged.
       ...(Array.isArray(tools) && tools.length > 0 ? { tools } : {}),
       ...(tool_choice ? { tool_choice } : {}),

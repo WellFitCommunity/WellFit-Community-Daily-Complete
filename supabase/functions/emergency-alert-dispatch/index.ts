@@ -3,6 +3,22 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/auditLogger.ts'
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
+import { requireUser, requireRole } from '../_shared/auth.ts'
+
+// A-1b remediation: this function previously had ZERO auth — any HTTP client
+// could trigger emergency emails/push and receive patient name + recipient
+// addresses. Two legitimate caller classes now:
+//   1. Internal server-to-server (DB webhook / cron): Bearer == SB_SECRET_KEY
+//      or x-internal-secret == INTERNAL_SECRET — verified BEFORE the payload
+//      is parsed.
+//   2. An authenticated user: a senior may dispatch an SOS for THEMSELVES
+//      (record.user_id === caller); staff roles may dispatch for others.
+// Deliberately NOT rate-limited: this is a life-critical path and callers are
+// now authenticated; throttling a real SOS is the worse failure mode.
+const DISPATCH_STAFF_ROLES = [
+  'admin', 'super_admin', 'physician', 'doctor', 'nurse', 'nurse_practitioner',
+  'physician_assistant', 'clinical_supervisor', 'case_manager', 'care_manager',
+];
 
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@wellfitcommunity.org";
 // Use the hardened, authenticated email function `send-email` (dash). The former
@@ -185,9 +201,38 @@ serve(async (req) => {
   const startTime = Date.now();
   logger.security('Emergency alert dispatch started', { timestamp: new Date().toISOString() });
 
+  // A-1b: authenticate BEFORE parsing the payload.
+  const authHeaderRaw = req.headers.get('authorization') || '';
+  const bearer = authHeaderRaw.startsWith('Bearer ') ? authHeaderRaw.slice(7).trim() : '';
+  const internalSecretHeader = req.headers.get('x-internal-secret') || '';
+  const INTERNAL_SECRET = Deno.env.get('INTERNAL_SECRET') ?? '';
+  const isServiceCaller =
+    (!!SB_SECRET_KEY && bearer === SB_SECRET_KEY) ||
+    (!!INTERNAL_SECRET && internalSecretHeader === INTERNAL_SECRET);
+
+  let callerId: string | null = null;
+  if (!isServiceCaller) {
+    try {
+      const user = await requireUser(req);
+      callerId = user.id;
+    } catch (e: unknown) {
+      logger.security('Rejected unauthenticated emergency dispatch attempt', {
+        had_bearer: !!bearer,
+      });
+      const status = e instanceof Response ? e.status : 401;
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   try {
     const payload = await req.json();
-    logger.debug('Received payload', { payload });
+    // Payload carries PHI (notes, location) — log shape only, never content.
+    logger.debug('Received payload', {
+      has_record: !!(payload.record || payload.new_record),
+    });
 
     const newCheckin = (payload.record || payload.new_record) as CheckinRecord;
 
@@ -225,7 +270,25 @@ serve(async (req) => {
         headers: corsHeaders,
       });
     }
-    
+
+    // A-1b: a user caller may only dispatch for THEMSELVES unless they hold a
+    // staff role. Service callers (webhook/cron) are already verified above.
+    if (!isServiceCaller && callerId !== user_id) {
+      try {
+        await requireRole(callerId as string, DISPATCH_STAFF_ROLES);
+      } catch (e: unknown) {
+        logger.security('Rejected cross-user emergency dispatch', {
+          caller_id: callerId,
+          target_user_id: user_id,
+        });
+        const status = e instanceof Response ? e.status : 403;
+        return new Response(JSON.stringify({ error: 'Forbidden: cannot dispatch for another user' }), {
+          status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const supabaseClient = createClient(
       SUPABASE_URL ?? '',
       SB_SECRET_KEY ?? ''
@@ -381,13 +444,14 @@ serve(async (req) => {
       totalRecipients: Object.keys(emailResultsMap).length
     });
 
-    // Return detailed response
+    // A-1b: the response previously returned the patient's name and the raw
+    // recipient email addresses. Return delivery outcomes only.
     const response = {
       success: true,
       message: 'Emergency alert processed',
-      user_name: userName,
       alert_type: alert_type,
-      emails_sent: emailResultsMap,
+      admin_notified: adminResult.success,
+      caregiver_notified: caregiverEmail ? (caregiverResult?.success ?? false) : null,
       processing_time_ms: processingTime
     };
 
