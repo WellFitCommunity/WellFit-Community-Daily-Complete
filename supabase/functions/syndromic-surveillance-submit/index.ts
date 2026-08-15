@@ -11,6 +11,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { getStateConfig, type StateConfig } from '../_shared/stateConfigLookup.ts';
+import { requirePublicHealthIntegrationAccess } from '../_shared/publicHealthGate.ts';
 
 // Hardcoded fallback — used when no database row exists for the tenant+state
 const FALLBACK_CONFIGS: Record<string, StateConfig> = {
@@ -39,15 +40,6 @@ serve(async (req: Request) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
-    // Validate authorization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing authorization' }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
     // Parse request
     const body: SubmitRequest = await req.json();
     const { tenantId, encounterId, state, useTestEndpoint = false } = body;
@@ -59,13 +51,28 @@ serve(async (req: Request) => {
       );
     }
 
+    // A-2 (S3): verified caller via the shared public-health gate — JWT +
+    // public-health role, tenant derived from the CALLER's profile (body
+    // tenantId honored only for super_admin / internal service callers).
+    let effectiveTenantId: string;
+    try {
+      const caller = await requirePublicHealthIntegrationAccess(req, tenantId);
+      effectiveTenantId = caller.tenantId;
+    } catch (e: unknown) {
+      if (e instanceof Response) {
+        const errBody = await e.text();
+        return new Response(errBody, { status: e.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      throw e;
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseKey = Deno.env.get('SB_SECRET_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get state configuration — DB first, hardcoded fallback
-    const dbConfig = await getStateConfig(supabase, tenantId, state, 'syndromic');
+    const dbConfig = await getStateConfig(supabase, effectiveTenantId, state, 'syndromic');
     const stateConfig = dbConfig || FALLBACK_CONFIGS[state.toUpperCase()] || null;
     if (!stateConfig) {
       return new Response(
@@ -81,7 +88,7 @@ serve(async (req: Request) => {
     const { data: encounter, error: encounterError } = await supabase
       .from('syndromic_surveillance_encounters')
       .select('id, status, chief_complaint, encounter_date')
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', effectiveTenantId)
       .eq('id', encounterId)
       .single();
 
@@ -116,7 +123,7 @@ serve(async (req: Request) => {
     const { error: insertError } = await supabase
       .from('syndromic_surveillance_transmissions')
       .insert({
-        tenant_id: tenantId,
+        tenant_id: effectiveTenantId,
         encounter_id: encounterId,
         submission_id: submissionId,
         destination: stateConfig.name,
@@ -145,7 +152,8 @@ serve(async (req: Request) => {
         last_submission_id: submissionId,
         last_submission_date: submissionTimestamp,
       })
-      .eq('id', encounterId);
+      .eq('id', encounterId)
+      .eq('tenant_id', effectiveTenantId);
 
     return new Response(
       JSON.stringify({

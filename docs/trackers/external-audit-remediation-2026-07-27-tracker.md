@@ -147,7 +147,15 @@ Require a verified caller (`supabase.auth.getUser(token)`), a clinical role, and
 
 ---
 
-## A-2 — `ecr-submit` bearer not verified + body-supplied tenant · **CONFIRMED** 🔴
+## A-2 — `ecr-submit` bearer not verified + body-supplied tenant · **✅ REMEDIATED 2026-08-15 (S3)**
+
+> **S3 executed 2026-08-15.** NEW shared gate module `supabase/functions/_shared/publicHealthGate.ts` (the Wave-0 gates): `isInternalServiceCaller(req)` — canonical machine/integration identity (platform secret or x-internal-secret; A-4/A-6 adopt this in later waves) — and `requirePublicHealthIntegrationAccess(req, tenantId)` — verify JWT → public-health role (`PUBLIC_HEALTH_ROLES`) → tenant from the CALLER's profile → body tenantId honored only for super_admin/service callers → throws Response(401/403/400) in the auth.ts house style. Applied to all three submitters; every query/insert/update scoped to the gate's tenant. **`pending_transport` honesty untouched** (preserved per the S3 PRESERVE clause).
+>
+> **Live proof matrix 15/15 (synthetic physician, swept afterward incl. auth user; 0 mutations, 0 downstream alerts):** per function — no-auth → 401, garbage bearer → 401, physician tenant-A posting tenant-B → **403 tenant mismatch**, physician same-tenant fake resource → 404 (no row, no fabrication), service-secret caller → gate passes → 404 at data layer. deno check 0 errors ×4.
+>
+> **Unchanged known state:** the f-series data layer remains honest-broken (`ecr_submissions`/`immunizations`/`patients` don't exist live — fourteenth-session finding; rebuild is the deferred registry-enrollment tracker). S3 gated the boundary; it did not rebuild the transport.
+
+### Original finding (for the record) · CONFIRMED 🔴
 
 `supabase/functions/ecr-submit/index.ts:53-59` — `startsWith('Bearer ')` only, any string passes. `:64` takes `tenantId` from the body. `:80-81` builds a **service-role** client. `:88-97` queries `electronic_case_reports` filtered by the client's own `tenant_id`.
 
@@ -403,7 +411,7 @@ Sized on the CLAUDE.md session scale. **No work starts without Maria's go; A-0, 
 |---|---|---|
 | **S1 ✅ DONE 2026-08-15** | **A-0 bed RPCs.** Swept by name AND prosrc (3 → 15 fns); migration `20260815120000_a0_bed_rpc_lockdown.sql`: REVOKE anon + `assert_bed_management_caller` in all 9 DEFINER RPCs. Live 10-test proof rolled back, zero residue. | ✅ `has_function_privilege('anon',…)` false ×13; cross-tenant denied (assign + metrics); senior role denied; same-tenant assign/discharge/status all work; service_role passes |
 | **S2 ✅ DONE 2026-08-15** | **A-1 the three no-auth functions.** All three gated via existing `_shared/auth.ts` helpers; no schema changes. Positive proofs surfaced + fixed 2 latent breakages (sonnet-5 `temperature` 400 in 3 fns; `pdmp_queries` insert drift). | ✅ no-auth/garbage → 401 ×6; role-less JWT → 403; wrong tenant → 403; physician e2e: pdmp honest 501 + transcript 200 through Anthropic; service path 200; synthetic artifacts fully swept |
-| **S3** | **Wave 0 gates + A-2.** Build the missing shared gates (machine/integration identity; edge-usable patient access) alongside `requireUser` / `requirePatientAccess` / `mcpAuthGate`. Apply to the public-health trio. | Shared gate exists; eCR/immunization/syndromic all 401 on garbage, 403 cross-tenant; `pending_transport` honesty preserved |
+| **S3 ✅ DONE 2026-08-15** | **Wave 0 gates + A-2.** NEW `_shared/publicHealthGate.ts`: `isInternalServiceCaller` (machine identity, canonical — A-4/A-6 adopt later) + `requirePublicHealthIntegrationAccess` (JWT → role → caller-profile tenant). Applied to all three submitters, all queries tenant-scoped. | ✅ 15/15 matrix: 401 garbage/no-auth ×6; 403 cross-tenant ×3; 404 honest ×6; `pending_transport` honesty preserved; deno check 0 ×4 |
 | **S4** | **A-3 + A-4.** phi-encrypt decrypt, 837P, drug interactions, provider assistant, HL7. Adopt the S3 gates. | Cross-patient decrypt 403; patient→physician-role 403; X-Tenant-Id alone rejected |
 | **S5** | **A-5 MCP FHIR tenant enforcement.** Every tool; force caller tenant on `list_ehr_connections`. | Real-handler cross-tenant test → 403/404, zero PHI |
 | **S6** | **A-6 + A-7 + C-15.** Orchestrator credential substitution, Guardian tenant precedence, patient-context per-request client. Preserve Guardian's human-merge boundary. | No-auth orchestrator → 401; body tenant never wins; patient-context queries run as caller |

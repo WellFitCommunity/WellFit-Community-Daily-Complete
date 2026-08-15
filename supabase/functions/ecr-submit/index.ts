@@ -11,6 +11,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { getStateConfig, type StateConfig } from '../_shared/stateConfigLookup.ts';
+import { requirePublicHealthIntegrationAccess } from '../_shared/publicHealthGate.ts';
 
 // AIMS platform config — centralized, stays hardcoded
 const AIMS_CONFIG: StateConfig = {
@@ -49,15 +50,6 @@ serve(async (req: Request) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
-    // Validate authorization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing authorization' }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
     // Parse request
     const body: SubmitRequest = await req.json();
     const {
@@ -75,6 +67,21 @@ serve(async (req: Request) => {
       );
     }
 
+    // A-2 (S3): verified caller via the shared public-health gate — JWT +
+    // public-health role, tenant derived from the CALLER's profile (body
+    // tenantId honored only for super_admin / internal service callers).
+    let effectiveTenantId: string;
+    try {
+      const caller = await requirePublicHealthIntegrationAccess(req, tenantId);
+      effectiveTenantId = caller.tenantId;
+    } catch (e: unknown) {
+      if (e instanceof Response) {
+        const errBody = await e.text();
+        return new Response(errBody, { status: e.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      throw e;
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseKey = Deno.env.get('SB_SECRET_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -85,7 +92,7 @@ serve(async (req: Request) => {
     if (submissionRoute === 'aims') {
       config = AIMS_CONFIG;
     } else {
-      const dbConfig = await getStateConfig(supabase, tenantId, state, 'ecr');
+      const dbConfig = await getStateConfig(supabase, effectiveTenantId, state, 'ecr');
       config = dbConfig || FALLBACK_DIRECT_CONFIGS[state.toUpperCase()] || AIMS_CONFIG;
     }
 
@@ -94,7 +101,7 @@ serve(async (req: Request) => {
     const { data: caseReport, error: reportError } = await supabase
       .from('electronic_case_reports')
       .select('id, status, trigger_code, trigger_description')
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', effectiveTenantId)
       .eq('id', caseReportId)
       .single();
 
@@ -132,7 +139,7 @@ serve(async (req: Request) => {
     const { error: insertError } = await supabase
       .from('ecr_submissions')
       .insert({
-        tenant_id: tenantId,
+        tenant_id: effectiveTenantId,
         case_report_id: caseReportId,
         submission_id: submissionId,
         submission_route: submissionRoute,
@@ -161,7 +168,8 @@ serve(async (req: Request) => {
         submission_date: submissionTimestamp,
         submission_route: submissionRoute,
       })
-      .eq('id', caseReportId);
+      .eq('id', caseReportId)
+      .eq('tenant_id', effectiveTenantId);
 
     return new Response(
       JSON.stringify({
