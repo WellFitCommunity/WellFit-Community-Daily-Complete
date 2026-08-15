@@ -3,10 +3,20 @@
 > **Read this file FIRST at the start of every session.**
 > **Update this file LAST at the end of every session.**
 
-**Last Updated:** 2026-07-27 (seventeenth session)
+**Last Updated:** 2026-08-15 (eighteenth session)
 
 ---
 ### 📨 HANDOFF FOR NEXT SESSION (read this first)
+
+**Session 2026-08-15 (eighteenth) — MARIA APPROVED THE REMEDIATION ORDER; S1 (A-0 bed RPC lockdown) SHIPPED + AGENT_INSTRUCTIONS.md realigned. 1 migration (`20260815120000_a0_bed_rpc_lockdown.sql`, pushed + live-verified), tree clean.**
+
+**1. A-0 REMEDIATED — the audit's only no-credential finding is closed.** The sibling sweep (by name AND by prosrc reference to bed tables) grew the surface from the audit's 3 functions to **15**: worst siblings were `predict_unit_discharges` (returned **patient names** for any unit UUID, DEFINER, anon-executable) and `process_adt_bed_update` (client-supplied `p_tenant_id` AND `p_changed_by`). Shipped: fail-closed `assert_bed_management_caller(tenant)` (service_role/direct-DB pass — HL7 ingest unaffected; `bed-management` edge forwards the user JWT so it authorizes as the user; user callers need auth + tenant match + bed-management role via the same `profiles.role_id→roles` store RLS uses) wired into all 9 DEFINER RPCs; identity stamp no longer spoofable; cross-tenant patient guard; `REVOKE EXECUTE FROM PUBLIC, anon` on all 13 client-callables + trigger-fn hygiene. **Live proof (rolled back, zero residue incl. no downstream security_alerts):** anon → permission denied; cross-tenant clinician → `BED_RPC_DENIED` 0 rows; senior role → denied; same-tenant assign→occupied/discharge→dirty/status→cleaning all green; service_role passes. Gates: scoped typecheck n/a (SQL only) · lint 0/0 · bed suites 25/25. Supabase MCP now HAS WellFit on the allowlist (Maria added it — psql direct connection is IPv6-dead from this codespace; MCP `execute_sql` + `npx supabase db push` both work).
+
+**Flags from S1 (not blockers):** (a) `beds_staff_write` RLS names dead roles (`care_manager`/`bed_control` not in `roles`); (b) `bed-management` edge gates on `profiles.role` TEXT while the DB gate uses `role_id→roles` — both fail closed; unify role stores in a later wave. Both recorded in the tracker.
+
+**2. AGENT_INSTRUCTIONS.md realigned** (`54386e82`): now an orientation doc deferring to CLAUDE.md/.claude/rules; stale Methodist-demo content, 500-line limit, hardcoded test counts, and dead `.backup.ts` recovery removed.
+
+**⚑ NEXT SESSION: S2 of the remediation tracker — the three no-auth edge functions** (`process-medical-transcript` ships raw transcript+patientId to Anthropic unauthenticated; `emergency-alert-dispatch` zero auth, returns patient name + recipient emails; `pdmp-query` bearer-shape check gates cached controlled-substance history). Then S3 = Wave-0 shared gates. Carried, still open: Maria's visual walk (rule #13: settings S1+S2 + router-v8 + `/envision` login); settings S3 (translation sweep + reminder-cron verify); Maria checking GitHub branch protection (decides D-3); Akima packet items.
 
 **Session 2026-07-27 (seventeenth) — EXTERNAL AUDIT TRIAGE. Read-only. Zero code changed, working tree clean. New tracker: `docs/trackers/external-audit-remediation-2026-07-27-tracker.md` (+ Word copy `docs/manual/EXTERNAL_AUDIT_REMEDIATION_2026-07-27.docx`).**
 

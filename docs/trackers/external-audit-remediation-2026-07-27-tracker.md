@@ -58,7 +58,19 @@ Both halves (P0-1 orchestrator substitution, P0-2 tenant precedence) remain real
 
 Ordered by real exposure, not by the auditor's numbering.
 
-## A-0 — Bed-management RPCs: `EXECUTE` granted to `anon` · **CONFIRMED — WORSE** 🔴 TOP RISK
+## A-0 — Bed-management RPCs: `EXECUTE` granted to `anon` · **✅ REMEDIATED 2026-08-15 (S1)**
+
+> **S1 executed 2026-08-15, Maria approved.** Migration `20260815120000_a0_bed_rpc_lockdown.sql` pushed and live-verified.
+>
+> **Sibling sweep grew the surface from 3 to 15 functions.** A prosrc-level sweep (functions whose *source* references `beds`/`bed_assignments`/`ed_boarders`) found DEFINER siblings the name sweep missed — worst: `predict_unit_discharges` returned **patient names** for any unit UUID to `anon`, and `process_adt_bed_update` took both `p_tenant_id` AND `p_changed_by` from the caller.
+>
+> **What shipped:** (1) new fail-closed `assert_bed_management_caller(tenant)` — service_role/direct-DB callers pass (HL7 ingest unaffected; `bed-management` forwards the user JWT so it authorizes as the user); user callers need auth.uid() + tenant match (`get_current_tenant_id`) + a bed-management role (`current_user_has_any_role`, same store as RLS). (2) Assertion wired into all 9 DEFINER RPCs: assign_patient_to_bed, discharge_patient, update_bed_status, assign_bed_to_ed_boarder, place_ed_boarder, find_bed_by_location, get_ed_boarding_metrics, predict_unit_discharges, process_adt_bed_update (which also now overwrites `p_changed_by` with auth.uid() for user callers — stamp no longer spoofable). (3) Cross-tenant patient guard + tenant-scoped internal statements in assign/discharge. (4) `REVOKE EXECUTE FROM PUBLIC, anon` on all 13 client-callable bed/ED functions (incl. INVOKER helpers find_available_beds, generate_bed_forecast, get_ed_census, get_unit_census) + anon/authenticated revoked on the 3 trigger functions.
+>
+> **Acceptance evidence (all live, rolled back, zero residue incl. no downstream security_alerts):** `has_function_privilege('anon', …)` = false on all 13; 10-test DO-block proof: anon → `permission denied`; cross-tenant clinician assign → `BED_RPC_DENIED … tenant`, 0 rows created; same-tenant senior → `BED_RPC_DENIED … role`; same-tenant clinician assign→occupied / discharge→dirty / update_bed_status→cleaning all work; service_role context passes; cross-tenant metrics probe denied. Bed suites 25/25 green.
+>
+> **Flags left open (not blockers):** (a) `beds_staff_write` RLS names roles `care_manager`/`bed_control` that don't exist in `roles` (fail-closed, but the intended grant is dead — fix when roles are unified); (b) `bed-management` edge fn gates on the separate `profiles.role` TEXT column, not `profiles.role_id→roles` — a user with only the text role would now pass the edge gate but fail the DB gate (fail-closed; role-store unification is a later wave).
+
+### Original finding (for the record) · CONFIRMED — WORSE 🔴 was TOP RISK
 
 The auditor wrote: *"I could not prove the live PostgreSQL EXECUTE grants through GitHub, so I am not claiming direct anonymous RPC exploitation."*
 
@@ -379,7 +391,7 @@ Sized on the CLAUDE.md session scale. **No work starts without Maria's go; A-0, 
 
 | Session | Scope | Gate |
 |---|---|---|
-| **S1** | **A-0 bed RPCs.** Sweep all bed `SECURITY DEFINER` fns → one migration: REVOKE from anon + caller-tenant checks. Live negative + positive proof, rolled back. | `has_function_privilege('anon',…)` false; cross-tenant denied; same-tenant still works |
+| **S1 ✅ DONE 2026-08-15** | **A-0 bed RPCs.** Swept by name AND prosrc (3 → 15 fns); migration `20260815120000_a0_bed_rpc_lockdown.sql`: REVOKE anon + `assert_bed_management_caller` in all 9 DEFINER RPCs. Live 10-test proof rolled back, zero residue. | ✅ `has_function_privilege('anon',…)` false ×13; cross-tenant denied (assign + metrics); senior role denied; same-tenant assign/discharge/status all work; service_role passes |
 | **S2** | **A-1 the three no-auth functions.** transcript, emergency-dispatch, pdmp-query. | `Bearer garbage` → 401 on all three; no Anthropic call without verified caller |
 | **S3** | **Wave 0 gates + A-2.** Build the missing shared gates (machine/integration identity; edge-usable patient access) alongside `requireUser` / `requirePatientAccess` / `mcpAuthGate`. Apply to the public-health trio. | Shared gate exists; eCR/immunization/syndromic all 401 on garbage, 403 cross-tenant; `pending_transport` honesty preserved |
 | **S4** | **A-3 + A-4.** phi-encrypt decrypt, 837P, drug interactions, provider assistant, HL7. Adopt the S3 gates. | Cross-patient decrypt 403; patient→physician-role 403; X-Tenant-Id alone rejected |
